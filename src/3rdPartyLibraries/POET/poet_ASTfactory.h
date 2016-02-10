@@ -123,6 +123,7 @@ class ListFactory  : public MultiFactory
    public:
     POETList* new_item(POETCode* first, POETCode* rest) 
      { 
+assert(first != 0);
        return static_cast<POETList*>(MultiFactory::new_item(first,rest)); 
      }
 };
@@ -160,8 +161,10 @@ class ASTFactory {
   TypeNotMap notMap;
   TupleFactory tupleMaker;
 
-  static POETString* emptyString;
-  static POETType* intType, *stringType, *lvarAny, *idType;
+  static POETString* emptyString, *linebreak;
+  static POETNull *emptylist;
+  static POETType* intType, *stringType, *floatType, *lvarAny, *idType;
+  static POETIconst* zero, *one;
 
   static ASTFactory* _inst;
 
@@ -182,7 +185,11 @@ class ASTFactory {
         _inst = new ASTFactory();
      return _inst;
   }
-  static POETString* new_empty() { return emptyString; }
+  static POETString* new_empty_string() { return emptyString; }
+  static POETNull* new_empty_list() { return emptylist; }
+  static POETString* new_linebreak() { return linebreak; }
+  static POETIconst* new_zero() { return zero; }
+  static POETIconst* new_one() { return one; }
   static POETType* make_any()  { return lvarAny; }
   static POETType* new_type(POETTypeEnum t) 
       { switch(t) 
@@ -190,6 +197,7 @@ class ASTFactory {
           case TYPE_ANY: return lvarAny;
           case TYPE_STRING: return stringType;
           case TYPE_ID: return idType;
+          case TYPE_FLOAT: return floatType;
           default: std::cerr << "unrecognized type: " << t << "\n"; assert(0);
         }
       } 
@@ -215,7 +223,8 @@ class ASTFactory {
       } 
      
   POETString* new_string(const std::string& entry) {
-     if (entry == "") return new_empty();
+     if (entry == "") return new_empty_string();
+     if (entry == "\n") return new_linebreak();
      StringMap::const_iterator p = stringConstMap.find(entry);
      if (p == stringConstMap.end()) {
        return stringConstMap[entry] = new POETString(entry);
@@ -225,6 +234,7 @@ class ASTFactory {
 
   POETList* new_list(POETCode* first, POETCode* rest) 
    { 
+      if (rest == emptylist) { rest=0; }
       return listMaker.new_item(first,rest); 
    }
 
@@ -236,6 +246,8 @@ class ASTFactory {
      return (*p).second;
   }
   POETIconst* new_iconst(int value) {
+     if (value == 0) return zero;
+     if (value == 1) return one;
      IconstMap::const_iterator p = iconstMap.find(value);
      if (p == iconstMap.end()) {
        return iconstMap[value] = new POETIconst(value);
@@ -326,8 +338,14 @@ class ASTFactory {
     POETBop* new_MAP(POETCode* arg1, POETCode* arg2)
      { return MAPMaker.new_item(arg1,arg2); }
 };
-#define EMPTY ASTFactory::new_empty()
+#define EMPTY ASTFactory::new_empty_string()
+#define ZERO ASTFactory::new_zero()
+#define ONE ASTFactory::new_one()
+#define EMPTY_LIST ASTFactory::new_empty_list()
+#define LINE_BREAK ASTFactory::new_linebreak()
 #define ANY  POETProgram::make_any()
+#define TRUE ASTFactory::inst()->new_iconst(1)
+#define ICONST(v) ASTFactory::inst()->new_iconst(v)
 #define STRING(name) POETProgram::make_string(name)
 #define PAIR(v1,v2) ASTFactory::inst()->new_pair(v1,v2)
 #define TUPLE3(v1,v2,v3) ASTFactory::inst()->append_tuple(PAIR(v1,v2), v3)

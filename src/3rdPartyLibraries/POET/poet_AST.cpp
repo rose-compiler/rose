@@ -37,13 +37,18 @@ implementation functions for POET AST
 #define DEBUG_MAX_OUTPUT 15
 
 int POETCode:: maxID = 0;
-bool POETProgram::backtrack=true;
+bool POETProgram::backtrack=false;
 LvarSymbolTable POETProgram::traceDef;
 LvarSymbolTable POETProgram::paramDef;
 LvarSymbolTable POETProgram::macroDef;
+POETIconst* ASTFactory::zero = new POETIconst(0);
+POETIconst* ASTFactory::one = new POETIconst(1);
 POETString* ASTFactory::emptyString = new POETString("");
+POETString* ASTFactory::linebreak = new POETString("\n");
+POETNull* ASTFactory::emptylist = new POETNull();
 POETType* ASTFactory::intType = new POETType(TYPE_INT);
 POETType* ASTFactory::stringType = new POETType(TYPE_STRING);
+POETType* ASTFactory::floatType = new POETType(TYPE_FLOAT);
 POETType* ASTFactory::idType = new POETType(TYPE_ID);
 POETType*  ASTFactory::lvarAny = new POETType(TYPE_ANY);
 ASTFactory* ASTFactory::_inst = 0;
@@ -51,10 +56,10 @@ std::map<void*, POETCode*> POETAstInterface::codeMap;
 POETProgram* curfile;
 int user_debug = 0;
 
-const char* POETTypeName[] = {"_", "INT","STRING","ID","~","...","....","|"};
+const char* POETTypeName[] = {"_", "INT","STRING","FLOAT","ID","~","...","....","|"};
 const char* OpName[] = 
   { "NONE", "DEBUG", "PRINT",
-    "REPLACE", "DUPLICATE", "PERMUTE", "REBUILD", 
+    "REPLACE", "DUPLICATE", "REVERSE", "PERMUTE", "REBUILD", 
     "TRACE", "ERASE", "COPY", "SAVE", "RESTORE", 
     "=>", "==>", "BEGIN", ":", 
     "EXP", "VAR", "CLEAR",
@@ -66,8 +71,8 @@ const char* OpName[] =
    "|" , "...","....", 
    "==", "<", "<=", ">", ">=", "!=", ".",
    "SEQ", "IFELSE", "CASE", 
-   "FOR", "FOREACH", "FOREACHR", "CONTINUE", "BREAK", "RETURN",
-    "ERROR"};
+   "FOR", "FOREACH", "CONTINUE", "BREAK", "RETURN",
+    "ERROR", "ASSERT"};
 
 extern int user_debug;
 extern bool debug_parse();
@@ -88,7 +93,7 @@ POETCode* POETProgram:: make_atomType(POETTypeEnum t)
 { return ASTFactory::inst()->new_type(t);  }
 
 std::string POETCode_ext :: toString(ASTOutputEnum config)
-       {  return POETAstInterface::Ast2String(content); }
+       {  return POETAstInterface::Ast2String(content) + ((children==0 || children == EMPTY)? "" : ("{"+children->toString()+"}")); }
 
 POETCode* POETProgram:: make_pair(POETCode* r1, POETCode* r2)
           { return ASTFactory::inst()->new_pair(r1,r2); }
@@ -135,8 +140,8 @@ POETCode* POETProgram::make_tuple6(POETCode* r1, POETCode* r2, POETCode* r3, POE
 }
 POETCode* POETProgram:: make_list(POETCode* head, POETCode* tail)
              { return ASTFactory::inst()->new_list(head, tail); }
-POETCode* POETProgram:: make_empty()
-             { return ASTFactory::inst()->new_empty(); }
+POETCode* POETProgram:: make_empty_list()
+             { return ASTFactory::inst()->new_empty_list(); }
 
 void POETProgram::insert_evalDecl(POETCode* code, int lineNo)
 { 
@@ -412,7 +417,7 @@ POETCode* CodeVar:: invoke_rebuild(POETCode* _args)
 {
     ASTFactory* fac= ASTFactory::inst();
     POETCode* res1 = invoke_func("rebuild",_args);
-    if (res1 == 0) {
+    if (res1 == 0) { 
        POETCode* res = build_codeRef(this, _args, true); 
        return res;
     }
@@ -563,7 +568,7 @@ std:: string POETMap:: toString(ASTOutputEnum config)
 { 
     std:: stringstream r;
     r << "MAP{";
-    for (std::map<POETCode*,POETCode*, POETCodeLessThan>::const_iterator p=impl.begin(); 
+    for (std::map<POETCode*,POETCode*>::const_iterator p=impl.begin(); 
          p != impl.end(); ++p) {
        r << (*p).first->toString(config) << "=>" << (*p).second->toString(config) << ";";
     }
@@ -672,7 +677,7 @@ std:: string POETQop:: toString(ASTOutputEnum config)
       case POET_OP_FOR:
          return "for ("+arg1->toString(config) + ";" + arg2->toString(config) + ";" + arg3->toString(config)+")"
                + "{" + arg4->toString(config) + "}";
-      case POET_OP_FOREACH: case POET_OP_FOREACHR:
+      case POET_OP_FOREACH: 
          return "foreach ("+arg1->toString(config) + ":" + arg2->toString(config) + ":" + arg3->toString(config)+")"
                + "{" + arg4->toString(config) + "}";
       default: return POETOperator::toString(config);
@@ -815,19 +820,6 @@ class Write_POET_Exp : public POETCodeVisitor
     }
 };
 
-class PrintNestedTraceVars : public VisitNestedTraceVars
-{
-  std::string res;
- public:
-  virtual void preVisitTraceVar(LocalVar* v) 
-    {  
-       if (res.size() > 0) res = res + ",";
-       res = res +  v->toString(OUTPUT_NO_DEBUG); 
-    }
-  std::string get_result() 
-    { return res; } 
-};
-
 std:: string POETTraceDecl:: toString(ASTOutputEnum config)
 {
      PrintNestedTraceVars write;
@@ -943,4 +935,36 @@ CodeVar* build_codeRef(POETCode* r1, POETCode* r2, bool overwrite)
     POETCode* r1_args = r1Code->get_args();
     if (r2 == 0) r2 = r1_args;
      return ASTFactory::inst()->build_codeRef(r1Code->get_entry(),r2,r1Code->get_attr());
+}
+
+POETInputList :: POETInputList(POETCode* f) : POETList(f, 0) 
+    { tail = this; line_end=(f==LINE_BREAK)?this : 0;}
+
+void POETInputList ::append(POETInputList* next) {
+    assert(next!=0);
+    assert(tail->rest == 0);
+    reset_next(next);
+}
+
+void POETInputList ::reset_next(POETInputList* next) {
+  if (next == 0) { tail = this; rest = 0; 
+        if (first==LINE_BREAK) line_end = this; else line_end=0; }
+  else { 
+    tail->rest = next; 
+    tail = next->tail;
+    if (tail->line_end != 0) line_end=tail->line_end;
+  }
+}
+
+POETInputList* POETInputList :: get_line_end() { 
+  POETInputList* next = dynamic_cast<POETInputList*>(line_end->get_rest());
+  if (next != 0) next->tail = tail;
+  return line_end; 
+}
+void POETInputList::reset_next_line(POETInputList* next)
+{
+  assert(next != 0 && line_end != 0);
+  line_end->rest = next;
+  line_end->tail = next->tail;
+  tail=next->tail;
 }

@@ -82,15 +82,8 @@ class CollectInfoVisitor : public POETCodeVisitor, public EvaluatePOET
   virtual void visitTupleAccess(TupleAccess* v) 
     {  if (v->get_tuple() != 0) v->get_tuple()->visit(next_op); }
   virtual void visitUnknown(POETCode_ext* ext)
-    { POETAstInterface::AstList children = POETAstInterface::GetChildrenList(ext->get_content());
-      for (POETAstInterface::AstList::const_iterator p = children.begin();
-           p != children.end(); ++p) { 
-          void* curptr = *p;
-          assert(curptr != ext);
-          if (curptr != 0) 
-             POETAstInterface::Ast2POET(curptr)->visit(next_op); 
-      }
-    }
+    {  POETCode* c = ext->get_children();
+       if (c != 0) c->visit(next_op); }
  public:
   CollectInfoVisitor(POETCodeVisitor* _op=0) : next_op(_op) 
        { if (next_op==0) next_op = this;}
@@ -122,7 +115,7 @@ class ReplInfoVisitor : public EvaluatePOET, public POETCodeVisitor
   bool inList;
  public:
   ReplInfoVisitor() : inList(false) { res = 0; }
-  virtual void defaultVisit(POETCode* c) { res = c; }
+  virtual void defaultVisit(POETCode* c)  = 0;
   virtual void visitLocalVar(LocalVar* v); 
   virtual void visitAssign(POETAssign* assign)  {
       POETCode* lhs = apply(assign->get_lhs());
@@ -142,15 +135,15 @@ class ReplInfoVisitor : public EvaluatePOET, public POETCodeVisitor
           else apply(rest);
        }
        else if (rest != 0) {
-		   bool inList_save = inList;
+	   bool inList_save = inList;
 
-		   inList = true;
-		   apply(rest);
-		   inList=inList_save;
+	   inList = true;
+	   apply(rest);
+	   inList=inList_save;
 
-		   POETCode* r2 = res;
-		   res = MakeXformList(r1,r2,false); 
-		   if (res == 0) res = fac->new_list(r1,r2); 
+	   POETCode* r2 = res;
+	   res = MakeXformList(r1,r2,false); 
+	   if (res == 0) res = fac->new_list(r1,r2); 
            else res->visit(this);
        }
        else if (inList) res = fac->new_list(r1,0);
@@ -165,7 +158,7 @@ class ReplInfoVisitor : public EvaluatePOET, public POETCodeVisitor
            POETCode* elem1 = v->get_entry(i);
            POETCode* elem2 = apply(elem1);
            if (elem2 != elem1) change = true;
-           if (elem2 == 0) elem2 = EMPTY;
+           if (elem2 == 0) elem2 = EMPTY_LIST;
            cur[i] = elem2;
        }
        if (!change)  { res = v; return;}
@@ -176,17 +169,23 @@ class ReplInfoVisitor : public EvaluatePOET, public POETCodeVisitor
      } 
   virtual void visitCodeVar( CodeVar* v) 
      { 
-       if (v->get_args() != 0) {
-          POETCode *nargs = apply(v->get_args());
-          POETCode* nattr = (v->get_attr() == 0)? (POETCode*)0 : apply(v->get_attr()); 
-          if (nargs != v->get_args()) {
-             res = ASTFactory::inst()->build_codeRef(v->get_entry(), nargs, nattr);
-          }
-          else res = v;
-       }
-       else
-          res = v;
+       POETCode *nargs = (v->get_args() == 0)? 0 : apply(v->get_args());
+       POETCode* nattr = (v->get_attr() == 0)? (POETCode*)0 : apply(v->get_attr());
+       if (nargs != v->get_args() || nattr != v->get_attr()) 
+           res = ASTFactory::inst()->build_codeRef(v->get_entry(), nargs, nattr);
+       else res = v;
      }
+  virtual void visitUnknown(POETCode_ext* ext)
+    { 
+      POETCode* children = ext->get_children();
+      if (children != 0) {
+           POETCode* new_children = apply(children);
+           if (new_children != children)
+              res = POETAstInterface::ReplaceChildren(ext, new_children);
+           else res = ext;
+      }
+      else res = ext;
+    }
   POETCode* apply(POETCode* code) 
      { res = code; code->visit(this); return res; }
 };

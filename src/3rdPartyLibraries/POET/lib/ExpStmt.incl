@@ -30,14 +30,8 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 parsing of floating point numbers
 ********>
 
-<code FLOAT2 pars=(val:INT) parse=""> .@val@ </code>
-<code FLOAT1 pars=(val:INT) parse=""> @val@. </code>
-<code FLOAT3 pars=(content: (INT CODE.FLOAT2)|(CODE.FLOAT1 INT)) 
-            parse="" > @content@ </code>
-<code FLOAT4 pars=(base: FLOAT3, expo: (("e"|"E") INT)) 
-             parse=""> @base expo@ </code>
-<code FLOAT pars=(content: (FLOAT4|FLOAT3|FLOAT2|FLOAT1)) rebuild=content 
-            match=FLOAT4|FLOAT3|FLOAT2|FLOAT1 > @content@ </code>
+<code EXPO pars=(base: FLOAT, expo: (("e"|"E") INT)) 
+             parse=FALSE> @base expo@ </code>
 
 <*******
 Type Processing
@@ -46,22 +40,7 @@ Type Processing
 <code PtrType pars=(base) /> 
 <code RefType pars=(base) /> 
 <code ArrayType pars=(base, dim) /> 
-<code FunctionType pars=(params,return) /> 
-
-<xform C_RebuildType pars=(base, annot)>
-switch (annot)
-{
-case (first rest) : C_RebuildType( C_RebuildType(base, first), rest)
-case "" : base
-case "*" : PtrType#base
-case "&" : RefType#base
-case "const" : CODE.ConstType#base
-case "restrict" : CODE.RestrictType#base
-case "register" : RegisterType#base
-case CODE.ArrayAnnot#(dim,init): (dim=="")? base : ArrayType#(base, dim)
-case CODE.VarInit: base
-}
-</xform>
+<code FunctionType pars=(params,ret) /> 
 
 <********
  Similar to using EXP for expressions, 
@@ -70,8 +49,53 @@ case CODE.VarInit: base
 ********>
 <code Stmt/>
 <code Assign pars=(lhs,rhs)/>
-<code ExpStmt pars=(exp:EXP) 
-         rebuild=(exp = REBUILD(exp); (exp=="")? "" : ExpStmt#(exp)) />
+<code ExpStmt pars=(exp) rebuild=((exp=="")?"":ExpStmt#exp) /> 
+<code TypeInfo pars=(type,name,init) />
+<code DeclStmt pars=(decl) /> 
+<code StmtBlock pars=(stmts) symtab="" /> 
+<code StructBody pars=(stmts) symtab="" />
+
+<***** Variables and declarations ***>
+<define TRACE_DECL "" /> <<* trace new variable declarations
+<define TRACE_VARS ""/> <<* trace new local variables being created
+
+<xform BuildName pars=(indexList)>
+result = "";
+foreach_r (indexList : (cur=(INT | STRING | CODE.UnrollIvarName)) : TRUE) {
+  if (cur != "_" && cur != "")
+     result = BuildList("_", BuildList(cur, result));
+}
+Name#(result)
+</xform>
+
+<xform AppendVar trace=GLOBAL.TRACE_VARS pars=(var)>
+  if (trace : VAR) {
+    if (trace == "") { REPLACE(ERASE(trace),var,trace); }
+    else if (!LookupList(var,trace)) 
+       REPLACE(ERASE(trace), AppendList(ERASE(trace),var),trace);
+  }
+</xform>
+
+<xform AppendDecl trace=GLOBAL.TRACE_TARGET pars=(type,vars) init="">
+    if (! (trace : VAR)) trace="";
+    decl = trace;
+    for (p_vars=vars; p_vars!=NULL;  p_vars = cdr p_vars) {
+           cur = car(p_vars);
+           if (cur != "") {
+             cur = DeclStmt#(TypeInfo#(type,cur,init));
+             if (!LookupList(cur,decl)) { decl = BuildList(decl,cur); }
+           }
+    }
+    if (trace : VAR && decl != trace) { ModifyTraceHandle(trace,decl)}
+    else {decl}
+</xform>
+
+<xform Append_Include trace=GLOBAL.TRACE_TARGET pars=(incl)>
+    if (trace == "" || !(LookupList(incl, trace)))
+       { REPLACE(ERASE(trace), incl::ERASE(trace), trace) }
+    else {trace}
+</xform>
+
 
 <********
 macros for parsing/building expressions 
@@ -80,25 +104,23 @@ Redefine for different languages
 
 <define PARSE_BOP CODE.Bop/>
 <define PARSE_UOP CODE.Uop/>
-<define PARSE_CALL CODE.FunctionCall/>
+<define PARSE_CALL XFORM.EvalCall/>
 <define PARSE_ARRAY CODE.ArrayAccess/>
-<define BUILD_BOP XFORM.BuildBop/>
-<define BUILD_UOP XFORM.BuildUop/>
 
 <define EXP_BOP (("+" "-") ("*" "/"))/>
 <define EXP_UOP ("-")/>
-<define EXP_BASE INT|CODE.FLOAT />
+<define EXP_BASE INT|FLOAT|CODE.Name />
+<define EXP_PREC  MAP{}/>  <<* precedence not defined
 
 <********
 Setup unparsing of Expressions
 ********>
-<define EXP_PREC  MAP{}/>  <<* precedence not defined
 <xform EVAL_EXP_PREC pars=(input) opType=GLOBAL.EXP_BOP >
    precMap=GLOBAL.EXP_PREC;
-   for ( (i = 1; p_op = opType) ; p_op != ""; (p_op=cdr p_op; i=i+1))
+   for ( (i = 1; p_op = opType) ; p_op != NULL; (p_op=cdr p_op; i=i+1))
    {
-   for (p_op2 = car p_op; p_op2 != ""; p_op2 = cdr p_op2)
-     precMap[car p_op2] = i;
+     for (p_op2 = car p_op; p_op2 != NULL; p_op2 = cdr p_op2)
+        precMap[car p_op2] = i;
    }
    input
 </xform>
@@ -114,35 +136,34 @@ rebuild/Parse/Unparse functions for Expressions
 <code MAX pars=(first,second)/> 
 <define NEED_MIN_MAX MIN|MAX />
 
-<code Uop pars=(op, opd) >
-@op@@opd@
+<code Uop pars=(op, opd) rebuild=(XFORM.RebuildUop(op,opd)) >
+@((opd : CODE.Bop)? ( op "(" opd ")") : (op opd))@
 </code>
 
-<code Bop pars=(op, opd1, opd2) 
-           match=XFORM.MatchBop rebuild=(XFORM.RebuildBop(op,opd1,opd2)) > 
+<code Bop pars=(op, opd1, opd2) rebuild=(XFORM.RebuildBop(op,opd1,opd2)) > 
 @
 if (op=="+" && opd2 : Uop#("-",_)) { op="-"; Uop#(_,opd2)=opd2; }
 p1=(opd1:INT|ID|(_)...)?100:0; 
-p2=(opd2:INT|ID|(_)...)?100:0; 
+p2=(opd2:INT|ID|(_)...)?100:0;
 p=GLOBAL.EXP_PREC[op];
-if ( opd1:Bop#(op1,_,_)) p1=GLOBAL.EXP_PREC[op1];
+flag = 0;
+if ( opd1:Bop#(op1,_,_)) {
+  p1=GLOBAL.EXP_PREC[op1];
+  if (op1 == "&&" || op1 == "||")
+    flag = 1;
+}
 if (opd2 : Bop#(op2,_,_)) { p2=GLOBAL.EXP_PREC[op2]; }
-((p1<p)?("("opd1")"):opd1)
+((p1<p)?("("opd1")"):((opd1 : ID || flag == 0)?opd1:("("opd1")")))
 op
 ((p2<=p)?("("opd2")"):opd2)
 @
 </code>
 
-<xform BuildBop pars=(op,opd1,opd2) > Bop#(op,opd1,opd2) </xform>
-<xform BuildUop pars=(op,opd) > Uop#(op,opd) </xform>
-<xform EvalCall pars=(op,opd)/> 
-
-<code FunctionCall pars=(function:ID, args : CODE.ExpList) 
-                rebuild= (EvalCall(function,args)) > 
-@function@(@args@) 
-</code>
+<code FunctionCall pars=(function, args)
+                rebuild= (XFORM.EvalCall(function,args)) /> 
 <code ArrayAccess pars=(array,subscript)/>  
 
+<code Multiply parse=LIST(EXP,"*") />
 <code ExpList parse=LIST(EXP,",") />
 <code StmtList parse=LIST(Stmt,"\n") />
 
@@ -155,6 +176,8 @@ e.g., Mod(a*b+c, b) = (a,c)
 <********************************************
  evaluate boolean expressions
 **********************************************>  
+<xform UnionComparison pars=(first,second) not="!" />
+<xform IntersectComparison pars=(first,second) not="!" />
 <xform EvalBoolOr pars=(first,second) or="||" not="!"/>
 <xform EvalBoolAnd pars=(first,second) not="!" and="&&"/>
 <xform EvalBoolNot pars=(input) not="!"/>
@@ -167,9 +190,8 @@ e.g., Mod(a*b+c, b) = (a,c)
 <********************************************
 Reduce a list of expressions to a single one
 by applying $op$ to all elements in the list 
-if (reverse==1) build exp in reverse order of opds
 **********************************************>  
-<xform Reduce_listExp pars=(op, opds) reverse=0/>
+<xform Reduce_listExp pars=(op, opds) />
 
 
 <******************************************
@@ -177,30 +199,21 @@ if (reverse==1) build exp in reverse order of opds
 *******************************************>
 
 <xform EvalCall pars=(op,opd)>
- len=LEN(opd);
- ismin = ("min"^len); 
- ismax = ("max"^len); 
+ len = LEN(opd);
+ ismin=("min"^len); ismax = ("max"^len);
  switch (op) {
- case ismin: op=MIN;
- case ismax : op=MAX;
- default: RETURN (CODE.FunctionCall#(op,opd));
+ case ismin: 
+         opd1 = MIN#(car(opd), car(cdr(opd)));
+         return (len==2)? opd1 : MIN#(opd1, car(cdr(cdr(opd))));
+ case ismax : 
+         opd1 = MAX#(car(opd), car(cdr(opd)));
+         return (len==2)? opd1 : MAX#(opd1, car(cdr(cdr(opd))));
+ default: return (CODE.FunctionCall#(op,opd));
  }
- res=RebuildBop(op,car(opd), car(cdr(opd)));
- for (p=cdr(cdr(opd)); p != ""; p = cdr(p)) {
-   res = RebuildBop(op,res,car(p));
- }
- res
-</xform>
-
-<xform MatchBop pars=(lhs,rhs)>
-if ( lhs : rhs) { TRUE }
-else if ( (lhs[0] : ("+"|"*"|MIN|MAX)) &&   
-         ((lhs[0], lhs[2], lhs[1]) : rhs)) { TRUE }
-else { FALSE }
 </xform>
 
 <xform IntDiv pars=(exp, div) output=(_quotiant,_remainder)>
-if (exp : INT && div : INT) { (exp / div, exp % div) }
+if (exp : INT && div : INT) { if (exp == 0) { (0,0) } else if (div != 0) { (exp / div, exp % div) } else { ERROR("[IntDiv:] Division by zero:" exp "/" div); } }
 else if (div == 1) { (exp,0) }
 else 
 switch (exp) {
@@ -218,30 +231,182 @@ switch (exp) {
 }
 </xform>
 
-<xform EvalBoolAnd pars=(first,second) not="!" and="&&" or="||">
-(first == second)? first
-:(first==FALSE || second==FALSE)? FALSE
-:(second==TRUE)? first
-:(first==TRUE)? second
-:(second : Uop#(not, first))? FALSE
-:(first : Uop#(not, second))? FALSE
-:(second : Bop#(or,first,rest))? second
-:(second : Bop#(or,Uop#(not,first),rest))? rest
-: Bop#(and, first, second)
+<xform UnionComparison pars=(first,second) not="!">
+if (first == second) RETURN first;
+switch (first) {
+case Uop#(not, e1): 
+   r = IntersectComparison(e2, first);
+   switch (r) {
+   case e2: TRUE  
+   case FALSE: second 
+   default: ""
+   }
+case Bop#("==",e1,e2):
+   switch (second) {
+   case Bop#("==",e1,e3)|Bop#("==",e3,e1): 
+         (e3 == e2)? first : ""
+   case Bop#("==",e2,e3)|Bop#("==",e3,e2): (e3 == e1)? first : ""
+   case Bop#("!=",e1,e2)|Bop#("!=",e2,e1): TRUE
+   default: ""
+   }
+case Bop#("!=",e1,e2):
+   (second : Bop#("==",e1,e2)|Bop#("==",e2,e1))? TRUE : ""
+case Bop#("<", f1,f2) | Bop#(">", f2, f1): 
+   switch (second) {
+   case Bop#("<",f1,f2)|Bop#(">", f2,f1): first
+   case Bop#("<="|"!=",f1,f2)|Bop#(">="|"!=", f2,f1): second
+   case Bop#(">=", f1,f2)|Bop#("<=",f2,f1): TRUE
+   case Bop#(">", f1,f2)|Bop#("<",f2,f1): Bop#("!=",f1,f2)
+   case Bop#("==", f1,f2)|Bop#("==",f2,f1): Bop#("<=",f1,f2)
+   default: ""
+   }
+case Bop#("<=", f1,f2) | Bop#(">=", f2, f1):
+   switch (second) {
+   case Bop#("=="|"<"|"<=",f1,f2)|Bop#("=="|">"|">=", f2,f1): first
+   case Bop#("!=",f1,f2)|Bop#("!=", f2,f1): second
+   case Bop#(">", f1,f2)|Bop#("<",f2,f1): TRUE
+   default: ""
+   }
+}
 </xform>
 
-<xform EvalBoolOr pars=(first,second) not="!" or="||">
+<xform IntersectComparison pars=(first,second) not="!">
+switch (first) {
+case Bop#("==",e1,e2):
+   switch (second) {
+   case Bop#("==",e2,e1): first
+   case Bop#("!=",e1,e2)|Bop#("!=",e2,e1): FALSE
+   case Bop#("==",e2|e1,(e3=INT))|Bop#("==",(e3=INT),e1|e2): 
+           (e1 : INT || e2 : INT)? FALSE : ""
+   case Bop#("!=",e2|e1,(e3=INT))|Bop#("!=",(e3=INT),e1|e2): 
+           (e1 : INT || e2 : INT)? first : ""
+   case Bop#("<=",e2|e1,(e3=INT))|Bop#(">=",(e3=INT),e2|e1): 
+          (e1 : INT)? ( (e1 <= e3)? first : FALSE) 
+         :(e2 : INT)? ( (e2 <= e3)? first : FALSE) : ""
+   case Bop#("<",e2|e1,(e3=INT))|Bop#(">",(e3=INT),e2|e1): 
+          (e1 : INT)? ( (e1 < e3)? first : FALSE) 
+         :(e2 : INT)? ( (e2 < e3)? first : FALSE) : ""
+   case Bop#(">",e2|e1,(e3=INT))|Bop#("<",(e3=INT),e2|e1): 
+          (e1 : INT)? ( (e1 > e3)? first : FALSE) 
+         :(e2 : INT)? ( (e2 > e3)? first : FALSE) : ""
+   default: ""
+   }
+case Bop#("!=",e1,e2):
+   switch (second) {
+      case Bop#("!=",e1,e2)|Bop#("!=",e2,e1): first
+      case Bop#("==",e1,e2)|Bop#("==",e2,e1): FALSE 
+      case Bop#("<"|">",e1,e2) | Bop#("<"|">",e2,e1): second
+      case Bop#("<=",e1,e2) | Bop#(">=",e2,e1): Bop#("<",e1,e2)
+      case Bop#("<=",e2,e1) | Bop#(">=",e1,e2): Bop#("<",e2,e1)
+      case Bop#("==",e1|e2, (e3=INT))|Bop#("==",(e3=INT),e2|e1): 
+            (e1 : INT || e2 : INT)? second : ""
+      case Bop#("<="|"<",e1|e2,(e3=INT)) | Bop#(">="|">",(e3=INT),e1|e2): 
+           (e2 : INT && e2 > e3 || e1 : INT && e1 > e3)? second : ""
+      case Bop#(">="|">",e1|e2,(e3=INT)) | Bop#("<="|"<",(e3=INT),e1|e2): 
+           (e2 : INT && e2 < e3 || e1 : INT && e1 < e3)? second : ""
+      default: ""
+   }
+case Bop#("<", f1,f2)|Bop#(">",f2,f1): 
+   switch (second) {
+   case Bop#("<="|"!=",f1,f2)|Bop#(">="|"!=", f2,f1): first
+   case Bop#(">"|"==", f1,f2)|Bop#("<"|"==",f2,f1): FALSE
+   case Bop#("==",f1|f2,(f3=INT)) | Bop#("==",(f3=INT), f1|f2):
+        (f1 : INT)? ((f1<f3)? second : FALSE) 
+       : (f2 : INT)? ((f2>f3)? second : FALSE) : ""
+   case Bop#("<"|"<=",f2,(f3=INT))|Bop#(">"|">=",(f3=INT),f2): 
+        (f1 : INT)? ((f3 <= f1)? FALSE : "") : ""
+   case Bop#("<"|"<="|"!=",f1,(f3=INT))|Bop#(">"|">="|"!=",(f3=INT),f1): 
+        (f2 : INT)? (( f2 <= f3)? first : Bop#("<",f1,f3)) : ""
+   case Bop#(">"|">="|"!=",f2,(f3=INT))|Bop#("<"|"!=",(f3=INT),f2):
+        (f1 : INT)? (( f1 >= f3)? first : Bop#(">",f2,f3)) : ""
+   default: ""
+   }
+case Bop#("<=", f1,f2)|Bop#(">=",f2,f1):
+   switch (second) {
+   case Bop#("!=",f1,f2)|Bop#("!=", f2,f1): Bop#("<",f1,f2)
+   case Bop#("<", f1,f2)|Bop#(">",f2,f1): second
+   case Bop#(">", f1,f2)|Bop#("<",f2,f1): FALSE
+   case Bop#("==",f1|f2,(f3=INT)) | Bop#("==",(f3=INT), f1|f2):
+        (f1 : INT)? ((f1<=f3)? second : FALSE) 
+       : (f2 : INT)? ((f2>=f3)? second : FALSE) : ""
+   case Bop#("<"|"<="|"!=",f1,(f3=INT))|Bop#(">"|">="|"!=",(f3=INT),f1): 
+        (f2 : INT)? (( f2 < f3)? first : second) : ""
+   case Bop#(">"|">="|"!=",f2,(f3=INT))|Bop#("<"|"!=",(f3=INT),f2):
+        (f1 : INT)? (( f1 > f3)? first : second) : ""
+   default: ""
+   }
+}
+</xform>
+
+<xform EvalBoolAnd pars=(first,second) not="!" and="&&" or="||">
+if (first == second) RETURN first;
+if (second==TRUE) RETURN first;
+if (first==TRUE) RETURN second;
+if (first == FALSE || second == FALSE) RETURN FALSE;
+if (first == Uop#(not, second) || second == Uop#(not, first)) RETURN FALSE;
+if (first : Uop#(not,nf))  first = EvalBoolNot(nf);
+switch (first) {
+case Bop#(and,f1,f2): EvalBoolAnd(f1, EvalBoolAnd(f2,second))
+case Bop#(or, f1, f2): EvalBoolOr(EvalBoolAnd(f1,second), EvalBoolAnd(f2,second))
+case Bop#("=="|">="|"<="|"!="|"<"|">",_,_) : 
+   if (second : Uop#(not,nf2))  second = EvalBoolNot(nf2);
+   switch (second) {
+   case Bop#(or,f1,f2):EvalBoolOr(EvalBoolAnd(first,f1),EvalBoolAnd(first,f2)) 
+   case Bop#("=="|">="|"<="|"!="|"<"|">",_,_) : 
+        r1 = IntersectComparison(first, second); 
+        (r1 == "")? Bop#(and, first, second) : r1
+   case Bop#(and, Bop#(and, f1, f2), f3): 
+          EvalBoolAnd(first, EvalBoolAnd(f1, EvalBoolAnd(f2, f3)))
+   case Bop#(and,f1,f2): 
+        r1 = IntersectComparison(first, f1); 
+        switch (r1) {
+        case FALSE: FALSE
+        case f1: second
+        case first: EvalBoolAnd(first,f2)
+        case "":  r2 = EvalBoolAnd(first, f2);
+             (r2 == FALSE)?  FALSE : Bop#(and, f1, r2)
+        default: Bop#(and, r1, f2)
+        }
+    default: Bop#(and,first,second)
+   }
+default: Bop#(and,first,second)
+}
+</xform>
+
+<xform IsEqual pars=(first,second) not="!" or="||" and="&&">
  (first == second)? first
+: (first : Bop#( (op1="+"|and|"*"), f1,f2) && 
+   second : Bop#( (op2="+"|and|"*"),g1,g2) && op1 == op2)? 
+   ((IsEqual(f1,g1) && IsEqual(f2,g2)) || IsEqual(f1,g2) && IsEqual(f2,g1))
+: 0
+</xform>
+
+<xform EvalBoolOr pars=(first,second) not="!" or="||" and="&&">
+ (IsEqual(first,second))? first
 :(first==TRUE || second==TRUE)? TRUE
 :(second==FALSE)? first
 :(first==FALSE)? second
 :(second : Uop#(not, first))? TRUE
 :(first : Uop#(not, second))? TRUE
+:(first : Bop#(and,f1,f2) && second : Bop#(and,g1,g) && EvalBoolAnd(first,second): first|second)? first
 : Bop#(or, first, second)
 </xform>
 
-<xform EvalBoolNot pars=(input) not="!">
- (input : Uop#(not, opd))? opd : Uop#(not,input)
+<xform EvalBoolNot pars=(input) not="!" and="&&" or="||">
+ switch (input){
+ case FALSE: TRUE
+ case TRUE: FALSE
+ case Uop#(not, opd): opd 
+ case Bop#("==", e1,e2) : Bop#("!=", e1, e2)
+ case Bop#("!=", e1,e2) : Bop#("==", e1, e2)
+ case Bop#(">", e1, e2) : Bop#("<=", e1, e2)
+ case Bop#("<=", e1, e2) : Bop#(">", e1, e2)
+ case Bop#("<", e1, e2) : Bop#(">=", e1, e2)
+ case Bop#(">=", e1, e2) : Bop#("<", e1, e2)
+ case Bop#(or, e1,e2) : Bop#(and, EvalBoolNot(e1), EvalBoolNot(e2))
+ case Bop#(and, e1,e2) : Bop#(or, EvalBoolNot(e1), EvalBoolNot(e2))
+ default: Uop#(not,input)
+}
 </xform>
 
 <xform RebuildUminus pars=(input)>
@@ -249,6 +414,10 @@ switch (exp) {
 : (input : Uop#("-",exp))? exp
 : (input : Bop#("+", opd1, opd2))?  
      Bop#("+",RebuildUminus(opd1),RebuildUminus(opd2))
+: (input : Bop#("*", (opd1=INT), opd2))?
+     Bop#("*", -opd1, opd2)
+: (input : Bop#("*", opd1, (opd2=INT)))?
+     Bop#("*", opd1, opd2)
 : Uop#("-",input)
 </xform>
 
@@ -281,7 +450,7 @@ switch (exp) {
       }
       (!found)? Bop#("+",rhs,lhs) 
       : (r == "")? 0
-      : ( for (( r1=car(r); pr = cdr(r)); pr != ""; pr=cdr(pr))
+      : ( for (( r1=car(r); pr = cdr(r)); pr != NULL; pr=cdr(pr))
              r1 = Bop#("+",car(pr), r1); 
           r1 )
    )
@@ -297,11 +466,13 @@ switch (exp) {
   {
    case "+": { RebuildPlus(lhs,rhs) }
    case "-": { RebuildPlus(lhs,RebuildUminus rhs) }
-   case "*": 
+   case "*":
             ((lhs : INT) && (rhs : INT))? lhs * rhs 
           : (lhs == 0 || rhs == 0)? 0
           : (lhs==1)?  rhs 
           : (rhs==1)?  lhs
+          : (lhs==-1)? Uop#("-",rhs)
+          : (rhs==-1)? Uop#("-",lhs)
           : (lhs : Bop#("+", lopd1, lopd2))? (lopd1 * rhs + lopd2 * rhs)
           : (rhs : Bop#("+", ropd1, ropd2))? (lhs * ropd1 + lhs * ropd2)
           : (lhs : Bop#("/",1,lhs1))? Bop#("/", rhs, lhs1)
@@ -325,39 +496,42 @@ switch (exp) {
    case MAX:
        (lhs=="")? rhs : (rhs=="")? lhs
        :(((cur=lhs - rhs)) : INT)? ((cur <= 0)? rhs : lhs) : MAX#(lhs,rhs) 
+   case "&&": EvalBoolAnd(lhs,rhs)
+   case "||": EvalBoolOr(lhs,rhs)
    default: Bop#(op, lhs,rhs)
  }
+</xform>
+
+<xform RebuildUop pars=(op,opd)>
+   switch (op) 
+   {
+    case "-" : RebuildUminus(opd)
+    case "!" : EvalBoolNot(opd)
+    default: Uop#(op, opd)
+   }
 </xform>
 
 <xform RebuildExp pars=(exp) >
 if (exp : Bop#(op, lhs, rhs))
    { RebuildBop(op,lhs,rhs) }
 else  if (exp : Uop#(op,opd))
-{
-   switch (op) 
-   {
-    case "-" : RebuildUminus(opd)
-    default: Uop#(op, opd)
-   }
-}
+   { RebuildUop(op,opd) }
 else { exp }
 </xform>
 
 <xform Build_listExp pars=(op, list1, list2)>
 (list1 : (first1 rest1))? (
   (list2 : (first2 rest2))? 
-     RebuildExp(BUILD_BOP(op,first1,first2)) :: Build_listExp(op,rest1, rest2)
-  :  RebuildExp(BUILD_BOP(op,first1,list2)) :: rest1
+     RebuildExp(Bop#(op,first1,first2)) :: Build_listExp(op,rest1, rest2)
+  :  RebuildExp(Bop#(op,first1,list2)) :: rest1
 )
-: (RebuildExp(BUILD_BOP(op,list1,list2)))
+: (RebuildExp(Bop#(op,list1,list2)))
 </xform>
 
-<xform Reduce_listExp pars=(op, opds) reverse=0>
-if (!reverse)
-    opds = ReverseList(opds);
+<xform Reduce_listExp pars=(op, opds) >
 res = car opds;
-for (p_opds = cdr opds; p_opds != ""; p_opds = cdr p_opds)
-  res = RebuildExp(BUILD_BOP(op, res, car p_opds));
+for (p_opds = cdr opds; p_opds != NULL; p_opds = cdr p_opds)
+  res = RebuildExp(Bop#(op, res, car p_opds));
 res
 </xform>
 
@@ -370,4 +544,33 @@ res
 : (exp : Bop#("+",opd1,opd2))? 
    Build_listExp("+", BK_plus(term,opd1), BK_plus(term,opd2))
 : (0 exp)
+</xform>
+
+<xform get_coeff  pars=(var,exp) throwaway="" >
+switch (exp) {
+case var : 1
+case NULL: NULL
+case (first second): (get_coeff(var,first) (get_coeff(var,second)))
+case (INT|ID|CODE.Name|CODE.CopyIvarName|CODE.UnrolledLoopStep) : 0
+case Uop#("-",a1) : - (get_coeff(var, a1))
+case Bop#("+", a1, a2): 
+       c1 = get_coeff(var, a1);
+       if (c1 != 0 && (throwaway == "" || (!(c1 : throwaway)))) { c1 }
+       else { get_coeff(var, a2) } 
+case Bop#("-", a1, a2): 
+       c1 = get_coeff(var, a1);
+       if (c1 != 0 && (throwaway == "" || (!(c1 : throwaway)))) { c1 }
+       else { - get_coeff(var, a2) } 
+case Bop#("*",a1,a2) : 
+       c1 = get_coeff(var, a1);
+       c2 = get_coeff(var, a2); 
+       if (a1 : CODE.ArrayAccess || a2: CODE.ArrayAccess) {
+          (c1 != 0)? c1 : (c2 != 0)? c2 : 0
+       }
+       else if (c1 != 0) { c1 * a2 } 
+       else if (c2 != 0) { c2 * a1 }
+       else { 0 }
+case ArrayAccess#(_,sub) | FunctionCall#(_,sub) : get_coeff(var,sub)
+case CODE.BlockLoopTileEnd#(_,_,stop) : get_coeff(var, stop)
+}
 </xform>

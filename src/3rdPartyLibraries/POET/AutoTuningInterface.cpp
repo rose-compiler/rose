@@ -5,9 +5,11 @@
 #include <BlockingAnal.h>
 #include <SymbolicExpr.h>
 
+#define DEBUG
+
 /*QY: poet header files */
-#include <poetAST.h>
-#include <ASTfactory.h>
+#include <poet_AST.h>
+#include <poet_ASTfactory.h>
 /***********************************************************************/
 /******QY: macros for creating POET instructions************************/
 /***********************************************************************/
@@ -15,8 +17,6 @@
 #define PAR_PARAM_NAME(handleName)  "pthread_" + handleName
 #define PAR_BLOCK_NAME(handleName)  "psize_" + handleName
 
-#define ANY  POETProgram::make_any()
-#define STRING(name) POETProgram::make_string(name)
 #define ICONST(val) POETProgram::make_Iconst(val)
 #define RANGE_TYPE(lb,ub) POETProgram::make_rangeType(lb,ub)
 #define LIST_TYPE(elem) POETProgram::make_listType(elem)
@@ -27,11 +27,8 @@
 #define TRACE_VAR(name) POETProgram::make_traceVar(STRING(name))
 #define HAS_TRACE(name) POETProgram::find_traceVar(STRING(name))
 #define CONFIG_VAR(scope,name) POETProgram::make_localVar(scope->get_entry().get_symTable(),STRING(name), LVAR_TUNE)
-#define ATTR_VAR(scope,name)  POETProgram::make_localVar(scope->get_entry().get_symTable(), STRING(name), LVAR_ATTR)
 #define ATTR(var,fd) POETProgram::make_attrAccess(var,STRING(fd))
 #define XFORM_VAR(name)  POETProgram::make_xformVar(STRING(name))
-#define CODE_VAR(name)  POETProgram::make_codeRef(STRING(name))
-#define CODE_REF(name,args)  POETProgram::make_codeRef(STRING(name),args)
 #define CODE_SET_ATTR(code,name,val)  code->get_entry().append_attr(poet->set_local_static(code->get_entry().get_symTable(),STRING("match"), LVAR_ATTR, val, val, true))
 
 #define BOP(op,opd1,opd2) poet.make_Bop(op, opd1, opd2)
@@ -41,13 +38,9 @@
 #define REPLACE(opd1,opd2,opd3)  POETProgram::make_Top(POET_OP_REPLACE, opd1, opd2,opd3)
 #define DELAY(opd)  POETProgram::make_Uop(POET_OP_DELAY, opd)
 #define APPLY(opd)  POETProgram::make_Uop(POET_OP_APPLY, opd)
-#define TUPLE_ACC(var,acc) poet.make_tupleAccess(var,acc)
+#define TUPLE_ACC(var,acc) POETProgram::make_tupleAccess(var,acc)
 #define TUPLE_APPEND(v1,v2) poet.append_tuple(v1,v2)
-#define PAIR(v1,v2) POETProgram::make_pair(v1,v2) 
-#define TUPLE3(v1,v2,v3)  POETProgram::make_tuple3(v1,v2,v3)
-#define TUPLE4(v1,v2,v3,v4)  POETProgram::make_tuple4(v1,v2,v3,v4)
 #define TUPLE5(v1,v2,v3,v4,v5)  POETProgram::make_tuple5(v1,v2,v3,v4,v5)
-#define LIST(head,tail) POETProgram::make_list(head,tail)
 #define ASSIGN(lhs,rhs) new POETAssign(lhs,rhs)
 #define INVOKE(xform,config,param) new XformVarInvoke(xform->get_entry(),config,param)
 #define CAR(v)  POETProgram::make_Uop(POET_OP_CAR, v)
@@ -61,13 +54,12 @@
 #define SEQ6(poet,s1,s2,s3,s4,s5,s6) SEQ5(poet,(poet).make_Bop(POET_OP_SEQ,s1,s2),s3,s4,s5,s6)
 #define TRACE_EVAL(vars,op) poet.make_Bop(POET_OP_TRACE, vars, op)
 #define IFELSE(cond,s1,s2) new POETTop(POET_OP_IFELSE, cond, s1, s2)
-#define ARRAY_REF(arr,sub) CODE_REF("ArrayAccess", PAIR(arr,sub))
+#define ARRAY_REF(arr,sub) CODE_ACC("ArrayAccess", PAIR(arr,sub))
 
 #define MAIN_EVAL(poet, exp,lineNo) (poet).insert_evalDecl(exp, lineNo)
 #define DECL_TRACE(poet,exp,lineNo) (poet).insert_traceDecl(exp,lineNo)
 
 // POET initialization.
-//extern EvaluatePOET* evalPOET = 0;     // needed to link poet
 EvaluatePOET* evalPOET = 0;     // needed to link poet
 
 inline void InsertParamDecl(POETProgram& poet, LocalVar* par, const std::string& msg, int lineNo)
@@ -87,9 +79,19 @@ namespace POET_static
   POETCode* Zero = ICONST(0);
   POETCode* One = ICONST(1);
 
-  CodeVar* const copyConfig = CODE_VAR("CopyConfig");
-  LocalVar* const copyConfig_permute=CONFIG_VAR(copyConfig,"permute");
-  LocalVar* const copyConfig_cpBlock=CONFIG_VAR(copyConfig,"cpBlock");
+  XformVar* const copyarray = XFORM_VAR("CopyRepl");
+  LocalVar* const copyarray_bufname=CONFIG_VAR(copyarray,"prefix");
+  LocalVar* const copyarray_initloc=CONFIG_VAR(copyarray,"init_loc");
+  LocalVar* const copyarray_saveloc=CONFIG_VAR(copyarray,"save_loc");
+  LocalVar* const copyarray_deleteloc=CONFIG_VAR(copyarray,"delete_loc");
+  LocalVar* const copyarray_elemtype=CONFIG_VAR(copyarray,"data_type");
+  LocalVar* const copyarray_isscalar=CONFIG_VAR(copyarray,"scalar");
+  LocalVar* const copyarray_trace=CONFIG_VAR(copyarray,"trace");
+  LocalVar* const copyarray_tracedecl=CONFIG_VAR(copyarray,"trace_decl");
+  LocalVar* const copyarray_tracevars=CONFIG_VAR(copyarray,"trace_vars");
+  LocalVar* const copyarray_tracemod=CONFIG_VAR(copyarray,"trace_mod");
+  LocalVar* const copyarray_permute=CONFIG_VAR(copyarray,"permute");
+  LocalVar* const copyarray_cpBlock=CONFIG_VAR(copyarray,"cpBlock");
 
   XformVar* const block_xvar = XFORM_VAR("BlockLoops");
   LocalVar* const block_cleanup=CONFIG_VAR(block_xvar,"cleanup");
@@ -99,75 +101,76 @@ namespace POET_static
   LocalVar* const block_decl=CONFIG_VAR(block_xvar,"trace_decl");
   LocalVar* const block_nonperfect=CONFIG_VAR(block_xvar,"nonPerfect");
 
-  XformVar* const traceNest=XFORM_VAR("TraceNest");
-  POETCode* const traceNest_config=ASSIGN(CONFIG_VAR(traceNest,"list_of_handles"),One);
+  CodeVar* const Array = CODE_VAR("ArrayAccess");
+  POETCode* const Array_var = ATTR(Array, "array");
+  POETCode* const Array_sub = ATTR(Array, "subscript");
 
-  XformVar* const modifyHandle= XFORM_VAR("ModifyTraceHandle");
-  LocalVar* const modifyHandle_trace= CONFIG_VAR(modifyHandle,"trace");
+  CodeVar* const FunctionCall = CODE_VAR("FunctionCall");
+  POETCode* const FunctionCall_arg = ATTR(FunctionCall, "args");
 
+  XformVar* const traceNest=XFORM_VAR("TraceNestedLoops");
+  POETCode* const traceNest_trace=CONFIG_VAR(traceNest,"trace");
+
+  XformVar* const moveHandle= XFORM_VAR("MoveTraceHandle");
+  LocalVar* const moveHandle_trace= CONFIG_VAR(moveHandle,"trace");
+
+  XformVar* const eraseHandle= XFORM_VAR("EraseTraceHandle");
+  LocalVar* const eraseHandle_repl= CONFIG_VAR(eraseHandle,"repl");
+
+  XformVar* const appendDecl=XFORM_VAR("AppendDecl");
+  LocalVar* const appendDecl_trace= CONFIG_VAR(appendDecl,"trace");
+
+  CodeVar* const Nest = CODE_VAR("Nest");
+  CodeVar* const Loop = CODE_VAR("Loop");
+  CodeVar* const IntType = CODE_VAR("IntegerType");
+  POETCode* const Nest_ctrl = ATTR(Nest, "ctrl");
+  POETCode* const Nest_body = ATTR(Nest, "body");
+  POETCode* const Loop_ivar=ATTR(Loop,"i");
+  POETCode* const Loop_step=ATTR(Loop,"step");
+  POETCode* const Loop_ub=ATTR(Loop,"stop");
+
+  XformVar* const  finiteDiff= XFORM_VAR("FiniteDiff");
+  LocalVar* const  fd_exp_type= CONFIG_VAR(finiteDiff,"exp_type");
+  LocalVar* const  fd_prefix= CONFIG_VAR(finiteDiff,"prefix");
+  LocalVar* const  fd_trace= CONFIG_VAR(finiteDiff,"trace");
+  LocalVar* const  fd_traceVar= CONFIG_VAR(finiteDiff,"trace_newVars");
+  LocalVar* const  fd_traceDecl= CONFIG_VAR(finiteDiff,"trace_decl");
+  LocalVar* const  fd_is_scalar= CONFIG_VAR(finiteDiff,"scalar");
+  LocalVar* const  fd_mod= CONFIG_VAR(finiteDiff,"trace_mod");
+  LocalVar* const  fd_permute= CONFIG_VAR(finiteDiff,"permute");
+
+  XformVar* const unroll = XFORM_VAR("UnrollLoops");
+  LocalVar* const unroll_factor=CONFIG_VAR(unroll,"factor");
+  LocalVar* const unroll_cleanup=CONFIG_VAR(unroll,"cleanup");
+
+  XformVar* const parloop = XFORM_VAR("ParallelizeLoop");
+  LocalVar* const  par_trace= CONFIG_VAR(parloop,"trace");
+  LocalVar* const  par_include= CONFIG_VAR(parloop,"trace_include");
+  LocalVar* const  par_thread= CONFIG_VAR(parloop,"threads");
+  LocalVar* const  par_private= CONFIG_VAR(parloop,"private");
+
+  XformVar* const unrollJam = XFORM_VAR("UnrollJam");
+  LocalVar* const unrollJam_cleanup = CONFIG_VAR(unrollJam,"cleanup");
+  LocalVar* const unrollJam_factor=CONFIG_VAR(unrollJam,"factor");
+  LocalVar* const unrollJam_trace=CONFIG_VAR(unrollJam,"trace");
+
+  XformVar* const cleanup = XFORM_VAR("CleanupBlockedNests");
+  LocalVar* const cleanup_trace = CONFIG_VAR(cleanup,"trace");
+
+  /*QY loop-based strength reduction optimization; return the invocation */
+  POETCode* gen_fdInvoke(POETProgram& poet, LocalVar* top, POETCode* target,
+                   const std::string& nvarName, POETCode* exp,
+                   POETCode* expType, const std::vector<POETCode*>& dimVec, 
+                   POETCode* permute=0, POETCode* traceMod=0,
+                   bool is_scalar=true); 
+  /*QY: return the permutation configuration for strength reduction */
+   POETCode* gen_permute(std::vector<int>& permuteVec);
 };
 
 ArrayAbstractionInterface* AutoTuningInterface::arrayInfo = 0;
 POETCode* AutoTuningInterface::arrayAccess = 0;
-CodeVar* const AutoTuningInterface::Array = CODE_VAR("ArrayAccess");
-POETCode* const AutoTuningInterface::Array_var = ATTR(Array, "array");
-POETCode* const AutoTuningInterface::Array_sub = ATTR(Array, "subscript");
-CodeVar* const AutoTuningInterface::FunctionCall = CODE_VAR("FunctionCall");
-POETCode* const AutoTuningInterface::FunctionCall_arg = ATTR(FunctionCall, "args");
 
-CodeVar* const OptSpec::Nest = CODE_VAR("Nest");
-CodeVar* const OptSpec::Loop = CODE_VAR("Loop");
-CodeVar* const OptSpec::LoopBound = CODE_VAR("LoopBound");
-CodeVar* const OptSpec::IntType = CODE_VAR("IntegerType");
-POETCode* const OptSpec::Nest_ctrl = ATTR(OptSpec::Nest, "ctrl");
-POETCode* const OptSpec::Nest_body = ATTR(OptSpec::Nest, "body");
-POETCode* const OptSpec::Loop_ivar=ATTR(OptSpec::Loop,"i");
-POETCode* const OptSpec::Loop_step=ATTR(OptSpec::Loop,"step");
-POETCode* const OptSpec::Loop_ub=ATTR(OptSpec::Loop,"stop");
-POETCode* const OptSpec::LoopBound_ivar=ATTR(OptSpec::LoopBound,"ivar");
-POETCode* const OptSpec::LoopBound_step=ATTR(OptSpec::LoopBound,"step");
-XformVar* const OptSpec::appendDecl=XFORM_VAR("AppendDecl");
-
-XformVar* const OptSpec:: finiteDiff= XFORM_VAR("FiniteDiff");
-LocalVar* const OptSpec:: fd_exp_type= CONFIG_VAR(finiteDiff,"exp_type");
-LocalVar* const OptSpec:: fd_trace= CONFIG_VAR(finiteDiff,"trace");
-LocalVar* const OptSpec:: fd_traceVar= CONFIG_VAR(finiteDiff,"trace_newVars");
-LocalVar* const OptSpec:: fd_traceDecl= CONFIG_VAR(finiteDiff,"trace_decl");
-LocalVar* const OptSpec:: fd_is_scalar= CONFIG_VAR(finiteDiff,"scalar");
-LocalVar* const OptSpec:: fd_mod= CONFIG_VAR(finiteDiff,"trace_mod");
-LocalVar* const OptSpec:: fd_permute= CONFIG_VAR(finiteDiff,"permute");
-
-
-XformVar* const UnrollSpec::unroll = XFORM_VAR("UnrollLoops");
-LocalVar* const UnrollSpec::unroll_factor=CONFIG_VAR(unroll,"factor");
-LocalVar* const UnrollSpec::unroll_cleanup=CONFIG_VAR(unroll,"cleanup");
-
-XformVar* const ParLoopSpec::parloop = XFORM_VAR("ParallelizeLoop");
-LocalVar* const ParLoopSpec:: par_trace= CONFIG_VAR(parloop,"trace");
-LocalVar* const ParLoopSpec:: par_include= CONFIG_VAR(parloop,"trace_include");
-LocalVar* const ParLoopSpec:: par_thread= CONFIG_VAR(parloop,"threads");
-LocalVar* const ParLoopSpec:: par_private= CONFIG_VAR(parloop,"private");
-
-XformVar* const BlockSpec::unrollJam = XFORM_VAR("UnrollJam");
-LocalVar* const BlockSpec::unrollJam_cleanup = CONFIG_VAR(unrollJam,"cleanup");
-XformVar* const BlockSpec::cleanup = XFORM_VAR("CleanupBlockedNests");
-LocalVar* const BlockSpec::cleanup_trace = CONFIG_VAR(cleanup,"trace");
-
-LocalVar* const BlockSpec::unrollJam_factor=CONFIG_VAR(unrollJam,"factor");
-LocalVar* const BlockSpec::unrollJam_trace=CONFIG_VAR(unrollJam,"trace");
-
-XformVar* const CopyArraySpec::copyarray = XFORM_VAR("CopyRepl");
-LocalVar* const CopyArraySpec::bufname=CONFIG_VAR(copyarray,"prefix");
-LocalVar* const CopyArraySpec::init_loc=CONFIG_VAR(copyarray,"init_loc");
-LocalVar* const CopyArraySpec::save_loc=CONFIG_VAR(copyarray,"save_loc");
-LocalVar* const CopyArraySpec::delete_loc=CONFIG_VAR(copyarray,"delete_loc");
-LocalVar* const CopyArraySpec::elem_type=CONFIG_VAR(copyarray,"data_type");
-LocalVar* const CopyArraySpec::is_scalar=CONFIG_VAR(copyarray,"scalar");
-LocalVar* const CopyArraySpec::trace=CONFIG_VAR(copyarray,"trace");
-LocalVar* const CopyArraySpec::trace_decl=CONFIG_VAR(copyarray,"trace_decl");
-LocalVar* const CopyArraySpec::trace_vars=CONFIG_VAR(copyarray,"trace_vars");
 int CopyArraySpec::index=0;
-LocalVar* const CopyArraySpec::trace_mod=CONFIG_VAR(copyarray,"trace_mod");
 
 /***********************************************************************/
 /*QY: symbolic value conversion to POET values */
@@ -213,7 +216,7 @@ class SymbolicVal2POET : public SymbolicVisitor
           const SymbolicPOETWrap* v2=dynamic_cast<const SymbolicPOETWrap*>(&v);
           if (v2 != 0) res = v2->get_ast();  
           else {
-            res=STRING(AstToString(v.get_ast()));
+            res=STRING(AstInterface::AstToString(v.get_ast()));
           }
        }
 
@@ -226,11 +229,13 @@ class SymbolicVal2POET : public SymbolicVisitor
       }
    virtual void VisitFunction(const SymbolicFunction& v)
      {
+        if (v.GetOp() == "/") 
+          { res = BOP(POET_OP_DIVIDE,apply(v.get_arg(0)),apply(v.get_arg(1))); return; }
         POETCode* args = 0;
         for (int i=v.NumOfArgs()-1; i >= 0; --i) {
            args = LIST(apply(v.get_arg(i)),args);
         }
-        res = CODE_REF("FunctionCall", PAIR(STRING(v.GetOp()),args));
+        res = CODE_ACC("FunctionCall", PAIR(STRING(v.GetOp()),args));
      }
    virtual void VisitVar(const SymbolicVar& v)
       {  res = STRING(v.GetVarName()); }
@@ -257,7 +262,7 @@ class SymbolicVal2POET : public SymbolicVisitor
                 SymbolicExpr::OpdIterator p = exp.GetOpdIterator();
                 POETCode* cur = apply(exp.Term2Val(p.Current()));
                 for (p.Advance(); !p.ReachEnd(); p.Advance())
-                   cur = CODE_REF(pt, PAIR(cur, apply(exp.Term2Val(p.Current()))));
+                   cur = CODE_ACC(pt, PAIR(cur, apply(exp.Term2Val(p.Current()))));
                 res = cur;
                 return;
             } 
@@ -307,13 +312,28 @@ GetLoopHandle(AstInterface &fa, const AstNodePtr& loop)
    }
    return (*p).second;
 }
+ 
+LocalVar* HandleMap:: GetBodyHandle(LoopTreeNode* loop, LocalVar* loophandle)
+{
+   std::map<LocalVar*,LocalVar*>::const_iterator p = bodyMap.find(loophandle);
+   if (p == bodyMap.end()) {
+     LocalVar* res = NewBodyHandle();
+     bodyMap[loophandle] = res;
+     loophandle->get_entry().set_restr(res);
+     std::string name = res->toString(OUTPUT_NO_DEBUG);
+     if (!loop->set_postAnnot("/*@; BEGIN("+name+"=Stmt) @*/"))
+         assert(0);
+     return res;
+   }
+   return (*p).second;
+}
 
 void HandleMap::
 ObserveCopyAst(AstInterfaceImpl& fa, 
       const AstNodePtr& orig, const AstNodePtr& n)
 {
   AstMapType::const_iterator p = astMap.find(orig.get_ptr());
-#ifdef DEBUG
+#ifdef DEBUG_COPY
 std::cerr << "from AST copying " << orig.get_ptr() << " => " << n.get_ptr() << "\n";
 #endif
   if (p != astMap.end()) {
@@ -329,7 +349,7 @@ void HandleMap::UpdateCodeGen(const LoopTreeCodeGenInfo& info)
    LocalVar* handle = loopMap[loop];
    assert(handle != 0);
    astMap[res.get_ptr()] = handle;
-#ifdef DEBUG
+#ifdef DEBUG_MAP
 std::cerr << "from loop tree: maping " << loop->toString() << " => " << res.get_ptr() << " : " << handle->toString() << "\n";
 #endif
 }
@@ -348,21 +368,6 @@ HandleMap:: ~HandleMap()
      cur->DetachObserver(*this);
   }
 */
-}
-
-LocalVar* HandleMap:: GetBodyHandle(LoopTreeNode* loop, LocalVar* loophandle)
-{
-   std::map<LocalVar*,LocalVar*>::const_iterator p = bodyMap.find(loophandle);
-   if (p == bodyMap.end()) {
-     LocalVar* res = NewBodyHandle();
-     bodyMap[loophandle] = res;
-     loophandle->get_entry().set_restr(res);
-     std::string name = res->toString(OUTPUT_NO_DEBUG);
-     if (!loop->set_postAnnot("/*@; BEGIN("+name+"=Stmt) @*/"))
-         assert(0);
-     return res;
-   }
-   return (*p).second;
 }
 
 LocalVar* HandleMap:: GetLoopHandle(LoopTreeNode* loop)
@@ -398,13 +403,13 @@ class SetTraceVarTraverse
   void pre_visit( const NodeType* n) 
   {
       typename MapType::const_iterator p = astMap.find(n);
-#ifdef DEBUG
+#ifdef DEBUG_TRACE
 std::cerr << "look for trace var: " << n << "\n";
 #endif
       if (p != astMap.end()) {
         LocalVar* v = (*p).second;
         assert(v != 0);
-#ifdef DEBUG
+#ifdef DEBUG_TRACE
 std::cerr << "found trace var: " << v->toString() << "\n";
 #endif
         if (last != 0) {
@@ -522,6 +527,20 @@ LocalVar* HandleMap:: GetTraceCleanup(LocalVar* top)
 LocalVar* HandleMap:: FindTraceCleanup(LocalVar* top)
 { return HAS_TRACE("var_clnup_"+top->toString(OUTPUT_NO_DEBUG)); }
 
+std::string HandleMap:: to_string() const
+ {
+      std::string res;
+      int size = topHandles.size();
+      if (size > 0)  {
+        PrintNestedTraceVars print;
+        for (int i = 0; i < size; ++i) {
+          print.apply(topHandles[i]);
+        }
+        res = res + print.get_result();
+      }
+      return res;
+ }
+
 
 LocalVar* HandleMap::
 GenTraceCommand(POETProgram& poet,const std::vector<LocalVar*>& handles,
@@ -537,20 +556,12 @@ GenTraceCommand(POETProgram& poet,const std::vector<LocalVar*>& handles,
      POETCode* handle = 0;
      for (int i = handlenum-1; i >= 0; --i) 
             handle=LIST(handles[i], handle);
-     POETCode* eval = SEQ3(poet,BOP(POET_OP_INSERT, handles[0], target),
-                           ASSIGN(decl,EMPTY), ASSIGN(top,LIST(decl,handle)));
+     POETCode* eval = SEQ(poet, ASSIGN(decl,EMPTY), ASSIGN(top,LIST(decl,handle)));
      int evalline = 3;
-     for (int i = 1; i < handlenum; ++i) {
-            eval = SEQ(poet,eval, 
-                       INVOKE(POET_static::modifyHandle, 
-                              ASSIGN(POET_static::modifyHandle_trace,target), 
-                              PAIR(handles[i],EMPTY)));
-            evalline ++;
-     }
      MAIN_EVAL(poet, 
-         SEQ(poet,eval,INVOKE(POET_static::modifyHandle, 
-                              ASSIGN(POET_static::modifyHandle_trace, target), 
-                              PAIR(handles[0],top))),
+         SEQ(poet,eval,INVOKE(POET_static::eraseHandle, 
+                              ASSIGN(POET_static::eraseHandle_repl, top), 
+                              PAIR(handles[0],target))),
           lineNo);
      lineNo+=evalline+1;
      return top;
@@ -582,9 +593,6 @@ int configure_optimization()
 /******QY: autotuning interface impl **********************************/
 /***********************************************************************/
 
-OptSpec::OptSpec(LocalVar* _handle)
-   : handle(_handle), handleName(_handle->toString(OUTPUT_NO_DEBUG)) {} 
-
 void AutoTuningInterface::
 set_astInterface(AstInterface& fa)
 { fa.AttachObserver(&handleMap); }
@@ -611,9 +619,9 @@ POETCode* AutoTuningInterface:: Access2Array(POETProgram& poet, POETCode* ref,in
 {
   if (arrayAccess!=0 && dim > 1)
   {
-    return CAR(TUPLE_ACC(ref, TOR(FunctionCall_arg,Array_var)));
+    return CAR(TUPLE_ACC(ref, TOR(POET_static::FunctionCall_arg,POET_static::Array_var)));
   }
-  else return TUPLE_ACC(ref,Array_var);
+  else return TUPLE_ACC(ref,POET_static::Array_var);
 }
 
 void AutoTuningInterface:: BuildPOETProgram()
@@ -626,13 +634,13 @@ void AutoTuningInterface:: BuildPOETProgram()
 
        if (arrayInfo != 0) {
           SymbolicVal access = arrayInfo->CreateArrayAccess(
-                new SymbolicPOETWrap(ATTR_VAR(Array,"array")),
-                new SymbolicPOETWrap(ATTR_VAR(Array,"subscript")));
+                new SymbolicPOETWrap(PARAM_VAR("array")),
+                new SymbolicPOETWrap(PARAM_VAR("subscript")));
           if (!access.IsNIL()) {
               SymbolicVal2POET val2poet(*poet);
-              CODE_SET_ATTR(Array, "match", val2poet.apply(access));
+              CODE_SET_ATTR(POET_static::Array, "match", val2poet.apply(access));
           }
-          poet->insert_codeDecl(Array); ++lineNo;
+          poet->insert_codeDecl(POET_static::Array); ++lineNo;
        }
        poet->insert_traceDecl(target,lineNo); ++lineNo;
        ReadInput* input = poet->insert_inputDecl(lineNo++);
@@ -661,6 +669,7 @@ void AutoTuningInterface:: Gen_POET_opt()
 
     /* insert xform parameter declarations */
     int applyOpt = configure_optimization();
+    POETCode* cond = 0;
     for (int i = 1; i <= OptSpec::OPT_LEVEL_MAX; i <<= 1) {
       OptSpec::OptLevel curLevel = (OptSpec::OptLevel)i;
       if (!(curLevel & applyOpt)) continue;
@@ -668,10 +677,18 @@ void AutoTuningInterface:: Gen_POET_opt()
            p = optvec.begin(); p != optvec.end(); ++p) {
            OptSpec* curopt = *p;
            if (curopt->get_opt_level() & curLevel) 
-               curopt->insert_paramDecl(*poet,curLevel, lineNo); 
+           {
+             POETCode* cur_cond = curopt->insert_paramDecl(*this, *poet,curLevel, lineNo); 
+             if (cur_cond != 0)
+                cond = (cond == 0)? cur_cond : poet->make_Bop(POET_OP_AND,cond,cur_cond);
+           }
       }
     }
     ++lineNo;
+    if (cond != 0) {
+       poet->insert_condDecl(cond, lineNo++);
+       ++lineNo;
+    }
 
     /* gen xform invocations*/
     std::vector<LocalVar*> delay_opts;
@@ -685,7 +702,7 @@ void AutoTuningInterface:: Gen_POET_opt()
                int linenum=lineNo;
                POETCode* cureval=curopt->gen_xformEval(*poet,top,traceMod,curLevel, lineNo); 
                if (cureval != 0) {
-                  LocalVar* optvar = EVAL_VAR(*poet, curopt->get_opt_prefix(curLevel)+"_"+curopt->get_handleName()); 
+                  LocalVar* optvar = EVAL_VAR(*poet, curopt->get_opt_prefix(curLevel)+"_"+curopt->get_targetName()); 
                   delay_opts.push_back(optvar);
                   MAIN_EVAL(*poet, ASSIGN(optvar,DELAY(cureval)), linenum);  
                   lineNo+=2;
@@ -714,6 +731,19 @@ void AutoTuningInterface::GenOutput()
     std::fstream out; 
     out.open(poet->get_filename().c_str(), std::ios::out);
     poet->write_to_file(out);
+    out.close();
+
+    std::string xsname = inputName + ".xs";
+    out.open(xsname.c_str(), std::ios::out);
+    out << "Nests: " << handleMap.to_string() << "\n";
+    for (int i = 1; i <= OptSpec::OPT_LEVEL_MAX; i <<= 1) {
+      OptSpec::OptLevel curLevel = (OptSpec::OptLevel)i;
+      for (std::vector<OptSpec*>::const_iterator 
+           p = optvec.begin(); p != optvec.end(); ++p) {
+         OptSpec* curopt = *p;
+         out << curopt->to_string(curLevel);
+      }
+    }
     out.close();
   }
 }
@@ -754,7 +784,7 @@ ParallelizeLoop(LoopTreeNode* outerLoop, int bsize)
 
 void AutoTuningInterface::
 BlockLoops(LoopTreeNode* outerLoop, LoopTreeNode* innerLoop, 
-      LoopBlocking* config, const FuseLoopInfo* nonperfect)
+      LoopBlocking* config, const std::vector<FuseLoopInfo>* nonperfect)
 {
    LocalVar* outerHandle = handleMap.GetLoopHandle(outerLoop);
    OptSpec* res = new BlockSpec(handleMap,outerHandle,innerLoop,config,nonperfect);
@@ -770,13 +800,20 @@ AutoTuningInterface:: ~AutoTuningInterface()
        }
      }
 
-BlockSpec* AutoTuningInterface:: LoopBlocked(LocalVar* outerhandle)
+BlockSpec* AutoTuningInterface:: LoopBlocked(LocalVar* loop, unsigned *index)
 {
    for (std::vector<OptSpec*>::const_iterator p = optvec.begin();
          p != optvec.end(); ++p) {
        BlockSpec* cur = dynamic_cast<BlockSpec*>(*p);
        if (cur != 0) {
-          if (cur->get_handle() == outerhandle) return cur;   
+          //   if (cur->get_handle() == loop) return cur;   
+          for (unsigned i = 0; i < cur->get_loopnum(); ++i) 
+          {
+             if (cur->get_loop(i).handle == loop) {
+                 if (index != 0) *index = i;
+                 return cur;   
+             }
+          }
        }
    }
    return 0;
@@ -785,26 +822,30 @@ BlockSpec* AutoTuningInterface:: LoopBlocked(LocalVar* outerhandle)
 void AutoTuningInterface::
 CopyArray( CopyArrayConfig& config, LoopTreeNode* repl)
 {
-//std::cerr << "copy config=" << config.toString() << "\n";
-//std::cerr << "copyroot=" << repl->toString() << "\n";
   LocalVar* outerHandle = 0, *handle = 0;
-  if (repl->IncreaseLoopLevel()) {
-     outerHandle = handleMap.GetLoopHandle(repl);
+
+  LoopTreeNode* repl1 = repl, *repl2=repl;
+  while (repl1->ChildCount()==1 && !repl1->IncreaseLoopLevel())  
+        { repl1=repl1->FirstChild(); }
+  outerHandle = handleMap.GetLoopHandle(repl1);
+
+  if (repl != repl1) handle = outerHandle;
+  else if (repl->ChildCount() > 1) {
+     handle=handleMap.GetBodyHandle(repl1, outerHandle);
   }
-  else {
-     LoopTreeNode* repl1 = repl;
-     while (repl1->ChildCount()==1 && !repl1->IncreaseLoopLevel())  
-          { repl1=repl1->FirstChild(); }
-     outerHandle = handle= handleMap.GetLoopHandle(repl1);
+  else  {
+     do { repl2=repl2->FirstChild(); }
+     while (repl2->ChildCount()==1 && !repl2->IncreaseLoopLevel()); 
+     handle = handleMap.GetLoopHandle(repl2);
   }
+
   BlockSpec* block = LoopBlocked(outerHandle);
   if (block!=0 && !config.get_arr().scalar_repl()) {
          OptSpec* res= new BlockCopyArraySpec(outerHandle,config, *block);
          optvec.push_back(res);
   }
   else {
-      if (handle == 0) handle = handleMap.GetBodyHandle(repl,outerHandle);
-      OptSpec* res = new CopyArraySpec(handleMap,handle,config,repl);
+      OptSpec* res = new CopyArraySpec(handleMap,handle,handle->toString(OUTPUT_NO_DEBUG), config,repl);
       optvec.push_back(res);
    }
 }
@@ -813,28 +854,29 @@ CopyArray( CopyArrayConfig& config, LoopTreeNode* repl)
 /******QY: finite differencing  impl **********************************/
 /***********************************************************************/
 
-POETCode* OptSpec::
-gen_fdInvoke(POETProgram& poet, LocalVar* top,
+POETCode* POET_static::
+gen_fdInvoke(POETProgram& poet, LocalVar* top, POETCode* target,
          const std::string& name,POETCode* exp, POETCode* expType,
          const std::vector<POETCode*>& dimVec, 
          POETCode* permute, POETCode* traceMod, bool isScalar)
 {
   if (dimVec.size() == 0) return 0;
-  POETCode* config=SEQ4(poet,ASSIGN(fd_exp_type, expType),
-                        ASSIGN(fd_trace,top),
-                        ASSIGN(fd_is_scalar, ICONST(isScalar)),
-                        ASSIGN(fd_traceDecl,HandleMap::GetTraceDecl(top)));
+  POETCode* config=SEQ5(poet,ASSIGN(POET_static::fd_exp_type, expType),
+                        ASSIGN(POET_static::fd_prefix, STRING(name)),
+                        ASSIGN(POET_static::fd_trace,top),
+                        ASSIGN(POET_static::fd_is_scalar, ICONST(isScalar)),
+                        ASSIGN(POET_static::fd_traceDecl,HandleMap::GetTraceDecl(top)));
   LocalVar* privateTrace = HandleMap::FindTracePrivate(top);
   if (privateTrace != 0)
-          config=SEQ(poet, config,ASSIGN(fd_traceVar,privateTrace));
-  if (permute != 0) config = SEQ(poet,config, ASSIGN(fd_permute, permute));
-  if (traceMod != 0) config = SEQ(poet,config, ASSIGN(fd_mod, traceMod));
+          config=SEQ(poet, config,ASSIGN(POET_static::fd_traceVar,privateTrace));
+  if (permute != 0) config = SEQ(poet,config, ASSIGN(POET_static::fd_permute, permute));
+  if (traceMod != 0) config = SEQ(poet,config, ASSIGN(POET_static::fd_mod, traceMod));
 
   POETCode* dim = 0;
   for (int i = dimVec.size()-1; i >= 0;  --i) 
           dim = LIST(dimVec[i], dim);
-  POETCode* args = TUPLE4(STRING(name),exp,dim, handle);
-  POETCode* result =  INVOKE(finiteDiff, config, args);
+  POETCode* args = TUPLE3(exp,dim, target);
+  POETCode* result =  INVOKE(POET_static::finiteDiff, config, args);
   return result;
 }
 
@@ -848,18 +890,38 @@ LocalVar* UnrollSpec:: get_unrollSizeVar(const std::string& handleName)
     return PARAM_VAR(paramName);
 }
 
-UnrollSpec :: UnrollSpec (LocalVar* handle, int unrollSize) : OptSpec(handle)
+std::string UnrollSpec:: to_string(OptLevel level)
+{ 
+  if (level & OPT_PROC_LEVEL)
+     return "UnrollLoop: target=" + targetName + "\n";
+  else return ""; 
+}
+
+UnrollSpec :: UnrollSpec (LocalVar* handle, int unrollSize) 
+   : OptSpec(handle, handle->toString(OUTPUT_NO_DEBUG))
 {
-    paramVar = get_unrollSizeVar(handleName);
+    paramVar = get_unrollSizeVar(targetName);
     paramVar->get_entry().set_code(ICONST(unrollSize));
     paramVar->get_entry().set_restr(RANGE_TYPE(ICONST(1),ANY));
 }
 
 
-void UnrollSpec::insert_paramDecl(POETProgram& poet, OptLevel optLevel,
-                                int& lineNo)
+POETCode* UnrollSpec::
+insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet, 
+                 OptLevel optLevel, int& lineNo)
 {
-  InsertParamDecl(poet,paramVar, "Unroll factor for loop " + handleName, lineNo++);
+  InsertParamDecl(poet,paramVar, "Unroll factor for loop " + targetName, lineNo++);
+  unsigned index = 0;
+  BlockSpec* block = tune.LoopBlocked(static_cast<LocalVar*>(get_target()), &index); 
+  if (block != 0 && block->get_loopnum() > index) 
+  {
+     POETCode* bsize = block->get_blockSize(block->get_targetName(), index);
+     assert(bsize!=0);
+     POETCode* res = BOP(POET_OP_AND, BOP(POET_OP_LE, paramVar, bsize),
+                         BOP(POET_OP_EQ, BOP(POET_OP_MOD,bsize,paramVar), POET_static::Zero));
+     return res;
+  } 
+  return 0;
 }
 
 POETCode* UnrollSpec::
@@ -867,45 +929,75 @@ gen_xformEval(POETProgram& poet, LocalVar* top,
                    POETCode* traceMod, OptLevel optLevel, int& lineNo) 
 {
   lineNo+=1;
-  return INVOKE(unroll, 
-          SEQ(poet,ASSIGN(unroll_factor,paramVar),ASSIGN(unroll_cleanup,ICONST(0))),
-          PAIR(TUPLE_ACC(handle,Nest_body), handle));
+  return INVOKE(POET_static::unroll, 
+          SEQ(poet,ASSIGN(POET_static::unroll_factor,paramVar),ASSIGN(POET_static::unroll_cleanup,ICONST(0))),
+          PAIR(TUPLE_ACC(target,POET_static::Nest_body), target));
 }
 
 /***********************************************************************/
 /******QY: loop parallelization impl **********************************/
 /***********************************************************************/
 
-ParLoopSpec :: ParLoopSpec(LocalVar* handle, LoopTreeNode* outerLoop,int bsize) 
-   : OptSpec(handle)
+std::string print_list(POETCode* r)
 {
-    parVar = PARAM_VAR(PAR_PARAM_NAME(handleName));
+  POETList* l = dynamic_cast<POETList*>(r);
+  if (l == 0 || l->get_rest() == 0) return r->toString(OUTPUT_NO_DEBUG);
+  return print_list(l->get_first()) + "," + print_list(l->get_rest()); 
+}
+
+std::string ParLoopSpec:: to_string(OptLevel level)
+{ 
+  if (level & OPT_PAR_LEVEL) {
+     std::string res =  "ParallelizeLoop: target=" + targetName;
+     if (privateVars != 0) 
+        res = res + " private=" + print_list(privateVars);
+     res = res + "\n";
+     return res;
+  }
+  return "";
+}
+
+ParLoopSpec :: ParLoopSpec(LocalVar* handle, LoopTreeNode* outerLoop,int bsize) 
+   : OptSpec(handle, handle->toString(OUTPUT_NO_DEBUG))
+{
+    parVar = PARAM_VAR(PAR_PARAM_NAME(targetName));
     parVar->get_entry().set_code(ICONST(1));
     parVar->get_entry().set_restr(RANGE_TYPE(ICONST(1),ANY));
 
-    parblockVar = PARAM_VAR(PAR_BLOCK_NAME(handleName));
+    parblockVar = PARAM_VAR(PAR_BLOCK_NAME(targetName));
     parblockVar->get_entry().set_code(ICONST(bsize));
     parblockVar->get_entry().set_restr(RANGE_TYPE(ICONST(1),ANY));
 
-   privateVars=0;
-   std::string ivar;
+   privateVars=0; ivarName = 0; bvarName = 0;
    for (LoopTreeTraverseSelectLoop loops(outerLoop);
         !loops.ReachEnd(); loops.Advance()) {
       LoopTreeNode* cur = loops.Current();
       std::string curvar = cur->GetLoopInfo()->GetVar().toString();
-      if (ivar == "") { 
-         ivar = curvar; ivarName=STRING(ivar); bvarName=STRING(ivar+"_par"); 
-         privateVars = LIST( bvarName, LIST(ivarName,privateVars));
+      if (ivarName == 0) { 
+          ivarName=STRING(curvar); bvarName=STRING(curvar+"_par"); 
       }
-      else privateVars = LIST( STRING(curvar),privateVars);
+      privateVars = LIST( STRING(curvar),privateVars);
    }
 }
 
-void ParLoopSpec::
-insert_paramDecl(POETProgram& poet, OptLevel optLevel, int& lineNo)
+POETCode* ParLoopSpec::
+insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet, 
+                 OptLevel optLevel, int& lineNo)
 {
-  InsertParamDecl(poet,parVar, "number of threads to parallelize loop " + handleName, lineNo++);
-  InsertParamDecl(poet,parblockVar, "number of loop iterations to run by different threads for " + handleName, lineNo++);
+  InsertParamDecl(poet,parVar, "number of threads to parallelize loop " + targetName, lineNo++);
+  InsertParamDecl(poet,parblockVar, "number of loop iterations to run by different threads for " + targetName, lineNo++);
+  
+  BlockSpec* block = tune.LoopBlocked(static_cast<LocalVar*>(get_target())); 
+  if (block != 0) 
+  {
+     POETCode* bsize = block->get_blockSize(targetName, 0);
+     assert(bsize!=0);
+     POETCode* res = BOP(POET_OP_OR,BOP(POET_OP_EQ,parblockVar,ICONST(1)),
+                      BOP(POET_OP_AND, BOP(POET_OP_GE, parblockVar, bsize),
+                         BOP(POET_OP_EQ, BOP(POET_OP_MOD,parblockVar,bsize), POET_static::Zero)));
+     return res;
+  } 
+  return 0;
 }
 
 void ParLoopSpec::
@@ -923,40 +1015,49 @@ gen_xformEval(POETProgram& poet, LocalVar* top,
 {
   LocalVar* privateTrace = HandleMap::GetTracePrivate(top);
 
-  POETCode* config=SEQ4(poet,ASSIGN(par_trace,top), 
-                    ASSIGN(par_private,privateTrace), 
-                    ASSIGN(par_include, HandleMap::GetTraceInclude()), 
-                         ASSIGN(par_thread,parVar));
-  POETCode* blockDim = CODE_REF("BlockDim", TUPLE3(ivarName, bvarName, parblockVar));
+  POETCode* config=SEQ4(poet,ASSIGN(POET_static::par_trace,top), 
+                    ASSIGN(POET_static::par_private,privateTrace), 
+                    ASSIGN(POET_static::par_include, HandleMap::GetTraceInclude()), 
+                         ASSIGN(POET_static::par_thread,parVar));
+  POETCode* blockDim = CODE_ACC("BlockDim", TUPLE3(ivarName, bvarName, parblockVar));
   POETCode* blockconfig= SEQ(poet, ASSIGN(POET_static::block_factor, blockDim),
                          ASSIGN(POET_static::block_cleanup, POET_static::Zero));
   if (traceMod!=0) blockconfig=SEQ(poet,blockconfig,
                          ASSIGN(POET_static::block_tracemod,traceMod));
   POETCode* blockInvoke = INVOKE(POET_static::block_xvar, blockconfig,
-             PAIR(TUPLE_ACC(handle,Nest_body) , handle));
+             PAIR(TUPLE_ACC(target,POET_static::Nest_body) , target));
   if (traceMod != 0) blockInvoke=TRACE_EVAL(traceMod, blockInvoke);
   POETCode* invoke= 
-     SEQ5(poet,blockInvoke,
-        INVOKE(parloop, config, handle),
-        BOP(POET_OP_ERASE, handle, top),
-        ASSIGN(handle,TUPLE_ACC(handle,Nest_body)),
-        REPLACE(ERASE(handle),handle,top));
-  lineNo += 9;
+     SEQ6(poet,blockInvoke,
+        INVOKE(POET_static::parloop, config, target),
+        BOP(POET_OP_ERASE, target, top),
+        ASSIGN(target,TUPLE_ACC(target,POET_static::Nest_body)),
+        REPLACE(ERASE(target),target,top),
+        INVOKE(POET_static::moveHandle,
+             ASSIGN(POET_static::moveHandle_trace,HandleMap::GetTraceTarget()), 
+             PAIR(top, target)));
+  lineNo += 10;
 
-  LocalVar* pcleanup = HandleMap::FindTraceCleanup(top);
-  if (pcleanup != 0) { /*QY: modify cleanup trance */
-      invoke=SEQ(poet,invoke,ASSIGN(pcleanup, handle));
-      ++lineNo;
-  }
-
-  return SEQ3(poet,ASSIGN(privateTrace,privateVars),
-     INVOKE(appendDecl,0,TUPLE3(IntType,bvarName,HandleMap::GetTraceDecl(top))),
+  return SEQ3(poet,ASSIGN(privateTrace,LIST(bvarName,privateVars)),
+     INVOKE(POET_static::appendDecl,ASSIGN(POET_static::appendDecl_trace,HandleMap::GetTraceDecl(top)),
+                PAIR(POET_static::IntType,bvarName)),
            IFELSE(BOP(POET_OP_NE,parVar,ICONST(1)), invoke, EMPTY)); 
 }
 
 /***********************************************************************/
 /******QY: loop blocking  impl **********************************/
 /***********************************************************************/
+
+std::string BlockSpec:: to_string(OptLevel level)
+{ 
+ std::string res;
+ bool doit=false;
+ if (level & OPT_CACHE_LEVEL) { doit = true; res = "BlockLoops: "; }
+ else if (level & OPT_REG_LEVEL) { doit = true; res = "UnrollJam: "; }
+ if (doit) 
+    res = res + "target=" + targetName + " inner_loop=" + loopVec[loopVec.size()-1].handle->toString(OUTPUT_NO_DEBUG) + "\n";
+  return res;
+}
 
 LocalVar* BlockSpec::get_blockDimVar(const std::string& handleName)
 {
@@ -986,47 +1087,46 @@ LocalVar* BlockSpec::get_unrollJamSizeVar(const std::string& handleName)
     return PARAM_VAR(paramName);
 }
 
-POETCode* FuseLoopInfo::toPOET(HandleMap& handleMap, const FuseLoopInfo* info)
+POETCode* BlockSpec:: get_ujSize(const std::string& handleName, int level)
 {
-   if (info == 0) return 0;
+      POETCode* cursize = get_unrollJamSizeVar(handleName);
+      for (int i = level-2; i >= 0; --i) 
+           cursize = CDR(cursize);
+      return CAR(cursize);
+}
+
+
+POETCode* FuseLoopInfo::toPOET(HandleMap& handleMap, const FuseLoopInfo& info)
+{
    POETCode* nonperfect=0;
-   if (info->loops.size() == 1) 
-        nonperfect=handleMap.GetLoopHandle(info->loops[0].first);
+   int size = info.loops.size();
+   if (size == 1) 
+        nonperfect=handleMap.GetLoopHandle(info.loops[0].first);
 /*QY: if need to consider alignment, should build a separate list  
-                    PAIR(handleMap.GetLoopHandle(info->loops[i].first),
-                         ICONST(info->loops[i].second));
+                    PAIR(handleMap.GetLoopHandle(info.loops[i].first),
+                         ICONST(info.loops[i].second));
 */
    else {
-        for (int i = info->loops.size()-1; i>=0; --i) { 
-           nonperfect=LIST(handleMap.GetLoopHandle(info->loops[i].first),nonperfect);
+        for (int i = size-1; i >= 0; --i) { 
+           nonperfect=LIST(handleMap.GetLoopHandle(info.loops[i].first),nonperfect);
          }
    }
    POETCode* pivot = 0;
-   if (info->pivotLoop==0) pivot=EMPTY;
-   else pivot=handleMap.GetLoopHandle(info->pivotLoop);
-   return CODE_REF("NonPerfectLoops", PAIR(pivot,nonperfect));
+   if (info.pivotLoop==0) pivot=EMPTY;
+   else pivot=handleMap.GetLoopHandle(info.pivotLoop);
+   return CODE_ACC("NonPerfectLoops", PAIR(pivot,nonperfect));
 }
 
 BlockSpec::BlockSpec(HandleMap& _handleMap, 
             LocalVar* outerHandle, LoopTreeNode* _innerLoop, 
             LoopBlocking* config, 
-            const FuseLoopInfo* _nonperfect) 
-   : OptSpec(outerHandle), handleMap(_handleMap), loopnum(config->NumOfLoops())
+            const std::vector<FuseLoopInfo>* _nonperfect) 
+   : OptSpec(outerHandle,outerHandle->toString(OUTPUT_NO_DEBUG)), handleMap(_handleMap), loopnum(config->NumOfLoops())
 {
-  assert(loopnum > 1); 
-   if (_nonperfect == 0) { nonperfect=0; }
-   else nonperfect=FuseLoopInfo::toPOET(handleMap,_nonperfect);
-   for (unsigned i = 0; i < loopnum; ++i) loopVec.push_back(LoopInfo());
-
+   assert(loopnum > 1); 
    /*QY: set up loopVec; */
+   for (unsigned i = 0; i < loopnum; ++i) loopVec.push_back(LoopInfo());
    LoopTreeNode* p = _innerLoop;
-   if (_nonperfect!=0) {
-      assert(_nonperfect->loops[0].first == p);
-      for (unsigned i = 1; i < _nonperfect->loops.size(); ++i) {
-         LoopTreeNode* curloop = _nonperfect->loops[i].first;
-         loopVec.push_back(LoopInfo(handleMap.GetLoopHandle(curloop),curloop->GetLoopInfo()->GetVar().GetVarName())); 
-      }
-   }
    for (int i = loopnum-1; i > 0;  --i) {
        assert(p != 0);
        loopVec[i] = LoopInfo(handleMap.GetLoopHandle(p), p->GetLoopInfo()->GetVar().GetVarName());
@@ -1038,7 +1138,31 @@ std::cerr << "The inner loop: " << _innerLoop->TreeToString() << " does not have
    }
    loopVec[0] = LoopInfo(outerHandle, p->GetLoopInfo()->GetVar().GetVarName());
 
-  /* QY: set up paramVar and loopVec*/
+   unsigned nsize=0;
+   if (_nonperfect == 0 || (nsize=_nonperfect->size()) == 0) { nonperfect=0; }
+   else {
+       nonperfect=FuseLoopInfo::toPOET(handleMap,(*_nonperfect)[nsize-1]);
+       for (int i = nsize-2; i >= 0; --i)
+       {
+         const FuseLoopInfo& cur=(*_nonperfect)[i];
+         nonperfect=LIST(FuseLoopInfo::toPOET(handleMap,cur),nonperfect);
+       }
+       for (unsigned i = 0; i < nsize; ++i) {
+         const FuseLoopInfo& cur=(*_nonperfect)[i];
+         for (unsigned j = 0; j < cur.loops.size(); ++j) { 
+            LoopTreeNode* curloop = cur.loops[j].first;
+            LocalVar* curhandle = handleMap.GetLoopHandle(curloop);
+            int k = 0;
+            for ( ; k < loopnum; ++k) 
+                   { if (loopVec[k].handle==curhandle) break; }
+            if (k == loopnum) { // curloop is not already in loopVec
+               loopVec.push_back(LoopInfo(curhandle,curloop->GetLoopInfo()->GetVar().GetVarName())); 
+            }
+         }
+       }
+   }
+
+  /* QY: set up paramVar*/
    POETCode* bsize = 0, *btype=0;
    for (int i = loopnum-1; i >= 0;  --i) {
        SymbolicVal cur_val = config->BlockSize(i);
@@ -1047,11 +1171,11 @@ std::cerr << "The inner loop: " << _innerLoop->TreeToString() << " does not have
        bsize=LIST(ICONST(cur),bsize); 
        btype = LIST(INT_TYPE, btype);
    }
-   blockPar = get_blockSizeVar(handleName);
+   blockPar = get_blockSizeVar(targetName);
    blockPar->get_entry().set_code(bsize);
    blockPar->get_entry().set_restr(btype);
 
-   ujPar = get_unrollJamSizeVar(handleName);
+   ujPar = get_unrollJamSizeVar(targetName);
    bsize = 0; btype=0;
    for (unsigned i = 1; i < loopnum; ++i) {
           bsize=LIST(ICONST(2), bsize); 
@@ -1084,7 +1208,7 @@ POETCode* BlockSpec::compute_blockDim(LocalVar* paramVar)
     POETCode* blockDim=0;
     for (int i = loopnum-1; i>=0; --i) {
        std::string ivarname = loopVec[i].ivarname;
-       blockDim = LIST(CODE_REF("BlockDim", 
+       blockDim = LIST(CODE_ACC("BlockDim", 
                    TUPLE3(STRING(ivarname),STRING(ivarname+"_bk"),blockVec[i])),
                      blockDim);
     }
@@ -1092,18 +1216,31 @@ POETCode* BlockSpec::compute_blockDim(LocalVar* paramVar)
 }
 
 
-void BlockSpec::
-insert_paramDecl(POETProgram& poet, OptLevel optLevel, int& lineNo)
+POETCode* BlockSpec::
+insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet, 
+                 OptLevel optLevel, int& lineNo)
 {
   switch (optLevel) {
    case OPT_CACHE_LEVEL: 
-      InsertParamDecl(poet, blockPar, "Blocking factor for loop nest " + handleName, lineNo++);
-      return;
+      InsertParamDecl(poet, blockPar, "Blocking factor for loop nest " + targetName, lineNo++);
+      return 0;
    case OPT_REG_LEVEL: 
+      {
       /*QY: unrolljam command-line parameter; default value set to 2 */
-      InsertParamDecl(poet, ujPar, "Unroll and Jam factor for loop nest " + handleName, lineNo++);
-      return;
-   case OPT_CLEANUP_LEVEL: return;
+      InsertParamDecl(poet, ujPar, "Unroll and Jam factor for loop nest " + targetName, lineNo++);
+      POETCode* res = 0; 
+      for (int i = 0; i < loopnum-1; ++i)
+      {
+          POETCode* bsize = get_blockSize(targetName, i);
+          POETCode* usize = get_ujSize(targetName, i);
+          POETCode* cond = BOP(POET_OP_OR, BOP(POET_OP_EQ,bsize,ICONST(1)),
+                            BOP(POET_OP_AND,BOP(POET_OP_LE,usize,bsize),
+                             BOP(POET_OP_EQ,BOP(POET_OP_MOD,bsize,usize),POET_static::Zero)));
+         res = (res == 0)? cond : BOP(POET_OP_AND,res,cond);
+      }
+      return res;
+      }
+   case OPT_CLEANUP_LEVEL: return 0;
    default: 
        std::cerr << "unexpected opt level: " << optLevel << "\n";
        assert(0);
@@ -1113,7 +1250,7 @@ insert_paramDecl(POETProgram& poet, OptLevel optLevel, int& lineNo)
 void BlockSpec::
 insert_xformDecl(POETProgram& poet, LocalVar* top, POETCode*& traceMod, int& lineNo)
 {
-    DECL_TRACE(poet, get_blockTileVar(handleName),lineNo++); 
+    DECL_TRACE(poet, get_blockTileVar(targetName),lineNo++); 
     LocalVar* cleanupvar = HandleMap::GetTraceCleanup(top);
     MAIN_EVAL(poet, ASSIGN(cleanupvar, top), lineNo++);
 }
@@ -1125,15 +1262,15 @@ POETCode* BlockSpec::gen_xformEval(POETProgram& poet, LocalVar* top,
    /*QY: set up blocking dimension configuration*/
   POETCode* decl = HandleMap::GetTraceDecl(top);
   LocalVar* innerHandle = loopVec[loopnum-1].handle;
-  LocalVar* tileVar = get_blockTileVar(handleName);
+  LocalVar* tileVar = get_blockTileVar(targetName);
 
   if (optLevel == OPT_CACHE_LEVEL) {
       POETCode* before= 
-         SEQ(poet,ASSIGN(get_blockDimVar(handleName),compute_blockDim(blockPar)),
-                 ASSIGN(get_blockTileVar(handleName), COPY(handle)));
+         SEQ(poet,ASSIGN(get_blockDimVar(targetName),compute_blockDim(blockPar)),
+                 ASSIGN(get_blockTileVar(targetName), COPY(target)));
       lineNo +=2;
       POETCode* config= 
-        SEQ4(poet,ASSIGN(POET_static::block_factor,get_blockDimVar(handleName)),
+        SEQ4(poet,ASSIGN(POET_static::block_factor,get_blockDimVar(targetName)),
                   ASSIGN(POET_static::block_cleanup,POET_static::Zero), 
                   ASSIGN(POET_static::block_tile, tileVar),
                   ASSIGN(POET_static::block_decl,decl));
@@ -1144,7 +1281,7 @@ POETCode* BlockSpec::gen_xformEval(POETProgram& poet, LocalVar* top,
       if (traceMod!=0) 
           config=SEQ(poet,config,
                      ASSIGN(POET_static::block_tracemod,traceMod));
-      POETCode* blockInvoke = INVOKE(POET_static::block_xvar, config, PAIR(TUPLE_ACC(innerHandle,Nest_body), handle));
+      POETCode* blockInvoke = INVOKE(POET_static::block_xvar, config, PAIR(TUPLE_ACC(innerHandle,POET_static::Nest_body), target));
       if (traceMod!=0) 
          blockInvoke=TRACE_EVAL(traceMod,blockInvoke);
 
@@ -1154,7 +1291,8 @@ POETCode* BlockSpec::gen_xformEval(POETProgram& poet, LocalVar* top,
       }
       lineNo += 3; 
       POETCode* res = SEQ3(poet,before,
-                INVOKE(appendDecl,0,TUPLE3(IntType,bvars,decl)), 
+                INVOKE(POET_static::appendDecl,ASSIGN(POET_static::appendDecl_trace, decl),
+                          PAIR(POET_static::IntType,bvars)),
                 blockInvoke);
       LocalVar* privateTrace = HandleMap::FindTracePrivate(top);
       if (privateTrace != 0)
@@ -1179,7 +1317,7 @@ POETCode* BlockSpec::gen_xformEval(POETProgram& poet, LocalVar* top,
 
       POETCode* before = 
           SEQ(poet,BOP(POET_OP_ERASE, allloops, top),
-                INVOKE(POET_static::traceNest, POET_static::traceNest_config, 
+                INVOKE(POET_static::traceNest, ASSIGN(POET_static::traceNest_trace,top), 
                        PAIR(loops,ERASE(tileVar))));
       lineNo += 2;
       POETCode* nonperfect = 0;
@@ -1198,12 +1336,12 @@ POETCode* BlockSpec::gen_xformEval(POETProgram& poet, LocalVar* top,
       for (unsigned i = 0; i < loopnum; ++i) {
          LocalVar* cur = loopVec[i].handle;
          LocalVar* body = handleMap.HasBodyHandle(cur);
-         POETCode* body_val = TUPLE_ACC(cur,Nest_body);
+         POETCode* body_val = TUPLE_ACC(cur,POET_static::Nest_body);
          if (body != 0) {
             before=SEQ3(poet,before,ASSIGN(body,body_val),
-                        INVOKE(POET_static::modifyHandle,
-                               ASSIGN(POET_static::modifyHandle_trace,cur),
-                               PAIR(ERASE(body),body)));
+                        INVOKE(POET_static::eraseHandle,
+                               ASSIGN(POET_static::eraseHandle_repl,body),
+                               PAIR(ERASE(body),cur)));
             lineNo+=2;
          }
       }
@@ -1222,22 +1360,53 @@ POETCode* BlockSpec::gen_xformEval(POETProgram& poet, LocalVar* top,
       for (int i = loopnum-2; i >=0; --i) 
          bsize = LIST(blockVec[i], bsize);
 
-      POETCode* config= SEQ3(poet,ASSIGN(unrollJam_factor, bsize),
-                             ASSIGN(unrollJam_cleanup, ICONST(0)),
-                             ASSIGN(unrollJam_trace, top));
+      POETCode* config= SEQ3(poet,ASSIGN(POET_static::unrollJam_factor, bsize),
+                             ASSIGN(POET_static::unrollJam_cleanup, ICONST(0)),
+                             ASSIGN(POET_static::unrollJam_trace, top));
       POETCode* param = PAIR(loopVec[loopnum-1].handle,loopVec[0].handle);
       lineNo ++;
-      return SEQ(poet,before, INVOKE(unrollJam, config, param));
+      return SEQ(poet,before, INVOKE(POET_static::unrollJam, config, param));
   }
   else if (optLevel == OPT_CLEANUP_LEVEL) {
       lineNo ++;
-      return INVOKE(cleanup, ASSIGN(cleanup_trace,top), HandleMap::GetTraceCleanup(top));
+      return INVOKE(POET_static::cleanup, ASSIGN(POET_static::cleanup_trace,top), HandleMap::GetTraceCleanup(top));
   }
 }
 
 /***********************************************************************/
 /******QY: array copying  impl **********************************/
 /***********************************************************************/
+
+std::string CopyArraySpec:: to_string(OptLevel level)
+{ 
+  if (level & OPT_REG_LEVEL) {
+    std::string res="ScalarRepl: "; /* use target Name only in array copying:target="+targetName;*/
+    res = res + " aref=" + sel.arr_name();
+    compute_copySubscript();
+    for (int i = 0; i < subscriptVec.size(); ++i) 
+       res = res + "[" + subscriptVec[i].toString() + "]";
+    res = res + " data_type=\"" + AstInterface::GetBaseTypeName(sel.elem_type())+"\"";
+
+    res = res + " dim="; 
+    bool begin = true; 
+    std::string scalarTarget;
+    for (SelectArray::iterator p = sel.begin(); p != sel.end(); ++p){
+       const SelectArray::ArrayDim& cur = *p;
+       int level=get_loopLevel(cur);
+       if (level >= 0) {
+          if (!begin) res = res + ","; else begin = false;
+          res = res + loopVec[level].handle->toString();
+          scalarTarget = loopVec[level].handle->toString() + "[Nest.body]";
+       }
+    }     
+    res = res + " target=" + scalarTarget;
+    if (opt & INIT_COPY) res = res + " init=1"; else res = res + " init=0"; 
+    if (opt & SAVE_COPY) res = res + " save=1"; else res = res + " save=0";
+    res = res + "\n";
+    return res;
+  }
+  else return "";
+}
 
 int CopyArraySpec::get_loopLevel(const SelectArray::ArrayDim& cur)
 {
@@ -1258,8 +1427,8 @@ int CopyArraySpec::get_loopLevel(const SelectArray::ArrayDim& cur)
 } 
 
 CopyArraySpec::  
-CopyArraySpec(HandleMap& handleMap, LocalVar* handle, CopyArrayConfig& config, LoopTreeNode* root)
-     : OptSpec(handle), sel(config.get_arr()), opt(config.get_opt()),permute(0)
+CopyArraySpec(HandleMap& handleMap, POETCode* target, const std::string& targetName, CopyArrayConfig& config, LoopTreeNode* root)
+     : OptSpec(target,targetName), sel(config.get_arr()), opt(config.get_opt()),permute(0)
 { 
   int copylevel = 0;
   SelectArray& sel = config.get_arr();
@@ -1289,12 +1458,12 @@ CopyArraySpec(HandleMap& handleMap, LocalVar* handle, CopyArrayConfig& config, L
 /* QY: return variable name  used to trace array dimension to be copied */
 LocalVar* CopyArraySpec:: 
 get_dimVar (POETProgram& poet, const std::string& arrname) 
-   { return EVAL_VAR(poet, handleName + "_" + cur_id + "_" + arrname+"_dim"); }
+   { return EVAL_VAR(poet, targetName + "_" + cur_id + "_" + arrname+"_dim"); }
 
 /* QY: trace handle for array name */
 LocalVar* CopyArraySpec:: get_arrVar
 (POETProgram& poet, const std::string& arrname)
-{  return EVAL_VAR(poet, handleName + "_" + cur_id + "_" + arrname); }
+{  return EVAL_VAR(poet, targetName + "_" + cur_id + "_" + arrname); }
 
 void CopyArraySpec:: 
 insert_xformDecl(POETProgram& poet, LocalVar* top, POETCode*& traceMod, int& lineNo)
@@ -1320,18 +1489,13 @@ insert_xformDecl(POETProgram& poet, LocalVar* top, POETCode*& traceMod, int& lin
       lineNo+=2;
 }
 
-POETCode* CopyArraySpec::
-compute_copySubscript(POETProgram& poet, bool afterCopy) 
+void CopyArraySpec:: compute_copySubscript(LocalVar* dimVar) 
 {
-      std::string arrname = sel.arr_name();
-      SymbolicVal2POET val2poet(poet);
+    if (dimVar == 0 && subscriptVec.size() > 0) return;
 
-      std::vector<SymbolicVal> subscriptVec;
-      int arrDim = sel.arr_dim();
-      for (int i = 0; i < arrDim; ++i) 
-             subscriptVec.push_back(sel.sel_start(i));
-
-      LocalVar* dimVar=get_dimVar(poet,arrname);
+     int arrDim = sel.arr_dim();
+     for (int i = 0; i < arrDim; ++i) 
+          subscriptVec.push_back(sel.sel_start(i));
       int i = 0;
       for (SelectArray::iterator p = sel.begin(); p != sel.end(); ++i,++p) {
          const SelectArray::ArrayDim& cur = *p;
@@ -1343,14 +1507,29 @@ compute_copySubscript(POETProgram& poet, bool afterCopy)
             /*QY: set up subscript*/
             int seldim = cur.get_arrDim();
 
-            if (!afterCopy) subscriptVec[seldim]=subscriptVec[seldim]+curivar*cur.get_incr();
+            if (dimVar == 0) subscriptVec[seldim]=subscriptVec[seldim]+curivar*cur.get_incr();
             else subscriptVec[seldim]=subscriptVec[seldim]+curivar*SymbolicPOETWrap(TUPLE_ACC(dimVar,ICONST(i)));
          }
       }
-      POETCode* subscript = val2poet.apply(subscriptVec[arrDim-1]);
-      for (int i = arrDim-2; i >= 0; --i) 
-         subscript = LIST(val2poet.apply(subscriptVec[i]), subscript);
-      return subscript;
+}
+
+POETCode* CopyArraySpec::
+compute_copySubscript(POETProgram& poet, bool afterCopy) 
+{
+   std::string arrname = sel.arr_name();
+   SymbolicVal2POET val2poet(poet);
+
+   if (!afterCopy) compute_copySubscript();
+   else {
+      LocalVar* dimVar=get_dimVar(poet,arrname);
+      compute_copySubscript(dimVar);
+   }
+   int arrDim = subscriptVec.size();
+   assert (arrDim > 0); 
+   POETCode* subscript = val2poet.apply(subscriptVec[arrDim-1]);
+   for (int i = arrDim-2; i >= 0; --i) 
+       subscript = LIST(val2poet.apply(subscriptVec[i]), subscript);
+   return subscript;
 }
 
 POETCode* CopyArraySpec::
@@ -1369,7 +1548,7 @@ compute_copyDim(POETProgram& poet, bool scalar)
          int minLoop=get_loopLevel(cur);
          if (minLoop < 0) {
              std::string ivarname = get_cpIvarName(arrname,i);
-             cpDimVec[i] = (CODE_REF("CopyDim", 
+             cpDimVec[i] = (CODE_ACC("CopyDim", 
                            TUPLE4(STRING(ivarname),ICONST(1), ICONST(1), 
                                   TUPLE_ACC(dimVar,ICONST(i)))));
          }
@@ -1378,24 +1557,26 @@ compute_copyDim(POETProgram& poet, bool scalar)
            LocalVar* loop = loopVec[minLoop].handle;
            std::string ivarname = loopVec[minLoop].ivarname;//get_cpIvarName(arrname,permuteIndex);
            cpDimVec[permuteIndex]=
-               CODE_REF("CopyDim", TUPLE4(STRING(ivarname), ICONST(0), 
+               CODE_ACC("CopyDim", TUPLE4(STRING(ivarname), ICONST(0), 
                                             //val2poet.apply(cur.get_size()), 
-                       TUPLE_ACC(TUPLE_ACC(loop,Nest_ctrl),Loop_ub), 
+                       TUPLE_ACC(TUPLE_ACC(loop,POET_static::Nest_ctrl),POET_static::Loop_ub), 
                                             val2poet.apply(cur.get_incr())));
          }
          else {
              std::string ivarname = loopVec[minLoop].ivarname;
              LocalVar* loop = loopVec[minLoop].handle;
-             cpDimVec[i] = (CODE_REF("CopyDim", 
+             cpDimVec[i] = (CODE_ACC("CopyDim", 
                            TUPLE4(STRING(ivarname),
-                                  TUPLE_ACC(TUPLE_ACC(loop,Nest_ctrl),TOR(Loop_ivar,LoopBound_ivar)), 
-                                  TUPLE_ACC(TUPLE_ACC(loop,Nest_ctrl),TOR(Loop_step,LoopBound_step)),
+                                  TUPLE_ACC(TUPLE_ACC(loop,POET_static::Nest_ctrl),POET_static::Loop_ivar), 
+                                  TUPLE_ACC(TUPLE_ACC(loop,POET_static::Nest_ctrl),POET_static::Loop_step),
                                   TUPLE_ACC(dimVar,ICONST(i)))));
          }
       }
       POETCode* cpDim = 0;
-      for (int i = cpDimVec.size() - 1; i >= 0; --i) 
+      for (int i = cpDimVec.size() - 1; i >= 0; --i) {
+        if (cpDimVec[i] != 0) 
           cpDim = LIST(cpDimVec[i], cpDim);
+      }
       return cpDim; 
 }
 
@@ -1465,7 +1646,9 @@ POETCode* CopyArraySpec:: gen_cpIvarDecl
         loopIvar = LIST(STRING(get_cpIvarName(arrname,i)), loopIvar);
      }
    }
-   POETCode* res = INVOKE(appendDecl,0,TUPLE3(IntType,loopIvar,HandleMap::GetTraceDecl(top)));
+   POETCode* res = INVOKE(POET_static::appendDecl,
+            ASSIGN(POET_static::appendDecl_trace,HandleMap::GetTraceDecl(top)),
+                  PAIR(POET_static::IntType,loopIvar));
    LocalVar* privateTrace = HandleMap::FindTracePrivate(top);
    if (privateTrace != 0) 
        res = SEQ(poet, res, ASSIGN(privateTrace, LIST(loopIvar,ERASE(privateTrace))));
@@ -1480,38 +1663,34 @@ gen_copyInvoke(POETProgram& poet, POETCode* cploc, LocalVar* top,
 {
       /*QY: set up element type and init/save/alloc configurations */
       POETCode* cpconfig= SEQ3(poet, 
-               ASSIGN(bufname,STRING(get_bufName(arrname,scalar))),
-               ASSIGN(elem_type,arrelemType), ASSIGN(is_scalar,ICONST(scalar)));
+               ASSIGN(POET_static::copyarray_bufname,STRING(get_bufName(arrname,scalar))),
+               ASSIGN(POET_static::copyarray_elemtype,arrelemType), ASSIGN(POET_static::copyarray_isscalar,ICONST(scalar)));
       if (opt & INIT_COPY) 
-           cpconfig = SEQ(poet,cpconfig,ASSIGN(init_loc,cploc));
+           cpconfig = SEQ(poet,cpconfig,ASSIGN(POET_static::copyarray_initloc,cploc));
       if (opt & SAVE_COPY) 
-           cpconfig = SEQ(poet,cpconfig,ASSIGN(save_loc,cploc));
+           cpconfig = SEQ(poet,cpconfig,ASSIGN(POET_static::copyarray_saveloc,cploc));
       if (!scalar && (opt & ALLOC_COPY)) 
-           cpconfig = SEQ(poet,cpconfig,ASSIGN(delete_loc,cploc));
+           cpconfig = SEQ(poet,cpconfig,ASSIGN(POET_static::copyarray_deleteloc,cploc));
       cpconfig=SEQ4(poet,cpconfig,
-                    ASSIGN(trace,top), 
-                    ASSIGN(trace_decl,HandleMap::GetTraceDecl(top)),
-                    ASSIGN(trace_mod,traceMod));
+                    ASSIGN(POET_static::copyarray_trace,top), 
+                    ASSIGN(POET_static::copyarray_tracedecl,HandleMap::GetTraceDecl(top)),
+                    ASSIGN(POET_static::copyarray_tracemod,traceMod));
       LocalVar* pvar = HandleMap::FindTracePrivate(top);
       if (pvar != 0)
-          cpconfig=SEQ(poet,cpconfig,ASSIGN(trace_vars,pvar));
+          cpconfig=SEQ(poet,cpconfig,ASSIGN(POET_static::copyarray_tracevars,pvar));
 
-      POETCode* config_opt = 0;
       if (permute != 0)
-          config_opt=ASSIGN(POET_static::copyConfig_permute,permute);
+          cpconfig=SEQ(poet,cpconfig,ASSIGN(POET_static::copyarray_permute,permute));
       if (cpblock != 0) {
-          POETCode* setblock=ASSIGN(POET_static::copyConfig_cpBlock,cpblock);
-          config_opt = (config_opt)? SEQ(poet,config_opt, setblock) : setblock;
+          POETCode* setblock=ASSIGN(POET_static::copyarray_cpBlock,cpblock);
+          cpconfig = SEQ(poet,cpconfig, setblock);
       }
 
       /*QY: set up copy parameters and making the call */
       LocalVar* arrVar = get_arrVar(poet,arrname);
       if (cpDim==0) cpDim=EMPTY;
-      cpDim = (config_opt==0)? CODE_REF("CopyConfig",PAIR(arrVar,cpDim))
-            : BOP(POET_OP_POND,TUPLE_ACC(POET_static::copyConfig, config_opt),
-                               PAIR(arrVar,cpDim)); 
-      POETCode* args = PAIR(cpDim,cploc); 
-      POETCode* copyinvoke = TRACE_EVAL(traceMod,INVOKE(copyarray, cpconfig,args));
+      POETCode* args = TUPLE3(arrVar,cpDim,cploc); 
+      POETCode* copyinvoke = TRACE_EVAL(traceMod,INVOKE(POET_static::copyarray, cpconfig,args));
       return copyinvoke;
 }
 
@@ -1530,7 +1709,7 @@ LocalVar* BlockCopyArraySpec::scalarRepl_handle(POETProgram& poet)
 BlockCopyArraySpec::  
 BlockCopyArraySpec(LocalVar* handle, CopyArrayConfig& config, 
                      BlockSpec& _block)
-     : CopyArraySpec(handle,config)
+     : CopyArraySpec(handle,handle->toString(OUTPUT_NO_DEBUG),config)
 { 
   int loopnum = _block.get_loopnum();
 #ifdef DEBUG
@@ -1558,7 +1737,7 @@ std::cerr << "loopnum=" << loopnum << "\n";
 POETCode* BlockCopyArraySpec::
 compute_copyBlock(POETProgram& poet)
 {
-      POETCode* blockPar = BlockSpec::get_blockDimVar(handleName);
+      POETCode* blockPar = BlockSpec::get_blockDimVar(targetName);
       std::string arrname = sel.arr_name();
       int selsize = sel.sel_dim();
 
@@ -1577,16 +1756,19 @@ compute_copyBlock(POETProgram& poet)
             for (int i = minLoop-1; i >= 0; --i) 
                 curblock = CDR(curblock);
             /*QY set up copy block dimension  */
-            cpblockVec[permuteIndex]=CODE_REF("CopyBlock",TUPLE3(STRING(ivarname), STRING(loopVec[minLoop].ivarname+"_bk"), CAR(curblock)));
+            cpblockVec[permuteIndex]=CODE_ACC("CopyBlock",TUPLE3(STRING(ivarname), STRING(loopVec[minLoop].ivarname+"_bk"), CAR(curblock)));
       }
       POETCode* cpblock=0;
-      for (int i = cpblockVec.size() - 1; i >= 0; --i) 
+      for (int i = cpblockVec.size() - 1; i >= 0; --i) {
+          if (cpblockVec[i] != 0)  /* QY: should we check at all here? */
               cpblock = LIST(cpblockVec[i], cpblock);
+      }
      return cpblock;
 }
 
-void CopyArraySpec:: 
-insert_paramDecl(POETProgram& poet, OptLevel optLevel, int& lineNo)
+POETCode* CopyArraySpec:: 
+insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet, 
+                 OptLevel optLevel, int& lineNo)
 {
      std::string arrname = sel.arr_name();
      std::string prefix = get_opt_prefix(optLevel);
@@ -1597,8 +1779,9 @@ insert_paramDecl(POETProgram& poet, OptLevel optLevel, int& lineNo)
      paramVar->get_entry().set_code(ICONST(1));
      paramVar->get_entry().set_restr(RANGE_TYPE(ICONST(0),ICONST(2)));
      InsertParamDecl(poet,paramVar,
-           "configuration for " + optname + " array " + arrname + " at loop " + handleName + ": 0-no opt; 1-" + optname + "; 2-strength reduction.",
+           "configuration for " + optname + " array " + arrname + " at loop " + targetName + ": 0-no opt; 1-" + optname + "; 2-strength reduction.",
            lineNo++);
+     return 0;
 }
 
 POETCode* CopyArraySpec::
@@ -1606,7 +1789,7 @@ gen_copyInvoke(POETProgram& poet, POETCode* cphandle, LocalVar* top,
         POETCode* cpblock, bool scalar, POETCode* traceMod, int& lineNo)
 {
   std::string arrname = sel.arr_name();
-  if (opt & COPY_INSIDE) cphandle=TUPLE_ACC(cphandle,Nest_body);
+  if (opt & COPY_INSIDE) cphandle=TUPLE_ACC(cphandle,POET_static::Nest_body);
 
   /* QY: compute copy configurations */
   POETCode* elemType=STRING(AstInterface::GetBaseTypeName(sel.elem_type()));
@@ -1633,7 +1816,7 @@ gen_xformEval(POETProgram& poet, LocalVar* top,
   /*QY: compute configuration*/
   bool scalar = do_scalarRepl(optLevel);
   /*QY: set up tuning parameters and trace vars*/
-  POETCode* copyInvoke=gen_copyInvoke(poet,handle,top,0,scalar,traceMod,lineNo);
+  POETCode* copyInvoke=gen_copyInvoke(poet,target,top,0,scalar,traceMod,lineNo);
 
   lineNo += 2;
   std::string arrname = sel.arr_name();
@@ -1656,10 +1839,10 @@ gen_xformEval(POETProgram& poet, LocalVar* top,
   LocalVar* paramVar = PARAM_VAR(paramName);
 
   std::vector<POETCode*> expDimVec_cp, expDimVec_nocp;
-  compute_fdConfig(poet,handle,scalar,expDimVec_cp,expDimVec_nocp);
+  compute_fdConfig(poet,target,scalar,expDimVec_cp,expDimVec_nocp);
   LocalVar* parHandle = 0;
 
-  LocalVar* cphandle=handle;
+  POETCode* cphandle=target;
   if (scalar) { cphandle =  scalarRepl_handle(poet);
                    opt = (CopyArrayOpt)(opt | COPY_INSIDE); }
   else if (!scalar_only) opt = (CopyArrayOpt)(opt & (~ COPY_INSIDE));
@@ -1676,8 +1859,8 @@ gen_xformEval(POETProgram& poet, LocalVar* top,
      if (!scalar) copyblock = compute_copyBlock(poet);
      /*QY: generate copy invocation*/
      copyInvoke=gen_copyInvoke(poet,cphandle,top,copyblock,scalar,traceMod,lineNo);
-     POETCode* fdInvoke = gen_fdInvoke(poet,top,get_fdName(bufname),arrexp,
-          CODE_REF("PtrType",elemType), expDimVec_cp, 0, traceMod, false);
+     POETCode* fdInvoke = POET_static::gen_fdInvoke(poet,top,target,get_fdName(bufname),arrexp,
+          CODE_ACC("PtrType",elemType), expDimVec_cp, 0, traceMod, false);
      if (fdInvoke!=0) {
         fdInvoke=TRACE_EVAL(traceMod,fdInvoke);
         copyInvoke = SEQ(poet,copyInvoke, fdInvoke);
@@ -1689,8 +1872,8 @@ gen_xformEval(POETProgram& poet, LocalVar* top,
   if (copyInvoke == 0 && sel.arr_dim() > 1) return 0; //QY: don't do anything due to lack of info on dimension size 
 
   POETCode* fdInvoke2 = 
-          gen_fdInvoke(poet,top,get_fdName(bufname),arrexp,
-          CODE_REF("PtrType",elemType), expDimVec_nocp, permute,
+          POET_static::gen_fdInvoke(poet,top,target,get_fdName(bufname),arrexp,
+          CODE_ACC("PtrType",elemType), expDimVec_nocp, permute,
           traceMod, false);
   if (fdInvoke2!=0) {
       fdInvoke2=IFELSE(BOP(POET_OP_EQ,paramVar,ICONST(2)),
@@ -1745,7 +1928,7 @@ int BlockCopyArraySpec:: compute_fdConfig
           POETCode* curdist = 0, *curdist2=0;
           if (selsize > 1 && !scalar) {
              if (permuteIndex + 1 == selsize) 
-                curdist = BlockSpec::get_blockSize(handleName,minLoop);
+                curdist = BlockSpec::get_blockSize(targetName,minLoop);
              else 
                 curdist=STRING(get_cpIvarName(arrname,permuteIndex+1));
              curdist2 = val2poet.apply(cur.get_incr()); 
@@ -1754,8 +1937,8 @@ int BlockCopyArraySpec:: compute_fdConfig
              curdist=curdist2=TUPLE_ACC(dimVar,ICONST(sel_index));
          }
          expDimVec_cp[permuteIndex] = 
-                  CODE_REF("ExpDim",TUPLE3(loopVec[minLoop].handle,ICONST(1),curdist));
-         expDimVec_nocp[permuteIndex]= CODE_REF("ExpDim",TUPLE3(loopVec[minLoop].handle,ICONST(1),curdist2));
+                  CODE_ACC("ExpDim",TUPLE3(loopVec[minLoop].handle,ICONST(1),curdist));
+         expDimVec_nocp[permuteIndex]= CODE_ACC("ExpDim",TUPLE3(loopVec[minLoop].handle,ICONST(1),curdist2));
       }
     return outermostLevel;
 }
@@ -1773,7 +1956,7 @@ AfterCopy_dimSize(POETProgram& poet)
        int permuteIndex = placeVec[minLoop];
        SymbolicVal dimsize = 1;
        for (int i = permuteIndex+1; i < selsize; ++i) 
-          dimsize = dimsize *(new SymbolicPOETWrap(BlockSpec::get_blockSize(handleName,i)));
+          dimsize = dimsize *(new SymbolicPOETWrap(BlockSpec::get_blockSize(targetName,i)));
         cpDim=TUPLE_APPEND(cpDim,val2poet.apply(dimsize));
     }
     return cpDim;

@@ -49,6 +49,7 @@ inline bool allow_redefine_code() { return redefine_code; }
 extern POETProgram* curfile;
 extern std::list<std::string> lib_dir;
 
+extern bool debug_xform();
 extern "C" LexState lexState;
 
 POETCode*  EvaluatePOET::lp = 0;
@@ -56,11 +57,13 @@ POETCode*  EvaluatePOET::rp = 0;
 POETCode*  EvaluatePOET::lb = 0;
 POETCode*  EvaluatePOET::rb = 0;
 POETCode*  EvaluatePOET::space = 0;
-POETCode*  EvaluatePOET::linebreak = 0;
 POETCode*  EvaluatePOET::tab = 0;
 POETCode*  EvaluatePOET::comma = 0;
+POETCode*  EvaluatePOET::inherit = 0;
+POETCode*  EvaluatePOET::lineno = 0;
 ASTFactory* EvaluatePOET::fac=0;
 LocalVar* EvaluatePOET::exp_item= 0;
+LocalVar* EvaluatePOET::exp_match= 0;
 LocalVar* EvaluatePOET::exp_bop= 0;
 LocalVar* EvaluatePOET::exp_uop= 0;
 LocalVar* EvaluatePOET::tokens = 0;
@@ -72,6 +75,7 @@ LocalVar*  EvaluatePOET::buildBop = 0;
 LocalVar*  EvaluatePOET::parseUop = 0;
 LocalVar*  EvaluatePOET::buildUop = 0;
 LocalVar*  EvaluatePOET::prep= 0;
+LocalVar*  EvaluatePOET::ext= 0;
 LocalVar*  EvaluatePOET::parseTarget= 0;
 LocalVar*  EvaluatePOET::unparseTarget= 0;
 
@@ -83,20 +87,23 @@ class GetLenVisitor : public POETCodeVisitor
   virtual void visitString(POETString* s) 
      { res = s->get_content().size(); }
   virtual void visitList(POETList* l) 
-     {  res = l->size(); }
+     {  res = 1 + apply(l->get_rest()); }
   virtual void visitTuple( POETTuple* v) 
      { res = v->size(); } 
   virtual void visitMap( POETMap *m)
      { res = m->size(); }
+  virtual void visitUnknown(POETCode_ext* e) { res = 1; }
  public:
-  unsigned apply(POETCode* code) { res = 1; code->visit(this);  return res; }
+  unsigned apply(POETCode* code) { if (code == 0) return 0; 
+                                   res = 1; code->visit(this);  return res; }
 };
 
-void EvaluatePOET::
+bool EvaluatePOET::
 ReadFiles(POETCode* files, std::list<POETProgram*>& resultFiles)
 {
    POETCode* p_files=files;
    LexState lexState_save = lexState;
+   bool succ = false;
    while (p_files != 0) {
        POETList* fileList = dynamic_cast<POETList*>(p_files);
        POETCode* fileCur = p_files;
@@ -108,12 +115,13 @@ ReadFiles(POETCode* files, std::list<POETProgram*>& resultFiles)
        else  p_files = 0;
        
        std::string fname= fileCur->toString(OUTPUT_NO_DEBUG); 
-       if (fname == "") {
-          std::cerr << "Empty file name: " << fileCur->toString() << " from list " << files->toString() << "\n";
-       } 
        POETProgram* programFile =  process_file(fname.c_str());
-       resultFiles.push_back(programFile);
+       if (programFile != 0) {
+          resultFiles.push_back(programFile);
+          succ=true;
+       }
     }
+    return succ;
 }
 
 class InsertTraceInside : public VisitNestedTraceVars, public ReplInfoVisitor
@@ -189,49 +197,55 @@ class InsertTraceInside : public VisitNestedTraceVars, public ReplInfoVisitor
  }
 };
 
-POETCode* EraseTrace(POETCode* vars, POETCode* res)
+class EraseTrace : public ReplInfoVisitor
 {
-  std::vector<LocalVar*> vec;
-  switch (vars->get_enum()) {
-  case SRC_LVAR: {
+ virtual void defaultVisit(POETCode* s) { res = s; }
+public:
+  POETCode* apply(POETCode* vars, POETCode* ret)
+  {
+    std::vector<LocalVar*> vec;
+    switch (vars->get_enum()) {
+    case SRC_LVAR: {
      vars = eval_AST(vars);
      if (vars->get_enum() != SRC_LVAR) break;
      LocalVar* lvar = static_cast<LocalVar*>(vars);
      if (lvar->get_entry().get_entry_type() == LVAR_TRACE)
         vec.push_back(lvar);
      break;
-  }
- case SRC_LIST: {
-   POETList* l = static_cast<POETList*>(vars);
-   while (l != 0) {
-     POETCode* cur = l->get_first();
-     if (cur->get_enum() == SRC_LVAR) {
-        cur = eval_AST(cur);
-        if (cur->get_enum() == SRC_LVAR) {
-           LocalVar* cur_lvar = static_cast<LocalVar*>(cur);
-           if (cur_lvar->get_entry().get_entry_type() == LVAR_TRACE) 
+    }
+   case SRC_LIST: {
+     POETList* l = static_cast<POETList*>(vars);
+     while (l != 0) {
+       POETCode* cur = l->get_first();
+       if (cur->get_enum() == SRC_LVAR) {
+          cur = eval_AST(cur);
+          if (cur->get_enum() == SRC_LVAR) {
+             LocalVar* cur_lvar = static_cast<LocalVar*>(cur);
+             if (cur_lvar->get_entry().get_entry_type() == LVAR_TRACE) 
                 vec.push_back(cur_lvar);
-        }
+          }
+       }
+       l = dynamic_cast<POETList*>(l->get_rest());
      }
-     l = dynamic_cast<POETList*>(l->get_rest());
+    }
+    break;
+   default: return ret;
    }
+   int size = vec.size();
+   if (size == 0) return ret;
+   for (int i = size-1; i >= 0; --i) {
+     LvarSymbolTable::Entry e = vec[i]->get_entry();
+     e.set_entry_type(LVAR_TRACE_OUTDATE);
+   }
+   visit(ret);
+   ret = res;
+   for (int i = size-1; i >= 0; --i) {
+     LvarSymbolTable::Entry e = vec[i]->get_entry();
+     e.set_entry_type(LVAR_TRACE);
+   }
+   return ret;
   }
-  break;
- default: return res;
- }
- int size = vec.size();
- if (size == 0) return res;
- for (int i = size-1; i >= 0; --i) {
-   LvarSymbolTable::Entry e = vec[i]->get_entry();
-   e.set_entry_type(LVAR_TRACE_OUTDATE);
- }
- res = ReplInfoVisitor().apply(res);
- for (int i = size-1; i >= 0; --i) {
-   LvarSymbolTable::Entry e = vec[i]->get_entry();
-   e.set_entry_type(LVAR_TRACE);
- }
- return res;
-}
+};
 
 POETCode* TraceEval(POETCode* vars, POETCode* res)
 {
@@ -374,7 +388,10 @@ class XformEvalVisitor : public ReplInfoVisitor
       cv->get_entry().get_symTable()->pop_table();
       LocalVar* lv = static_cast<LocalVar*>(access);
       res = eval_cvar_attr(cv, lv);
-      if (res == 0) { CVAR_ACC_MISMATCH( cv,access); }
+      if (res == 0) { 
+         
+         CVAR_ACC_MISMATCH( cv,access); 
+      }
       break;
    }
    case SRC_OP: {
@@ -405,10 +422,10 @@ class XformEvalVisitor : public ReplInfoVisitor
      { 
       try {
        POETCode* tuple = apply(fc->get_tuple());
-       POETCode* tuple1 = EvalTrace(tuple);
-       if (tuple1 == 0) SYM_UNDEFINED(tuple->toString())
-       else tuple = tuple1;
        POETCode* access= EvalTrace(fc->get_access()); 
+       POETCode* tuple1 = EvalTrace(tuple);
+       if (tuple1 == 0) { TUPLE_ACC_MISMATCH(fc,tuple,access); }
+       else tuple = tuple1;
        switch (tuple->get_enum()) {
          case SRC_TUPLE: {
             access= apply(access);
@@ -431,6 +448,17 @@ class XformEvalVisitor : public ReplInfoVisitor
          }
          case SRC_CVAR: {
             CodeVar* cv = static_cast<CodeVar*>(tuple);
+            if (access->get_enum() == SRC_OP && 
+                static_cast<POETOperator*>(access)->get_op()==POET_OP_DOT) {
+               POETCode* r1 = static_cast<POETOperator*>(access)->get_arg(0); 
+               CodeVar* cv2 = dynamic_cast<CodeVar*>(r1);
+               if (cv2 == 0) CVAR_ACC_MISMATCH(cv,access);
+               while (cv->get_entry() != cv2->get_entry()) {
+                   CodeVar* m = dynamic_cast<CodeVar*>(cv->invoke_match(cv->get_args()));
+                   if (m == 0) CVAR_ACC_MISMATCH(cv,access);
+                   cv = m;
+               }
+            }
             res = eval_cvar_access(cv, access);
             return;
          }
@@ -483,7 +511,7 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
    {
      POETCode *r1 = op->get_arg(0), *r2 = op->get_arg(1), *r3 = op->get_arg(2), *r4 = op->get_arg(3);
      switch(op->get_op()) {
-     case POET_OP_IFELSE: case POET_OP_CASE: case POET_OP_FOR: case POET_OP_FOREACH: case POET_OP_FOREACHR: case POET_OP_CONTINUE: case POET_OP_BREAK: case POET_OP_ERROR:
+     case POET_OP_IFELSE: case POET_OP_CASE: case POET_OP_FOR: case POET_OP_FOREACH: case POET_OP_CONTINUE: case POET_OP_BREAK: case POET_OP_ERROR:
      case POET_OP_CLEAR: case POET_OP_ASTMATCH: case POET_OP_TYPEMATCH: case POET_OP_ANNOT: case POET_OP_TYPEMATCH_Q:
      case POET_OP_TRACE: case POET_OP_DELAY: case POET_OP_AND: case POET_OP_TUPLE: case POET_OP_LIST: case POET_OP_LIST1: 
      case POET_OP_DEBUG: case POET_OP_PRINT: case POET_OP_OR:  case POET_OP_ERASE:
@@ -514,6 +542,11 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
      case POET_OP_LIST:
      case POET_OP_ANNOT:
          res = op; return;
+     case POET_OP_ASSERT:
+       assert(r1 != 0);
+       if (r1 == ZERO)  ASSERT_FAIL(op->get_arg(0));
+       res = EMPTY;
+       return;
      case POET_OP_PRINT: 
        assert(r1 != 0);
        print_AST(std::cerr, r1);
@@ -564,23 +597,26 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
      case POET_OP_DOT: res = ASTFactory::inst()->make_attrAccess(r1,r2); return;
      case POET_OP_CAR:  
               r1 = EvalTrace(r1);
-              if (r1->get_enum() == SRC_LIST) 
+              if (r1 == EMPTY_LIST) { INCORRECT_LIST(r1) }
+              else if (r1->get_enum() == SRC_LIST) 
                  res = static_cast<POETList*>(r1)->get_first();
               break;
      case POET_OP_CDR:  
               r1 = EvalTrace(r1);
-              if (r1->get_enum() == SRC_LIST) {
+              if (r1 == EMPTY_LIST) { INCORRECT_LIST(r1); }
+              else if (r1->get_enum() == SRC_LIST) {
                 res = static_cast<POETList*>(r1)->get_rest();
-                if (res == 0) res = EMPTY;
+                if (res == 0) res = EMPTY_LIST;
               }
-              else res = EMPTY;
+              else res = EMPTY_LIST;
               break;
      case POET_OP_CONS:  {
-             assert(r1 != 0 && r2 != 0 && r3 == 0);
-             POETList* l2 = dynamic_cast<POETList*>(EvalTrace(r2));
-             if (l2 != 0)
+             assert(r1 != 0);
+             POETList* l2 = 0;
+             if (r2 != 0) l2 = dynamic_cast<POETList*>(EvalTrace(r2));
+             if (l2 != 0 || r2 == 0 || r2 == EMPTY_LIST)
                  res = fac->new_list(r1,r2); 
-             else
+             else 
                  res = fac->new_list(r1, fac->new_list(r2,0)); 
              return;
          }
@@ -609,11 +645,16 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
            POETMap* m =new POETMap();
            res = m;
            if (r1 != 0 && r2 == 0 && r3 == 0) {
-             for (POETList* p1 = dynamic_cast<POETList*>(r1); p1!=0; 
-                   p1 = p1->get_rest()) {
-                POETList* cur = dynamic_cast<POETList*>(p1->get_first());
-                if (cur==0) { std::cerr << "Unexpected error : " << p1->get_first()->toString() << "\n"; assert(0); }
-                m->set(cur->get_first(), cur->get_rest());
+             POETList* p1 = dynamic_cast<POETList*>(r1); 
+             if (p1==0) { 
+                POETTuple* cur = dynamic_cast<POETTuple*>(r1);
+                assert(cur != 0);
+                m->set(cur->get_entry(0), cur->get_entry(1));
+             }
+             for ( ; p1!=0; p1 = p1->get_rest()) {
+                POETTuple* cur = dynamic_cast<POETTuple*>(p1->get_first());
+                assert(cur != 0);
+                m->set(cur->get_entry(0), cur->get_entry(1));
              }    
            }
            return;
@@ -628,7 +669,7 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
            assert(r1 != 0 && r2 != 0 && r3 == 0);
            switch (r1->get_enum()) {
            case SRC_ICONST: {
-              POETCode* left=EMPTY;
+              POETCode* left=EMPTY_LIST;
               unsigned prefix = static_cast<POETIconst*>(r1)->get_val();
               POETCode* split = split_prefix(r2, prefix, left);
               res = fac->new_list(split, left);
@@ -690,15 +731,20 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
        if (user_debug < 11) user_debug = 0;
        res = eval_TypeMatch(r1, r2, op->get_op() == POET_OP_TYPEMATCH);
        user_debug = userDebugSave;
-       if (op->get_op() == POET_OP_TYPEMATCH_Q)
-             res = fac->new_iconst(1);
+       if (op->get_op() == POET_OP_TYPEMATCH_Q) {
+          if (res == 0) res = fac->new_iconst(0);
+          else res = fac->new_iconst(1);
+       }
        break;
      }   
      case POET_OP_ERASE:  
+      {
         r2->visit(this); r2 = res;
         assert (r1 != 0 && r2 != 0); 
-        res = EraseTrace(r1,r2); 
+        EraseTrace op;
+        res = op.apply(r1,r2); 
         return;
+      }
      case POET_OP_TRACE: 
        if (r2 != 0)
            res = TraceEval(r1, r2); 
@@ -761,13 +807,11 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
            if (user_debug)
              std::cerr << OpName[op->get_op()] << ";\n"; 
            throw op; 
-     case POET_OP_FOREACHR: 
      case POET_OP_FOREACH: {
        assert(r1 != 0 && r2 != 0 && r3 != 0 && r4 != 0);
-       r1->visit(this); r1 = res;
        if (user_debug) 
           std::cerr << "Entering " << OpName[op->get_op()] << "(" << SHORT(r1->toString(DEBUG_NO_VAR),200) << ")\n";
-       try { EvaluatePOET::eval_foreach(r1, r2, r3, r4, op->get_op() == POET_OP_FOREACHR); }
+       try { EvaluatePOET::eval_foreach(r1, r2, r3, r4); }
        catch (POETOperator* c) { if (c->get_op() != POET_OP_BREAK) throw c; }
        if (user_debug) 
           std::cerr << "Exiting " << OpName[op->get_op()] << "(" << SHORT(r1->toString(DEBUG_NO_VAR),200) << ")\n";
@@ -854,14 +898,16 @@ static void set_syntaxFiles(std::list<POETProgram*>& syntaxFiles)
           if (cur->get_file_ext() == ".code") cur->set_syntax();
       }
 }
-void EvaluatePOET::read_syntaxFiles(POETCode* langFiles, std::list<POETProgram*>& syntaxPrograms)
+bool EvaluatePOET::read_syntaxFiles(POETCode* langFiles, std::list<POETProgram*>& syntaxPrograms)
 {   /*read and set syntax*/
   if (langFiles != 0) {
       lexState=LEX_SYNTAX; 
-      ReadFiles(eval_AST(langFiles), syntaxPrograms); 
+      bool succ = ReadFiles(eval_AST(langFiles), syntaxPrograms); 
       lexState=LEX_DEFAULT;
       set_syntaxFiles(syntaxPrograms); 
+      return succ;
    }
+   return false;
 }
 
 void EvaluatePOET::clear_syntaxFiles(std::list<POETProgram*>& syntaxFiles)
@@ -938,6 +984,7 @@ POETCode* EvaluatePOET:: eval_writeOutput(POETCode* output)
 void POETProgram::set_syntax()
 {
   if (prep_save.lvar != 0) prep_save.lvar->get_entry().set_code(prep_save.restr);
+  if (extern_save.lvar != 0) extern_save.lvar->get_entry().set_code(extern_save.restr);
   if (parse_save.lvar != 0) parse_save.lvar->get_entry().set_code(parse_save.restr); 
   if (token_save.lvar != 0) { token_save.lvar->get_entry().set_code(token_save.restr); }
   if (unparse_save.lvar != 0) unparse_save.lvar->get_entry().set_code(unparse_save.restr);
@@ -970,6 +1017,7 @@ void POETProgram::set_syntax()
 void POETProgram::clear_syntax()
 {
   if (prep_save.lvar != 0) {  prep_save.lvar->get_entry().set_code(0); }
+  if (extern_save.lvar != 0) {  extern_save.lvar->get_entry().set_code(0); }
   if (parse_save.lvar != 0) parse_save.lvar->get_entry().set_code(0);
   if (token_save.lvar != 0) token_save.lvar->get_entry().set_code(0);
   if (unparse_save.lvar != 0) unparse_save.lvar->get_entry().set_code(0);
@@ -1024,30 +1072,6 @@ void POETProgram::clear_syntax()
     done_save = true;
 }
 
-POETCode* EvaluatePOET::
-eval_readInput(POETCode* inputFiles, POETCode* codeType, POETCode* inputInline)
-{
-   POETCode* res = 0; 
-   if (inputFiles != 0) {
-      std::list<POETProgram*> inputPrograms;
-      ReadFiles(eval_AST(inputFiles), inputPrograms);
-      std::list<POETProgram*>::reverse_iterator p = inputPrograms.rbegin(); 
-      for ( ; p != inputPrograms.rend(); ++p) {
-          POETProgram* prog = *p;
-          POETCode* eval = *(prog->begin());
-          eval = parse_input( eval, codeType);  
-          if (res == 0) res = eval; else res=new POETInputList(eval, res);
-      }
-   }
-   if (inputInline != 0) {
-      inputInline = parse_input( inputInline, codeType);
-      if (!res) res = inputInline;
-      else res = ASTFactory::inst()->new_list(res, inputInline);
-   }
-   return res;
-}
-
-
 POETCode* EvaluatePOET:: eval_inputCommand(ReadInput* impl)
 {
   try {
@@ -1059,24 +1083,35 @@ POETCode* EvaluatePOET:: eval_inputCommand(ReadInput* impl)
     int debugSave = user_debug; /* save previous debuging */
     if (debug != 0) user_debug = AST2Int(debug);
 
-    LocalVar* target_var = dynamic_cast<LocalVar*>(impl->get_var());
-    if (target_var != 0) {
+    POETCode* target = impl->get_var();
+    if (target == 0 || target != impl) {
        POETCode* langFiles = impl->get_syntaxFiles();
        std::list<POETProgram*> syntaxPrograms;
-       read_syntaxFiles(langFiles, syntaxPrograms);
-
+       bool has_syntax=read_syntaxFiles(langFiles, syntaxPrograms);
        int hasannot = (annot == 0)? 1 : AST2Int(eval_AST(annot));
        lexState = (hasannot)? LEX_INPUT : LEX_INPUT_NOANNOT;
-       if (langFiles != 0)
-          res = eval_readInput(impl->get_inputFiles(), impl->get_type(),impl->get_inputInline()); 
-       else  {
+
+  assert(ext != 0);
+       POETCode* use_extern = ext->get_entry().get_code();
+       if (use_extern == 0 || AST2Int(use_extern) == 0) {
+         if (has_syntax) 
+           res = eval_readInput(impl->get_inputFiles(), impl->get_type(),impl->get_inputInline()); 
+         else  
           res = eval_readInput_nosyntax(impl->get_inputFiles(), impl->get_type(),impl->get_inputInline()); 
        }       
+       else {
+          res = eval_readInput_nosyntax(impl->get_inputFiles(), impl->get_type(),impl->get_inputInline()); 
+          res = eval_readInput(0, impl->get_type(), res); 
+       }
        lexState=LEX_DEFAULT; /* restore lexical state*/
        if (res == 0) res = EMPTY;
 
        clear_syntaxFiles(syntaxPrograms);
-       target_var->get_entry().set_code(res);
+       if (target != 0) {
+          LocalVar* target_var = dynamic_cast<LocalVar*>(target);
+          assert(target_var != 0);
+          target_var->get_entry().set_code(res);
+       }
     }
     else res=eval_program(eval_readPOET(impl->get_inputFiles()));
     user_debug = debugSave;
@@ -1216,7 +1251,7 @@ POETCode* XformVarInvoke:: eval(bool evalArg)
    POETCode* pars = e.get_param();
    POETCode* args = get_args();
    if (pars == 0) {
-      if (args != 0) FUNC_MISMATCH(e.get_name()->toString(OUTPUT_NO_DEBUG), args);
+      if (args != 0 && args != EMPTY) FUNC_MISMATCH(e.get_name()->toString(OUTPUT_NO_DEBUG), args);
    }
    else if (args == 0) return this; 
    else {
@@ -1302,6 +1337,8 @@ void POETProgram::eval_define(LocalVar* var, POETCode* code)
   std::string name = var->get_entry().get_name()->toString(OUTPUT_NO_DEBUG);
   if (name == "PREP") 
       { prep_save.lvar = var; prep_save.restr=code; }
+  else if (name == "EXTERN") 
+      { extern_save.lvar = var; extern_save.restr=code; }
   else if (name == "PARSE") 
       { parse_save.lvar = var; parse_save.restr=code; }
   else if (name == "TOKEN") 
