@@ -6325,6 +6325,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (11/15/2015): Token-based unparsing support for partial token sequence unparsing of lists of statements (controls fromatting).
                b_parentStatementListBeingUnparsedUsingPartialTokenSequence = 50, /*!< Controls output formatting (CR's) in mixing unparsing from token stream with unparsing from the AST. */
 
+            // DQ (2/8/2016): Adding support for C++11 specific initialization lists.
+               b_cxx11_initialization_list = 51, /*!< Indicate when we are in a C++11 specific initialization list. */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6631,6 +6634,11 @@ HEADER_UNPARSE_INFO_START
           bool parentStatementListBeingUnparsedUsingPartialTokenSequence() const;
           void set_parentStatementListBeingUnparsedUsingPartialTokenSequence();
           void unset_parentStatementListBeingUnparsedUsingPartialTokenSequence();
+
+       // DQ (2/8/2016): Adding support for C++11 specific initialization lists.
+          bool get_cxx11_initialization_list() const;
+          void set_cxx11_initialization_list();
+          void unset_cxx11_initialization_list();
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -18232,6 +18240,19 @@ void SgUnparse_Info::set_parentStatementListBeingUnparsedUsingPartialTokenSequen
 
 void SgUnparse_Info::unset_parentStatementListBeingUnparsedUsingPartialTokenSequence()
    { unsetBit(b_parentStatementListBeingUnparsedUsingPartialTokenSequence); }
+
+// DQ (2/8/2016): Adding support for C++11 specific initialization lists.
+bool
+SgUnparse_Info::get_cxx11_initialization_list() const
+   { return checkBit(b_cxx11_initialization_list); }
+
+void
+SgUnparse_Info::set_cxx11_initialization_list()
+   { setBit(b_cxx11_initialization_list); }
+
+void
+SgUnparse_Info::unset_cxx11_initialization_list()
+   { unsetBit(b_cxx11_initialization_list); }
 
 
 void
