@@ -27,6 +27,11 @@ namespace DSL_Support
   // DQ (2/3/2016): Added output function for generated data about target DSL abstractions.
      void outputGeneratedData();
 
+  // DQ (2/5/2016): Added recognition functions for target DSL abstreactions.
+     bool isDslVariable(SgNode* astNode);
+     bool isDslFunction(SgNode* astNode);
+     bool isDslMemberFunction(SgNode* astNode);
+
   // DQ (2/3/2016): Added function to detect DSL target abstractions.
      bool isDslAbstraction(SgNode* astNode);
 

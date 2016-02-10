@@ -6,21 +6,24 @@
 
 #include "rose.h"
 
-// #include "ompAstConstruction.h"
-
-// #include "stencilAndStencilOperatorDetection.h"
-// #include "stencilEvaluation.h"
-
-//#include "shiftCalculusCompiler.h"
-// #include "dslCodeGeneration.h"
-
 #include "VariableIdMapping.h"
 
-// This line can maybe be generic in the future.
-// #include "dsl_attributes.h"
-// #include "array_dsl_attributes.h"
+// #include "generated_dsl_attributes.h"
+#include "dsl_attribute_support.h"
+
+// This line can maybe be generic in the future, it is here in the case that
+// we want to use the DSL abstractions semantics at comile-time to evaluate
+// constant expressions.
 #include "array.h"
-#include "generated_dsl_attributes.h"
+
+// This can be the generated code to support the DSL recognition and evaluation.
+#if 1
+// Use the hand written version of the generated code.
+   #include "nongenerated_dsl_attributes.h"
+#else
+// Use the automatically generated version of the generated code.
+   #include "generated_dsl_attributes.h"
+#endif
 
 #include "dsl_detection.h"
 
@@ -146,6 +149,26 @@ int main( int argc, char * argv[] )
      printf ("DONE: Call the Detection traversal starting at the project (root) node of the AST \n");
      printf ("********************************************************************************* \n\n");
 #endif
+
+#if DEBUG_USING_DOT_GRAPHS
+  // generateDOTforMultipleFile(*project);
+     generateDOT(*project,"_after_transformation");
+  // generateDOT_withIncludes(*project,"_before_transformation");
+  // AstDOTGeneration astdotgen;
+  // astdotgen.generateWithinFile(firstFile,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,"_before_transformation");
+#endif
+
+
+  // Abstraction of evaluation is similar to the previous implementation.
+
+  // Steps not yet in this version of the code.
+  // Connection to HPC code generation is through generation of nieve affine loops (same as in array translator project).
+
+  // Call the HPC code generation (same as for Stencil abstraction code generator).
+
+  // Generate defined number of variants via calls to the HPC code generator API.
+
+  // Ignore selection of optimial generated loops (or construct connection to OpenTuner for autotuning).
 
      return 0;
    }
