@@ -156,7 +156,7 @@ Grammar::setUpSymbols ()
      FunctionTypeSymbol.setDataPrototype   ( "SgName" , "name", "= \"\"",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionTypeSymbol.setDataPrototype   ( "SgType*", "type", "= NULL",
-                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE);
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/25/2004): This function should be modified (customized) to return p_declaration->firstNondefiningDeclaration() 
   // instead of p_declaration!  This way only nondefining declarations are shared (though all declarations share a 
@@ -224,7 +224,7 @@ Grammar::setUpSymbols ()
   // DefaultSymbol.setDataPrototype       ( "SgName", "name", "= SgdefaultName",
   //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DefaultSymbol.setDataPrototype       ( "SgType*", "type", "= NULL",
-                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/30/2009): Added support for namespace alias to the NamespaceSymbol.
   // DQ (12/23/2005): This has been here for a long time, but in trying to remove unused SgName 

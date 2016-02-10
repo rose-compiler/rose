@@ -2,13 +2,7 @@
 // #                           Header Files                       #
 // ################################################################
 
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
-
-// DQ (3/22/2009): This is redundant with inclusion in "grammar.h"
-// #include "ROSETTA_macros.h"
-
 #include "grammar.h"
 #include "terminal.h"
 #include "grammarString.h"
@@ -39,22 +33,9 @@ vector<grammarFile*> Grammar::fileList;
 #define WRITE_SEPARATE_FILES_FOR_EACH_CLASS 1
 #endif
 
-string replaceString(string patternInInput, string replacePattern, string input) {
-  string::size_type posIter = input.find(patternInInput);
-  if (posIter != string::npos)
-    input.replace(posIter, patternInInput.size(), replacePattern);
-  return input;
-}
-
 Grammar::~Grammar ()
-   {
+{
 }
-
-Grammar::Grammar ()
-   {
-     printf ("Error: Please use Grammar ( const char* ) constructor \n");
-     ROSE_ABORT();
-   }
 
 Grammar::Grammar ( const string& inputGrammarName, 
                    const string& inputPrefixName, 
@@ -62,23 +43,12 @@ Grammar::Grammar ( const string& inputGrammarName,
                    const Grammar* inputParentGrammar,
                    const string& t_directory)
    {
-  // The constructor builds a grammar.  The inputs are strings:
-  //    inputGrammarName          -- The name of the grammar (used in the construction of filenames etc.)
-  //    inputPrefixName           -- The name used for the prefix to all classes generated to implement 
-  //                                 the grammar.  This permits each class to have a unique name.  The 
-  //                                 prefix for the base level grammar should be "Sg" to match SAGE!
-  //    inputGrammarNameBaseClass -- The name of the class representing the grammar!  There can
-  //                                 be many grammars defined within a preprocessor.
-  //    inputParentGrammar        -- A pointer to the parent grammar (object) representing the base grammar.
 
   // Intialize some member data 
   // By default the parent grammar is not known
      target_directory = t_directory;
      parentGrammar = NULL;
 
-     // tps (01/05/2010) : added printf for debugging 
-      //printf ("GRAMMAR Constructor values : target_directory : %s   inputParentGrammar %d \n",target_directory.c_str(),inputParentGrammar);
-  
   // We want to set the parent grammar as early as possible since the specification of terminals/nonterminals is
   // dependent upon the the current grammar being a "RootGrammar" (using the isRootGrammar() member function)
   // and the value of the boolean returned from isRootGrammardepends upon the pointer to the parentGrammar being set!
@@ -107,11 +77,9 @@ Grammar::Grammar ( const string& inputGrammarName,
                  // TPS (11/4/2009) : This will work now not using cygwin
            std::string astNodeListFilename = std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/src/ROSETTA/astNodeList";
 #else
-        // DQ (4/4/2009): MSVS is not interpreting the type correctly here...(fixed rose_paths.[hC])
-    // DQ (4/11/2009): Using cygwin generated rose_paths.C files so need to map cygwin file prefix to Windows file prefix.
-       std::string astNodeListFilename = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/astNodeList";
-    // TPS (11/4/2009) : Since we are not using Cygwin anymore, this line is incorrect.
-//         string prefixString = "/cygdrive/c";
+           // DQ (4/4/2009): MSVS is not interpreting the type correctly here...(fixed rose_paths.[hC])
+           // DQ (4/11/2009): Using cygwin generated rose_paths.C files so need to map cygwin file prefix to Windows file prefix.
+           std::string astNodeListFilename = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/astNodeList";
            string prefixString = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR;
            printf("prefix == %s\n",prefixString.c_str());
            size_t prefixLocation = astNodeListFilename.find(prefixString);
@@ -125,7 +93,7 @@ Grammar::Grammar ( const string& inputGrammarName,
                         if (astNodeListFilename[i] == '/')
                            {
                           // DQ (4/11/2009): My laptop version of Windows requires '\\' but it was 
-                          // not a problem for the decktop version of windows to use '\'.
+                          // not a problem for the desktop version of windows to use '\'.
                                  astNodeListFilename[i] = '\\';
                            }
                         i++;
@@ -229,8 +197,6 @@ Grammar::addGrammarElement ( Terminal & X )
      ROSE_ASSERT (this != NULL);
   // terminalList.display("START of Grammar::addGrammarElement(Terminal)");
      X.setGrammar(this);
-     // commented by BP : 10112001
-     //     terminalList.push_back ( (Terminal *const &) X );
      const Terminal *const &Y = &X;
      terminalList.push_back ( (Terminal *const &) Y );
   // terminalList.display("END of Grammar::addGrammarElement(Terminal)");
@@ -638,13 +604,15 @@ void Grammar::editStringList ( vector<GrammarString *> & targetList, const vecto
   vector<GrammarString*> newList;
   for (vector<GrammarString*>::const_iterator i = targetList.begin(); i != targetList.end(); ++i) {
     for (vector<GrammarString*>::const_iterator j = i + 1; j != targetList.end(); ++j) {
-      if (**i == **j) goto skipThisElement;
+      if (**i == **j)
+        goto skipThisElement;
     }
     for (vector<GrammarString*>::const_iterator j = excludeList.begin(); j != excludeList.end(); ++j) {
-      if (**i == **j) goto skipThisElement;
+      if (**i == **j)
+        goto skipThisElement;
     }
     newList.push_back(*i);
-skipThisElement: continue;
+  skipThisElement:;
   }
   targetList.swap(newList);
 }
@@ -1942,15 +1910,12 @@ Grammar::editSubstitution ( Terminal & node, const StringUtility::FileWithLineNu
      sourceExcludeList = node.getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
 
   // now generate the additions to the lists from the parent node subtree lists
-     // BP : 10/09/2001, modified next two lines to provide addresses
      generateStringListsFromSubtreeLists ( node, targetList, targetExcludeList, &Terminal::getEditSubstituteTargetList );
      generateStringListsFromSubtreeLists ( node, sourceList, sourceExcludeList, &Terminal::getEditSubstituteSourceList );
 
-  // int listLength = targetList.size();
      ROSE_ASSERT (sourceList.size()        == targetList.size());
      ROSE_ASSERT (sourceExcludeList.size() == targetExcludeList.size());
 
-  // printf ("listLength = %d \n",listLength);
      vector<GrammarString *>::iterator sourceListIterator, targetListIterator;
      for ( sourceListIterator = sourceList.begin(), targetListIterator = targetList.begin(); 
            sourceListIterator != sourceList.end() || targetListIterator != targetList.end(); 
@@ -1959,8 +1924,8 @@ Grammar::editSubstitution ( Terminal & node, const StringUtility::FileWithLineNu
           // MS 11/22/2015: changed above loop test to check on both iterators (not just check one iterator as before).
           // therefore the following inariant must hold or something is wrong
           ROSE_ASSERT(sourceListIterator!=sourceList.end() && targetListIterator != targetList.end());
-       // These are done in the order in which the user specified them!
-         
+
+          // These are done in the order in which the user specified them!
           // fprintf (stderr, "targetList[index].getFunctionNameString() = %s \n",(*targetListIterator)->getFunctionPrototypeString().c_str());
           // fprintf (stderr, "sourceList[index].getFunctionNameString() = %s \n",(*sourceListIterator)->getFunctionPrototypeString().c_str());
 
@@ -1970,15 +1935,15 @@ Grammar::editSubstitution ( Terminal & node, const StringUtility::FileWithLineNu
           // fprintf(stderr, "After edit: %s\n", editString.c_str());
         }
 
-  // Finally, Edit into place the name of the grammar
-  // printf ("In editSubstitution node name = %s \n",node.getName());
+     // Finally, Edit into place the name of the grammar
+     // printf ("In editSubstitution node name = %s \n",node.getName());
      editString = GrammarString::copyEdit (editString,"$GRAMMAR_PREFIX_",node.getGrammar()->getGrammarPrefixName());
      editString = GrammarString::copyEdit (editString,"$GRAMMAR_TAG_PREFIX_",node.getGrammar()->getGrammarTagName());
 
      string parentGrammarPrefix = "";
      if (isRootGrammar() == true)
         {
-       // In the case of a root grammar there is no parent
+          // In the case of a root grammar there is no parent
           parentGrammarPrefix = node.getGrammar()->getGrammarPrefixName();
         }
        else
@@ -3569,7 +3534,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
   return info;
 }
 
-#include "grammarGenerator.C"
+//#include "grammarGenerator.C"
 
 /////////////////////////
 // RTI CODE GENERATION //

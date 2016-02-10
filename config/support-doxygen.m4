@@ -9,55 +9,87 @@ AC_DEFUN([ROSE_SUPPORT_DOXYGEN],
         [doxygen],                                                      dnl  --with-[doxygen]
         [for doxygen],                                                  dnl "checking [for doxygen]"
         [Program for generating the API reference manual.],             dnl help string
-        [yes])                                                          dnl default is to use system version
+        [check])                                                        dnl default is to use only if present
+
+    DOXYGEN_FAIL_IF_NOT_FOUND=						dnl 'yes' means fail if we don't find doxygen
+    DOXYGEN=			                                        dnl doxygen executable
 
     if test "$ROSE_WITH_DOXYGEN" = "no"; then
+        dnl Do not look for or use doxygen
         DOXYGEN=
+	DOXYGEN_FAIL_IF_NOT_FOUND=
     elif test "$ROSE_WITH_DOXYGEN" = "yes"; then
+        dnl User wants to use the system-installed doxygen version
         DOXYGEN=doxygen
+	DOXYGEN_FAIL_IF_NOT_FOUND=yes
+    elif test "$ROSE_WITH_DOXYGEN" = "check"; then
+        dnl User doesn't care; use doxygen only if we can find an appropriate system-installed version
+        DOXYGEN=doxygen
+	DOXYGEN_FAIL_IF_NOT_FOUND=
     else
+        dnl User wants us to use a specific doxygen executable, so fail if that's not appropriate
         DOXYGEN="$ROSE_WITH_DOXYGEN"
+	DOXYGEN_FAIL_IF_NOT_FOUND=yes
     fi
 
-    dnl Check the doxygen version number if doxygen is available
-    if test "$DOXYGEN" != ""; then
-        DOXYGEN_VERSION=$($DOXYGEN --version 2>/dev/null)
-        if test "$DOXYGEN_VERSION" = ""; then
-            AC_MSG_FAILURE([doxygen command "$DOXYGEN --version" did not report a version number; $DOXYGEN_DISABLE_HOWTO])
-        fi
+    dnl Check the doxygen version number if doxygen is available. If doxygen is not found or its too old a version then either
+    dnl fail (if DOXYGEN_FAIL_IF_NOT_FOUND is 'yes') or assume that doxygen is not desired.
+    while true; do
+	if test "$DOXYGEN" != ""; then
+	    DOXYGEN_VERSION=$($DOXYGEN --version 2>/dev/null)
+	    if test "$DOXYGEN_VERSION" = ""; then
+	        if test "$DOXYGEN_FAIL_IF_NOT_FOUND" = yes; then
+		    AC_MSG_FAILURE([doxygen command "$DOXYGEN --version" did not report a version number; $DOXYGEN_DISABLE_HOWTO])
+		else
+		    DOXYGEN=
+		    break
+		fi
+	    fi
 
-        DOXYGEN_VERSION_HAVE_MAJOR=$(echo "$DOXYGEN_VERSION" |cut -d. -f1)
-        DOXYGEN_VERSION_HAVE_MINOR=$(echo "$DOXYGEN_VERSION" |cut -d. -f2)
-        DOXYGEN_VERSION_HAVE_PATCH=$(echo "$DOXYGEN_VERSION" |cut -d. -f3)
-        if test "$DOXYGEN_VERSION_HAVE_MAJOR" = "" -o \
-                "$DOXYGEN_VERSION_HAVE_MINOR" = "" -o \
-                "$DOXYGEN_VERSION_HAVE_PATCH" = ""; then
-            AC_MSG_FAILURE([malformed doxygen version number "$DOXYGEN_VERSION" reported by "$DOXYGEN --version"])
-        fi
+	    DOXYGEN_VERSION_HAVE_MAJOR=$(echo "$DOXYGEN_VERSION" |cut -d. -f1)
+	    DOXYGEN_VERSION_HAVE_MINOR=$(echo "$DOXYGEN_VERSION" |cut -d. -f2)
+	    DOXYGEN_VERSION_HAVE_PATCH=$(echo "$DOXYGEN_VERSION" |cut -d. -f3)
+	    if test "$DOXYGEN_VERSION_HAVE_MAJOR" = "" -o \
+		    "$DOXYGEN_VERSION_HAVE_MINOR" = "" -o \
+		    "$DOXYGEN_VERSION_HAVE_PATCH" = ""; then
+		if test "$DOXYGEN_FAIL_IF_NOT_FOUND" = yes; then
+		    AC_MSG_FAILURE([malformed doxygen version number "$DOXYGEN_VERSION" reported by "$DOXYGEN --version"])
+		else
+		    DOXYGEN=
+		    break
+		fi
+	    fi
 
-        DOXYGEN_VERSION_NEED="1.8.1"
-        DOXYGEN_VERSION_NEED_MAJOR=$(echo "$DOXYGEN_VERSION_NEED" |cut -d. -f1)
-        DOXYGEN_VERSION_NEED_MINOR=$(echo "$DOXYGEN_VERSION_NEED" |cut -d. -f2)
-        DOXYGEN_VERSION_NEED_PATCH=$(echo "$DOXYGEN_VERSION_NEED" |cut -d. -f3)
+	    DOXYGEN_VERSION_NEED="1.8.1"
+	    DOXYGEN_VERSION_NEED_MAJOR=$(echo "$DOXYGEN_VERSION_NEED" |cut -d. -f1)
+	    DOXYGEN_VERSION_NEED_MINOR=$(echo "$DOXYGEN_VERSION_NEED" |cut -d. -f2)
+	    DOXYGEN_VERSION_NEED_PATCH=$(echo "$DOXYGEN_VERSION_NEED" |cut -d. -f3)
 
-        if test "$DOXYGEN_VERSION_HAVE_MAJOR" -gt "$DOXYGEN_VERSION_NEED_MAJOR"; then
-            DOXYGEN_VERSION_IS_OKAY=yes
-        elif test "$DOXYGEN_VERSION_HAVE_MAJOR" -lt "$DOXYGEN_VERSION_NEED_MAJOR"; then
-            DOXYGEN_VERSION_IS_OKAY=no
-        elif test "$DOXYGEN_VERSION_HAVE_MINOR" -gt "$DOXYGEN_VERSION_NEED_MINOR"; then
-            DOXYGEN_VERSION_IS_OKAY=yes
-        elif test "$DOXYGEN_VERSION_HAVE_MINOR" -lt "$DOXYGEN_VERSION_NEED_MINOR"; then
-            DOXYGEN_VERSION_IS_OKAY=no
-        elif test "$DOXYGEN_VERSION_HAVE_PATCH" -ge "$DOXYGEN_VERSION_NEED_PATCH"; then
-            DOXYGEN_VERSION_IS_OKAY=yes
-        else
-            DOXYGEN_VERSION_IS_OKAY=no
-        fi
+	    if test "$DOXYGEN_VERSION_HAVE_MAJOR" -gt "$DOXYGEN_VERSION_NEED_MAJOR"; then
+		DOXYGEN_VERSION_IS_OKAY=yes
+	    elif test "$DOXYGEN_VERSION_HAVE_MAJOR" -lt "$DOXYGEN_VERSION_NEED_MAJOR"; then
+		DOXYGEN_VERSION_IS_OKAY=no
+	    elif test "$DOXYGEN_VERSION_HAVE_MINOR" -gt "$DOXYGEN_VERSION_NEED_MINOR"; then
+		DOXYGEN_VERSION_IS_OKAY=yes
+	    elif test "$DOXYGEN_VERSION_HAVE_MINOR" -lt "$DOXYGEN_VERSION_NEED_MINOR"; then
+		DOXYGEN_VERSION_IS_OKAY=no
+	    elif test "$DOXYGEN_VERSION_HAVE_PATCH" -ge "$DOXYGEN_VERSION_NEED_PATCH"; then
+		DOXYGEN_VERSION_IS_OKAY=yes
+	    else
+		DOXYGEN_VERSION_IS_OKAY=no
+	    fi
 
-        if test "$DOXYGEN_VERSION_IS_OKAY" != "yes"; then
-            AC_MSG_FAILURE([$DOXYGEN $DOXYGEN_VERSION is too old; need at least $DOXYGEN_VERSION_NEED. $DOXYGEN_DISABLE_HOWTO])
-        fi
-    fi
+	    if test "$DOXYGEN_VERSION_IS_OKAY" != "yes"; then
+	        if test "$DOXYGEN_FAIL_IF_NOT_FOUND" = yes; then
+		    AC_MSG_FAILURE([$DOXYGEN $DOXYGEN_VERSION is too old; need at least $DOXYGEN_VERSION_NEED. $DOXYGEN_DISABLE_HOWTO])
+		else
+		    DOXYGEN=
+		    break
+		fi
+	    fi
+	fi
+	break
+    done
 
     dnl Find the optional doxyindexer program. It's normally in the same directory as doxygen but not
     dnl always present. It didn't exist before 1.8.3, and it's not always installed after that.
