@@ -53,7 +53,7 @@ EDGBIN_NAME_SUFFIX = $(build_triplet_without_redhat)-$(GENERATED_COMPILER_NAME_A
 EDGBIN_NAME        = $(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
 
 # All the .PHONY's need to be outside any automake "if" statements otherwise automake complains.
-.PHONY: edg-prerequisites binary_edg_tarball upload_edg_binary check-network download-edg show-edg-name show-edg-url
+.PHONY: edg-prerequisites binary_edg_tarball upload_edg_binary check-network download-edg show-edg-name show-edg-url show-edg-hash
 
 # Phony target to build EDG dependencies. We have to build EDG's prerequisites in order to compute the EDG hash.
 #(see above): .PHONY: edg-prerequisites
@@ -70,6 +70,17 @@ MOSTLYCLEANFILES += $(EDGBIN_SIGNATURE_FILE)
 $(EDGBIN_SIGNATURE_FILE): edg-prerequisites
 	$(EDG_GENERATE_SIG) $(top_srcdir) $(top_builddir) >$@.tmp
 	mv $@.tmp $@
+
+# Phony target to show useful information. See .PHONY above.
+show-edg-hash: $(EDGBIN_SIGNATURE_FILE)
+	@cat $(EDGBIN_SIGNATURE_FILE)
+
+show-edg-name: $(EDGBIN_SIGNATURE_FILE)
+	@echo $(EDGBIN_NAME).tar.gz
+
+show-edg-url: $(EDGBIN_SIGNATURE_FILE)
+	@echo $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz
+
 
 if ROSE_HAS_EDG_SOURCE
 
@@ -178,13 +189,6 @@ download-edg: EDG.tar.gz
 	@echo "To compile on a system with no network, copy this EDG tarball, the EDG.tar.gz symlink, and"
 	@echo "the $(EDGBIN_SIGNATURE_FILE) file to the $$ROSE_BUILD/src/frontend/CxxFrontend directory on"
 	@echo "the machine with no network."
-
-# This target is for the user to obtain the EDG tarball name without downloading anything
-#(see above): .PHONY: show-edg-name show-edg-url
-show-edg-name: $(EDGBIN_SIGNATURE_FILE)
-	@echo $(EDGBIN_NAME).tar.gz
-show-edg-url: $(EDGBIN_SIGNATURE_FILE)
-	@echo $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
 # Unpack the EDG tarball. Note: $(am__untar) comes from configure and if it's not set then there's something wrong with configure.
 EDG/libroseEDG.la: EDG.tar.gz
