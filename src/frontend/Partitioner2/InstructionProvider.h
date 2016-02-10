@@ -25,7 +25,10 @@ namespace BinaryAnalysis {
  *  which instruction semantics dispatcher can be used with the instructions, etc. */
 class InstructionProvider: public Sawyer::SharedObject {
 public:
+    /** Shared-ownership pointer to an @ref InstructionProvider. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<InstructionProvider> Ptr;
+
+    /** Mapping from address to instruction. */
     typedef Sawyer::Container::Map<rose_addr_t, SgAsmInstruction*> InsnMap;
 
 private:

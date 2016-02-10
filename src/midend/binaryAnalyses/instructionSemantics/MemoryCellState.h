@@ -9,8 +9,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
-/** Smart pointer to a MemoryCellState object.  MemoryCellState objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to a cell-based memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryCellState> MemoryCellStatePtr;
 
 /** Cell-based memory state.
@@ -54,6 +53,24 @@ public:
         latestWrittenCell_ = cell;
     }
     /** @} */
+
+    /** Writers for an address.
+     *
+     *  Returns the set of all writers that wrote to the specified address or any address that might alias the specified
+     *  address. Memory states that don't normally compute aliases (e.g., @ref MemoryCellMap) return only the writers for the
+     *  specified address, not any aliases, and in this case @ref getWritersUnion and @ref getWritersIntersection return the
+     *  same set. */
+    virtual MemoryCell::AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                                   RiscOperators *valOps) = 0;
+
+    /** Writers for an address.
+     *
+     *  Returns the set of all writers that wrote to the specified address and any address that might alias the specified
+     *  address. Memory states that don't normally compute aliases (e.g., @ref MemoryCellMap) return only the writers for the
+     *  specified address, not any aliases, and in this case @ref getWritersUnion and @ref getWritersIntersection return the
+     *  same set. */
+    virtual MemoryCell::AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                                          RiscOperators *valOps) = 0;
 
     /** Find all matching cells.
      *

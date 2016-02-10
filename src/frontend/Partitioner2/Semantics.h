@@ -31,6 +31,7 @@ typedef InstructionSemantics2::BaseSemantics::StatePtr StatePtr;
 template<class Super = InstructionSemantics2::SymbolicSemantics::MemoryListState> // or MemoryMapState
 class MemoryState: public Super {
 public:
+    /** Shared-ownership pointer to a @ref MemoryState. See @ref heap_object_shared_ownership. */
     typedef boost::shared_ptr<MemoryState> Ptr;
 
 private:
@@ -137,14 +138,18 @@ public:
 
 typedef MemoryState<InstructionSemantics2::SymbolicSemantics::MemoryListState> MemoryListState;
 typedef MemoryState<InstructionSemantics2::SymbolicSemantics::MemoryMapState> MemoryMapState;
+
+/** Shared-ownership pointer to a @ref MemoryListState. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<MemoryListState> MemoryListStatePtr;
+
+/** Shared-ownership pointer to a @ref MemoryMapState. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<MemoryMapState> MemoryMapStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      RISC Operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
+/** Shared-ownership pointer to the RISC operators object. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Semantic operators.
@@ -160,15 +165,15 @@ private:
 protected:
     explicit RiscOperators(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(protoval, solver) {
-        set_name("PartitionerSemantics");
+        name("PartitionerSemantics");
         (void)SValue::promote(protoval);                // make sure its dynamic type is appropriate
         trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 
     explicit RiscOperators(const InstructionSemantics2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(state, solver) {
-        set_name("PartitionerSemantics");
-        (void)SValue::promote(state->get_protoval());
+        name("PartitionerSemantics");
+        (void)SValue::promote(state->protoval());
         trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 

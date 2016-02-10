@@ -212,8 +212,8 @@ class Terminal
                                      const std::string& defaultInitializer,
                                      const ConstructParamEnum& constructorParameter,
                                      const BuildAccessEnum& buildAccessFunctions,
-                                     const TraversalFlag& toBeTraversedDuringTreeTraversal,
-                                     const DeleteFlag& delete_flag,
+                                     const TraversalEnum& toBeTraversedDuringTreeTraversal,
+                                     const DeleteEnum& delete_flag,
                                      const CopyConfigEnum& toBeCopied = COPY_DATA);
 
   virtual ~Terminal ();

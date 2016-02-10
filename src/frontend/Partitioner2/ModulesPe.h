@@ -76,6 +76,7 @@ void buildMayReturnLists(Partitioner&);
  *  the successor edge is replace with the edge to the original callee as if PEScrambler's dispatcher did the replacement. */
 class PeDescrambler: public BasicBlockCallback {
 public:
+    /** Shared-ownership pointer to a @ref PeDescrambler. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<PeDescrambler> Ptr;
 
     /** One dispatch table entry in native format. */

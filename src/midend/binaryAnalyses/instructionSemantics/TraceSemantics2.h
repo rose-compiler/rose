@@ -55,6 +55,8 @@ namespace TraceSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void SValue;
+
+/** Shared-ownership pointer to trace-semantics values. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> SValuePtr;
 
 
@@ -63,6 +65,8 @@ typedef boost::shared_ptr<void> SValuePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void RegisterState;
+
+/** Shared-ownership pointer to trace-semantics register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> RegisterStatePtr;
 
 
@@ -71,6 +75,8 @@ typedef boost::shared_ptr<void> RegisterStatePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void MemoryState;
+
+/** Shared-ownership pointer to trace-semantics memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> MemoryStatePtr;
 
 
@@ -78,15 +84,13 @@ typedef boost::shared_ptr<void> MemoryStatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to trace-semantics RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Wraps RISC operators so they can be traced. */
 class RiscOperators: public BaseSemantics::RiscOperators {
     BaseSemantics::RiscOperatorsPtr subdomain_;         // Domain to which all our RISC operators chain
     Sawyer::Message::Stream stream_;                    // stream to which output is emitted
-    size_t nInsns_;                                     // number of instructions processed
     
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,20 +98,20 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     // use the version that takes a subdomain instead of this c'tor
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
-        set_name("Trace");
+        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]) {
+        name("Trace");
     }
 
     // use the version that takes a subdomain instead of this c'tor.
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
-        set_name("Trace");
+        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]) {
+        name("Trace");
     }
 
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
-        : BaseSemantics::RiscOperators(subdomain->get_state(), subdomain->get_solver()),
-          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
-        set_name("Trace");
+        : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->solver()),
+          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]) {
+        name("Trace");
     }
 
 public:
@@ -137,9 +141,9 @@ public:
      * trace. */
     static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &subdomain) {
         ASSERT_not_null(subdomain);
-        RiscOperatorsPtr self = subdomain->get_state()!=NULL ?
-                                RiscOperatorsPtr(new RiscOperators(subdomain->get_state(), subdomain->get_solver())) :
-                                RiscOperatorsPtr(new RiscOperators(subdomain->get_protoval(), subdomain->get_solver()));
+        RiscOperatorsPtr self = subdomain->currentState()!=NULL ?
+                                RiscOperatorsPtr(new RiscOperators(subdomain->currentState(), subdomain->solver())) :
+                                RiscOperatorsPtr(new RiscOperators(subdomain->protoval(), subdomain->solver()));
         self->subdomain_ = subdomain;
         return self;
     }
@@ -253,15 +257,15 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from our super class
 public:
-    virtual BaseSemantics::SValuePtr get_protoval() const ROSE_OVERRIDE;
-    virtual void set_solver(SMTSolver*) ROSE_OVERRIDE;
-    virtual SMTSolver *get_solver() const ROSE_OVERRIDE;
-    virtual BaseSemantics::StatePtr get_state() const ROSE_OVERRIDE;
-    virtual void set_state(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr protoval() const ROSE_OVERRIDE;
+    virtual void solver(SMTSolver*) ROSE_OVERRIDE;
+    virtual SMTSolver *solver() const ROSE_OVERRIDE;
+    virtual BaseSemantics::StatePtr currentState() const ROSE_OVERRIDE;
+    virtual void currentState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
-    virtual size_t get_ninsns() const ROSE_OVERRIDE;
-    virtual void set_ninsns(size_t n) ROSE_OVERRIDE;
-    virtual SgAsmInstruction *get_insn() const ROSE_OVERRIDE;
+    virtual size_t nInsns() const ROSE_OVERRIDE;
+    virtual void nInsns(size_t n) ROSE_OVERRIDE;
+    virtual SgAsmInstruction* currentInstruction() const ROSE_OVERRIDE;
     virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     virtual void finishInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     
@@ -337,7 +341,8 @@ public:
     virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,

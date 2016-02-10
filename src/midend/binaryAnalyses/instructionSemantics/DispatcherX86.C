@@ -32,7 +32,7 @@ InsnProcessor::process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmIns
     DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
     BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
-    ASSERT_require(insn!=NULL && insn==operators->get_insn());
+    ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
     dispatcher->advanceInstructionPointer(insn);
     SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
     check_arg_width(dispatcher.get(), insn, operands);
@@ -4463,8 +4463,8 @@ DispatcherX86::regcache_init()
 
 void
 DispatcherX86::memory_init() {
-    if (BaseSemantics::StatePtr state = get_state()) {
-        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+    if (BaseSemantics::StatePtr state = currentState()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     break;
@@ -5016,8 +5016,8 @@ BaseSemantics::SValuePtr
 DispatcherX86::readRegister(const RegisterDescriptor &reg) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
     if (reg.get_major()==x86_regclass_flags && reg.get_offset()==0 && reg.get_nbits()>1) {
-        if (BaseSemantics::StatePtr ss = operators->get_state()) {
-            BaseSemantics::RegisterStatePtr rs = ss->get_register_state();
+        if (BaseSemantics::StatePtr ss = operators->currentState()) {
+            BaseSemantics::RegisterStatePtr rs = ss->registerState();
             if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
                 BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
                 return operators->readRegister(reg);

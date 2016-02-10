@@ -17,7 +17,7 @@ namespace Partitioner2 {
  *  A data block represents data with a type. */
 class DataBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
 public:
-    /** Shared pointer to a data block. */
+    /** Shared pointer to a data block. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<DataBlock> Ptr;
 
 private:
