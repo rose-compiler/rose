@@ -25,7 +25,9 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WContainerWidget>
 #include <Wt/WGridLayout>
 #include <Wt/WHBoxLayout>
+#include <Wt/WInPlaceEdit>
 #include <Wt/WLabel>
+#include <Wt/WLineEdit>
 #include <Wt/WLength>
 #include <Wt/WPanel>
 #include <Wt/WPushButton>
@@ -1354,7 +1356,10 @@ public:
         vbox->addWidget(new Wt::WText("These are the most prevalent errors in the failing configurations selected in the "
                                       "\"Overview\" tab.  The definition of \"failing\" can be found in the \"Settings\" "
                                       "tab. The information below each error is the list of constraints, in addition to "
-                                      "those in the \"Overview\" tab, which all the errors satisfy."));
+                                      "those in the \"Overview\" tab, which all the errors satisfy. "
+                                      "<b>Guide for commentary:</b> when commenting, remember that the same error might "
+                                      "occur in other configurations as well and your comment will apply to them also even "
+                                      "if they're not shown in this table."));
 
         vbox->addWidget(summary_ = new Wt::WText);
 
@@ -1426,25 +1431,24 @@ public:
 
         // Fill the table
         Sawyer::Container::Map<std::string, std::string> statusCssClass;
-        int i = 1;
-        for (SqlDatabase::Statement::iterator iter1 = q1->begin(); iter1 != q1->end(); ++iter1) {
+        int bigRow = 1;                                 // leave room for the header
+        for (SqlDatabase::Statement::iterator iter1 = q1->begin(); iter1 != q1->end(); ++iter1, bigRow+=3) {
             int nErrors = iter1.get<int>(0);
             int errorsPercent = round(100.0*nErrors/nTests);
             std::string status = iter1.get<std::string>(1);
             std::string message = iter1.get<std::string>(2);
-            grid_->elementAt(i, 0)->addWidget(new Wt::WText(StringUtility::numberToString(nErrors) + "<br/>" +
-                                                            StringUtility::numberToString(errorsPercent) + "%"));
-            grid_->elementAt(i, 1)->addWidget(new Wt::WText(status));
-            grid_->elementAt(i, 2)->addWidget(new Wt::WText(message, Wt::PlainText));
+            grid_->elementAt(bigRow+0, 0)->addWidget(new Wt::WText(StringUtility::numberToString(nErrors) + "<br/>" +
+                                                                   StringUtility::numberToString(errorsPercent) + "%"));
+            grid_->elementAt(bigRow+0, 1)->addWidget(new Wt::WText(status));
+            grid_->elementAt(bigRow+0, 2)->addWidget(new Wt::WText(message, Wt::PlainText));
 
-            grid_->elementAt(i, 0)->setRowSpan(2);
-            grid_->elementAt(i, 0)->setStyleClass("error-count-cell");
-            grid_->elementAt(i, 1)->setRowSpan(2);
+            grid_->elementAt(bigRow+0, 0)->setRowSpan(3);
+            grid_->elementAt(bigRow+0, 0)->setStyleClass("error-count-cell");
+            grid_->elementAt(bigRow+0, 1)->setRowSpan(3);
             if (!statusCssClass.exists(status))
                 statusCssClass.insert(status, "error-status-"+StringUtility::numberToString(statusCssClass.size()%8));
-            grid_->elementAt(i, 1)->setStyleClass(statusCssClass[status]);
-            grid_->elementAt(i, 2)->setStyleClass("error-message-cell");
-            ++i;
+            grid_->elementAt(bigRow+0, 1)->setStyleClass(statusCssClass[status]);
+            grid_->elementAt(bigRow+0, 2)->setStyleClass("error-message-cell");
 
             // Figure out the dependencies that are in common for all tests of this error
             typedef Sawyer::Container::Map<std::string /*depname*/, std::string /*human*/> Dependencies;
@@ -1483,10 +1487,62 @@ public:
             }
             if (allSameDeps.empty())
                 allSameDeps.push_back("No additional constraints.");
-            grid_->elementAt(i, 2)->addWidget(new Wt::WText(boost::join(allSameDeps, ", ")));
-            grid_->elementAt(i, 2)->setStyleClass("error-dependencies-cell");
-            ++i;
+            grid_->elementAt(bigRow+1, 2)->addWidget(new Wt::WText(boost::join(allSameDeps, ", ")));
+            grid_->elementAt(bigRow+1, 2)->setStyleClass("error-dependencies-cell");
+
+            // Is there commentary about this error?
+            SqlDatabase::StatementPtr q3 = gstate.tx->statement("select commentary from errors"
+                                                                " where status = ? and message = ?");
+            q3->bind(0, status);
+            q3->bind(1, message);
+            do {
+                SqlDatabase::Statement::iterator iter3 = q3->begin();
+                std::string commentary;
+                if (iter3 != q3->end())
+                    commentary = iter3.get<std::string>(0);
+                Wt::WInPlaceEdit *wCommentary = new Wt::WInPlaceEdit(commentary);
+                wCommentary->setPlaceholderText("No comment (click to add).");
+                wCommentary->lineEdit()->setTextSize(80);
+                wCommentary->valueChanged().connect(boost::bind(&WErrors::setComment, this, status, message, wCommentary));
+                grid_->elementAt(bigRow+2, 2)->addWidget(wCommentary);
+                grid_->elementAt(bigRow+2, 2)->setStyleClass("error-comment-cell");
+            } while (0);
         }
+    }
+
+private:
+    void setComment(const std::string &status, const std::string &message, Wt::WInPlaceEdit *wEdit) {
+        std::string commentary = wEdit->text().narrow();
+        int mtime = time(NULL);
+
+        // We need a temporary transaction since our main transaction will never be committed.
+        SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
+
+        // Don't use "insert ... on conflict" because this was introduced in PostgreSQL 9.5 and we need to support older
+        // versions. Therefore, do it in two steps.
+        if (commentary.empty()) {
+            tx->statement("delete from errors where status = ? and message = ?")
+                ->bind(0, status)
+                ->bind(1, message)
+                ->execute();
+        } else if (tx->statement("select count(*) from errors where status = ? and message = ?")
+            ->bind(0, status)->bind(1, message)->execute_int()) {
+            tx->statement("update errors set commentary = ?, mtime = ? where status = ? and message = ?")
+                ->bind(0, commentary)
+                ->bind(1, mtime)
+                ->bind(2, status)
+                ->bind(3, message)
+                ->execute();
+        } else {
+            tx->statement("insert into errors (status, message, commentary, mtime) values (?, ?, ?, ?)")
+                ->bind(0, status)
+                ->bind(1, message)
+                ->bind(2, commentary)
+                ->bind(3, mtime)
+                ->execute();
+        }
+
+        tx->commit();
     }
 };
 
@@ -1594,6 +1650,7 @@ public:
         // Styles of error priority table cells
         styleSheet().addRule(".error-count-cell", "border:1px solid black;");
         styleSheet().addRule(".error-dependencies-cell", "border:1px solid black;");
+        styleSheet().addRule(".error-comment-cell", "border:1px solid black;");
         styleSheet().addRule(".error-message-cell", "border:1px solid black; color:#680000; background-color:#ffc0c0;");
         styleSheet().addRule(".error-status-0", "border:1px solid black; background-color:#d0aae0;");// light purple
         styleSheet().addRule(".error-status-1", "border:1px solid black; background-color:#e1c2ba;");// light tomato
