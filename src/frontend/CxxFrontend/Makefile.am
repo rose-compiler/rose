@@ -109,8 +109,9 @@ EDGBIN_DESTINATIONS=						\
 	$(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz	\
 	$(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
 $(EDGBIN_DESTINATIONS): upload-EDG.tar.gz
-	echo $(EDGBIN_DESTINATIONS)
-	cp $(EDGBIN_NAME).tar.gz $@
+#	cp $(EDGBIN_NAME).tar.gz $@
+	cp $(EDGBIN_NAME).tar.gz $(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz
+	cp $(EDGBIN_NAME).tar.gz $(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
 # Phony target to generate a tarball but not upload it
 #(see above): .PHONY: binary_edg_tarball
