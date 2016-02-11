@@ -1170,6 +1170,12 @@ public:
         if (testId_ != id) {
             testId_ = id;
             testIdChanged_.emit();
+
+            // Make sure the combo box shows the correct ID
+            std::string pattern = boost::lexical_cast<std::string>(id) + ": ";
+            int cbIdx = testIdChoices_->findText(pattern, Wt::MatchStartsWith);
+            if (cbIdx >= 0)
+                testIdChoices_->setCurrentIndex(cbIdx);
         }
     }
     
@@ -1348,6 +1354,7 @@ class WErrors: public Wt::WContainerWidget {
     bool outOfDate_;                                    // need to query database again?
     Wt::WText *summary_;                                // summary about what's displayed
     Wt::WTable *grid_;
+    Wt::Signal<int> testIdChanged_;                     // emitted when user selects a test ID number
 public:
     explicit WErrors(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent), outOfDate_(true) {
@@ -1367,6 +1374,10 @@ public:
         grid_->setHeaderCount(1);
 
         vbox->addStretch(1);
+    }
+
+    Wt::Signal<int>& testIdChanged() {
+        return testIdChanged_;
     }
 
     void changeConstraints() {
@@ -1487,7 +1498,7 @@ public:
             }
             if (allSameDeps.empty())
                 allSameDeps.push_back("No additional constraints.");
-            grid_->elementAt(bigRow+1, 2)->addWidget(new Wt::WText(boost::join(allSameDeps, ", ")));
+            grid_->elementAt(bigRow+1, 2)->addWidget(new Wt::WText(boost::join(allSameDeps, ", ")+" "));
             grid_->elementAt(bigRow+1, 2)->setStyleClass("error-dependencies-cell");
 
             // Is there commentary about this error?
@@ -1507,10 +1518,36 @@ public:
                 grid_->elementAt(bigRow+2, 2)->addWidget(wCommentary);
                 grid_->elementAt(bigRow+2, 2)->setStyleClass("error-comment-cell");
             } while (0);
+
+            // Create a combo box of all the configuration ID's that have this error.
+            Wt::WComboBox *wTestIds = new Wt::WComboBox;
+            wTestIds->activated().connect(boost::bind(&WErrors::emitTestIdChanged, this, wTestIds));
+            wTestIds->addItem("View details");
+            args.clear();
+            SqlDatabase::StatementPtr q4 = gstate.tx->statement("select id" + sqlFromClause() +
+                                                                sqlWhereClause(deps, args) +
+                                                                " and first_error = ?"
+                                                                " and " + passFailExpr + " = 'fail'"
+                                                                " order by id");
+            args.push_back(message);
+            bindSqlVariables(q4, args);
+            for (SqlDatabase::Statement::iterator iter4 = q4->begin(); iter4 != q4->end(); ++iter4)
+                wTestIds->addItem(boost::lexical_cast<std::string>(iter4.get<int>(0)));
+            grid_->elementAt(bigRow+1, 2)->addWidget(wTestIds);
         }
     }
 
 private:
+    // Emit a signal indicating that the user wants to see the details for a particular configuration.
+    void emitTestIdChanged(Wt::WComboBox *wTestIds) {
+        std::string s = wTestIds->currentText().narrow();
+        if (s.empty() || !isdigit(s[0]))
+            return;                                     // not a test ID number
+        int testId = boost::lexical_cast<int>(s);
+        testIdChanged_.emit(testId);
+    }
+
+    // Set comment for an error message
     void setComment(const std::string &status, const std::string &message, Wt::WInPlaceEdit *wEdit) {
         std::string commentary = wEdit->text().narrow();
         int mtime = time(NULL);
@@ -1671,6 +1708,7 @@ public:
         // Wiring
         resultsConstraints_->constraints()->constraintsChanged().connect(this, &WApplication::getMatchingTests);
         details_->testIdChanged().connect(this, &WApplication::updateDetails);
+        errors_->testIdChanged().connect(this, &WApplication::showTestDetails);
         settings_->settingsChanged().connect(this, &WApplication::updateAll);
         tabs_->currentChanged().connect(this, &WApplication::switchTabs);
         getMatchingTests();
@@ -1698,6 +1736,11 @@ private:
         resultsConstraints_->updateStatusCounts();
         getMatchingTests();
         updateDetails();
+    }
+
+    void showTestDetails(int testId) {
+        details_->setTestId(testId);
+        tabs_->setCurrentWidget(details_);
     }
 };
 
