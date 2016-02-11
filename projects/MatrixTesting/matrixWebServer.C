@@ -113,7 +113,7 @@ static std::string
 sqlFromClause() {
     return (" from test_results"
             " join users on test_results.reporting_user = users.uid"
-            " left outer join test_names on test_results.status = test_names.name");
+            " left outer join test_names on test_results.status = test_names.name ");
 }
 
 static std::string
@@ -137,7 +137,7 @@ sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
     }
     if (where.empty())
         where = " where true";
-    return where;
+    return where + " ";
 }
 
 static void
@@ -1115,10 +1115,13 @@ public:
 
         // Error message cached in database test_results.first_error
         vbox->addWidget(error_ = new Wt::WText);
-        error_->setStyleClass("compiler-error");
 
         // Configuration
         vbox->addWidget(new Wt::WText("<h2>Detailed status</h2>"));
+        vbox->addWidget(new Wt::WText("This list includes configuration and results. Note that the configuration items are the "
+                                      "versions requested by the test, but might not be the versions actually used by ROSE due "
+                                      "to possible bugs in ROSE's \"configure\" or \"cmake\" system or in the scripts used to "
+                                      "run these tests."));
         config_ = new Wt::WText;
         config_->setTextFormat(Wt::PlainText);
         config_->setWordWrap(false);
@@ -1185,7 +1188,8 @@ public:
         std::string sql;
         BOOST_FOREACH (const std::string &colName, columns.values())
             sql += std::string(sql.empty()?"select ":", ") + colName;
-        sql += ", coalesce(first_error,'')";
+        sql += ", coalesce(first_error,'')";            // +0
+        sql += ", " + gstate.dependencyNames["status"]; // +1
 
         sql += sqlFromClause();
         std::vector<std::string> args;
@@ -1193,19 +1197,32 @@ public:
         args.push_back(boost::lexical_cast<std::string>(testId_));
         sql += where;
 
-        config_->setText("");
         std::string config, first_error;
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
             int column = 0;
+
+            // The known columns for the "config"
             BOOST_FOREACH (const std::string &name, columns.keys())
                 config += name + "=" + humanDepValue(name, row.get<std::string>(column++)) + "\n";
-            first_error = row.get<std::string>(columns.size());
+
+            // Additional information from the query
+            first_error = row.get<std::string>(columns.size()+0);
+            std::string status = row.get<std::string>(columns.size()+1);
+            if (first_error.empty() && status != "end") {
+                first_error = "No error pattern matched (see output below).  The best way to fix this is to change the "
+                              "error message so it begins with the string \"error:\" followed by a space and an error "
+                              "message. If that's not possible, send the configuration number (above) and the error "
+                              "message (below) to Robb.";
+            }
+
             break;
         }
         config_->setText(config);
+
         error_->setText(first_error);
+        error_->setStyleClass(first_error.empty() ? "" : "output-error");
 
         updateCommands();
         updateOutput();
@@ -1277,35 +1294,41 @@ private:
             q->bind(1, "Final output");
             SqlDatabase::Statement::iterator row = q->begin();
             std::string s = row != q->end() ? row.get<std::string>(0) : std::string();
-            if (s.empty())
+            if (s.empty()) {
                 s = "Command output was not saved for this test.\n";
+                error_->setText("");
+                error_->setStyleClass("");
+            }
+
             std::string t = escapeHtml(s);
 
-            // Look for special compiler output lines for errors and warnings
-            boost::regex compilerRegex("(^[^\\n]*?(?:"
-                                       // Errors
-                                       "\\berror:"
-                                       "|\\[ERROR\\]"
-                                       "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*Aborted$" // fatal exception in shell command
-                                       "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*command died" // fatal exception from $(RTH_RUN)
-                                       "|\\[err\\]: terminated after \\d+ seconds"
+            // Look for special output lines for errors and warnings so we can highlight them
+            boost::regex highlightRegex("(^[^\\n]*?(?:"
+                                        // Errors
+                                        "\\b(?:error|ERROR):"                           // generic errors
+                                        "|\\[(?:ERROR|FATAL) *\\]"                      // Sawyer message streams
+                                        "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*Aborted$"     // fatal exception in shell command
+                                        "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*command died" // fatal exception from $(RTH_RUN)
+                                        "|\\[err\\]: terminated after \\d+ seconds"     // timeout from $(RTH_RUN)
+                                        "|: Assertion `[^\\n]+' failed\\."              // failed <cassert> assertion
 
-                                       ")[^\\n]*$)|"
-                                       "(^[^\\n]*?(?:"
+                                        ")[^\\n]*$)|"
+                                        "(^[^\\n]*?(?:"
 
-                                       // Warnings
-                                       "\\bwarning:"
+                                        // Warnings
+                                        "\\b(?:warning|WARNING):"                       // generic warnings
+                                        "|\\[WARN *\\]"                                 // Sawyer message streams
 
-                                       ")[^\\n]*$)|"
-                                       "(^={17}-={17}[^\\n]+={17}-={17}$)");
+                                        ")[^\\n]*$)|"
+                                        "(^={17}-={17}[^\\n]+={17}-={17}$)");
 
-            const char *compilerFormat = "(?1<span class=\"compiler-error\">$&</span>)"
-                                         "(?2<span class=\"compiler-warning\">$&</span>)"
-                                         "(?3<span class=\"output-separator\"><hr/>$&</span>)";
+            const char *highlightFormat = "(?1<span class=\"output-error\">$&</span>)"
+                                          "(?2<span class=\"output-warning\">$&</span>)"
+                                          "(?3<span class=\"output-separator\"><hr/>$&</span>)";
 
             std::ostringstream out(std::ios::out | std::ios::binary);
             std::ostream_iterator<char, char> oi(out);
-            boost::regex_replace(oi, t.begin(), t.end(), compilerRegex, compilerFormat,
+            boost::regex_replace(oi, t.begin(), t.end(), highlightRegex, highlightFormat,
                                  boost::match_default|boost::format_all);
             t = out.str();
 
@@ -1321,6 +1344,7 @@ private:
 // For prioritizing errors to be fixed
 class WErrors: public Wt::WContainerWidget {
     bool outOfDate_;                                    // need to query database again?
+    Wt::WText *summary_;                                // summary about what's displayed
     Wt::WTable *grid_;
 public:
     explicit WErrors(Wt::WContainerWidget *parent = NULL)
@@ -1331,6 +1355,9 @@ public:
                                       "\"Overview\" tab.  The definition of \"failing\" can be found in the \"Settings\" "
                                       "tab. The information below each error is the list of constraints, in addition to "
                                       "those in the \"Overview\" tab, which all the errors satisfy."));
+
+        vbox->addWidget(summary_ = new Wt::WText);
+
         vbox->addWidget(grid_ = new Wt::WTable);
         grid_->setHeaderCount(1);
 
@@ -1346,7 +1373,37 @@ public:
         if (!outOfDate_)
             return;
         outOfDate_ = false;
+
+        // Summary
         std::vector<std::string> args;
+        SqlDatabase::StatementPtr q0 = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps, args));
+        bindSqlVariables(q0, args);
+        int nTests = q0->execute_int();
+        int nFails = 0;
+        if (0 == nTests) {
+            summary_->setText("No tests match the \"Overview\" constraints.");
+            grid_->setHidden(true);
+            return;
+        } else {
+            args.clear();
+            q0 = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps, args) +
+                                      "and " + gstate.dependencyNames["pass/fail"] + " = 'fail'");
+            bindSqlVariables(q0, args);
+            nFails = q0->execute_int();
+            if (0 == nFails) {
+                summary_->setText(StringUtility::plural(nTests, "tests") + " selected but none failed.");
+                grid_->setHidden(true);
+                return;
+            }
+
+            summary_->setText(StringUtility::numberToString(nFails) + " of " + StringUtility::numberToString(nTests) +
+                              " selected " + (1 == nFails ? "test fails." : "tests fail") +
+                              " (" + StringUtility::numberToString((int)round(100.0*nFails/nTests)) + "%).");
+            grid_->setHidden(false);
+        }
+
+        // Build the SQL query for finding the errors
+        args.clear();
         std::string passFailExpr = gstate.dependencyNames["pass/fail"];
         std::string sql = "select count(*) as n, status, first_error, " + passFailExpr +
                           sqlFromClause() +
@@ -1359,21 +1416,24 @@ public:
         SqlDatabase::StatementPtr q1 = gstate.tx->statement(sql);
         bindSqlVariables(q1, args);
 
+        // Reset the table
         grid_->clear();
         grid_->elementAt(0, 0)->addWidget(new Wt::WText("Count"));
         grid_->elementAt(0, 1)->addWidget(new Wt::WText("Status"));
         grid_->elementAt(0, 2)->addWidget(new Wt::WText("Error"));
-
         grid_->columnAt(0)->setWidth(Wt::WLength(4.0, Wt::WLength::FontEm));
         grid_->columnAt(1)->setWidth(Wt::WLength(6.0, Wt::WLength::FontEm));
 
+        // Fill the table
         Sawyer::Container::Map<std::string, std::string> statusCssClass;
         int i = 1;
         for (SqlDatabase::Statement::iterator iter1 = q1->begin(); iter1 != q1->end(); ++iter1) {
             int nErrors = iter1.get<int>(0);
+            int errorsPercent = round(100.0*nErrors/nTests);
             std::string status = iter1.get<std::string>(1);
             std::string message = iter1.get<std::string>(2);
-            grid_->elementAt(i, 0)->addWidget(new Wt::WText(StringUtility::numberToString(nErrors)));
+            grid_->elementAt(i, 0)->addWidget(new Wt::WText(StringUtility::numberToString(nErrors) + "<br/>" +
+                                                            StringUtility::numberToString(errorsPercent) + "%"));
             grid_->elementAt(i, 1)->addWidget(new Wt::WText(status));
             grid_->elementAt(i, 2)->addWidget(new Wt::WText(message, Wt::PlainText));
 
@@ -1507,8 +1567,8 @@ public:
         Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
         root()->setLayout(vbox);
 
-        styleSheet().addRule(".compiler-error",   "color:#680000; background-color:#ffc0c0;"); // reds
-        styleSheet().addRule(".compiler-warning", "color:#8f4000; background-color:#ffe0c7;"); // oranges
+        styleSheet().addRule(".output-error",   "color:#680000; background-color:#ffc0c0;"); // reds
+        styleSheet().addRule(".output-warning", "color:#8f4000; background-color:#ffe0c7;"); // oranges
         styleSheet().addRule(".output-separator", "background-color:#808080;");
 
         // Colors for pass-ratios.

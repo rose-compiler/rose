@@ -167,11 +167,14 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings) 
 #endif
                                                 "from '(?n)("
                                                 //----- regular expressions begin -----
-                                                "\\merror: .+"
-                                                "|catastrophic error: *\\n.+"
-                                                "|^.* \\[err\\]: terminated after .+"
-                                                "|^.* \\[err\\]: command died with .+"
-                                                "|^.* \\[err\\]: +what\\(\\): .*"
+                                                "\\merror: .+"                                  // general error
+                                                "|\\mERROR: [^0-9].*"                           // not error counts from cmake
+                                                "|\\[(ERROR|FATAL) *\\]"                        // Sawyer error message
+                                                "|catastrophic error: *\\n.+"                   // ROSE translator compile error
+                                                "|^.* \\[err\\]: terminated after .+"           // RTH timeout
+                                                "|^.* \\[err\\]: command died with .+"          // RTH_RUN failure
+                                                "|^.* \\[err\\]: +what\\(\\): .*"               // C++ exception
+                                                "|Assertion `.*'' failed\\.$"                   // failed <cassert> assertion
                                                 //----- regular expressions end -----
                                                 ")')"
                                                 " from attachments att" +
