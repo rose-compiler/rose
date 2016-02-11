@@ -1327,9 +1327,10 @@ public:
         : Wt::WContainerWidget(parent), outOfDate_(true) {
         Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
         setLayout(vbox);
-        vbox->addWidget(new Wt::WText("These are the most prevalent errors in the configurations selected in the "
-                                      "\"Overview\" tab. The information below each error is the list of "
-                                      "constraints, in addition to the \"Overview\" tab, which all the errors satisfy."));
+        vbox->addWidget(new Wt::WText("These are the most prevalent errors in the failing configurations selected in the "
+                                      "\"Overview\" tab.  The definition of \"failing\" can be found in the \"Settings\" "
+                                      "tab. The information below each error is the list of constraints, in addition to "
+                                      "those in the \"Overview\" tab, which all the errors satisfy."));
         vbox->addWidget(grid_ = new Wt::WTable);
         grid_->setHeaderCount(1);
 
@@ -1346,10 +1347,13 @@ public:
             return;
         outOfDate_ = false;
         std::vector<std::string> args;
-        std::string sql = "select count(*) as n, status, first_error" +
+        std::string passFailExpr = gstate.dependencyNames["pass/fail"];
+        std::string sql = "select count(*) as n, status, first_error, " + passFailExpr +
                           sqlFromClause() +
-                          sqlWhereClause(deps, args) + " and first_error is not null"
-                          " group by status, first_error"
+                          sqlWhereClause(deps, args) +
+                          " and first_error is not null"
+                          " and " + passFailExpr + " = 'fail'"
+                          " group by status, first_error, test_names.position"
                           " order by n desc"
                           " limit 15";
         SqlDatabase::StatementPtr q1 = gstate.tx->statement(sql);
@@ -1442,11 +1446,15 @@ public:
         //------------------------------
         // Criteria for passing a test.
         //------------------------------
+#if 0 // [Robb Matzke 2016-02-10]
         Wt::WHBoxLayout *passBox = new Wt::WHBoxLayout;
         vbox->addLayout(passBox);
+#else
+        Wt::WContainerWidget *passBox = new Wt::WContainerWidget;
+        vbox->addWidget(passBox);
+#endif
 
-        passBox->addWidget(new Wt::WLabel("For the \"pass/fail\" constraint, a configuration is said to have failed"
-                                          " it it fails before the "));
+        passBox->addWidget(new Wt::WText("A configuration is defined to have passed if it makes it to the "));
 
         passCriteria_ = new Wt::WComboBox;
         passBox->addWidget(passCriteria_);
@@ -1456,8 +1464,13 @@ public:
                 passCriteria_->setCurrentIndex(passCriteria_->count()-1);
         }
 
-        passBox->addWidget(new Wt::WLabel("test."));
+        passBox->addWidget(new Wt::WText("step, otherwise it is considered to have failed. This rule generates "
+                                         "the 'pass' or 'fail' values for the \"pass/fail\" property used throughout "
+                                         "this application."));
+
+#if 0 // [Robb Matzke 2016-02-10]
         passBox->addStretch(1);
+#endif
 
         vbox->addStretch(1);
 
@@ -1564,6 +1577,7 @@ private:
     }
 
     void updateAll() {
+        errors_->changeConstraints();
         resultsConstraints_->updateStatusCounts();
         getMatchingTests();
         updateDetails();
