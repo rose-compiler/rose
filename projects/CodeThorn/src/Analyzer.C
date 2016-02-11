@@ -1445,11 +1445,15 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             }
           }
         } else {
-          cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
-          cerr << "expr: "<< lhs->unparseToString()<<endl;
-          cerr << "type: "<<lhs->class_name()<<endl;
-          //cerr << "performing no update of state!"<<endl;
-          exit(1);
+          if(getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {
+            cout<<"WARNING: skipping pointer dereference: "<<lhs->unparseToString()<<endl;
+          } else {
+            cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+            cerr << "expr: "<< lhs->unparseToString()<<endl;
+            cerr << "type: "<<lhs->class_name()<<endl;
+            //cerr << "performing no update of state!"<<endl;
+            exit(1);
+          }
         }
       }
       return estateList;
