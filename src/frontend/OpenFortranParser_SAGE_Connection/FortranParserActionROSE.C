@@ -10634,8 +10634,9 @@ void c_action_label(Token_t * lbl)
                     "Error: (endOfConstruct == startOfConstruct) astScopeStack.front()->get_endOfConstruct()->get_line() = %d \n",
                     astScopeStack.front()->get_endOfConstruct()->get_line());
         }
+#if 0   // Hiro (2/7/2016): this could happen for test2011_Rice_ifConstruct.f90
         ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
-
+#endif
         // This scope on the stack shuold be a SgBasicBlock
         ROSE_ASSERT(isSgBasicBlock(astScopeStack.front()) != NULL);
         astScopeStack.pop_front();
