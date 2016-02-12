@@ -13742,15 +13742,18 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
       ROSE_ASSERT(cur_stmt);
       SgExpression * exp = cur_stmt->get_expression();
    // TV (05/03/2011) Catch the case "return ;" where exp is NULL
-      bool needRewrite = (exp != NULL) && !(isSgValueExp(exp));
+	 // JP (02/11/2016) It seems this is now modeled with an SgNullExpression
+	 		ROSE_ASSERT(exp != NULL);
+      bool needRewrite = !(isSgNullExpression(exp) || isSgValueExp(exp));
       if (needRewrite)
       {
         splitExpression(exp);
       }
-       // avoid reusing the statement
-      if (result>=1 )
+      // avoid reusing the statement
+      if (result>=1 ) {
          s = copyStatement(s);
-       insertStatementBefore(cur_stmt,s);
+			}
+      insertStatementBefore(cur_stmt,s);
       result ++;
     } // for
     if (stmts.size()==0 ) // a function without any return at all,
