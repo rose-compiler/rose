@@ -36,7 +36,7 @@ public:
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
         ASSERT_not_null(insn);
-        ASSERT_require(insn == operators->get_insn());
+        ASSERT_require(insn == operators->currentInstruction());
 
         // Update the PC to point to the fall-through instruction before we process the instruction, so that the semantics for
         // individual instructions (like branches) can override this choice by assigning a new value to PC.  However, we must
@@ -3747,8 +3747,8 @@ DispatcherM68k::regcache_init() {
 
 void
 DispatcherM68k::memory_init() {
-    if (BaseSemantics::StatePtr state = get_state()) {
-        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+    if (BaseSemantics::StatePtr state = currentState()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     mlog[WARN] <<"m68k memory state is using little-endian byte order\n";
@@ -3866,7 +3866,7 @@ DispatcherM68k::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*
     if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
         static const RegisterDescriptor REG_PC(m68k_regclass_spr, m68k_spr_pc, 0, 32);
         if (re->get_descriptor() == REG_PC) {
-            SgAsmInstruction *insn = get_insn();
+            SgAsmInstruction *insn = currentInstruction();
             ASSERT_not_null(insn);
             return operators->number_(32, insn->get_address() + 2);
         }

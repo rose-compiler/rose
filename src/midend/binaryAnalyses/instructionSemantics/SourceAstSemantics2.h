@@ -51,7 +51,7 @@ namespace SourceAstSemantics {
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for reference-counted semantic values. */
+/** Shared-ownership pointer for a binary-to-source semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Semantic values for generating C source code ASTs.
@@ -203,7 +203,7 @@ typedef BaseSemantics::StatePtr StatePtr;               /**< Pointer to states u
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for basic semantic operations. */
+/** Shared-ownership pointer for basic semantic operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Basic semantic operations.
@@ -214,6 +214,8 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  The semantic state is split between the @ref State object normally attached to semantic domains, and the side effect list
  *  stored in this RiscOperators object.  Neither is complete by itself. */
 class RiscOperators: public BaseSemantics::RiscOperators {
+    typedef BaseSemantics::RiscOperators Super;
+
 public:
     /** Side effect. */
     struct SideEffect {
@@ -250,14 +252,14 @@ private:
 protected:
     RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver)
         : BaseSemantics::RiscOperators(protoval, solver), executionHalted_(false) {
-        set_name("SourceAstSemantics");
+        name("SourceAstSemantics");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SourceAstSemantics::SValue
     }
 
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver), executionHalted_(false) {
-        set_name("SourceAstSemantics");
-        (void) SValue::promote(state->get_protoval()); // values must have SourceAstSemantics::SValue dynamic type
+        name("SourceAstSemantics");
+        (void) SValue::promote(state->protoval());      // values must have SourceAstSemantics::SValue dynamic type
     }
 
 public:
@@ -274,14 +276,14 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument because the base class expects one, but it is not used for this semantic domain. See set_solver() for
+     *  second argument because the base class expects one, but it is not used for this semantic domain. See @ref solver for
      *  details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
-     *  because the base class expects one, but it is not used for this semantic domain. See set_solver() for details. */
+     *  because the base class expects one, but it is not used for this semantic domain. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -425,7 +427,8 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,

@@ -324,7 +324,7 @@ RiscOperators::add_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain, c
     if (idx>=formatter.subdomain_names.size())
         formatter.subdomain_names.resize(idx+1, "");
     formatter.subdomain_names[idx] = name;
-    SValue::promote(get_protoval())->set_subvalue(idx, subdomain->get_protoval());
+    SValue::promote(protoval())->set_subvalue(idx, subdomain->protoval());
     return idx;
 }
 
@@ -352,7 +352,7 @@ void
 RiscOperators::print(std::ostream &stream, BaseSemantics::Formatter &formatter) const
 {
     for (Subdomains::const_iterator sdi=subdomains.begin(); sdi!=subdomains.end(); ++sdi)
-        stream <<"== " <<(*sdi)->get_name() <<" ==\n" <<(**sdi + formatter);
+        stream <<"== " <<(*sdi)->name() <<" ==\n" <<(**sdi + formatter);
 }
 
 void
@@ -806,11 +806,11 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg)
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt)
 {
     SValuePtr retval = svalue_empty(reg.get_nbits());
     SUBDOMAINS(sd, ())
-        retval->set_subvalue(sd.idx(), sd->readRegister(reg));
+        retval->set_subvalue(sd.idx(), sd->readRegister(reg, sd(dflt)));
     return retval;
 }
 

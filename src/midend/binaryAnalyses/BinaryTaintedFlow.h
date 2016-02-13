@@ -50,7 +50,7 @@ public:
         VarTaintList taints_;
 
     public:
-        /** Smart pointer for taint states. */
+        /** Shared-ownership pointer to taint states. See @ref heap_object_shared_ownership. */
         typedef boost::shared_ptr<State> Ptr;
 
     protected:

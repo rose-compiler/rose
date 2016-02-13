@@ -86,10 +86,10 @@ public:
     // Override the base class by initializing only the stack pointer register.
     BaseSemantics::StatePtr initialState() const {
         BaseSemantics::RiscOperatorsPtr ops = cpu()->get_operators();
-        BaseSemantics::StatePtr newState = ops->get_state()->clone();
+        BaseSemantics::StatePtr newState = ops->currentState()->clone();
         newState->clear();
         BaseSemantics::RegisterStateGenericPtr regState =
-            BaseSemantics::RegisterStateGeneric::promote(newState->get_register_state());
+            BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
 
         const RegisterDescriptor SP = cpu()->stackPointerRegister();
         rose_addr_t initialSp = 0;
@@ -114,12 +114,13 @@ public:
         if (P2::DataFlow::DfCfgVertex::BBLOCK == vertex->value().type()) {
             BaseSemantics::StatePtr retval = incomingState->clone();
             BaseSemantics::RiscOperatorsPtr ops = analysis_->cpu()->get_operators();
-            ops->set_state(retval);
+            ops->currentState(retval);
             ASSERT_not_null(vertex->value().bblock());
-            BaseSemantics::SValuePtr oldSp = retval->readRegister(cpu()->stackPointerRegister(), ops.get());
+            RegisterDescriptor SP = cpu()->stackPointerRegister();
+            BaseSemantics::SValuePtr oldSp = retval->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
             BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
                 cpu()->processInstruction(insn);
-                BaseSemantics::SValuePtr newSp = retval->readRegister(cpu()->stackPointerRegister(), ops.get());
+                BaseSemantics::SValuePtr newSp = retval->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
                 BaseSemantics::SValuePtr delta = ops->subtract(newSp, oldSp);
                 analysis_->adjustInstruction(insn, oldSp, newSp, delta);
                 oldSp = newSp;
@@ -170,11 +171,12 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
 
     // Build the initial state
     BaseSemantics::StatePtr initialState = xfer.initialState();
     BaseSemantics::RegisterStateGenericPtr initialRegState =
-        BaseSemantics::RegisterStateGeneric::promote(initialState->get_register_state());
+        BaseSemantics::RegisterStateGeneric::promote(initialState->registerState());
 
     // Run data flow analysis
     bool converged = true;
@@ -212,7 +214,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
             }
         }
         if (finalState)
-            finalRegState = BaseSemantics::RegisterStateGeneric::promote(finalState->get_register_state());
+            finalRegState = BaseSemantics::RegisterStateGeneric::promote(finalState->registerState());
     }
 
     // Get stack pointers for each basic block
@@ -220,15 +222,16 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK) {
             P2::BasicBlock::Ptr bblock = vertex.value().bblock();
             ASSERT_not_null(bblock);
-            BaseSemantics::SValuePtr sp0, sp1;;
+            BaseSemantics::SValuePtr sp0, sp1;
+            RegisterDescriptor SP = cpu_->stackPointerRegister();
             if (BaseSemantics::StatePtr state = dfEngine.getInitialState(vertex.id()))
-                sp0 = state->readRegister(cpu_->stackPointerRegister(), cpu_->get_operators().get());
+                sp0 = state->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
             if (BaseSemantics::StatePtr state = dfEngine.getFinalState(vertex.id()))
-                sp1 = state->readRegister(cpu_->stackPointerRegister(), cpu_->get_operators().get());
+                sp1 = state->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
             bblockStackPtrs_.insert(bblock->address(), SValuePair(sp0, sp1));
 
             if (sp0 && sp1) {
-                BaseSemantics::SValuePtr delta = cpu_->get_operators()->subtract(sp1, sp0);
+                BaseSemantics::SValuePtr delta = ops->subtract(sp1, sp0);
                 bblockDeltas_.insert(bblock->address(), delta);
             }
         }
@@ -237,10 +240,10 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // Functon stack delta is final stack pointer minus initial stack pointer.  This includes popping the return address from
     // the stack (if the function did that) and popping arguments (if the function did that).
     const RegisterDescriptor REG_SP = cpu_->stackPointerRegister();
-    functionStackPtrs_.first = initialRegState->readRegister(REG_SP, cpu_->get_operators().get());
+    functionStackPtrs_.first = initialRegState->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
     if (finalRegState) {
-        functionStackPtrs_.second = finalRegState->readRegister(REG_SP, cpu_->get_operators().get());
-        functionDelta_ = cpu_->get_operators()->subtract(functionStackPtrs_.second, functionStackPtrs_.first);
+        functionStackPtrs_.second = finalRegState->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+        functionDelta_ = ops->subtract(functionStackPtrs_.second, functionStackPtrs_.first);
     }
 
     hasResults_ = true;

@@ -230,7 +230,7 @@ BaseSemantics::RiscOperatorsPtr
 Partitioner::newOperators() const {
     Semantics::RiscOperatorsPtr ops =
         Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_, semanticMemoryParadigm_);
-    BaseSemantics::MemoryStatePtr mem = ops->get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
     if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
         ml->memoryMap(&memoryMap_);
     } else if (Semantics::MemoryMapStatePtr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {

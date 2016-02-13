@@ -21,7 +21,7 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Shared-ownership pointer for function. */
+/** Shared-ownership pointer for function. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class Function> FunctionPtr;
 
 /** Describes one function.

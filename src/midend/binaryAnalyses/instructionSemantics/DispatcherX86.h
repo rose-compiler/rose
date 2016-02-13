@@ -12,6 +12,7 @@ namespace InstructionSemantics2 {
 //                                      Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Shared-ownership pointer to an x86 instruction dispatcher. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {

@@ -984,7 +984,7 @@ Grammar::setUpStatements ()
 
   // In this case we want the Xness of the data member to match that of the outer terminal
      FunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type", "= NULL",
-                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (4/18/2005): Removed this data member since it is redundent with the firstNondefiningDeclaration in the base class (SgDeclarationStatement)
   // QY: need forward definition so that we can set definition pointer as NULL for forward decls 
@@ -1005,7 +1005,7 @@ Grammar::setUpStatements ()
 #if 0
   // QY:11/2/04 isn't p_orig_return_type already stored in p_type? should go through p_type then
   // FunctionDeclaration.setDataPrototype ( "SgType*", "orig_return_type", "= NULL",
-  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL | DEF2TYPE_TRAVERSAL, NO_DELETE);
+  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionDeclaration.setDataPrototype ( "int", "from_template", "= 0",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -1112,7 +1112,7 @@ Grammar::setUpStatements ()
   // (but not to the formal type system).  I am not clear if this type should be traversed, I think 
   // not, since it is a function type used only for the representation of syntax.
      FunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type_syntax", "= NULL",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL /* || DEF2TYPE_TRAVERSAL */, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/9/2014): Added boolean flag to communicate when the function's type syntax is different from 
   // the function's type.  However, when the type_syntax is non-null, it is always an equivalent type.
@@ -1479,9 +1479,9 @@ Grammar::setUpStatements ()
   // DQ (10/17/2007): Modified to reflect that the SgClassType should be cloned instead of copied, however, 
   // we might need a copy constructor to support this!
   // ClassDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ClassDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
      ClassDeclaration.setDataPrototype ( "SgClassDefinition*", "definition", "= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1735,11 +1735,11 @@ Grammar::setUpStatements ()
   // DQ (12/12/2011): SgTemplateType IR nodes were never used in the EDG 3.3 connection. They are only used in the newer EDG 4.3 connection.
   // DQ (11/20/2011): OLD INCORRECT COMMENT: Template declarations don't have a type, the SgTemplateType is used for template instantiations only.
   // TemplateClassDeclaration.setDataPrototype ( "SgTemplateType*", "type", "= NULL",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
   // TemplateClassDeclaration.setDataPrototype ( "SgType*", "type", "= NULL",
-  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
      TemplateClassDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
      TemplateClassDeclaration.setDataPrototype ( "SgTemplateClassDefinition*", "definition", "= NULL",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1830,7 +1830,7 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionDefinition*", "definition", "= NULL",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2214,7 +2214,7 @@ Grammar::setUpStatements ()
 
   // DQ (10/18/2007): Modified to force AST copy mechanim to copy the type (using CLONE_PTR option).
      EnumDeclaration.setDataPrototype ( "SgEnumType*", "type", "= NULL",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
 #if 0
      EnumDeclaration.setDataPrototype ( "SgInitializedNamePtrList", "enumerators", "= NULL",
@@ -2264,7 +2264,7 @@ Grammar::setUpStatements ()
 
   // DQ (8/12/2014): Adding support for enum field type specifier.
      EnumDeclaration.setDataPrototype ( "SgType*", "field_type", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
   // DQ (8/12/2014): Adding support for C++11 scoped enum declarations.
      EnumDeclaration.setDataPrototype("bool","isScopedEnum","= false",
@@ -2606,9 +2606,9 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TypedefDeclaration.setDataPrototype ( "SgTypedefType*", "type", "= NULL",
-  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypedefDeclaration.setDataPrototype ( "SgTypedefType*", "type", "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
   // DQ (7/22/2004): Where this has been changed to be a valid pointer in the AST 
   // (fix to EDG/Sage connetion), its traversal now causes a cycle in the example 

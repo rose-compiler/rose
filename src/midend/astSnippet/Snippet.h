@@ -12,10 +12,10 @@
 
 namespace rose {
 
-/** Smart pointer to a SnippetFile object.  SnippetFile objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a SnippetFile object.  See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class SnippetFile> SnippetFilePtr;
 
-/** Smart pointer to a Snippet object. Snippet objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a Snippet object. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class Snippet> SnippetPtr;
 
 /** Information about something that was inserted.
