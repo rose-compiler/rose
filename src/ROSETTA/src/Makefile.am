@@ -87,6 +87,7 @@ noinst_PROGRAMS = CxxGrammarMetaProgram
 CxxGrammarMetaProgram_SOURCES = \
    CxxGrammarMetaProgram.C \
    grammar.C \
+   grammarGenerator.C \
    grammarString.C \
    terminal.C \
    type.C \

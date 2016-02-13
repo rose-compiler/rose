@@ -192,8 +192,8 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         // Look at the top of the stack
         const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
         SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, ops->readRegister(SP),
-                                                        ops->get_protoval()->undefined_(ipWidth),
-                                                        ops->get_protoval()->boolean_(true)));
+                                                        ops->protoval()->undefined_(ipWidth),
+                                                        ops->protoval()->boolean_(true)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
             if (target) {
                 SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_anyIP));
