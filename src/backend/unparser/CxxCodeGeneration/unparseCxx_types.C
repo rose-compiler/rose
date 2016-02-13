@@ -3402,7 +3402,20 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                     if (ninfo2.supressArrayBound() == false)
                        {
                       // Unparse the array bound.
-                         unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+
+                      // DQ (2/12/2016): Adding support for variable length arrays.
+                      // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                         SgExpression* indexExpression = array_type->get_index();
+                         SgNullExpression* nullExpression = isSgNullExpression(indexExpression);
+                         if (nullExpression != NULL && array_type->get_is_variable_length_array() == true)
+                            {
+                           // The is the canonical normaled form for a type specified in a function parameter list of a prototype function.
+                              curprint("*");
+                            }
+                           else
+                            {
+                              unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                            }
                        }
                       else
                        {

@@ -3029,6 +3029,19 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #endif
           ROSE_ASSERT(func != NULL);
 
+#if 0
+       // DQ (2/10/2016): Adding support for C99 function parameters used as variable references in the function parameter list.
+          ROSE_ASSERT(func->get_functionParameterScope() == NULL);
+          SgFunctionParameterScope* functionParameterScope = new SgFunctionParameterScope();
+          ROSE_ASSERT(functionParameterScope != NULL);
+#if 0
+          printf ("NOTE: In buildNondefiningFunctionDeclaration_T(): building new functionParameterScope for nondefining function declaration: name = %s functionParameterScope = %p = %s \n",
+               nameWithTemplateArguments.str(),functionParameterScope,functionParameterScope->class_name().c_str());
+#endif
+          func->set_functionParameterScope(functionParameterScope);
+          ROSE_ASSERT(func->get_functionParameterScope() != NULL);
+#endif
+
        // DQ (5/1/2012): This should always be true.
           ROSE_ASSERT(func->get_file_info() == NULL);
 
