@@ -1,6 +1,4 @@
 
-#include "sage3basic.h"
-
 #include <StmtInfoCollect.h>
 #include <AstInterface_ROSE.h>
 
@@ -10,6 +8,13 @@
 #include <CommandOptions.h>
 #include <GraphIO.h>
 #include "ptr_anal_icfg_creator.h"
+//do not include the following files from rose.h
+#define CFG_ROSE_H
+#define CONTROLFLOWGRAPH_H
+#define PRE_H
+#define ASTDOTGENERATION_TEMPLATES_C
+#include <sage3.h>
+
 
 extern	int DEBUG_ICFG;
 extern	int DEBUG_STMT;
@@ -31,14 +36,14 @@ class PrintPtrAnalMap : public ProcessAstNode
        if (n != AST_NULL) {
           PtrAnal::VarRef p = m.translate_exp(n);
           if (p.name != "") {
-            std::cout << AstToString(n) << ":" << 
+            std::cout << AstInterface::AstToString(n) << ":" << 
              ((long) p.stmt) << p.name << "\n"; 
           }
       }
       else if (fa.IsStatement(_n)) {
           PtrAnal::StmtRef p = m.translate_stmt(_n);
           if (p.size()) {
-            std::cout << AstToString(_n) << ":" << 
+            std::cout << AstInterface::AstToString(_n) << ":" << 
              ((long) p.front()) << "->" << ((long)p.back()) << "\n"; 
           }
       }
@@ -51,7 +56,6 @@ class PrintPtrAnalMap : public ProcessAstNode
 int
 main ( int argc,  char * argv[] )
    {
-int a;
      if (argc <= 1) {
          PrintUsage(argv[0]);
          return -1;
@@ -60,7 +64,7 @@ int a;
 	DEBUG_STMT = 0;
 
     SgProject sageProject ( argc,argv);
-    SageInterface::changeAllBodiesToBlocks(&sageProject);
+    SageInterface::changeAllLoopBodiesToBlocks(&sageProject);
     CmdOptions::GetInstance()->SetOptions(argc, argv);
 
 
@@ -69,8 +73,9 @@ int a;
    ptr_Anal_ICFG_Creator op;
    int filenum = sageProject.numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgFile &sageFile = sageProject.get_file(i);
-     SgGlobal *root = sageFile.get_root();
+     SgSourceFile* sageFile = isSgSourceFile(sageProject.get_fileList()[i]);
+     ROSE_ASSERT(sageFile != NULL);
+     SgGlobal *root = sageFile->get_globalScope();
      AstInterfaceImpl scope(root);
      AstInterface fa(&scope);
      SgDeclarationStatementPtrList& declList = root->get_declarations ();

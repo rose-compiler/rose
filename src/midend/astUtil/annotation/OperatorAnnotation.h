@@ -14,7 +14,7 @@ class OperatorAnnotCollection
   public TypeCollection<Descriptor>
 {
  protected:
-  using TypeCollection<Descriptor>::typemap;
+  TypeCollection<Descriptor>::typemap;
  public:
   void read_descriptor( const OperatorDeclaration& target,
                         const std::string& annot, std::istream& in)
@@ -56,7 +56,7 @@ class OperatorAnnotCollection
   }
 };
 
-class ROSE_DLL_API OperatorInlineAnnotation
+class OperatorInlineAnnotation
 : public OperatorAnnotCollection<OperatorInlineDescriptor>
 {
   virtual bool read_annot_name( const std::string& annotName) const
@@ -104,7 +104,7 @@ class OperatorReadInfoCollection
       OperatorAnnotCollection<OperatorSideEffectDescriptor>::Dump();
     }
 };
-class ROSE_DLL_API OperatorSideEffectAnnotation : public FunctionSideEffectInterface
+class OperatorSideEffectAnnotation : public FunctionSideEffectInterface
 {
   OperatorModInfoCollection modInfo;
   OperatorReadInfoCollection readInfo;

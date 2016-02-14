@@ -1,6 +1,4 @@
 
-#include <sage3.h>
-
 #include <StmtInfoCollect.h>
 #include <AstInterface_ROSE.h>
 
@@ -9,6 +7,13 @@
 #include <iostream>
 #include <CommandOptions.h>
 #include <GraphIO.h>
+//do not include the following files from rose.h
+#define CFG_ROSE_H
+#define CONTROLFLOWGRAPH_H
+#define PRE_H
+#define ASTDOTGENERATION_TEMPLATES_C
+#include <sage3.h>
+
 
 void PrintUsage( char* name)
 {
@@ -27,14 +32,14 @@ class PrintPtrAnalMap : public ProcessAstNode
        if (n != AST_NULL) {
           PtrAnal::VarRef p = m.translate_exp(n);
           if (p.name != "") {
-            std::cout << AstToString(n) << ":" << 
+            std::cout << AstInterface::AstToString(n) << ":" << 
              ((long) p.stmt) << p.name << "\n"; 
           }
       }
       else if (fa.IsStatement(_n)) {
           PtrAnal::StmtRef p = m.translate_stmt(_n);
           if (p.size()) {
-            std::cout << AstToString(_n) << ":" << 
+            std::cout << AstInterface::AstToString(_n) << ":" << 
              ((long) p.front()) << "->" << ((long)p.back()) << "\n"; 
           }
       }
@@ -176,7 +181,7 @@ main ( int argc,  char * argv[] )
      }
 
     SgProject sageProject ( argc,argv);
-    SageInterface::changeAllBodiesToBlocks(&sageProject);
+    SageInterface::changeAllLoopBodiesToBlocks(&sageProject);
     CmdOptions::GetInstance()->SetOptions(argc, argv);
 
 
@@ -185,7 +190,6 @@ main ( int argc,  char * argv[] )
    for (int i = 0; i < filenum; ++i) {
 
      SgSourceFile* sageFile = isSgSourceFile(sageProject.get_fileList()[i]);
-     std::string filename = sageFile->get_file_info()->get_filename();
      ROSE_ASSERT(sageFile != NULL);
      SgGlobal *root = sageFile->get_globalScope();
 
@@ -198,8 +202,6 @@ main ( int argc,  char * argv[] )
              continue;
           SgFunctionDefinition *defn = func->get_definition();
           if (defn == 0)
-             continue;
-          if (defn->get_file_info()->get_filename() != filename)
              continue;
           op(fa, defn);
      }

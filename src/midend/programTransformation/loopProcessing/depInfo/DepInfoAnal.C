@@ -175,7 +175,7 @@ GetLoopInfo( const AstNodePtr& s)
        info.domain = op.get_domain1();
        info.domain.ClosureCond();
        if (DebugDep())
-         std::cerr << "domain of statement " << AstToString(s) << " is : " << info.domain.toString() << std::endl;
+         std::cerr << "domain of statement " << AstInterface::AstToString(s) << " is : " << info.domain.toString() << std::endl;
     }
     assert(!info.IsTop());
     return info;
@@ -283,7 +283,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                 ai.get_fileInfo(root,&fileName,&dummy);
                 */
                 /** Due to the time they take, do only the tests that are
-                *        called for
+                *         called for
                 **/
 #ifdef OMEGA
                 switch(test)
@@ -327,7 +327,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                         {
                                 handle = AdhocTest;
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
-                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);                            
+                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);                                
 
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
                                 plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
@@ -337,7 +337,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                         {
                                 handle = OmegaTest;
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
-                                d = omega_d=OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);         
+                                d = omega_d=OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);                
 
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
                                 plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
@@ -394,7 +394,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
                        const DepInfoAnal::StmtRefDep& ref, DepType deptype)
 {
   if (DebugDep())
-     std::cerr << "compute array dep between " << AstToString(ref.r1.ref) << " and " << AstToString(ref.r2.ref) << std::endl;
+     std::cerr << "compute array dep between " << AstInterface::AstToString(ref.r1.ref) << " and " << AstInterface::AstToString(ref.r2.ref) << std::endl;
 
   const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(ref.r1.stmt);
   const DepInfoAnal::LoopDepInfo& info2 = anal.GetStmtInfo(ref.r2.stmt);
@@ -519,7 +519,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
   {
           adhocProbNum++;
           //adhocDV = PlatoOmegaInterface::DirVector(result);
-                //buffer << "Prob\t" << adhocProbNum << " between " << lineNo1 << " and " << lineNo2 << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tTime\t" << adhocTime << std::endl;
+                  //buffer << "Prob\t" << adhocProbNum << " between " << lineNo1 << " and " << lineNo2 << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tTime\t" << adhocTime << std::endl;
           //buffer << "Prob\t" << adhocProbNum << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tDV\t" << adhocDV << "\tTime\t" << adhocTime <<  std::endl;
                 //PrintResults(buffer.str());
   }
@@ -650,7 +650,7 @@ ComputeDataDep( const AstNodePtr& s1,  const AstNodePtr& s2,
   if (!AnalyzeStmtRefs( fa, s1, cwRef1, crRef1) || 
         (s1 != s2 && !AnalyzeStmtRefs( fa, s2, cwRef2, crRef2))) {
        if (DebugDep())
-          std::cerr << "cannot determine side effects of statements: " << AstToString(s1) << "; or " << AstToString(s2) << std::endl;
+          std::cerr << "cannot determine side effects of statements: " << AstInterface::AstToString(s1) << "; or " << AstInterface::AstToString(s2) << std::endl;
        ComputeIODep( s1, s2, outDeps, inDeps, DEPTYPE_IO);
   }
   StmtRefDep ref = GetStmtRefDep( s1, AST_NULL, s2, AST_NULL);

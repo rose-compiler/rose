@@ -4,6 +4,7 @@
 #include "SymbolicSelect.h"
 #include "SymbolicPlus.h"
 #include "SymbolicMultiply.h"
+#include "CPPAstInterface.h"
 #include <string.h>
 
 using namespace std;
@@ -129,9 +130,9 @@ AstNodePtr SymbolicFunctionPtrCall :: CodeGen(AstInterface& fa) const
   for ( ++i ; i != args_end(); ++i) {
      SymbolicVal cur = *i;
      AstNodePtr curast = cur.CodeGen(fa); 
-     l.push_back(curast);
+     l.push_back(curast.get_ptr());
   }
-  return fa.CreateFunctionCall(func,l); 
+  return fa.CreateFunctionCall(func,l.begin(), l.end()); 
 }
 
 
@@ -145,9 +146,10 @@ AstNodePtr SymbolicDotExp:: CodeGen( AstInterface& fa) const
          string objtypename;
          fa.GetTypeInfo(objtype, 0, &objtypename);
 
-         string val = last_arg().toString(), type = last_arg().GetTypeName();
-         SymbolicConst tmp( objtypename + "::" + val, type);
-         return fa.CreateBinaryOP(AstInterface::BOP_DOT_ACCESS,obj, tmp.CodeGen(fa)); 
+         string val = last_arg().toString(), valtype = last_arg().GetTypeName();
+         CPPAstInterface fa2(fa);
+         AstNodePtr valast = (valtype == "field")? fa2.CreateFieldRef(objtypename, val) : fa2.CreateMethodRef(objtypename, val,true); 
+         return fa.CreateBinaryOP(AstInterface::BOP_DOT_ACCESS,obj, valast);
      }
 
 SymbolicVal ReadSymbolicExpr( int level, istream& in);
@@ -424,13 +426,6 @@ class ReplaceExtendibleParam : public SymbolicVisitor
         lb = atoi( (*(++i)).toString().c_str());
         ub = atoi( (*(++i)).toString().c_str());
         SymbolicVal cur = *(++i);
-
-     // DQ (9/12/2011): Enforce some reasonable bounds checking on input from the command line.
-     // Not sure what is reasonable nere, likely something much smaller.  Static analysis
-     // is suggesting some input validation, likely this is enough for now.
-        assert(lb > -1000 && lb < 1000);
-        assert(ub > -1000 && ub < 1000);
-
         for (int j = lb; j <= ub; ++j) {
           SymbolicVal tmp= ReplaceVal( cur, SymbolicVar(buf, AST_NULL), SymbolicConst(j));
           orig = tmp;
@@ -470,11 +465,11 @@ class ReplaceExtendibleParam : public SymbolicVisitor
 };
 
 bool SymbolicFunctionDeclarationGroup::
-get_val(AstInterface& fa, AstInterface::AstNodeList& argList, AstNodePtr& r) const
+get_val(AstInterface& fa, const AstInterface::AstNodeList& argList, AstNodePtr& r) const
 {
   std::vector<SymbolicVal> argVal;
   int index = 0;
-  for (AstInterface::AstNodeList::iterator p = argList.begin();
+  for (AstInterface::AstNodeList::const_iterator p = argList.begin();
        p != argList.end(); ++p, ++index) {
     AstNodePtr cur = *p;
     argVal.push_back( SymbolicAstWrap(cur));

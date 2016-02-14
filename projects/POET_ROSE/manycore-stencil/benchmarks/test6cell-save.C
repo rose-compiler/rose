@@ -921,7 +921,7 @@ int main(int argc,char *argv[])
     print_usage();
     return - 1;
   }
-  else {
+   else {
     numberOfIterations = atoi(argv[1]);
     global_arraySize = atoi(argv[2]);
     stencilSize = atoi(argv[3]);
@@ -942,7 +942,7 @@ int main(int argc,char *argv[])
   if (numaSupport != - 1) {
     printf("NUMA support is AVAILABLE \n");
   }
-  else {
+   else {
     printf("NUMA support is NOT available numaSupport = %d \n",numaSupport);
   }
   int arraySize[DIM] = {(0), (0), (0)};
@@ -1008,7 +1008,7 @@ int main(int argc,char *argv[])
 #ifndef __APPLE__
 // Get and report the time.
   clock_gettime(0,&time2);
-  (((cout<<"overall high-level time:") << diff(time1,time2) . tv_sec<<".") << diff(time1,time2) . tv_nsec) << endl;
+  ((((cout<<"overall high-level time:") << diff(time1,time2) . tv_sec)<<".") << diff(time1,time2) . tv_nsec) << endl;
 #endif
 #endif
 #endif //isComparedHighLevel
@@ -1051,7 +1051,7 @@ int main(int argc,char *argv[])
 #endif
   printf("time: %llu\n",b - a);
 #if isComparedHighLevel
-  array1 == array2?((void )0) : ((__assert_fail("array1 == array2","test6cell.C",404,__PRETTY_FUNCTION__) , ((void )0)));
+  array1 == array2?((void )0) : __assert_fail("array1 == array2","test6cell.C",404,__PRETTY_FUNCTION__);
 #endif
 #endif
 #if 0

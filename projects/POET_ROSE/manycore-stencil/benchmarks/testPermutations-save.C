@@ -698,7 +698,7 @@ int main()
   if (numaSupport != - 1) {
     printf("NUMA support is AVAILABLE \n");
   }
-  else {
+   else {
     printf("NUMA support is NOT available numaSupport = %d \n",numaSupport);
   }
   int arraySize[DIM] = {(0), (0), (0)};
@@ -743,8 +743,8 @@ int main()
 // Output the result
 #endif
 // Make sure that the results are the same.
-              tmp_array1 == tmp_array2?((void )0) : ((__assert_fail("tmp_array1 == tmp_array2","testPermutations.C",162,__PRETTY_FUNCTION__) , ((void )0)));
-              old_tmp_array1 == old_tmp_array2?((void )0) : ((__assert_fail("old_tmp_array1 == old_tmp_array2","testPermutations.C",163,__PRETTY_FUNCTION__) , ((void )0)));
+              tmp_array1 == tmp_array2?((void )0) : __assert_fail("tmp_array1 == tmp_array2","testPermutations.C",162,__PRETTY_FUNCTION__);
+              old_tmp_array1 == old_tmp_array2?((void )0) : __assert_fail("old_tmp_array1 == old_tmp_array2","testPermutations.C",163,__PRETTY_FUNCTION__);
             }
       }
 }

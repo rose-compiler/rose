@@ -15,7 +15,7 @@ class LoopPar;
 class CopyArrayOperator;
 class AstNodePtr;
 class LoopTransformInterface;
-class ROSE_DLL_API LoopTransformOptions 
+class LoopTransformOptions 
 {
  public:
   class OptRegistryType

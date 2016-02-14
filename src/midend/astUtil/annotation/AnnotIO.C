@@ -191,7 +191,7 @@ string read_num( istream& in )
           // tps: todo Windows. Not reached yet.
           assert(false);
 #else
-    throw ReadError("read number error: expecting numerics instead of " + string(1,c) );  
+    throw ReadError("read number error: expecting numerics instead of " + c );  
 #endif
   }
   string buf = "";

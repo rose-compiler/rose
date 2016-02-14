@@ -1,15 +1,17 @@
-1:func v:foo(v:foo-1-input) => (v:foo-0);
-2:v:foo-1-2=&v:foo-1-m;
-3:v:foo-1-q=&v:foo-1-m;
-4:v:foo-1-r=v:foo-1-q;
-5:v:foo-1-3=&v:foo-1-p;
-6:v:foo-1-pp=&v:foo-1-p;
-7:(*v:foo-1-pp)=v:foo-1-r
-8:v:foo-1-5=(*v:foo-1-pp)
-9:v:foo-1-4=op(v:foo-1-5 c:2 );
-10:v:foo-1-p1=op(v:foo-1-5 c:2 );
-11:v:foo-0=v:foo-1-input;
-12:return-v:foo;
+1:func v:gnu_dev_major(v:gnu_dev_major-1-__dev) => (v:gnu_dev_major-0);
+2:v:gnu_dev_major-1-5=op(v:gnu_dev_major-1-__dev c:8 );
+3:v:gnu_dev_major-1-6=op(c:0xfff );
+4:v:gnu_dev_major-1-4=op(v:gnu_dev_major-1-5 v:gnu_dev_major-1-6 );
+5:v:gnu_dev_major-1-10=op(v:gnu_dev_major-1-__dev c:32 );
+6:v:gnu_dev_major-1-9=op(v:gnu_dev_major-1-10 );
+7:v:gnu_dev_major-1-12=op(c:0xfff );
+8:v:gnu_dev_major-1-11=op(v:gnu_dev_major-1-12 );
+9:v:gnu_dev_major-1-8=op(v:gnu_dev_major-1-9 v:gnu_dev_major-1-11 );
+10:v:gnu_dev_major-1-7=op(v:gnu_dev_major-1-8 );
+11:v:gnu_dev_major-1-3=op(v:gnu_dev_major-1-4 v:gnu_dev_major-1-7 );
+12:v:gnu_dev_major-1-2=op(v:gnu_dev_major-1-3 );
+13:v:gnu_dev_major-0=v:gnu_dev_major-1-2;
+14:return-v:gnu_dev_major;
 ctrl: 1->2 always
 ctrl: 2->3 always
 ctrl: 3->4 always
@@ -21,52 +23,46 @@ ctrl: 8->9 always
 ctrl: 9->10 always
 ctrl: 10->11 always
 ctrl: 11->12 always
-13:return-v:foo;
 ctrl: 12->13 always
+ctrl: 13->14 always
+15:return-v:gnu_dev_major;
+ctrl: 14->15 always
 
  Mapping 
-SgBasicBlock:{char *p;char *q;char *r;char **pp;char m;q = &m;r = q;pp = &p;*pp = r;char *p1 =( *pp + 2);return input;}:2->12
-SgExprStatement:q = &m;:2->3
-SgAssignOp:q = &m:3v:foo-1-q
-SgVarRefExp:q:3v:foo-1-q
-SgAddressOfOp:&m:3v:foo-1-q
-SgVarRefExp:m:3v:foo-1-m
-SgExprStatement:r = q;:4->4
-SgAssignOp:r = q:4v:foo-1-r
-SgVarRefExp:r:4v:foo-1-r
-SgVarRefExp:q:4v:foo-1-q
-SgExprStatement:pp = &p;:5->6
-SgAssignOp:pp = &p:6v:foo-1-pp
-SgVarRefExp:pp:6v:foo-1-pp
-SgAddressOfOp:&p:6v:foo-1-pp
-SgVarRefExp:p:6v:foo-1-p
-SgExprStatement:*pp = r;:7->7
-SgAssignOp:*pp = r:7v:foo-1-r
-SgPointerDerefExp:*pp:7v:foo-1-r
-SgVarRefExp:pp:7v:foo-1-pp
-SgVarRefExp:r:7v:foo-1-r
-SgVariableDeclaration:char *p1 =( *pp + 2);:8->10
-SgInitializedName:p1:10v:foo-1-p1
-SgAddOp:( *pp + 2):10v:foo-1-p1
-SgPointerDerefExp:*pp:10v:foo-1-5
-SgVarRefExp:pp:8v:foo-1-pp
-SgIntVal:2:10c:2
-SgReturnStmt:return input;:11->12
-SgVarRefExp:input:11v:foo-1-input
+SgBasicBlock:{return(__dev >> 8 & 0xfff |(((unsigned int )(__dev >> 32)) &(~0xfff)));}:2->14
+SgReturnStmt:return(__dev >> 8 & 0xfff |(((unsigned int )(__dev >> 32)) &(~0xfff)));:2->14
+SgCastExp:(__dev >> 8 & 0xfff |(((unsigned int )(__dev >> 32)) &(~0xfff))):13v:gnu_dev_major-1-2
+SgBitOrOp:(__dev >> 8 & 0xfff |(((unsigned int )(__dev >> 32)) &(~0xfff))):12v:gnu_dev_major-1-3
+SgBitAndOp:__dev >> 8 & 0xfff:11v:gnu_dev_major-1-4
+SgRshiftOp:__dev >> 8:4v:gnu_dev_major-1-5
+SgVarRefExp:__dev:2v:gnu_dev_major-1-__dev
+SgIntVal:8:2c:8
+SgCastExp:0xfff:4v:gnu_dev_major-1-6
+SgIntVal:0xfff:3c:0xfff
+SgCastExp:(((unsigned int )(__dev >> 32)) &(~0xfff)):11v:gnu_dev_major-1-7
+SgBitAndOp:(((unsigned int )(__dev >> 32)) &(~0xfff)):10v:gnu_dev_major-1-8
+SgCastExp:((unsigned int )(__dev >> 32)):9v:gnu_dev_major-1-9
+SgRshiftOp:(__dev >> 32):6v:gnu_dev_major-1-10
+SgVarRefExp:__dev:5v:gnu_dev_major-1-__dev
+SgIntVal:32:5c:32
+SgCastExp:(~0xfff):9v:gnu_dev_major-1-11
+SgBitComplementOp:(~0xfff):8v:gnu_dev_major-1-12
+SgIntVal:0xfff:7c:0xfff
 END Mapping 
 
-14:func v:goo(v:goo-6-f) => (v:goo-0);
-15:allocate v:goo-6-8;
-16:v:goo-6-7=op(v:goo-6-8 );
-17:v:goo-6-content=op(v:goo-6-8 );
-18:() =v:goo-6-f(v:goo-6-content);
-19:allocate v:goo-6-9;
-20:allocate v:goo-6-content2;
-21:(v:goo-6-10) =v:foo(v:goo-6-content);
-22:(v:goo-6-output) =v:foo(v:goo-6-content);
-23:() =v:goo(v:foo);
-ctrl: 14->15 always
-ctrl: 15->16 always
+16:func v:gnu_dev_minor(v:gnu_dev_minor-13-__dev) => (v:gnu_dev_minor-0);
+17:v:gnu_dev_minor-13-17=op(c:0xff );
+18:v:gnu_dev_minor-13-16=op(v:gnu_dev_minor-13-__dev v:gnu_dev_minor-13-17 );
+19:v:gnu_dev_minor-13-21=op(v:gnu_dev_minor-13-__dev c:12 );
+20:v:gnu_dev_minor-13-20=op(v:gnu_dev_minor-13-21 );
+21:v:gnu_dev_minor-13-23=op(c:0xff );
+22:v:gnu_dev_minor-13-22=op(v:gnu_dev_minor-13-23 );
+23:v:gnu_dev_minor-13-19=op(v:gnu_dev_minor-13-20 v:gnu_dev_minor-13-22 );
+24:v:gnu_dev_minor-13-18=op(v:gnu_dev_minor-13-19 );
+25:v:gnu_dev_minor-13-15=op(v:gnu_dev_minor-13-16 v:gnu_dev_minor-13-18 );
+26:v:gnu_dev_minor-13-14=op(v:gnu_dev_minor-13-15 );
+27:v:gnu_dev_minor-0=v:gnu_dev_minor-13-14;
+28:return-v:gnu_dev_minor;
 ctrl: 16->17 always
 ctrl: 17->18 always
 ctrl: 18->19 always
@@ -74,112 +70,296 @@ ctrl: 19->20 always
 ctrl: 20->21 always
 ctrl: 21->22 always
 ctrl: 22->23 always
-
- Mapping 
-SgBasicBlock:{char *content = "dklafj";( *f)(content);char *content2 = new char [4UL];char *output = ::foo(content);::goo(::foo);}:15->23
-SgVariableDeclaration:char *content = "dklafj";:15->17
-SgInitializedName:content:17v:goo-6-content
-SgCastExp:"dklafj":17v:goo-6-content
-SgStringVal:"dklafj":17v:goo-6-8
-SgExprStatement:( *f)(content);:18->18
-SgVarRefExp:f:18v:goo-6-f
-SgVarRefExp:content:18v:goo-6-content
-SgVariableDeclaration:char *content2 = new char [4UL];:19->20
-SgInitializedName:content2:20v:goo-6-content2
-SgVariableDeclaration:char *output = foo(content);:21->22
-SgInitializedName:output:22v:goo-6-output
-SgFunctionRefExp:foo:22v:foo
-SgVarRefExp:content:22v:goo-6-content
-SgExprStatement:goo(foo);:23->23
-SgFunctionRefExp:goo:23v:goo
-SgFunctionRefExp:foo:23v:foo
-END Mapping 
-
-24:func v:test() => (v:test-0);
-25:(v:test-12-13) =v:malloc(c:(((sizeof(int )) *(10))));
-26:v:test-12-11=op(v:test-12-13 );
-27:v:test-12-intArray2=op(v:test-12-13 );
-28:v:test-12-intArray2=c:1;
-29:v:test-12-intArray=c:1;
+ctrl: 23->24 always
 ctrl: 24->25 always
 ctrl: 25->26 always
 ctrl: 26->27 always
 ctrl: 27->28 always
+29:return-v:gnu_dev_minor;
 ctrl: 28->29 always
 
  Mapping 
-SgBasicBlock:{int intArray[10UL];int *intArray2 =(int *)(::malloc((((sizeof(int )) *(10)))));intArray2[1] = 1;intArray[1] = 1;}:25->29
-SgVariableDeclaration:int *intArray2 =(int *)(malloc((((sizeof(int )) *(10)))));:25->27
-SgInitializedName:intArray2:27v:test-12-intArray2
-SgCastExp:(int *)(malloc((((sizeof(int )) *(10))))):27v:test-12-intArray2
-SgFunctionCallExp:(malloc((((sizeof(int )) *(10))))):27v:test-12-13
-SgFunctionRefExp:malloc:25v:malloc
-SgUnsignedLongVal:(((sizeof(int )) *(10))):25c:(((sizeof(int )) *(10)))
-SgExprStatement:intArray2[1] = 1;:28->28
-SgAssignOp:intArray2[1] = 1:28v:test-12-intArray2
-SgPntrArrRefExp:intArray2[1]:28v:test-12-intArray2
-SgIntVal:1:28c:1
-SgExprStatement:intArray[1] = 1;:29->29
-SgAssignOp:intArray[1] = 1:29v:test-12-intArray
-SgPntrArrRefExp:intArray[1]:29v:test-12-intArray
-SgIntVal:1:29c:1
+SgBasicBlock:{return(__dev & 0xff |(((unsigned int )(__dev >> 12)) &(~0xff)));}:17->28
+SgReturnStmt:return(__dev & 0xff |(((unsigned int )(__dev >> 12)) &(~0xff)));:17->28
+SgCastExp:(__dev & 0xff |(((unsigned int )(__dev >> 12)) &(~0xff))):27v:gnu_dev_minor-13-14
+SgBitOrOp:(__dev & 0xff |(((unsigned int )(__dev >> 12)) &(~0xff))):26v:gnu_dev_minor-13-15
+SgBitAndOp:__dev & 0xff:25v:gnu_dev_minor-13-16
+SgVarRefExp:__dev:18v:gnu_dev_minor-13-__dev
+SgCastExp:0xff:18v:gnu_dev_minor-13-17
+SgIntVal:0xff:17c:0xff
+SgCastExp:(((unsigned int )(__dev >> 12)) &(~0xff)):25v:gnu_dev_minor-13-18
+SgBitAndOp:(((unsigned int )(__dev >> 12)) &(~0xff)):24v:gnu_dev_minor-13-19
+SgCastExp:((unsigned int )(__dev >> 12)):23v:gnu_dev_minor-13-20
+SgRshiftOp:(__dev >> 12):20v:gnu_dev_minor-13-21
+SgVarRefExp:__dev:19v:gnu_dev_minor-13-__dev
+SgIntVal:12:19c:12
+SgCastExp:(~0xff):23v:gnu_dev_minor-13-22
+SgBitComplementOp:(~0xff):22v:gnu_dev_minor-13-23
+SgIntVal:0xff:21c:0xff
 END Mapping 
 
-30:func v:main(v:main-14-argc,v:main-14-argv) => (v:main-0);
-31:v:main-14-a=c:0;
-32:v:main-14-b=c:0;
-33:v:main-14-i=c:0;
-34:v:main-14-15=op(v:main-14-i c:10 );
-35:v:main-14-b=op(v:main-14-b c:5 );
-36:v:main-14-16=op(v:main-14-i );
-37:allocate v:main-14-17;
-38:() =v:printf(v:main-14-17,v:main-14-a,v:main-14-b);
-39:v:main-0=c:0;
-40:return-v:main;
+30:func v:gnu_dev_makedev(v:gnu_dev_makedev-24-__major,v:gnu_dev_makedev-24-__minor) => (v:gnu_dev_makedev-0);
+31:v:gnu_dev_makedev-24-30=op(c:0xff );
+32:v:gnu_dev_makedev-24-29=op(v:gnu_dev_makedev-24-__minor v:gnu_dev_makedev-24-30 );
+33:v:gnu_dev_makedev-24-33=op(c:0xfff );
+34:v:gnu_dev_makedev-24-32=op(v:gnu_dev_makedev-24-__major v:gnu_dev_makedev-24-33 );
+35:v:gnu_dev_makedev-24-31=op(v:gnu_dev_makedev-24-32 c:8 );
+36:v:gnu_dev_makedev-24-28=op(v:gnu_dev_makedev-24-29 v:gnu_dev_makedev-24-31 );
+37:v:gnu_dev_makedev-24-27=op(v:gnu_dev_makedev-24-28 );
+38:v:gnu_dev_makedev-24-38=op(c:0xff );
+39:v:gnu_dev_makedev-24-37=op(v:gnu_dev_makedev-24-38 );
+40:v:gnu_dev_makedev-24-36=op(v:gnu_dev_makedev-24-__minor v:gnu_dev_makedev-24-37 );
+41:v:gnu_dev_makedev-24-35=op(v:gnu_dev_makedev-24-36 );
+42:v:gnu_dev_makedev-24-34=op(v:gnu_dev_makedev-24-35 c:12 );
+43:v:gnu_dev_makedev-24-26=op(v:gnu_dev_makedev-24-27 v:gnu_dev_makedev-24-34 );
+44:v:gnu_dev_makedev-24-43=op(c:0xfff );
+45:v:gnu_dev_makedev-24-42=op(v:gnu_dev_makedev-24-43 );
+46:v:gnu_dev_makedev-24-41=op(v:gnu_dev_makedev-24-__major v:gnu_dev_makedev-24-42 );
+47:v:gnu_dev_makedev-24-40=op(v:gnu_dev_makedev-24-41 );
+48:v:gnu_dev_makedev-24-39=op(v:gnu_dev_makedev-24-40 c:32 );
+49:v:gnu_dev_makedev-24-25=op(v:gnu_dev_makedev-24-26 v:gnu_dev_makedev-24-39 );
+50:v:gnu_dev_makedev-0=v:gnu_dev_makedev-24-25;
+51:return-v:gnu_dev_makedev;
 ctrl: 30->31 always
 ctrl: 31->32 always
 ctrl: 32->33 always
 ctrl: 33->34 always
-ctrl: 34->35 true
+ctrl: 34->35 always
 ctrl: 35->36 always
-ctrl: 36->34 always
+ctrl: 36->37 always
 ctrl: 37->38 always
-ctrl: 34->37 false
 ctrl: 38->39 always
 ctrl: 39->40 always
-41:return-v:main;
 ctrl: 40->41 always
+ctrl: 41->42 always
+ctrl: 42->43 always
+ctrl: 43->44 always
+ctrl: 44->45 always
+ctrl: 45->46 always
+ctrl: 46->47 always
+ctrl: 47->48 always
+ctrl: 48->49 always
+ctrl: 49->50 always
+ctrl: 50->51 always
+52:return-v:gnu_dev_makedev;
+ctrl: 51->52 always
 
  Mapping 
-SgBasicBlock:{int i;int a = 0;int b = 0;i = 0;while(i < 10){b -= 5;i++;}::printf("%d %d\n",a,b);return 0;}:31->40
-SgVariableDeclaration:int a = 0;:31->31
-SgInitializedName:a:31v:main-14-a
-SgIntVal:0:31c:0
-SgVariableDeclaration:int b = 0;:32->32
-SgInitializedName:b:32v:main-14-b
-SgIntVal:0:32c:0
-SgExprStatement:i = 0;:33->33
-SgAssignOp:i = 0:33v:main-14-i
-SgVarRefExp:i:33v:main-14-i
-SgIntVal:0:33c:0
-SgWhileStmt:while(i < 10){b -= 5;i++;}:34->36
-SgExprStatement:i < 10;:34->34
-SgLessThanOp:i < 10:34v:main-14-15
-SgVarRefExp:i:34v:main-14-i
-SgIntVal:10:34c:10
-SgBasicBlock:{b -= 5;i++;}:35->36
-SgExprStatement:b -= 5;:35->35
-SgMinusAssignOp:b -= 5:35v:main-14-b
-SgVarRefExp:b:35v:main-14-b
-SgExprStatement:i++;:36->36
-SgPlusPlusOp:i++:36v:main-14-16
-SgVarRefExp:i:36v:main-14-i
-SgExprStatement:printf("%d %d\n",a,b);:37->38
-SgFunctionRefExp:printf:38v:printf
-SgStringVal:"%d %d\n":38v:main-14-17
-SgVarRefExp:a:38v:main-14-a
-SgVarRefExp:b:38v:main-14-b
-SgReturnStmt:return 0;:39->40
-SgIntVal:0:39c:0
+SgBasicBlock:{return(__minor & 0xff |(__major & 0xfff) << 8) |((unsigned long long )(__minor &(~0xff))) << 12 |((unsigned long long )(__major &(~0xfff))) << 32;}:31->51
+SgReturnStmt:return(__minor & 0xff |(__major & 0xfff) << 8) |((unsigned long long )(__minor &(~0xff))) << 12 |((unsigned long long )(__major &(~0xfff))) << 32;:31->51
+SgBitOrOp:(__minor & 0xff |(__major & 0xfff) << 8) |((unsigned long long )(__minor &(~0xff))) << 12 |((unsigned long long )(__major &(~0xfff))) << 32:50v:gnu_dev_makedev-24-25
+SgBitOrOp:(__minor & 0xff |(__major & 0xfff) << 8) |((unsigned long long )(__minor &(~0xff))) << 12:49v:gnu_dev_makedev-24-26
+SgCastExp:(__minor & 0xff |(__major & 0xfff) << 8):43v:gnu_dev_makedev-24-27
+SgBitOrOp:(__minor & 0xff |(__major & 0xfff) << 8):37v:gnu_dev_makedev-24-28
+SgBitAndOp:__minor & 0xff:36v:gnu_dev_makedev-24-29
+SgVarRefExp:__minor:32v:gnu_dev_makedev-24-__minor
+SgCastExp:0xff:32v:gnu_dev_makedev-24-30
+SgIntVal:0xff:31c:0xff
+SgLshiftOp:(__major & 0xfff) << 8:36v:gnu_dev_makedev-24-31
+SgBitAndOp:(__major & 0xfff):35v:gnu_dev_makedev-24-32
+SgVarRefExp:__major:34v:gnu_dev_makedev-24-__major
+SgCastExp:0xfff:34v:gnu_dev_makedev-24-33
+SgIntVal:0xfff:33c:0xfff
+SgIntVal:8:35c:8
+SgLshiftOp:((unsigned long long )(__minor &(~0xff))) << 12:43v:gnu_dev_makedev-24-34
+SgCastExp:((unsigned long long )(__minor &(~0xff))):42v:gnu_dev_makedev-24-35
+SgBitAndOp:(__minor &(~0xff)):41v:gnu_dev_makedev-24-36
+SgVarRefExp:__minor:40v:gnu_dev_makedev-24-__minor
+SgCastExp:(~0xff):40v:gnu_dev_makedev-24-37
+SgBitComplementOp:(~0xff):39v:gnu_dev_makedev-24-38
+SgIntVal:0xff:38c:0xff
+SgIntVal:12:42c:12
+SgLshiftOp:((unsigned long long )(__major &(~0xfff))) << 32:49v:gnu_dev_makedev-24-39
+SgCastExp:((unsigned long long )(__major &(~0xfff))):48v:gnu_dev_makedev-24-40
+SgBitAndOp:(__major &(~0xfff)):47v:gnu_dev_makedev-24-41
+SgVarRefExp:__major:46v:gnu_dev_makedev-24-__major
+SgCastExp:(~0xfff):46v:gnu_dev_makedev-24-42
+SgBitComplementOp:(~0xfff):45v:gnu_dev_makedev-24-43
+SgIntVal:0xfff:44c:0xfff
+SgIntVal:32:48c:32
+END Mapping 
+
+53:func v:foo(v:foo-44-input) => (v:foo-0);
+54:v:foo-44-45=&v:foo-44-m;
+55:v:foo-44-q=&v:foo-44-m;
+56:v:foo-44-r=v:foo-44-q;
+57:v:foo-44-46=&v:foo-44-p;
+58:v:foo-44-pp=&v:foo-44-p;
+59:(*v:foo-44-pp)=v:foo-44-r
+60:v:foo-44-48=(*v:foo-44-pp)
+61:v:foo-44-47=op(v:foo-44-48 c:2 );
+62:v:foo-44-p1=op(v:foo-44-48 c:2 );
+63:v:foo-0=v:foo-44-input;
+64:return-v:foo;
+ctrl: 53->54 always
+ctrl: 54->55 always
+ctrl: 55->56 always
+ctrl: 56->57 always
+ctrl: 57->58 always
+ctrl: 58->59 always
+ctrl: 59->60 always
+ctrl: 60->61 always
+ctrl: 61->62 always
+ctrl: 62->63 always
+ctrl: 63->64 always
+65:return-v:foo;
+ctrl: 64->65 always
+
+ Mapping 
+SgBasicBlock:{char *p;char *q;char *r;char **pp;char m;q = &m;r = q;pp = &p;*pp = r;char *p1 = *pp + 2;return input;}:54->64
+SgExprStatement:q = &m;:54->55
+SgAssignOp:q = &m:55v:foo-44-q
+SgVarRefExp:q:55v:foo-44-q
+SgAddressOfOp:&m:55v:foo-44-q
+SgVarRefExp:m:55v:foo-44-m
+SgExprStatement:r = q;:56->56
+SgAssignOp:r = q:56v:foo-44-r
+SgVarRefExp:r:56v:foo-44-r
+SgVarRefExp:q:56v:foo-44-q
+SgExprStatement:pp = &p;:57->58
+SgAssignOp:pp = &p:58v:foo-44-pp
+SgVarRefExp:pp:58v:foo-44-pp
+SgAddressOfOp:&p:58v:foo-44-pp
+SgVarRefExp:p:58v:foo-44-p
+SgExprStatement:*pp = r;:59->59
+SgAssignOp:*pp = r:59v:foo-44-r
+SgPointerDerefExp:*pp:59v:foo-44-r
+SgVarRefExp:pp:59v:foo-44-pp
+SgVarRefExp:r:59v:foo-44-r
+SgVariableDeclaration:char *p1 = *pp + 2;:60->62
+SgInitializedName:p1:62v:foo-44-p1
+SgAddOp:*pp + 2:62v:foo-44-p1
+SgPointerDerefExp:*pp:62v:foo-44-48
+SgVarRefExp:pp:60v:foo-44-pp
+SgIntVal:2:62c:2
+SgReturnStmt:return input;:63->64
+SgVarRefExp:input:63v:foo-44-input
+END Mapping 
+
+66:func v:goo(v:goo-49-f) => (v:goo-0);
+67:allocate v:goo-49-51;
+68:v:goo-49-50=op(v:goo-49-51 );
+69:v:goo-49-content=op(v:goo-49-51 );
+70:() =v:goo-49-f(v:goo-49-content);
+71:allocate v:goo-49-52;
+72:allocate v:goo-49-content2;
+73:(v:goo-49-53) =v:foo(v:goo-49-content);
+74:(v:goo-49-output) =v:foo(v:goo-49-content);
+75:() =v:goo(v:foo);
+ctrl: 66->67 always
+ctrl: 67->68 always
+ctrl: 68->69 always
+ctrl: 69->70 always
+ctrl: 70->71 always
+ctrl: 71->72 always
+ctrl: 72->73 always
+ctrl: 73->74 always
+ctrl: 74->75 always
+
+ Mapping 
+SgBasicBlock:{char *content = "dklafj";f(content);char *content2 = new char [4];char *output = foo(content);goo(foo);}:67->75
+SgVariableDeclaration:char *content = "dklafj";:67->69
+SgInitializedName:content:69v:goo-49-content
+SgCastExp:"dklafj":69v:goo-49-content
+SgStringVal:"dklafj":69v:goo-49-51
+SgExprStatement:f(content);:70->70
+SgVarRefExp:f:70v:goo-49-f
+SgVarRefExp:content:70v:goo-49-content
+SgVariableDeclaration:char *content2 = new char [4];:71->72
+SgInitializedName:content2:72v:goo-49-content2
+SgVariableDeclaration:char *output = foo(content);:73->74
+SgInitializedName:output:74v:goo-49-output
+SgFunctionRefExp:foo:74v:foo
+SgVarRefExp:content:74v:goo-49-content
+SgExprStatement:goo(foo);:75->75
+SgFunctionRefExp:goo:75v:goo
+SgFunctionRefExp:foo:75v:foo
+END Mapping 
+
+76:func v:test() => (v:test-0);
+77:v:test-55-58=op(c:10 );
+78:v:test-55-57=op(c:sizeof(int ) v:test-55-58 );
+79:(v:test-55-56) =v:malloc(v:test-55-57);
+80:v:test-55-54=op(v:test-55-56 );
+81:v:test-55-intArray2=op(v:test-55-56 );
+82:v:test-55-intArray2=c:1;
+83:v:test-55-intArray=c:1;
+ctrl: 76->77 always
+ctrl: 77->78 always
+ctrl: 78->79 always
+ctrl: 79->80 always
+ctrl: 80->81 always
+ctrl: 81->82 always
+ctrl: 82->83 always
+
+ Mapping 
+SgBasicBlock:{int intArray[10];int *intArray2 =(int *)(malloc(sizeof(int ) * 10));intArray2[1] = 1;intArray[1] = 1;}:77->83
+SgVariableDeclaration:int *intArray2 =(int *)(malloc(sizeof(int ) * 10));:77->81
+SgInitializedName:intArray2:81v:test-55-intArray2
+SgCastExp:(int *)(malloc(sizeof(int ) * 10)):81v:test-55-intArray2
+SgFunctionCallExp:(malloc(sizeof(int ) * 10)):81v:test-55-56
+SgFunctionRefExp:malloc:79v:malloc
+SgMultiplyOp:sizeof(int ) * 10:79v:test-55-57
+SgSizeOfOp:sizeof(int ):78c:sizeof(int )
+SgCastExp:10:78v:test-55-58
+SgIntVal:10:77c:10
+SgExprStatement:intArray2[1] = 1;:82->82
+SgAssignOp:intArray2[1] = 1:82v:test-55-intArray2
+SgPntrArrRefExp:intArray2[1]:82v:test-55-intArray2
+SgIntVal:1:82c:1
+SgExprStatement:intArray[1] = 1;:83->83
+SgAssignOp:intArray[1] = 1:83v:test-55-intArray
+SgPntrArrRefExp:intArray[1]:83v:test-55-intArray
+SgIntVal:1:83c:1
+END Mapping 
+
+84:func v:main(v:main-59-argc,v:main-59-argv) => (v:main-0);
+85:v:main-59-a=c:0;
+86:v:main-59-b=c:0;
+87:v:main-59-i=c:0;
+88:v:main-59-60=op(v:main-59-i c:10 );
+89:v:main-59-b=op(v:main-59-b c:5 );
+90:v:main-59-61=op(v:main-59-i );
+91:allocate v:main-59-62;
+92:() =v:printf(v:main-59-62,v:main-59-a,v:main-59-b);
+ctrl: 84->85 always
+ctrl: 85->86 always
+ctrl: 86->87 always
+ctrl: 87->88 always
+ctrl: 88->89 true
+ctrl: 89->90 always
+ctrl: 90->88 always
+ctrl: 91->92 always
+ctrl: 88->91 false
+
+ Mapping 
+SgBasicBlock:{int i;int a = 0;int b = 0;i = 0;while(i < 10){b -= 5;i++;}printf("%d %d\n",a,b);}:85->92
+SgVariableDeclaration:int a = 0;:85->85
+SgInitializedName:a:85v:main-59-a
+SgIntVal:0:85c:0
+SgVariableDeclaration:int b = 0;:86->86
+SgInitializedName:b:86v:main-59-b
+SgIntVal:0:86c:0
+SgExprStatement:i = 0;:87->87
+SgAssignOp:i = 0:87v:main-59-i
+SgVarRefExp:i:87v:main-59-i
+SgIntVal:0:87c:0
+SgWhileStmt:while(i < 10){b -= 5;i++;}:88->90
+SgExprStatement:i < 10;:88->88
+SgLessThanOp:i < 10:88v:main-59-60
+SgVarRefExp:i:88v:main-59-i
+SgIntVal:10:88c:10
+SgBasicBlock:{b -= 5;i++;}:89->90
+SgExprStatement:b -= 5;:89->89
+SgMinusAssignOp:b -= 5:89v:main-59-b
+SgVarRefExp:b:89v:main-59-b
+SgExprStatement:i++;:90->90
+SgPlusPlusOp:i++:90v:main-59-61
+SgVarRefExp:i:90v:main-59-i
+SgExprStatement:printf("%d %d\n",a,b);:91->92
+SgFunctionRefExp:printf:92v:printf
+SgStringVal:"%d %d\n":92v:main-59-62
+SgVarRefExp:a:92v:main-59-a
+SgVarRefExp:b:92v:main-59-b
 END Mapping 
 

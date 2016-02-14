@@ -274,7 +274,7 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
            diff = diff / c;   
            if (odiff != diff * c)
                           {
-                                        //DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_NONE)));
+                                          //DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_NONE)));
                                         result[i][j] = DepRel(DEPDIR_NONE);
                                         return true;
            }

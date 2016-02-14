@@ -213,7 +213,7 @@ class IntDescriptor
 };
 //! A descriptor with begin(left) and end(right) characters, such as {x}, (x), etc
 template <class Descriptor, char left, char right>
-class ROSE_DLL_API CloseDescriptor : public Descriptor {
+class CloseDescriptor : public Descriptor {
  public:
   bool read( std::istream& in);
   void write(std::ostream& out) const ;

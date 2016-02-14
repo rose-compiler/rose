@@ -8,9 +8,10 @@
 #include "AnalysisInterface.h"
 #include "union_find.h"
 #include <map>
+#include <list>
 #include <sstream>
 
-class ROSE_DLL_API StmtInfoCollect : public ProcessAstTreeBase
+class StmtInfoCollect : public ProcessAstTreeBase
 { 
  protected:
   struct ModRecord{
@@ -44,7 +45,7 @@ class ROSE_DLL_API StmtInfoCollect : public ProcessAstTreeBase
 };
 
 class FunctionSideEffectInterface;
-class ROSE_DLL_API StmtSideEffectCollect 
+class StmtSideEffectCollect 
 : public StmtInfoCollect, public SideEffectAnalysisInterface
 {
  private:
@@ -84,15 +85,17 @@ class Ast2StringMap {
   typedef std::map<AstNodePtr, std::string, std::less<AstNodePtr> > MapType;
   MapType astmap;
   int cur;
- public:
+  static Ast2StringMap* handle;
   Ast2StringMap() : cur(0) {}
+  ~Ast2StringMap() {}
+ public:
+  static Ast2StringMap* inst();
   std::string get_string( const AstNodePtr& s); 
   std::string get_string( const AstNodePtr& s) const; 
   std::string lookup_string( const AstNodePtr& s) const; 
 };
 
 class InterProcVariableUniqueRepr {
-  static Ast2StringMap astmap;
  public: 
 
   static std:: string  // get name for the ith parameter of function 
@@ -106,7 +109,7 @@ class InterProcVariableUniqueRepr {
   static std:: string 
   get_unique_name(const std::string& fname, const AstNodePtr& scope, 
                                const std::string& varname)
-    { return fname + "-" + (scope==0? "" : astmap.get_string(scope))
+    { return fname + "-" + (scope==0? "" : Ast2StringMap::inst()->get_string(scope))
                    + "-" + varname; }
 
   static std:: string 
@@ -118,13 +121,13 @@ class InterProcVariableUniqueRepr {
 
 class FunctionAliasInterface;
 // flow insensitive alias analysis for named variables only
-class ROSE_DLL_API StmtVarAliasCollect 
+class StmtVarAliasCollect 
 : public StmtInfoCollect, public AliasAnalysisInterface
 {
  public:
    class VarAliasMap {
       std::map<std::string, UF_elem*, std::less<std::string> > aliasmap;
-      Ast2StringMap scopemap;
+      static Ast2StringMap scopemap;
      public:
        ~VarAliasMap() {
          for (std::map<std::string, UF_elem*, std::less<std::string> >::

@@ -4,6 +4,7 @@
 #include "SymbolicPlus.h"
 #include "SymbolicSelect.h"
 
+#include <list>
 #include <stdio.h>
 #include <sstream>
 
@@ -74,7 +75,7 @@ AstNodePtr SymbolicAstWrap::CodeGen( AstInterface &fa) const
 
 std::string SymbolicAstWrap::toString() const
 {
-   return "AstWrap(" + AstToString(ast) + ")";
+   return "AstWrap(" + AstInterface::AstToString(ast) + ")";
 }
 
 void SymbolicAstWrap::Dump() const
@@ -118,19 +119,22 @@ bool SymbolicFunction:: operator == (const SymbolicFunction& that) const
 
 AstNodePtr SymbolicFunction :: CodeGen( AstInterface &_fa) const
 {
-  AstInterface::AstNodeList l;
+  AstNodeList l;
   for (const_iterator i = args.begin(); i != args.end(); ++i) {
      SymbolicVal cur = *i;
      AstNodePtr curast = cur.CodeGen(_fa); 
-     l.push_back(curast);
+     l.push_back(curast.get_ptr());
   }
   if (t == AstInterface::OP_NONE) {
-     return _fa.CreateFunctionCall( op, l);
+     return _fa.CreateFunctionCall( op, l.begin(), l.end());
   }
   else if (t == AstInterface::OP_ARRAY_ACCESS) {
-        AstNodePtr arr = l.front();
-        l.pop_front();
-        return _fa.CreateArrayAccess(arr, l);
+        AstNodeList::const_iterator b = l.begin();
+        AstNodePtr arr = *b;
+        for (++b; b != l.end(); ++b) {
+           arr =  _fa.CreateArrayAccess(arr, *b);
+        }
+        return arr;
      }
   else if (t == AstInterface::OP_ASSIGN && l.size() == 2) {
         return _fa.CreateAssignment(l.front(), l.back());
@@ -149,13 +153,13 @@ AstNodePtr SymbolicSelect:: CodeGen(  AstInterface &fa ) const
       AstInterface::AstNodeList list;
       for (OpdIterator iter = GetOpdIterator(); !iter.ReachEnd(); iter.Advance()) {
            AstNodePtr p = Term2Val(iter.Current()).CodeGen(fa);
-           list.push_back(p);
+           list.push_back(p.get_ptr());
            ++size;
       }
       assert( size > 1);
       std::string func = (opt< 0)? "min" : "max";
 
-      return fa.CreateFunctionCall(func, list);
+      return fa.CreateFunctionCall(func, list.begin(), list.end());
    }
 
 void SymbolicBound:: 
@@ -348,7 +352,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
     case AstInterface::UOP_INCR1:
         return new SymbolicFunction( opr, "++", v);
     default:
-       std::cerr << "Cannot handle " << AstToString(exp) << ":" << opr << "\n";
+       std::cerr << "Cannot handle " << AstInterface::AstToString(exp) << ":" << opr << "\n";
        assert(false);
      }
   }

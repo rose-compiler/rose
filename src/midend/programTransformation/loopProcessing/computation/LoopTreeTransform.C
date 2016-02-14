@@ -94,7 +94,7 @@ class ObserveTransform
 };
 
 LoopTreeNode*  LoopTreeDistributeNode ::
-Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, ObserveTransform &ob, 
+Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, int pos, ObserveTransform &ob, 
             LoopTreeNode** loc)
 {
   if (sel(n)) return n; 
@@ -105,7 +105,7 @@ Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, ObserveTransform &ob,
   while (cur != 0) {
     tmp1 = cur;
     cur = cur->NextSibling();
-    tmp = Distribute( tmp1, sel, ob);
+    tmp = Distribute( tmp1, sel, pos, ob);
     if (tmp != tmp1) 
        break;
   }
@@ -116,7 +116,7 @@ Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, ObserveTransform &ob,
       while (cur != 0) {
           tmp1 = cur;
           cur = cur->NextSibling();
-          tmp = Distribute( tmp1, sel, ob);
+          tmp = Distribute( tmp1, sel, pos, ob);
           if (tmp != 0) 
              break;
           else if (loc != 0) *loc = tmp1;
@@ -140,14 +140,14 @@ Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, ObserveTransform &ob,
   while (cur != 0) {
      tmp1 = cur;
      cur = cur->NextSibling();
-     tmp = Distribute( tmp1, sel, ob);
+     tmp = Distribute( tmp1, sel, pos, ob);
      if (tmp != 0) {
         UnlinkNode(tmp);
         tmp->Link(n1, LoopTreeNode::AsLastChild);
      }
   }
 
-  DistNodeInfo *info = new DistNodeInfo( n, n1);
+  DistNodeInfo *info = new DistNodeInfo( n, n1, pos);
   ob.AddTransformInfo( info );
 
   return n1;
@@ -170,7 +170,7 @@ DistributeBefore(LoopTreeNode* parent, LoopTreeNode* loc)
   UnlinkNode(loc);
   loc->Link(n, LoopTreeNode::AsLastChild);
   if (n != 0) {
-     DistNodeInfo info( parent, n);
+     DistNodeInfo info( parent, n, -1);
      Notify(info);
   }
   return n;
@@ -180,22 +180,23 @@ LoopTreeNode* LoopTreeDistributeNode ::
 operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, Location config)
 {
    ObserveTransform ob;
-   LoopTreeNode* loc = 0;
-   LoopTreeNode *n1 = Distribute( n, stmts, ob, &loc);
-   if (n1 != n && n1 != 0) {
-     switch(config) {
-     case ORIG:
-        if (loc != 0) {
-            loc = DistributeBefore(n, loc);
-        }
+   LoopTreeNode* loc = 0, *n1=0;
+   switch(config) {
      case BEFORE:
+        {
+        n1 = Distribute( n, stmts, -1, ob, &loc);
+        if (n1 != n && n1 != 0) 
         n1->Link( n, LoopTreeNode::AsPrevSibling); break;
+        }
      case AFTER:
-        n1->Link( n, LoopTreeNode::AsNextSibling); break;
+        {
+        n1 = Distribute( n, stmts, 1, ob, &loc);
+        if (n1 != n && n1 != 0) 
+            n1->Link( n, LoopTreeNode::AsNextSibling); break;
+        }
      default: assert(0);
      }
      ob.Notify();
-   }
    return n1;
 }
 
@@ -593,7 +594,7 @@ std::string SelectArray::toString() const
          r = r + ":" + (*selp).get_incr().toString() + ":" + (*selp).get_size().toString() + ":";
       r = r + "; ";
   }
-  r = r + ")" + ":" + AstToString(prep); 
+  r = r + ")" + ":" + AstInterface::AstToString(prep); 
   return r;
 }
 
@@ -656,7 +657,7 @@ void SelectArray:: set_bufname(AstInterface& fa)
     SymbolicVal copysize = bufsize[bufsize.size()-1];
     if (!scalar_repl()) {
        AstInterface::AstNodeList bufsizes;
-       bufsizes.push_back(copysize.CodeGen(fa));
+       bufsizes.push_back(copysize.CodeGen(fa).get_ptr());
        buftype = fa.GetArrayType(buftype, bufsizes);
        bufname = fa.NewVar(buftype, arrname + "_buf", true);
     } 
@@ -717,10 +718,8 @@ buf_codegen(AstInterface& fa, const SymbolicVal& bufoffset) const
 {
    int offsetval=-1;
    if (!bufoffset.isConstInt(offsetval)) {
-      AstInterface::AstNodeList bufindex;
       AstNodePtr offsetAST = bufoffset.CodeGen(fa);
-      bufindex.push_back(offsetAST);
-      return fa.CreateArrayAccess( fa.CreateVarRef(bufname), bufindex);
+      return fa.CreateArrayAccess( fa.CreateVarRef(bufname), offsetAST);
    }
    return buf_codegen(fa, offsetval);
 }
@@ -804,7 +803,7 @@ AstNodePtr SelectArray::allocate_codegen(AstInterface& fa) const
    int bufsizeval = -1;
    if (!sz.isConstInt(bufsizeval))  {
      AstInterface::AstNodeList bufsizevec;
-     bufsizevec.push_back(sz.CodeGen(fa));
+     bufsizevec.push_back(sz.CodeGen(fa).get_ptr());
      AstNodePtr alloc = 
            fa.CreateAllocateArray(fa.CreateVarRef(bufname),basetype, bufsizevec);
      if (prep == 0)

@@ -1,11 +1,7 @@
-//do not include the following files from rose.h
-#define CFG_ROSE_H
-#define CONTROLFLOWGRAPH_H
-#define PRE_H
-#define ASTDOTGENERATION_TEMPLATES_C
-
+#include <sage3basic.h>
+#include "unparser.h"
+#include "unparser_opt.h"
 #include "AstInterface.h"
-#include "rose.h"
 #include "AstInterface_ROSE.h"
 #include <stdlib.h>
 #include <iostream>
