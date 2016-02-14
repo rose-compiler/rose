@@ -27,7 +27,7 @@ template <class Node>
 void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
 template <class Node>
 void BuildCFG ( AstInterface& fa, const AstInterface::AstNodeList& head, BuildCFGConfig<Node>& g);
-}
+};
 
 
 namespace OpenAnalysis {
@@ -46,7 +46,7 @@ void OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng);
 
 template <class Node>
 void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
-}
+};
 
 bool debug_cfg();
 
@@ -58,10 +58,8 @@ inline std::string CFGConfig::EdgeType2String( EdgeType e)
   case ALWAYS: return "always";
   default:
      assert(false);
+     return "error";
   }
-
-// DQ (11/3/2011): Added return (caught by new EDG compiling ROSE).
-   return "error";
 }
 
 template <class Node>
@@ -102,14 +100,14 @@ class BuildCFGTraverse : public ProcessAstTree
     AstNodePtr first;
     if (fa.IsBlock(s) && (first = fa.GetBlockFirstStmt(s)) == AST_NULL) {
       if (debug_cfg())
-         std::cerr << "block " << AstToString(s) << " is empty " << std::endl;
+         std::cerr << "block " << AstInterface::AstToString(s) << " is empty " << std::endl;
       return true;
     }
     else {
       if (debug_cfg()) {
-         std::cerr << "block " << AstToString(s) << " is not empty " ;
+         std::cerr << "block " << AstInterface::AstToString(s) << " is not empty " ;
          if (first != AST_NULL) 
-            std::cerr << "first statement: " << AstToString(first) << std::endl;
+            std::cerr << "first statement: " << AstInterface::AstToString(first) << std::endl;
          else
             std::cerr << std::endl;
       }
@@ -132,11 +130,11 @@ class BuildCFGTraverse : public ProcessAstTree
    {
       if (debug_cfg()) {
          std::cerr << "mapping stmt " << ((t == START)? "START" : "EXIT");
-         std::cerr << AstToString(s) << " to " << n << std::endl;
+         std::cerr << AstInterface::AstToString(s) << " to " << n << std::endl;
       }
       switch (t) {
       case EXIT:
-         exitMap.InsertMapping(s.get_ptr(), n);
+         exitMap.InsertMapping(s.get_ptr(), n); break;
          break;
       case START:
          startMap.InsertMapping(s.get_ptr(), n);
@@ -179,7 +177,7 @@ class BuildCFGTraverse : public ProcessAstTree
        else
           graph.AddNodeStmt(n, s); 
        if (debug_cfg()) {
-          std::cerr << " add stmt " << AstToString(s);
+          std::cerr << " add stmt " << AstInterface::AstToString(s);
           std::cerr << " to node " << n << std::endl;
        }
        if (node == n)
@@ -434,7 +432,7 @@ class BuildCFGTraverse : public ProcessAstTree
   virtual bool ProcessStmt(AstInterface &fa, const AstNodePtr& s)
      {
        if (debug_cfg()) 
-          std::cerr << "processing stmt " << AstToString(s) << std::endl;
+          std::cerr << "processing stmt " << AstInterface::AstToString(s) << std::endl;
 
          Node *lastNode = GetCurNode();
          Node *n = GetStmtNode(s, START);

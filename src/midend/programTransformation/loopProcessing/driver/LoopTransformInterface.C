@@ -101,19 +101,30 @@ CreateArrayAccess( const SymbolicVal& arr, const SymbolicVal& index)
    return SymbolicFunction(AstInterface::OP_ARRAY_ACCESS,funcname, arr,index);
 }
 
+AstNodePtr LoopTransformInterface::
+CreateArrayAccess( const AstNodePtr& arr, AstInterface::AstList& index) 
+  { assert(fa != 0);
+    if (arrayInfo != 0){ return arrayInfo->CreateArrayAccess(*fa,arr,index); }
+    else {
+       AstNodePtr res = arr;
+       for (AstNodeList::const_reverse_iterator p = index.rbegin(); 
+            p != index.rend(); ++p) 
+         { res = AstInterface::CreateArrayAccess(res, *p); }
+       return res;
+    }
+  }
+
 AstNodePtr ArrayUseAccessFunction::
 CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
-                                AstInterface::AstNodeList& index)
+                                const AstNodeList& index)
 {
   if (prev != 0)
      return prev->CreateArrayAccess(fa, arr, index);
-  if (index.size() > 1) {
-     AstInterface::AstNodeList tmp = index;
-     tmp.push_front(arr);
-     return fa.CreateFunctionCall(funcname, tmp);
-  }
-  else 
-     return fa.CreateArrayAccess(arr, index);
+  AstNodeList nindex;
+  nindex.push_back(arr.get_ptr());
+  for (AstNodeList::const_iterator p = index.begin(); p != index.end(); ++p) 
+     nindex.push_back(*p);
+  return fa.CreateFunctionCall(funcname,nindex.begin(), nindex.end()) ;
 }
 
 AstNodePtr LoopTransformInterface::
@@ -121,18 +132,14 @@ CreateArrayAccess(const std::string& arrname,
                             const std::vector<SymbolicVal>& arrindex) 
   {
      assert(fa != 0);
-     AstInterface::AstNodeList indexlist;
+     AstNodePtr res = fa->CreateVarRef(arrname);
+     AstNodeList args;
      for (std::vector<SymbolicVal>::const_iterator indexp = arrindex.begin();
           indexp != arrindex.end(); ++indexp) {
-         AstNodePtr cur = (*indexp).CodeGen(*fa);
-         if (cur == AST_NULL) {
-            std::cerr << "Empty AST from Symbolic Val: " << (*indexp).toString() << "\n";
-            assert(0);
-         }
-         indexlist.push_back(cur);
+        AstNodePtr cur = (*indexp).CodeGen(*fa);
+        args.push_back(cur.get_ptr());
      }
-     AstNodePtr res = CreateArrayAccess(fa->CreateVarRef(arrname),indexlist);
-     return res;
+    return CreateArrayAccess(res,args);
    }
 
 class LoopTransformationWrap : public TransformAstTree
@@ -231,7 +238,7 @@ TransformTraverse(AstInterfaceImpl& scope,const AstNodePtr& head)
 }
 
 void LoopTransformInterface::
-PrintTransformUsage(std::ostream& __outstream)
+PrintTransformUsage(std::ostream& __out)
 {
   std::cerr << "-debugloop: print debugging information for loop transformations; \n"
             << "-debugdep: print debugging information for dependence analysis; \n"
@@ -240,7 +247,7 @@ PrintTransformUsage(std::ostream& __outstream)
             << "opt <level=0>: the level of loop optimizations to apply; by default, only the outermost level is optimized;\n"
             << LoopUnrolling::cmdline_help() << std::endl
             << BreakupStatement::cmdline_help() << std::endl;
-  LoopTransformOptions::GetInstance()->PrintUsage(__outstream);
+  LoopTransformOptions::GetInstance()->PrintUsage(__out);
 }
 
 //////////////////////////////////
@@ -264,17 +271,17 @@ CreateDynamicFusionConfig( const AstNodePtr& groupNum, AstInterface::AstNodeList
 { assert(fa != 0); 
   std::string name = "DynamicFusionConfig";
   ++configIndex;
-  args.push_front( fa->CreateConstInt( args.size() ) );
-  args.push_front( fa->CreateConstInt(configIndex) );
-  AstNodePtr invoc = fa->CreateFunctionCall( "DynamicFusionConfig",  args); 
+  args.push_back( fa->CreateConstInt(configIndex).get_ptr() );
+  args.push_back( fa->CreateConstInt( args.size() ).get_ptr() );
+  AstNodePtr invoc = fa->CreateFunctionCall( "DynamicFusionConfig",  args.begin(), args.end()); 
   return fa->CreateAssignment ( groupNum, invoc) ;
 }
 
 AstNodePtr LoopTransformInterface::CreateDynamicFusionEnd( int id)
 { assert(fa != 0);
   AstInterface::AstNodeList args;
-  args.push_back( fa->CreateConstInt(id));
-  return fa->CreateFunctionCall("DynamicFusionEnd", args);
+  args.push_back( fa->CreateConstInt(id).get_ptr());
+  return fa->CreateFunctionCall("DynamicFusionEnd", args.begin(), args.end());
 }
 
 bool LoopTransformInterface::

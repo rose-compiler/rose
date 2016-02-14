@@ -1,3 +1,9 @@
+//do not include the following files from rose.h
+#define CFG_ROSE_H
+#define CONTROLFLOWGRAPH_H
+#define PRE_H
+#define ASTDOTGENERATION_TEMPLATES_C
+
 #include "sage3.h"
 
 #include "CPPAstInterface.h"
@@ -37,9 +43,17 @@ IsMemberAccess( const AstNodePtr& _s,  AstNodePtr* obj, std::string* field)
 }
 
 AstNodePtr CPPAstInterface::
+CreateFieldRef(std::string classname, std::string fieldname)
+{ return AstNodePtrImpl(impl->CreateFieldRef(classname, fieldname));  }
+
+AstNodePtr CPPAstInterface::
+CreateMethodRef(std::string classname, std::string fieldname, bool createIfNotFound)
+{ return AstNodePtrImpl(impl->CreateMethodRef(classname,fieldname,createIfNotFound)); }
+
+AstNodePtr CPPAstInterface::
 CreateFunctionCall( const AstNodePtr& func, const AstNodeList& args)
 {
-  return AstNodePtrImpl(impl->CreateFunctionCall(AstNodePtrImpl(func).get_ptr(), args));
+  return AstNodePtrImpl(impl->CreateFunctionCall(AstNodePtrImpl(func).get_ptr(), args.begin(), args.end()));
 }
 
 //Check if a node '_s' is a member function call of an object
@@ -77,7 +91,7 @@ IsMemberFunctionCall( const AstNodePtr& _s,  AstNodePtr* obj,
   //Store object from the first argument
   if (obj != 0) {
      assert(args.size() > 0);
-     *obj = args.front();
+     *obj = AstNodePtrImpl((SgNode*)args.front());
   }
   //Store function call arguments, excluding the firt one
   if (_args != 0) {
@@ -125,7 +139,7 @@ bool CPPAstInterface :: IsPlusPlus( const AstNodePtr& _s, AstNodePtr* opd)
   AstNodeList args;
   if ( IsFunctionCall(s, &op, &args) && IsVarRef(op,0,&fname) 
        && strstr(fname.c_str(),"operator++") != 0) {
-      if (opd != 0) *opd = args.front();
+      if (opd != 0) *opd = AstNodePtrImpl((SgNode*)args.front());
       return true;
   }
   if ( s->variantT() == V_SgPlusPlusOp)  {

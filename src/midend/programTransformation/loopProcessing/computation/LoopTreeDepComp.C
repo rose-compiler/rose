@@ -260,7 +260,7 @@ class BuildLoopDepGraphCreate : public BuildLoopDepGraphEdges
          iter.Advance(), cur = iter.Current());
     if (!( cur->GetOrigStmt() == 0 || cur->GetOrigStmt() == start))
        { std::cerr << "problem stmt: " << cur->toString() << "\n"; 
-         std::cerr << "start : " << AstToString(start) << "\n";
+         std::cerr << "start : " << AstInterface::AstToString(start) << "\n";
          assert(0);}
     iter.Advance();
     LoopTreeDepGraphNode *d = graph.CreateNode(cur, c);

@@ -25,8 +25,6 @@ class HandleMap : public LoopTreeObserver, public AstObserver
   public: typedef std::map<const void*, LocalVar*>  AstMapType;
 
   private:
-static XformVar* const modifyHandle;
-static LocalVar* const modify_trace;
    int loopindex, bodyindex;
    std::vector<LocalVar*> topHandles;
 
@@ -47,6 +45,7 @@ static LocalVar* const modify_trace;
    /*QY: return the number of loop handles created*/
    int NumOfLoops() { return loopindex; }
    int NumOfBodies() { return bodyindex; }
+   std::string to_string() const;
 
    /*QY:return a POET trace handle for the given AST or loop tree node*/
    LocalVar* GetLoopHandle(AstInterface& fa, const AstNodePtr& loop);
@@ -80,13 +79,14 @@ static LocalVar* const modify_trace;
         const std::vector<LocalVar*>& handles, LocalVar* target, int& lineNo); 
 };
 
+class AutoTuningInterface;
 /*QY: specification of program transformations to be implemented in POET*/
 class OptSpec {
  protected:
-   LocalVar* handle;
-   std::string handleName;
-   OptSpec(LocalVar* _handle);
-
+   POETCode* target;
+   std::string targetName;
+   OptSpec(POETCode* _target, const std::string& _name)
+   : target(_target), targetName(_name) {}
  protected:
    struct LoopInfo { LocalVar* handle; std::string ivarname;
                      LoopInfo(LocalVar* _handle=0, const std::string& name="")
@@ -97,59 +97,27 @@ class OptSpec {
   typedef enum {OPT_NONE=0,OPT_PAR_LEVEL = 1,OPT_CACHE_LEVEL = 2, OPT_PAR_CACHE_LEVEL=3, OPT_REG_LEVEL = 4, OPT_CACHE_REG_LEVEL=6, OPT_PROC_LEVEL=8, OPT_POST_PAR_LEVEL=16, OPT_CLEANUP_LEVEL=32, OPT_CACHE_CLEANUP_LEVEL=34, OPT_CACHE_REG_CLEANUP_LEVEL=38, OPT_CACHE_PROC_CLEANUP_LEVEL=42, OPT_ALL=63, OPT_LEVEL_MAX=32} OptLevel;
  typedef std::vector<OptSpec*>::const_iterator OptIterator;
 
-  LocalVar* get_handle() const { return handle; }
-  std::string get_handleName() const { return handleName; }
-  /*QY loop-based strength reduction optimization; return the invocation */
-  POETCode* gen_fdInvoke(POETProgram& poet, LocalVar* top,
-                   const std::string& nvarName, POETCode* exp,
-                   POETCode* expType, const std::vector<POETCode*>& dimVec, 
-                   POETCode* permute=0, POETCode* traceMod=0,
-                   bool is_scalar=true); 
-
-
+  POETCode* get_target() const { return target; }
+  std::string get_targetName() const { return targetName; }
   virtual ~OptSpec() {}
   virtual OptEnum get_enum() const = 0;
   virtual OptLevel get_opt_level() const = 0;
   virtual std::string get_opt_prefix(OptLevel optLevel) = 0;
+  virtual std::string to_string(OptLevel level) = 0;
 
-  /*QY: insert parameter decl; modify lineNo with new line number */
-  virtual void insert_paramDecl(POETProgram& poet, OptLevel optLevel,
-                                int& lineNo) {}
   /*QY: return xform declaration; modify lineNo;
         append traceMod with variables that need to be kept track of; */
   virtual void insert_xformDecl(POETProgram& poet, LocalVar* top, POETCode*& traceMod, int& lineNo) {}
   /*QY: return xform evaluation; modify lineNo with new line number */
   virtual POETCode* gen_xformEval(POETProgram& poet, LocalVar* top, 
                    POETCode* traceMod, OptLevel optLevel, int& lineNo) = 0;
-
-
-  /*QY: return the permutation configuration for strength reduction */
-  static POETCode* gen_permute(std::vector<int>& permuteVec);
+  /*QY: insert parameter decl; modify lineNo with new line number; 
+        return constrains on parameter values */
+  virtual POETCode* insert_paramDecl(AutoTuningInterface& tune,
+            POETProgram& poet, OptLevel optLevel, int& lineNo) {}
 friend class AutoTuningInterface;
 
   protected:
-   static CodeVar* const Nest;
-   static CodeVar* const Loop;
-   static CodeVar* const LoopBound;
-   static CodeVar* const IntType;
-   static POETCode* const Nest_ctrl;
-   static POETCode* const Nest_body;
-   static POETCode* const Loop_ivar;
-   static POETCode* const Loop_step;
-   static POETCode* const Loop_ub;
-   static POETCode* const LoopBound_ivar;
-   static POETCode* const LoopBound_step;
-   static XformVar* const appendDecl;
-
-   static XformVar* const finiteDiff;
-   static LocalVar* const fd_exp_type;
-   static LocalVar* const fd_trace;
-   static LocalVar* const fd_traceVar;
-   static LocalVar* const fd_traceDecl;
-   static LocalVar* const fd_is_scalar;
-   static LocalVar* const fd_mod;
-   static LocalVar* const fd_permute;
-  
 };
 
 /*QY: used for specifying non-perfect loops in loop blocking */
@@ -160,7 +128,7 @@ struct FuseLoopInfo
   LoopTreeNode *pivotLoop; /*QY: the pivot loop*/
   
   FuseLoopInfo(LoopTreeNode* _pivot=0) : pivotLoop(_pivot) {}
-  static POETCode* toPOET(HandleMap& handleMap, const FuseLoopInfo* info);
+  static POETCode* toPOET(HandleMap& handleMap, const FuseLoopInfo& info);
 };
 
 class BlockSpec;
@@ -176,11 +144,6 @@ class AutoTuningInterface
 
    static ArrayAbstractionInterface* arrayInfo;
    static POETCode* arrayAccess;
-   static CodeVar* const Array;
-   static POETCode* const Array_var;
-   static POETCode* const Array_sub;
-   static CodeVar* const FunctionCall;
-   static POETCode* const FunctionCall_arg;
 
    void BuildPOETProgram();
    void Gen_POET_opt();
@@ -197,11 +160,12 @@ class AutoTuningInterface
 
     LocalVar* get_target() { return target; }
 
-    BlockSpec* LoopBlocked(LocalVar* loop); /*QY: whether loop has been blocked*/
+    /*QY: whether loop has been blocked; if yes, at which level*/
+    BlockSpec* LoopBlocked(LocalVar* loop, unsigned* index=0); 
 
     void UnrollLoop(AstInterface& fa, const AstNodePtr& loop, int unrollsize);
 
-    void BlockLoops(LoopTreeNode* outerLoop, LoopTreeNode* innerLoop, LoopBlocking* config, const FuseLoopInfo* nonperfect = 0);
+    void BlockLoops(LoopTreeNode* outerLoop, LoopTreeNode* innerLoop, LoopBlocking* config, const std::vector<FuseLoopInfo>* nonperfect= 0);
 
     void ParallelizeLoop(LoopTreeNode* outerLoop, int bsize);
 
@@ -212,6 +176,7 @@ class AutoTuningInterface
     bool ApplyOpt(AstInterface& fa);
 
     void GenOutput();
+    void gen_specification();
 
 };
 
@@ -220,9 +185,6 @@ class UnrollSpec : public OptSpec
 {
    /*QY: relevant POET invocation names 
          (need to be consistent with POET/lib/opt.pi*/
-   static XformVar* const unroll;
-   static LocalVar* const unroll_factor;
-   static LocalVar* const unroll_cleanup;
    LocalVar* paramVar;
 
  public:
@@ -230,10 +192,13 @@ class UnrollSpec : public OptSpec
   virtual OptEnum get_enum() const { return UNROLL; }
   virtual OptLevel get_opt_level() const { return OPT_PROC_LEVEL; }
   virtual std::string get_opt_prefix(OptLevel optLevel) { return "unroll"; }
+  virtual std::string to_string(OptLevel level);
 
-  /*QY: insert parameter decl; modify lineNo with new line number */
-  virtual void insert_paramDecl(POETProgram& poet, OptLevel optLevel,
-                                int& lineNo); 
+  /*QY: insert parameter decl; modify lineNo with new line number; 
+        return constrains on parameter values */
+  virtual POETCode* 
+  insert_paramDecl(AutoTuningInterface& tune, 
+            POETProgram& poet, OptLevel optlevel, int& lineno);
 
   virtual POETCode* gen_xformEval(POETProgram& poet, LocalVar* top, 
                    POETCode* traceMod, OptLevel optLevel, int& lineNo);
@@ -245,11 +210,6 @@ class UnrollSpec : public OptSpec
 
 class ParLoopSpec : public OptSpec
 {
-  static XformVar* const parloop;
-  static LocalVar* const par_trace;
-  static LocalVar* const par_thread;
-  static LocalVar* const par_private;
-  static LocalVar* const par_include;
   POETCode* privateVars;
   POETCode* ivarName, *bvarName;
   LocalVar* parVar, *parblockVar;
@@ -258,10 +218,13 @@ class ParLoopSpec : public OptSpec
   virtual OptEnum get_enum() const { return PARLOOP; }
   virtual OptLevel get_opt_level() const { return OPT_PAR_LEVEL; }
   virtual std::string get_opt_prefix(OptLevel optLevel) { return "par"; }
+  virtual std::string to_string(OptLevel level);
 
-  /*QY: insert parameter decl; modify lineNo with new line number */
-  virtual void insert_paramDecl(POETProgram& poet, OptLevel optLevel,
-                                int& lineNo); 
+  /*QY: insert parameter decl; 
+        modify lineNo with new line number; 
+        return constrains on parameter values */
+  virtual POETCode* insert_paramDecl(AutoTuningInterface& tune, 
+            POETProgram& poet, OptLevel optlevel, int& lineno);
 
   virtual void insert_xformDecl(POETProgram& poet, LocalVar* top, POETCode*& traceMod, int& lineNo); 
 
@@ -272,16 +235,6 @@ class ParLoopSpec : public OptSpec
 /*QY: loop blocking optimization*/
 class BlockSpec : public OptSpec
 {
-   /*QY: relevant POET invocation names 
-         (need to be consistent with POET/lib/opt.pi*/
-   static XformVar* const unrollJam;
-   static LocalVar* const unrollJam_cleanup;
-   static XformVar* const cleanup;
-   static LocalVar* const cleanup_trace;
-
-   static LocalVar* const unrollJam_factor;
-   static LocalVar* const unrollJam_trace;
-
    std::vector<LoopInfo> loopVec; /*QY: the loops to block */ 
    POETCode* nonperfect; /*QY: the non-perfect loops*/
    LocalVar* blockPar, *ujPar;
@@ -292,7 +245,7 @@ class BlockSpec : public OptSpec
    POETCode* compute_blockDim(LocalVar* paramVar);
 
  public:
-  BlockSpec(HandleMap& handleMap, LocalVar* outerHandle, LoopTreeNode* innerLoop, LoopBlocking* config, const FuseLoopInfo* nonperfect=0); 
+  BlockSpec(HandleMap& handleMap, LocalVar* outerHandle, LoopTreeNode* innerLoop, LoopBlocking* config, const std::vector<FuseLoopInfo>* nonperfect=0); 
   virtual OptEnum get_enum() const { return BLOCK; }
   virtual OptLevel get_opt_level() const { return OPT_CACHE_REG_CLEANUP_LEVEL; }
   virtual std::string get_opt_prefix(OptLevel optLevel) 
@@ -304,11 +257,16 @@ class BlockSpec : public OptSpec
        default: return "";
      }
    }
+  virtual std::string to_string(OptLevel level);
 
-  unsigned get_loopnum() const { return loopVec.size(); }
+  unsigned get_loopnum() const { return loopnum; }
   const LoopInfo& get_loop(int i) const { return loopVec[i]; }
 
-  void insert_paramDecl(POETProgram& poet, OptLevel optLevel, int& lineNo);
+  /*QY: insert parameter decl; 
+        modify lineNo with new line number; 
+        return constrains on parameter values */
+  virtual POETCode* insert_paramDecl(AutoTuningInterface& tune, 
+            POETProgram& poet, OptLevel optlevel, int& lineno);
 
   /*QY: return xform declaration; modify lineNo;
         append traceMod with variables that need to be kept track of; */
@@ -325,26 +283,17 @@ class BlockSpec : public OptSpec
   static LocalVar* get_blockSplitVar(const std::string& handleName);
 
   static POETCode* get_blockSize(const std::string& handleName, int level);
+  static POETCode* get_ujSize(const std::string& handleName, int level);
 };
 
 /*QY: array copy */
 class CopyArraySpec : public OptSpec
 {
+   std::vector<SymbolicVal> subscriptVec;
+   void compute_copySubscript(LocalVar* dimVar=0);
  protected:
    /*QY: relevant POET invocation names 
          (need to be consistent with POET/lib/opt.pi*/
-   static XformVar* const copyarray;
-   static LocalVar* const bufname;
-   static LocalVar* const init_loc;
-   static LocalVar* const save_loc;
-   static LocalVar* const delete_loc;
-   static LocalVar* const elem_type;
-   static LocalVar* const trace_decl;
-   static LocalVar* const trace_mod;
-   static LocalVar* const trace_vars;
-   static LocalVar* const trace;
-   static LocalVar* const is_scalar;
-   static LocalVar* const block_spec;
    static int index;
 
    SelectArray sel; /*QY: which array elements to copy*/
@@ -368,13 +317,19 @@ class CopyArraySpec : public OptSpec
    POETCode* gen_copyInvoke(POETProgram& poet, POETCode* cphandle, 
             LocalVar* top, POETCode* cpblock, bool scalar, 
             POETCode* traceMod, int& lineNo);
-   void insert_paramDecl(POETProgram& poet, OptLevel optLevel, int& lineNo);
-  CopyArraySpec(LocalVar* handle, CopyArrayConfig& config)
-     : OptSpec(handle), sel(config.get_arr()), opt(config.get_opt()),permute(0)
+
+  /*QY: insert parameter decl; 
+        modify lineNo with new line number; 
+        return constrains on parameter values */
+  virtual POETCode* insert_paramDecl(AutoTuningInterface& tune, 
+            POETProgram& poet, OptLevel optLevel, int& lineNo); 
+  CopyArraySpec(POETCode* input, const std::string& name, 
+                CopyArrayConfig& config)
+     :OptSpec(input,name),sel(config.get_arr()),opt(config.get_opt()),permute(0)
        {}
 
  public:
-  CopyArraySpec(HandleMap& handleMap,LocalVar* handle,CopyArrayConfig& config, LoopTreeNode* root);
+  CopyArraySpec(HandleMap& handleMap,POETCode* input,const std::string& name, CopyArrayConfig& config, LoopTreeNode* root);
   virtual OptEnum get_enum() const { return COPY_ARRAY; }
   virtual OptLevel get_opt_level() const { return OPT_REG_LEVEL; }
 
@@ -401,6 +356,7 @@ class CopyArraySpec : public OptSpec
     default: assert(0);
     }
   }
+  virtual std::string to_string(OptLevel level);
 
   /* QY: global variable for tracing array dimension and ref exp */
   LocalVar* get_dimVar(POETProgram& poet, const std::string& arrname);
@@ -413,7 +369,7 @@ class CopyArraySpec : public OptSpec
   std::string get_cpIvarName(const std::string& arrname, int sel_index) 
     {  
        assert( sel_index >= 0);
-       std::string copyIvar = handleName +  "_" + cur_id+"_"+arrname + "_cp";
+       std::string copyIvar = targetName +  "_" + cur_id+"_"+arrname + "_cp";
        copyIvar.push_back('0' + sel_index);
        return copyIvar;
     }

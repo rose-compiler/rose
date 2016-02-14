@@ -61,11 +61,11 @@ int ApplyOptLevel()
   if (level < 0) {
     level = 0;
     vector<string>::const_iterator p = CmdOptions::GetInstance()->GetOptionPosition("-opt");
-    if (p != CmdOptions::GetInstance()->opts.end()) {
+    if (p != CmdOptions::GetInstance()->end()) {
       string str = p->substr(4);
       if (str.empty()) {
         ++p;
-        assert (p != CmdOptions::GetInstance()->opts.end());
+        assert (p != CmdOptions::GetInstance()->end());
         str = *p;
       }
       sscanf(str.c_str(), "%d", &level);
@@ -96,7 +96,7 @@ class AstTreeOptimizable : public ProcessAstTree
      {
         if (fa.IsVariableDecl(s) && fa.GetParent(s) != top) {
            if (DebugLoop()) 
-              std::cerr << "has declaration " << AstToString(s) << "\n";
+              std::cerr << "has declaration " << AstInterface::AstToString(s) << "\n";
             succ = -1;
             return false;
         } 
@@ -110,7 +110,7 @@ class AstTreeOptimizable : public ProcessAstTree
 
         if (!fa.IsFortranLoop(s)) {
            if (DebugLoop()) {
-              std::cerr << "not fortran loop " << AstToString(s) << std::endl;
+              std::cerr << "not fortran loop " << AstInterface::AstToString(s) << std::endl;
            }
            succ = -1;
            return false;
@@ -216,9 +216,7 @@ class CopyDeclarations : public ProcessAstTree
   CopyDeclarations( const AstNodePtr& d) : dest(d) {}
   bool operator ()(AstInterface& fa, const AstNodePtr& top)
      {
-        bool r = ReadAstTraverse(fa, top, *this, AstInterface::PreAndPostOrder);
-        fa.AddNewVarDecls(dest, top);
-        return r;
+        return ReadAstTraverse(fa, top, *this, AstInterface::PreAndPostOrder);
      }
 };
 
@@ -244,7 +242,7 @@ std::cerr << "LoopTransformation1\n";
   if (debugloop) {
     std::cerr <<"----------------------------------------------"<<endl;
     std::cerr << "try applying loop transformation to \n";
-    std::cerr << AstToString(head) << std::endl;
+    std::cerr << AstInterface::AstToString(head) << std::endl;
   }
   if (reportPhaseTiming) GetWallTime();
   LoopTreeDepCompCreate comp(head);
@@ -293,13 +291,13 @@ std::cerr << "LoopTransformation1\n";
 
   AstInterface &fa = LoopTransformInterface::getAstInterface();
   AstNodePtr r = comp.CodeGen();
-
+  assert (r != 0);
+  
   result = fa.CreateBlock(head);
   CopyDeclarations copyDecl( result);
   copyDecl( fa, head); 
-  assert (r != 0);
+  fa.CopyNewVarDecls(result);
   fa.BlockAppendStmt(result, r);
-
   return true;
 }
 

@@ -28,7 +28,8 @@ class LoopTreeShadowNode : public LoopTreeNode
     { return map->Map(const_cast<LoopTreeNode*>(n)); }
   LoopTreeShadowNode( LoopTreeNode *n, LoopTreeShadowCreate *c) ;
   LoopTreeShadowNode( LoopTreeNode *n, const LoopTreeShadowNode &that)
-     : repr(n), map(that.map) {}
+     : repr(n), map(that.map) 
+    {  map->InsertMapping(repr, this); }
  public:
   AstNodePtr GetOrigStmt() const { return repr->GetOrigStmt(); }
   LoopInfo * GetLoopInfo() { return repr->GetLoopInfo(); }

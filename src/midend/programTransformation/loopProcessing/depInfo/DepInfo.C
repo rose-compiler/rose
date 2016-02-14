@@ -104,7 +104,7 @@ std::string DepInfo :: toString() const
   out << "CarryLevel = ("<<num1 << "," << num2 << ") ";
   if (is_precise()) 
       out << " Is precise ";
-  out << AstToString(SrcRef())<<getAstLocation(SrcRef())<<"->" << AstToString(SnkRef())<<getAstLocation(SnkRef())<<" ";
+  out << AstInterface::AstToString(SrcRef())<<AstInterface::getAstLocation(SrcRef())<<"->" << AstInterface::AstToString(SnkRef())<<AstInterface::getAstLocation(SnkRef())<<" ";
   for (int i = 0; i < rows(); i++) {
     for (int j = 0; j < cols(); j++) {
        out << Entry( i, j).toString() << ";";

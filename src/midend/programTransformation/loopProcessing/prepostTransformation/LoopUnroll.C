@@ -115,7 +115,7 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
           std::string nvarname = "";
           SymbolicVal nvar;
           if (opt & USE_NEWVAR) {
-               nvarname = fa.NewVar(fa.GetType("int"),"",true,body, ivar.CodeGen(fa)); 
+               nvarname = fa.NewVar(fa.GetType("int"),"",true,false,body, ivar.CodeGen(fa)); 
                nvar = SymbolicVar(nvarname,body);
           }
           bodylist.push_back(body);

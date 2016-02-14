@@ -52,9 +52,9 @@ class CFGNodeImpl : public MultiGraphElem
         std::stringstream r;
         std:: list<AstNodePtr>::const_iterator p = stmtList.begin(); 
         if (p != stmtList.end()) {
-           r <<  AstToString(*p);
+           r <<  AstInterface::AstToString(*p);
            for ( ++p; p != stmtList.end(); ++p) 
-               r << "\n" <<  AstToString(*p);
+               r << "\n" <<  AstInterface::AstToString(*p);
         }
         else
             r << "EMPTY\n";
@@ -66,7 +66,7 @@ class CFGNodeImpl : public MultiGraphElem
       std:: cerr << "Node : " << this << "\n"; 
       for (std:: list<AstNodePtr>::const_iterator p = stmtList.begin(); 
            p != stmtList.end(); ++p)
-            std:: cerr << AstToString(*p);
+            std:: cerr << AstInterface::AstToString(*p);
     }
   virtual void Dump() const
     {
