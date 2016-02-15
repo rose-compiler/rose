@@ -4598,6 +4598,9 @@ SgName
 SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList) 
    {
   // Note that this is a static member function.
+#if 0
+     printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): TOP \n");
+#endif
 
   // process argument type
      SgName arg_names;
@@ -4606,6 +4609,7 @@ SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * type
           const SgTypePtrList & args = typeList->get_arguments ();
           arg_names = mangleTypes (args.begin (), args.end ());
         }
+
 #if 0
      printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): arg_names = %s \n",arg_names.str());
 #endif
@@ -5671,6 +5675,13 @@ SgArrayType::get_mangled(void) const
      printf ("In SgArrayType::get_mangled(): mangled base type name = %s \n",base_name.str());
 #endif
 
+  // DQ (2/14/2016): Adding support for variable length arrays.
+     const bool is_variable_length_array = this->get_is_variable_length_array();
+
+#if 0
+     printf ("In SgArrayType::get_mangled(): is_variable_length_array = %s \n",is_variable_length_array ? "true" : "false");
+#endif
+
      const SgExpression* index_exp = get_index();
      SgName index_name;
      if (index_exp != NULL)
@@ -5743,7 +5754,16 @@ SgArrayType::get_mangled(void) const
                  // t = associatedScope->get_type_table()->lookup_type(name);
                  // index_name = associatedScope->get_mangled_name();
 #else
-                    index_name = index_declaration->get_mangled_name();
+                 // DQ (2/14/2016): Adding support for VLA types (if we evaluate the mangled name we will cause endless recursion).
+                 // index_name = index_declaration->get_mangled_name();
+                    if (is_variable_length_array == true)
+                       {
+                         index_name = "vla_dimention";
+                       }
+                      else
+                       {
+                         index_name = index_declaration->get_mangled_name();
+                       }
 #endif
 #if 0
                     printf ("SgInitializedName part of index_name = %s \n",index_name.str());
@@ -5889,7 +5909,9 @@ SgArrayType::get_mangled(void) const
                   << index_name.str ()
                   << "_Ae_";
 
-  // printf ("SgArrayType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#if 0
+     printf ("SgArrayType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
 
      return mangled_name;
    }
