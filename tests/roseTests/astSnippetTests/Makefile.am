@@ -657,7 +657,7 @@ quickSortInjector_SOURCES = quickSortInjector.C snippetTests.C
 quickSortInjector_LDADD = $(ROSE_LIBS)
 
 # TEST_TARGETS += quickSortC.passed quickSortJava.passed reverseC.passed reverseJava.passed
-TEST_TARGETS += quickSortC.passed everseC.passed
+TEST_TARGETS += quickSortC.passed reverseC.passed
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += quickSortJava.passed reverseJava.passed
 endif
