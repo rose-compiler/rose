@@ -671,6 +671,13 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
   // DQ (9/7/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
+#if 0
+     printf ("In unparseFunctionParameterDeclaration(): TOP \n");
+     printf ("   --- funcdecl_stmt                                 = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
+     printf ("   --- funcdecl_stmt->get_type_syntax_is_available() = %s \n",funcdecl_stmt->get_type_syntax_is_available() ? "true" : "false");
+     printf ("   --- initializedName->get_name()                   = %s \n",initializedName->get_name().str());
+#endif
+
 #if 1
   // DQ (9/14/2015): Test disabling this for C++11 mode.
 

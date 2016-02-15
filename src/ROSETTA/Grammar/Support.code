@@ -18258,7 +18258,7 @@ SgUnparse_Info::unset_cxx11_initialization_list()
 void
 SgUnparse_Info::display ( const std::string & label ) const
    {
-     printf ("Inside of SgUnparse_Info::display(%s) \n",label.c_str());
+     printf ("\nInside of SgUnparse_Info::display(%s) \n",label.c_str());
 
 #if 0
 #define PRINT_INFO_MEMBER_DATA_OUTPUT_MACRO(XX) printf (#XX" = %s \n",(XX() == true) ? "true" : "false");
@@ -18382,7 +18382,15 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("p_nested_expression                    = %d \n",p_nested_expression);
      printf ("p_operator_name                        = %s \n", p_operator_name.c_str());
      printf ("p_var_name                             = %s \n",(p_var_name.is_null() == false) ? p_var_name.str() : "EmPtY sTrInG");
-     printf ("p_declstatement_ptr                    = %p \n",p_declstatement_ptr);
+
+  // printf ("p_declstatement_ptr                    = %p \n",p_declstatement_ptr);
+     printf ("p_declstatement_ptr                    = %p = %s \n",p_declstatement_ptr,p_declstatement_ptr != NULL ? p_declstatement_ptr->class_name().c_str() : "null");
+     if (p_declstatement_ptr != NULL)
+        {
+          printf ("   --- firstNondefiningDeclaration = %p \n",p_declstatement_ptr->get_firstNondefiningDeclaration());
+          printf ("   --- definingDeclaration         = %p \n",p_declstatement_ptr->get_definingDeclaration());
+        }
+
      printf ("p_current_context                      = %p \n",p_current_context);
      printf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
      printf ("p_current_namespace                    = %p \n",p_current_namespace);
