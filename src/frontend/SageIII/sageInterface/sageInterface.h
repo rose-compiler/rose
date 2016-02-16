@@ -1204,6 +1204,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 
 //! Collect all variable references in a subtree
   void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
+
   //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)

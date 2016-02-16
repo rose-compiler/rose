@@ -1,3 +1,22 @@
+#include "rose_config.h"
+
+#include "grammar.h"
+#include "terminal.h"
+#include "grammarString.h"
+#include <sstream>
+#include <fstream>
+#include <map>
+
+using namespace std;
+
+string replaceString(string patternInInput, string replacePattern, string input) {
+  string::size_type posIter = input.find(patternInInput);
+  if (posIter != string::npos)
+    input.replace(posIter, patternInInput.size(), replacePattern);
+  return input;
+}
+
+
 /**********************************
  * Terminal/Nonterminal functions *
  **********************************/
@@ -34,7 +53,7 @@ Grammar::CreateGrammarDotString(Terminal* grammarnode,
     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
         stringListIterator != includeList.end();
         stringListIterator++) {
-      if ((*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
+      if ((*stringListIterator)->getToBeTraversed()==DEF_TRAVERSAL) {
         string type = (*stringListIterator)->getTypeNameString();
         type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
         type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
@@ -69,6 +88,11 @@ Grammar::CreateGrammarDotString(Terminal* grammarnode,
   saDot.grammarnode=grammarnode;
   saDot.text=s;
   return saDot;
+}
+
+bool 
+Grammar::isAbstractTreeGrammarSymbol(Terminal* t) {
+  return t->getCanHaveInstances();
 }
 
 bool 
@@ -110,7 +134,7 @@ Grammar::CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode,
     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
     stringListIterator != includeList.end(); // ", " only between the elements of the list
     stringListIterator++) {
-      if ( (*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
+      if ( (*stringListIterator)->getToBeTraversed()==DEF_TRAVERSAL) {
         traversedTerminals.insert(restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode,"",""));
       }
     }  
@@ -190,7 +214,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
                                     ,"containsTransformationToSurroundingWhitespace","attributeMechanism","source_sequence_value","need_paren","lvalue","operatorPosition","originalExpressionTree"};
   set<string> filteredMemberVariablesSet(nonAtermMemberVariables, nonAtermMemberVariables + sizeof(nonAtermMemberVariables)/sizeof(nonAtermMemberVariables[0]) );
 
-  if(grammarnode->isLeafNode()) {
+  if(true||grammarnode->isLeafNode()) {
     string rhsTerminalSuccessors;
     /*
       bool containermembers=0; // (non-pointer)
@@ -200,7 +224,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
         stringListIterator != includeList.end(); // ", " only between the elements of the list
         stringListIterator++) {
-      if (true|| (*stringListIterator)->getToBeTraversed()==TraversalFlag(true) ) {
+      if (true|| (*stringListIterator)->getToBeTraversed()==DEF_TRAVERSAL ) {
         string type=restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode, grammarSymListOpPrefix, grammarSymListOpPostfix);
         string varName=(*stringListIterator)->getVariableNameString();
 #if 1
@@ -281,10 +305,10 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
     }
     else {
       */
-    if(isAbstractTreeGrammarSymbol(string(grammarnode->getName())) ) {
+    if(true||isAbstractTreeGrammarSymbol(grammarnode) ) {
       saLatex.nodetext=string(grammarnode->getName())+" "+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
       saLatex.terminalname=string(grammarnode->getName());
-      saLatex.isTerminal=true;
+      saLatex.isTerminal=true; //isAbstractTreeGrammarSymbol(grammarnode->getName());
     } else {
       saLatex.nodetext="";
     }
@@ -302,14 +326,19 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
   string grammarRule;
   bool first=true;
   for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-    if((*viter).nodetext!="" && isAbstractTreeGrammarSymbol(string(grammarnode->getName())) ) {
+    if((*viter).nodetext!="" /*&& isAbstractTreeGrammarSymbol(string(grammarnode->getName()))*/ ) {
       if(generateSDFTreeGrammar) {
         if((*viter).isTerminal) {
           // SDF: generate two rules for terminals: A->B; B->B(...);
           grammarRule+=string(grammarnode->getName()) + " -> " + (*viter).terminalname+"\n";
-          grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"\n";
+          if(!isAbstractTreeGrammarSymbol(grammarnode)) {
+            grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"\n";
+          }
         } else {
           grammarRule+=string(grammarnode->getName()) + " -> " + (*viter).nodetext+"\n";
+          if(!isAbstractTreeGrammarSymbol(grammarnode)) {
+            grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"// non-terminal rule 2\n";
+          }
         }
       } else {
         if(first) {

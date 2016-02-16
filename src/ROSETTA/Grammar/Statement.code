@@ -1438,6 +1438,10 @@ HEADER_STATIC_ASSERTION_DECLARATION_START
 HEADER_STATIC_ASSERTION_DECLARATION_END
 
 
+HEADER_FUNCTION_PARAMETER_SCOPE_START
+HEADER_FUNCTION_PARAMETER_SCOPE_END
+
+
 HEADER_FUNCTION_DECLARATION_STATEMENT_START
 
       //! Support for C++ covariant return types (used in virtual function overloading).
@@ -10437,6 +10441,17 @@ SgStaticAssertionDeclaration::hasExplicitScope() const
 
 
 SOURCE_STATIC_ASSERTION_DECLARATION_END
+
+
+SOURCE_FUNCTION_PARAMETER_SCOPE_START
+
+void
+SgFunctionParameterScope::post_construction_initialization()
+   {
+  // Nothing to do here, but we need this function to be defined.
+   }
+
+SOURCE_FUNCTION_PARAMETER_SCOPE_END
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_START
