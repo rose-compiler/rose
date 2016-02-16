@@ -109,8 +109,8 @@ upload-EDG.tar.gz: EDG/libroseEDG.la $(EDGBIN_SIGNATURE_FILE)
 	cp -r EDG/.libs $(EDGBIN_NAME)
 	tar czf $(EDGBIN_NAME).tar.gz $(EDGBIN_NAME)
 	rm -rf $(EDGBIN_NAME)
-	ln -s $(EDGBIN_NAME).tar.gz $@             # for upload
-	ln -s $(EDGBIN_NAME).tar.gz EDG.tar.gz     # make it look like we downloaded also
+	ln -sf $(EDGBIN_NAME).tar.gz $@             # for upload
+	ln -sf $(EDGBIN_NAME).tar.gz EDG.tar.gz     # make it look like we downloaded also
 
 # Upload EDG tarballs to the staging area and the local area. Do not use $(EDGBIN_NAME) in the target or dependencies because
 # it hasn't been computed at the time that make parses that part of the rule. It's okay to use it in the commands of this rule.
