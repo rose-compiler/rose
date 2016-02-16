@@ -163,9 +163,11 @@ RegisterStateGeneric::scanAccessedLocations(const RegisterDescriptor &reg, RiscO
 }
 
 SValuePtr
-RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops)
 {
     ASSERT_require(reg.is_valid());
+    ASSERT_not_null(dflt);
+    ASSERT_require(reg.get_nbits() == dflt->get_width());
     ASSERT_not_null(ops);
     assertStorageConditions("at start of read", reg);
     BitRange accessedLocation = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
@@ -180,7 +182,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
         if (!accessCreatesLocations_)
             throw RegisterNotPresent(reg);
         size_t nbits = reg.get_nbits();
-        SValuePtr newval = protoval()->undefined_(nbits);
+        SValuePtr newval = dflt->copy();
         std::string regname = regdict->lookup(reg);
         if (!regname.empty() && newval->get_comment().empty())
             newval->set_comment(regname + "_0");
@@ -217,7 +219,11 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
     if (accessCreatesLocations_) {
         BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
             RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), newLocation.least(), newLocation.size());
-            newParts.push_back(RegPair(subreg, protoval()->undefined_(newLocation.size())));
+            ASSERT_require(newLocation.least() >= reg.get_offset());
+            SValuePtr newval = ops->extract(dflt,
+                                            newLocation.least()-reg.get_offset(),
+                                            newLocation.greatest()+1-reg.get_offset());
+            newParts.push_back(RegPair(subreg, newval));
         }
     } else {
         ASSERT_require(newLocations.isEmpty());         // should have thrown a RegisterNotPresent exception already
@@ -721,7 +727,8 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
         const RegisterDescriptor &otherReg = otherRegVal.desc;
         const BaseSemantics::SValuePtr &otherValue = otherRegVal.value;
         if (is_partly_stored(otherReg)) {
-            BaseSemantics::SValuePtr thisValue = readRegister(otherReg, ops);
+            BaseSemantics::SValuePtr dflt = ops->undefined_(otherReg.get_nbits());
+            BaseSemantics::SValuePtr thisValue = readRegister(otherReg, dflt, ops);
             if (BaseSemantics::SValuePtr merged = thisValue->createOptionalMerge(otherValue, merger(),
                                                                                  ops->solver()).orDefault()) {
                 writeRegister(otherReg, merged, ops);

@@ -152,8 +152,8 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg) {
-    SValuePtr retval = SValue::promote(Super::readRegister(reg));
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+    SValuePtr retval = SValue::promote(Super::readRegister(reg, dflt));
     SymbolicExpr::Ptr expr = retval->get_expression();
     if (expr->isLeafNode()) {
         std::string comment = commentForVariable(reg, "read");

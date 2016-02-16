@@ -8,8 +8,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
-/** Smart pointer to a RegisterStateGeneric object.  RegisterStateGeneric objects are reference counted and should not be
- *  explicitly deleted. */
+/** Shared-ownership pointer to generic register states. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
 
 /** A RegisterState for any architecture.
@@ -290,7 +289,7 @@ public:
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() ROSE_OVERRIDE;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
@@ -322,13 +321,15 @@ public:
     //                                  Value storage queries
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Returns the list of all registers and their values.  The returned registers are guaranteed to be non-overlapping,
-     * although they might not correspond to actual named machine registers.  For instance, if a 32-bit value was written to
-     * the x86 EFLAGS register then the return value will contain a register/value pair for EFLAGS but no pairs for individual
-     * flags.  If one subsequently writes a 1-bit value to the ZF flag (bit 6 of EFLAGS) then the return value will contain a
-     * register/value pair for ZF, and also a pair for bits 0-5, and a pair for bits 7-31, neither of which correspond to
-     * actual register names in x86 (there is no name for bits 0-5 as a whole). The readRegister() and writeRegister() methods
-     * can be used to re-cast the various pairs into other groupings; get_stored_registers() is a lower-level interface. */
+    /** Returns the list of all registers and their values.
+     *
+     *  The returned registers are guaranteed to be non-overlapping, although they might not correspond to actual named machine
+     *  registers.  For instance, if a 32-bit value was written to the x86 EFLAGS register then the return value will contain a
+     *  register/value pair for EFLAGS but no pairs for individual flags.  If one subsequently writes a 1-bit value to the ZF
+     *  flag (bit 6 of EFLAGS) then the return value will contain a register/value pair for ZF, and also a pair for bits 0-5,
+     *  and a pair for bits 7-31, neither of which correspond to actual register names in x86 (there is no name for bits 0-5 as
+     *  a whole). The @ref readRegister and @ref writeRegister methods can be used to re-cast the various pairs into other
+     *  groupings; @ref get_stored_registers is a lower-level interface. */
     virtual RegPairs get_stored_registers() const;
 
     /** Determines if some of the specified register is stored in the state. Returns true even if only part of the requested
@@ -353,9 +354,11 @@ public:
      *  register, as indicated by is_partly_stored() returning false. */
     virtual bool is_exactly_stored(const RegisterDescriptor&) const;
 
-    /** Returns a description of which bits of a register are stored.  The return value is an ExtentMap that contains the bits
-     * that are stored in the state. This does not return the value of any parts of stored registers--one gets that with
-     * readRegister(). The return value does not contain any bits that are not part of the specified register. */
+    /** Returns a description of which bits of a register are stored.
+     *
+     *  The return value is an ExtentMap that contains the bits that are stored in the state. This does not return the value of
+     *  any parts of stored registers--one gets that with @ref readRegister. The return value does not contain any bits that
+     *  are not part of the specified register. */
     virtual ExtentMap stored_parts(const RegisterDescriptor&) const;
 
     /** Find stored registers overlapping with specified register.
@@ -412,9 +415,8 @@ public:
      * As with most ROSE and STL traversals, the Visitor is not allowed to modify the structure of the object over which it is
      * traversing.  In other words, it's permissible to change the values pointed to by the state, but it is not permissible to
      * perform any operation that might change the list of register parts by adding, removing, or combining parts.  This
-     * includes calling readRegister() and writeRegister() except when the register being read or written is already exactly
-     * stored in the state as indicated by is_exactly_stored().
-     */
+     * includes calling @ref readRegister and @ref writeRegister except when the register being read or written is already
+     * exactly stored in the state as indicated by @ref is_exactly_stored. */
     virtual void traverse(Visitor&);
 
 

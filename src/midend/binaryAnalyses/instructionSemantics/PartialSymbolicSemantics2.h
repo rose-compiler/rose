@@ -65,7 +65,7 @@ public:
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a partial-symbolic semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the PartialSymbolicSemantics domain. A value is either known or unknown. Unknown values have
@@ -214,7 +214,7 @@ typedef BaseSemantics::MemoryCellListPtr MemoryStatePtr;
 //                                      Complete state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to partial symbolic semantics state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class State> StatePtr;
 
 /** Represents the entire state of the machine. This state expects to use a subclass of BaseSemantics::MemoryCellList as
@@ -297,8 +297,7 @@ public:
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to partial symbolic semantics RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for this semantic domain. */

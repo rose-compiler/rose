@@ -568,8 +568,8 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
     props.insert(IO_READ_BEFORE_WRITE);
     props.insert(IO_WRITE);
     BOOST_FOREACH (const RegisterDescriptor &reg, finalRegs->findProperties(props)) {
-        SValuePtr initialValue = initialRegs->readRegister(reg, ops.get());
-        SValuePtr finalValue = finalRegs->readRegister(reg, ops.get());
+        SValuePtr initialValue = initialRegs->readRegister(reg, ops->undefined_(reg.get_nbits()), ops.get());
+        SValuePtr finalValue = finalRegs->readRegister(reg, ops->undefined_(reg.get_nbits()), ops.get());
         SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
         SymbolicExpr::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
         if (finalExpr->flags() == initialExpr->flags() && finalExpr->mustEqual(initialExpr, ops->solver()))
@@ -602,7 +602,8 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
 
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
     RiscOperatorsPtr ops = cpu_->get_operators();
-    SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
+    RegisterDescriptor SP = cpu_->stackPointerRegister();
+    SValuePtr initialStackPointer = initialState->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
     ops->currentState(finalState);
     StackVariables vars = P2::DataFlow::findFunctionArguments(ops, initialStackPointer);
     BOOST_FOREACH (const StackVariable &var, vars) {
@@ -618,8 +619,9 @@ void
 Analysis::updateStackDelta(const StatePtr &initialState, const StatePtr &finalState) {
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
     RiscOperatorsPtr ops = cpu_->get_operators();
-    SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
-    SValuePtr finalStackPointer = finalState->readRegister(cpu_->stackPointerRegister(), ops.get());
+    RegisterDescriptor SP = cpu_->stackPointerRegister();
+    SValuePtr initialStackPointer = initialState->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+    SValuePtr finalStackPointer = finalState->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
     SValuePtr stackDelta = ops->subtract(finalStackPointer, initialStackPointer);
     if (stackDelta->is_number() && stackDelta->get_width()<=64) {
         stackDelta_ = IntegerOps::signExtend2(stackDelta->get_number(), stackDelta->get_width(), 64);

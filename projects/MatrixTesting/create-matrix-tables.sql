@@ -51,12 +51,15 @@ insert into dependencies values ('build',        'autoconf',         1);
 insert into dependencies values ('build',        'cmake',            0);
 
 -- Compiler is $VENDOR-$VERSION-$LANGUAGE or just $VENDOR-$VERSION or just $VENDOR.
-insert into dependencies values ('compiler',     'gcc-4.2',          0);
-insert into dependencies values ('compiler',     'gcc-4.3',          0);
-insert into dependencies values ('compiler',     'gcc-4.4',          0);
-insert into dependencies values ('compiler',     'gcc-4.8',          1);
-insert into dependencies values ('compiler',     'gcc-4.9',          1);
-insert into dependencies values ('compiler',     'llvm-3.5',         1);
+insert into dependencies values ('compiler',     'gcc-4.2-default',  0);
+insert into dependencies values ('compiler',     'gcc-4.3-default',  0);
+insert into dependencies values ('compiler',     'gcc-4.4-default',  0);
+insert into dependencies values ('compiler',     'gcc-4.4-c++11',    0);
+insert into dependencies values ('compiler',     'gcc-4.8-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.8-c++11',    1);
+insert into dependencies values ('compiler',     'gcc-4.9-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.9-c++11',    1);
+insert into dependencies values ('compiler',     'llvm-3.5-default', 1);
 
 -- Whether to compile ROSE with debugging support. Value is 'yes' or 'no'.
 -- NOTE: cmake is not set up for all combinations of debug and optimize.
@@ -81,7 +84,6 @@ insert into dependencies values ('assertions',   'throw',            0);
 insert into dependencies values ('languages',    'all',              1);
 insert into dependencies values ('languages',    'c,c++',            1);
 insert into dependencies values ('languages',    'binaries',         1);
-insert into dependencies values ('languages',    'c,c++,binaries',   0);
 
 -- Boost version numbers or "system" to use the system-installed version.
 insert into dependencies values ('boost',        '1.43',             0);
@@ -156,10 +158,13 @@ insert into dependencies values ('sqlite',       'system',           0);
 insert into dependencies values ('wt',           'none',             1);
 insert into dependencies values ('wt',           '3.3.3',            0);
 insert into dependencies values ('wt',           '3.3.4',            1);
+insert into dependencies values ('wt',           '3.3.5',            0);
 
 -- YAML-CC library version number or "system" or "none"
 insert into dependencies values ('yaml',         'none',             1);
 insert into dependencies values ('yaml',         '0.5.1',            1);
+insert into dependencies values ('yaml',         '0.5.2',            0);
+insert into dependencies values ('yaml',         '0.5.3',            0);
 
 -- Yices SMT solver version or "system" or "none"
 insert into dependencies values ('yices',        'no',               1);
@@ -238,7 +243,10 @@ create table test_results (
     -- Additional optional information reported by the tester.
     duration integer,                                   -- time it took to run the test (seconds)
     noutput integer,                                    -- total lines of output (compiler, tests, etc)
-    nwarnings integer                                   -- number of compiler warnings (pattern "warning:")
+    nwarnings integer,                                  -- number of compiler warnings (pattern "warning:")
+
+    -- Information about the first error message.
+    first_error text
 );
 
 --

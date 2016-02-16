@@ -140,8 +140,12 @@ string get_type_name(SgType* t)
                     usingGcc = true;
                   #endif
                 #else
-                  string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                  usingGcc = (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx");
+               // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+               // string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+               // usingGcc = (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx");
+                  #if BACKEND_CXX_IS_GNU_COMPILER
+                     usingGcc = true;
+                  #endif
                 #endif
 
                 if (usingGcc) {
@@ -289,9 +293,14 @@ string get_type_name(SgType* t)
                          usingGcc = true;
                        #endif
                      #else
-                       string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                       usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+                    // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+                    // string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+                    // usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+                       #if BACKEND_CXX_IS_GNU_COMPILER
+                         usingGcc = true;
+                       #endif
 #if 0
+                     string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
                      printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
 #endif
                      #endif
@@ -2683,8 +2692,12 @@ Unparse_Type::unparseRestrictKeyword()
       usingGcc = true;
     #endif
   #else
-    string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-    usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+ // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+ // string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+ // usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+    #if BACKEND_CXX_IS_GNU_COMPILER
+      usingGcc = true;
+    #endif
 #if 0
      printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
 #endif
@@ -3214,6 +3227,19 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
   //      ArrayType(base_type, 2)
   //        ArrayType(int, 10), because of the front-end
 
+#if 0
+     info.display("In unparseArrayType()");
+#endif
+
+     bool is_variable_length_array = array_type->get_is_variable_length_array();
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(info.get_decl_stmt());
+     bool isFunctionPrototype = ( (functionDeclaration != NULL) && (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration()) );
+
+#if 0
+     printf ("In unparseArrayType(): is_variable_length_array = %s \n",is_variable_length_array ? "true" : "false");
+     printf ("In unparseArrayType(): isFunctionPrototype      = %s \n",isFunctionPrototype ? "true" : "false");
+#endif
+
 #if DEBUG_ARRAY_TYPE
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
@@ -3389,7 +3415,35 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                     if (ninfo2.supressArrayBound() == false)
                        {
                       // Unparse the array bound.
-                         unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+
+                      // DQ (2/12/2016): Adding support for variable length arrays.
+                      // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                         SgExpression* indexExpression = array_type->get_index();
+                         SgNullExpression* nullExpression = isSgNullExpression(indexExpression);
+
+                      // DQ (2/14/2016): Since the array type's index is updated after seeing the function definition, we need to always use the VLA syntax for reliabily.
+                      // if (nullExpression != NULL && array_type->get_is_variable_length_array() == true)
+                         if (is_variable_length_array == true && isFunctionPrototype == true)
+                            {
+                           // The is the canonical normalized form for a type specified in a function parameter list of a prototype function.
+                              curprint("*");
+                            }
+                           else
+                            {
+                           // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                              if (is_variable_length_array == true && isFunctionPrototype == false)
+                                 {
+#if 0
+                                   printf ("We need to output the expression used in the defining declaration's array type \n");
+                                   curprint(" /* We need to output the expression used in the defining declaration's array type */ ");
+#endif
+                                   unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                                 }
+                                else
+                                 {
+                                   unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                                 }
+                            }
                        }
                       else
                        {
@@ -3404,6 +3458,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                   }
 
                curprint("]");
+
 #if DEBUG_ARRAY_TYPE
                printf ("ninfo.isTypeSecondPart() == true: needParen = %s Calling unparseType(array_type->get_base_type(), ninfo); \n",needParen ? "true" : "false");
 #endif

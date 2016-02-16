@@ -1,0 +1,38 @@
+Problem:
+   It is not robuse to determine the compiler vendor from the name of the compiler.
+Se we need a better mechanism to support this.  
+
+Current situation in ROSE:
+   Currently the compiler name is used to determine the vendor of the compiler, this is not robust.
+The "compilerVendorName" is computed in compiler-defs.m4
+
+Locations where the compiler name is used to determin the vendor of the compiler:
+   1) compiler-defs.m4: to figure out the vendor
+   2) create_system_headers:
+       a) used to determine if this is the ROSE compiler only
+       b) and used to determine if this is a C or C++ compiler.
+
+
+support-rose.m4 : calls compiler-defs.m4 (via shell function GET_COMPILER_SPECIFIC_DEFINES)
+
+support-rose.4m : calls choose_backend_compiler.m4 (via shell function CHOOSE_BACKEND_COMPILER)
+
+support-rose.m4 : calls generate-backend-compiler-specific-headers.m4 
+
+   generate-backend-compiler-specific-headers.m4 : calls create_system_headers
+
+
+We want a C and C++ files that will return the vendor name.
+We might also need to determine the language of the compiler (see create_system_headers file).
+
+Note: Justin is checking on the Autoconf mechansim to support this.
+
+
+As a test for the compiler selection being independent of the compiler name, use 
+different C and C++ compilers with names like "compiler1" and "compiler2".
+
+As an additional issue:
+   There are locations in the ROSE source code where we check the name of the backend compiler
+   to determine the vendor.  The problem is that this is not robust.
+
+

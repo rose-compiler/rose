@@ -78,12 +78,12 @@ namespace BinaryAnalysis {
  *
  *  Most of the instruction semantics components have abstract base classes. Instances of concrete subclasses thereof are
  *  passed around by pointers, and in order to simplify memory management issues, those objects are reference counted.  Most
- *  objects use boost::shared_ptr, but SValue objects use a faster custom smart pointer (it also uses a custom allocator, and
- *  testing showed a substantial speed improvement over Boost when compiled with GCC's "-O3" switch). In any case, to alleviate
- *  the user from having to remember which kind of objects use which smart pointer implementation, pointer typedefs are created
- *  for each class&mdash;their names are the same as the class but suffixed with "Ptr".  Users will almost exclusively work
- *  with pointers to the objects rather than objects themselves. In fact, holding only a normal pointer to an object is a bit
- *  dangerous since the object will be deleted when the last smart pointer disappears.
+ *  objects use <code>boost::shared_ptr</code>, but SValue objects use a faster custom smart pointer (it also uses a custom
+ *  allocator, and testing showed a substantial speed improvement over Boost when compiled with GCC's "-O3" switch). In any
+ *  case, to alleviate the user from having to remember which kind of objects use which smart pointer implementation, pointer
+ *  typedefs are created for each class&mdash;their names are the same as the class but suffixed with "Ptr".  Users will almost
+ *  exclusively work with pointers to the objects rather than objects themselves. In fact, holding only a normal pointer to an
+ *  object is a bit dangerous since the object will be deleted when the last smart pointer disappears.
  *
  *  In order to encourage users to use the provided smart pointers and not allocate semantic objects on the stack, the normal
  *  constructors are protected.  To create a new object from a class name known at compile time, use the static instance()
@@ -263,7 +263,7 @@ namespace BinaryAnalysis {
  *  considered in the original design. See DispatcherX86 for some examples.
  *
  *  The interface between RiscOperators and either MemoryState or RegisterState has been formalized somewhat. See documentation
- *  for RiscOperators::readMemory() and RiscOperators::readRegister().
+ *  for @ref RiscOperators::readMemory and @ref RiscOperators::readRegister.
  *
  *  @section instruction_semantics_future Future work
  *
@@ -467,7 +467,7 @@ public:
 //                                      Merging states
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared ownership pointer for Merger classes. */
+/** Shared-ownership pointer for @ref Merger classes. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class Merger> MergerPtr;
 
 /** Controls state merge operations.
@@ -491,7 +491,7 @@ protected:
     Merger() {}
 
 public:
-    /** Shared ownership pointer to an object. */
+    /** Shared ownership pointer for @ref Merger. See @ref heap_object_shared_ownership. */
     typedef MergerPtr Ptr;
 
     /** Allocating constructor. */
@@ -513,10 +513,7 @@ Sawyer::SharedPointer<To> dynamic_pointer_cast(const Sawyer::SharedPointer<From>
     return from.template dynamicCast<To>();
 }
 
-/** Smart pointer to an SValue object. SValue objects are reference counted and should not be explicitly deleted.
- *
- *  Note: Although most semantic *Ptr types are based on boost::shared_ptr<>, SValuePtr uses Sawyer::SharedPointer which is
- *  substantially faster. */
+/** Shared-ownership pointer to a semantic value in any domain. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Base class for semantic values.
@@ -544,7 +541,7 @@ protected:
     SValue(const SValue &other): width(other.width) {}
 
 public:
-    /** Shared-ownership pointer for an SValue object. */
+    /** Shared-ownership pointer for an @ref SValue object. See @ref heap_object_shared_ownership. */
     typedef SValuePtr Ptr;
 
 public:
@@ -734,8 +731,7 @@ public:
 //                                      Register States
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RegisterState object.  RegisterState objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to a register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
 /** The set of all registers and their values. RegisterState objects are allocated on the heap and reference counted.  The
@@ -758,7 +754,7 @@ protected:
     }
 
 public:
-    /** Shared-ownership pointer for a register state object. */
+    /** Shared-ownership pointer for a @ref RegisterState object. See @ref heap_object_shared_ownership. */
     typedef RegisterStatePtr Ptr;
 
 public:
@@ -840,16 +836,27 @@ public:
      *  Merges the @p other state into this state, returning true if this state changed. */
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) = 0;
 
-    /** Read a value from a register. The register descriptor, @p reg, not only describes which register, but also which bits
-     * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
-     * different parts of that register). The RISC operations are provided so that they can be used to extract the correct bits
-     * from a wider hardware register if necessary. See RiscOperators::readRegister() for more details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) = 0;
+    /** Read a value from a register.
+     *
+     *  The register descriptor, @p reg, not only describes which register, but also which bits of that register (e.g., "al",
+     *  "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to different parts of that
+     *  register). The RISC operations are provided so that they can be used to extract the correct bits from a wider hardware
+     *  register if necessary.
+     *
+     *  The @p dflt value is written into the register state if the register was not defined in the state. By doing this, a
+     *  subsequent read of the same register will return the same value. Some register states cannot distinguish between a
+     *  register that was never accessed and a register that was only read, in which case @p dflt is not used since all
+     *  registers are already initialized.
+     *
+     *  See @ref RiscOperators::readRegister for more details. */
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
 
-    /** Write a value to a register.  The register descriptor, @p reg, not only describes which register, but also which bits
-     * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
-     * different parts of that register). The RISC operations are provided so that they can be used to insert the @p value bits
-     * into a wider the hardware register if necessary. See RiscOperators::readRegister() for more details. */
+    /** Write a value to a register.
+     *
+     *  The register descriptor, @p reg, not only describes which register, but also which bits of that register (e.g., "al",
+     *  "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to different parts of that
+     *  register). The RISC operations are provided so that they can be used to insert the @p value bits into a wider the
+     *  hardware register if necessary. See @ref RiscOperators::readRegister for more details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) = 0;
 
     /** Print the register contents. This emits one line per register and contains the register name and its value.
@@ -884,8 +891,7 @@ public:
 
 };
 
-/** Smart pointer to a RegisterStateX86 object.  RegisterStateX86 objects are reference counted and should not be
- *  explicitly deleted. */
+/** Shared-ownership pointer to an x86 register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RegisterStateX86> RegisterStateX86Ptr;
 
 /** The set of all registers and their values for a 32-bit x86 architecture.
@@ -975,7 +981,7 @@ public:
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() /* override*/;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
@@ -1011,7 +1017,7 @@ protected:
 //                                      Memory State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryState object. MemoryState objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Represents all memory in the state. MemoryState objects are allocated on the heap and reference counted.  The
@@ -1039,7 +1045,7 @@ protected:
           merger_(other->merger_), byteRestricted_(other->byteRestricted_) {}
 
 public:
-    /** Shared-ownership pointer for a memory state object. */
+    /** Shared-ownership pointer for a @ref MemoryState. See @ref heap_object_shared_ownership. */
     typedef MemoryStatePtr Ptr;
 
 public:
@@ -1197,7 +1203,7 @@ public:
 //                                      State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a semantic state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class State> StatePtr;
 
 /** Base class for semantics machine states.
@@ -1241,7 +1247,7 @@ protected:
     }
 
 public:
-    /** Shared-ownership pointer for a state object. */
+    /** Shared-ownership pointer for a @ref State. See @ref heap_object_shared_ownership. */
     typedef StatePtr Ptr;
 
 public:
@@ -1311,7 +1317,7 @@ public:
     /** Property: Register state.
      *
      *  This read-only property is the register substate of this whole state. */
-    RegisterStatePtr registerState() {
+    RegisterStatePtr registerState() const {
         return registers_;
     }
 
@@ -1334,14 +1340,14 @@ public:
     
     /** Read a value from a register.
      *
-     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state.  See
-     *  BaseSemantics::RiscOperators::readRegister() for details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &desc, RiscOperators *ops);
+     *  The @ref BaseSemantics::readRegister implementation simply delegates to the register state member of this state.  See
+     *  @ref BaseSemantics::RiscOperators::readRegister for details. */
+    virtual SValuePtr readRegister(const RegisterDescriptor &desc, const SValuePtr &dflt, RiscOperators *ops);
 
     /** Write a value to a register.
      *
-     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state.  See
-     *  BaseSemantics::RiscOperators::writeRegister() for details. */
+     *  The @ref BaseSemantics::writeRegister implementation simply delegates to the register state member of this state.  See
+     *  @ref BaseSemantics::RiscOperators::writeRegister for details. */
     virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops);
 
     /** Read a value from memory.
@@ -1435,17 +1441,25 @@ public:
 //                                      RISC Operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperator object. RiscOperator objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a RISC operators object. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
-/** Base class for most instruction semantics RISC operators.  This class is responsible for defining the semantics of the
- *  RISC-like operations invoked by the translation object (e.g., X86InstructionSemantics).  We omit the definitions for most
- *  of the RISC operations from the base class so that failure to implement them in a subclass is an error.
+/** Base class for most instruction semantics RISC operators.
+ *
+ *  This class is responsible for defining the semantics of the RISC-like operations invoked by the translation object (e.g.,
+ *  X86InstructionSemantics).  We omit the definitions for most of the RISC operations from the base class so that failure to
+ *  implement them in a subclass is an error.
  *
  *  RISC operator arguments are, in general, SValue pointers.  However, if the width of a RISC operator's result depends on an
  *  argument's value (as opposed to depending on the argument width), then that argument must be a concrete value (i.e., an
  *  integral type).  This requirement is due to the fact that SMT solvers need to know the sizes of their bit
- *  vectors. Operators extract(), unsignedExtend(), signExtend(), readRegister(), and readMemory() fall into this category.
+ *  vectors. Operators @ref extract, @ref unsignedExtend, @ref signExtend, @ref readRegister, and @ref readMemory fall into
+ *  this category.
+ *
+ *  Operators with side effects (@ref writeRegister, @ref writeMemory, and possibly others) usually modify a @ref State object
+ *  pointed to by the @ref currentState property. Keeping side effects in states allows @ref RiscOperators to be used in
+ *  data-flow analysis where meeting control flow edges cause states to be merged.  Side effects that don't need to be part of
+ *  a data-flow can be stored elsewhere, such as data members of a subclass or the @ref initialState property.
  *
  *  RiscOperator objects are allocated on the heap and reference counted.  The BaseSemantics::RiscOperator is an abstract class
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
@@ -1453,6 +1467,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors
     StatePtr currentState_;                             // State upon which RISC operators operate
+    StatePtr initialState_;                             // Lazily updated initial state; see readMemory
     SMTSolver *solver_;                                 // Optional SMT solver
     SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
     size_t nInsns_;                                     // Number of instructions processed
@@ -1473,7 +1488,7 @@ protected:
     }
 
 public:
-    /** Shared-ownership pointer for a RiscOperators object. */
+    /** Shared-ownership pointer for a @ref RiscOperators object. See @ref heap_object_shared_ownership. */
     typedef RiscOperatorsPtr Ptr;
 
 public:
@@ -1542,11 +1557,13 @@ public:
      *  state has no effect on this object's prototypical value which was initialized by the constructor; new states should
      *  have a prototyipcal value of the same dynamic type.
      *
+     *  See also, @ref initialState.
+     *
      * @{ */
     virtual StatePtr currentState() const { return currentState_; }
     virtual void currentState(const StatePtr &s) { currentState_ = s; }
     /** @} */
-    
+
     // [Robb Matzke 2016-01-22]: deprecated
     virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
         return currentState();
@@ -1556,6 +1573,47 @@ public:
     virtual void set_state(const StatePtr &s) ROSE_DEPRECATED("use currentState instead") {
         currentState(s);
     }
+
+    /** Property: Optional lazily updated initial state.
+     *
+     *  If non-null, then any calls to @ref readMemory or @ref readRegister which do not find that the address or register has
+     *  a value, not only instantiate the value in the current state, but also write the same value to this initial state.  In
+     *  effect, this is like Schrodinger's cat: every memory address and register has a value, we just don't know what it is
+     *  until we try to read it.  Once we read it, it becomes instantiated in the current state and the initial state. The
+     *  default initial state is the null pointer.
+     *
+     *  Changing the current state does not affect the initial state.  This makes it easier to use a state as part of a
+     *  data-flow analysis, in which one typically swaps in different current states as the data-flow progresses.
+     *
+     *  The initial state need not be the same type as the current state, as long as they both have the same prototypical value
+     *  type.  For instance, a symbolic domain could use a @ref MemoryCellList for its @ref currentState and a state based
+     *  on a @ref MemoryMap of concrete values for its initial state, as long as those concrete values are converted to
+     *  symbolic values when they're read.
+     *
+     *  <b>Caveats:</b> Not all semantic domains use the initial state. The order that values are added to an initial state
+     *  depends on the order they're encountered during the analysis.
+     *
+     *  See also, @ref currentState.
+     *
+     *  @section example1 Example 1: Simple usage
+     *
+     *  This example, shows one way to use an initial state and the effect is has on memory and register I/O. It uses the same
+     *  type for the initial state as it does for the current states.
+     *
+     *  @snippet testLazyInitialStates.C basicReadTest
+     *
+     *  @section example2 Example 2: Advanced usage
+     *
+     *  This example is somwewhat more advanced. It uses a custom state, which is a relatively common practice of users, and
+     *  augments it to do something special when it's used as an initial state. When it's used as an initial state, it sets a
+     *  flag for the values produced so that an analysis can presumably detect that the value is an initial value.
+     *
+     *  @snippet testLazyInitialStates.C advancedReadTest
+     *
+     * @{ */
+    virtual StatePtr initialState() const { return initialState_; }
+    virtual void initialState(const StatePtr &s) { initialState_ = s; }
+    /** @} */
 
     /** Property: Name used for debugging.
      *
@@ -1986,29 +2044,37 @@ public:
      *  A register state will typically implement storage for hardware registers, but higher layers (the State, RiscOperators,
      *  Dispatcher, ...)  should not be concerned about the size of the register they're trying to read.  For example, a
      *  register state for a 32-bit x86 architecture will likely have a storage location for the 32-bit EAX register, but it
-     *  should be possible to ask RiscOperators::readRegister to return the value of AX (the low-order 16-bits).  In order to
-     *  accomplish this, some level of the readRegister delegations needs to invoke RiscOperators::extract() to obtain the low
-     *  16 bits.  The RiscOperators object is passed along the delegation path for this purpose.  The inverse concat()
-     *  operation will be needed at some level when we ask readRegister() to return a value that comes from multiple storage
-     *  locations in the register state (such as can happen if an x86 register state holds individual status flags and we ask
-     *  for the 32-bit EFLAGS register).
+     *  should be possible to ask @ref readRegister to return the value of AX (the low-order 16-bits).  In order to accomplish
+     *  this, some level of the readRegister delegations needs to invoke @ref extract to obtain the low 16 bits.  The
+     *  RiscOperators object is passed along the delegation path for this purpose.  The inverse @ref concat operation will be
+     *  needed at some level when we ask @ref readRegister to return a value that comes from multiple storage locations in the
+     *  register state (such as can happen if an x86 register state holds individual status flags and we ask for the 32-bit
+     *  EFLAGS register).
+     *
+     *  If the register state can distinguish between a register that has never been accessed and a register that has only been
+     *  read, then the @p dflt value is stored into the register the first time it's read. This ensures that reading the
+     *  register a second time with no intervening write will return the same value as the first read.  If a @p dflt is not
+     *  provided then one is constructed by invoking @ref undefined_.
      *
      *  There needs to be a certain level of cooperation between the RiscOperators, State, and register state classes to decide
-     *  which layer should invoke the extract() or concat() (or whatever other RISC operations might be necessary).
-     */ 
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg) {
-        ASSERT_not_null(currentState_);
-        return currentState_->readRegister(reg, this);
+     *  which layer should invoke the @ref extract or @ref concat (or whatever other RISC operations might be necessary).
+     *
+     *  @{ */
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg) { // old subclasses can still override this if they want,
+        return readRegister(reg, undefined_(reg.get_nbits()));      // but new subclasses should not override this method.
     }
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt); // new subclasses override this
+    /** @} */
 
     /** Writes a value to a register.
      *
      *  The base implementation simply delegates to the current semantic State, which probably delegates to a register state,
      *  but subclasses are welcome to override this behavior at any level.
      *
-     *  As with readRegister(), writeRegister() may need to perform various RISC operations in order to accomplish the task of
-     *  writing a value to the specified register when the underlying register state doesn't actually store a value for that
-     *  specific register. The RiscOperations object is passed along for that purpose.  See readRegister() for more details. */
+     *  As with @ref readRegister, @ref writeRegister may need to perform various RISC operations in order to accomplish the
+     *  task of writing a value to the specified register when the underlying register state doesn't actually store a value for
+     *  that specific register. The RiscOperations object is passed along for that purpose.  See @ref readRegister for more
+     *  details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
         ASSERT_not_null(currentState_);
         currentState_->writeRegister(reg, a, this);
@@ -2020,8 +2086,8 @@ public:
      *  State::readMemory "readMemory" method.
      *
      *  A MemoryState will implement storage for memory locations and might impose certain restrictions, such as "all memory
-     *  values must be eight bits".  However, the RiscOperators::readMemory() should not have these constraints so that it can
-     *  be called from a variety of Dispatcher subclass (e.g., the DispatcherX86 class assumes that RiscOperators::readMemory()
+     *  values must be eight bits".  However, the @ref readMemory should not have these constraints so that it can
+     *  be called from a variety of Dispatcher subclass (e.g., the DispatcherX86 class assumes that @ref readMemory
      *  is capable of reading 32-bit values from little-endian memory). The designers of the MemoryState, State, and
      *  RiscOperators should collaborate to decide which layer (RiscOperators, State, or MemoryState) is reponsible for
      *  combining individual memory locations into larger values.  A RiscOperators object is passed along the chain of
@@ -2059,7 +2125,7 @@ public:
 //                                      Instruction Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a Dispatcher object. Dispatcher objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a semantics instruction dispatcher. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
 
 /** Functor that knows how to dispatch a single kind of instruction. */
@@ -2111,7 +2177,7 @@ protected:
     }
 
 public:
-    /** Shared-ownership pointer for a Dispatcher object. */
+    /** Shared-ownership pointer for a @ref Dispatcher object. See @ref heap_object_shared_ownership. */
     typedef DispatcherPtr Ptr;
 
 public:
@@ -2216,10 +2282,10 @@ public:
     // Methods related to registers
 public:
     /** Access the register dictionary.  The register dictionary defines the set of registers over which the RISC operators may
-     *  operate. This should be same registers (or superset thereof) whose values are stored in the machine state(s).
-     *  This dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to
-     *  read from the "eax" register, the dispatcher will look up "eax" in its register dictionary and then pass that
-     *  descriptor to the readRegister() RISC operation.  Register descriptors are also stored in instructions when the
+     *  operate. This should be same registers (or superset thereof) whose values are stored in the machine state(s).  This
+     *  dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to read
+     *  from the "eax" register, the dispatcher will look up "eax" in its register dictionary and then pass that descriptor to
+     *  the @ref RiscOperators::readRegister operation.  Register descriptors are also stored in instructions when the
      *  instruction is disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a
      *  superset thereof.
      *

@@ -55,6 +55,8 @@ namespace TraceSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void SValue;
+
+/** Shared-ownership pointer to trace-semantics values. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> SValuePtr;
 
 
@@ -63,6 +65,8 @@ typedef boost::shared_ptr<void> SValuePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void RegisterState;
+
+/** Shared-ownership pointer to trace-semantics register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> RegisterStatePtr;
 
 
@@ -71,6 +75,8 @@ typedef boost::shared_ptr<void> RegisterStatePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void MemoryState;
+
+/** Shared-ownership pointer to trace-semantics memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> MemoryStatePtr;
 
 
@@ -78,8 +84,7 @@ typedef boost::shared_ptr<void> MemoryStatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to trace-semantics RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Wraps RISC operators so they can be traced. */
@@ -336,7 +341,8 @@ public:
     virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,

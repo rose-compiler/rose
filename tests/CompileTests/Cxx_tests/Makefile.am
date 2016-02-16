@@ -210,7 +210,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_184.C \
    test2014_185.C \
    test2014_186.C \
-   test2014_188.C \
    test2014_189.C \
    test2014_190.C \
    test2014_191.C \
@@ -332,7 +331,6 @@ NEW_TESTCODES = \
    test2015_117.C \
    test2015_118.C \
    test2015_119.C \
-   test2015_120.C \
    test2015_121.C \
    test2015_122.C \
    test2015_123.C \
@@ -368,7 +366,26 @@ NEW_TESTCODES = \
    test2016_04.C \
    test2016_05.C \
    test2016_06.C \
-   test2016_07.C 
+   test2016_07.C \
+   test2016_08.C \
+   test2016_09.C \
+   test2016_10.C \
+   test2016_11.C \
+   test2016_12.C \
+   test2016_13.C \
+   test2016_14.C 
+
+if !ROSE_USE_EDG_VERSION_4_7
+if !ROSE_USING_BOOST_VERSION_1_57
+# These boost 1.57 specific tests fail in EDG 4.7 and pass in EDG 4.9, so
+# avoid testing them in this combination.  The issue is fixed in EDG 4.9.
+NEW_TESTCODES += \
+   test2014_187.C \
+   test2014_187_work_around.C \
+   test2014_188.C \
+   test2015_120.C 
+endif
+endif
 
 # Failing test codes:
 #   test2015_147.C 
@@ -422,11 +439,14 @@ if !USING_INTEL_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_304.C \
    test2014_159.C \
-   test2014_187.C \
-   test2014_187_work_around.C \
    test2014_211.C \
    test2015_55.C
 endif
+
+# These should not be tested with the EDG 4.7 frontend (pass only in ROSE with the EDG 4.9 frontend).
+# I thnk this has much less to do with Intel compiler being used.
+# test2014_187.C 
+# test2014_187_work_around.C 
 
 # DQ (12/19/2015): I think these test codes use language builtin functions not present with the same signature in
 # older GNU versions (e.g. "__builtin_isgreater()") and types not present in older GNU versions (e.g. "__int128")

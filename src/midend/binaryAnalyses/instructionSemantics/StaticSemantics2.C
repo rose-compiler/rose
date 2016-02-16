@@ -431,7 +431,7 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg) {
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
     BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));
     return makeSValue(reg.get_nbits(), SgAsmRiscOperation::OP_readRegister, regExpr);
 }

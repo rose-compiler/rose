@@ -51,7 +51,7 @@ namespace SourceAstSemantics {
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for reference-counted semantic values. */
+/** Shared-ownership pointer for a binary-to-source semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Semantic values for generating C source code ASTs.
@@ -203,7 +203,7 @@ typedef BaseSemantics::StatePtr StatePtr;               /**< Pointer to states u
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for basic semantic operations. */
+/** Shared-ownership pointer for basic semantic operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Basic semantic operations.
@@ -214,6 +214,8 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  The semantic state is split between the @ref State object normally attached to semantic domains, and the side effect list
  *  stored in this RiscOperators object.  Neither is complete by itself. */
 class RiscOperators: public BaseSemantics::RiscOperators {
+    typedef BaseSemantics::RiscOperators Super;
+
 public:
     /** Side effect. */
     struct SideEffect {
@@ -425,7 +427,8 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,

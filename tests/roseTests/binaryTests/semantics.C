@@ -158,7 +158,7 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
             FormatRestorer fmt(o);
             o <<prefix <<std::setw(8) <<std::left <<abbr <<"= { ";
             fmt.restore();
-            BaseSemantics::SValuePtr val = regstate->readRegister(desc, ops.get());
+            BaseSemantics::SValuePtr val = regstate->readRegister(desc, ops->undefined_(desc.get_nbits()), ops.get());
             o <<*val <<" }\n";
         }
         void operator()(unsigned majr, unsigned minr, unsigned offset, unsigned nbits, const char *abbr) {

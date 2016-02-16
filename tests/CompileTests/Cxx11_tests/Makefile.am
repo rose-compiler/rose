@@ -86,6 +86,18 @@ test2015_11.C \
 test2015_12.C \
 test2015_13.C \
 test2015_14.C \
+test2016_01.C \
+test2016_03.C \
+test2016_04.C \
+test2016_06.C \
+test2016_07.C \
+test2016_10.C \
+test2016_11.C \
+test2016_12.C \
+test2016_13.C \
+test2016_14.C \
+test2016_15.C \
+test2016_16.C \
 last.C
 
 # New test codes not yet tested in regression tests.

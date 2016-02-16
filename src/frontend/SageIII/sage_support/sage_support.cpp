@@ -3336,13 +3336,18 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
             // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what
             // version of gfortran (as we do for C and C++))
                bool usingGfortran = false;
-               string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+            // string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
                #ifdef USE_CMAKE
                  #ifdef CMAKE_COMPILER_IS_GNUG77
                    usingGfortran = true;
                  #endif
                #else
-                 usingGfortran = (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx");
+              // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+              // Note that this code assumes that if we are using the C/C++ GNU compiler then we are using the GNU Fortran comiler (we need a similar BACKEND_FORTRAN_IS_GNU_COMPILER macro).
+              // usingGfortran = (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx");
+                 #if BACKEND_CXX_IS_GNU_COMPILER
+                    usingGfortran = true;
+                 #endif
                #endif
 
                if (usingGfortran)
@@ -3364,6 +3369,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                   }
                  else
                   {
+                    string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
                     printf ("Currently only the GNU compiler backend is supported (gfortran) backendCompilerSystem = %s \n",backendCompilerSystem.c_str());
                     ROSE_ASSERT(false);
                   }

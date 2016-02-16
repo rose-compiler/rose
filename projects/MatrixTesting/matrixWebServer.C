@@ -7,6 +7,7 @@ static Sawyer::Message::Facility mlog;
 
 #ifdef ROSE_USE_WT
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
@@ -29,14 +30,15 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WPanel>
 #include <Wt/WPushButton>
 #include <Wt/WStackedWidget>
+#include <Wt/WTable>
 #include <Wt/WTableView>
 #include <Wt/WTabWidget>
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-static const char* WILD_CARD_STR = "<any>";
+static const char* WILD_CARD_STR = "*";
 enum ChartType { BAR_CHART, LINE_CHART };
-enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO };
+enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, CVT_DURATION_AVE };
 static int END_STATUS_POSITION = 999;                   // test_names.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
@@ -133,6 +135,8 @@ sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
             }
         }
     }
+    if (where.empty())
+        where = " where true";
     return where;
 }
 
@@ -264,6 +268,47 @@ humanDepValue(const std::string &depName, const std::string &depValue, HumanForm
     return depValue;
 }
 
+// Clip val to be in the interval [minVal,maxVal]
+template<typename T>
+static T
+clip(T val, T minVal, T maxVal) {
+    return std::min(std::max(minVal, val), maxVal);
+}
+
+// Returns a CSS class name "redgreen-X-Y" where X is an integer in [0,100] depending on where val falls in the interval
+// [minVal,maxVal] and Y is an integer in the range [0,4] based on how many samples are present.
+static Wt::WString
+redToGreen(double val, double minVal, double maxVal, int nSamples=4) {
+    int fade = std::min((int)round(nSamples), 4);
+    if (0 == nSamples) {
+        return Wt::WString("chart-zero");
+    } else if (maxVal - minVal < 1.0) {
+        return Wt::WString("redgreen-50-" + StringUtility::numberToString(fade));
+    } else {
+        val = clip(val, minVal, maxVal);
+        int percentile = round(100.0 * (val - minVal) / (maxVal - minVal));
+        return Wt::WString("redgreen-" + StringUtility::numberToString(percentile) +
+                           "-" + StringUtility::numberToString(fade));
+    }
+}
+
+// Returns a CSS class name "redgreen-X-Y" where X is an integer in [100,0] depending on where val falls in the interval
+// [minVal,maxVal] and Y is an integer in the range [0,4] based on how many samples are present.
+static Wt::WString
+greenToRed(double val, double minVal, double maxVal, int nSamples=4) {
+    int fade = std::min((int)round(nSamples), 4);
+    if (0 == nSamples) {
+        return Wt::WString("chart-zero");
+    } else if (maxVal - minVal < 1.0) {
+        return Wt::WString("redgreen-50-" + StringUtility::numberToString(fade));
+    } else {
+        val = clip(val, minVal, maxVal);
+        int percentile = round(100.0 * (maxVal - val) / (maxVal - minVal));
+        return Wt::WString("redgreen-" + StringUtility::numberToString(percentile) +
+                           "-" + StringUtility::numberToString(fade));
+    }
+}
+    
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Model of test results.  This is a two dimensional table. The rows of the table correspond to values of the major dependency
 // and the columns of the table correspond to values of the minor dependency.  If the minor dependency name is the empty string
@@ -281,9 +326,15 @@ private:
     typedef std::vector<double> TableRow;
     typedef std::vector<TableRow> Table;
     Table counts_;                                      // counts of matching rows
+    double minCounts_, maxCounts_;                      // min/max values in counts_ (excluding zeros)
     Table passes_;                                      // portion of counts_ where pass_fail = 'passed'
+    Table aveWarnings_;                                 // average number of compiler warnings per run
+    double minAveWarnings_, maxAveWarnings_;            // min/max value in aveWarnings_
+    Table aveDuration_;                                 // average wall-clock duration per run
+    double minAveDuration_, maxAveDuration_;            // min/max value in aveDuration_
     ChartValueType chartValueType_;                     // whether to show counts, percents, or pass ratios
     bool roundToInteger_;                               // round cell values to nearest integer
+    bool humanReadable_;                                // return data as human-radable strings instead of doubles
 
     std::string depMajorName_;                          // dependency for major axis
     std::vector<std::string> depMajorValues_;           // human-format values of major dependency
@@ -297,7 +348,7 @@ private:
     
 public:
     explicit StatusModel(Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), chartValueType_(CVT_COUNT), roundToInteger_(false),
+        : Wt::WAbstractTableModel(parent), chartValueType_(CVT_COUNT), roundToInteger_(false), humanReadable_(false),
           depMajorName_("rose_date"), depMajorIsData_(false), depMinorName_("pass/fail"), depMinorIsData_(false) {}
 
     const std::string& depMajorName() const {
@@ -348,6 +399,14 @@ public:
         roundToInteger_ = b;
     }
 
+    bool humanReadable() const {
+        return humanReadable_;
+    }
+
+    void setHumanReadable(bool b) {
+        humanReadable_ = b;
+    }
+
     const std::string depMajorValue(size_t modelRow) {
         size_t i = modelRow - (depMinorIsData_ ? 1 : 0);
         return i < depMajorValues_.size() ? depMajorValues_[i] : std::string();
@@ -363,7 +422,13 @@ public:
         updateDepMajor(deps);
         updateDepMinor(deps);
         resetTable(counts_);
+        minCounts_ = maxCounts_ = 0.0;
         resetTable(passes_);
+        resetTable(aveWarnings_);
+        minAveWarnings_ = maxAveWarnings_ = 0.0;
+        resetTable(aveDuration_);
+        minAveDuration_ = maxAveDuration_ = 0.0;
+        
         if (counts_.empty())
             return modelReset().emit();
 
@@ -373,7 +438,13 @@ public:
         std::string depMinorColumn = gstate.dependencyNames[depMinorName_];
         std::string passFailColumn = gstate.dependencyNames["pass/fail"];
         std::vector<std::string> args;
-        std::string sql = "select " + depMajorColumn + ", " + depMinorColumn + ", " + passFailColumn + " as pf, count(*)" +
+        std::string sql = "select " +
+                          depMajorColumn + ", " +       // 0
+                          depMinorColumn + ", " +       // 1
+                          passFailColumn + " as pf, "   // 2
+                          "count(*), " +                // 3
+                          "sum(nwarnings)," +           // 4
+                          "sum(duration)" +             // 5
                           sqlFromClause() +
                           sqlWhereClause(deps, args /*out*/) +
                           " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
@@ -387,13 +458,42 @@ public:
             std::string minorValue = humanDepValue(depMinorName_, row.get<std::string>(1), HUMAN_TERSE);
             std::string pf = row.get<std::string>(2);
             int count = row.get<int>(3);
+            double nwarn = row.get<int>(4);
+            double duration = row.get<int>(5);
 
             int i = depMajorIndex_.getOrElse(majorValue, -1);
             int j = depMinorIndex_.getOrElse(minorValue, -1);
             if (i >= 0 && j >= 0) {
                 counts_[i][j] += count;
+                aveWarnings_[i][j] += nwarn;            // sum here; adjusted below
+                aveDuration_[i][j] += duration;         // sum here; adjusted below
                 if (pf == "pass")
                     passes_[i][j] += count;
+            }
+        }
+
+        // Adjust aveWarnings and aveDuration to be averages instead of sums
+        {
+            int n = 0;
+            for (size_t i=0; i<aveWarnings_.size(); ++i) {
+                for (size_t j=0; j<aveWarnings_[i].size(); ++j) {
+                    if (counts_[i][j] > 0) {
+                        aveWarnings_[i][j] /= counts_[i][j];
+                        aveDuration_[i][j] /= counts_[i][j];
+                        if (0 == n++) {
+                            minCounts_ = maxCounts_ = counts_[i][j];
+                            minAveWarnings_ = maxAveWarnings_ = aveWarnings_[i][j];
+                            minAveDuration_ = maxAveDuration_ = aveDuration_[i][j];
+                        } else {
+                            minCounts_      = std::min(minCounts_,      counts_[i][j]);
+                            maxCounts_      = std::max(maxCounts_,      counts_[i][j]);
+                            minAveWarnings_ = std::min(minAveWarnings_, aveWarnings_[i][j]);
+                            maxAveWarnings_ = std::max(maxAveWarnings_, aveWarnings_[i][j]);
+                            minAveDuration_ = std::min(minAveDuration_, aveDuration_[i][j]);
+                            maxAveDuration_ = std::max(maxAveDuration_, aveDuration_[i][j]);
+                        }
+                    }
+                }
             }
         }
 
@@ -464,19 +564,38 @@ public:
             } else if (CVT_PASS_RATIO == chartValueType_) {// number of passes divided by count as a percent
                 double percent = 100.0 * passes_[i][j] / counts_[i][j];
                 return roundToInteger_ ? round(percent) : percent;
+            } else if (CVT_WARNINGS_AVE == chartValueType_) {// average number of warnings per test
+                return roundToInteger_ ? round(aveWarnings_[i][j]) : aveWarnings_[i][j];
+            } else if (CVT_DURATION_AVE == chartValueType_) {// average run duration per test in seconds
+                if (humanReadable_)
+                    return humanDuration(aveDuration_[i][j], HUMAN_TERSE);
+                return roundToInteger_ ? round(aveDuration_[i][j]) : aveDuration_[i][j];
             } else {                                    // raw counts
                 return counts_[i][j];
             }
 
         } else if (Wt::StyleClassRole == role) {
-            if (i >= 0 && j >= 0 && CVT_PASS_RATIO == chartValueType_) {
-                if (counts_[i][j] == 0) {
-                    return Wt::WString("chart-zero");
-                } else {
-                    int pfratio = round(100.0 * passes_[i][j] / counts_[i][j]);
-                    int fade = std::min((int)round(counts_[i][j]), 4);
-                    return Wt::WString("chart-pass-ratio-" + StringUtility::numberToString(pfratio) +
-                                       "-" + StringUtility::numberToString(fade));
+            if (i >= 0 && j >= 0) {
+                switch (chartValueType_) {
+                    case CVT_COUNT:
+                        return redToGreen(counts_[i][j], minCounts_, maxCounts_);
+                    case CVT_PERCENT: {
+                        double rowTotal = 0;
+                        BOOST_FOREACH (double count, counts_[i])
+                            rowTotal += count;
+                        double percent = rowTotal > 0 ? 100.0 * counts_[i][j] / rowTotal : 0.0;
+                        return redToGreen(percent, 0.0, 100.0);
+                    }
+                    case CVT_PASS_RATIO: {
+                        double pfratio = 0.0;
+                        if (counts_[i][j] > 0)
+                            pfratio = passes_[i][j] / counts_[i][j];
+                        return redToGreen(pfratio, 0.0, 1.0, counts_[i][j]);
+                    }
+                    case CVT_WARNINGS_AVE:
+                        return greenToRed(aveWarnings_[i][j], minAveWarnings_, maxAveWarnings_, counts_[i][j]);
+                    case CVT_DURATION_AVE:
+                        return greenToRed(aveDuration_[i][j], minAveDuration_, maxAveDuration_, counts_[i][j]);
                 }
             }
         }
@@ -674,6 +793,8 @@ public:
             switch (model_->chartValueType()) {
                 case CVT_COUNT:
                 case CVT_PASS_RATIO:
+                case CVT_WARNINGS_AVE:
+                case CVT_DURATION_AVE:
                     axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
                     break;
                 case CVT_PERCENT:
@@ -829,6 +950,7 @@ public:
         tableModel_ = new StatusModel;
         tableModel_->setDepMajorIsData(true);
         tableModel_->setRoundToInteger(true);
+        tableModel_->setHumanReadable(true);
         tableView_ = new Wt::WTableView;
         tableView_->setModel(tableModel_);
         tableView_->setAlternatingRowColors(false);         // true interferes with our custom background colors
@@ -872,13 +994,16 @@ public:
 
         // Combo box to choose whether the model stores percents or counts
         chartSettingsBox->addWidget(absoluteRelative_ = new Wt::WComboBox);
-        absoluteRelative_->addItem("counts");
-        absoluteRelative_->addItem("normalized%");
-        absoluteRelative_->addItem("pass%");
+        absoluteRelative_->addItem("runs (#)");
+        absoluteRelative_->addItem("runs (%)");
+        absoluteRelative_->addItem("pass / runs (%)");
+        absoluteRelative_->addItem("ave warnings (#)");
+        absoluteRelative_->addItem("ave duration (sec)");
         absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
 
         // Update button to reload data from the database
         Wt::WPushButton *updateButton = new Wt::WPushButton("Update");
+        updateButton->setToolTip("Update chart with latest database changes.");
         updateButton->clicked().connect(this, &WResultsConstraintsTab::updateStatusCounts);
         chartSettingsBox->addWidget(updateButton);
 
@@ -949,6 +1074,9 @@ private:
             case 0: cvt = CVT_COUNT; break;
             case 1: cvt = CVT_PERCENT; break;
             case 2: cvt = CVT_PASS_RATIO; break;
+            case 3: cvt = CVT_WARNINGS_AVE; break;
+            case 4: cvt = CVT_DURATION_AVE; break;
+            default: ASSERT_not_reachable("invalid chart value type");
         }
 
         chartModel_->setChartValueType(cvt);
@@ -966,13 +1094,15 @@ class WDetails: public Wt::WContainerWidget {
     Wt::WComboBox *testIdChoices_;
     int testId_;
     Wt::Signal<> testIdChanged_;
-    Wt::WText *config_, *commands_, *testOutput_;
+    Wt::WText *error_, *config_, *commands_, *testOutput_;
 
 public:
     explicit WDetails(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent), testId_(-1) {
         Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
         setLayout(vbox);
+
+        vbox->addWidget(new Wt::WLabel("Details about the configurations selected in the \"Overview\" tab."));
 
         // Combo box to choose which test to display
         Wt::WHBoxLayout *choiceBox = new Wt::WHBoxLayout;
@@ -982,6 +1112,10 @@ public:
         choiceBox->addWidget(testIdChoices_);
         choiceBox->addStretch(1);
         vbox->addLayout(choiceBox);
+
+        // Error message cached in database test_results.first_error
+        vbox->addWidget(error_ = new Wt::WText);
+        error_->setStyleClass("compiler-error");
 
         // Configuration
         vbox->addWidget(new Wt::WText("<h2>Detailed status</h2>"));
@@ -994,7 +1128,7 @@ public:
         vbox->addWidget(new Wt::WText("<h2>Commands executed</h2>"));
         commands_ = new Wt::WText;
         commands_->setTextFormat(Wt::XHTMLText);
-        config_->setWordWrap(true);
+        commands_->setWordWrap(true);
         vbox->addWidget(commands_);
 
         // Tests final output
@@ -1007,7 +1141,7 @@ public:
 
     void queryTestIds(const Dependencies &deps) {
         std::vector<std::string> args;
-        std::string sql = "select id, status " + sqlFromClause() + sqlWhereClause(deps, args) + " order by id";
+        std::string sql = "select id, status" + sqlFromClause() + sqlWhereClause(deps, args) + " order by id";
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
 
@@ -1051,25 +1185,27 @@ public:
         std::string sql;
         BOOST_FOREACH (const std::string &colName, columns.values())
             sql += std::string(sql.empty()?"select ":", ") + colName;
+        sql += ", coalesce(first_error,'')";
 
         sql += sqlFromClause();
         std::vector<std::string> args;
-        std::string where = sqlWhereClause(deps, args);
-        where += std::string(where.empty() ? " where " : " and ") + "id = ?";
+        std::string where = sqlWhereClause(deps, args) + " and id = ?";
         args.push_back(boost::lexical_cast<std::string>(testId_));
         sql += where;
 
         config_->setText("");
-        std::string config;
+        std::string config, first_error;
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
             int column = 0;
             BOOST_FOREACH (const std::string &name, columns.keys())
                 config += name + "=" + humanDepValue(name, row.get<std::string>(column++)) + "\n";
+            first_error = row.get<std::string>(columns.size());
             break;
         }
         config_->setText(config);
+        error_->setText(first_error);
 
         updateCommands();
         updateOutput();
@@ -1180,6 +1316,117 @@ private:
     }
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// For prioritizing errors to be fixed
+class WErrors: public Wt::WContainerWidget {
+    bool outOfDate_;                                    // need to query database again?
+    Wt::WTable *grid_;
+public:
+    explicit WErrors(Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), outOfDate_(true) {
+        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+        setLayout(vbox);
+        vbox->addWidget(new Wt::WText("These are the most prevalent errors in the configurations selected in the "
+                                      "\"Overview\" tab. The information below each error is the list of "
+                                      "constraints, in addition to the \"Overview\" tab, which all the errors satisfy."));
+        vbox->addWidget(grid_ = new Wt::WTable);
+        grid_->setHeaderCount(1);
+
+        vbox->addStretch(1);
+    }
+
+    void changeConstraints() {
+        outOfDate_ = true;
+    }
+
+    // Update the error list if it's outdated
+    void updateErrorList(const Dependencies &deps) {
+        if (!outOfDate_)
+            return;
+        outOfDate_ = false;
+        std::vector<std::string> args;
+        std::string sql = "select count(*) as n, status, first_error" +
+                          sqlFromClause() +
+                          sqlWhereClause(deps, args) + " and first_error is not null"
+                          " group by status, first_error"
+                          " order by n desc"
+                          " limit 15";
+        SqlDatabase::StatementPtr q1 = gstate.tx->statement(sql);
+        bindSqlVariables(q1, args);
+
+        grid_->clear();
+        grid_->elementAt(0, 0)->addWidget(new Wt::WText("Count"));
+        grid_->elementAt(0, 1)->addWidget(new Wt::WText("Status"));
+        grid_->elementAt(0, 2)->addWidget(new Wt::WText("Error"));
+
+        grid_->columnAt(0)->setWidth(Wt::WLength(4.0, Wt::WLength::FontEm));
+        grid_->columnAt(1)->setWidth(Wt::WLength(6.0, Wt::WLength::FontEm));
+
+        Sawyer::Container::Map<std::string, std::string> statusCssClass;
+        int i = 1;
+        for (SqlDatabase::Statement::iterator iter1 = q1->begin(); iter1 != q1->end(); ++iter1) {
+            int nErrors = iter1.get<int>(0);
+            std::string status = iter1.get<std::string>(1);
+            std::string message = iter1.get<std::string>(2);
+            grid_->elementAt(i, 0)->addWidget(new Wt::WText(StringUtility::numberToString(nErrors)));
+            grid_->elementAt(i, 1)->addWidget(new Wt::WText(status));
+            grid_->elementAt(i, 2)->addWidget(new Wt::WText(message, Wt::PlainText));
+
+            grid_->elementAt(i, 0)->setRowSpan(2);
+            grid_->elementAt(i, 0)->setStyleClass("error-count-cell");
+            grid_->elementAt(i, 1)->setRowSpan(2);
+            if (!statusCssClass.exists(status))
+                statusCssClass.insert(status, "error-status-"+StringUtility::numberToString(statusCssClass.size()%8));
+            grid_->elementAt(i, 1)->setStyleClass(statusCssClass[status]);
+            grid_->elementAt(i, 2)->setStyleClass("error-message-cell");
+            ++i;
+
+            // Figure out the dependencies that are in common for all tests of this error
+            typedef Sawyer::Container::Map<std::string /*depname*/, std::string /*human*/> Dependencies;
+            Dependencies dependencies;
+            args.clear();
+            sql = "select distinct " + boost::join(gstate.dependencyNames.values(), ", ") +
+                  sqlFromClause() + sqlWhereClause(deps, args) + " and first_error = ?";
+            args.push_back(message);
+            SqlDatabase::StatementPtr q2 = gstate.tx->statement(sql);
+            bindSqlVariables(q2, args);
+            for (SqlDatabase::Statement::iterator iter2 = q2->begin(); iter2 != q2->end(); ++iter2) {
+                int colNumber = 0;
+                BOOST_FOREACH (const std::string &depname, gstate.dependencyNames.keys()) {
+                    std::string depval = humanDepValue(depname, iter2.get<std::string>(colNumber++), HUMAN_TERSE);
+                    if (!dependencies.exists(depname)) {
+                        dependencies.insert(depname, depval);
+                    } else if (dependencies[depname]!=depval) {
+                        dependencies[depname] = "";
+                    }
+                }
+            }
+
+            // Show dependencies that have the same value for all error, but for which the user has more than one choice of
+            // setting (well, two since the first item is always the wildcard).
+            std::vector<std::string> allSameDeps;
+            BOOST_FOREACH (const Dependencies::Node &node, dependencies.nodes()) {
+                if (node.value().empty())
+                    continue;                           // conflicting values found above
+                if (node.key() == "pass/fail" || node.key() == "status")
+                    continue;                           // not useful information
+                if (deps[node.key()].comboBox->count() <= 2)
+                    continue;                           // user had only one value choice (plus the wildcard)
+                if (deps[node.key()].comboBox->currentText().narrow() == node.value())
+                    continue;                           // this dependency is already constrained
+                allSameDeps.push_back(node.key() + "=" + node.value());
+            }
+            if (allSameDeps.empty())
+                allSameDeps.push_back("No additional constraints.");
+            grid_->elementAt(i, 2)->addWidget(new Wt::WText(boost::join(allSameDeps, ", ")));
+            grid_->elementAt(i, 2)->setStyleClass("error-dependencies-cell");
+            ++i;
+        }
+    }
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global settings
 class WSettings: public Wt::WContainerWidget {
@@ -1236,6 +1483,7 @@ private:
 class WApplication: public Wt::WApplication {
     WResultsConstraintsTab *resultsConstraints_;
     WDetails *details_;
+    WErrors *errors_;
     WSettings *settings_;
     Wt::WTabWidget *tabs_;
 
@@ -1251,15 +1499,15 @@ public:
         styleSheet().addRule(".output-separator", "background-color:#808080;");
 
         // Colors for pass-ratios.
-        //   Classes chart-pass-ratio-N vary from red to green as N goes from integer 0 through 100.
-        //   Classes chart-pass-ratio-N-S are similar except S is a saturation amount from 0 through 4 (desaturated).
+        //   Classes redgreen-N vary from red to green as N goes from integer 0 through 100.
+        //   Classes redgreen-N-S are similar except S is a saturation amount from 0 through 4 (desaturated).
         rose::Color::Gradient redgreen;
         redgreen.insert(0.0, rose::Color::HSV(0.00, 0.50, 0.50));
         redgreen.insert(0.5, rose::Color::HSV(0.17, 0.40, 0.50));
         redgreen.insert(1.0, rose::Color::HSV(0.33, 0.50, 0.50));
         for (int i=0; i<=100; ++i) {
             rose::Color::RGB c = redgreen.interpolate(i/100.0);
-            std::string cssClass = ".chart-pass-ratio-" + StringUtility::numberToString(i);
+            std::string cssClass = ".redgreen-" + StringUtility::numberToString(i);
             std::string bgColor = "background-color:" + c.toHtml() + ";";
             styleSheet().addRule(cssClass, bgColor);
             for (int j=0; j<5; ++j) {
@@ -1270,9 +1518,23 @@ public:
         }
         styleSheet().addRule(".chart-zero", "background-color:" + rose::Color::HSV(0, 0, 0.3).toHtml() + ";");
 
+        // Styles of error priority table cells
+        styleSheet().addRule(".error-count-cell", "border:1px solid black;");
+        styleSheet().addRule(".error-dependencies-cell", "border:1px solid black;");
+        styleSheet().addRule(".error-message-cell", "border:1px solid black; color:#680000; background-color:#ffc0c0;");
+        styleSheet().addRule(".error-status-0", "border:1px solid black; background-color:#d0aae0;");// light purple
+        styleSheet().addRule(".error-status-1", "border:1px solid black; background-color:#e1c2ba;");// light tomato
+        styleSheet().addRule(".error-status-2", "border:1px solid black; background-color:#aed5df;");// light cyan
+        styleSheet().addRule(".error-status-3", "border:1px solid black; background-color:#dfb9cd;");// light pink
+        styleSheet().addRule(".error-status-4", "border:1px solid black; background-color:#dfd5b8;");// light ochre
+        styleSheet().addRule(".error-status-5", "border:1px solid black; background-color:#bbc4df;");// light blue
+        styleSheet().addRule(".error-status-6", "border:1px solid black; background-color:#edc7d5;");// light rose
+        styleSheet().addRule(".error-status-7", "border:1px solid black; background-color:#bebadf;");// light purple
+
         tabs_ = new Wt::WTabWidget();
         tabs_->addTab(resultsConstraints_ = new WResultsConstraintsTab, "Overview");
         tabs_->addTab(details_ = new WDetails, "Details");
+        tabs_->addTab(errors_ = new WErrors, "Errors");
         tabs_->addTab(settings_ = new WSettings, "Settings");
         vbox->addWidget(tabs_);
 
@@ -1280,13 +1542,20 @@ public:
         resultsConstraints_->constraints()->constraintsChanged().connect(this, &WApplication::getMatchingTests);
         details_->testIdChanged().connect(this, &WApplication::updateDetails);
         settings_->settingsChanged().connect(this, &WApplication::updateAll);
+        tabs_->currentChanged().connect(this, &WApplication::switchTabs);
         getMatchingTests();
     }
 
 private:
+    void switchTabs(int idx) {
+        if (tabs_->widget(idx) == errors_)
+            errors_->updateErrorList(resultsConstraints_->constraints()->dependencies());
+    }
+    
     void getMatchingTests() {
         ::mlog[DEBUG] <<"WApplication::getMatchingTests\n";
         details_->queryTestIds(resultsConstraints_->constraints()->dependencies());
+        errors_->changeConstraints();
     }
 
     void updateDetails() {
