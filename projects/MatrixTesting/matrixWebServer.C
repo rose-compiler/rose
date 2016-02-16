@@ -9,6 +9,7 @@ static Sawyer::Message::Facility mlog;
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <Color.h>                                      // ROSE
@@ -31,6 +32,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WLength>
 #include <Wt/WPanel>
 #include <Wt/WPushButton>
+#include <Wt/WScrollArea>
 #include <Wt/WStackedWidget>
 #include <Wt/WTable>
 #include <Wt/WTableView>
@@ -310,7 +312,20 @@ greenToRed(double val, double minVal, double maxVal, int nSamples=4) {
                            "-" + StringUtility::numberToString(fade));
     }
 }
-    
+
+// Wraps a widget in a WScrollArea wrapped in a WPanel with the specified title.
+static Wt::WPanel*
+scrolledPanel(Wt::WWidget *centralWidget, const std::string &title) {
+    Wt::WScrollArea *sa = new Wt::WScrollArea;
+    sa->setWidget(centralWidget);
+
+    Wt::WPanel *p = new Wt::WPanel;
+    p->setTitle(title);
+    p->setCentralWidget(sa);
+
+    return p;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Model of test results.  This is a two dimensional table. The rows of the table correspond to values of the major dependency
 // and the columns of the table correspond to values of the minor dependency.  If the minor dependency name is the empty string
@@ -1101,49 +1116,64 @@ class WDetails: public Wt::WContainerWidget {
 public:
     explicit WDetails(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent), testId_(-1) {
-        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
-        setLayout(vbox);
 
-        vbox->addWidget(new Wt::WLabel("Details about the configurations selected in the \"Overview\" tab."));
+        {
+            Wt::WLabel *w = new Wt::WLabel("Details about the configurations selected in the \"Overview\" tab.");
+            addWidget(w);
+        }
 
         // Combo box to choose which test to display
-        Wt::WHBoxLayout *choiceBox = new Wt::WHBoxLayout;
-        choiceBox->addWidget(new Wt::WLabel("Configuration"));
-        testIdChoices_ = new Wt::WComboBox;
-        testIdChoices_->activated().connect(this, &WDetails::selectTestId);
-        choiceBox->addWidget(testIdChoices_);
-        choiceBox->addStretch(1);
-        vbox->addLayout(choiceBox);
+        {
+            Wt::WContainerWidget *c = new Wt::WContainerWidget;
+            c->addWidget(new Wt::WLabel("Configuration "));
+            testIdChoices_ = new Wt::WComboBox;
+            testIdChoices_->activated().connect(this, &WDetails::selectTestId);
+            c->addWidget(testIdChoices_);
+            addWidget(c);
+        }
 
         // Error message cached in database test_results.first_error
-        vbox->addWidget(error_ = new Wt::WText);
-        error_->setTextFormat(Wt::PlainText);
-        error_->setWordWrap(false);
+        {
+            addWidget(new Wt::WText("<div><h2>First error</h2></div>"));
+            error_ = new Wt::WText;
+            error_->setWordWrap(false);
+            error_->setInline(false);
+            addWidget(error_);
+        }
 
-        // Configuration
-        vbox->addWidget(new Wt::WText("<h2>Detailed status</h2>"));
-        vbox->addWidget(new Wt::WText("This list includes configuration and results. Note that the configuration items are the "
-                                      "versions requested by the test, but might not be the versions actually used by ROSE due "
-                                      "to possible bugs in ROSE's \"configure\" or \"cmake\" system or in the scripts used to "
-                                      "run these tests."));
-        config_ = new Wt::WText;
-        config_->setTextFormat(Wt::PlainText);
-        config_->setWordWrap(false);
-        vbox->addWidget(config_);
+        // Configuration and detailed status
+        {
+            addWidget(new Wt::WText("<div><h2>Detailed status</h2></div>"));
+            addWidget(new Wt::WText("<p>This list includes configuration and results. Note that the configuration items "
+                                    "are the versions requested by the test, but might not be the versions actually used "
+                                    "by ROSE due to possible bugs in ROSE's \"configure\" or \"cmake\" system or in the "
+                                    "scripts used to run these tests.</p>"));
+            config_ = new Wt::WText;
+            config_->setTextFormat(Wt::PlainText);
+            config_->setWordWrap(false);
+            config_->setInline(false);
+            addWidget(config_);
+        }
 
         // Commands that were executed
-        vbox->addWidget(new Wt::WText("<h2>Commands executed</h2>"));
-        commands_ = new Wt::WText;
-        commands_->setTextFormat(Wt::XHTMLText);
-        commands_->setWordWrap(true);
-        vbox->addWidget(commands_);
+        {
+            addWidget(new Wt::WText("<div><h2>Commands executed</h2></div>"));
+            commands_ = new Wt::WText;
+            commands_->setTextFormat(Wt::XHTMLText);
+            commands_->setWordWrap(true);
+            commands_->setInline(false);
+            addWidget(commands_);
+        }
 
         // Tests final output
-        vbox->addWidget(new Wt::WText("<h2>Command output</h2>"));
-        testOutput_ = new Wt::WText;
-        testOutput_->setTextFormat(Wt::XHTMLText);
-        testOutput_->setWordWrap(false);
-        vbox->addWidget(testOutput_, 1);
+        {
+            addWidget(new Wt::WText("<div><h2>Command output</h2></div>"));
+            testOutput_ = new Wt::WText;
+            testOutput_->setTextFormat(Wt::XHTMLText);
+            testOutput_->setWordWrap(false);
+            testOutput_->setInline(false);
+            addWidget(testOutput_);
+        }
     }
 
     void queryTestIds(const Dependencies &deps) {
@@ -1218,22 +1248,23 @@ public:
                 config += name + "=" + humanDepValue(name, row.get<std::string>(column++)) + "\n";
 
             // Additional information from the query
-            first_error = row.get<std::string>(columns.size()+0);
+            first_error = boost::trim_copy(row.get<std::string>(columns.size()+0));
             std::string status = row.get<std::string>(columns.size()+1);
             if (first_error.empty() && status != "end") {
-                first_error = "No error pattern matched (see output below).  The best way to fix this is to change the "
-                              "error message so it begins with the string \"error:\" followed by a space and an error "
-                              "message. If that's not possible, send the configuration number (above) and the error "
-                              "message (below) to Robb.";
+                error_->setText("<p>No error pattern matched (see output below).  The best way to fix this is to change the "
+                                "error message so it begins with the string \"error:\" followed by a space and an error "
+                                "message. If that's not possible, send the configuration number (above) and the error "
+                                "message (below) to Robb.</p>");
+            } else if (first_error.empty()) {
+                error_->setText("<p>None found.</p>");
+            } else {
+                first_error = StringUtility::htmlEscape(first_error);
+                boost::replace_all(first_error, "\n", "<br/>");
+                error_->setText("<div><span class=\"output-error\">" + first_error + "</span></div>");
             }
-
             break;
         }
         config_->setText(config);
-
-        error_->setText(first_error);
-        error_->setStyleClass(first_error.empty() ? "" : "output-error");
-
         updateCommands();
         updateOutput();
     }
@@ -1306,8 +1337,7 @@ private:
             std::string s = row != q->end() ? row.get<std::string>(0) : std::string();
             if (s.empty()) {
                 s = "Command output was not saved for this test.\n";
-                error_->setText("");
-                error_->setStyleClass("");
+                error_->setText("<p>Output was not saved.</p>");
             }
 
             std::string t = escapeHtml(s);
