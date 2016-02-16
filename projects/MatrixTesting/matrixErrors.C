@@ -182,6 +182,11 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                                        "   substring(" + finalOutputSection + " from '(" + failedMakeRe + ".+)'),"
                                        "   " + finalOutputSection + ")";
 
+    std::string sawyerAssertionFailedRe = "\\[FATAL\\]: assertion failed:\n"
+                                          ".*\\[FATAL\\]:.*\n"                                  // file name
+                                          ".*\\[FATAL\\]:.*\n"                                  // function
+                                          ".*\\[FATAL\\]:.*";                                   // message
+
 
     SqlDatabase::StatementPtr q = tx->statement("update test_results test"
                                                 " set first_error = substring(" +
@@ -196,7 +201,8 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                                                 //----- regular expressions begin -----
                                                 "\\merror: .+"                                  // general error
                                                 "|\\mERROR: [^0-9].*"                           // not error counts from cmake
-                                                "|\\[(ERROR|FATAL) *\\]"                        // Sawyer error message
+                                                "|" + sawyerAssertionFailedRe +
+                                                "|\\[(ERROR|FATAL) *\\].*"                      // Sawyer error message
                                                 "|catastrophic error: *\\n.+"                   // ROSE translator compile error
                                                 "|^.* \\[err\\]: terminated after .+"           // RTH timeout
                                                 "|^.* \\[err\\]: command died with .+"          // RTH_RUN failure

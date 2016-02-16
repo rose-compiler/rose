@@ -1117,6 +1117,8 @@ public:
 
         // Error message cached in database test_results.first_error
         vbox->addWidget(error_ = new Wt::WText);
+        error_->setTextFormat(Wt::PlainText);
+        error_->setWordWrap(false);
 
         // Configuration
         vbox->addWidget(new Wt::WText("<h2>Detailed status</h2>"));
@@ -1448,57 +1450,72 @@ public:
             int errorsPercent = round(100.0*nErrors/nTests);
             std::string status = iter1.get<std::string>(1);
             std::string message = iter1.get<std::string>(2);
+
+            // Error count and failure rate
             grid_->elementAt(bigRow+0, 0)->addWidget(new Wt::WText(StringUtility::numberToString(nErrors) + "<br/>" +
                                                                    StringUtility::numberToString(errorsPercent) + "%"));
-            grid_->elementAt(bigRow+0, 1)->addWidget(new Wt::WText(status));
-            grid_->elementAt(bigRow+0, 2)->addWidget(new Wt::WText(message, Wt::PlainText));
-
             grid_->elementAt(bigRow+0, 0)->setRowSpan(3);
             grid_->elementAt(bigRow+0, 0)->setStyleClass("error-count-cell");
+
+            // Test status for these errors.  An error is always identified by a unique (status,message) pair so that we can
+            // distinguish between, for example, the same compiler error message for the ROSE library vs. a test case.
+            grid_->elementAt(bigRow+0, 1)->addWidget(new Wt::WText(status));
             grid_->elementAt(bigRow+0, 1)->setRowSpan(3);
             if (!statusCssClass.exists(status))
                 statusCssClass.insert(status, "error-status-"+StringUtility::numberToString(statusCssClass.size()%8));
             grid_->elementAt(bigRow+0, 1)->setStyleClass(statusCssClass[status]);
+
+            // Create a combo box of all the test ID's that have this error so we can select an ID and be taken directly to the
+            // details for that test.
+            Wt::WComboBox *wTestIds = new Wt::WComboBox;
+            wTestIds->activated().connect(boost::bind(&WErrors::emitTestIdChanged, this, wTestIds));
+            wTestIds->addItem("View details");
+            args.clear();
+            SqlDatabase::StatementPtr q4 = gstate.tx->statement("select id" + sqlFromClause() +
+                                                                sqlWhereClause(deps, args) +
+                                                                " and first_error = ?"
+                                                                " and " + passFailExpr + " = 'fail'"
+                                                                " order by id");
+            args.push_back(message);
+            bindSqlVariables(q4, args);
+            for (SqlDatabase::Statement::iterator iter4 = q4->begin(); iter4 != q4->end(); ++iter4)
+                wTestIds->addItem(boost::lexical_cast<std::string>(iter4.get<int>(0)));
+            grid_->elementAt(bigRow+0, 2)->addWidget(wTestIds);
+
+            // Error message
+            grid_->elementAt(bigRow+0, 2)->addWidget(new Wt::WText(message, Wt::PlainText));
             grid_->elementAt(bigRow+0, 2)->setStyleClass("error-message-cell");
 
-            // Figure out the dependencies that are in common for all tests of this error
-            typedef Sawyer::Container::Map<std::string /*depname*/, std::string /*human*/> Dependencies;
-            Dependencies dependencies;
+            // Accumulate and show counts for the various configuration characteristics.
+            typedef Sawyer::Container::Map<std::string /*depvalue*/, size_t /*count*/> DepValueCounts;
+            typedef Sawyer::Container::Map<std::string /*depname*/, DepValueCounts> Characteristics;
+            Characteristics characteristics;
             args.clear();
-            sql = "select distinct " + boost::join(gstate.dependencyNames.values(), ", ") +
-                  sqlFromClause() + sqlWhereClause(deps, args) + " and first_error = ?";
+            sql = "select " + boost::join(gstate.dependencyNames.values(), ", ") + ", count(*)" +
+                  sqlFromClause() + sqlWhereClause(deps, args) + " and first_error = ?"
+                  " group by " + boost::join(gstate.dependencyNames.values(), ", ");
             args.push_back(message);
             SqlDatabase::StatementPtr q2 = gstate.tx->statement(sql);
             bindSqlVariables(q2, args);
             for (SqlDatabase::Statement::iterator iter2 = q2->begin(); iter2 != q2->end(); ++iter2) {
+                size_t count = iter2.get<size_t>(gstate.dependencyNames.size());
                 int colNumber = 0;
-                BOOST_FOREACH (const std::string &depname, gstate.dependencyNames.keys()) {
-                    std::string depval = humanDepValue(depname, iter2.get<std::string>(colNumber++), HUMAN_TERSE);
-                    if (!dependencies.exists(depname)) {
-                        dependencies.insert(depname, depval);
-                    } else if (dependencies[depname]!=depval) {
-                        dependencies[depname] = "";
-                    }
+                BOOST_FOREACH (const std::string &depName, gstate.dependencyNames.keys()) {
+                    std::string depval = humanDepValue(depName, iter2.get<std::string>(colNumber++), HUMAN_TERSE);
+                    characteristics.insertMaybeDefault(depName).insertMaybe(depval, 0) += count;
                 }
             }
-
-            // Show dependencies that have the same value for all error, but for which the user has more than one choice of
-            // setting (well, two since the first item is always the wildcard).
-            std::vector<std::string> allSameDeps;
-            BOOST_FOREACH (const Dependencies::Node &node, dependencies.nodes()) {
-                if (node.value().empty())
-                    continue;                           // conflicting values found above
-                if (node.key() == "pass/fail" || node.key() == "status")
-                    continue;                           // not useful information
-                if (deps[node.key()].comboBox->count() <= 2)
-                    continue;                           // user had only one value choice (plus the wildcard)
-                if (deps[node.key()].comboBox->currentText().narrow() == node.value())
-                    continue;                           // this dependency is already constrained
-                allSameDeps.push_back(node.key() + "=" + node.value());
+            BOOST_FOREACH (const Characteristics::Node &characteristic, characteristics.nodes()) {
+                const std::string &depname = characteristic.key();
+                if (depname == "status" || depname == "pass/fail")
+                    continue;
+                Wt::WComboBox *combos = new Wt::WComboBox;
+                BOOST_FOREACH (const DepValueCounts::Node &valcount, characteristic.value().nodes()) {
+                    combos->addItem(depname + " = " + valcount.key() +
+                                    " (" + StringUtility::numberToString(valcount.value()) + ")");
+                }
+                grid_->elementAt(bigRow+1, 2)->addWidget(combos);
             }
-            if (allSameDeps.empty())
-                allSameDeps.push_back("No additional constraints.");
-            grid_->elementAt(bigRow+1, 2)->addWidget(new Wt::WText(boost::join(allSameDeps, ", ")+" "));
             grid_->elementAt(bigRow+1, 2)->setStyleClass("error-dependencies-cell");
 
             // Is there commentary about this error?
@@ -1518,22 +1535,6 @@ public:
                 grid_->elementAt(bigRow+2, 2)->addWidget(wCommentary);
                 grid_->elementAt(bigRow+2, 2)->setStyleClass("error-comment-cell");
             } while (0);
-
-            // Create a combo box of all the configuration ID's that have this error.
-            Wt::WComboBox *wTestIds = new Wt::WComboBox;
-            wTestIds->activated().connect(boost::bind(&WErrors::emitTestIdChanged, this, wTestIds));
-            wTestIds->addItem("View details");
-            args.clear();
-            SqlDatabase::StatementPtr q4 = gstate.tx->statement("select id" + sqlFromClause() +
-                                                                sqlWhereClause(deps, args) +
-                                                                " and first_error = ?"
-                                                                " and " + passFailExpr + " = 'fail'"
-                                                                " order by id");
-            args.push_back(message);
-            bindSqlVariables(q4, args);
-            for (SqlDatabase::Statement::iterator iter4 = q4->begin(); iter4 != q4->end(); ++iter4)
-                wTestIds->addItem(boost::lexical_cast<std::string>(iter4.get<int>(0)));
-            grid_->elementAt(bigRow+1, 2)->addWidget(wTestIds);
         }
     }
 
