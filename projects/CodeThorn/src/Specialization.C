@@ -595,6 +595,27 @@ bool accessSetIntersect(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSe
   return false;
 }
 
+std::string arrayElementAccessDataSetToString(ArrayElementAccessDataSet& ds, VariableIdMapping* vim) {
+  std::stringstream ss;
+  for(ArrayElementAccessDataSet::iterator i=ds.begin();i!=ds.end();++i) {
+    if(i!=ds.begin())
+      ss<<", ";
+    ss<<(*i).toString(vim);
+  }
+  return ss.str();
+}
+
+std::string indexVectorToString(IndexVector iv) {
+  std::stringstream ss;
+  for(IndexVector::iterator i=iv.begin();i!=iv.end();++i) {
+    if(i!=iv.begin())
+      ss<<", ";
+    ss<<(*i);
+  }
+  return ss.str();
+}
+
+
 // returns the number of race conditions detected (0 or 1 as of now)
 int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
@@ -686,6 +707,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
 
       // to be utilized later for more detailed output
 #if 0
+      cout<<"DEBUG: indexToReadWriteDataMap size: "<<indexToReadWriteDataMap.size()<<endl;
       for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
           imap!=indexToReadWriteDataMap.end();
           ++imap) {
@@ -720,7 +742,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
 #endif
 
       // perform the check now
-      // 1) compute vector if index-vectors for each outer-var-vector
+      // 1) compute vector of index-vectors for each outer-var-vector
       // 2) check each index-vector. For each iteration of each par-loop iteration then.
       
       //typedef set<int> ParVariableValueSet;
@@ -751,36 +773,48 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
       }
       //cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
       // perform the check now
-
+      bool drdebug=false;
+      if(drdebug) cout<<"DEBUG: checkMap size: "<<checkMap.size()<<endl;
       for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
         IndexVector outerVarIndexVector=(*miter).first;
+        if(drdebug) cout<<"DEBUG: outerVarIndexVector: "<<indexVectorToString(outerVarIndexVector)<<endl;
         ThreadVector threadVectorToCheck=(*miter).second;
-        //cout<<"DEBUG: to check: "<<threadVectorToCheck.size()<<endl;
+        if(drdebug) cout<<"DEBUG: vector size to check: "<<threadVectorToCheck.size()<<endl;
         for(ThreadVector::iterator tv1=threadVectorToCheck.begin();tv1!=threadVectorToCheck.end();++tv1) {
+          if(drdebug) cout<<"DEBUG: thread-vectors: tv1:"<<"["<<indexVectorToString(*tv1)<<"]"<<endl;
           ArrayElementAccessDataSet wset=indexToReadWriteDataMap[*tv1].writeArrayAccessSet;
-          for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
+          if(drdebug) cout<<"DEBUG: tv1-wset:"<<wset.size()<<": "<<arrayElementAccessDataSetToString(wset,variableIdMapping)<<endl;
+          //for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
+          for(ThreadVector::iterator tv2=threadVectorToCheck.begin();tv2!=threadVectorToCheck.end();++tv2) {
+            if(tv2!=tv1) {
             ThreadVector::iterator tv2b=tv2;
-            ++tv2b;
+            //++tv2b;
             if(tv2b!=threadVectorToCheck.end()) {
+              if(drdebug) cout<<"thread-vectors: tv2b:"<<"["<<indexVectorToString(*tv2b)<<"]"<<endl;
               ArrayElementAccessDataSet rset2=indexToReadWriteDataMap[*tv2b].readArrayAccessSet;
               ArrayElementAccessDataSet wset2=indexToReadWriteDataMap[*tv2b].writeArrayAccessSet;
               // check intersect(rset,wset)
+              if(drdebug) cout<<"DEBUG: rset2:"<<rset2.size()<<": "<<arrayElementAccessDataSetToString(rset2,variableIdMapping)<<endl;
+              if(drdebug) cout<<"DEBUG: wset2:"<<wset2.size()<<": "<<arrayElementAccessDataSetToString(wset2,variableIdMapping)<<endl;
               if(accessSetIntersect(wset,rset2)) {
                 // verification failed
-                cout<<"INFO: race condition detected (wset1,rset2)."<<endl;
+                cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
                 return 1;
               } 
               if(accessSetIntersect(wset,wset2)) {
                 // verification failed
-                cout<<"INFO: race condition detected (wset1,wset2)."<<endl;
+                cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
                 return 1;
               }
             }
+            } // same-iter check
           }
+          if(drdebug) cout<<"DEBUG: ------------------------"<<endl;
         }
       }
     } // if parallel loop
   } // foreach loop
+  cout<<"DATA RACE CHECK: PASS."<<endl;
   return 0;
 }
 
