@@ -38,6 +38,16 @@
  *  Using the alternatives system is easier than trying to specify the 4.8 compiler directly for all the ROSE software
  *  dependencies that you might try to compile.
  *
+ *  @section installing_gcc_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
+ *
+ *  The default compiler collection on Trusty Tahr is GCC-4.8.4. To it, run these commands as the administrator:
+ *
+ *  @code
+ *  apt-get install build-essential
+ *  apt-get install g++ gfortran
+ *  g++ --version # make sure it says 4.8
+ *  @endcode
+ *
  *  @section installing_gcc_osx OS X
  *
  *  @todo Show the commands to use XCode to install GCC on OS X.  Include instructions for gfortran. */
