@@ -72,13 +72,13 @@ static rose_addr_t overlaps(const SgAsmElfSection *s1, const SgAsmElfSection *s2
 static void show_section(FILE *f, const char *prefix, SgAsmElfSection *section) {
     /* File addresses */
     fprintf(f, "%s", prefix);
-    fprintf(f, "%c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+    fprintf(f, "%c0x%08" PRIx64" 0x%08" PRIx64" 0x%08" PRIx64,
             section->get_file_alignment()==0 || section->get_offset()%section->get_file_alignment()==0?' ':'!',
             section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
 
     /* Mapped addresses */
     if (section->is_mapped()) {
-        fprintf(f, " %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+        fprintf(f, " %c0x%08" PRIx64" 0x%08" PRIx64" 0x%08" PRIx64" 0x%08" PRIx64,
                 (section->get_mapped_alignment()==0 ||
                  section->get_mapped_preferred_rva()%section->get_mapped_alignment()==0
                  ? ' ' : '!'),
@@ -214,7 +214,8 @@ private:
                         src_offset = 0;
                         dst_offset = src->get_mapped_preferred_rva() - core_section->get_mapped_preferred_rva();
                     }
-                    printf("               copying from src offset 0x%"PRIx64" to dst offset 0x%"PRIx64" for 0x%"PRIx64" bytes\n",
+                    printf("               copying from src offset 0x%" PRIx64
+                           " to dst offset 0x%" PRIx64 " for 0x%" PRIx64 " bytes\n",
                            src_offset, dst_offset, nbytes);
                     src->read_content_local(src_offset, dst_content+dst_offset, nbytes, false);
                     if (src->get_section_entry()!=NULL && src_offset==0 && src->get_size()==nbytes)

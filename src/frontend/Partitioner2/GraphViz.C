@@ -652,9 +652,9 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
                     // when it's negative (negative is the usual case for most architectures).
                     char buf[64];
                     if (delta <= 0) {
-                        sprintf(buf, "%02"PRIx64" ", -delta);
+                        sprintf(buf, "%02" PRIx64 " ", -delta);
                     } else {
-                        sprintf(buf, "+%"PRIx64" ", delta);
+                        sprintf(buf, "+%" PRIx64 " ", delta);
                     }
                     s += buf;
                 } else {
