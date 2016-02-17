@@ -47,11 +47,12 @@
 // #endif
 
 #ifndef ROSE_SKIP_COMPILATION_OF_WAVE
-  #if _MSC_VER > 1600  // 1600 == VC++ 10.0
+//  #if _MSC_VER < 1600  // 1600 == VC++ 10.0
+  #ifndef _MSC_VER
     #include <boost/preprocessor/iteration/iterate.hpp> // Liao, 7/10/2009, required by GCC 4.4.0 for a #define line of BOOST_PP_ITERATION_DEPTH
-    #ifdef _MSC_VER
+//    #ifdef _MSC_VER
       #include <boost/wave.hpp> // CH (4/7/2010): Put this header here to avoid compiling error about mismatch between defination and declaration
-    #endif
+//    #endif
     #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
     #include <boost/wave/cpplexer/cpp_lex_iterator.hpp>   // lexer type
   #else
