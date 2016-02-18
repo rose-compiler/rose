@@ -3006,6 +3006,18 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
 #endif
 
+// DQ (2/17/2016): Checking that the correct values are set.
+#ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+   #error "ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
+#endif
+
+#if 0
+// DQ (2/17/2016): Checking that the correct values are set.
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+   #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
+#endif
+#endif
+
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
 
