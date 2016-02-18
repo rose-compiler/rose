@@ -266,7 +266,8 @@ create table attachments (
 create table errors (
     status text not null,				-- point at which error was detected
     message text not null,				-- the error message
-    commentary text,					-- commentary about the error message
+    issue_name text default '', 			-- name of corresponding JIRA issue if any
+    commentary text default '',				-- commentary about the error message
     mtime int	     					-- time that commentary was added/changed (unix)
 );
 

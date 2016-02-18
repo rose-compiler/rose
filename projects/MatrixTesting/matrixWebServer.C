@@ -1554,19 +1554,35 @@ public:
                 grid_->elementAt(bigRow+2, 2)->addWidget(new Wt::WText("No comment."));
                 grid_->elementAt(bigRow+2, 2)->setStyleClass("error-comment-cell");
             } else {
-                SqlDatabase::StatementPtr q3 = gstate.tx->statement("select commentary from errors"
+                SqlDatabase::StatementPtr q3 = gstate.tx->statement("select commentary, issue_name from errors"
                                                                     " where status = ? and message = ?");
                 q3->bind(0, status);
                 q3->bind(1, message);
                 do {
                     SqlDatabase::Statement::iterator iter3 = q3->begin();
-                    std::string commentary;
-                    if (iter3 != q3->end())
+                    std::string commentary, issueName;
+                    if (iter3 != q3->end()) {
                         commentary = iter3.get<std::string>(0);
+                        issueName = iter3.get<std::string>(1);
+                    }
+
+                    // Link to JIRA. This is where most comments will be kept.
+                    Wt::WAnchor *jiraLink = new Wt::WAnchor;
+                    jiraLink->setTarget(Wt::TargetNewWindow);
+                    if (!issueName.empty()) {
+                        jiraLink->setLink(Wt::WLink(issueUrl(issueName)));
+                        jiraLink->setText(issueName + " ");
+                    } else {
+                        jiraLink->setHidden(true);
+                    }
+                    grid_->elementAt(bigRow+2, 2)->addWidget(jiraLink);
+
+                    // User-defined commentary within the database
                     Wt::WInPlaceEdit *wCommentary = new Wt::WInPlaceEdit(commentary);
                     wCommentary->setPlaceholderText("No comment (click to add).");
                     wCommentary->lineEdit()->setTextSize(80);
-                    wCommentary->valueChanged().connect(boost::bind(&WErrors::setComment, this, status, message, wCommentary));
+                    wCommentary->valueChanged().connect(boost::bind(&WErrors::setComment, this, status, message,
+                                                                    wCommentary, jiraLink));
                     grid_->elementAt(bigRow+2, 2)->addWidget(wCommentary);
                     grid_->elementAt(bigRow+2, 2)->setStyleClass("error-comment-cell");
                 } while (0);
@@ -1584,38 +1600,114 @@ private:
         testIdChanged_.emit(testId);
     }
 
+    // URL for issue name
+    std::string issueUrl(const std::string &issueName) {
+        if (issueName.empty())
+            return "";
+        return "https://rosecompiler.atlassian.net/browse/" + issueName;
+    }
+
     // Set comment for an error message
-    void setComment(const std::string &status, const std::string &message, Wt::WInPlaceEdit *wEdit) {
+    void setComment(const std::string &status, const std::string &message, Wt::WInPlaceEdit *wEdit, Wt::WAnchor *jiraLink) {
+        // Avoid doing anything if we're called recursively. This is because this function is called when wEdit is modified,
+        // but this function also modifies that value.
+        static size_t callDepth = 0;
+        struct CallDepthGuard {
+            size_t &counter_;
+            CallDepthGuard(size_t &counter): counter_(counter) { ++counter; }
+            ~CallDepthGuard() {
+                ASSERT_require(counter_ > 0);
+                --counter_;
+            }
+        } callDepthGuard(callDepth);
+        if (callDepth > 1)
+            return;                                     // this is a recursive call
+
         std::string commentary = wEdit->text().narrow();
         int mtime = time(NULL);
+        bool restoreGuiComment = false;
 
         // We need a temporary transaction since our main transaction will never be committed.
         SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
 
-        // Don't use "insert ... on conflict" because this was introduced in PostgreSQL 9.5 and we need to support older
-        // versions. Therefore, do it in two steps.
-        if (commentary.empty()) {
-            tx->statement("delete from errors where status = ? and message = ?")
+        if (commentary.empty() || commentary == "no comment") {
+            // If the commentary is empty, then delete any comment that's in the database, but leave the JIRA issue alone if
+            // there is one.
+            tx->statement("update errors set commentary = '' where status = ? and message = ?")
                 ->bind(0, status)
                 ->bind(1, message)
                 ->execute();
-        } else if (tx->statement("select count(*) from errors where status = ? and message = ?")
-            ->bind(0, status)->bind(1, message)->execute_int()) {
-            tx->statement("update errors set commentary = ?, mtime = ? where status = ? and message = ?")
-                ->bind(0, commentary)
-                ->bind(1, mtime)
-                ->bind(2, status)
-                ->bind(3, message)
+            wEdit->setText("");
+        } else if (commentary == "no issue") {
+            // Delete the JIRA issue link, but leave the comment alone.
+            tx->statement("update errors set issue_name = '' where status = ? and message = ?")
+                ->bind(0, status)
+                ->bind(1, message)
                 ->execute();
+            restoreGuiComment = true;
+            jiraLink->setHidden(true);
         } else {
-            tx->statement("insert into errors (status, message, commentary, mtime) values (?, ?, ?, ?)")
-                ->bind(0, status)
-                ->bind(1, message)
-                ->bind(2, commentary)
-                ->bind(3, mtime)
-                ->execute();
+            // We're modifying an existing record or inserting a new one. We can't use "insert ... on conflict" because the
+            // database might be older than PostgreSQL 9.5.
+            bool recordExists = 0 < (tx->statement("select count(*) from errors where status = ? and message = ?")
+                                     ->bind(0, status)
+                                     ->bind(1, message)
+                                     ->execute_int());
+            if (boost::regex_match(commentary, boost::regex("[A-Z]+-[0-9]+"))) {
+                // Looks like a JIRA issue name, so update the issue and leave the comment alone.
+                if (recordExists) {
+                    tx->statement("update errors set issue_name = ?, mtime = ? where status = ? and message = ?")
+                        ->bind(0, commentary)
+                        ->bind(1, mtime)
+                        ->bind(2, status)
+                        ->bind(3, message)
+                        ->execute();
+                } else {
+                    tx->statement("insert into errors (status, message, issue_name, mtime) values (?, ?, ?, ?)")
+                        ->bind(0, status)
+                        ->bind(1, message)
+                        ->bind(2, commentary)
+                        ->bind(3, mtime)
+                        ->execute();
+                }
+                jiraLink->setLink(Wt::WLink(issueUrl(commentary)));
+                jiraLink->setText(commentary + " ");
+                jiraLink->setHidden(false);
+                restoreGuiComment = true;
+            } else {
+                // Update the commentary
+                if (recordExists) {
+                    tx->statement("update errors set commentary = ?, mtime = ? where status = ? and message = ?")
+                        ->bind(0, commentary)
+                        ->bind(1, mtime)
+                        ->bind(2, status)
+                        ->bind(3, message)
+                        ->execute();
+                } else {
+                    tx->statement("insert into errors (status, message, commentary, mtime) values (?, ?, ?, ?)")
+                        ->bind(0, status)
+                        ->bind(1, message)
+                        ->bind(2, commentary)
+                        ->bind(3, mtime)
+                        ->execute();
+                }
+            }
         }
 
+        if (restoreGuiComment) {
+            SqlDatabase::StatementPtr q = tx->statement("select commentary from errors where status = ? and message = ?")
+                                          ->bind(0, status)
+                                          ->bind(1, message);
+            SqlDatabase::Statement::iterator iter = q->begin();
+            if (iter == q->end()) {
+                wEdit->setText("");
+            } else {
+                wEdit->setText(iter.get<std::string>(0));
+            }
+        }
+
+        // Cleanup by deleting records that aren't needed
+        tx->statement("delete from errors where commentary = '' and issue_name = ''")->execute();
         tx->commit();
     }
 };
