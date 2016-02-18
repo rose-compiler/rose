@@ -1136,7 +1136,6 @@ public:
         {
             addWidget(new Wt::WText("<div><h2>First error</h2></div>"));
             error_ = new Wt::WText;
-            error_->setWordWrap(false);
             error_->setInline(false);
             addWidget(error_);
         }
@@ -1255,12 +1254,14 @@ public:
                                 "error message so it begins with the string \"error:\" followed by a space and an error "
                                 "message. If that's not possible, send the configuration number (above) and the error "
                                 "message (below) to Robb.</p>");
+                error_->setWordWrap(true);
             } else if (first_error.empty()) {
                 error_->setText("<p>None found.</p>");
             } else {
                 first_error = StringUtility::htmlEscape(first_error);
                 boost::replace_all(first_error, "\n", "<br/>");
                 error_->setText("<div><span class=\"output-error\">" + first_error + "</span></div>");
+                error_->setWordWrap(false);
             }
             break;
         }
@@ -1453,10 +1454,9 @@ public:
         // Build the SQL query for finding the errors
         args.clear();
         std::string passFailExpr = gstate.dependencyNames["pass/fail"];
-        std::string sql = "select count(*) as n, status, first_error, " + passFailExpr +
+        std::string sql = "select count(*) as n, status, coalesce(first_error,''), " + passFailExpr +
                           sqlFromClause() +
                           sqlWhereClause(deps, args) +
-                          " and first_error is not null"
                           " and " + passFailExpr + " = 'fail'"
                           " group by status, first_error, test_names.position"
                           " order by n desc"
@@ -1503,7 +1503,7 @@ public:
             args.clear();
             SqlDatabase::StatementPtr q4 = gstate.tx->statement("select id" + sqlFromClause() +
                                                                 sqlWhereClause(deps, args) +
-                                                                " and first_error = ?"
+                                                                " and coalesce(first_error,'') = ?"
                                                                 " and " + passFailExpr + " = 'fail'"
                                                                 " order by id");
             args.push_back(message);
@@ -1513,7 +1513,8 @@ public:
             grid_->elementAt(bigRow+0, 2)->addWidget(wTestIds);
 
             // Error message
-            grid_->elementAt(bigRow+0, 2)->addWidget(new Wt::WText(message, Wt::PlainText));
+            grid_->elementAt(bigRow+0, 2)->addWidget(new Wt::WText(message.empty() ? "Undetermined error(s)" : message,
+                                                                   Wt::PlainText));
             grid_->elementAt(bigRow+0, 2)->setStyleClass("error-message-cell");
 
             // Accumulate and show counts for the various configuration characteristics.
@@ -1522,7 +1523,7 @@ public:
             Characteristics characteristics;
             args.clear();
             sql = "select " + boost::join(gstate.dependencyNames.values(), ", ") + ", count(*)" +
-                  sqlFromClause() + sqlWhereClause(deps, args) + " and first_error = ?"
+                  sqlFromClause() + sqlWhereClause(deps, args) + " and coalesce(first_error,'') = ?"
                   " group by " + boost::join(gstate.dependencyNames.values(), ", ");
             args.push_back(message);
             SqlDatabase::StatementPtr q2 = gstate.tx->statement(sql);
@@ -1548,23 +1549,28 @@ public:
             }
             grid_->elementAt(bigRow+1, 2)->setStyleClass("error-dependencies-cell");
 
-            // Is there commentary about this error?
-            SqlDatabase::StatementPtr q3 = gstate.tx->statement("select commentary from errors"
-                                                                " where status = ? and message = ?");
-            q3->bind(0, status);
-            q3->bind(1, message);
-            do {
-                SqlDatabase::Statement::iterator iter3 = q3->begin();
-                std::string commentary;
-                if (iter3 != q3->end())
-                    commentary = iter3.get<std::string>(0);
-                Wt::WInPlaceEdit *wCommentary = new Wt::WInPlaceEdit(commentary);
-                wCommentary->setPlaceholderText("No comment (click to add).");
-                wCommentary->lineEdit()->setTextSize(80);
-                wCommentary->valueChanged().connect(boost::bind(&WErrors::setComment, this, status, message, wCommentary));
-                grid_->elementAt(bigRow+2, 2)->addWidget(wCommentary);
+            // Is there commentary about this error? Do not allow comments to be added for undetermined errors.
+            if (message.empty()) {
+                grid_->elementAt(bigRow+2, 2)->addWidget(new Wt::WText("No comment."));
                 grid_->elementAt(bigRow+2, 2)->setStyleClass("error-comment-cell");
-            } while (0);
+            } else {
+                SqlDatabase::StatementPtr q3 = gstate.tx->statement("select commentary from errors"
+                                                                    " where status = ? and message = ?");
+                q3->bind(0, status);
+                q3->bind(1, message);
+                do {
+                    SqlDatabase::Statement::iterator iter3 = q3->begin();
+                    std::string commentary;
+                    if (iter3 != q3->end())
+                        commentary = iter3.get<std::string>(0);
+                    Wt::WInPlaceEdit *wCommentary = new Wt::WInPlaceEdit(commentary);
+                    wCommentary->setPlaceholderText("No comment (click to add).");
+                    wCommentary->lineEdit()->setTextSize(80);
+                    wCommentary->valueChanged().connect(boost::bind(&WErrors::setComment, this, status, message, wCommentary));
+                    grid_->elementAt(bigRow+2, 2)->addWidget(wCommentary);
+                    grid_->elementAt(bigRow+2, 2)->setStyleClass("error-comment-cell");
+                } while (0);
+            }
         }
     }
 
