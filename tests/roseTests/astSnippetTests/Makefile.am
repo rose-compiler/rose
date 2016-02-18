@@ -394,7 +394,9 @@ EXTRA_DIST += $(JAVA_INJECTION_TEST)
 
 #----------------------------------------------------------------------------------------------------
 # testJava1.passed are for injection Snippets1.java into Specimen1.java in various ways.
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += testJava1a.passed testJava1b.passed testJava1c.passed testJava1d.passed
+endif
 EXTRA_DIST += SmallSpecimensJava/Snippets1.java SmallSpecimensJava/Specimen1.java
 testJava1a.passed: injectSnippet SmallSpecimensJava/Snippets1.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)						\
@@ -442,7 +444,9 @@ testJava1d.passed: injectSnippet SmallSpecimensJava/Snippets1.java SmallSpecimen
 
 #----------------------------------------------------------------------------------------------------
 # testJava2.passed are for injection Snippets2.java into Specimen1.java in various ways.
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += testJava2a.passed testJava2b.passed
+endif
 EXTRA_DIST += SmallSpecimensJava/Snippets2.java SmallSpecimensJava/Specimen1.java
 testJava2a.passed: injectSnippet SmallSpecimensJava/Snippets2.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)						\
@@ -468,7 +472,9 @@ testJava2b.passed: injectSnippet SmallSpecimensJava/Snippets2.java SmallSpecimen
 
 #----------------------------------------------------------------------------------------------------
 # testJava3*.passed are for injection Snippets3.java into Specimen1.java in various ways.
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += testJava3a.passed
+endif
 EXTRA_DIST += SmallSpecimensJava/Snippets3.java SmallSpecimensJava/Specimen1.java
 testJava3a.passed: injectSnippet SmallSpecimensJava/Snippets3.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)						\
@@ -483,7 +489,9 @@ testJava3a.passed: injectSnippet SmallSpecimensJava/Snippets3.java SmallSpecimen
 
 #----------------------------------------------------------------------------------------------------
 # testJava4*.passed are for injection Snippets5.java into Specimen1.java in various ways.
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += testJava4a.passed testJava4b.passed testJava4c.passed
+endif
 EXTRA_DIST += SmallSpecimensJava/Snippets5.java SmallSpecimensJava/Specimen1.java
 testJava4a.passed: injectSnippet SmallSpecimensJava/Snippets5.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)								\
@@ -523,7 +531,9 @@ testJava4c.passed: injectSnippet SmallSpecimensJava/Snippets5.java SmallSpecimen
 
 #----------------------------------------------------------------------------------------------------
 # testJava5*.passed are for injection Snippets6.java into Specimen1.java in various ways.
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += testJava5a.passed testJava5c.passed
+endif
 EXTRA_DIST += SmallSpecimensJava/Snippets6.java SmallSpecimensJava/Specimen1.java
 testJava5a.passed: injectSnippet SmallSpecimensJava/Snippets6.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)						\
@@ -549,7 +559,9 @@ testJava5c.passed: injectSnippet SmallSpecimensJava/Snippets6.java SmallSpecimen
 
 #----------------------------------------------------------------------------------------------------
 # testJava6*.passed are for injection Snippets7.java into Specimen2.java in various ways.
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += testJava6a.passed
+endif
 EXTRA_DIST += SmallSpecimensJava/Snippets7.java SmallSpecimensJava/Specimen2.java
 testJava6a.passed: injectSnippet SmallSpecimensJava/Snippets7.java SmallSpecimensJava/Specimen2.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)						\
@@ -564,7 +576,9 @@ testJava6a.passed: injectSnippet SmallSpecimensJava/Snippets7.java SmallSpecimen
 
 #----------------------------------------------------------------------------------------------------
 # testJava7*.passed are for injection Exotic*.java into Specimen1.java in various ways.
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += testJava7a.passed testJava7b.passed
+endif
 EXTRA_DIST += SmallSpecimensJava/Exotic1.java SmallSpecimensJava/Exotic2.java SmallSpecimensJava/Specimen1.java
 
 testJava7a.passed: injectSnippet SmallSpecimensJava/Exotic1.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
@@ -592,7 +606,9 @@ testJava7b.passed: injectSnippet SmallSpecimensJava/Exotic2.java SmallSpecimensJ
 
 #----------------------------------------------------------------------------------------------------
 # testJava8*.passed are for injections with packages
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += testJava8a-parse.passed testJava8a-snippet.passed testJava8a.passed
+endif
 EXTRA_DIST += SmallSpecimensJava/SnippetPackage/Snippet3.java SmallSpecimensJava/Specimen3/Specimen3.java
 
 # frontend() only, for testing that we can compile the java snippet files as Java source
@@ -640,7 +656,11 @@ noinst_PROGRAMS += quickSortInjector
 quickSortInjector_SOURCES = quickSortInjector.C snippetTests.C
 quickSortInjector_LDADD = $(ROSE_LIBS)
 
-TEST_TARGETS += quickSortC.passed quickSortJava.passed reverseC.passed reverseJava.passed
+# TEST_TARGETS += quickSortC.passed quickSortJava.passed reverseC.passed reverseJava.passed
+TEST_TARGETS += quickSortC.passed reverseC.passed
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+TEST_TARGETS += quickSortJava.passed reverseJava.passed
+endif
 
 quickSortC.passed: quickSortInjector QuickSortC/quicksort.c QuickSortC/errorSnippets.c
 	@$(RTH_RUN)										\

@@ -57,15 +57,49 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
 
           SgGlobal* global_scope_requiredSourceCode;
 
+       // Variables that we will initialize with types, functions, etc.
+          SgInitializedName* dsl_type_names_variable;
+          SgInitializedName* dsl_function_names_variable;
+          SgInitializedName* dsl_member_function_names_variable;
+          SgInitializedName* dsl_attribute_map_variable;
+
+#if 0
+       // This is the code generation, we are passing the inforamtion to
+       // the DSL compiler for types and functions in terms of names.
+          std::vector<std::string> dsl_type_name_list;
+          std::vector<std::string> dsl_function_name_list;
+          std::vector<std::string> dsl_member_function_name_list;
+
+       // Here we have to generate constructor calls in the generated code that will be used
+       // in the DSL compiler, so we need to generate references to constructor initializers.
+          std::vector<SgConstructorInitializer*> dsl_attribute_map_list;
+#endif
+       // I think it is better to save the pointer to the DSL abstraction type instead of a string representing the name.
+       // All types are then used to generate attributes as a last step in the traversal (in the syntheziedAttribute evaluation.
+          std::vector<SgType*> dsl_type_list;
+          std::vector<SgFunctionDeclaration*> dsl_function_list;
+
+       // I don't think we need this since member functions and nonmember functions can be combined in the dsl_function_list.
+       // std::vector<SgMemberFunctionDeclaration*> dsl_member_function_list;
+
+       // I am not yet clar how to generate the initializers for this DSL variable.
+          std::vector<SgConstructorInitializer*> dsl_attribute_map_list;
+
           AttributeGeneratorTraversal();
 
        // Functions required to overload the pure virtual functions in the abstract base class.
           AttributeGenerator_InheritedAttribute   evaluateInheritedAttribute   (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute );
           AttributeGenerator_SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList );
 
-          SgNode* buildAttribute(SgType* type);
+       // SgNode* buildAttribute(SgType* type);
+       // SgNode* buildAttribute(SgFunctionDeclaration* functionDeclaration);
 
           void unparseGeneratedCode();
+
+       // Process the variables used to communicate DSL abstractions to the DSL compiler.
+          void processvariable(SgInitializedName* initializedName);
+
+          void modify_dsl_variable_initializers();
    };
 
 

@@ -1,16 +1,13 @@
-
 #include "array.h"
 
-
-
-void foo()
+int main()
    {
-     array A,B,C;
+     array A;
+     array B;
+     array C;
 
+     A = 1;
+     B = 2;
      A = B + C;
    }
 
-int main(int argc, char* argv[])
-   {
-     return 0;
-   }
