@@ -269,15 +269,15 @@ using Sawyer::Message::Facility;                        // collection of related
 /** Default destination for ROSE diagnostics.  The user may set this explicitly before rose::Diagnostics::initialize is called,
  *  otherwise that function will create a destination that points to standard error and uses the optional
  *  rose::Diagnostics::mprefix. */
-extern Sawyer::Message::DestinationPtr destination;
+ROSE_DLL_API extern Sawyer::Message::DestinationPtr destination;
 
 /** Default line prefix for message sinks created in ROSE. For instance, if the library needs to create a default destination
  *  (rose::Diagnostics::destination) then this prefix is used, and if null at that time then a default prefix is created and
  *  assigned to this variable.  The user may assign a prefix before calling rose::Diagnostics::initialize. */
-extern Sawyer::Message::PrefixPtr mprefix;
+ROSE_DLL_API extern Sawyer::Message::PrefixPtr mprefix;
 
 /** Diagnostic facility for the ROSE library as a whole. */
-extern Sawyer::Message::Facility mlog;
+ROSE_DLL_API extern Sawyer::Message::Facility mlog;
 
 /** Collection of all registered ROSE logging facilities. This collection allows the facilities to be controlled collectively
  *  such as from the -rose:log command-line switch. */

@@ -462,6 +462,9 @@ findRoseSupportPathFromBuild(const string& buildTreeLocation,
     return installTreePath + "/" + installTreeLocation;
   } else {
     #ifdef _MSC_VER
+  #ifndef CMAKE_INTDIR
+  #define CMAKE_INTDIR ""
+  #endif
     if (buildTreeLocation.compare(0, 3, "lib") == 0 || buildTreeLocation.compare(0, 3, "bin") == 0) {
       return string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/" + buildTreeLocation + "/" + CMAKE_INTDIR;
     }

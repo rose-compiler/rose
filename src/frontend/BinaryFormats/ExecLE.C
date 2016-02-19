@@ -289,56 +289,56 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_os_type",                p_e_os_type);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_module_version",         p_e_module_version);
     fprintf(f, "%s%-*s = 0x%08x\n",                    p, w, "e_flags",                  p_e_flags);
-    fprintf(f, "%s%-*s = %"PRIu64"\n",                 p, w, "e_npages",                 p_e_npages);
+    fprintf(f, "%s%-*s = %" PRIu64 "\n",                 p, w, "e_npages",                 p_e_npages);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_eip_section",            p_e_eip_section);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",             p, w, "e_eip",                    p_e_eip);
+    fprintf(f, "%s%-*s = 0x%08"  PRIx64 "\n",             p, w, "e_eip",                    p_e_eip);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_esp_section",            p_e_esp_section);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",             p, w, "e_esp",                    p_e_esp);
-    fprintf(f, "%s%-*s = %"PRIu64"\n",                 p, w, "e_page_size",              p_e_page_size);
+    fprintf(f, "%s%-*s = 0x%08"  PRIx64 "\n",             p, w, "e_esp",                    p_e_esp);
+    fprintf(f, "%s%-*s = %" PRIu64 "\n",                 p, w, "e_page_size",              p_e_page_size);
     if (FAMILY_LE == p_exec_format->get_family()) {
         fprintf(f, "%s%-*s = %u\n",                    p, w, "e_last_page_size",         p_e_last_page_size);
     } else {
         ROSE_ASSERT(FAMILY_LX == p_exec_format->get_family());
         fprintf(f, "%s%-*s = %u\n",                    p, w, "e_page_offset_shift",      p_e_page_offset_shift);
     }
-    fprintf(f, "%s%-*s = %"PRIu64"\n",                 p, w, "e_fixup_sect_size",        p_e_fixup_sect_size);
+    fprintf(f, "%s%-*s = %" PRIu64 "\n",                 p, w, "e_fixup_sect_size",        p_e_fixup_sect_size);
     fprintf(f, "%s%-*s = 0x%08x\n",                    p, w, "e_fixup_sect_cksum",       p_e_fixup_sect_cksum);
-    fprintf(f, "%s%-*s = %"PRIu64"\n",                 p, w, "e_loader_sect_size",       p_e_loader_sect_size);
+    fprintf(f, "%s%-*s = %" PRIu64 "\n",                 p, w, "e_loader_sect_size",       p_e_loader_sect_size);
     fprintf(f, "%s%-*s = 0x%08x\n",                    p, w, "e_loader_sect_cksum",      p_e_loader_sect_cksum);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_secttab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_secttab_rfo",
                                                        p_e_secttab_rfo, p_e_secttab_rfo+p_offset);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_secttab_nentries",       p_e_secttab_nentries);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_pagetab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_pagetab_rfo",
                                                        p_e_pagetab_rfo, p_e_pagetab_rfo+p_offset);
-    fprintf(f, "%s%-*s = %"PRIu64"\n",                 p, w, "e_iterpages_offset",       p_e_iterpages_offset);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_rsrctab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 "\n",                 p, w, "e_iterpages_offset",       p_e_iterpages_offset);
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_rsrctab_rfo",
                                                        p_e_rsrctab_rfo, p_e_rsrctab_rfo+p_offset);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_rsrctab_nentries",       p_e_rsrctab_nentries);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_resnametab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_resnametab_rfo",
                                                        p_e_resnametab_rfo, p_e_resnametab_rfo+p_offset);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_entrytab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_entrytab_rfo",
                                                        p_e_entrytab_rfo, p_e_entrytab_rfo+p_offset);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_fmtdirtab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_fmtdirtab_rfo",
                                                        p_e_fmtdirtab_rfo, p_e_fmtdirtab_rfo+p_offset);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_fmtdirtab_nentries",     p_e_fmtdirtab_nentries);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_fixup_pagetab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_fixup_pagetab_rfo",
                                                        p_e_fixup_pagetab_rfo, p_e_fixup_pagetab_rfo+p_offset);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_fixup_rectab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_fixup_rectab_rfo",
                                                        p_e_fixup_rectab_rfo, p_e_fixup_rectab_rfo+p_offset);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_import_modtab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_import_modtab_rfo",
                                                        p_e_import_modtab_rfo, p_e_import_modtab_rfo+p_offset);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_import_modtab_nentries", p_e_import_modtab_nentries);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_import_proctab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_import_proctab_rfo",
                                                        p_e_import_proctab_rfo, p_e_import_proctab_rfo+p_offset);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_ppcksumtab_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_ppcksumtab_rfo",
                                                        p_e_ppcksumtab_rfo, p_e_ppcksumtab_rfo+p_offset);
-    fprintf(f, "%s%-*s = %"PRIu64"\n",                 p, w, "e_data_pages_offset",      p_e_data_pages_offset);
+    fprintf(f, "%s%-*s = %" PRIu64 "\n",                 p, w, "e_data_pages_offset",      p_e_data_pages_offset);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_preload_npages",         p_e_preload_npages);
-    fprintf(f, "%s%-*s = %"PRIu64"\n",                 p, w, "e_nonresnametab_offset",   p_e_nonresnametab_offset);
+    fprintf(f, "%s%-*s = %" PRIu64 "\n",                 p, w, "e_nonresnametab_offset",   p_e_nonresnametab_offset);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_nonresnametab_size",     p_e_nonresnametab_size);
     fprintf(f, "%s%-*s = 0x%08x\n",                    p, w, "e_nonresnametab_cksum",    p_e_nonresnametab_cksum);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_auto_ds_section",        p_e_auto_ds_section);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_debug_info_rfo",
+    fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_debug_info_rfo",
                                                        p_e_debug_info_rfo, p_e_debug_info_rfo+p_offset);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_debug_info_size",        p_e_debug_info_size);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_instance_preload",   p_e_num_instance_preload);
@@ -535,8 +535,8 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 
         const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = %"PRIu64" bytes\n", p, w, "mapped_size",      p_mapped_size);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",   p, w, "base_addr",        p_base_addr);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "mapped_size",      p_mapped_size);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",   p, w, "base_addr",        p_base_addr);
 
     fprintf(f, "%s%-*s = 0x%08x",            p, w, "flags",            p_flags);
     switch (p_flags & SF_TYPE_MASK) {
@@ -859,7 +859,7 @@ SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
         if (p_entry_type & 0x01) fputs(" exported", f);
         if (p_entry_type & 0x02) fputs(" shared-data", f);
         fprintf(f, " stack-params=%u\n", (p_entry_type >> 3) & 0x1f);
-        fprintf(f, "%s%-*s = %"PRIu64"\n", p, w, "entry_offset", p_entry_offset);
+        fprintf(f, "%s%-*s = %" PRIu64 "\n", p, w, "entry_offset", p_entry_offset);
         fprintf(f, "%s%-*s = 0x%04x\n",    p, w, "res1",         p_res1);
     } else {
         fprintf(f, " empty\n");

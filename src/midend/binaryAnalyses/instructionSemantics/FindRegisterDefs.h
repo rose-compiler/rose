@@ -66,7 +66,7 @@ struct ValueType {
         } else {                                // some defined, some undefined (show the mask)
             int nnibbles = (nBits+3)/4;
             char buf[128];
-            snprintf(buf, sizeof buf, "0x%0*"PRIx64, nnibbles, defbits);
+            snprintf(buf, sizeof buf, "0x%0*" PRIx64, nnibbles, defbits);
             o <<buf;
         }
     }

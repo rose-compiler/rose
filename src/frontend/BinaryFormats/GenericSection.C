@@ -748,7 +748,7 @@ SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix
         SgAsmGenericSection *s = slist[i];
         if (s->is_mapped() && rva>=s->get_mapped_preferred_rva() && rva<s->get_mapped_preferred_rva()+s->get_mapped_size()) {
             rose_addr_t offset = rva - s->get_mapped_preferred_rva();
-            fprintf(f, "%-*s   is 0x%08"PRIx64" (%"PRIu64") bytes into section [%d] \"%s\"\n",
+            fprintf(f, "%-*s   is 0x%08" PRIx64 " (%" PRIu64 ") bytes into section [%d] \"%s\"\n",
                     DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->get_string(true).c_str());
         }
     }
@@ -772,12 +772,12 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, " (%s)", p_short_name.c_str());
     fprintf(f, "\n");
     fprintf(f, "%s%-*s = %d\n",                          p, w, "id",          p_id);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "offset", p_offset, p_offset);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "size", get_size(), get_size());
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes into file\n", p, w, "offset", p_offset, p_offset);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes\n",           p, w, "size", get_size(), get_size());
     if (0==get_file_alignment()) {
         fprintf(f, "%s%-*s = not specified\n", p, w, "file_alignment");
     } else {
-        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") %s\n", p, w, "file_alignment", 
+        fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") %s\n", p, w, "file_alignment", 
                 get_file_alignment(), get_file_alignment(),
                 0==get_offset()%get_file_alignment()?"satisfied":"NOT SATISFIED");
     }
@@ -792,11 +792,11 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", purpose.c_str());
 
     if (is_mapped()) {
-        fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_preferred_rva, p_mapped_size);
+        fprintf(f, "%s%-*s = rva=0x%08" PRIx64 ", size=%" PRIu64 " bytes\n", p, w, "mapped",  p_mapped_preferred_rva, p_mapped_size);
         if (0==get_mapped_alignment()) {
             fprintf(f, "%s%-*s = not specified\n", p, w, "mapped_alignment");
         } else {
-            fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") %s\n", p, w, "mapped_alignment", 
+            fprintf(f, "%s%-*s = 0x%08" PRIx64" (%" PRIu64 ") %s\n", p, w, "mapped_alignment", 
                     get_mapped_alignment(), get_mapped_alignment(),
                     0==get_mapped_preferred_rva()%get_mapped_alignment()?"satisfied":"NOT SATISFIED");
         }
@@ -807,7 +807,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     fprintf(f, "%s%-*s = %s\n", p, w, "contains_code", get_contains_code()?"true":"false");
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") \n", p, w, "mapped_actual_va", p_mapped_actual_va, p_mapped_actual_va);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") \n", p, w, "mapped_actual_va", p_mapped_actual_va, p_mapped_actual_va);
 
     // DQ (8/31/2008): Output the contents if this not derived from (there is likely a 
     // better implementation if the hexdump function was a virtual member function).

@@ -6,7 +6,7 @@
 #include "rosedll.h"
 
 /** Linear congruential generator.  Generates a repeatable sequence of pseudo-random numbers. */
-class ROSE_DLL_API LinearCongruentialGenerator {
+class ROSE_UTIL_API LinearCongruentialGenerator {
 public:
     /** Initialize the generator with a random seed. */
     LinearCongruentialGenerator() { init(); }

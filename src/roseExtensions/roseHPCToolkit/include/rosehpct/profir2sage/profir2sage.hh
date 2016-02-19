@@ -42,8 +42,8 @@ namespace RoseHPCT
                       bool verbose = false);
   //! A quick reference to all file nodes of Profile IRs 
   // obtained from multiple profile xml files
-  extern std::set<const RoseHPCT::IRNode *> profFileNodes_;
-  extern std::set<const RoseHPCT::IRNode *> profStmtNodes_;
+  ROSE_DLL_API extern std::set<const RoseHPCT::IRNode *> profFileNodes_;
+  ROSE_DLL_API extern std::set<const RoseHPCT::IRNode *> profStmtNodes_;
 
   //@}
 };

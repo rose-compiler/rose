@@ -180,6 +180,11 @@ static std::string getJavaClassNameFromFileName(const std::string fileName)
 
     return boost::erase_last_copy(notDir, ".java");
 }
+#ifdef _MSC_VER
+#define UNUSED_VAR
+#else
+#define UNUSED_VAR __attribute__((unused))
+#endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 // Parse java file based on addJavaSource.cpp test case
@@ -228,7 +233,7 @@ static SgFile* parseJavaFile(const std::string &fileName)
             }
         }
         struct stat sb;
-        int status __attribute__((unused)) = stat(dirName.c_str(), &sb);
+        int status UNUSED_VAR = stat(dirName.c_str(), &sb);
         assert(0==status);
         assert(boost::filesystem::is_directory(dirName));
         if (dirName!=tempDirectory) {

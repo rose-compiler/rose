@@ -754,7 +754,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         sprintf(p, "SgAsmGenericFile::shift_extend[%" PRIuPTR "]: ", ncalls++);
         fprintf(stderr, "%s    -- START --\n", p);
         fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->get_string(true).c_str());
-        fprintf(stderr, "%s    %s Sa=0x%08"PRIx64" (%"PRIu64"), Sn=0x%08"PRIx64" (%"PRIu64")\n", p, space_s, sa, sa, sn, sn);
+        fprintf(stderr, "%s    %s Sa=0x%08" PRIx64 " (%" PRIu64 "), Sn=0x%08" PRIx64 " (%" PRIu64 ")\n", p, space_s, sa, sa, sn, sn);
         fprintf(stderr, "%s    elasticity = %s\n", p, (ELASTIC_NONE==elasticity ? "none" :
                                                        ELASTIC_UNREF==elasticity ? "unref" :
                                                        ELASTIC_HOLE==elasticity ? "unref+holes" :
@@ -798,7 +798,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 ROSE_ASSERT(all[i]->is_mapped());
                 ep = all[i]->get_mapped_preferred_extent();
             }
-            fprintf(stderr, "%s        0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n",
+            fprintf(stderr, "%s        0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64 " [%d] \"%s\"\n",
                     p, ep.relaxed_first(), ep.size(), ep.relaxed_first()+ep.size(), all[i]->get_id(),
                     all[i]->get_name()->get_string(true).c_str());
         }
@@ -832,7 +832,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             fprintf(stderr, "%s    Address map:\n", p);
             amap.dump_extents(stderr, (std::string(p)+"        ").c_str(), "amap");
             fprintf(stderr, "%s    Extent of S:\n", p);
-            fprintf(stderr, "%s        start=0x%08"PRIx64" size=0x%08"PRIx64" end=0x%08"PRIx64"\n",
+            fprintf(stderr, "%s        start=0x%08" PRIx64 " size=0x%08" PRIx64 " end=0x%08" PRIx64 "\n",
                     p, sp.relaxed_first(), sp.size(), sp.relaxed_first()+sp.size());
         }
         
@@ -876,7 +876,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             switch (ExtentMap::category(ap, nhs)) {
               case 'L':
                 if (debug)
-                    fprintf(stderr, "%s        L 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n", 
+                    fprintf(stderr, "%s        L 0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64 " [%d] \"%s\"\n", 
                             p, ap.relaxed_first(), ap.size(), ap.relaxed_first()+ap.size(),
                             a->get_id(), a->get_name()->get_string(true).c_str());
                 break;
@@ -909,11 +909,11 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 Extent ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
                 rose_addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 char cat = ExtentMap::category(ap, sp);
-                fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                fprintf(stderr, "%s        %c %c0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64,
                         p, cat, 0==ap.relaxed_first() % (align?align:1) ? ' ' : '!',
                         ap.relaxed_first(), ap.size(), ap.relaxed_first()+ap.size());
                 if (strchr("RICE", cat)) {
-                    fprintf(stderr, " align=0x%08"PRIx64, align);
+                    fprintf(stderr, " align=0x%08" PRIx64, align);
                 } else {
                     fputs("                 ", stderr);
                 }
@@ -924,7 +924,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 SgAsmGenericSection *a = villagers[i];
                 Extent ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
                 rose_addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
-                fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                fprintf(stderr, "%s        %c %c0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64,
                         p, ExtentMap::category(ap, sp), /*cat should always be R*/
                         0==ap.relaxed_first() % (align?align:1) ? ' ' : '!',
                         ap.relaxed_first(), ap.size(), ap.relaxed_first()+ap.size());
@@ -946,9 +946,9 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         aligned_sa = (sa/align + (sa%align?1:0))*align;
         aligned_sasn = ((sa+sn)/align + ((sa+sn)%align?1:0))*align;
         if (debug) {
-            fprintf(stderr, "%s    Alignment LCM = 0x%08"PRIx64" (%"PRIu64")\n", p, align, align);
-            fprintf(stderr, "%s    Aligned Sa    = 0x%08"PRIx64" (%"PRIu64")\n", p, aligned_sa, aligned_sa);
-            fprintf(stderr, "%s    Aligned Sa+Sn = 0x%08"PRIx64" (%"PRIu64")\n", p, aligned_sasn, aligned_sasn);
+            fprintf(stderr, "%s    Alignment LCM = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, align, align);
+            fprintf(stderr, "%s    Aligned Sa    = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, aligned_sa, aligned_sa);
+            fprintf(stderr, "%s    Aligned Sa+Sn = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, aligned_sasn, aligned_sasn);
         }
         
         /* Are there any sections to the right of neighborhood(S)? If so, find the one with the lowest start address and use
@@ -968,7 +968,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         ROSE_ASSERT(hp.relaxed_first() > nhs.relaxed_first()+nhs.size());
         rose_addr_t hole_size = hp.relaxed_first() - (nhs.relaxed_first()+nhs.size());
         if (debug) {
-            fprintf(stderr, "%s    hole size = 0x%08"PRIx64" (%"PRIu64"); need 0x%08"PRIx64" (%"PRIu64"); %s\n",
+            fprintf(stderr, "%s    hole size = 0x%08" PRIx64 " (%" PRIu64 "); need 0x%08" PRIx64 " (%" PRIu64 "); %s\n",
                     p, hole_size, hole_size, aligned_sasn, aligned_sasn,
                     hole_size>=aligned_sasn ? "large enough" : "not large enough");
         }
@@ -979,7 +979,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
          * all-sections address map and neighborhood(S). */
         ROSE_ASSERT(0==pass); /*logic problem since the recursive call should have enlarged the hole enough*/
         if (debug) {
-            fprintf(stderr, "%s    Calling recursively to increase hole size by 0x%08"PRIx64" (%"PRIu64") bytes\n",
+            fprintf(stderr, "%s    Calling recursively to increase hole size by 0x%08" PRIx64 " (%" PRIu64 ") bytes\n",
                     p, need_more, need_more);
         }
         shift_extend(after_hole, need_more, 0, space, elasticity);
@@ -1062,12 +1062,12 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         if (debug) {
             const char *space_name = filespace ? "file" : "mem";
             rose_addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
-            fprintf(stderr, "%s   %4s-%c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+            fprintf(stderr, "%s   %4s-%c %c0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64,
                     p, space_name, ExtentMap::category(ap, sp), 
                     0==ap.relaxed_first()%(x?x:1)?' ':'!',
                     ap.relaxed_first(), ap.size(), ap.relaxed_first()+ap.size());
             Extent newap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
-            fprintf(stderr, " -> %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+            fprintf(stderr, " -> %c0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64,
                     0==newap.relaxed_first()%(x?x:1)?' ':'!',
                     newap.relaxed_first(), newap.size(), newap.relaxed_first()+newap.size());
             fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->get_string(true).c_str());
@@ -1198,13 +1198,13 @@ SgAsmGenericFile::dump(FILE *f) const
         fprintf(f, "  %3s", overlap);
 
         /* File addresses */
-        fprintf(f, "%c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+        fprintf(f, "%c0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64,
                 section->get_file_alignment()==0 || section->get_offset()%section->get_file_alignment()==0?' ':'!',
                 section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
 
         /* Mapped addresses */
         if (section->is_mapped()) {
-            fprintf(f, " %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+            fprintf(f, " %c0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64,
                     (section->get_mapped_alignment()==0 ||
                      section->get_mapped_preferred_rva()%section->get_mapped_alignment()==0?' ':'!'),
                     section->get_base_va(), section->get_mapped_preferred_rva(), section->get_mapped_size(),
@@ -1238,7 +1238,7 @@ SgAsmGenericFile::dump(FILE *f) const
     } else if (sections.back()->get_offset() + sections.back()->get_size() < get_current_size()) {
         overlap[2] = 'h';
     }
-    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF", overlap, get_current_size(), 76, "");
+    fprintf(f, "  %3s 0x%08" PRIx64 "%*s EOF", overlap, get_current_size(), 76, "");
     if (get_current_size()!=p_data.size())
         fprintf(f, " (original EOF was 0x%08zx)", p_data.size());
     if (get_truncate_zeros())

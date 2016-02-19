@@ -23,9 +23,9 @@
 namespace rose {
 namespace Diagnostics {
 
-Sawyer::Message::DestinationPtr destination;
-Sawyer::Message::PrefixPtr mprefix;
-Sawyer::Message::Facility mlog;
+ROSE_DLL_API Sawyer::Message::DestinationPtr destination;
+ROSE_DLL_API Sawyer::Message::PrefixPtr mprefix;
+ROSE_DLL_API Sawyer::Message::Facility mlog;
 static bool isInitialized_ = false;
 
 void initialize() {
