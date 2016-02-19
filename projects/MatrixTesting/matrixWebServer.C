@@ -365,7 +365,7 @@ private:
     
 public:
     explicit StatusModel(Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), chartValueType_(CVT_COUNT), roundToInteger_(false), humanReadable_(false),
+        : Wt::WAbstractTableModel(parent), chartValueType_(CVT_PERCENT), roundToInteger_(false), humanReadable_(false),
           depMajorName_("rose_date"), depMajorIsData_(false), depMinorName_("pass/fail"), depMinorIsData_(false) {}
 
     const std::string& depMajorName() const {
@@ -760,16 +760,8 @@ public:
 
         // Make room around the graph for titles, labels, and legend.
         if (BAR_CHART == chartType_) {
-            setPlotAreaPadding(200, Wt::Left);
-            setPlotAreaPadding(200, Wt::Right);
-            setPlotAreaPadding(20, Wt::Top);
-            setPlotAreaPadding(0, Wt::Bottom);
             setOrientation(Wt::Horizontal);
         } else {
-            setPlotAreaPadding(40, Wt::Left);
-            setPlotAreaPadding(200, Wt::Right);
-            setPlotAreaPadding(0, Wt::Top);
-            setPlotAreaPadding(60, Wt::Bottom);
             setOrientation(Wt::Vertical);
             axis(Wt::Chart::XAxis).setLabelAngle(22.5);
         }
@@ -782,31 +774,60 @@ public:
     void modelReset() ROSE_OVERRIDE {
         Wt::Chart::WCartesianChart::modelReset();
 
+        // Figure out the height of the bars. If the legend is very tall we'll have to make the chart tall so the legend
+        // fits. But if we do that and there's only a few bars, then the bars will be very tall also. We'd like the bars to
+        // always be the same height regardless of how tall we make the chart, but the API doesn't have a method to set the bar
+        // to a particular height -- only methods to adjust the margins around the bars.
+        static const int BAR_HEIGHT = 25;               // height in pixels of each bar including margins
+        static const int LEGEND_ITEM_HEIGHT = 20;       // height in pixels of each legend item including margins
+        double barHeightRatio = 0.9;                    // height of colored part of bar as a ratio of total bar height
+        if (BAR_CHART == chartType_) {
+            double barsToLegend = (1.0 * model()->rowCount() * BAR_HEIGHT) / (model()->columnCount() * LEGEND_ITEM_HEIGHT);
+            barHeightRatio = std::max(0.01, std::min(barsToLegend, 0.8));
+        }
+
+        // Build the data series, one per model column.
         std::vector<Wt::Chart::WDataSeries> series;
+        size_t maxMinorValueLength = 0;
         for (int j=1; j<model_->columnCount(); ++j) {
             if (BAR_CHART == chartType_) {
                 series.push_back(Wt::Chart::WDataSeries(j, Wt::Chart::BarSeries));
                 series.back().setStacked(true);
+                series.back().setBarWidth(barHeightRatio); // chart is rotated 90 degrees
             } else {
                 series.push_back(Wt::Chart::WDataSeries(j, Wt::Chart::LineSeries));
                 series.back().setMarker(Wt::Chart::SquareMarker);
             }
-            Wt::WColor color = dependencyValueColor(model_->depMinorName(), model_->depMinorValue(j), j);
+            std::string minorValue = model_->depMinorValue(j);
+            maxMinorValueLength = std::max(maxMinorValueLength, minorValue.size());
+            Wt::WColor color = dependencyValueColor(model_->depMinorName(), minorValue, j);
             series.back().setBrush(Wt::WBrush(color));
             series.back().setPen(Wt::WPen(color));
         }
         setSeries(series);
 
-        if (BAR_CHART == chartType_) {
-            int height = std::max(40 + 25 * std::min(model()->rowCount(), 15), 130);
-            setHeight(height);
-        } else {
-            setHeight(230);
+        // What is the maximum length of the major axis labels
+        size_t maxMajorValueLength = 0;
+        for (int i=0; i<model_->rowCount(); ++i) {
+            std::string majorValue = model_->depMajorValue(i);
+            maxMajorValueLength = std::max(maxMajorValueLength, majorValue.size());
         }
 
-        if (LINE_CHART == chartType_) {
-            axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
-        } else {
+        // Adjust axis labels, ranges, and legend size.
+        setPlotAreaPadding(35 + 7*maxMinorValueLength, Wt::Right);
+        if (BAR_CHART == chartType_) {
+            int topAxisHeight = 20;
+            int bottomAxisHeight = 0;
+            int leftAxisWidth = 20 + 7*maxMajorValueLength;
+            int barsHeight = model()->rowCount() * BAR_HEIGHT - (/*correction*/6*(model()->rowCount()-3));
+            int legendHeight = model()->columnCount() * LEGEND_ITEM_HEIGHT;
+            int totalHeight = std::max(barsHeight, legendHeight) + topAxisHeight + bottomAxisHeight;
+            setHeight(totalHeight);
+
+            setPlotAreaPadding(topAxisHeight, Wt::Top);
+            setPlotAreaPadding(bottomAxisHeight, Wt::Bottom);
+            setPlotAreaPadding(leftAxisWidth, Wt::Left);
+
             switch (model_->chartValueType()) {
                 case CVT_COUNT:
                 case CVT_PASS_RATIO:
@@ -818,6 +839,12 @@ public:
                     axis(Wt::Chart::YAxis).setMaximum(100);
                     break;
             }
+        } else {
+            setHeight(400);
+            setPlotAreaPadding(0, Wt::Top);
+            setPlotAreaPadding(20 + 2.65 * maxMajorValueLength, Wt::Bottom);
+            setPlotAreaPadding(40, Wt::Left);
+            axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
         }
     }
 
@@ -879,6 +906,7 @@ public:
             // individual tests run, not their names.
             dep.comboBox = new Wt::WComboBox;
             dep.comboBox->addItem(WILD_CARD_STR);
+            dep.comboBox->setMinimumSize(Wt::WLength(20, Wt::WLength::FontEm), Wt::WLength::Auto);
             std::vector<std::string> comboValues(dep.humanValues.keys().begin(), dep.humanValues.keys().end());
             std::sort(comboValues.begin(), comboValues.end(), DependencyValueSorter(depName));
             BOOST_FOREACH (const std::string &comboValue, comboValues)
@@ -888,16 +916,22 @@ public:
 
         static const size_t nDepCols = 2;               // number of columns for dependencies
         size_t nDepRows = (depNames.size() + nDepCols - 1) / nDepCols;
-        Wt::WGridLayout *grid = new Wt::WGridLayout;
-        setLayout(grid);
+        Wt::WTable *grid = new Wt::WTable;
+        grid->columnAt(0)->setWidth(Wt::WLength(25, Wt::WLength::Percentage));
+        grid->columnAt(1)->setWidth(Wt::WLength(25, Wt::WLength::Percentage));
+        grid->columnAt(2)->setWidth(Wt::WLength(25, Wt::WLength::Percentage));
+        grid->columnAt(3)->setWidth(Wt::WLength(25, Wt::WLength::Percentage));
+        addWidget(grid);
 
         // Fill the grid in row-major order
         for (size_t i=0; i<depNames.size(); ++i) {
             int row = i % nDepRows;
             int col = i / nDepRows;
             std::string depName = depNames[i];
-            grid->addWidget(new Wt::WLabel(depName), row, 2*col+0, Wt::AlignRight | Wt::AlignMiddle);
-            grid->addWidget(dependencies_[depName].comboBox, row, 2*col+1);
+            grid->elementAt(row, 2*col+0)->addWidget(new Wt::WLabel(depName));
+            grid->elementAt(row, 2*col+0)->setStyleClass("constraint-name");
+            grid->elementAt(row, 2*col+1)->addWidget(dependencies_[depName].comboBox);
+            grid->elementAt(row, 2*col+1)->setStyleClass("constraint-value");
         }
     }
 
@@ -940,30 +974,33 @@ class WResultsConstraintsTab: public Wt::WContainerWidget {
 public:
     explicit WResultsConstraintsTab(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent) {
-        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
-        setLayout(vbox);
 
-        //-----------------
-        // Results area
-        //-----------------
+        //------------
+        // Chart area
+        //------------
 
-        Wt::WPanel *results = new Wt::WPanel;
-        results->setTitle("Test results");
-        Wt::WContainerWidget *resultsWidget = new Wt::WContainerWidget;
-        Wt::WVBoxLayout *resultsBox = new Wt::WVBoxLayout;
-        resultsWidget->setLayout(resultsBox);
-        results->setCentralWidget(resultsWidget);
-        vbox->addWidget(results);
+        addWidget(new Wt::WText("<h2>Test results</h2>"));
+        chartStack_ = new Wt::WStackedWidget;           // added after settings
 
-        // The resultsBox has two rows: the top row is the charts (in a WStackedWidget), and the bottom is the settings to
-        // choose which chart to display and how.
+        // Bar and lines charts, which need to be in a container widget in order to span the entire width.
         chartModel_ = new StatusModel;
         chartModel_->setDepMajorIsData(true);
-        resultsBox->addWidget(chartStack_ = new Wt::WStackedWidget);
-        chartStack_->addWidget(statusCharts_[0] = new WStatusChart2d(chartModel_, BAR_CHART));
-        chartStack_->addWidget(statusCharts_[1] = new WStatusChart2d(chartModel_, LINE_CHART));
 
-        // Data can be viewed as a table instead of a chart.
+        WStatusChart2d *barChart = new WStatusChart2d(chartModel_, BAR_CHART);
+        Wt::WHBoxLayout *barChartLayout = new Wt::WHBoxLayout;
+        barChartLayout->addWidget(barChart, 1);
+        Wt::WContainerWidget *barChartContainer = new Wt::WContainerWidget;
+        barChartContainer->setLayout(barChartLayout);
+        chartStack_->addWidget(barChartContainer);
+
+        WStatusChart2d *lineChart = new WStatusChart2d(chartModel_, LINE_CHART);
+        Wt::WHBoxLayout *lineChartLayout = new Wt::WHBoxLayout;
+        lineChartLayout->addWidget(lineChart, 1);
+        Wt::WContainerWidget *lineChartContainer = new Wt::WContainerWidget;
+        lineChartContainer->setLayout(lineChartLayout);
+        chartStack_->addWidget(lineChartContainer);
+
+        // Table charts
         tableModel_ = new StatusModel;
         tableModel_->setDepMajorIsData(true);
         tableModel_->setRoundToInteger(true);
@@ -975,13 +1012,16 @@ public:
         tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
         chartStack_->addWidget(tableView_);
 
-        // Data can be viewed as a list of comma-separated values.
+        // Chart of plain text comma-separated values
         csvView_ = new WCommaSeparatedValues(tableModel_);
         chartStack_->addWidget(csvView_);
 
+        //----------------
+        // Chart settings
+        //----------------
+
         // The chartSettingsBox holds the various buttons and such for adjusting the charts.
-        Wt::WHBoxLayout *chartSettingsBox = new Wt::WHBoxLayout;
-        chartSettingsBox->addSpacing(300);
+        Wt::WContainerWidget *chartSettingsBox = new Wt::WContainerWidget;
 
         // Combo box to choose what to display as the X axis for the test status chart
         majorAxisChoices_ = new Wt::WComboBox;
@@ -1016,6 +1056,7 @@ public:
         absoluteRelative_->addItem("pass / runs (%)");
         absoluteRelative_->addItem("ave warnings (#)");
         absoluteRelative_->addItem("ave duration (sec)");
+        absoluteRelative_->setCurrentIndex(1);
         absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
 
         // Update button to reload data from the database
@@ -1024,37 +1065,27 @@ public:
         updateButton->clicked().connect(this, &WResultsConstraintsTab::updateStatusCounts);
         chartSettingsBox->addWidget(updateButton);
 
-        chartSettingsBox->addStretch(1);
-        resultsBox->addLayout(chartSettingsBox);
+        addWidget(chartSettingsBox);
+        addWidget(chartStack_);
 
         //------------------
         // Constraints area
         //------------------
 
-        Wt::WPanel *constraints = new Wt::WPanel;
-        constraints->setTitle("Constraints");
-        Wt::WContainerWidget *constraintsWidget = new Wt::WContainerWidget;
-        Wt::WVBoxLayout *constraintsBox = new Wt::WVBoxLayout;
-        constraintsWidget->setLayout(constraintsBox);
-        constraints->setCentralWidget(constraintsWidget);
-        vbox->addWidget(constraints);
+        addWidget(new Wt::WText("<h2>Constraints</h2>"));
 
         // Constraints
-        constraintsBox->addWidget(constraints_ = new WConstraints);
+        addWidget(constraints_ = new WConstraints);
         constraints_->constraintsChanged().connect(this, &WResultsConstraintsTab::updateStatusCounts);
 
         // Button to reset everything to the initial state.
-        Wt::WHBoxLayout *constraintButtonBox = new Wt::WHBoxLayout;
-        constraintsBox->addLayout(constraintButtonBox);
         Wt::WPushButton *reset = new Wt::WPushButton("Clear");
         reset->clicked().connect(this, &WResultsConstraintsTab::resetConstraints);
-        constraintButtonBox->addWidget(reset);
-        constraintButtonBox->addStretch(1);
+        addWidget(reset);
 
         //---------
         // Wiring
         //---------
-        vbox->addStretch(1);
         majorAxisChoices_->activated().connect(this, &WResultsConstraintsTab::updateStatusCounts);
         minorAxisChoices_->activated().connect(this, &WResultsConstraintsTab::updateStatusCounts);
         updateStatusCounts();
@@ -1786,6 +1817,11 @@ public:
         Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
         root()->setLayout(vbox);
 
+        // Styles for constraints
+        styleSheet().addRule(".constraint-name", "text-align:right;");
+        styleSheet().addRule(".constraint-value", "text-align:left;");
+
+        // Styles for command output
         styleSheet().addRule(".output-error",   "color:#680000; background-color:#ffc0c0;"); // reds
         styleSheet().addRule(".output-warning", "color:#8f4000; background-color:#ffe0c7;"); // oranges
         styleSheet().addRule(".output-separator", "background-color:#808080;");
