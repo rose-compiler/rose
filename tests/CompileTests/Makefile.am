@@ -82,9 +82,9 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
 endif
 
-if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-   SUBDIRS += Matlab_tests
-endif
+# if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+#    SUBDIRS += Matlab_tests
+# endif
 
 SUBDIRS += CudaTests
 
