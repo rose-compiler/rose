@@ -18,7 +18,9 @@
 #else
 #include <windows.h>
 #include "Shlwapi.h"
-#define snprintf _snprintf
+#ifndef snprintf
+//#define snprintf _snprintf
+#endif
 
 #endif
 #include <algorithm>

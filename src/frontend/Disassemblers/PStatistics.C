@@ -721,7 +721,11 @@ Partitioner::count_size_variance(const InstructionMap &insns)
     }
     return variance;
 }
-
+#ifdef _MSC_VER
+#define UNUSED_VAR
+#else
+#define UNUSED_VAR __attribute__((unused))
+#endif
 Partitioner::RegionStats *
 Partitioner::region_statistics()
 {
@@ -824,7 +828,7 @@ Partitioner::region_statistics(const ExtentMap &addresses)
             /* Add instruction as vertex to CFG */
             std::pair<Addr2Vertex::iterator, bool> inserted = va2id.insert(std::make_pair(va, va2id.size()));
             if (inserted.second) {
-                CFGVertex vertex __attribute__((unused)) = add_vertex(cfg);
+                CFGVertex vertex UNUSED_VAR = add_vertex(cfg);
                 assert(vertex==inserted.first->second);
             }
 

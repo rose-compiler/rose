@@ -148,8 +148,8 @@ void
 MemoryState::print(std::ostream &out, Formatter&) const {
     map_.dump(out);
     rose_addr_t pageVa = 0;
+    uint8_t* page = new uint8_t[pageSize_];
     while (map_.atOrAfter(pageVa).next().assignTo(pageVa)) {
-        uint8_t page[pageSize_];
         size_t nread = map_.at(pageVa).limit(pageSize_).read(page).size();
         ASSERT_always_require(nread == pageSize_);
         HexdumpFormat fmt;
@@ -159,6 +159,7 @@ MemoryState::print(std::ostream &out, Formatter&) const {
             break;
         pageVa += pageSize_;
     }
+    delete [] page;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -22,18 +22,18 @@ namespace GraphViz {
 typedef Sawyer::Container::Map<std::string, std::string> Attributes;
 
 /** Convert attributes to GraphViz language string. */
-std::string toString(const Attributes&);
+ROSE_DLL_API std::string toString(const Attributes&);
 
 /** Escape characters that need to be escaped within GraphViz double quoted literals. */
-std::string quotedEscape(const std::string&);
+ROSE_DLL_API std::string quotedEscape(const std::string&);
 
 /** Escape characters that need to be escaped within GraphViz HTML literals. */
-std::string htmlEscape(const std::string&);
+ROSE_DLL_API std::string htmlEscape(const std::string&);
 
 /** Escape some value for GraphViz.
  *
  *  The returned string will include double quote or angle-brackets as necessary depending on the input string. */
-std::string escape(const std::string&);
+ROSE_DLL_API std::string escape(const std::string&);
 
 /** Append a value to an existing string.
  *
@@ -41,15 +41,15 @@ std::string escape(const std::string&);
  *  newStuff should not be quoted or escaped.  This is useful for appending additional information to a label. The @p separator
  *  is escaped and inserted between the @p oldStuff and @p newStuff if @p oldStuff is not empty. Returns a new string that is
  *  also quoted and escaped. */
-std::string concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator="");
+ROSE_DLL_API std::string concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator="");
 
 /** Determins if a string is a valid GraphViz ID.
  *
  *  True if s forms a valid GraphViz ID.  ID strings do not need special quoting in the GraphViz language. */
-bool isId(const std::string &s);
+ROSE_DLL_API bool isId(const std::string &s);
 
 /** An invalid identification number. */
-extern const size_t NO_ID;
+ROSE_DLL_API extern const size_t NO_ID;
 
 
 /** Organizational information.
@@ -57,7 +57,7 @@ extern const size_t NO_ID;
  *  The organization determines which vertices, edges, and subgraphs are selected for output and also gives them labels and
  *  attributes.  Generally speaking, the GraphViz object will update labels and attributes automatically only when
  *  transitioning from an unselected to selected state. */
-class Organization {
+class ROSE_DLL_API Organization {
 private:
     bool isSelected_;
     std::string name_;                                  // name used by GraphViz to identify this object
@@ -429,7 +429,7 @@ protected:
  *  gv.selectFunctionGraph(f1);
  *  gv.emit(std::cout);
  * @endcode */
-class CfgEmitter: public BaseEmitter<ControlFlowGraph> {
+class ROSE_DLL_API CfgEmitter: public BaseEmitter<ControlFlowGraph> {
     const Partitioner &partitioner_;
     bool useFunctionSubgraphs_;                         // should called functions be shown as subgraphs?
     bool showReturnEdges_;                              // show E_FUNCTION_RETURN edges?
@@ -801,7 +801,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Emits a function call graph. */
-class CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
+class ROSE_DLL_API CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
     const Partitioner &partitioner_;
     FunctionCallGraph cg_;
     Color::HSV functionHighlightColor_;                 // highlight certain functions
@@ -832,7 +832,7 @@ private:
  *  The function call graph is modified by removing all vertices whose function names match a user-specified pattern and
  *  compensating by listing the names of removed functions in the vertices of the callers.  This is a little bit like inlining,
  *  thus the name of the class. */
-class CgInlinedEmitter: public CgEmitter {
+class ROSE_DLL_API CgInlinedEmitter: public CgEmitter {
     boost::regex nameMatcher_;
     typedef std::vector<Function::Ptr> InlinedFunctions;
     typedef Sawyer::Container::Map<Function::Ptr, InlinedFunctions> Inlines;

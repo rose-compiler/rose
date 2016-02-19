@@ -6,6 +6,10 @@
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 #include <SymbolicSemantics2.h>
+#ifdef _MSC_VER
+#define popen _popen
+#define pclose _pclose
+#endif
 
 using namespace rose::Diagnostics;
 using namespace Sawyer::Container::Algorithm;
@@ -29,7 +33,7 @@ makeEdgeColor(const Color::HSV &bg) {
     return Color::HSV(bg.h(), 1.0, 0.5, 1.0);
 }
 
-std::string
+ROSE_DLL_API std::string
 toString(const Attributes &attrs) {
     std::string retval;
     BOOST_FOREACH (const Attributes::Node &attr, attrs.nodes())
@@ -37,7 +41,7 @@ toString(const Attributes &attrs) {
     return retval;
 }
 
-std::string
+ROSE_DLL_API std::string
 quotedEscape(const std::string &s) {
     std::string retval;
     for (size_t i=0; i<s.size(); ++i) {
@@ -52,7 +56,7 @@ quotedEscape(const std::string &s) {
     return retval;
 }
 
-std::string
+ROSE_DLL_API std::string
 htmlEscape(const std::string &s) {
     std::string retval;
     for (size_t i=0; i<s.size(); ++i) {
@@ -71,7 +75,7 @@ htmlEscape(const std::string &s) {
     return retval;
 }
 
-bool
+ROSE_DLL_API bool
 isId(const std::string &s) {
     if (s.empty())
         return false;
@@ -92,7 +96,7 @@ isId(const std::string &s) {
     return false;
 }
 
-std::string
+ROSE_DLL_API std::string
 escape(const std::string &s) {
     if (s.empty())
         return "\"\"";
@@ -114,7 +118,7 @@ escape(const std::string &s) {
     return "\"" + quotedEscape(s) + "\"";
 }
 
-std::string
+ROSE_DLL_API std::string
 concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator) {
     if (oldStuff.empty())
         return "\"" + quotedEscape(newStuff) + "\"";
