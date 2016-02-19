@@ -1391,22 +1391,19 @@ class WErrors: public Wt::WContainerWidget {
 public:
     explicit WErrors(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent), outOfDate_(true) {
-        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
-        setLayout(vbox);
-        vbox->addWidget(new Wt::WText("These are the most prevalent errors in the failing configurations selected in the "
-                                      "\"Overview\" tab.  The definition of \"failing\" can be found in the \"Settings\" "
-                                      "tab. The information below each error is the list of constraints, in addition to "
-                                      "those in the \"Overview\" tab, which all the errors satisfy. "
-                                      "<b>Guide for commentary:</b> when commenting, remember that the same error might "
-                                      "occur in other configurations as well and your comment will apply to them also even "
-                                      "if they're not shown in this table."));
 
-        vbox->addWidget(summary_ = new Wt::WText);
+        addWidget(new Wt::WText("<p>These are the most prevalent errors in the failing configurations selected in the "
+                                "\"Overview\" tab.  The definition of \"failing\" can be found in the \"Settings\" "
+                                "tab. The information below each error is the list of constraints, in addition to "
+                                "those in the \"Overview\" tab, which all the errors satisfy. "
+                                "<b>Guide for commentary:</b> when commenting, remember that the same error might "
+                                "occur in other configurations as well and your comment will apply to them also even "
+                                "if they're not shown in this table.</p>"));
 
-        vbox->addWidget(grid_ = new Wt::WTable);
+        addWidget(summary_ = new Wt::WText);
+
+        addWidget(grid_ = new Wt::WTable);
         grid_->setHeaderCount(1);
-
-        vbox->addStretch(1);
     }
 
     Wt::Signal<int>& testIdChanged() {
@@ -1430,7 +1427,7 @@ public:
         int nTests = q0->execute_int();
         int nFails = 0;
         if (0 == nTests) {
-            summary_->setText("No tests match the \"Overview\" constraints.");
+            summary_->setText("<p>No tests match the \"Overview\" constraints.</p>");
             grid_->setHidden(true);
             return;
         } else {
@@ -1440,14 +1437,14 @@ public:
             bindSqlVariables(q0, args);
             nFails = q0->execute_int();
             if (0 == nFails) {
-                summary_->setText(StringUtility::plural(nTests, "tests") + " selected but none failed.");
+                summary_->setText("<p>" + StringUtility::plural(nTests, "tests") + " selected but none failed.</p>");
                 grid_->setHidden(true);
                 return;
             }
 
-            summary_->setText(StringUtility::numberToString(nFails) + " of " + StringUtility::numberToString(nTests) +
+            summary_->setText("<p>" + StringUtility::numberToString(nFails) + " of " + StringUtility::numberToString(nTests) +
                               " selected " + (1 == nFails ? "test fails." : "tests fail") +
-                              " (" + StringUtility::numberToString((int)round(100.0*nFails/nTests)) + "%).");
+                              " (" + StringUtility::numberToString((int)round(100.0*nFails/nTests)) + "%).</p>");
             grid_->setHidden(false);
         }
 
