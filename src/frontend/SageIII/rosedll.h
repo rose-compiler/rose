@@ -43,7 +43,6 @@
   #endif
 #endif
 
-
 // ROSE_DLL_EXPORTS is only defined for cmake
   #ifdef ROSE_DLL_EXPORTS // defined if we are building the ROSE DLL (instead of using it)
     #define ROSE_DLL_API ROSE_DLL_HELPER_DLL_EXPORT
