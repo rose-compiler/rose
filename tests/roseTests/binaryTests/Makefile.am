@@ -193,8 +193,7 @@ testPeConstruct.passed: testPeConstruct.conf testPeConstruct
 noinst_PROGRAMS += shiftResizeSection
 shiftResizeSection_SOURCES = shiftResizeSection.C
 shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-# DQ (2/18/2016): Commented out after discussion with Robb (issue with Windows support).
-# TEST_TARGETS += shiftResizeSection.passed
+TEST_TARGETS += shiftResizeSection.passed
 EXTRA_DIST += shiftResizeSection.conf shiftResizeSection.ans
 MOSTLYCLEANFILES += arm-ctrlaltdel.dump-1 arm-ctrlaltdel.dump-2 arm-ctrlaltdel.dump-3
 shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection execFormatsTest
