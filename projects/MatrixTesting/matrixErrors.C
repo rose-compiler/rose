@@ -208,6 +208,7 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                                                 "|^.* \\[err\\]: command died with .+"          // RTH_RUN failure
                                                 "|^.* \\[err\\]: +what\\(\\): .*"               // C++ exception
                                                 "|Assertion `.*'' failed\\.$"                   // failed <cassert> assertion
+                                                "|\\merror: \n.*"                               // ROSE error on next line
                                                 //----- regular expressions end -----
                                                 ")')"
                                                 " from attachments att" +
