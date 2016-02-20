@@ -112,23 +112,18 @@ upload-EDG.tar.gz: EDG/libroseEDG.la $(EDGBIN_SIGNATURE_FILE)
 	ln -sf $(EDGBIN_NAME).tar.gz $@             # for upload
 	ln -sf $(EDGBIN_NAME).tar.gz EDG.tar.gz     # make it look like we downloaded also
 
-# Upload EDG tarballs to the staging area and the local area. Do not use $(EDGBIN_NAME) in the target or dependencies because
-# it hasn't been computed at the time that make parses that part of the rule. It's okay to use it in the commands of this rule.
-EDGBIN_DESTINATIONS=						\
-	$(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz	\
-	$(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
-$(EDGBIN_DESTINATIONS): upload-EDG.tar.gz
-#	cp $(EDGBIN_NAME).tar.gz $@
-	cp $(EDGBIN_NAME).tar.gz $(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz
-	cp $(EDGBIN_NAME).tar.gz $(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
 # Phony target to generate a tarball but not upload it
 #(see above): .PHONY: binary_edg_tarball
 binary_edg_tarball: upload-EDG.tar.gz
 
-# Phony target to upload the tarball
+# Phony target to upload EDG tarballs to the staging area and the local area. Do not use $(EDGBIN_NAME) in the target or
+# dependencies because it hasn't been computed at the time that make parses that part of the rule. It's okay to use it
+# in the commands of this rule.
 #(see above): .PHONY: upload_edg_binary
-upload_edg_binary: $(EDGBIN_DESTINATIONS)
+upload_edg_binary: binary_edg_tarball
+	cp -f $(EDGBIN_NAME).tar.gz $(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz
+	cp -f $(EDGBIN_NAME).tar.gz $(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
 else
 
