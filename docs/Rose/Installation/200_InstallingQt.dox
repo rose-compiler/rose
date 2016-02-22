@@ -8,7 +8,12 @@
  *  @section installing_qt_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install Qt on RHEL.
+ *  Todo.
  *
  *  @section installing_qt_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libqt4-dev qt4-dev-tools</code> as the administrator.
+ *
+ *  @section installing_qt_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
  *
  *  Run <code>apt-get install libqt4-dev qt4-dev-tools</code> as the administrator. */

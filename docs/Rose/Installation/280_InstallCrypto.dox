@@ -8,7 +8,12 @@
  *  @section installing_crypto_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install cryptography libraries on RHEL.
+ *  Todo.
  *
  *  @section installing_crypto_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libssl-dev libgcrypt11-dev</code> as the administrator.
+ *
+ *  @section installing_crypto_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
  *
  *  Run <code>apt-get install libssl-dev libgcrypt11-dev</code> as the administrator. */

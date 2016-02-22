@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
                 try {
                     SgAsmInstruction *insn = NULL;
                     insn = analysis.disassembler->disassembleOne(insn_info->instruction, va, sizeof(insn_info->instruction), va);
-                    printf("0x%08"PRIx64": %s\n", va, unparseInstruction(insn).c_str());
+                    printf("0x%08" PRIx64 ": %s\n", va, unparseInstruction(insn).c_str());
                     SageInterface::deleteAST(insn);
                 } catch(const Disassembler::Exception &e) {
                     std::cerr <<e <<"\n";
