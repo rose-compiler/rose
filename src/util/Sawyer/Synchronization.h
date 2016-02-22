@@ -11,13 +11,23 @@
 #include <Sawyer/Sawyer.h>
 
 #if SAWYER_MULTI_THREADED
-#   include <boost/thread.hpp>
-#   include <boost/thread/barrier.hpp>
-#   include <boost/thread/condition_variable.hpp>
-#   include <boost/thread/mutex.hpp>
-#   include <boost/thread/locks.hpp>
-#   include <boost/thread/once.hpp>
-#   include <boost/thread/recursive_mutex.hpp>
+    // It appears as though a certain version of GNU libc interacts badly with C++03 GCC and LLVM compilers. Some system header
+    // file defines _XOPEN_UNIX as "1" and __UINTPTR_TYPE__ as "unsigned long int" but doesn't provide a definition for
+    // "uintptr_t".  This triggers a compilation error in <boost/atomic/atomic.hpp> for boost-1.54 because it assumes that
+    // "uintptr_t" is available based on the preprocessor macros and the included files.  These errors occur (at a minimum) on
+    // Debian 8.2 and 8.3 using C++03 mode of gcc-4.8.4, gcc-4.9.2, or llvm-3.5.
+    #include <boost/version.hpp>
+    #if __cplusplus < 201103L && BOOST_VERSION == 105400
+        #include <stdint.h>                             //  must be included before <boost/thread.hpp>
+    #endif
+
+    #include <boost/thread.hpp>
+    #include <boost/thread/barrier.hpp>
+    #include <boost/thread/condition_variable.hpp>
+    #include <boost/thread/mutex.hpp>
+    #include <boost/thread/locks.hpp>
+    #include <boost/thread/once.hpp>
+    #include <boost/thread/recursive_mutex.hpp>
 #endif
 
 namespace Sawyer {

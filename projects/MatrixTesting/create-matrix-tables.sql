@@ -148,7 +148,8 @@ insert into dependencies values ('qt',           'system',           0);
 
 -- GNU Readline version or "system" or "none"
 insert into dependencies values ('readline',     'none',             1);
-insert into dependencies values ('readline',     'system',           0);
+insert into dependencies values ('readline',     'system',           1);
+insert into dependencies values ('readline',     'ambivalent',       1);
 
 -- SQLite library version number or "system" or "none"
 insert into dependencies values ('sqlite',       'none',             1);
@@ -257,6 +258,17 @@ create table attachments (
     test_id integer references test_results(id),        -- the test to which this attachment belongs
     name varchar(64),                                   -- short name for this attachment
     content text                                        -- the content of the attachment
+);
+
+--
+-- Stores info about error messages
+--
+create table errors (
+    status text not null,				-- point at which error was detected
+    message text not null,				-- the error message
+    issue_name text default '', 			-- name of corresponding JIRA issue if any
+    commentary text default '',				-- commentary about the error message
+    mtime int	     					-- time that commentary was added/changed (unix)
 );
 
 commit;

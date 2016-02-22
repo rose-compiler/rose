@@ -53,7 +53,7 @@ EDGBIN_NAME_SUFFIX = $(build_triplet_without_redhat)-$(GENERATED_COMPILER_NAME_A
 EDGBIN_NAME        = $(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
 
 # All the .PHONY's need to be outside any automake "if" statements otherwise automake complains.
-.PHONY: edg-prerequisites binary_edg_tarball upload_edg_binary check-network download-edg show-edg-name show-edg-url
+.PHONY: edg-prerequisites binary_edg_tarball upload_edg_binary check-network download-edg show-edg-name show-edg-url show-edg-hash
 
 # Phony target to build EDG dependencies. We have to build EDG's prerequisites in order to compute the EDG hash.
 #(see above): .PHONY: edg-prerequisites
@@ -70,6 +70,15 @@ MOSTLYCLEANFILES += $(EDGBIN_SIGNATURE_FILE)
 $(EDGBIN_SIGNATURE_FILE): edg-prerequisites
 	$(EDG_GENERATE_SIG) $(top_srcdir) $(top_builddir) >$@.tmp
 	mv $@.tmp $@
+
+# Phony targets to show useful information. See .PHONY above.
+show-edg-hash: $(EDGBIN_SIGNATURE_FILE)
+	@cat $(EDGBIN_SIGNATURE_FILE)
+show-edg-name: $(EDGBIN_SIGNATURE_FILE)
+	@echo $(EDGBIN_NAME).tar.gz
+show-edg-url: $(EDGBIN_SIGNATURE_FILE)
+	@echo $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz
+
 
 if ROSE_HAS_EDG_SOURCE
 
@@ -100,26 +109,21 @@ upload-EDG.tar.gz: EDG/libroseEDG.la $(EDGBIN_SIGNATURE_FILE)
 	cp -r EDG/.libs $(EDGBIN_NAME)
 	tar czf $(EDGBIN_NAME).tar.gz $(EDGBIN_NAME)
 	rm -rf $(EDGBIN_NAME)
-	ln -s $(EDGBIN_NAME).tar.gz $@             # for upload
-	ln -s $(EDGBIN_NAME).tar.gz EDG.tar.gz     # make it look like we downloaded also
+	ln -sf $(EDGBIN_NAME).tar.gz $@             # for upload
+	ln -sf $(EDGBIN_NAME).tar.gz EDG.tar.gz     # make it look like we downloaded also
 
-# Upload EDG tarballs to the staging area and the local area. Do not use $(EDGBIN_NAME) in the target or dependencies because
-# it hasn't been computed at the time that make parses that part of the rule. It's okay to use it in the commands of this rule.
-EDGBIN_DESTINATIONS=						\
-	$(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz	\
-	$(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
-$(EDGBIN_DESTINATIONS): upload-EDG.tar.gz
-#	cp $(EDGBIN_NAME).tar.gz $@
-	cp $(EDGBIN_NAME).tar.gz $(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz
-	cp $(EDGBIN_NAME).tar.gz $(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
 # Phony target to generate a tarball but not upload it
 #(see above): .PHONY: binary_edg_tarball
 binary_edg_tarball: upload-EDG.tar.gz
 
-# Phony target to upload the tarball
+# Phony target to upload EDG tarballs to the staging area and the local area. Do not use $(EDGBIN_NAME) in the target or
+# dependencies because it hasn't been computed at the time that make parses that part of the rule. It's okay to use it
+# in the commands of this rule.
 #(see above): .PHONY: upload_edg_binary
-upload_edg_binary: $(EDGBIN_DESTINATIONS)
+upload_edg_binary: binary_edg_tarball
+	cp -f $(EDGBIN_NAME).tar.gz $(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz
+	cp -f $(EDGBIN_NAME).tar.gz $(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
 else
 
@@ -180,13 +184,6 @@ download-edg: EDG.tar.gz
 	@echo "To compile on a system with no network, copy this EDG tarball, the EDG.tar.gz symlink, and"
 	@echo "the $(EDGBIN_SIGNATURE_FILE) file to the $$ROSE_BUILD/src/frontend/CxxFrontend directory on"
 	@echo "the machine with no network."
-
-# This target is for the user to obtain the EDG tarball name without downloading anything
-#(see above): .PHONY: show-edg-name show-edg-url
-show-edg-name: $(EDGBIN_SIGNATURE_FILE)
-	@echo $(EDGBIN_NAME).tar.gz
-show-edg-url: $(EDGBIN_SIGNATURE_FILE)
-	@echo $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
 # Unpack the EDG tarball. Note: $(am__untar) comes from configure and if it's not set then there's something wrong with configure.
 EDG/libroseEDG.la: EDG.tar.gz

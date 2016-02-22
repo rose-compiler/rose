@@ -711,7 +711,7 @@ SgAsmGenericSection::unparse_holes(std::ostream &f) const
 {
 #if 0 /*DEBUGGING*/
     ExtentMap holes = get_unreferenced_extents();
-    fprintf(stderr, "Section \"%s\", 0x%"PRIx64" bytes\n", get_name()->get_string(true).c_str(), get_size());
+    fprintf(stderr, "Section \"%s\", 0x%" PRIx64 " bytes\n", get_name()->get_string(true).c_str(), get_size());
     holes.dump_extents(stderr, "  ", "");
 #endif
 //    unparse(f, get_unreferenced_extents());
@@ -792,11 +792,12 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", purpose.c_str());
 
     if (is_mapped()) {
-        fprintf(f, "%s%-*s = rva=0x%08" PRIx64 ", size=%" PRIu64 " bytes\n", p, w, "mapped",  p_mapped_preferred_rva, p_mapped_size);
+        fprintf(f, "%s%-*s = rva=0x%08" PRIx64 ", size=%" PRIu64 " bytes\n",
+                p, w, "mapped",  p_mapped_preferred_rva, p_mapped_size);
         if (0==get_mapped_alignment()) {
             fprintf(f, "%s%-*s = not specified\n", p, w, "mapped_alignment");
         } else {
-            fprintf(f, "%s%-*s = 0x%08" PRIx64" (%" PRIu64 ") %s\n", p, w, "mapped_alignment", 
+            fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") %s\n", p, w, "mapped_alignment", 
                     get_mapped_alignment(), get_mapped_alignment(),
                     0==get_mapped_preferred_rva()%get_mapped_alignment()?"satisfied":"NOT SATISFIED");
         }
