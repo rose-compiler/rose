@@ -111,6 +111,7 @@ public:
 
 };
 
+#ifdef ROSE_HAVE_SQLITE3
 static std::string
 sqlite3_url_documentation() {
     return ("@named{SQLite3}{The uniform resource locator for SQLite3 databases has the format "
@@ -121,6 +122,7 @@ sqlite3_url_documentation() {
             "Each parameter has an optional setting. At this time, the only parameter that is understood is "
             "\"debug\", which takes no value.}");
 }
+#endif
 
 #ifdef ROSE_HAVE_SQLITE3
 // Parse an sqlite3 URL of the form:

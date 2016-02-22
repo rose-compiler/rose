@@ -19,7 +19,18 @@
  *  Run <code>apt-get install libsqlite3-dev</code> and/or <code>apt-get install libpqxx3-dev postgresql</code> as the
  *  administrator.
  *
+ *  The "postgresql" package is required only if you wish to run the PostgreSQL server locally.
+ *
  *  @section installing_database_jessie Debian 8 "Jessie"
  *
  *  Run <code>apt-get install libsqlite3-dev</code> and/or <code>apt-get install libpqxx3-dev postgresql</code> as the
- *  administrator. */
+ *  administrator.
+ *
+ *  The "postgresql" package is required only if you wish to run the PostgreSQL server locally.
+ *
+ *  @section installing_database_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
+ *
+ *  Run <code>apt-get install libsqlite3-dev</code> and/or <code>apt-get install libpqxx3-dev postgresql</code> as the
+ *  administrator.
+ *
+ *  The "postgresql" package is required only if you wish to run the PostgreSQL server locally. */

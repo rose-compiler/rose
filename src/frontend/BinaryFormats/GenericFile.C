@@ -754,7 +754,8 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         sprintf(p, "SgAsmGenericFile::shift_extend[%" PRIuPTR "]: ", ncalls++);
         fprintf(stderr, "%s    -- START --\n", p);
         fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->get_string(true).c_str());
-        fprintf(stderr, "%s    %s Sa=0x%08" PRIx64 " (%" PRIu64 "), Sn=0x%08" PRIx64 " (%" PRIu64 ")\n", p, space_s, sa, sa, sn, sn);
+        fprintf(stderr, "%s    %s Sa=0x%08" PRIx64 " (%" PRIu64 "), Sn=0x%08" PRIx64 " (%" PRIu64 ")\n",
+                p, space_s, sa, sa, sn, sn);
         fprintf(stderr, "%s    elasticity = %s\n", p, (ELASTIC_NONE==elasticity ? "none" :
                                                        ELASTIC_UNREF==elasticity ? "unref" :
                                                        ELASTIC_HOLE==elasticity ? "unref+holes" :

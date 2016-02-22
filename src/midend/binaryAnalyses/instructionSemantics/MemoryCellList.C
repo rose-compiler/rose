@@ -137,11 +137,6 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
     return changed;
 }
 
-static bool
-cellHasNoWriters(const MemoryCellPtr &cell) {
-    return cell->getWriters().isEmpty();
-}
-
 SValuePtr
 MemoryCellList::mergeCellValues(const CellList &cells, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     SValuePtr retval;

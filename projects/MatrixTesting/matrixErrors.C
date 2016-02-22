@@ -34,22 +34,25 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.purpose("update cache for latest errors");
     parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
     parser.chapter(1, "ROSE Command-line Tools");
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{action}");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{action} [@{args}...]");
     parser.errorStream(mlog[FATAL]);
 
     parser.doc("Description",
                "This tool performs various actions related to error messages produced by tests.  The @v{action} is "
                "one of the following words:"
 
-               "@named{list}{List error messages in order of how often they occur.}"
+               "@named{list}{List error messages in order of how often they occur. This action takes no arguments.}"
 
                "@named{clear}{Erase all cached error information from the test_results table. This is useful if the "
                "regular expressions that search for errors have changed and the error information needs to be "
-               "recomputed from scratch.}"
+               "recomputed from scratch. An optional list of test identification numbers can be provided in order "
+               "to clear the cached errors from only those tests.}"
 
                "@named{update}{Search for the first error message in the output of failed commands and cache that "
                "information in the test_results table.  This information is only calculated for tests that failed, "
-               "and which produced output, and which don't have a cached error message already.}"
+               "and which produced output, and which don't have a cached error message already.  An optional list of "
+               "test identifiers can be provided as arguments, in which case the previously mentioned test list is "
+               "further constrained to include only those tests mentioned as arguments.}"
 
                "@named{missing}{List basic information about tests that have no cached error message but which "
                "failed and produced output. This information is useful in order to adjust the regular expressions "
@@ -128,7 +131,7 @@ sqlWhereClause(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
     if (constraints.empty())
         constraints.push_back("true");
 
-    return " where " + boost::join(constraints, " and ");
+    return " where " + boost::join(constraints, " and ") + " ";
 }
 
 // Bind arguments to a statement
@@ -138,12 +141,27 @@ sqlBindArgs(const SqlDatabase::StatementPtr &stmt, const std::vector<std::string
         stmt->bind(i, args[i]);
 }
 
+// Build an expression to limit test IDs
+static std::string
+sqlIdLimitation(const std::string &columnName, const std::vector<int> &testIds) {
+    if (!testIds.empty()) {
+        std::string sql;
+        BOOST_FOREACH (int id, testIds)
+            sql = (sql.empty() ? "" : ", ") + boost::lexical_cast<std::string>(id);
+        sql = " " + columnName + " in (" + sql + ") ";
+        return sql;
+    } else {
+        return " true ";
+    }
+}
+
 // Clear all cached error information from the database.
 static void
-clearErrors(const SqlDatabase::TransactionPtr &tx, const Settings &settings) {
+clearErrors(const SqlDatabase::TransactionPtr &tx, const Settings &settings, const std::vector<int> &testIds) {
     std::vector<std::string> args;
     SqlDatabase::StatementPtr q = tx->statement("update test_results set first_error = null" +
-                                                sqlWhereClause(tx, settings, args));
+                                                sqlWhereClause(tx, settings, args) +
+                                                "and" + sqlIdLimitation("test_results.id", testIds));
     sqlBindArgs(q, args);
     q->execute();
 }
@@ -151,35 +169,55 @@ clearErrors(const SqlDatabase::TransactionPtr &tx, const Settings &settings) {
 // Update the database by filling in test_results.first_error information for those tests that don't have a cached first error
 // but which failed and have output.
 static void
-updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings) {
+updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, const std::vector<int> &testIds) {
     std::vector<std::string> args;
+
+    std::string outputSeparatorLine = "=================-================="; // important! '=' * 17 + '-' + '=' * 17
+    std::string outputSeparatorRe = outputSeparatorLine + " [a-zA-Z_0-9]+ " + outputSeparatorLine;
+    std::string finalOutputSection = "coalesce("
+                                     "   substring(att.content from '(" + outputSeparatorRe + "\\n.*)'),"
+                                     "   att.content)";
+    std::string failedMakeRe = "\\nmake: \\*\\*\\* \\[[-_a-zA-Z0-9]+\\] Error 1\\n";
+    std::string outputAfterFirstMake = "coalesce("
+                                       "   substring(" + finalOutputSection + " from '(" + failedMakeRe + ".+)'),"
+                                       "   " + finalOutputSection + ")";
+
+    std::string sawyerAssertionFailedRe = "\\[FATAL\\]: assertion failed:\n"
+                                          ".*\\[FATAL\\]:.*\n"                                  // file name
+                                          ".*\\[FATAL\\]:.*\n"                                  // function
+                                          ".*\\[FATAL\\]:.*";                                   // message
+
+
     SqlDatabase::StatementPtr q = tx->statement("update test_results test"
-                                                " set first_error = substring("
-#if 0 // [Robb Matzke 2016-02-08]
-                                                // Look at all output stored in the database (which is typically only the last
-                                                // few hundred lines of the complete output).
-                                                "att.content "
-#else
-                                                // This coalesce tries to find where a parallel make command failed and looks
-                                                // only at the following serial make, which is assumed to follow the parallel
-                                                // make.
-                                                "coalesce(substring(att.content from '(\\nmake: \\*\\*\\* \\[[-_a-zA-Z0-9]+\\] Error 1\n.+)'), att.content) "
-#endif
+                                                " set first_error = substring(" +
+
+                                                // We want to search for error messages only in the last section of output (if
+                                                // there's more than one). Also, within that section of output, if a parallel
+                                                // "make" is followed by a serial "make", we only want to search the serial
+                                                // make's output.
+                                                outputAfterFirstMake +
+
                                                 "from '(?n)("
                                                 //----- regular expressions begin -----
-                                                "\\merror: .+"
-                                                "|catastrophic error: *\\n.+"
-                                                "|^.* \\[err\\]: terminated after .+"
-                                                "|^.* \\[err\\]: command died with .+"
-                                                "|^.* \\[err\\]: +what\\(\\): .*"
+                                                "\\merror: .+"                                  // general error
+                                                "|\\mERROR: [^0-9].*"                           // not error counts from cmake
+                                                "|" + sawyerAssertionFailedRe +
+                                                "|\\[(ERROR|FATAL) *\\].*"                      // Sawyer error message
+                                                "|catastrophic error: *\\n.+"                   // ROSE translator compile error
+                                                "|^.* \\[err\\]: terminated after .+"           // RTH timeout
+                                                "|^.* \\[err\\]: command died with .+"          // RTH_RUN failure
+                                                "|^.* \\[err\\]: +what\\(\\): .*"               // C++ exception
+                                                "|Assertion `.*'' failed\\.$"                   // failed <cassert> assertion
+                                                "|\\merror: \n.*"                               // ROSE error on next line
                                                 //----- regular expressions end -----
                                                 ")')"
                                                 " from attachments att" +
-                                                sqlWhereClause(tx, settings, args) + " and"
-                                                "    test.id = att.test_id and"
-                                                "    test.first_error is null and"
-                                                "    test.status <> 'end' and"
-                                                "    att.name = 'Final output'");
+                                                sqlWhereClause(tx, settings, args) +
+                                                "    and test.id = att.test_id"
+                                                "    and test.first_error is null"
+                                                "    and test.status <> 'end'"
+                                                "    and att.name = 'Final output'"
+                                                "    and " + sqlIdLimitation("test.id", testIds));
     sqlBindArgs(q, args);
     q->execute();
 }
@@ -248,6 +286,38 @@ listErrors(const SqlDatabase::TransactionPtr &tx, const Settings &settings) {
     }
 }
 
+// List errors for specific test IDs
+static void
+listErrors(const SqlDatabase::TransactionPtr &tx, const Settings &settings, const std::vector<int> &testIds) {
+    std::vector<std::string> args;
+    SqlDatabase::StatementPtr q = tx->statement("select id, coalesce(first_error,'') from test_results" +
+                                                sqlWhereClause(tx, settings, args) +
+                                                "and " + sqlIdLimitation("id", testIds) +
+                                                "order by id");
+    sqlBindArgs(q, args);
+    for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+        int testId = row.get<int>(0);
+        std::string message = row.get<std::string>(1);
+        std::cout <<"configuration #" <<testId <<":\n"
+                  <<"    " <<message <<"\n";
+    }
+}
+
+// Parse strings as integers.
+static std::vector<int>
+parseIds(const std::vector<std::string> &strings, size_t startAt = 0) {
+    std::vector<int> retval;
+    for (size_t i=startAt; i<strings.size(); ++i) {
+        try {
+            retval.push_back(boost::lexical_cast<int>(strings[i]));
+        } catch (const boost::bad_lexical_cast&) {
+            mlog[FATAL] <<"invalid test ID \"" <<StringUtility::cEscape(strings[i]) <<"\"\n";
+            exit(1);
+        }
+    }
+    return retval;
+}
+
 int
 main(int argc, char *argv[]) {
     Sawyer::initializeLibrary();
@@ -258,21 +328,38 @@ main(int argc, char *argv[]) {
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
-    if (args.size() != 1) {
+    if (args.empty()) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
     }
 
     if (args[0] == "clear") {
-        clearErrors(tx, settings);
+        std::vector<int> ids = parseIds(args, 1);
+        clearErrors(tx, settings, ids);
     } else if (args[0] == "update") {
-        updateDatabase(tx, settings);
+        std::vector<int> ids = parseIds(args, 1);
+        updateDatabase(tx, settings, ids);
     } else if (args[0] == "missing") {
+        if (args.size() != 1) {
+            mlog[FATAL] <<"incorrect usage; see --help\n";
+            exit(1);
+        }
         listMissingErrors(tx, settings);
     } else if (args[0] == "count-missing") {
+        if (args.size() != 1) {
+            mlog[FATAL] <<"incorrect usage; see --help\n";
+            exit(1);
+        }
         countMissingErrors(tx, settings);
-    } else if (args[0] == "list") {
+    } else if (args[0] == "list" && args.size()==1) {
+        if (args.size() != 1) {
+            mlog[FATAL] <<"incorrect usage; see --help\n";
+            exit(1);
+        }
         listErrors(tx, settings);
+    } else if (args[0] == "list") {
+        std::vector<int> ids = parseIds(args, 1);
+        listErrors(tx, settings, ids);
     } else {
         mlog[FATAL] <<"unknown command \"" <<StringUtility::cEscape(args[0]) <<"\"; see --help\n";
         exit(1);

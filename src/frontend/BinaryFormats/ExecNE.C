@@ -272,7 +272,7 @@ SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_linker_minor",         p_e_linker_minor);
     fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_entrytab_rfo",      
                                                        p_e_entrytab_rfo, p_e_entrytab_rfo+p_offset);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",           p, w, "e_entrytab_size",        p_e_entrytab_size);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",         p, w, "e_entrytab_size",        p_e_entrytab_size);
     fprintf(f, "%s%-*s = 0x%08x\n",                    p, w, "e_checksum",             p_e_checksum);
     fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_flags1",               p_e_flags1);
     fprintf(f, "%s%-*s = %u (1-origin)\n",             p, w, "e_autodata_sn",          p_e_autodata_sn);
@@ -290,17 +290,17 @@ SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_resnametab_rfo",
                                                        p_e_resnametab_rfo, p_e_resnametab_rfo+p_offset);
     fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_modreftab_rfo",
-                                                        p_e_modreftab_rfo, p_e_modreftab_rfo+p_offset);
+                                                       p_e_modreftab_rfo, p_e_modreftab_rfo+p_offset);
     fprintf(f, "%s%-*s = %" PRIu64 " (%" PRIu64 " abs)\n", p, w, "e_importnametab_rfo",
                                                        p_e_importnametab_rfo, p_e_importnametab_rfo+p_offset);
-    fprintf(f, "%s%-*s = %" PRIu64 " byte offset\n",     p, w, "e_nonresnametab_offset", p_e_nonresnametab_offset);
+    fprintf(f, "%s%-*s = %" PRIu64 " byte offset\n",   p, w, "e_nonresnametab_offset", p_e_nonresnametab_offset);
     fprintf(f, "%s%-*s = %u entries\n",                p, w, "e_nmovable_entries",     p_e_nmovable_entries);
     fprintf(f, "%s%-*s = %u (log2)\n",                 p, w, "e_sector_align",         p_e_sector_align);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_nresources",           p_e_nresources);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_exetype",              p_e_exetype);
     fprintf(f, "%s%-*s = 0x%02x\n",                    p, w, "e_flags2",               p_e_flags2);
-    fprintf(f, "%s%-*s = sector %" PRIu64 "\n",          p, w, "e_fastload_sector",      p_e_fastload_sector); 
-    fprintf(f, "%s%-*s = %" PRIu64 " sectors\n",         p, w, "e_fastload_nsectors",    p_e_fastload_nsectors); 
+    fprintf(f, "%s%-*s = sector %" PRIu64 "\n",        p, w, "e_fastload_sector",      p_e_fastload_sector); 
+    fprintf(f, "%s%-*s = %" PRIu64 " sectors\n",       p, w, "e_fastload_nsectors",    p_e_fastload_nsectors); 
     fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_res1",                 p_e_res1);
     fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_winvers",              p_e_winvers);
 
@@ -388,8 +388,8 @@ SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNE
     if (fhdr)
         fprintf(f, " (%" PRIu64 " byte offset)", (rose_addr_t) p_sector << fhdr->get_e_sector_align());
     fputc('\n', f);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",       p, w, "physical_size",   p_physical_size);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",       p, w, "virtual_size",    p_virtual_size);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",     p, w, "physical_size",   p_physical_size);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",     p, w, "virtual_size",    p_virtual_size);
     fprintf(f, "%s%-*s = 0x%08x",                  p, w, "flags",           p_flags);
     switch (p_flags & SF_TYPE_MASK) {
       case SF_CODE:  fputs(" code", f);  break;
@@ -787,8 +787,9 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i=0; at<get_size(); i++) {
         std::string s = get_string(at);
         char label[64];
-        sprintf(label, "string-at-%"PRIu64, at);
-        fprintf(f, "%s%-*s = [%" PRIuPTR "] (offset %"PRIu64", %" PRIuPTR " bytes) \"%s\"\n", p, w, "string", i, at, s.size(), s.c_str());
+        sprintf(label, "string-at-%" PRIu64, at);
+        fprintf(f, "%s%-*s = [%" PRIuPTR "] (offset %" PRIu64 ", %" PRIuPTR " bytes) \"%s\"\n",
+                p, w, "string", i, at, s.size(), s.c_str());
         at += 1 + s.size();
     }
     if (!was_congealed)
@@ -1242,12 +1243,12 @@ SgAsmNERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
       case RF_TGTTYPE_IORD:
         fprintf(f, "%s%-*s = %u\n",            p, w, "modref",     p_iord.modref);
         fprintf(f, "%s%-*s = %u\n",            p, w, "ordinal",    p_iord.ordinal);
-        fprintf(f, "%s%-*s = %" PRIu64 "\n",     p, w, "addend",     p_iord.addend);
+        fprintf(f, "%s%-*s = %" PRIu64 "\n",   p, w, "addend",     p_iord.addend);
         break;
       case RF_TGTTYPE_INAME:
         fprintf(f, "%s%-*s = %u\n",            p, w, "modref",     p_iname.modref);
         fprintf(f, "%s%-*s = %u\n",            p, w, "nm_off",     p_iname.nm_off);
-        fprintf(f, "%s%-*s = %" PRIu64 "\n",     p, w, "addend",     p_iname.addend);
+        fprintf(f, "%s%-*s = %" PRIu64 "\n",   p, w, "addend",     p_iname.addend);
         break;
       case RF_TGTTYPE_OSFIXUP:
         fprintf(f, "%s%-*s = %u\n",            p, w, "type",       p_osfixup.type);

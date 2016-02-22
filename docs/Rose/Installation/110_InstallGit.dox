@@ -16,4 +16,10 @@
  *
  *  @section installing_git_jessie Debian 8 "Jessie"
  *
- *  Run <code>apt-get install git</code> as the administrator. */
+ *  Run <code>apt-get install git</code> as the administrator.
+ *
+ *  @section installing_git_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
+ *
+ *  Run <code>apt-get install git</code> as the administrator.
+ *
+ *  */
