@@ -1204,6 +1204,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 
 //! Collect all variable references in a subtree
   void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
+
   //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
@@ -1718,7 +1719,7 @@ ROSE_DLL_API void appendExpressionList(SgExprListExp *, const std::vector<SgExpr
 
 //! Set parameter list for a function declaration, considering existing parameter list etc.
 template <class actualFunction> 
-ROSE_DLL_API void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
+void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
 
   // TODO consider the difference between C++ and Fortran
   // fixup the scope of arguments,no symbols for nondefining function declaration's arguments

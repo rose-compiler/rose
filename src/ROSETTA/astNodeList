@@ -386,6 +386,7 @@ SgFuncDecl_attr
 SgFunctionCallExp
 SgFunctionDeclaration
 SgFunctionDefinition
+SgFunctionParameterScope
 SgFunctionModifier
 SgFunctionParameterList
 SgFunctionParameterRefExp

@@ -79,6 +79,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (SwitchStatement,           "SwitchStatement",           "SWITCH_STMT" );
      NEW_TERMINAL_MACRO (CatchOptionStmt,           "CatchOptionStmt",           "CATCH_STMT" );
 
+  // DQ (2/10/2016): Adding support for C99 function parameter references in nondefining function declarations.
+     NEW_TERMINAL_MACRO (FunctionParameterScope,    "FunctionParameterScope",    "FUNCTION_PARAMETER_SCOPE" );
+
      NEW_TERMINAL_MACRO (VariableDefinition,        "VariableDefinition",        "VAR_DEFN_STMT" );
   // NEW_TERMINAL_MACRO (ClassDeclaration,          "ClassDeclaration",          "CLASS_DECL_STMT" );
   // NEW_TERMINAL_MACRO (ClassDefinition,           "ClassDefinition",           "CLASS_DEFN_STMT" );
@@ -400,8 +403,8 @@ Grammar::setUpStatements ()
           Global                       | BasicBlock           | IfStmt               | ForStatement       | FunctionDefinition |
           ClassDefinition              | WhileStmt            | DoWhileStmt          | SwitchStatement    | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement   | FortranDo          | ForAllStatement    |
-          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement | JavaLabelStatement | MatlabForStatement
-       /* | TemplateInstantiationDefn */,
+          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement | JavaLabelStatement | MatlabForStatement |
+          FunctionParameterScope /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
 
   // DQ (3/22/2004): Added to support template member functions (removed MemberFunctionDeclaration as terminal)
@@ -869,6 +872,10 @@ Grammar::setUpStatements ()
      StaticAssertionDeclaration.setDataPrototype ( "SgName", "string_literal", "= \"\"",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+     FunctionParameterScope.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_SCOPE", "../Grammar/Statement.code" );
+
+
      FunctionDeclaration.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
 
@@ -1126,6 +1133,10 @@ Grammar::setUpStatements ()
   // DQ (8/3/2014): Added support for C++11 new function return type syntax.
      FunctionDeclaration.setDataPrototype("bool","using_new_function_return_type_syntax","= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/10/2016): Adding support for a scope to put function parameters to support C99 cases such as: "foobar(int size, int array[size]);"
+     FunctionDeclaration.setDataPrototype ( "SgFunctionParameterScope*", "functionParameterScope", "= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -3697,6 +3708,9 @@ Grammar::setUpStatements ()
 
   // DQ (7/25/2014): Adding support for C11 static assertions.
      StaticAssertionDeclaration.setFunctionSource  ( "SOURCE_STATIC_ASSERTION_DECLARATION", "../Grammar/Statement.code" );
+
+  // DQ (2/10/2016): Adding support for a scope for function parametes in non-defining declarations.
+     FunctionParameterScope.setFunctionSource  ( "SOURCE_FUNCTION_PARAMETER_SCOPE", "../Grammar/Statement.code" );
 
      FunctionDeclaration.setFunctionSource  ( "SOURCE_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDeclaration.setFunctionSource  ( "SOURCE_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );

@@ -1,5 +1,4 @@
 #include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
 
 #include <rose.h>
 #include "APISpec.h"
@@ -12,6 +11,7 @@
 
 #include <staticSingleAssignment.h>
 #include <iostream>
+#define foreach BOOST_FOREACH
 
 int main(int argc, char **argv) {
 

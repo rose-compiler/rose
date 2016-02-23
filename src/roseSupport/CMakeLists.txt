@@ -1,5 +1,5 @@
 ########### build library ###############
-
+add_definitions(-DROSE_DLL_EXPORTS)
 add_library(roseSupport OBJECT
   transformationSupport.C optionDeclaration.C
   sourceLocationInheritedAttribute.C rangemap.C roseTranslators.C
