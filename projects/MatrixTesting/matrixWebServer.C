@@ -58,6 +58,7 @@ enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, 
 static int END_STATUS_POSITION = 999;                   // test_names.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
+typedef Sawyer::Container::Map<std::string, std::string> StringString;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Combo box with extra data. Type T should have a "display" method that returns an std::string that will become part of the
@@ -864,7 +865,7 @@ public:
             if (i >= 0 && j >= 0) {
                 switch (chartValueType_) {
                     case CVT_COUNT:
-                        return redToGreen(counts_[i][j], minCounts_, maxCounts_);
+                        return redToGreen(counts_[i][j], minCounts_, maxCounts_, counts_[i][j]==0?0:5);
                     case CVT_PERCENT: {
                         double rowTotal = 0;
                         BOOST_FOREACH (double count, counts_[i])
@@ -1395,7 +1396,8 @@ class WDetails: public Wt::WContainerWidget {
     Wt::WComboBox *testIdChoices_;
     int testId_;
     Wt::Signal<> testIdChanged_;
-    Wt::WText *error_, *config_, *commands_, *testOutput_;
+    Wt::WText *error_, *commands_, *testOutput_;
+    Wt::WTable *humanConfig_, *rmcConfig_;
 
 public:
     explicit WDetails(Wt::WContainerWidget *parent = NULL)
@@ -1431,11 +1433,18 @@ public:
                                     "are the versions requested by the test, but might not be the versions actually used "
                                     "by ROSE due to possible bugs in ROSE's \"configure\" or \"cmake\" system or in the "
                                     "scripts used to run these tests.</p>"));
-            config_ = new Wt::WText;
-            config_->setTextFormat(Wt::PlainText);
-            config_->setWordWrap(false);
-            config_->setInline(false);
-            addWidget(config_);
+            Wt::WComboBox *configChoice = new Wt::WComboBox;
+            addWidget(configChoice);
+            Wt::WStackedWidget *configStack = new Wt::WStackedWidget;
+            addWidget(configStack);
+
+            configChoice->addItem("All details");
+            configStack->addWidget(humanConfig_ = new Wt::WTable);
+
+            configChoice->addItem("RMC configuration");
+            configStack->addWidget(rmcConfig_ = new Wt::WTable);
+
+            configChoice->activated().connect(boost::bind(&WDetails::displayConfig, this, configStack, _1));
         }
 
         // Commands that were executed
@@ -1500,6 +1509,7 @@ public:
 
     void updateDetails(const Dependencies &deps) {
         ::mlog[DEBUG] <<"WDetails::updateDetails(testId=" <<testId_ <<")\n";
+        StringString rmcCharacteristics = queryRmcCharacteristics();
 
         // What columns to query?
         DependencyNames columns = gstate.dependencyNames;
@@ -1520,15 +1530,41 @@ public:
         args.push_back(boost::lexical_cast<std::string>(testId_));
         sql += where;
 
-        std::string config, first_error;
+        std::string first_error;
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-            int column = 0;
+            int queryColumn = 0, humanConfigRow = 0, rmcConfigRow = 0;
+
+            humanConfig_->clear();
+            humanConfig_->columnAt(0)->setWidth(Wt::WLength(10, Wt::WLength::FontEm));
+            rmcConfig_->clear();
+            rmcConfig_->columnAt(0)->setWidth(Wt::WLength(10, Wt::WLength::FontEm));
+            rmcConfig_->elementAt(rmcConfigRow, 0)->addWidget(new Wt::WText("rmc_rosesrc"));
+            rmcConfig_->elementAt(rmcConfigRow, 1)->addWidget(new Wt::WText("/path/to/your/ROSE/source/tree"));
+            ++rmcConfigRow;
+            rmcConfig_->elementAt(rmcConfigRow, 0)->addWidget(new Wt::WText("rmc_parallelism"));
+            rmcConfig_->elementAt(rmcConfigRow, 1)->addWidget(new Wt::WText("system"));
+            ++rmcConfigRow;
+            rmcConfig_->elementAt(rmcConfigRow, 0)->addWidget(new Wt::WText("rmc_code_coverage"));
+            rmcConfig_->elementAt(rmcConfigRow, 1)->addWidget(new Wt::WText("no"));
+            ++rmcConfigRow;
 
             // The known columns for the "config"
-            BOOST_FOREACH (const std::string &name, columns.keys())
-                config += name + "=" + humanDepValue(name, row.get<std::string>(column++)) + "\n";
+            BOOST_FOREACH (const std::string &name, columns.keys()) {
+                std::string depRawVal = row.get<std::string>(queryColumn++);
+                std::string depHumanVal = humanDepValue(name, depRawVal);
+                humanConfig_->elementAt(humanConfigRow, 0)->addWidget(new Wt::WText(name));
+                humanConfig_->elementAt(humanConfigRow, 1)->addWidget(new Wt::WText(depHumanVal));
+                ++humanConfigRow;
+
+                std::string rmcCharacteristic;
+                if (rmcCharacteristics.getOptional(name).assignTo(rmcCharacteristic)) {
+                    rmcConfig_->elementAt(rmcConfigRow, 0)->addWidget(new Wt::WText(rmcCharacteristic));
+                    rmcConfig_->elementAt(rmcConfigRow, 1)->addWidget(new Wt::WText(depRawVal));
+                    ++rmcConfigRow;
+                }
+            }
 
             // Additional information from the query
             first_error = boost::trim_copy(row.get<std::string>(columns.size()+0));
@@ -1549,12 +1585,15 @@ public:
             }
             break;
         }
-        config_->setText(config);
         updateCommands();
         updateOutput();
     }
 
 private:
+    void displayConfig(Wt::WStackedWidget *configStack, int index) {
+        configStack->setCurrentIndex(index);
+    }
+
     void selectTestId() {
         int i = testIdChoices_->currentIndex();
         if (i >= 0 && (size_t)i < testIds_.size()) {
@@ -1564,6 +1603,16 @@ private:
         }
     }
 
+    StringString queryRmcCharacteristics() {
+        StringString retval;
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct name from dependencies");
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+            std::string characteristic = row.get<std::string>(0);
+            retval.insert(characteristic, "rmc_" + characteristic);
+        }
+        return retval;
+    }
+    
     void updateCommands() {
         commands_->setText("");
         if (testId_ >= 0) {
