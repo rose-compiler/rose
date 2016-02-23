@@ -317,6 +317,16 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      ctx.set_language(boost::wave::enable_variadics(ctx.get_language()));
   // Force a specific file to be included before all others
 
+
+#if ((ROSE_BOOST_VERSION == 105300) && (__cplusplus == 201103L))
+     printf ("ERROR: WAVE support not available using BOOST version 1.53 in C++11 mode (fails to compile in C++11 mode) \n");
+     ROSE_ASSERT(false);
+#else
+  // DQ (2/13/2016): The function ctx.add_macro_definition() does not compile with Boost 1.53 
+  // in C++11 mode. So this combination is detected and disabled locally where it is a problem.
+  // Note that wave is off by default at runtime, though it appears to always be compiled
+  // (so it is not a configuration option, I gather).  Maybe it should be a configuration option?
+
     if( sageFilePtr->get_C_only() == true){
        // Tentaive support for C. For now treat it like C99 since Wave does not
        // have an option for just C.
@@ -337,6 +347,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           if ((*it_beg)!="")
                ctx.add_macro_definition(*it_beg,true);
         }
+#endif
           
      if (SgProject::get_verbose() >= 1)
           std::cout << "AFTER ADDING PREDEFINES" << std::endl;

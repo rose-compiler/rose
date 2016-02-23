@@ -31,6 +31,7 @@ class ThreadWorkers {
     boost::mutex mutex_;                                // protects the following members after the constructor
     DependencyGraph dependencies_;                      // outstanding dependencies
     bool hasStarted_;                                   // set when work has started
+    bool hasWaited_;                                    // set when wait() is called
     Container::Stack<size_t> workQueue_;                // outstanding work identified by vertex ID of dependency graph
     boost::condition_variable workInserted_;            // signaled when work is added to the queue or all work is consumed
     size_t nWorkers_;                                   // number of worker threads allocated
@@ -46,7 +47,7 @@ public:
      *  This constructor initializes the object but does not start any worker threads.  Each object can perform work a single
      *  time, which is done by calling @ref run (synchronous) or @ref start and @ref wait (asynchronous). */
     ThreadWorkers()
-        : hasStarted_(false), nWorkers_(0), workers_(NULL), nItemsStarted_(0), nItemsFinished_(0),
+        : hasStarted_(false), hasWaited_(false), nWorkers_(0), workers_(NULL), nItemsStarted_(0), nItemsFinished_(0),
           nWorkersRunning_(0), nWorkersFinished_(0) {}
 
     /** Constructor that synchronously runs the work.
@@ -64,7 +65,7 @@ public:
      *
      *  The constructor does not return until all work has been completed. This object can only perform work a single time. */
     ThreadWorkers(const DependencyGraph &dependencies, size_t nWorkers, Functor functor)
-        : hasStarted_(false), nWorkers_(0), workers_(NULL), nItemsStarted_(0), nItemsFinished_(0),
+        : hasStarted_(false), hasWaited_(false), nWorkers_(0), workers_(NULL), nItemsStarted_(0), nItemsFinished_(0),
           nWorkersRunning_(0), nWorkersFinished_(0) {
         run(dependencies, nWorkers, functor);
     }
@@ -112,10 +113,11 @@ public:
      *  This call blocks until all work is completed. If no work has started yet then it returns immediately. */
     void wait() {
         boost::unique_lock<boost::mutex> lock(mutex_);
-        if (!hasStarted_)
+        if (!hasStarted_ || hasWaited_)
             return;
-
+        hasWaited_ = true;
         lock.unlock();
+
         for (size_t i=0; i<nWorkers_; ++i)
             workers_[i].join();
 
