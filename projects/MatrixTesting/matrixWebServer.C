@@ -18,7 +18,18 @@ static Sawyer::Message::Facility mlog;
 #include <SqlDatabase.h>                                // ROSE
 #include <string>
 #include <vector>
+#include <Wt/Auth/AuthService>
+#include <Wt/Auth/AuthWidget>
+#include <Wt/Auth/Dbo/AuthInfo>
+#include <Wt/Auth/Dbo/UserDatabase>
+#include <Wt/Auth/HashFunction>
+#include <Wt/Auth/Login>
+#include <Wt/Auth/PasswordService>
+#include <Wt/Auth/PasswordStrengthValidator>
+#include <Wt/Auth/PasswordVerifier>
 #include <Wt/Chart/WCartesianChart>
+#include <Wt/Dbo/backend/Postgres>
+#include <Wt/Dbo/Dbo>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WApplication>
 #include <Wt/WCheckBox>
@@ -34,6 +45,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WPushButton>
 #include <Wt/WScrollArea>
 #include <Wt/WStackedWidget>
+#include <Wt/WStringListModel>
 #include <Wt/WTable>
 #include <Wt/WTableView>
 #include <Wt/WTabWidget>
@@ -46,6 +58,205 @@ enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, 
 static int END_STATUS_POSITION = 999;                   // test_names.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Combo box with extra data. Type T should have a "display" method that returns an std::string that will become part of the
+// value displayed by the combo box.  T should also be copiable.
+struct ComboBoxNoData {
+    std::string display() const {
+        return "";
+    }
+};
+
+template<class T = ComboBoxNoData>
+class ComboBoxModel: public Wt::WStringListModel {
+    Sawyer::Container::Map<Wt::WString, T> extraData_;  // data indexed by base string
+public:
+    static const int BaseTextRole = Wt::UserRole;
+
+    explicit ComboBoxModel(Wt::WObject *parent = NULL)
+        : Wt::WStringListModel(parent) {}
+    explicit ComboBoxModel(const std::vector<Wt::WString> &strings, Wt::WObject *parent = NULL)
+        : Wt::WStringListModel(strings, parent) {}
+
+    // The base string (without any extra data attached to the end)
+    Wt::WString baseString(const Wt::WModelIndex &idx) const {
+        boost::any v = data(idx, BaseTextRole);
+        if (v.empty())
+            return "";
+        return boost::any_cast<Wt::WString>(v);
+    }
+
+    // The full string: base string plus attached data.
+    Wt::WString fullString(const Wt::WModelIndex &idx) const {
+        boost::any v = data(idx, Wt::DisplayRole);
+        if (v.empty())
+            return "";
+        return boost::any_cast<Wt::WString>(v);
+    }
+    
+    // Associate some data with an item.
+    void setItemData(const Wt::WModelIndex &idx, const T &data) {
+        setItemData(baseString(idx), data);
+    }
+    void setItemData(const Wt::WString &item, const T &data) {
+        std::string oldDisplay = extraData_.getOrDefault(item).display();
+        std::string newDisplay = data.display();
+        bool displayChanged = oldDisplay != newDisplay;
+        extraData_.insert(item, data);
+        if (displayChanged) {
+            for (int i = 0; i < rowCount(); ++i) {
+                if (boost::any_cast<Wt::WString>(this->data(index(i, 0), BaseTextRole)) == item)
+                    dataChanged().emit(index(i, 0), index(i, 0));
+            }
+        }
+    }
+
+    // Get data for an item.
+    const T& itemData(const Wt::WModelIndex &idx) {
+        return extraData_.getOrDefault(baseString(idx));
+    }
+        
+    virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const ROSE_OVERRIDE {
+        if (idx.isValid() && BaseTextRole == role) {
+            return Wt::WStringListModel::data(idx, Wt::DisplayRole);
+        } else if (idx.isValid() && Wt::DisplayRole == role) {
+            boost::any v = Wt::WStringListModel::data(idx, Wt::DisplayRole);
+            Wt::WString s1 = v.empty() ? Wt::WString() : boost::any_cast<Wt::WString>(v);
+            Wt::WString s2 = extraData_.getOrDefault(s1).display();
+            return s1 + (s1.empty() || s2.empty() ? "" : " ") + s2;
+        } else {
+            return Wt::WStringListModel::data(idx, role);
+        }
+    }
+};
+
+template<typename T = ComboBoxNoData>
+class WComboBoxWithData: public Wt::WContainerWidget {
+    typedef Sawyer::Container::Map<std::string, T> DataMap;
+    ComboBoxModel<T> *model_;
+    Wt::WComboBox *comboBox_;
+public:
+    explicit WComboBoxWithData(Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), model_(new ComboBoxModel<T>), comboBox_(new Wt::WComboBox) {
+        comboBox_->setModel(model_);
+#if 0 // [Robb Matzke 2016-02-21]
+        Wt::WHBoxLayout *layout = new Wt::WHBoxLayout;
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->addWidget(comboBox_, 1);
+        setLayout(layout);
+#else
+        addWidget(comboBox_);
+        setInline(true);
+#endif
+    }
+
+    void addItem(const std::string &item, const T &data = T()) {
+        comboBox_->addItem(item);
+        model_->setItemData(item, data);
+    }
+
+    void setItemData(int idx, const T &data) {
+        if (idx >= 0 && idx < comboBox_->count())
+            model_->setItemData(itemBaseText(idx), data);
+    }
+
+    int currentIndex() const {
+        return comboBox_->currentIndex();
+    }
+
+    void setCurrentIndex(int idx) {
+        comboBox_->setCurrentIndex(idx);
+    }
+
+    Wt::WString itemFullText(int idx) const {
+        return comboBox_->itemText(idx);
+    }
+        
+    Wt::WString currentFullText() const {
+        return itemFullText(currentIndex());
+    }
+
+    Wt::WString itemBaseText(int idx) const {
+        if (idx < 0 || idx >= comboBox_->count())
+            return "";
+        return model_->baseString(model_->index(idx, 0));
+    }
+
+    Wt::WString currentBaseText() const {
+        return itemBaseText(currentIndex());
+    }
+
+    const T& itemData(int idx) const {
+        return model_->itemData(model_->index(idx, 0));
+    }
+
+    const T& currentData() const {
+        return itemData(currentIndex());
+    }
+    
+    Wt::Signal<int>& activated() {
+        return comboBox_->activated();
+    }
+
+    int count() const {
+        return comboBox_->count();
+    }
+
+    void setMinimumSize(const Wt::WLength &width, const Wt::WLength &height) {
+        comboBox_->setMinimumSize(width, height);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Authentication and authorization stuff
+
+class User {
+public:
+    template<class Action>
+    void persist(Action& a) {
+    }
+};
+
+typedef Wt::Auth::Dbo::AuthInfo<User> AuthInfo;
+
+typedef Wt::Auth::Dbo::UserDatabase<AuthInfo> UserDatabase;
+
+class Session: public Wt::Dbo::Session {
+    Wt::Dbo::backend::Postgres connection_;
+    UserDatabase *users_;
+    Wt::Auth::Login login_;
+public:
+    Session(const std::string& dbUrl)
+        : connection_(SqlDatabase::Connection::connectionSpecification(dbUrl)), users_(NULL) {
+        setConnection(connection_);
+
+        mapClass<User>("auth_users");
+        mapClass<AuthInfo>("auth_info");
+        mapClass<AuthInfo::AuthIdentityType>("auth_identities");
+        mapClass<AuthInfo::AuthTokenType>("auth_tokens");
+
+        try {
+            createTables();
+        } catch (Wt::Dbo::Exception& e) {
+            std::cerr <<e.what() <<"using existing database\n";
+        }
+
+        users_ = new UserDatabase(*this);
+    }
+
+    ~Session() {
+        delete users_;
+    }
+
+    Wt::Auth::AbstractUserDatabase& users() {
+	return *users_;
+    }
+
+    Wt::Auth::Login& login() {
+        return login_;
+    }
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Represents a bucket of values by storing a min and max value.
@@ -77,12 +288,28 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Info about a dependency.
+
+struct DependencyComboBoxData {
+    int nPass;                                          // number of these dependencies that pass
+
+    explicit DependencyComboBoxData(int nPass = -1)
+        : nPass(nPass) {}
+
+    std::string display() const {
+        if (nPass >= 0)
+            return "(" + boost::lexical_cast<std::string>(nPass) + ")";
+        return "";
+    }
+};
+
+typedef WComboBoxWithData<DependencyComboBoxData> DependencyComboBox;
+    
 struct Dependency {
     typedef Sawyer::Container::Map<std::string, Bucket<std::string> > Choices;
 
     std::string name;                                   // name of dependency, such as "boost"
     Choices humanValues;                                // human-readable values and how they map to the database values
-    Wt::WComboBox *comboBox;                            // choices available to the user
+    DependencyComboBox *comboBox;                       // choices available to the user
 
     Dependency()
         : comboBox(NULL) {}
@@ -105,9 +332,12 @@ struct GlobalState {
     std::vector<std::string> testNames;
     StringIndex testNameIndex;
     SqlDatabase::TransactionPtr tx;
+    Wt::Auth::AuthService authenticationService;
+    Wt::Auth::PasswordService passwordService;
 
     GlobalState()
-        : docRoot("."), httpAddress("0.0.0.0"), httpPort(80), dbUrl(DEFAULT_DATABASE) {}
+        : docRoot("."), httpAddress("0.0.0.0"), httpPort(80), dbUrl(DEFAULT_DATABASE),
+          passwordService(authenticationService) {}
 };
 static GlobalState gstate;
 
@@ -115,16 +345,20 @@ static GlobalState gstate;
 
 static std::string
 sqlFromClause() {
-    return (" from test_results"
-            " join users on test_results.reporting_user = users.uid"
-            " left outer join test_names on test_results.status = test_names.name ");
+    return (" from test_results as test"
+            " join auth_identities as auth_user on test.reporting_user = auth_user.id"
+            " left outer join test_names on test.status = test_names.name ");
 }
 
 static std::string
 sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
     std::string where;
     BOOST_FOREACH (const Dependency &dep, deps.values()) {
-        std::string humanValue = dep.comboBox->currentText().narrow();
+        // Get the human value from the combo box. Sometimes a combo box will display (Wt::DisplayRole) a different value than
+        // what should be used as the human value. In this case, the underlying model will support Wt::UserRole to return the
+        // human value.
+        std::string humanValue = dep.comboBox->currentBaseText().narrow();
+
         Bucket<std::string> bucket;
         if (humanValue.compare(WILD_CARD_STR) != 0 && dep.humanValues.getOptional(humanValue).assignTo(bucket)) {
             std::string depColumn = gstate.dependencyNames[dep.name];
@@ -187,6 +421,14 @@ public:
         }
     }
 };
+
+// Sorts human-friendly values of a dependency
+static std::vector<std::string>
+sortedHumanValues(const Dependency &dep) {
+    std::vector<std::string> retval(dep.humanValues.keys().begin(), dep.humanValues.keys().end());
+    std::sort(retval.begin(), retval.end(), DependencyValueSorter(dep.name));
+    return retval;
+}
 
 // What does it mean to "pass"?  The special virtual dependency "pass/fail" returns the word "pass" or "fail" depending
 // on our current definition of pass/fail.  The default definition is that any test whose status = "end" is considered to have
@@ -313,17 +555,44 @@ greenToRed(double val, double minVal, double maxVal, int nSamples=4) {
     }
 }
 
-// Wraps a widget in a WScrollArea wrapped in a WPanel with the specified title.
-static Wt::WPanel*
-scrolledPanel(Wt::WWidget *centralWidget, const std::string &title) {
-    Wt::WScrollArea *sa = new Wt::WScrollArea;
-    sa->setWidget(centralWidget);
+// Loads information about the possible values of the specified dependencies.  E.g., if depNames contains the word "compiler"
+// then the test_results table is queried to obtain a list of all values for the corresponding compiler expression (probably
+// just the column named "test.rmc_compiler" according to gstate.dependencyNames).
+static Dependencies
+loadDependencyValues(const std::vector<std::string> &depNames,
+                     const std::string &whereClause = "",
+                     const std::vector<std::string> &whereClauseArgs = std::vector<std::string>()) {
+    Dependencies retval;
+    BOOST_FOREACH (const std::string &depName, depNames) {
+        Dependency &dep = retval.insertMaybe(depName, Dependency(depName));
+        
+        // Find all values that the dependency can have. Depending on the dependency, we might want to use human-readable
+        // values (like yyyy-mm-dd instead of a unix time stamp), in which case the "select distinct" and "order by" SQL
+        // clauses won't really do what we want. Regardless of whether we use human-readalbe names and buckets of values, we
+        // need to store the original value from the SQL table so we can construct "where" clauses later.
+        ASSERT_require(gstate.dependencyNames.exists(depName));
+        std::string depExpr = gstate.dependencyNames[depName];
+        std::string sql = "select distinct " + depExpr +
+                          sqlFromClause() +
+                          whereClause;
+        SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
+        bindSqlVariables(q, whereClauseArgs);
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+            std::string rawValue = row.get<std::string>(0);
+            std::string humanValue = humanDepValue(depName, rawValue, HUMAN_TERSE);
+            dep.humanValues.insertMaybeDefault(humanValue) <<rawValue;
+        }
+    }
+    return retval;
+}
 
-    Wt::WPanel *p = new Wt::WPanel;
-    p->setTitle(title);
-    p->setCentralWidget(sa);
-
-    return p;
+// Loads info about possible values for all known dependencies.
+static Dependencies
+loadDependencyValues() {
+    std::vector<std::string> depNames;
+    BOOST_FOREACH (const std::string &depName, gstate.dependencyNames.keys())
+        depNames.push_back(depName);
+    return loadDependencyValues(depNames);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -460,8 +729,8 @@ public:
                           depMinorColumn + ", " +       // 1
                           passFailColumn + " as pf, "   // 2
                           "count(*), " +                // 3
-                          "sum(nwarnings)," +           // 4
-                          "sum(duration)" +             // 5
+                          "sum(test.nwarnings)," +      // 4
+                          "sum(test.duration)" +        // 5
                           sqlFromClause() +
                           sqlWhereClause(deps, args /*out*/) +
                           " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
@@ -881,41 +1150,23 @@ class WConstraints: public Wt::WContainerWidget {
 public:
     explicit WConstraints(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent) {
-
-        // Build info about each dependency
-        std::vector<std::string> depNames;
-        BOOST_FOREACH (const std::string &depName, gstate.dependencyNames.keys()) {
-            Dependency &dep = dependencies_.insertMaybe(depName, Dependency(depName));
-            depNames.push_back(depName);
-
-            // Find all values that the dependency can have. Depending on the dependency, we might want to use human-readable
-            // values (like yyyy-mm-dd instead of a unix time stamp), in which case the "select distinct" and "order by" SQL
-            // clauses won't really do what we want. Regardless of whether we use human-readalbe names and buckets of values,
-            // we need to store the original value from the SQL table so we can construct "where" clauses later.
-            std::string depColumn = gstate.dependencyNames[depName];
-            SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct " + depColumn + sqlFromClause());
-            for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-                std::string rawValue = row.get<std::string>(0);
-                std::string humanValue = humanDepValue(depName, rawValue, HUMAN_TERSE);
-                dep.humanValues.insertMaybeDefault(humanValue) <<rawValue;
-            }
-
+        dependencies_ = loadDependencyValues();
+        BOOST_FOREACH (Dependency &dep, dependencies_.values()) {
             // Combo box so we can pick a human value (i.e., bucket of database values) by which to limit queries later.  Add
             // entries to the combo box, but make sure they're sorted. The default sort for the dep.humanValues.keys() is
             // alphabetical, but that's not always what we want. For instance, "status" should be sorted in the order that the
             // individual tests run, not their names.
-            dep.comboBox = new Wt::WComboBox;
+            dep.comboBox = new DependencyComboBox;
             dep.comboBox->addItem(WILD_CARD_STR);
             dep.comboBox->setMinimumSize(Wt::WLength(20, Wt::WLength::FontEm), Wt::WLength::Auto);
-            std::vector<std::string> comboValues(dep.humanValues.keys().begin(), dep.humanValues.keys().end());
-            std::sort(comboValues.begin(), comboValues.end(), DependencyValueSorter(depName));
+            std::vector<std::string> comboValues = sortedHumanValues(dep);
             BOOST_FOREACH (const std::string &comboValue, comboValues)
                 dep.comboBox->addItem(comboValue);
             dep.comboBox->activated().connect(this, &WConstraints::emitConstraintsChanged);
         }
 
         static const size_t nDepCols = 2;               // number of columns for dependencies
-        size_t nDepRows = (depNames.size() + nDepCols - 1) / nDepCols;
+        size_t nDepRows = (dependencies_.size() + nDepCols - 1) / nDepCols;
         Wt::WTable *grid = new Wt::WTable;
         grid->columnAt(0)->setWidth(Wt::WLength(25, Wt::WLength::Percentage));
         grid->columnAt(1)->setWidth(Wt::WLength(25, Wt::WLength::Percentage));
@@ -924,14 +1175,16 @@ public:
         addWidget(grid);
 
         // Fill the grid in row-major order
-        for (size_t i=0; i<depNames.size(); ++i) {
+        size_t i = 0;
+        BOOST_FOREACH (const Dependencies::Node &depNode, dependencies_.nodes()) {
             int row = i % nDepRows;
             int col = i / nDepRows;
-            std::string depName = depNames[i];
-            grid->elementAt(row, 2*col+0)->addWidget(new Wt::WLabel(depName));
+            std::string depLabel = depNode.key();
+            grid->elementAt(row, 2*col+0)->addWidget(new Wt::WText(depLabel + "&nbsp;"));
             grid->elementAt(row, 2*col+0)->setStyleClass("constraint-name");
-            grid->elementAt(row, 2*col+1)->addWidget(dependencies_[depName].comboBox);
+            grid->elementAt(row, 2*col+1)->addWidget(depNode.value().comboBox);
             grid->elementAt(row, 2*col+1)->setStyleClass("constraint-value");
+            ++i;
         }
     }
 
@@ -1208,7 +1461,7 @@ public:
 
     void queryTestIds(const Dependencies &deps) {
         std::vector<std::string> args;
-        std::string sql = "select id, status" + sqlFromClause() + sqlWhereClause(deps, args) + " order by id";
+        std::string sql = "select test.id, test.status" + sqlFromClause() + sqlWhereClause(deps, args) + " order by id";
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
 
@@ -1250,20 +1503,20 @@ public:
 
         // What columns to query?
         DependencyNames columns = gstate.dependencyNames;
-        columns.insert("status", "status");
-        columns.insert("duration", "duration");
-        columns.insert("noutput", "noutput");
-        columns.insert("nwarnings", "nwarnings");
+        columns.insert("status", "test.status");
+        columns.insert("duration", "test.duration");
+        columns.insert("noutput", "test.noutput");
+        columns.insert("nwarnings", "test.nwarnings");
 
         std::string sql;
         BOOST_FOREACH (const std::string &colName, columns.values())
             sql += std::string(sql.empty()?"select ":", ") + colName;
-        sql += ", coalesce(first_error,'')";            // +0
+        sql += ", coalesce(test.first_error,'')";            // +0
         sql += ", " + gstate.dependencyNames["status"]; // +1
 
         sql += sqlFromClause();
         std::vector<std::string> args;
-        std::string where = sqlWhereClause(deps, args) + " and id = ?";
+        std::string where = sqlWhereClause(deps, args) + " and test.id = ?";
         args.push_back(boost::lexical_cast<std::string>(testId_));
         sql += where;
 
@@ -1383,6 +1636,7 @@ private:
                                         "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*command died" // fatal exception from $(RTH_RUN)
                                         "|\\[err\\]: terminated after \\d+ seconds"     // timeout from $(RTH_RUN)
                                         "|: Assertion `[^\\n]+' failed\\."              // failed <cassert> assertion
+                                        "|: undefined reference to `"                   // GNU linker error
 
                                         ")[^\\n]*$)|"
                                         "(^[^\\n]*?(?:"
@@ -1529,11 +1783,11 @@ public:
             wTestIds->activated().connect(boost::bind(&WErrors::emitTestIdChanged, this, wTestIds));
             wTestIds->addItem("View details");
             args.clear();
-            SqlDatabase::StatementPtr q4 = gstate.tx->statement("select id" + sqlFromClause() +
+            SqlDatabase::StatementPtr q4 = gstate.tx->statement("select test.id" + sqlFromClause() +
                                                                 sqlWhereClause(deps, args) +
-                                                                " and coalesce(first_error,'') = ?"
+                                                                " and coalesce(test.first_error,'') = ?"
                                                                 " and " + passFailExpr + " = 'fail'"
-                                                                " order by id");
+                                                                " order by test.id");
             args.push_back(message);
             bindSqlVariables(q4, args);
             for (SqlDatabase::Statement::iterator iter4 = q4->begin(); iter4 != q4->end(); ++iter4)
@@ -1551,7 +1805,7 @@ public:
             Characteristics characteristics;
             args.clear();
             sql = "select " + boost::join(gstate.dependencyNames.values(), ", ") + ", count(*)" +
-                  sqlFromClause() + sqlWhereClause(deps, args) + " and coalesce(first_error,'') = ?"
+                  sqlFromClause() + sqlWhereClause(deps, args) + " and coalesce(test.first_error,'') = ?"
                   " group by " + boost::join(gstate.dependencyNames.values(), ", ");
             args.push_back(message);
             SqlDatabase::StatementPtr q2 = gstate.tx->statement(sql);
@@ -1802,17 +2056,241 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Tab to help select a working ROSE configuration
+
+// Extra data attached to combo boxes that show ROSE version information
+struct RoseComboBoxData {
+    std::string roseVersion;                            // full-length rose version that appears in the database
+    std::string roseDate;                               // human readable version date
+
+    RoseComboBoxData() {}
+
+    RoseComboBoxData(const std::string &v, unsigned long date)
+        : roseVersion(v), roseDate(humanLocalTime(date, HUMAN_TERSE)) {}
+
+    std::string display() const {
+        if (roseDate.empty())
+            return "";
+        return "created " + roseDate;
+    }
+};
+
+// Extra data attached to combo boxes that show configuration values
+struct WorkingConfig {
+    size_t nPass;
+    std::string display() const {
+        return nPass ? boost::lexical_cast<std::string>(nPass) : std::string();
+    }
+};
+
+class WFindWorkingConfig: public Wt::WContainerWidget {
+    std::string roseVersion_;                           // version of ROSE that we're investigating
+    unsigned long roseDate_;                            // date of ROSE commit
+    std::vector<std::string> depNames_;                 // names of dependencies that we're interested in
+    std::vector<std::string> depLabels_;                // label for each dependency
+    Dependencies deps_;                                 // dependencies that might be constrained
+    bool suppressCountUpdates_;                         // skip updating counts
+
+    WComboBoxWithData<RoseComboBoxData> *wVersions_;
+    Wt::WTable *wTable_;
+    Wt::WText *wSummary_;
+
+public:
+    explicit WFindWorkingConfig(Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), roseDate_(0), suppressCountUpdates_(false) {
+
+        depNames_.push_back("os");
+        depLabels_.push_back("Operating system");
+
+        depNames_.push_back("compiler");
+        depLabels_.push_back("Compiler");
+
+        depNames_.push_back("boost");
+        depLabels_.push_back("Boost version");
+
+        depNames_.push_back("languages");
+        depLabels_.push_back("Frontend languages");
+
+        depNames_.push_back("edg");
+        depLabels_.push_back("EDG version");
+
+        // Build a combo box so we can choose a version of ROSE. The combo box text will be human readable version numbers
+        // (short SHA1) and the full version number used in the SQL query is stored in the attached data.
+        std::string penultimateVersion = findRoseVersion();
+        addWidget(new Wt::WText("ROSE version "));
+        addWidget(wVersions_ = new WComboBoxWithData<RoseComboBoxData>);
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct rose, rose_date"
+                                                           " from test_results"
+                                                           " order by rose_date");
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+            std::string fullVersion = row.get<std::string>(0);
+            std::string humanVersion = humanSha1(fullVersion, HUMAN_TERSE);
+            unsigned long date = row.get<unsigned long>(1);
+            wVersions_->addItem(humanVersion, RoseComboBoxData(fullVersion, date));
+            if (fullVersion == penultimateVersion)
+                wVersions_->setCurrentIndex(wVersions_->count()-1);
+        }
+        wVersions_->activated().connect(this, &WFindWorkingConfig::selectNewVersion);
+
+        addWidget(new Wt::WText("<p>Choose your configuration:</p>"));
+        addWidget(wTable_ = new Wt::WTable);
+
+        Wt::WPushButton *wClear = new Wt::WPushButton("Clear");
+        wClear->clicked().connect(this, &WFindWorkingConfig::clearConstraints);
+        addWidget(wClear);
+
+        addWidget(wSummary_ = new Wt::WText);
+
+        setRoseVersion(findRoseVersion());
+    }
+
+    // Set which version of ROSE we're looking at.
+    void setRoseVersion(const std::string &roseVersion) {
+        bool changed = roseVersion_ != roseVersion;
+        roseVersion_ = roseVersion;
+        if (changed) {
+            buildTable();
+            updateCounts();
+        }
+    }
+
+    void clearConstraints() {
+        bool needUpdate = false;
+        suppressCountUpdates_ = true;
+        BOOST_FOREACH (Dependency &dep, deps_.values()) {
+            if (dep.comboBox) {
+                needUpdate = needUpdate || dep.comboBox->currentIndex() != 0;
+                dep.comboBox->setCurrentIndex(0);
+            }
+        }
+        suppressCountUpdates_ = false;
+        if (needUpdate)
+            updateCounts();
+    }
+
+    // Find the version of ROSE whose information will be presented and update this object with that info. This is normally the
+    // penultimate version since the last version is probably undergoing testing right now.
+    std::string findRoseVersion() {
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct rose, rose_date"
+                                                           " from test_results"
+                                                           " order by rose_date desc"
+                                                           " offset 1 limit 1");
+        SqlDatabase::Statement::iterator row = q->begin();
+        if (row == q->end())
+            return "";
+        return row.get<std::string>(0);
+    }
+
+    // (Re)build the table of combo boxes and initialize them with all possible values for this version of ROSE
+    void buildTable() {
+        wTable_->clear();
+        deps_ = loadDependencyValues(depNames_, "where rose = ?", std::vector<std::string>(1, roseVersion_));
+        
+        for (size_t i = 0; i < depNames_.size(); ++i) {
+            // Build a combo box for each dependency
+            Dependency &dep = deps_[depNames_[i]];
+            dep.comboBox = new DependencyComboBox;
+            dep.comboBox->addItem(WILD_CARD_STR);
+            dep.comboBox->activated().connect(this, &WFindWorkingConfig::updateCounts);
+            dep.comboBox->setMinimumSize(Wt::WLength(15, Wt::WLength::FontEm), Wt::WLength::Auto);
+            std::vector<std::string> humanValues = sortedHumanValues(dep);
+            BOOST_FOREACH (const std::string &s, humanValues)
+                dep.comboBox->addItem(s);
+
+            // Insert table row
+            wTable_->elementAt(i, 0)->addWidget(new Wt::WText(depLabels_[i] + "&nbsp;"));
+            wTable_->elementAt(i, 1)->addWidget(dep.comboBox);
+        }
+    }
+                
+    // Update the counts stored in the combo boxes.
+    void updateCounts() {
+        if (suppressCountUpdates_)
+            return;
+        for (size_t i=0; i<depNames_.size(); ++i) {
+            Dependency &dep = deps_[depNames_[i]];
+
+            // Count the number of times the dependency value occurs in a passing test for this version of ROSE, and accumulate
+            // those counts based on the human-friendly representation of the dependency value. Note that multiple raw
+            // dependency values can map to the same human-friendly value.
+            Dependencies otherDeps = deps_;
+            otherDeps.erase(dep.name);
+            std::vector<std::string> args;
+            std::string sql = "select " + gstate.dependencyNames[dep.name] + ", count(*)" +
+                              sqlFromClause() +
+                              sqlWhereClause(otherDeps, args) +
+                              "and rose = ?"
+                              "and " + gstate.dependencyNames["pass/fail"] + " = 'pass' "
+                              "group by " + gstate.dependencyNames[dep.name];
+            args.push_back(roseVersion_);
+            SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
+            bindSqlVariables(q, args);
+            Sawyer::Container::Map<std::string, size_t> depCounts;
+            for (SqlDatabase::Statement::iterator iter = q->begin(); iter != q->end(); ++iter) {
+                std::string depHumanValue = humanDepValue(dep.name, iter.get<std::string>(0), HUMAN_TERSE);
+                size_t count = iter.get<size_t>(1);
+                depCounts.insertMaybeDefault(depHumanValue) += count;
+            }
+            
+            // Update the combo box with new counts, setting things to zero where we didn't find anything.
+            ASSERT_not_null(dep.comboBox);
+            for (int i=0; i<dep.comboBox->count(); ++i) {
+                std::string depName = dep.comboBox->itemBaseText(i).narrow();
+                int count = depCounts.getOrElse(depName, 0);
+                if (depName == WILD_CARD_STR)
+                    count = -1;                         // turn off count display
+                dep.comboBox->setItemData(i, DependencyComboBoxData(count));
+            }
+        }
+
+        // Summarize what was tested.
+        std::vector<std::string> args;
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps_, args) +
+                                                           " and " + gstate.dependencyNames["pass/fail"] + " = 'pass'"
+                                                           " and rose = ?");
+        args.push_back(roseVersion_);
+        bindSqlVariables(q, args);
+        if (int nPass = q->execute_int()) {
+            wSummary_->setText("<p>Our automated testing system has found " +
+                               StringUtility::plural(nPass, "passing configurations") +
+                               " that are similar to your chosen configuration.</p>");
+        } else {
+            args.clear();
+            q = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps_, args) + "and rose = ?");
+            args.push_back(roseVersion_);
+            bindSqlVariables(q, args);
+            if (int nTested = q->execute_int()) {
+                wSummary_->setText("<p>Our automated testing system did not find any configurations of ROSE that "
+                                   "pass even though it tested " +
+                                   StringUtility::plural(nTested, "similar configurations") + ".</p>");
+            } else {
+                wSummary_->setText("<p>Our automated testing system has not tested any similar configurations for "
+                                   "this version of ROSE, so we can't say whether your chosen configuration would work or "
+                                   "not.</p>");
+            }
+        }
+    }
+
+private:
+    void selectNewVersion(int idx) {
+        setRoseVersion(wVersions_->currentData().roseVersion);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // One application object is created per user session.
 class WApplication: public Wt::WApplication {
+    WFindWorkingConfig *findWorkingConfig_;
     WResultsConstraintsTab *resultsConstraints_;
     WDetails *details_;
     WErrors *errors_;
     WSettings *settings_;
     Wt::WTabWidget *tabs_;
+    Session session_;
 
 public:
     explicit WApplication(const Wt::WEnvironment &env)
-        : Wt::WApplication(env) {
+        : Wt::WApplication(env), session_(gstate.dbUrl) {
         setTitle("ROSE testing matrix");
         Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
         root()->setLayout(vbox);
@@ -1860,14 +2338,37 @@ public:
         styleSheet().addRule(".error-status-6", "border:1px solid black; background-color:#edc7d5;");// light rose
         styleSheet().addRule(".error-status-7", "border:1px solid black; background-color:#bebadf;");// light purple
 
+        // User authentication
+        Wt::Auth::AuthWidget *wAuthentication = new Wt::Auth::AuthWidget(gstate.authenticationService, session_.users(),
+                                                                         session_.login());
+        wAuthentication->model()->addPasswordAuth(&gstate.passwordService);
+        wAuthentication->setRegistrationEnabled(true);
+        wAuthentication->processEnvironment();
+
+        // Main application
         tabs_ = new Wt::WTabWidget();
+        mlog[INFO] <<"creating tab: Find Working Config\n";
+        tabs_->addTab(findWorkingConfig_ = new WFindWorkingConfig, "Find Working Config");
+        mlog[INFO] <<"creating tab: Overview\n";
         tabs_->addTab(resultsConstraints_ = new WResultsConstraintsTab, "Overview");
+        mlog[INFO] <<"creating tab: Details\n";
         tabs_->addTab(details_ = new WDetails, "Details");
+        mlog[INFO] <<"creating tab: Errors\n";
         tabs_->addTab(errors_ = new WErrors, "Errors");
+        mlog[INFO] <<"creating tab: Settings\n";
         tabs_->addTab(settings_ = new WSettings, "Settings");
-        vbox->addWidget(tabs_);
+
+        // Show either authentication or main application
+        Wt::WStackedWidget *mainStack = new Wt::WStackedWidget;
+        mainStack->addWidget(wAuthentication);
+        mainStack->addWidget(tabs_);
+        vbox->addWidget(mainStack);
+#if 1 // DEBUGGING [Robb Matzke 2016-02-21]
+        mainStack->setCurrentWidget(tabs_);
+#endif
 
         // Wiring
+        session_.login().changed().connect(this, &WApplication::authenticationEvent);
         resultsConstraints_->constraints()->constraintsChanged().connect(this, &WApplication::getMatchingTests);
         details_->testIdChanged().connect(this, &WApplication::updateDetails);
         errors_->testIdChanged().connect(this, &WApplication::showTestDetails);
@@ -1877,6 +2378,14 @@ public:
     }
 
 private:
+    void authenticationEvent() {
+        if (session_.login().loggedIn()) {
+            std::cerr <<"ROBB: user " <<session_.login().user().id() <<" logged in\n";
+        } else {
+            std::cerr <<"ROBB: user logged out\n";
+        }
+    }
+
     void switchTabs(int idx) {
         if (tabs_->widget(idx) == errors_)
             errors_->updateErrorList(resultsConstraints_->constraints()->dependencies());
@@ -1898,6 +2407,7 @@ private:
         resultsConstraints_->updateStatusCounts();
         getMatchingTests();
         updateDetails();
+        findWorkingConfig_->updateCounts();
     }
 
     void showTestDetails(int testId) {
@@ -2007,22 +2517,34 @@ loadDependencyNames() {
     SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct name from dependencies");
     for (SqlDatabase::Statement::iterator row=q->begin(); row!=q->end(); ++row) {
         std::string key = row.get<std::string>(0);
-        gstate.dependencyNames.insert(key, "test_results.rmc_"+key);
+        gstate.dependencyNames.insert(key, "test.rmc_"+key);
     }
 
     // Additional key/column relationships
-    gstate.dependencyNames.insert("reporting_user", "users.name");
-    gstate.dependencyNames.insert("reporting_time", "reporting_time");
-    gstate.dependencyNames.insert("tester", "tester");
-    gstate.dependencyNames.insert("os", "os");
-    gstate.dependencyNames.insert("rose", "rose");
-    gstate.dependencyNames.insert("rose_date", "rose_date");
-    gstate.dependencyNames.insert("status", "status");
+    gstate.dependencyNames.insert("reporting_user", "auth_user.identity");
+    gstate.dependencyNames.insert("reporting_time", "test.reporting_time");
+    gstate.dependencyNames.insert("tester", "test.tester");
+    gstate.dependencyNames.insert("os", "test.os");
+    gstate.dependencyNames.insert("rose", "test.rose");
+    gstate.dependencyNames.insert("rose_date", "test.rose_date");
+    gstate.dependencyNames.insert("status", "test.status");
 }
 
 static WApplication*
 createApplication(const Wt::WEnvironment &env) {
     return new WApplication(env);
+}
+
+static void
+configureAuthenticationServices() {
+    gstate.authenticationService.setAuthTokensEnabled(true, "logincookie");
+    gstate.authenticationService.setEmailVerificationEnabled(true);
+
+    Wt::Auth::PasswordVerifier *verifier = new Wt::Auth::PasswordVerifier;
+    verifier->addHashFunction(new Wt::Auth::BCryptHashFunction(7));
+    gstate.passwordService.setVerifier(verifier);
+    gstate.passwordService.setAttemptThrottlingEnabled(true);
+    gstate.passwordService.setStrengthValidator(new Wt::Auth::PasswordStrengthValidator);
 }
 
 #endif
@@ -2043,6 +2565,7 @@ main(int argc, char *argv[]) {
     loadTestNames();
     loadDependencyNames();
     setPassDefinition("end");                           // a configuration passes if its status is >= "end"
+    configureAuthenticationServices();
 
     // Start the web server
 #ifdef USING_FASTCGI

@@ -3,21 +3,6 @@
 
 begin transaction;
 
---
--- User list.  These are users that are permitted insert new test results.
---
-
-create table users (
-    uid serial primary key,                             -- unique user ID number
-    name varchar(64),                                   -- user name, email, etc.
-    salt varchar(16),                                   -- random password salt
-    password varchar(64),                               -- cryptographically hashed password
-    enabled integer                                     -- non-zero if user is enabled
-);
-
-insert into users (name) values ('matzke');
-insert into users (name) values ('jenkins');
-
 
 --
 -- List of software dependency packages.  There are a number of different kinds of dependencies:
@@ -197,7 +182,7 @@ create table test_results (
     id serial primary key,
 
     -- who did the testing and reporting
-    reporting_user integer references users(uid),       -- user making this report
+    reporting_user integer references auth_identities(id), -- user making this report
     reporting_time integer,                             -- when report was made (unix time)
     tester varchar(256),                                -- who did the testing (e.g., a Jenkins slave name)
     os varchar(64),                                     -- operating system information
@@ -247,7 +232,8 @@ create table test_results (
     nwarnings integer,                                  -- number of compiler warnings (pattern "warning:")
 
     -- Information about the first error message.
-    first_error text
+    first_error text,
+    first_error_staging text				-- temporary column when for searching for errors
 );
 
 --

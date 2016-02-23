@@ -183,43 +183,84 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                                        "   " + finalOutputSection + ")";
 
     std::string sawyerAssertionFailedRe = "\\[FATAL\\]: assertion failed:\n"
-                                          ".*\\[FATAL\\]:.*\n"                                  // file name
-                                          ".*\\[FATAL\\]:.*\n"                                  // function
-                                          ".*\\[FATAL\\]:.*";                                   // message
+                                          "(.*\\[FATAL\\]:.*\n)*"; // file name, function, expression, message
 
+    //---------------------------------------------------------------------------------------------------
+    // Step 1: Search for error text in output and save it in the first_error_staging column.
+    //---------------------------------------------------------------------------------------------------
 
-    SqlDatabase::StatementPtr q = tx->statement("update test_results test"
-                                                " set first_error = substring(" +
+    // Find and store the error messages into the first_error_staging column.
+    SqlDatabase::StatementPtr q;
+    q = tx->statement("update test_results test"
+                      " set first_error_staging = substring(" +
 
-                                                // We want to search for error messages only in the last section of output (if
-                                                // there's more than one). Also, within that section of output, if a parallel
-                                                // "make" is followed by a serial "make", we only want to search the serial
-                                                // make's output.
-                                                outputAfterFirstMake +
+                      // We want to search for error messages only in the last section of output (if
+                      // there's more than one). Also, within that section of output, if a parallel
+                      // "make" is followed by a serial "make", we only want to search the serial
+                      // make's output.
+                      outputAfterFirstMake +
 
-                                                "from '(?n)("
-                                                //----- regular expressions begin -----
-                                                "\\merror: .+"                                  // general error
-                                                "|\\mERROR: [^0-9].*"                           // not error counts from cmake
-                                                "|" + sawyerAssertionFailedRe +
-                                                "|\\[(ERROR|FATAL) *\\].*"                      // Sawyer error message
-                                                "|catastrophic error: *\\n.+"                   // ROSE translator compile error
-                                                "|^.* \\[err\\]: terminated after .+"           // RTH timeout
-                                                "|^.* \\[err\\]: command died with .+"          // RTH_RUN failure
-                                                "|^.* \\[err\\]: +what\\(\\): .*"               // C++ exception
-                                                "|Assertion `.*'' failed\\.$"                   // failed <cassert> assertion
-                                                "|\\merror: \n.*"                               // ROSE error on next line
-                                                //----- regular expressions end -----
-                                                ")')"
-                                                " from attachments att" +
-                                                sqlWhereClause(tx, settings, args) +
-                                                "    and test.id = att.test_id"
-                                                "    and test.first_error is null"
-                                                "    and test.status <> 'end'"
-                                                "    and att.name = 'Final output'"
-                                                "    and " + sqlIdLimitation("test.id", testIds));
+                      "from '(?n)("
+                      //----- regular expressions begin -----
+                      "\\merror: .+"                            // general error
+                      "|\\mERROR: [^0-9].*"                     // not error counts from cmake
+                      "|" + sawyerAssertionFailedRe +
+                      "|\\[(ERROR|FATAL) *\\].*"                // Sawyer error message
+                      "|catastrophic error: *\\n.+"             // ROSE translator compile error
+                      "|^.* \\[err\\]: terminated after .+"     // RTH timeout
+                      "|^.* \\[err\\]: command died with .+"    // RTH_RUN failure
+                      "|^.* \\[err\\]: +what\\(\\): .*"         // C++ exception
+                      "|Assertion `.*'' failed\\.$"             // failed <cassert> assertion
+                      "|^.*: undefined reference to `.*"        // GNU linker error
+                      "|\\merror: \n.*"                         // ROSE error on next line
+                      //----- regular expressions end -----
+                      ")')"
+                      " from attachments att" +
+                      sqlWhereClause(tx, settings, args) +
+                      "    and test.id = att.test_id"
+                      "    and test.first_error is null"
+                      "    and test.status <> 'end'"
+                      "    and att.name = 'Final output'"
+                      "    and " + sqlIdLimitation("test.id", testIds));
     sqlBindArgs(q, args);
     q->execute();
+
+    //---------------------------------------------------------------------------------------------------
+    // Step 2: Massage the first_error_staging values so similar errors have equal text.
+    //---------------------------------------------------------------------------------------------------
+
+    // Replace absolute file names "/foo/bar/baz" with "/.../baz"
+    std::string fileNameChar    =  "[-+=_.a-zA-Z0-9]";
+    std::string nonFileNameChar = "[^-+=_.a-zA-Z0-9]";
+    tx->statement("update test_results test"
+                  " set first_error_staging = regexp_replace(first_error_staging,"
+                  "   '(^|" + nonFileNameChar + ")((/" + fileNameChar + "+)+)/(" + fileNameChar + "+)',"
+                  "   '\\1/.../\\4',"
+                  "   'g')"
+                  " where test.first_error_staging is not null"
+                  " and " + sqlIdLimitation("test.id", testIds))
+        ->execute(); 
+
+    tx->statement("update test_results test"
+                  " set first_error_staging = regexp_replace(first_error_staging,"
+                  "   '(" + fileNameChar + ")\\[[0-9]+\\] [0-9]+\\.[0-9]+s ',"
+                  "   '\\1[...] ... ',"
+                  "   'g')"
+                  " where test.first_error_staging is not null"
+                  " and " + sqlIdLimitation("test.id", testIds))
+        ->execute();
+
+
+    //---------------------------------------------------------------------------------------------------
+    // Step 3: Move the staging area values to their final home.
+    //---------------------------------------------------------------------------------------------------
+
+    tx->statement("update test_results test"
+                  " set first_error = first_error_staging,"
+                  "     first_error_staging = null"
+                  " where test.first_error_staging is not null and test.first_error_staging <> ''"
+                  " and " + sqlIdLimitation("test.id", testIds))
+        ->execute();
 }
 
 // List tests that are missing error information.

@@ -105,7 +105,7 @@ getUserName() {
 static int
 getUserId(const SqlDatabase::TransactionPtr &tx) {
     std::string userName = getUserName();
-    SqlDatabase::StatementPtr q = tx->statement("select uid from users where name = ?")->bind(0, userName);
+    SqlDatabase::StatementPtr q = tx->statement("select id from auth_identities where identity = ?")->bind(0, userName);
     SqlDatabase::Statement::iterator row = q->begin();
     if (row == q->end()) {
         mlog[FATAL] <<"no such user: \"" <<StringUtility::cEscape(userName) <<"\"\n";
