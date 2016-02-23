@@ -5,10 +5,13 @@
  *
  *  Instructions for installing <a href="https://gcc.gnu.org">GCC</a>, a ROSE software dependency.
  *
- *  @section installing_gcc_rhel Redhat Enterprise Linux
+ *  @section installing_gcc_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install GCC on RHEL.
- *  Todo.
+ *  The default compiler on RHEL 7 is GCC-4.8.5, which is supported by ROSE. To install it, run this command as the adminstrator:
+ *
+ *  @code
+ *  yum group install "Development Tools"
+ *  @endcode
  *
  *  @section installing_gcc_wheezy Debian 7 "Wheezy"
  *

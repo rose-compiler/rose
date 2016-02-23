@@ -5,10 +5,9 @@
  *
  *  Instructions for installing <a href="http://xmlsoft.org">libxml2</a>, a ROSE software dependency.
  *
- *  @section installing_libxml2_rhel Redhat Enterprise Linux
+ *  @section installing_libxml2_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install libxml2 on RHEL.
- *  Todo.
+ *  Run <code>yum install libxml2-devel</code> as the administrator.
  *
  *  @section installing_libxml2_jessie Debian 8 "Jessie"
  *

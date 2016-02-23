@@ -6,10 +6,9 @@
  *  Instructions for installing <a href="http://flex.sourceforge.net">Flex</a> and <a
  *  href="https://www.gnu.org/software/bison">bison</a>, ROSE software dependencies.
  *
- *  @section installing_flexbison_rhel Redhat Enterprise Linux
+ *  @section installing_flexbison_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install flex and bison on RHEL.
- *  Todo.
+ *  Run <code>yum group install "Development Tools"</code> as the administrator.
  *
  *  @section installing_flexbison_wheezy Debian 7 "Wheezy"
  *

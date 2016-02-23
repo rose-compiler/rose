@@ -5,10 +5,9 @@
  *
  *  Instructions for installing the Java development kit, a ROSE software dependency.
  *
- *  @section installing_jdk_rhel Redhat Enterprise Linux
+ *  @section installing_jdk_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install the JDK on RHEL.
- *  Todo.
+ *  A suitable JDK can be installed by running <code>yum install java-1.7.0-openjdk-devel</code> as the administrator.
  *
  *  @section installing_jdk_wheezy Debian 7 "Wheezy"
  *

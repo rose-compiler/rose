@@ -5,10 +5,9 @@
  *
  *  Instructions for installing <a href="https://www.gnu.org/software/wget">wget</a>, a ROSE software dependency.
  *
- *  @section installing_wget_rhel Redhat Enterprise Linux
+ *  @section installing_wget_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install wget on RHEL.
- *  Todo.
+ *  Run <code>yum install wget</code> as the administrator.
  *
  *  @section installing_wget_wheezy Debian 7 "Wheezy"
  *

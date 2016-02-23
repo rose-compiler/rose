@@ -5,10 +5,9 @@
  *
  *  Instructions for installing <a href="http://graphviz.org">GraphViz</a>, a ROSE software dependency.
  *
- *  @section installing_graphviz_rhel Redhat Enterprise Linux
+ *  @section installing_graphviz_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install GraphViz on RHEL.
- *  Todo.
+ *  Run <code>yum install graphviz</code> as the administrator.
  *
  *  @section installing_graphviz_wheezy Debian 7 "Wheezy"
  *

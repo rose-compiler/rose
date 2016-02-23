@@ -6,10 +6,9 @@
  *  Instructions for installing <a href="http://cnswww.cns.cwru.edu/php/chet/readline/rltop.html">GNU readline</a>, a ROSE
  *  software dependency.
  *
- *  @section installing_readline_rhel Redhat Enterprise Linux
+ *  @section installing_readline_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install GNU readline on RHEL.
- *  Todo.
+ *  Run <code>yum install readline-devel</code> as the administrator.
  *
  *  @section installing_readline_wheezy Debian 7 "Wheezy"
  *

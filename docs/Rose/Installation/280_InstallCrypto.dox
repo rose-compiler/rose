@@ -5,10 +5,14 @@
  *
  *  Instructions for installing cryptography libraries that are ROSE software dependencies.
  *
- *  @section installing_crypto_rhel Redhat Enterprise Linux
+ *  @section installing_crypto_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install cryptography libraries on RHEL.
- *  Todo.
+ *  Run these commands as the administrator:
+ *
+ *  @code
+ *   yum install libgcrypt-devel
+ *   yum install openssl-devel
+ *  @endcode
  *
  *  @section installing_crypto_jessie Debian 8 "Jessie"
  *

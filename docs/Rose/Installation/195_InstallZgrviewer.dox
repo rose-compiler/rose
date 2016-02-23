@@ -5,7 +5,7 @@
  *
  *  Instructions for installing <a href="http://zvtm.sourceforge.net/zgrviewer.html">ZGRViewer</a>, a ROSE software dependency.
  *
- *  @section installing_zgrviewer_rhel Redhat Enterprise Linux
+ *  @section installing_zgrviewer_rhel Red Hat Enterprise Linux 7
  *
  *  @todo Describe how to install ZGRViewer on RHEL.
  *  Todo.

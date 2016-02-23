@@ -5,7 +5,7 @@
  *
  *  Instructions for installing <a href="http://www.graphicsmagick.org">GraphicsMagick</a>, a ROSE software dependency.
  *
- *  @section installing_graphicsmagick_rhel Redhat Enterprise Linux
+ *  @section installing_graphicsmagick_rhel Red Hat Enterprise Linux 7
  *
  *  @todo Describe how to install GraphicsMagick on RHEL.
  *  Todo.

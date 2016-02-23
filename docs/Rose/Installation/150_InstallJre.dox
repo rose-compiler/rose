@@ -5,7 +5,7 @@
  *
  *  Instructions for installing the Java runtime environment, a ROSE software dependency.
  *
- *  @section installing_jre_rhel Redhat Enterprise Linux
+ *  @section installing_jre_rhel Red Hat Enterprise Linux 7
  *
  *  @todo Describe how to install the JRE on RHEL.
  *  Todo.

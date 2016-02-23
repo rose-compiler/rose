@@ -9,7 +9,7 @@
  *  This document only describes how to install the libraries used by ROSE; it does not describe how to set up or manage a
  *  database system.
  *
- *  @section installing_database_rhel Redhat Enterprise Linux
+ *  @section installing_database_rhel Red Hat Enterprise Linux 7
  *
  *  @todo Describe how to install SQLite3 or PostgreSQL on RHEL.
  *  Todo.

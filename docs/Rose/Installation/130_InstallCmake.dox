@@ -5,10 +5,9 @@
  *
  *  Instructions for installing <a href="http://www.cmake.org">CMake</a>, a ROSE software dependency.
  *
- *  @section installing_cmake_rhel Redhat Enterprise Linux
+ *  @section installing_cmake_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install CMake on RHEL.
- *  Todo.
+ *  Run <code>yum install cmake</code> as the administrator.
  *
  *  @section installing_cmake_wheezy Debian 7 "Wheezy"
  *
