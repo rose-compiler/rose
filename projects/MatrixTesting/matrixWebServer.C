@@ -15,6 +15,7 @@ static Sawyer::Message::Facility mlog;
 #include <Color.h>                                      // ROSE
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/Set.h>
 #include <SqlDatabase.h>                                // ROSE
 #include <string>
 #include <vector>
@@ -55,14 +56,17 @@ static Sawyer::Message::Facility mlog;
 static const char* WILD_CARD_STR = "*";
 enum ChartType { BAR_CHART, LINE_CHART };
 enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, CVT_DURATION_AVE };
+enum HumanFormat { HUMAN_TERSE, HUMAN_VERBOSE };
 static int END_STATUS_POSITION = 999;                   // test_names.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
 typedef Sawyer::Container::Map<std::string, std::string> StringString;
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Combo box with extra data. Type T should have a "display" method that returns an std::string that will become part of the
-// value displayed by the combo box.  T should also be copiable.
+// value displayed by the combo box.  T should also be copyable.  We might have been able to implement this using only the
+// default Wt::WComboBox model with extra columns.
 struct ComboBoxNoData {
     std::string display() const {
         return "";
@@ -71,7 +75,7 @@ struct ComboBoxNoData {
 
 template<class T = ComboBoxNoData>
 class ComboBoxModel: public Wt::WStringListModel {
-    Sawyer::Container::Map<Wt::WString, T> extraData_;  // data indexed by base string
+    std::vector<T> extraData_;
 public:
     static const int BaseTextRole = Wt::UserRole;
 
@@ -97,25 +101,21 @@ public:
     }
     
     // Associate some data with an item.
-    void setItemData(const Wt::WModelIndex &idx, const T &data) {
-        setItemData(baseString(idx), data);
-    }
-    void setItemData(const Wt::WString &item, const T &data) {
-        std::string oldDisplay = extraData_.getOrDefault(item).display();
+    void setItemExtraData(const Wt::WModelIndex &idx, const T &data) {
+        if (idx.row() >= extraData_.size())
+            extraData_.resize(idx.row()+1);
+        std::string oldDisplay = extraData_[idx.row()].display();
         std::string newDisplay = data.display();
         bool displayChanged = oldDisplay != newDisplay;
-        extraData_.insert(item, data);
-        if (displayChanged) {
-            for (int i = 0; i < rowCount(); ++i) {
-                if (boost::any_cast<Wt::WString>(this->data(index(i, 0), BaseTextRole)) == item)
-                    dataChanged().emit(index(i, 0), index(i, 0));
-            }
-        }
+        extraData_[idx.row()] = data;
+        if (displayChanged)
+            dataChanged().emit(idx, idx);
     }
 
     // Get data for an item.
-    const T& itemData(const Wt::WModelIndex &idx) {
-        return extraData_.getOrDefault(baseString(idx));
+    const T& itemExtraData(const Wt::WModelIndex &idx) const {
+        static const T dflt;
+        return idx.row() < extraData_.size() ? extraData_[idx.row()] : dflt;
     }
         
     virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const ROSE_OVERRIDE {
@@ -124,7 +124,7 @@ public:
         } else if (idx.isValid() && Wt::DisplayRole == role) {
             boost::any v = Wt::WStringListModel::data(idx, Wt::DisplayRole);
             Wt::WString s1 = v.empty() ? Wt::WString() : boost::any_cast<Wt::WString>(v);
-            Wt::WString s2 = extraData_.getOrDefault(s1).display();
+            Wt::WString s2 = (idx.row() < extraData_.size() ? extraData_[idx.row()] : T()).display();
             return s1 + (s1.empty() || s2.empty() ? "" : " ") + s2;
         } else {
             return Wt::WStringListModel::data(idx, role);
@@ -141,25 +141,20 @@ public:
     explicit WComboBoxWithData(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent), model_(new ComboBoxModel<T>), comboBox_(new Wt::WComboBox) {
         comboBox_->setModel(model_);
-#if 0 // [Robb Matzke 2016-02-21]
-        Wt::WHBoxLayout *layout = new Wt::WHBoxLayout;
-        layout->setContentsMargins(0, 0, 0, 0);
-        layout->addWidget(comboBox_, 1);
-        setLayout(layout);
-#else
         addWidget(comboBox_);
         setInline(true);
-#endif
     }
 
     void addItem(const std::string &item, const T &data = T()) {
         comboBox_->addItem(item);
-        model_->setItemData(item, data);
+        int rowIdx = comboBox_->count() - 1;
+        ASSERT_require(rowIdx >= 0);
+        model_->setItemExtraData(model_->index(rowIdx, 0), data);
     }
 
     void setItemData(int idx, const T &data) {
         if (idx >= 0 && idx < comboBox_->count())
-            model_->setItemData(itemBaseText(idx), data);
+            model_->setItemExtraData(model_->index(idx, 0), data);
     }
 
     int currentIndex() const {
@@ -189,7 +184,7 @@ public:
     }
 
     const T& itemData(int idx) const {
-        return model_->itemData(model_->index(idx, 0));
+        return model_->itemExtraData(model_->index(idx, 0));
     }
 
     const T& currentData() const {
@@ -446,8 +441,6 @@ setPassDefinition(const std::string &minimumPassStatus) {
 }
 
 
-enum HumanFormat { HUMAN_TERSE, HUMAN_VERBOSE };
-
 static std::string
 humanLocalTime(unsigned long when, HumanFormat fmt = HUMAN_VERBOSE) {
     struct tm tm;
@@ -467,7 +460,10 @@ humanLocalTime(unsigned long when, HumanFormat fmt = HUMAN_VERBOSE) {
 }
 
 static std::string
-humanDuration(unsigned long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
+humanDuration(long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
+    bool isNegative = seconds < 0;
+    if (seconds < 0)
+        seconds = -seconds;
     unsigned hours = seconds / 3600;
     unsigned minutes = seconds / 60 % 60;
     seconds %= 60;
@@ -478,10 +474,10 @@ humanDuration(unsigned long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
             retval = boost::lexical_cast<std::string>(minutes) + " minute" + (1==minutes?"":"s") + " " + retval;
         if (hours > 0)
             retval = boost::lexical_cast<std::string>(hours) + " hour" + (1==hours?"":"s") + " " + retval;
-        return retval;
+        return (isNegative?"-":"") + retval;
     } else {
         char buf[256];
-        sprintf(buf, "%2d:%02d:%02u", hours, minutes, (unsigned)seconds);
+        sprintf(buf, "%s%2d:%02d:%02u", isNegative?"-":"", hours, minutes, (unsigned)seconds);
         return buf;
     }
 }
@@ -597,6 +593,50 @@ loadDependencyValues() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Extra data attached to combo boxes that show ROSE version information. The combo box's base text is a date string (usually
+// sorted by date) and a human-readable version number extends the string. Therefore this struct holds the version string.
+struct ComboBoxVersion {
+    std::string version;                                // full-length version that appears in the database
+
+    ComboBoxVersion() {}
+
+    explicit ComboBoxVersion(const std::string &v)
+        : version(v) {}
+
+    std::string display() const {
+        if (version.empty())
+            return "";
+        return humanSha1(version, HUMAN_TERSE);
+    }
+};
+
+// Fill the version selection combo box, returning the first entry that matches the needle version (or -1)
+int
+fillVersionComboBox(WComboBoxWithData<ComboBoxVersion> *comboBox, const std::string &needle = "") {
+    int found = -1;
+    SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct rose, rose_date"
+                                                       " from test_results"
+                                                       " order by rose_date");
+    Sawyer::Container::Set<std::string> uniqueValues;
+    for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+        std::string version = row.get<std::string>(0);
+        std::string date = humanLocalTime(row.get<unsigned long>(1), HUMAN_TERSE);
+        uniqueValues.insert(date + "\t" + version);
+    }
+
+    BOOST_FOREACH (const std::string &s, uniqueValues.values()) {
+        size_t tab = s.find('\t');
+        ASSERT_require(tab != std::string::npos);
+        std::string date = s.substr(0, tab);
+        std::string version = s.substr(tab+1);
+        comboBox->addItem(date, ComboBoxVersion(version));
+        if (-1 == found && version == needle)
+            found = comboBox->count()-1;
+    }
+    return found;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Model of test results.  This is a two dimensional table. The rows of the table correspond to values of the major dependency
 // and the columns of the table correspond to values of the minor dependency.  If the minor dependency name is the empty string
 // then the various test names (database "status" column of the "test_results" table) are used. The major and/or minor values
@@ -612,13 +652,23 @@ class StatusModel: public Wt::WAbstractTableModel {
 private:
     typedef std::vector<double> TableRow;
     typedef std::vector<TableRow> Table;
-    Table counts_;                                      // counts of matching rows
-    double minCounts_, maxCounts_;                      // min/max values in counts_ (excluding zeros)
-    Table passes_;                                      // portion of counts_ where pass_fail = 'passed'
-    Table aveWarnings_;                                 // average number of compiler warnings per run
-    double minAveWarnings_, maxAveWarnings_;            // min/max value in aveWarnings_
-    Table aveDuration_;                                 // average wall-clock duration per run
-    double minAveDuration_, maxAveDuration_;            // min/max value in aveDuration_
+
+    struct DataSet {
+        Table counts;                                   // counts of matching rows
+        double minCounts, maxCounts;                    // min/max values in counts_ (excluding zeros)
+        Table passes;                                   // portion of counts_ where pass_fail = 'passed'
+        Table aveWarnings;                              // average number of compiler warnings per run
+        double minAveWarnings, maxAveWarnings;          // min/max value in aveWarnings_
+        Table aveDuration;                              // average wall-clock duration per run
+        double minAveDuration, maxAveDuration;          // min/max value in aveDuration_
+    };
+
+    std::string baselineVersion_;                       // software version to use as the baseline, or empty for none
+    DataSet baseline_;                                  // data for baseline version if there is one
+    DataSet current_;                                   // the non-baseline data
+    Table delta_;                                       // difference between baseline_ and current_
+    double minDelta_, maxDelta_;                        // min/max value in delta_
+
     ChartValueType chartValueType_;                     // whether to show counts, percents, or pass ratios
     bool roundToInteger_;                               // round cell values to nearest integer
     bool humanReadable_;                                // return data as human-radable strings instead of doubles
@@ -694,6 +744,18 @@ public:
         humanReadable_ = b;
     }
 
+    const std::string& baselineVersion() const {
+        return baselineVersion_;
+    }
+
+    void setBaselineVersion(const std::string &version) {
+        baselineVersion_ = version;
+    }
+
+    bool hasBaseline() const {
+        return !baselineVersion_.empty();
+    }
+    
     const std::string depMajorValue(size_t modelRow) {
         size_t i = modelRow - (depMinorIsData_ ? 1 : 0);
         return i < depMajorValues_.size() ? depMajorValues_[i] : std::string();
@@ -708,102 +770,32 @@ public:
         Sawyer::Message::Stream debug(::mlog[DEBUG] <<"StatusModel::updateModel...\n");
         updateDepMajor(deps);
         updateDepMinor(deps);
-        resetTable(counts_);
-        minCounts_ = maxCounts_ = 0.0;
-        resetTable(passes_);
-        resetTable(aveWarnings_);
-        minAveWarnings_ = maxAveWarnings_ = 0.0;
-        resetTable(aveDuration_);
-        minAveDuration_ = maxAveDuration_ = 0.0;
+        resetDataset(current_);
+        resetDataset(baseline_);
+        resetTable(delta_);
         
-        if (counts_.empty())
+        if (current_.counts.empty())
             return modelReset().emit();
 
-        // Build the SQL query
-        ASSERT_require(!depMajorName_.empty());
-        std::string depMajorColumn = gstate.dependencyNames[depMajorName_];
-        std::string depMinorColumn = gstate.dependencyNames[depMinorName_];
-        std::string passFailColumn = gstate.dependencyNames["pass/fail"];
-        std::vector<std::string> args;
-        std::string sql = "select " +
-                          depMajorColumn + ", " +       // 0
-                          depMinorColumn + ", " +       // 1
-                          passFailColumn + " as pf, "   // 2
-                          "count(*), " +                // 3
-                          "sum(test.nwarnings)," +      // 4
-                          "sum(test.duration)" +        // 5
-                          sqlFromClause() +
-                          sqlWhereClause(deps, args /*out*/) +
-                          " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
-        SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
-        bindSqlVariables(q, args);
+        loadDataset(deps, current_, "");
 
-        // Iterate over the query results to update the table. Remember that the row and column numbers are the human-style
-        // values (e.g., yyyy-mm-dd rather than Unix time, etc.)
-        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-            std::string majorValue = humanDepValue(depMajorName_, row.get<std::string>(0), HUMAN_TERSE);
-            std::string minorValue = humanDepValue(depMinorName_, row.get<std::string>(1), HUMAN_TERSE);
-            std::string pf = row.get<std::string>(2);
-            int count = row.get<int>(3);
-            double nwarn = row.get<int>(4);
-            double duration = row.get<int>(5);
-
-            int i = depMajorIndex_.getOrElse(majorValue, -1);
-            int j = depMinorIndex_.getOrElse(minorValue, -1);
-            if (i >= 0 && j >= 0) {
-                counts_[i][j] += count;
-                aveWarnings_[i][j] += nwarn;            // sum here; adjusted below
-                aveDuration_[i][j] += duration;         // sum here; adjusted below
-                if (pf == "pass")
-                    passes_[i][j] += count;
-            }
-        }
-
-        // Adjust aveWarnings and aveDuration to be averages instead of sums
-        {
-            int n = 0;
-            for (size_t i=0; i<aveWarnings_.size(); ++i) {
-                for (size_t j=0; j<aveWarnings_[i].size(); ++j) {
-                    if (counts_[i][j] > 0) {
-                        aveWarnings_[i][j] /= counts_[i][j];
-                        aveDuration_[i][j] /= counts_[i][j];
-                        if (0 == n++) {
-                            minCounts_ = maxCounts_ = counts_[i][j];
-                            minAveWarnings_ = maxAveWarnings_ = aveWarnings_[i][j];
-                            minAveDuration_ = maxAveDuration_ = aveDuration_[i][j];
-                        } else {
-                            minCounts_      = std::min(minCounts_,      counts_[i][j]);
-                            maxCounts_      = std::max(maxCounts_,      counts_[i][j]);
-                            minAveWarnings_ = std::min(minAveWarnings_, aveWarnings_[i][j]);
-                            maxAveWarnings_ = std::max(maxAveWarnings_, aveWarnings_[i][j]);
-                            minAveDuration_ = std::min(minAveDuration_, aveDuration_[i][j]);
-                            maxAveDuration_ = std::max(maxAveDuration_, aveDuration_[i][j]);
-                        }
+        if (hasBaseline()) {
+            Dependencies limited = deps;
+            limited.erase("rose");
+            limited.erase("rose_date");
+            loadDataset(limited, baseline_, baselineVersion_);
+            for (size_t i=0; i<current_.counts.size(); ++i) {
+                for (size_t j=0; j<current_.counts[i].size(); ++j) {
+                    delta_[i][j] = getDataValue(current_, i, j) - getDataValue(baseline_, i, j);
+                    if (0==i && 0==j) {
+                        minDelta_ = maxDelta_ = delta_[0][0];
+                    } else {
+                        minDelta_ = std::min(minDelta_, delta_[i][j]);
+                        maxDelta_ = std::max(maxDelta_, delta_[i][j]);
                     }
                 }
             }
         }
-
-        if (debug) {
-            debug <<"  major \"" <<StringUtility::cEscape(depMajorName_) <<"\" =";
-            BOOST_FOREACH (const std::string &v, depMajorValues_)
-                debug <<" " <<StringUtility::cEscape(v);
-            debug <<"\n";
-            debug <<"  minor \"" <<StringUtility::cEscape(depMinorName_) <<"\" =";
-            BOOST_FOREACH (const std::string &v, depMinorValues_)
-                debug <<" " <<StringUtility::cEscape(v);
-            debug <<"\n";
-
-            for (size_t i=0; i<counts_.size(); ++i) {
-                debug <<"[" <<i <<"] =";
-                for (size_t j=0; j<counts_[i].size(); ++j) {
-                    debug <<" " <<counts_[i][j];
-                }
-                debug <<"\n";
-            }
-        }
-        
-        modelReset().emit();
     }
 
     int rowCount(const Wt::WModelIndex &parent = Wt::WModelIndex()) const ROSE_OVERRIDE {
@@ -817,7 +809,7 @@ public:
             return 0;
         return depMinorValues_.size() + (depMajorIsData_ ? 1 : 0);
     }
-
+                
     boost::any data(const Wt::WModelIndex &index, int role = Wt::DisplayRole) const ROSE_OVERRIDE {
         Sawyer::Message::Stream debug(::mlog[DEBUG]);
         ASSERT_require(index.isValid());
@@ -827,8 +819,8 @@ public:
         // i and j are indexes relative to counts_[0][0]
         int i = index.row()    - (depMinorIsData_ ? 1 : 0);
         int j = index.column() - (depMajorIsData_ ? 1 : 0);
-        ASSERT_require(-1 == i || (size_t)i < counts_.size());
-        ASSERT_require(-1 == j || (size_t)j < counts_[i].size());
+        ASSERT_require(-1 == i || (size_t)i < current_.counts.size());
+        ASSERT_require(-1 == j || (size_t)j < current_.counts[i].size());
 
         if (Wt::DisplayRole == role) {
             if (-1 == i && -1 == j) {
@@ -840,49 +832,57 @@ public:
             } else if (-1 == i) {                       // querying a depMinorValue
                 ASSERT_require(j >= 0 && (size_t)j < depMinorValues_.size());
                 return depMinorValues_[j];
-            } else if (0 == counts_[i][j]) {
-                return 0.0;
-            } else if (CVT_PERCENT == chartValueType_) {// counts divided by total for entire row as a percent
-                double rowTotal = 0;
-                BOOST_FOREACH (double count, counts_[i])
-                    rowTotal += count;
-                double percent = 100.0 * counts_[i][j] / rowTotal;
-                return roundToInteger_ ? round(percent) : percent;
-            } else if (CVT_PASS_RATIO == chartValueType_) {// number of passes divided by count as a percent
-                double percent = 100.0 * passes_[i][j] / counts_[i][j];
-                return roundToInteger_ ? round(percent) : percent;
-            } else if (CVT_WARNINGS_AVE == chartValueType_) {// average number of warnings per test
-                return roundToInteger_ ? round(aveWarnings_[i][j]) : aveWarnings_[i][j];
-            } else if (CVT_DURATION_AVE == chartValueType_) {// average run duration per test in seconds
-                if (humanReadable_)
-                    return humanDuration(aveDuration_[i][j], HUMAN_TERSE);
-                return roundToInteger_ ? round(aveDuration_[i][j]) : aveDuration_[i][j];
-            } else {                                    // raw counts
-                return counts_[i][j];
+            } else {
+                double value = hasBaseline() ? delta_[i][j]: getDataValue(current_, i, j);
+                if (roundToInteger_)
+                    value = round(value);
+                if (humanReadable_) {
+                    std::string humanValue;
+                    switch (chartValueType_) {
+                        case CVT_COUNT:
+                        case CVT_WARNINGS_AVE:
+                            if (hasBaseline() && value > 0)
+                                humanValue = "+";
+                            humanValue += boost::lexical_cast<std::string>(value);
+                            break;
+                        case CVT_PERCENT:
+                        case CVT_PASS_RATIO:
+                            if (hasBaseline() && value > 0)
+                                humanValue = "+";
+                            humanValue += boost::lexical_cast<std::string>(value) + "%";
+                            break;
+                        case CVT_DURATION_AVE:
+                            if (hasBaseline() && value > 0)
+                                humanValue = "+";
+                            humanValue += humanDuration(value, HUMAN_TERSE);
+                            break;
+                    }
+                    return humanValue;
+                }
+                return value;
             }
 
         } else if (Wt::StyleClassRole == role) {
             if (i >= 0 && j >= 0) {
+                double value = hasBaseline() ? delta_[i][j] : getDataValue(current_, i, j);
+                std::pair<double, double> mm = getDataMinMax(current_, i, j);
+                int nSamples = current_.counts[i][j];
+                if (hasBaseline()) {
+                    nSamples = std::min(nSamples, (int)baseline_.counts[i][j]);
+                    mm = std::make_pair(minDelta_, maxDelta_);
+                }
+
                 switch (chartValueType_) {
                     case CVT_COUNT:
-                        return redToGreen(counts_[i][j], minCounts_, maxCounts_, counts_[i][j]==0?0:5);
-                    case CVT_PERCENT: {
-                        double rowTotal = 0;
-                        BOOST_FOREACH (double count, counts_[i])
-                            rowTotal += count;
-                        double percent = rowTotal > 0 ? 100.0 * counts_[i][j] / rowTotal : 0.0;
-                        return redToGreen(percent, 0.0, 100.0);
-                    }
-                    case CVT_PASS_RATIO: {
-                        double pfratio = 0.0;
-                        if (counts_[i][j] > 0)
-                            pfratio = passes_[i][j] / counts_[i][j];
-                        return redToGreen(pfratio, 0.0, 1.0, counts_[i][j]);
-                    }
+                        return redToGreen(value, mm.first, mm.second, value?5:0);
+                    case CVT_PERCENT:
+                    case CVT_PASS_RATIO:
+                        if (hasBaseline())
+                            mm = std::make_pair(-100.0, 100.0);
+                        return redToGreen(value, mm.first, mm.second, nSamples);
                     case CVT_WARNINGS_AVE:
-                        return greenToRed(aveWarnings_[i][j], minAveWarnings_, maxAveWarnings_, counts_[i][j]);
                     case CVT_DURATION_AVE:
-                        return greenToRed(aveDuration_[i][j], minAveDuration_, maxAveDuration_, counts_[i][j]);
+                        return greenToRed(value, mm.first, mm.second, nSamples);
                 }
             }
         }
@@ -916,6 +916,170 @@ private:
         TableRow row(depMinorValues_.size(), 0.0);
         t.clear();
         t.resize(depMajorValues_.size(), row);
+    }
+
+    void resetDataset(DataSet &d) {
+        resetTable(d.counts);
+        d.minCounts = d.maxCounts = 0.0;
+        resetTable(d.passes);
+        resetTable(d.aveWarnings);
+        d.minAveWarnings = d.maxAveWarnings = 0.0;
+        resetTable(d.aveDuration);
+        d.minAveDuration = d.maxAveDuration = 0.0;
+    }
+    
+    void loadDataset(const Dependencies &deps, DataSet &ds /*out*/, const std::string &version) {
+        // Build the SQL query
+        ASSERT_require(!depMajorName_.empty());
+        std::string depMajorColumn = gstate.dependencyNames[depMajorName_];
+        std::string depMinorColumn = gstate.dependencyNames[depMinorName_];
+        std::string passFailColumn = gstate.dependencyNames["pass/fail"];
+        std::vector<std::string> args;
+        std::string sql = "select " +
+                          depMajorColumn + ", " +       // 0
+                          depMinorColumn + ", " +       // 1
+                          passFailColumn + " as pf, "   // 2
+                          "count(*), " +                // 3
+                          "sum(test.nwarnings)," +      // 4
+                          "sum(test.duration)" +        // 5
+                          sqlFromClause() +
+                          sqlWhereClause(deps, args /*out*/) +
+                          (version.empty() ? "" : "and rose = ?") +
+                          " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
+        if (!version.empty())
+            args.push_back(version);
+        SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
+        bindSqlVariables(q, args);
+
+        // If we're looking at a specific version of ROSE and the model has a version (number or time) based major axis, then
+        // each datum applies to all rows of the table.  Similarly, for columns if the minor axis is based on a version.
+        bool applyToAllRows = !version.empty() && (depMajorName_ == "rose" || depMajorName_ == "rose_date");
+        bool applyToAllCols = !version.empty() && (depMinorName_ == "rose" || depMinorName_ == "rose_date");
+
+        // Iterate over the query results to update the table. Remember that the row and column numbers are the human-style
+        // values (e.g., yyyy-mm-dd rather than Unix time, etc.)
+        for (SqlDatabase::Statement::iterator queryRow = q->begin(); queryRow != q->end(); ++queryRow) {
+            std::string majorValue = humanDepValue(depMajorName_, queryRow.get<std::string>(0), HUMAN_TERSE);
+            std::string minorValue = humanDepValue(depMinorName_, queryRow.get<std::string>(1), HUMAN_TERSE);
+            std::string pf = queryRow.get<std::string>(2);
+            int count = queryRow.get<int>(3);
+            double nwarn = queryRow.get<int>(4);
+            double duration = queryRow.get<int>(5);
+
+            int row = depMajorIndex_.getOrElse(majorValue, -1);
+            int col = depMinorIndex_.getOrElse(minorValue, -1);
+            if (row >= 0 && col >= 0) {
+                // aveWarnings and aveDuration are summed here and divided after this loop.
+                if (applyToAllRows && applyToAllCols) {
+                    for (size_t i=0; i<ds.counts.size(); ++i) {
+                        for (size_t j=0; j<ds.counts[i].size(); ++j) {
+                            ds.counts[i][j] += count;
+                            ds.aveWarnings[i][j] += nwarn;
+                            ds.aveDuration[i][j] += duration;
+                            if (pf == "pass")
+                                ds.passes[i][j] += count;
+                        }
+                    }
+                } else if (applyToAllRows) {
+                    for (size_t i=0; i<ds.counts.size(); ++i) {
+                        ds.counts[i][col] += count;
+                        ds.aveWarnings[i][col] += nwarn;
+                        ds.aveDuration[i][col] += duration;
+                        if (pf == "pass")
+                            ds.passes[i][col] += count;
+                    }
+                } else if (applyToAllCols) {
+                    for (size_t j=0; j<ds.counts[row].size(); ++j) {
+                        ds.counts[row][j] += count;
+                        ds.aveWarnings[row][j] += nwarn;
+                        ds.aveDuration[row][j] += duration;
+                        if (pf == "pass")
+                            ds.passes[row][j] += count;
+                    }
+                } else {
+                    ds.counts[row][col] += count;
+                    ds.aveWarnings[row][col] += nwarn;
+                    ds.aveDuration[row][col] += duration;
+                    if (pf == "pass")
+                        ds.passes[row][col] += count;
+                }
+            }
+        }
+
+        // Adjust aveWarnings and aveDuration to be averages instead of sums
+        {
+            int n = 0;
+            for (size_t i=0; i<ds.aveWarnings.size(); ++i) {
+                for (size_t j=0; j<ds.aveWarnings[i].size(); ++j) {
+                    if (ds.counts[i][j] > 0) {
+                        ds.aveWarnings[i][j] /= ds.counts[i][j];
+                        ds.aveDuration[i][j] /= ds.counts[i][j];
+                        if (0 == n++) {
+                            ds.minCounts      = ds.maxCounts      = ds.counts[i][j];
+                            ds.minAveWarnings = ds.maxAveWarnings = ds.aveWarnings[i][j];
+                            ds.minAveDuration = ds.maxAveDuration = ds.aveDuration[i][j];
+                        } else {
+                            ds.minCounts      = std::min(ds.minCounts,      ds.counts[i][j]);
+                            ds.maxCounts      = std::max(ds.maxCounts,      ds.counts[i][j]);
+                            ds.minAveWarnings = std::min(ds.minAveWarnings, ds.aveWarnings[i][j]);
+                            ds.maxAveWarnings = std::max(ds.maxAveWarnings, ds.aveWarnings[i][j]);
+                            ds.minAveDuration = std::min(ds.minAveDuration, ds.aveDuration[i][j]);
+                            ds.maxAveDuration = std::max(ds.maxAveDuration, ds.aveDuration[i][j]);
+                        }
+                    }
+                }
+            }
+        }
+        
+        modelReset().emit();
+    }
+
+    // Returns a value from the dataset.
+    double getDataValue(const DataSet &ds, int rowIdx, int colIdx) const {
+        switch (chartValueType_) {
+            case CVT_COUNT:
+                return ds.counts[rowIdx][colIdx];
+
+            case CVT_PERCENT:
+                if (double count = ds.counts[rowIdx][colIdx]) {
+                    double rowTotal = 0.0;
+                    BOOST_FOREACH (double n, ds.counts[rowIdx])
+                        rowTotal += n;
+                    return 100.0 * count / rowTotal;
+                }
+                return 0.0;
+
+            case CVT_PASS_RATIO:
+                if (double count = ds.counts[rowIdx][colIdx])
+                    return 100.0 * ds.passes[rowIdx][colIdx] / count;
+                return 0.0;
+
+            case CVT_WARNINGS_AVE:
+                return ds.aveWarnings[rowIdx][colIdx];
+
+            case CVT_DURATION_AVE:
+                return ds.aveDuration[rowIdx][colIdx];
+        }
+        ASSERT_not_reachable("invalid chart value type");
+    }
+
+    std::pair<double, double> getDataMinMax(const DataSet &ds, int rowIdx, int colIdx) const {
+        switch (chartValueType_) {
+            case CVT_COUNT:
+                return std::make_pair(ds.minCounts, ds.maxCounts);
+            case CVT_PERCENT:
+            case CVT_PASS_RATIO:
+                if (hasBaseline()) {
+                    return std::make_pair(-100.0, 100.0);
+                } else {
+                    return std::make_pair(0.0, 100.0);
+                }
+            case CVT_WARNINGS_AVE:
+                return std::make_pair(ds.minAveWarnings, ds.maxAveWarnings);
+            case CVT_DURATION_AVE:
+                return std::make_pair(ds.minAveDuration, ds.maxAveDuration);
+        }
+        ASSERT_not_reachable("invalid chart value type");
     }
 
     // Update the depMajorValues_ and depMajorIndex_ according to depMajorName_
@@ -1098,6 +1262,7 @@ public:
             setPlotAreaPadding(bottomAxisHeight, Wt::Bottom);
             setPlotAreaPadding(leftAxisWidth, Wt::Left);
 
+            axis(Wt::Chart::YAxis).setMinimum(0);
             switch (model_->chartValueType()) {
                 case CVT_COUNT:
                 case CVT_PASS_RATIO:
@@ -1114,7 +1279,27 @@ public:
             setPlotAreaPadding(0, Wt::Top);
             setPlotAreaPadding(20 + 2.65 * maxMajorValueLength, Wt::Bottom);
             setPlotAreaPadding(40, Wt::Left);
-            axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
+            switch (model_->chartValueType()) {
+                case CVT_COUNT:
+                case CVT_WARNINGS_AVE:
+                case CVT_DURATION_AVE:
+                    if (model_->hasBaseline()) {
+                        axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MinimumValue | Wt::Chart::MaximumValue);
+                    } else {
+                        axis(Wt::Chart::YAxis).setMinimum(0);
+                        axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
+                    }
+                    break;
+                case CVT_PERCENT:
+                case CVT_PASS_RATIO:
+                    if (model_->hasBaseline()) {
+                        axis(Wt::Chart::YAxis).setMinimum(-100);
+                    } else {
+                        axis(Wt::Chart::YAxis).setMinimum(0);
+                    }
+                    axis(Wt::Chart::YAxis).setMaximum(100);
+                    break;
+            }
         }
     }
 
@@ -1224,6 +1409,7 @@ class WResultsConstraintsTab: public Wt::WContainerWidget {
     Wt::WComboBox *majorAxisChoices_, *minorAxisChoices_;
     Wt::WComboBox *chartChoice_;
     Wt::WComboBox *absoluteRelative_;                   // whether to show percents or counts
+    WComboBoxWithData<ComboBoxVersion> *chartBaselineChoices_;
 
 public:
     explicit WResultsConstraintsTab(Wt::WContainerWidget *parent = NULL)
@@ -1295,7 +1481,7 @@ public:
         chartSettingsBox->addWidget(minorAxisChoices_);
 
         // Combo box to choose which chart to show.
-        chartSettingsBox->addWidget(new Wt::WLabel("Chart type:"));
+        chartSettingsBox->addWidget(new Wt::WLabel("&nbsp;Chart type:"));
         chartSettingsBox->addWidget(chartChoice_ = new Wt::WComboBox);
         chartChoice_->addItem("bars");
         chartChoice_->addItem("lines");
@@ -1312,6 +1498,13 @@ public:
         absoluteRelative_->addItem("ave duration (sec)");
         absoluteRelative_->setCurrentIndex(1);
         absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
+
+        // Combo box to choose a baseline
+        chartBaselineChoices_ = new WComboBoxWithData<ComboBoxVersion>;
+        chartBaselineChoices_->addItem("None");
+        fillVersionComboBox(chartBaselineChoices_);
+        chartSettingsBox->addWidget(new Wt::WLabel("&nbsp;Baseline:"));
+        chartSettingsBox->addWidget(chartBaselineChoices_);
 
         // Update button to reload data from the database
         Wt::WPushButton *updateButton = new Wt::WPushButton("Update");
@@ -1342,6 +1535,7 @@ public:
         //---------
         majorAxisChoices_->activated().connect(this, &WResultsConstraintsTab::updateStatusCounts);
         minorAxisChoices_->activated().connect(this, &WResultsConstraintsTab::updateStatusCounts);
+        chartBaselineChoices_->activated().connect(this, &WResultsConstraintsTab::switchBaselineVersion);
         updateStatusCounts();
     }
 
@@ -1385,6 +1579,14 @@ private:
         chartModel_->updateModel(constraints_->dependencies());
 
         tableModel_->setChartValueType(cvt);
+        tableModel_->updateModel(constraints_->dependencies());
+    }
+
+    void switchBaselineVersion(int idx) {
+        chartModel_->setBaselineVersion(chartBaselineChoices_->currentData().version);
+        chartModel_->updateModel(constraints_->dependencies());
+
+        tableModel_->setBaselineVersion(chartBaselineChoices_->currentData().version);
         tableModel_->updateModel(constraints_->dependencies());
     }
 };
@@ -2107,23 +2309,6 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Tab to help select a working ROSE configuration
 
-// Extra data attached to combo boxes that show ROSE version information
-struct RoseComboBoxData {
-    std::string roseVersion;                            // full-length rose version that appears in the database
-    std::string roseDate;                               // human readable version date
-
-    RoseComboBoxData() {}
-
-    RoseComboBoxData(const std::string &v, unsigned long date)
-        : roseVersion(v), roseDate(humanLocalTime(date, HUMAN_TERSE)) {}
-
-    std::string display() const {
-        if (roseDate.empty())
-            return "";
-        return "created " + roseDate;
-    }
-};
-
 // Extra data attached to combo boxes that show configuration values
 struct WorkingConfig {
     size_t nPass;
@@ -2140,7 +2325,7 @@ class WFindWorkingConfig: public Wt::WContainerWidget {
     Dependencies deps_;                                 // dependencies that might be constrained
     bool suppressCountUpdates_;                         // skip updating counts
 
-    WComboBoxWithData<RoseComboBoxData> *wVersions_;
+    WComboBoxWithData<ComboBoxVersion> *wVersions_;
     Wt::WTable *wTable_;
     Wt::WText *wSummary_;
 
@@ -2167,18 +2352,10 @@ public:
         // (short SHA1) and the full version number used in the SQL query is stored in the attached data.
         std::string penultimateVersion = findRoseVersion();
         addWidget(new Wt::WText("ROSE version "));
-        addWidget(wVersions_ = new WComboBoxWithData<RoseComboBoxData>);
-        SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct rose, rose_date"
-                                                           " from test_results"
-                                                           " order by rose_date");
-        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-            std::string fullVersion = row.get<std::string>(0);
-            std::string humanVersion = humanSha1(fullVersion, HUMAN_TERSE);
-            unsigned long date = row.get<unsigned long>(1);
-            wVersions_->addItem(humanVersion, RoseComboBoxData(fullVersion, date));
-            if (fullVersion == penultimateVersion)
-                wVersions_->setCurrentIndex(wVersions_->count()-1);
-        }
+        addWidget(wVersions_ = new WComboBoxWithData<ComboBoxVersion>);
+        int idx = fillVersionComboBox(wVersions_, penultimateVersion);
+        if (idx >= 0)
+            wVersions_->setCurrentIndex(idx);
         wVersions_->activated().connect(this, &WFindWorkingConfig::selectNewVersion);
 
         addWidget(new Wt::WText("<p>Choose your configuration:</p>"));
@@ -2322,7 +2499,7 @@ public:
 
 private:
     void selectNewVersion(int idx) {
-        setRoseVersion(wVersions_->currentData().roseVersion);
+        setRoseVersion(wVersions_->currentData().version);
     }
 };
 

@@ -55,7 +55,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                "word whose meaning is understood by the test designers and users.}"
                "@named{tester}{The entity that performed the testing, such as a Jenkins node name.}");
     parser.doc("Output",
-               "Emits the new test ID to standard output on success.")
+               "Emits the new test ID to standard output on success.");
 
     SwitchGroup sg("Tool-specific switches");
 
