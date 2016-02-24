@@ -100,6 +100,7 @@ cat_edg_dependencies() {
 	    echo "$myname: cannot read generated EDG dependency: $f" >&2
 	    exit 1
 	fi
+	grep -v '#line' "$f"
     done
 }
 
