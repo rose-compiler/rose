@@ -22,8 +22,8 @@ if test -e "$GIT_DIR"; then
   fi
 else
   if test -e "$VERSION_FILE"; then
-      GIT_HEAD_HASH="$(cat "$VERSION_FILE" | awk '{print [$][1]}')"
-      GIT_HEAD_DATE="$(cat "$VERSION_FILE" | awk '{print [$][2]}')"
+      GIT_HEAD_HASH="$(head -n1 "$VERSION_FILE" | cut -d' ' -f1)
+      GIT_HEAD_DATE="$(head -n1 "$VERSION_FILE" | cut -d' ' -f2)
   else
       AC_MSG_FAILURE([$VERSION_FILE file does not exist])
   fi
