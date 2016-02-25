@@ -27,7 +27,7 @@
 // using namespace std;
 
 // class GrammarTreeNode;   // forward declaration
-class Terminal;
+class AstNodeClass;
 
 class GrammarString
 {
@@ -79,7 +79,7 @@ class GrammarString
   GrammarString & operator= ( const GrammarString & X );
 
   void setVirtual ( const bool & X );
-  virtual std::string getFunctionNameString ( Terminal & node );
+  virtual std::string getFunctionNameString ( AstNodeClass & node );
 
   std::string getConstructorPrototypeParameterString();
   std::string getConstructorSourceParameterString();
@@ -102,7 +102,7 @@ class GrammarString
   friend bool operator== ( const GrammarString & X, const GrammarString & Y );
   // char* getFunctionNameStringTestAgainstExclusions ( GrammarTreeNode & node );
   std::string getFunctionNameStringTestAgainstExclusions 
-    ( Terminal & node,
+    ( AstNodeClass & node,
       std::vector<GrammarString *> &,
       std::vector<GrammarString *> & excludeList );
 
@@ -116,8 +116,8 @@ class GrammarString
 // DQ (10/8/2014): This returns the name of the type where this data member is a container.
 // The container type is required as part of ATerm support in reading the ATerms and generating
 // the ROSE IR.
-  std::string containerElementTypeString(Terminal & node) const;
-  std::string containerAppendFunctionNameString(Terminal & node) const;
+  std::string containerElementTypeString(AstNodeClass & node) const;
+  std::string containerAppendFunctionNameString(AstNodeClass & node) const;
 
   void setIsInConstructorParameterList(ConstructParamEnum X);
   ConstructParamEnum getIsInConstructorParameterList() const;
