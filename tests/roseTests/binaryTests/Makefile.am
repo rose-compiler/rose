@@ -373,6 +373,19 @@ TEST_TARGETS += cory007.passed
 cory007.passed: $(TEST_EXIT_STATUS) cory007
 	@$(RTH_RUN) CMD="./cory007" $< $@
 
+# Test and demonstrate binary attributes
+noinst_PROGRAMS += cory008
+cory008_SOURCES = cory008.C
+cory008_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory008.passed
+EXTRA_DIST += cory008.ans
+cory008.passed: $(TEST_WITH_ANSWER) cory008 cory008.ans
+	@$(RTH_RUN)								\
+		TITLE="base objects in SgAsmIntegerValueExpression [$@]"	\
+		CMD="./cory008 $(top_srcdir)/binaries/samples/i386-nologin"	\
+		ANS=$(srcdir)/cory008.ans					\
+		$< $@
+
 # Test symbolic semantics memory read-after-write
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C

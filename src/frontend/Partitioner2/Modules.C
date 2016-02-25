@@ -888,7 +888,15 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
                    const SgAsmGenericSectionPtrList &mappedSections)
             : insnIndex(insnIndex), bblockIndex(bblockIndex), funcIndex(funcIndex), mappedSections(mappedSections) {}
         void visit(SgNode *node) {
-            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+            std::vector<SgAsmIntegerValueExpression*> ivals;
+            if (SgAsmBlock *blk = isSgAsmBlock(node)) {
+                // SgAsmBlock::p_successors is not traversed due to limitations of ROSETTA, so traverse explicitly.
+                ivals = blk->get_successors();
+            } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+                ivals.push_back(ival);
+            }
+
+            BOOST_FOREACH (SgAsmIntegerValueExpression *ival, ivals) {
                 if (ival->get_baseNode()==NULL) {
                     rose_addr_t va = ival->get_absoluteValue();
                     SgAsmNode *base = NULL;
