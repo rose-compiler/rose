@@ -1,7 +1,7 @@
 
 #include "grammar.h"
 #include "ROSETTA_macros.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 
 #if 0
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
@@ -394,7 +394,7 @@ Grammar::setUpStatements ()
   // NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT", true );
      NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn | TemplateClassDefinition, "ClassDefinition",  "CLASS_DEFN_STMT", true );
 
-  // DQ (6/10/2011): Changed this to be a non-terminal and added TemplateFunctionDefinition
+  // DQ (6/10/2011): Changed this to be a non-AstNodeClass and added TemplateFunctionDefinition
      NEW_NONTERMINAL_MACRO (FunctionDefinition, TemplateFunctionDefinition, "FunctionDefinition",  "FUNC_DEFN_STMT", true );
 
   // Note that the associate statement is really a scope, with its own declarations of variables declared by reference to 
@@ -407,7 +407,7 @@ Grammar::setUpStatements ()
           FunctionParameterScope /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
 
-  // DQ (3/22/2004): Added to support template member functions (removed MemberFunctionDeclaration as terminal)
+  // DQ (3/22/2004): Added to support template member functions (removed MemberFunctionDeclaration as AstNodeClass)
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): New design...
      NEW_NONTERMINAL_MACRO (MemberFunctionDeclaration, TemplateMemberFunctionDeclaration | TemplateInstantiationMemberFunctionDecl,"MemberFunctionDeclaration","MFUNC_DECL_STMT", true);
@@ -975,14 +975,14 @@ Grammar::setUpStatements ()
   // In the case where these are X terminals/nonterminals the data members should be X versions of these.
   // It is difficult for it to be either the X or non_X version since these are different types.
   // There are three cases to consider:
-  //   1) Data member is an X version (matching Xness of the outer terminal)
+  //   1) Data member is an X version (matching Xness of the outer AstNodeClass)
   //           Implementation proceedure: build X version
-  //   2) Data member is a non X version (not matching the Xness of the outer terminal)
+  //   2) Data member is a non X version (not matching the Xness of the outer AstNodeClass)
   //           Implementation proceedure: build non X version
-  //   3) Data member can be the X OR non X version (independent of the Xness of the outer terminal)
+  //   3) Data member can be the X OR non X version (independent of the Xness of the outer AstNodeClass)
   //           Implementation proceedure: build X and non X versions?
 
-  // In this case we want the Xness of the data member to match that of the outer terminal
+  // In this case we want the Xness of the data member to match that of the outer AstNodeClass
      FunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type", "= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -3682,7 +3682,7 @@ Grammar::setUpStatements ()
   // within the root grammar (the C+ grammar)).
      if (isRootGrammar() == false)
         {
-       // Use the specialized unparse function for this terminal
+       // Use the specialized unparse function for this AstNodeClass
           Global.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
           Global.setFunctionSource     ( "SOURCE_GLOBAL_STATEMENT_PARSER", "../Grammar/Statement.code" );
         }
@@ -3720,7 +3720,7 @@ Grammar::setUpStatements ()
   // within the root grammar (the C+ grammar)).
      if (isRootGrammar() == false)
         {
-       // Use the specialized unparse function for this terminal
+       // Use the specialized unparse function for this AstNodeClass
           FunctionDeclaration.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
           FunctionDeclaration.setFunctionSource     ( "SOURCE_FUNCTION_DECLARATION_STATEMENT_PARSER", "../Grammar/Statement.code" );
         }
@@ -3733,7 +3733,7 @@ Grammar::setUpStatements ()
   // within the root grammar (the C+ grammar)).
      if (isRootGrammar() == false)
         {
-       // Use the specialized unparse function for this terminal
+       // Use the specialized unparse function for this AstNodeClass
           FunctionDefinition.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
           FunctionDefinition.setFunctionSource     ( "SOURCE_FUNCTION_DEFINTION_STATEMENT_PARSER", "../Grammar/Statement.code" );
         }
@@ -4036,7 +4036,7 @@ Grammar::setUpStatements ()
      FortranIncludeLine.setFunctionSource               ( "SOURCE_FORTRAN_INCLUDE_LINE", "../Grammar/Statement.code" );
 
 #if USE_OMP_IR_NODES     
-     // define members for each terminal/non-terminal
+     // define members for each AstNodeClass/non-AstNodeClass
      //------------------------------------------------------------
     // every statement needs post_construction_initialization(){} but why ???
 

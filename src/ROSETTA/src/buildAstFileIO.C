@@ -5,7 +5,7 @@
 //#include "sage3basic.h"
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 #include "grammarString.h"
 #include <sstream>
 #include <algorithm>
@@ -53,13 +53,13 @@ Grammar::generateAST_FILE_IOFiles()
  * the class AST_FILE_IO, that resets all static data of the memory pools to 
  * 0, NULL and/or deletes the data and lists behind.
  */
-std::string Terminal::buildStaticDataMemberListDeleteStaticData()
+std::string AstNodeClass::buildStaticDataMemberListDeleteStaticData()
    {
      std::string s;
      std::string classNameString = this->name;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -103,13 +103,13 @@ std::string Terminal::buildStaticDataMemberListDeleteStaticData()
  * for its static data by the method above!
  */
 std::string
-Grammar::buildStaticDataMemberListDeleteStaticDataSource(Terminal & node)
+Grammar::buildStaticDataMemberListDeleteStaticDataSource(AstNodeClass & node)
    {
      std::string classMembers = node.buildStaticDataMemberListDeleteStaticData();
      string temp = classMembers;
      classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
 
-     vector<Terminal *>::const_iterator treeListIterator;
+     vector<AstNodeClass *>::const_iterator treeListIterator;
      for( treeListIterator = node.subclasses.begin();
           treeListIterator != node.subclasses.end();
           treeListIterator++ )

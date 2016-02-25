@@ -2,7 +2,7 @@
 #define __ROSETTAMACROS_H__
 
 // MK: These header files contains macro definitions to be used
-// by the setDataPrototype() member function of class Terminal
+// by the setDataPrototype() member function of class AstNodeClass
 
 // define HL_GRAMMARS if you want all rules added (experimental) to allow X/Non_X-rules to be
 // added to the abstract C++ grammar.
@@ -64,14 +64,14 @@
 // it will not go out of scope, but we want a reference to the object instead of
 // a pointer to the object to preserve the interface with existing code!
 #define NEW_TERMINAL_MACRO(TERMINAL_NAME,TERMINAL_NAME_STRING,TAG_NAME_STRING)                \
-     Terminal & TERMINAL_NAME = terminalConstructor (TERMINAL_NAME_STRING, *this,             \
+     AstNodeClass & TERMINAL_NAME = terminalConstructor (TERMINAL_NAME_STRING, *this,             \
                                                      TERMINAL_NAME_STRING, TAG_NAME_STRING ); \
      ROSE_ASSERT (TERMINAL_NAME.associatedGrammar != NULL);
 
 
 // A new nonterminal should not be born a parent of any child
 #define NEW_NONTERMINAL_MACRO(NONTERMINAL_NAME, NONTERMINAL_EXPRESSION, NONTERMINAL_NAME_STRING, NONTERMINAL_TAG_STRING, NONTERMINAL_CAN_HAVE_INSTANCES) \
-     Terminal & NONTERMINAL_NAME = nonTerminalConstructor ( NONTERMINAL_NAME_STRING, *this, NONTERMINAL_NAME_STRING, NONTERMINAL_TAG_STRING, (SubclassListBuilder() | NONTERMINAL_EXPRESSION), NONTERMINAL_CAN_HAVE_INSTANCES ); \
+     AstNodeClass & NONTERMINAL_NAME = nonTerminalConstructor ( NONTERMINAL_NAME_STRING, *this, NONTERMINAL_NAME_STRING, NONTERMINAL_TAG_STRING, (SubclassListBuilder() | NONTERMINAL_EXPRESSION), NONTERMINAL_CAN_HAVE_INSTANCES ); \
      ROSE_ASSERT (NONTERMINAL_NAME.associatedGrammar != NULL);
      // /*printf ("%s ---> ",NONTERMINAL_NAME_STRING);*/ NONTERMINAL_NAME.show(); //printf ("\n"); //MS
 

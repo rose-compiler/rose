@@ -22,13 +22,13 @@ by the specification of new terminals.
 for example adds an X statement to the existing grammar.
 
 Example of new statement:
-     Terminal & loopStatement = ForStatement | WhileStatement | DoWhileStatement;
+     AstNodeClass & loopStatement = ForStatement | WhileStatement | DoWhileStatement;
      X_Grammar.addTerminal(loopStatement);
 
      B. The addition of a new expression to an existing grammar is more interesting.
 
 Example of new expression:
-     Terminal & functionExpression = ForStatement | WhileStatement | DoWhileStatement;
+     AstNodeClass & functionExpression = ForStatement | WhileStatement | DoWhileStatement;
      X_Grammar.addTerminal(functionExpression);
 
      An consequence is that the addition of a new expression element
@@ -63,7 +63,7 @@ Example of adding a new type to a grammar (expansion):
   // In the tree heirarchy the new terminal is DERIVED from the parent (thus the doubleArrayType
   // is derived from the ClassType.  This makes sense because the doubleArrayType is a 
   // "specialization" of the X_ClassType terminal).
-     Terminal & doubleArrayType = X_Grammar.getTerminal("ClassType").copy("doubleArrayType","DOUBLE_ARRAY_TYPE_TAG");
+     AstNodeClass & doubleArrayType = X_Grammar.getTerminal("ClassType").copy("doubleArrayType","DOUBLE_ARRAY_TYPE_TAG");
 
   // Build a constraint (using the SAGE interface) and add it to the new terminal.
      char* constraintString = "isSgClassDeclaration() && isSgClassDeclaration()->getName() == \"doubleArray\"";

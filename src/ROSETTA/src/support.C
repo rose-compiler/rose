@@ -5,7 +5,7 @@
 #include "grammar.h"
 
 #include "ROSETTA_macros.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 //#include "OmpAttribute.h"
 
 // What should be the behavior of the default constructor for Grammar
@@ -28,8 +28,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (SymbolTable, "SymbolTable", "SymbolTableTag" );
 
      NEW_TERMINAL_MACRO (Pragma, "Pragma", "PragmaTag" );
-  // Grammar::Terminal  Attribute( "Attribute", sageGrammar, "Attribute" );
-  // Grammar::Terminal  BitAttribute( "BitAttribute", sageGrammar, "BitAttribute" );
+  // Grammar::AstNodeClass  Attribute( "Attribute", sageGrammar, "Attribute" );
+  // Grammar::AstNodeClass  BitAttribute( "BitAttribute", sageGrammar, "BitAttribute" );
 
 #if 0
   // const_volatile specifiers (const, volatile)
@@ -130,8 +130,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (TemplateArgumentList, "TemplateArgumentList", "TemplateArgumentListTag" );
 
   // We don't use these yet, though we might in the future!
-  // Grammar::Terminal  ApplyFunction( "ApplyFunction", sageGrammar, "ApplyFunction" );
-  // Grammar::Terminal  printFunction( "printFunction", sageGrammar, "printFunction" );
+  // Grammar::AstNodeClass  ApplyFunction( "ApplyFunction", sageGrammar, "ApplyFunction" );
+  // Grammar::AstNodeClass  printFunction( "printFunction", sageGrammar, "printFunction" );
 
      NEW_NONTERMINAL_MACRO (BitAttribute, FuncDecl_attr | ClassDecl_attr /* | TemplateInstDecl_attr */,"BitAttribute","BitAttributeTag", false);
 
@@ -379,7 +379,7 @@ Grammar::setUpSupport ()
 
      File_Info.setFunctionPrototype           ( "HEADER_FILE_INFORMATION", "../Grammar/Support.code");
 
-  // Skip building a parse function for this terminal/nonterminal of the Grammar
+  // Skip building a parse function for this AstNodeClass/nonterminal of the Grammar
      if (isRootGrammar() == false)
         {
           Attribute.excludeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code" );

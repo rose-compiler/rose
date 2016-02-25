@@ -1,7 +1,7 @@
 #include "rose_config.h"
 
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 #include "grammarString.h"
 #include <sstream>
 #include <fstream>
@@ -18,7 +18,7 @@ string replaceString(string patternInInput, string replacePattern, string input)
 
 
 /**********************************
- * Terminal/Nonterminal functions *
+ * AstNodeClass/Nonterminal functions *
  **********************************/
 
 #if 0
@@ -42,7 +42,7 @@ Grammar::isNonTerminal ( const string& nonTerminalName ) const {
 using namespace std;
 
 Grammar::GrammarSynthesizedAttribute 
-Grammar::CreateGrammarDotString(Terminal* grammarnode,
+Grammar::CreateGrammarDotString(AstNodeClass* grammarnode,
                   vector<GrammarSynthesizedAttribute> v) {
   GrammarSynthesizedAttribute saDot;
   string s;
@@ -62,11 +62,11 @@ Grammar::CreateGrammarDotString(Terminal* grammarnode,
           +" [label=\""+(*stringListIterator)->getVariableNameString()+"\"];\n";
       }
     }
-    // approximation: if the node has at least one successor that is a non-terminal then
+    // approximation: if the node has at least one successor that is a non-AstNodeClass then
     //                create successor information
     // unfortunately GrammarString does not contain this information
     bool createSuccessorInfo=false;
-    for(vector<Terminal *>::iterator succiter=grammarnode->subclasses.begin();
+    for(vector<AstNodeClass *>::iterator succiter=grammarnode->subclasses.begin();
         succiter!=grammarnode->subclasses.end();
         succiter++) {
       if((*succiter)->isInnerNode())
@@ -91,7 +91,7 @@ Grammar::CreateGrammarDotString(Terminal* grammarnode,
 }
 
 bool 
-Grammar::isAbstractTreeGrammarSymbol(Terminal* t) {
+Grammar::isAbstractTreeGrammarSymbol(AstNodeClass* t) {
   return t->getCanHaveInstances();
 }
 
@@ -127,7 +127,7 @@ Grammar::isAbstractTreeGrammarSymbol(string s) {
 // MS: 2003
 // MS: We compute the set of traversed terminals to restrict the abstract grammar to traversed nodes only.
 Grammar::GrammarSynthesizedAttribute
-Grammar::CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode,
+Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode,
                                                  vector<Grammar::GrammarSynthesizedAttribute> v) {
   if(grammarnode->isLeafNode()) {
     vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
@@ -145,7 +145,7 @@ Grammar::CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode,
 
 // MS: 2003
 string
-Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, string grammarSymListOpPrefix, string grammarSymListOpPostfix) {
+Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, AstNodeClass* grammarnode, string grammarSymListOpPrefix, string grammarSymListOpPostfix) {
   string type=typeStringOfGrammarString(gs);
   
   type = replaceString("$CLASSNAME",grammarnode->name,type);
@@ -186,13 +186,13 @@ Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* gramma
 /* infos:
    
    std::vector<GrammarString *> memberDataPrototypeList[2][2];
-   terminal->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+   AstNodeClass->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
    
 */
 
 // MS: 2002, 2003, 2014
 Grammar::GrammarSynthesizedAttribute 
-Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
+Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
                                          vector<GrammarSynthesizedAttribute> v) {
   //cout << "Creating grammar latex string:" << endl;
   GrammarSynthesizedAttribute saLatex;
@@ -257,7 +257,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
           */
         if(generateSDFTreeGrammar) {
           rhsTerminalSuccessors+=type; //+":"+varName;
-          // grammar->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          // grammar->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           //string dataMembers=grammarnode->outputFields ();
         } else {
           rhsTerminalSuccessors+=varName+":"+type;
@@ -281,7 +281,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
       }
     }
         
-    // assert: s2=="" means that no members are traversed of this terminal 'grammarnode'
+    // assert: s2=="" means that no members are traversed of this AstNodeClass 'grammarnode'
     /*
       for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
       stringListIterator != includeList.end(); // ", " only between the elements of the list
@@ -337,7 +337,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
         } else {
           grammarRule+=string(grammarnode->getName()) + " -> " + (*viter).nodetext+"\n";
           if(!isAbstractTreeGrammarSymbol(grammarnode)) {
-            grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"// non-terminal rule 2\n";
+            grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"// non-AstNodeClass rule 2\n";
           }
         }
       } else {
@@ -369,16 +369,16 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
     saLatex.problematicnodes+=string(grammarnode->getName())+"\n";
   
   // ------------------------------------------------------------
-  // create terminal and nonterminal (and problematic node) lists 
+  // create AstNodeClass and nonterminal (and problematic node) lists 
   // ------------------------------------------------------------
 
-  // create terminal or non-terminal entry
+  // create AstNodeClass or non-AstNodeClass entry
   if(grammarnode->isLeafNode()) {
     saLatex.terminalsbunch+=string(grammarnode->getName())+"\n";
   } else {
     saLatex.nonterminalsbunch+=string(grammarnode->getName())+"\n";
   }
-  // union non-terminal, terminal, and problematic nodes data of subtree nodes
+  // union non-AstNodeClass, AstNodeClass, and problematic nodes data of subtree nodes
   for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
     // union subtrees
     saLatex.nonterminalsbunch+=(*viter).nonterminalsbunch;
@@ -388,7 +388,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
   return saLatex;
 }
 
-void Grammar::buildGrammarDotFile(Terminal* rootNode, ostream& GrammarDotFile) {
+void Grammar::buildGrammarDotFile(AstNodeClass* rootNode, ostream& GrammarDotFile) {
   GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateGrammarDotString);
   GrammarDotFile << "digraph G {\n";
   GrammarDotFile << a.text;
@@ -396,7 +396,7 @@ void Grammar::buildGrammarDotFile(Terminal* rootNode, ostream& GrammarDotFile) {
 }
 
 // MS:2002,2014
-void Grammar::buildAbstractTreeGrammarFile(Terminal* rootNode, ostream& AbstractTreeGrammarFile) {
+void Grammar::buildAbstractTreeGrammarFile(AstNodeClass* rootNode, ostream& AbstractTreeGrammarFile) {
   generateSDFTreeGrammar=false;
   GrammarSynthesizedAttribute dummy=BottomUpProcessing(rootNode, &Grammar::CreateMinimalTraversedGrammarSymbolsSet);
   GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateAbstractTreeGrammarString);
@@ -410,7 +410,7 @@ void Grammar::buildAbstractTreeGrammarFile(Terminal* rootNode, ostream& Abstract
 }
 
 // MS:2014
-void Grammar::buildSDFTreeGrammarFile(Terminal* rootNode, ostream& SDFTreeGrammarFile) {
+void Grammar::buildSDFTreeGrammarFile(AstNodeClass* rootNode, ostream& SDFTreeGrammarFile) {
   generateSDFTreeGrammar=true;
   GrammarSynthesizedAttribute dummy=BottomUpProcessing(rootNode, &Grammar::CreateMinimalTraversedGrammarSymbolsSet);
   GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateAbstractTreeGrammarString);
