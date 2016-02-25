@@ -340,6 +340,29 @@ Engine::partitionerSwitches() {
                    "table.  If a single address is specified, then the length of the table is architecture dependent, "
                    "otherwise the entire table is read."));
 
+    sg.insert(Switch("name-constants")
+              .intrinsicValue(true, settings_.partitioner.namingConstants)
+              .doc("Scans the instructions and gives labels to constants that refer to entities that have that address "
+                   "and also have a name.  For instance, if a constant refers to the beginning of a file section then "
+                   "the constant will be labeled so it has the same name as the section.  The @s{no-name-constants} "
+                   "turns this feature off. The default is to " + std::string(settings_.partitioner.namingConstants?"":"not ") +
+                   "do this step."));
+    sg.insert(Switch("no-name-constants")
+              .key("name-constants")
+              .intrinsicValue(false, settings_.partitioner.namingConstants)
+              .hidden(true));
+
+    sg.insert(Switch("name-strings")
+              .intrinsicValue(true, settings_.partitioner.namingStrings)
+              .doc("Scans the instructions and gives labels to constants that refer to the beginning of string literals. "
+                   "The label is usually the first few characters of the string.  The @s{no-name-strings} turns this "
+                   "feature off. The default is to " + std::string(settings_.partitioner.namingStrings?"":"not ") +
+                   "do this step."));
+    sg.insert(Switch("no-name-strings")
+              .key("name-strings")
+              .intrinsicValue(false, settings_.partitioner.namingStrings)
+              .hidden(true));
+
     sg.insert(Switch("post-analysis")
               .intrinsicValue(true, settings_.partitioner.doingPostAnalysis)
               .doc("Run all enabled post-partitioning analysis functions.  For instance, calculate stack deltas for each "
@@ -352,6 +375,19 @@ Engine::partitionerSwitches() {
     sg.insert(Switch("no-post-analysis")
               .key("post-analysis")
               .intrinsicValue(false, settings_.partitioner.doingPostAnalysis)
+              .hidden(true));
+
+    sg.insert(Switch("post-function-noop")
+              .intrinsicValue(true, settings_.partitioner.doingPostFunctionNoop)
+              .doc("Run a function no-op analysis for each function if post-partitioning analysis is enabled with the "
+                   "@s{post-analysis} switch. This analysis tries to determine whether each function is effectively a no-op. "
+                   "Functions that are no-ops are given names (if they don't already have one) that's indicative of "
+                   "being a no-op. The @s{no-post-function-noop} switch disables this analysis. The default is that "
+                   "this analysis is " +
+                   std::string(settings_.partitioner.doingPostFunctionNoop?"enable":"disable") + "."));
+    sg.insert(Switch("no-post-function-noop")
+              .key("post-function-noop")
+              .intrinsicValue(false, settings_.partitioner.doingPostFunctionNoop)
               .hidden(true));
 
     sg.insert(Switch("post-may-return")
@@ -976,9 +1012,10 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
 
     if (interp_)
         ModulesPe::nameImportThunks(partitioner, interp_);
-    Modules::nameConstants(partitioner);
-    Modules::nameStrings(partitioner);
-    Modules::nameNoopFunctions(partitioner);
+    if (settings_.partitioner.namingConstants)
+        Modules::nameConstants(partitioner);
+    if (settings_.partitioner.namingStrings)
+        Modules::nameStrings(partitioner);
 }
 
 void
@@ -1456,6 +1493,12 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
     Sawyer::Stopwatch timer;
     info <<"post partition analysis";
     std::string separator = ": ";
+
+    if (settings_.partitioner.doingPostFunctionNoop) {
+        info <<separator <<"func-no-op";
+        separator = ", ";
+        Modules::nameNoopFunctions(partitioner);
+    }
 
     if (settings_.partitioner.doingPostFunctionMayReturn) {
         info <<separator <<"may-return";
