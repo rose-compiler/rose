@@ -1456,7 +1456,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
         {
           if (di.rows()>0 && di.cols()>0)
           {
-            int dist = abs((di.Entry(0,0)).GetAlign());
+            int dist = abs((di.Entry(0,0)).getMinAlign());
             if (dist < dep_dist)
               dep_dist = dist;
           }
