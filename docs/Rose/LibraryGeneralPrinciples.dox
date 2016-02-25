@@ -1,0 +1,5 @@
+//-*- c++ -*-
+
+/** @defgroup library_general_principles Library general principles
+ *
+ *  This group contains information about the ROSE library API in general. */

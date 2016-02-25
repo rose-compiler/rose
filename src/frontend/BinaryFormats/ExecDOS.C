@@ -294,7 +294,7 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u (zero implies not used)\n",p, w, "e_cksum",          p_e_cksum);
     fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_ip",                 p_e_ip, p_e_ip);
     fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_cs",                 p_e_cs, p_e_cs);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_relocs_offset",  p_e_relocs_offset, p_e_relocs_offset);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "e_relocs_offset",  p_e_relocs_offset, p_e_relocs_offset);
     fprintf(f, "%s%-*s = %u\n",                    p, w, "e_overlay",            p_e_overlay);
     fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_res1",               p_e_res1, p_e_res1);
     if (p_relocs) {
@@ -402,7 +402,7 @@ SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res4",     p_e_res4, p_e_res4);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res5",     p_e_res5, p_e_res5);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res6",     p_e_res6, p_e_res6);
-    fprintf(f, "%s%-*s = %"PRIu64" byte offset (0x%"PRIx64")\n",  p, w, "e_lfanew",   p_e_lfanew,p_e_lfanew);
+    fprintf(f, "%s%-*s = %" PRIu64 " byte offset (0x%" PRIx64 ")\n",  p, w, "e_lfanew",   p_e_lfanew,p_e_lfanew);
 
     if (variantT() == V_SgAsmDOSExtendedHeader) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
