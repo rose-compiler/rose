@@ -2942,7 +2942,11 @@ CreateUnaryOP( OperatorEnum op, const AstNodePtr& _a0)
    case UOP_MINUS: 
      result = new SgMinusOp( GetFileInfo(), e, e->get_type());
      break;
+   case UOP_CAST:
+     result = new SgCastExp( GetFileInfo(), e, e->get_type());
+     break;
    default:
+     std::cerr << "unexpected uop:" << op << "\n";
      assert(false);
   }
   e->set_parent(result);
