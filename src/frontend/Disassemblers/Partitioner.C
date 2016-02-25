@@ -1147,7 +1147,7 @@ Partitioner::mark_ipd_configuration()
              * registers, loading the successor program, pushing some arguments onto the program's stack, interpreting the
              * program, extracting return values from memory, and unloading the program. */
             char block_name_str[64];
-            sprintf(block_name_str, "B%08"PRIx64, va);
+            sprintf(block_name_str, "B%08" PRIx64, va);
             std::string block_name = block_name_str;
             mlog[DEBUG] << "running successors program for " <<block_name_str <<"\n";
 

@@ -196,7 +196,8 @@ public:
     finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
 
     virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    readRegister(const RegisterDescriptor &reg,
+                 const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
     virtual void
     writeRegister(const RegisterDescriptor &reg,

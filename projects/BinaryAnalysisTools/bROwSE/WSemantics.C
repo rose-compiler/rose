@@ -110,7 +110,7 @@ public:
 
                     // Stack pointer at the very start of this function.
                     const RegisterDescriptor SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
-                    SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops.get());
+                    SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
                     const RegisterDescriptor SS = ctx_.partitioner.instructionProvider().stackSegmentRegister();
 
                     // Function arguments
@@ -286,7 +286,8 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         
         const RegisterDescriptor &SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
         BaseSemantics::RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
-        BaseSemantics::SValuePtr initialStackPointer = df.initialStates[0]->readRegister(SP, ops.get());
+        BaseSemantics::SValuePtr initialStackPointer =
+            df.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
 
         BOOST_FOREACH (const P2::DataFlow::DfCfg::Vertex &vertex, df.dfCfg.vertices()) {
             if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK && vertex.value().bblock() == bblock) {

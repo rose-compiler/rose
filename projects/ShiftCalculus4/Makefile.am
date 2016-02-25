@@ -7,7 +7,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
 bin_PROGRAMS    = attributeGenerator shiftCalculusCompiler testFunctionCallBack_01 testFunctionCallBack_02 testFunctionCallBack_03 testFunctionCallBack_04
-noinst_PROGRAMS = mpiCodeGenerator 
+
+# DQ (1/26/2016): Commented out since this does not compile any more (API change and only the version in ShiftCalculus2 is supported.
+# noinst_PROGRAMS = mpiCodeGenerator 
 
 # Liao, 9/14/15 C++11 has only been available since G++ 4.3. 
 # In versions pre-G++ 4.7, you'll have to use -std=c++0x, for more recent versions you can use -std=c++11.
@@ -15,10 +17,10 @@ noinst_PROGRAMS = mpiCodeGenerator
 CXX11FLAG = -std=c++11
 
 CPPFLAGS += $(CXX11FLAG)
- 
+
 shiftCalculusCompiler_SOURCES = shiftCalculusCompiler.C stencilAndStencilOperatorDetection.C stencilEvaluation.C stencilFiniteStateMachine.C dslSupport.C dslCodeGeneration.C lowLevelCodeGeneration.C
 
-mpiCodeGenerator_SOURCES = mpiCodeGenerator.C mpiCodeGenerator.h
+# mpiCodeGenerator_SOURCES = mpiCodeGenerator.C mpiCodeGenerator.h
 
 attributeGenerator_SOURCES = attributeGenerator.C attributeGenerator.h
 
@@ -27,6 +29,9 @@ testFunctionCallBack_01_SOURCES = testFunctionCallBack_01.C
 testFunctionCallBack_02_SOURCES = testFunctionCallBack_02.C
 testFunctionCallBack_03_SOURCES = testFunctionCallBack_03.C
 testFunctionCallBack_04_SOURCES = testFunctionCallBack_04.C
+
+# Simple example
+# array_SOURCES = array.C
 
 
 include_HEADERS = shiftCalculusCompiler.h stencilAndStencilOperatorDetection.h stencilEvaluation.h stencilFiniteStateMachine.h dslSupport.h dslCodeGeneration.h lowLevelCodeGeneration.h
@@ -180,7 +185,10 @@ mpiTests: rose_test_mpi_v1.cpp
 cudaTests: rose_laplacian_lite_v3.cu rose_laplacian_lite_v3_GPU_collapsed.cu 
 
 demo: test10 cudaTests test10poly test10vector test10MLM
-demo2015: test10 cudaTests test10vector mpiTests
+
+# DQ (1/26/2016): Commented out mpi code generation (only the newr version in ShiftCalculus2 is supported/maintained).
+# demo2015: test10 cudaTests test10vector mpiTests
+demo2015: test10 cudaTests test10vector 
 
 MULTIGRID_INCLUDES = -I$(srcdir)/CODE.v0.2/StencilTools -I$(srcdir)/CODE.v0.2/timer -I$(srcdir)/CODE.v0.2/VisitWriter
 

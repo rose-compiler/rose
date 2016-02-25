@@ -18,7 +18,9 @@
 #else
 #include <windows.h>
 #include "Shlwapi.h"
-#define snprintf _snprintf
+#ifndef snprintf
+//#define snprintf _snprintf
+#endif
 
 #endif
 #include <algorithm>
@@ -575,7 +577,7 @@ StringUtility::toHex2(uint64_t value, size_t nbits, bool show_unsigned_decimal, 
     std::string retval;
     int nnibbles = (nbits+3)/4;
     char buf[64];
-    snprintf(buf, sizeof buf, "0x%0*"PRIx64, nnibbles, value);
+    snprintf(buf, sizeof buf, "0x%0*" PRIx64, nnibbles, value);
     buf[sizeof(buf)-1] = '\0';
     retval = buf;
 

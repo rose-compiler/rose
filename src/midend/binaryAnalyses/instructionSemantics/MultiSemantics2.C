@@ -806,11 +806,11 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg)
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt)
 {
     SValuePtr retval = svalue_empty(reg.get_nbits());
     SUBDOMAINS(sd, ())
-        retval->set_subvalue(sd.idx(), sd->readRegister(reg));
+        retval->set_subvalue(sd.idx(), sd->readRegister(reg, sd(dflt)));
     return retval;
 }
 

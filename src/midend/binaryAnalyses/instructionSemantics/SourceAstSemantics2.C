@@ -467,10 +467,9 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg) {
-    RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());
-    BaseSemantics::SValuePtr retval = substitute(registers->readRegister(reg, this));
-    return retval;
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+    BaseSemantics::SValuePtr retval = Super::readRegister(reg, dflt);
+    return substitute(retval);
 }
 
 void

@@ -990,10 +990,10 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg) 
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) 
 {
     PartialDisableUsedef du(this);
-    BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg);
+    BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg, dflt);
 
     if (currentInstruction()) {
         RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
@@ -1048,17 +1048,25 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     SValuePtr retval;
     InsnSet allDefiners;
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
+    BaseSemantics::MemoryStatePtr currentMem = currentState()->memoryState();
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
-        size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
+        size_t byteOffset = ByteOrder::ORDER_MSB==currentMem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
+
+        // Read the default value from the initial memory state first. We want to use whatever value is in the initial memory
+        // state if the address is not present in the current memory state. As a side effect, if this value is not in the
+        // initial memory it will be added.
+        if (initialState())
+            byte_dflt = initialState()->readMemory(byte_addr, byte_dflt, this, this);
+
+        // Read a byte from the current memory state. Adds the new value as a side effect if necessary.
         SValuePtr byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
         if (0==bytenum) {
             retval = byte_value;
-        } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
+        } else if (ByteOrder::ORDER_MSB==currentMem->get_byteOrder()) {
             retval = SValue::promote(concat(byte_value, retval));
-        } else if (ByteOrder::ORDER_LSB==mem->get_byteOrder()) {
+        } else if (ByteOrder::ORDER_LSB==currentMem->get_byteOrder()) {
             retval = SValue::promote(concat(retval, byte_value));
         } else {
             // See BaseSemantics::MemoryState::set_byteOrder

@@ -1,11 +1,11 @@
 #include <numeric>
 #include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
 
 #include "rose.h"
 
 #include "Utils.h"
 #include "APIDepFinder.h"
+#define foreach BOOST_FOREACH
 
 static const std::string APIDep("APIDep");
 

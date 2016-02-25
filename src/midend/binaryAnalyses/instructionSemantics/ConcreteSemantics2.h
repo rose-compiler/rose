@@ -25,7 +25,7 @@ namespace ConcreteSemantics {
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
+/** Smart-ownership pointer to a concrete semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Formatter for symbolic values. */
@@ -154,7 +154,7 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 //                                      Memory State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryState object.  MemoryState objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a concrete memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Byte-addressable memory.
@@ -293,8 +293,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to concrete RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the ConcreteSemantics domain.

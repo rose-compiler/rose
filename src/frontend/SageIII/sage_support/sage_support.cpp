@@ -462,6 +462,9 @@ findRoseSupportPathFromBuild(const string& buildTreeLocation,
     return installTreePath + "/" + installTreeLocation;
   } else {
     #ifdef _MSC_VER
+  #ifndef CMAKE_INTDIR
+  #define CMAKE_INTDIR ""
+  #endif
     if (buildTreeLocation.compare(0, 3, "lib") == 0 || buildTreeLocation.compare(0, 3, "bin") == 0) {
       return string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/" + buildTreeLocation + "/" + CMAKE_INTDIR;
     }
@@ -3333,13 +3336,18 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
             // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what
             // version of gfortran (as we do for C and C++))
                bool usingGfortran = false;
-               string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+            // string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
                #ifdef USE_CMAKE
                  #ifdef CMAKE_COMPILER_IS_GNUG77
                    usingGfortran = true;
                  #endif
                #else
-                 usingGfortran = (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx");
+              // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+              // Note that this code assumes that if we are using the C/C++ GNU compiler then we are using the GNU Fortran comiler (we need a similar BACKEND_FORTRAN_IS_GNU_COMPILER macro).
+              // usingGfortran = (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx");
+                 #if BACKEND_CXX_IS_GNU_COMPILER
+                    usingGfortran = true;
+                 #endif
                #endif
 
                if (usingGfortran)
@@ -3361,6 +3369,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                   }
                  else
                   {
+                    string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
                     printf ("Currently only the GNU compiler backend is supported (gfortran) backendCompilerSystem = %s \n",backendCompilerSystem.c_str());
                     ROSE_ASSERT(false);
                   }
@@ -4114,77 +4123,74 @@ Rose::Frontend::Java::Run(SgProject* project)
   return status;
 } // Rose::Frontend::Java::Run
 
+
 int
 Rose::Frontend::Java::Ecj::RunBatchMode(SgProject* project)
-{
-  int status = 0;
+   {
+     int status = 0;
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-  namespace ecj = Rose::Frontend::Java::Ecj;
-  {
-      if (SgProject::get_verbose() > 1)
-          std::cout << "[INFO] [Frontend] [Java] Running in batch mode" << std::endl;
+     namespace ecj = Rose::Frontend::Java::Ecj;
 
-      // Setup global pointer to this project to be
-      // accessed via JNI C++ code;
-      //
-      // ECJ AST will be attached to this project's shared
-      // global scope
-      {
-          ecj::Ecj_globalProjectPointer = project;
-          ROSE_ASSERT(ecj::Ecj_globalProjectPointer != NULL);
-      }
-
-      // Call ECJ
-      int argc = 0;
-      char** argv = NULL;
-      {
-          // Process command line options specific to ROSE to
-          // set SgFile attributes.
-          //
-          // This leaves all filenames and non-rose specific option in the
-          // argv list.
-          //
-          // Note: Function has historically been defined as member of SgFile.
-          BOOST_FOREACH(SgFile* file, project->get_files())
-          {
-              ROSE_ASSERT(file != NULL);
-              // argv is modified so we need to use a copy
-              std::vector<std::string> argv_copy =
-                  project->get_originalCommandLineArgumentList();
-              {
-                  file->processRoseCommandLineOptions(argv_copy);
-              }
-          }
-
-          std::vector<std::string> argv_copy =
-              project->get_originalCommandLineArgumentList();
-          std::vector<std::string> cmdline =
-              ecj::GetCommandline(argv_copy, project, argc, &argv);
-
+        {
           if (SgProject::get_verbose() > 1)
-          {
-              std::string cmdline_string = boost::algorithm::join(cmdline, " ");
-              std::cout
-                  << "[INFO] [Frontend] [Java] ECJ commandline: "
-                  << cmdline_string
-                  << std::endl;
-          }
+               std::cout << "[INFO] [Frontend] [Java] Running in batch mode" << std::endl;
 
-          status = openJavaParser_main(argc, argv);
-          {
-              project->set_ecjErrorCode(status);
-          }
-      }
-  }
-#else // ! ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-  ROSE_ASSERT (!
-      "[FATAL] [ROSE] [frontend] [Java] "
-      "ROSE was not configured to support the Java frontend, see ROSE/configure --help.");
+       // Setup global pointer to this project to be
+       // accessed via JNI C++ code;
+       //
+       // ECJ AST will be attached to this project's shared global scope
+             {
+               ecj::Ecj_globalProjectPointer = project;
+               ROSE_ASSERT(ecj::Ecj_globalProjectPointer != NULL);
+             }
+
+       // Call ECJ
+          int argc = 0;
+          char** argv = NULL;
+             {
+            // Process command line options specific to ROSE to
+            // set SgFile attributes.
+            //
+            // This leaves all filenames and non-rose specific option in the
+            // argv list.
+            //
+            // Note: Function has historically been defined as member of SgFile.
+               BOOST_FOREACH(SgFile* file, project->get_files())
+                  {
+                    ROSE_ASSERT(file != NULL);
+                 // argv is modified so we need to use a copy
+                    std::vector<std::string> argv_copy = project->get_originalCommandLineArgumentList();
+                       {
+                         file->processRoseCommandLineOptions(argv_copy);
+                       }
+                  }
+
+               std::vector<std::string> argv_copy = project->get_originalCommandLineArgumentList();
+               std::vector<std::string> cmdline   = ecj::GetCommandline(argv_copy, project, argc, &argv);
+
+               if (SgProject::get_verbose() > 1)
+                  {
+                    std::string cmdline_string = boost::algorithm::join(cmdline, " ");
+                    std::cout << "[INFO] [Frontend] [Java] ECJ commandline: " << cmdline_string << std::endl;
+                  }
+
+               status = openJavaParser_main(argc, argv);
+                  {
+                    project->set_ecjErrorCode(status);
+                  }
+             }
+        }
+#else
+ //! ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+  // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
+     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] error: ROSE was not configured to support the Java frontend, see ROSE/configure --help.");
 #endif
 
-  return status;
-} // Rose::Frontend::Java::Ecj::Run
+     return status;
+  // Rose::Frontend::Java::Ecj::Run
+   } 
+
 
 std::vector<std::string>
 Rose::Frontend::Java::Ecj::GetCommandline(
@@ -4576,9 +4582,10 @@ int
 SgSourceFile::build_X10_AST(const vector<string>& p_argv)
 {
   #ifndef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+  // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
       ROSE_ASSERT (!
           "[FATAL] [ROSE] [frontend] [X10] "
-          "ROSE was not configured to support the X10 frontend, see --help.");
+          "error: ROSE was not configured to support the X10 frontend, see --help.");
   #else
       if (SgProject::get_verbose() >= 1)
           std::cout << "[INFO] Building the X10 AST" << std::endl;
@@ -4850,9 +4857,10 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
 #endif /* clang or edg */
 
 #else
+  // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
      int frontendErrorLevel = 99;
      ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [C/C++] "
-                    "ROSE was not configured to support the C/C++ frontend.");
+                    "error: ROSE was not configured to support the C/C++ frontend.");
 #endif
 
      return frontendErrorLevel;
@@ -4875,9 +4883,10 @@ SgSourceFile::build_PHP_AST()
      SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = php_main(phpFileName, this);
 #else
+  // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
      int frontendErrorLevel = 99;
      ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [PHP] "
-                    "ROSE was not configured to support the PHP frontend.");
+                    "error: ROSE was not configured to support the PHP frontend.");
 #endif
 #endif
      return frontendErrorLevel;
@@ -4893,9 +4902,10 @@ SgSourceFile::build_Python_AST()
      SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = python_main(pythonFileName, this);
 #else
+  // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
      int frontendErrorLevel = 99;
      ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Python] "
-                    "ROSE was not configured to support the Python frontend.");
+                    "error: ROSE was not configured to support the Python frontend.");
 #endif
      return frontendErrorLevel;
    }
@@ -4939,8 +4949,9 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
      SgProject* project = SageInterface::getEnclosingNode<SgProject>(this);
      ROSE_ASSERT(project != NULL);
 #else
+  // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
      ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Binary analysis] "
-                    "ROSE was not configured to support the binary analysis frontend.");
+                    "error: ROSE was not configured to support the binary analysis frontend.");
 #endif
 
 #if 0
@@ -4996,8 +5007,9 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     // Generate the ELF executable format structure into the AST
     // generateBinaryExecutableFileInformation(executableFileName,asmFile);
 #else
+  // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
      ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Binary analysis] "
-                    "ROSE was not configured to support the binary analysis frontend.");
+                    "error: ROSE was not configured to support the binary analysis frontend.");
 #endif
 
      int frontendErrorLevel = 0;
@@ -5069,8 +5081,9 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
           frontend_failed = (frontendErrorLevel > 1);  // DXN (01/18/2011): needed to pass make check.  TODO: need fixing up
 #else
+       // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
           ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Fortran] "
-                         "ROSE was not configured to support the Fortran frontend.");
+                         "error: ROSE was not configured to support the Fortran frontend.");
 #endif
         }
        else
@@ -5121,8 +5134,9 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                         frontendErrorLevel = 0; // PC: Always keep going for Java!
                     }
 #else
+                 // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
                     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
-                                   "ROSE was not configured to support the Java frontend.");
+                                   "error: ROSE was not configured to support the Java frontend.");
 #endif
 
                   }
@@ -5134,8 +5148,9 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                              frontendErrorLevel = build_Python_AST();
                              frontend_failed = (frontendErrorLevel > 0);
 #else
+                          // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
                              ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Python] "
-                                            "ROSE was not configured to support the Python frontend.");
+                                            "error: ROSE was not configured to support the Python frontend.");
 #endif
 
                          }
@@ -5147,8 +5162,9 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                                    frontendErrorLevel = build_X10_AST(argv);
                                    frontend_failed = (frontendErrorLevel > 0);
                               #else
+                                // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
                                    ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [X10] "
-                                                  "ROSE was not configured to support the X10 frontend.");
+                                                  "error: ROSE was not configured to support the X10 frontend.");
                               #endif
                           }
                           else
@@ -5194,11 +5210,13 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
              }
             else
              {
+            // DQ (1/28/2016): Tone this down a bit to be less sarcastic.
             // DQ (4/12/2015): Make this a more friendly message than what the OS provides on abort() (which is "Aborted (core dumped)").
             // Exit because there are errors in the input program
             // cout << "Errors in Processing: (frontend_failed)" << endl;
             // ROSE_ABORT("Errors in Processing: (frontend_failed)");
-               printf ("Errors in Processing Input File: (throwing an instance of \"frontend_failed\" exception due to errors detected in the input code), have a nice day! \n");
+            // printf ("Errors in Processing Input File: (throwing an instance of \"frontend_failed\" exception due to errors detected in the input code), have a nice day! \n");
+               printf ("Errors in Processing Input File: throwing an instance of \"frontend_failed\" exception due to syntax errors detected in the input code \n");
                exit(1);
              }
         }

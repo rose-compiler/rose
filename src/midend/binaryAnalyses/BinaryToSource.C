@@ -218,7 +218,9 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
     const RegisterDescriptor SP = disassembler_->stackPointerRegister();
     const RegisterDescriptor SS = disassembler_->stackSegmentRegister();
     raisingOps_->reset();
-    BaseSemantics::SValuePtr returnTarget = raisingOps_->readMemory(SS, raisingOps_->readRegister(SP),
+    BaseSemantics::SValuePtr spDflt = raisingOps_->undefined_(SP.get_nbits());
+    BaseSemantics::SValuePtr returnTarget = raisingOps_->readMemory(SS,
+                                                                    raisingOps_->readRegister(SP, spDflt),
                                                                     raisingOps_->undefined_(IP.get_nbits()),
                                                                     raisingOps_->boolean_(true));
     emitEffects(out);

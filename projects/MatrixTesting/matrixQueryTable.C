@@ -63,17 +63,17 @@ loadDependencyNames(const SqlDatabase::TransactionPtr &tx) {
     }
 
     // Additional key/column relationships
-    retval.insert("id", "id");
-    retval.insert("reporting_user", "users.name");
-    retval.insert("reporting_time", "reporting_time");
-    retval.insert("tester", "tester");
-    retval.insert("os", "os");
-    retval.insert("rose", "rose");
-    retval.insert("rose_date", "rose_date");
-    retval.insert("status", "status");
-    retval.insert("duration", "duration");
-    retval.insert("noutput", "noutput");
-    retval.insert("nwarnings", "nwarnings");
+    retval.insert("id", "test.id");
+    retval.insert("reporting_user", "user.identity");
+    retval.insert("reporting_time", "test.reporting_time");
+    retval.insert("tester", "test.tester");
+    retval.insert("os", "test.os");
+    retval.insert("rose", "test.rose");
+    retval.insert("rose_date", "test.rose_date");
+    retval.insert("status", "test.status");
+    retval.insert("duration", "test.duration");
+    retval.insert("noutput", "test.noutput");
+    retval.insert("nwarnings", "test.nwarnings");
 
     return retval;
 }
@@ -170,7 +170,7 @@ main(int argc, char *argv[]) {
     } else {
         sql += " " + StringUtility::join(", ", columnsSelected) + ", count(*) as subtotal";
     }
-    sql += " from test_results join users on test_results.reporting_user = users.uid";
+    sql += " from test_results as test join auth_idenenties as auth_user on test.reporting_user = auth_user.uid";
     if (!whereClauses.empty())
         sql += " where " + StringUtility::join(" and ", whereClauses);
     if (!columnsSelected.empty()) {

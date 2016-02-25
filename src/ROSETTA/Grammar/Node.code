@@ -280,11 +280,25 @@ typedef Rose_STL_Container<SgInitializedName*> SgInitializedNamePtrList;
 typedef SgInitializedNamePtrList*              SgInitializedNamePtrListPtr;
 
 class SgDeclarationStatement;
+
+// DQ (1/28/2016): Different ways of documenting typedefs (none appear to be working with Doxygen).
+/** \typedef SgDeclarationStatementPtrList
+    \brief This is socumentation for the following typedef 
+ */
 typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrList;
+
+/** \typedef SgDeclarationStatementPtrListPtr
+    \brief This is socumentation for the following typedef 
+ */
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
 // tps (8/20/2007): Added support for binaries.
+/** \typedef SgAsmBlockPtrList
+    This is socumentation for the following typedef 
+ */
 typedef Rose_STL_Container<SgAsmBlock*>     SgAsmBlockPtrList;
+
+/** This is socumentation for the following typedef */
 typedef SgAsmBlockPtrList*                  SgAsmBlockPtrListPtr;
 
 // JJW (8/28/2008): Added SgAsmInterpretation
@@ -2252,22 +2266,16 @@ void Range<rose_addr_t>::print(std::ostream &o) const
     } else {
         char buf[64];
      // DQ (10/20/2015): Note that whitespace is required before PRIx64 (to avoid compiler warning).
-        sprintf(buf, "0x%08" PRIx64"+0x%08" PRIx64"=0x%08" PRIx64, first(), size(), first()+size());
+        sprintf(buf, "0x%08" PRIx64 "+0x%08" PRIx64 "=0x%08" PRIx64, first(), size(), first()+size());
         o <<buf;
     }
 }
 
 // This resolves a linker error when building ROSE with Visual Studio.
 // If the above function is not called within the same file, the compiler
-// fails to generate the symbol.
+// fails to generate the symbol, so we use explicit instantiation.
 #ifdef _MSC_VER
-namespace {
-void instantiate_range_print_msvc()
-{
-  static Range<rose_addr_t> g;
-  g.print(std::cout);
-}
-}
+template class Range<rose_addr_t>;
 #endif
 
 // Support for global function type symbol table (moved to be static data pointer)

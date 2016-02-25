@@ -148,8 +148,8 @@ void
 MemoryState::print(std::ostream &out, Formatter&) const {
     map_.dump(out);
     rose_addr_t pageVa = 0;
+    uint8_t* page = new uint8_t[pageSize_];
     while (map_.atOrAfter(pageVa).next().assignTo(pageVa)) {
-        uint8_t page[pageSize_];
         size_t nread = map_.at(pageVa).limit(pageSize_).read(page).size();
         ASSERT_always_require(nread == pageSize_);
         HexdumpFormat fmt;
@@ -159,6 +159,7 @@ MemoryState::print(std::ostream &out, Formatter&) const {
             break;
         pageVa += pageSize_;
     }
+    delete [] page;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -534,6 +535,12 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
+
+        // Use the lazily updated initial memory state if there is one.
+        if (initialState())
+            byte_dflt = initialState()->readMemory(byte_addr, byte_dflt, this, this);
+
+        // Read the current memory state
         SValuePtr byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
         if (0==bytenum) {
             retval = byte_value;

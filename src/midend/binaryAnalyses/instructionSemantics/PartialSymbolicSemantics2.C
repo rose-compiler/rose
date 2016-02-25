@@ -570,15 +570,18 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &dflt_,
                           const BaseSemantics::SValuePtr &condition)
 {
-    size_t nbits = dflt_->get_width();
+    BaseSemantics::SValuePtr dflt = dflt_;
+    size_t nbits = dflt->get_width();
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     ASSERT_require2(nbits % 8 == 0, "read from memory must be in byte units");
     if (condition->is_number() && !condition->get_number())
-        return dflt_;
+        return dflt;
 
-    // Default values come from an optional memory map if possible, otherwise use the passed-in default. Only those areas of
-    // the map that are readable and not writable are used.
-    BaseSemantics::SValuePtr dflt = dflt_;
+    // Use the initial memory state if there is one.
+    if (initialState())
+        dflt = initialState()->readMemory(address, dflt, this, this);
+
+    // Use the concrete MemoryMap if there is one.  Only those areas of the map that are readable and not writable are used.
     if (map && address->is_number()) {
         size_t nbytes = nbits/8;
         uint8_t *buf = new uint8_t[nbytes];

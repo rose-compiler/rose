@@ -1,5 +1,5 @@
 #include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
+
 
 #include <rose.h>
 #include "ssexpr.h"
@@ -7,7 +7,7 @@
 #include "APIReader.h"
 #include "SignatureReader.h"
 #include <iostream>
-
+#define foreach BOOST_FOREACH
 // Looks for a command line like:
 // ./foo --bar -baz -- 1.sig 2.sig 3.sig
 // Starting from the -- it will unconditionally grab

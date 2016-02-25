@@ -30,7 +30,7 @@ main() {
     // Read bits 8-31. Bits [8-15] are from one register and [16-31] are from another
     std::cout <<"\nread reg@8+24\n";
     RegisterDescriptor r_8_24(x86_regclass_gpr, 0, 8, 24);
-    x = rstate->readRegister(r_8_24, ops.get());
+    x = rstate->readRegister(r_8_24, ops->undefined_(r_8_24.get_nbits()), ops.get());
     std::cout <<"  got " <<*x <<"\n";
     rstate->print(std::cout, fmt);
 }

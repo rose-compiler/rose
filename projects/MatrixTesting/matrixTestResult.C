@@ -54,6 +54,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                "@named{status}{The final disposition of the test; i.e., where it failed. This should be a single "
                "word whose meaning is understood by the test designers and users.}"
                "@named{tester}{The entity that performed the testing, such as a Jenkins node name.}");
+    parser.doc("Output",
+               "Emits the new test ID to standard output on success.");
 
     SwitchGroup sg("Tool-specific switches");
 
@@ -105,7 +107,7 @@ getUserName() {
 static int
 getUserId(const SqlDatabase::TransactionPtr &tx) {
     std::string userName = getUserName();
-    SqlDatabase::StatementPtr q = tx->statement("select uid from users where name = ?")->bind(0, userName);
+    SqlDatabase::StatementPtr q = tx->statement("select id from auth_identities where identity = ?")->bind(0, userName);
     SqlDatabase::Statement::iterator row = q->begin();
     if (row == q->end()) {
         mlog[FATAL] <<"no such user: \"" <<StringUtility::cEscape(userName) <<"\"\n";
