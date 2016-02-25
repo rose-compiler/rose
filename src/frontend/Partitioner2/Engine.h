@@ -96,7 +96,7 @@ namespace Partitioner2 {
  *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
  *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
  */
-class Engine {
+class ROSE_DLL_API Engine {
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Settings.  All settings must act like properties, which means the following:

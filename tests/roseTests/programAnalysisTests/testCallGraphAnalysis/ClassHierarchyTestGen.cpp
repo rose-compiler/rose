@@ -101,7 +101,7 @@ void generateOutStreams(const vector<string> & fileNames, vector<ostream*> & ost
     {
         stringstream path;
         path<<outputFolderName << "/" << fileNames[i];
-        ofstream * stream = new ofstream(path.str().c_str());
+        std::ofstream * stream = new std::ofstream(path.str().c_str());
         ostreamVec.push_back(stream);
 
         *stream << "#ifndef " << StringToUpper(fileNames[i]) << endl;
@@ -127,7 +127,7 @@ void printMain(const vector<string> & headerFiles)
 {
     stringstream fileName;
     fileName << outputFolderName << "/" << "main.cpp";
-    ofstream os (fileName.str().c_str());
+    std::ofstream os (fileName.str().c_str());
 
     for(size_t i=0; i < headerFiles.size(); i++)
         os << "#include \"" << headerFiles[i] << "\"" << endl;
@@ -195,7 +195,7 @@ void printGraphToFile(Graph & g,const vector<string> & vertexNames )
 {
     stringstream fileName;
     fileName << outputFolderName << "/" << "dumpfile.cmp.out";
-    ofstream os (fileName.str().c_str());
+    std::ofstream os (fileName.str().c_str());
     printGraph(os,g,vertexNames);
 }
 
@@ -415,8 +415,12 @@ int main(int argc, char**argv)
 
     Graph g;
 
-    // Generate random graph
-    mt19937 rng;
+ // Generate random graph
+
+ // DQ (2/12/2016): Need name qualification within C++11 mode.
+ // mt19937 rng;
+    boost::mt19937 rng;
+
     rng.seed((unsigned int)time(NULL));
 
     rng.seed(32);
@@ -450,7 +454,15 @@ int main(int argc, char**argv)
     for(list<Vertex>::iterator i = vlist.begin(); i != vlist.end(); ++i)
     {
         int fileId = vCount / classesPerFile;
-        vertexToFileId.insert(make_pair<int,int>(*i, fileId ));
+
+     // DQ (2/12/2016): This is a problem for the C++11 mode.
+     // vertexToFileId.insert(make_pair<int,int>(*i, fileId ));
+#if (__cplusplus >= 201103L) 
+        printf ("Error: not clear how to express this for the C++11 mode! \n");
+        assert(false);
+#else
+        vertexToFileId.insert(std::make_pair<int,int>(*i, fileId ));
+#endif
         vCount++;
     }
 

@@ -181,7 +181,6 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, const SValuePt
     if (!registers_.exists(reg)) {
         if (!accessCreatesLocations_)
             throw RegisterNotPresent(reg);
-        size_t nbits = reg.get_nbits();
         SValuePtr newval = dflt->copy();
         std::string regname = regdict->lookup(reg);
         if (!regname.empty() && newval->get_comment().empty())

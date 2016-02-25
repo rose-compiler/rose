@@ -661,7 +661,7 @@ AST_FILE_IO :: writeASTToFile ( std::string fileName )
  
      std::ofstream out;
      out.open ( fileName.c_str(), std::ios::out | std::ios::binary );
-     if ( out == NULL )
+     if ( !out )
         {
           std::cout << "Problems opening file " << fileName << " for writing AST!" << std::endl;
           exit(-1);
@@ -925,7 +925,7 @@ AST_FILE_IO :: readASTFromFile ( std::string fileName )
  
      std::ifstream inFile;
      inFile.open ( fileName.c_str(), std::ios::in | std::ios::binary );
-     if ( inFile == NULL )
+     if ( !inFile )
         {
           std::cout << "Problems opening file " << fileName << " for reading AST!" << std::endl;
           exit(-1);

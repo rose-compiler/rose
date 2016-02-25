@@ -205,7 +205,7 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (!strtab || get_offset()==SgAsmGenericString::unallocated) {
         fputs(", not allocated", f);
     } else {
-        fprintf(f, ", offset 0x%08"PRIx64" (%"PRIu64")", get_offset(), get_offset());
+        fprintf(f, ", offset 0x%08" PRIx64 " (%" PRIu64 ")", get_offset(), get_offset());
     }
     fprintf(f, ", \"%s\"\n", escapeString(get_string()).c_str());
 }
@@ -459,11 +459,11 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
         p_storage_list[i]->dump(f, p, i);
     }
 
-    fprintf(f, "%s%-*s = %"PRIu64" free regions\n", p, w, "freelist", get_freelist().size());
+    fprintf(f, "%s%-*s = %" PRIu64 " free regions\n", p, w, "freelist", get_freelist().size());
     BOOST_FOREACH (const AddressInterval &interval, get_freelist().intervals()) {
-        fprintf(f, "%s%-*s = offset 0x%08"PRIx64" (%"PRIu64"),"
-                " for 0x%08"PRIx64" (%"PRIu64") byte%s,"
-                " ending at 0x%08"PRIx64" (%"PRIu64")\n",
+        fprintf(f, "%s%-*s = offset 0x%08" PRIx64 " (%" PRIu64 "),"
+                " for 0x%08" PRIx64 " (%" PRIu64 ") byte%s,"
+                " ending at 0x%08" PRIx64 " (%" PRIu64 ")\n",
                 p, w, "",
                 interval.least(), interval.least(),
                 interval.size(), interval.size(), 1==interval.size()?"":"s",
