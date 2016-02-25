@@ -11,11 +11,12 @@ using namespace std;
 
 string replaceString(string patternInInput, string replacePattern, string input) {
   string::size_type posIter = input.find(patternInInput);
-  if (posIter != string::npos)
+  while(posIter != string::npos) {
     input.replace(posIter, patternInInput.size(), replacePattern);
+    posIter = input.find(patternInInput);
+  }
   return input;
 }
-
 
 /**********************************
  * AstNodeClass/Nonterminal functions *
@@ -148,21 +149,42 @@ string
 Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, AstNodeClass* grammarnode, string grammarSymListOpPrefix, string grammarSymListOpPostfix) {
   string type=typeStringOfGrammarString(gs);
   
-  type = replaceString("$CLASSNAME",grammarnode->name,type);
-  type = replaceString("std::","",type);
-
-  // SgPartialFunctionModifier has "static" as part of its type
-  std::size_t found = type.find("static");
-  if (found!=std::string::npos) {
-    return "IGNORE";
+  if(type.find("static ")!=string::npos) {
+    return "IGNORE"; // special case: static types are ignored entirely
   }
-  type=replaceString("static ","",type);
 
-  string::size_type posIter = type.find("*");
-  if (posIter != string::npos)
-    type.replace(posIter, 1, "");
+  // $CLASSNAME in type
+  type=replaceString("$CLASSNAME",grammarnode->name,type);
+  type=replaceString("std::","",type);
+
+  // pointer type
+  type=replaceString("*","",type);
+
+  // other characters: '<','>'," ","::" => "_"
+  type=replaceString("<","_",type);
+  type=replaceString(">","_",type);
+  type=replaceString(" ","_",type);
+  type=replaceString("::","_",type);
+  type=replaceString(",","_",type);
+
+  // reduce sequences of underscores to one underscore
+  type=replaceString("__","_",type);
+
+  /* beautify type-names */
+  if(type.size()>0) {
+    // remove single leading "_"
+    string::size_type firstPos=0;
+    if(type[firstPos]=='_') {
+      type.replace(firstPos, 1, "");
+    }
+    // remove single trailing "_"
+    string::size_type lastPos=type.size()-1;
+    if(type[lastPos]=='_') {
+      type.replace(lastPos, 1, "");
+    }
+  }
+
   GrammarNodeInfo gInfo=getGrammarNodeInfo(grammarnode); // MS: should be a member function of GrammarNode
-
   if(gInfo.numContainerMembers>0) { // there can be only one container member!
     //cout << "ContainerMembers>0: " << type << endl;
     type = replaceString("PtrList","",type);
@@ -256,7 +278,7 @@ Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
           //type=GrammarString::copyEdit (type,"*","");
           */
         if(generateSDFTreeGrammar) {
-          rhsTerminalSuccessors+=type; //+":"+varName;
+          rhsTerminalSuccessors+=type+"/*"+varName+"*/";
           // grammar->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           //string dataMembers=grammarnode->outputFields ();
         } else {
