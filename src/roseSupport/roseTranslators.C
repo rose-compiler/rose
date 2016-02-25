@@ -1,3 +1,4 @@
+
 //#include "rose.h"
 #include "sage3basic.h"
 #include "Cxx_Grammar.h"
@@ -118,3 +119,4 @@ void RoseTestTranslator::midend() {
 }
 
 /********************************************************/
+

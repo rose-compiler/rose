@@ -3134,7 +3134,7 @@ SgAsmDwarfLineList::display( const string & label )
      SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
 
      std::pair<uint64_t,uint64_t> addressRange = instructionRange();
-     printf ("addressRange = (0x%"PRIx64", 0x%"PRIx64") \n",addressRange.first,addressRange.second);
+     printf ("addressRange = (0x%" PRIx64 ", 0x%" PRIx64 ") \n",addressRange.first,addressRange.second);
 
   // Iterate over all the files in the static Sg_File_Info::get_fileidtoname_map
   // int numberOfSourceFiles = Sg_File_Info::get_fileidtoname_map().size();
@@ -3165,15 +3165,15 @@ SgAsmDwarfLineList::display( const string & label )
      printf ("\n\nTest sourceCodeToAddress: \n");
      FileIdLineColumnFilePosition s1(2,std::pair<int,int>(10,-1));
      uint64_t instructionAddress1 = sourceCodeToAddress(s1);
-     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%"PRIx64" \n",s1.first,s1.second.first,s1.second.second,instructionAddress1);
+     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n", s1.first,s1.second.first,s1.second.second,instructionAddress1);
 
      FileIdLineColumnFilePosition s2(2,std::pair<int,int>(11,-1));
      uint64_t instructionAddress2 = sourceCodeToAddress(s2);
-     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%"PRIx64" \n",s2.first,s2.second.first,s2.second.second,instructionAddress2);
+     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n",s2.first,s2.second.first,s2.second.second,instructionAddress2);
 
      FileIdLineColumnFilePosition s3(1,std::pair<int,int>(11,-1));
      uint64_t instructionAddress3 = sourceCodeToAddress(s3);
-     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%"PRIx64" \n",s3.first,s3.second.first,s3.second.second,instructionAddress3);
+     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n",s3.first,s3.second.first,s3.second.second,instructionAddress3);
 
      for (int fileNumber = 1; fileNumber < 4; fileNumber++)
         {
@@ -3183,7 +3183,8 @@ SgAsmDwarfLineList::display( const string & label )
                   {
                     FileIdLineColumnFilePosition s(fileNumber,std::pair<int,int>(lineNumber,columnNumber));
                     uint64_t instructionAddress = sourceCodeToAddress(s);
-                    printf ("sourceCodeToAddress(%d,%d,%d) = 0x%"PRIx64" \n",s.first,s.second.first,s.second.second,instructionAddress);
+                    printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n",
+                            s.first,s.second.first,s.second.second,instructionAddress);
                   }
              }
         }
@@ -3191,12 +3192,14 @@ SgAsmDwarfLineList::display( const string & label )
      printf ("\n\nTest addressToSourceCode: (not tested yet) \n");
 
      FileIdLineColumnFilePosition s1map = addressToSourceCode(instructionAddress1);
-     printf ("addressToSourceCode: address 0x%"PRIx64" = (%d,%d,%d) \n",instructionAddress1,s1map.first,s1map.second.first,s1map.second.second);
+     printf ("addressToSourceCode: address 0x%" PRIx64 " = (%d,%d,%d)\n",
+             instructionAddress1,s1map.first,s1map.second.first,s1map.second.second);
 
      for (uint64_t address = instructionAddress1-15; address < instructionAddress1+ 85; address++)
         {
           FileIdLineColumnFilePosition s_map = addressToSourceCode(address);
-          printf ("addressToSourceCode: address 0x%"PRIx64" = (%d,%d,%d) \n",address,s_map.first,s_map.second.first,s_map.second.second);
+          printf ("addressToSourceCode: address 0x%" PRIx64 " = (%d,%d,%d)\n",
+                  address,s_map.first,s_map.second.first,s_map.second.second);
         }
 
      printf ("\nOutput entries in instruction_source_code_map \n");
@@ -3212,7 +3215,7 @@ SgAsmDwarfLineList::display( const string & label )
           int line    = it1->second.second.first;
           int column  = it1->second.second.second;
 
-          printf ("instruction_source_code_map[0x%"PRIx64"] = (file=%d, line=%d, col=%d) \n",address, file_id, line, column);
+          printf ("instruction_source_code_map[0x%" PRIx64 "] = (file=%d, line=%d, col=%d)\n", address, file_id, line, column);
 
        // A test of the evaluation of ranges of lines for each instruction
           SgInstructionAddressSourcePositionMapPtrList::iterator it1_lb = instruction_source_code_map.lower_bound(address);
@@ -3249,7 +3252,7 @@ SgAsmDwarfLineList::display( const string & label )
           int line    = it2->first.second.first;
           int column  = it2->first.second.second;
 
-          printf ("source_code_instruction_map[file=%d, line=%d, col=%d] = 0x%"PRIx64" \n",file_id, line, column, address);
+          printf ("source_code_instruction_map[file=%d, line=%d, col=%d] = 0x%" PRIx64 "\n", file_id, line, column, address);
 
        // A test of the evaluation of ranges of instructions for each line of source code.
           FileIdLineColumnFilePosition file_info(file_id,std::pair<int,int>(line,column));
@@ -3260,11 +3263,11 @@ SgAsmDwarfLineList::display( const string & label )
              {
                if (it2_ub != source_code_instruction_map.end())
                   {
-                    printf ("   ----- range = [0x%"PRIx64", 0x%"PRIx64") \n",it2_lb->second,it2_ub->second);
+                    printf ("   ----- range = [0x%" PRIx64 ", 0x%" PRIx64 ")\n", it2_lb->second,it2_ub->second);
                   }
                  else
                   {
-                    printf ("   ----- range = [0x%"PRIx64", last_instruction) \n",it2_lb->second);
+                    printf ("   ----- range = [0x%" PRIx64 ", last_instruction)\n", it2_lb->second);
                   }
              }
 
