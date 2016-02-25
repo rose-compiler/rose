@@ -16,7 +16,7 @@ set(CxxGrammarMetaProgram_SRCS
     GrammarFile.C
     grammarString.C
     grammarGenerator.C
-    terminal.C
+    AstNodeClass.C
     type.C
     symbol.C
     expression.C
