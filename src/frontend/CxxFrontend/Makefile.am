@@ -1,17 +1,6 @@
 ################################################################################
 # How to install ROSE without EDG source code on a machine with no network:
-#   On a machine with a network connection:
-#     1. git-clone the ROSE sources
-#     2. copy the ROSE source tree to the other machine
-#     3. create a build directory and configure
-#     4. in $BUILD/src/frontend/CxxFrontend run "make download-edg"
-#     5. follow the instructions to copy some files to the other machine
-# 
-#   *Note: the files must be copied such that the mtime for the
-#    tarball is not earlier than the other file, or else make will try
-#    to download on the non-networked machine.  The easiest way to
-#    ensure proper mtimes is to touch(1) the tarball after copying
-#    the files.
+#  See http://rosecompiler.org/ROSE_HTML_Reference/group__installing__edg.html
 ################################################################################
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
@@ -149,24 +138,24 @@ network_checking: check-network
 # messages inside the tarball. Don't use $(EDGBIN_NAME) in the target or dependencies because it hasn't been computed
 # yet when make parses that part of this rule; it's okay to use it in the commands though.
 EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
-	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then						\
-	    echo "Empty EDG binary compatibility signature in $(EDGBIN_SIGNATURE_FILE)." >&2;	\
-	    echo "$(CONTACT_INFO)" >&2;								\
-	    exit 1;										\
+	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then							\
+	    echo "error: empty EDG binary compatibility signature in $(EDGBIN_SIGNATURE_FILE)." >&2;	\
+	    echo "$(CONTACT_INFO)" >&2;									\
+	    exit 1;											\
 	fi
 
-	@if [ -r "$(EDGBIN_NAME).tar.gz" ]; then							\
-	    echo "EDG binary tarball appears to have been downloaded already: $(EDGBIN_NAME).tar.gz";	\
-	else												\
-	    $(MAKE) check-network || exit 1;								\
-	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";				\
-	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then	\
-	        echo "The EDG binary tarball is not available (or the web site is not reachable)." >&2;	\
-	        echo "$(CONTACT_INFO)" >&2;								\
-	        exit 1;											\
-	    fi;												\
-	    wget -O "$(EDGBIN_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz";		\
-	    touch $(EDGBIN_NAME).tar.gz;								\
+	@if [ -r "$(EDGBIN_NAME).tar.gz" ]; then								\
+	    echo "EDG binary tarball appears to have been downloaded already: $(EDGBIN_NAME).tar.gz";		\
+	else													\
+	    $(MAKE) check-network || exit 1;									\
+	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";					\
+	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then		\
+	        echo "error: the EDG binary tarball is not available (or the web site is not reachable)." >&2;	\
+	        echo "$(CONTACT_INFO)" >&2;									\
+	        exit 1;												\
+	    fi;													\
+	    wget -O "$(EDGBIN_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz";			\
+	    touch $(EDGBIN_NAME).tar.gz;									\
 	fi
 
 	ln -sf $(EDGBIN_NAME).tar.gz $@
@@ -176,15 +165,8 @@ EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
 download-edg: EDG.tar.gz
 	@echo
 	@echo "The EDG tarball is $(EDGBIN_NAME).tar.gz"
-	@echo "To compile on a system with no network, copy this EDG tarball to the other machine's"
-	@echo "$$ROSE_BUILD/src/frontend/CxxFrontend directory and name it 'EDG.tar.gz'. On that machine,"
-	@echo "which must be using the same compiler and version of ROSE as this machine, configure ROSE"
-	@echo "like you already did on this machine, and run 'make show-edg-url' in the CxxFrontend"
-	@echo "directory (this is necessary). Then untar the EDG.tar.gz file in the CxxFrontend directory,"
-	@echo "remove any existing 'EDG' directory, and rename the untarred directory 'EDG'.  Then run"
-	@echo "'touch EDG.tar.gz' followed by 'touch EDG/libroseEDG.la'.  Finally, run 'make' in the"
-	@echo "CxxFrontend directory to ensure that it's no longer trying to download anything. Now you're"
-	@echo "ready to build ROSE resuming the install instructions as if you had just run the 'configure' step."
+	@echo "To compile on a system with no network, follow the instructions here:"
+	@echo "  http://rosecompiler.org/ROSE_HTML_Reference/group__installing__edg.html"
 
 # Unpack the EDG tarball. Note: $(am__untar) comes from configure and if it's not set then there's something wrong with configure.
 EDG/libroseEDG.la: EDG.tar.gz

@@ -7,7 +7,7 @@
  *
  *  @section installing_git_rhel Red Hat Enterprise Linux 7
  *
- *  To install Git, run <code>yum group install "Development Tools" as the administrator.
+ *  To install Git, run <code>yum group install</code> "Development Tools" as the administrator.
  *
  *  @section installing_git_wheezy Debian 7 "Wheezy"
  *
