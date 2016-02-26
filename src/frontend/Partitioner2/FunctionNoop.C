@@ -7,8 +7,10 @@
 #include <Diagnostics.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
+#include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
+#include <Sawyer/ThreadWorkers.h>
 
 using namespace rose::Diagnostics;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
@@ -105,32 +107,35 @@ done:
     return retval;
 }
 
+struct FunctionNoopWorker {
+    const Partitioner &partitioner;
+    Sawyer::ProgressBar<size_t> &progress;
+
+    FunctionNoopWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress)
+        : partitioner(partitioner), progress(progress) {}
+
+    void operator()(size_t workId, const Function::Ptr &function) {
+#if 1 // DEBUGGING [Robb Matzke 2016-02-26]
+        std::cerr <<"ROBB: starting " <<function->printableName() <<"\n";
+#endif
+        partitioner.functionIsNoop(function);
+        ++progress;
+#if 1 // DEBUGGING [Robb Matzke 2016-02-26]
+        std::cerr <<"      ending   " <<function->printableName() <<"\n";
+#endif
+    }
+};
+
 void
 Partitioner::allFunctionIsNoop() const {
-    // Function call graph
-    FunctionCallGraph cgAnalyzer = functionCallGraph();
-    const FunctionCallGraph::Graph &cg = cgAnalyzer.graph();
-
-    // FIXME[Robb Matzke 2016-02-26]: For now this is serial, but it could be parallel.
-    // Use a function call graph and process functions using a reverse depth-first traversal. We do this because if function A
-    // calls or transfers control to function B we need to know whether function B is a no-op before we can determine if
-    // function A is a no-op.  Actually, that's not precisely true -- it is necessary but not sufficient for B to be a no-op in
-    // order for A to be a no-op.
-    Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "no-op function analysis");
-    typedef Sawyer::Container::Algorithm::DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
-    std::vector<bool> processed(cg.nVertices(), false);
-    for (size_t i=0; i<cg.nVertices(); ++i) {
-        if (processed[i])
-            continue;
-        for (Traversal t(cg, cg.findVertex(i), Sawyer::Container::Algorithm::LEAVE_VERTEX); t; ++t) {
-            if (processed[t.vertex()->id()])
-                continue;
-            ++progress;
-            Function::Ptr function = t.vertex()->value();
-            (void) functionIsNoop(function);            // result is cached in the function
-            processed[t.vertex()->id()] = true;
-        }
-    }
+    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    FunctionCallGraph::Graph cg = functionCallGraph().graph();
+    Sawyer::Container::Algorithm::graphBreakCycles(cg);
+    Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "function no-op analysis");
+    Sawyer::Message::FacilitiesGuard guard;
+    if (nThreads != 1)
+        mlog[MARCH].disable();                          // lots of threads doing progress reports won't look too good
+    Sawyer::workInParallel(cg, nThreads, FunctionNoopWorker(*this, progress));
 }
 
 void
