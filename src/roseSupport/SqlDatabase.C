@@ -111,6 +111,7 @@ public:
 
 };
 
+#ifdef ROSE_HAVE_SQLITE3
 static std::string
 sqlite3_url_documentation() {
     return ("@named{SQLite3}{The uniform resource locator for SQLite3 databases has the format "
@@ -121,8 +122,8 @@ sqlite3_url_documentation() {
             "Each parameter has an optional setting. At this time, the only parameter that is understood is "
             "\"debug\", which takes no value.}");
 }
+#endif
 
-#ifdef ROSE_HAVE_SQLITE3
 // Parse an sqlite3 URL of the form:
 //    sqlite3://FILENAME[?PARAM1[=VALUE1]&...]
 // The only parameter that's currently understood is "debug", which turns on the debug property for the connection.
@@ -168,7 +169,6 @@ sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
     }
     return dbname;
 }
-#endif
 
 static std::string
 postgres_url_documentation() {
@@ -183,7 +183,6 @@ postgres_url_documentation() {
             "to be emitted to standard error as it's executed.}");
 }
 
-#ifdef ROSE_HAVE_LIBPQXX
 // Documentation for lipqxx says pqxx::connection's argument is whatever libpq connect takes, but apparently URLs don't work.
 // This function converts a postgresql connection URL into an old-style libpq connection string.  A url is of the form:
 //    postgresql://[USER[:PASSWORD]@][NETLOC][:PORT][/DBNAME][?PARAM1[=VALUE1]&...]
@@ -291,7 +290,6 @@ postgres_parse_url(const std::string &src, bool *has_debug/*in,out*/)
     std::string retval = StringUtility::listToString(params);
     return retval;
 }
-#endif
 
 size_t
 ConnectionImpl::conn_for_transaction()
@@ -456,6 +454,21 @@ std::string
 Connection::openspec() const
 {
     return impl->open_spec;
+}
+
+// class method
+std::string
+Connection::connectionSpecification(const std::string &url, Driver driver) {
+    if (NO_DRIVER == driver)
+        driver = guess_driver(url);
+    switch (driver) {
+        case SQLITE3:
+            return sqlite3_parse_url(url, NULL);
+        case POSTGRESQL:
+            return postgres_parse_url(url, NULL);
+        default:
+            throw Exception("no suitable driver for \"" + url + "\"");
+    }
 }
 
 TransactionPtr

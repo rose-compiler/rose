@@ -1035,7 +1035,6 @@ RiscOperators::emit_global_read(std::ostream &o, const std::string &varname, siz
     ASSERT_require(!varname.empty() && varname[0]=='@');
     LeafPtr t1 = next_temporary(nbits);
     if (llvmVersion_ < 3007000) {
-        static unsigned nwarnings = 0;
         if (0 == llvmVersion_ && 0 == nVersionWarnings++)
             mlog[WARN] <<"LLVM version number is unknown; assuming 1-argument \"load\" instructions\n";
         o <<prefix() <<llvm_lvalue(t1) <<" = load " <<llvm_integer_type(nbits) <<"* " <<varname <<"\n";

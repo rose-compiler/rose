@@ -38,7 +38,7 @@ private:
                 rre->get_descriptor().get_major() != x86_regclass_gpr ||
                 rre->get_descriptor().get_minor() != x86_gpr_bp)
                 continue;
-            printf("Marking 0x%08"PRIx64" as the start of a function.\n", addr);
+            printf("Marking 0x%08" PRIx64 " as the start of a function.\n", addr);
             p->add_function(addr, SgAsmFunction::FUNC_USERDEF);
         }
     }
