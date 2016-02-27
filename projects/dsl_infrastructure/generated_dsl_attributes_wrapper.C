@@ -58,8 +58,9 @@ dsl_attribute::additionalNodeOptions()
   // Base class additionalNodeOptions() function should be an error to be called.
 
      printf ("Error: base class function called: needs an implementation on the derived function \n");
+#ifndef SKIP_ROSE_HEADERS
      ROSE_ASSERT(false);
-
+#endif
   // return "fillcolor=\"green\",style=filled";
      return "";
    }
@@ -93,7 +94,9 @@ dsl_attribute::additionalEdgeInfo()
      vector<SgNode*>::iterator i = dslChildren.begin();
      while ( i != dslChildren.end() )
         {
+#ifndef SKIP_ROSE_HEADERS
           ROSE_ASSERT(currentNode != NULL);
+#endif
 #if 0
           printf ("Adding an edge from %p = %s to %p = %s \n",currentNode,currentNode->class_name().c_str(),*i,(*i)->class_name().c_str());
 #endif
@@ -103,10 +106,11 @@ dsl_attribute::additionalEdgeInfo()
        // string options = " arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false color=" + color + " ";
           string options = " arrowsize=4.0 style=\"setlinewidth(7)\" constraint=true color=" + color + " ";
 
+#ifndef SKIP_ROSE_HEADERS
           AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) currentNode,*i,name,options);
 
           v.push_back(additional_edge);
-
+#endif
           i++;
         }
 

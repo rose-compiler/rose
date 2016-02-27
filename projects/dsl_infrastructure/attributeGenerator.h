@@ -91,8 +91,10 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           AttributeGenerator_InheritedAttribute   evaluateInheritedAttribute   (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute );
           AttributeGenerator_SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList );
 
-       // SgNode* buildAttribute(SgType* type);
-       // SgNode* buildAttribute(SgFunctionDeclaration* functionDeclaration);
+#if 1
+          SgNode* buildAttribute(SgType* type);
+          SgNode* buildAttribute(SgFunctionDeclaration* functionDeclaration);
+#endif
 
           void unparseGeneratedCode();
 

@@ -5286,9 +5286,12 @@ SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribu
         }
        else
         {
+       // DQ (2/25/2016): I think it is significant, because inputlocation refers to the order relative to
+       // the statement, not relative to other AstUnparseAttribute objects. Fixed to use the inputlocation.
        // DQ (2/23/2009): commented added.
        // Note that this will be the only string in the attribute, so inputlocation is not significant (and e_before is the default used).
-          AstUnparseAttribute* code = new AstUnparseAttribute(s,AstUnparseAttribute::e_before);
+       // AstUnparseAttribute* code = new AstUnparseAttribute(s,AstUnparseAttribute::e_before);
+          AstUnparseAttribute* code = new AstUnparseAttribute(s,inputlocation);
           ROSE_ASSERT(code != NULL);
 
           astNode->addNewAttribute(AstUnparseAttribute::markerName,code);
