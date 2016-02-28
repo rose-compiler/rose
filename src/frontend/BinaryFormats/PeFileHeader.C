@@ -852,7 +852,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_cpu_type",          p_e_cpu_type, p_e_cpu_type);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_nsections",         p_e_nsections);
     fprintf(f, "%s%-*s = %u (%s)\n",                   p, w, "e_time",              p_e_time, time_str);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "e_coff_symtab",       p_e_coff_symtab, p_e_coff_symtab);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "e_coff_symtab",   p_e_coff_symtab, p_e_coff_symtab);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_coff_nsyms",        p_e_coff_nsyms);
     if (p_coff_symtab) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n",           p, w, "coff_symtab",
@@ -860,7 +860,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         fprintf(f, "%s%-*s = none\n",                  p, w, "coff_symtab");
     }
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "e_nt_hdr_size",       p_e_nt_hdr_size, p_e_nt_hdr_size);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "e_nt_hdr_size",   p_e_nt_hdr_size, p_e_nt_hdr_size);
     fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_flags",             p_e_flags, p_e_flags);
     fprintf(f, "%s%-*s = 0x%04x %s\n",                 p, w, "e_opt_magic",         p_e_opt_magic,
             0x10b == p_e_opt_magic ? "PE32" : (0x20b == p_e_opt_magic ? "PE32+" : "other"));

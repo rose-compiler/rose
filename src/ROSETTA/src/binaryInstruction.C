@@ -31,7 +31,7 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 
 void
 Grammar::setUpBinaryInstructions()
@@ -180,7 +180,7 @@ Grammar::setUpBinaryInstructions()
 
 
     // Direct register references, like x86 EAX (as opposed to, say, ST(0)).  The only purpose of this class is because SageIII
-    // doesn't allow traversals on non-terminal classes.
+    // doesn't allow traversals on non-AstNodeClass classes.
     NEW_TERMINAL_MACRO(AsmDirectRegisterExpression,
                        "AsmDirectRegisterExpression", "AsmDirectRegisterExpressionTag");
     AsmDirectRegisterExpression.setDataPrototype("unsigned", "psr_mask", "=0", // for ARM
