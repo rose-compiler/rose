@@ -4,7 +4,7 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 #include "grammarString.h"
 #include <sstream>
 
@@ -13,7 +13,7 @@ using namespace std;
 
 string
 // Grammar::outputClassesAndFields ( GrammarTreeNode & node, fstream & outputFile )
-Grammar::outputClassesAndFields ( Terminal & node )
+Grammar::outputClassesAndFields ( AstNodeClass & node )
    {
      string className = node.getName();
 
@@ -24,7 +24,7 @@ Grammar::outputClassesAndFields ( Terminal & node )
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     vector<Terminal *>::iterator treeNodeIterator;
+     vector<AstNodeClass *>::iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin();
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )
@@ -52,7 +52,7 @@ Grammar::outputClassesAndFields ( Terminal & node )
 
 
 string
-Terminal::outputClassesAndFields ()
+AstNodeClass::outputClassesAndFields ()
    {
      string returnString;
      vector<GrammarString *> localList;
@@ -60,8 +60,8 @@ Terminal::outputClassesAndFields ()
      vector<GrammarString *>::iterator stringListIterator;
 
   // Initialize with local node data
-     localList        = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-     localExcludeList = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
+     localList        = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+     localExcludeList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::EXCLUDE_LIST);
 
   // Now edit the list to remove elements appearing within the exclude list
      Grammar::editStringList ( localList, localExcludeList );
@@ -83,21 +83,21 @@ Terminal::outputClassesAndFields ()
 
      ROSE_ASSERT (localExcludeList.size() == 0);
 
-  // printf ("In Terminal::outputClassesAndFields(): returnString = %s \n",returnString.c_str());
+  // printf ("In AstNodeClass::outputClassesAndFields(): returnString = %s \n",returnString.c_str());
 
      return returnString;
    }
 
 string
-Terminal::outputFields () {
+AstNodeClass::outputFields () {
   string returnString;
   vector<GrammarString *> localList;
   vector<GrammarString *> localExcludeList;
   vector<GrammarString *>::iterator stringListIterator;
   
   // Initialize with local node data
-  localList        = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-  localExcludeList = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
+  localList        = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+  localExcludeList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::EXCLUDE_LIST);
 
   // Now edit the list to remove elements appearing within the exclude list
   Grammar::editStringList ( localList, localExcludeList );

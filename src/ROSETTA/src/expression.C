@@ -1,7 +1,7 @@
 
 #include "grammar.h"
 #include "ROSETTA_macros.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 
 // What should be the behavior of the default constructor for Grammar
 

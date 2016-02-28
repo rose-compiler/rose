@@ -236,6 +236,9 @@ public:
     // Only called by boost::shared_ptr
     ~Connection() { finish(); }
 
+    /** Converts a uniform resource locator to a driver specific string. */
+    static std::string connectionSpecification(const std::string &uri, Driver driver = NO_DRIVER);
+
 protected:
     // Protected because you should be using create() to get a smart pointer.  Database driver-level connections are typically
     // not copyable object anyway.

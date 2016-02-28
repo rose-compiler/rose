@@ -317,9 +317,9 @@ public:
  *  // C++ way of emitting a message
  *  mlog[DEBUG] <<"address is " <<StringUtility::addrToString(va) <<"\n";
  *  // C way of emitting a message
- *  mfprintf(mlog[DEBUG])("address is 0x"PRIx64"\n", va);
+ *  mfprintf(mlog[DEBUG])("address is 0x" PRIx64 "\n", va);
  *  // Shortcut macro
- *  mprintf("address is 0x"PRIx64"\n", va);
+ *  mprintf("address is 0x" PRIx64 "\n", va);
  * @endcode
  *
  * The @c mprintf macro always uses <code>mlog[DEBUG]</code> without any name qualification in order to resolve to the most

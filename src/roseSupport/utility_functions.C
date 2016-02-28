@@ -129,7 +129,11 @@ readlineVersionString() {
 static std::string
 libmagicVersionString() {
 #ifdef ROSE_HAVE_LIBMAGIC
+#ifdef MAGIC_VERSION
     return StringUtility::numberToString(MAGIC_VERSION);
+#else
+    return "unknown (but enabled)";
+#endif
 #else
     return "unknown (libmagic is disabled)";
 #endif
