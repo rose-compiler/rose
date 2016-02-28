@@ -13104,6 +13104,8 @@ void SageInterface::replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* ta
   {
     if ((*j)->getTypeOfDirective()==PreprocessingInfo::CMacroCall)
     {
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
+   // DQ (2/17/2016): The token_container type is not defined if Wave is not available.
       std::ostringstream os;
       token_container tc = (*j)->get_macro_call()->expanded_macro;
       token_container::const_iterator iter;
@@ -13123,6 +13125,7 @@ void SageInterface::replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* ta
       }
        delete target->get_pragma();
        target->set_pragma(buildPragma(pragmaText));
+#endif
     } // end if
   } // end for
 #endif

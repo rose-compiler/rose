@@ -13,9 +13,11 @@ int main( int argc, char * argv[] )
     SgProject* project = frontend(newArgv);
 	std::vector<SgNode*> macroVec2 = linearize_subtree(project);
  
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
     createMap map_tokenToAST(macroVec2,wave_tokenStream);
     map_tokenToAST.printNodeToTokenMap();
     map_tokenToAST.printTokenToNodeMap();
+#endif
 
   // Insert your own manipulation of the AST here...
 
