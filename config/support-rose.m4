@@ -145,8 +145,9 @@ fi
   AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
   AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
-AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.8.x)])
-AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.8.x verification check]),,[enableval=yes])
+# DQ (2/27/2016): Added version 4.9.x to supported compilers.
+AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.9.x)])
+AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.9.x verification check]),,[enableval=yes])
 if test "x$enableval" = "xyes" ; then
       AC_LANG_PUSH([C])
       # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html

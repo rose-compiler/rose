@@ -1,5 +1,5 @@
 // Simple hand-written example of the DSL attributes class that we want to generate automatically.
-
+#if 0
 // Reference classe names that are specific to the DSL.
 extern std::vector<std::string> dsl_type_names;
 
@@ -31,7 +31,9 @@ class dsl_attribute : public AstAttribute
 
 // References to dsl attributes in a map inexed by the name of the dsl abstraction.
 extern std::map<std::string,dsl_attribute> dsl_attribute_map;
+#endif
 
+#if 1
 // Examples of classes to be generated for to support the DSL compiler.
 // NOTE: we might not need to generate this if it could be a template.
 class array_dsl_attribute : public dsl_attribute
@@ -46,6 +48,7 @@ class array_dsl_attribute : public dsl_attribute
           std::string toString();
           std::string additionalNodeOptions();
    };
+#endif
 
 class array_refexp_dsl_attribute : public dsl_attribute
    {

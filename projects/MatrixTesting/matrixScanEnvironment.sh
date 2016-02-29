@@ -72,5 +72,5 @@ fi
 
 # Print results
 for kv in "${config_vector[@]}"; do
-    echo "$kv"
+    echo "'$kv'"
 done

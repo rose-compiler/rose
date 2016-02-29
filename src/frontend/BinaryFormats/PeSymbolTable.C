@@ -133,7 +133,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
                 if (fname_offset < 4) throw FormatError("name collides with size field");
                 set_name(new SgAsmBasicString(strtab->read_content_local_str(fname_offset)));
                 if (debug) {
-                    fprintf(stderr, "COFF aux file: offset=%"PRIu64", name=\"%s\"\n",
+                    fprintf(stderr, "COFF aux file: offset=%" PRIu64 ", name=\"%s\"\n",
                             fname_offset, get_name()->get_string(true).c_str());
                 }
             } else {

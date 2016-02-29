@@ -4,7 +4,7 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 #include "grammarString.h"
 
 using namespace std;
@@ -15,31 +15,31 @@ using namespace std;
 // #                 NonTerminal Member Functions                 #
 // ################################################################
 
-SubclassListBuilder& SubclassListBuilder::operator|(const Terminal& t) {
+SubclassListBuilder& SubclassListBuilder::operator|(const AstNodeClass& t) {
   ROSE_ASSERT (&t);
-  children.push_back(const_cast<Terminal*>(&t));
+  children.push_back(const_cast<AstNodeClass*>(&t));
   return *this;
 }
 
-const std::vector<Terminal*>& SubclassListBuilder::getList() const {
+const std::vector<AstNodeClass*>& SubclassListBuilder::getList() const {
   return children;
 }
 
 bool
-Terminal::isInnerNode() {
+AstNodeClass::isInnerNode() {
   return subclasses.size()>0;
 }
 
 bool
-Terminal::isLeafNode() {
+AstNodeClass::isLeafNode() {
   return subclasses.size()==0;
 }
 
-Terminal::~Terminal()
+AstNodeClass::~AstNodeClass()
    {
    }
 
-Terminal::Terminal ( const string& lexemeString , Grammar & X , const string& stringVar, const string& tagString, bool canHaveInstances, const SubclassListBuilder & builder )
+AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const string& stringVar, const string& tagString, bool canHaveInstances, const SubclassListBuilder & builder )
    : name((stringVar.empty() ? lexemeString : stringVar)),
      baseName((stringVar.empty() ? lexemeString : stringVar)),
      baseClass(NULL),
@@ -68,22 +68,22 @@ Terminal::Terminal ( const string& lexemeString , Grammar & X , const string& st
    }
 
 void
-Terminal::setBaseClass(Terminal* bc) {baseClass = bc;}
+AstNodeClass::setBaseClass(AstNodeClass* bc) {baseClass = bc;}
 
-Terminal*
-Terminal::getBaseClass() const {return baseClass;}
+AstNodeClass*
+AstNodeClass::getBaseClass() const {return baseClass;}
 
 bool
-Terminal::isDerivedFrom(const string & s) const 
+AstNodeClass::isDerivedFrom(const string & s) const 
    {
-  // DQ (10/11/2014): This function checks if the input name is a base class of this Terminal.
+  // DQ (10/11/2014): This function checks if the input name is a base class of this AstNodeClass.
 
 #if 1
-      printf ("In Terminal::isBaseClass(): s = %s this = %p = %s \n",s.c_str(),this,this->getName().c_str());
+      printf ("In AstNodeClass::isBaseClass(): s = %s this = %p = %s \n",s.c_str(),this,this->getName().c_str());
 #endif
 
      bool returnValue = false;
-     Terminal* temp = const_cast<Terminal*>(this);
+     AstNodeClass* temp = const_cast<AstNodeClass*>(this);
      while (temp != NULL && temp->getName() != s)
         {
           temp = temp->getBaseClass();
@@ -92,7 +92,7 @@ Terminal::isDerivedFrom(const string & s) const
      if (temp != NULL && temp->getName() == s)
         {
 #if 1
-          printf ("Found matching terminal name: s = %s \n",s.c_str());
+          printf ("Found matching AstNodeClass name: s = %s \n",s.c_str());
 #endif
           returnValue = true;
         }
@@ -101,19 +101,19 @@ Terminal::isDerivedFrom(const string & s) const
    }
 
 void
-Terminal::setCanHaveInstances(bool chi) {canHaveInstances = chi;}
+AstNodeClass::setCanHaveInstances(bool chi) {canHaveInstances = chi;}
 
 bool
-Terminal::getCanHaveInstances() const {return canHaveInstances;}
+AstNodeClass::getCanHaveInstances() const {return canHaveInstances;}
 
 void
-Terminal::setBuildDefaultConstructor ( bool X )
+AstNodeClass::setBuildDefaultConstructor ( bool X )
    {
      buildDefaultConstructor = X;
    }
 
 bool
-Terminal::getBuildDefaultConstructor () const
+AstNodeClass::getBuildDefaultConstructor () const
    {
      ROSE_ASSERT (buildDefaultConstructor == true || buildDefaultConstructor == false);
      return buildDefaultConstructor;
@@ -122,7 +122,7 @@ Terminal::getBuildDefaultConstructor () const
 // AJ ( 10/26/2004)
 // 
 string
-Terminal::buildDestructorBody ()
+AstNodeClass::buildDestructorBody ()
    {
      string returnString;
      vector<GrammarString *> localList;
@@ -130,8 +130,8 @@ Terminal::buildDestructorBody ()
      vector<GrammarString *>::iterator stringListIterator;
 
   // Initialize with local node data
-     localList        = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-     localExcludeList = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
+     localList        = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+     localExcludeList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::EXCLUDE_LIST);
 
   // Now edit the list to remove elements appearing within the exclude list
      Grammar::editStringList ( localList, localExcludeList );
@@ -189,12 +189,12 @@ Terminal::buildDestructorBody ()
 
      ROSE_ASSERT (localExcludeList.size() == 0);
 
-  // printf ("In Terminal::buildDestructorBody(): returnString = %s \n",returnString.c_str());
+  // printf ("In AstNodeClass::buildDestructorBody(): returnString = %s \n",returnString.c_str());
      return returnString;
    }
 
 string
-Terminal::buildConstructorBody ( bool withInitializers, ConstructParamEnum config )
+AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum config )
    {
   // This function builds a string that represents the initialization of member data
   // if the default initializers are used (for default constructors) then all member 
@@ -214,8 +214,8 @@ Terminal::buildConstructorBody ( bool withInitializers, ConstructParamEnum confi
      ROSE_ASSERT (withInitializers == false);
 
   // Initialize with local node data
-     localList        = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-     localExcludeList = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
+     localList        = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+     localExcludeList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::EXCLUDE_LIST);
 
   // Now edit the list to remove elements appearing within the exclude list
      Grammar::editStringList ( localList, localExcludeList );
@@ -256,7 +256,7 @@ Terminal::buildConstructorBody ( bool withInitializers, ConstructParamEnum confi
      return returnString;
    }
 
-StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionHeader ()
+StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionHeader ()
    {
   // DQ (3/25/3006): I put this back in because it had the logic for where the copy function required 
   // and not required which is required to match the other aspects of the copy mechanism code generation.
@@ -278,16 +278,16 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionHeader ()
           returnString.push_back(StringUtility::StringWithLineNumber("       // copy functions omitted for $CLASSNAME", "" /* "<copy member function>" */, 1));
         }
 
-  // printf ("In Terminal::buildCopyMemberFunctionHeader(): returnString = %s \n",returnString);
+  // printf ("In AstNodeClass::buildCopyMemberFunctionHeader(): returnString = %s \n",returnString);
 
      return returnString;
    }
 
-StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
+StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionSource ()
    {
   // This function builds the copy member function's body
 
-  // printf ("In Terminal::buildCopyMemberFunctionSource(): class name = %s \n",name);
+  // printf ("In AstNodeClass::buildCopyMemberFunctionSource(): class name = %s \n",name);
 
      StringUtility::FileWithLineNumbers returnString;
      if (automaticGenerationOfCopyFunction == true)
@@ -297,22 +297,22 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
           StringUtility::FileWithLineNumbers functionTemplateString = Grammar::readFileWithPos (filename);
           bool emptyConstructorArg = (!generateConstructor()) || getBuildDefaultConstructor ();
 
-       // printf ("Derived Class terminal name = %s \n",name);
+       // printf ("Derived Class AstNodeClass name = %s \n",name);
 
        // DQ (9/28/2005): We can't enforce this, but perhaps it is a good goal for ROSETTA.
           ROSE_ASSERT(getBuildDefaultConstructor() == false);
 
        // DQ (9/28/2005): I think this should be a while loop and not a for 
        // loop since the terminatation is not easily determined statically.
-          for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+          for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
              {
                string constructArgCopy1 = "", constructArgList1 = "", postConstructCopy1 = "";
                vector<GrammarString *> copyList;
                vector<GrammarString *>::iterator stringListIterator;
 
-            // printf ("Possible base class terminal name = %s \n",(*t).name);
+            // printf ("Possible base class AstNodeClass name = %s \n",(*t).name);
 
-               copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+               copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
 
                for( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
                   {
@@ -411,7 +411,7 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
 
                               default:
                                  {
-                                   printf ("Default reached in Terminal::buildCopyMemberFunctionSource \n");
+                                   printf ("Default reached in AstNodeClass::buildCopyMemberFunctionSource \n");
                                    ROSE_ASSERT(false);
                                  }
                             }
@@ -445,34 +445,34 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
    }
 
 
-void Terminal::setConnectionToLowerLevelGrammar ( Terminal & X )
+void AstNodeClass::setConnectionToLowerLevelGrammar ( AstNodeClass & X )
    {
      lowerLevelGramaticalElement = &X;
      ROSE_ASSERT (lowerLevelGramaticalElement != NULL);
    }
 
-Terminal & Terminal::getConnectionToLowerLevelGrammar ()
+AstNodeClass & AstNodeClass::getConnectionToLowerLevelGrammar ()
    {
      ROSE_ASSERT (lowerLevelGramaticalElement != NULL);
      return *lowerLevelGramaticalElement;
    }
 
 void
-Terminal::show(size_t indent) const
+AstNodeClass::show(size_t indent) const
    {
      ROSE_ASSERT (this != NULL);
-     if (subclasses.empty()) { // Terminal
+     if (subclasses.empty()) { // AstNodeClass
        printf ("%s ",name.c_str());
      } else { // Nonterminal
        for (size_t i=0; i < indent; i++) {
          printf ("..");
        }
-       for(vector<Terminal*>::const_iterator terminalIterator =
+       for(vector<AstNodeClass*>::const_iterator terminalIterator =
              subclasses.begin(); 
            terminalIterator != subclasses.end(); 
            terminalIterator++) {
          ROSE_ASSERT((*terminalIterator)!=NULL);
-         displayName(indent); cout << " -> "; (*terminalIterator)->Terminal::show(); cout << ";" << endl; //MS edge
+         displayName(indent); cout << " -> "; (*terminalIterator)->AstNodeClass::show(); cout << ";" << endl; //MS edge
          if ((*terminalIterator)->getCanHaveInstances()) {
            (*terminalIterator)->show();
            cout << "[style=bold];" << endl; // Terminals are bold! MS node
@@ -482,26 +482,26 @@ Terminal::show(size_t indent) const
    }
 
 void
-Terminal::displayName ( int indent ) const
+AstNodeClass::displayName ( int indent ) const
    {
      ROSE_ASSERT (this != NULL);
      printf ("%s ",name.c_str());
    }
 
 void 
-Terminal::setLexeme ( const string& label )
+AstNodeClass::setLexeme ( const string& label )
    {
      this->lexeme = label;
    }
 
 const string&
-Terminal::getLexeme () const
+AstNodeClass::getLexeme () const
    {
      return lexeme;
    }
 
 void 
-Terminal::setName ( const string& label, const string& tagName )
+AstNodeClass::setName ( const string& label, const string& tagName )
    {
   // baseName is the same as "name" but name will be modified later to 
   // include the $GRAMMAR_PREFIX_ we need to keep the base around so that 
@@ -511,7 +511,7 @@ Terminal::setName ( const string& label, const string& tagName )
 
      ROSE_ASSERT (this != NULL);
 
-  // printf ("In Terminal::setName ( label = %s tagName = %s ) \n",
+  // printf ("In AstNodeClass::setName ( label = %s tagName = %s ) \n",
   //      (label == NULL) ? "NULL" : label,(tagName == NULL) ? "NULL" : tagName);
 
      this->baseName = this->name = label;
@@ -527,15 +527,15 @@ Terminal::setName ( const string& label, const string& tagName )
    }
 
 void
-Terminal::setGrammar ( Grammar* grammarPointer )
+AstNodeClass::setGrammar ( Grammar* grammarPointer )
    {
      ROSE_ASSERT (this != NULL);
      ROSE_ASSERT (grammarPointer != NULL);
-     ((Terminal*)this)->associatedGrammar = grammarPointer;
+     ((AstNodeClass*)this)->associatedGrammar = grammarPointer;
    }
 
 Grammar*
-Terminal::getGrammar() const
+AstNodeClass::getGrammar() const
    {
      ROSE_ASSERT (this != NULL);
      ROSE_ASSERT (associatedGrammar != NULL);
@@ -543,18 +543,18 @@ Terminal::getGrammar() const
    }
 
 const string&
-Terminal::getName () const
+AstNodeClass::getName () const
    {
      ROSE_ASSERT (this != NULL);
      ROSE_ASSERT (!name.empty());
 #if 0
-     printf ("In Terminal::getName(): name = %s \n",name);
+     printf ("In AstNodeClass::getName(): name = %s \n",name);
 #endif
      return name;
    }
 
 const string&
-Terminal::getBaseName () const
+AstNodeClass::getBaseName () const
    {
      ROSE_ASSERT (this != NULL);
      return baseName;
@@ -562,7 +562,7 @@ Terminal::getBaseName () const
 
 
 void
-Terminal::addGrammarPrefixToName()
+AstNodeClass::addGrammarPrefixToName()
    {
   // In this function we prefix the grammar's name to the names of all terminals and nonterminals
   // This allows them to have unique names in the global namespace (allowing us to have multiple
@@ -577,25 +577,25 @@ Terminal::addGrammarPrefixToName()
      ROSE_ASSERT (getGrammar() != NULL);
      grammarName = getGrammar()->getGrammarPrefixName();
 
-  // printf ("In Terminal::addGrammarPrefixToName: grammarName = %s \n",grammarName);
+  // printf ("In AstNodeClass::addGrammarPrefixToName: grammarName = %s \n",grammarName);
 
   // Error Checking! Check to make sure that grammar's name does not already exist in the
-  // terminal's name.  This helps make sure that elements are not represented twice!
+  // AstNodeClass's name.  This helps make sure that elements are not represented twice!
      if (GrammarString::isContainedIn(name, grammarName)) {
-         std::cerr <<"Grammar's name already exists in the terminal's name"
+         std::cerr <<"Grammar's name already exists in the AstNodeClass's name"
                    <<"; name=" <<name <<", grammarName=" <<grammarName <<"\n";
      }
      ROSE_ASSERT(!GrammarString::isContainedIn(name,grammarName));
 
   // Set the name to include the grammar's prefix
   // Modify this statement to avoid Insure++ warning
-  // ((Terminal*)this)->name = stringConcatinate( GrammarString::stringDuplicate(grammarName), name );
+  // ((AstNodeClass*)this)->name = stringConcatinate( GrammarString::stringDuplicate(grammarName), name );
      string newNameWithPrefix = grammarName + name;
      this->name = newNameWithPrefix;
 
   // Set the name to include the grammar's prefix
 
-  // printf ("In Terminal::addGrammarPrefixToName() tag = %s \n",tag);
+  // printf ("In AstNodeClass::addGrammarPrefixToName() tag = %s \n",tag);
   // ROSE_ASSERT (getGrammar()->parentGrammar != NULL);
 
      string grammarTagName = "";
@@ -603,7 +603,7 @@ Terminal::addGrammarPrefixToName()
           grammarTagName = grammarName;
 
   // Modify this statement to avoid Insure++ warning
-  // ((Terminal*)this)->tag  = stringConcatinate( GrammarString::stringDuplicate(grammarTagName), tag  );
+  // ((AstNodeClass*)this)->tag  = stringConcatinate( GrammarString::stringDuplicate(grammarTagName), tag  );
   // char* tempTag = stringConcatinate( GrammarString::stringDuplicate(grammarTagName), tag  );
      string tempTag = grammarTagName + tag;
      this->tag  = tempTag;
@@ -612,9 +612,9 @@ Terminal::addGrammarPrefixToName()
    }
 
 void 
-Terminal::setTagName ( const string& label )
+AstNodeClass::setTagName ( const string& label )
    {
-  // printf ("In Terminal::setTagName ( label = %s ) \n",
+  // printf ("In AstNodeClass::setTagName ( label = %s ) \n",
   //        (label == NULL) ? "NULL" : label);
 
      this->tag = label;
@@ -622,23 +622,23 @@ Terminal::setTagName ( const string& label )
 
   // Prepend the grammar's name to the tag so that multiple 
   // grammars will have unique tags
-  // ((Terminal*)this)->tag = stringConcatinate(getGrammar()->getGrammarName(),tag);
+  // ((AstNodeClass*)this)->tag = stringConcatinate(getGrammar()->getGrammarName(),tag);
      string grammarName = "";
 
      this->tag = grammarName + tag;
    }
 
 const string&
-Terminal::getTagName () const
+AstNodeClass::getTagName () const
    {
      return tag;
    }
 
 void
-Terminal::setFunctionPrototype ( const GrammarString & inputMemberFunction )
+AstNodeClass::setFunctionPrototype ( const GrammarString & inputMemberFunction )
    {
-     Terminal::addElementToList
-        ( getMemberFunctionPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST),
+     AstNodeClass::addElementToList
+        ( getMemberFunctionPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST),
           inputMemberFunction);
    }
 
@@ -653,7 +653,7 @@ Terminal::setFunctionPrototype ( const GrammarString & inputMemberFunction )
      codeString->setVirtual(pureVirtual);
 
 void
-Terminal::setFunctionPrototype ( const string& markerString, const string& filename, bool pureVirtual )
+AstNodeClass::setFunctionPrototype ( const string& markerString, const string& filename, bool pureVirtual )
    {
   // We might want to include the path name into the filename string
   // so we don't need to have a directory input parameter
@@ -663,19 +663,19 @@ Terminal::setFunctionPrototype ( const string& markerString, const string& filen
    }
 
 void
-Terminal::setFunctionSource ( const string& markerString, const string& filename, bool pureVirtual )
+AstNodeClass::setFunctionSource ( const string& markerString, const string& filename, bool pureVirtual )
    {
   // We might want to include the path name into the filename string
   // so we don't need to have a directory input parameter
      SETUP_MARKER_STRINGS_MACRO
        // BP : 10/25/2001, fixing memory leak
   // memberFunctionSourceList.addElement(*codeString);
-     Terminal::addElementToList ( getMemberFunctionSourceList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST),
+     AstNodeClass::addElementToList ( getMemberFunctionSourceList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST),
                                            *codeString );
    }
 
 void
-Terminal::setSubTreeFunctionPrototype ( const GrammarString & inputMemberFunction )
+AstNodeClass::setSubTreeFunctionPrototype ( const GrammarString & inputMemberFunction )
    {
   // When we add a string of code to the subtree we have to also add it explicitly to 
   // the root of the subtree (calling "setFunction" takes care of this).
@@ -683,13 +683,13 @@ Terminal::setSubTreeFunctionPrototype ( const GrammarString & inputMemberFunctio
   // This function must be run ONLY after the grammar tree is built!
   // ROSE_ASSERT (grammarSubTree != NULL);
   // subTreeMemberFunctionPrototypeList.addElement(inputMemberFunction);
-     Terminal::addElementToList ( getMemberFunctionPrototypeList(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST),
+     AstNodeClass::addElementToList ( getMemberFunctionPrototypeList(AstNodeClass::SUBTREE_LIST,AstNodeClass::INCLUDE_LIST),
                                            inputMemberFunction );
-     ROSE_ASSERT (getMemberFunctionPrototypeList(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size() > 0);
+     ROSE_ASSERT (getMemberFunctionPrototypeList(AstNodeClass::SUBTREE_LIST,AstNodeClass::INCLUDE_LIST).size() > 0);
    }
 
 void
-Terminal::setSubTreeFunctionPrototype ( const string& markerString, const string& filename, bool pureVirtual )
+AstNodeClass::setSubTreeFunctionPrototype ( const string& markerString, const string& filename, bool pureVirtual )
    {
   // We might want to include the path name into the filename string
   // so we don't need to have a directory input parameter
@@ -698,19 +698,19 @@ Terminal::setSubTreeFunctionPrototype ( const string& markerString, const string
    }
 
 void
-Terminal::setSubTreeFunctionSource ( const string& markerString, const string& filename, bool pureVirtual )
+AstNodeClass::setSubTreeFunctionSource ( const string& markerString, const string& filename, bool pureVirtual )
    {
   // We might want to include the path name into the filename string
   // so we don't need to have a directory input parameter
      SETUP_MARKER_STRINGS_MACRO
   // subTreeMemberFunctionSourceList.addElement(*codeString);
-     Terminal::addElementToList ( getMemberFunctionSourceList(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST),
+     AstNodeClass::addElementToList ( getMemberFunctionSourceList(AstNodeClass::SUBTREE_LIST,AstNodeClass::INCLUDE_LIST),
                                            *codeString );
    }
 
 
 void
-Terminal::setPredeclarationString  ( const string& markerString, const string& filename )
+AstNodeClass::setPredeclarationString  ( const string& markerString, const string& filename )
    {
      bool pureVirtual;     
      SETUP_MARKER_STRINGS_MACRO
@@ -719,7 +719,7 @@ Terminal::setPredeclarationString  ( const string& markerString, const string& f
    }
 
 void
-Terminal::setPostdeclarationString  ( const string& markerString, const string& filename )
+AstNodeClass::setPostdeclarationString  ( const string& markerString, const string& filename )
    {
      bool pureVirtual;     
      SETUP_MARKER_STRINGS_MACRO
@@ -727,7 +727,7 @@ Terminal::setPostdeclarationString  ( const string& markerString, const string& 
    }
 
 void
-Terminal::setPredeclarationString  ( const string& declarationString )
+AstNodeClass::setPredeclarationString  ( const string& declarationString )
    {
   // This function allows the specification of declarations 
   // that are to appear prefixed to a class declaration
@@ -735,7 +735,7 @@ Terminal::setPredeclarationString  ( const string& declarationString )
    }
 
 void
-Terminal::setPostdeclarationString ( const string& declarationString )
+AstNodeClass::setPostdeclarationString ( const string& declarationString )
    {
   // This function allows the specification of declarations 
   // that are to appear postfixed to a class declaration
@@ -743,22 +743,22 @@ Terminal::setPostdeclarationString ( const string& declarationString )
    }
 
 const string&
-Terminal::getPredeclarationString () const
+AstNodeClass::getPredeclarationString () const
    {
      return predeclarationString;
    }
 
 const string&
-Terminal::getPostdeclarationString() const
+AstNodeClass::getPostdeclarationString() const
    {
      return postdeclarationString;
    }
 
 void
-Terminal::setDataPrototype ( const GrammarString & inputMemberData)
+AstNodeClass::setDataPrototype ( const GrammarString & inputMemberData)
 {
   // MK: This is the correct place to put the memberData info
-  Terminal::addElementToList (getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST),
+  AstNodeClass::addElementToList (getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST),
                                        inputMemberData );
   
   // Once the string for the class declaration is built we have to 
@@ -773,18 +773,18 @@ Terminal::setDataPrototype ( const GrammarString & inputMemberData)
   ROSE_ASSERT(sourceCodeString != NULL);
   sourceCodeString->setVirtual(pureVirtual);
 
-  vector<GrammarString*>& l = getMemberFunctionSourceList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+  vector<GrammarString*>& l = getMemberFunctionSourceList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
   // Data access "functions" should be placed into the LOCAL_LIST since
   // they are accessable though the base classes by definition (of C++)
-  Terminal::addElementToList ( l, *sourceCodeString );
+  AstNodeClass::addElementToList ( l, *sourceCodeString );
   
 }
 
 string
-Terminal::buildDataAccessFunctions ( const GrammarString & inputMemberData)
+AstNodeClass::buildDataAccessFunctions ( const GrammarString & inputMemberData)
    {
   // This function builds the access functions that will be used with the 
-  // associated data declared on this terminal (or non-terminal).
+  // associated data declared on this AstNodeClass (or non-AstNodeClass).
 
      string returnString = "";
      string filename = "";
@@ -877,7 +877,7 @@ Terminal::buildDataAccessFunctions ( const GrammarString & inputMemberData)
    }
 
 void
-Terminal::setDataPrototype (
+AstNodeClass::setDataPrototype (
      const string& inputTypeNameString,
      const string& inputVariableNameString,
      const string& inputDefaultInitializer,
@@ -902,49 +902,49 @@ Terminal::setDataPrototype (
 
 // Mechanism for excluding code from specific node or subtrees
 void
-Terminal::excludeFunctionPrototype ( const GrammarString & inputMemberFunction )
+AstNodeClass::excludeFunctionPrototype ( const GrammarString & inputMemberFunction )
    {
-     Terminal::addElementToList
-        ( getMemberFunctionPrototypeList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST),inputMemberFunction);
+     AstNodeClass::addElementToList
+        ( getMemberFunctionPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::EXCLUDE_LIST),inputMemberFunction);
    }
 
 void 
-Terminal::excludeFunctionPrototype
+AstNodeClass::excludeFunctionPrototype
    ( const string& markerString, const string& filename, bool pureVirtual )
    {
      SETUP_MARKER_STRINGS_MACRO
-     Terminal::addElementToList (
-          getMemberFunctionPrototypeList (Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST), *codeString);
+     AstNodeClass::addElementToList (
+          getMemberFunctionPrototypeList (AstNodeClass::LOCAL_LIST,AstNodeClass::EXCLUDE_LIST), *codeString);
    }
 
 void
-Terminal::excludeSubTreeFunctionPrototype ( const GrammarString & inputMemberFunction )
+AstNodeClass::excludeSubTreeFunctionPrototype ( const GrammarString & inputMemberFunction )
    {
-     Terminal::addElementToList ( 
-          getMemberFunctionPrototypeList(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST),
+     AstNodeClass::addElementToList ( 
+          getMemberFunctionPrototypeList(AstNodeClass::SUBTREE_LIST,AstNodeClass::EXCLUDE_LIST),
           inputMemberFunction);
    }
 
 void 
-Terminal::excludeSubTreeFunctionPrototype 
+AstNodeClass::excludeSubTreeFunctionPrototype 
    ( const string& markerString, const string& filename, bool pureVirtual )
    {
      SETUP_MARKER_STRINGS_MACRO
-     Terminal::addElementToList(
-          getMemberFunctionPrototypeList(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST),
+     AstNodeClass::addElementToList(
+          getMemberFunctionPrototypeList(AstNodeClass::SUBTREE_LIST,AstNodeClass::EXCLUDE_LIST),
           *codeString);
    }
 
 void
-Terminal::excludeSubTreeDataPrototype ( const GrammarString & inputMemberData )
+AstNodeClass::excludeSubTreeDataPrototype ( const GrammarString & inputMemberData )
 {
   // Note that the exclusion of data works slightly differently than for function prototypes
-  Terminal::addElementToList(getMemberDataPrototypeList(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST), 
+  AstNodeClass::addElementToList(getMemberDataPrototypeList(AstNodeClass::SUBTREE_LIST,AstNodeClass::EXCLUDE_LIST), 
                                       inputMemberData);
 }
 
 void
-Terminal::excludeSubTreeDataPrototype (
+AstNodeClass::excludeSubTreeDataPrototype (
      const string& inputTypeNameString, 
      const string& inputVariableNameString, 
      const string& inputDefaultInitializer )
@@ -960,41 +960,41 @@ Terminal::excludeSubTreeDataPrototype (
    }
 
 void 
-Terminal::excludeFunctionSource           
+AstNodeClass::excludeFunctionSource           
    ( const string& markerString, const string& filename, bool pureVirtual )
    {
      SETUP_MARKER_STRINGS_MACRO
-     Terminal::addElementToList(
-          getMemberFunctionSourceList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST),
+     AstNodeClass::addElementToList(
+          getMemberFunctionSourceList(AstNodeClass::LOCAL_LIST,AstNodeClass::EXCLUDE_LIST),
           *codeString);
    }
 
 void 
-Terminal::excludeSubTreeFunctionSource
+AstNodeClass::excludeSubTreeFunctionSource
    ( const string& markerString, const string& filename, bool pureVirtual )
    {
      SETUP_MARKER_STRINGS_MACRO
-     Terminal::addElementToList(
-          getMemberFunctionSourceList (Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST),
+     AstNodeClass::addElementToList(
+          getMemberFunctionSourceList (AstNodeClass::SUBTREE_LIST,AstNodeClass::EXCLUDE_LIST),
           *codeString);
    }
 
 // test of work around for Insure++ (removing the const declaration to avoid generation of a copy)
 #if !ROSE_MICROSOFT_OS
 #if INSURE_BUG
-void Terminal::addElementToList ( vector<GrammarString *> & targetList, GrammarString & element )
+void AstNodeClass::addElementToList ( vector<GrammarString *> & targetList, GrammarString & element )
 #else
-void Terminal::addElementToList ( vector<GrammarString *> & targetList, const GrammarString & element )
+void AstNodeClass::addElementToList ( vector<GrammarString *> & targetList, const GrammarString & element )
 #endif
 #else
-void Terminal::addElementToList ( vector<GrammarString *> & targetList, const GrammarString & element )
+void AstNodeClass::addElementToList ( vector<GrammarString *> & targetList, const GrammarString & element )
 #endif
    {
   // This function abstracts the details of adding GrammarString objects to the lists
   // that are stored internally.  It allows us to implement tests to check for redundencies in 
   // the list of elements (for now it allows us to test the != operator which will be used heavily later)
 
-  // printf ("Inside of Terminal::addElementToList \n");
+  // printf ("Inside of AstNodeClass::addElementToList \n");
 
      int i = 0;
      bool duplicateEntryFound = false;
@@ -1030,29 +1030,29 @@ void Terminal::addElementToList ( vector<GrammarString *> & targetList, const Gr
        }
    }
 
-vector<GrammarString *> & Terminal::getMemberFunctionPrototypeList(int i, int j) const
+vector<GrammarString *> & AstNodeClass::getMemberFunctionPrototypeList(int i, int j) const
    {
-  // printf ("Inside of Terminal::getMemberFunctionPrototypeList() \n");
+  // printf ("Inside of AstNodeClass::getMemberFunctionPrototypeList() \n");
      return (vector<GrammarString *> &) memberFunctionPrototypeList[i][j];
   // return memberFunctionPrototypeList[i][j];
    }
 
-vector<GrammarString *> & Terminal::getMemberDataPrototypeList(int i, int j) const
+vector<GrammarString *> & AstNodeClass::getMemberDataPrototypeList(int i, int j) const
    {
      return (vector<GrammarString *> &) memberDataPrototypeList[i][j];
    }
 
-vector<GrammarString *> & Terminal::getMemberFunctionSourceList(int i, int j) const
+vector<GrammarString *> & AstNodeClass::getMemberFunctionSourceList(int i, int j) const
    {
      return (vector<GrammarString *> &) memberFunctionSourceList[i][j];
    }
 
-vector<GrammarString *> & Terminal::getEditSubstituteTargetList( int i, int j ) const
+vector<GrammarString *> & AstNodeClass::getEditSubstituteTargetList( int i, int j ) const
    {
      return (vector<GrammarString *> &) editSubstituteTargetList[i][j];
    }
 
-vector<GrammarString *> & Terminal::getEditSubstituteSourceList( int i, int j ) const
+vector<GrammarString *> & AstNodeClass::getEditSubstituteSourceList( int i, int j ) const
    {
      return (vector<GrammarString *> &) editSubstituteSourceList[i][j];
    }
@@ -1063,47 +1063,47 @@ vector<GrammarString *> & Terminal::getEditSubstituteSourceList( int i, int j ) 
 #define EDIT_SUBSTITUTE_MACRO(X,Y) \
      GrammarString* targetString = new GrammarString (oldString);                 \
      GrammarString* sourceString = new GrammarString (newString);                 \
-     getEditSubstituteTargetList(Terminal:: X ,Terminal:: Y ).push_back(targetString);  \
-     getEditSubstituteSourceList(Terminal:: X ,Terminal:: Y ).push_back(sourceString);  \
-     ROSE_ASSERT (getEditSubstituteTargetList(Terminal:: X,Terminal:: Y ).size() == \
-                  getEditSubstituteSourceList(Terminal:: X,Terminal:: Y ).size());
+     getEditSubstituteTargetList(AstNodeClass:: X ,AstNodeClass:: Y ).push_back(targetString);  \
+     getEditSubstituteSourceList(AstNodeClass:: X ,AstNodeClass:: Y ).push_back(sourceString);  \
+     ROSE_ASSERT (getEditSubstituteTargetList(AstNodeClass:: X,AstNodeClass:: Y ).size() == \
+                  getEditSubstituteSourceList(AstNodeClass:: X,AstNodeClass:: Y ).size());
 
-  // printf ("getEditSubstituteTargetList(Terminal:: X,Terminal:: Y ).size() = %d \n",
-  //          getEditSubstituteTargetList(Terminal:: X,Terminal:: Y ).size());
+  // printf ("getEditSubstituteTargetList(AstNodeClass:: X,AstNodeClass:: Y ).size() = %d \n",
+  //          getEditSubstituteTargetList(AstNodeClass:: X,AstNodeClass:: Y ).size());
 
 void
-Terminal::editSubstitute ( const string& oldString, const string& newString )
+AstNodeClass::editSubstitute ( const string& oldString, const string& newString )
    {
   // Add these to storage and use then just before writting out the final strings
-  // printf ("Terminal::editSubstitute() oldString = %s   newString = %s \n",oldString,newString);
+  // printf ("AstNodeClass::editSubstitute() oldString = %s   newString = %s \n",oldString,newString);
 
      EDIT_SUBSTITUTE_MACRO(LOCAL_LIST,INCLUDE_LIST)
 
-  // printf ("getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST).size() = %d \n",
-  //      getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST).size());
+  // printf ("getEditSubstituteTargetList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST).size() = %d \n",
+  //      getEditSubstituteTargetList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST).size());
    }
 
 void
-Terminal::editSubstituteSubTree        ( const string& oldString, const string& newString )
+AstNodeClass::editSubstituteSubTree        ( const string& oldString, const string& newString )
    {
-  // printf ("Terminal::editSubstituteSubTree() oldString = %s   newString = %s \n",oldString,newString);
+  // printf ("AstNodeClass::editSubstituteSubTree() oldString = %s   newString = %s \n",oldString,newString);
      EDIT_SUBSTITUTE_MACRO(SUBTREE_LIST,INCLUDE_LIST)
    }
 
 void
-Terminal::editSubstituteExclude        ( const string& oldString, const string& newString )
+AstNodeClass::editSubstituteExclude        ( const string& oldString, const string& newString )
    {
      EDIT_SUBSTITUTE_MACRO(LOCAL_LIST,EXCLUDE_LIST)
    }
 
 void
-Terminal::editSubstituteExcludeSubTree ( const string& oldString, const string& newString )
+AstNodeClass::editSubstituteExcludeSubTree ( const string& oldString, const string& newString )
    {
      EDIT_SUBSTITUTE_MACRO(SUBTREE_LIST,EXCLUDE_LIST)
    }
 
 void
-Terminal::editSubstitute ( const string& oldString, const string& markerString, const string& filename )
+AstNodeClass::editSubstitute ( const string& oldString, const string& markerString, const string& filename )
    {
      bool pureVirtual = false;
   // char* returnString = "";
@@ -1115,7 +1115,7 @@ Terminal::editSubstitute ( const string& oldString, const string& markerString, 
    }
 
 void
-Terminal::editSubstituteSubTree        ( const string& oldString, const string& markerString, const string& filename )
+AstNodeClass::editSubstituteSubTree        ( const string& oldString, const string& markerString, const string& filename )
    {
      bool pureVirtual = false;
   // char* returnString = "";
@@ -1128,7 +1128,7 @@ Terminal::editSubstituteSubTree        ( const string& oldString, const string& 
    }
 
 void
-Terminal::editSubstituteExclude        ( const string& oldString, const string& markerString, const string& filename )
+AstNodeClass::editSubstituteExclude        ( const string& oldString, const string& markerString, const string& filename )
    {
      bool pureVirtual = false;
   // char* returnString = "";
@@ -1140,7 +1140,7 @@ Terminal::editSubstituteExclude        ( const string& oldString, const string& 
    }
 
 void
-Terminal::editSubstituteExcludeSubTree ( const string& oldString, const string& markerString, const string& filename )
+AstNodeClass::editSubstituteExcludeSubTree ( const string& oldString, const string& markerString, const string& filename )
    {
      bool pureVirtual = false;
   // char* returnString = "";
@@ -1153,7 +1153,7 @@ Terminal::editSubstituteExcludeSubTree ( const string& oldString, const string& 
 
 
 void
-Terminal::setAutomaticGenerationOfConstructor  ( bool X )
+AstNodeClass::setAutomaticGenerationOfConstructor  ( bool X )
    {
   // All terminals can have there constructors and destructors 
   // automatically generated.  This function controls the automatic
@@ -1163,14 +1163,14 @@ Terminal::setAutomaticGenerationOfConstructor  ( bool X )
    }
 
 void
-Terminal::setAutomaticGenerationOfDestructor   ( bool X )
+AstNodeClass::setAutomaticGenerationOfDestructor   ( bool X )
    {
   // See description of setAutomaticGenerationOfConstructor(bool) above
      automaticGenerationOfDestructor = X;
    }
 
 bool
-Terminal::generateDestructor () const
+AstNodeClass::generateDestructor () const
    {
   // See description of setAutomaticGenerationOfConstructor(bool) above
   // return automaticGenerationOfDestructor;
@@ -1179,46 +1179,46 @@ Terminal::generateDestructor () const
    }
 
 bool
-Terminal::generateConstructor() const
+AstNodeClass::generateConstructor() const
    {
   // See description of setAutomaticGenerationOfConstructor(bool) above
      return automaticGenerationOfConstructor;
    }
 
 void
-Terminal::setAutomaticGenerationOfDataAccessFunctions ( bool X )
+AstNodeClass::setAutomaticGenerationOfDataAccessFunctions ( bool X )
    {
-  // These functions set the construction of access functions for all member data of a terminal!
+  // These functions set the construction of access functions for all member data of a AstNodeClass!
   // See description of setAutomaticGenerationOfConstructor(bool) above
      automaticGenerationOfDataAccessFunctions = X;
    }
 
 bool
-Terminal::generateDataAccessFunctions() const
+AstNodeClass::generateDataAccessFunctions() const
    {
-  // These functions set the construction of access functions for all member data of a terminal!
+  // These functions set the construction of access functions for all member data of a AstNodeClass!
   // See description of setAutomaticGenerationOfConstructor(bool) above
      return automaticGenerationOfDataAccessFunctions;
    }
 
 void
-Terminal::setAutomaticGenerationOfCopyFunction ( bool X )
+AstNodeClass::setAutomaticGenerationOfCopyFunction ( bool X )
    {
-  // These functions set the construction of access functions for all member data of a terminal!
+  // These functions set the construction of access functions for all member data of a AstNodeClass!
   // See description of setAutomaticGenerationOfConstructor(bool) above
      automaticGenerationOfCopyFunction = X;
    }
 
 bool
-Terminal::generateCopyFunction() const
+AstNodeClass::generateCopyFunction() const
    {
-  // These functions set the construction of access functions for all member data of a terminal!
+  // These functions set the construction of access functions for all member data of a AstNodeClass!
   // See description of setAutomaticGenerationOfConstructor(bool) above
      return automaticGenerationOfCopyFunction;
    }
 
 void
-Terminal::consistencyCheck() const
+AstNodeClass::consistencyCheck() const
    {
      ROSE_ASSERT (associatedGrammar != NULL);
 
@@ -1257,7 +1257,7 @@ Terminal::consistencyCheck() const
 #endif
 
   // check the subclass list for valid objects
-     for( vector<Terminal*>::const_iterator terminalIterator = subclasses.begin(); 
+     for( vector<AstNodeClass*>::const_iterator terminalIterator = subclasses.begin(); 
           terminalIterator != subclasses.end(); 
           terminalIterator++)
        {
@@ -1270,15 +1270,15 @@ Terminal::consistencyCheck() const
 
 
 void
-Terminal::display( const string& label ) const
+AstNodeClass::display( const string& label ) const
    {
-     printf ("In Terminal::display ( %s ) \n",label.c_str());
+     printf ("In AstNodeClass::display ( %s ) \n",label.c_str());
 
      printf ("Name     = %s \n", getName().c_str());
      printf ("Lexeme   = %s \n", getLexeme().c_str());
      printf ("Tag Name = %s \n", getTagName().c_str());
 
-     for( vector<Terminal*>::const_iterator terminalIterator = subclasses.begin(); 
+     for( vector<AstNodeClass*>::const_iterator terminalIterator = subclasses.begin(); 
           terminalIterator != subclasses.end(); 
           terminalIterator++)
        {
@@ -1292,7 +1292,7 @@ Terminal::display( const string& label ) const
 // MK: This function is used to check the lists of GrammarString objects that
 // are used during the generation phase of the classes of the AST restructuring tool
 void
-Terminal::checkListOfGrammarStrings(vector<GrammarString *>& checkList)
+AstNodeClass::checkListOfGrammarStrings(vector<GrammarString *>& checkList)
 {
   // Check list for uniqueness and for elements of length 0
   vector<GrammarString *>::iterator it;
@@ -1308,7 +1308,7 @@ Terminal::checkListOfGrammarStrings(vector<GrammarString *>& checkList)
 
 // JH (10/28/2005) :
 string
-Terminal::buildPointerInMemoryPoolCheck ()
+AstNodeClass::buildPointerInMemoryPoolCheck ()
    {
   // DQ & JH (1/17/2006): This function generates the code for each IR node to check all its 
   // non-NULL data members pointing to IR nodes to make sure that each IR node is:
@@ -1326,9 +1326,9 @@ Terminal::buildPointerInMemoryPoolCheck ()
      string s;
   // s += "   std::cout << \"------------ checking pointers of " + classNameString + "  -------------------\" << std::endl;\n" ;
   // s += "   ROSE_ASSERT ( pointer->p_freepointer == AST_FileIO::IS_VALID_POINTER() );\n";
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                GrammarString *data = *stringListIterator;
@@ -1531,12 +1531,12 @@ Terminal::buildPointerInMemoryPoolCheck ()
 
 /*************************************************************************************************
 *  The function
-*       Terminal::buildListIteratorString()
+*       AstNodeClass::buildListIteratorString()
 *  supports buildReturnDataMemberPointers() by building the string representing the code 
 *  necessary to return all data member pointers to IR nodes contained in STL lists.
 *************************************************************************************************/
 std::string
-Terminal::buildListIteratorString( string typeName, string variableName, string classNameString)
+AstNodeClass::buildListIteratorString( string typeName, string variableName, string classNameString)
    {
         // AS(2/14/2006) Builds the strings for the list of data member pointers.
         string returnString;
@@ -1669,11 +1669,11 @@ Terminal::buildListIteratorString( string typeName, string variableName, string 
 //AS (021406)
 /*************************************************************************************************
 *  The function
-*       Terminal::buildReturnDataMemberPointers()
+*       AstNodeClass::buildReturnDataMemberPointers()
 *  builds the code for returning all data member pointers to IR nodes in the AST.
 *************************************************************************************************/
 string
-Terminal::buildReturnDataMemberPointers ()
+AstNodeClass::buildReturnDataMemberPointers ()
    {
   // AS (2/14/2006): This function generates the code for each IR node to return
   // a pair of all data members pointing to IR nodes and their name to:
@@ -1687,15 +1687,15 @@ Terminal::buildReturnDataMemberPointers ()
      string s("std::vector<std::pair<SgNode*,std::string> > returnVector;\n") ;
   // s += "   std::cout << \"------------ checking pointers of " + classNameString + "  -------------------\" << std::endl;\n" ;
   // s += "   ROSE_ASSERT ( pointer->p_freepointer == AST_FileIO::IS_VALID_POINTER() );\n";
-  // AS Iterate over the terminal and its parents (base-classes).
+  // AS Iterate over the AstNodeClass and its parents (base-classes).
   // PS! Everything is treated as terminals; even non-terminals
-  // printf ("Derived Class terminal name = %s \n",name);
+  // printf ("Derived Class AstNodeClass name = %s \n",name);
 
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-       // printf ("Possible base class terminal name = %s \n",(*t).name);
-       // AS Iterate over data memeber of (non-) terminal class we are looking at 
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+       // printf ("Possible base class AstNodeClass name = %s \n",(*t).name);
+       // AS Iterate over data memeber of (non-) AstNodeClass class we are looking at 
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                //AS ???
@@ -1763,13 +1763,13 @@ Terminal::buildReturnDataMemberPointers ()
 
 /*************************************************************************************************
 *  The function
-*       Terminal::buildListIteratorStringForReferenceToPointers()
+*       AstNodeClass::buildListIteratorStringForReferenceToPointers()
 *  supports buildProcessDataMemberReferenceToPointers() by building the string representing the code 
 *  necessary to process references (pointers) all data member pointers to IR nodes contained in STL lists.
 *  The traverse parameter indicates whether the property is normally traversed.  This parameter is
 *  propagated through to the ReferenceToPointerHandler.
 *************************************************************************************************/
-string Terminal::buildListIteratorStringForReferenceToPointers(string typeName, string variableName, string classNameString, bool traverse)
+string AstNodeClass::buildListIteratorStringForReferenceToPointers(string typeName, string variableName, string classNameString, bool traverse)
    {
   // AS(2/14/2006) Builds the strings for the list of data member pointers.
      string returnString;
@@ -1891,11 +1891,11 @@ string Terminal::buildListIteratorStringForReferenceToPointers(string typeName, 
 //DQ (4/30/2006): This function is similar to buildReturnDataMemberPointers but returns reference to the pointers.
 /*************************************************************************************************
 *  The function
-*       Terminal::buildProcessDataMemberReferenceToPointers()
+*       AstNodeClass::buildProcessDataMemberReferenceToPointers()
 *  builds the code for processing references to all data member pointers to IR nodes in the AST.
 *************************************************************************************************/
 string
-Terminal::buildProcessDataMemberReferenceToPointers ()
+AstNodeClass::buildProcessDataMemberReferenceToPointers ()
    {
   // DQ (4/30/2006): This is a modified version of the code for buildReturnDataMemberPointers()
 
@@ -1911,15 +1911,15 @@ Terminal::buildProcessDataMemberReferenceToPointers ()
      string s ;
   // s += "   std::cout << \"------------ checking pointers of " + classNameString + "  -------------------\" << std::endl;\n" ;
   // s += "   ROSE_ASSERT ( pointer->p_freepointer == AST_FileIO::IS_VALID_POINTER() );\n";
-  // AS Iterate over the terminal and its parents (base-classes).
+  // AS Iterate over the AstNodeClass and its parents (base-classes).
   // PS! Everything is treated as terminals; even non-terminals
-  // printf ("Derived Class terminal name = %s \n",name);
+  // printf ("Derived Class AstNodeClass name = %s \n",name);
 
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-       // printf ("Possible base class terminal name = %s \n",(*t).name);
-       // AS Iterate over data memeber of (non-) terminal class we are looking at 
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+       // printf ("Possible base class AstNodeClass name = %s \n",(*t).name);
+       // AS Iterate over data memeber of (non-) AstNodeClass class we are looking at 
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
             // AS ???
@@ -1984,12 +1984,12 @@ Terminal::buildProcessDataMemberReferenceToPointers ()
 // DQ (3/7/2007): This is support for buildChildIndex() (see below)
 /*************************************************************************************************
 *  The function
-*       Terminal::buildListIteratorStringForChildIndex()
+*       AstNodeClass::buildListIteratorStringForChildIndex()
 *  supports buildChildIndex() by building the string representing the code 
 *  necessary to count the index of all data member pointers to IR nodes 
 *  contained in STL lists.
 *************************************************************************************************/
-std::string Terminal::buildListIteratorStringForChildIndex(string typeName, string variableName, string classNameString)
+std::string AstNodeClass::buildListIteratorStringForChildIndex(string typeName, string variableName, string classNameString)
    {
   // AS(2/14/2006) Builds the strings for the list of data member pointers.
      string returnString;
@@ -2116,11 +2116,11 @@ std::string Terminal::buildListIteratorStringForChildIndex(string typeName, stri
 // DQ (3/7/2007): This is support for buildChildIndex() (see below)
 /*************************************************************************************************
 *  The function
-*       Terminal::buildChildIndex()
+*       AstNodeClass::buildChildIndex()
 *  builds the code for returning all data member pointers to IR nodes in the AST.
 *************************************************************************************************/
 string
-Terminal::buildChildIndex()
+AstNodeClass::buildChildIndex()
    {
   // AS (2/14/2006): This function generates the code for each IR node to return
   // a signed integer of the index associated with the child in the IR node. A negative
@@ -2139,11 +2139,11 @@ Terminal::buildChildIndex()
   // string s = "int indexCounter = 0, returnValue = -1;\n";
      string s = "int indexCounter = 0;\n";
 
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-       // printf ("Possible base class terminal name = %s \n",(*t).name);
-       // AS Iterate over data memeber of (non-) terminal class we are looking at 
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+       // printf ("Possible base class AstNodeClass name = %s \n",(*t).name);
+       // AS Iterate over data memeber of (non-) AstNodeClass class we are looking at 
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                GrammarString *data = *stringListIterator;
@@ -2210,7 +2210,7 @@ Terminal::buildChildIndex()
 
   // DQ (10/12/2014): output the name assocauted with the TypeEvaluation enum values.
 string
-Terminal::typeEvaluationName ( TypeEvaluation x )
+AstNodeClass::typeEvaluationName ( TypeEvaluation x )
    {
      string s;
 

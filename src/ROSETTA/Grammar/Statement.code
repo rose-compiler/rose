@@ -3000,10 +3000,24 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 // DQ (10/5/2014): This is now wrong because we now include rose_config.h before processing the
 // files generated from this file.  This change was required to support the ATerm libraries.
 // #ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-#ifdef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+// BH (11/13/2015) on windows this caused incosistent defines of this
+// so that it was not defined in the .h but used in the cxx file
+// #ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
+//#endif
+
+// DQ (2/17/2016): Checking that the correct values are set.
+#ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+   #error "ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
+#endif
+
+#if 0
+// DQ (2/17/2016): Checking that the correct values are set.
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+   #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
+#endif
 #endif
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
@@ -3013,12 +3027,13 @@ HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
 
        // DQ (12/28/2011): We need a constructor similar to the base class.
        // $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
-
-#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+// BH (11/13/2015) on windows this caused incosistent defines of this
+// so that it was not defined in the .h but used in the cxx file
+//#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-#endif
+//#endif
 
 HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
 
