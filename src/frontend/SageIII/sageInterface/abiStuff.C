@@ -413,7 +413,9 @@ StructLayoutInfo CustomizedPrimitiveTypeLayoutGenerator::layoutType(SgType* t) c
   }
   return layout;
 }
-
+#ifdef _MSC_VER
+#define alignof alignof_rose
+#endif
 template <typename T>
 struct rose_alignof {
 

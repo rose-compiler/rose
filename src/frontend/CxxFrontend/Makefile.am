@@ -1,22 +1,6 @@
 ################################################################################
 # How to install ROSE without EDG source code on a machine with no network:
-#   On a machine with a network connection:
-#     1. git-clone the ROSE sources
-#     2. copy the ROSE source tree to the other machine
-#     3. create a build directory and configure
-#     4. in $BUILD/src/frontend/CxxFrontend run "make download-edg"
-#     5. follow the instructions to copy some files to the other machine
-# 
-#   On the non-networked machine:
-#     1. create a build directory and configure like usual
-#     2. copy the two files and symlink from step 5 above (*)
-#     3. run make
-# 
-#   *Note: the files must be copied such that the mtime for the
-#    tarball is not earlier than the other file, or else make will try
-#    to download on the non-networked machine.  The easiest way to
-#    ensure proper mtimes is to touch(1) the tarball after copying
-#    the files.
+#  See http://rosecompiler.org/ROSE_HTML_Reference/group__installing__edg.html
 ################################################################################
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
@@ -69,15 +53,13 @@ edg-prerequisites:
 MOSTLYCLEANFILES += $(EDGBIN_SIGNATURE_FILE)
 $(EDGBIN_SIGNATURE_FILE): edg-prerequisites
 	$(EDG_GENERATE_SIG) $(top_srcdir) $(top_builddir) >$@.tmp
-	mv $@.tmp $@
+	diff -q $@ $@.tmp || mv $@.tmp $@
 
-# Phony target to show useful information. See .PHONY above.
+# Phony targets to show useful information. See .PHONY above.
 show-edg-hash: $(EDGBIN_SIGNATURE_FILE)
 	@cat $(EDGBIN_SIGNATURE_FILE)
-
 show-edg-name: $(EDGBIN_SIGNATURE_FILE)
 	@echo $(EDGBIN_NAME).tar.gz
-
 show-edg-url: $(EDGBIN_SIGNATURE_FILE)
 	@echo $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
@@ -111,26 +93,21 @@ upload-EDG.tar.gz: EDG/libroseEDG.la $(EDGBIN_SIGNATURE_FILE)
 	cp -r EDG/.libs $(EDGBIN_NAME)
 	tar czf $(EDGBIN_NAME).tar.gz $(EDGBIN_NAME)
 	rm -rf $(EDGBIN_NAME)
-	ln -s $(EDGBIN_NAME).tar.gz $@             # for upload
-	ln -s $(EDGBIN_NAME).tar.gz EDG.tar.gz     # make it look like we downloaded also
+	ln -sf $(EDGBIN_NAME).tar.gz $@             # for upload
+	ln -sf $(EDGBIN_NAME).tar.gz EDG.tar.gz     # make it look like we downloaded also
 
-# Upload EDG tarballs to the staging area and the local area. Do not use $(EDGBIN_NAME) in the target or dependencies because
-# it hasn't been computed at the time that make parses that part of the rule. It's okay to use it in the commands of this rule.
-EDGBIN_DESTINATIONS=						\
-	$(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz	\
-	$(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
-$(EDGBIN_DESTINATIONS): upload-EDG.tar.gz
-#	cp $(EDGBIN_NAME).tar.gz $@
-	cp $(EDGBIN_NAME).tar.gz $(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz
-	cp $(EDGBIN_NAME).tar.gz $(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
 # Phony target to generate a tarball but not upload it
 #(see above): .PHONY: binary_edg_tarball
 binary_edg_tarball: upload-EDG.tar.gz
 
-# Phony target to upload the tarball
+# Phony target to upload EDG tarballs to the staging area and the local area. Do not use $(EDGBIN_NAME) in the target or
+# dependencies because it hasn't been computed at the time that make parses that part of the rule. It's okay to use it
+# in the commands of this rule.
 #(see above): .PHONY: upload_edg_binary
-upload_edg_binary: $(EDGBIN_DESTINATIONS)
+upload_edg_binary: binary_edg_tarball
+	cp -f $(EDGBIN_NAME).tar.gz $(EDGBIN_STAGING_TARBALLS)/$(EDGBIN_NAME).tar.gz
+	cp -f $(EDGBIN_NAME).tar.gz $(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
 else
 
@@ -161,24 +138,24 @@ network_checking: check-network
 # messages inside the tarball. Don't use $(EDGBIN_NAME) in the target or dependencies because it hasn't been computed
 # yet when make parses that part of this rule; it's okay to use it in the commands though.
 EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
-	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then						\
-	    echo "Empty EDG binary compatibility signature in $(EDGBIN_SIGNATURE_FILE)." >&2;	\
-	    echo "$(CONTACT_INFO)" >&2;								\
-	    exit 1;										\
+	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then							\
+	    echo "error: empty EDG binary compatibility signature in $(EDGBIN_SIGNATURE_FILE)." >&2;	\
+	    echo "$(CONTACT_INFO)" >&2;									\
+	    exit 1;											\
 	fi
 
-	@if [ -r "$(EDGBIN_NAME).tar.gz" ]; then							\
-	    echo "EDG binary tarball appears to have been downloaded already: $(EDGBIN_NAME).tar.gz";	\
-	else												\
-	    $(MAKE) check-network || exit 1;								\
-	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";				\
-	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then	\
-	        echo "The EDG binary tarball is not available (or the web site is not reachable)." >&2;	\
-	        echo "$(CONTACT_INFO)" >&2;								\
-	        exit 1;											\
-	    fi;												\
-	    wget -O "$(EDGBIN_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz";		\
-	    touch $(EDGBIN_NAME).tar.gz;								\
+	@if [ -r "$(EDGBIN_NAME).tar.gz" ]; then								\
+	    echo "EDG binary tarball appears to have been downloaded already: $(EDGBIN_NAME).tar.gz";		\
+	else													\
+	    $(MAKE) check-network || exit 1;									\
+	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";					\
+	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then		\
+	        echo "error: the EDG binary tarball is not available (or the web site is not reachable)." >&2;	\
+	        echo "$(CONTACT_INFO)" >&2;									\
+	        exit 1;												\
+	    fi;													\
+	    wget -O "$(EDGBIN_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz";			\
+	    touch $(EDGBIN_NAME).tar.gz;									\
 	fi
 
 	ln -sf $(EDGBIN_NAME).tar.gz $@
@@ -188,9 +165,8 @@ EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
 download-edg: EDG.tar.gz
 	@echo
 	@echo "The EDG tarball is $(EDGBIN_NAME).tar.gz"
-	@echo "To compile on a system with no network, copy this EDG tarball, the EDG.tar.gz symlink, and"
-	@echo "the $(EDGBIN_SIGNATURE_FILE) file to the $$ROSE_BUILD/src/frontend/CxxFrontend directory on"
-	@echo "the machine with no network."
+	@echo "To compile on a system with no network, follow the instructions here:"
+	@echo "  http://rosecompiler.org/ROSE_HTML_Reference/group__installing__edg.html"
 
 # Unpack the EDG tarball. Note: $(am__untar) comes from configure and if it's not set then there's something wrong with configure.
 EDG/libroseEDG.la: EDG.tar.gz

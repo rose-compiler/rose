@@ -7226,6 +7226,34 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
        // Only look for pointers to type in the global type table.
           SgType* t = get_globalTypeTable()->lookup_type(name);
 
+       // DQ (2/23/2016): Add test and reset type returned from globalTypeTable if it is not a SgDeclType.
+       // I have at least one case where the type table returns a SgModifierType (not clear if that is correct behavior).
+       // Detect this case for now and make sure it can't happen in general.
+          if (t != NULL && isSgDeclType(t) == NULL)
+             {
+               printf ("Error: This name = %s does not return the correct type from the globalTypeTable: t = %p = %s reset t == NULL \n",name.str(),t,t->class_name().c_str());
+
+            // Note: were we detect that this is a SgModifierType it is a default built SgModifierType.
+            // This kind of SgModifierType is only used in the frontend to support references to types 
+            // in templates that have not been defined yet.  It is rare to see these.  In this case the
+            // modifier's name mangling does not change the name and so that name can appear in the 
+            // globalTypeTable() and a SgModifierType.  For now we are issuing a warning about this and
+            // forcing a new SgDeclType type to be used.
+               SgModifierType* modifierType = isSgModifierType(t);
+               if (modifierType != NULL)
+                  {
+#if 0
+                    SgTypeModifier & typeModifier = modifierType->get_typeModifier();
+                    typeModifier.display("does not return the correct type from the globalTypeTable");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+               t = NULL;
+             }
+
           if (t == NULL)
              {
             // The pointer type was not found in the type table, put it into the global type table.
@@ -7257,7 +7285,17 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
                newType = NULL;
 
                newType = isSgDeclType(t);
+
+            // DQ (2/23/2016): Added assertion.
+               if (newType == NULL)
+                  {
+                    printf ("In createType(SgExpression* base_expression, SgExpression* kind): isSgDeclType(t) == NULL: error: t = %p = %s \n",t,t->class_name().c_str());
+                  }
+               assert(newType != NULL);
              }
+
+       // DQ (2/23/2016): Added assertion.
+          assert(newType != NULL);
 
           base_type->p_decltype_ref_to = newType;
           assert(base_type->p_decltype_ref_to != NULL);

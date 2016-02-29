@@ -4,7 +4,7 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 #include "grammarString.h"
 #include <string>
 

@@ -8,6 +8,7 @@
 // #include <map>
 // Header files needed for ROSE
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
 #ifndef _MSC_VER
@@ -18,6 +19,7 @@
 // Include the lexer stuff
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
 #include <boost/wave/cpplexer/cpp_lex_iterator.hpp> // lexer class
+
 
 // DQ: I don't think this forward declaration is required...
 // class AttributeListMap;
@@ -841,8 +843,10 @@ class AttributeListMap {
                        return result;
                }
 };
+#endif
 
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 template <typename TokenT>
 bool AttributeListMap::found_include_directive(TokenT directive, std::string relname, std::string absname )
    {
@@ -872,6 +876,7 @@ bool AttributeListMap::found_include_directive(TokenT directive, std::string rel
         }
         return false;
    }
+#endif
 
 #endif
 
