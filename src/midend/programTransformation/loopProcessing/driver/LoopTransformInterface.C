@@ -238,7 +238,7 @@ TransformTraverse(AstInterfaceImpl& scope,const AstNodePtr& head)
 }
 
 void LoopTransformInterface::
-PrintTransformUsage(std::ostream& __out)
+PrintTransformUsage(std::ostream& __outstream)
 {
   std::cerr << "-debugloop: print debugging information for loop transformations; \n"
             << "-debugdep: print debugging information for dependence analysis; \n"
@@ -247,7 +247,7 @@ PrintTransformUsage(std::ostream& __out)
             << "opt <level=0>: the level of loop optimizations to apply; by default, only the outermost level is optimized;\n"
             << LoopUnrolling::cmdline_help() << std::endl
             << BreakupStatement::cmdline_help() << std::endl;
-  LoopTransformOptions::GetInstance()->PrintUsage(__out);
+  LoopTransformOptions::GetInstance()->PrintUsage(__outstream);
 }
 
 //////////////////////////////////
