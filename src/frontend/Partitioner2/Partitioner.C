@@ -1715,83 +1715,70 @@ Partitioner::fixInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator &con
 }
 
 Function::Ptr
-Partitioner::attachOrMergeFunction(const Function::Ptr &function) {
-    ASSERT_not_null(function);
+Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
+    ASSERT_not_null(newFunction);
 
     // If this function is already in the CFG then we have nothing to do.
-    if (function->isFrozen())
-        return function;
+    if (newFunction->isFrozen())
+        return newFunction;
 
-    // The basic blocks in function must not be owned by more than one attached function.
-    std::vector<Function::Ptr> owningFunctions = functionsOwningBasicBlocks(function->basicBlockAddresses());
-    if (owningFunctions.size() > 1) {
-        std::ostringstream ss;
-        ss <<function->printableName() + " cannot be merged because multiple attached functions own its basic blocks:";
-        BOOST_FOREACH (const Function::Ptr &f, owningFunctions)
-            ss <<" " <<f->printableName();
-        throw FunctionError(function, ss.str());
-    }
-
-    // If this function shares no basic blocks with an existing function then just add this function the usual way.
-    if (owningFunctions.empty()) {
-        attachFunction(function);
-        return function;
+    // Is there some other function with the same entry address? If not, then degenerate to a plain attach.
+    Function::Ptr existingFunction = functionExists(newFunction->address());
+    if (existingFunction == NULL) {
+        attachFunction(newFunction);
+        return newFunction;
     }
     
-    // If an existing function has the same entry address as this new function, then perhapse use this new function's name.  If
-    // the names are the same except for the "@plt" part then use the version with the "@plt".
-    ASSERT_forbid(owningFunctions.empty());
-    Function::Ptr exists = owningFunctions.front();
-    if (exists->address()==function->address()) {
-        if (exists->name().empty()) {
-            exists->name(function->name());
-        } else {
-            size_t atSign = function->name().find_last_of('@');
-            if (atSign != std::string::npos && exists->name()==function->name().substr(0, atSign))
-                exists->name(function->name());
-        }
+    // Perhapse use this new function's name.  If the names are the same except for the "@plt" part then use the version with
+    // the "@plt".
+    if (existingFunction->name().empty()) {
+        existingFunction->name(newFunction->name());
+    } else {
+        size_t atSign = newFunction->name().find_last_of('@');
+        if (atSign != std::string::npos && existingFunction->name()==newFunction->name().substr(0, atSign))
+            existingFunction->name(newFunction->name());
     }
 
     // If the new function has basic blocks or data blocks that aren't in the existing function, then update the existing
     // function.
     bool needsUpdate = false;
-    if (exists->basicBlockAddresses().size() != function->basicBlockAddresses().size()) {
+    if (existingFunction->basicBlockAddresses().size() != newFunction->basicBlockAddresses().size()) {
         needsUpdate = true;
     } else {
-        const std::set<rose_addr_t> &s1 = function->basicBlockAddresses();
-        const std::set<rose_addr_t> &s2 = exists->basicBlockAddresses();
+        const std::set<rose_addr_t> &s1 = newFunction->basicBlockAddresses();
+        const std::set<rose_addr_t> &s2 = existingFunction->basicBlockAddresses();
         if (!std::equal(s1.begin(), s1.end(), s2.begin()))
             needsUpdate = true;
     }
     if (!needsUpdate) {
-        if (exists->dataBlocks().size() != function->dataBlocks().size()) {
+        if (existingFunction->dataBlocks().size() != newFunction->dataBlocks().size()) {
             needsUpdate = true;
         } else {
-            const std::vector<DataBlock::Ptr> &v1 = function->dataBlocks();
-            const std::vector<DataBlock::Ptr> &v2 = exists->dataBlocks();
+            const std::vector<DataBlock::Ptr> &v1 = newFunction->dataBlocks();
+            const std::vector<DataBlock::Ptr> &v2 = existingFunction->dataBlocks();
             if (!std::equal(v1.begin(), v1.end(), v2.begin()))
                 needsUpdate = true;
         }
     }
 
     if (needsUpdate) {
-        detachFunction(exists);
+        detachFunction(existingFunction);
 
         // Add this function's basic blocks to the existing function.
-        BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses())
-            exists->insertBasicBlock(bblockVa);
-        attachFunctionBasicBlocks(exists);
+        BOOST_FOREACH (rose_addr_t bblockVa, newFunction->basicBlockAddresses())
+            existingFunction->insertBasicBlock(bblockVa);
+        attachFunctionBasicBlocks(existingFunction);
 
         // Add this function's data blocks to the existing function.
-        BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
+        BOOST_FOREACH (const DataBlock::Ptr &dblock, newFunction->dataBlocks()) {
             attachDataBlock(dblock);
             dblock->incrementOwnerCount();
         }
 
-        attachFunction(exists);
+        attachFunction(existingFunction);
     }
     
-    return exists;
+    return existingFunction;
 }
     
 size_t

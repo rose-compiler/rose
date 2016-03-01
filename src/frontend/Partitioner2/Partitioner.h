@@ -1415,7 +1415,12 @@ public:
      *  If no other function exists at the specified function's entry address, then this method behaves identically to @ref
      *  attachFunction.  Otherwise, this method attempts to merge the specified function into an existing function.  In any
      *  case, it returns a pointer to the function in the CFG/AUM (the existing one, or the new one). If the merge is not
-     *  possible, then an exception is thrown. */
+     *  possible, then an exception is thrown.
+     *
+     *  One of the things that are merged are the basic blocks.  If the function being attached is A and the partitioner
+     *  already knows about B having the same entry address as A, then all basic blocks owned by A are now (also) owned by
+     *  B. Some of those blocks happened to be owned by other functions also attached to the partitioner they continue to be
+     *  owned also by those other functions. */
     Function::Ptr attachOrMergeFunction(const Function::Ptr&) /*final*/;
 
     /** Create placeholders for function basic blocks.
