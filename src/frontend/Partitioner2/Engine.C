@@ -1279,9 +1279,8 @@ Engine::makeCalledFunctions(Partitioner &partitioner) {
 std::vector<Function::Ptr>
 Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) {
     std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa);
-    BOOST_FOREACH (const Function::Ptr &function, functions) {
-        partitioner.attachFunction(function);
-    }
+    BOOST_FOREACH (const Function::Ptr &function, functions)
+        partitioner.attachOrMergeFunction(function);
     return functions;
 }
 
