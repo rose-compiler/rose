@@ -4,7 +4,7 @@
 0x000000cc: Basic block reasons: 
 0x000000cc: 8a 8c 30 02             |..0.    |          mov    cl, byte ds:[si + 0x0230<560>]
 0x000000d0: e8 4d 00                |.M.     |          call   0x0120<288,<Func>>
-0x000000d0: Successor blocks: 0x00000120, 0x000000d3
+0x000000d0: Successor blocks: 0x00000120<<Func>>, 0x000000d3
 
 0x000000d3: Basic block reasons: 
 0x000000d3: 8a 97 42 02             |..B.    |          mov    dl, byte ds:[bx + 0x0242<578>]
@@ -31,7 +31,7 @@
 0x000000ef: Basic block reasons: 
 0x000000ef: 8a 8c 39 02             |..9.    |          mov    cl, byte ds:[si + 0x0239<569>]
 0x000000f3: e8 2a 00                |.*.     |          call   0x0120<288,<Func>>
-0x000000f3: Successor blocks: 0x00000120, 0x000000f6
+0x000000f3: Successor blocks: 0x00000120<<Func>>, 0x000000f6
 
 0x000000f6: Basic block reasons: 
 0x000000f6: 87 df                   |..      |          xchg   di, bx
