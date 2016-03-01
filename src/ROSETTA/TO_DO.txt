@@ -83,7 +83,7 @@ Examples of new grammars (built from the specification of constraints on the C++
    1) Where statement
          X_Grammar.excludeTypes();
          X_Grammar.excludeExpressions();
-         Terminal & forStatementTerminal = X_Grammar["ForStatement"]
+         AstNodeClass & forStatementTerminal = X_Grammar["ForStatement"]
 
 
 
@@ -102,7 +102,7 @@ Bugs to fix in the grammar generation:
 
    2) Use of nonTerminal copy constructor prevents the generation of the correct
       tree.  See sageType.include and the bug that is referred to in that file.
-      There was a simple work around by adding a extra Terminal and forcing the
+      There was a simple work around by adding a extra AstNodeClass and forcing the
       construction through ussing the output of the operator|().
 
 Design Issues:
@@ -287,13 +287,13 @@ Design Issues:
 
       doubleArrayType = (classType.name == "doubleArray");
            -- OR --
-      Terminal doubleArrayType = (classType.getName == "doubleArray");
-      Terminal floatArrayType  = (classType.getName == "floatArray");
+      AstNodeClass doubleArrayType = (classType.getName == "doubleArray");
+      AstNodeClass floatArrayType  = (classType.getName == "floatArray");
 
-      Terminal CxxType         = (classType.getName != ("doubleArray" | "floatArray") );
+      AstNodeClass CxxType         = (classType.getName != ("doubleArray" | "floatArray") );
 
    // This is not sufficient since "doubleArray" would then be both doubleArrayType AND CxxType!
-      Terminal CxxType         = (classType.getName == "*");
+      AstNodeClass CxxType         = (classType.getName == "*");
 
       The implementation uses the operator== to store the reference to the name in 
       the classType and the string "Array".  These are then used internally within 
