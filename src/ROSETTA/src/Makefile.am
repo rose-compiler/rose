@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 EXTRA_DIST = CMakeLists.txt \
-   ROSETTA_macros.h  grammar.h grammarString.h terminal.h
+   ROSETTA_macros.h  grammar.h grammarString.h AstNodeClass.h
 
 # Define the template repository path used in the autoconf
 # subsitution for various C++ template control variables.
@@ -87,9 +87,10 @@ noinst_PROGRAMS = CxxGrammarMetaProgram
 CxxGrammarMetaProgram_SOURCES = \
    CxxGrammarMetaProgram.C \
    grammar.C \
+   GrammarFile.C \
    grammarGenerator.C \
    grammarString.C \
-   terminal.C \
+   AstNodeClass.C \
    type.C \
    symbol.C \
    expression.C \
@@ -139,7 +140,7 @@ CxxGrammarMetaProgram_LDADD = \
 
 # Force recompilation of source files if any of the header files 
 # are changed (does not work if *.o files are not present).
-$(librosetta_a_OBJECTS): ROSETTA_macros.h grammar.h grammarString.h terminal.h
+$(librosetta_a_OBJECTS): ROSETTA_macros.h grammar.h grammarString.h AstNodeClass.h
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files cxx_templates Cxx_Grammar* grammar.dot translationSupport.code
@@ -148,19 +149,3 @@ distclean-local:
 	rm -rf Cxx_Grammar.h Cxx_Grammar.C Cxx_GrammarTreeTraversal.C Cxx_GrammarTreeTraversalClass.h \
           Cxx_GrammarTreeTraversalClass.C
 	rm -rf grammar.tex grammar.dot
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

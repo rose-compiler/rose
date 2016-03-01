@@ -12,6 +12,11 @@
 // Use the examples in the nongenerated_dsl_attributes.h to simplify the ASC construction for the generated code.
 #include "nongenerated_dsl_attributes.h"
 
+// DQ (2/24/2016): Now I think I want it after!
+// DQ (2/24/2016): We want to move this to before the inclusion of the target abstraction.
+// It should not be in the "dsl_attribute_support.h" file because these defining declarations
+// should appear only once in a single translation unit, and the header file in intended to be 
+// included multiple times.
 
 // Include the definitions of the variable with their initializations.
 // This is a redundant specification of these variables but with default example initializers

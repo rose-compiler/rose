@@ -8,24 +8,24 @@
 
 class Grammar;
 class GrammarString;
-class Terminal;
+class AstNodeClass;
 
 class SubclassListBuilder {
-  std::vector<Terminal*> children;
+  std::vector<AstNodeClass*> children;
 
   public:
   SubclassListBuilder() {}
 #if 0
-  SubclassListBuilder(const Terminal& t)
-      : children(1, const_cast<Terminal*>(&t)) {
+  SubclassListBuilder(const AstNodeClass& t)
+      : children(1, const_cast<AstNodeClass*>(&t)) {
     ROSE_ASSERT (&t);
   }
-  SubclassListBuilder& operator|=(const Terminal& t) {
+  SubclassListBuilder& operator|=(const AstNodeClass& t) {
     ROSE_ASSERT (&t);
-    children.push_back(const_cast<Terminal*>(&t));
+    children.push_back(const_cast<AstNodeClass*>(&t));
     return *this;
   }
-  SubclassListBuilder operator|(const Terminal& t) {
+  SubclassListBuilder operator|(const AstNodeClass& t) {
     SubclassListBuilder result(*this);
     result |= t;
     return result;
@@ -33,24 +33,24 @@ class SubclassListBuilder {
 #endif
   // Yes, this is a mutating operation; the symbol was used for that before and
   // so we need to keep it
-  SubclassListBuilder& operator|(const Terminal& t);
-  const std::vector<Terminal*>& getList() const;
+  SubclassListBuilder& operator|(const AstNodeClass& t);
+  const std::vector<AstNodeClass*>& getList() const;
 };
 
 #if 0
-inline SubclassListBuilder operator|(const Terminal& t1, const Terminal& t2) {
+inline SubclassListBuilder operator|(const AstNodeClass& t1, const AstNodeClass& t2) {
   ROSE_ASSERT (&t1);
   ROSE_ASSERT (&t2);
   return SubclassListBuilder(t1) | t2;
 }
 #endif
 
-class Terminal
+class AstNodeClass
 {
   // Later we will template this class to permit it to refer to an arbitrary lower level grammar
 
   // Terminals for the basis for the definition of a grammar that defines a language
-  // This class represents a terminal (the NonTerminal class is derived from the Terminal class)
+  // This class represents a AstNodeClass (the NonTerminal class is derived from the AstNodeClass class)
 
  public:
   // MS: 2013
@@ -59,15 +59,15 @@ class Terminal
 
   std::string   name;    // The name we assign to the token (e.g. "BinaryOperatorEquals")
 
-  // where the name of the terminal is saved unmodified (with no grammar suffix)
+  // where the name of the AstNodeClass is saved unmodified (with no grammar suffix)
   std::string baseName;
 
-  // Terminal/nonterminal for the base class of this terminal (set in the
+  // AstNodeClass/nonterminal for the base class of this AstNodeClass (set in the
   // NonTerminal constructor)
-  Terminal* baseClass;
+  AstNodeClass* baseClass;
                    
   // Subclasses of this AST node type
-  std::vector<Terminal *>    subclasses;
+  std::vector<AstNodeClass *>    subclasses;
 
   // Can there be objects of this type (as opposed to just subclasses)?
   bool canHaveInstances;
@@ -77,20 +77,20 @@ class Terminal
   // name (effectively naming the nonterminal).
   std::string   lexeme;  // The actual character string (e.g. "operator=")
 
-  // Tag used within enum declaration (to that each terminal can be assigned an ID
+  // Tag used within enum declaration (to that each AstNodeClass can be assigned an ID
   std::string   tag;
 
   // Relationship in lower level grammar (value == NULL only if a part of the C++ grammar)
   // This needs to be recorded into the classes that are build as well (I think)
   // We want to automatically set these (not sure if we can!)
-  Terminal* lowerLevelGramaticalElement;
+  AstNodeClass* lowerLevelGramaticalElement;
 
   bool buildDefaultConstructor;
 
-  // When a class is declared to implement the Terminal object we must 
+  // When a class is declared to implement the AstNodeClass object we must 
   // provide a mechanism for the declaration of class forwards (pre-declaration) 
   // and global variables (post-delaration) associated with the declaration 
-  // of the class representing this terminal (it's object).
+  // of the class representing this AstNodeClass (it's object).
   std::string predeclarationString;
   std::string postdeclarationString;
 
@@ -101,7 +101,7 @@ class Terminal
   bool automaticGenerationOfDataAccessFunctions;
   bool automaticGenerationOfCopyFunction;
 
-  // Record the grammar that this terminal is associated with!
+  // Record the grammar that this AstNodeClass is associated with!
   Grammar* associatedGrammar;
 
   // Header file class definition function prototypes (local and subtree definitions)
@@ -216,15 +216,15 @@ class Terminal
                                      const DeleteEnum& delete_flag,
                                      const CopyConfigEnum& toBeCopied = COPY_DATA);
 
-  virtual ~Terminal ();
+  virtual ~AstNodeClass ();
  protected:
-  Terminal ();
+  AstNodeClass ();
  public:
-  Terminal ( const std::string& lexeme, Grammar & X, const std::string& stringVar, const std::string& tagString, bool canHaveInstances = true, const SubclassListBuilder & childList = SubclassListBuilder() );
+  AstNodeClass ( const std::string& lexeme, Grammar & X, const std::string& stringVar, const std::string& tagString, bool canHaveInstances = true, const SubclassListBuilder & childList = SubclassListBuilder() );
 
   // Access functions
-  void setConnectionToLowerLevelGrammar ( Terminal & X );
-  Terminal & getConnectionToLowerLevelGrammar ();
+  void setConnectionToLowerLevelGrammar ( AstNodeClass & X );
+  AstNodeClass & getConnectionToLowerLevelGrammar ();
 
   void  setLexeme ( const std::string& label = "defaultLexeme" );
   const std::string& getLexeme () const;
@@ -237,8 +237,8 @@ class Terminal
   void setGrammar ( Grammar* grammarPointer );
   Grammar* getGrammar () const;
 
-  void setBaseClass ( Terminal* baseClassPointer );
-  Terminal* getBaseClass () const;
+  void setBaseClass ( AstNodeClass* baseClassPointer );
+  AstNodeClass* getBaseClass () const;
 
   bool isDerivedFrom(const std::string & s) const;
 
@@ -376,7 +376,7 @@ class Terminal
      std::string typeEvaluationName ( TypeEvaluation x );
 
   /* JH (10/28/2005): declaration of the source building methods for the storage classes
-     concenrning the ast file IO. More about them one can find in the terminal.C file. They
+     concenrning the ast file IO. More about them one can find in the AstNodeClass.C file. They
      are called while the code generation of ROSETTA by the method 'buildStringForStorageClassSource'
      in the file grammar.C
    */
