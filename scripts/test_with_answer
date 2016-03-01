@@ -10,3 +10,4 @@ answer = ${ANS}
 title = ${TITLE}
 disabled = ${DISABLED}
 subdir = ${USE_SUBDIR}
+require_memory = ${MEMORY}
