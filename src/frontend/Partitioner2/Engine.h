@@ -364,7 +364,7 @@ public:
      *
      * @{ */
     Sawyer::CommandLine::ParserResult parseCommandLine(int argc, char *argv[],
-                                                       const std::string &purpose, const std::string &description);
+                                                       const std::string &purpose, const std::string &description) /*final*/;
     virtual Sawyer::CommandLine::ParserResult parseCommandLine(const std::vector<std::string> &args,
                                                                const std::string &purpose, const std::string &description);
     /** @} */
@@ -792,7 +792,7 @@ public:
      *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
      *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
      *  attachBlocksToFunctions tries to attach each basic block to a function. */
-    void discoverFunctions(Partitioner&);
+    virtual void discoverFunctions(Partitioner&);
 
     /** Attach dead code to function.
      *
@@ -1051,7 +1051,7 @@ public:
      *
      * @{ */
     SemanticMemoryParadigm semanticMemoryParadigm() const /*final*/ { return settings_.partitioner.semanticMemoryParadigm; }
-    void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
+    virtual void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
     /** @} */
 
     /**  Property: Whether to follow ghost edges.
@@ -1229,8 +1229,8 @@ public:
      *  This property holds a list of configuration files or directories.
      *
      * @{ */
-    const std::vector<std::string>& configurationNames() const { return settings_.engine.configurationNames; }
-    std::vector<std::string>& configurationNames() { return settings_.engine.configurationNames; }
+    const std::vector<std::string>& configurationNames() /*final*/ const { return settings_.engine.configurationNames; }
+    std::vector<std::string>& configurationNames() /*final*/ { return settings_.engine.configurationNames; }
     /** @} */
 
     /** Property: Give names to constants.
