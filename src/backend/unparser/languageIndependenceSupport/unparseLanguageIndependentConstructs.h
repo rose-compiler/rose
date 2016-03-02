@@ -172,7 +172,8 @@ class UnparseLanguageIndependentConstructs
           ROSE_DLL_API virtual void unparseExpression              (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info);
-
+          virtual void unparseMatrixExp               (SgExpression* expr, SgUnparse_Info& info);
+          
        // virtual void unparseUnaryOperator           (SgExpression* expr, const char* op, SgUnparse_Info& info);
        // virtual void unparseBinaryOperator          (SgExpression* expr, const char* op, SgUnparse_Info& info);
           virtual void unparseUnaryExpr               (SgExpression* expr, SgUnparse_Info& info);
