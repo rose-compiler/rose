@@ -1,7 +1,8 @@
 
 #include "GrammarFile.h"
 
-GrammarFile::GrammarFile ( std::string inputFilename = "", const StringUtility::FileWithLineNumbers inputBuffer = StringUtility::FileWithLineNumbers() ) {
+//GrammarFile::GrammarFile ( std::string inputFilename, const StringUtility::FileWithLineNumbers inputBuffer = StringUtility::FileWithLineNumbers() ) {
+GrammarFile::GrammarFile ( std::string inputFilename, const StringUtility::FileWithLineNumbers inputBuffer) {
   setFilename (inputFilename);
   setBuffer(inputBuffer);
 }
