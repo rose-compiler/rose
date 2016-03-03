@@ -1460,7 +1460,7 @@ Engine::attachSurroundedDataToFunctions(Partitioner &partitioner) {
     }
     AddressIntervalSet unused = partitioner.aum().unusedExtent(executableSpace);
 
-    // Iterate over the larged unused address intervals and find their surrounding functions
+    // Iterate over the large unused address intervals and find their surrounding functions
     std::vector<DataBlock::Ptr> retval;
     BOOST_FOREACH (const AddressInterval &interval, unused.intervals()) {
         if (interval.least()<=executableSpace.least() || interval.greatest()>=executableSpace.greatest())
