@@ -1420,6 +1420,52 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
      return varDecl;
    }
 
+SgVariableDefinition*
+SageBuilder::buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitializedName* init_name,  SgInitializer *init)
+{
+// refactored from ROSETTA/Grammar/Statement.code SgVariableDeclaration::append_variable ()
+
+  ROSE_ASSERT (decl!=NULL);
+  ROSE_ASSERT (init_name !=NULL);
+  // init can be NULL
+
+  SgVariableDefinition *defn_stmt = NULL; 
+  if (!isSgFunctionType(init_name->get_type()))
+  {     
+    Sg_File_Info* copyOfFileInfo = NULL; 
+    if (decl->get_file_info() != NULL) 
+    {      
+      copyOfFileInfo = new Sg_File_Info(*(decl->get_file_info()));
+      ROSE_ASSERT (copyOfFileInfo != NULL); 
+
+      // Note that the SgVariableDefinition will connect the new IR node into the AST.
+      defn_stmt = new SgVariableDefinition(copyOfFileInfo, init_name, init);  
+      assert (defn_stmt != NULL); 
+
+      copyOfFileInfo->set_parent(defn_stmt);
+
+      // DQ (3/13/2007): We can't enforce that the endOfConstruct is set (if the interface using the startOfConstruct is used.
+      // DQ (2/3/2007): Need to build the endOfConstruct position as well.
+      // ROSE_ASSERT(this->get_endOfConstruct() != NULL);
+      if (decl->get_endOfConstruct() != NULL) 
+      {            
+        Sg_File_Info* copyOfEndOfConstruct = new Sg_File_Info(*(decl->get_endOfConstruct()));
+        defn_stmt->set_endOfConstruct(copyOfEndOfConstruct);
+        copyOfEndOfConstruct->set_parent(defn_stmt);
+      }            
+    }      
+    else   
+    {            
+      // Note that the SgVariableDefinition will connect the new IR node into the AST.
+      defn_stmt = new SgVariableDefinition(init_name, init);
+    }            
+    ROSE_ASSERT(defn_stmt != NULL); 
+  }
+  else
+    defn_stmt = NULL;  
+  return defn_stmt ;   
+}
+
 
 // #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
@@ -2982,6 +3028,19 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           func = new actualFunction (nameWithTemplateArguments,func_type,NULL);
 #endif
           ROSE_ASSERT(func != NULL);
+
+#if 0
+       // DQ (2/10/2016): Adding support for C99 function parameters used as variable references in the function parameter list.
+          ROSE_ASSERT(func->get_functionParameterScope() == NULL);
+          SgFunctionParameterScope* functionParameterScope = new SgFunctionParameterScope();
+          ROSE_ASSERT(functionParameterScope != NULL);
+#if 0
+          printf ("NOTE: In buildNondefiningFunctionDeclaration_T(): building new functionParameterScope for nondefining function declaration: name = %s functionParameterScope = %p = %s \n",
+               nameWithTemplateArguments.str(),functionParameterScope,functionParameterScope->class_name().c_str());
+#endif
+          func->set_functionParameterScope(functionParameterScope);
+          ROSE_ASSERT(func->get_functionParameterScope() != NULL);
+#endif
 
        // DQ (5/1/2012): This should always be true.
           ROSE_ASSERT(func->get_file_info() == NULL);
@@ -4921,7 +4980,80 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
         {
         // std::cout<<"patching defining function argument's scope and symbol.... "<<std::endl;
           (*argi)->set_scope(func_def);
-          func_def->insert_symbol((*argi)->get_name(), new SgVariableSymbol(*argi) );
+
+       // func_def->insert_symbol((*argi)->get_name(), new SgVariableSymbol(*argi) );
+          SgVariableSymbol* variableSymbol = new SgVariableSymbol(*argi);
+          ROSE_ASSERT(variableSymbol != NULL);
+          func_def->insert_symbol((*argi)->get_name(), variableSymbol );
+
+       // DQ (2/13/2016): Adding support for variable length array types in the function parameter list.
+          SgArrayType* arrayType = isSgArrayType((*argi)->get_type());
+          if (arrayType != NULL)
+             {
+            // Check if this is a VLA array type, if so look for the index expressions and check
+            // if we need to add asociated symbols to the current function definition scope.
+               SgExpression* indexExpression = arrayType->get_index();
+
+            // DQ (2/15/2016): This fails for X10 support.
+            // ROSE_ASSERT(indexExpression != NULL);
+               if (indexExpression != NULL)
+                  {
+                 // DQ (2/14/2016): Handle the case of an expression tree with any number of variable references.
+                 // Get the list of SgVarRef IR nodes and process each one as above.
+                 // void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
+                    vector<SgVarRefExp* > varRefList;
+                    collectVarRefs(indexExpression,varRefList);
+#if 0
+                    printf ("For array variable: name = %s \n",(*argi)->get_name().str());
+                    printf ("varRefList.size() = %zu \n",varRefList.size());
+#endif
+                    for (size_t i = 0; i < varRefList.size(); i++)
+                       {
+                      // Process each index subtree's SgVarRefExp.
+#if 0
+                         printf ("   --- index expression SgVarRefExp: name = %s \n",varRefList[i]->get_symbol()->get_name().str());
+#endif
+                         SgVariableSymbol* dimension_variableSymbol = varRefList[i]->get_symbol();
+                         ROSE_ASSERT(dimension_variableSymbol != NULL);
+#if 0
+                         printf ("dimension_variableSymbol = %p \n",dimension_variableSymbol);
+#endif
+                         ROSE_ASSERT(dimension_variableSymbol != variableSymbol);
+
+                      // The symbol from the referenced variable for the array dimension expression shuld already by in the function definition's symbol table.
+                         SgSymbol* symbolFromLookup = func_def->lookup_symbol(dimension_variableSymbol->get_name());
+                         if (symbolFromLookup != NULL)
+                            {
+                              SgVariableSymbol* variableSymbolFromLookup = isSgVariableSymbol(symbolFromLookup);
+                              ROSE_ASSERT(variableSymbolFromLookup != NULL);
+
+                           // varRefExp->set_symbol(symbolFromLookup);
+                              varRefList[i]->set_symbol(variableSymbolFromLookup);
+#if 0
+                              printf ("Ignoring previously built dimension_variableSymbol: dimension_variableSymbol->get_name() = %s \n",dimension_variableSymbol->get_name().str());
+#endif
+                           // I think we have a problem if this is not true.
+                              ROSE_ASSERT(dimension_variableSymbol != variableSymbol);
+                            }
+                           else
+                            {
+                           // This is not a reference to a variable from the current function's paramter lists, so we can ignore processing it within the VLA handling.
+                            }
+#if 0
+                         printf ("Detected an array type in the function parameter list with nontrivial index expression tree \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+                 else
+                  {
+                 // In X10 the array index can be more general (fixed to avoid failing X10 tests).
+                  }
+#if 0
+               printf ("Detected an array type in the function parameter list \n");
+               ROSE_ASSERT(false);
+#endif
+             }
         }
 
      defining_func->set_parent(scope);
@@ -7396,33 +7528,55 @@ SageBuilder::buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList pa
 
 
 //! Build a CUDA kernel call expression (kernel<<<config>>>(parameters))
-SgCudaKernelCallExp * SageBuilder::buildCudaKernelCallExp_nfi(SgExpression * kernel, SgExprListExp* parameters, SgCudaKernelExecConfig * config) {
-  ROSE_ASSERT(kernel);
-  ROSE_ASSERT(parameters);
-  ROSE_ASSERT(config);
+SgCudaKernelCallExp * SageBuilder::buildCudaKernelCallExp_nfi(SgExpression * kernel, SgExprListExp* parameters, SgCudaKernelExecConfig * config) 
+   {
+     ROSE_ASSERT(kernel);
+     ROSE_ASSERT(parameters);
+     ROSE_ASSERT(config);
 
-  SgFunctionRefExp * func_ref_exp = isSgFunctionRefExp(kernel);
-  if (!func_ref_exp) {
-    std::cerr << "SgCudaKernelCallExp accept only direct reference to a function." << std::endl;
-    ROSE_ASSERT(false);
-  }
-  if (!(func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel())) {
-    std::cerr << "To build a SgCudaKernelCallExp the callee need to be a kernel (having \"__global__\" attribute)." << std::endl;
-    ROSE_ASSERT(false);
-  }
+  // DQ (1/19/2016): Adding template function ref support.
+     SgFunctionRefExp * func_ref_exp = isSgFunctionRefExp(kernel);
+     SgTemplateFunctionRefExp * template_func_ref_exp = isSgTemplateFunctionRefExp(kernel);
+  // if (func_ref_exp == NULL)
+     if (func_ref_exp == NULL && template_func_ref_exp == NULL)
+        {
+#if 1
+          printf ("Error: SageBuilder::buildCudaKernelCallExp_nfi(): kernel = %p = %s \n",kernel,kernel->class_name().c_str());
+#endif
+          std::cerr << "SgCudaKernelCallExp accept only direct reference to a function." << std::endl;
+          ROSE_ASSERT(false);
+        }
 
-  SgCudaKernelCallExp * kernel_call_expr = new SgCudaKernelCallExp(kernel, parameters, kernel->get_type(), config);
+  // DQ (1/19/2016): Adding template function ref support.
+  // if (!(func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel()))
+     if ( (func_ref_exp          != NULL && func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() == false) &&
+          (template_func_ref_exp != NULL && template_func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() == false) )
+        {
+#if 1
+          printf ("Error: SageBuilder::buildCudaKernelCallExp_nfi(): kernel = %p = %s \n",kernel,kernel->class_name().c_str());
+          if (func_ref_exp != NULL)
+               printf ("func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() = %s \n",
+                    func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() ? "true" : "false");
+          if (template_func_ref_exp != NULL)
+               printf ("template_func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() = %s \n",
+                    template_func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() ? "true" : "false");
+#endif
+          std::cerr << "To build a SgCudaKernelCallExp the callee needs to be a kernel (having \"__global__\" attribute)." << std::endl;
+          ROSE_ASSERT(false);
+        }
 
-  kernel->set_parent(kernel_call_expr);
-  parameters->set_parent(kernel_call_expr);
-  config->set_parent(kernel_call_expr);
+     SgCudaKernelCallExp * kernel_call_expr = new SgCudaKernelCallExp(kernel, parameters, kernel->get_type(), config);
 
-  setOneSourcePositionNull(kernel_call_expr);
+     kernel->set_parent(kernel_call_expr);
+     parameters->set_parent(kernel_call_expr);
+     config->set_parent(kernel_call_expr);
 
-  ROSE_ASSERT(kernel_call_expr);
+     setOneSourcePositionNull(kernel_call_expr);
 
-  return kernel_call_expr;  
-}
+     ROSE_ASSERT(kernel_call_expr);
+
+     return kernel_call_expr;  
+   }
 
 //! Build a CUDA kernel execution configuration (<<<grid, blocks, shared, stream>>>)
 SgCudaKernelExecConfig * SageBuilder::buildCudaKernelExecConfig_nfi(SgExpression *grid, SgExpression *blocks, SgExpression *shared, SgExpression *stream) {

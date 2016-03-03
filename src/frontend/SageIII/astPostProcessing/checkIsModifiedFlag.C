@@ -46,7 +46,7 @@ CheckIsModifiedFlagSupport(SgNode *node)
 } 
 #endif
 
-void
+ROSE_DLL_API void
 reportNodesMarkedAsModified(SgNode *node)
    {
   // DQ (4/15/2015): This function reports using an output message and nodes marked as isModified (useful for debugging).
@@ -68,7 +68,7 @@ reportNodesMarkedAsModified(SgNode *node)
      traversal.traverse(node, preorder);
    }
 
-void
+ROSE_DLL_API void
 unsetNodesMarkedAsModified(SgNode *node)
    {
   // DQ (4/16/2015): This function sets the isModified flag on each node of the AST to false.

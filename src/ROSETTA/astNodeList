@@ -386,6 +386,7 @@ SgFuncDecl_attr
 SgFunctionCallExp
 SgFunctionDeclaration
 SgFunctionDefinition
+SgFunctionParameterScope
 SgFunctionModifier
 SgFunctionParameterList
 SgFunctionParameterRefExp
@@ -749,7 +750,7 @@ SgUntypedModuleScope
 SgUntypedGlobalScope
 SgUntypedModuleDeclaration
 SgUntypedStatementList
-SgUntypedDeclarationList
+SgUntypedDeclarationStatementList
 SgUntypedFunctionDeclarationList
 SgUntypedInitializedNameList
 SgUpcBarrierStatement

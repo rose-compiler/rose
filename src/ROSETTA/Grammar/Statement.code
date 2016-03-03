@@ -1438,6 +1438,10 @@ HEADER_STATIC_ASSERTION_DECLARATION_START
 HEADER_STATIC_ASSERTION_DECLARATION_END
 
 
+HEADER_FUNCTION_PARAMETER_SCOPE_START
+HEADER_FUNCTION_PARAMETER_SCOPE_END
+
+
 HEADER_FUNCTION_DECLARATION_STATEMENT_START
 
       //! Support for C++ covariant return types (used in virtual function overloading).
@@ -2996,10 +3000,24 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 // DQ (10/5/2014): This is now wrong because we now include rose_config.h before processing the
 // files generated from this file.  This change was required to support the ATerm libraries.
 // #ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-#ifdef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+// BH (11/13/2015) on windows this caused incosistent defines of this
+// so that it was not defined in the .h but used in the cxx file
+// #ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
+//#endif
+
+// DQ (2/17/2016): Checking that the correct values are set.
+#ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+   #error "ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
+#endif
+
+#if 0
+// DQ (2/17/2016): Checking that the correct values are set.
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+   #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
+#endif
 #endif
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
@@ -3009,12 +3027,13 @@ HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
 
        // DQ (12/28/2011): We need a constructor similar to the base class.
        // $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
-
-#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+// BH (11/13/2015) on windows this caused incosistent defines of this
+// so that it was not defined in the .h but used in the cxx file
+//#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-#endif
+//#endif
 
 HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
 
@@ -10436,6 +10455,17 @@ SgStaticAssertionDeclaration::hasExplicitScope() const
 SOURCE_STATIC_ASSERTION_DECLARATION_END
 
 
+SOURCE_FUNCTION_PARAMETER_SCOPE_START
+
+void
+SgFunctionParameterScope::post_construction_initialization()
+   {
+  // Nothing to do here, but we need this function to be defined.
+   }
+
+SOURCE_FUNCTION_PARAMETER_SCOPE_END
+
+
 SOURCE_FUNCTION_DECLARATION_STATEMENT_START
 
 void
@@ -12701,6 +12731,8 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
      assert(this != NULL);
      ROSE_ASSERT (what != NULL);
 
+     SageBuilder::buildVariableDefinition_nfi (this, what, initializer);
+#if 0     
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // if (!isSgFunctionType(what.get_type()))
      if (!isSgFunctionType(what->get_type()))
@@ -12747,6 +12779,7 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
           ROSE_ASSERT(defn_stmt != NULL);
        // printf ("In SgVariableDeclaration::append_variable(): SgVariableDefinition *defn_stmt = %p \n",defn_stmt);
         }
+#endif      
    }
 
 // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
@@ -12764,7 +12797,8 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
 
   // DQ (6/1/2004): Can we assert this
   // ROSE_ASSERT (decl_item == what);
-
+   SageBuilder::buildVariableDefinition_nfi (this, what, initializer);
+#if 0
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // if (!isSgFunctionType(what.get_type()))
      if (!isSgFunctionType(what->get_type()))
@@ -12807,6 +12841,7 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
           ROSE_ASSERT(defn_stmt != NULL);
        // printf ("In SgVariableDeclaration::prepend_variable(): SgVariableDefinition *defn_stmt = %p \n",defn_stmt);
         }
+#endif        
    }
 
 #if 0

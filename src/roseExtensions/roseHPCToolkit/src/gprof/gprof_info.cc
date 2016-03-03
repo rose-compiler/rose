@@ -161,7 +161,8 @@ namespace RoseHPCT
         ROSE_ASSERT(f!=NULL);
         // insert it under prog_root
         size_t num_kids = prog_root->getNumChildren();
-        file_node = prog_root->setChildValue(num_kids+1, f);
+		num_kids++;
+        file_node = prog_root->setChildValue(num_kids, f);
         ROSE_ASSERT(file_node != NULL);
         file_node_map[file_name] = file_node;
       }
@@ -193,7 +194,8 @@ namespace RoseHPCT
         p->setFileNode(dynamic_cast<File*>(file_node->value));
         //insert it under a corresponding file node
         size_t num_kids= file_node->getNumChildren();
-        func_node = file_node->setChildValue(num_kids+1,p);
+		num_kids++;
+        func_node = file_node->setChildValue(num_kids,p);
         func_node_map[func_name]=func_node;
         //func_node_map[func_name].insert(func_node);
       } 
@@ -214,7 +216,8 @@ namespace RoseHPCT
         s->setFileNode(dynamic_cast<File*>(file_node->value));
         // insert into a procedure node
         size_t num_kids = func_node->getNumChildren();
-        func_node->setChildValue(num_kids+1,s); 
+		num_kids++;
+        func_node->setChildValue(num_kids,s); 
 
         //Attach metrics
         // Metric 1: We treat the self-seconds as wall clock time, 
