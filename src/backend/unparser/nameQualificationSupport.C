@@ -425,7 +425,7 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeSignedInt:
           case V_SgTypeSignedLong:
           case V_SgTypeSignedLongLong:
-
+            
        // DQ (11/6/2014): Added support for C++11 rvalue references.
           case V_SgRvalueReferenceType:
 
@@ -442,6 +442,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
        // DQ (3/28/2015): Adding GNU C language extension.
           case V_SgTypeOfType:
 
+            //sk: Matrix type
+        case V_SgTypeMatrix:
+            
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
