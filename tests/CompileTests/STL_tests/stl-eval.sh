@@ -17,7 +17,6 @@ STL_CPP11_HEADERS_FAILING="algorithm bitset complex deque exception fstream func
 ###############################################################################
 
 # ensure that no old result files are present
-rm -f *.pass.C *.fail.C *.o *.pp.C *.ti
 
 GREEN="\033[32;0m"   # Green
 RED="\033[31;1m"   # Red
@@ -27,6 +26,11 @@ REDFAIL="${RED}FAIL${COLOREND}"
 BS_INCLUDE=-I.
 
 TOOL2_BACKEND=-rose:skipfinalCompileStep
+
+function cleanup {
+    rm -f *.o *.pp.C *.ti
+    rm -f test_*.* rose_test*.* a.out
+}
 
 function test_failed {
   echo -e "${RED}SOME TESTS FAILED (${TOTAL_FAIL}). See above list for details.${COLOREND}"
@@ -49,34 +53,31 @@ T2_FAIL=0
 for header in ${STL_HEADERS}; do
   printf "TESTING: %-17s: " "$header"
   printf "#include <$header>\nint main(){ return 0; }\n" > test_$header.C
-  # option -P: Inhibit generation of linemarkers
+  # option -P: inhibit generation of linemarkers
   cpp -P -std=$LANG_STANDARD -x c++ test_${header}.C test_${header}.pp.C
   LOC=`wc -l test_${header}.pp.C| cut -f1 -d' '`
   printf "%6s LOC : " "$LOC"
+
   # use a sub shell and redirect coredump output of subshell to /dev/null
   {
    $TOOL1 $BS_INCLUDE test_${header}.C -std=$LANG_STANDARD &> /dev/null
   } > /dev/null 2>&1
+
   if [ $? -eq 0 ]; then
       echo -n "PASS " # 0
       ((T0_PASS+=1))
       {
           $TOOL2 $TOOL2_BACKEND $BS_INCLUDE test_${header}.pp.C -std=$LANG_STANDARD &> /dev/null
-          #mv test_${header}.pp.C_rose.C rose_test_${header}.pp.C
       } > /dev/null 2>&1
       if [ $? -eq 0 ]; then
-          cp test_${header}.pp.C $header.pass.C
-          echo -n "PASS" # 1
-          ((T1_PASS+=1))
           if [ -e rose_test_${header}.pp.C ]
           then
-              cp rose_test_${header}.pp.C rose_test_$header.t1.pass.C
-              #echo -n " 2:PASS"
+              echo -n "PASS" # 1
+              ((T1_PASS+=1))
               g++ -std=$LANG_STANDARD rose_test_${header}.pp.C -w -Wfatal-errors > /dev/null 2>&1
               if [ $? -eq 0 ]; then
-                  cp rose_test_${header}.pp.C rose_test_$header.t2.pass.C
-              echo -n " PASS : 100.00%" # 2
-              ((T2_PASS+=1))
+                  echo -n " PASS : 100.00%" # 2
+                  ((T2_PASS+=1))
               else
                   # determine line number of error
                   ERROR_LINE=`g++ -std=${LANG_STANDARD} rose_test_${header}.pp.C -w -Wfatal-errors 2>&1 | egrep rose_test_${header}.pp.C:[0-9] | cut -f2 -d:` 
@@ -85,16 +86,12 @@ for header in ${STL_HEADERS}; do
                   printf " : %6s%% (LINE:%s)" "$ERROR_PERCENTAGE" "$ERROR_LINE" # 2
                   cp rose_test_${header}.pp.C rose_test_$header.t2.fail.C
                   ((T2_FAIL+=1))
-          fi            
+              fi            
           else
-              echo -n " [no file generated!] "
+              echo -n " ${RED}FAIL${COLOREND} [no file generated!] "
+              ((T1_FAIL+=1))
           fi
       else
-          cp test_${header}.pp.C test_$header.fail.C
-          if [ -e rose_test_${header}.pp.C ]
-          then
-              cp rose_test_${header}.pp.C rose_test_$header.t1.fail.C
-          fi
           echo -en "${RED}FAIL ----${COLOREND}" # 1
           ((T1_FAIL+=1))
       fi
@@ -118,6 +115,10 @@ else
 fi
 
 } # end of function check
+
+#main
+
+cleanup
 
 TOTAL_FAIL=0
 echo "-----------------------------------------------------------------"
@@ -156,7 +157,7 @@ echo -e "${GREEN}ALL TESTS PASSED (that are expected to pass)${COLOREND}"
 echo -e "${GREEN}-----------------------------------------------------------------${COLOREND}"
 
 # clean up (remove all generated files. cleanup is only performed when all tests passed)
-rm -f test_*.* rose_test*.* a.out *.pass.C
+cleanup
 
 # NOTES on cpp:
 # -fdirectives-only
