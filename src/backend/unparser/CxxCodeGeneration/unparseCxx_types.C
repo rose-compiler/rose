@@ -86,6 +86,7 @@ string get_type_name(SgType* t)
           case T_SIGNED_LONG_LONG:        return "signed long long";
           case T_UNSIGNED_LONG_LONG:      return "unsigned long long";
 
+        case T_MATRIX:                    return "Matrix";  
        // DQ (3/24/2014): Added support for 128-bit integers.
           case T_SIGNED_128BIT_INTEGER:   return "__int128";
           case T_UNSIGNED_128BIT_INTEGER: return "unsigned __int128";
@@ -564,6 +565,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_SIGNED_128BIT_INTEGER:
                case T_UNSIGNED_128BIT_INTEGER:
 
+                 //SK: Matrix type for Matlab
+               case T_MATRIX:
                case T_LONG_DOUBLE:
                case T_STRING:
                case T_BOOL:
