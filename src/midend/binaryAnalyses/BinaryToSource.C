@@ -94,7 +94,7 @@ BinaryToSource::emitFilePrologue(const P2::Partitioner &partitioner, std::ostrea
 void
 BinaryToSource::declareGlobalRegisters(std::ostream &out) {
     out <<"\n/* Global register variables */\n";
-    RegisterStatePtr regs = RegisterState::promote(raisingOps_->get_state()->get_register_state());
+    RegisterStatePtr regs = RegisterState::promote(raisingOps_->currentState()->registerState());
     BOOST_FOREACH (const RegisterState::RegPair &regpair, regs->get_stored_registers()) {
         std::string ctext = SValue::unsignedTypeNameForSize(regpair.desc.get_nbits()) + " " +
                             raisingOps_->registerVariableName(regpair.desc);
@@ -218,7 +218,9 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
     const RegisterDescriptor SP = disassembler_->stackPointerRegister();
     const RegisterDescriptor SS = disassembler_->stackSegmentRegister();
     raisingOps_->reset();
-    BaseSemantics::SValuePtr returnTarget = raisingOps_->readMemory(SS, raisingOps_->readRegister(SP),
+    BaseSemantics::SValuePtr spDflt = raisingOps_->undefined_(SP.get_nbits());
+    BaseSemantics::SValuePtr returnTarget = raisingOps_->readMemory(SS,
+                                                                    raisingOps_->readRegister(SP, spDflt),
                                                                     raisingOps_->undefined_(IP.get_nbits()),
                                                                     raisingOps_->boolean_(true));
     emitEffects(out);

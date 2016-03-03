@@ -18,7 +18,7 @@ namespace NullSemantics {
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a null semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Values in the NullSemantics domain.  Values are essentially void. */
@@ -124,6 +124,7 @@ public:
 //                                      Register state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Shared-ownership pointer to null register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
 /** Null register state.
@@ -165,8 +166,9 @@ public:
     virtual void zero() ROSE_OVERRIDE {}
 
     virtual BaseSemantics::SValuePtr
-    readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
-        return get_protoval()->undefined_(reg.get_nbits());
+    readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt,
+                 BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+        return protoval()->undefined_(reg.get_nbits());
     }
 
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value,
@@ -180,6 +182,7 @@ public:
 //                                      Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Shared-ownership pointer to null register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Null memory.
@@ -248,8 +251,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to null RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** NullSemantics operators always return a new undefined value.  They do, however, check certain preconditions. */
@@ -260,11 +262,11 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Null");
+        name("Null");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Null");
+        name("Null");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

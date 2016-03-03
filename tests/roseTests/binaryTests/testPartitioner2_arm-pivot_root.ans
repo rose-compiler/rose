@@ -52,5 +52,5 @@
 0x00008354: 10 30 9f e5             |.0..    |          ldral  r3, [r15, #+16]
 0x00008358: 04 c0 2d e5             |..-.    |          stral  r12, [r13, #-4]!
 0x0000835c: f1 ff ff eb             |....    |          blal   0x00008328
-0x0000835c: Successor blocks: 0x00008328
+0x0000835c: Successor blocks: 0x00008328<__libc_start_main>
 

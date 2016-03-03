@@ -5286,9 +5286,12 @@ SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribu
         }
        else
         {
+       // DQ (2/25/2016): I think it is significant, because inputlocation refers to the order relative to
+       // the statement, not relative to other AstUnparseAttribute objects. Fixed to use the inputlocation.
        // DQ (2/23/2009): commented added.
        // Note that this will be the only string in the attribute, so inputlocation is not significant (and e_before is the default used).
-          AstUnparseAttribute* code = new AstUnparseAttribute(s,AstUnparseAttribute::e_before);
+       // AstUnparseAttribute* code = new AstUnparseAttribute(s,AstUnparseAttribute::e_before);
+          AstUnparseAttribute* code = new AstUnparseAttribute(s,inputlocation);
           ROSE_ASSERT(code != NULL);
 
           astNode->addNewAttribute(AstUnparseAttribute::markerName,code);
@@ -13101,6 +13104,8 @@ void SageInterface::replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* ta
   {
     if ((*j)->getTypeOfDirective()==PreprocessingInfo::CMacroCall)
     {
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
+   // DQ (2/17/2016): The token_container type is not defined if Wave is not available.
       std::ostringstream os;
       token_container tc = (*j)->get_macro_call()->expanded_macro;
       token_container::const_iterator iter;
@@ -13120,6 +13125,7 @@ void SageInterface::replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* ta
       }
        delete target->get_pragma();
        target->set_pragma(buildPragma(pragmaText));
+#endif
     } // end if
   } // end for
 #endif

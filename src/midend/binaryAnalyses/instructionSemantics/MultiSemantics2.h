@@ -66,7 +66,7 @@ public:
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object. SValue objects are referece counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a multi-semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the MultiSemantics domain.
@@ -204,6 +204,8 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void RegisterState;
+
+/** Shared-ownership pointer to a multi-semantics register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> RegisterStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -211,6 +213,8 @@ typedef boost::shared_ptr<void> RegisterStatePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void MemoryState;
+
+/** Shared-ownership pointer to a multi-semantics memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> MemoryStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,14 +222,15 @@ typedef boost::shared_ptr<void> MemoryStatePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void State;
+
+/** Shared-ownership pointer to a multi-semantics state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> StatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to multi-semantics RISC operators. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the MultiSemantics domain.
@@ -244,14 +249,14 @@ protected:
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Multi");
+        name("Multi");
         (void) SValue::promote(protoval); // check that its dynamic type is a MultiSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Multi");
-        (void) SValue::promote(state->get_protoval()); // dynamic type must be a MultiSemantics::SValue
+        name("Multi");
+        (void) SValue::promote(state->protoval());      // dynamic type must be a MultiSemantics::SValue
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,7 +347,7 @@ public:
 
     /** Convenience function for SValue::create_empty(). */
     virtual SValuePtr svalue_empty(size_t nbits) {
-        return SValue::promote(get_protoval())->create_empty(nbits);
+        return SValue::promote(protoval())->create_empty(nbits);
     }
     
     /** Iterates over valid subdomains whose inputs are valid. This is intended to be used in a "for" loop inside a RISC
@@ -475,7 +480,8 @@ public:
                                               SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,

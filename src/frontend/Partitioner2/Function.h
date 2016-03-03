@@ -21,7 +21,7 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Shared-ownership pointer for function. */
+/** Shared-ownership pointer for function. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class Function> FunctionPtr;
 
 /** Describes one function.
@@ -61,9 +61,10 @@ private:
     // The following members are caches either because their value is seldom needed and expensive to compute, or because the
     // value is best computed at a higher layer (e.g., in the partitioner) yet it makes the most sense to store it here. Make
     // sure clearCache() resets these to initial values.
-    /*void*/
+    Sawyer::Cached<bool> isNoop_;
 
     void clearCache() {
+        isNoop_.clear();
     }
     
 protected:
@@ -241,6 +242,12 @@ public:
     /** A printable name for the function.  Returns a string like 'function 0x10001234 "main"'.  The function name is not
      *  included if the name is empty. */
     std::string printableName() const;
+
+    /** Cached results of function no-op analysis.
+     *
+     *  If a value is cached, then the analysis has run and the cached value is true if the analysis proved that the function
+     *  is a no-op. */
+    const Sawyer::Cached<bool>& isNoop() const { return isNoop_; }
 
 private:
     friend class Partitioner;

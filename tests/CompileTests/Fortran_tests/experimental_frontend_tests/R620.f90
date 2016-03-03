@@ -1,0 +1,16 @@
+SUBROUTINE foo(A,B)
+REAL :: A(:), B(:,:), array(10), arr(10,10)
+INTEGER :: int_array(10)
+a = array(1)
+a = array(:)
+a = array(1:)
+a = array(:2)
+a = array(1:2)
+a = array(::3)
+a = array(1::3)
+a = array(:2:3)
+a = array(1:2:3)
+B = arr(1:2:3,5:10:2)
+a = array(int_array)
+END SUBROUTINE
+

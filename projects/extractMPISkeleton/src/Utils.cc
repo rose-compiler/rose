@@ -1,7 +1,7 @@
 #include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
 #include <rose.h>
 #include "Utils.h"
+#define foreach BOOST_FOREACH
 
 using namespace SageBuilder;
 using namespace SageInterface;

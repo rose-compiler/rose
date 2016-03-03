@@ -15,6 +15,9 @@ config_vector=()
 #     ROSE is configured in that regard.
 #  2. If an environment variable is set to the empty string (not unset) then assume that ROSE is being
 #     configured without that dependency (e.g., "--without-foo" or "--with-foo=no").
+#  3. If an environment variable is the word "ambivalent" then ROSE was configured without specifying
+#     anything about that dependency (neither "--with-foo" nor "--without-foo") and that should be made
+#     known to the database by also sending it the string 'ambivalent'.
 #
 # Most of the time the value comes directly from the variable, but sometimes we want to provide our own value
 # and use the variable name argument only to decide whether the dependency is known to the configuration system,
@@ -53,6 +56,7 @@ if [ "$RMC_RMC_VERSION" != "" ]; then
     append_rmc_record languages  RMC_LANGUAGES
     append_rmc_record magic      RMC_MAGIC_VERSION
     append_rmc_record optimize   RMC_OPTIM
+    append_rmc_record os         RMC_OS_NAME
     append_rmc_record python     RMC_PYTHON_VERSION
     append_rmc_record qt         RMC_QT_VERSION
     append_rmc_record readline   RMC_READLINE_VERSION
@@ -68,5 +72,5 @@ fi
 
 # Print results
 for kv in "${config_vector[@]}"; do
-    echo "$kv"
+    echo "'$kv'"
 done

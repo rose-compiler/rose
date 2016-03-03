@@ -4573,6 +4573,26 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
+  // DQ (1/25/2016): Allow defaults to be set based on filename extension.
+  // set_F2008_only(false);
+  // ROSE_ASSERT (get_F2008_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(f2008|F2008|Fortran2008)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Fortran2008 only mode ON \n");
+          set_F2008_only(true);
+          set_Fortran_only(true);
+
+       // DQ (1/25/2016): We might want to skip the syntax checking.
+          set_skip_syntax_check(true);
+
+          if (get_sourceFileUsesFortran2008FileExtension() == false)
+             {
+               printf ("Warning, Non Fortran2008 source file name specificed with explicit -rose:Fortran2008 Fortran 2008 language option! \n");
+               set_F2008_only(false);
+             }
+        }
+
      if ( CommandlineProcessing::isOption(argv,"-rose:","(caf|CAF|CoArrayFortran)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -5170,6 +5190,27 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_experimental_fortran_frontend(true);
         }
 
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     set_experimental_fortran_frontend_OFP_test(false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend_OFP_test",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Using experimental fortran frontend_OFP_test (explicitly set: ON) \n");
+          set_experimental_fortran_frontend_OFP_test(true);
+        }
+
+  // DQ (1/25/2016): we want to enforce that we only use F08 with the new experimental mode.
+     if (get_experimental_fortran_frontend() == false)
+        {
+       // We only want to allow Fortran 2008 mode to work with the new experimental fortran frontend.
+          if (get_F2008_only() == true)
+             {
+               printf ("ERROR: Fortran 2008 mode is only supported with the -rose:experimental_fortran_frontend option \n");
+               exit(1);
+            // ROSE_ASSERT(false);
+             }
+        }
 
   // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
   // ****************
@@ -5646,6 +5687,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
+
+  // DQ (1/23/2016): Added support for OFP testing within new experimental Fortran support.
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend_OFP_test)",1);
 
   // DQ (9/15/2013): Remove this from being output to the backend compiler.
      optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);
@@ -6315,7 +6359,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           printf ("   --- get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
           printf ("   --- get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
           printf ("   --- get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
-       // printf ("   --- get_F2008_only()          = %s \n",(get_F2008_only() == true) ? "true" : "false");
+          printf ("   --- get_F2008_only()          = %s \n",(get_F2008_only() == true) ? "true" : "false");
           printf ("   --- get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
           printf ("   --- get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
           printf ("   --- get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");

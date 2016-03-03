@@ -6,8 +6,8 @@
 1. How data members and function members are specified (within the classes
 to be automatically generated)
 ==========================================================================
-Each Terminal object (and each Nonterminal object as well, since class
-Nonterminal is derived from class Terminal) contains three 2x2 arrays of
+Each AstNodeClass object (and each Nonterminal object as well, since class
+Nonterminal is derived from class AstNodeClass) contains three 2x2 arrays of
 lists of GrammarString objects, see grammar.h:
 
    // Header file class definition function prototypes (local and subtree definitions)
@@ -43,7 +43,7 @@ SUBTREE/INCLUDE | SUBTREE/EXCLUDE
 
 Note that this convention does not include the root node as a part of the subtree!
 
-The Terminal class (and thus the Nonterminal class) provides the following member
+The AstNodeClass class (and thus the Nonterminal class) provides the following member
 functions to add elements to each of these three arrays of lists:
 
 setDataPrototype()                -> LOCAL/INCLUDE
@@ -62,7 +62,7 @@ that are actually needed. All these functions are implemented in terminal.C.
 
 Data members are added using the setDataPrototype() member function
 (in ROSETTA/terminal.C):
-void Grammar::Terminal::setDataPrototype (char* inputTypeNameString,
+void Grammar::AstNodeClass::setDataPrototype (char* inputTypeNameString,
      char* inputVariableNameString, char* inputDefaultInitializer,
      bool constructorParameter, bool buildAccessDataFunctions,
      bool toBeTraversedDuringTreeTraversal);

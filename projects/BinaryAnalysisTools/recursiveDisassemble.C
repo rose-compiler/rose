@@ -90,6 +90,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     std::string description =
         "Disassembles the specimens and presents various information depending on switches.";
     Parser parser = engine.commandLineParser(purpose, description);
+    parser.errorStream(mlog[FATAL]);
 
     // Switches for output
     SwitchGroup out("Output switches");

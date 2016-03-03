@@ -34,7 +34,7 @@ public:
         DispatcherPowerpcPtr dispatcher = DispatcherPowerpc::promote(dispatcher_);
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
-        ASSERT_require(insn!=NULL && insn==operators->get_insn());
+        ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
         dispatcher->advanceInstructionPointer(insn);
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         p(dispatcher.get(), operators.get(), insn, operands);
@@ -1084,8 +1084,8 @@ DispatcherPowerpc::regcache_init()
 
 void
 DispatcherPowerpc::memory_init() {
-    if (BaseSemantics::StatePtr state = get_state()) {
-        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+    if (BaseSemantics::StatePtr state = currentState()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     break;

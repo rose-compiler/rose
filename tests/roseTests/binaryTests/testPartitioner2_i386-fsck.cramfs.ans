@@ -8,17 +8,17 @@
 0x08048943: 83 ec 08                |...     |<sp-4 >   sub    esp, 0x08
 0x08048946: e8 89 02 00 00          |.....   |<sp-12>   call   0x08048bd4<<Func>>
 0x08048946: Outgoing stack delta: -16
-0x08048946: Successor blocks: 0x08048bd4, 0x0804894b
+0x08048946: Successor blocks: 0x08048bd4<<Func>>, 0x0804894b
 
 0x0804894b: Basic block reasons: 
 0x0804894b: e8 e0 02 00 00          |.....   |<sp-12>   call   0x08048c30<<Func>>
 0x0804894b: Outgoing stack delta: -16
-0x0804894b: Successor blocks: 0x08048c30, 0x08048950
+0x0804894b: Successor blocks: 0x08048c30<<Func>>, 0x08048950
 
 0x08048950: Basic block reasons: 
 0x08048950: e8 4b 13 00 00          |.K...   |<sp-12>   call   0x08049ca0<<Func>>
 0x08048950: Outgoing stack delta: -16
-0x08048950: Successor blocks: 0x08049ca0, 0x08048955
+0x08048950: Successor blocks: 0x08049ca0<<Func>>, 0x08048955
 
 0x08048955: Basic block reasons: 
 0x08048955: c9                      |.       |<sp-12>   leave  
@@ -341,7 +341,7 @@
 0x08048bc7: 68 a2 95 04 08          |h....   |<sp-28>   push   0x080495a2
 0x08048bcc: e8 b7 fe ff ff          |.....   |<sp-32>   call   0x08048a88<__libc_start_main@plt>
 0x08048bcc: Outgoing stack delta: -36
-0x08048bcc: Successor blocks: 0x08048a88, 0x08048bd1
+0x08048bcc: Successor blocks: 0x08048a88<__libc_start_main@plt>, 0x08048bd1
 
 0x08048bd1: Basic block reasons: 
 0x08048bd1: f4                      |.       |<sp-32>   hlt    
@@ -358,7 +358,7 @@
 0x08048bd8: 83 ec 04                |...     |<sp-8 >   sub    esp, 0x04
 0x08048bdb: e8 00 00 00 00          |.....   |<sp-12>   call   0x08048be0<<Func>>
 0x08048bdb: Outgoing stack delta: -16
-0x08048bdb: Successor blocks: 0x08048be0, 0x08048be0
+0x08048bdb: Successor blocks: 0x08048be0<<Func>>, 0x08048be0<<Func>>
 
 0x08048be0: ================================== Function (function call, graph) unknown name
 
@@ -374,7 +374,7 @@
 0x08048bf1: Basic block reasons: 
 0x08048bf1: e8 92 ff ff ff          |.....   |<sp+4 >   call   0x08048b88<__gmon_start__@plt>
 0x08048bf1: Outgoing stack delta: +0
-0x08048bf1: Successor blocks: 0x08048b88, 0x08048bf6
+0x08048bf1: Successor blocks: 0x08048b88<__gmon_start__@plt>, 0x08048bf6
 
 0x08048bf6: Basic block reasons: 
 0x08048bf6: 58                      |X       |<sp+4 >   pop    eax
@@ -469,7 +469,7 @@
 0x08048c5b: 6a 0c                   |j.      |<sp-24>   push   0x0c
 0x08048c5d: e8 b6 fd ff ff          |.....   |<sp-28>   call   0x08048a18<malloc@plt>
 0x08048c5d: Outgoing stack delta: -32
-0x08048c5d: Successor blocks: 0x08048a18, 0x08048c62
+0x08048c5d: Successor blocks: 0x08048a18<malloc@plt>, 0x08048c62
 
 0x08048c62: Basic block reasons: 
 0x08048c62: fc                      |.       |<sp-28>   cld    
@@ -516,7 +516,7 @@
 0x08048c95: 6a 00                   |j.      |<sp-24>   push   0x00
 0x08048c97: e8 4c fd ff ff          |.L...   |<sp-28>   call   0x080489e8<dcgettext@plt>
 0x08048c97: Outgoing stack delta: -32
-0x08048c97: Successor blocks: 0x080489e8, 0x08048c9c
+0x08048c97: Successor blocks: 0x080489e8<dcgettext@plt>, 0x08048c9c
 
 0x08048c9c: Basic block reasons: 
 0x08048c9c: 83 c4 0c                |...     |<sp-28>   add    esp, 0x0c
@@ -525,13 +525,13 @@
 0x08048ca1: 57                      |W       |<sp-24>   push   edi
 0x08048ca2: e8 21 fd ff ff          |.!...   |<sp-28>   call   0x080489c8<fprintf@plt>
 0x08048ca2: Outgoing stack delta: -32
-0x08048ca2: Successor blocks: 0x080489c8, 0x08048ca7
+0x08048ca2: Successor blocks: 0x080489c8<fprintf@plt>, 0x08048ca7
 
 0x08048ca7: Basic block reasons: 
 0x08048ca7: 89 34 24                |.4$     |<sp-28>   mov    dword ss:[esp], esi
 0x08048caa: e8 49 fe ff ff          |.I...   |<sp-28>   call   0x08048af8<exit@plt>
 0x08048caa: Outgoing stack delta: -32
-0x08048caa: Successor blocks: 0x08048af8
+0x08048caa: Successor blocks: 0x08048af8<exit@plt>
 
 0x08049bf0: ================================== Function (pattern, graph) unknown name
 0x08049bf0: Function stack delta: +4
@@ -544,7 +544,7 @@
 0x08049bf5: 53                      |S       |<sp-12>   push   ebx
 0x08049bf6: e8 98 00 00 00          |.....   |<sp-16>   call   0x08049c93<<Func>>
 0x08049bf6: Outgoing stack delta: -20
-0x08049bf6: Successor blocks: 0x08049c93, 0x08049bfb
+0x08049bf6: Successor blocks: 0x08049c93<<Func>>, 0x08049bfb
 
 0x08049bfb: Basic block reasons: 
 0x08049bfb: 81 c3 99 15 00 00       |......  |<sp-16>   add    ebx, 0x00001599<5529>
@@ -580,7 +580,7 @@
 0x08049c29: 8d b4 26 00 00 00 00    |..&.... |<sp-28>   lea    esi, [esi + 0x00000000]
 0x08049c30: e8 9f 00 00 00          |.....   |<sp-28>   call   0x08049cd4<(func)_fini>
 0x08049c30: Outgoing stack delta: -32
-0x08049c30: Successor blocks: 0x08049cd4, 0x08049c35
+0x08049c30: Successor blocks: 0x08049cd4<_fini>, 0x08049c35
 
 0x08049c35: Basic block reasons: 
 0x08049c35: 83 c4 0c                |...     |<sp-28>   add    esp, 0x0c
@@ -603,14 +603,14 @@
 0x08049c45: 53                      |S       |<sp-12>   push   ebx
 0x08049c46: e8 48 00 00 00          |.H...   |<sp-16>   call   0x08049c93<<Func>>
 0x08049c46: Outgoing stack delta: -20
-0x08049c46: Successor blocks: 0x08049c93, 0x08049c4b
+0x08049c46: Successor blocks: 0x08049c93<<Func>>, 0x08049c4b
 
 0x08049c4b: Basic block reasons: 
 0x08049c4b: 81 c3 49 15 00 00       |..I...  |<sp-16>   add    ebx, 0x00001549<5449>
 0x08049c51: 83 ec 0c                |...     |<sp-16>   sub    esp, 0x0c
 0x08049c54: e8 e7 ec ff ff          |.....   |<sp-28>   call   0x08048940<(func)_init>
 0x08049c54: Outgoing stack delta: -32
-0x08049c54: Successor blocks: 0x08048940, 0x08049c59
+0x08049c54: Successor blocks: 0x08048940<_init>, 0x08049c59
 
 0x08049c59: Basic block reasons: 
 0x08049c59: 8d 83 18 ff ff ff       |......  |<sp-28>   lea    eax, [ebx + 0xffffff18<-232>]
@@ -715,7 +715,7 @@
 0x08049cd8: 83 ec 04                |...     |<sp-8 >   sub    esp, 0x04
 0x08049cdb: e8 00 00 00 00          |.....   |<sp-12>   call   0x08049ce0<<Func>>
 0x08049cdb: Outgoing stack delta: -16
-0x08049cdb: Successor blocks: 0x08049ce0, 0x08049ce0
+0x08049cdb: Successor blocks: 0x08049ce0<<Func>>, 0x08049ce0<<Func>>
 
 0x08049ce0: ================================== Function (function call, graph) unknown name
 
@@ -724,7 +724,7 @@
 0x08049ce1: 81 c3 b4 14 00 00       |......  |<sp+4 >   add    ebx, 0x000014b4<5300>
 0x08049ce7: e8 14 ef ff ff          |.....   |<sp+4 >   call   0x08048c00<<Func>>
 0x08049ce7: Outgoing stack delta: +0
-0x08049ce7: Successor blocks: 0x08048c00, 0x08049cec
+0x08049ce7: Successor blocks: 0x08048c00<<Func>>, 0x08049cec
 
 0x08049cec: Basic block reasons: 
 0x08049cec: 59                      |Y       |<sp+4 >   pop    ecx

@@ -18,16 +18,21 @@ dnl predefined by a specific compiler
 
 # DQ (4/1/2005): Modified to get compiler name from path
   compilerName=`basename $BACKEND_CXX_COMPILER`
-  echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler name = \"$compilerName\" for processing of unparsed source files from ROSE preprocessors."
+# echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler name = \"$compilerName\" for processing of unparsed source files from ROSE preprocessors."
 
+compilerVendorName=$ax_cv_cxx_compiler_vendor
+
+# DQ (2/1/2016): Change the switch to the vendor name computed from the macro call to AX COMPILER VENDOR (autoconf macro).
 # case $BACKEND_CXX_COMPILER in
-  case $compilerName in
+# case $compilerName in
+  case $ax_cv_cxx_compiler_vendor in
   # MS 10/22/2015: Support for LLVM
-  clang|clang++|clang-*|clang++-*)
+  # clang|clang++|clang-*|clang++-*)
+  clang)
     macroString="{\"--preinclude\", \"rose_edg_required_macros_and_functions.h\"}"
-    compilerVendorName=llvm
-    echo "Support for clang as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
-    echo "Support for clang as a backend for compiling ROSE generated code \"$macroString\" ";
+  # compilerVendorName=llvm
+  # echo "Support for clang as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
+  # echo "Support for clang as a backend for compiling ROSE generated code \"$macroString\" ";
   ;;
   
   # Support for GNU gcc or g++ as a backend for compiling ROSE generated code
@@ -35,7 +40,8 @@ dnl predefined by a specific compiler
   # g++|gcc|mpicc|mpic++|mpicxx|mpiCC)
   # TOO (2/16/2011): added support for tensilica compilers, assuming they are
   # like GCC (they use a GCC front-end)
-    g++*|gcc*|mpicc|mpic++|mpicxx|mpiCC|xt-xc++|xt-xcc)
+  # g++*|gcc*|mpicc|mpic++|mpicxx|mpiCC|xt-xc++|xt-xcc)
+    gnu)
              BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
              BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
              BACKEND_GCC_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3`
@@ -56,13 +62,14 @@ dnl predefined by a specific compiler
 
              macroString="${macroString}}"
 
-             compilerVendorName=GNU
+#            compilerVendorName=GNU
              ;;
 
   # Support for Intel icc as a backend for compiling ROSE generated code
   # DQ (3/14/2014): Added support for mpi specific versions (suggested by Jeff).
   # icpc|icc)
-    icpc|icc|mpiicpc|mpiicc)
+  # icpc|icc|mpiicpc|mpiicc)
+    intel)
            # DQ (3/8/2014): Adding version number support for Intel compiler.
              BACKEND_INTEL_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
              BACKEND_INTEL_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
@@ -106,7 +113,7 @@ dnl predefined by a specific compiler
               echo "ICC MACRO DEFS: $ICC_MACRO_DEFS"
              echo "macroString: $macroString"
 
-             compilerVendorName=Intel
+#            compilerVendorName=Intel
 
              #BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
              #BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
@@ -117,7 +124,12 @@ dnl predefined by a specific compiler
   # Or support "roseAnalysis" as a backend which generates object files from the original source code.
   # DQ (1/28/2010): Added testAnalysis since this is the name of the executable build in ROSE/tests 
   # directory and used by ROSE to compile ROSE in the automated Hudson tests.
-    roseTranslator|testTranslator|roseCodeGeneration|testCodeGeneration|roseAnalysis|testAnalysis|roseAstFileIO|testAstFileIO)
+  # roseTranslator|testTranslator|roseCodeGeneration|testCodeGeneration|roseAnalysis|testAnalysis|roseAstFileIO|testAstFileIO)
+    rose)
+           # DQ (2/1/2016): I think this is an error.  If we want to compile ROSE using ROSE then the backend should be specificed to NOT be ROSE (e.g. gcc/g++).
+             echo "If we want to compile ROSE using ROSE then the backend should be specificed to NOT be ROSE (e.g. gcc/g++)"
+             exit 1
+
            # macroString=" -D__GNUG__=$BACKEND_GCC_MAJOR -D__GNUC__=$BACKEND_GCC_MAJOR -D__GNUC_MINOR__=$BACKEND_GCC_MINOR -D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL -D_GNU_SOURCE --preinclude rose_edg_macros_and_functions_required_for_gnu.h "
            # macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\", \"-D_GNU_SOURCE\""
            # if test x$enable_new_edg_interface = xyes; then
@@ -157,13 +169,19 @@ dnl predefined by a specific compiler
 
              macroString="${macroString}}"
 
-             compilerVendorName=GNU
+#            compilerVendorName=GNU
              echo "Support for ROSE as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
              echo "Support for ROSE as a backend for compiling ROSE generated code \"$macroString\" ";
              ;;
 
+  # DQ (2/1/20116): Added case for unknown value.
+    unknown)
+             echo "Backend compiler is unknown (cannot identify vendor for back-end C++ compiler \"$BACKEND_CXX_COMPILER\")";
+             exit 1;
+             macroString="";;
+
     *)
-             echo "we reached here for some reason (cannot identify back-end C++ compiler \"$BACKEND_CXX_COMPILER\")";
+             echo "We reached the default case of the switch over the compiler vendors for some reason (cannot identify vendor for back-end C++ compiler \"$BACKEND_CXX_COMPILER\")";
              exit 1;
              macroString="";;
   esac
@@ -174,11 +192,14 @@ dnl predefined by a specific compiler
 # This is now setup in a separate macro and can be specified on the command line
 # AC_DEFINE_UNQUOTED(CXX_COMPILER_NAME, "$CXX")
 
+# DQ (2/1/2016): Fixed compiler vendor names to be consistatenyl lower case.
 # DQ (1/9/2010): Detect the type of compiler being used. This is used to add the
 # library libimf with libm to support use of the Intel compiler.  I have added
 # AM conditional for GNu just for completeness.
-  AM_CONDITIONAL(USING_INTEL_COMPILER,test "x$compilerVendorName" = xIntel)
-  AM_CONDITIONAL(USING_GNU_COMPILER,test "x$compilerVendorName" = xGNU)
+# AM_CONDITIONAL(USING_INTEL_COMPILER,test "x$compilerVendorName" = xIntel)
+# AM_CONDITIONAL(USING_GNU_COMPILER,test "x$compilerVendorName" = xGNU)
+  AM_CONDITIONAL(USING_INTEL_COMPILER,test "x$compilerVendorName" = xintel)
+  AM_CONDITIONAL(USING_GNU_COMPILER,test "x$compilerVendorName" = xgnu)
 
 # DQ (1/27/2010): Setup automake conditionals so that we can optionally skip files in ROSE that don't compile.
   AM_CONDITIONAL(ROSE_USING_ROSE,test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator || test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration || test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis || test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO)
@@ -225,12 +246,14 @@ dnl predefined by a specific compiler
 # echo "Exiting after recognition of ROSE analizer, code generator, or translator."
 # exit 1;
 
-  if test "x$compilerVendorName" = xIntel; then
+# if test "x$compilerVendorName" = xIntel; then
+  if test "x$compilerVendorName" = xintel; then
    # using_intel_compiler=true
    # AC_DEFINE([CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
      AC_DEFINE([BACKEND_CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
   fi
-  if test "x$compilerVendorName" = xGNU; then
+# if test "x$compilerVendorName" = xGNU; then
+  if test "x$compilerVendorName" = xgnu; then
    # using_gnu_compiler=true
    # AC_DEFINE([CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
      AC_DEFINE([BACKEND_CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])

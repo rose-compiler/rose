@@ -148,17 +148,17 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
             : ops(ops), o(o), prefix(prefix) {}
 
         void operator()(const char *name, const char *abbr=NULL) {
-            const RegisterDictionary *regdict = ops->get_state()->get_register_state()->get_register_dictionary();
+            const RegisterDictionary *regdict = ops->currentState()->registerState()->get_register_dictionary();
             const RegisterDescriptor *desc = regdict->lookup(name);
             assert(desc);
             (*this)(*desc, abbr?abbr:name);
         }
         void operator()(const RegisterDescriptor &desc, const char *abbr) {
-            BaseSemantics::RegisterStatePtr regstate = ops->get_state()->get_register_state();
+            BaseSemantics::RegisterStatePtr regstate = ops->currentState()->registerState();
             FormatRestorer fmt(o);
             o <<prefix <<std::setw(8) <<std::left <<abbr <<"= { ";
             fmt.restore();
-            BaseSemantics::SValuePtr val = regstate->readRegister(desc, ops.get());
+            BaseSemantics::SValuePtr val = regstate->readRegister(desc, ops->undefined_(desc.get_nbits()), ops.get());
             o <<*val <<" }\n";
         }
         void operator()(unsigned majr, unsigned minr, unsigned offset, unsigned nbits, const char *abbr) {
@@ -218,7 +218,7 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
     BaseSemantics::Formatter memfmt;
     memfmt.set_line_prefix("    ");
     std::cout <<"memory:\n";
-    ops->get_state()->printMemory(std::cout, memfmt);
+    ops->currentState()->printMemory(std::cout, memfmt);
 }
 
 
@@ -269,7 +269,7 @@ analyze_interp(SgAsmInterpretation *interp)
         } else {
             dispatcher = DispatcherX86::instance(operators, 32);
         }
-        operators->set_solver(make_solver());
+        operators->solver(make_solver());
 
         // The fpstatus_top register must have a concrete value if we'll use the x86 floating-point stack (e.g., st(0))
         if (const RegisterDescriptor *REG_FPSTATUS_TOP = regdict->lookup("fpstatus_top")) {
@@ -282,7 +282,7 @@ analyze_interp(SgAsmInterpretation *interp)
         if (do_test_subst) {
             // Only request the orig_esp if we're going to use it later because it causes an esp value to be instantiated
             // in the state, which is printed in the output, and thus changes the answer.
-            BaseSemantics::RegisterStateGeneric::promote(operators->get_state()->get_register_state())->initialize_large();
+            BaseSemantics::RegisterStateGeneric::promote(operators->currentState()->registerState())->initialize_large();
             orig_esp = operators->readRegister(*regdict->lookup("esp"));
             std::cout <<"Original state:\n" <<*operators;
         }

@@ -1,0 +1,29 @@
+module no-to-none
+
+imports
+   libstratego-lib
+   Main
+
+signature
+  constructors
+
+   SpecificationPart : A -> B
+
+   // For ambiguities
+   amb : list -> choice
+
+
+strategies //=================START OF STRATEGIES============================
+
+  main =
+    io-wrap(io-no-to-none)
+
+  io-no-to-none =
+    innermost(no-to-none)
+
+rules //========================START OF RULES===============================
+
+// General catch-all cases
+//
+
+no-to-none:  no-label()                      -> None()

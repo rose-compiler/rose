@@ -31,7 +31,7 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *  threads.  The memory for these objects is shared and managed by a shared pointer implementation. */
 class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
 public:
-    /** Shared pointer to a basic block. */
+    /** Shared pointer to a basic block. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;
 
     /** Basic block successor. */

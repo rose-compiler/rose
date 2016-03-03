@@ -98,8 +98,8 @@ sorts
   CharLiteralConstant                 %% R423
   LogicalLiteralConstant              %% R424
 
-  NoKindParam OptKindParam OptKindSelector
-  NoKindSelector OptCharSelector
+  NoKindParam OptKindSelector
+  NoKindSelector OptCharSelector NoLengthSelector
 
 %% 4.5 Derived types
 
@@ -736,13 +736,13 @@ sorts
   EntryStmt                           %% R1240
   ReturnStmt                          %% R1241
   ContainsStmt                        %% R1242
-  StmtFunctionStmt                    %% R1243
+%%StmtFunctionStmt                    %% R1243  %% AMBIGUOUS with array assignment
 
   NoActualArgSpecList DummyArgList NoDummyArgList OptDummyArgList
   OptGenericSpec  OptPrefix
   NoProcLanguageBindingSpec OptProcLanguageBindingSpec
   NoProcAttrSpecList OptProcAttrSpecList OptProcInterface NoProcPointerInit
-  NoProcedureName NoSuffix OptSuffix
+  NoProcedureName NoSuffix OptSuffix Result
   OptStartCommentBlock
 
 %% Identifier aliases
@@ -842,11 +842,11 @@ context-free syntax
 %%R404
   'INTEGER'            OptKindSelector  -> IntrinsicTypeSpec    {cons("INTEGER")}
   'REAL'               OptKindSelector  -> IntrinsicTypeSpec    {cons("REAL")}
-  'DOUBLE' 'PRECISION'  NoKindSelector  -> IntrinsicTypeSpec    {cons("DOUBLEPRECISION")}
+  'DOUBLE' 'PRECISION'                  -> IntrinsicTypeSpec    {cons("DOUBLEPRECISION")}
   'COMPLEX'            OptKindSelector  -> IntrinsicTypeSpec    {cons("COMPLEX")}
   'CHARACTER'          OptCharSelector  -> IntrinsicTypeSpec    {cons("CHARACTER")}
   'LOGICAL'            OptKindSelector  -> IntrinsicTypeSpec    {cons("LOGICAL")}
-  'DOUBLE' 'COMPLEX'    NoKindSelector  -> IntrinsicTypeSpec    {cons("DOUBLECOMPLEX")}
+  'DOUBLE' 'COMPLEX'                    -> IntrinsicTypeSpec    {cons("DOUBLECOMPLEX")}
 
 %%R405
 %%       expr substituted for scalar-int-constant-expr
@@ -865,14 +865,14 @@ context-free syntax
   Sign IntLiteralConstant            -> SignedIntLiteralConstant  {cons("SignedIntLiteralConstant")}
 
 %%R407
-  DigitString                           -> IntLiteralConstant
+  DigitString   NoKindParam             -> IntLiteralConstant  {cons("IntLiteralConstant")}
   DigitString '_' KindParam             -> IntLiteralConstant  {cons("IntLiteralConstant")}
 
-  % empty %                             -> NoKindParam         {cons("no-kind-param")}
+  % empty %                             -> NoKindParam         {cons("no-kind")}
 
 %%R408
-  DigitString                           -> KindParam
-  ScalarIntConstantName                 -> KindParam
+  DigitString NoKindParam               -> KindParam           {cons("IntLiteralConstant")}
+  ScalarIntConstantName                 -> KindParam           {cons("VarRef")}
 
   Ident                                 -> ScalarIntConstantName
 
@@ -916,16 +916,18 @@ context-free syntax
 
 %%R420
 %%       expr substituted for scalar-int-constant-expr
-%%
-  LengthSelector                                               -> CharSelector
-  '(' 'LEN'  '=' TypeParamValue ',' 'KIND'  '=' Expr ')'       -> CharSelector    {cons("CharSelector_LEN_KIND")}
-  '('            TypeParamValue ',' 'KIND'  '=' Expr ')'       -> CharSelector    {cons("CharSelector_LEN_KIND")}
-  '('            TypeParamValue ','             Expr ')'       -> CharSelector    {cons("CharSelector_LEN_KIND")}
-  '(' 'KIND' '=' Expr ',' 'LEN' '=' TypeParamValue   ')'       -> CharSelector    {cons("CharSelector_KIND_LEN")}
-  '(' 'KIND' '=' Expr                                ')'       -> CharSelector    {cons("CharSelector_KIND")}
+
+  LengthSelector NoKindSelector                                -> CharSelector     {cons("CharSelector")}
+  '(' 'LEN'  '=' TypeParamValue ',' 'KIND'  '=' Expr ')'       -> CharSelector     {cons("CharSelector")}
+  '('            TypeParamValue ',' 'KIND'  '=' Expr ')'       -> CharSelector     {cons("CharSelector")}
+  '('            TypeParamValue ','             Expr ')'       -> CharSelector     {cons("CharSelector")}
+  '(' 'KIND' '=' Expr ',' 'LEN' '=' TypeParamValue   ')'       -> CharSelector     {cons("CharSelector_KIND_LEN")}
+  '(' 'KIND' '=' Expr               NoLengthSelector ')'       -> CharSelector     {cons("CharSelector_KIND_LEN")}
+
+  % empty %                                                    -> NoLengthSelector {cons("no-length-selector")}
 
   CharSelector                                                 -> OptCharSelector
-  % empty %                                                    -> OptCharSelector {cons("no-char-selector")}
+  % empty %                                                    -> OptCharSelector  {cons("no-char-selector")}
 
 %%R421
   '(' 'LEN' '=' TypeParamValue ')'                             -> LengthSelector  {cons("LengthSelector")}
@@ -942,11 +944,11 @@ context-free syntax
                 Scon                    -> CharLiteralConstant
 
 %%R424
-  '.TRUE.'  OptKindParam                -> LogicalLiteralConstant  {cons("TRUE")}
-  '.FALSE.' OptKindParam                -> LogicalLiteralConstant  {cons("FALSE")}
+  '.TRUE.'      NoKindParam             -> LogicalLiteralConstant  {cons("TRUE")}
+  '.TRUE.'  '_'   KindParam             -> LogicalLiteralConstant  {cons("TRUE")}
+  '.FALSE.'     NoKindParam             -> LogicalLiteralConstant  {cons("FALSE")}
+  '.FALSE.' '_'   KindParam             -> LogicalLiteralConstant  {cons("FALSE")}
 
-  '_' KindParam                         -> OptKindParam            {cons("opt-kind-param")}
-  % empty %                             -> OptKindParam            {cons("no-kind-param")}
 
 %% 4.5 Derived types
 %%
@@ -1065,7 +1067,8 @@ context-free syntax
 
 %%R441
   'POINTER'                                   -> ProcComponentAttrSpec     {cons("POINTER")}
-  'PASS'                                      -> ProcComponentAttrSpec     {cons("PASS")}
+  'PASS'   NoArgName                          -> ProcComponentAttrSpec     {cons("Pass")}
+  'PASS' '(' ArgName ')'                      -> ProcComponentAttrSpec     {cons("Pass")}
   'NOPASS'                                    -> ProcComponentAttrSpec     {cons("NOPASS")}
   AccessSpec                                  -> ProcComponentAttrSpec
 
@@ -1343,9 +1346,9 @@ context-free syntax
 %%R508
 %%       Ident with quotes substituted for scalar-default-char-constant-expr
 %%
-  'BIND' '(' 'C' OptLanguageBindingName ')'             -> LanguageBindingSpec  {cons("LanguageBindingSpec")}
-  ',' 'NAME' '=' '"' Ident '"'                          -> LanguageBindingName  {cons("language-binding-name")}
-  ',' 'NAME' '=' "'" Ident "'"                          -> LanguageBindingName  {cons("language-binding-name")}
+  'BIND' '(' 'C' OptLanguageBindingName ')'             -> LanguageBindingSpec  {cons("LanguageBinding")}
+  ',' 'NAME' '=' Scon                                   -> LanguageBindingName  {cons("BindingName")}
+  ',' 'NAME' '=' Scon                                   -> LanguageBindingName  {cons("BindingName")}
 
   LanguageBindingName                                   -> OptLanguageBindingName
   % empty %                                             -> OptLanguageBindingName {cons("no-binding-name")}
@@ -1711,7 +1714,7 @@ context-free syntax
 %%TODO-AMB   Expr                                                          -> Subscript
 
 %%R603
-  Ident              -> VariableName
+  Ident              -> VariableName                       {cons("VarRef")}
 
 %%R604
   Variable           -> LogicalVariable
@@ -1743,7 +1746,7 @@ context-free syntax
   StructureComponent                   -> ParentString
   Constant                             -> ParentString
 
-  Ident                                -> ScalarVariableName
+  Ident                                -> ScalarVariableName                 {cons("VarRef")}
 
 %%R610
 %%      int-expr substituted for scalar-int-expr
@@ -1967,7 +1970,7 @@ context-free syntax
 %%FunctionReference             -> Primary  {reject}        %% AMBIGUOUS > Designator - TODO: need ActualArgSpec with keyword
 %%TypeParamInquiry              -> Primary  {reject}        %% AMBIGUOUS > Designator
 %%TypeParamName                 -> Primary  {reject}        %% AMBIGUOUS > Designator
-  '(' Expr ')'                  -> Primary  {cons("Primary")}
+  '(' Expr ')'                  -> Primary  {cons("Parens")}
 
 %%TODO-DELETE   Scon                          -> Primary          {cons("PrimaryScon")}
 %%TODO-DELETE   UnsignedArithmeticConstant    -> Primary          {cons("ConstExpr")}
@@ -2319,8 +2322,8 @@ context-free priorities
   }
   >
   {
-    '+' Expr            -> Expr {cons("Plus")}
-    '-' Expr            -> Expr {cons("Minus")}
+    '+' Expr            -> Expr {cons("UnaryPlus")}
+    '-' Expr            -> Expr {cons("UnaryMinus")}
   }
   >
   { left:
@@ -2482,7 +2485,7 @@ context-free syntax
 
 %%R819
   ScalarIntVariableName                                 -> DoVariable
-  Ident                                                 -> ScalarIntVariableName
+  Ident                                                 -> ScalarIntVariableName  {cons("VarRef")}
 
 %%820
 %%AMB  Block                                            -> DoBlock
@@ -2548,7 +2551,7 @@ context-free syntax
 %%
   OptLabel IfConstructName ':'
          'IF' '(' LogicalExpr ')' 'THEN'            EOS -> IfThenStmt     {cons("IfThenStmt")}
-  OptLabel
+  OptLabel NoName
          'IF' '(' LogicalExpr ')' 'THEN'            EOS -> IfThenStmt     {cons("IfThenStmt")}
 
   Ident                                                 -> IfConstructName
@@ -2650,8 +2653,8 @@ context-free syntax
   % empty %                                             -> OptSelectConstructName {cons("no-name")}
 
 %%R850
-  OptLabel 'EXIT' ConstructName                   EOS -> ExitStmt             {cons("ExitStmt")}
-  OptLabel 'EXIT'        NoName                   EOS -> ExitStmt             {cons("ExitStmt")}
+  OptLabel 'EXIT' ConstructName                     EOS -> ExitStmt             {cons("ExitStmt")}
+  OptLabel 'EXIT'        NoName                     EOS -> ExitStmt             {cons("ExitStmt")}
 
   Ident                                                 -> ConstructName
 
@@ -3217,7 +3220,7 @@ context-free syntax
   ProcedureDeclarationStmt               -> DeclarationConstruct
   OtherSpecificationStmt                 -> DeclarationConstruct
   TypeDeclarationStmt                    -> DeclarationConstruct
-  StmtFunctionStmt                       -> DeclarationConstruct
+%%StmtFunctionStmt                       -> DeclarationConstruct  %% AMBIGUOUS with array assignment
 
 %%R208
 %%     WARNING-MODIFICATION:
@@ -3292,7 +3295,6 @@ context-free syntax
 %%R214
 %%TODO-REMOVE  AssignStmt
 %%TODO-REMOVE  AssignedGotoStmt
-%%TODO-REMOVE  StmtFunctionStmt  %% see R1226 comment
 %%TODO-REMOVE  AllstopStmt
   AllocateStmt                           -> ActionStmt
   AssignmentStmt                         -> ActionStmt
@@ -3699,16 +3701,18 @@ context-free syntax
 
 %%R1231
   ProcLanguageBindingSpec NoResultName                  -> Suffix       {cons("Suffix")}
-  ProcLanguageBindingSpec 'RESULT' '(' ResultName ')'   -> Suffix       {cons("Suffix")}
-  'RESULT' '(' ResultName ')' NoProcLanguageBindingSpec -> Suffix       {cons("Suffix")}
-  'RESULT' '(' ResultName ')' ProcLanguageBindingSpec   -> Suffix       {cons("Suffix")}
+  ProcLanguageBindingSpec Result                        -> Suffix       {cons("Suffix")}
+  Result NoProcLanguageBindingSpec                      -> Suffix       {cons("Suffix")}
+  Result ProcLanguageBindingSpec                        -> Suffix       {cons("Suffix")}
+
+  'RESULT' '(' ResultName ')'                           -> Result       {cons("Result")}
 
   Suffix                                                -> OptSuffix
   % empty %                                             -> OptSuffix    {cons("no-suffix")}
   % empty %                                             -> NoSuffix     {cons("no-suffix")}
 
   Ident                                                 -> ResultName
-  % empty %                                             -> NoResultName {cons("no-result-name")}
+  % empty %                                             -> NoResultName {cons("no-result")}
 
 %%R1232
   OptLabel 'END'            NoFunctionName          EOS -> EndFunctionStmt  {cons("EndFunctionStmt")}
@@ -3796,5 +3800,6 @@ context-free syntax
 
 %%R1243
 %%          scalar-expr replaced by expr
+%% This rule is AMBIGUOUS with an array assignment, e.g., A(i) = 1
 %%
-  OptLabel FunctionName '(' {DummyArgName ','}* ')' '=' Expr  EOS -> StmtFunctionStmt {cons("StmtFunctionStmt")}
+%% OptLabel FunctionName '(' {DummyArgName ','}* ')' '=' Expr  EOS -> StmtFunctionStmt {cons("StmtFunctionStmt")}

@@ -26,7 +26,7 @@ public:
     public:
         virtual ~StateNormalizer() {}
 
-        /** Shared ownership pointer for state normalizer. */
+        /** Shared ownership pointer to a @ref StateNormalizer. See @ref heap_object_shared_ownership. */
         typedef Sawyer::SharedPointer<StateNormalizer> Ptr;
 
         /** Allocating constructor. */

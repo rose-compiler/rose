@@ -557,7 +557,7 @@ public:
 
     /* Return number of instructions executed */
     size_t get_ninsns() const {
-        return operators()->get_ninsns();
+        return operators()->nInsns();
     }
 
     /** Returns instruction at current IP, disassembling it if necessary, and caching it.  Since the simulated memory belongs
