@@ -1276,6 +1276,9 @@ int main( int argc, char * argv[] ) {
   double verifyUpdateSequenceRaceConditionRunTime=0.0;
   
   int verifyUpdateSequenceRaceConditionsResult=-1;
+  int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
+  int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
+
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     Specialization speci;
     ArrayUpdatesSequence arrayUpdates;
@@ -1306,7 +1309,8 @@ int main( int argc, char * argv[] ) {
       VariableId parallelIterationVar;
       LoopInfoSet loopInfoSet=EquivalenceChecking::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
       cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
-      Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
+      verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
+      verifyUpdateSequenceRaceConditionsParLoopNum=Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
       timer.start();
       verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
       verifyUpdateSequenceRaceConditionRunTime=timer.getElapsedTimeInMilliSec();
@@ -1441,6 +1445,9 @@ int main( int argc, char * argv[] ) {
     } else {
       text<<"fail";
     }
+    text<<","<<verifyUpdateSequenceRaceConditionsResult;  
+    text<<","<<verifyUpdateSequenceRaceConditionsParLoopNum;
+    text<<","<<verifyUpdateSequenceRaceConditionsTotalLoopNum;
     text<<endl;
 
     text<<"rewrite-stats, "<<rewriteSystem.getRewriteStatistics().toCsvString()<<endl;

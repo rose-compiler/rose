@@ -78,6 +78,11 @@ int PStateConstReporter::getConstInt() {
   return varIntValue;
 }
 
+Specialization::Specialization():
+  _specializedFunctionRootNode(0),
+  _checkAllLoops(false) {
+}
+
 int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
   return specializeFunction(project, funNameToFind, param, constInt, "", 0, variableIdMapping);
 }
@@ -615,10 +620,14 @@ std::string indexVectorToString(IndexVector iv) {
   return ss.str();
 }
 
+void Specialization::setCheckAllLoops(bool val) {
+  _checkAllLoops=val;
+}
 
 // returns the number of race conditions detected (0 or 1 as of now)
 int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
+  int errorCount=0;
   stringstream ss;
   cout<<"STATUS: checking race conditions."<<endl;
   cout<<"INFO: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
@@ -628,10 +637,14 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
     allIterVars.insert((*lis).iterationVarId);
   }
   for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
-    if((*lis).iterationVarType==ITERVAR_PAR) {
+    if((*lis).iterationVarType==ITERVAR_PAR || _checkAllLoops) {
       VariableId parVariable;
       parVariable=(*lis).iterationVarId;
-      cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+      if(_checkAllLoops) {
+        cout<<"INFO: checking loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+      } else {
+        cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+      }
 
       // race check
       // intersect w-set_i = empty
@@ -799,12 +812,22 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
               if(accessSetIntersect(wset,rset2)) {
                 // verification failed
                 cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
-                return 1;
+                errorCount++;
+                if(_checkAllLoops) {
+                  goto continueCheck;
+                } else {
+                  return errorCount;
+                }
               } 
               if(accessSetIntersect(wset,wset2)) {
                 // verification failed
                 cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
-                return 1;
+                errorCount++;
+                if(_checkAllLoops) {
+                  goto continueCheck;
+                } else {
+                  return errorCount;
+                }
               }
             }
             } // same-iter check
@@ -813,9 +836,10 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
         }
       }
     } // if parallel loop
+  continueCheck:;
   } // foreach loop
   cout<<"DATA RACE CHECK: PASS."<<endl;
-  return 0;
+  return errorCount;
 }
 
 void Specialization::writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting) {
