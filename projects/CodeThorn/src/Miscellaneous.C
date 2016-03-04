@@ -7,6 +7,7 @@
 #include "Miscellaneous.h"
 #include "CommandLineOptions.h"
 #include <cctype>
+#include <iomanip>
 
 using namespace std;
 
@@ -85,3 +86,42 @@ string CodeThorn::color(string name) {
   else
     throw "Error: unknown color code.";
 }
+
+string CodeThorn::readableruntime(double timeInMilliSeconds) {
+  stringstream s;
+  double time=timeInMilliSeconds;
+  s << std::fixed << std::setprecision(2); // 2 digits past decimal point.
+  if(time<1000.0) {
+    s<<time<<" ms";
+    return s.str();
+  } else {
+    time=time/1000;
+  }
+  if(time<60) {
+    s<<time<<" secs"; 
+    return s.str();
+  } else {
+    time=time/60;
+  }
+  if(time<60) {
+    s<<time<<" mins"; 
+    return s.str();
+  } else {
+    time=time/60;
+  }
+  if(time<24) {
+    s<<time<<" hours"; 
+    return s.str();
+  } else {
+    time=time/24;
+  }
+  if(time<31) {
+    s<<time<<" days"; 
+    return s.str();
+  } else {
+    time=time/(((double)(365*3+366))/12*4);
+  }
+  s<<time<<" months"; 
+  return s.str();
+}
+
