@@ -197,6 +197,8 @@ Labeler::Labeler(SgNode* start) {
   computeNodeToLabelMapping();
 }
 
+Labeler::~Labeler(){}
+
 // returns number of labels to be associated with node
 int Labeler::isLabelRelevantNode(SgNode* node) {
   if(node==0) 
@@ -229,11 +231,12 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgForStatement:
     //  case V_SgForInitStatement: // TODO: investigate: we might not need this
   case V_SgBreakStmt:
+  case V_SgContinueStmt:
+  case V_SgGotoStatement:
   case V_SgVariableDeclaration:
   case V_SgLabelStatement:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
-  case V_SgGotoStatement:
   case V_SgSwitchStatement:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
@@ -558,6 +561,9 @@ IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labele
     (*i).initializeIO(variableIdMapping);
   }
   computeNodeToLabelMapping();
+}
+
+IOLabeler::~IOLabeler() {
 }
 
 bool IOLabeler::isStdIOLabel(Label label) {

@@ -46,6 +46,22 @@
 //  #define ROSE_SKIP_COMPILATION_OF_WAVE
 // #endif
 
+// DQ (2/27/2016): Check for DEBIAN and Boost 1.54 and disable WAVE (not found in 
+// Boost 1.54, for Debian OS installations, as I understand it).  This is a fix 
+// for a bug identified to be specific to Boost 1.54 on Debian systems, so that 
+// is why it is so specific in deactivating boost::wave.  To support this the 
+// boost::wave support had to be revisited to permit it to NOT be a dependence.
+// We shuld put in place tests that make sure it does not accedently become a 
+// dependence in the future.
+#ifdef ROSE_DEBIAN_OS_VENDOR
+   #if (ROSE_BOOST_VERSION == 105400)
+      #define ROSE_SKIP_COMPILATION_OF_WAVE
+   #endif
+#endif
+
+// DQ (2/27/2016): Test compilation of ROSE without boost::wave support.
+// #define ROSE_SKIP_COMPILATION_OF_WAVE
+
 #ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 //  #if _MSC_VER < 1600  // 1600 == VC++ 10.0
   #if (!defined(_MSC_VER) || (_MSC_VER > 1600))
