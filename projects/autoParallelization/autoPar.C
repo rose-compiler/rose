@@ -22,6 +22,7 @@
 #include "autoParSupport.h" 
 using namespace std;
 using namespace AutoParallelization;
+using namespace SageInterface;
 int
 main (int argc, char *argv[])
 {
@@ -47,8 +48,19 @@ main (int argc, char *argv[])
          {
            SgForStatement* cur_loop = isSgForStatement(*iter);
            ROSE_ASSERT(cur_loop);
-          // SageInterface::normalizeForLoopInitDeclaration(cur_loop);
-           SageInterface::forLoopNormalization(cur_loop);
+           // SageInterface::normalizeForLoopInitDeclaration(cur_loop);
+           if (keep_c99_loop_init) 
+           {
+             // 2/29/2016, disable for loop init declaration normalization
+             // This is not used . No longer used.
+             normalizeForLoopTest(cur_loop);
+             normalizeForLoopIncrement(cur_loop);
+             ensureBasicBlockAsBodyOfFor(cur_loop);
+             constantFolding(cur_loop->get_test());
+             constantFolding(cur_loop->get_increment());
+           }
+           else
+             SageInterface::forLoopNormalization(cur_loop);
          }
 
 #endif
@@ -122,23 +134,23 @@ main (int argc, char *argv[])
 
 	for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin(); 
 	    iter!= loops.end(); iter++ ) 
-	{
-	  SgNode* current_loop = *iter;
-	  //X. Parallelize loop one by one
+        {
+          SgNode* current_loop = *iter;
+          //X. Parallelize loop one by one
           // getLoopInvariant() will actually check if the loop has canonical forms 
           // which can be handled by dependence analysis
           SgInitializedName* invarname = getLoopInvariant(current_loop);
           if (invarname != NULL)
           {
-             hasOpenMP = ParallelizeOutermostLoop(current_loop, &array_interface, annot);
+            hasOpenMP = ParallelizeOutermostLoop(current_loop, &array_interface, annot);
           }
-           else // cannot grab loop index from a non-conforming loop, skip parallelization
-           {
+          else // cannot grab loop index from a non-conforming loop, skip parallelization
+          {
             if (enable_debug)
               cout<<"Skipping a non-canonical loop at line:"<<current_loop->get_file_info()->get_line()<<"..."<<endl;
-             hasOpenMP = false;
-           }
-	}// end for loops
+            hasOpenMP = false;
+          }
+        }// end for loops
       } // end for-loop for declarations
      // insert omp.h if needed
      if (hasOpenMP && !enable_diff)
