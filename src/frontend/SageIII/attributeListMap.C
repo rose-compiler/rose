@@ -16,6 +16,7 @@
 #include <sys/param.h>
 #endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 #if 1
 // DQ (5/9/2007): This is used to support the work with WAVE.
 
@@ -237,6 +238,8 @@ void AttributeListMap::addElement(boost::wave::token_id wave_typeid, const strin
 
    
 }
+#endif
+
 #endif
 
 #endif

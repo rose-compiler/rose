@@ -6,7 +6,7 @@
 0x080480a0: 68 10 00 00 00          |h....   |<sp+0 >   push   0x00000010
 0x080480a5: e8 07 00 00 00          |.....   |<sp-4 >   call   0x080480b1<thunk1>
 0x080480a5: Outgoing stack delta: -8
-0x080480a5: Successor blocks: 0x080480b1, 0x080480aa
+0x080480a5: Successor blocks: 0x080480b1<thunk1>, 0x080480aa
 
 0x080480aa: Basic block reasons: 
 0x080480aa: f4                      |.       |<sp-4 >   hlt    

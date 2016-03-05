@@ -373,7 +373,11 @@ NEW_TESTCODES = \
    test2016_11.C \
    test2016_12.C \
    test2016_13.C \
-   test2016_14.C 
+   test2016_14.C \
+   test2016_15.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C
 
 if !ROSE_USE_EDG_VERSION_4_7
 if !ROSE_USING_BOOST_VERSION_1_57
