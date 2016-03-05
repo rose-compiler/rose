@@ -1085,6 +1085,12 @@ ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i-=s is normalized to i+= -s
 ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop, bool foldConstant = true);
 
+//! Normalize a for loop's test expression 
+//!           i<x is normalized to i<= (x-1) and
+//!           i>x is normalized to i>= (x+1)
+ROSE_DLL_API bool normalizeForLoopTest(SgForStatement* loop);
+ROSE_DLL_API bool normalizeForLoopIncrement(SgForStatement* loop);
+
 //!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
 ROSE_DLL_API bool doLoopNormalization(SgFortranDo* loop);
 
