@@ -203,6 +203,7 @@ create table test_results (
     rmc_dlib            varchar(64) default 'unknown',
     rmc_doxygen         varchar(64) default 'unknown',
     rmc_edg             varchar(64) default 'unknown',
+    rmc_java		varchar(64) default 'unknown',
     rmc_languages       varchar(64) default 'unknown',
     rmc_magic           varchar(64) default 'unknown',
     rmc_optimize        varchar(64) default 'unknown',

@@ -31,7 +31,7 @@
 0x0040115e: 48 c7 c7 d0 13 40 00    |H....@. |<sp-16>   mov    rdi, 0x004013d0
 0x00401165: e8 3e fd ff ff          |.>...   |<sp-16>   call   0x0000000000400ea8<<Func>>
 0x00401165: Outgoing stack delta: -24
-0x00401165: Successor blocks: 0x00400ea8, 0x0040116a
+0x00401165: Successor blocks: 0x00400ea8<<Func>>, 0x0040116a
 
 0x0040116a: Basic block reasons: 
 0x0040116a: f4                      |.       |          hlt    

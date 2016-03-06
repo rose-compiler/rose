@@ -1,7 +1,6 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
-#include <BinaryNoOperation.h>
 #include <BinaryString.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/Modules.h>
@@ -12,8 +11,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <Sawyer/CommandLine.h>
-#include <Sawyer/GraphTraversal.h>
-#include <Sawyer/ProgressBar.h>
 #include <stringify.h>
 
 using namespace rose::Diagnostics;
@@ -888,7 +885,15 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
                    const SgAsmGenericSectionPtrList &mappedSections)
             : insnIndex(insnIndex), bblockIndex(bblockIndex), funcIndex(funcIndex), mappedSections(mappedSections) {}
         void visit(SgNode *node) {
-            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+            std::vector<SgAsmIntegerValueExpression*> ivals;
+            if (SgAsmBlock *blk = isSgAsmBlock(node)) {
+                // SgAsmBlock::p_successors is not traversed due to limitations of ROSETTA, so traverse explicitly.
+                ivals = blk->get_successors();
+            } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+                ivals.push_back(ival);
+            }
+
+            BOOST_FOREACH (SgAsmIntegerValueExpression *ival, ivals) {
                 if (ival->get_baseNode()==NULL) {
                     rose_addr_t va = ival->get_absoluteValue();
                     SgAsmNode *base = NULL;
@@ -945,84 +950,13 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
 
 std::vector<Function::Ptr>
 findNoopFunctions(const Partitioner &partitioner) {
-    std::vector<Function::Ptr> noOpFunctions;           // those functions that are determined to be no-ops
-
-    // No-op analyser. We use an arbitrary concrete initial stack pointer because it allows the analysis to assume stack
-    // semantics. That is, items popped from the stack are no longer considered to be valid memory.  Using an odd value for the
-    // initial stack reduces the number of false positives for stack-aligning instructions being no-ops (e.g., "AND SP,
-    // 0xfffffff0" will not be a no-op).
-    NoOperation noOpAnalyzer(partitioner.newDispatcher(partitioner.newOperators()));
-    noOpAnalyzer.initialStackPointer(0xdddd0001);
-
-    // Function call graph
-    FunctionCallGraph cgAnalyzer = partitioner.functionCallGraph();
-    const FunctionCallGraph::Graph &cg = cgAnalyzer.graph();
-
-    // Use a function call graph and process functions using a reverse depth-first traversal. We do this because if function A
-    // calls or transfers control to function B we need to know whether function B is a no-op before we can determine if
-    // function A is a no-op.  Actually, that's not precisely true -- it is necessary but not sufficient for B to be a no-op in
-    // order for A to be a no-op.
-    Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "no-op function analysis");
-    typedef Sawyer::Container::Algorithm::DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
-    std::vector<bool> processed(cg.nVertices(), false);
-    for (size_t i=0; i<cg.nVertices(); ++i) {
-        if (processed[i])
-            continue;
-        for (Traversal t(cg, cg.findVertex(i), Sawyer::Container::Algorithm::LEAVE_VERTEX); t; ++t) {
-            if (processed[t.vertex()->id()])
-                continue;
-            ++progress;
-            Function::Ptr function = t.vertex()->value();
-            bool funcIsNoOp = true;                         // assume function is no-op and prove otherwise
-
-            // Does this BB have CFG successors that belong to some other function?  The calling function can be a no-op only
-            // if the callee is already proven to be a no-op.  Recursive calls don't affect the outcome.
-            BOOST_FOREACH (const Function::Ptr &callee, cgAnalyzer.callees(function)) {
-                if (callee != function && !existsUnique(noOpFunctions, callee, sortFunctionsByAddress)) {
-                    funcIsNoOp = false;
-                    break;
-                }
-            }
-
-            // The current function cannot be a no-op if any of its basic blocks are not no-os.
-            if (funcIsNoOp) {
-                BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
-                    if (BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
-                        // Get the instructions for this block, excluding the final instruction if this is a function return.
-                        std::vector<SgAsmInstruction*> insns = bb->instructions();
-                        if (partitioner.basicBlockIsFunctionReturn(bb)) {
-                            insns.pop_back();
-                        } else {
-                            // If the basic block is not a function return and its CFG successor is undiscovered or
-                            // indeterminate then we must assume that its successor imparts some effect to this function.
-                            ControlFlowGraph::ConstVertexIterator placeholder = partitioner.findPlaceholder(bbVa);
-                            ASSERT_forbid(placeholder == partitioner.cfg().vertices().end());
-                            BOOST_FOREACH (const ControlFlowGraph::Edge &edge, placeholder->outEdges()) {
-                                if (edge.target()->value().type() != V_BASIC_BLOCK) {
-                                    funcIsNoOp = false;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        if (funcIsNoOp && !noOpAnalyzer.isNoop(insns))
-                            funcIsNoOp = false;
-                    } else {
-                        funcIsNoOp = false;                     // one of its basic blocks is missing
-                    }
-                    if (!funcIsNoOp)
-                        break;
-                }
-            }
-
-            if (funcIsNoOp)
-                insertUnique(noOpFunctions, function, sortFunctionsByAddress);
-            processed[t.vertex()->id()] = true;
-        }
+    partitioner.allFunctionIsNoop();
+    std::vector<Function::Ptr> retval;
+    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+        if (function->isNoop().getOptional().orElse(false))
+            insertUnique(retval, function, sortFunctionsByAddress);
     }
-
-    ASSERT_require(isSorted(noOpFunctions, sortFunctionsByAddress));
-    return noOpFunctions;
+    return retval;
 }
 
 void

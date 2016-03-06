@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ ("$#" < 5) || ("$1" = "--help") ]]; then 
-  echo "Usage: <problem no.> <version> <CodeThorn src dir> <CodeThorn build dir> <temp make check log dir> [<number-of-threads>]";
+  echo "Usage: <problem no.> <version> <CodeThorn src dir> <CodeThorn build dir> <temp make check log dir> [<number-of-threads>] [<keep-err-states(yes|[no])>]";
   exit;
 fi
 #optional parameter: number of threads
@@ -11,6 +11,15 @@ if [[ ("$#" < 6) || ("$6" = 1) ]]; then
 else
   NUMTHREADS=$6;
   NUMS="s";
+fi
+#optional parameter: --keep-error-states
+if [[ ("$#" < 7) || ("$7" = no) ]]; then 
+  KEEP_ERR_STATES=""
+elif  [[ ("$7" = yes) ]]; then 
+  KEEP_ERR_STATES="--keep-error-states=yes"
+else
+  echo "ERROR: Value of parameter \"keep-err-states\" not recognized."
+  exit 1
 fi
 
 #list of supported RERS problems
@@ -49,7 +58,7 @@ eval echo "Generating RERS LTL results for \${P${1}}${VERSION} with $NUMTHREADS 
 echo ".________________________."
 echo "| start running CodeThorn|"
 echo "*~~~~~~~~~~~~~~~~~~~~~~~~*"
-eval $BUILDDIR/codethorn ${PROBLEMDIR}/\${P${1}}${VERSION}${PROBLEM_MC}.c --edg:no_warnings --threads=${NUMTHREADS} --input-values=${INPUT_VALUES} ${LTL_ALPHABET} --rersmode=yes --check-ltl="$SRCDIR/tests/rers/${LTLS}" --csv-spot-ltl="${MC_LOG_DIR}/\${P${1}}${VERSION}_ltl_results${MC}.csv" --with-counterexamples=no
+eval $BUILDDIR/codethorn ${PROBLEMDIR}/\${P${1}}${VERSION}${PROBLEM_MC}.c --edg:no_warnings --threads=${NUMTHREADS} --input-values=${INPUT_VALUES} ${LTL_ALPHABET} --rersmode=yes --check-ltl="$SRCDIR/tests/rers/${LTLS}" --csv-spot-ltl="${MC_LOG_DIR}/\${P${1}}${VERSION}_ltl_results${MC}.csv" --with-counterexamples=no ${KEEP_ERR_STATES}
 echo ".___________________________."
 echo "| finished running CodeThorn|"
 echo "*~~~~~~~~~~~~~~~~~~~~~~~~~~~*"

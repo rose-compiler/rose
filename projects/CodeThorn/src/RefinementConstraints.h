@@ -25,7 +25,7 @@ namespace CodeThorn {
   //                the constraint variables themselves.
   class RefinementConstraints {
   public:
-    RefinementConstraints(Flow* flow, IOLabeler* labeler, ExprAnalyzer* exprAnalyzer, CFAnalysis* cfanalyzer, VariableIdMapping* varIdMapping) {
+    RefinementConstraints(Flow* flow, SPRAY::IOLabeler* labeler, ExprAnalyzer* exprAnalyzer, CFAnalysis* cfanalyzer, VariableIdMapping* varIdMapping) {
       _cfg = flow; _labeler=labeler; _exprAnalyzer=exprAnalyzer; _cfanalyzer=cfanalyzer; _varIdMapping=varIdMapping;
     };
     // collects the atomic propositions of conditional statements that decide about the path from the start of the program to "label".
@@ -60,7 +60,7 @@ namespace CodeThorn {
 
     Flow* _cfg;
     CFAnalysis* _cfanalyzer;
-    IOLabeler* _labeler;
+    SPRAY::IOLabeler* _labeler;
     ExprAnalyzer* _exprAnalyzer;
     VariableIdMapping* _varIdMapping; 
   };
