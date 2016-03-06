@@ -803,14 +803,23 @@ SgFunctionCallExp* SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(SgNode*
 
 /*! 
   * \author Markus Schordan
-  * \date 2012.
+  * \date 2015.
  */
 SgFunctionCallExp* SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode* node) {
+  std::pair<SgVarRefExp*,SgFunctionCallExp*>  p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
+  return p.second;
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2015.
+ */
+std::pair<SgVarRefExp*,SgFunctionCallExp*> SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(SgNode* node) {
   if(SgNode* sexp=isSgExprStatement(node)) {
     if(SgNode* assignOp=isSgAssignOp(SgNodeHelper::getExprStmtChild(sexp))) {
       SgNode* lhs=SgNodeHelper::getLhs(assignOp);
       SgNode* rhs=SgNodeHelper::getRhs(assignOp);
-      if(isSgVarRefExp(lhs)) {
+      if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
         /* the result of a function call may be casted. skip those
            casts to find the actual function call node.
         */
@@ -818,12 +827,12 @@ SgFunctionCallExp* SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunction
           rhs=SgNodeHelper::getFirstChild(rhs);
         }
         if(SgFunctionCallExp* fcp=isSgFunctionCallExp(rhs)) {
-          return fcp;
+          return std::make_pair(var,fcp);
         }
       }
     }
   }
-  return 0;
+  return std::make_pair((SgVarRefExp*)0,(SgFunctionCallExp*)0);
 }
 
 

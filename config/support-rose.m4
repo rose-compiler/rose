@@ -2195,6 +2195,7 @@ tests/CompileTests/x10_tests/Makefile
 tests/CompileTests/systemc_tests/Makefile
 tests/CompileTests/mixLanguage_tests/Makefile
 tests/CompileTests/Matlab_tests/Makefile
+tests/CompileTests/STL_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile

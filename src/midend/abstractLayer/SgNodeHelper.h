@@ -322,13 +322,14 @@ namespace SgNodeHelper {
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
     //! tests several patterns and returns pointer to FunctionCallExp inside that matched pattern, otherwise 0.
-    SgFunctionCallExp* matchFunctionCall(SgNode *);
+    SgFunctionCallExp* matchFunctionCall(SgNode*);
     //! tests pattern SgReturnStmt(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
-    SgFunctionCallExp* matchReturnStmtFunctionCallExp(SgNode *);
+    SgFunctionCallExp* matchReturnStmtFunctionCallExp(SgNode*);
     //! tests pattern SgExprStatement(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
-    SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode *);
-    //! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp, otherwise 0.
-    SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode *);
+    SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode*);
+    //! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp otherwise 0.
+    SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode*);
+    std::pair<SgVarRefExp*,SgFunctionCallExp*> matchExprStmtAssignOpVarRefExpFunctionCallExp2(SgNode*);
 
     //! tests pattern SgFunctionCall(...) where the name of the function is scanf with 2 params
     SgVarRefExp* matchSingleVarScanf(SgNode* node);
