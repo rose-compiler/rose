@@ -16,6 +16,9 @@
 // constant expressions.
 #include "array.h"
 
+// #include "dsl_detection.h"
+#include "dslSupport.h"
+
 // This can be the generated code to support the DSL recognition and evaluation.
 #if 1
 // Use the hand written version of the generated code.
@@ -26,8 +29,7 @@
 #endif
 
 #include "dsl_detection.h"
-
-#include "dslSupport.h"
+// #include "dslSupport.h"
 
 
 using namespace std;
