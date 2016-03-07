@@ -3,6 +3,15 @@
 
 begin transaction;
 
+--
+-- Persistent interface settings
+--
+create table interface_settings (
+    rose_public_version text default '',		-- version number to show by default on the public parts of the site
+    pass_criteria text default 'end' 			-- what test needs to be reached for ROSE to be considered useful
+);
+
+insert into interface_settings (rose_public_version) values ('');
 
 --
 -- List of software dependency packages.  There are a number of different kinds of dependencies:

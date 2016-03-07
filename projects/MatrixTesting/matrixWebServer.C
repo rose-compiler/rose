@@ -117,7 +117,16 @@ public:
         static const T dflt;
         return idx.row() < extraData_.size() ? extraData_[idx.row()] : dflt;
     }
-        
+
+    // Find first item with specified data. Returns -1 if not found.
+    int findData(const T &data) {
+        for (size_t i=0; i<extraData_.size(); ++i) {
+            if (extraData_[i] == data)
+                return i;
+        }
+        return -1;
+    }
+
     virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const ROSE_OVERRIDE {
         if (idx.isValid() && BaseTextRole == role) {
             return Wt::WStringListModel::data(idx, Wt::DisplayRole);
@@ -306,6 +315,7 @@ struct Dependency {
     std::string name;                                   // name of dependency, such as "boost"
     Choices humanValues;                                // human-readable values and how they map to the database values
     DependencyComboBox *comboBox;                       // choices available to the user
+    std::string sqlExpression;                          // optional SQL to override the column name from gstate
 
     Dependency()
         : comboBox(NULL) {}
@@ -347,6 +357,20 @@ sqlFromClause() {
 }
 
 static std::string
+sqlDependencyExpression(const Dependency &dep, const std::string &depName) {
+    std::string retval = dep.sqlExpression;
+    if (retval.empty())
+        retval = gstate.dependencyNames[depName];
+    ASSERT_require(!retval.empty());
+    return retval;
+}
+
+static std::string
+sqlDependencyExpression(const Dependencies &deps, const std::string &depName) {
+    return sqlDependencyExpression(deps[depName], depName);
+}
+
+static std::string
 sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
     std::string where;
     BOOST_FOREACH (const Dependency &dep, deps.values()) {
@@ -357,7 +381,7 @@ sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
 
         Bucket<std::string> bucket;
         if (humanValue.compare(WILD_CARD_STR) != 0 && dep.humanValues.getOptional(humanValue).assignTo(bucket)) {
-            std::string depColumn = gstate.dependencyNames[dep.name];
+            std::string depColumn = sqlDependencyExpression(dep, dep.name);
             where += std::string(where.empty() ? " where " : " and ");
             if (bucket.minValue() == bucket.maxValue()) {
                 where += depColumn + " = ?";
@@ -931,9 +955,9 @@ private:
     void loadDataset(const Dependencies &deps, DataSet &ds /*out*/, const std::string &version) {
         // Build the SQL query
         ASSERT_require(!depMajorName_.empty());
-        std::string depMajorColumn = gstate.dependencyNames[depMajorName_];
-        std::string depMinorColumn = gstate.dependencyNames[depMinorName_];
-        std::string passFailColumn = gstate.dependencyNames["pass/fail"];
+        std::string depMajorColumn = sqlDependencyExpression(deps, depMajorName_);
+        std::string depMinorColumn = sqlDependencyExpression(deps, depMinorName_);
+        std::string passFailColumn = sqlDependencyExpression(deps, "pass/fail");
         std::vector<std::string> args;
         std::string sql = "select " +
                           depMajorColumn + ", " +       // 0
@@ -1108,7 +1132,7 @@ private:
         values.clear();
         index.clear();
 
-        std::string columnName = gstate.dependencyNames[depName];
+        std::string columnName = sqlDependencyExpression(deps, depName);
         std::string sql = "select distinct " +  columnName + sqlFromClause();
         std::vector<std::string> args;
         sql += sqlWhereClause(deps, args /*out*/);
@@ -1969,7 +1993,7 @@ public:
         } else {
             args.clear();
             q0 = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps, args) +
-                                      "and " + gstate.dependencyNames["pass/fail"] + " = 'fail'");
+                                      "and " + sqlDependencyExpression(deps, "pass/fail") + " = 'fail'");
             bindSqlVariables(q0, args);
             nFails = q0->execute_int();
             if (0 == nFails) {
@@ -1986,7 +2010,7 @@ public:
 
         // Build the SQL query for finding the errors
         args.clear();
-        std::string passFailExpr = gstate.dependencyNames["pass/fail"];
+        std::string passFailExpr = sqlDependencyExpression(deps, "pass/fail");
         std::string sql = "select count(*) as n, status, coalesce(first_error,''), " + passFailExpr +
                           sqlFromClause() +
                           sqlWhereClause(deps, args) +
@@ -2247,66 +2271,6 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Global settings
-class WSettings: public Wt::WContainerWidget {
-    Wt::Signal<> settingsChanged_;
-    Wt::WComboBox *passCriteria_;
-
-public:
-    explicit WSettings(Wt::WContainerWidget *parent = NULL)
-        : Wt::WContainerWidget(parent) {
-        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
-        setLayout(vbox);
-
-        //------------------------------
-        // Criteria for passing a test.
-        //------------------------------
-#if 0 // [Robb Matzke 2016-02-10]
-        Wt::WHBoxLayout *passBox = new Wt::WHBoxLayout;
-        vbox->addLayout(passBox);
-#else
-        Wt::WContainerWidget *passBox = new Wt::WContainerWidget;
-        vbox->addWidget(passBox);
-#endif
-
-        passBox->addWidget(new Wt::WText("A configuration is defined to have passed if it makes it to the "));
-
-        passCriteria_ = new Wt::WComboBox;
-        passBox->addWidget(passCriteria_);
-        BOOST_FOREACH (const std::string &testName, gstate.testNames) {
-            passCriteria_->addItem(testName);
-            if (testName == "end")
-                passCriteria_->setCurrentIndex(passCriteria_->count()-1);
-        }
-
-        passBox->addWidget(new Wt::WText("step, otherwise it is considered to have failed. This rule generates "
-                                         "the 'pass' or 'fail' values for the \"pass/fail\" property used throughout "
-                                         "this application."));
-
-#if 0 // [Robb Matzke 2016-02-10]
-        passBox->addStretch(1);
-#endif
-
-        vbox->addStretch(1);
-
-        //----------
-        // Wiring
-        //----------
-        passCriteria_->activated().connect(this, &WSettings::updatePassCriteria);
-    }
-
-    Wt::Signal<>& settingsChanged() {
-        return settingsChanged_;
-    }
-
-private:
-    void updatePassCriteria() {
-        setPassDefinition(passCriteria_->currentText().narrow());
-        settingsChanged_.emit();
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Tab to help select a working ROSE configuration
 
 // Extra data attached to combo boxes that show configuration values
@@ -2324,14 +2288,26 @@ class WFindWorkingConfig: public Wt::WContainerWidget {
     std::vector<std::string> depLabels_;                // label for each dependency
     Dependencies deps_;                                 // dependencies that might be constrained
     bool suppressCountUpdates_;                         // skip updating counts
+    std::string passDefinition_;                        // SQL condition defining what it means for ROSE to "pass"
+
+    StatusModel *tableModel_;                           // model for our table of results
+    Wt::WTableView *tableView_;                         // table of results
 
     WComboBoxWithData<ComboBoxVersion> *wVersions_;
     Wt::WTable *wTable_;
     Wt::WText *wSummary_;
+    Wt::WText *wPassDefinition_;
 
 public:
     explicit WFindWorkingConfig(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent), roseDate_(0), suppressCountUpdates_(false) {
+
+        wPassDefinition_ = new Wt::WText;
+        std::string userPassDef = gstate.tx->statement("select pass_criteria from interface_settings")->execute_string();
+        setPassCriteria(userPassDef);
+
+        depNames_.push_back("rose");
+        depLabels_.push_back("ROSE version");
 
         depNames_.push_back("os");
         depLabels_.push_back("Operating system");
@@ -2348,17 +2324,46 @@ public:
         depNames_.push_back("edg");
         depLabels_.push_back("EDG version");
 
+        depNames_.push_back("pass/fail");
+        depLabels_.push_back("");                       // used in queries but not shown in interface
+
         // Build a combo box so we can choose a version of ROSE. The combo box text will be human readable version numbers
-        // (short SHA1) and the full version number used in the SQL query is stored in the attached data.
+        // (short SHA1) and the full version number used in the SQL query is stored in the attached data.  The combo box is not
+        // for public consumption, so the app will place it in the "Settings" tab instead, which will be accessible only to
+        // logged-in users.
         std::string penultimateVersion = findRoseVersion();
-        addWidget(new Wt::WText("ROSE version "));
-        addWidget(wVersions_ = new WComboBoxWithData<ComboBoxVersion>);
+        wVersions_ = new WComboBoxWithData<ComboBoxVersion>;
         int idx = fillVersionComboBox(wVersions_, penultimateVersion);
         if (idx >= 0)
             wVersions_->setCurrentIndex(idx);
         wVersions_->activated().connect(this, &WFindWorkingConfig::selectNewVersion);
 
-        addWidget(new Wt::WText("<p>Choose your configuration:</p>"));
+        // Build a table showing some results
+        addWidget(new Wt::WText("<p>This table shows the number of tests that pass as a percent of the number of tests that "
+                                "were run subject to the constraints listed below.  The table is organized so each row is a "
+                                "Boost version and each column is a compiler since these are the two most sensitive ROSE "
+                                "dependencies. Green represents cases where all tested configurations passed, and red "
+                                "represents where all failed, with a spectrum of colors between those two extremes. Cells "
+                                "that are dark gray indicate that no tests were run, and cells that are partly desaturated "
+                                "(i.e., between a bright color and gray) represent configurations where only a few tests "
+                                "were performed.</p>"));
+        addWidget(wPassDefinition_);
+        tableModel_ = new StatusModel;
+        tableModel_->setDepMajorIsData(true);
+        tableModel_->setRoundToInteger(true);
+        tableModel_->setHumanReadable(true);
+        tableModel_->setDepMajorName("boost");
+        tableModel_->setDepMinorName("compiler");
+        tableModel_->setChartValueType(CVT_PASS_RATIO);
+        tableView_ = new Wt::WTableView;
+        tableView_->setModel(tableModel_);
+        tableView_->setAlternatingRowColors(false);     // true interferes with our custom background colors
+        tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
+        addWidget(tableView_);
+
+        // Choose configuration (FIXME[Robb Matzke 2016-03-07]: move this to Settings tab)
+        addWidget(new Wt::WText("<p>Choose your configuration below. The numbers in parentheses indicate how many tests "
+                                "passed for your chosen configuration and are adjusted as you change the constraints.</p>"));
         addWidget(wTable_ = new Wt::WTable);
 
         Wt::WPushButton *wClear = new Wt::WPushButton("Clear");
@@ -2368,6 +2373,11 @@ public:
         addWidget(wSummary_ = new Wt::WText);
 
         setRoseVersion(findRoseVersion());
+    }
+
+    // Combo box to choose which version of ROSE to display to users.
+    WComboBoxWithData<ComboBoxVersion>* roseVersionChoices() const {
+        return wVersions_;
     }
 
     // Set which version of ROSE we're looking at.
@@ -2392,40 +2402,76 @@ public:
         suppressCountUpdates_ = false;
         if (needUpdate)
             updateCounts();
+        tableModel_->updateModel(deps_);
     }
 
-    // Find the version of ROSE whose information will be presented and update this object with that info. This is normally the
+    void setPassCriteria(const std::string &reachedTestName) {
+        int position = gstate.testNameIndex.getOrElse(reachedTestName, END_STATUS_POSITION);
+        passDefinition_ = "case"
+                          " when test_names.position >= " + StringUtility::numberToString(position) +
+                          " then 'pass' else 'fail' end";
+        if (reachedTestName == "end") {
+            wPassDefinition_->setText("");
+        } else {
+            wPassDefinition_->setText("<p>A ROSE configuration is considered to have passed if it reaches "
+                                      "the \"" + reachedTestName + "\" step of testing.</p>");
+        }
+    }
+
+    // Find the version of ROSE whose information will be presented and update this object with that info. The version is
+    // stored as interface_settings.rose_public_version in the database, but if this setting is empty then use the
     // penultimate version since the last version is probably undergoing testing right now.
     std::string findRoseVersion() {
-        SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct rose, rose_date"
-                                                           " from test_results"
-                                                           " order by rose_date desc"
-                                                           " offset 1 limit 1");
-        SqlDatabase::Statement::iterator row = q->begin();
-        if (row == q->end())
-            return "";
-        return row.get<std::string>(0);
+        std::string version;
+
+        // Look at the interface settings
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select rose_public_version"
+                                                           " from interface_settings"
+                                                           " limit 1");
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
+            version = row.get<std::string>(0);
+
+        // Or use the penultimate version
+        if (version.empty()) {
+            q = gstate.tx->statement("select distinct rose, rose_date"
+                                     " from test_results"
+                                     " order by rose_date desc"
+                                     " offset 1 limit 1");
+            for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
+                version = row.get<std::string>(0);
+        }
+
+        return version;
     }
 
     // (Re)build the table of combo boxes and initialize them with all possible values for this version of ROSE
     void buildTable() {
         wTable_->clear();
         deps_ = loadDependencyValues(depNames_, "where rose = ?", std::vector<std::string>(1, roseVersion_));
-        
+        std::string roseVersionHuman = humanSha1(roseVersion_, HUMAN_TERSE);
+
+        int tableRow = 0;
         for (size_t i = 0; i < depNames_.size(); ++i) {
             // Build a combo box for each dependency
             Dependency &dep = deps_[depNames_[i]];
             dep.comboBox = new DependencyComboBox;
-            dep.comboBox->addItem(WILD_CARD_STR);
+            if (depNames_[i] != "rose")
+                dep.comboBox->addItem(WILD_CARD_STR);
             dep.comboBox->activated().connect(this, &WFindWorkingConfig::updateCounts);
             dep.comboBox->setMinimumSize(Wt::WLength(15, Wt::WLength::FontEm), Wt::WLength::Auto);
             std::vector<std::string> humanValues = sortedHumanValues(dep);
-            BOOST_FOREACH (const std::string &s, humanValues)
+            BOOST_FOREACH (const std::string &s, humanValues) {
                 dep.comboBox->addItem(s);
+                if (depNames_[i] == "rose" && s == roseVersionHuman)
+                    dep.comboBox->setCurrentIndex(dep.comboBox->count()-1);
+            }
 
             // Insert table row
-            wTable_->elementAt(i, 0)->addWidget(new Wt::WText(depLabels_[i] + "&nbsp;"));
-            wTable_->elementAt(i, 1)->addWidget(dep.comboBox);
+            if (!depLabels_[i].empty()) {
+                wTable_->elementAt(tableRow, 0)->addWidget(new Wt::WText(depLabels_[i] + "&nbsp;"));
+                wTable_->elementAt(tableRow, 1)->addWidget(dep.comboBox);
+                ++tableRow;
+            }
         }
     }
                 
@@ -2433,6 +2479,7 @@ public:
     void updateCounts() {
         if (suppressCountUpdates_)
             return;
+        deps_["pass/fail"].sqlExpression = passDefinition_;
         for (size_t i=0; i<depNames_.size(); ++i) {
             Dependency &dep = deps_[depNames_[i]];
 
@@ -2442,13 +2489,10 @@ public:
             Dependencies otherDeps = deps_;
             otherDeps.erase(dep.name);
             std::vector<std::string> args;
-            std::string sql = "select " + gstate.dependencyNames[dep.name] + ", count(*)" +
+            std::string sql = "select " + sqlDependencyExpression(dep, dep.name) + ", count(*)" +
                               sqlFromClause() +
                               sqlWhereClause(otherDeps, args) +
-                              "and rose = ?"
-                              "and " + gstate.dependencyNames["pass/fail"] + " = 'pass' "
-                              "group by " + gstate.dependencyNames[dep.name];
-            args.push_back(roseVersion_);
+                              "group by " + sqlDependencyExpression(dep, dep.name);
             SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
             bindSqlVariables(q, args);
             Sawyer::Container::Map<std::string, size_t> depCounts;
@@ -2471,19 +2515,17 @@ public:
 
         // Summarize what was tested.
         std::vector<std::string> args;
-        SqlDatabase::StatementPtr q = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps_, args) +
-                                                           " and " + gstate.dependencyNames["pass/fail"] + " = 'pass'"
-                                                           " and rose = ?");
-        args.push_back(roseVersion_);
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps_, args));
         bindSqlVariables(q, args);
         if (int nPass = q->execute_int()) {
             wSummary_->setText("<p>Our automated testing system has found " +
                                StringUtility::plural(nPass, "passing configurations") +
-                               " that are similar to your chosen configuration.</p>");
+                               " that are similar to your chosen configuration. The ROSE team tests many more configurations "
+                               "than what are represented by this simple interface, which is why the table above may have "
+                               "cells that are other than zero or 100%</p>");
         } else {
             args.clear();
-            q = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps_, args) + "and rose = ?");
-            args.push_back(roseVersion_);
+            q = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps_, args));
             bindSqlVariables(q, args);
             if (int nTested = q->execute_int()) {
                 wSummary_->setText("<p>Our automated testing system did not find any configurations of ROSE that "
@@ -2495,11 +2537,115 @@ public:
                                    "not.</p>");
             }
         }
+
+        tableModel_->updateModel(deps_);
     }
 
 private:
     void selectNewVersion(int idx) {
         setRoseVersion(wVersions_->currentData().version);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Global settings
+class WSettings: public Wt::WContainerWidget {
+    Wt::Signal<> settingsChanged_;
+    Wt::WComboBox *passCriteria_, *userPassCriteria_;
+
+public:
+    explicit WSettings(WFindWorkingConfig *findWorkingConfig, Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent) {
+
+
+        // What test must be reached in order to qualify ROSE as being usable by end users?
+        std::string publicPass = "end";
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select pass_criteria from interface_settings limit 1");
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
+            publicPass = row.get<std::string>(0);
+
+        // Build combo boxes that have the test names
+        passCriteria_ = new Wt::WComboBox;
+        userPassCriteria_ = new Wt::WComboBox;
+        BOOST_FOREACH (const std::string &testName, gstate.testNames) {
+            passCriteria_->addItem(testName);
+            userPassCriteria_->addItem(testName);
+            if (testName == "end")
+                passCriteria_->setCurrentIndex(passCriteria_->count()-1);
+            if (testName == publicPass)
+                userPassCriteria_->setCurrentIndex(userPassCriteria_->count()-1);
+        }
+
+        //--------------------
+        // Developer settings
+        //--------------------
+        addWidget(new Wt::WText("<h1>Developer settings</h1>"));
+
+        addWidget(new Wt::WText("A configuration is defined to have passed if it makes it to the "));
+        addWidget(passCriteria_);
+        addWidget(new Wt::WText("step, otherwise it is considered to have failed. This rule generates "
+                                "the 'pass' or 'fail' values for the \"pass/fail\" property used throughout "
+                                "this application.<br/>"));
+
+
+        //-------------------------
+        // Public session settings
+        //-------------------------
+
+        addWidget(new Wt::WText("<h1>Settings for public interface</h1>"));
+        addWidget(new Wt::WText("<p>The changes you make here will be visible in your own session immediately, and "
+                                "if you click the \"Publish\" button they will become the defaults for all new "
+                                "public sessions for all users.</p>"));
+
+        addWidget(new Wt::WText("Show ROSE version "));
+        addWidget(findWorkingConfig->roseVersionChoices());
+        addWidget(new Wt::WText(" in the publicly-visible parts of this application.<br/><br/>"));
+
+        addWidget(new Wt::WText("Assume that ROSE is usable by users if we make it to the "));
+        addWidget(userPassCriteria_);
+        addWidget(new Wt::WText(" step. This is the pass/fail criteria used in the public interface.<br/><br/>"));
+
+        Wt::WPushButton *publishVersionButton = new Wt::WPushButton("Publish");
+        publishVersionButton->setToolTip("Pressing this button will make these public settings the default for all "
+                                         "subsequent sessions both public and private.");
+        addWidget(publishVersionButton);
+
+        //----------
+        // Wiring
+        //----------
+        passCriteria_->activated().connect(this, &WSettings::updatePassCriteria);
+        userPassCriteria_->activated().connect(boost::bind(&WSettings::updateUserPassCriteria, this, findWorkingConfig));
+        publishVersionButton->clicked().connect(boost::bind(&WSettings::publishSettings, this, findWorkingConfig));
+    }
+
+    Wt::Signal<>& settingsChanged() {
+        return settingsChanged_;
+    }
+
+private:
+    void updatePassCriteria() {
+        setPassDefinition(passCriteria_->currentText().narrow());
+        settingsChanged_.emit();
+    }
+
+    void updateUserPassCriteria(WFindWorkingConfig *findWorkingConfig) {
+        findWorkingConfig->setPassCriteria(userPassCriteria_->currentText().narrow());
+        findWorkingConfig->updateCounts();
+    }
+
+    void publishSettings(WFindWorkingConfig *findWorkingConfig) {
+        // We need a temporary transaction so we can commit the changes.
+        SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
+
+        std::string publicVersion = findWorkingConfig->roseVersionChoices()->currentData().version;
+        std::string passCriteria = userPassCriteria_->currentText().narrow();
+
+        tx->statement("update interface_settings set rose_public_version = ?, pass_criteria = ?")
+            ->bind(0, publicVersion)
+            ->bind(1, passCriteria)
+            ->execute();
+
+        tx->commit();
     }
 };
 
@@ -2582,7 +2728,7 @@ public:
         mlog[INFO] <<"creating tab: Errors\n";
         tabs_->addTab(errors_ = new WErrors, "Errors");
         mlog[INFO] <<"creating tab: Settings\n";
-        tabs_->addTab(settings_ = new WSettings, "Settings");
+        tabs_->addTab(settings_ = new WSettings(findWorkingConfig_), "Settings");
 
         // Show either authentication or main application
         Wt::WStackedWidget *mainStack = new Wt::WStackedWidget;
