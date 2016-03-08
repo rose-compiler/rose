@@ -2444,7 +2444,8 @@ public:
         return version;
     }
 
-    // (Re)build the table of combo boxes and initialize them with all possible values for this version of ROSE
+    // (Re)build the table of combo boxes and initialize them with all possible values for this version of ROSE, including
+    // those values that never pass.
     void buildTable() {
         wTable_->clear();
         deps_ = loadDependencyValues(depNames_, "where rose = ?", std::vector<std::string>(1, roseVersion_));
@@ -2492,6 +2493,7 @@ public:
             std::string sql = "select " + sqlDependencyExpression(dep, dep.name) + ", count(*)" +
                               sqlFromClause() +
                               sqlWhereClause(otherDeps, args) +
+                              "and " + passDefinition_ + " = 'pass' "
                               "group by " + sqlDependencyExpression(dep, dep.name);
             SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
             bindSqlVariables(q, args);
@@ -2515,7 +2517,9 @@ public:
 
         // Summarize what was tested.
         std::vector<std::string> args;
-        SqlDatabase::StatementPtr q = gstate.tx->statement("select count(*)" + sqlFromClause() + sqlWhereClause(deps_, args));
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select count(*)" + sqlFromClause() +
+                                                           sqlWhereClause(deps_, args) +
+                                                           "and " + passDefinition_ + " = 'pass'");
         bindSqlVariables(q, args);
         if (int nPass = q->execute_int()) {
             wSummary_->setText("<p>Our automated testing system has found " +
@@ -2585,7 +2589,7 @@ public:
         addWidget(passCriteria_);
         addWidget(new Wt::WText("step, otherwise it is considered to have failed. This rule generates "
                                 "the 'pass' or 'fail' values for the \"pass/fail\" property used throughout "
-                                "this application.<br/>"));
+                                "this application except in the public areas (see below).<br/>"));
 
 
         //-------------------------

@@ -64,7 +64,7 @@ authenticate_sender() {
 # Any part of the body that looks like a var=value setting needs to be collected. Try to weed out malicious stuff by
 # being quite strict about what we accept.
 var_val_pairs() {
-    sed -n '1,/^====/ s/^\([a-zA-Z_][a-zA-Z_0-9]*\)[ \t]*=[ \t]*\([-. a-zA-Z_0-9]*\)$/\1='"'"'\2'"'"'/p' <$mail_body |\
+    sed -n '1,/^====/ s/^\([a-zA-Z_][a-zA-Z_0-9]*\)[ \t]*=[ \t]*\([-+., a-zA-Z_0-9]*\)$/\1='"'"'\2'"'"'/p' <$mail_body |\
 	tr '\n' ' '
 }
 
@@ -109,4 +109,4 @@ authenticate_sender
 test_id=$(update_test_results)
 attach_commands $test_id
 attach_output $test_id
-run_matrix_command matrixErrors update
+run_matrix_command matrixErrors --database="$DATABASE" update
