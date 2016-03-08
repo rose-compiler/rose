@@ -253,8 +253,9 @@ Engine::partitionerSwitches() {
 
     sg.insert(Switch("find-function-padding")
               .intrinsicValue(true, settings_.partitioner.findingFunctionPadding)
-              .doc("Look for padding such as zero bytes and certain instructions like no-ops that occur prior to the "
-                   "lowest address of a function and attach them to the function as static data.  The "
+              .doc("Cause each built-in and user-defined function padding analysis to run. The purpose of these "
+                   "analyzers is to look for padding such as zero bytes and certain instructions like no-ops that occur "
+                   "prior to the lowest address of a function and attach them to the function as static data.  The "
                    "@s{no-find-function-padding} switch turns this off.  The default is to " +
                    std::string(settings_.partitioner.findingFunctionPadding?"":"not ") + "search for padding."));
     sg.insert(Switch("no-find-function-padding")
