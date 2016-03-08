@@ -1415,9 +1415,9 @@ Engine::attachSurroundedCodeToFunctions(Partitioner &partitioner) {
                 mlog[DEBUG] <<"attachSurroundedCodeToFunctions: basic block " <<StringUtility::addrToString(interval.least())
                             <<" is attached now to function " <<function->printableName() <<"\n";
                 partitioner.detachFunction(function);
-                function->insertBasicBlock(interval.least());
+                if (function->insertBasicBlock(interval.least()))
+                    ++nNewBlocks;
                 partitioner.attachFunction(function);
-                ++nNewBlocks;
             }
         }
 

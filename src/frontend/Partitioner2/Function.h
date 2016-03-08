@@ -127,14 +127,20 @@ public:
         return bblockVas_.find(bblockVa) != bblockVas_.end();
     }
 
-    /** Add a basic block to this function.  This method does not adjust the partitioner CFG. Basic blocks cannot be added by
-     *  this method when this function is attached to the CFG since it would cause the CFG to become outdated with respect to
-     *  this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.  If the
-     *  specified address is already part of the function then it is not added a second time. */
-    void insertBasicBlock(rose_addr_t bblockVa) {       // no-op if exists
+    /** Add a basic block to this function.
+     *
+     *  This method does not adjust the partitioner CFG. Basic blocks cannot be added by this method when this function is
+     *  attached to the CFG since it would cause the CFG to become outdated with respect to this function, but as long as the
+     *  function is detached blocks can be inserted and removed arbitrarily.  If the specified address is already part of the
+     *  function then it is not added a second time.
+     *
+     *  Returns true if the block is inserted, false if the block was already part of this function. */
+    bool insertBasicBlock(rose_addr_t bblockVa) {
         ASSERT_forbid(isFrozen_);
-        clearCache();
-        bblockVas_.insert(bblockVa);
+        bool wasInserted = bblockVas_.insert(bblockVa).second;
+        if (wasInserted)
+            clearCache();
+        return wasInserted;
     }
 
     /** Remove a basic block from this function.  This method does not adjust the partitioner CFG.  Basic blocks cannot be
