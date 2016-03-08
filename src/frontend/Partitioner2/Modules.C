@@ -390,9 +390,9 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
 }
 
 AddressIntervalSet
-deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold) {
+deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
     AddressIntervalSet changes;
-    if (0==threshold)
+    if (leaveAtFront + leaveAtBack >= threshold)
         return changes;
     rose_addr_t va = map.hull().least();
     AddressInterval zeros;
@@ -423,9 +423,10 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold) {
         }
         va += nRead;
     }
-    if (zeros.size()>=threshold) {
-        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
-        changes.insert(zeros);
+    if (zeros.size() >= threshold && zeros.size() >= leaveAtFront + leaveAtBack) {
+        AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront, zeros.greatest()-leaveAtBack);
+        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+        changes.insert(affected);
     }
     return changes;
 }

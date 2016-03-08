@@ -113,12 +113,24 @@ Engine::loaderSwitches() {
     SwitchGroup sg("Loader switches");
 
     sg.insert(Switch("remove-zeros")
-              .argument("size", nonNegativeIntegerParser(settings_.loader.deExecuteZeros), "128")
+              .argument("size", nonNegativeIntegerParser(settings_.loader.deExecuteZerosThreshold), "128")
               .doc("This switch causes execute permission to be removed from sequences of contiguous zero bytes. The "
                    "switch argument is the minimum number of consecutive zeros that will trigger the removal, and "
-                   "defaults to 128.  An argument of zero disables the removal.  When this switch is not specified at "
-                   "all, this tool assumes a value of " +
-                   StringUtility::plural(settings_.loader.deExecuteZeros, "bytes") + "."));
+                   "defaults to 128.  An argument of zero disables the removal.  Each interval of zeros is narrowed "
+                   "according to the @s{remove-zeros-narrow} switch before execute permission is removed. When this switch "
+                   "is not specified at all, this tool assumes a value of " +
+                   StringUtility::plural(settings_.loader.deExecuteZerosThreshold, "bytes") + "."));
+    sg.insert(Switch("remove-zeros-narrow")
+              .argument("@v{begin},@v{end}",
+                        listParser(nonNegativeIntegerParser(settings_.loader.deExecuteZerosLeaveAtFront))
+                        ->nextMember(nonNegativeIntegerParser(settings_.loader.deExecuteZerosLeaveAtBack))
+                        ->exactly(2))
+              .doc("If @s{remove-zeros} is active then each interval of zeros detected by that analysis is narrowed by "
+                   "removing @v{begin} and @v{end} bytes from the interval before execute permission is removed. This "
+                   "effectively makes the analysis less greedy and less apt to remove zeros from the ends and beginnings "
+                   "of adjacent instructions.  The default is to narrow each interval by " +
+                   StringUtility::plural(settings_.loader.deExecuteZerosLeaveAtFront, "bytes") + " at the beginning and " +
+                   StringUtility::plural(settings_.loader.deExecuteZerosLeaveAtBack, "bytes") + " at the end."));
 
     sg.insert(Switch("executable")
               .intrinsicValue(true, settings_.loader.memoryIsExecutable)
@@ -722,7 +734,8 @@ void
 Engine::adjustMemoryMap() {
     if (settings_.loader.memoryIsExecutable)
         map_.any().changeAccess(MemoryMap::EXECUTABLE, 0);
-    Modules::deExecuteZeros(map_/*in,out*/, settings_.loader.deExecuteZeros);
+    Modules::deExecuteZeros(map_/*in,out*/, settings_.loader.deExecuteZerosThreshold,
+                            settings_.loader.deExecuteZerosLeaveAtFront, settings_.loader.deExecuteZerosLeaveAtBack);
 
     switch (settings_.loader.memoryDataAdjustment) {
         case DATA_IS_CONSTANT:
