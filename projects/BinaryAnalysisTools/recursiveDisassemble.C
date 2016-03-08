@@ -641,34 +641,6 @@ selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Se
     ASSERT_not_implemented("function selection criteria is not implemented yet");
 }
 
-#if 1 // DEBUGGING [Robb Matzke 2016-03-08]
-// Test whether deleting the first instruction of a basic block causes an infinite loop
-class EmptyBlockTest: public P2::BasicBlockCallback {
-protected:
-    EmptyBlockTest() {}
-
-public:
-    typedef Sawyer::SharedPointer<EmptyBlockTest> Ptr;
-
-    static Ptr instance() {
-        return Ptr(new EmptyBlockTest);
-    }
-
-    bool operator()(bool chain, const Args &args) {
-        if (chain && 1 == args.bblock->instructions().size()) {
-            if (SgAsmX86Instruction* insn = isSgAsmX86Instruction(args.bblock->instructions().back())) {
-                if (insn->get_kind() == x86_inc) {
-                    mlog[INFO] <<"ZeroBlockTest was triggered at " <<StringUtility::addrToString(insn->get_address()) <<"\n";
-                    args.results.terminate = TERMINATE_PRIOR;// there is no prior instruction!
-                }
-            }
-        }
-        return chain;
-    }
-};
-#endif
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -699,10 +671,6 @@ int main(int argc, char *argv[]) {
         partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose
     if (false)
         makeCallTargetFunctions(partitioner);           // not useful; see documentation at function definition
-
-#if 1 // DEBUGGING [Robb Matzke 2016-03-08]
-    partitioner.basicBlockCallbacks().append(EmptyBlockTest::instance());
-#endif
 
     // Insert debugging aids
     BOOST_FOREACH (const std::string &s, settings.triggers) {
