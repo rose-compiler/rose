@@ -19,6 +19,7 @@ separator::separator(int bp, int ep, std::vector<separator> ss ){
         sub_separators = ss;
 } 
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // #ifndef USE_ROSE
 // If we are using ROSE to compile ROSE source code then the Wave support is not present.
 void separator::outputValues(token_container& tokenStream, int counter ){
@@ -38,6 +39,7 @@ void separator::outputValues(token_container& tokenStream, int counter ){
         }
 }
 // #endif
+#endif
 
 void separator::outputValues(std::vector<SgNode*>& linearizedAST, int counter ){
         string prefix = "";
@@ -147,6 +149,7 @@ separator* mapSeparatorsAST(std::vector<SgNode*>& linearizedAST){
 
 
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // #ifndef USE_ROSE
 // If we are using ROSE to compile ROSE source code then the Wave support is not present.
 separator* mapSeparatorsTokenStream(token_container& tokenStream){
@@ -201,5 +204,5 @@ separator* mapSeparatorsTokenStream(token_container& tokenStream){
         return globalScope; 
 }
 // #endif
-
+#endif
 

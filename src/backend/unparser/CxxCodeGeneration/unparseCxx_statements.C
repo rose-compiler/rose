@@ -7653,12 +7653,29 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string("{"));
           unp->cur.format(classdefn_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
 
+       // DQ (2/25/2016): Adding support for specification of AstUnparseAttribute for placement inside of a SgClassDefinition.
+       // Note that this does not replace any existing declarations in the class definition.
+          AstUnparseAttribute* unparseAttribute = dynamic_cast<AstUnparseAttribute*>(classdefn_stmt->getAttribute(AstUnparseAttribute::markerName));
+          if (unparseAttribute != NULL)
+             {
+            // Note that in most cases unparseLanguageSpecificStatement() will be called, some formatting 
+            // via "unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);" may be done.  This can cause extra 
+            // CRs to be inserted (which only looks bad).  Not clear now to best clean this up.
+               string code = unparseAttribute->toString(AstUnparseAttribute::e_inside);
+               curprint (code);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
           SgDeclarationStatementPtrList::iterator pp = classdefn_stmt->get_members().begin();
 
           while ( pp != classdefn_stmt->get_members().end() )
              {
 #if 0
-               printf ("In unparseClassDefnStmt(): (*pp)->get_declarationModifier().get_accessModifier().isProtected() = %s \n",(*pp)->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
+               printf ("In unparseClassDefnStmt(): (*pp)->get_declarationModifier().get_accessModifier().isProtected() = %s \n",
+                    (*pp)->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
 #endif
                unparseStatement((*pp), ninfo);
                pp++;

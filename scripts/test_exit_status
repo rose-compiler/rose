@@ -13,3 +13,4 @@ cmd = ${VALGRIND} ${CMD}
 title = ${TITLE}
 disabled = ${DISABLED}
 timeout = ${TIMEOUT}
+require_memory = ${MEMORY}
