@@ -1,7 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# This list is now copied to C_TESTCODES_REQUIRED_TO_VERIFY, Liao 3/9/2016
 # the code which can be parallelized or confirmed as not parallelizable now
 C_TESTCODES_REQUIRED_TO_PASS = \
+accumulateForce.c \
 anti_dep.c \
 array_scalar.c \
 c99loop.c \
@@ -22,7 +24,6 @@ matrixmultiply.c \
 matrixmultiply2.c \
 matrixVectormultiply.c \
 minusMinus.c \
-multiReduction.c \
 outer_only.c \
 output_dep.c \
 output_dep2.c \
@@ -57,6 +58,7 @@ test20100223.C
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
 TESTCODE_CURRENTLY_FAILING = \
+multiReduction.c \
 iterator1.C \
 iterator_const1.C \
 list1.C \
@@ -94,11 +96,14 @@ CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 # we want to use diff to compare generated files with reference files
 # Pending test cases: TODO
-#jacobi_seq.c # still fails due to some missed live-in variables
 #minusMinus.c  
 #multiReduction.c // not supported 
 # TODO: diff patches is a better choice.  Tolerate other differences introduced by ROSE.
-C_TESTCODES_REQUIRED_TO_VERIFY = \
+C_TESTCODES_REQUIRED_TO_VERIFY = $(C_TESTCODES_REQUIRED_TO_PASS)
+
+# Old list, not in use
+C_TESTCODES_REQUIRED_TO_VERIFY0 = \
+accumulateForce.c \
 anti_dep.c \
 array_scalar.c \
 c99loop.c \
@@ -112,6 +117,7 @@ foo.c \
 functionCall.c \
 ifAndFor.c \
 indirectIndex.c \
+jacobi_seq.c \
 livenessTest.c \
 matrixmultiply.c \
 matrixmultiply2.c \
