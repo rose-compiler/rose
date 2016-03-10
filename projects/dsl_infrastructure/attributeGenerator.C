@@ -52,6 +52,9 @@ AttributeGenerator_SynthesizedAttribute::AttributeGenerator_SynthesizedAttribute
 // Attribute Generator Traversal
 AttributeGeneratorTraversal::AttributeGeneratorTraversal()
    {
+  // DQ (3/4/2016): Turning on internal debugging.
+     internal_debugging = false;
+
   // SgSourceFile* buildSourceFile(string,SgProject = NULL)
      generatedHeaderFile    = NULL;
      generatedSourceFile    = NULL;
@@ -98,6 +101,7 @@ AttributeGeneratorTraversal::AttributeGeneratorTraversal()
 
   // This is not specified explicitly in the generated_dsl_attributes_wrapper.C file.
   // argList.push_back("-DSKIP_ROSE_HEADERS");
+     argList.push_back("-DSKIP_ROSE_HEADERS");
 
      argList.push_back("-c");
      argList.push_back(requiredCodeFileNameWithPath);
@@ -207,8 +211,22 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
      printf ("In evaluateInheritedAttribute(): astNode = %p = %s: DSLnodes.size() = %zu \n",astNode,astNode->class_name().c_str(),DSLnodes.size());
 #endif
 
+#if 0
+     if (internal_debugging == true)
+        {
+          printf ("In evaluateInheritedAttribute(): astNode = %p = %s: DSLnodes.size() = %zu \n",astNode,astNode->class_name().c_str(),DSLnodes.size());
+        }
+#endif
+
      switch (astNode->variantT())
         {
+          case V_SgGlobal:
+             {
+            // Turn of the debug mode at the to of each global scope (required because we proces an AST with two source files).
+               internal_debugging = false;
+               break;
+             }
+
           case V_SgPragmaDeclaration:
              {
             // Statements after a pragma will be detected and be used as DSL keywords.
@@ -217,20 +235,21 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                ROSE_ASSERT(pragmaDeclaration != NULL);
 
                std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-#if 0
+#if 1
                printf ("Detected marking pragma for DSL keyword: pragmaDeclaration = %p = %s = %s \n",pragmaDeclaration,pragmaDeclaration->class_name().c_str(),pragmaString.c_str());
 #endif
-            // At this point none of the dls attribute variable have been initialized 
-            // (because the variables are at the end of the input source file).
-               ROSE_ASSERT(dsl_type_names_variable            == NULL);
-               ROSE_ASSERT(dsl_function_names_variable        == NULL);
-               ROSE_ASSERT(dsl_member_function_names_variable == NULL);
-               ROSE_ASSERT(dsl_attribute_map_variable         == NULL);
-
             // We only want to support pragmas that are specific to our DSL keyword markers.
             // DSLnodes.insert(DSLKeywordStatement);
                if (pragmaString == "DSL keyword")
                   {
+                 // At this point we have see the extern declarations of these variables, but the 
+                 // defining declarations (with initializers) appear later in the input source file.
+                    ROSE_ASSERT(dsl_type_names_variable            != NULL);
+                    ROSE_ASSERT(dsl_type_names_variable->get_initializer() == NULL);
+                    ROSE_ASSERT(dsl_function_names_variable        != NULL);
+                    ROSE_ASSERT(dsl_member_function_names_variable != NULL);
+                    ROSE_ASSERT(dsl_attribute_map_variable         != NULL);
+
                  // There should always be a next statement after a pragma declaration (at least for where we use our DSL pragmas).
                     SgStatement* DSLKeywordStatement = SageInterface::getNextStatement(pragmaDeclaration);
                     if (DSLKeywordStatement == NULL)
@@ -238,8 +257,20 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                          printf ("Error: There should always be a next statement after a pragma declaration \n");
                        }
                     ROSE_ASSERT(DSLKeywordStatement != NULL);
-
+#if 1
+                    printf ("DSLKeywordStatement = %p = %s \n",DSLKeywordStatement,DSLKeywordStatement->class_name().c_str());
+                    SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(DSLKeywordStatement);
+                    if (declarationStatement != NULL)
+                       {
+                         printf ("   --- nondefining declaration = %p \n",declarationStatement->get_firstNondefiningDeclaration());
+                         printf ("   --- defining declaration    = %p \n",declarationStatement->get_definingDeclaration());
+                       }
+#endif
                     DSLnodes.insert(DSLKeywordStatement);
+#if 1
+                 // Turn on internal debugging.
+                    internal_debugging = true;
+#endif
                   }
 
                break;
@@ -257,15 +288,18 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                if (DSLnodes.find(classDeclaration) != DSLnodes.end())
                   {
                     printf ("Build DSL attribute for class = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+                    printf ("   --- nondefining declaration = %p \n",classDeclaration->get_firstNondefiningDeclaration());
+                    printf ("   --- defining declaration    = %p \n",classDeclaration->get_definingDeclaration());
 
                     SgType* type = classDeclaration->get_type();
                     ROSE_ASSERT(type != NULL);
 
                  // Maybe we should be saving the SgClassDeclaration to be semetric with the case of SgFunctionDeclaration below?
-                    dsl_type_list.push_back(type);
-#if 0
+                 // dsl_type_list.push_back(type);
+#if 1
                     SgNode* ast_fragment = buildAttribute(type);
                     ROSE_ASSERT(ast_fragment == NULL);
+                 // ROSE_ASSERT(ast_fragment != NULL);
 #endif
                   }
 
@@ -273,37 +307,59 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
              }
 
           case V_SgFunctionDeclaration:
+          case V_SgMemberFunctionDeclaration:
           case V_SgTemplateFunctionDeclaration:
+          case V_SgTemplateMemberFunctionDeclaration:
              {
             // This case is more complex since functions have arguments (using std::function support in C++11).
 
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(astNode);
                ROSE_ASSERT(functionDeclaration != NULL);
-
-               if (DSLnodes.find(functionDeclaration) != DSLnodes.end())
+#if 1
+               if (internal_debugging == true)
                   {
-                    printf ("Build DSL attribute for function = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
-
-                    dsl_function_list.push_back(functionDeclaration);
+                    printf ("In evaluateInheritedAttribute(): case V_SgFunctionDeclaration: functionDeclaration = %s \n",functionDeclaration->get_name().str());
+                  }
+#endif
+            // Check if this is a member function of a defined DSL specific class.
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+               SgClassDeclaration* classDeclaration = NULL;
+               if (memberFunctionDeclaration != NULL)
+                  {
+                    SgScopeStatement* scope = memberFunctionDeclaration->get_scope();
+                    ROSE_ASSERT(scope != NULL);
 #if 0
-                 // SgType* type = functionDeclaration->get_type();
-                 // ROSE_ASSERT(type != NULL);
-                 // SgNode* ast_fragment = buildAttribute(type);
-                 // ROSE_ASSERT(ast_fragment == NULL);
-                    SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+                    printf ("memberFunctionDeclaration->get_scope() = %p = %s \n",scope,scope->class_name().c_str());
+#endif
+                    SgClassDefinition* classDefinition = isSgClassDefinition(memberFunctionDeclaration->get_scope());
                     if (memberFunctionDeclaration != NULL)
                        {
-                         dsl_function_list.push_back(functionDeclaration);
-                       }
-                      else
-                       {
-                         string function_name = functionDeclaration->get_name();
+                         ROSE_ASSERT(classDefinition != NULL);
+                         classDeclaration = classDefinition->get_declaration();
+                         ROSE_ASSERT(classDeclaration != NULL);
+                         classDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+                         ROSE_ASSERT(classDeclaration != NULL);
 #if 1
-                         printf ("Handling function_name = %s \n",function_name.c_str());
+                         if (internal_debugging == true)
+                            {
+                              printf ("Member function defining class declaration = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+                            }
 #endif
-                      // dsl_function_name_list.push_back(function_name);
-                         dsl_function_list.push_back(functionDeclaration);
                        }
+                  }
+
+            // if (DSLnodes.find(functionDeclaration) != DSLnodes.end())
+               if (classDeclaration != NULL && DSLnodes.find(classDeclaration) != DSLnodes.end())
+                  {
+                    printf ("Build DSL attribute for member function: class = %p = %s = %s function = %p = %s = %s \n",
+                         classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str(),
+                         functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+
+                 // dsl_function_list.push_back(functionDeclaration);
+#if 1
+                    SgNode* ast_fragment = buildAttribute(functionDeclaration);
+                    ROSE_ASSERT(ast_fragment == NULL);
+                 // ROSE_ASSERT(ast_fragment != NULL);
 #endif
                   }
 
@@ -392,7 +448,7 @@ AttributeGeneratorTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Attr
           if (global_scope_source->get_declarations().empty() == false)
              {
             // Nothing to do.
-#if 0
+#if 1
                modify_dsl_variable_initializers();
 #else
                printf ("Skipping call to modify_dsl_variable_initializers() \n");
@@ -402,6 +458,46 @@ AttributeGeneratorTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Attr
              {
             // Skip adding #include and comments to an empty file (thoough it should work).
                printf ("Generating an empty file: not extra processing required \n");
+             }
+        }
+
+     switch (astNode->variantT())
+        {
+          case V_SgClassDeclaration:
+          case V_SgTemplateClassDeclaration:
+             {
+            // The case of a class declaration need not generate new code since the DSL_Attribute template can take the class type as a parameter.
+            // But the DSL comiler has to know what classes to use as a basis for DSL keywords, so it might be simpler to just generate code for these cases.
+
+            // SgClassDeclaration* classDeclaration = isSgClassDeclaration(astNode);
+               SgClassDeclaration* classDeclaration = isSgTemplateInstantiationDecl(astNode) == NULL ? isSgClassDeclaration(astNode) : NULL;
+               if (isSgTemplateClassDeclaration(classDeclaration) != NULL)
+                  {
+                    classDeclaration = NULL;
+                  }
+            // ROSE_ASSERT(classDeclaration != NULL);
+
+               if (classDeclaration != NULL)
+                  {
+                    printf ("In evaluateSynthesizedAttribute(): finished processing of class = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+                    printf ("   --- nondefining declaration = %p \n",classDeclaration->get_firstNondefiningDeclaration());
+                    printf ("   --- defining declaration    = %p \n",classDeclaration->get_definingDeclaration());
+                  }
+
+               if (DSLnodes.find(classDeclaration) != DSLnodes.end())
+                  {
+                    printf ("In evaluateSynthesizedAttribute() class = %p = %s = %s (turn internal debugging off) \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+
+                    internal_debugging = false;
+                  }
+             }
+
+          default:
+             {
+            // Cases not handled
+#if 0
+               printf ("AttributeGeneratorTraversal::evaluateSynthesizedAttribute: case not handled: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#endif
              }
         }
 
@@ -418,16 +514,219 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
      printf ("Fixup the dsl variable initializers to communicate what DSL abstractions have been identified \n");
   // ROSE_ASSERT(false);
 
+     printf ("In modify_dsl_variable_initializers(): dsl_type_list.size() = %zu \n",dsl_type_list.size());
+
+  // There are four specific variables that hold information specific to the DSL target abstractions.
+  // string initializerString;
+     string dsl_type_names_initializerString;
+     string dsl_function_names_initializerString;
+     string dsl_member_function_names_initializerString;
+     string dsl_attribute_map_initializerString;
+
+     if (dsl_type_list.empty() == false)
+        {
+       // initializerString = " = { ";
+          dsl_type_names_initializerString            = " = { ";
+          dsl_function_names_initializerString        = " = { ";
+          dsl_member_function_names_initializerString = " = { ";
+          dsl_attribute_map_initializerString         = " = { ";
+        }
+
      for (size_t i = 0; i < dsl_type_list.size(); i++)
         {
           SgType* type = dsl_type_list[i];
           ROSE_ASSERT(type != NULL);
 
-          printf ("Process saved DSL type: type = %p = %s \n",type,type->class_name().c_str());
-
           SgClassType* classType = isSgClassType(type);
           ROSE_ASSERT(classType != NULL);
 
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+          ROSE_ASSERT(classDeclaration != NULL);
+
+          string type_name = classDeclaration->get_name();
+
+          printf ("Process saved DSL type i = %zu: type = %p = %s type_name = %s \n",i,type,type->class_name().c_str(),type_name.c_str());
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
+       // Add the attribute to the initializer of the associated dsl_attribute_map_variable variable.
+
+       // initializerString += " { {className},{className_dsl_attribute()} } ";
+       // dsl_type_names_initializerString += " { \"$className\" } ";
+          dsl_type_names_initializerString += " \"$className\" ";
+       // dsl_function_names_initializerString += " { \"functionName\"} ";
+       // dsl_member_function_names_initializerString += " { {\"className\"}, {\"functionName\"} } ";
+          dsl_attribute_map_initializerString += " { {\"$className\"},{className_dsl_attribute()} } ";
+
+          dsl_type_names_initializerString    = StringUtility::copyEdit(dsl_type_names_initializerString,"$className",type_name);
+          dsl_attribute_map_initializerString = StringUtility::copyEdit(dsl_attribute_map_initializerString,"$className",type_name);
+
+          if (i < dsl_type_list.size()-1)
+             {
+            // initializerString += ",";
+               dsl_type_names_initializerString += ",";
+            // dsl_function_names_initializerString += ",";
+            // dsl_member_function_names_initializerString += ",";
+               dsl_attribute_map_initializerString += ",";
+             }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+     if (dsl_type_list.empty() == false && dsl_function_list.empty() == false)
+        {
+       // initializerString += ",";
+       // dsl_type_names_initializerString += ",";
+          dsl_function_names_initializerString += ",";
+       // dsl_member_function_names_initializerString += ",";
+          dsl_attribute_map_initializerString += ",";
+        }
+
+     for (size_t i = 0; i < dsl_function_list.size(); i++)
+        {
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(dsl_function_list[i]);
+          ROSE_ASSERT(functionDeclaration != NULL);
+
+          string function_name = functionDeclaration->get_name();
+
+          printf ("Process saved DSL function i = %zu: function_name = %s functionDeclaration = %p = %s \n",
+               i,function_name.c_str(),functionDeclaration,functionDeclaration->class_name().c_str());
+
+       // initializerString += " { {functionName},{functionName_dsl_attribute()} } ";
+          dsl_function_names_initializerString += "{\"functionName\"}";
+       // dsl_member_function_names_initializerString += "{\"memberFunctionName\"}";
+          dsl_attribute_map_initializerString += " { {\"functionName\"},{functionName_dsl_attribute()} } ";
+          if (i < dsl_function_list.size()-1)
+             {
+            // initializerString += ",";
+            // dsl_type_names_initializerString += ",";
+               dsl_function_names_initializerString += ",";
+            // dsl_member_function_names_initializerString += ",";
+               dsl_attribute_map_initializerString += ",";
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+     printf ("dsl_type_list.empty()            = %s \n",dsl_type_list.empty()            ? "true" : "false");
+     printf ("dsl_function_list.empty()        = %s \n",dsl_function_list.empty()        ? "true" : "false");
+     printf ("dsl_member_function_list.empty() = %s \n",dsl_member_function_list.empty() ? "true" : "false");
+
+     if ( (dsl_type_list.empty() == false || dsl_function_list.empty() == false) && (dsl_member_function_list.empty() == false) )
+        {
+       // Only add a "'" for the dsl_attribute_map_initializerString.
+       // initializerString += ",";
+       // dsl_type_names_initializerString += ",";
+       // dsl_function_names_initializerString += ",";
+       // dsl_member_function_names_initializerString += ",";
+          dsl_attribute_map_initializerString += ",";
+        }
+
+     for (size_t i = 0; i < dsl_member_function_list.size(); i++)
+        {
+          SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(dsl_member_function_list[i]);
+          ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(memberFunctionDeclaration->get_associatedClassDeclaration());
+          ROSE_ASSERT(classDeclaration != NULL);
+
+          printf ("classDeclaration (for member function) = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+
+       // We might at some point want the qualified name.
+          string class_name           = classDeclaration->get_name();
+          string member_function_name = memberFunctionDeclaration->get_name();
+
+          printf ("Process saved DSL member_function i = %zu: class_name = %s member_function_name = %s functionDeclaration = %p = %s \n",
+                  i,class_name.c_str(),member_function_name.c_str(),memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str());
+
+       // initializerString += " { {functionName},{functionName_dsl_attribute()} } ";
+       // dsl_function_names_initializerString += "{\"functionName\"}";
+       // dsl_member_function_names_initializerString += "{\"memberFunctionName\"}";
+       // dsl_member_function_names_initializerString += "\"memberFunctionName\"";
+          dsl_member_function_names_initializerString += " { \"" + class_name + "\" \"" + member_function_name + "\" } ";
+       // dsl_attribute_map_initializerString += " { {\"functionName\"},{functionName_dsl_attribute()} } ";
+          dsl_attribute_map_initializerString += " { \"memberFunctionName\",memberFunctionName_dsl_attribute() } ";
+          if (i < dsl_member_function_list.size()-1)
+             {
+            // initializerString += ",";
+            // dsl_type_names_initializerString += ",";
+            // dsl_function_names_initializerString += ",";
+               dsl_member_function_names_initializerString += ",";
+               dsl_attribute_map_initializerString += ",";
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // Add the type name to the initializer of the associated dsl_type_names_variable variable.
+     ROSE_ASSERT(dsl_type_names_variable != NULL);
+     SgConstructorInitializer* dsl_type_names_variable_initializer = isSgConstructorInitializer(dsl_type_names_variable->get_initializer());
+
+     ROSE_ASSERT(dsl_type_names_variable_initializer != NULL);
+     ROSE_ASSERT(dsl_type_names_variable_initializer->get_args() != NULL);
+     ROSE_ASSERT(dsl_type_names_variable_initializer->get_args()->get_expressions().empty() == false);
+
+     ROSE_ASSERT(dsl_function_names_variable != NULL);
+     SgConstructorInitializer* dsl_function_names_variable_initializer = isSgConstructorInitializer(dsl_function_names_variable->get_initializer());
+
+     ROSE_ASSERT(dsl_member_function_names_variable != NULL);
+     SgConstructorInitializer* dsl_member_function_names_variable_initializer = isSgConstructorInitializer(dsl_member_function_names_variable->get_initializer());
+
+     ROSE_ASSERT(dsl_attribute_map_variable != NULL);
+     SgConstructorInitializer* dsl_attribute_map_variable_initializer = isSgConstructorInitializer(dsl_attribute_map_variable->get_initializer());
+
+     if (dsl_type_list.empty() == false)
+        {
+       // initializerString += " }";
+          dsl_type_names_initializerString += " }";
+          dsl_function_names_initializerString += " }";
+          dsl_member_function_names_initializerString += " }";
+          dsl_attribute_map_initializerString += " }";
+
+       // printf ("initializerString = %s \n",initializerString.c_str());
+          printf ("dsl_type_names_initializerString            = %s \n",dsl_type_names_initializerString.c_str());
+          printf ("dsl_function_names_initializerString        = %s \n",dsl_function_names_initializerString.c_str());
+          printf ("dsl_member_function_names_initializerString = %s \n",dsl_member_function_names_initializerString.c_str());
+          printf ("dsl_attribute_map_initializerString         = %s \n",dsl_attribute_map_initializerString.c_str());
+
+       // SageInterface::addTextForUnparser(dsl_type_names_variable_initializer,initializerString,AstUnparseAttribute::e_replace);
+          SageInterface::addTextForUnparser(dsl_type_names_variable_initializer,dsl_type_names_initializerString,AstUnparseAttribute::e_replace);
+          SageInterface::addTextForUnparser(dsl_function_names_variable_initializer,dsl_function_names_initializerString,AstUnparseAttribute::e_replace);
+          SageInterface::addTextForUnparser(dsl_member_function_names_variable_initializer,dsl_member_function_names_initializerString,AstUnparseAttribute::e_replace);
+          SageInterface::addTextForUnparser(dsl_attribute_map_variable_initializer,dsl_attribute_map_initializerString,AstUnparseAttribute::e_replace);
+        }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+#if 1
+SgNode* 
+AttributeGeneratorTraversal::buildAttribute(SgType* type)
+   {
+     printf ("Build DSL attribute for type = %p = %s \n",type,type->class_name().c_str());
+
+     dsl_type_list.push_back(type);
+
+#if 1
+  // SgTemplateInstantiationDecl* templateClass = NULL;
+
+     SgClassType* classType = isSgClassType(type);
+     if (classType != NULL)
+        {
        // We don't have to generate code for class types (but perhaps we will to avoid template issues initially).
        // Alternative we could in this narrow non-function case just build the tempalte instantiation declaration.
           SgClassDeclaration* ClassDeclarationFromType = isSgClassDeclaration(classType->get_declaration());
@@ -436,7 +735,9 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
           printf ("Building DSL support for ClassDeclarationFromType = %p = %s = %s \n",ClassDeclarationFromType,ClassDeclarationFromType->class_name().c_str(),name.str());
           ROSE_ASSERT(global_scope_header != NULL);
 
-          SgName attribute_name = name + "_dsl_attribute";
+       // Don't let class names collide with constructor member function names.
+       // SgName attribute_name = name + "_dsl_attribute";
+          SgName attribute_name = name + "_dsl_type_attribute";
 
        // SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration(attribute_name,global_scope_header);
           SgClassDeclaration* nonDefiningDecl              = NULL;
@@ -449,10 +750,66 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
           ROSE_ASSERT(generatedClass->get_startOfConstruct() != NULL);
           ROSE_ASSERT(generatedClass->get_endOfConstruct() != NULL);
 
-#if 0
-       // If we want to handle the DSL attribute that we generate as a templated class then we can just 
-       // build template instantiations so that they will exist at compile time for use in the DSL compiler.
+       // generatedClass->get_startOfConstruct()->display("In buildAttribute(): added class to global scope: debug");
 
+       // Add the base class
+       // Lookup the base class by name
+       // SgBaseClassPtrList p_inheritances
+       // SgClassSymbol* baseClassSymbol = global_scope_header->lookup_class_symbol("dsl_attribute",NULL);
+          ROSE_ASSERT(global_scope_requiredSourceCode != NULL);
+          SgClassSymbol* baseClassSymbol = global_scope_requiredSourceCode->lookup_class_symbol("dsl_attribute",NULL);
+          ROSE_ASSERT(baseClassSymbol != NULL);
+
+          SgClassDeclaration* baseClassDeclaration = baseClassSymbol->get_declaration();
+          ROSE_ASSERT(baseClassDeclaration != NULL);
+
+          SgClassDefinition* generatedClassDefinition = generatedClass->get_definition();
+          ROSE_ASSERT(generatedClassDefinition != NULL);
+
+       // This builder function adds it to the inheritance list.
+          bool isVirtual = false;
+          bool isDirect  = false;
+          SgBaseClass* baseClass = SageBuilder::buildBaseClass(baseClassDeclaration,generatedClassDefinition,isVirtual,isDirect);
+          ROSE_ASSERT(baseClass != NULL);
+#if 0
+       // For each class we want the class member declarations to be:
+               public:
+                 // Depending on the compile time semantics we want to leverage we may not need an object here.
+                    array value;
+
+                    array_dsl_attribute();
+                    virtual ~array_dsl_attribute();
+
+                    std::string toString();
+                    std::string additionalNodeOptions();
+#endif
+
+       // DQ (2/25/2016): To simplify the inital code construction we will fill in the class with a string based unparsing mechanism.
+       // This can be replaced with mechanisms to construct the AST directly when we are sure what code we want to build.
+       // For now this is a simple way to tailor the code and add comments easily and quickly.
+          string s = "\n \
+     public: \n \
+       // Depending on the compile time semantics we want to leverage we may not need an object here. \n \
+          $DSL_NAME value; \n \
+\n \
+       // I think we can comment out the constructor and destructor. \n \
+       // $DSL_NAME_dsl_attribute(); \n \
+       // virtual ~$DSL_NAME_dsl_attribute(); \n \
+\n \
+       // Required functions \n \
+          std::string toString() { return \"$DSL_NAME_attribute\"; } \n \
+          std::string additionalNodeOptions() { return \"fillcolor=\\\"red2\\\",style=filled\"; } \n";
+
+       // Substitue value defined by name for "$DSL_NAME" in string.
+       // ROSE_UTIL_API std::string copyEdit(const std::string& inputString, const std::string & oldToken, const std::string & newToken);
+          string new_string = StringUtility::copyEdit(s,"$DSL_NAME",name);
+
+       // AstUnparseAttribute* astUnparseAttribute = new AstUnparseAttribute(s,AstUnparseAttribute::e_inside);
+       // ROSE_ASSERT(astUnparseAttribute != NULL);
+       // generatedClassDefinition->addAttribute(astUnparseAttribute);
+       // SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribute::RelativePositionType inputlocation )
+          SageInterface::addTextForUnparser(generatedClassDefinition,new_string,AstUnparseAttribute::e_inside);
+#if 0
           ROSE_ASSERT(global_scope_requiredSourceCode);
 
        // Find the template class and build an template instantiation directive to force the instantiation (instead of generating code directly).
@@ -476,80 +833,23 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
           ROSE_ASSERT(templateInstantiationDirective->get_startOfConstruct() != NULL);
           ROSE_ASSERT(templateInstantiationDirective->get_endOfConstruct() != NULL);
 #else
+       // Put the class declaration into the header file.
        // We can share this, for now, though generally it is a bad idea.
-       // SageInterface::appendStatement(generatedClass,global_scope_header);
-
+          SageInterface::appendStatement(generatedClass,global_scope_header);
        // SageInterface::appendStatement(generatedClass,global_scope_source);
-          SageInterface::prependStatement(generatedClass,global_scope_source);
 #endif
-
-       // Add the type name to the initializer of the associated dsl_type_names_variable variable.
-          ROSE_ASSERT(dsl_type_names_variable != NULL);
-          SgConstructorInitializer* dsl_type_names_variable_initializer = isSgConstructorInitializer(dsl_type_names_variable->get_initializer());
-
-          ROSE_ASSERT(dsl_type_names_variable_initializer != NULL);
-          ROSE_ASSERT(dsl_type_names_variable_initializer->get_args() != NULL);
-          ROSE_ASSERT(dsl_type_names_variable_initializer->get_args()->get_expressions().empty() == false);
-
-       // Get the first element as an example AST subtree.
-          SgConstructorInitializer* exampleTypeNameConstructor = isSgConstructorInitializer(dsl_type_names_variable_initializer->get_args()->get_expressions()[0]);
-          ROSE_ASSERT(exampleTypeNameConstructor != NULL);
-
-          SgTreeCopy copyHelp;
-       // Make a copy of the example AST subtree expression.
-          SgNode* typeNameCopy = exampleTypeNameConstructor->copy(copyHelp);
-          ROSE_ASSERT(typeNameCopy != NULL);
-
-          SgConstructorInitializer* typeNameConstructorInitializer = isSgConstructorInitializer(typeNameCopy);
-          ROSE_ASSERT(typeNameConstructorInitializer != NULL);
-
-          printf ("exampleTypeNameConstructor     = %p \n",exampleTypeNameConstructor);
-          printf ("typeNameConstructorInitializer = %p \n",typeNameConstructorInitializer);
-
-          ROSE_ASSERT(typeNameConstructorInitializer != exampleTypeNameConstructor);
-
-       // Modify the copy of the exampleTypeNameConstructor to change the string literal.
-          SgExpression* expectedStringVal = typeNameConstructorInitializer->get_args()->get_expressions()[0];
-          ROSE_ASSERT(expectedStringVal != NULL);
-       // SgStringVal* stringLiteral = isSgStringVal(typeNameConstructorInitializer->get_args()->get_expressions()[0]);
-          SgStringVal* stringLiteral = isSgStringVal(expectedStringVal);
-          if (stringLiteral == NULL)
-             {
-               printf ("ERROR: What is this: expectedStringVal = %p = %s \n",expectedStringVal,expectedStringVal->class_name().c_str());
-
-               SgAggregateInitializer* aggrigateInitializer = isSgAggregateInitializer(expectedStringVal);
-               ROSE_ASSERT(aggrigateInitializer != NULL);
-               for (size_t i = 0; i < aggrigateInitializer->get_initializers()->get_expressions().size(); i++)
-                  {
-                    printf ("elements: aggrigateInitializer->get_initializers()->get_expressions()[%zu] = %s \n",i,aggrigateInitializer->get_initializers()->get_expressions()[i]->class_name().c_str());
-                  }
-               SgConstructorInitializer* nested_constructorInitializer = isSgConstructorInitializer(aggrigateInitializer->get_initializers()->get_expressions()[0]);
-               ROSE_ASSERT(nested_constructorInitializer != NULL);
-               expectedStringVal = nested_constructorInitializer->get_args()->get_expressions()[0];
-               stringLiteral = isSgStringVal(expectedStringVal);
-
-               ROSE_ASSERT(stringLiteral != NULL);
-             }
-
-          ROSE_ASSERT(stringLiteral != NULL);
-
-          printf ("OLD stringLiteral value = %s \n",stringLiteral->get_value().c_str());
-       // stringLiteral->set_value("abcdefg");
-          stringLiteral->set_value(name);
-          printf ("NEW stringLiteral value = %s \n",stringLiteral->get_value().c_str());
-
-          dsl_type_names_variable_initializer->get_args()->append_expression(typeNameConstructorInitializer);
-
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-#endif
-
 
        // Add the attribute to the initializer of the associated dsl_attribute_map_variable variable.
+       // But we have not see the variable yet (since they are defined after the DSL abstractions's declarations.
+       // So we have to put this onto a stack for processing when (or after) we see the associated variable.
+       // dsl_type_name_list.push_back(name);
 
 #if 0
-       // This is the builder function we might want to use.
+       // This should be an pair<string,dsl_attribute> instead of pair<string,string>.
+       // dsl_attribute_map_list.push(pair<string,string>(name,attribute_name));
+       // dsl_attribute_map_list.push(pair<string,SgConstructorInitializer*>(name,generatedClass));
+          SgConstructorInitializer* constructorInitializer = NULL;
+
        // SgConstructorInitializer* buildConstructorInitializer( 
        //    SgMemberFunctionDeclaration *declaration, SgExprListExp *args, 
        //    SgType *expression_type, bool need_name, bool need_qualifier, 
@@ -562,71 +862,18 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
           ROSE_ASSERT(dsl_attribute_map_variable_initializer->get_args() != NULL);
           ROSE_ASSERT(dsl_attribute_map_variable_initializer->get_args()->get_expressions().empty() == false);
 
-          SgConstructorInitializer* exampleAttributePairConstructor = isSgConstructorInitializer(dsl_attribute_map_variable_initializer->get_args()->get_expressions()[0]);
-          ROSE_ASSERT(exampleAttributePairConstructor != NULL);
+          SgConstructorInitializer* exampleConstructor = dsl_attribute_map_variable_initializer->get_args()->get_expressions()[0];
+          ROSE_ASSERT(exampleConstructor != NULL);
 
-       // Make a copy of the expression.
-          SgNode* attributePairCopy = exampleAttributePairConstructor->copy(copyHelp);
-          ROSE_ASSERT(attributePairCopy != NULL);
+       // constructorInitializer = ASTCopy::copy(exampleConstructor);
+          constructorInitializer = exampleConstructor;
+          ROSE_ASSERT(constructorInitializer != NULL);
 
-          SgConstructorInitializer* attributePairConstructorInitializer = isSgConstructorInitializer(attributePairCopy);
-          ROSE_ASSERT(attributePairConstructorInitializer != NULL);
+          dsl_attribute_map_variable_initializer->get_args()->append_expression(constructorInitializer);
 
-          printf ("exampleAttributePairConstructor     = %p \n",exampleAttributePairConstructor);
-          printf ("attributePairConstructorInitializer = %p \n",attributePairConstructorInitializer);
+          ROSE_ASSERT(constructorInitializer != NULL);
 
-          SgExpression* tempExp_0 = attributePairConstructorInitializer->get_args()->get_expressions()[0];
-          ROSE_ASSERT(tempExp_0 != NULL);
-          printf ("tempExp_0 = %p = %s \n",tempExp_0,tempExp_0->class_name().c_str());
-
-       // Find the first element of the new copy.
-          SgConstructorInitializer* dslAbstractionNameConstructor = isSgConstructorInitializer(attributePairConstructorInitializer->get_args()->get_expressions()[0]);
-          if (dslAbstractionNameConstructor == NULL)
-             {
-               printf ("ERROR: What is this: attributePairConstructorInitializer->get_args()->get_expressions()[0] = %s \n",
-                    attributePairConstructorInitializer->get_args()->get_expressions()[0]->class_name().c_str());
-             }
-          ROSE_ASSERT(dslAbstractionNameConstructor != NULL);
-
-       // Modify the copy of the exampleTypeNameConstructor to change the string literal.
-          SgStringVal* attributeStringLiteral = isSgStringVal(dslAbstractionNameConstructor->get_args()->get_expressions()[0]);
-          ROSE_ASSERT(attributeStringLiteral != NULL);
-
-          printf ("OLD attributeStringLiteral value = %s \n",attributeStringLiteral->get_value().c_str());
-       // stringLiteral->set_value("abcdefg");
-          attributeStringLiteral->set_value(name);
-          printf ("NEW attributeStringLiteral value = %s \n",attributeStringLiteral->get_value().c_str());
-
-          ROSE_ASSERT(attributePairConstructorInitializer->get_args() != NULL);
-          ROSE_ASSERT(attributePairConstructorInitializer->get_args()->get_expressions().size() == 2);
-
-       // Find the first element of the new copy.
-          SgExpression* tempExp_1 = attributePairConstructorInitializer->get_args()->get_expressions()[1];
-          ROSE_ASSERT(tempExp_1 != NULL);
-          printf ("tempExp_1 = %p = %s \n",tempExp_1,tempExp_1->class_name().c_str());
-
-       // The cast is not pressent if we use the example which references the base class (dsl_attribute).
-       // SgCastExp* castExp = isSgCastExp(attributePairConstructorInitializer->get_args()->get_expressions()[1]);
-       // ROSE_ASSERT(castExp != NULL);
-          SgConstructorInitializer* dslAbstractionAttributeConstructor = isSgConstructorInitializer(attributePairConstructorInitializer->get_args()->get_expressions()[1]);
-          ROSE_ASSERT(dslAbstractionAttributeConstructor != NULL);
-
-          SgType* expressionType = dslAbstractionAttributeConstructor->get_expression_type();
-          ROSE_ASSERT(expressionType != NULL);
-       // SgClassDeclaration* classDeclaration = dslAbstractionAttributeConstructor->
-          printf ("expressionType = %p = %s \n",expressionType,expressionType->class_name().c_str());
-          SgClassType* attributeClassType = isSgClassType(expressionType);
-          ROSE_ASSERT(attributeClassType != NULL);
-          SgClassDeclaration* attributeClassDeclaration = isSgClassDeclaration(attributeClassType->get_declaration());
-
-          printf ("attributeClassDeclaration->get_name() = %s \n",attributeClassDeclaration->get_name().str());
-
-          SgClassType* generatedClassType = generatedClass->get_type();
-          ROSE_ASSERT(generatedClassType != NULL);
-
-          dslAbstractionAttributeConstructor->set_expression_type(generatedClassType);
-
-          dsl_attribute_map_variable_initializer->get_args()->append_expression(attributePairConstructorInitializer);
+          dsl_attribute_map_list.push(constructorInitializer);
 #endif
 
 #if 0
@@ -634,22 +881,131 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
           ROSE_ASSERT(false);
 #endif
         }
-
-
-       for (size_t i = 0; i < dsl_function_list.size(); i++)
-        {
-          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(dsl_function_list[i]);
-          ROSE_ASSERT(functionDeclaration != NULL);
-
-          printf ("Process saved DSL function: functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
-
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
 #endif
-        }
 
+     return NULL;
    }
+#endif
+
+
+#if 1
+SgNode* 
+AttributeGeneratorTraversal::buildAttribute(SgFunctionDeclaration* function)
+   {
+     ROSE_ASSERT(function != NULL);
+     printf ("Build DSL attribute for function = %p = %s = %s \n",function,function->class_name().c_str(),function->get_name().str());
+
+  // dsl_function_list.push_back(function);
+     SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(function);
+     if (memberFunctionDeclaration != NULL)
+        {
+          dsl_member_function_list.push_back(memberFunctionDeclaration);
+        }
+       else
+        {
+          dsl_function_list.push_back(function);
+        }
+
+#if 1
+     if (function != NULL)
+        {
+          SgName name = function->get_name();
+          printf ("Building DSL support for function = %p = %s = %s \n",function,function->class_name().c_str(),name.str());
+          ROSE_ASSERT(global_scope_header != NULL);
+
+       // SgName attribute_name = name + "_dsl_attribute";
+          SgName attribute_name = name + "_dsl_function_attribute";
+
+       // SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration(attribute_name,global_scope_header);
+          SgClassDeclaration* nonDefiningDecl              = NULL;
+          bool buildTemplateInstantiation                  = false; 
+          SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+
+          SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration_nfi(attribute_name,SgClassDeclaration::e_class,global_scope_header,nonDefiningDecl,buildTemplateInstantiation,templateArgumentsList);
+          ROSE_ASSERT(generatedClass != NULL);
+
+          ROSE_ASSERT(generatedClass->get_startOfConstruct() != NULL);
+          ROSE_ASSERT(generatedClass->get_endOfConstruct() != NULL);
+
+       // generatedClass->get_startOfConstruct()->display("In buildAttribute(): added class to global scope: debug");
+
+       // Add the base class
+       // Lookup the base class by name
+       // SgBaseClassPtrList p_inheritances
+       // SgClassSymbol* baseClassSymbol = global_scope_header->lookup_class_symbol("dsl_attribute",NULL);
+          ROSE_ASSERT(global_scope_requiredSourceCode != NULL);
+          SgClassSymbol* baseClassSymbol = global_scope_requiredSourceCode->lookup_class_symbol("dsl_attribute",NULL);
+          ROSE_ASSERT(baseClassSymbol != NULL);
+
+          SgClassDeclaration* baseClassDeclaration = baseClassSymbol->get_declaration();
+          ROSE_ASSERT(baseClassDeclaration != NULL);
+
+          SgClassDefinition* generatedClassDefinition = generatedClass->get_definition();
+          ROSE_ASSERT(generatedClassDefinition != NULL);
+
+       // This builder function adds it to the inheritance list.
+          bool isVirtual = false;
+          bool isDirect  = false;
+          SgBaseClass* baseClass = SageBuilder::buildBaseClass(baseClassDeclaration,generatedClassDefinition,isVirtual,isDirect);
+          ROSE_ASSERT(baseClass != NULL);
+#if 0
+       // For each class we want the class member declarations to be:
+               public:
+                 // Depending on the compile time semantics we want to leverage we may not need an object here.
+                    array value;
+
+                    array_dsl_attribute();
+                    virtual ~array_dsl_attribute();
+
+                    std::string toString();
+                    std::string additionalNodeOptions();
+#endif
+
+       // DQ (2/25/2016): To simplify the inital code construction we will fill in the class with a string based unparsing mechanism.
+       // This can be replaced with mechanisms to construct the AST directly when we are sure what code we want to build.
+       // For now this is a simple way to tailor the code and add comments easily and quickly.
+          string s = "\n \
+     public: \n \
+       // Depending on the compile time semantics we want to leverage we may not need an object here. \n \
+       // $DSL_NAME value; \n \
+\n \
+       // I think we can comment out the constructor and destructor. \n \
+       // $DSL_NAME_dsl_attribute(); \n \
+       // virtual ~$DSL_NAME_dsl_attribute(); \n \
+\n \
+       // Required functions \n \
+          std::string toString() { return \"$DSL_NAME_attribute\"; } \n \
+          std::string additionalNodeOptions() { return \"fillcolor=\\\"lightblue\\\",style=filled\"; } \n";
+
+       // Substitue value defined by name for "$DSL_NAME" in string.
+       // ROSE_UTIL_API std::string copyEdit(const std::string& inputString, const std::string & oldToken, const std::string & newToken);
+          string new_string = StringUtility::copyEdit(s,"$DSL_NAME",name);
+
+       // AstUnparseAttribute* astUnparseAttribute = new AstUnparseAttribute(s,AstUnparseAttribute::e_inside);
+       // ROSE_ASSERT(astUnparseAttribute != NULL);
+       // generatedClassDefinition->addAttribute(astUnparseAttribute);
+       // SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribute::RelativePositionType inputlocation )
+          SageInterface::addTextForUnparser(generatedClassDefinition,new_string,AstUnparseAttribute::e_inside);
+
+       // Put the class declaration into the header file.
+       // We can share this, for now, though generally it is a bad idea.
+          SageInterface::appendStatement(generatedClass,global_scope_header);
+       // SageInterface::appendStatement(generatedClass,global_scope_source);
+
+       // Add the attribute to the initializer of the associated dsl_attribute_map_variable variable.
+       // But we have not see the variable yet (since they are defined after the DSL abstractions's declarations.
+       // So we have to put this onto a stack for processing when (or after) we see the associated variable.
+       // dsl_type_name_list.push_back(name);
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+     return NULL;
+   }
+#endif
 
 
 
@@ -685,19 +1041,17 @@ int main( int argc, char * argv[] )
 
      ROSE_ASSERT(t.generatedHeaderFile != NULL);
 
-#if 0
+#if 1
      printf ("t.global_scope_header->get_declarations().size() = %zu \n",t.global_scope_header->get_declarations().size());
-     printf ("t.generatedHeaderFile->unparseToString() = %s \n",t.generatedHeaderFile->unparseToString().c_str());
+  // printf ("t.generatedHeaderFile->unparseToString() = %s \n",t.generatedHeaderFile->unparseToString().c_str());
 
      printf ("t.global_scope_source->get_declarations().size() = %zu \n",t.global_scope_source->get_declarations().size());
-     printf ("t.generatedSourceFile->unparseToString() = %s \n",t.generatedSourceFile->unparseToString().c_str());
+  // printf ("t.generatedSourceFile->unparseToString() = %s \n",t.generatedSourceFile->unparseToString().c_str());
 #endif
 
 #if DEBUG_USING_DOT_GRAPHS
   // generateDOT(*(t.generatedHeaderFile),"_after_transformation");
 #endif
-
-
 
      t.unparseGeneratedCode();
 

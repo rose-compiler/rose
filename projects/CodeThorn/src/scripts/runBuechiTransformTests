@@ -1,0 +1,63 @@
+#1/bin/bash
+
+#$1: CodeThorn's src directory
+#$2: CodeThorn's build directory
+
+SRCDIR=$1
+BUILDDIR=$2
+
+P1="Problem1"
+P2="Problem2"
+P3="Problem3"
+P4="Problem28"
+P5="Problem1T_size5_14"
+
+MAKE_CHECK="_make_check"
+
+echo ".====================================."
+echo "| testing option --keep-error-states |"
+echo "*====================================*"
+
+#create a temp directory
+CURRENT_TIME=`date '+%m-%d-%y_%H:%M:%S'`
+TEMP_DIR="make_check_log_"${CURRENT_TIME}
+mkdir ${2}/${TEMP_DIR}
+echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
+
+for i in 1 4 5 #test all versions listed as P1,P2,... above
+do
+  # generate opt version
+  eval $SRCDIR/scripts/transform_globalinputvar $SRCDIR/tests/rers/\${P${i}}.c ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c
+  eval ${BUILDDIR}/woodpecker --edg:no_warnings ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c --eliminate-dead-code=yes --generate-transformed-code=yes 
+  eval mv rose_\${P${i}}_mod${MAKE_CHECK}.c ${2}/${TEMP_DIR}/\${P${i}}_opt${MAKE_CHECK}.c
+
+  #check problem specific ltl formulae and generate the results. Use one thread only for test purposes
+  v=4
+  VERSION="_opt"
+  eval $SRCDIR/scripts/genLtlResRegressionTest $i $v ${SRCDIR} ${2} ${2}/${TEMP_DIR} 1 yes
+
+  #compare with regression data
+  eval diff ${2}/${TEMP_DIR}/\${P${i}}${VERSION}_ltl_results_make_check.csv $SRCDIR/regressiondata2/\${P${i}}_ltl_results.csv >/dev/null 2>&1
+  if [ ! $? -eq 0 ] 
+  then 
+    eval echo "ERROR: RERS ltl / reachability regression data could not be correctly reproduced \(test case: keep error states\). Mismatch in problem: \${P${i}}"
+    echo "(Please look at directory <CodeThorn build dir>/src/${TEMP_DIR} for files that could not be matched)"
+    exit 1 
+  else
+    eval echo \${P${i}} "\(test case: keep error states\) succesfully verified."
+  fi
+
+  #remove all temporary files generated for the tests
+  eval rm ${2}/${TEMP_DIR}/\${P${i}}${VERSION}_ltl_results_make_check.csv
+  eval echo "file " ${2}/${TEMP_DIR}/\${P${i}}${VERSION}_ltl_results_make_check.csv "succesfully removed."
+  eval rm ${2}/${TEMP_DIR}/\${P${i}}_opt${MAKE_CHECK}.c ; eval rm ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c 
+  eval echo "files " ${2}/${TEMP_DIR}/\${P${i}}_opt${MAKE_CHECK}.c " and " ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c "succesfully removed."
+done
+
+#remove temp directory
+rm -rf ${2}/${TEMP_DIR}
+echo "removed directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
+    
+echo ".=============================================================."
+echo "| test of option \"--keep-error-states\" completed successfully |"
+echo "*=============================================================*"

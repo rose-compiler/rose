@@ -10,6 +10,7 @@ class array
        // Copy constructor
        // array(const array & X);
 
+#if 1
        // Assignment operator
           array operator= (const array & X);
           array operator= (int x);
@@ -25,4 +26,7 @@ class array
 
        // returns array of size set to ones.
        // array one (int size);
+#else
+          void foobar();
+#endif
    };

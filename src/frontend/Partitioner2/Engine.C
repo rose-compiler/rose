@@ -113,12 +113,24 @@ Engine::loaderSwitches() {
     SwitchGroup sg("Loader switches");
 
     sg.insert(Switch("remove-zeros")
-              .argument("size", nonNegativeIntegerParser(settings_.loader.deExecuteZeros), "128")
+              .argument("size", nonNegativeIntegerParser(settings_.loader.deExecuteZerosThreshold), "128")
               .doc("This switch causes execute permission to be removed from sequences of contiguous zero bytes. The "
                    "switch argument is the minimum number of consecutive zeros that will trigger the removal, and "
-                   "defaults to 128.  An argument of zero disables the removal.  When this switch is not specified at "
-                   "all, this tool assumes a value of " +
-                   StringUtility::plural(settings_.loader.deExecuteZeros, "bytes") + "."));
+                   "defaults to 128.  An argument of zero disables the removal.  Each interval of zeros is narrowed "
+                   "according to the @s{remove-zeros-narrow} switch before execute permission is removed. When this switch "
+                   "is not specified at all, this tool assumes a value of " +
+                   StringUtility::plural(settings_.loader.deExecuteZerosThreshold, "bytes") + "."));
+    sg.insert(Switch("remove-zeros-narrow")
+              .argument("@v{begin},@v{end}",
+                        listParser(nonNegativeIntegerParser(settings_.loader.deExecuteZerosLeaveAtFront))
+                        ->nextMember(nonNegativeIntegerParser(settings_.loader.deExecuteZerosLeaveAtBack))
+                        ->exactly(2))
+              .doc("If @s{remove-zeros} is active then each interval of zeros detected by that analysis is narrowed by "
+                   "removing @v{begin} and @v{end} bytes from the interval before execute permission is removed. This "
+                   "effectively makes the analysis less greedy and less apt to remove zeros from the ends and beginnings "
+                   "of adjacent instructions.  The default is to narrow each interval by " +
+                   StringUtility::plural(settings_.loader.deExecuteZerosLeaveAtFront, "bytes") + " at the beginning and " +
+                   StringUtility::plural(settings_.loader.deExecuteZerosLeaveAtBack, "bytes") + " at the end."));
 
     sg.insert(Switch("executable")
               .intrinsicValue(true, settings_.loader.memoryIsExecutable)
@@ -241,8 +253,9 @@ Engine::partitionerSwitches() {
 
     sg.insert(Switch("find-function-padding")
               .intrinsicValue(true, settings_.partitioner.findingFunctionPadding)
-              .doc("Look for padding such as zero bytes and certain instructions like no-ops that occur prior to the "
-                   "lowest address of a function and attach them to the function as static data.  The "
+              .doc("Cause each built-in and user-defined function padding analysis to run. The purpose of these "
+                   "analyzers is to look for padding such as zero bytes and certain instructions like no-ops that occur "
+                   "prior to the lowest address of a function and attach them to the function as static data.  The "
                    "@s{no-find-function-padding} switch turns this off.  The default is to " +
                    std::string(settings_.partitioner.findingFunctionPadding?"":"not ") + "search for padding."));
     sg.insert(Switch("no-find-function-padding")
@@ -340,6 +353,29 @@ Engine::partitionerSwitches() {
                    "table.  If a single address is specified, then the length of the table is architecture dependent, "
                    "otherwise the entire table is read."));
 
+    sg.insert(Switch("name-constants")
+              .intrinsicValue(true, settings_.partitioner.namingConstants)
+              .doc("Scans the instructions and gives labels to constants that refer to entities that have that address "
+                   "and also have a name.  For instance, if a constant refers to the beginning of a file section then "
+                   "the constant will be labeled so it has the same name as the section.  The @s{no-name-constants} "
+                   "turns this feature off. The default is to " + std::string(settings_.partitioner.namingConstants?"":"not ") +
+                   "do this step."));
+    sg.insert(Switch("no-name-constants")
+              .key("name-constants")
+              .intrinsicValue(false, settings_.partitioner.namingConstants)
+              .hidden(true));
+
+    sg.insert(Switch("name-strings")
+              .intrinsicValue(true, settings_.partitioner.namingStrings)
+              .doc("Scans the instructions and gives labels to constants that refer to the beginning of string literals. "
+                   "The label is usually the first few characters of the string.  The @s{no-name-strings} turns this "
+                   "feature off. The default is to " + std::string(settings_.partitioner.namingStrings?"":"not ") +
+                   "do this step."));
+    sg.insert(Switch("no-name-strings")
+              .key("name-strings")
+              .intrinsicValue(false, settings_.partitioner.namingStrings)
+              .hidden(true));
+
     sg.insert(Switch("post-analysis")
               .intrinsicValue(true, settings_.partitioner.doingPostAnalysis)
               .doc("Run all enabled post-partitioning analysis functions.  For instance, calculate stack deltas for each "
@@ -352,6 +388,19 @@ Engine::partitionerSwitches() {
     sg.insert(Switch("no-post-analysis")
               .key("post-analysis")
               .intrinsicValue(false, settings_.partitioner.doingPostAnalysis)
+              .hidden(true));
+
+    sg.insert(Switch("post-function-noop")
+              .intrinsicValue(true, settings_.partitioner.doingPostFunctionNoop)
+              .doc("Run a function no-op analysis for each function if post-partitioning analysis is enabled with the "
+                   "@s{post-analysis} switch. This analysis tries to determine whether each function is effectively a no-op. "
+                   "Functions that are no-ops are given names (if they don't already have one) that's indicative of "
+                   "being a no-op. The @s{no-post-function-noop} switch disables this analysis. The default is that "
+                   "this analysis is " +
+                   std::string(settings_.partitioner.doingPostFunctionNoop?"enable":"disable") + "."));
+    sg.insert(Switch("no-post-function-noop")
+              .key("post-function-noop")
+              .intrinsicValue(false, settings_.partitioner.doingPostFunctionNoop)
               .hidden(true));
 
     sg.insert(Switch("post-may-return")
@@ -686,7 +735,8 @@ void
 Engine::adjustMemoryMap() {
     if (settings_.loader.memoryIsExecutable)
         map_.any().changeAccess(MemoryMap::EXECUTABLE, 0);
-    Modules::deExecuteZeros(map_/*in,out*/, settings_.loader.deExecuteZeros);
+    Modules::deExecuteZeros(map_/*in,out*/, settings_.loader.deExecuteZerosThreshold,
+                            settings_.loader.deExecuteZerosLeaveAtFront, settings_.loader.deExecuteZerosLeaveAtBack);
 
     switch (settings_.loader.memoryDataAdjustment) {
         case DATA_IS_CONSTANT:
@@ -976,9 +1026,10 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
 
     if (interp_)
         ModulesPe::nameImportThunks(partitioner, interp_);
-    Modules::nameConstants(partitioner);
-    Modules::nameStrings(partitioner);
-    Modules::nameNoopFunctions(partitioner);
+    if (settings_.partitioner.namingConstants)
+        Modules::nameConstants(partitioner);
+    if (settings_.partitioner.namingStrings)
+        Modules::nameStrings(partitioner);
 }
 
 void
@@ -1242,9 +1293,8 @@ Engine::makeCalledFunctions(Partitioner &partitioner) {
 std::vector<Function::Ptr>
 Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) {
     std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa);
-    BOOST_FOREACH (const Function::Ptr &function, functions) {
-        partitioner.attachFunction(function);
-    }
+    BOOST_FOREACH (const Function::Ptr &function, functions)
+        partitioner.attachOrMergeFunction(function);
     return functions;
 }
 
@@ -1379,9 +1429,9 @@ Engine::attachSurroundedCodeToFunctions(Partitioner &partitioner) {
                 mlog[DEBUG] <<"attachSurroundedCodeToFunctions: basic block " <<StringUtility::addrToString(interval.least())
                             <<" is attached now to function " <<function->printableName() <<"\n";
                 partitioner.detachFunction(function);
-                function->insertBasicBlock(interval.least());
+                if (function->insertBasicBlock(interval.least()))
+                    ++nNewBlocks;
                 partitioner.attachFunction(function);
-                ++nNewBlocks;
             }
         }
 
@@ -1424,7 +1474,7 @@ Engine::attachSurroundedDataToFunctions(Partitioner &partitioner) {
     }
     AddressIntervalSet unused = partitioner.aum().unusedExtent(executableSpace);
 
-    // Iterate over the larged unused address intervals and find their surrounding functions
+    // Iterate over the large unused address intervals and find their surrounding functions
     std::vector<DataBlock::Ptr> retval;
     BOOST_FOREACH (const AddressInterval &interval, unused.intervals()) {
         if (interval.least()<=executableSpace.least() || interval.greatest()>=executableSpace.greatest())
@@ -1456,6 +1506,12 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
     Sawyer::Stopwatch timer;
     info <<"post partition analysis";
     std::string separator = ": ";
+
+    if (settings_.partitioner.doingPostFunctionNoop) {
+        info <<separator <<"func-no-op";
+        separator = ", ";
+        Modules::nameNoopFunctions(partitioner);
+    }
 
     if (settings_.partitioner.doingPostFunctionMayReturn) {
         info <<separator <<"may-return";

@@ -3,6 +3,15 @@
 
 begin transaction;
 
+--
+-- Persistent interface settings
+--
+create table interface_settings (
+    rose_public_version text default '',		-- version number to show by default on the public parts of the site
+    pass_criteria text default 'end' 			-- what test needs to be reached for ROSE to be considered useful
+);
+
+insert into interface_settings (rose_public_version) values ('');
 
 --
 -- List of software dependency packages.  There are a number of different kinds of dependencies:
@@ -203,6 +212,7 @@ create table test_results (
     rmc_dlib            varchar(64) default 'unknown',
     rmc_doxygen         varchar(64) default 'unknown',
     rmc_edg             varchar(64) default 'unknown',
+    rmc_java		varchar(64) default 'unknown',
     rmc_languages       varchar(64) default 'unknown',
     rmc_magic           varchar(64) default 'unknown',
     rmc_optimize        varchar(64) default 'unknown',

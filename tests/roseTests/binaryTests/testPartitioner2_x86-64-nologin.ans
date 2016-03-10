@@ -31,7 +31,7 @@
 0x0040053e: 48 c7 c7 e0 05 40 00    |H....@. |<sp-16>   mov    rdi, 0x004005e0
 0x00400545: e8 76 ff ff ff          |.v...   |<sp-16>   call   0x00000000004004c0<<Func>>
 0x00400545: Outgoing stack delta: -24
-0x00400545: Successor blocks: 0x004004c0, 0x0040054a
+0x00400545: Successor blocks: 0x004004c0<<Func>>, 0x0040054a
 
 0x0040054a: Basic block reasons: 
 0x0040054a: f4                      |.       |          hlt    

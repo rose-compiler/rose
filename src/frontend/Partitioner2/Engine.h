@@ -123,11 +123,17 @@ public:
      *
      *  The runtime descriptions and command-line parser for these switches can be obtained from @ref loaderSwitches. */
     struct LoaderSettings {
-        size_t deExecuteZeros;                          /**< Size threshold for removing execute permission from zero data. If
+        size_t deExecuteZerosThreshold;                 /**< Size threshold for removing execute permission from zero data. If
                                                          *   this data member is non-zero, then the memory map will be adjusted
                                                          *   by removing execute permission from any region of memory that has
-                                                         *   at least this many consecutive zero bytes. This happens after the
+                                                         *   at least this many consecutive zero bytes. The affected regions
+                                                         *   are adjusted by the @ref deExecuteZerosLeaveAtFront and @ref
+                                                         *   deExecuteZerosLeaveAtBack data members. This happens after the
                                                          *   @ref memoryIsExecutable property is processed. */
+        size_t deExecuteZerosLeaveAtFront;              /**< Number of bytes at the beginning of each zero area to leave
+                                                         *   unaffected. */
+        size_t deExecuteZerosLeaveAtBack;               /**< Number of bytes at the end of each zero area to leave
+                                                         *   unaffected. */
         MemoryDataAdjustment memoryDataAdjustment;      /**< How to globally adjust memory segment access bits for data
                                                          *   areas. See the enum for details. The default is @ref
                                                          *   DATA_NO_CHANGE, which causes the partitioner to use the
@@ -140,7 +146,8 @@ public:
                                                          *   @ref deExecuteZeros property is processed. */
 
         LoaderSettings()
-            : deExecuteZeros(0), memoryDataAdjustment(DATA_IS_INITIALIZED), memoryIsExecutable(false) {}
+            : deExecuteZerosThreshold(0), deExecuteZerosLeaveAtFront(16), deExecuteZerosLeaveAtBack(1),
+              memoryDataAdjustment(DATA_IS_INITIALIZED), memoryIsExecutable(false) {}
     };
 
     /** Settings that control the disassembler.
@@ -196,19 +203,22 @@ public:
         bool doingPostFunctionMayReturn;                /**< Run function-may-return analysis if doingPostAnalysis is set? */
         bool doingPostFunctionStackDelta;               /**< Run function-stack-delta analysis if doingPostAnalysis is set? */
         bool doingPostCallingConvention;                /**< Run calling-convention analysis if doingPostAnalysis is set? */
+        bool doingPostFunctionNoop;                     /**< Find and name functions that are effectively no-ops. */
         FunctionReturnAnalysis functionReturnAnalysis;  /**< How to run the function may-return analysis. */
         bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
         bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
         bool splittingThunks;                           /**< Split thunks into their own separate functions. */
         SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
+        bool namingConstants;                           /**< Give names to constants by calling @ref Modules::nameConstants. */
+        bool namingStrings;                             /**< Give labels to constants that are string literal addresses. */
 
         PartitionerSettings()
             : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
               findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
               doingPostAnalysis(true), doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true),
-              doingPostCallingConvention(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
+              doingPostCallingConvention(false), doingPostFunctionNoop(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
               findingDataFunctionPointers(false), findingThunks(true), splittingThunks(false),
-              semanticMemoryParadigm(LIST_BASED_MEMORY) {}
+              semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true) {}
     };
 
     /** Settings for controling the engine behavior.
@@ -361,7 +371,7 @@ public:
      *
      * @{ */
     Sawyer::CommandLine::ParserResult parseCommandLine(int argc, char *argv[],
-                                                       const std::string &purpose, const std::string &description);
+                                                       const std::string &purpose, const std::string &description) /*final*/;
     virtual Sawyer::CommandLine::ParserResult parseCommandLine(const std::vector<std::string> &args,
                                                                const std::string &purpose, const std::string &description);
     /** @} */
@@ -789,7 +799,7 @@ public:
      *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
      *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
      *  attachBlocksToFunctions tries to attach each basic block to a function. */
-    void discoverFunctions(Partitioner&);
+    virtual void discoverFunctions(Partitioner&);
 
     /** Attach dead code to function.
      *
@@ -966,12 +976,19 @@ public:
     /** Property: when to remove execute permission from zero bytes.
      *
      *  This is the number of consecutive zero bytes that must be present before execute permission is removed from this part
-     *  of the memory map.  A value of zero disables this feature.  This action happens after the @ref memoryIsExecutable
-     *  property is processed.
+     *  of the memory map.  A value of zero disables this feature.  The @ref deExecuteZerosThreshold is the number of
+     *  consecutive zero bytes that must be found to trigger this alteration, while the @ref deExecuteZerosLeaveAtFront and
+     *  @ref deExecuteZerosLeaveAtBack narrow each region slightly before removing execute permission.
+     *
+     *  This action happens after the @ref memoryIsExecutable property is processed.
      *
      * @{ */
-    size_t deExecuteZeros() const /*final*/ { return settings_.loader.deExecuteZeros; }
-    virtual void deExecuteZeros(size_t n) { settings_.loader.deExecuteZeros = n; }
+    size_t deExecuteZerosThreshold() const /*final*/ { return settings_.loader.deExecuteZerosThreshold; }
+    virtual void deExecuteZerosThreshold(size_t n) { settings_.loader.deExecuteZerosThreshold = n; }
+    size_t deExecuteZerosLeaveAtFront() const /*final*/ { return settings_.loader.deExecuteZerosLeaveAtFront; }
+    virtual void deExecuteZerosLeaveAtFront(size_t n) { settings_.loader.deExecuteZerosLeaveAtFront = n; }
+    size_t deExecuteZerosLeaveAtBack() const /*final*/ { return settings_.loader.deExecuteZerosLeaveAtBack; }
+    virtual void deExecuteZerosLeaveAtBack(size_t n) { settings_.loader.deExecuteZerosLeaveAtBack = n; }
     /** @} */
 
     /** Property: Global adjustments to memory map data access bits.
@@ -1048,7 +1065,7 @@ public:
      *
      * @{ */
     SemanticMemoryParadigm semanticMemoryParadigm() const /*final*/ { return settings_.partitioner.semanticMemoryParadigm; }
-    void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
+    virtual void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
     /** @} */
 
     /**  Property: Whether to follow ghost edges.
@@ -1191,6 +1208,16 @@ public:
     virtual void doingPostCallingConvention(bool b) { settings_.partitioner.doingPostCallingConvention = b; }
     /** @} */
 
+    /** Property: Whether to run no-op function analysis.
+     *
+     *  Determines whether function no-op analysis is run on each function when @ref doingPostAnalysis is true. This analysis
+     *  determines whether a function is effectively a no-op and gives it a name indicative of a no-op if it is one.
+     *
+     * @{ */
+    bool doingPostFunctionNoop() const /*final*/ { return settings_.partitioner.doingPostFunctionNoop; }
+    virtual void doingPostFunctionNoop(bool b) { settings_.partitioner.doingPostFunctionNoop = b; }
+    /** @} */
+
     /** Property: Whether to run the function may-return analysis.
      *
      *  The caller can decide whether may-return analysis runs, or if it runs whether an indeterminate result should be
@@ -1216,8 +1243,26 @@ public:
      *  This property holds a list of configuration files or directories.
      *
      * @{ */
-    const std::vector<std::string>& configurationNames() const { return settings_.engine.configurationNames; }
-    std::vector<std::string>& configurationNames() { return settings_.engine.configurationNames; }
+    const std::vector<std::string>& configurationNames() /*final*/ const { return settings_.engine.configurationNames; }
+    std::vector<std::string>& configurationNames() /*final*/ { return settings_.engine.configurationNames; }
+    /** @} */
+
+    /** Property: Give names to constants.
+     *
+     *  If this property is set, then the partitioner calls @ref Modules::nameConstants as part of its final steps.
+     *
+     * @{ */
+    bool namingConstants() const /*final*/ { return settings_.partitioner.namingConstants; }
+    virtual void namingConstants(bool b) { settings_.partitioner.namingConstants = b; }
+    /** @} */
+
+    /** Property: Give names to string literal addresses.
+     *
+     *  If this property is set, then the partitioner calls @ref Modules::nameStrings as part of its final steps.
+     *
+     * @{ */
+    bool namingStrings() const /*final*/ { return settings_.partitioner.namingStrings; }
+    virtual void namingStrings(bool b) { settings_.partitioner.namingStrings = b; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

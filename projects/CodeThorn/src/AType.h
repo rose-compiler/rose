@@ -7,7 +7,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include <limits.h>
+#include <climits>
 #include <string>
 #include <sstream>
 
@@ -100,27 +100,42 @@ class ConstIntLattice {
   ConstIntLattice();
   ConstIntLattice(bool val);
   // type conversion
-  ConstIntLattice(Top e);
+  ConstIntLattice(AType::Top e);
   // type conversion
-  ConstIntLattice(Bot e);
+  ConstIntLattice(AType::Bot e);
   // type conversion
+  ConstIntLattice(signed char x);
+  ConstIntLattice(unsigned char x);
+  ConstIntLattice(short int x);
   ConstIntLattice(int x);
+  ConstIntLattice(long int x);
+  ConstIntLattice(long long int x);
+  ConstIntLattice(unsigned short int x);
+  ConstIntLattice(unsigned int x);
+  ConstIntLattice(unsigned long int x);
+  ConstIntLattice(unsigned long long int x);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
   bool isBot() const;
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
-  ConstIntLattice operator!();
-  ConstIntLattice operator-(); // unary minus
-  ConstIntLattice operator||(ConstIntLattice other);
-  ConstIntLattice operator&&(ConstIntLattice other);
-  ConstIntLattice operator==(ConstIntLattice other) const;
-  ConstIntLattice operator!=(ConstIntLattice other) const;
-  ConstIntLattice operator<(ConstIntLattice other) const;
-  ConstIntLattice operator<=(ConstIntLattice other) const;
-  ConstIntLattice operator>=(ConstIntLattice other) const;
-  ConstIntLattice operator>(ConstIntLattice other) const;
+  ConstIntLattice operatorNot();
+  ConstIntLattice operatorUnaryMinus(); // unary minus
+  ConstIntLattice operatorOr(ConstIntLattice other);
+  ConstIntLattice operatorAnd(ConstIntLattice other);
+  ConstIntLattice operatorEq(ConstIntLattice other) const;
+  ConstIntLattice operatorNotEq(ConstIntLattice other) const;
+  ConstIntLattice operatorLess(ConstIntLattice other) const;
+  ConstIntLattice operatorLessOrEq(ConstIntLattice other) const;
+  ConstIntLattice operatorMoreOrEq(ConstIntLattice other) const;
+  ConstIntLattice operatorMore(ConstIntLattice other) const;
+
+  // strict weak ordering (required for sorted STL data structures if
+  // no comparator is provided)
+  bool operator==(AType::ConstIntLattice other) const;
+  bool operator<(AType::ConstIntLattice other) const;
+
   string toString() const;
   friend ostream& operator<<(ostream& os, const ConstIntLattice& value);
   friend istream& operator>>(istream& os, ConstIntLattice& value);
@@ -129,6 +144,8 @@ class ConstIntLattice {
   int getIntValue() const;
   long hash() const;
   static bool arithTop;
+  // returns length of integer dependent on valueType
+  int intLength();
  private:
   ValueType valueType;
   int intValue;
@@ -152,28 +169,9 @@ class ConstIntLattice {
     bool operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const;
   };
 
- class CppCapsuleConstIntLattice {
- public:
-   CppCapsuleConstIntLattice(){}
-   CppCapsuleConstIntLattice(ConstIntLattice val):value(val){}
-   CppCapsuleConstIntLattice(Top top){value=ConstIntLattice(top);}
-   bool operator==(CppCapsuleConstIntLattice other) const;
-   bool operator<(CppCapsuleConstIntLattice other) const;
-   string toString() const { return value.toString(); }
-   ConstIntLattice getValue() const { return value; }
-   void setValue(ConstIntLattice val) { value=val; }
- private:
-   ConstIntLattice value;
- };
-  struct CppCapsuleConstIntLatticeLessComparator {
-    bool operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const;
-  };
-
 } // end of namespace AType
 
 typedef AType::ConstIntLattice AValue; 
-typedef AType::CppCapsuleConstIntLattice CppCapsuleAValue; 
-typedef AType::CppCapsuleConstIntLatticeLessComparator CppCapsuleAValueLessComp; 
 typedef AType::ConstIntLatticeCmp AValueCmp; 
 
 }

@@ -79,11 +79,16 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           std::vector<SgType*> dsl_type_list;
           std::vector<SgFunctionDeclaration*> dsl_function_list;
 
+       // I now think that this will simplify the handling of the generated code since we support a 
+       // dsl_member_function_names_variable to know the class associated with each member function.
        // I don't think we need this since member functions and nonmember functions can be combined in the dsl_function_list.
-       // std::vector<SgMemberFunctionDeclaration*> dsl_member_function_list;
+          std::vector<SgMemberFunctionDeclaration*> dsl_member_function_list;
 
        // I am not yet clar how to generate the initializers for this DSL variable.
           std::vector<SgConstructorInitializer*> dsl_attribute_map_list;
+
+       // DQ (3/4/2016): Turning on internal debugging.
+          bool internal_debugging;
 
           AttributeGeneratorTraversal();
 
@@ -91,8 +96,10 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           AttributeGenerator_InheritedAttribute   evaluateInheritedAttribute   (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute );
           AttributeGenerator_SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList );
 
-       // SgNode* buildAttribute(SgType* type);
-       // SgNode* buildAttribute(SgFunctionDeclaration* functionDeclaration);
+#if 1
+          SgNode* buildAttribute(SgType* type);
+          SgNode* buildAttribute(SgFunctionDeclaration* functionDeclaration);
+#endif
 
           void unparseGeneratedCode();
 

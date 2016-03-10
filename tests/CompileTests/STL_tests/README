@@ -1,0 +1,107 @@
+The script stl-eval.sh is a bash script that generates programs for each STL header and performs then tests on these programs.
+
+The form of the generated programs is:
+
+#include <HEADER>
+
+int main() { 
+  return 0;
+}
+
+The HEADER is replaced with each STL header file. E.g. vector, queue,
+etc. The file is the pre-processed with cpp. The pre-processed file is
+the used for testing. With this test we check whether ROSE can operate
+on complete translation units. Note that the pre-processed files can
+be very large, between 100 to 40.000 LOC (although the original file
+has only a few lines), because the translation unit includes all
+header files.
+
+The test script is driven by four lists which contain names of C++STL
+header files. These lists are specified at the very beginning of the
+script:
+
+STL_CPP98_HEADERS_PASSING="..."
+STL_CPP98_HEADERS_FAILING="..."
+STL_CPP11_HEADERS_PASSING="..."
+STL_CPP11_HEADERS_FAILING="..."
+
+For C++98 and C++11 there are two lists each, one containing the
+passing, and one the failing tests. The passing tests are used for
+regression testing. Whenever ROSE is improved header names can be
+moved from *_FAILING to *_PASSING. Note that the tests are separate
+for C++98 and C++11 because the portion of the header files that is
+selected for compilation by pre-processor directives in the STL header
+files is substantial. When compiled in C++11 mode the code from header
+files can be twice as long as in C++98 mode (e.g. instead of 20K you
+get 40K LOC after pre-processing).
+
+The language modes are tested with the language option -std=c++98 and
+-std=c++11. The test is only applied for newer versions of compilers
+that support c++11 (for example starting with gcc 4.8).
+
+If any of the passing tests fail, the script will stop and report an
+exit code of 1. In this case the make file will also terminate and
+"make check" fails. In case of an error all generated test files
+remain in the directory for further investigation of the error. 
+
+The script performs three tests, each of them listed in a separate
+column. The result of the test is either PASS or FAIL. An example for
+a passing test is:
+
+TESTING: algorithm        :   6964 LOC : PASS PASS PASS : 100.00% 
+
+The three columns show results for three different kinds of tests:
+
+Column 1: the pre-processed file is compiled with the selected
+back-end compiler (e.g. g++). This is to ensure that the pre-processed
+file can indeed be processed with the provided command line flags. In
+future this may be replaced by using ROSE's pre-processor mode.
+
+Column 2: the pre-processed file is compiled with the ROSE
+tesTranslator. This test passes if ROSE can read and generate the
+file.
+
+Column 3: Takes is input the ROSE generated file and compiles it with
+the back end compile (e.g. g++).
+
+If an error occurs, the test is indicated as FAIL and the error line
+with the error is reported. An example for a failing test is:
+
+TESTING: bitset           :   7168 LOC : PASS PASS FAIL :  76.70% (LINE:5498) [expected fail]
+
+The reported percentage is simply the error line relative to the total
+number of lines (meaning how many lines of the total lines were
+processed successfully). All expected failures are marked with
+"[expected fail]". Those do not tests do not make the entire check
+fail, they are only reported. If one of the expected FAIL tests passes
+it should be moved from the list of FAILING tests to the list of
+PASSING tests (see above four lists).
+
+If an error occurs the stl-eval.sh stops at the end of each of the two
+passing lists of STL headers to be tested. Hence, in case of an error
+it stops either after the passing C++98 header tests or the passing
+C++11 header tests. It will not stop if one of the expected failing
+tests fails.
+
+If the script stops because of an error, all generated files remain in
+the directory for further investigation. The generated files are
+
+Input to the three tests corresponding to the three reported columns are:
+
+Column 1: test_$(HEADER).pp.C
+Column 2: test_$(HEADER).pp.C
+Column 3: rose_test_$(HEADER).pp.C
+
+Hence, if an error is reported in column 3 the line number corresponds
+to the file rose_test_$(HEADER).pp.C, where HEADER is one of the STL
+header file names (e.g. bitset).
+
+If no error occurs, all generated files are removed and no files
+remain in the directory.
+
+Restrictions: the tests are currently restricted to g++4.8 (or newer)
+using the EDG front end. The tests will be extended to other compilers
+and clang in future. The compilers and the front end are restricted in
+Makefile.am.
+
+
