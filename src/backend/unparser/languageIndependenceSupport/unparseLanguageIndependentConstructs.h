@@ -125,7 +125,7 @@ class UnparseLanguageIndependentConstructs
                return myStream.str();                         // Returns the string form of the stringstream object
              }
 #endif
-          void curprint (const std::string & str) const;
+          void curprint (const std::string & str, bool wrap=true) const;
           void printOutComments ( SgLocatedNode* locatedNode ) const;
 
       //! Unparser support for compiler-generated statments

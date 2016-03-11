@@ -74,11 +74,11 @@ UnparseLanguageIndependentConstructs::tostring(T t) const
 
 // TODO: This code is identical to 'FortranCodeGeneration_locatedNode::curprint'. Factor this!
 void
-UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
+UnparseLanguageIndependentConstructs::curprint (const std::string & str, bool wrap) const
 {
 #if USE_RICE_FORTRAN_WRAPPING
 
-    if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
+    if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() && wrap )
     {
         // determine line wrapping parameters -- 'pos' variables are one-based
         bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
@@ -3581,7 +3581,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          case PreprocessingInfo::CplusplusStyleComment:
                               if ( !info.SkipComments() )
                                  {
-                                   curprint ( (*i)->getString());
+                                   curprint ( (*i)->getString(),false);
                                  }
                               break;
 
@@ -3592,7 +3592,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                 // DQ (9/16/2013): Commented out single line CPP directives is easy, so go ahead and do that.
                                 // This used later style C comment syntax.  This permits the user to see the original CPP
                                 // directives in a way that they will have no effect.
-                                   curprint("// " + (*i)->getString());
+                                   curprint("// " + (*i)->getString(),false); // does this work even for Fortran (and other languages?)
                                  }
                                 else
                                  {
@@ -3619,7 +3619,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                    ROSE_ASSERT(unp->opt.get_unparse_includes_opt() == false);
 #if 1
                                 // DQ (9/16/2013): This is simpler code.
-                                   curprint((*i)->getString());
+                                   curprint((*i)->getString(),false);
 #else
                                 // DQ (9/16/2013): This predicate should be always false.
                                    if (unp->opt.get_unparse_includes_opt() == true)
@@ -3637,7 +3637,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          case PreprocessingInfo::CplusplusStyleComment:
                               if ( !info.SkipComments() )
                                  {
-                                   curprint ( (*i)->getString());
+                                   curprint ( (*i)->getString(),false);
                                  }
                               break;
 
@@ -3647,9 +3647,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                               if ( !info.SkipComments() )
                                  {
                                    if (unp->opt.get_unparse_includes_opt() == true)
-                                        curprint (  string("// ") + (*i)->getString());
+                                        curprint (  string("// ") + (*i)->getString(),false);
                                      else
-                                        curprint ( (*i)->getString());
+                                        curprint ( (*i)->getString(),false);
                                  }
                               break;
 
@@ -3677,16 +3677,16 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                  {
                                    if (unp->opt.get_unparse_includes_opt() == true)
                                       {
-                                        curprint ( string("// (previously processed: ignored) " ) + (*i)->getString());
+                                        curprint ( string("// (previously processed: ignored) " ) + (*i)->getString(),false);
                                       }
                                      else
                                       {
-                                        curprint ( (*i)->getString());
+                                        curprint ( (*i)->getString(),false);
                                       }
                                  }
                                 else
                                  {
-                                   curprint ( (*i)->getString());
+                                   curprint ( (*i)->getString(),false);
                                  }
                               break;
 
@@ -3700,7 +3700,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                  {
                                 // DQ (11/29/2006): Let's try to generate code which handles these better.
                                 // curprint ( string("// (previously processed: ignored) " + (*i)->getString() ;
-                                   curprint ( (*i)->getString());
+                                   curprint ( (*i)->getString(),false);
                                  }
                               break;
 
@@ -3716,7 +3716,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                  {
                                    if (unp->opt.get_unparse_includes_opt() == true)
                                       {
-                                        curprint(string("// (previously processed: ignored) " ) + (*i)->getString());
+                                        curprint(string("// (previously processed: ignored) " ) + (*i)->getString(),false);
                                       }
                                      else
                                       {
@@ -3748,26 +3748,26 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                                      {
                                                     // DQ (1/21/2014): This reports: "error: stray '#' in program"
                                                     // curprint(string("// (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getString() + " \n");
-                                                       curprint(string("// (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getMacroName() + " \n");
+                                                       curprint(string("// (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getMacroName() + " \n",false);
                                                      }
                                                     else
                                                      {
                                                        ROSE_ASSERT((*i)->getNumberOfLines() > 1);
-                                                       curprint(string("/* (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getMacroName() + " */\n");
+                                                       curprint(string("/* (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getMacroName() + " */\n",false);
                                                      }
 #else
                                                // DQ (1/21/2014): This has to be a C style comments for the options used in Valgrind compilation (not C99, I think).
-                                                  curprint(string("/* (previously processed: ignoring self-referential macro declaration) macro name = " ) + (*i)->getMacroName() + " */ \n");
+                                                  curprint(string("/* (previously processed: ignoring self-referential macro declaration) macro name = " ) + (*i)->getMacroName() + " */ \n",false);
 #endif
                                                 }
                                                else
                                                 {
-                                                  curprint((*i)->getString());
+                                                  curprint((*i)->getString(),false);
                                                 }
                                            }
                                           else
                                            {
-                                             curprint((*i)->getString());
+                                             curprint((*i)->getString(),false);
                                            }
                                       }
                                  }
@@ -3781,18 +3781,18 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                            // AS(1/04/07) Macro rewrapping is currently not supported
                               break;
                          case PreprocessingInfo::CMacroCallStatement:
-                              curprint ( (*i)->getString());
+                           curprint ( (*i)->getString(),false);
                               break;
 
                          case PreprocessingInfo::LineReplacement:
                               break;
 
                          case PreprocessingInfo::CpreprocessorIdentDeclaration:
-                              curprint ( (*i)->getString());
+                           curprint ( (*i)->getString(),false);
                               break;
 
                          case PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker:
-                              curprint ( (*i)->getString());
+                           curprint ( (*i)->getString(),false);
                               break;
 
                          default:
@@ -3812,7 +3812,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 #if 0
      printf ("In unparseAttachedPreprocessingInfo(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
   // curprint ("\n /* Inside of unparseAttachedPreprocessingInfo() */ \n");
-     curprint (string("/* Inside of unparseAttachedPreprocessingInfo() stmt = ") + stmt->class_name() + " */ \n");
+     curprint (string("/* Inside of unparseAttachedPreprocessingInfo() stmt = ") + stmt->class_name() + " */ \n",false);
 #endif
    }
 
