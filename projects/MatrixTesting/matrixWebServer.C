@@ -44,6 +44,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WLength>
 #include <Wt/WPanel>
 #include <Wt/WPushButton>
+#include <Wt/WRegExpValidator>
 #include <Wt/WScrollArea>
 #include <Wt/WStackedWidget>
 #include <Wt/WStringListModel>
@@ -221,6 +222,7 @@ public:
 class User {
 public:
     // Authorizations
+    std::string userId;                                 // id for the auth_info record
     std::string testSubmissionToken;                    // Token require to submit test results; empty means not permitted
     bool canControlPublicInterface;                     // Is user allowed to modify the public-facing web interface
     bool isAdministrator;                               // Administrator account bypasses all security
@@ -230,6 +232,7 @@ public:
 
     template<class Action>
     void persist(Action& a) {
+        Wt::Dbo::field(a, userId, "user_id");
         Wt::Dbo::field(a, testSubmissionToken, "test_submission_token");
         Wt::Dbo::field(a, canControlPublicInterface, "can_control_public_interface");
         Wt::Dbo::field(a, isAdministrator, "is_administrator");
@@ -2677,6 +2680,180 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// User-management classes
+//
+// On first run, the administrator account is initialized and the administrator is logged in.  The administrator can create
+// additional accounts that are given random passwords. No email is sent because (1) sending passwords and password reset links
+// by unencrypted email is unsafe, (2) the system running the web server might not have email capability.
+
+// Used to validate that two user-entered passwords match
+class ExactMatchValidator: public Wt::WValidator {
+    Wt::WString toMatch_;
+public:
+    explicit ExactMatchValidator(Wt::WObject *parent = NULL)
+        : Wt::WValidator(parent) {}
+
+    virtual Result validate(const Wt::WString &input) const ROSE_OVERRIDE {
+        return Wt::WValidator::Result(!input.empty() && input == toMatch_ ? Wt::WValidator::Valid : Wt::WValidator::Invalid);
+    }
+
+    void setTargetString(const Wt::WString &toMatch) {
+        toMatch_ = toMatch;
+    }
+};
+
+// First-run creation of the administrator account. Creates the administrator account and then logs in as the administrator.
+class WCreateAdminAccount: public Wt::WContainerWidget {
+    Wt::WLineEdit *wFullName_, *wLoginName_, *wEmail_, *wPassword1_, *wPassword2_;
+    Wt::WText *wPasswordStrength_, *wPasswordsMatch_;
+    Wt::WPushButton *wCreate_;
+    Wt::Auth::PasswordStrengthValidator *pwStrengthValidator_;
+    ExactMatchValidator *pwSameValidator_;
+public:
+    explicit WCreateAdminAccount(Session &session, Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent) {
+        addWidget(new Wt::WText("<h1>Create administrator account</h1>"));
+        addWidget(new Wt::WText("<p>This page sets up the administrator account since the user database tables are empty.</p>"));
+
+        Wt::WTable *table = new Wt::WTable;
+        addWidget(table);
+        int tableRow = 0;
+
+        std::string singleNameRe = "(([A-Z][a-zA-Z]*-)*[A-Z][a-zA-Z]*\\.?)"; // "Billy", "Billy-Bob", "Jr." and similar
+        std::string parenNameRe = "(" + singleNameRe + "|\\(" + singleNameRe + "\\))"; // parenthesized nick name
+        std::string multiNameRe = "(" + parenNameRe + "(,? " + parenNameRe + ")+)"; // "Smokey T. Bear"
+        
+        table->elementAt(tableRow, 0)->addWidget(new Wt::WLabel("Full name:"));
+        wFullName_ = new Wt::WLineEdit;
+        wFullName_->setTextSize(64);
+        wFullName_->setMaxLength(64);
+        Wt::WRegExpValidator *fullNameValidator = new Wt::WRegExpValidator(multiNameRe);
+        fullNameValidator->setMandatory(true);
+        wFullName_->setValidator(fullNameValidator);
+        table->elementAt(tableRow, 1)->addWidget(wFullName_);
+        ++tableRow;
+
+        table->elementAt(tableRow, 0)->addWidget(new Wt::WLabel("Login name:"));
+        wLoginName_ = new Wt::WLineEdit;
+        wLoginName_->setTextSize(12);
+        wLoginName_->setMaxLength(12);
+        Wt::WRegExpValidator *loginNameValidator = new Wt::WRegExpValidator("[a-z][a-z0-9]{2,11}");
+        loginNameValidator->setMandatory(true);
+        wLoginName_->setValidator(loginNameValidator);
+        table->elementAt(tableRow, 1)->addWidget(wLoginName_);
+        ++tableRow;
+
+        table->elementAt(tableRow, 0)->addWidget(new Wt::WLabel("Email contact:"));
+        wEmail_ = new Wt::WLineEdit;
+        wEmail_->setTextSize(64);
+        wEmail_->setMaxLength(64);
+        Wt::WRegExpValidator *emailValidator =
+            new Wt::WRegExpValidator("[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\\.){1,2}[a-zA-Z]{2,4}");
+        emailValidator->setMandatory(true);
+        wEmail_->setValidator(emailValidator);
+        table->elementAt(tableRow, 1)->addWidget(wEmail_);
+        ++tableRow;
+
+        table->elementAt(tableRow, 0)->addWidget(new Wt::WLabel("Password:"));
+        wPassword1_ = new Wt::WLineEdit;
+        wPassword1_->setTextSize(16);
+        wPassword1_->setMaxLength(32);
+        wPassword1_->setEchoMode(Wt::WLineEdit::Password);
+        wPassword1_->setValidator(pwStrengthValidator_ = new Wt::Auth::PasswordStrengthValidator);
+        table->elementAt(tableRow, 1)->addWidget(wPassword1_);
+        table->elementAt(tableRow, 1)->addWidget(wPasswordStrength_ = new Wt::WText);
+        ++tableRow;
+        
+        table->elementAt(tableRow, 0)->addWidget(new Wt::WLabel("Password:"));
+        wPassword2_ = new Wt::WLineEdit;
+        wPassword2_->setTextSize(16);
+        wPassword2_->setMaxLength(32);
+        wPassword2_->setEchoMode(Wt::WLineEdit::Password);
+        pwSameValidator_ = new ExactMatchValidator;
+        pwSameValidator_->setMandatory(true);
+        wPassword2_->setValidator(pwSameValidator_);
+        table->elementAt(tableRow, 1)->addWidget(wPassword2_);
+        table->elementAt(tableRow, 1)->addWidget(wPasswordsMatch_ = new Wt::WText);
+        ++tableRow;
+
+        wCreate_ = new Wt::WPushButton("Create account");
+        wCreate_->setEnabled(false);
+        addWidget(wCreate_);
+
+        // Wiring
+        wFullName_->textInput().connect(this, &WCreateAdminAccount::enableDisableSubmit);
+        wLoginName_->textInput().connect(this, &WCreateAdminAccount::enableDisableSubmit);
+        wEmail_->textInput().connect(this, &WCreateAdminAccount::enableDisableSubmit);
+        wPassword1_->textInput().connect(this, &WCreateAdminAccount::enableDisableSubmit);
+        wPassword2_->textInput().connect(this, &WCreateAdminAccount::enableDisableSubmit);
+
+        wPassword1_->textInput().connect(this, &WCreateAdminAccount::updatePasswordStrength);
+        wPassword1_->textInput().connect(this, &WCreateAdminAccount::updatePasswordsMatch);
+        wPassword2_->textInput().connect(this, &WCreateAdminAccount::updatePasswordsMatch);
+
+        wCreate_->clicked().connect(boost::bind(&WCreateAdminAccount::createAccount, this, &session));
+    }
+
+private:
+    void enableDisableSubmit() {
+        wCreate_->setEnabled(wFullName_->validate() == Wt::WValidator::Valid &&
+                             wLoginName_->validate() == Wt::WValidator::Valid &&
+                             wEmail_->validate() == Wt::WValidator::Valid &&
+                             wPassword1_->validate() == Wt::WValidator::Valid &&
+                             wPassword2_->validate() == Wt::WValidator::Valid &&
+                             wPassword1_->text() == wPassword2_->text());
+    }
+
+    void updatePasswordStrength() {
+        Wt::Auth::AbstractPasswordService::StrengthValidatorResult result =
+            pwStrengthValidator_->evaluateStrength(wPassword1_->text(), wLoginName_->text(), wEmail_->text().narrow());
+        wPasswordStrength_->setText(result.message());
+
+        pwSameValidator_ = new ExactMatchValidator;
+        pwSameValidator_->setMandatory(true);
+        pwSameValidator_->setTargetString(wPassword1_->text());
+        wPassword2_->setValidator(pwSameValidator_);
+    }
+
+    void updatePasswordsMatch() {
+        Wt::WString s1 = wPassword1_->text();
+        Wt::WString s2 = wPassword2_->text();
+
+        if (s1.empty() || s2.empty()) {
+            wPasswordsMatch_->setText("");
+        } else if (s1 == s2) {
+            wPasswordsMatch_->setText(" Match");
+        } else {
+            wPasswordsMatch_->setText(" Passwords do not match");
+        }
+    }
+
+    void createAccount(Session *session) {
+        std::string fullName = wFullName_->text().narrow();
+        std::string loginName = wLoginName_->text().narrow();
+        std::string email = wEmail_->text().narrow();
+        std::string passwd = wPassword1_->text().narrow();
+
+        mlog[INFO] <<"creating administrator account \"" <<loginName <<"\" for " <<fullName <<" <" <<email <<">\n";
+        Wt::Auth::AbstractUserDatabase::Transaction *tx = session->users().startTransaction();
+        Wt::Auth::User user = session->users().registerNew();
+        session->users().setStatus(user, Wt::Auth::User::Normal);
+        session->users().setUnverifiedEmail(user, email);
+        gstate.passwordService.updatePassword(user, passwd);
+        session->users().addIdentity(user, "loginname", loginName);
+
+        User *admin = new User;
+        admin->userId = user.id();
+        admin->isAdministrator = true;
+        session->add(admin);
+        
+        mlog[INFO] <<"  new user ID is " <<user.id() <<"\n";
+        tx->commit();
+        session->login().login(user);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // One application object is created per user session.
 class WApplication: public Wt::WApplication {
     WFindWorkingConfig *findWorkingConfig_;
@@ -2746,6 +2923,7 @@ public:
         
         // Main application
         tabs_ = new Wt::WTabWidget();
+        vbox->addWidget(tabs_);
         mlog[INFO] <<"creating tab: Public view\n";
         tabs_->addTab(findWorkingConfig_ = new WFindWorkingConfig, "Public");
         mlog[INFO] <<"creating tab: Overview\n";
@@ -2757,7 +2935,9 @@ public:
         mlog[INFO] <<"creating tab: Settings\n";
         tabs_->addTab(settings_ = new WSettings(findWorkingConfig_), "Settings");
         tabs_->addTab(wAuthentication_, "Developers");
-        vbox->addWidget(tabs_);
+#if 1 // DEBUGGING [Robb Matzke 2016-03-12]
+        tabs_->addTab(new WCreateAdminAccount(session_), "Admin");
+#endif
 
         if (session_.login().loggedIn()) {
             showLoggedInView();
