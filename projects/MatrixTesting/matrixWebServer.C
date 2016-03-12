@@ -216,10 +216,23 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Authentication and authorization stuff
 
+// The user table holds information about who submitted tests, who can view the private parts of the web app, and who can
+// modify the public parts of the web app, etc.
 class User {
 public:
+    // Authorizations
+    std::string testSubmissionToken;                    // Token require to submit test results; empty means not permitted
+    bool canControlPublicInterface;                     // Is user allowed to modify the public-facing web interface
+    bool isAdministrator;                               // Administrator account bypasses all security
+
+    User()
+        : canControlPublicInterface(false), isAdministrator(false) {}
+
     template<class Action>
     void persist(Action& a) {
+        Wt::Dbo::field(a, testSubmissionToken, "test_submission_token");
+        Wt::Dbo::field(a, canControlPublicInterface, "can_control_public_interface");
+        Wt::Dbo::field(a, isAdministrator, "is_administrator");
     }
 };
 
@@ -243,8 +256,9 @@ public:
 
         try {
             createTables();
+            mlog[INFO] <<"created new user database tables\n";
         } catch (Wt::Dbo::Exception& e) {
-            std::cerr <<e.what() <<"using existing database\n";
+            mlog[INFO] <<"using existing user database tables\n";
         }
 
         users_ = new UserDatabase(*this);
@@ -260,6 +274,15 @@ public:
 
     Wt::Auth::Login& login() {
         return login_;
+    }
+
+    Wt::Dbo::ptr<User> user() const {
+	if (login_.loggedIn()) {
+            Wt::Dbo::ptr<AuthInfo> authInfo = users_->find(login_.user());
+            return authInfo->user();
+	} else {
+            return Wt::Dbo::ptr<User>();
+        }
     }
 };
 
@@ -2663,6 +2686,7 @@ class WApplication: public Wt::WApplication {
     WSettings *settings_;
     Wt::WTabWidget *tabs_;
     Session session_;
+    Wt::Auth::AuthWidget *wAuthentication_;
 
 public:
     explicit WApplication(const Wt::WEnvironment &env)
@@ -2715,16 +2739,15 @@ public:
         styleSheet().addRule(".error-status-7", "border:1px solid black; background-color:#bebadf;");// light purple
 
         // User authentication
-        Wt::Auth::AuthWidget *wAuthentication = new Wt::Auth::AuthWidget(gstate.authenticationService, session_.users(),
-                                                                         session_.login());
-        wAuthentication->model()->addPasswordAuth(&gstate.passwordService);
-        wAuthentication->setRegistrationEnabled(true);
-        wAuthentication->processEnvironment();
-
+        wAuthentication_ = new Wt::Auth::AuthWidget(gstate.authenticationService, session_.users(), session_.login());
+        wAuthentication_->model()->addPasswordAuth(&gstate.passwordService);
+        wAuthentication_->setRegistrationEnabled(true);
+        wAuthentication_->processEnvironment();
+        
         // Main application
         tabs_ = new Wt::WTabWidget();
-        mlog[INFO] <<"creating tab: Find Working Config\n";
-        tabs_->addTab(findWorkingConfig_ = new WFindWorkingConfig, "Find Working Config");
+        mlog[INFO] <<"creating tab: Public view\n";
+        tabs_->addTab(findWorkingConfig_ = new WFindWorkingConfig, "Public");
         mlog[INFO] <<"creating tab: Overview\n";
         tabs_->addTab(resultsConstraints_ = new WResultsConstraintsTab, "Overview");
         mlog[INFO] <<"creating tab: Details\n";
@@ -2733,15 +2756,14 @@ public:
         tabs_->addTab(errors_ = new WErrors, "Errors");
         mlog[INFO] <<"creating tab: Settings\n";
         tabs_->addTab(settings_ = new WSettings(findWorkingConfig_), "Settings");
+        tabs_->addTab(wAuthentication_, "Developers");
+        vbox->addWidget(tabs_);
 
-        // Show either authentication or main application
-        Wt::WStackedWidget *mainStack = new Wt::WStackedWidget;
-        mainStack->addWidget(wAuthentication);
-        mainStack->addWidget(tabs_);
-        vbox->addWidget(mainStack);
-#if 1 // DEBUGGING [Robb Matzke 2016-02-21]
-        mainStack->setCurrentWidget(tabs_);
-#endif
+        if (session_.login().loggedIn()) {
+            showLoggedInView();
+        } else {
+            showLoggedOutView();
+        }
 
         // Wiring
         session_.login().changed().connect(this, &WApplication::authenticationEvent);
@@ -2756,10 +2778,27 @@ public:
 private:
     void authenticationEvent() {
         if (session_.login().loggedIn()) {
-            std::cerr <<"ROBB: user " <<session_.login().user().id() <<" logged in\n";
+            Wt::Dbo::ptr<User> user = session_.user();
+
+            showLoggedInView();
         } else {
-            std::cerr <<"ROBB: user logged out\n";
+            showLoggedOutView();
         }
+    }
+
+    void showLoggedInView() {
+        tabs_->setTabHidden(tabs_->indexOf(resultsConstraints_), false);
+        tabs_->setTabHidden(tabs_->indexOf(details_), false);
+        tabs_->setTabHidden(tabs_->indexOf(errors_), false);
+        tabs_->setTabHidden(tabs_->indexOf(settings_), false);
+    }
+
+    void showLoggedOutView() {
+        tabs_->setTabHidden(tabs_->indexOf(resultsConstraints_), true);
+        tabs_->setTabHidden(tabs_->indexOf(details_), true);
+        tabs_->setTabHidden(tabs_->indexOf(errors_), true);
+        tabs_->setTabHidden(tabs_->indexOf(settings_), true);
+        tabs_->setCurrentIndex(0);
     }
 
     void switchTabs(int idx) {
@@ -2914,7 +2953,7 @@ createApplication(const Wt::WEnvironment &env) {
 static void
 configureAuthenticationServices() {
     gstate.authenticationService.setAuthTokensEnabled(true, "logincookie");
-    gstate.authenticationService.setEmailVerificationEnabled(true);
+    gstate.authenticationService.setEmailVerificationEnabled(false);
 
     Wt::Auth::PasswordVerifier *verifier = new Wt::Auth::PasswordVerifier;
     verifier->addHashFunction(new Wt::Auth::BCryptHashFunction(7));
