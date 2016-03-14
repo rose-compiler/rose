@@ -444,7 +444,7 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
 
             //sk: Matrix type
         case V_SgTypeMatrix:
-            
+        case V_SgTypeTuple:
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
