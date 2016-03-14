@@ -3235,6 +3235,12 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                break;
              }
 
+        case V_SgMatlabForStatement:
+          {
+            return;
+            break;
+          }
+             
 
        // DQ (12/23/2012): Added support for templates.
           case V_SgTemplateFunctionDefinition:
