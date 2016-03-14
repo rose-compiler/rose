@@ -250,6 +250,7 @@ public:
     std::string testSubmissionToken;                    // Token require to submit test results; empty means not permitted
     bool isPublisher;                                   // Is user allowed to modify the public-facing web interface
     bool isAdministrator;                               // Administrator account bypasses all security
+    bool pwChangeRequired;                              // If true, then a password change is required
 
     User()
         : isPublisher(false), isAdministrator(false) {}
@@ -260,6 +261,7 @@ public:
         Wt::Dbo::field(a, testSubmissionToken, "test_submission_token");
         Wt::Dbo::field(a, isPublisher, "is_publisher");
         Wt::Dbo::field(a, isAdministrator, "is_administrator");
+        Wt::Dbo::field(a, pwChangeRequired, "update_password");
     }
 };
 
@@ -479,6 +481,51 @@ public:
         login_.login(authUser);
     }
 
+    // True if the user needs to change his password
+    bool
+    pwChangeRequired(const Wt::Auth::User &authUser) {
+        bool retval = false;
+        if (!authUser.isValid())
+            return retval;
+        Wt::Auth::AbstractUserDatabase::Transaction *tx = users_->startTransaction();
+        Wt::Dbo::ptr<User> user = findUser(authUser, tx);
+        retval = user && user->pwChangeRequired;
+        tx->commit();
+        return retval;
+    }
+
+    // Make a password change required at next login
+    void
+    setPwChangeRequired(const Wt::Auth::User &authUser, bool b = true) {
+        if (!authUser.isValid())
+            return;
+        Wt::Auth::AbstractUserDatabase::Transaction *tx = users_->startTransaction();
+        Wt::Dbo::ptr<User> user = findUser(authUser, tx);
+        user.modify()->pwChangeRequired = b;
+        tx->commit();
+    }
+    
+    // Verify the user's password
+    Wt::Auth::PasswordResult
+    verifyPassword(const Wt::Auth::User &authUser, const std::string &password) {
+        ASSERT_require(authUser.isValid());
+        Wt::Auth::PasswordResult retval = Wt::Auth::PasswordInvalid;
+        Wt::Auth::AbstractUserDatabase::Transaction *tx = users_->startTransaction();
+        retval = passwordService_.verifyPassword(authUser, password);
+        tx->commit();
+        return retval;
+    }
+
+    // Set user password
+    void
+    setPassword(const Wt::Auth::User &authUser, const std::string &password) {
+        ASSERT_require(authUser.isValid());
+        Wt::Auth::AbstractUserDatabase::Transaction *tx = users_->startTransaction();
+        passwordService_.updatePassword(authUser, password);
+        findUser(authUser, tx).modify()->pwChangeRequired = false;
+        tx->commit();
+    }
+    
 private:
     Wt::Dbo::ptr<AuthInfo>
     findAuthInfo(const Wt::Auth::User &authUser, Wt::Auth::AbstractUserDatabase::Transaction *tx) {
@@ -3203,6 +3250,7 @@ private:
 
         mlog[INFO] <<"creating user account \"" <<loginName <<"\" for " <<fullName <<" <" <<email <<">\n";
         Wt::Auth::User authUser = session_.createUser(fullName, loginName, email, passwd, isAdministrator, isPublisher);
+        session_.setPwChangeRequired(authUser);
         setUser(authUser);
         userCreated_.emit(authUser);
     }
@@ -3247,9 +3295,138 @@ public:
 
 private:
     void login(const Wt::Auth::User &user) {
+        session_.setPwChangeRequired(user, false);
         session_.login(user);
     }
 };
+
+// Widget to force a password change for the logged-in user.
+class WChangePassword: public Wt::WContainerWidget {
+    Session &session_;
+    Wt::WText *wUserName_, *wPasswordStrength_, *wPasswordsMatch_;
+    Wt::WTable *table_;
+    Wt::WLineEdit *wPassword1_, *wPassword2_;
+    Wt::Auth::PasswordStrengthValidator *pwStrengthValidator_;
+    ExactMatchValidator *pwSameValidator_;
+    Wt::WPushButton *wSubmit_;
+    Wt::Auth::User modifyingUser_;
+    Wt::Signal<Wt::Auth::User> passwordChanged_;
+public:
+    explicit WChangePassword(Session &session, Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), session_(session) {
+        addWidget(new Wt::WText("<h2>Change password</h2>"));
+        addWidget(wUserName_ = new Wt::WText);
+
+        table_ = new Wt::WTable(this);
+
+        table_->elementAt(0, 0)->addWidget(new Wt::WLabel("Password:"));
+        wPassword1_ = new Wt::WLineEdit;
+        wPassword1_->setTextSize(16);
+        wPassword1_->setMaxLength(32);
+        wPassword1_->setEchoMode(Wt::WLineEdit::Password);
+        wPassword1_->setValidator(pwStrengthValidator_ = new Wt::Auth::PasswordStrengthValidator);
+        table_->elementAt(0, 1)->addWidget(wPassword1_);
+        table_->elementAt(0, 1)->addWidget(wPasswordStrength_ = new Wt::WText);
+        
+        table_->elementAt(1, 0)->addWidget(new Wt::WLabel("Password:"));
+        wPassword2_ = new Wt::WLineEdit;
+        wPassword2_->setTextSize(16);
+        wPassword2_->setMaxLength(32);
+        wPassword2_->setEchoMode(Wt::WLineEdit::Password);
+        pwSameValidator_ = new ExactMatchValidator;
+        pwSameValidator_->setMandatory(true);
+        wPassword2_->setValidator(pwSameValidator_);
+        table_->elementAt(1, 1)->addWidget(wPassword2_);
+        table_->elementAt(1, 1)->addWidget(wPasswordsMatch_ = new Wt::WText);
+
+        addWidget(wSubmit_ = new Wt::WPushButton("Change"));
+
+        wPassword1_->textInput().connect(this, &WChangePassword::enableDisableSubmit);
+        wPassword2_->textInput().connect(this, &WChangePassword::enableDisableSubmit);
+        wPassword1_->textInput().connect(this, &WChangePassword::updatePasswordStrength);
+        wPassword1_->textInput().connect(this, &WChangePassword::updatePasswordsMatch);
+        wPassword2_->textInput().connect(this, &WChangePassword::updatePasswordsMatch);
+        wSubmit_->clicked().connect(this, &WChangePassword::changePassword);
+    }
+
+    void setUser(const Wt::Auth::User &user) {
+        modifyingUser_ = user;
+        if (user.isValid()) {
+            wUserName_->setText("<p>" + session_.fullName(user) + " (" + session_.loginName(user) + ")"
+                                ", your password has expired. Please change it now.</p>");
+        } else {
+            wUserName_->setText("No user");
+        }
+        wPassword1_->setText("");
+        wPassword2_->setText("");
+        enableDisableSubmit();
+    }
+
+    // Call this when a user logs in or out
+    void authenticationEvent() {
+        setUser(session_.currentUser());
+    }
+
+    Wt::Signal<Wt::Auth::User>& passwordChanged() {
+        return passwordChanged_;
+    }
+
+private:
+    void enableDisableSubmit() {
+        std::string password = wPassword1_->text().narrow();
+        wSubmit_->setEnabled(modifyingUser_.isValid() &&
+                             !wPassword1_->text().empty() &&
+                             wPassword1_->text() == wPassword2_->text() &&
+                             wPassword1_->validate() == Wt::WValidator::Valid &&
+                             wPassword2_->validate() == Wt::WValidator::Valid &&
+                             session_.verifyPassword(modifyingUser_, password) != Wt::Auth::PasswordValid);
+    }
+
+    // Update the text about how good the password is.
+    void updatePasswordStrength() {
+        if (modifyingUser_.isValid()) {
+            Wt::Auth::AbstractPasswordService::StrengthValidatorResult result =
+                pwStrengthValidator_->evaluateStrength(wPassword1_->text(), session_.loginName(modifyingUser_),
+                                                       session_.email(modifyingUser_));
+            wPasswordStrength_->setText(result.message());
+
+            pwSameValidator_ = new ExactMatchValidator;
+            pwSameValidator_->setMandatory(true);
+            pwSameValidator_->setTargetString(wPassword1_->text());
+            wPassword2_->setValidator(pwSameValidator_);
+        }
+    }
+
+    // Update text about whether passwords match.
+    void updatePasswordsMatch() {
+        std::string s1 = wPassword1_->text().narrow();
+        std::string s2 = wPassword2_->text().narrow();
+
+        if (s1.empty() || s2.empty()) {
+            wPasswordsMatch_->setText("");
+        } else if (s1 == s2) {
+            if (session_.verifyPassword(modifyingUser_, s1) == Wt::Auth::PasswordValid) {
+                wPasswordsMatch_->setText(" Old password");
+            } else {
+                wPasswordsMatch_->setText(" Match");
+            }
+        } else {
+            wPasswordsMatch_->setText(" Passwords do not match");
+        }
+    }
+
+    // Change a user's password
+    void changePassword() {
+        std::string password = wPassword1_->text().narrow();
+        session_.setPassword(modifyingUser_, password);
+        passwordChanged_.emit(modifyingUser_);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Developer's tab
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // Data (the user) for a combo box that holds user names.
 class UserComboBoxData {
@@ -3284,6 +3461,8 @@ class WDevelopersTab: public Wt::WContainerWidget {
     Wt::WContainerWidget *wUsers_;
     UserComboBox *wUserChoices_;
     WUserEdit *wUserEdit_;
+    WChangePassword *wChangePassword_;
+    Wt::Signal<> developerActionFinished_;              // used for important developer actions, like password changes
 
 public:
     explicit WDevelopersTab(Session &session, Wt::WContainerWidget *parent = NULL)
@@ -3302,6 +3481,12 @@ public:
         addWidget(wStack_ = new Wt::WStackedWidget);
 
         //---------------------------
+        // Force password change
+        //---------------------------
+        wStack_->addWidget(wChangePassword_ = new WChangePassword(session_));
+        wChangePassword_->passwordChanged().connect(this, &WDevelopersTab::finishedPwChange);
+
+        //---------------------------
         // Editing user information
         //---------------------------
 
@@ -3315,11 +3500,17 @@ public:
 
             // Wiring
             wUserChoices_->activated().connect(this, &WDevelopersTab::setUserEdit);
+            wUserEdit_->userCreated().connect(this, &WDevelopersTab::userNameMaybeChanged);
             wUserEdit_->userEdited().connect(this, &WDevelopersTab::userNameMaybeChanged);
 
             // Initialize data
             authenticationEvent();
         }
+    }
+
+    // Signal emitted when an important developer action has been completed, such as a mandatory password change.
+    Wt::Signal<>& developerActionFinished() {
+        return developerActionFinished_;
     }
 
     // Invoke this whenever a user logs in or out
@@ -3328,10 +3519,12 @@ public:
             wUserChoices_->setHidden(false);
             wUserEdit_->allowAuthorizationEdits(true);
             wStack_->setHidden(false);
+            wChangePassword_->setUser(session_.currentUser());
         } else if (session_.currentUser().isValid()) {
             wUserChoices_->setHidden(true);
             wUserEdit_->allowAuthorizationEdits(false);
             wStack_->setHidden(false);
+            wChangePassword_->setUser(session_.currentUser());
         } else {
             wStack_->setHidden(true);
         }
@@ -3343,6 +3536,13 @@ public:
             wUserChoices_->setCurrentIndex(idx);
             setUserEdit();
         }
+
+        // If the user needs to change his password then show the password change dialog.
+        if (session_.pwChangeRequired(session_.currentUser())) {
+            wStack_->setCurrentWidget(wChangePassword_);
+        } else {
+            wStack_->setCurrentWidget(wUsers_);
+        }
     }
 
 private:
@@ -3351,7 +3551,7 @@ private:
         wUserEdit_->setUser(wUserChoices_->currentData().user());
     }
 
-    // Call this if user names might have changed due to editing a user.
+    // Call this if user names might have changed due to editing or creating a user.
     void userNameMaybeChanged(const Wt::Auth::User &user) {
         Wt::Auth::User oldUser = wUserChoices_->currentData().user();
         repopulateUserComboBox();
@@ -3383,6 +3583,11 @@ private:
         }
     }
 
+    // Called when a required password change is completed.
+    void finishedPwChange(const Wt::Auth::User&) {
+        wStack_->setCurrentWidget(wUsers_);
+        developerActionFinished_.emit();
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3474,6 +3679,7 @@ public:
         details_->testIdChanged().connect(this, &WApplication::updateDetails);
         errors_->testIdChanged().connect(this, &WApplication::showTestDetails);
         settings_->settingsChanged().connect(this, &WApplication::updateAll);
+        developers_->developerActionFinished().connect(this, &WApplication::authenticationEvent);
         tabs_->currentChanged().connect(this, &WApplication::switchTabs);
         getMatchingTests();
 
@@ -3484,6 +3690,8 @@ private:
     void authenticationEvent() {
         if (gstate.tx->statement("select count(*) from auth_info")->execute_int() == 0) {
             showSetupView();
+        } else if (session_.pwChangeRequired(session_.currentUser())) {
+            showDeveloperActionView();
         } else if (session_.currentUser().isValid()) {
             showLoggedInView();
         } else {
@@ -3524,6 +3732,17 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(developers_),                SHOW); // shows the login form
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     HIDE);
         tabs_->setCurrentIndex(tabs_->indexOf(findWorkingConfig_));
+    }
+
+    void showDeveloperActionView() {
+        tabs_->setTabHidden(tabs_->indexOf(findWorkingConfig_),         HIDE);
+        tabs_->setTabHidden(tabs_->indexOf(resultsConstraints_),        HIDE);
+        tabs_->setTabHidden(tabs_->indexOf(details_),                   HIDE);
+        tabs_->setTabHidden(tabs_->indexOf(errors_),                    HIDE);
+        tabs_->setTabHidden(tabs_->indexOf(settings_),                  HIDE);
+        tabs_->setTabHidden(tabs_->indexOf(developers_),                SHOW);
+        tabs_->setTabHidden(tabs_->indexOf(setup_),                     HIDE);
+        tabs_->setCurrentIndex(tabs_->indexOf(developers_));
     }
 
     void switchTabs(int idx) {
