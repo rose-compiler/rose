@@ -2609,12 +2609,14 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global settings
 class WSettings: public Wt::WContainerWidget {
+    Session &session_;
     Wt::Signal<> settingsChanged_;
     Wt::WComboBox *passCriteria_, *userPassCriteria_;
+    Wt::WPushButton *publishVersionButton_;
 
 public:
-    explicit WSettings(WFindWorkingConfig *findWorkingConfig, Wt::WContainerWidget *parent = NULL)
-        : Wt::WContainerWidget(parent) {
+    explicit WSettings(Session &session, WFindWorkingConfig *findWorkingConfig, Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), session_(session) {
 
 
         // What test must be reached in order to qualify ROSE as being usable by end users?
@@ -2664,21 +2666,36 @@ public:
         addWidget(userPassCriteria_);
         addWidget(new Wt::WText(" step. This is the pass/fail criteria used in the public interface.<br/><br/>"));
 
-        Wt::WPushButton *publishVersionButton = new Wt::WPushButton("Publish");
-        publishVersionButton->setToolTip("Pressing this button will make these public settings the default for all "
-                                         "subsequent sessions both public and private.");
-        addWidget(publishVersionButton);
+        publishVersionButton_ = new Wt::WPushButton("Publish");
+        publishVersionButton_->setToolTip("Pressing this button will make these public settings the default for all "
+                                          "subsequent sessions both public and private.");
+        addWidget(publishVersionButton_);
 
         //----------
         // Wiring
         //----------
         passCriteria_->activated().connect(this, &WSettings::updatePassCriteria);
         userPassCriteria_->activated().connect(boost::bind(&WSettings::updateUserPassCriteria, this, findWorkingConfig));
-        publishVersionButton->clicked().connect(boost::bind(&WSettings::publishSettings, this, findWorkingConfig));
+        publishVersionButton_->clicked().connect(boost::bind(&WSettings::publishSettings, this, findWorkingConfig));
+
+        //-----------------
+        // Initialize data
+        //-----------------
+        authenticationEvent();
     }
 
     Wt::Signal<>& settingsChanged() {
         return settingsChanged_;
+    }
+
+    // Invoke this whenever a user logs in or out
+    void authenticationEvent() {
+        if (session_.login().loggedIn() && session_.user() &&
+            (session_.user()->isPublisher || session_.user()->isAdministrator)) {
+            publishVersionButton_->setEnabled(true);
+        } else {
+            publishVersionButton_->setEnabled(false);
+        }
     }
 
 private:
@@ -3208,9 +3225,6 @@ private:
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
             std::string loginName = row.get<std::string>(0);
             std::string realName = row.get<std::string>(1);
-#if 1 // DEBUGGING [Robb Matzke 2016-03-13]
-            mlog[FATAL] <<"ROBB: loginName=" <<loginName <<", realName=" <<realName <<"\n";
-#endif
             Wt::Auth::User user = session_.users().findWithIdentity("loginname", loginName);
             ASSERT_require(user.isValid());
             wUserChoices_->addItem(realName + " (" + loginName + ")", UserComboBoxData(user));
@@ -3297,7 +3311,7 @@ public:
         mlog[INFO] <<"creating tab: Errors\n";
         tabs_->addTab(errors_ = new WErrors, "Errors");
         mlog[INFO] <<"creating tab: Settings\n";
-        tabs_->addTab(settings_ = new WSettings(findWorkingConfig_), "Settings");
+        tabs_->addTab(settings_ = new WSettings(session_, findWorkingConfig_), "Settings");
         mlog[INFO] <<"creating tab: Developers\n";
         tabs_->addTab(developers_ = new WDevelopersTab(session_), "Developers");
         mlog[INFO] <<"creating tab: Setup\n";
@@ -3323,6 +3337,10 @@ public:
 
 private:
     void authenticationEvent() {
+        // Make sure Wt::Dbo connection is flushed so ROSE's SqlDatabase connection sees the data.
+        gstate.authTx->commit();
+        gstate.authTx = session_.users().startTransaction();
+
         if (session_.login().loggedIn()) {
             Wt::Dbo::ptr<User> user = session_.user();
             showLoggedInView();
@@ -3331,8 +3349,12 @@ private:
         } else {
             showLoggedOutView();
         }
+        settings_->authenticationEvent();
         developers_->authenticationEvent();
 
+        // Make sure Wt::Dbo connection is flushed so ROSE's SqlDatabase connection sees the data.
+        gstate.authTx->commit();
+        gstate.authTx = session_.users().startTransaction();
     }
 
     void showSetupView() {
