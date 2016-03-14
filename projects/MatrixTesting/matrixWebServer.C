@@ -131,6 +131,16 @@ public:
         return -1;
     }
 
+    // Remove some data
+    virtual bool removeRows(int row, int count, const Wt::WModelIndex &parent = Wt::WModelIndex()) {
+        ASSERT_require(row + count <= extraData_.size());
+        if (Wt::WStringListModel::removeRows(row, count, parent)) {
+            extraData_.erase(extraData_.begin()+row, extraData_.begin()+row+count);
+            return true;
+        }
+        return false;
+    }
+
     virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const ROSE_OVERRIDE {
         if (idx.isValid() && BaseTextRole == role) {
             return Wt::WStringListModel::data(idx, Wt::DisplayRole);
@@ -205,7 +215,12 @@ public:
     const T& currentData() const {
         return itemData(currentIndex());
     }
-    
+
+    // First item with data equal to specified data, or -1
+    int findData(const T &data) const {
+        return model_->findData(data);
+    }
+
     Wt::Signal<int>& activated() {
         return comboBox_->activated();
     }
@@ -214,6 +229,10 @@ public:
         return comboBox_->count();
     }
 
+    void clear() {
+        model_->removeRows(0, count());
+    }
+    
     void setMinimumSize(const Wt::WLength &width, const Wt::WLength &height) {
         comboBox_->setMinimumSize(width, height);
     }
@@ -227,6 +246,7 @@ public:
 class User {
 public:
     // Authorizations
+    std::string fullName;                               // Full name of user, as in "Robb Matzke"
     std::string testSubmissionToken;                    // Token require to submit test results; empty means not permitted
     bool isPublisher;                                   // Is user allowed to modify the public-facing web interface
     bool isAdministrator;                               // Administrator account bypasses all security
@@ -236,6 +256,7 @@ public:
 
     template<class Action>
     void persist(Action& a) {
+        Wt::Dbo::field(a, fullName, "full_name");
         Wt::Dbo::field(a, testSubmissionToken, "test_submission_token");
         Wt::Dbo::field(a, isPublisher, "is_publisher");
         Wt::Dbo::field(a, isAdministrator, "is_administrator");
@@ -372,6 +393,7 @@ struct GlobalState {
     std::vector<std::string> testNames;
     StringIndex testNameIndex;
     SqlDatabase::TransactionPtr tx;
+    Wt::Auth::AbstractUserDatabase::Transaction *authTx;
     Wt::Auth::AuthService authenticationService;
     Wt::Auth::PasswordService passwordService;
 
@@ -2710,7 +2732,7 @@ public:
 };
 
 // Creates and registers a new user.  This is generally run only by an administrator.
-class WCreateUser: public Wt::WContainerWidget {
+class WUserEdit: public Wt::WContainerWidget {
 public:
     enum UserItem { FullName, LoginName, Email, Password1, Password2, Publisher, Administrator };
 
@@ -2719,17 +2741,18 @@ private:
     Wt::WTable *table_;
     Wt::WLineEdit *wFullName_, *wLoginName_, *wEmail_, *wPassword1_, *wPassword2_;
     Wt::WText *wLoginNameError_, *wPasswordStrength_, *wPasswordsMatch_;
-    Wt::WPushButton *wCreate_;
+    Wt::WPushButton *wCreate_, *wUpdate_;
     Wt::Auth::PasswordStrengthValidator *pwStrengthValidator_;
     ExactMatchValidator *pwSameValidator_;
     Wt::WCheckBox *wIsPublisher_, *wIsAdministrator_;
-    Wt::Signal<Wt::Auth::User> userCreated_;
+    Wt::Signal<Wt::Auth::User> userCreated_, userEdited_;
+    Wt::Auth::User modifyingUser_;                      // user begin modified; invalid if creating user
 
     std::string loginNameChecked_;                      // a login name that was checked for existence
     bool loginNameExists_;                              // whether that login name exists
 
 public:
-    explicit WCreateUser(Session &session, Wt::WContainerWidget *parent = NULL)
+    explicit WUserEdit(Session &session, Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent), session_(session), loginNameExists_(false) {
         table_ = new Wt::WTable;
         addWidget(table_);
@@ -2798,21 +2821,31 @@ public:
         wCreate_->setEnabled(false);
         addWidget(wCreate_);
 
+        wUpdate_ = new Wt::WPushButton("Update account");
+        wUpdate_->setEnabled(false);
+        wUpdate_->setHidden(true);
+        addWidget(wUpdate_);
+
         // Wiring
-        wFullName_->textInput().connect(this, &WCreateUser::enableDisableSubmit);
+        wFullName_->textInput().connect(this, &WUserEdit::enableDisableSubmit);
 
-        wLoginName_->textInput().connect(this, &WCreateUser::enableDisableSubmit);
-        wLoginName_->textInput().connect(this, &WCreateUser::updateLoginExistsError);
+        wLoginName_->textInput().connect(this, &WUserEdit::enableDisableSubmit);
+        wLoginName_->textInput().connect(this, &WUserEdit::updateLoginExistsError);
 
-        wEmail_->textInput().connect(this, &WCreateUser::enableDisableSubmit);
+        wEmail_->textInput().connect(this, &WUserEdit::enableDisableSubmit);
 
-        wPassword1_->textInput().connect(this, &WCreateUser::enableDisableSubmit);
-        wPassword2_->textInput().connect(this, &WCreateUser::enableDisableSubmit);
-        wPassword1_->textInput().connect(this, &WCreateUser::updatePasswordStrength);
-        wPassword1_->textInput().connect(this, &WCreateUser::updatePasswordsMatch);
-        wPassword2_->textInput().connect(this, &WCreateUser::updatePasswordsMatch);
+        wPassword1_->textInput().connect(this, &WUserEdit::enableDisableSubmit);
+        wPassword2_->textInput().connect(this, &WUserEdit::enableDisableSubmit);
+        wPassword1_->textInput().connect(this, &WUserEdit::updatePasswordStrength);
+        wPassword1_->textInput().connect(this, &WUserEdit::updatePasswordsMatch);
+        wPassword2_->textInput().connect(this, &WUserEdit::updatePasswordsMatch);
 
-        wCreate_->clicked().connect(boost::bind(&WCreateUser::createAccount, this, &session));
+        wCreate_->clicked().connect(this, &WUserEdit::createAccount);
+        wUpdate_->clicked().connect(this, &WUserEdit::updateAccount);
+
+        // Initialize data
+        setUser(Wt::Auth::User());
+        allowAuthorizationEdits(false);
     }
 
     // Hide or show a certain user information
@@ -2836,16 +2869,65 @@ public:
         wIsPublisher_->setCheckState(b ? Wt::Checked : Wt::Unchecked);
     }
 
+    // Set up widget to modify a user. If the usr is invalid then we're creating a user instead.
+    void setUser(const Wt::Auth::User &authUser) {
+        modifyingUser_ = authUser;
+        if (authUser.isValid()) {
+            Wt::Dbo::ptr<AuthInfo> authInfo = session_.users().find(authUser);
+            ASSERT_require(authInfo);
+            ASSERT_require(authInfo->user());
+            wFullName_->setText(authInfo->user()->fullName);
+            wLoginName_->setText(authUser.identity("loginname"));
+            wLoginName_->setEnabled(false);             // login name cannot be changed this way
+            wEmail_->setText(authUser.unverifiedEmail());
+            wPassword1_->setText("");
+            wPassword2_->setText("");
+            wIsPublisher_->setCheckState(authInfo->user()->isPublisher ? Wt::Checked : Wt::Unchecked);
+            wIsAdministrator_->setCheckState(authInfo->user()->isAdministrator ? Wt::Checked : Wt::Unchecked);
+            wUpdate_->setHidden(false);                 // we are editing an existing account...
+            wCreate_->setHidden(true);                  // ...not creating a new account
+        } else {
+            wFullName_->setText("");
+            wLoginName_->setText("");
+            wLoginName_->setEnabled(true);
+            wEmail_->setText("");
+            wPassword1_->setText("");
+            wPassword2_->setText("");
+            wIsPublisher_->setCheckState(Wt::Unchecked);
+            wIsAdministrator_->setCheckState(Wt::Unchecked);
+            wCreate_->setHidden(false);                 // we are creating a new account,...
+            wUpdate_->setHidden(true);                  // ...not editing an existing account.
+        }
+    }
+
+    void allowAuthorizationEdits(bool b) {
+        if (b) {
+            wIsPublisher_->setEnabled(true);
+            wIsAdministrator_->setEnabled(true);
+        } else {
+            wIsPublisher_->setEnabled(false);
+            wIsAdministrator_->setEnabled(false);
+        }
+    }
+
     Wt::Signal<Wt::Auth::User>& userCreated() {
         return userCreated_;
     }
 
+    Wt::Signal<Wt::Auth::User>& userEdited() {
+        return userEdited_;
+    }
+
 private:
     void updateLoginExistsError() {
-        if (loginNameExists(wLoginName_->text().narrow())) {
-            wLoginNameError_->setText(" Name already exists");
+        if (modifyingUser_.isValid()) {
+            wLoginNameError_->setText("");              // we expect the name to exist when we're modifying a user!
         } else {
-            wLoginNameError_->setText("");
+            if (loginNameExists(wLoginName_->text().narrow())) {
+                wLoginNameError_->setText(" Name already exists");
+            } else {
+                wLoginNameError_->setText("");
+            }
         }
     }
 
@@ -2866,13 +2948,27 @@ private:
 
     // Enable or disable the button to actually create the user.
     void enableDisableSubmit() {
-        wCreate_->setEnabled(wFullName_->validate() == Wt::WValidator::Valid &&
-                             wLoginName_->validate() == Wt::WValidator::Valid &&
-                             !loginNameExists(wLoginName_->text().narrow()) &&
-                             wEmail_->validate() == Wt::WValidator::Valid &&
-                             wPassword1_->validate() == Wt::WValidator::Valid &&
-                             wPassword2_->validate() == Wt::WValidator::Valid &&
-                             wPassword1_->text() == wPassword2_->text());
+        bool isValid = wFullName_->validate() == Wt::WValidator::Valid &&
+                       wLoginName_->validate() == Wt::WValidator::Valid &&
+                       wEmail_->validate() == Wt::WValidator::Valid;
+
+        if (modifyingUser_.isValid()) {
+            // We're modifying an existing user. Empty password is okay and means don't change the password.
+            isValid = isValid &&
+                      ((wPassword1_->text().empty() && wPassword2_->text().empty()) ||
+                       (wPassword1_->validate() == Wt::WValidator::Valid &&
+                        wPassword2_->validate() == Wt::WValidator::Valid &&
+                        wPassword1_->text() == wPassword2_->text()));
+            wUpdate_->setEnabled(isValid);
+        } else {
+            // We're creating a new user.
+            isValid = isValid &&
+                      !loginNameExists(wLoginName_->text().narrow()) &&
+                      wPassword1_->validate() == Wt::WValidator::Valid &&
+                      wPassword2_->validate() == Wt::WValidator::Valid &&
+                      wPassword1_->text() == wPassword2_->text();
+            wCreate_->setEnabled(isValid);
+        }
     }
 
     // Update the text about how good the password is.
@@ -2901,32 +2997,64 @@ private:
         }
     }
 
-    void createAccount(Session *session) {
+    void createAccount() {
         std::string fullName = wFullName_->text().narrow();
         std::string loginName = wLoginName_->text().narrow();
         std::string email = wEmail_->text().narrow();
         std::string passwd = wPassword1_->text().narrow();
 
-        mlog[INFO] <<"creating administrator account \"" <<loginName <<"\" for " <<fullName <<" <" <<email <<">\n";
-        Wt::Auth::AbstractUserDatabase::Transaction *tx = session->users().startTransaction();
+        mlog[INFO] <<"creating user account \"" <<loginName <<"\" for " <<fullName <<" <" <<email <<">\n";
 
         // Create the info needed by our own queries
         User *user = new User;
+        user->fullName = fullName;
         user->isPublisher = wIsPublisher_->checkState() == Wt::Checked;
         user->isAdministrator = wIsAdministrator_->checkState() == Wt::Checked;
-        Wt::Dbo::ptr<User> userRecord = session->add(user);
+        Wt::Dbo::ptr<User> userRecord = session_.add(user);
 
         // Create the user used by Wt::Auth for authentication
-        Wt::Auth::User authUser = session->users().registerNew();
-        Wt::Dbo::ptr<AuthInfo> authInfoRecord = session->users().find(authUser);
+        Wt::Auth::User authUser = session_.users().registerNew();
+        Wt::Dbo::ptr<AuthInfo> authInfoRecord = session_.users().find(authUser);
         authInfoRecord.modify()->setUser(userRecord);
         authInfoRecord.modify()->setStatus(Wt::Auth::User::Normal);
         authInfoRecord.modify()->setUnverifiedEmail(email);
         gstate.passwordService.updatePassword(authUser, passwd);
-        session->users().addIdentity(authUser, "loginname", loginName);
+        session_.users().addIdentity(authUser, "loginname", loginName);
+        flush();                                        // so SqlDatabase layer sees it
 
-        tx->commit();
+        setUser(authUser);
         userCreated_.emit(authUser);
+    }
+
+    void updateAccount() {
+        ASSERT_require(modifyingUser_.isValid());
+        std::string fullName = wFullName_->text().narrow();
+        std::string loginName = wLoginName_->text().narrow();
+        std::string email = wEmail_->text().narrow();
+        std::string passwd = wPassword1_->text().narrow();
+
+        mlog[INFO] <<"updating user account \"" <<loginName <<"\" for " <<fullName <<" <" <<email <<">\n";
+
+        // Update the database
+        Wt::Dbo::ptr<AuthInfo> authInfoRecord = session_.users().find(modifyingUser_);
+        Wt::Dbo::ptr<User> user = authInfoRecord->user();
+        user.modify()->fullName = fullName;
+        user.modify()->isPublisher = wIsPublisher_->checkState() == Wt::Checked;
+        user.modify()->isAdministrator = wIsAdministrator_->checkState() == Wt::Checked;
+        authInfoRecord.modify()->setUnverifiedEmail(email);
+        if (!passwd.empty())
+            gstate.passwordService.updatePassword(modifyingUser_, passwd);
+        flush();                                        // so SqlDatabase layer sees it
+
+        // Make sure we have the latest info for the user.
+        Wt::Auth::User authUser = session_.users().findWithIdentity("loginname", loginName);
+        setUser(authUser);
+        userEdited_.emit(authUser);
+    }
+
+    void flush() {
+        gstate.authTx->commit();
+        gstate.authTx = session_.users().startTransaction();
     }
 };
 
@@ -2934,7 +3062,7 @@ private:
 
 // First-run creation of the administrator account. Creates the administrator account and then logs in as the administrator.
 class WCreateAdminAccount: public Wt::WContainerWidget {
-    WCreateUser *createUser_;
+    WUserEdit *createUser_;
     Session &session_;                                  // database session for user authentication
 
 public:
@@ -2942,9 +3070,10 @@ public:
         : Wt::WContainerWidget(parent), session_(session) {
         addWidget(new Wt::WText("<h1>Create administrator account</h1>"));
         addWidget(new Wt::WText("<p>This page sets up the administrator account since the user database tables are empty.</p>"));
-        addWidget(createUser_ = new WCreateUser(session));
+        addWidget(createUser_ = new WUserEdit(session));
         createUser_->makeAdministrator();
         createUser_->makePublisher();
+        createUser_->allowAuthorizationEdits(true);
 
         createUser_->userCreated().connect(this, &WCreateAdminAccount::login);
     }
@@ -2955,6 +3084,141 @@ private:
     }
 };
 
+// Data (the user) for a combo box that holds user names.
+class UserComboBoxData {
+    Wt::Auth::User user_;
+
+public:
+    UserComboBoxData() {}
+
+    explicit UserComboBoxData(const Wt::Auth::User &user)
+        : user_(user) {}
+
+    std::string display() const {
+        return "";
+    }
+
+    const Wt::Auth::User& user() const {
+        return user_;
+    }
+
+    bool operator==(const UserComboBoxData &other) {
+        return user_ == other.user_;                    // same identity and same database?
+    }
+};
+
+typedef WComboBoxWithData<UserComboBoxData> UserComboBox;
+    
+// Top-level tab for doing various user things.
+class WDevelopersTab: public Wt::WContainerWidget {
+    Session &session_;
+    Wt::Auth::AuthWidget *wAuthentication_;
+    Wt::WStackedWidget *wStack_;
+    Wt::WContainerWidget *wUsers_;
+    UserComboBox *wUserChoices_;
+    WUserEdit *wUserEdit_;
+
+public:
+    explicit WDevelopersTab(Session &session, Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), session_(session) {
+
+        // User authentication: login/logout. In the logged-out state we show only the AuthWidget which is showing a login
+        // form. In the logged in state we show the AuthWidget's logout button along with the stack widget.
+        wAuthentication_ = new Wt::Auth::AuthWidget(gstate.authenticationService, session_.users(), session_.login());
+        wAuthentication_->model()->addPasswordAuth(&gstate.passwordService);
+        wAuthentication_->setRegistrationEnabled(false);
+        wAuthentication_->processEnvironment();
+        addWidget(wAuthentication_);
+
+        // The stack of additional widgets.
+        addWidget(wStack_ = new Wt::WStackedWidget);
+
+        //---------------------------
+        // Editing user information
+        //---------------------------
+
+        {
+            wStack_->addWidget(wUsers_ = new Wt::WContainerWidget);
+
+            wUsers_->addWidget(new Wt::WLabel("Edit user: "));
+            repopulateUserComboBox();
+            wUsers_->addWidget(wUserChoices_);
+            wUsers_->addWidget(wUserEdit_ = new WUserEdit(session_));
+
+            // Wiring
+            wUserChoices_->activated().connect(this, &WDevelopersTab::setUserEdit);
+            wUserEdit_->userEdited().connect(this, &WDevelopersTab::userNameMaybeChanged);
+
+            // Initialize data
+            authenticationEvent();
+        }
+    }
+
+    // Invoke this whenever a user logs in or out
+    void authenticationEvent() {
+        if (session_.login().loggedIn() && session_.user() && session_.user()->isAdministrator) {
+            wUserChoices_->setHidden(false);
+            wUserEdit_->allowAuthorizationEdits(true);
+            wStack_->setHidden(false);
+        } else if (session_.login().loggedIn() && session_.user()) {
+            wUserChoices_->setHidden(true);
+            wUserEdit_->allowAuthorizationEdits(false);
+            wStack_->setHidden(false);
+        } else {
+            wStack_->setHidden(true);
+        }
+
+        // If a user is logged in, then make that user the one being edited and make sure the user combo box is right.
+        if (session_.login().loggedIn()) {
+            int idx = std::max(0, wUserChoices_->findData(UserComboBoxData(session_.login().user())));
+            wUserChoices_->setCurrentIndex(idx);
+            setUserEdit();
+        }
+    }
+
+private:
+    // Change which user information is being edited.
+    void setUserEdit() {
+        wUserEdit_->setUser(wUserChoices_->currentData().user());
+    }
+
+    // Call this if user names might have changed due to editing a user.
+    void userNameMaybeChanged(const Wt::Auth::User &user) {
+        Wt::Auth::User oldUser = wUserChoices_->currentData().user();
+        repopulateUserComboBox();
+        int idx = std::max(0, wUserChoices_->findData(UserComboBoxData(oldUser)));
+        wUserChoices_->setCurrentIndex(idx);
+        setUserEdit();
+    }
+    
+    // (Re)build the user combo box.
+    void repopulateUserComboBox() {
+        if (wUserChoices_) {
+            wUserChoices_->clear();
+        } else {
+            wUserChoices_ = new UserComboBox(wUsers_);
+        }
+        
+        wUserChoices_->addItem("New user");
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select ident.identity, u.full_name"
+                                                           " from auth_identities as ident"
+                                                           " join auth_info as info on ident.auth_info_id = info.id"
+                                                           " join auth_users as u on info.user_id = u.id"
+                                                           " order by u.full_name");
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+            std::string loginName = row.get<std::string>(0);
+            std::string realName = row.get<std::string>(1);
+#if 1 // DEBUGGING [Robb Matzke 2016-03-13]
+            mlog[FATAL] <<"ROBB: loginName=" <<loginName <<", realName=" <<realName <<"\n";
+#endif
+            Wt::Auth::User user = session_.users().findWithIdentity("loginname", loginName);
+            ASSERT_require(user.isValid());
+            wUserChoices_->addItem(realName + " (" + loginName + ")", UserComboBoxData(user));
+        }
+    }
+
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // One application object is created per user session.
 class WApplication: public Wt::WApplication {
@@ -2963,9 +3227,9 @@ class WApplication: public Wt::WApplication {
     WDetails *details_;
     WErrors *errors_;
     WSettings *settings_;
+    WDevelopersTab *developers_;
     Wt::WTabWidget *tabs_;
     Session session_;
-    Wt::Auth::AuthWidget *wAuthentication_;
     WCreateAdminAccount *setup_;
     static const bool HIDE = true;
     static const bool SHOW = false;
@@ -2974,6 +3238,7 @@ public:
     explicit WApplication(const Wt::WEnvironment &env)
         : Wt::WApplication(env), session_(gstate.dbUrl) {
         setTitle("ROSE testing matrix");
+        gstate.authTx = session_.users().startTransaction();
         Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
         root()->setLayout(vbox);
 
@@ -3020,12 +3285,6 @@ public:
         styleSheet().addRule(".error-status-6", "border:1px solid black; background-color:#edc7d5;");// light rose
         styleSheet().addRule(".error-status-7", "border:1px solid black; background-color:#bebadf;");// light purple
 
-        // User authentication
-        wAuthentication_ = new Wt::Auth::AuthWidget(gstate.authenticationService, session_.users(), session_.login());
-        wAuthentication_->model()->addPasswordAuth(&gstate.passwordService);
-        wAuthentication_->setRegistrationEnabled(true);
-        wAuthentication_->processEnvironment();
-        
         // Main application
         tabs_ = new Wt::WTabWidget();
         vbox->addWidget(tabs_);
@@ -3039,7 +3298,9 @@ public:
         tabs_->addTab(errors_ = new WErrors, "Errors");
         mlog[INFO] <<"creating tab: Settings\n";
         tabs_->addTab(settings_ = new WSettings(findWorkingConfig_), "Settings");
-        tabs_->addTab(wAuthentication_, "Developers");
+        mlog[INFO] <<"creating tab: Developers\n";
+        tabs_->addTab(developers_ = new WDevelopersTab(session_), "Developers");
+        mlog[INFO] <<"creating tab: Setup\n";
         tabs_->addTab(setup_ = new WCreateAdminAccount(session_), "Setup");
 
         if (gstate.tx->statement("select count(*) from auth_info")->execute_int() == 0) {
@@ -3070,6 +3331,8 @@ private:
         } else {
             showLoggedOutView();
         }
+        developers_->authenticationEvent();
+
     }
 
     void showSetupView() {
@@ -3078,7 +3341,7 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(details_),                   HIDE);
         tabs_->setTabHidden(tabs_->indexOf(errors_),                    HIDE);
         tabs_->setTabHidden(tabs_->indexOf(settings_),                  HIDE);
-        tabs_->setTabHidden(tabs_->indexOf(wAuthentication_),           HIDE);
+        tabs_->setTabHidden(tabs_->indexOf(developers_),                HIDE);
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     SHOW);
         tabs_->setCurrentIndex(tabs_->indexOf(setup_));
     }
@@ -3089,7 +3352,7 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(details_),                   SHOW);
         tabs_->setTabHidden(tabs_->indexOf(errors_),                    SHOW);
         tabs_->setTabHidden(tabs_->indexOf(settings_),                  SHOW);
-        tabs_->setTabHidden(tabs_->indexOf(wAuthentication_),           SHOW);
+        tabs_->setTabHidden(tabs_->indexOf(developers_),                SHOW);
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     HIDE);
         if (tabs_->currentIndex() == tabs_->indexOf(setup_))
             tabs_->setCurrentIndex(tabs_->indexOf(findWorkingConfig_));
@@ -3101,7 +3364,7 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(details_),                   HIDE);
         tabs_->setTabHidden(tabs_->indexOf(errors_),                    HIDE);
         tabs_->setTabHidden(tabs_->indexOf(settings_),                  HIDE);
-        tabs_->setTabHidden(tabs_->indexOf(wAuthentication_),           SHOW);
+        tabs_->setTabHidden(tabs_->indexOf(developers_),                SHOW); // shows the login form
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     HIDE);
         tabs_->setCurrentIndex(tabs_->indexOf(findWorkingConfig_));
     }

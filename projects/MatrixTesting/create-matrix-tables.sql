@@ -4,6 +4,14 @@
 begin transaction;
 
 --
+-- The folowing tables are created automatically by the web application
+--
+--  auth_users		-- application-level user information
+--  auth_info		-- Wt::Auth information about each user
+--  auth_identities	-- login name(s) for each user
+--  auth_tokens		-- web browser tokens to maintain logins between sessions
+
+--
 -- Persistent interface settings
 --
 create table interface_settings (
@@ -191,7 +199,7 @@ create table test_results (
     id serial primary key,
 
     -- who did the testing and reporting
-    reporting_user integer references auth_identities(id), -- user making this report
+    reporting_user integer references auth_users(id),   -- user making this report
     reporting_time integer,                             -- when report was made (unix time)
     tester varchar(256),                                -- who did the testing (e.g., a Jenkins slave name)
     os varchar(64),                                     -- operating system information
