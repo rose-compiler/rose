@@ -327,7 +327,7 @@ SgAsmFunction *
 functionAst(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     SgNode *result = NULL;
     if (function && !function->optionalAttribute<SgNode*>(ATTR_Ast).assignTo(result)) {
-        result = P2::Modules::buildFunctionAst(partitioner, function, true /*relaxed*/);
+        result = P2::Modules::buildFunctionAst(partitioner, function, P2::AstConstructionSettings::permissive());
         function->setAttribute(ATTR_Ast, result);
     }
     return isSgAsmFunction(result);

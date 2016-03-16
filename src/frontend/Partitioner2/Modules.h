@@ -366,45 +366,38 @@ void nameNoopFunctions(const Partitioner&);
 /** Build AST for basic block.
  *
  *  Builds and returns an AST for the specified basic block. The basic block must not be a null pointer, but it need not be in
- *  the CFG.  If the basic block has no instructions then it would violate ROSE's invariants, so a null pointer is returned
- *  instead; however, if @p relaxed is true then an IR node is returned anyway. */
-SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, const Function::Ptr&, bool relaxed=false);
+ *  the CFG. */
+SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, const Function::Ptr&, const AstConstructionSettings&);
 
 /** Build AST for data block.
  *
  *  Builds and returns an AST for the specified data block.  The data block must not be a null pointer, but it need not be in
- *  the CFG.  If @p relaxed is true then IR nodes are created even if they would violate some ROSE invariant, otherwise invalid
- *  data blocks are ignored and a null pointer is returned for them. */
-SgAsmBlock* buildDataBlockAst(const Partitioner&, const DataBlock::Ptr&, bool relaxed=false);
+ *  the CFG. */
+SgAsmBlock* buildDataBlockAst(const Partitioner&, const DataBlock::Ptr&, const AstConstructionSettings&);
 
 /** Build AST for function.
  *
  *  Builds and returns an AST for the specified function.  The function must not be a null pointer, but it need not be in the
  *  CFG.  The function will have children created only for its basic blocks that exist in the CFG (otherwise the partitioner
- *  doesn't know about them).  If no children were created then the returned function IR node violates ROSE's invariants, so a
- *  null pointer is returned instead; however, if @p relaxed is true then an IR node is returned anyway. */
-SgAsmFunction* buildFunctionAst(const Partitioner&, const Function::Ptr&, bool relaxed=false);
+ *  doesn't know about them). */
+SgAsmFunction* buildFunctionAst(const Partitioner&, const Function::Ptr&, const AstConstructionSettings&);
 
 /** Builds the global block AST.
  *
  *  A global block's children are all the functions contained in the AST, which in turn contain SgAsmBlock IR nodes for the
- *  basic blocks, which in turn contain instructions.  If no functions exist in the CFG then the returned node would violate
- *  ROSE's invariants, so a null pointer is returned instead; however, if @p relaxed is true then the IR node is returned
- *  anyway. */
-SgAsmBlock* buildGlobalBlockAst(const Partitioner&, bool relaxed=false);
+ *  basic blocks, which in turn contain instructions. */
+SgAsmBlock* buildGlobalBlockAst(const Partitioner&, const AstConstructionSettings&);
 
 /** Builds an AST from the CFG.
  *
  *  Builds an abstract syntax tree from the control flow graph.  The returned SgAsmBlock will have child functions; each
- *  function (SgAsmFunction) will have child basic blocks; each basic block (SgAsmBlock) will have child instructions.  If @p
- *  relaxed is false then all IR nodes in the returned tree will satisfy ROSE's invariants concerning them at the expense of not
- *  including certain things in the AST; otherwise, when @p relaxed is true, the AST will be as complete as possible but may
- *  violate some invariants.
+ *  function (SgAsmFunction) will have child basic blocks; each basic block (SgAsmBlock) will have child instructions.
  *
  *  This function is the same as @ref buildGlobalBlockAst except it also calls various AST fixup functions. Providing an
  *  interpretation allows more fixups to occur.  Also, if @p interp is non-null then the returned global block is attached to
  *  the interpretation in the AST (any previous global block is detached but not destroyed). */
-SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL, bool relaxed=false);
+SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL,
+                     const AstConstructionSettings &settings = AstConstructionSettings::strict());
 
 /** Fixes pointers in the AST.
  *
