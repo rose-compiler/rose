@@ -1098,6 +1098,8 @@ public:
      *  Returns the bits of this vector by interpreting them as an unsigned integer.  If this vector contains more than 64 bits
      *  then only the low-order 64 bits are considered. */
     boost::uint64_t toInteger() const {
+        if (size() <= 64)
+            return BitVectorSupport::toInteger(data(), size());
         return BitVectorSupport::toInteger(data(), hull());
     }
 

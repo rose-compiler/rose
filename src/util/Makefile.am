@@ -102,6 +102,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/CommandLine.h			\
 	Sawyer/DefaultAllocator.h		\
 	Sawyer/DistinctList.h			\
+	Sawyer/Exception.h			\
 	Sawyer/Graph.h				\
 	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
