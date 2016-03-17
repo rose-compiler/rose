@@ -96,9 +96,15 @@ class Node;
 class Interior;
 class Leaf;
 
+/** Shared-ownership pointer to an expression @ref Node. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<Node> Ptr;
+
+/** Shared-ownership pointer to an expression @ref Interior node. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<Interior> InteriorPtr;
+
+/** Shared-ownership pointer to an expression @ref Leaf node. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<Leaf> LeafPtr;
+
 typedef std::vector<Ptr> Nodes;
 typedef Map<uint64_t, uint64_t> RenameMap;
 

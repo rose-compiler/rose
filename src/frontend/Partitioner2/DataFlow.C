@@ -293,9 +293,9 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
     ASSERT_not_null(ops);
     ASSERT_not_null(initialStackPointer);
-    BaseSemantics::StatePtr state = ops->get_state();
+    BaseSemantics::StatePtr state = ops->currentState();
     ASSERT_not_null(state);
-    SMTSolver *solver = ops->get_solver();             // might be null
+    SMTSolver *solver = ops->solver();                  // might be null
 
     // What is the word size for this architecture?  We'll assume the word size is the same as the width of the stack pointer,
     // whose value we have in initialStackPointer.
@@ -309,7 +309,7 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     CellCoalescer cellCoalescer;
     typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress; // full address per stack offset
     OffsetAddress offsetAddresses;
-    BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->get_memory_state());
+    BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
     BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
         SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->get_address());
         ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
@@ -385,7 +385,7 @@ findFunctionArguments(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSema
 std::vector<AbstractLocation>
 findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNBytes) {
     ASSERT_not_null(ops);
-    BaseSemantics::StatePtr state = ops->get_state();
+    BaseSemantics::StatePtr state = ops->currentState();
     ASSERT_not_null(state);
     ASSERT_require(wordNBytes>0);
 
@@ -396,7 +396,7 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
     typedef Sawyer::Container::Map<rose_addr_t, BaseSemantics::SValuePtr> SymbolicAddresses;
     StackWriters stackWriters;
     SymbolicAddresses symbolicAddrs;
-    BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->get_memory_state());
+    BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
     BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
         ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
         size_t nBytes = cell->get_value()->get_width() / 8;
@@ -429,11 +429,11 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
 BaseSemantics::StatePtr
 TransferFunction::initialState() const {
     BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
-    BaseSemantics::StatePtr newState = ops->get_state()->clone();
+    BaseSemantics::StatePtr newState = ops->currentState()->clone();
     newState->clear();
 
     BaseSemantics::RegisterStateGenericPtr regState =
-        BaseSemantics::RegisterStateGeneric::promote(newState->get_register_state());
+        BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
 
     // Any register for which we need its initial state must be initialized rather than just springing into existence. We could
     // initialize all registers, but that makes output a bit verbose--users usually don't want to see values for registers that
@@ -452,7 +452,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
     BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
     BaseSemantics::StatePtr retval = incomingState->clone();
     const RegisterDictionary *regDict = cpu_->get_register_dictionary();
-    ops->set_state(retval);
+    ops->currentState(retval);
 
     DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
     ASSERT_require(vertex != dfCfg.vertices().end());
@@ -460,7 +460,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         Function::Ptr callee = vertex->value().callee();
         bool isStackPtrFixed = false;
         BaseSemantics::RegisterStateGenericPtr genericRegState =
-            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->get_register_state());
+            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->registerState());
 
         BaseSemantics::SValuePtr stackDelta;            // non-null if a stack delta is known for the callee
         if (callee)

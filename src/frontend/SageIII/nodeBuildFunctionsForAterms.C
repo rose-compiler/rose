@@ -3403,14 +3403,14 @@ SgUntypedStatementList* SgUntypedStatementList::build_node_from_nonlist_children
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedDeclarationList* SgUntypedDeclarationList::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgUntypedDeclarationStatementList* SgUntypedDeclarationStatementList::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedDeclarationList::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedDeclarationStatementList::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
-     SgUntypedDeclarationList* returnNode = NULL;
+     SgUntypedDeclarationStatementList* returnNode = NULL;
 
      return returnNode;
    }
@@ -14171,6 +14171,189 @@ SgAsyncStmt* SgAsyncStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStat
 
      SgAsyncStmt* returnNode = NULL;
 
+     return returnNode;
+   }
+
+#if 0
+  // DQ (1/18/2016): Need to add more complete support for newer IR nodes (Matlab, Asm, and OpenMP nodes).
+     SgLeftDivideOp
+     SgElementwiseDivideOp
+     SgElementwisePowerOp
+     SgElementwiseLeftDivideOp
+     SgElementwiseAddOp
+     SgOmpEndClause
+     SgRangeExp
+     SgOmpBeginClause
+     SgMatrixTransposeOp
+     SgNoexceptOp
+     SgPowerOp
+     SgAsmRiscOperation
+     SgMatrixExp
+     SgElementwiseSubtractOp
+     SgMagicColonExp
+     SgElementwiseMultiplyOp
+
+  // Support for statement:
+     SgMatlabForStatement
+
+  // Support for types:
+     SgTypeMatrix
+     SgTypeOfType
+     SgTypeTuple
+#endif
+
+// SgLeftDivideOp* SgLeftDivideOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgLeftDivideOp* SgLeftDivideOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgType*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgLeftDivideOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgLeftDivideOp* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// SgElementwiseDivideOp* SgElementwiseDivideOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgElementwiseDivideOp* SgElementwiseDivideOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgType*)
+   {
+     SgElementwiseDivideOp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgElementwisePowerOp* SgElementwisePowerOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgElementwisePowerOp* SgElementwisePowerOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgType*)
+   {
+     SgElementwisePowerOp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgElementwiseLeftDivideOp* SgElementwiseLeftDivideOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgElementwiseLeftDivideOp* SgElementwiseLeftDivideOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgType*)
+   {
+     SgElementwiseLeftDivideOp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgElementwiseAddOp* SgElementwiseAddOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgElementwiseAddOp* SgElementwiseAddOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgType*)
+   {
+     SgElementwiseAddOp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgOmpEndClause* SgOmpEndClause::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgOmpEndClause* SgOmpEndClause::build_node_from_nonlist_children(Sg_File_Info*)
+   {
+     SgOmpEndClause* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgRangeExp* SgRangeExp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgRangeExp* SgRangeExp::build_node_from_nonlist_children(Sg_File_Info*)
+   {
+     SgRangeExp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgOmpBeginClause* SgOmpBeginClause::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgOmpBeginClause* SgOmpBeginClause::build_node_from_nonlist_children(Sg_File_Info*)
+   {
+     SgOmpBeginClause* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgMatrixTransposeOp* SgMatrixTransposeOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgMatrixTransposeOp* SgMatrixTransposeOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgType*)
+   {
+     SgMatrixTransposeOp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgNoexceptOp* SgNoexceptOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgNoexceptOp* SgNoexceptOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+   {
+     SgNoexceptOp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgPowerOp* SgPowerOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgPowerOp* SgPowerOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgType*)
+   {
+     SgPowerOp* returnNode = NULL;
+     return returnNode;
+   }
+
+#if 0
+// SgAsmRiscOperation* SgAsmRiscOperation::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgAsmRiscOperation* SgAsmRiscOperation::build_node_from_nonlist_children((SgAsmRiscOperation::RiscOperator)
+   {
+     SgAsmRiscOperation* returnNode = NULL;
+     return returnNode;
+   }
+#endif
+
+SgAsmRiscOperation* SgAsmRiscOperation::build_node_from_nonlist_children(SgAsmRiscOperation::RiscOperator riscOperator )
+   {
+     SgAsmRiscOperation* returnNode = NULL;
+     return returnNode;
+   }
+
+
+// SgMatrixExp* SgMatrixExp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgMatrixExp* SgMatrixExp::build_node_from_nonlist_children(Sg_File_Info*)
+   {
+     SgMatrixExp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgElementwiseSubtractOp* SgElementwiseSubtractOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgElementwiseSubtractOp* SgElementwiseSubtractOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgType*)
+   {
+     SgElementwiseSubtractOp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgMagicColonExp* SgMagicColonExp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgMagicColonExp* SgMagicColonExp::build_node_from_nonlist_children(Sg_File_Info*)
+   {
+     SgMagicColonExp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgElementwiseMultiplyOp* SgElementwiseMultiplyOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*)
+SgElementwiseMultiplyOp* SgElementwiseMultiplyOp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgType*)
+   {
+     SgElementwiseMultiplyOp* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgMatlabForStatement* SgMatlabForStatement::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*)
+SgMatlabForStatement* SgMatlabForStatement::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgBasicBlock*)
+   {
+     SgMatlabForStatement* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgTypeMatrix* SgTypeMatrix::build_node_from_nonlist_children(Sg_File_Info*, SgType*)
+SgTypeMatrix* SgTypeMatrix::build_node_from_nonlist_children()
+   {
+     SgTypeMatrix* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgTypeOfType* SgTypeOfType::build_node_from_nonlist_children(Sg_File_Info*, SgType*)
+SgTypeOfType* SgTypeOfType::build_node_from_nonlist_children(SgExpression*, SgType*)
+   {
+     SgTypeOfType* returnNode = NULL;
+     return returnNode;
+   }
+
+// SgTypeTuple* SgTypeTuple::build_node_from_nonlist_children(Sg_File_Info*, SgType*)
+SgTypeTuple* SgTypeTuple::build_node_from_nonlist_children()
+   {
+     SgTypeTuple* returnNode = NULL;
      return returnNode;
    }
 

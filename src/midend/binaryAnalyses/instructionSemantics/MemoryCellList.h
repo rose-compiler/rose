@@ -9,7 +9,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
-/** Smart pointer to a MemoryCell object. MemoryCell objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a list-based memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryCellList> MemoryCellListPtr;
 
 /** Simple list-based memory state.
@@ -196,18 +196,11 @@ public:
         return latestWrittenCell();
     }
 
-    /** Writers for an address.
-     *
-     *  Returns the set of all writers that wrote to the specified address or any address that might alias the specified
-     *  address. */
-    virtual AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps);
+    virtual MemoryCell::AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                                   RiscOperators *valOps) ROSE_OVERRIDE;
 
-    /** Writers for an address.
-     *
-     *  Returns the set of all writers that wrote to the specified address and any address that might alias the specified
-     *  address. */
-    virtual AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                              RiscOperators *valOps);
+    virtual MemoryCell::AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                                          RiscOperators *valOps) ROSE_OVERRIDE;
 
     // [Robb P. Matzke 2015-08-17]: deprecated
     virtual std::set<rose_addr_t> get_latest_writers(const SValuePtr &addr, size_t nbits,

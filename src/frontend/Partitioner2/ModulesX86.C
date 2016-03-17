@@ -195,10 +195,13 @@ isThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &in
 
 void
 splitThunkFunctions(Partitioner &partitioner) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    debug <<"splitThunkFunctions\n";
     std::vector<Function::Ptr> workList = partitioner.functions();
     while (!workList.empty()) {
         Function::Ptr candidate = workList.back();
         workList.pop_back();
+        SAWYER_MESG(debug) <<"  considering " <<candidate->printableName() <<"\n";
 
         // Get the entry vertex in the CFG and the entry basic block.
         ControlFlowGraph::ConstVertexIterator entryVertex = partitioner.findPlaceholder(candidate->address());
@@ -206,7 +209,8 @@ splitThunkFunctions(Partitioner &partitioner) {
         if (entryVertex->value().type() != V_BASIC_BLOCK)
             continue;
         BasicBlock::Ptr entryBlock = entryVertex->value().bblock();
-        ASSERT_not_null(entryBlock);
+        if (entryBlock == NULL)
+            continue;                                   // can't split a block if we haven't discovered it yet
 
         // All incoming edges must be function calls, function transfers, etc. We cannot split the thunk from the beginning of
         // the entry block if the entry block is a successor of some other non-call block in the same function (e.g., the top
@@ -229,6 +233,8 @@ splitThunkFunctions(Partitioner &partitioner) {
 #endif
         if (0 == thunkSize)
             continue;
+
+        // Is the thunk pattern a proper subsequence of the entry block?
         bool thunkIsPrefix = thunkSize < entryBlock->nInstructions();
         if (!thunkIsPrefix && candidate->basicBlockAddresses().size()==1)
             continue;                                   // function is only a thunk already
@@ -241,30 +247,37 @@ splitThunkFunctions(Partitioner &partitioner) {
         // By now we've determined that there is indeed a thunk that must be split off from the big candidate function. We
         // can't just remove the thunk's basic block from the candidate function because the thunk is the candidate function's
         // entry block. Therefore detach the big function from the CFG to make room for new thunk and target functions.
+        SAWYER_MESG(debug) <<"    " <<candidate->printableName() <<" starts with a thunk\n";
         partitioner.detachFunction(candidate);
 
         // If the thunk is a proper prefix of the candidate function's entry block then split the entry block in two.
         BasicBlock::Ptr origEntryBlock = entryBlock;
         ControlFlowGraph::ConstVertexIterator targetVertex = partitioner.cfg().vertices().end();
-        if (thunkSize < entryBlock->nInstructions()) {
+        if (thunkIsPrefix) {
+            SAWYER_MESG(debug) <<"    splitting entry " <<origEntryBlock->printableName() <<"\n";
             targetVertex = partitioner.truncateBasicBlock(entryVertex, entryBlock->instructions()[thunkSize]);
             entryBlock = entryVertex->value().bblock();
+            SAWYER_MESG(debug) <<"    new entry is " <<entryBlock->printableName() <<"\n";
             ASSERT_require(entryBlock != origEntryBlock); // we need the original block for its analysis results below
             ASSERT_require(entryBlock->nInstructions() < origEntryBlock->nInstructions());
         } else {
             targetVertex = entryVertex->outEdges().begin()->target();
+            SAWYER_MESG(debug) <<"    eliding entry block; new entry is " <<partitioner.vertexName(targetVertex) <<"\n";
         }
         ASSERT_require(partitioner.cfg().isValidVertex(targetVertex));
 
         // Create the new thunk function.
         Function::Ptr thunkFunction = Function::instance(candidate->address(), SgAsmFunction::FUNC_THUNK);
+        SAWYER_MESG(debug) <<"    created thunk " <<thunkFunction->printableName() <<"\n";
         partitioner.attachFunction(thunkFunction);
 
         // Create the new target function, which has basically the same features as the original candidate function except a
         // different entry address.  The target might be indeterminate (e.g., "jmp [address]" where address is not mapped or
         // non-const), in which case we shouldn't create a function there (in fact, we can't since indeterminate has no
-        // concrete address and functions need entry addresses).
-        if (targetVertex->value().type() == V_BASIC_BLOCK) {
+        // concrete address and functions need entry addresses). Since the partitioner supports shared basic blocks (basic
+        // block owned by multiple functions), the target vertex might already be a function, in which case we shouldn't try to
+        // create it.
+        if (targetVertex->value().type() == V_BASIC_BLOCK && !partitioner.functionExists(targetVertex->value().address())) {
             unsigned newReasons = (candidate->reasons() & ~SgAsmFunction::FUNC_THUNK) | SgAsmFunction::FUNC_GRAPH;
             Function::Ptr newFunc = Function::instance(targetVertex->value().address(), candidate->name(), newReasons);
             newFunc->comment(candidate->comment());

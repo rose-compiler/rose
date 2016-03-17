@@ -6372,6 +6372,9 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
              }
         }
 
+  // DQ (3/4/2016): Klocworks reports a problem with "node->get_parent() != NULL".
+     ROSE_ASSERT(node != NULL);
+
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
         {
           output << prefix

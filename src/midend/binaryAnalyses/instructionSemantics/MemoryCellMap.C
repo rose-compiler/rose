@@ -34,7 +34,7 @@ MemoryCellMap::writeMemory(const SValuePtr &address, const SValuePtr &value, Ris
     ASSERT_not_null(address);
     ASSERT_require(!byteRestricted() || value->get_width() == 8);
     MemoryCellPtr newCell = protocell->create(address, value);
-    if (addrOps->get_insn() || valOps->get_insn()) {
+    if (addrOps->currentInstruction() || valOps->currentInstruction()) {
         newCell->ioProperties().insert(IO_WRITE);
     } else {
         newCell->ioProperties().insert(IO_INIT);
@@ -51,36 +51,44 @@ MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscO
     ASSERT_not_null(other);
     bool changed = false;
 
-    BOOST_FOREACH (const MemoryCellPtr &otherCell, other->cells.values()) {
+    std::set<CellKey> allKeys;                          // union of cell keys from "this" and "other"
+    BOOST_FOREACH (const CellKey &key, cells.keys())
+        allKeys.insert(key);
+    BOOST_FOREACH (const CellKey &key, other->cells.keys())
+        allKeys.insert(key);
+
+    BOOST_FOREACH (const CellKey &key, allKeys) {
+        const MemoryCellPtr &thisCell  = cells.getOrDefault(key);
+        const MemoryCellPtr &otherCell = other->cells.getOrDefault(key);
         bool thisCellChanged = false;
-        CellKey key = generateCellKey(otherCell->get_address());
-        if (const MemoryCellPtr &thisCell = cells.getOrDefault(key)) {
-            SValuePtr otherValue = otherCell->get_value();
-            SValuePtr thisValue = thisCell->get_value();
-            SValuePtr newValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->get_solver()).orDefault();
-            if (newValue)
-                thisCellChanged = true;
 
-            MemoryCell::AddressSet otherWriters = otherCell->getWriters();
-            MemoryCell::AddressSet thisWriters = thisCell->getWriters();
-            MemoryCell::AddressSet newWriters = otherWriters | thisWriters;
-            if (newWriters != thisWriters)
-                thisCellChanged = true;
+        ASSERT_require(thisCell != NULL || otherCell != NULL);
+        SValuePtr thisValue  = thisCell  ? thisCell->get_value()  : valOps->undefined_(otherCell->get_value()->get_width());
+        SValuePtr otherValue = otherCell ? otherCell->get_value() : valOps->undefined_(thisCell->get_value()->get_width());
+        SValuePtr newValue   = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
+        if (newValue)
+            thisCellChanged = true;
 
-            InputOutputPropertySet otherProps = otherCell->ioProperties();
-            InputOutputPropertySet thisProps = thisCell->ioProperties();
-            InputOutputPropertySet newProps = otherProps | thisProps;
-            if (newProps != thisProps)
-                thisCellChanged = true;
+        MemoryCell::AddressSet thisWriters  = thisCell  ? thisCell->getWriters()  : MemoryCell::AddressSet();
+        MemoryCell::AddressSet otherWriters = otherCell ? otherCell->getWriters() : MemoryCell::AddressSet();
+        MemoryCell::AddressSet newWriters = otherWriters | thisWriters;
+        if (newWriters != thisWriters)
+            thisCellChanged = true;
 
-            if (thisCellChanged) {
-                if (!newValue)
-                    newValue = thisValue->copy();
-                writeMemory(thisCell->get_address(), newValue, addrOps, valOps);
-                latestWrittenCell_->setWriters(newWriters);
-                latestWrittenCell_->ioProperties() = newProps;
-                changed = true;
-            }
+        InputOutputPropertySet thisProps  = thisCell  ? thisCell->ioProperties()  : InputOutputPropertySet();
+        InputOutputPropertySet otherProps = otherCell ? otherCell->ioProperties() : InputOutputPropertySet();
+        InputOutputPropertySet newProps = otherProps | thisProps;
+        if (newProps != thisProps)
+            thisCellChanged = true;
+
+        if (thisCellChanged) {
+            if (!newValue)
+                newValue = thisValue->copy();
+            SValuePtr address = thisCell ? thisCell->get_address() : otherCell->get_address();
+            writeMemory(address, newValue, addrOps, valOps);
+            latestWrittenCell_->setWriters(newWriters);
+            latestWrittenCell_->ioProperties() = newProps;
+            changed = true;
         }
     }
     return changed;
@@ -145,6 +153,24 @@ MemoryCellMap::eraseLeadingCells(const MemoryCell::Predicate &p) {
 MemoryCellPtr
 MemoryCellMap::findCell(const SValuePtr &addr) const {
     return cells.getOrDefault(generateCellKey(addr));
+}
+
+MemoryCell::AddressSet
+MemoryCellMap::getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+    MemoryCell::AddressSet retval;
+    CellKey key = generateCellKey(addr);
+    if (MemoryCellPtr cell = cells.getOrDefault(key))
+        retval = cell->getWriters();
+    return retval;
+}
+
+MemoryCell::AddressSet
+MemoryCellMap::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+    MemoryCell::AddressSet retval;
+    CellKey key = generateCellKey(addr);
+    if (MemoryCellPtr cell = cells.getOrDefault(key))
+        retval = cell->getWriters();
+    return retval;
 }
 
 } // namespace

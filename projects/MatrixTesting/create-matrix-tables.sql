@@ -4,20 +4,14 @@
 begin transaction;
 
 --
--- User list.  These are users that are permitted insert new test results.
+-- Persistent interface settings
 --
-
-create table users (
-    uid serial primary key,                             -- unique user ID number
-    name varchar(64),                                   -- user name, email, etc.
-    salt varchar(16),                                   -- random password salt
-    password varchar(64),                               -- cryptographically hashed password
-    enabled integer                                     -- non-zero if user is enabled
+create table interface_settings (
+    rose_public_version text default '',		-- version number to show by default on the public parts of the site
+    pass_criteria text default 'end' 			-- what test needs to be reached for ROSE to be considered useful
 );
 
-insert into users (name) values ('matzke');
-insert into users (name) values ('jenkins');
-
+insert into interface_settings (rose_public_version) values ('');
 
 --
 -- List of software dependency packages.  There are a number of different kinds of dependencies:
@@ -51,12 +45,15 @@ insert into dependencies values ('build',        'autoconf',         1);
 insert into dependencies values ('build',        'cmake',            0);
 
 -- Compiler is $VENDOR-$VERSION-$LANGUAGE or just $VENDOR-$VERSION or just $VENDOR.
-insert into dependencies values ('compiler',     'gcc-4.2',          0);
-insert into dependencies values ('compiler',     'gcc-4.3',          0);
-insert into dependencies values ('compiler',     'gcc-4.4',          0);
-insert into dependencies values ('compiler',     'gcc-4.8',          1);
-insert into dependencies values ('compiler',     'gcc-4.9',          1);
-insert into dependencies values ('compiler',     'llvm-3.5',         1);
+insert into dependencies values ('compiler',     'gcc-4.2-default',  0);
+insert into dependencies values ('compiler',     'gcc-4.3-default',  0);
+insert into dependencies values ('compiler',     'gcc-4.4-default',  0);
+insert into dependencies values ('compiler',     'gcc-4.4-c++11',    0);
+insert into dependencies values ('compiler',     'gcc-4.8-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.8-c++11',    1);
+insert into dependencies values ('compiler',     'gcc-4.9-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.9-c++11',    1);
+insert into dependencies values ('compiler',     'llvm-3.5-default', 1);
 
 -- Whether to compile ROSE with debugging support. Value is 'yes' or 'no'.
 -- NOTE: cmake is not set up for all combinations of debug and optimize.
@@ -81,7 +78,6 @@ insert into dependencies values ('assertions',   'throw',            0);
 insert into dependencies values ('languages',    'all',              1);
 insert into dependencies values ('languages',    'c,c++',            1);
 insert into dependencies values ('languages',    'binaries',         1);
-insert into dependencies values ('languages',    'c,c++,binaries',   0);
 
 -- Boost version numbers or "system" to use the system-installed version.
 insert into dependencies values ('boost',        '1.43',             0);
@@ -146,7 +142,8 @@ insert into dependencies values ('qt',           'system',           0);
 
 -- GNU Readline version or "system" or "none"
 insert into dependencies values ('readline',     'none',             1);
-insert into dependencies values ('readline',     'system',           0);
+insert into dependencies values ('readline',     'system',           1);
+insert into dependencies values ('readline',     'ambivalent',       1);
 
 -- SQLite library version number or "system" or "none"
 insert into dependencies values ('sqlite',       'none',             1);
@@ -156,10 +153,13 @@ insert into dependencies values ('sqlite',       'system',           0);
 insert into dependencies values ('wt',           'none',             1);
 insert into dependencies values ('wt',           '3.3.3',            0);
 insert into dependencies values ('wt',           '3.3.4',            1);
+insert into dependencies values ('wt',           '3.3.5',            0);
 
 -- YAML-CC library version number or "system" or "none"
 insert into dependencies values ('yaml',         'none',             1);
 insert into dependencies values ('yaml',         '0.5.1',            1);
+insert into dependencies values ('yaml',         '0.5.2',            0);
+insert into dependencies values ('yaml',         '0.5.3',            0);
 
 -- Yices SMT solver version or "system" or "none"
 insert into dependencies values ('yices',        'no',               1);
@@ -191,7 +191,7 @@ create table test_results (
     id serial primary key,
 
     -- who did the testing and reporting
-    reporting_user integer references users(uid),       -- user making this report
+    reporting_user integer references auth_identities(id), -- user making this report
     reporting_time integer,                             -- when report was made (unix time)
     tester varchar(256),                                -- who did the testing (e.g., a Jenkins slave name)
     os varchar(64),                                     -- operating system information
@@ -212,6 +212,7 @@ create table test_results (
     rmc_dlib            varchar(64) default 'unknown',
     rmc_doxygen         varchar(64) default 'unknown',
     rmc_edg             varchar(64) default 'unknown',
+    rmc_java		varchar(64) default 'unknown',
     rmc_languages       varchar(64) default 'unknown',
     rmc_magic           varchar(64) default 'unknown',
     rmc_optimize        varchar(64) default 'unknown',
@@ -238,7 +239,11 @@ create table test_results (
     -- Additional optional information reported by the tester.
     duration integer,                                   -- time it took to run the test (seconds)
     noutput integer,                                    -- total lines of output (compiler, tests, etc)
-    nwarnings integer                                   -- number of compiler warnings (pattern "warning:")
+    nwarnings integer,                                  -- number of compiler warnings (pattern "warning:")
+
+    -- Information about the first error message.
+    first_error text,
+    first_error_staging text				-- temporary column when for searching for errors
 );
 
 --
@@ -249,6 +254,17 @@ create table attachments (
     test_id integer references test_results(id),        -- the test to which this attachment belongs
     name varchar(64),                                   -- short name for this attachment
     content text                                        -- the content of the attachment
+);
+
+--
+-- Stores info about error messages
+--
+create table errors (
+    status text not null,				-- point at which error was detected
+    message text not null,				-- the error message
+    issue_name text default '', 			-- name of corresponding JIRA issue if any
+    commentary text default '',				-- commentary about the error message
+    mtime int	     					-- time that commentary was added/changed (unix)
 );
 
 commit;

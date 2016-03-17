@@ -90,6 +90,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     std::string description =
         "Disassembles the specimens and presents various information depending on switches.";
     Parser parser = engine.commandLineParser(purpose, description);
+    parser.errorStream(mlog[FATAL]);
 
     // Switches for output
     SwitchGroup out("Output switches");
@@ -639,7 +640,6 @@ selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Se
     }
     ASSERT_not_implemented("function selection criteria is not implemented yet");
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

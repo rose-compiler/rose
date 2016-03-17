@@ -342,7 +342,7 @@ public:
     public:
         virtual ~ShouldInline() {}
 
-        /**  Predicates are reference counted. */
+        /**  Shared ownership pointer to a predicate object. See @ref heap_object_shared_ownership. */
         typedef Sawyer::SharedPointer<ShouldInline> Ptr;
 
         /** Factory class method. */

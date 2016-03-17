@@ -10,26 +10,26 @@
 
 namespace Combinatorics {
 
-bool
+ROSE_UTIL_API bool
 flip_coin()
 {
     static LinearCongruentialGenerator rng;
     return 0 == (rng() & 1);
 }
 
-std::vector<uint8_t>
+ROSE_UTIL_API std::vector<uint8_t>
 sha1_digest(const std::vector<uint8_t> &data)
 {
     return sha1_digest(&data[0], data.size());
 }
 
-std::vector<uint8_t>
+ROSE_UTIL_API std::vector<uint8_t>
 sha1_digest(const std::string &data)
 {
     return sha1_digest((const uint8_t*)&data[0], data.size());
 }
 
-std::vector<uint8_t>
+ROSE_UTIL_API std::vector<uint8_t>
 sha1_digest(const uint8_t *data, size_t size)
 {
 #ifndef ROSE_HAVE_GCRYPT_H
@@ -49,19 +49,19 @@ sha1_digest(const uint8_t *data, size_t size)
 #endif
 }
 
-uint64_t
+ROSE_UTIL_API uint64_t
 fnv1a64_digest(const std::vector<uint8_t> &data)
 {
     return fnv1a64_digest(&data[0], data.size());
 }
 
-uint64_t
+ROSE_UTIL_API uint64_t
 fnv1a64_digest(const std::string &data)
 {
     return fnv1a64_digest((const uint8_t*)&data[0], data.size());
 }
 
-uint64_t
+ROSE_UTIL_API uint64_t
 fnv1a64_digest(const uint8_t *data, size_t size)
 {
     uint64_t hash = 0xcbf29ce484222325ull;
@@ -70,7 +70,7 @@ fnv1a64_digest(const uint8_t *data, size_t size)
     return hash;
 }
 
-std::string digest_to_string(const uint8_t *data, size_t size)
+ROSE_UTIL_API std::string digest_to_string(const uint8_t *data, size_t size)
 {
     std::string str;
     for (size_t i=0; i<size; ++i) {
@@ -80,13 +80,13 @@ std::string digest_to_string(const uint8_t *data, size_t size)
     return str;
 }
 
-std::string
+ROSE_UTIL_API std::string
 digest_to_string(const std::vector<uint8_t> &data)
 {
     return digest_to_string(&data[0], data.size());
 }
 
-std::string
+ROSE_UTIL_API std::string
 digest_to_string(const std::string &data)
 {
     return digest_to_string((const uint8_t*)&data[0], data.size());

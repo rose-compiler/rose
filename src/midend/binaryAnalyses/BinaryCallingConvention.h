@@ -75,6 +75,7 @@ enum StackCleanup {
  *
  *  The same type is used for input parameters, output parameters, and in-out parameters. Return values are a kind of
  *  output parameter, although the API usually does not include the return value when it talks about "parameters". */
+  #undef ABSOLUTE
 class ParameterLocation {
 public:
     /** Type of location. */

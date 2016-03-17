@@ -819,8 +819,8 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 EXTRA_ALL_TESTCODES = $(EXTRA_TESTCODES_REQUIRED_TO_PASS) $(TESTS_STILL_TOO_HARD)
 
-# ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = --edg:no_warnings -rose:verbose 0 --edg:restrict
+# ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict -rose:suppress_variable_declaration_normalization
+ROSE_FLAGS = --edg:no_warnings -rose:verbose 0 --edg:restrict 
 
 ## Include the path to A++ and the transformation specification
 TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code

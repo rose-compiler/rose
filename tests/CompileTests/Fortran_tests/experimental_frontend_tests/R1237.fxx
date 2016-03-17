@@ -1,0 +1,9 @@
+MODULE mod
+
+CONTAINS
+
+MODULE PROCEDURE modproc
+INTEGER :: i
+i = 3
+END PROCEDURE modproc
+END MODULE

@@ -25,7 +25,7 @@ namespace ConcreteSemantics {
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
+/** Smart-ownership pointer to a concrete semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Formatter for symbolic values. */
@@ -154,7 +154,7 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 //                                      Memory State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryState object.  MemoryState objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a concrete memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Byte-addressable memory.
@@ -293,8 +293,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to concrete RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the ConcreteSemantics domain.
@@ -320,14 +319,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Concrete");
+        name("Concrete");
         (void) SValue::promote(protoval); // make sure its dynamic type is a ConcreteSemantics::SValue
     }
 
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Concrete");
-        (void) SValue::promote(state->get_protoval()); // values must have ConcreteSemantics::SValue dynamic type
+        name("Concrete");
+        (void) SValue::promote(state->protoval());      // values must have ConcreteSemantics::SValue dynamic type
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -344,14 +343,14 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument because the base class expects one, but it is not used for concrete semantics. See set_solver() for
+     *  second argument because the base class expects one, but it is not used for concrete semantics. See @ref solver for
      *  details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
-     *  because the base class expects one, but it is not used for concrete semantics. See set_solver() for details. */
+     *  because the base class expects one, but it is not used for concrete semantics. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }

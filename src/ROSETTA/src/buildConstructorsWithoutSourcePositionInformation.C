@@ -4,14 +4,14 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 #include "grammarString.h"
 #include <sstream>
 
 using namespace std;
 
 void
-Grammar::markNodeForConstructorWithoutSourcePositionInformation ( Terminal & node )
+Grammar::markNodeForConstructorWithoutSourcePositionInformation ( AstNodeClass & node )
    {
   // DQ (11/7/2006): Where we find the SgLocatedNode mark a data member so that we can use the
   // same code generation mechanisms to generate different constructors.
@@ -25,7 +25,7 @@ Grammar::markNodeForConstructorWithoutSourcePositionInformation ( Terminal & nod
         {
        // printf ("Found SgLocatedNode, look for the Sg_File_Info object startOfConstructor \n");
 #if 0
-          const list<GrammarString*> & terminalList = node.token->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          const list<GrammarString*> & terminalList = node.token->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           list<GrammarString*>::const_iterator i = terminalList.begin();
           while (i != terminalList.end())
              {
@@ -48,13 +48,13 @@ Grammar::markNodeForConstructorWithoutSourcePositionInformation ( Terminal & nod
    }
 
 void
-Grammar::markNodeForConstructorWithoutSourcePositionInformationSupport( Terminal & node )
+Grammar::markNodeForConstructorWithoutSourcePositionInformationSupport( AstNodeClass & node )
    {
      markNodeForConstructorWithoutSourcePositionInformation(node);
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     vector<Terminal *>::const_iterator treeNodeIterator;
+     vector<AstNodeClass *>::const_iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin();
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )
@@ -68,10 +68,10 @@ Grammar::markNodeForConstructorWithoutSourcePositionInformationSupport( Terminal
    }
 
 GrammarString* 
-Grammar::getNamedDataMember ( Terminal & node, const string & name )
+Grammar::getNamedDataMember ( AstNodeClass & node, const string & name )
    {
      GrammarString* returnValue = NULL;
-     const vector<GrammarString*> & terminalList = node.getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     const vector<GrammarString*> & terminalList = node.getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      vector<GrammarString*>::const_iterator i = terminalList.begin();
      while (i != terminalList.end())
         {
@@ -89,13 +89,13 @@ Grammar::getNamedDataMember ( Terminal & node, const string & name )
      return returnValue;
    }
 
-Terminal* 
-Grammar::getNamedNode ( Terminal & node, const string & name )
+AstNodeClass* 
+Grammar::getNamedNode ( AstNodeClass & node, const string & name )
    {
   // This function only operates on the parent chain.
 
   // We only want to output non-source-position dependent constructors for SgLocatedNodes. Test for this.
-     Terminal* parentNode = node.getBaseClass();
+     AstNodeClass* parentNode = node.getBaseClass();
 #if 0
      string parentNodeName;
      if (parentNode != NULL)
@@ -124,7 +124,7 @@ Grammar::getNamedNode ( Terminal & node, const string & name )
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
+Grammar::buildConstructorWithoutSourcePositionInformation ( AstNodeClass & node )
    {
   // DQ (11/6/2006): This function generates the code for a newer form of the constructor 
   // that has not source position information in it's parameter list.  This new form of the constructor
@@ -153,7 +153,7 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
 
 
   // We only want to output non-source-position dependent constructors for SgLocatedNodes. Test for this.
-     Terminal* parentNode = getNamedNode ( node, "SgLocatedNode" );
+     AstNodeClass* parentNode = getNamedNode ( node, "SgLocatedNode" );
 
   // We only want to output non-source-position dependent constructors for SgLocatedNodes.
      if (parentNode != NULL && node.generateConstructor() == true)
@@ -213,7 +213,7 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
    }
 
 void
-Grammar::buildConstructorWithoutSourcePositionInformationSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildConstructorWithoutSourcePositionInformationSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      StringUtility::FileWithLineNumbers editString = buildConstructorWithoutSourcePositionInformation(node);
 
@@ -231,7 +231,7 @@ Grammar::buildConstructorWithoutSourcePositionInformationSupport( Terminal & nod
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     vector<Terminal *>::const_iterator treeNodeIterator;
+     vector<AstNodeClass *>::const_iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin();
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )

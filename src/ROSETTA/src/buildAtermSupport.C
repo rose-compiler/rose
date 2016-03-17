@@ -4,7 +4,7 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 #include "grammarString.h"
 #include <sstream>
 
@@ -19,11 +19,11 @@
 using namespace std;
 
 void
-Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::FileWithLineNumbers & outputFile)
+Grammar::buildAtermGenerationSupportFunctions(AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile)
    {
      vector<GrammarString*> includeList = Grammar::classMemberIncludeList(node);
 
-  // Terminal::TypeEvaluation typeKind = Terminal::evaluateType(std::string& varTypeString);
+  // AstNodeClass::TypeEvaluation typeKind = AstNodeClass::evaluateType(std::string& varTypeString);
 
   // printf ("node = %s includeList = %zu \n",node.getName().c_str(),includeList.size());
 
@@ -114,10 +114,10 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
           GrammarString* grammarString = *i;
           ROSE_ASSERT(grammarString != NULL);
 
-       // We need a Terminal so that we can call the evaluateType() function (this is a bit awkward).
-       // Terminal::TypeEvaluation typeKind = node.evaluateType(grammarString->getTypeNameString());
+       // We need a AstNodeClass so that we can call the evaluateType() function (this is a bit awkward).
+       // AstNodeClass::TypeEvaluation typeKind = node.evaluateType(grammarString->getTypeNameString());
           string typenameString = grammarString->getTypeNameString();
-          Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+          AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
        // outputFile << "// data member variable: " << grammarString->getVariableNameString() << "\n";
        // generateAtermSupport(grammarString,outputFile);
@@ -133,13 +133,13 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
 #endif
        // printf ("   --- typenameString = %s typeKind = %d \n",typenameString.c_str(),typeKind);
 
-          bool toBeTraversed = grammarString->getToBeTraversed().getValue();
+          TraversalEnum toBeTraversed = grammarString->getToBeTraversed();
 
 #if 1
-          if (typeKind == Terminal::SGCLASS_POINTER)
+          if (typeKind == AstNodeClass::SGCLASS_POINTER)
              {
             // This should generate a sequence of aterms.
-               if (toBeTraversed == true)
+               if (toBeTraversed == DEF_TRAVERSAL)
                   {
 #if 0
                     printf ("   --- typeKind == SGCLASS_POINTER typenameString = %s typeKind = %d name = %s \n",typenameString.c_str(),typeKind,grammarString->getVariableNameString().c_str());
@@ -156,7 +156,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                   {
 #if 0
                  // This should be added as an aterm annotation.
-                     outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
+                     outputFile << "// node = " << node.getName() << " toBeTraversed == NO_TRAVERSAL: data member type: " 
                                 << grammarString->getTypeNameString() << " data member variable: " 
                                 << grammarString->getVariableNameString() << " typeKind = " 
                                 << StringUtility::numberToString((int)typeKind) << "\n";
@@ -232,16 +232,16 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
 #endif
 #if 0
        // This is not used for containers of SGCLASS_POINTER.
-          if (typeKind == Terminal::SGCLASS_POINTER_VECTOR)
+          if (typeKind == AstNodeClass::SGCLASS_POINTER_VECTOR)
              {
             // This should generate a list of aterms.
                printf ("   --- typeKind == SGCLASS_POINTER_VECTOR typenameString = %s typeKind = %d name = %s \n",typenameString.c_str(),typeKind,grammarString->getVariableNameString().c_str());
             // printf ("Found typeKind == SGCLASS_POINTER_VECTOR \n");
              }
 #endif
-          if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+          if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST)
              {
-               if (toBeTraversed == true)
+               if (toBeTraversed == DEF_TRAVERSAL)
                   {
                  // This should generate a list of aterms.
 #if 0
@@ -265,7 +265,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
              }
 #if 0
        // This is not used for containers of SGCLASS_POINTER.
-          if (typeKind == Terminal::SGCLASS_POINTER_VECTOR_NAMED_LIST)
+          if (typeKind == AstNodeClass::SGCLASS_POINTER_VECTOR_NAMED_LIST)
              {
             // This should generate a list of aterms.
                printf ("   --- typeKind == SGCLASS_POINTER_VECTOR_NAMED_LIST typenameString = %s typeKind = %d name = %s \n",typenameString.c_str(),typeKind,grammarString->getVariableNameString().c_str());
@@ -274,7 +274,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
 #endif
 
        // Ignore these initially.
-          if (typeKind == Terminal::BASIC_DATA_TYPE)
+          if (typeKind == AstNodeClass::BASIC_DATA_TYPE)
              {
             // This will generate an Aterm annotation to store the value of the associated basic data type.
 #if 0
@@ -333,7 +333,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
              }
 
        // This is where names are stored and we need them for numerous sources of declarations (stored as a string annotation).
-          if (typeKind == Terminal::SGNAME)
+          if (typeKind == AstNodeClass::SGNAME)
              {
             // This will generate an Aterm annotation to store the value of the associated basic data type.
 #if 0
@@ -372,7 +372,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
              }
 
        // DQ (make the annotations more complete by adding the enum types.
-          if (typeKind == Terminal::ENUM_TYPE)
+          if (typeKind == AstNodeClass::ENUM_TYPE)
              {
             // This will generate an Aterm annotation to store the value of the associated enum type.
 #if 0
@@ -542,7 +542,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
      outputFile << "\n\n";
 
   // Traverse all nodes of the grammar recursively and build the tree traversal function for each of them.
-     vector<Terminal*>::iterator treeNodeIterator;
+     vector<AstNodeClass*>::iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin(); treeNodeIterator != node.subclasses.end(); treeNodeIterator++ )
         {
           ROSE_ASSERT((*treeNodeIterator) != NULL);
@@ -554,13 +554,13 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
 
 
 void
-Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::FileWithLineNumbers & outputFile)
+Grammar::buildAtermConsumerSupportFunctions(AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile)
    {
   // This function generates the code to convert the ATERM --> AST.
 
      vector<GrammarString*> includeList = Grammar::classMemberIncludeList(node);
 
-  // Terminal::TypeEvaluation typeKind = Terminal::evaluateType(std::string& varTypeString);
+  // AstNodeClass::TypeEvaluation typeKind = AstNodeClass::evaluateType(std::string& varTypeString);
   // printf ("node = %s includeList = %zu \n",node.getName().c_str(),includeList.size());
 
   // bool outputAterm = false;
@@ -671,10 +671,10 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
           GrammarString* grammarString = *i;
           ROSE_ASSERT(grammarString != NULL);
 
-       // We need a Terminal so that we can call the evaluateType() function (this is a bit awkward).
-       // Terminal::TypeEvaluation typeKind = node.evaluateType(grammarString->getTypeNameString());
+       // We need a AstNodeClass so that we can call the evaluateType() function (this is a bit awkward).
+       // AstNodeClass::TypeEvaluation typeKind = node.evaluateType(grammarString->getTypeNameString());
           string typenameString = grammarString->getTypeNameString();
-          Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+          AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
        // outputFile << "// data member variable: " << grammarString->getVariableNameString() << "\n";
        // generateAtermSupport(grammarString,outputFile);
@@ -690,7 +690,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 #endif
        // printf ("   --- typenameString = %s typeKind = %d \n",typenameString.c_str(),typeKind);
 
-          bool toBeTraversed = grammarString->getToBeTraversed().getValue();
+          TraversalEnum toBeTraversed = grammarString->getToBeTraversed();
 
           // MS 11/12/2015: uses new function
           // isInConstructorParameterList to allow to properly check
@@ -704,10 +704,10 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 #endif
 
 #if 1
-          if (typeKind == Terminal::SGCLASS_POINTER)
+          if (typeKind == AstNodeClass::SGCLASS_POINTER)
              {
             // This should generate a sequence of aterms.
-               if (toBeTraversed == true)
+               if (toBeTraversed == DEF_TRAVERSAL)
                   {
 #if 0
                     printf ("   --- typeKind == SGCLASS_POINTER typenameString = %s typeKind = %d name = %s \n",typenameString.c_str(),typeKind,grammarString->getVariableNameString().c_str());
@@ -786,7 +786,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                   {
                  // This should be added as an aterm annotation.
 #if 0
-                     outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
+                     outputFile << "// node = " << node.getName() << " toBeTraversed == NO_TRAVERSAL: data member type: " 
                                 << grammarString->getTypeNameString() << " data member variable: " 
                                 << grammarString->getVariableNameString() << " typeKind = " 
                                 << StringUtility::numberToString((int)typeKind) << "\n";
@@ -832,9 +832,9 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
              }
 #endif
 
-          if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+          if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST)
              {
-               if (toBeTraversed == true)
+               if (toBeTraversed == DEF_TRAVERSAL)
                   {
                  // This should generate a list of aterms.
 #if 0
@@ -860,7 +860,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
              }
 #if 0
        // This is not used for containers of SGCLASS_POINTER.
-          if (typeKind == Terminal::SGCLASS_POINTER_VECTOR_NAMED_LIST)
+          if (typeKind == AstNodeClass::SGCLASS_POINTER_VECTOR_NAMED_LIST)
              {
             // This should generate a list of aterms.
                printf ("   --- typeKind == SGCLASS_POINTER_VECTOR_NAMED_LIST typenameString = %s typeKind = %d name = %s \n",typenameString.c_str(),typeKind,grammarString->getVariableNameString().c_str());
@@ -869,7 +869,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 #endif
 
        // Ignore these initially.
-          if (typeKind == Terminal::BASIC_DATA_TYPE)
+          if (typeKind == AstNodeClass::BASIC_DATA_TYPE)
              {
             // This will generate an Aterm annotation to store the value of the associated basic data type.
 #if 0
@@ -913,7 +913,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
              }
 
        // This is where names are stored and we need them for numerous sources of declarations (stored as a string annotation).
-          if (typeKind == Terminal::SGNAME)
+          if (typeKind == AstNodeClass::SGNAME)
              {
             // This will generate an Aterm annotation to store the value of the associated basic data type.
 #if 0
@@ -956,7 +956,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
              }
 
        // DQ: make the annotations more complete by adding the enum types.
-          if (typeKind == Terminal::ENUM_TYPE)
+          if (typeKind == AstNodeClass::ENUM_TYPE)
              {
             // This will generate an Aterm annotation to store the value of the associated enum type.
 #if 0
@@ -981,7 +981,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
              }
 
        // DQ: make the annotations more complete by adding the enum types.
-          if (typeKind == Terminal::STRING)
+          if (typeKind == AstNodeClass::STRING)
              {
             // This will generate an Aterm annotation to store the value of the associated enum type.
 #if 0
@@ -1236,7 +1236,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
   // outputFile << "\n\n";
 
   // Traverse all nodes of the grammar recursively and build the tree traversal function for each of them.
-     vector<Terminal*>::iterator treeNodeIterator;
+     vector<AstNodeClass*>::iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin(); treeNodeIterator != node.subclasses.end(); treeNodeIterator++ )
         {
           ROSE_ASSERT((*treeNodeIterator) != NULL);
@@ -1247,7 +1247,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
 
 void
-Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & firstAterm,
+Grammar::buildDataMember(AstNodeClass & node, GrammarString* grammarString, bool & firstAterm,
      bool & firstConstructorParameter, bool & lastDataMemberWasConstructorParameter, bool & isInConstructorParameterList, 
      string & constructorArgumentsString, string & atermArgumentsSubstring, string & atermPatternSubstring,
      string & dataMemberString, string & dataMemberString_post, int integer_counter)
@@ -1255,9 +1255,9 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
   // Refactored code to support building default values date members for marked as constructor initializers.
 
      string typenameString             = grammarString->getTypeNameString();
-     Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+     AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
-     bool toBeTraversed = grammarString->getToBeTraversed().getValue();
+     TraversalEnum toBeTraversed = grammarString->getToBeTraversed();
 
      string atermArgumentsName     = "term";
      string integer_counter_string = StringUtility::numberToString(integer_counter);
@@ -1267,15 +1267,15 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
           constructorArgumentsString  += ", ";
         }
 
-     if (toBeTraversed == true)
+     if (toBeTraversed == DEF_TRAVERSAL)
         {
 #if 0
           dataMemberString += string("       // firstConstructorParameter    = ") + (firstConstructorParameter    ? "true" : "false") + "\n";
           dataMemberString += string("       // isInConstructorParameterList = ") + (isInConstructorParameterList ? "true" : "false") + "\n";
 #endif
-       // Terminal::SGCLASS_POINTER_LIST types are never in the constructor parameter list.
+       // AstNodeClass::SGCLASS_POINTER_LIST types are never in the constructor parameter list.
        // if (firstConstructorParameter == false && isInConstructorParameterList == true)
-       // if (firstConstructorParameter == false && ( (isInConstructorParameterList == true) || (typeKind == Terminal::SGCLASS_POINTER_LIST) ) )
+       // if (firstConstructorParameter == false && ( (isInConstructorParameterList == true) || (typeKind == AstNodeClass::SGCLASS_POINTER_LIST) ) )
           if (firstAterm == false)
              {
                atermArgumentsSubstring  += ", ";
@@ -1294,7 +1294,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
         {
 #if 0
           dataMemberString += "       // This needs to be supported because it is a constructor parameter. \n";
-          dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
+          dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == NO_TRAVERSAL: data member type: "
                            + grammarString->getTypeNameString() + " data member variable: " 
                            + grammarString->getVariableNameString() + " typeKind = " 
                            + StringUtility::numberToString((int)typeKind) + "\n";
@@ -1305,10 +1305,10 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
        // string initializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
           string initializerString;
 
-          Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+          AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
           switch(typeKind)
              {
-               case Terminal::SGCLASS_POINTER:
+               case AstNodeClass::SGCLASS_POINTER:
                   {
                  // initializerString = string("= getAtermNodeNameAttribute(term,\"") + attributeName + "\")";
                  // initializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
@@ -1357,13 +1357,13 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
                     break;
                   }
 
-               case Terminal::STRING:
-               case Terminal::SGNAME:
+               case AstNodeClass::STRING:
+               case AstNodeClass::SGNAME:
                     initializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
                     break;
 
             // This case included bools and integer values.
-               case Terminal::BASIC_DATA_TYPE:
+               case AstNodeClass::BASIC_DATA_TYPE:
                   {
                     initializerString = string("= getAtermIntegerAttribute(term,\"") + attributeName + "\")";
 
@@ -1382,7 +1382,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
                     break;
                   }
 
-               case Terminal::ENUM_TYPE:
+               case AstNodeClass::ENUM_TYPE:
                  // initializerString = string("= getAtermEnumAttribute(term,\"") + attributeName + "\")";
                     initializerString = string("= ") + typenameString + "(getAtermIntegerAttribute(term,\"" + attributeName + "\"))";
                     break;
@@ -1437,7 +1437,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
         {
        // lastDataMemberWasConstructorParameter = false;
 
-          if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+          if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST)
              {
                if (firstAterm == false)
                   {
@@ -1450,13 +1450,13 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
                string typenameBase = grammarString->getTypeNameString();
 
 #if 0
-               outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
+               outputFile << "// node = " << node.getName() << " toBeTraversed == NO_TRAVERSAL: data member type: " 
                           << grammarString->getTypeNameString() << " data member variable: " 
                           << grammarString->getVariableNameString() << " typeKind = " 
                           << StringUtility::numberToString((int)typeKind) << "\n";
 #endif
 #if 0
-               dataMemberString_post += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
+               dataMemberString_post += string("       // node = ") + node.getName() + " toBeTraversed == NO_TRAVERSAL: data member type: "
                                       + grammarString->getTypeNameString() + " data member variable: " 
                                       + grammarString->getVariableNameString() + " typeKind = " 
                                       + StringUtility::numberToString((int)typeKind) + "\n";
@@ -1489,20 +1489,20 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
             // Get the annotations and call the access function on the ROSE IR node to set the data members.
             // dataMemberString_post += "       // Get the annotations and call the access function on the ROSE IR node to set the data members\n";
 #if 1
-               dataMemberString_post += "       // Get annotation and set data member: node = " + node.getName() + " toBeTraversed == false: data member type: "
+               dataMemberString_post += "       // Get annotation and set data member: node = " + node.getName() + " toBeTraversed == NO_TRAVERSAL: data member type: "
                      + grammarString->getTypeNameString() + " data member variable: "
                      + grammarString->getVariableNameString() + " typeKind = "
                      + StringUtility::numberToString((int)typeKind) + "\n";
 #endif
                string attributeName = grammarString->getVariableNameString();
                string initializerString;
-               Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+               AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
                string typenameBase = typenameString;
 
                switch(typeKind)
                   {
-                    case Terminal::SGCLASS_POINTER:
+                    case AstNodeClass::SGCLASS_POINTER:
                        {
                          size_t typenameStringSize = grammarString->getTypeNameString().size();
 
@@ -1535,17 +1535,17 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
                          break;
                        }
 
-                    case Terminal::STRING:
-                    case Terminal::SGNAME:
+                    case AstNodeClass::STRING:
+                    case AstNodeClass::SGNAME:
                          initializerString = string("getAtermStringAttribute(term,\"") + attributeName + "\")";
                          break;
 
                  // This case included bools and integer values.
-                    case Terminal::BASIC_DATA_TYPE:
+                    case AstNodeClass::BASIC_DATA_TYPE:
                          initializerString = string("getAtermIntegerAttribute(term,\"") + attributeName + "\")";
                          break;
 
-                    case Terminal::ENUM_TYPE:
+                    case AstNodeClass::ENUM_TYPE:
                          initializerString = string("getAtermIntegerAttribute(term,\"") + attributeName + "\")";
                          break;
 
@@ -1574,7 +1574,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
                     if (processDataMember == true)
                        {
                       // dataMemberString_post += "          local_returnNode->set_" + grammarString->getVariableNameString() + "(" + initializerString + ");\n";
-                         if (typeKind == Terminal::SGCLASS_POINTER)
+                         if (typeKind == AstNodeClass::SGCLASS_POINTER)
                             {
                               dataMemberString_post += "          " + typenameString + " local_" + attributeName + " = is" + typenameBase + "(" + initializerString + ");\n";
                             }
@@ -1630,7 +1630,7 @@ bool Grammar::isIntegerKind(const string & typenameString)
    }
 
 void
-Grammar::buildAtermSupportFunctions(Terminal & node, StringUtility::FileWithLineNumbers & outputFile)
+Grammar::buildAtermSupportFunctions(AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile)
    {
   // This function calls the two seperate function to write and read the aterm.
 
@@ -1712,7 +1712,7 @@ Grammar::buildAtermSupportFunctions(Terminal & node, StringUtility::FileWithLine
 
 #if 0
 string
-Terminal::buildAtermSupport ()
+AstNodeClass::buildAtermSupport ()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
@@ -1725,9 +1725,9 @@ Terminal::buildAtermSupport ()
      s += "     assert ( source->p_freepointer != NULL) ; \n";
      s += "#endif \n" ;
 
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                GrammarString *data = *stringListIterator;

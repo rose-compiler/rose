@@ -32,10 +32,12 @@ namespace Partitioner2 {
  *  to look at the <code>args.results.termination</code> enum returned by the callbacks: if it is TERMINATE_NOW or
  *  TERMINATE_PRIOR then the block is forcibly terminated regardless of what would have otherwise happened.
  *
- *  The partitioner expects callbacks to have shared ownership and references them only via Sawyer::SharedPointer.  Therefore,
- *  subclasses should implement an @c instance class method that allocates a new object and returns a shared pointer. */
+ *  The partitioner expects callbacks to have shared ownership (see @ref heap_object_shared_ownership) and references them only
+ *  via @ref Sawyer::SharedPointer.  Therefore, subclasses should implement an @c instance class method that allocates a new
+ *  object and returns a shared pointer. */
 class BasicBlockCallback: public Sawyer::SharedObject {
 public:
+    /** Shared-ownership pointer to a @ref BasicBlockCallback. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<BasicBlockCallback> Ptr;
 
     /** Whether to terminate a basic block. */
@@ -74,8 +76,7 @@ public:
  *  implement a @ref match method that performs the actual matching. */
 class InstructionMatcher: public Sawyer::SharedObject {
 public:
-    /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
-     *  partitioners are copied. */
+    /** Shared-ownership pointer to an @ref InstructionMatcher. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<InstructionMatcher> Ptr;
 
     /** Attempt to match an instruction pattern.
@@ -105,8 +106,7 @@ public:
  *  additional addresses. */
 class FunctionPrologueMatcher: public InstructionMatcher {
 public:
-    /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
-     *  partitioners are copied. */
+    /** Shared-ownership pointer to a @ref FunctionPrologueMatcher. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<FunctionPrologueMatcher> Ptr;
 
     /** Returns the function(s) for the previous successful match.
@@ -132,8 +132,7 @@ public:
  *  combinations of no-ops and zeros.  It's conceivable that some compiler might even emit random garbage. */
 class FunctionPaddingMatcher: public Sawyer::SharedObject {
 public:
-    /** Shared-ownership pointer.  The partitioner never explicitly frees matches. Their pointers are copied when partitioners
-     *  are copied. */
+    /** Shared-ownership pointer to a @ref FunctionPaddingMatcher. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<FunctionPaddingMatcher> Ptr;
 
     /** Attempt to match padding.
@@ -297,10 +296,19 @@ public:
 
 /** Remove execute permissions for zeros.
  *
- *  Scans memory to find consecutive zero bytes and removes execute permission from them.  Returns the set of addresses whose
- *  access permissions were changed.  Only occurrences of at least @p threshold consecutive zeros are changed. If @p threshold
- *  is zero then nothing happens. */
-AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold);
+ *  Scans memory to find consecutive zero bytes and removes execute permission from them. Only occurrences of at least @p
+ *  threshold consecutive zeros are found, and only a subset of those occurrences have their execute permission
+ *  removed. Namely, whenever an interval of addresses is found that contain all zeros, the interval is narrowed by eliminating
+ *  the first few bytes (@p leaveAtFront) and last few bytes (@p leaveAtBack), and execute permissions are removed for this
+ *  narrowed interval.
+ *
+ *  Returns the set of addresses whose access permissions were changed, which may be slightly fewer addresses than which
+ *  contain zeros due to the @p leaveAtFront and @p leaveAtBack.  The set of found zeros can be recovered from the return value
+ *  by iterating over the intervals in the set and inserting the @p leaveAtFront and @p leaveAtBack addresses at each end of
+ *  each interval.
+ *
+ *  If @p threshold is zero or the @p leaveAtFront and @p leaveAtBack sum to at least @p threshold then nothing happens. */
+AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront=16, size_t leaveAtBack=1);
 
 /** Give labels to addresses that are symbols.
  *

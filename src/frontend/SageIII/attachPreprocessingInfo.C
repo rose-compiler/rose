@@ -10,6 +10,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // #ifndef USE_ROSE
 // Local typedefs used in this file only...
 typedef boost::wave::cpplexer::lex_token<>  token_type;
@@ -17,6 +18,7 @@ typedef std::vector<token_type>             token_container;
 typedef std::list<token_type>               token_list_container;
 typedef std::vector<std::list<token_type> > token_container_container;
 // #endif
+#endif
 
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // DQ (11/28/2008): What does this evaluate to???  Does this mix C++ constants with CPP values (does this make sense? Is "true" defined?)
@@ -25,6 +27,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 #ifndef USE_ROSE
 #endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
 #include <boost/wave.hpp>
@@ -35,6 +38,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 #include "advanced_preprocessing_hooks.h"
 #include "attributeListMap.h"
+#endif
 
 #include <boost/filesystem.hpp>         // exsits()
 
@@ -97,6 +101,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr, std::map<std::string,ROSEAttr
 #endif
 
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 void
 attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& attributeMapForAllFiles)
    {
@@ -317,6 +322,16 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      ctx.set_language(boost::wave::enable_variadics(ctx.get_language()));
   // Force a specific file to be included before all others
 
+
+#if ((ROSE_BOOST_VERSION == 105300) && (__cplusplus == 201103L))
+     printf ("ERROR: WAVE support not available using BOOST version 1.53 in C++11 mode (fails to compile in C++11 mode) \n");
+     ROSE_ASSERT(false);
+#else
+  // DQ (2/13/2016): The function ctx.add_macro_definition() does not compile with Boost 1.53 
+  // in C++11 mode. So this combination is detected and disabled locally where it is a problem.
+  // Note that wave is off by default at runtime, though it appears to always be compiled
+  // (so it is not a configuration option, I gather).  Maybe it should be a configuration option?
+
     if( sageFilePtr->get_C_only() == true){
        // Tentaive support for C. For now treat it like C99 since Wave does not
        // have an option for just C.
@@ -337,6 +352,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           if ((*it_beg)!="")
                ctx.add_macro_definition(*it_beg,true);
         }
+#endif
           
      if (SgProject::get_verbose() >= 1)
           std::cout << "AFTER ADDING PREDEFINES" << std::endl;
@@ -613,7 +629,8 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      ROSE_ABORT();
 #endif
    }
-
+// Only compiled if using Boost::wave.
+#endif
 
 // DQ (4/5/2006): Older version not using Wave preprocessor
 // This is the function to be called from the main function
@@ -645,7 +662,12 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
   // When using Wave get all the preprocessing dirctives for all the files.
      if ( sageFilePtr->get_wave() == true )
         {
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
           attachPreprocessingInfoUsingWave(sageFilePtr, tt.get_attributeMapForAllFiles() );
+#else
+          printf ("Boost wave is not available within this configuration \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
   // DQ (12/19/2008): Added support for Fortran CPP files.

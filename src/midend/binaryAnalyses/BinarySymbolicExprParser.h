@@ -196,7 +196,7 @@ public:
     public:
         virtual ~Expansion() {}
 
-        /** Shared pointer. Uses reference counting. */
+        /** Shared-ownership pointer to an @ref Expansion. See @ref heap_object_shared_ownership. */
         typedef Sawyer::SharedPointer<Expansion> Ptr;
 
         /** Property: Title to use for documentation.
@@ -219,7 +219,7 @@ public:
     /** Virtual base class for expanding atoms. */
     class AtomExpansion: public Expansion {
     public:
-        /** Shared pointer. Uses reference counting. */
+        /** Shared-ownership pointer to an @ref AtomExpansion. See @ref heap_object_shared_ownership. */
         typedef Sawyer::SharedPointer<AtomExpansion> Ptr;
 
         /** Operator to expand the symbol into an expression tree. The width in bits is either the width specified in square
@@ -233,7 +233,7 @@ public:
     public:
         virtual ~OperatorExpansion() {}
 
-        /** Shared pointer. Uses reference counting. */
+        /** Shared-ownership pointer to an @ref OperatorExpansion. See @ref heap_object_shared_ownership. */
         typedef Sawyer::SharedPointer<OperatorExpansion> Ptr;
 
         /** Operator to expand a list into an expression tree. The width in bits is either the width specified in
