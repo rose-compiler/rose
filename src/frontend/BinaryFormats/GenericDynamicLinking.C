@@ -158,12 +158,12 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = none\n", p, w, "bound");
     }
     
-    fprintf(f, "%s%-*s = 0x%08"PRIx64, p, w, "value", p_value);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64, p, w, "value", p_value);
     if (p_value > 9) {
-        fprintf(f, " (unsigned)%"PRIu64, p_value);
-        if ((int64_t)p_value < 0) fprintf(f, " (signed)%"PRId64, (int64_t)p_value);
+        fprintf(f, " (unsigned)%" PRIu64, p_value);
+        if ((int64_t)p_value < 0) fprintf(f, " (signed)%" PRId64, (int64_t)p_value);
     }
     fputc('\n', f);
 
-    fprintf(f, "%s%-*s = %"PRIu64" bytes\n", p, w, "size", p_size);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "size", p_size);
 }

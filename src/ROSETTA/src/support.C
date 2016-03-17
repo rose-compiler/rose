@@ -5,7 +5,7 @@
 #include "grammar.h"
 
 #include "ROSETTA_macros.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 //#include "OmpAttribute.h"
 
 // What should be the behavior of the default constructor for Grammar
@@ -28,8 +28,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (SymbolTable, "SymbolTable", "SymbolTableTag" );
 
      NEW_TERMINAL_MACRO (Pragma, "Pragma", "PragmaTag" );
-  // Grammar::Terminal  Attribute( "Attribute", sageGrammar, "Attribute" );
-  // Grammar::Terminal  BitAttribute( "BitAttribute", sageGrammar, "BitAttribute" );
+  // Grammar::AstNodeClass  Attribute( "Attribute", sageGrammar, "Attribute" );
+  // Grammar::AstNodeClass  BitAttribute( "BitAttribute", sageGrammar, "BitAttribute" );
 
 #if 0
   // const_volatile specifiers (const, volatile)
@@ -130,8 +130,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (TemplateArgumentList, "TemplateArgumentList", "TemplateArgumentListTag" );
 
   // We don't use these yet, though we might in the future!
-  // Grammar::Terminal  ApplyFunction( "ApplyFunction", sageGrammar, "ApplyFunction" );
-  // Grammar::Terminal  printFunction( "printFunction", sageGrammar, "printFunction" );
+  // Grammar::AstNodeClass  ApplyFunction( "ApplyFunction", sageGrammar, "ApplyFunction" );
+  // Grammar::AstNodeClass  printFunction( "printFunction", sageGrammar, "printFunction" );
 
      NEW_NONTERMINAL_MACRO (BitAttribute, FuncDecl_attr | ClassDecl_attr /* | TemplateInstDecl_attr */,"BitAttribute","BitAttributeTag", false);
 
@@ -379,7 +379,7 @@ Grammar::setUpSupport ()
 
      File_Info.setFunctionPrototype           ( "HEADER_FILE_INFORMATION", "../Grammar/Support.code");
 
-  // Skip building a parse function for this terminal/nonterminal of the Grammar
+  // Skip building a parse function for this AstNodeClass/nonterminal of the Grammar
      if (isRootGrammar() == false)
         {
           Attribute.excludeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code" );
@@ -898,6 +898,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "F2003_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/25/2016): Added initial command line support for Fortran 2008 files.
+     File.setDataPrototype         ( "bool", "F2008_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (1/23/2009): Co-Array Fortran (CAF) support
      File.setDataPrototype         ( "bool", "CoArrayFortran_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1219,6 +1223,11 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesFortran2003FileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/25/2016): Added initial support in command line handling for Fortran 2008 files.
+     File.setDataPrototype         ( "bool", "sourceFileUsesFortran2008FileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      File.setDataPrototype         ( "bool", "sourceFileUsesCoArrayFortranFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesPHPFileExtension", "= false",
@@ -1245,6 +1254,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // To be consistent with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
@@ -2644,7 +2657,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // TypedefSeq.setAutomaticGenerationOfDestructor (true);
      TypedefSeq.setDataPrototype("SgTypePtrList","typedefs","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionParameterTypeList.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_TYPE_LIST", "../Grammar/Support.code" );
      FunctionParameterTypeList.setFunctionSource    ( "SOURCE_FUNCTION_PARAMETER_TYPE_LIST", "../Grammar/Support.code" );
@@ -2652,7 +2665,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // FunctionParameterTypeList.setAutomaticGenerationOfDestructor (true);
      FunctionParameterTypeList.setDataPrototype("SgTypePtrList","arguments","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 0
   // DQ (12/21/2005): Global qualification and qualified name handling are now represented explicitly

@@ -5286,9 +5286,12 @@ SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribu
         }
        else
         {
+       // DQ (2/25/2016): I think it is significant, because inputlocation refers to the order relative to
+       // the statement, not relative to other AstUnparseAttribute objects. Fixed to use the inputlocation.
        // DQ (2/23/2009): commented added.
        // Note that this will be the only string in the attribute, so inputlocation is not significant (and e_before is the default used).
-          AstUnparseAttribute* code = new AstUnparseAttribute(s,AstUnparseAttribute::e_before);
+       // AstUnparseAttribute* code = new AstUnparseAttribute(s,AstUnparseAttribute::e_before);
+          AstUnparseAttribute* code = new AstUnparseAttribute(s,inputlocation);
           ROSE_ASSERT(code != NULL);
 
           astNode->addNewAttribute(AstUnparseAttribute::markerName,code);
@@ -8676,8 +8679,16 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
       //TODO a better name
       std::ostringstream os;
       os<<ivarname->get_name().getString();
-      os<<"_nom_";
-      os<<++gensym_counter;
+      
+      // keep the original variable name if possible
+      SgSymbol * visibleSym = NULL; 
+      visibleSym = lookupVariableSymbolInParentScopes(ivarname->get_name(), funcBody);
+      if (visibleSym != NULL) // if there is a name collision, add suffix to the variable name
+      {
+        os<<"_nom_";
+        os<<++gensym_counter;
+      }
+
       SgVariableDeclaration* ndecl = buildVariableDeclaration(os.str(),ivarname->get_type(), NULL, funcBody);
       prependStatement(ndecl, funcBody);
       SgVariableSymbol* nsymbol = getFirstVarSym(ndecl);
@@ -8701,18 +8712,10 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
   }
   return true;
 }
-//! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
-// Her loop translation does not pass AST consistency tests so we rewrite some of them here
-// NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
-bool SageInterface::forLoopNormalization(SgForStatement* loop, bool foldConstant /*= true*/)
+
+bool SageInterface::normalizeForLoopTest(SgForStatement* loop)
 {
   ROSE_ASSERT(loop != NULL);
-  // Normalize initialization statement of the for loop
-  // -------------------------------------
-  // for (int i=0;... ) becomes int i; for (i=0;..)
-  // Only roughly check here, isCanonicalForLoop() should be called to have a stricter check
-  if (!normalizeForLoopInitDeclaration(loop))
-    return false;
 
   // Normalized the test expressions
   // -------------------------------------
@@ -8751,7 +8754,31 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop, bool foldConstant
     default:
       return false;
   }
-  // Normalize the increment expression
+  return true; 
+}
+bool  SageInterface::normalizeForLoopIncrement(SgForStatement* loop)
+{
+  ROSE_ASSERT(loop != NULL);
+
+  SgExpression* test = loop->get_test_expr();
+  SgExpression* testlhs=NULL, * testrhs=NULL;
+  if (isSgBinaryOp(test))
+  {
+    testlhs = isSgBinaryOp(test)->get_lhs_operand();
+    testrhs = isSgBinaryOp(test)->get_rhs_operand();
+    ROSE_ASSERT(testlhs && testrhs);
+  }
+  else
+    return false;
+  // keep the variable since test will be removed later on
+  SgVarRefExp* testlhs_var = isSgVarRefExp(SkipCasting(testlhs));
+  if (testlhs_var == NULL )
+    return false;
+  SgVariableSymbol * var_symbol = testlhs_var->get_symbol();
+  if (var_symbol==NULL)
+    return false;
+
+
   // -------------------------------------
   SgExpression* incr = loop->get_increment();
   ROSE_ASSERT(incr != NULL);
@@ -8797,6 +8824,29 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop, bool foldConstant
       return false;
   }
 
+  return true; 
+}
+//! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
+// Her loop translation does not pass AST consistency tests so we rewrite some of them here
+// NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
+bool SageInterface::forLoopNormalization(SgForStatement* loop, bool foldConstant /*= true*/)
+{
+  ROSE_ASSERT(loop != NULL);
+  // Normalize initialization statement of the for loop
+  // -------------------------------------
+  // for (int i=0;... ) becomes int i; for (i=0;..)
+  // Only roughly check here, isCanonicalForLoop() should be called to have a stricter check
+  if (!normalizeForLoopInitDeclaration(loop))
+    return false;
+
+  // Normalized the test expressions
+  if (!normalizeForLoopTest(loop))
+    return false;
+
+ // Normalize the increment expression
+  if (!normalizeForLoopIncrement(loop))
+    return false;
+
   // Normalize the loop body: ensure there is a basic block
   SgBasicBlock* body = ensureBasicBlockAsBodyOfFor(loop);
   ROSE_ASSERT(body!=NULL);
@@ -8812,6 +8862,7 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop, bool foldConstant
 
   return true;
 }
+
 //!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
 bool SageInterface::doLoopNormalization(SgFortranDo* loop)
 {
@@ -13101,6 +13152,8 @@ void SageInterface::replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* ta
   {
     if ((*j)->getTypeOfDirective()==PreprocessingInfo::CMacroCall)
     {
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
+   // DQ (2/17/2016): The token_container type is not defined if Wave is not available.
       std::ostringstream os;
       token_container tc = (*j)->get_macro_call()->expanded_macro;
       token_container::const_iterator iter;
@@ -13120,6 +13173,7 @@ void SageInterface::replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* ta
       }
        delete target->get_pragma();
        target->set_pragma(buildPragma(pragmaText));
+#endif
     } // end if
   } // end for
 #endif

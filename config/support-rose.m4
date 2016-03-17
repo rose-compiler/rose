@@ -145,8 +145,9 @@ fi
   AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
   AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
-AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.8.x)])
-AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.8.x verification check]),,[enableval=yes])
+# DQ (2/27/2016): Added version 4.9.x to supported compilers.
+AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.9.x)])
+AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.9.x verification check]),,[enableval=yes])
 if test "x$enableval" = "xyes" ; then
       AC_LANG_PUSH([C])
       # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
@@ -481,6 +482,28 @@ CHOOSE_BACKEND_COMPILER
 # TV (06/17/2013): Now always the case (EDG 4.7).
 AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
 
+# Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
+# This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
+# AC_LANG_PUSH(C)
+  saved_compiler_name=$CXX
+  CXX=$BACKEND_CXX_COMPILER
+  echo "After resetting CXX to be the backend compiler: CXX = $CXX"
+
+  AX_COMPILER_VENDOR
+# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns 
+# the vendor for the C compiler in ax_cv_c_compiler_vendor for the C compiler.
+# CcompilerVendorName= $ax_cv_c_compiler_vendor
+# CxxcompilerVendorName= $ax_cv_cxx_compiler_vendor
+# echo "Output the names of the vendor for the C or C++ backend compilers."
+# echo "Using back-end C   compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_c_compiler_vendor   for processing of unparsed source files from ROSE preprocessors."
+  echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+
+  CXX=$saved_compiler_name
+  echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
+
+# echo "Exiting in support-rose after computing the compiler vendor name for the C and C++ compilers."
+# exit 1
+
 # End macro ROSE_SUPPORT_ROSE_PART_1.
 ]
 )
@@ -491,6 +514,9 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 [
 # Begin macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
 
+echo "In ROSE SUPPORT ROSE BUILD INCLUDE FILES: Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+
+# Note that this directory name is not spelled correctly, is this a typo?
 # JJW (12/10/2008): We don't preprocess the header files for the new interface
 rm -rf ./include-stagin
 
@@ -660,6 +686,19 @@ AM_CONDITIONAL(ROSE_USE_LIBFFI,test ! "$with_libffi" = no)
 
 # DQ (3/14/2013): Adding support for Aterm library use in ROSE.
 ROSE_SUPPORT_ATERM
+
+# DQ (1/22/2016): Added support for stratego (need to know the path to sglri executable for Exprermental Fortran support).
+ROSE_SUPPORT_STRATEGO
+
+if test "x$enable_experimental_fortran_frontend" = "xyes"; then
+   if test "x$ATERM_LIBRARY_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_fortran_frontend requires Aterm library support, --with-aterm=<path> must be specified!])
+   fi
+   if test "x$STRATEGO_LIBRARY_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_fortran_frontend requires Stratego library support, --with-stratego=<path> must be specified!])
+   fi
+fi
+
 
 ROSE_SUPPORT_MINT
 
@@ -2013,6 +2052,7 @@ projects/ShiftCalculus/Makefile
 projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
 projects/ShiftCalculus4/Makefile
+projects/dsl_infrastructure/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
 projects/demos-dlx-mdcg/Makefile
