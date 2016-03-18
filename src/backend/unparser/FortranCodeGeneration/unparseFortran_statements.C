@@ -3147,17 +3147,22 @@ FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUn
      if (fmt != NULL)
         {
           unparseExpression(fmt, info);
-          curprint(", ");
+          //curprint(", "); // comma is not neede if iolist is null.
         }
        else
         {
        // Default if we don't have a valid format
-          curprint("*, ");
+          // comma is not neede if iolist is null.
+          //curprint("*, ");
+          curprint("*");
         }
 
      SgExprListExp* iolist = printStatement->get_io_stmt_list();
-     unparseExprList(iolist, info, false /*paren*/);
-
+     if( iolist != NULL)
+     {
+       curprint(", ");
+       unparseExprList(iolist, info, false /*paren*/);
+     }
      unp->cur.insert_newline(1); 
    }
 

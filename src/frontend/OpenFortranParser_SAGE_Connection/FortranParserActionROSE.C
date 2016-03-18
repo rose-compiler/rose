@@ -13968,16 +13968,24 @@ void c_action_label(Token_t * lbl)
             ROSE_ASSERT(astExpressionStack.empty() == false);
             exprListExp = isSgExprListExp(astExpressionStack.front());
 
-            resetSourcePosition(exprListExp, printStatement);
+            // exprListExp could be NULL in the case of a print stmt with only a format argument
+            // such as "print *"
+            if(exprListExp!=NULL)
+            {
+              resetSourcePosition(exprListExp, printStatement);
+            }
         }
 
-        ROSE_ASSERT(exprListExp != NULL);
-        printStatement->set_io_stmt_list(exprListExp);
+        // exprListExp could be NULL in the case of a print stmt with only a format argument
+        //ROSE_ASSERT(exprListExp != NULL);
+        if(exprListExp!=NULL)
+        {
+          printStatement->set_io_stmt_list(exprListExp);
 
-        exprListExp->set_parent(printStatement);
+          exprListExp->set_parent(printStatement);
 
-        astExpressionStack.pop_front();
-
+          astExpressionStack.pop_front();
+        }
         // DQ (1/26/2009): test2009_07.f demonstrates that the astExpressionStack can have the
         // conditional expression from another part of the statement if this is an "if"
         // statement.
