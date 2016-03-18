@@ -1146,7 +1146,10 @@ public:
                 ASSERT_require(j >= 0 && (size_t)j < depMinorValues_.size());
                 return depMinorValues_[j];
             } else {
-                double value = hasBaseline() ? delta_[i][j]: getDataValue(current_, i, j);
+                double value = hasBaseline() ? delta_[i][j] : getDataValue(current_, i, j);
+                int nSamples = current_.counts[i][j];
+                if (hasBaseline())
+                    nSamples = std::min(nSamples, (int)baseline_.counts[i][j]);
                 if (roundToInteger_)
                     value = round(value);
                 if (humanReadable_) {
@@ -1160,9 +1163,13 @@ public:
                             break;
                         case CVT_PERCENT:
                         case CVT_PASS_RATIO:
-                            if (hasBaseline() && value > 0)
-                                humanValue = "+";
-                            humanValue += boost::lexical_cast<std::string>(value) + "%";
+                            if (0 == nSamples) {
+                                humanValue = "n/a";
+                            } else {
+                                if (hasBaseline() && value > 0)
+                                    humanValue = "+";
+                                humanValue += boost::lexical_cast<std::string>(value) + "%";
+                            }
                             break;
                         case CVT_DURATION_AVE:
                             if (hasBaseline() && value > 0)
