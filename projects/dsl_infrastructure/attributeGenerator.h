@@ -87,10 +87,14 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
        // I am not yet clar how to generate the initializers for this DSL variable.
           std::vector<SgConstructorInitializer*> dsl_attribute_map_list;
 
+       // DQ (3/16/2016): Name collision testing.
+          std::map<std::string,int> dsl_attribute_name_collision_map;
+
        // DQ (3/4/2016): Turning on internal debugging.
           bool internal_debugging;
 
-          AttributeGeneratorTraversal();
+       // AttributeGeneratorTraversal();
+          AttributeGeneratorTraversal( SgProject* project );
 
        // Functions required to overload the pure virtual functions in the abstract base class.
           AttributeGenerator_InheritedAttribute   evaluateInheritedAttribute   (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute );
