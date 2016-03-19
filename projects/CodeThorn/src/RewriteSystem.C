@@ -77,11 +77,14 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
     SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i,variableIdMapping));
     buildTime+=timer.getElapsedTimeInMilliSec();
 
-    ROSE_ASSERT(newRoot);
-    timer.start();
-    SgNodeHelper::replaceExpression(*i,newRoot);
-    replaceTime+=timer.getElapsedTimeInMilliSec();
-    assignOpNr++;
+    if(newRoot) {
+      timer.start();
+      SgNodeHelper::replaceExpression(*i,newRoot);
+      replaceTime+=timer.getElapsedTimeInMilliSec();
+      assignOpNr++;
+    } else {
+      cout<<"WARNING: not an expression. transformation not applied: "<<(*i)->unparseToString()<<endl;
+    }
     //cout<<"Buildtime: "<<buildTime<<" Replacetime: "<<replaceTime<<endl;
   }
   cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
