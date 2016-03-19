@@ -199,7 +199,12 @@ SgSymbol::get_mangled_name() const
                const SgFunctionSymbol* symbol = isSgFunctionSymbol(symbolFromTable);
                assert(symbol != NULL);
                SgFunctionDeclaration* functionDeclaration = symbol->get_declaration();
+
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(functionDeclaration != NULL);
+
                mangledName = functionDeclaration->get_mangled_name();
+
                break;
              }
 
@@ -208,6 +213,10 @@ SgSymbol::get_mangled_name() const
                const SgMemberFunctionSymbol* symbol = isSgMemberFunctionSymbol(symbolFromTable);
                assert(symbol != NULL);
                SgFunctionDeclaration* functionDeclaration = symbol->get_declaration();
+
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(functionDeclaration != NULL);
+
                mangledName = functionDeclaration->get_mangled_name();
                break;
              }
@@ -217,6 +226,10 @@ SgSymbol::get_mangled_name() const
                const SgClassSymbol* symbol = isSgClassSymbol(symbolFromTable);
                assert(symbol != NULL);
                SgClassDeclaration* classDeclaration = symbol->get_declaration();
+
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(classDeclaration != NULL);
+
                mangledName = classDeclaration->get_mangled_name();
                break;
              }
@@ -226,6 +239,10 @@ SgSymbol::get_mangled_name() const
                const SgEnumFieldSymbol* symbol = isSgEnumFieldSymbol(symbolFromTable);
                assert(symbol != NULL);
                SgInitializedName* enumFieldName = symbol->get_declaration();
+
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(enumFieldName != NULL);
+
                mangledName = enumFieldName->get_mangled_name();
                break;
              }
@@ -235,6 +252,10 @@ SgSymbol::get_mangled_name() const
                const SgEnumSymbol* symbol = isSgEnumSymbol(symbolFromTable);
                assert(symbol != NULL);
                SgEnumDeclaration* enumDeclaration = symbol->get_declaration();
+
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(enumDeclaration != NULL);
+
                mangledName = enumDeclaration->get_mangled_name();
                break;
              }
@@ -244,7 +265,9 @@ SgSymbol::get_mangled_name() const
                const SgFunctionTypeSymbol* symbol = isSgFunctionTypeSymbol(symbolFromTable);
                assert(symbol != NULL);
                mangledName = symbol->get_name();
+
                printf ("A SgFunctionTypeSymbol also has a pointer to a SgType = %p \n",symbol->get_type());
+
                break;
              }
 
@@ -280,12 +303,21 @@ SgSymbol::get_mangled_name() const
                if (symbol->get_isAlias() == true)
                   {
                     SgNamespaceAliasDeclarationStatement* namespaceAliasDeclarationStatement = symbol->get_aliasDeclaration();
+
+                 // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+                    ROSE_ASSERT(namespaceAliasDeclarationStatement != NULL);
+
                     mangledName = namespaceAliasDeclarationStatement->get_mangled_name();
+
                     printf ("A SgNamespaceSymbol has an ALIAS with name = %s \n",symbol->get_name().str());
                   }
                  else
                   {
                     SgNamespaceDeclarationStatement* namespaceDeclaration = symbol->get_declaration();
+
+                 // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+                    ROSE_ASSERT(namespaceDeclaration != NULL);
+
                     mangledName = namespaceDeclaration->get_mangled_name();
                     printf ("A SgNamespaceSymbol also has a name = %s \n",symbol->get_name().str());
                   }
@@ -298,6 +330,10 @@ SgSymbol::get_mangled_name() const
                const SgTemplateSymbol* symbol = isSgTemplateSymbol(symbolFromTable);
                assert(symbol != NULL);
                SgTemplateDeclaration* templateDeclaration = symbol->get_declaration();
+
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(templateDeclaration != NULL);
+
                mangledName = templateDeclaration->get_mangled_name();
                break;
              }
@@ -307,6 +343,10 @@ SgSymbol::get_mangled_name() const
                const SgTypedefSymbol* symbol = isSgTypedefSymbol(symbolFromTable);
                assert(symbol != NULL);
                SgTypedefDeclaration* typedefDeclaration = symbol->get_declaration();
+
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(typedefDeclaration != NULL);
+
                mangledName = typedefDeclaration->get_mangled_name();
                break;
              }
@@ -316,6 +356,10 @@ SgSymbol::get_mangled_name() const
                const SgVariableSymbol* symbol = isSgVariableSymbol(symbolFromTable);
                assert(symbol != NULL);
                SgInitializedName* initializedName = symbol->get_declaration();
+
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(initializedName != NULL);
+
                mangledName = initializedName->get_mangled_name();
                break;
              }
