@@ -11,13 +11,16 @@
 
 #if 1
 // Reference classe names that are specific to the DSL.
-extern std::vector<std::string> dsl_type_names;
+// extern std::vector<std::string> dsl_type_names;
+std::vector<std::string> dsl_type_names;
 
 // Reference functions names that are specific to the DSL.
-extern std::vector<std::string> dsl_function_names;
+// extern std::vector<std::string> dsl_function_names;
+std::vector<std::string> dsl_function_names;
 
 // Reference member functions (class and member function names) that are specific to the DSL.
-extern std::vector< std::pair<std::string,std::string> > dsl_member_function_names;
+// extern std::vector< std::pair<std::string,std::string> > dsl_member_function_names;
+std::vector< std::pair<std::string,std::string> > dsl_member_function_names;
 
 // Example attributes that we need to have generated to support array DSL example.
 class dsl_attribute : public AstAttribute
@@ -40,7 +43,8 @@ class dsl_attribute : public AstAttribute
    };
 
 // References to dsl attributes in a map inexed by the name of the dsl abstraction.
-extern std::map<std::string,dsl_attribute> dsl_attribute_map;
+// extern std::map<std::string,dsl_attribute> dsl_attribute_map;
+std::map<std::string,dsl_attribute> dsl_attribute_map;
 #endif
 
 
@@ -51,12 +55,13 @@ extern std::map<std::string,dsl_attribute> dsl_attribute_map;
 // of architecture specific code.
 // #include "stencilFiniteStateMachine.h"
 
+
+#if 1
+   #include "generated_dsl_attributes.h"
+#else
 // DSL specific code being included.
 #include "array.h"
 
-#if 0
-   #include "generated_dsl_attributes.h"
-#else
    #include "nongenerated_dsl_attributes.h"
 #endif
 
@@ -985,7 +990,7 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
 
                               if (initializedName->isCompilerGenerated() == false)
                                  {
-#if 1
+#if 0
                                    array_dsl_attribute* dslAttribute = new array_dsl_attribute();
 #if 1
                                    printf ("Adding (array_dsl_attribute to dsl variable) dslAttribute = %p \n",dslAttribute);
@@ -1056,7 +1061,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                     printf ("In isDslFunction(): case SgDotExp: found function ref name = %s from variable reference for variable name = %s \n",memberFunctionSymbol->get_name().str(),initializedName->get_name().str());
 
                 // Add attribute
-#if 1
+#if 0
                    array_assignment_operator_dsl_attribute* dslAttribute = new array_assignment_operator_dsl_attribute();
 #if 1
                    printf ("Adding (array_assignment_operator_dsl_attribute to dsl function call) dslAttribute = %p \n",dslAttribute);
@@ -1066,7 +1071,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                 // virtual void addNewAttribute (std::string s, AstAttribute *a);   
                    functionCallExp->addNewAttribute(memberFunctionSymbol->get_name(),dslAttribute);
 #endif
-#if 1
+#if 0
                    array_refexp_dsl_attribute* dslAttribute_refexp = new array_refexp_dsl_attribute();
 #if 1
                    printf ("Adding (array_refexp_dsl_attribute to dsl var ref) dslAttribute = %p \n",dslAttribute_refexp);
@@ -1163,7 +1168,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                     string functionName = functionSymbol->get_name();
                     printf ("In isDslFunction(): functionName = %s \n",functionName.c_str());
 
-#if 1
+#if 0
                    plus_operator_dsl_attribute* dslAttribute = new plus_operator_dsl_attribute();
 #if 1
                    printf ("Adding (plus_operator_dsl_attribute to dsl function call) dslAttribute = %p \n",dslAttribute);
@@ -1188,7 +1193,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                SgVarRefExp* varRefExp = isSgVarRefExp(arg);
                if (varRefExp != NULL)
                   {
-#if 1
+#if 0
                    array_refexp_dsl_attribute* dslAttribute_refexp = new array_refexp_dsl_attribute();
 #if 1
                    printf ("Adding (array_refexp_dsl_attribute to dsl var ref) dslAttribute = %p \n",dslAttribute_refexp);
@@ -1203,7 +1208,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                SgValueExp* valueExp = isSgValueExp(arg);
                if (valueExp != NULL)
                   {
-#if 1
+#if 0
                    value_refexp_dsl_attribute* dslAttribute_value = new value_refexp_dsl_attribute();
 #if 1
                    printf ("Adding (value_refexp_dsl_attribute to dsl value) dslAttribute = %p \n",dslAttribute_value);

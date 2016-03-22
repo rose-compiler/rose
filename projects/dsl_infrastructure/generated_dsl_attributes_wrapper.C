@@ -16,6 +16,7 @@
 // #include "generated_dsl_attributes.C"
 
 #if 0
+#if 0
 class dsl_attribute{};
 
 class array_dsl_attribute : public dsl_attribute
@@ -24,12 +25,13 @@ class array_dsl_attribute : public dsl_attribute
 #else
    #include "nongenerated_dsl_attributes.h"
 #endif
+#endif
 
 // Bug in ROSE where we are unparsing this without the C++11 initializer syntax.
 // std::vector< std::string  > dsl_type_names(("EXAMPLE"),("array"));
-std::vector< std::string  > dsl_type_names = { {"EXAMPLE"},{"array"}};
+// std::vector< std::string  > dsl_type_names = { {"EXAMPLE"},{"array"}};
 
-#if 1
+#if 0
 std::vector< std::string  > dsl_function_names = { "EXAMPLE_FUNCTION" };
 std::vector< std::pair< std::string  , std::string  >  > dsl_member_function_names = { { {"EXAMPLE_CLASS"},{"EXAMPLE_MEMBER_FUNCTION"} } };
 // std::map< std::string  , dsl_attribute  > dsl_attribute_map = { { {"EXAMPLE_CLASS"},{dsl_attribute()} },{ {"array"},{array_dsl_attribute()} } };
@@ -120,6 +122,7 @@ dsl_attribute::additionalEdgeInfo()
    }
 
 
+#if 0
 // ***************************************************************************************************
 // Examples of more complex code generation for automated handling of DSL support code to DSL compiler
 // ***************************************************************************************************
@@ -227,3 +230,5 @@ plus_operator_dsl_attribute::additionalNodeOptions()
   // return "fillcolor=\"aquamarine\",style=filled";
      return "fillcolor=\"green\",style=filled";
    }
+
+#endif

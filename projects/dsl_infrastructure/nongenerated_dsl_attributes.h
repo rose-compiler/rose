@@ -33,7 +33,7 @@ class dsl_attribute : public AstAttribute
 extern std::map<std::string,dsl_attribute> dsl_attribute_map;
 #endif
 
-#if 1
+#if 0
 // Examples of classes to be generated for to support the DSL compiler.
 // NOTE: we might not need to generate this if it could be a template.
 class array_dsl_attribute : public dsl_attribute
@@ -50,6 +50,7 @@ class array_dsl_attribute : public dsl_attribute
    };
 #endif
 
+#if 0
 class array_refexp_dsl_attribute : public dsl_attribute
    {
      public:
@@ -90,5 +91,7 @@ class plus_operator_dsl_attribute : public dsl_attribute
           std::string toString();
           std::string additionalNodeOptions();
    };
+#endif
+
 
 

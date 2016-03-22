@@ -543,6 +543,47 @@ AttributeGeneratorTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Attr
      return AttributeGenerator_SynthesizedAttribute (generated_ast);
    }
 
+// Generate unique name for use as a class name for the generated attribute classes.
+// std::string AttributeGeneratorTraversal::generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration )
+// std::string AttributeGeneratorTraversal::generateUniqueName ( SgDeclarationStatement* declaration )
+std::string
+AttributeGeneratorTraversal::generateUniqueName ( SgDeclarationStatement* declaration )
+   {
+  // DQ (3/21/2016): The support for unique name generation for use across translation 
+  // units is not refactored into the SageInterface. 
+  // string s = SageInterface::generateUniqueNameForUseAsIdentifier(declaration);
+     string s;
+
+     if (SageInterface::local_node_to_name_map.find(declaration) != SageInterface::local_node_to_name_map.end())
+        {
+          s = SageInterface::local_node_to_name_map[declaration];
+        }
+       else
+        {
+          SgDeclarationStatement* definingDeclaration = declaration->get_definingDeclaration();
+          if (definingDeclaration != NULL)
+             {
+#if 1
+               printf ("In generateUniqueName(): Using the defining declaration = %p since %p was not in the map \n",definingDeclaration,declaration);
+#endif
+               s = generateUniqueName(definingDeclaration);
+             }
+            else
+             {
+               printf ("Error: declaration not in SageInterface::local_node_to_name_map: declaration = %p = %s = %s \n",
+                    declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return s;
+   }
+
 
 void
 AttributeGeneratorTraversal::modify_dsl_variable_initializers()
@@ -580,7 +621,7 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
 
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
           ROSE_ASSERT(classDeclaration != NULL);
-
+#if 0
           string type_name = classDeclaration->get_name();
 
           printf ("Process saved DSL type i = %zu: type = %p = %s type_name = %s \n",i,type,type->class_name().c_str(),type_name.c_str());
@@ -597,11 +638,17 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
 #if 1
           printf ("classDeclaration->get_scope() = %p = %s scope = %s \n",classDeclaration->get_scope(),classDeclaration->get_scope()->class_name().c_str(),scope.c_str());
 #endif
+#else
+          string className = generateUniqueName (classDeclaration);
+          string className_dsl_attribute = className + "_dsl_attribute";
+#endif
+
        // Add the attribute to the initializer of the associated dsl_attribute_map_variable variable.
 
        // initializerString += " { {className},{className_dsl_attribute()} } ";
        // dsl_type_names_initializerString += " { \"$className\" } ";
-          dsl_type_names_initializerString += " \"$className\" ";
+       // dsl_type_names_initializerString += " \"$className\" ";
+          dsl_type_names_initializerString += " \"" + className + "\" ";
        // dsl_function_names_initializerString += " { \"functionName\"} ";
        // dsl_member_function_names_initializerString += " { {\"className\"}, {\"functionName\"} } ";
        // dsl_attribute_map_initializerString += " { {\"$className\"},{className_dsl_attribute()} } ";
@@ -684,6 +731,7 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(memberFunctionDeclaration->get_associatedClassDeclaration());
           ROSE_ASSERT(classDeclaration != NULL);
 
+#if 0
           printf ("classDeclaration (for member function) = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
 
        // We might at some point want the qualified name.
@@ -714,24 +762,36 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
                member_function_name += StringUtility::numberToString(count);
              }
 
+#else
+       // string class_name           = classDeclaration->get_name();
+          string className            = generateUniqueName (classDeclaration);
+          string member_function_name = generateUniqueName (memberFunctionDeclaration);
+       // string member_function_name_dsl_attribute = className + "_dsl_attribute";
+          string member_function_name_dsl_attribute = member_function_name + "_dsl_attribute";
+#endif
+
        // Call the mangled name support more directly.
        // string mangledName = MangledNameSupport::mangleFunctionName(original_name.str(),"return_type");
-          string mangledName = mangleFunctionName(original_name,"return_type");
+       // string mangledName = mangleFunctionName(original_name,"return_type");
 
-          printf ("Process saved DSL member_function i = %zu: class_name = %s member_function_name = %s functionDeclaration = %p = %s = %s = %s \n",
-                  i,class_name.c_str(),member_function_name.c_str(),memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str(),original_name.c_str(),mangledName.c_str());
+       // printf ("Process saved DSL member_function i = %zu: class_name = %s member_function_name = %s functionDeclaration = %p = %s = %s = %s \n",
+       //         i,class_name.c_str(),member_function_name.c_str(),memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str(),original_name.c_str(),mangledName.c_str());
+          printf ("Process saved DSL member_function i = %zu: className = %s member_function_name = %s functionDeclaration = %p = %s \n",
+                  i,className.c_str(),member_function_name.c_str(),memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str());
 
        // initializerString += " { {functionName},{functionName_dsl_attribute()} } ";
        // dsl_function_names_initializerString += "{\"functionName\"}";
        // dsl_member_function_names_initializerString += "{\"memberFunctionName\"}";
        // dsl_member_function_names_initializerString += "\"memberFunctionName\"";
-          dsl_member_function_names_initializerString += " { \"" + class_name + "\" \"" + member_function_name + "\" } ";
+       // dsl_member_function_names_initializerString += " { \"" + class_name + "\" \"" + member_function_name + "\" } ";
+          dsl_member_function_names_initializerString += " { \"" + className + "\", \"" + member_function_name + "\" } ";
 
-          string memberFunctionName_dsl_attribute = member_function_name + "_dsl_attribute";
+       // string memberFunctionName_dsl_attribute = member_function_name + "_dsl_attribute";
 
        // dsl_attribute_map_initializerString += " { {\"functionName\"},{functionName_dsl_attribute()} } ";
        // dsl_attribute_map_initializerString += " { \"memberFunctionName\",memberFunctionName_dsl_attribute() } ";
-          dsl_attribute_map_initializerString += " { \"" + member_function_name + "\"," + memberFunctionName_dsl_attribute + "() } ";
+       // dsl_attribute_map_initializerString += " { \"" + member_function_name + "\"," + memberFunctionName_dsl_attribute + "() } ";
+          dsl_attribute_map_initializerString += " { \"" + member_function_name + "\"," + member_function_name_dsl_attribute + "() } ";
           if (i < dsl_member_function_list.size()-1)
              {
             // initializerString += ",";
@@ -807,8 +867,8 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type)
         {
        // We don't have to generate code for class types (but perhaps we will to avoid template issues initially).
        // Alternative we could in this narrow non-function case just build the tempalte instantiation declaration.
+#if 0
           SgClassDeclaration* ClassDeclarationFromType = isSgClassDeclaration(classType->get_declaration());
-
           SgName name = ClassDeclarationFromType->get_name();
           printf ("Building DSL support for ClassDeclarationFromType = %p = %s = %s \n",ClassDeclarationFromType,ClassDeclarationFromType->class_name().c_str(),name.str());
           ROSE_ASSERT(global_scope_header != NULL);
@@ -816,12 +876,20 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type)
        // Don't let class names collide with constructor member function names.
        // SgName attribute_name = name + "_dsl_attribute";
           SgName attribute_name = name + "_dsl_type_attribute";
+#else
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+          SgName name = classDeclaration->get_name();
+          string className = generateUniqueName (classDeclaration);
+          string className_dsl_attribute = className + "_dsl_attribute";
+          SgName attribute_name = className_dsl_attribute;
+#endif
 
        // SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration(attribute_name,global_scope_header);
           SgClassDeclaration* nonDefiningDecl              = NULL;
           bool buildTemplateInstantiation                  = false; 
           SgTemplateArgumentPtrList* templateArgumentsList = NULL;
 
+          ROSE_ASSERT(global_scope_header != NULL);
           SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration_nfi(attribute_name,SgClassDeclaration::e_class,global_scope_header,nonDefiningDecl,buildTemplateInstantiation,templateArgumentsList);
           ROSE_ASSERT(generatedClass != NULL);
 
@@ -923,7 +991,7 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type)
        // dsl_type_name_list.push_back(name);
 
 #if 0
-       // This should be an pair<string,dsl_attribute> instead of pair<string,string>.
+       // This should be a pair<string,dsl_attribute> instead of pair<string,string>.
        // dsl_attribute_map_list.push(pair<string,string>(name,attribute_name));
        // dsl_attribute_map_list.push(pair<string,SgConstructorInitializer*>(name,generatedClass));
           SgConstructorInitializer* constructorInitializer = NULL;
@@ -987,6 +1055,7 @@ AttributeGeneratorTraversal::buildAttribute(SgFunctionDeclaration* function)
 #if 1
      if (function != NULL)
         {
+#if 0
        // SgName name = function->get_name();
           SgName original_name = function->get_name();
        // SgName name = function->get_mangled_name();
@@ -1001,6 +1070,12 @@ AttributeGeneratorTraversal::buildAttribute(SgFunctionDeclaration* function)
 
        // SgName attribute_name = name + "_dsl_attribute";
           SgName attribute_name = name + "_dsl_function_attribute";
+#else
+          SgName name = function->get_name();
+          string functionName = generateUniqueName(function);
+          string functionName_dsl_attribute = functionName + "_dsl_attribute";
+          SgName attribute_name = functionName_dsl_attribute;
+#endif
 
        // SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration(attribute_name,global_scope_header);
           SgClassDeclaration* nonDefiningDecl              = NULL;
@@ -1110,6 +1185,15 @@ int main( int argc, char * argv[] )
 
 #if DEBUG_USING_DOT_GRAPHS
      generateDOT(*project,"_before_transformation");
+#endif
+
+  // DQ (3/21/2016): Call the support to generate unique names for class and function declarations. These
+  // names will be unique across translation units (which re require to generate code for the DSL compiler).
+     SageInterface::computeUniqueNameForUseAsIdentifier(project);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
 #if 1
