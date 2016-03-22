@@ -333,6 +333,30 @@ struct hash_nodeptr
     */
      std::string get_name ( const SgToken* token );
 
+  // DQ (3/20/2016): Added to refactor some of the DSL infrastructure support.
+   /*! \brief Generate a useful name to support construction of identifiers from declarations.
+
+       This function permits names to be generated that will be unique across translation units
+       (a specific requirement different from the context of the get_name() functions above).
+
+       \internal This supports only a restricted set of declarations presently.
+    */
+     std::string generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration );
+
+   /*! \brief Global map of name collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     extern std::map<std::string,int>     local_name_collision_map;
+     extern std::map<std::string,SgNode*> local_name_to_node_map;
+     extern std::map<SgNode*,std::string> local_node_to_name_map;
+
+   /*! \brief Traversal to set the global map of names to node and node to names.collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void computeUniqueNameForUseAsIdentifier( SgNode* astNode );
+
+   /*! \brief Reset map variables used to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void reset_name_collision_map();
+
  //@}
 
  //------------------------------------------------------------------------
