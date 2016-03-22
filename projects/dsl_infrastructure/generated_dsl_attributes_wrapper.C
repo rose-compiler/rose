@@ -5,10 +5,12 @@
 // #include "generated_dsl_attributes.h"
 #include "dsl_attribute_support.h"
 
+// DQ (3/6/2016): For the AMRShift work we don't want to include the array.h file.
 // This line can maybe be generic in the future, it is here in the case that
 // we want to use the DSL abstractions semantics at comile-time to evaluate
 // constant expressions.
-#include "array.h"
+// #include "array.h"
+// #include "Point.H"
 
 // This is the generated code from the attributeGenerator run over the DSL target abstraction.
 // #include "generated_dsl_attributes.C"

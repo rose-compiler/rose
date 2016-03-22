@@ -13746,8 +13746,10 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // Not sure why a warning shows up from astPostProcessing.C
   // SgNode::get_globalMangledNameMap().size() != 0 size = %" PRIuPTR " (clearing mangled name cache)
-     if (result->get_globalMangledNameMap().size() != 0) 
+     if (result->get_globalMangledNameMap().size() != 0)
+        {
           result->clearGlobalMangledNameMap();
+        }
 
      return result;
 #else

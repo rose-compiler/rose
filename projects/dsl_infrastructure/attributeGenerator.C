@@ -50,7 +50,8 @@ AttributeGenerator_SynthesizedAttribute::AttributeGenerator_SynthesizedAttribute
 
 
 // Attribute Generator Traversal
-AttributeGeneratorTraversal::AttributeGeneratorTraversal()
+// AttributeGeneratorTraversal::AttributeGeneratorTraversal()
+AttributeGeneratorTraversal::AttributeGeneratorTraversal( SgProject* project )
    {
   // DQ (3/4/2016): Turning on internal debugging.
      internal_debugging = false;
@@ -74,10 +75,15 @@ AttributeGeneratorTraversal::AttributeGeneratorTraversal()
      global_scope_source = generatedSourceFile->get_globalScope();
      ROSE_ASSERT(global_scope_source != NULL);
 
+     global_scope_requiredSourceCode = NULL;
+     ROSE_ASSERT(global_scope_requiredSourceCode == NULL);
+
+#if 0
   // Read in the file containing code that we want to use (e.g. templates).
   // build the file name of the required with the path (use the source directory as the path)
   // string requiredCodeFileNameWithPath = ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/ShiftCalculus4/" + "requiredCode.C";
   // string requiredCodeFileNameWithPath = ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/dsl_infrastructure/" + "array_header.C";
+  // string requiredCodeFileNameWithPath = ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/dsl_infrastructure/" + "generated_dsl_attributes_wrapper.C";
      string requiredCodeFileNameWithPath = ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/dsl_infrastructure/" + "generated_dsl_attributes_wrapper.C";
 
      printf ("Using requiredCodeFileNameWithPath = %s \n",requiredCodeFileNameWithPath.c_str());
@@ -112,6 +118,11 @@ AttributeGeneratorTraversal::AttributeGeneratorTraversal()
   // SgProject* requiredSourceCodeProject = frontend(argc,argv,frontendConstantFolding);
      SgProject* requiredSourceCodeProject = frontend(argList,frontendConstantFolding);
      ROSE_ASSERT(requiredSourceCodeProject != NULL);
+#else
+  // DQ (3/6/2016): Use the input project instead of another project read seperately.
+     SgProject* requiredSourceCodeProject = project;
+     ROSE_ASSERT(requiredSourceCodeProject != NULL);
+#endif
 
 #if 0
      printf ("In AttributeGeneratorTraversal constructor: Exiting as a test! \n");
@@ -126,8 +137,20 @@ AttributeGeneratorTraversal::AttributeGeneratorTraversal()
      requiredSourceCodeFile = isSgSourceFile(requiredSourceCodeProject->operator[](0));
      ROSE_ASSERT(requiredSourceCodeFile != NULL);
 
+#if 0
+  // DQ (3/6/2016): Clear the mangled name cache so that we can generate better mnagled names.
+#if 0
+     if (requiredSourceCodeFile->get_globalMangledNameMap().size() != 0)
+        {
+          requiredSourceCodeFile->clearGlobalMangledNameMap();
+        }
+#else
+     requiredSourceCodeFile->clearGlobalMangledNameMap();
+#endif
+#endif
+
      global_scope_requiredSourceCode = requiredSourceCodeFile->get_globalScope();
-     ROSE_ASSERT(global_scope_requiredSourceCode);
+     ROSE_ASSERT(global_scope_requiredSourceCode != NULL);
 
   // At this point we should have all of the dls attribute variables set to NULL.
      ROSE_ASSERT(dsl_type_names_variable            == NULL);
@@ -235,13 +258,16 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                ROSE_ASSERT(pragmaDeclaration != NULL);
 
                std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-#if 1
+#if 0
                printf ("Detected marking pragma for DSL keyword: pragmaDeclaration = %p = %s = %s \n",pragmaDeclaration,pragmaDeclaration->class_name().c_str(),pragmaString.c_str());
 #endif
             // We only want to support pragmas that are specific to our DSL keyword markers.
             // DSLnodes.insert(DSLKeywordStatement);
                if (pragmaString == "DSL keyword")
                   {
+#if 1
+                    printf ("Detected marking pragma for DSL keyword: pragmaDeclaration = %p = %s = %s \n",pragmaDeclaration,pragmaDeclaration->class_name().c_str(),pragmaString.c_str());
+#endif
                  // At this point we have see the extern declarations of these variables, but the 
                  // defining declarations (with initializers) appear later in the input source file.
                     ROSE_ASSERT(dsl_type_names_variable            != NULL);
@@ -264,6 +290,18 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                        {
                          printf ("   --- nondefining declaration = %p \n",declarationStatement->get_firstNondefiningDeclaration());
                          printf ("   --- defining declaration    = %p \n",declarationStatement->get_definingDeclaration());
+
+                         if (declarationStatement->get_definingDeclaration() == NULL)
+                            {
+                              printf ("Error: no associated defining declaration found for statement marked as DSL keyword \n");
+                            }
+                         ROSE_ASSERT(declarationStatement->get_definingDeclaration() != NULL);
+
+                         if (declarationStatement != declarationStatement->get_definingDeclaration())
+                            {
+                              printf ("Marking the defining declaration instead of the non-defining declaration with the DSL Keyword \n");
+                              DSLKeywordStatement = declarationStatement->get_definingDeclaration();
+                            }
                        }
 #endif
                     DSLnodes.insert(DSLKeywordStatement);
@@ -457,7 +495,7 @@ AttributeGeneratorTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Attr
             else
              {
             // Skip adding #include and comments to an empty file (thoough it should work).
-               printf ("Generating an empty file: not extra processing required \n");
+               printf ("Generating an empty file: no extra processing required \n");
              }
         }
 
@@ -476,14 +514,14 @@ AttributeGeneratorTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Attr
                     classDeclaration = NULL;
                   }
             // ROSE_ASSERT(classDeclaration != NULL);
-
+#if 0
                if (classDeclaration != NULL)
                   {
                     printf ("In evaluateSynthesizedAttribute(): finished processing of class = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
                     printf ("   --- nondefining declaration = %p \n",classDeclaration->get_firstNondefiningDeclaration());
                     printf ("   --- defining declaration    = %p \n",classDeclaration->get_definingDeclaration());
                   }
-
+#endif
                if (DSLnodes.find(classDeclaration) != DSLnodes.end())
                   {
                     printf ("In evaluateSynthesizedAttribute() class = %p = %s = %s (turn internal debugging off) \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
@@ -552,6 +590,13 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
           ROSE_ASSERT(false);
 #endif
 
+       // string scope = SageInterface::get_name(classDeclaration->get_scope());
+          string scope = isSgGlobal(classDeclaration->get_scope()) == NULL ? SageInterface::get_name(classDeclaration->get_scope()) : "global";
+          string className = string("scope_") + scope + "_type_name_" + type_name;
+          string className_dsl_attribute = className + "_dsl_attribute";
+#if 1
+          printf ("classDeclaration->get_scope() = %p = %s scope = %s \n",classDeclaration->get_scope(),classDeclaration->get_scope()->class_name().c_str(),scope.c_str());
+#endif
        // Add the attribute to the initializer of the associated dsl_attribute_map_variable variable.
 
        // initializerString += " { {className},{className_dsl_attribute()} } ";
@@ -559,10 +604,11 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
           dsl_type_names_initializerString += " \"$className\" ";
        // dsl_function_names_initializerString += " { \"functionName\"} ";
        // dsl_member_function_names_initializerString += " { {\"className\"}, {\"functionName\"} } ";
-          dsl_attribute_map_initializerString += " { {\"$className\"},{className_dsl_attribute()} } ";
+       // dsl_attribute_map_initializerString += " { {\"$className\"},{className_dsl_attribute()} } ";
+       // dsl_type_names_initializerString    = StringUtility::copyEdit(dsl_type_names_initializerString,"$className",type_name);
+       // dsl_attribute_map_initializerString = StringUtility::copyEdit(dsl_attribute_map_initializerString,"$className",type_name);
 
-          dsl_type_names_initializerString    = StringUtility::copyEdit(dsl_type_names_initializerString,"$className",type_name);
-          dsl_attribute_map_initializerString = StringUtility::copyEdit(dsl_attribute_map_initializerString,"$className",type_name);
+          dsl_attribute_map_initializerString += " { {\"" + className + "\"},{" + className_dsl_attribute + "()} } ";
 
           if (i < dsl_type_list.size()-1)
              {
@@ -642,18 +688,50 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
 
        // We might at some point want the qualified name.
           string class_name           = classDeclaration->get_name();
-          string member_function_name = memberFunctionDeclaration->get_name();
+       // string member_function_name = memberFunctionDeclaration->get_name();
+          string original_name = memberFunctionDeclaration->get_name();
 
-          printf ("Process saved DSL member_function i = %zu: class_name = %s member_function_name = %s functionDeclaration = %p = %s \n",
-                  i,class_name.c_str(),member_function_name.c_str(),memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str());
+       // string member_function_name = memberFunctionDeclaration->get_mangled_name();
+       // string member_function_name = memberFunctionDeclaration->get_qualified_name();
+       // string member_function_name = SageInterface::get_name(memberFunctionDeclaration);
+          string member_function_scope = SageInterface::get_name(memberFunctionDeclaration->get_scope());
+          string member_function_name_part = mangleFunctionName(original_name,"return_type");
+          string member_function_name  = string("scope_") + member_function_scope + "_function_name_" + member_function_name_part;
+
+       // DQ (3/16/2016): Detect name collisions so that we can 
+       // std::map<std::string,int> dsl_attribute_name_collision_map;
+          if (dsl_attribute_name_collision_map.find(member_function_name) == dsl_attribute_name_collision_map.end())
+             {
+               dsl_attribute_name_collision_map.insert(pair<string,int>(member_function_name,0));
+             }
+            else
+             {
+               dsl_attribute_name_collision_map[member_function_name]++;
+#if 1
+               int count = dsl_attribute_name_collision_map[member_function_name];
+               printf ("Collision count = %d \n",count);
+#endif
+               member_function_name += StringUtility::numberToString(count);
+             }
+
+       // Call the mangled name support more directly.
+       // string mangledName = MangledNameSupport::mangleFunctionName(original_name.str(),"return_type");
+          string mangledName = mangleFunctionName(original_name,"return_type");
+
+          printf ("Process saved DSL member_function i = %zu: class_name = %s member_function_name = %s functionDeclaration = %p = %s = %s = %s \n",
+                  i,class_name.c_str(),member_function_name.c_str(),memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str(),original_name.c_str(),mangledName.c_str());
 
        // initializerString += " { {functionName},{functionName_dsl_attribute()} } ";
        // dsl_function_names_initializerString += "{\"functionName\"}";
        // dsl_member_function_names_initializerString += "{\"memberFunctionName\"}";
        // dsl_member_function_names_initializerString += "\"memberFunctionName\"";
           dsl_member_function_names_initializerString += " { \"" + class_name + "\" \"" + member_function_name + "\" } ";
+
+          string memberFunctionName_dsl_attribute = member_function_name + "_dsl_attribute";
+
        // dsl_attribute_map_initializerString += " { {\"functionName\"},{functionName_dsl_attribute()} } ";
-          dsl_attribute_map_initializerString += " { \"memberFunctionName\",memberFunctionName_dsl_attribute() } ";
+       // dsl_attribute_map_initializerString += " { \"memberFunctionName\",memberFunctionName_dsl_attribute() } ";
+          dsl_attribute_map_initializerString += " { \"" + member_function_name + "\"," + memberFunctionName_dsl_attribute + "() } ";
           if (i < dsl_member_function_list.size()-1)
              {
             // initializerString += ",";
@@ -909,9 +987,17 @@ AttributeGeneratorTraversal::buildAttribute(SgFunctionDeclaration* function)
 #if 1
      if (function != NULL)
         {
-          SgName name = function->get_name();
-          printf ("Building DSL support for function = %p = %s = %s \n",function,function->class_name().c_str(),name.str());
-          ROSE_ASSERT(global_scope_header != NULL);
+       // SgName name = function->get_name();
+          SgName original_name = function->get_name();
+       // SgName name = function->get_mangled_name();
+       // SgName name = SageInterface::get_name(function);
+          SgName name = function->get_mangled_name();
+
+       // Call the mangled name support more directly.
+       // string mangledName = MangledNameSupport::mangleFunctionName(original_name.str(),"return_type");
+          string mangledName = mangleFunctionName(original_name.str(),"return_type");
+
+          printf ("Building DSL support for function = %p = %s = %s = %s = %s \n",function,function->class_name().c_str(),original_name.str(),name.str(),mangledName.c_str());
 
        // SgName attribute_name = name + "_dsl_attribute";
           SgName attribute_name = name + "_dsl_function_attribute";
@@ -920,6 +1006,8 @@ AttributeGeneratorTraversal::buildAttribute(SgFunctionDeclaration* function)
           SgClassDeclaration* nonDefiningDecl              = NULL;
           bool buildTemplateInstantiation                  = false; 
           SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+
+          ROSE_ASSERT(global_scope_header != NULL);
 
           SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration_nfi(attribute_name,SgClassDeclaration::e_class,global_scope_header,nonDefiningDecl,buildTemplateInstantiation,templateArgumentsList);
           ROSE_ASSERT(generatedClass != NULL);
@@ -1025,7 +1113,8 @@ int main( int argc, char * argv[] )
 #endif
 
 #if 1
-     AttributeGeneratorTraversal t;
+  // AttributeGeneratorTraversal t;
+     AttributeGeneratorTraversal t(project);
      AttributeGenerator_InheritedAttribute ih;
 
   // AttributeGenerator_SynthesizedAttribute sh = t.traverseInputFiles(project,ih);
