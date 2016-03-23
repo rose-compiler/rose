@@ -2,68 +2,20 @@
 // to support the stencil computations, and required runtime support is developed seperately.
 #include "rose.h"
 
-// #include "shiftCalculusCompiler.h"
+#include "dsl_attribute_support.h"
 
-// #include "stencilAndStencilOperatorDetection.h"
-// #include "stencilEvaluation.h"
-
-#include "dslSupport.h"
-
-#if 1
-// Reference classe names that are specific to the DSL.
-// extern std::vector<std::string> dsl_type_names;
-std::vector<std::string> dsl_type_names;
-
-// Reference functions names that are specific to the DSL.
-// extern std::vector<std::string> dsl_function_names;
-std::vector<std::string> dsl_function_names;
-
-// Reference member functions (class and member function names) that are specific to the DSL.
-// extern std::vector< std::pair<std::string,std::string> > dsl_member_function_names;
-std::vector< std::pair<std::string,std::string> > dsl_member_function_names;
-
-// Example attributes that we need to have generated to support array DSL example.
-class dsl_attribute : public AstAttribute
-   {
-     public:
-          dsl_attribute();
-          virtual ~dsl_attribute();
-
-          std::string toString();
-          std::string additionalNodeOptions();
-
-       // Most attributes will have children that define there embedding into the AST.
-          std::vector<SgNode*> dslChildren;
-
-          SgNode* currentNode;
-          std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
-
-          std::string get_name();
-          std::string get_color();
-   };
-
-// References to dsl attributes in a map inexed by the name of the dsl abstraction.
-// extern std::map<std::string,dsl_attribute> dsl_attribute_map;
-std::map<std::string,dsl_attribute> dsl_attribute_map;
-#endif
-
-
-// This code will make calles to the finite state machine representing the stencil 
-// so that we can execute events and accumulate state (and then read the state as
-// and intermediate form for the stencil (maybe saved as an attribute).  This data
-// is then the jumping off point for different groups to experiment with the generation
-// of architecture specific code.
-// #include "stencilFiniteStateMachine.h"
-
-
-#if 1
-   #include "generated_dsl_attributes.h"
-#else
-// DSL specific code being included.
+// DQ (3/22/2016): This must preceed the inclusion of generated files since generated 
+// attribute classes may contain variables of abstracition types.
 #include "array.h"
 
-   #include "nongenerated_dsl_attributes.h"
-#endif
+// General DSL support (including the dsl_attribute type declaration used in the generated 
+// attribute classes for the DSL abstractions).
+#include "dslSupport.h"
+
+#include "generated_dsl_attributes_header.C"
+
+// This must be included only once in a translation unit.
+// #include "generated_dsl_attributes.C"
 
 using namespace std;
 
@@ -978,7 +930,18 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
                     if (classDeclaration != NULL)
                        {
-                         string className = classDeclaration->get_name();
+                      // DQ (3/22/2016): Use new mechanism that will work across translation units.
+                      // string className = classDeclaration->get_name();
+                      // string className = SageInterface::generateUniqueName (classDeclaration);
+                         string className = SageInterface::generateUniqueNameForUseAsIdentifier(classDeclaration);
+
+                      // DQ (3/22/2016): Output the date collected from the DSL compiler's geneated code.
+                         printf ("className = %s dsl_type_names.size()            = %zu \n",className.c_str(),dsl_type_names.size());
+                         for (size_t i = 0; i < dsl_type_names.size(); i++)
+                            {
+                              printf ("   --- dsl_type_name[%zu] = %s \n",i,dsl_type_names[i].c_str());
+                            }
+
                          std::vector<std::string>::iterator it = find(dsl_type_names.begin(),dsl_type_names.end(),className);
                          if (it != dsl_type_names.end())
                             {
@@ -1112,7 +1075,8 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                          SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
                          if (classDeclaration != NULL)
                             {
-                              string className = classDeclaration->get_name();
+                           // string className = classDeclaration->get_name();
+                              string className = SageInterface::generateUniqueNameForUseAsIdentifier(classDeclaration);
                               printf ("In isDslFunction(): case SgDotExp: case function returning DSL type: class name = %s \n",className.c_str());
                             }
                        }
@@ -1161,11 +1125,12 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                if (templateInstantiationFunctionDecl != NULL)
                   {
                     string templateName = (templateInstantiationFunctionDecl != NULL) ? templateInstantiationFunctionDecl->get_templateName() : "";
-                    printf ("In isDslFunction(): templateName = %s \n",templateName.c_str());
+                    printf ("In isDslFunction(): (unique name mechanisms not used) templateName = %s \n",templateName.c_str());
                   }
                  else
                   {
-                    string functionName = functionSymbol->get_name();
+                 // string functionName = functionSymbol->get_name();
+                    string functionName = SageInterface::generateUniqueNameForUseAsIdentifier(functionDeclaration);
                     printf ("In isDslFunction(): functionName = %s \n",functionName.c_str());
 
 #if 0
@@ -1269,8 +1234,89 @@ bool DSL_Support::isDslAbstraction(SgNode* astNode)
                ROSE_ASSERT(detectedDslVariable == false);
              }
 
+          returnValue = true;
         }
 
      return returnValue;
+   }
+
+
+
+
+// Implementation of dsl_attribute support.
+
+dsl_attribute::dsl_attribute() {}
+
+dsl_attribute::~dsl_attribute() {}
+
+string
+dsl_attribute::toString()
+   {
+     return "DSL_Attribute";
+   }
+
+string 
+dsl_attribute::additionalNodeOptions()
+   {
+  // Base class additionalNodeOptions() function should be an error to be called.
+
+     printf ("Error: base class function called: needs an implementation on the derived function \n");
+#ifndef SKIP_ROSE_HEADERS
+     ROSE_ASSERT(false);
+#endif
+  // return "fillcolor=\"green\",style=filled";
+     return "";
+   }
+
+string
+dsl_attribute::get_name()
+   {
+     return "DSL-child";
+   }
+
+string
+dsl_attribute::get_color()
+   {
+#if 0
+  // Base class get_color() function should be an error to be called.
+
+     printf ("Error: base class function called: needs an implementation on the derived function \n");
+     ROSE_ASSERT(false);
+
+     return "";
+#else
+     return "blue";
+#endif
+   }
+
+vector<AstAttribute::AttributeEdgeInfo>
+dsl_attribute::additionalEdgeInfo()
+   {
+     vector<AstAttribute::AttributeEdgeInfo> v;
+
+     vector<SgNode*>::iterator i = dslChildren.begin();
+     while ( i != dslChildren.end() )
+        {
+#ifndef SKIP_ROSE_HEADERS
+          ROSE_ASSERT(currentNode != NULL);
+#endif
+#if 0
+          printf ("Adding an edge from %p = %s to %p = %s \n",currentNode,currentNode->class_name().c_str(),*i,(*i)->class_name().c_str());
+#endif
+          string name  = get_name();
+          string color = get_color();
+
+       // string options = " arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false color=" + color + " ";
+          string options = " arrowsize=4.0 style=\"setlinewidth(7)\" constraint=true color=" + color + " ";
+
+#ifndef SKIP_ROSE_HEADERS
+          AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) currentNode,*i,name,options);
+
+          v.push_back(additional_edge);
+#endif
+          i++;
+        }
+
+     return v;
    }
 

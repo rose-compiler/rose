@@ -552,8 +552,12 @@ AttributeGeneratorTraversal::generateUniqueName ( SgDeclarationStatement* declar
   // DQ (3/21/2016): The support for unique name generation for use across translation 
   // units is not refactored into the SageInterface. 
   // string s = SageInterface::generateUniqueNameForUseAsIdentifier(declaration);
-     string s;
 
+#if 1
+     string s = SageInterface::generateUniqueNameForUseAsIdentifier(declaration);
+#else
+  // This complexity has been refactored into the SageInterface.
+     string s;
      if (SageInterface::local_node_to_name_map.find(declaration) != SageInterface::local_node_to_name_map.end())
         {
           s = SageInterface::local_node_to_name_map[declaration];
@@ -575,7 +579,7 @@ AttributeGeneratorTraversal::generateUniqueName ( SgDeclarationStatement* declar
                ROSE_ASSERT(false);
              }
         }
-
+#endif
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);

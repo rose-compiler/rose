@@ -83,7 +83,8 @@ extern std::vector<std::string> dsl_function_names;
 
 // Reference member functions (class and member function names) that are specific to the DSL.
 extern std::vector< std::pair<std::string,std::string> > dsl_member_function_names;
-
+#endif
+#if 0
 // Example attributes that we need to have generated to support array DSL example.
 class dsl_attribute : public AstAttribute
    {
@@ -103,7 +104,8 @@ class dsl_attribute : public AstAttribute
           std::string get_name();
           std::string get_color();
    };
-
+#endif
+#if 0
 // References to dsl attributes in a map inexed by the name of the dsl abstraction.
 extern std::map<std::string,dsl_attribute> dsl_attribute_map;
 #endif

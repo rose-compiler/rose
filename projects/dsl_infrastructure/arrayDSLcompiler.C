@@ -8,7 +8,6 @@
 
 #include "VariableIdMapping.h"
 
-// #include "generated_dsl_attributes.h"
 #include "dsl_attribute_support.h"
 
 // This line can maybe be generic in the future, it is here in the case that
@@ -19,17 +18,10 @@
 // #include "dsl_detection.h"
 #include "dslSupport.h"
 
-// This can be the generated code to support the DSL recognition and evaluation.
-#if 1
-// Use the hand written version of the generated code.
-   #include "nongenerated_dsl_attributes.h"
-#else
-// Use the automatically generated version of the generated code.
-   #include "generated_dsl_attributes.h"
-#endif
+#include "generated_dsl_attributes_header.C"
+#include "generated_dsl_attributes.C"
 
 #include "dsl_detection.h"
-// #include "dslSupport.h"
 
 
 using namespace std;
@@ -86,6 +78,10 @@ int main( int argc, char * argv[] )
 
   // variableIdMapping.toStream(cout);
 
+  // DQ (3/21/2016): Call the support to generate unique names for class and function declarations. These
+  // names will be unique across translation units (which re require to generate code for the DSL compiler).
+     SageInterface::computeUniqueNameForUseAsIdentifier(project);
+
 #if 1
      printf ("variableIdMapping.getVariableIdSet().size() = %zu \n",variableIdMapping.getVariableIdSet().size());
      ROSE_ASSERT(variableIdMapping.getVariableIdSet().size() > 0);
@@ -124,6 +120,39 @@ int main( int argc, char * argv[] )
 #if DEBUG_USING_DOT_GRAPHS && 1
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"_before");
+#endif
+
+  // DQ (3/22/2016): Output the date collected from the DSL compiler's geneated code.
+     printf ("dsl_type_names.size()            = %zu \n",dsl_type_names.size());
+     for (size_t i = 0; i < dsl_type_names.size(); i++)
+        {
+          printf ("   --- dsl_type_name[%zu] = %s \n",i,dsl_type_names[i].c_str());
+        }
+
+     printf ("dsl_function_names.size()        = %zu \n",dsl_function_names.size());
+     for (size_t i = 0; i < dsl_function_names.size(); i++)
+        {
+          printf ("   --- dsl_function_name[%zu] = %s \n",i,dsl_function_names[i].c_str());
+        }
+
+     printf ("dsl_member_function_names.size() = %zu \n",dsl_member_function_names.size());
+     for (size_t i = 0; i < dsl_member_function_names.size(); i++)
+        {
+          printf ("   --- dsl_member_function_name[%zu] = (%s,%s) \n",i,dsl_member_function_names[i].first.c_str(),dsl_member_function_names[i].second.c_str());
+        }
+
+     printf ("dsl_attribute_map.size()         = %zu \n",dsl_attribute_map.size());
+     size_t counter = 0;
+     for (std::map<std::string,dsl_attribute>::iterator i = dsl_attribute_map.begin(); i != dsl_attribute_map.end(); i++)
+        {
+       // printf ("   --- dsl_attribute_map: counter = %zu value = (%s,%p) \n",counter,i->first.c_str(),i->second.c_str());
+          printf ("   --- dsl_attribute_map: counter = %zu value = (%s,dsl_attribute value) \n",counter,i->first.c_str());
+          counter++;
+        }
+
+#if 0
+     printf ("\nExiting after output of generated code for DSL compiler \n");
+     ROSE_ASSERT(false);
 #endif
 
   // Generate maps from generated DSL data structures.

@@ -1,4 +1,8 @@
 
+// This file is no longer used!
+
+#if 0
+
 // I don't appear to turn this on in the compilation of this file with the attribute generator.
 // #define SKIP_ROSE_HEADERS
 
@@ -232,3 +236,6 @@ plus_operator_dsl_attribute::additionalNodeOptions()
    }
 
 #endif
+
+#endif
+
