@@ -5,6 +5,7 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 # This included test programs demonstrating the std::function use and API.
 # bin_PROGRAMS    = attributeGenerator testFunctionCallBack_01 testFunctionCallBack_02 testFunctionCallBack_03 testFunctionCallBack_04 array_main arrayDSLcompiler
 # bin_PROGRAMS    = attributeGenerator array_main arrayDSLcompiler
+# bin_PROGRAMS    = attributeGenerator array_main arrayDSLcompiler amrShiftDSLcompiler
 bin_PROGRAMS    = attributeGenerator array_main arrayDSLcompiler
 
 CXX11FLAG = -std=c++11
@@ -24,6 +25,8 @@ array_main_SOURCES = array_main.C array.C
 # arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C generated_dsl_attributes_wrapper.C generated_dsl_attributes.C generated_dsl_attributes_header.C array.C
 # arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C generated_dsl_attributes_wrapper.C array.C
 arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C array.C 
+
+amrShiftDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C
 
 dsl_detection_SOURCES = dsl_detection.C
 
@@ -105,6 +108,9 @@ testArrayDSLCompiler: arrayDSLcompiler
 
 testAMRShift: attributeGenerator
 	./attributeGenerator -std=c++11 -DSKIP_ROSE_HEADERS -I$(srcdir)/AMRShift/Multigrid -I$(srcdir)/AMRShift/StencilTools -I$(srcdir)/AMRShift/timer -I$(srcdir)/AMRShift/VisitWriter $(srcdir)/AMRShiftAbstractions.C
+
+testAMRShiftCompiler: amrShiftDSLcompiler
+	./amrShiftDSLcompiler -Wunknown-pragmas -DSKIP_ROSE_BUILTIN_DECLARATIONS -c $(srcdir)/array_main.C
 
 
 check-local:

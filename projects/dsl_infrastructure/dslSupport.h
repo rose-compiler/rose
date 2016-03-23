@@ -38,6 +38,9 @@ namespace DSL_Support
   // DQ (2/3/2016): Refactored support for AST.
      void checkAndResetToMakeConsistantCompilerGenerated ( SgInitializedName* initializedName );
 
+  // This is the main processing function for any DSL compiler built using this EDSL ROSE infrastructure.
+     int dslProcessing(SgProject* project);
+
   // ********************************************************
   // DQ (10/24/2014): Added feature for constant expresssion 
   // evaluation. This code below is an advanced version of 

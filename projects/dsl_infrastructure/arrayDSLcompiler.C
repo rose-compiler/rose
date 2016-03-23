@@ -2,10 +2,21 @@
 // It should be generic to any specific abstraction (but for 
 // now it can be specific to the array DSL compiler).
 
-#include <iostream>
+// This line can maybe be generic in the future, it is here in the case that
+// we want to use the DSL abstractions semantics at comile-time to evaluate
+// constant expressions.
+#include "array.h"
+
+// #include <iostream>
 
 #include "rose.h"
 
+#include "dsl.h"
+
+#include "generated_dsl_attributes_header.C"
+#include "generated_dsl_attributes.C"
+
+#if 0
 #include "VariableIdMapping.h"
 
 #include "dsl_attribute_support.h"
@@ -13,7 +24,7 @@
 // This line can maybe be generic in the future, it is here in the case that
 // we want to use the DSL abstractions semantics at comile-time to evaluate
 // constant expressions.
-#include "array.h"
+// #include "array.h"
 
 // #include "dsl_detection.h"
 #include "dslSupport.h"
@@ -23,18 +34,19 @@
 
 #include "dsl_detection.h"
 
-
 using namespace std;
 
 using namespace SPRAY;
 using namespace SageInterface;
 using namespace SageBuilder;
+#endif
 
+#if 0
 VariableIdMapping variableIdMapping;
 
 // Control generation of DOT graphs of the AST for debugging.
 #define DEBUG_USING_DOT_GRAPHS 1
-
+#endif
 
 int main( int argc, char * argv[] )
    {
@@ -59,6 +71,11 @@ int main( int argc, char * argv[] )
      SgProject* project = frontend(argvList,frontendConstantFolding);
      ROSE_ASSERT(project != NULL);
 
+     int status = 0;
+
+#if 1
+     status = DSL_Support::dslProcessing(project);
+#else
      try
         {
           variableIdMapping.computeVariableSymbolMapping(project);
@@ -200,6 +217,7 @@ int main( int argc, char * argv[] )
   // Generate defined number of variants via calls to the HPC code generator API.
 
   // Ignore selection of optimial generated loops (or construct connection to OpenTuner for autotuning).
+#endif
 
-     return 0;
+     return status;
    }

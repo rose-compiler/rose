@@ -1,7 +1,14 @@
+// DQ (3/22/2016): This must preceed the inclusion of generated files since generated 
+// attribute classes may contain variables of abstracition types.
+#include "array.h"
+
 // Example ROSE Translator reads input program and implements a DSL embedded within C++
 // to support the stencil computations, and required runtime support is developed seperately.
 #include "rose.h"
 
+#include "dsl.h"
+
+#if 0
 #include "dsl_attribute_support.h"
 
 // DQ (3/22/2016): This must preceed the inclusion of generated files since generated 
@@ -13,11 +20,16 @@
 #include "dslSupport.h"
 
 #include "generated_dsl_attributes_header.C"
+#endif
 
 // This must be included only once in a translation unit.
 // #include "generated_dsl_attributes.C"
 
 using namespace std;
+
+using namespace SPRAY;
+using namespace SageInterface;
+using namespace SageBuilder;
 
 
 // This is a function refactoring code used within the stencil evaluation.
@@ -1241,7 +1253,162 @@ bool DSL_Support::isDslAbstraction(SgNode* astNode)
    }
 
 
+VariableIdMapping variableIdMapping;
 
+// Control generation of DOT graphs of the AST for debugging.
+#define DEBUG_USING_DOT_GRAPHS 1
+
+int
+DSL_Support::dslProcessing(SgProject* project)
+   {
+  // This is the main processing function for any DSL compiler built using this EDSL ROSE infrastructure.
+
+     int status = 0;
+
+     try
+        {
+          variableIdMapping.computeVariableSymbolMapping(project);
+        }
+     catch(char* str)
+        {
+          cout << "*Exception raised: " << str << endl;
+        } 
+     catch(const char* str) 
+        {
+          cout << "Exception raised: " << str << endl;
+        } 
+     catch(string str)
+        {
+          cout << "Exception raised: " << str << endl;
+        }
+
+  // variableIdMapping.toStream(cout);
+
+  // DQ (3/21/2016): Call the support to generate unique names for class and function declarations. These
+  // names will be unique across translation units (which re require to generate code for the DSL compiler).
+     SageInterface::computeUniqueNameForUseAsIdentifier(project);
+
+#if 1
+     printf ("variableIdMapping.getVariableIdSet().size() = %zu \n",variableIdMapping.getVariableIdSet().size());
+     ROSE_ASSERT(variableIdMapping.getVariableIdSet().size() > 0);
+#endif
+
+#if 0
+     printf ("Exiting as a test after calling variableIdMapping.computeVariableSymbolMapping(project) \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
+     printf ("Calling constant folding \n");
+     ConstantFolding::constantFoldingOptimization(project,false);
+
+#if 0
+     printf ("Exiting as a test after calling ConstantFolding::constantFoldingOptimization() \n");
+     ROSE_ASSERT(false);
+#endif
+#endif
+
+  // DQ (2/8/2015): Find the associated SgFile so we can restrict processing to the current file.
+     ROSE_ASSERT(project->get_fileList().empty() == false);
+     SgFile* firstFile = project->get_fileList()[0];
+     ROSE_ASSERT(firstFile != NULL);
+
+#if DEBUG_USING_DOT_GRAPHS
+  // generateDOTforMultipleFile(*project);
+     generateDOT(*project,"_before_transformation");
+  // generateDOT_withIncludes(*project,"_before_transformation");
+  // AstDOTGeneration astdotgen;
+  // astdotgen.generateWithinFile(firstFile,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,"_before_transformation");
+#endif
+#if DEBUG_USING_DOT_GRAPHS && 1
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 12000;
+#endif
+#if DEBUG_USING_DOT_GRAPHS && 1
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"_before");
+#endif
+
+  // DQ (3/22/2016): Output the date collected from the DSL compiler's geneated code.
+     printf ("dsl_type_names.size()            = %zu \n",dsl_type_names.size());
+     for (size_t i = 0; i < dsl_type_names.size(); i++)
+        {
+          printf ("   --- dsl_type_name[%zu] = %s \n",i,dsl_type_names[i].c_str());
+        }
+
+     printf ("dsl_function_names.size()        = %zu \n",dsl_function_names.size());
+     for (size_t i = 0; i < dsl_function_names.size(); i++)
+        {
+          printf ("   --- dsl_function_name[%zu] = %s \n",i,dsl_function_names[i].c_str());
+        }
+
+     printf ("dsl_member_function_names.size() = %zu \n",dsl_member_function_names.size());
+     for (size_t i = 0; i < dsl_member_function_names.size(); i++)
+        {
+          printf ("   --- dsl_member_function_name[%zu] = (%s,%s) \n",i,dsl_member_function_names[i].first.c_str(),dsl_member_function_names[i].second.c_str());
+        }
+
+     printf ("dsl_attribute_map.size()         = %zu \n",dsl_attribute_map.size());
+     size_t counter = 0;
+     for (std::map<std::string,dsl_attribute>::iterator i = dsl_attribute_map.begin(); i != dsl_attribute_map.end(); i++)
+        {
+       // printf ("   --- dsl_attribute_map: counter = %zu value = (%s,%p) \n",counter,i->first.c_str(),i->second.c_str());
+          printf ("   --- dsl_attribute_map: counter = %zu value = (%s,dsl_attribute value) \n",counter,i->first.c_str());
+          counter++;
+        }
+
+#if 0
+     printf ("\nExiting after output of generated code for DSL compiler \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // Generate maps from generated DSL data structures.
+     DSL_Support::outputGeneratedData();
+
+  // Build the inherited attribute
+     Detection_InheritedAttribute inheritedAttribute;
+
+  // Define the traversal
+  // DetectionTraversal shiftCalculus_DetectionTraversal;
+     DetectionTraversal shiftCalculus_DetectionTraversal(project);
+
+#if 1
+     printf ("\n*************************************************************************** \n");
+     printf ("Call the Detection traversal starting at the project (root) node of the AST \n");
+     printf ("*************************************************************************** \n\n");
+#endif
+
+  // Call the traversal starting at the project (root) node of the AST
+  // Detection_SynthesizedAttribute result = shiftCalculus_DetectionTraversal.traverse(project,inheritedAttribute);
+     Detection_SynthesizedAttribute result = shiftCalculus_DetectionTraversal.traverseWithinFile(firstFile,inheritedAttribute);
+
+#if 1
+     printf ("\n********************************************************************************* \n");
+     printf ("DONE: Call the Detection traversal starting at the project (root) node of the AST \n");
+     printf ("********************************************************************************* \n\n");
+#endif
+
+#if DEBUG_USING_DOT_GRAPHS
+  // generateDOTforMultipleFile(*project);
+     generateDOT(*project,"_after_transformation");
+  // generateDOT_withIncludes(*project,"_before_transformation");
+  // AstDOTGeneration astdotgen;
+  // astdotgen.generateWithinFile(firstFile,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,"_before_transformation");
+#endif
+
+
+  // Abstraction of evaluation is similar to the previous implementation.
+
+  // Steps not yet in this version of the code.
+  // Connection to HPC code generation is through generation of nieve affine loops (same as in array translator project).
+
+  // Call the HPC code generation (same as for Stencil abstraction code generator).
+
+  // Generate defined number of variants via calls to the HPC code generator API.
+
+  // Ignore selection of optimial generated loops (or construct connection to OpenTuner for autotuning).
+
+     return status;
+   }
 
 // Implementation of dsl_attribute support.
 
