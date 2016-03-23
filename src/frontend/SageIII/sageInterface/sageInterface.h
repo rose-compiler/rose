@@ -342,6 +342,7 @@ struct hash_nodeptr
        \internal This supports only a restricted set of declarations presently.
     */
      std::string generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration );
+     std::string generateUniqueNameForUseAsIdentifier_support ( SgDeclarationStatement* declaration );
 
    /*! \brief Global map of name collisions to support generateUniqueNameForUseAsIdentifier() function.
     */

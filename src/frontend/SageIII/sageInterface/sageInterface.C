@@ -2427,7 +2427,7 @@ SageInterface::reset_name_collision_map()
 
 
 string
-SageInterface::generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration )
+SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationStatement* declaration )
    {
   // DQ (3/20/2016): Adding support for generating a unique name from a declaration that 
   // can be used as an identifier.  This functionality is used in the DSL infrastructure 
@@ -2559,6 +2559,55 @@ SageInterface::generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* de
      return s;
    }
 
+// Generate unique name for use as a class name for the generated attribute classes.
+// std::string AttributeGeneratorTraversal::generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration )
+// std::string AttributeGeneratorTraversal::generateUniqueName ( SgDeclarationStatement* declaration )
+std::string
+SageInterface::generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration )
+   {
+  // DQ (3/21/2016): The support for unique name generation for use across translation 
+  // units is not refactored into the SageInterface. 
+  // string s = SageInterface::generateUniqueNameForUseAsIdentifier(declaration);
+     string s;
+
+#if 1
+     printf ("In generateUniqueNameForUseAsIdentifier(): evaluating declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+
+     ROSE_ASSERT(local_node_to_name_map.empty() == false);
+     ROSE_ASSERT(local_name_to_node_map.empty() == false);
+
+     if (SageInterface::local_node_to_name_map.find(declaration) != SageInterface::local_node_to_name_map.end())
+        {
+          s = SageInterface::local_node_to_name_map[declaration];
+        }
+       else
+        {
+          SgDeclarationStatement* definingDeclaration = declaration->get_definingDeclaration();
+          if (definingDeclaration != NULL)
+             {
+#if 1
+               printf ("In generateUniqueName(): Using the defining declaration = %p since %p was not in the map \n",definingDeclaration,declaration);
+#endif
+            // s = generateUniqueName(definingDeclaration);
+               s = generateUniqueNameForUseAsIdentifier_support(definingDeclaration);
+             }
+            else
+             {
+               printf ("Error: declaration not in SageInterface::local_node_to_name_map: declaration = %p = %s = %s \n",
+                    declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return s;
+   }
+
 
 void
 SageInterface::computeUniqueNameForUseAsIdentifier( SgNode* astNode )
@@ -2582,7 +2631,7 @@ SageInterface::computeUniqueNameForUseAsIdentifier( SgNode* astNode )
                          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl);
                          if (classDeclaration != NULL || functionDeclaration != NULL)
                             {
-                              string s = generateUniqueNameForUseAsIdentifier(decl);
+                              string s = generateUniqueNameForUseAsIdentifier_support(decl);
                               local_name_to_node_map.insert(pair<string,SgNode*>(s,decl));
                               local_node_to_name_map.insert(pair<SgNode*,string>(decl,s));
                             }
