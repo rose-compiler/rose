@@ -39,10 +39,22 @@ ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_BUILD_OS;
 ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_BUILD_CPU;
 ROSE_UTIL_API extern const std::string ROSE_OFP_VERSION_STRING;
 
-/* Numeric form of ROSE version -- assuming ROSE version x.y.zL (where */
-/* x, y, and z are numbers, and L is a single lowercase letter from a to j), */
-/* the numeric value is x * 1000000 + y * 10000 + z * 100 + (L - 'a') */
-extern const int ROSE_NUMERIC_VERSION;
+/** Numeric form of ROSE version.
+ *
+ *  This is the numeric form of the ROSE version number. It's formed by taking the ROSE version string from the ROSE_VERSION
+ *  file at the top of the source tree (e.g., "0.9.6.399-rc1", replacing all non-numeric characters with '.',
+ *  ("0.9.6.399...1"), deleting dots that are repeated ("0.9.6.399.1"), discarding all but the first three numeric values
+ *  ("0.9.6"), forming an integer using three digits per version part ("000009006"), and removing leading zeros ("9006").
+ *
+ *  If the first three numbers of a ROSE version are called "major", "minor", and "patch" then these three values can be
+ *  obtained from the ROSE_NUMERIC_VERSION with this code:
+ *
+ * @code
+ *   unsigned long patch_number = ROSE_NUMERIC_VERSION % 1000ul;
+ *   unsigned long minor_number = ROSE_NUMERIC_VERSION / 1000ul % 1000ul;
+ *   unsigned long major_number = ROSE_NUMERIC_VERSION / 1000000ul;
+ * @endcode */
+extern const unsigned long ROSE_NUMERIC_VERSION;
 
 
 // DQ (5/2/2009): This is temporary while we work out the details of the new Graph IR nodes.

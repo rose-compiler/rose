@@ -67,6 +67,15 @@ install-compass: install-core
 	$(MAKE) -C $(top_builddir)/projects/compass
 	$(MAKE) install -C $(top_builddir)/projects/compass
 
+# Install ONLY the library components (no examples, no tests, no projects). This is even more "core" than "core" but I'm
+# not changing "install-core" because users use that and expect certain behavior. The purpose of this target is mainly for
+# ROSE project developers that have a need to install the library and other specific tools (via other install targets) but
+# don't want to install anything (perhaps because it doesn't compile). [Robb Matzke, 2016-03-07]
+install-rose-library: install-data-local
+	$(MAKE) -C $(top_builddir)/src install
+	cp rosePublicConfig.h $(pkgincludedir)
+
+
 # DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
 # DQ (9/29/2010): Next three lines are a modification suggested by Scott Warren to 

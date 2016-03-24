@@ -50,6 +50,7 @@
 
 #include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
+#include <Sawyer/Exception.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
@@ -163,23 +164,24 @@ SAWYER_EXPORT const std::string& name(Id);
 /** Exception for non-existing values.
  *
  *  This exception is thrown when querying an attribute value and no value is stored for the specified attribute ID. */
-class SAWYER_EXPORT DoesNotExist: public std::domain_error {
+class SAWYER_EXPORT DoesNotExist: public Exception::NotFound {
 public:
     ~DoesNotExist() throw () {}
 
     /** Constructor taking an attribute name or description. */
     explicit DoesNotExist(const std::string &attrName)
-        : std::domain_error(attrName + " does not exist in object") {}
+        : Exception::NotFound(attrName + " does not exist in object") {}
 };
 
 /** Exception thrown when redeclaring an existing attribute. */
-class SAWYER_EXPORT AlreadyExists: public std::runtime_error {
+class SAWYER_EXPORT AlreadyExists: public Exception::AlreadyExists {
 public:
     ~AlreadyExists() throw () {}
 
     /** Constructor taking an attribute name or description. */
     AlreadyExists(const std::string &attrName, Id id)
-        : std::runtime_error(attrName + " is already a declared attribute (id=" + boost::lexical_cast<std::string>(id) + ")") {}
+        : Exception::AlreadyExists(attrName + " is already a declared attribute (id=" +
+                                   boost::lexical_cast<std::string>(id) + ")") {}
 };
 
 /** Exception thrown when wrong data type is queried. */
