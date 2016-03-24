@@ -93,14 +93,25 @@ codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
+  ArrayElementAccessData.h \
+  ArrayElementAccessData.C \
   CollectionOperators.h            \
   CommandLineOptions.C             \
   CommandLineOptions.h             \
   ConstraintRepresentation.C       \
   ConstraintRepresentation.h       \
+  CounterexampleAnalyzer.C \
+  CounterexampleAnalyzer.h \
+  CPAstAttribute.h CPAstAttribute.C \
+  CTIOLabeler.h                    \
+  CTIOLabeler.C                    \
   EqualityMaintainer.h             \
   ExprAnalyzer.C                   \
   ExprAnalyzer.h                   \
+  EquivalenceChecking.h            \
+  EquivalenceChecking.C            \
+  Evaluator.h                      \
+  FIConstAnalysis.h FIConstAnalysis.C \
   HSet.h                           \
   HSetMaintainer.h                 \
   HashFun.h                        \
@@ -112,19 +123,19 @@ codethorn_SOURCES = \
   LanguageRestrictorCollection.h   \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
-  SetAlgo.h                        \
-  StateRepresentations.C           \
-  StateRepresentations.h           \
-  Timer.cpp                        \
-  Timer.h                          \
-  Visualizer.C                     \
-  Visualizer.h                     \
-  Evaluator.h                      \
-  RERS_empty_specialization.C      \
+  PragmaHandler.h \
+  PragmaHandler.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
+  ReachabilityAnalysis.h ReachabilityAnalysis.C \
+  RefinementConstraints.C \
+  RefinementConstraints.h \
+  RERS_empty_specialization.C      \
   RewriteSystem.C \
   RewriteSystem.h \
+  SetAlgo.h \
+  Specialization.h \
+  Specialization.C \
   SpotConnection.C \
   SpotConnection.h \
   SpotTgba.C \
@@ -133,19 +144,16 @@ codethorn_SOURCES = \
   SpotState.h \
   SpotSuccIter.C \
   SpotSuccIter.h \
-  CounterexampleAnalyzer.C \
-  CounterexampleAnalyzer.h \
-  RefinementConstraints.C \
-  RefinementConstraints.h \
-  ArrayElementAccessData.h \
-  ArrayElementAccessData.C \
-  Specialization.h \
-  Specialization.C \
-  PragmaHandler.h \
-  PragmaHandler.C \
-  FIConstAnalysis.h FIConstAnalysis.C \
-  CPAstAttribute.h CPAstAttribute.C \
-  ReachabilityAnalysis.h ReachabilityAnalysis.C \
+  StateRepresentations.C           \
+  StateRepresentations.h           \
+  Timer.cpp                        \
+  Timer.h                          \
+  TransitionGraph.h                \
+  TransitionGraph.C                \
+  VariableValueMonitor.h \
+  VariableValueMonitor.C \
+  Visualizer.C                     \
+  Visualizer.h                     \
   codethorn.h \
   codethorn.C
 
@@ -161,6 +169,7 @@ addressTakenAnalysis_DEPENDENCIES=libspray.la
 
 # workaround to intentionally fool policy
 faketarget:
+	RersSpecialization.h
 	RERS_Problem10_specialization.C
 	RERS_Problem1_specialization.C
 	RERS_Problem2_specialization.C
@@ -187,6 +196,7 @@ faketarget:
 	spotconnection/ltlverifier.C 
 	spotconnection/stg2.c 
 	spotconnection/stg2_cpp.C 
+	tests/jacobi-1d-imper_mod.c
 	tests/Problem28.c 
 	tests/artificialsum1.C 
 	tests/artificialsum1.c 
@@ -322,6 +332,7 @@ faketarget:
 	rtests/vector1/RevStack.h
 	ProgramAbstractionLayer.h
 	tests/lvtest4.C
+	tests/svcomp-test2.c
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
@@ -445,13 +456,36 @@ analyterix_SOURCES = \
 
 
 check-local:
-	./codethorn --internal-checks				 
+	./codethorn --internal-checks	
+	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
+	@echo ================================================================
+	@echo RUNNING VERIFICATION ERROR TESTS
+	@echo ================================================================
+	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test2.c --edg:no_warnings
+	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
+	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
+
+	@echo ================================================================
+	@echo RUNNING CONST ANALYSIS CHECK
+	@echo ================================================================
+	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c 
+	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
+	@rm tmp.const.csv
+
+	@echo ================================================================
+	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
+	@echo ================================================================
+	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
+	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
+	@rm tmp.nsdump
+
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	rm -f *.consistent
 	$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) . #test the analysis of RERS Problem1403 (which features arrays)
 	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
+	$(srcdir)/scripts/runBuechiTransformTests $(srcdir) . #confirm that option --keep-error-states=yes does not lead to erroneous results
 	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 
 checkdemos: 
@@ -484,6 +518,7 @@ clean-local:
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv
 	rm -f codethorn-LTLParser.c++
+	rm -f tmp.nsdump
 
 distclean-local: clean
 	rm -f *.tgz

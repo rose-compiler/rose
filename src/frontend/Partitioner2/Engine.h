@@ -98,127 +98,6 @@ namespace Partitioner2 {
  */
 class ROSE_DLL_API Engine {
 public:
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Settings.  All settings must act like properties, which means the following:
-    //   1. Each setting must have a name that does not begin with a verb.
-    //   2. Each setting must have a command-line switch to manipulate it.
-    //   3. Each setting must have a method that queries the property (same name as the property and taking no arguments).
-    //   4. Each setting must have a modifier method (same name as property but takes a value and returns void)
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /** How the partitioner should globally treat memory. */
-    enum MemoryDataAdjustment {
-        DATA_IS_CONSTANT,                               /**< Treat all memory as if it were constant. This is accomplished by
-                                                         *   removing @ref MemoryMap::READABLE from all segments. */
-        DATA_IS_INITIALIZED,                            /**< Treat all memory as if it were initialized. This is a little
-                                                         *   weaker than @ref MEMORY_IS_CONSTANT in that it allows the
-                                                         *   partitioner to read the value from memory as if it were constant,
-                                                         *   but also marks the value as being indeterminate. This is
-                                                         *   accomplished by adding @ref MemoryMap::INITIALIZED to all
-                                                         *   segments. */
-        DATA_NO_CHANGE,                                 /**< Do not make any global changes to the memory map. */
-    };
-
-    /** Settings for loading specimens.
-     *
-     *  The runtime descriptions and command-line parser for these switches can be obtained from @ref loaderSwitches. */
-    struct LoaderSettings {
-        size_t deExecuteZeros;                          /**< Size threshold for removing execute permission from zero data. If
-                                                         *   this data member is non-zero, then the memory map will be adjusted
-                                                         *   by removing execute permission from any region of memory that has
-                                                         *   at least this many consecutive zero bytes. This happens after the
-                                                         *   @ref memoryIsExecutable property is processed. */
-        MemoryDataAdjustment memoryDataAdjustment;      /**< How to globally adjust memory segment access bits for data
-                                                         *   areas. See the enum for details. The default is @ref
-                                                         *   DATA_NO_CHANGE, which causes the partitioner to use the
-                                                         *   user-supplied memory map without changing anything. */
-        bool memoryIsExecutable;                        /**< Determines whether all of memory should be made executable. The
-                                                         *   executability bit controls whether the partitioner is able to make
-                                                         *   instructions at that address.  The default, false, means that the
-                                                         *   engine will not modify executable bits in memory, but rather use
-                                                         *   the bits already set in the memory map. This happens before the
-                                                         *   @ref deExecuteZeros property is processed. */
-
-        LoaderSettings()
-            : deExecuteZeros(0), memoryDataAdjustment(DATA_IS_INITIALIZED), memoryIsExecutable(false) {}
-    };
-
-    /** Settings that control the disassembler.
-     *
-     *  The runtime descriptions and command-line parser for these switches can be obtained from @ref disassemblerSwitches. */
-    struct DisassemblerSettings {
-        std::string isaName;                            /**< Name of the instruction set architecture. Specifying a non-empty
-                                                         *   ISA name will override the architecture that's chosen from the
-                                                         *   binary container(s) such as ELF or PE. */
-    };
-
-    /** Controls whether the function may-return analysis runs. */
-    enum FunctionReturnAnalysis {
-        MAYRETURN_DEFAULT_YES,                          /**< Assume a function returns if the may-return analysis cannot
-                                                         *   decide whether it may return. */
-        MAYRETURN_DEFAULT_NO,                           /**< Assume a function cannot return if the may-return analysis cannot
-                                                         *   decide whether it may return. */
-        MAYRETURN_ALWAYS_YES,                           /**< Assume that all functions return without ever running the
-                                                         *   may-return analysis. */
-        MAYRETURN_ALWAYS_NO,                            /**< Assume that a function cannot return without ever running the
-                                                         *   may-return analysis. */
-    };
-
-    /** Settings that control creation of the partitioner.
-     *
-     *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
-    struct PartitionerSettings {
-        std::vector<rose_addr_t> startingVas;           /**< Addresses at which to start recursive disassembly. These
-                                                         *   addresses are in addition to entry addresses, addresses from
-                                                         *   symbols, addresses from configuration files, etc. */
-        bool usingSemantics;                            /**< Whether instruction semantics are used. If semantics are used,
-                                                         *   then the partitioner will have more accurate reasoning about the
-                                                         *   control flow graph.  For instance, semantics enable the detection
-                                                         *   of certain kinds of opaque predicates. */
-        bool followingGhostEdges;                       /**< Should ghost edges be followed during disassembly?  A ghost edge
-                                                         *   is a CFG edge that is apparent from the instruction but which is
-                                                         *   not taken according to semantics. For instance, a branch
-                                                         *   instruction might have two outgoing CFG edges apparent by looking
-                                                         *   at the instruction syntax, but a semantic analysis might determine
-                                                         *   that only one of those edges can ever be taken. Thus, the branch
-                                                         *   has an opaque predicate with one actual edge and one ghost edge. */
-        bool discontiguousBlocks;                       /**< Should basic blocks be allowed to be discontiguous. If set, then
-                                                         *   the instructions of a basic block do not need to follow one after
-                                                         *   the other in memory--the block can have internal unconditional
-                                                         *   branches. */
-        bool findingFunctionPadding;                    /**< Look for padding before each function entry point? */
-        bool findingDeadCode;                           /**< Look for unreachable basic blocks? */
-        rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
-        bool findingIntraFunctionCode;                  /**< Suck up unused addresses as intra-function code. */
-        bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
-        AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
-        bool doingPostAnalysis;                         /**< Perform enabled post-partitioning analyses? */
-        bool doingPostFunctionMayReturn;                /**< Run function-may-return analysis if doingPostAnalysis is set? */
-        bool doingPostFunctionStackDelta;               /**< Run function-stack-delta analysis if doingPostAnalysis is set? */
-        bool doingPostCallingConvention;                /**< Run calling-convention analysis if doingPostAnalysis is set? */
-        FunctionReturnAnalysis functionReturnAnalysis;  /**< How to run the function may-return analysis. */
-        bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
-        bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
-        bool splittingThunks;                           /**< Split thunks into their own separate functions. */
-        SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
-
-        PartitionerSettings()
-            : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
-              findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
-              doingPostAnalysis(true), doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true),
-              doingPostCallingConvention(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
-              findingDataFunctionPointers(false), findingThunks(true), splittingThunks(false),
-              semanticMemoryParadigm(LIST_BASED_MEMORY) {}
-    };
-
-    /** Settings for controling the engine behavior.
-     *
-     *  These settings control the behavior of the engine itself irrespective of how the partitioner is configured. The runtime
-     *  descriptions and command-line parser for these switches can be obtained from @ref engineBehaviorSwitches. */
-    struct EngineSettings {
-        std::vector<std::string> configurationNames;    /**< List of configuration files and/or directories. */
-    };
-
     /** Settings for the engine.
      *
      *  The engine is configured by adjusting these settings, usually shortly after the engine is created. */
@@ -227,6 +106,7 @@ public:
         DisassemblerSettings disassembler;              /**< Settings for creating the disassembler. */
         PartitionerSettings partitioner;                /**< Settings for creating a partitioner. */
         EngineSettings engine;                          /**< Settings that control engine behavior. */
+        AstConstructionSettings astConstruction;        /**< Settings for constructing the AST. */
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -361,7 +241,7 @@ public:
      *
      * @{ */
     Sawyer::CommandLine::ParserResult parseCommandLine(int argc, char *argv[],
-                                                       const std::string &purpose, const std::string &description);
+                                                       const std::string &purpose, const std::string &description) /*final*/;
     virtual Sawyer::CommandLine::ParserResult parseCommandLine(const std::vector<std::string> &args,
                                                                const std::string &purpose, const std::string &description);
     /** @} */
@@ -457,6 +337,9 @@ public:
 
     /** Command-line switches related to engine behavior. */
     virtual Sawyer::CommandLine::SwitchGroup engineSwitches();
+
+    /** Command-line switches related to AST construction. */
+    virtual Sawyer::CommandLine::SwitchGroup astConstructionSwitches();
 
     /** Documentation for specimen names. */
     static std::string specimenNameDocumentation();
@@ -789,7 +672,7 @@ public:
      *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
      *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
      *  attachBlocksToFunctions tries to attach each basic block to a function. */
-    void discoverFunctions(Partitioner&);
+    virtual void discoverFunctions(Partitioner&);
 
     /** Attach dead code to function.
      *
@@ -966,12 +849,19 @@ public:
     /** Property: when to remove execute permission from zero bytes.
      *
      *  This is the number of consecutive zero bytes that must be present before execute permission is removed from this part
-     *  of the memory map.  A value of zero disables this feature.  This action happens after the @ref memoryIsExecutable
-     *  property is processed.
+     *  of the memory map.  A value of zero disables this feature.  The @ref deExecuteZerosThreshold is the number of
+     *  consecutive zero bytes that must be found to trigger this alteration, while the @ref deExecuteZerosLeaveAtFront and
+     *  @ref deExecuteZerosLeaveAtBack narrow each region slightly before removing execute permission.
+     *
+     *  This action happens after the @ref memoryIsExecutable property is processed.
      *
      * @{ */
-    size_t deExecuteZeros() const /*final*/ { return settings_.loader.deExecuteZeros; }
-    virtual void deExecuteZeros(size_t n) { settings_.loader.deExecuteZeros = n; }
+    size_t deExecuteZerosThreshold() const /*final*/ { return settings_.loader.deExecuteZerosThreshold; }
+    virtual void deExecuteZerosThreshold(size_t n) { settings_.loader.deExecuteZerosThreshold = n; }
+    size_t deExecuteZerosLeaveAtFront() const /*final*/ { return settings_.loader.deExecuteZerosLeaveAtFront; }
+    virtual void deExecuteZerosLeaveAtFront(size_t n) { settings_.loader.deExecuteZerosLeaveAtFront = n; }
+    size_t deExecuteZerosLeaveAtBack() const /*final*/ { return settings_.loader.deExecuteZerosLeaveAtBack; }
+    virtual void deExecuteZerosLeaveAtBack(size_t n) { settings_.loader.deExecuteZerosLeaveAtBack = n; }
     /** @} */
 
     /** Property: Global adjustments to memory map data access bits.
@@ -1048,7 +938,7 @@ public:
      *
      * @{ */
     SemanticMemoryParadigm semanticMemoryParadigm() const /*final*/ { return settings_.partitioner.semanticMemoryParadigm; }
-    void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
+    virtual void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
     /** @} */
 
     /**  Property: Whether to follow ghost edges.
@@ -1191,6 +1081,16 @@ public:
     virtual void doingPostCallingConvention(bool b) { settings_.partitioner.doingPostCallingConvention = b; }
     /** @} */
 
+    /** Property: Whether to run no-op function analysis.
+     *
+     *  Determines whether function no-op analysis is run on each function when @ref doingPostAnalysis is true. This analysis
+     *  determines whether a function is effectively a no-op and gives it a name indicative of a no-op if it is one.
+     *
+     * @{ */
+    bool doingPostFunctionNoop() const /*final*/ { return settings_.partitioner.doingPostFunctionNoop; }
+    virtual void doingPostFunctionNoop(bool b) { settings_.partitioner.doingPostFunctionNoop = b; }
+    /** @} */
+
     /** Property: Whether to run the function may-return analysis.
      *
      *  The caller can decide whether may-return analysis runs, or if it runs whether an indeterminate result should be
@@ -1216,8 +1116,73 @@ public:
      *  This property holds a list of configuration files or directories.
      *
      * @{ */
-    const std::vector<std::string>& configurationNames() const { return settings_.engine.configurationNames; }
-    std::vector<std::string>& configurationNames() { return settings_.engine.configurationNames; }
+    const std::vector<std::string>& configurationNames() /*final*/ const { return settings_.engine.configurationNames; }
+    std::vector<std::string>& configurationNames() /*final*/ { return settings_.engine.configurationNames; }
+    /** @} */
+
+    /** Property: Give names to constants.
+     *
+     *  If this property is set, then the partitioner calls @ref Modules::nameConstants as part of its final steps.
+     *
+     * @{ */
+    bool namingConstants() const /*final*/ { return settings_.partitioner.namingConstants; }
+    virtual void namingConstants(bool b) { settings_.partitioner.namingConstants = b; }
+    /** @} */
+
+    /** Property: Give names to string literal addresses.
+     *
+     *  If this property is set, then the partitioner calls @ref Modules::nameStrings as part of its final steps.
+     *
+     * @{ */
+    bool namingStrings() const /*final*/ { return settings_.partitioner.namingStrings; }
+    virtual void namingStrings(bool b) { settings_.partitioner.namingStrings = b; }
+    /** @} */
+
+    /** Property: Whether to allow empty global block in the AST.
+     *
+     *  If partitioner has not detected any functions, then it will create an AST containing either a single global block with
+     *  no children (true) or no global block at all (false).
+     *
+     * @{ */
+    bool astAllowEmptyGlobalBlock() const /*final*/ { return settings_.astConstruction.allowEmptyGlobalBlock; }
+    virtual void astAllowEmptyGlobalBlock(bool b) { settings_.astConstruction.allowEmptyGlobalBlock = b; }
+    /** @} */
+
+    /** Property: Whether to allow empty functions in the AST.
+     *
+     *  If a function has no basic blocks then the partitioner will create an AST containing either a function node (@ref
+     *  SgAsmFunction) with no basic block children (true) or no function node at all (false).
+     *
+     * @{ */
+    bool astAllowFunctionWithNoBasicBlocks() const /*final*/ {
+        return settings_.astConstruction.allowFunctionWithNoBasicBlocks;
+    }
+    virtual void astAllowFunctionWithNoBasicBlocks(bool b) {
+        settings_.astConstruction.allowFunctionWithNoBasicBlocks = b;
+    }
+    /** @} */
+
+    /** Property: Whether to allow empty basic blocks in the AST.
+     *
+     *  If a basic block has no instructions then the partitioner will create an AST containing either a basic block node (@ref
+     *  SgAsmNode) with no instruction children (true) or no basic block node at all (false).
+     *
+     * @{ */
+    bool astAllowEmptyBasicBlock() const /*final*/ { return settings_.astConstruction.allowEmptyBasicBlocks; }
+    virtual void astAllowEmptyBasicBlock(bool b) { settings_.astConstruction.allowEmptyBasicBlocks = b; }
+    /** @} */
+
+    /** Property: Whether to copy instructions when building the AST.
+     *
+     *  Determines whether each instruction is deep-copied into the AST from the instruction provider (true) or simply
+     *  referenced (false).  Note that because the partitioner allows the same instruction to appear in more than one function,
+     *  referencing instructions directly in the AST will violate the basic property of a tree: the instruction will be
+     *  reachable in an AST depth-first traversal more than once although the instruction will have only one arbitrarily chosen
+     *  basic block as its parent. Turning off the copying makes AST construction faster.
+     *
+     * @{ */
+    bool astCopyAllInstructions() const /*final*/ { return settings_.astConstruction.copyAllInstructions; }
+    virtual void astCopyAllInstructions(bool b) { settings_.astConstruction.copyAllInstructions = b; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

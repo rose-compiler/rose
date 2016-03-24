@@ -588,7 +588,7 @@ static SgAsmBlock *
 buildAst(P2::Engine &engine, const P2::Partitioner &partitioner) {
     static SgAsmBlock *gblock = NULL;
     if (NULL==gblock)
-        gblock = P2::Modules::buildAst(partitioner, engine.interpretation());
+        gblock = P2::Modules::buildAst(partitioner, engine.interpretation(), engine.settings().astConstruction);
     return gblock;
 }
 
@@ -640,7 +640,6 @@ selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Se
     }
     ASSERT_not_implemented("function selection criteria is not implemented yet");
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -828,6 +827,24 @@ int main(int argc, char *argv[]) {
         unparser.unparse(std::cout, gblock);
     }
 
+    
+    // Test what affect shared instructions have on the AST by counting how many times each instruction appears in the AST.  If
+    // instruction copying is enabled, they should all occur once; if not, then there may be instructions that occur multiple
+    // times (but always having the same parent pointer).
+    if (0) {
+        struct InsnCounter: AstSimpleProcessing {
+            typedef Sawyer::Container::Map<SgAsmInstruction*, size_t> InsnCount;
+            InsnCount insnCount;
+            void visit(SgNode *node) {
+                if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                    ++insnCount.insertMaybe(insn, 0);
+            }
+        } insnCounter;
+        insnCounter.traverse(buildAst(engine, partitioner), preorder);
+        BOOST_FOREACH (const InsnCounter::InsnCount::Node &node, insnCounter.insnCount.nodes())
+            std::cout <<node.value() <<"\t" <<unparseInstructionWithAddress(node.key()) <<"\n";
+    }
+
 #if 0 // DEBUGGING [Robb P. Matzke 2014-08-23]
     // This should free all symbolic expressions except for perhaps a few held by something we don't know about.
     partitioner.clear();
@@ -835,6 +852,4 @@ int main(int argc, char *argv[]) {
     std::cerr <<"all done; entering busy loop\n";
     while (1);                                          // makes us easy to find in process listings
 #endif
-
-    exit(0);
 }

@@ -79,13 +79,22 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           std::vector<SgType*> dsl_type_list;
           std::vector<SgFunctionDeclaration*> dsl_function_list;
 
+       // I now think that this will simplify the handling of the generated code since we support a 
+       // dsl_member_function_names_variable to know the class associated with each member function.
        // I don't think we need this since member functions and nonmember functions can be combined in the dsl_function_list.
-       // std::vector<SgMemberFunctionDeclaration*> dsl_member_function_list;
+          std::vector<SgMemberFunctionDeclaration*> dsl_member_function_list;
 
        // I am not yet clar how to generate the initializers for this DSL variable.
           std::vector<SgConstructorInitializer*> dsl_attribute_map_list;
 
-          AttributeGeneratorTraversal();
+       // DQ (3/16/2016): Name collision testing.
+          std::map<std::string,int> dsl_attribute_name_collision_map;
+
+       // DQ (3/4/2016): Turning on internal debugging.
+          bool internal_debugging;
+
+       // AttributeGeneratorTraversal();
+          AttributeGeneratorTraversal( SgProject* project );
 
        // Functions required to overload the pure virtual functions in the abstract base class.
           AttributeGenerator_InheritedAttribute   evaluateInheritedAttribute   (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute );

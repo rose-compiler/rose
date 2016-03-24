@@ -10,7 +10,7 @@ class array
        // Copy constructor
        // array(const array & X);
 
-#if 0
+#if 1
        // Assignment operator
           array operator= (const array & X);
           array operator= (int x);

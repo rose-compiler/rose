@@ -209,7 +209,8 @@ splitThunkFunctions(Partitioner &partitioner) {
         if (entryVertex->value().type() != V_BASIC_BLOCK)
             continue;
         BasicBlock::Ptr entryBlock = entryVertex->value().bblock();
-        ASSERT_not_null(entryBlock);
+        if (entryBlock == NULL)
+            continue;                                   // can't split a block if we haven't discovered it yet
 
         // All incoming edges must be function calls, function transfers, etc. We cannot split the thunk from the beginning of
         // the entry block if the entry block is a successor of some other non-call block in the same function (e.g., the top

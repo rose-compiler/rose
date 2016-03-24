@@ -3,6 +3,23 @@
 
 begin transaction;
 
+--
+-- The folowing tables are created automatically by the web application
+--
+--  auth_users		-- application-level user information
+--  auth_info		-- Wt::Auth information about each user
+--  auth_identities	-- login name(s) for each user
+--  auth_tokens		-- web browser tokens to maintain logins between sessions
+
+--
+-- Persistent interface settings
+--
+create table interface_settings (
+    rose_public_version text default '',		-- version number to show by default on the public parts of the site
+    pass_criteria text default 'end' 			-- what test needs to be reached for ROSE to be considered useful
+);
+
+insert into interface_settings (rose_public_version) values ('');
 
 --
 -- List of software dependency packages.  There are a number of different kinds of dependencies:
@@ -36,15 +53,25 @@ insert into dependencies values ('build',        'autoconf',         1);
 insert into dependencies values ('build',        'cmake',            0);
 
 -- Compiler is $VENDOR-$VERSION-$LANGUAGE or just $VENDOR-$VERSION or just $VENDOR.
-insert into dependencies values ('compiler',     'gcc-4.2-default',  0);
-insert into dependencies values ('compiler',     'gcc-4.3-default',  0);
-insert into dependencies values ('compiler',     'gcc-4.4-default',  0);
-insert into dependencies values ('compiler',     'gcc-4.4-c++11',    0);
+-- A vendor is not the same thing as a compiler name (gcc vs. g++, llvm vs. clang++, intel vs. icc, etc)
+insert into dependencies values ('compiler',     'gcc-4.0-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.1-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.2-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.3-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.4-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.5-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.6-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.7-default',  1);
 insert into dependencies values ('compiler',     'gcc-4.8-default',  1);
 insert into dependencies values ('compiler',     'gcc-4.8-c++11',    1);
 insert into dependencies values ('compiler',     'gcc-4.9-default',  1);
 insert into dependencies values ('compiler',     'gcc-4.9-c++11',    1);
+insert into dependencies values ('compiler',     'gcc-5.1-default',  1);
+insert into dependencies values ('compiler',     'gcc-5.1-c++11',    1);
 insert into dependencies values ('compiler',     'llvm-3.5-default', 1);
+insert into dependencies values ('compiler',     'llvm-3.5-c++11',   1);
+insert into dependencies values ('compiler',     'llvm-3.7-default', 1);
+insert into dependencies values ('compiler',     'llvm-3.7-c++11',   1);
 
 -- Whether to compile ROSE with debugging support. Value is 'yes' or 'no'.
 -- NOTE: cmake is not set up for all combinations of debug and optimize.
@@ -182,7 +209,7 @@ create table test_results (
     id serial primary key,
 
     -- who did the testing and reporting
-    reporting_user integer references auth_identities(id), -- user making this report
+    reporting_user integer references auth_users(id),   -- user making this report
     reporting_time integer,                             -- when report was made (unix time)
     tester varchar(256),                                -- who did the testing (e.g., a Jenkins slave name)
     os varchar(64),                                     -- operating system information
@@ -203,6 +230,7 @@ create table test_results (
     rmc_dlib            varchar(64) default 'unknown',
     rmc_doxygen         varchar(64) default 'unknown',
     rmc_edg             varchar(64) default 'unknown',
+    rmc_java		varchar(64) default 'unknown',
     rmc_languages       varchar(64) default 'unknown',
     rmc_magic           varchar(64) default 'unknown',
     rmc_optimize        varchar(64) default 'unknown',

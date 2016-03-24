@@ -47,9 +47,12 @@ void SpotConnection::resetLtlResults(int property) {
   ltlResults->setCounterexample(property, "");
 }
 
+void SpotConnection::setModeLTLDriven(bool ltlDriven) {
+  modeLTLDriven=ltlDriven;
+}
 void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 
 						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
-  if (stg.size() == 0) {
+  if (stg.size() == 0 && !modeLTLDriven) {
     cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
     return;
   }
@@ -114,7 +117,7 @@ void SpotConnection::checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tg
 
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
 						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
-  if (stg.size() == 0) {
+  if (stg.size() == 0 && !modeLTLDriven) {
     cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
     return;
   }
@@ -259,7 +262,6 @@ bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, s
 
   //cout<<"STATUS: computing product automaton."<<endl;
   spot::tgba_product product(formula_tgba,ct_tgba);
-
   //cout<<"STATUS: emptiness check."<<endl;
   spot::emptiness_check *ec= new spot::couvreur99_check(&product);
   spot::emptiness_check_result* ce = ec->check();

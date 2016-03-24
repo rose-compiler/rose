@@ -79,6 +79,9 @@ testArrayDSLCompiler: arrayDSLcompiler generated_dsl_attributes_wrapper.o
 
 testDSLCompiler: dsl_attributes.C
 
+testAMRShift: attributeGenerator
+	./attributeGenerator -std=c++11 -DSKIP_ROSE_HEADERS -I$(srcdir)/AMRShift/Multigrid -I$(srcdir)/AMRShift/StencilTools -I$(srcdir)/AMRShift/timer -I$(srcdir)/AMRShift/VisitWriter $(srcdir)/AMRShiftAbstractions.C
+
 
 check-local:
 	@echo "Tests for DSL Infrastructure examples."
