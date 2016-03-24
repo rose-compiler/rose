@@ -48,7 +48,8 @@ namespace rose {
  *  ROSE is slightly different and is described in a later section.
  *
  *  As an example, let's say that a programmer wants to convert the BinaryLoader class to use its own logging facilities.  The
- *  first step is to declare a class (static) data member for the facility.
+ *  first step is to declare a static data member for the facility. Adding a logging facility to a namespace or file is similar
+ *  except the @c mlog would be declared in the namespace or as a file-scope (static or anonymous namespace) variable.
  *
  * @code
  *  // in BinaryLoader.h
@@ -67,11 +68,11 @@ namespace rose {
  *  start using it (you probably also need to search for places where @c mlog usage was qualified). Specifically, we avoid
  *  using "log" as the name of any logging facility because it can conflict on some systems with the logorithm function @c log.
  *
- *  The second step is to define the @c mlog static variable. Sinc the variable is static, it must be constructed only with the
- *  default constructor. Sawyer also has other Facility constructors, but these generally can't be used for static variables
- *  because there is no portable way to ensure that the C++ runtime is initialized before the Facility initialization happens.
- *  If the initializations occur in the wrong order then bizarre behavior may result, including segmentation faults in STL
- *  container classes.
+ *  The second step is to define the @c mlog static variable. Since the variable is statically allocated, it must be
+ *  constructed only with the default constructor. Sawyer also has other Facility constructors, but these generally can't be
+ *  used for static variables because there is no portable way to ensure that the C++ runtime is initialized before the
+ *  Facility initialization happens.  If the initializations occur in the wrong order then bizarre behavior may result,
+ *  including segmentation faults in STL container classes.
  *
  * @code
  *  // in BinaryLoader.C
@@ -92,7 +93,7 @@ namespace rose {
  *  controlled by the user in the typical way.
  *
  * @code
- *  // class method in BinaryLoader.C
+ *  // class method (static member function) in BinaryLoader.C
  *  void BinaryLoader::initDiagnostics() {
  *      static bool initialized = false;
  *      if (!initialized) {
@@ -103,7 +104,13 @@ namespace rose {
  *  }
  * @endcode
  *
- * The fourth and final step is to add a call to BinaryLoader::initDiagnostics() from Diagnostics::initialize().
+ *  If the class, namespace, or file containing you @c initDiagnostics function is conditionally compiled (e.g., binary
+ *  analysis is not always enabled in ROSE), you'll want to add a dummy version of @c initDiagnostics that does nothing
+ *  (preferrable to using conditional compilation in the next step).
+ *
+ *  The fourth and final step is to add a call to BinaryLoader::initDiagnostics() from Diagnostics::initialize(). This function
+ *  is defined in "src/roseSupport/Diagnostics.C". You probably don't need to include your entire header file in Diagnostics.C;
+ *  a declarations should be sufficient and faster to compile.
  *
  * @section usage Using a facility in the ROSE library or tools
  *
