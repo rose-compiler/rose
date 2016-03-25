@@ -9,6 +9,7 @@ software and some Unix-based text editors which developers then have to work
 around and/or correct.  To convert a file from any mixture of CR+LF or
 LF-only line endings to LF-only line endings, use:
   * the unix command "dos2unix"
+  * sed -i 's/\r$//' <filename>
   * vim 7.0 and later commands ':update', ':setlocal ff=unix'.
   * in XEmacs use the "M-x set-buffer-file-coding-system RET" and
     enter "undecided-unix".
