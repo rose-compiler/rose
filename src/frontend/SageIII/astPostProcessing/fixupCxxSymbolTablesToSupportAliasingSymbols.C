@@ -1,8 +1,19 @@
 #include "sage3basic.h"
+
+#include "Diagnostics.h"
+
 #include "fixupCxxSymbolTablesToSupportAliasingSymbols.h"
+
 #include <string>
 
 #define ALIAS_SYMBOL_DEBUGGING 0
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/24/2016): Adding Message logging mechanism.
+Sawyer::Message::Facility FixupAstSymbolTablesToSupportAliasedSymbols::mlog;
+
 
 void
 fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
@@ -32,6 +43,19 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
      printf ("ERROR: COMMENTED OUT CALL TO FixupAstSymbolTablesToSupportAliasedSymbols traversal \n");
 #endif
    }
+
+
+void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("FixupAstSymbolTablesToSupportAliasedSymbols", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
+
 
 
 // DQ (8/23/2011): Made this a static function so that I could call it from the Java support.
@@ -138,7 +162,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                   }
                  else
                   {
-                    printf ("WARNING: In injectSymbolsFromReferencedScopeIntoCurrentScope(): initializedNameFromSymbol->get_declptr() == NULL: initializedNameFromSymbol->get_name() = %s \n",initializedNameFromSymbol->get_name().str());
+                    mprintf ("WARNING: In injectSymbolsFromReferencedScopeIntoCurrentScope(): initializedNameFromSymbol->get_declptr() == NULL: initializedNameFromSymbol->get_name() = %s \n",initializedNameFromSymbol->get_name().str());
                   }
              }
 
