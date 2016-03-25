@@ -11,9 +11,15 @@
 // DQ (11/30/2013): Added more support for token handling.
 #include "previousAndNextNode.h"
 
-
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/24/2016): Adding Message logging mechanism.
+Sawyer::Message::Facility UnparseLanguageIndependentConstructs::mlog;
+
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_HIDDEN_LIST_DATA 0
@@ -26,6 +32,19 @@ using namespace std;
 SgStatement* global_lastStatementUnparsed = NULL;
 
 UnparseLanguageIndependentConstructs::unparsed_as_enum_type global_unparsed_as = UnparseLanguageIndependentConstructs::e_unparsed_as_error;
+
+void 
+UnparseLanguageIndependentConstructs::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("UnparseLanguageIndependentConstructs", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
+
 
 std::string
 UnparseLanguageIndependentConstructs::unparsed_as_kind(unparsed_as_enum_type x)
@@ -7146,7 +7165,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                       // If this is compiler generated then we have to look at the precedence of the unary operator's operand.
                       // printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 1) \n");
                       // return 1;
-                         printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 16) \n");
+                         mprintf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 16) \n");
                       // return 16;
                          precedence_value = 16; 
                        }
