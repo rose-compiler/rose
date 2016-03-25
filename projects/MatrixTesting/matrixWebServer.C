@@ -2376,7 +2376,10 @@ public:
             Characteristics characteristics;
             args.clear();
             sql = "select " + boost::join(gstate.dependencyNames.values(), ", ") + ", count(*)" +
-                  sqlFromClause() + sqlWhereClause(deps, args) + " and coalesce(test.first_error,'') = ?"
+                  sqlFromClause() +
+                  sqlWhereClause(deps, args) +
+                  " and coalesce(test.first_error,'') = ?"
+                  " and " + passFailExpr + " = 'fail'"
                   " group by " + boost::join(gstate.dependencyNames.values(), ", ");
             args.push_back(message);
             SqlDatabase::StatementPtr q2 = gstate.tx->statement(sql);
