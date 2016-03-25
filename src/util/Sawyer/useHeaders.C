@@ -3,6 +3,7 @@
 // anywhere else. [Robb P. Matzke 2014-06-11]
 
 #include <Sawyer/BitVector.h>
+#include <Sawyer/DenseIntegerSet.h>
 #include <Sawyer/GraphBoost.h>
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/PoolAllocator.h>
