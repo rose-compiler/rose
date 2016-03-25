@@ -940,7 +940,7 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type)
           string s = "\n \
      public: \n \
        // Depending on the compile time semantics we want to leverage we may not need an object here. \n \
-          $DSL_NAME value; \n \
+       // $DSL_NAME value; \n \
 \n \
        // I think we can comment out the constructor and destructor. \n \
        // $DSL_NAME_dsl_attribute(); \n \

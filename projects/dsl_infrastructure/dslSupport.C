@@ -1,29 +1,12 @@
 // DQ (3/22/2016): This must preceed the inclusion of generated files since generated 
 // attribute classes may contain variables of abstracition types.
-#include "array.h"
+// #include "array.h"
 
 // Example ROSE Translator reads input program and implements a DSL embedded within C++
 // to support the stencil computations, and required runtime support is developed seperately.
 #include "rose.h"
 
 #include "dsl.h"
-
-#if 0
-#include "dsl_attribute_support.h"
-
-// DQ (3/22/2016): This must preceed the inclusion of generated files since generated 
-// attribute classes may contain variables of abstracition types.
-#include "array.h"
-
-// General DSL support (including the dsl_attribute type declaration used in the generated 
-// attribute classes for the DSL abstractions).
-#include "dslSupport.h"
-
-#include "generated_dsl_attributes_header.C"
-#endif
-
-// This must be included only once in a translation unit.
-// #include "generated_dsl_attributes.C"
 
 using namespace std;
 
