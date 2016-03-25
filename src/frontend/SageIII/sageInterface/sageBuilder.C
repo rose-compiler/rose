@@ -47,8 +47,25 @@
 using namespace std;
 using namespace SageInterface;
 
+
 // MS 2015: utility functions used in the implementation of SageBuilder functions, but are not exposed in the SageBuilder-Interface.
 namespace SageBuilder {
+
+// DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+Sawyer::Message::Facility mlog;
+void 
+initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("SageBuilder", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
+
+
 
 template <class actualFunction>
 actualFunction*
@@ -2756,7 +2773,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
      if (XXX_name.is_null() == true)
         {
        // DQ (4/2/2013): This case is generated for test2013_86.C.
-          printf ("NOTE: In buildNondefiningFunctionDeclaration_T(): XXX_name.is_null() == true: This is a function with an empty name (allowed as compiler generated initializing constructors to un-named classes, structs, and unions in C++ \n");
+          mprintf ("NOTE: In buildNondefiningFunctionDeclaration_T(): XXX_name.is_null() == true: This is a function with an empty name (allowed as compiler generated initializing constructors to un-named classes, structs, and unions in C++ \n");
         }
 
      SgName nameWithoutTemplateArguments = XXX_name;
