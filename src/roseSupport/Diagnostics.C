@@ -111,6 +111,7 @@ void initialize() {
         EDG_ROSE_Translation::initDiagnostics();
         TestChildPointersInMemoryPool::initDiagnostics();
         FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics();
+        FixupAstDeclarationScope::initDiagnostics();
         NameQualificationTraversal::initDiagnostics();
         UnparseLanguageIndependentConstructs::initDiagnostics();
         SageBuilder::initDiagnostics();

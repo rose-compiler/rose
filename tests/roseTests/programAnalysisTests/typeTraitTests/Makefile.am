@@ -23,8 +23,18 @@ SWITCHES = \
 $(TEST_TARGETS): nt_%.passed: $(TESTDIR)/% typeTraitExerciseWithRetCode $(TEST_EXIT_STATUS)
 	@$(RTH_RUN) CMD="./typeTraitExerciseWithRetCode $(SWITCHES) -c $<" $(TEST_EXIT_STATUS)  $@
 
+# DQ (3/26/2016): WARNING: This typeTrait testing represents a quadratic test on the size of the AST
+# and as such is inapropriate for testing using large files.  This test takes 90 minutes on our fastest
+# desktop machines and thus contributes an unacceptabily large burden to our ROSE testing infrastructure.
+# As a result it is being disabled as a test.  All other tests are run as usual.
+# A solution to improve the performance would be to have the GetAllMemberFunctionsInClassHierarchy() 
+# function save computed results, since it appears to be an expensive operation that is repreated many 
+# times for the same classes.
+# Note that if we wanted to we could still make this a release level test, but it should not be a 
+# development level test.
 ROSE_HRD_TEST: typeTraitExerciseWithoutRetCode $(srcdir)/tests/roseHeader.C
-	./typeTraitExerciseWithoutRetCode -c $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/tests/roseHeader.C
+	@echo "Skipping large file quadratic test of type traits on ROSE headers (too expensive for testing)."
+#	./typeTraitExerciseWithoutRetCode $(SWITCHES) -c $(ROSE_FLAGS) -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/tests/roseHeader.C
 
 check-local:
 # type traits is a not fully supported in older gcc versions. We enable tests only when rose is compiled with gcc 4.2 or higher and the backend compiler used is also gcc 4.2 or higher.
