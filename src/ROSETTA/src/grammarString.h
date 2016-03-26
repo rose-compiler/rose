@@ -7,26 +7,8 @@
 #include "grammar.h"
 #include "string_functions.h"
 
-// BP : 11/30/01
-// #ifndef STL_LIST_IS_BROKEN
-// #include STL_LIST_HEADER_FILE
-// #endif
-
-// BP : 11/30/01
-// #ifndef NAMESPACE_IS_BROKEN
-// using namespace std;
-// #endif
-
-// BP : 11/30/01
-// #ifndef IOSTREAM_IS_BROKEN
-// #include IOSTREAM_HEADER_FILE
-// #endif
-
 #include <iostream>
 
-// using namespace std;
-
-// class GrammarTreeNode;   // forward declaration
 class AstNodeClass;
 
 class GrammarString
@@ -113,9 +95,9 @@ class GrammarString
   // MS 2014: 
   std::string infoFieldsToString() const;
 
-// DQ (10/8/2014): This returns the name of the type where this data member is a container.
-// The container type is required as part of ATerm support in reading the ATerms and generating
-// the ROSE IR.
+  // DQ (10/8/2014): This returns the name of the type where this data member is a container.
+  // The container type is required as part of ATerm support in reading the ATerms and generating
+  // the ROSE IR.
   std::string containerElementTypeString(AstNodeClass & node) const;
   std::string containerAppendFunctionNameString(AstNodeClass & node) const;
 
