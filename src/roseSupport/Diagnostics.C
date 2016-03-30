@@ -18,6 +18,21 @@
 #include <Partitioner2/Utility.h>                       // rose::BinaryAnalysis::Partitioner2
 #include <EditDistance/EditDistance.h>                  // rose::EditDistance
 
+// DQ (3/24/2016): Adding support for EDG/ROSE frontend message logging.
+namespace EDG_ROSE_Translation
+   {
+     void initDiagnostics();
+   }
+
+// DQ (3/24/2016): Adding support for AstDiagnostics / AstConsistancy tests message logging.
+#include "AstDiagnostics.h"
+// #include "fixupCxxSymbolTablesToSupportAliasingSymbols.h"
+#include "astPostProcessing.h"
+#include "nameQualificationSupport.h"
+// #include "unparseLanguageIndependentConstructs.h"
+#include "unparser.h"
+#include "sageBuilder.h"
+
 #include <cstdarg>
 
 namespace rose {
@@ -91,6 +106,15 @@ void initialize() {
         BinaryAnalysis::CallingConvention::initDiagnostics();
         EditDistance::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
+
+     // DQ (3/24/2016): Added use of message logging mechanism to more locations in ROSE (to control output spew).
+        EDG_ROSE_Translation::initDiagnostics();
+        TestChildPointersInMemoryPool::initDiagnostics();
+        FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics();
+        FixupAstDeclarationScope::initDiagnostics();
+        NameQualificationTraversal::initDiagnostics();
+        UnparseLanguageIndependentConstructs::initDiagnostics();
+        SageBuilder::initDiagnostics();
     }
 }
 

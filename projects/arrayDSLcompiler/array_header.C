@@ -10,7 +10,7 @@
 #include "array.h"
 
 // Use the examples in the nongenerated_dsl_attributes.h to simplify the ASC construction for the generated code.
-#include "nongenerated_dsl_attributes.h"
+// #include "nongenerated_dsl_attributes.h"
 
 // DQ (2/24/2016): Now I think I want it after!
 // DQ (2/24/2016): We want to move this to before the inclusion of the target abstraction.

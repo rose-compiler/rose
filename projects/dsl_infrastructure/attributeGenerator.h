@@ -111,6 +111,10 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           void processvariable(SgInitializedName* initializedName);
 
           void modify_dsl_variable_initializers();
+
+       // Generate unique name for use as a class name for the generated attribute classes.
+       // std::string generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration );
+          std::string generateUniqueName ( SgDeclarationStatement* declaration );
    };
 
 

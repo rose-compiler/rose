@@ -712,8 +712,6 @@ AstNodeClass::setSubTreeFunctionSource ( const string& markerString, const strin
 void
 AstNodeClass::setPredeclarationString  ( const string& markerString, const string& filename )
    {
-  // DQ (3/19/2016): Klocworks reports this variable is used uninitialized.
-  // bool pureVirtual;
      bool pureVirtual = false;
      SETUP_MARKER_STRINGS_MACRO
        
@@ -723,8 +721,6 @@ AstNodeClass::setPredeclarationString  ( const string& markerString, const strin
 void
 AstNodeClass::setPostdeclarationString  ( const string& markerString, const string& filename )
    {
-  // DQ (3/19/2016): Klocworks reports this variable is used uninitialized.
-  // bool pureVirtual;
      bool pureVirtual = false;
      SETUP_MARKER_STRINGS_MACRO
      setPostdeclarationString(functionString);

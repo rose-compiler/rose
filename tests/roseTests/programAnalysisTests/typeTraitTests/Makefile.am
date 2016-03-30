@@ -63,16 +63,23 @@ $(TEST_TARGETS): nt_%.passed: $(TESTDIR)/% typeTraitExerciseWithRetCode $(TEST_E
 		DISABLED="$(type_traits_test_disabled)" \
 		$(TEST_EXIT_STATUS)  $@
 
-# Run one test conditionally
-.PHONY: ROSE_HRD_TEST
+# DQ (3/26/2016): WARNING: This typeTrait testing represents a quadratic test on the size of the AST
+# and as such is inapropriate for testing using large files.  This test takes 90 minutes on our fastest
+# desktop machines and thus contributes an unacceptabily large burden to our ROSE testing infrastructure.
+# As a result it is being disabled as a test.  All other tests are run as usual.
+# A solution to improve the performance would be to have the GetAllMemberFunctionsInClassHierarchy() 
+# function save computed results, since it appears to be an expensive operation that is repreated many 
+# times for the same classes.
+# Note that if we wanted to we could still make this a release level test, but it should not be a 
+# development level test.
 ROSE_HRD_TEST: typeTraitExerciseWithoutRetCode $(srcdir)/tests/roseHeader.C
 	@if [ "$(type_traits_test_disabled)" = "" ]; then					\
-		echo "  TEST   hard test [$@]";							\
-		(set -x;									\
-			./typeTraitExerciseWithoutRetCode					\
-				-c $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir)		\
-				$(ROSE_INCLUDES) -c $(srcdir)/tests/roseHeader.C		\
-		);										\
+		echo "  TEST   hard test [$@] (disabled: quadratic algorithm is too expensive)";\
+		#(set -x;									\
+		#       ./typeTraitExerciseWithoutRetCode					\
+		#		-c $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir)		\
+		#		$(ROSE_INCLUDES) -c $(srcdir)/tests/roseHeader.C		\
+		#);										\
 	else											\
 		echo "  TEST   hard test [$@] (disabled: $(type_traits_test_disabled))";	\
 	fi
