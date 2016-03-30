@@ -216,9 +216,7 @@ Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, AstNodeClass* gr
 Grammar::GrammarSynthesizedAttribute 
 Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
                                          vector<GrammarSynthesizedAttribute> v) {
-  //cout << "Creating grammar latex string:" << endl;
-  GrammarSynthesizedAttribute saLatex;
-  string s;
+  GrammarSynthesizedAttribute synAttr;
 
   // EBNF generated Grammar symbols (this can be parameterized in future)
   // tree grammar
@@ -232,9 +230,9 @@ Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
   string grammarSymListOpPostfix="*";
   
   // c++11: set<string> filteredMemberVariablesSet={...};
-  string nonAtermMemberVariables[]={"parent","freepointer","isModified","containsTransformation","startOfConstruct","endOfConstruct","attachedPreprocessingInfoPtr"
-                                    ,"containsTransformationToSurroundingWhitespace","attributeMechanism","source_sequence_value","need_paren","lvalue","operatorPosition","originalExpressionTree"};
-  // create set of filtered member variables from above array
+  string nonAtermMemberVariables[]={"parent","freepointer","isModified","containsTransformation","startOfConstruct","endOfConstruct",
+                                    "attachedPreprocessingInfoPtr","containsTransformationToSurroundingWhitespace","attributeMechanism",
+                                    "source_sequence_value","need_paren","lvalue","operatorPosition","originalExpressionTree"};
   set<string> filteredMemberVariablesSet(nonAtermMemberVariables, nonAtermMemberVariables + sizeof(nonAtermMemberVariables)/sizeof(nonAtermMemberVariables[0]) );
 
   string rhsTerminalSuccessors;
@@ -271,27 +269,27 @@ Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
       rhsTerminalSuccessors+=" [["+dataMembers+"]]";
     }
   }
-  saLatex.nodetext=string(grammarnode->getName())+" "+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
-  saLatex.terminalname=string(grammarnode->getName());
-  saLatex.isTerminal=true;
+  synAttr.nodetext=string(grammarnode->getName())+" "+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
+  synAttr.terminalname=string(grammarnode->getName());
+  synAttr.isTerminal=true;
   
   // create grammar rule for current grammar node and its successors
   string grammarRule;
+  grammarRule=grammarnode->getName()+" -> "+grammarnode->getName()+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
+  if(!grammarnode->getCanHaveInstances()) {
+    // add info, but do not change grammar
+    grammarRule+=" /* ABSTRACT CLASS */";
+  }
+  grammarRule+="\n";
+
   bool first=true;
   for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
     if((*viter).nodetext!="" /*&& isAbstractTreeGrammarSymbol(string(grammarnode->getName()))*/ ) {
       if(generateSDFTreeGrammar) {
-        if((*viter).isTerminal) {
-          // SDF: generate two rules for terminals: A->B; B->B(...);
-          grammarRule+=string(grammarnode->getName()) + " -> " + (*viter).terminalname+"\n";
-          if(!isAbstractTreeGrammarSymbol(grammarnode)) {
-            grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"\n";
-          }
+        if(false && (*viter).isTerminal) {
+          // nothing to do
         } else {
-          grammarRule+=string(grammarnode->getName()) + " -> " + (*viter).nodetext+"\n";
-          if(!isAbstractTreeGrammarSymbol(grammarnode)) {
-            grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"// non-AstNodeClass rule 2\n";
-          }
+          grammarRule+=string(grammarnode->getName()) + " -> " + (*viter).terminalname+"\n";
         }
       } else {
         if(first) {
@@ -310,16 +308,16 @@ Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
   }
   
   // union data of subtree nodes
-  saLatex.grammarnode=grammarnode;
-  saLatex.text=grammarRule;
+  synAttr.grammarnode=grammarnode;
+  synAttr.text=grammarRule;
   for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-    saLatex.text+=(*viter).text;
+    synAttr.text+=(*viter).text;
   }
   
   // create problematic node info
   GrammarNodeInfo gInfo=getGrammarNodeInfo(grammarnode); // MS: should be a member function of GrammarNode
   if(gInfo.numSingleDataMembers>0 && gInfo.numContainerMembers>0) 
-    saLatex.problematicnodes+=string(grammarnode->getName())+"\n";
+    synAttr.problematicnodes+=string(grammarnode->getName())+"\n";
   
   // ------------------------------------------------------------
   // create AstNodeClass and nonterminal (and problematic node) lists 
@@ -327,18 +325,18 @@ Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
 
   // create AstNodeClass or non-AstNodeClass entry
   if(grammarnode->isLeafNode()) {
-    saLatex.terminalsbunch+=string(grammarnode->getName())+"\n";
+    synAttr.terminalsbunch+=string(grammarnode->getName())+"\n";
   } else {
-    saLatex.nonterminalsbunch+=string(grammarnode->getName())+"\n";
+    synAttr.nonterminalsbunch+=string(grammarnode->getName())+"\n";
   }
   // union non-AstNodeClass, AstNodeClass, and problematic nodes data of subtree nodes
   for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
     // union subtrees
-    saLatex.nonterminalsbunch+=(*viter).nonterminalsbunch;
-    saLatex.terminalsbunch+=(*viter).terminalsbunch;
-    saLatex.problematicnodes+=(*viter).problematicnodes;
+    synAttr.nonterminalsbunch+=(*viter).nonterminalsbunch;
+    synAttr.terminalsbunch+=(*viter).terminalsbunch;
+    synAttr.problematicnodes+=(*viter).problematicnodes;
   }
-  return saLatex;
+  return synAttr;
 }
 
 void Grammar::buildGrammarDotFile(AstNodeClass* rootNode, ostream& GrammarDotFile) {
