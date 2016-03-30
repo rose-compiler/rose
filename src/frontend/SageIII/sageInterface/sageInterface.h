@@ -333,6 +333,31 @@ struct hash_nodeptr
     */
      std::string get_name ( const SgToken* token );
 
+  // DQ (3/20/2016): Added to refactor some of the DSL infrastructure support.
+   /*! \brief Generate a useful name to support construction of identifiers from declarations.
+
+       This function permits names to be generated that will be unique across translation units
+       (a specific requirement different from the context of the get_name() functions above).
+
+       \internal This supports only a restricted set of declarations presently.
+    */
+     std::string generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration );
+     std::string generateUniqueNameForUseAsIdentifier_support ( SgDeclarationStatement* declaration );
+
+   /*! \brief Global map of name collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     extern std::map<std::string,int>     local_name_collision_map;
+     extern std::map<std::string,SgNode*> local_name_to_node_map;
+     extern std::map<SgNode*,std::string> local_node_to_name_map;
+
+   /*! \brief Traversal to set the global map of names to node and node to names.collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void computeUniqueNameForUseAsIdentifier( SgNode* astNode );
+
+   /*! \brief Reset map variables used to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void reset_name_collision_map();
+
  //@}
 
  //------------------------------------------------------------------------
@@ -1085,6 +1110,12 @@ ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i-=s is normalized to i+= -s
 ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop, bool foldConstant = true);
 
+//! Normalize a for loop's test expression 
+//!           i<x is normalized to i<= (x-1) and
+//!           i>x is normalized to i>= (x+1)
+ROSE_DLL_API bool normalizeForLoopTest(SgForStatement* loop);
+ROSE_DLL_API bool normalizeForLoopIncrement(SgForStatement* loop);
+
 //!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
 ROSE_DLL_API bool doLoopNormalization(SgFortranDo* loop);
 
@@ -1204,6 +1235,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 
 //! Collect all variable references in a subtree
   void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
+
   //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
@@ -1718,7 +1750,7 @@ ROSE_DLL_API void appendExpressionList(SgExprListExp *, const std::vector<SgExpr
 
 //! Set parameter list for a function declaration, considering existing parameter list etc.
 template <class actualFunction> 
-ROSE_DLL_API void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
+void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
 
   // TODO consider the difference between C++ and Fortran
   // fixup the scope of arguments,no symbols for nondefining function declaration's arguments

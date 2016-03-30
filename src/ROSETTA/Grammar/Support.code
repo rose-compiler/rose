@@ -1367,14 +1367,14 @@ HEADER_TYPE_MODIFIER_START
             // e_volatile       = xx,/*!< volatile attribute specifier (for Fortran 2003) */
 
             // DQ (12/4/2007): Added support for GNU specific attributes
-               e_gnu_attribute__unused__            = 18,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__packed__            = 19,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__deprecated__        = 20,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__transparent_union__ = 21,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__noreturn__          = 22,/*!< GNU specific attribute for function type (GNU extension) */
-               e_gnu_attribute__const__             = 23,/*!< GNU specific attribute for function type (GNU extension) */
-               e_gnu_attribute__cdecl__             = 24,/*!< GNU specific attribute for function type (GNU extension) */
-               e_gnu_attribute__stdcall__           = 25,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__unused__             = 18,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__packed__             = 19,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__deprecated__         = 20,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__transparent_union__  = 21,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__noreturn__           = 22,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__const__              = 23,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__cdecl__              = 24,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__stdcall__            = 25,/*!< GNU specific attribute for function type (GNU extension) */
 
             // DQ (1/3/2009): New GNU attributes not previously supported in ROSE
                e_gnu_attribute__warn_unused_result__ = 26,/*!< GNU specific attribute for function type (GNU extension) */
@@ -1391,6 +1391,12 @@ HEADER_TYPE_MODIFIER_START
 
             // TV (03/03/2012): Address space modifer
                e_vector_type__                       = 33,/*!< GCC vector type attribute and other vector extentions */
+
+            // DQ (1/24/2016): New GNU attributes not previously supported in ROSE (added to support custom device specification on types).
+            // This is part of an experiment to support a new feature in CUDA that would allow device specification in the function parameter type.
+            // I am not certain that it should not already exist, but we don't have it implemented in ROSE.  EDG appears to drop the "__device__"
+            // keyword, so I am trying to capture it as an attribute.
+               e_gnu_attribute__device__             = 34,/*!< Using GNU support for general attributes in the contect of parameter type (ROSE extension using GNU attribute extension) */
 
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
@@ -1634,6 +1640,10 @@ HEADER_TYPE_MODIFIER_START
           bool isVectorType() const;
           void setVectorType();
           void unsetVectorType();
+
+          bool isGnuAttributeDevice() const;
+          void setGnuAttributeDevice();
+          void unsetGnuAttributeDevice();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -3507,6 +3517,11 @@ void SgTypeModifier::unsetOpenclConstant()    { unsetBit(e_ocl_constant__,p_modi
 bool SgTypeModifier::isVectorType() const { return checkBit(e_vector_type__,p_modifierVector); }
 void SgTypeModifier::setVectorType()      { setBit(e_vector_type__,p_modifierVector); }
 void SgTypeModifier::unsetVectorType()    { unsetBit(e_vector_type__,p_modifierVector); }
+
+// DQ (1/24/2016): Added GNU specific attributes for custom specification of CUDA device in function parameter types.
+bool SgTypeModifier::isGnuAttributeDevice() const  { return checkBit(e_gnu_attribute__device__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeDevice()       { setBit(e_gnu_attribute__device__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeDevice()     { unsetBit(e_gnu_attribute__device__,p_modifierVector); }
 
 
 string
@@ -6009,6 +6024,7 @@ HEADER_APPLICATION_PROJECT_START
           bool get_F90_only     (void) const;
           bool get_F95_only     (void) const;
           bool get_F2003_only   (void) const;
+          bool get_F2008_only   (void) const;
           bool get_CoArrayFortran_only (void) const;
 
           void set_C_only       (bool value);
@@ -6308,6 +6324,9 @@ HEADER_UNPARSE_INFO_START
 
             // DQ (11/15/2015): Token-based unparsing support for partial token sequence unparsing of lists of statements (controls fromatting).
                b_parentStatementListBeingUnparsedUsingPartialTokenSequence = 50, /*!< Controls output formatting (CR's) in mixing unparsing from token stream with unparsing from the AST. */
+
+            // DQ (2/8/2016): Adding support for C++11 specific initialization lists.
+               b_cxx11_initialization_list = 51, /*!< Indicate when we are in a C++11 specific initialization list. */
 
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
@@ -6615,6 +6634,11 @@ HEADER_UNPARSE_INFO_START
           bool parentStatementListBeingUnparsedUsingPartialTokenSequence() const;
           void set_parentStatementListBeingUnparsedUsingPartialTokenSequence();
           void unset_parentStatementListBeingUnparsedUsingPartialTokenSequence();
+
+       // DQ (2/8/2016): Adding support for C++11 specific initialization lists.
+          bool get_cxx11_initialization_list() const;
+          void set_cxx11_initialization_list();
+          void unset_cxx11_initialization_list();
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -7216,6 +7240,12 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgFunctionType:
              {
                const SgFunctionType* functionType = isSgFunctionType(node);
+
+            // DQ (3/19/2016): Klocworks reports this as an issue, since functionType could be NULL.
+            // So I am adding an assertion to see if this is a reasonalbe solution.  I am not clear 
+            // why all of the other cases in this function are not flagged as issues by Klocworks.
+               ROSE_ASSERT(functionType != NULL);
+
                name = functionType->get_mangled();
                break;
              }
@@ -7679,7 +7709,11 @@ SgSymbolTable::find( const SgFunctionType* functionType)
   // while (p_iterator != p_table->end() && (*p_iterator).first == name)
      while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
-          if (isSgSymbol((*p_iterator).second)->variantT() == functionType->variantT())
+       // DQ (3/19/2016): This is an issue for Klocworks.
+       // if (isSgSymbol((*p_iterator).second)->variantT() == functionType->variantT())
+          SgSymbol* symbol = isSgSymbol((*p_iterator).second);
+          ROSE_ASSERT(symbol != NULL);
+          if (symbol->variantT() == functionType->variantT())
              {
                returnSymbol = p_iterator->second;
                if (returnSymbol->get_symbol_basis() == functionType)
@@ -11512,6 +11546,9 @@ SgInitializedName::post_construction_initialization()
   // DQ (8/2/2014): Adding support for C++11 auto keyword.
      p_using_auto_keyword = false;
 
+  // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
+     p_using_device_keyword = false;
+
   // DQ (6/10/2012): Testing for test2012_102.C.
   // printf ("In SgInitializedName::post_construction_initialization(): this = %p \n",this);
    }
@@ -11670,6 +11707,8 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
   // DQ (8/2/2014): Adding support for C++11 auto keyword.
      p_using_auto_keyword                     = ptr.p_using_auto_keyword;
 
+  // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
+     p_using_device_keyword                   = ptr.p_using_device_keyword;
    }
 
 SgInitializedName&
@@ -11770,6 +11809,9 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
 
        // DQ (8/2/2014): Adding support for C++11 auto keyword.
           p_using_auto_keyword                     = ptr.p_using_auto_keyword;
+
+       // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
+          p_using_device_keyword                   = ptr.p_using_device_keyword;
         }
        else
         {
@@ -13159,6 +13201,7 @@ Sg_File_Info::display_static_data( const std::string label )
 
 Sg_File_Info::Sg_File_Info()
    {
+  // DQ (3/19/2016): Note that this asserion does not generate an issue in Klocworks since there is no pre-initialization list.
      assert(this != NULL);
 
 #if 0
@@ -13197,7 +13240,11 @@ Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
      p_physical_line(0),
      p_source_sequence_number(0)
    {
-     assert(this != NULL);
+  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
+  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
+  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
+  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
+  // assert(this != NULL);
 
 #if 0
      printf ("In Sg_File_Info::Sg_File_Info(filename = %s, line = %d, col = %d) \n",filename.c_str(),line,col);
@@ -13251,7 +13298,11 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
      p_source_sequence_number(X.p_source_sequence_number),
      p_fileIDsToUnparse(X.p_fileIDsToUnparse)
    {
-     assert(this != NULL);
+  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
+  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
+  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
+  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
+  // assert(this != NULL);
 
      assert (p_col >= 0);
 
@@ -13305,7 +13356,11 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
      p_physical_line(0),
      p_source_sequence_number(0)
    {
-     assert(this != NULL);
+  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
+  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
+  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
+  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
+  // assert(this != NULL);
 
 #if 0
      printf ("In Sg_File_Info::Sg_File_Info(file_id = %d, line = %d, column = %d) this = %p \n",file_id,line,column,this);
@@ -14681,6 +14736,7 @@ SgFile::initialization()
      p_F90_only                = false;
      p_F95_only                = false;
      p_F2003_only              = false;
+     p_F2008_only              = false;
 
   // DQ (1/23/2009): Added CoArray Fortran support.
      p_CoArrayFortran_only     = false;
@@ -14979,8 +15035,12 @@ X aggressive
   // function is called as part of the user's translator.
      p_skipAstConsistancyTests = false;
 
-  // DQ (6/7/2013): Added support for using experimental forntran frontend.
+  // DQ (6/7/2013): Added support for using experimental fortran frontend.
      p_experimental_fortran_frontend = false;
+
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     p_experimental_fortran_frontend_OFP_test = false;
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      p_multifile_support = false;
@@ -15420,6 +15480,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_F90_only()                           = %s \n",(p_F90_only == true) ? "true" : "false");
      printf ("     p_F95_only()                           = %s \n",(p_F95_only == true) ? "true" : "false");
      printf ("     p_F2003_only()                         = %s \n",(p_F2003_only == true) ? "true" : "false");
+     printf ("     p_F2008_only()                         = %s \n",(p_F2008_only == true) ? "true" : "false");
      printf ("     p_CoArrayFortran_only()                = %s \n",(p_CoArrayFortran_only == true) ? "true" : "false");
      printf ("     p_PHP_only()                           = %s \n",(p_PHP_only == true) ? "true" : "false");
      printf ("     p_Python_only()                        = %s \n",(p_Python_only == true) ? "true" : "false");
@@ -15589,7 +15650,8 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_skipAstConsistancyTests              = %s \n",(p_skipAstConsistancyTests == true) ? "true" : "false");
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
-     printf ("     p_experimental_fortran_frontend        = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
+     printf ("     p_experimental_fortran_frontend          = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
+     printf ("     p_experimental_fortran_frontend_OFP_test = %s \n",(p_experimental_fortran_frontend_OFP_test == true) ? "true" : "false");
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      printf ("     p_multifile_support                    = %s \n",(p_multifile_support == true) ? "true" : "false");
@@ -16804,6 +16866,19 @@ SgProject::get_F2003_only (void) const
         {
           SgFile & file = get_file(i);
           result = result || (bool) file.get_F2003_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_F2008_only (void) const
+   {
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_F2008_only();
         }
      return result;
    }
@@ -18189,11 +18264,24 @@ void SgUnparse_Info::set_parentStatementListBeingUnparsedUsingPartialTokenSequen
 void SgUnparse_Info::unset_parentStatementListBeingUnparsedUsingPartialTokenSequence()
    { unsetBit(b_parentStatementListBeingUnparsedUsingPartialTokenSequence); }
 
+// DQ (2/8/2016): Adding support for C++11 specific initialization lists.
+bool
+SgUnparse_Info::get_cxx11_initialization_list() const
+   { return checkBit(b_cxx11_initialization_list); }
+
+void
+SgUnparse_Info::set_cxx11_initialization_list()
+   { setBit(b_cxx11_initialization_list); }
+
+void
+SgUnparse_Info::unset_cxx11_initialization_list()
+   { unsetBit(b_cxx11_initialization_list); }
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
    {
-     printf ("Inside of SgUnparse_Info::display(%s) \n",label.c_str());
+     printf ("\nInside of SgUnparse_Info::display(%s) \n",label.c_str());
 
 #if 0
 #define PRINT_INFO_MEMBER_DATA_OUTPUT_MACRO(XX) printf (#XX" = %s \n",(XX() == true) ? "true" : "false");
@@ -18317,7 +18405,15 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("p_nested_expression                    = %d \n",p_nested_expression);
      printf ("p_operator_name                        = %s \n", p_operator_name.c_str());
      printf ("p_var_name                             = %s \n",(p_var_name.is_null() == false) ? p_var_name.str() : "EmPtY sTrInG");
-     printf ("p_declstatement_ptr                    = %p \n",p_declstatement_ptr);
+
+  // printf ("p_declstatement_ptr                    = %p \n",p_declstatement_ptr);
+     printf ("p_declstatement_ptr                    = %p = %s \n",p_declstatement_ptr,p_declstatement_ptr != NULL ? p_declstatement_ptr->class_name().c_str() : "null");
+     if (p_declstatement_ptr != NULL)
+        {
+          printf ("   --- firstNondefiningDeclaration = %p \n",p_declstatement_ptr->get_firstNondefiningDeclaration());
+          printf ("   --- definingDeclaration         = %p \n",p_declstatement_ptr->get_definingDeclaration());
+        }
+
      printf ("p_current_context                      = %p \n",p_current_context);
      printf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
      printf ("p_current_namespace                    = %p \n",p_current_namespace);
@@ -19642,7 +19738,7 @@ SgIncidenceDirectedGraph::getSuccessors(const SgGraphNode* node, std::vector <Sg
   assert(node);
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
-    //    cerr << "            are : " << edge->get_index() << endl;
+ // cerr << "            are : " << edge->get_index() << endl;
     assert(edge);
     if (edge) {
       SgGraphNode* target = isSgGraphNode(edge->get_to());
@@ -19701,6 +19797,10 @@ SgIncidenceDirectedGraph::getDirectedEdge(SgGraphNode* src, SgGraphNode* trg) {
   for (;it1!=it2; ++it1) {
     //    SgGraphNode* source = it1->first;
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+
+ // DQ (3/19/2016): Klocworks reports this as an issue, since "edge" could be NULL.  Fix by adding an addertion.
+    ROSE_ASSERT(edge != NULL);
+
     SgGraphNode* target = isSgGraphNode(edge->get_to());
     if (target==trg)
       medges.insert(edge);
@@ -19725,6 +19825,10 @@ SgIncidenceDirectedGraph::checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGra
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+
+ // DQ (3/19/2016): Klocworks reports this as an issue, since "edge" could be NULL.  Fix by adding an addertion.
+    ROSE_ASSERT(edge != NULL);
+
     SgGraphNode* target = edge->get_to();
     if (target==trg)
       return true;

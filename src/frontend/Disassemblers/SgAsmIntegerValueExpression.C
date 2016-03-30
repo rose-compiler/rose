@@ -162,7 +162,7 @@ SgAsmIntegerValueExpression::get_label(bool quiet/*=false*/) const
         retval += "+";
     } else if (offset > 0) {
         char buf[64];
-        snprintf(buf, sizeof buf, "+%"PRId64, offset);
+        snprintf(buf, sizeof buf, "+%" PRId64, offset);
         retval += buf;
     } else if (offset==0) {
         /*void*/
@@ -184,7 +184,7 @@ SgAsmIntegerValueExpression::get_label(bool quiet/*=false*/) const
         retval += "-";
     } else {
         char buf[64];
-        snprintf(buf, sizeof buf, "%"PRId64, offset);
+        snprintf(buf, sizeof buf, "%" PRId64, offset);
         retval += buf;
     }
     if (nbits!=0)

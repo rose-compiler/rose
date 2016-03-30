@@ -185,7 +185,7 @@ class Labeler {
   };
   iterator begin();
   iterator end();
-
+  virtual ~Labeler();
  protected:
   void computeNodeToLabelMapping();
   void registerLabel(LabelProperty);
@@ -200,16 +200,15 @@ class Labeler {
 class IOLabeler : public Labeler {
  public:
   IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
+  virtual bool isStdIOLabel(Label label);
+  virtual bool isStdInLabel(Label label, VariableId* id=0);
+  virtual bool isStdOutLabel(Label label); 
+  virtual bool isStdOutVarLabel(Label label, VariableId* id=0);
+  virtual bool isStdOutConstLabel(Label label, int* constvalue=0);
+  virtual bool isStdErrLabel(Label label, VariableId* id=0);
+  virtual  ~IOLabeler();
 
- public:
-  bool isStdIOLabel(Label label);
-  bool isStdInLabel(Label label, VariableId* id=0);
-  bool isStdOutLabel(Label label); // deprecated
-  bool isStdOutVarLabel(Label label, VariableId* id=0);
-  bool isStdOutConstLabel(Label label, int* constvalue=0);
-  bool isStdErrLabel(Label label, VariableId* id=0);
-
- private:
+ protected:
   VariableIdMapping* _variableIdMapping;
 };
 

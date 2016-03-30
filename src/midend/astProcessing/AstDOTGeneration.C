@@ -124,9 +124,14 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                std::string filenameWithoutPath = StringUtility::stripPathFromFileName(rawFileName);
                if (filenameWithoutPath == targetFileName)
                   {
+#if 1
+                 // This permits the visualization of the AST to be smaller (skips things in std namespace for example).
                     ia.skipSubTree = true;
+#endif
                   }
 
+            // DQ (1/6/2015): This allows us to simplify the AST visualization by reducing the 
+            // number of nodes in the AST specific to template instantiations. 
 #define DEBUG_DSL_EXAMPLES 0
 
 #if DEBUG_DSL_EXAMPLES
@@ -144,7 +149,8 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                if (templateInstantationClassDeclaration != NULL || 
                    templateInstantationFunctionDeclaration != NULL || 
                    templateInstantationMemberFunctionDeclaration != NULL ||
-                   templateMemberFunctionDeclaration != NULL)
+                // templateMemberFunctionDeclaration != NULL ||
+                   false)
                   {
                     ia.skipSubTree = true;
                   }
@@ -169,8 +175,18 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                printf ("DOT file generation: functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
 #endif
 #if 1
-               if (functionDeclaration->get_name() != "main" &&
-                   functionDeclaration->get_name() != "makeStencils")
+            // if (functionDeclaration->get_name() != "main" && functionDeclaration->get_name() != "makeStencils")
+               if (functionDeclaration->get_name() != "pointRelax" && functionDeclaration->get_name() != "define")
+                  {
+                    ia.skipSubTree = true;
+                  }
+#endif
+             }
+            else
+             {
+#if 1
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
+               if (classDeclaration != NULL && classDeclaration->get_name() != "Multigrid")
                   {
                     ia.skipSubTree = true;
                   }
@@ -622,7 +638,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
             // It does not work to embed the "\n" into the single sprintf parameter.
             // sprintf(buffer," Addr: 0x%08"PRIx64" \n line: %d col: %d ",asmDwarfLine->get_address(),asmDwarfLine->get_line(),asmDwarfLine->get_column());
 
-               sprintf(buffer,"Addr: 0x%08"PRIx64,asmDwarfLine->get_address());
+               sprintf(buffer,"Addr: 0x%08" PRIx64,asmDwarfLine->get_address());
                name = buffer;
                sprintf(buffer,"line: %d col: %d",asmDwarfLine->get_line(),asmDwarfLine->get_column());
                name += string("\\n") + buffer;

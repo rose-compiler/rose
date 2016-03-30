@@ -3480,8 +3480,13 @@ SgJavaParameterizedType::get_name() const {
                 }
                 SgType *type = (*i) -> get_type();
                 SgArrayType *array_type = isSgArrayType(type);
-                ROSE_ASSERT(array_type || isSgNamedType(type));
-                name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+
+             // DQ (3/19/2016): Klocworks reports the use of isSgNamedType(type) as an issue, since it could be NULL (as it sees it).
+             // ROSE_ASSERT(array_type || isSgNamedType(type));
+             // name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+                SgNamedType *named_type = isSgNamedType(type);
+                ROSE_ASSERT(array_type != NULL || named_type != NULL);
+                name += (array_type ? array_type -> get_name() : named_type -> get_name()).getString();
             }
             name += ">";
         }
@@ -3609,25 +3614,33 @@ SgJavaWildcardType::is_unbound() {
 }
 
 SgName
-SgJavaWildcardType::get_name() const {
-    string name = "?";
+SgJavaWildcardType::get_name() const 
+   {
+     string name = "?";
 
-    if (p_bound_type != NULL) {
-        if (p_has_extends) {
-            name += " extends ";
+     if (p_bound_type != NULL) 
+        {
+          if (p_has_extends) {
+              name += " extends ";
+          }
+          else if (p_has_super) {
+              name += " super ";
+          }
+
+          SgType *type = p_bound_type;
+          SgArrayType *array_type = isSgArrayType(type);
+	  ROSE_ASSERT(array_type || isSgNamedType(type));
+
+       // DQ (3/19/2016): Klocworks reports the use of isSgNamedType(type) as an issue, since it could be NULL (as it sees it).
+       // ROSE_ASSERT(array_type || isSgNamedType(type));
+       // name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+          SgNamedType *named_type = isSgNamedType(type);
+          ROSE_ASSERT(array_type != NULL || named_type != NULL);
+          name += (array_type ? array_type -> get_name() : named_type -> get_name()).getString();
         }
-        else if (p_has_super) {
-            name += " super ";
-        }
 
-        SgType *type = p_bound_type;
-        SgArrayType *array_type = isSgArrayType(type);
-	ROSE_ASSERT(array_type || isSgNamedType(type));
-        name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
-    }
-
-    return SgName(name);
-}
+     return SgName(name);
+   }
 
 SgName
 SgJavaWildcardType::get_qualified_name() const {
@@ -4598,6 +4611,9 @@ SgName
 SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList) 
    {
   // Note that this is a static member function.
+#if 0
+     printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): TOP \n");
+#endif
 
   // process argument type
      SgName arg_names;
@@ -4606,6 +4622,7 @@ SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * type
           const SgTypePtrList & args = typeList->get_arguments ();
           arg_names = mangleTypes (args.begin (), args.end ());
         }
+
 #if 0
      printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): arg_names = %s \n",arg_names.str());
 #endif
@@ -5556,7 +5573,9 @@ SgName
 SgArrayType::get_name(void) const {
     string dimensions = "[]";
     SgType *type = p_base_type;
-    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) {
+
+    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) 
+    {
         dimensions += "[]";
         type = array_type -> get_base_type();
     }
@@ -5592,9 +5611,19 @@ SgArrayType::get_name(void) const {
     else if (isSgTypeString(type)) {
         name = "String";
     }
-    else if (isSgNamedType(type)) {
-        name = isSgNamedType(type) -> get_name().getString();
+    else 
+    { 
+   // DQ (3/19/2016): Klocworks reports this as an issue because the result of the 2nd call to isSgNamedType() 
+   // is not clearly the same result as the first call.  The fix is to just make a single call and save the result.
+   // if (isSgNamedType(type)) 
+      SgNamedType* namedType = isSgNamedType(type);
+      if (namedType != NULL) 
+         {
+        // name = isSgNamedType(type) -> get_name().getString();
+           name = namedType -> get_name().getString();
+         }
     }
+
     name += dimensions;
 
     return SgName(name);
@@ -5604,7 +5633,9 @@ SgName
 SgArrayType::get_qualified_name(void) const {
     string dimensions = "[]";
     SgType *type = p_base_type;
-    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) {
+
+    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) 
+    {
         dimensions += "[]";
         type = array_type -> get_base_type();
     }
@@ -5640,9 +5671,19 @@ SgArrayType::get_qualified_name(void) const {
     else if (isSgTypeString(type)) {
         name = "String";
     }
-    else if (isSgNamedType(type)) {
-        name = isSgNamedType(type) -> get_qualified_name().getString();
+    else 
+    {
+   // DQ (3/19/2016): Klocworks reports this as an issue because the result of the 2nd call to isSgNamedType() 
+   // is not clearly the same result as the first call.  The fix is to just make a single call and save the result.
+   // if (isSgNamedType(type)) 
+      SgNamedType* namedType = isSgNamedType(type);
+      if (namedType != NULL) 
+         {
+        // name = isSgNamedType(type) -> get_qualified_name().getString();
+           name = namedType -> get_qualified_name().getString();
+         }
     }
+
     name += dimensions;
 
     return SgName(name);
@@ -5669,6 +5710,13 @@ SgArrayType::get_mangled(void) const
 
 #if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
      printf ("In SgArrayType::get_mangled(): mangled base type name = %s \n",base_name.str());
+#endif
+
+  // DQ (2/14/2016): Adding support for variable length arrays.
+     const bool is_variable_length_array = this->get_is_variable_length_array();
+
+#if 0
+     printf ("In SgArrayType::get_mangled(): is_variable_length_array = %s \n",is_variable_length_array ? "true" : "false");
 #endif
 
      const SgExpression* index_exp = get_index();
@@ -5743,7 +5791,16 @@ SgArrayType::get_mangled(void) const
                  // t = associatedScope->get_type_table()->lookup_type(name);
                  // index_name = associatedScope->get_mangled_name();
 #else
-                    index_name = index_declaration->get_mangled_name();
+                 // DQ (2/14/2016): Adding support for VLA types (if we evaluate the mangled name we will cause endless recursion).
+                 // index_name = index_declaration->get_mangled_name();
+                    if (is_variable_length_array == true)
+                       {
+                         index_name = "vla_dimention";
+                       }
+                      else
+                       {
+                         index_name = index_declaration->get_mangled_name();
+                       }
 #endif
 #if 0
                     printf ("SgInitializedName part of index_name = %s \n",index_name.str());
@@ -5889,7 +5946,9 @@ SgArrayType::get_mangled(void) const
                   << index_name.str ()
                   << "_Ae_";
 
-  // printf ("SgArrayType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#if 0
+     printf ("SgArrayType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
 
      return mangled_name;
    }
@@ -7204,6 +7263,34 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
        // Only look for pointers to type in the global type table.
           SgType* t = get_globalTypeTable()->lookup_type(name);
 
+       // DQ (2/23/2016): Add test and reset type returned from globalTypeTable if it is not a SgDeclType.
+       // I have at least one case where the type table returns a SgModifierType (not clear if that is correct behavior).
+       // Detect this case for now and make sure it can't happen in general.
+          if (t != NULL && isSgDeclType(t) == NULL)
+             {
+               printf ("Error: This name = %s does not return the correct type from the globalTypeTable: t = %p = %s reset t == NULL \n",name.str(),t,t->class_name().c_str());
+
+            // Note: were we detect that this is a SgModifierType it is a default built SgModifierType.
+            // This kind of SgModifierType is only used in the frontend to support references to types 
+            // in templates that have not been defined yet.  It is rare to see these.  In this case the
+            // modifier's name mangling does not change the name and so that name can appear in the 
+            // globalTypeTable() and a SgModifierType.  For now we are issuing a warning about this and
+            // forcing a new SgDeclType type to be used.
+               SgModifierType* modifierType = isSgModifierType(t);
+               if (modifierType != NULL)
+                  {
+#if 0
+                    SgTypeModifier & typeModifier = modifierType->get_typeModifier();
+                    typeModifier.display("does not return the correct type from the globalTypeTable");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+               t = NULL;
+             }
+
           if (t == NULL)
              {
             // The pointer type was not found in the type table, put it into the global type table.
@@ -7235,7 +7322,17 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
                newType = NULL;
 
                newType = isSgDeclType(t);
+
+            // DQ (2/23/2016): Added assertion.
+               if (newType == NULL)
+                  {
+                    printf ("In createType(SgExpression* base_expression, SgExpression* kind): isSgDeclType(t) == NULL: error: t = %p = %s \n",t,t->class_name().c_str());
+                  }
+               assert(newType != NULL);
              }
+
+       // DQ (2/23/2016): Added assertion.
+          assert(newType != NULL);
 
           base_type->p_decltype_ref_to = newType;
           assert(base_type->p_decltype_ref_to != NULL);
