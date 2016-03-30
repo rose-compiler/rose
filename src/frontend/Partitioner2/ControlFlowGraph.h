@@ -202,6 +202,7 @@ typedef Sawyer::Container::BiMap<ControlFlowGraph::ConstVertexIterator, ControlF
  *  the @ref cfgAdjustmentCallbacks method. */
 class CfgAdjustmentCallback: public Sawyer::SharedObject {
 public:
+    /** Shared ownership pointer to @ref CfgAdjustmentCallback. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CfgAdjustmentCallback> Ptr;
 
     /** Arguments for attaching a basic block.

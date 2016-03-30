@@ -81,7 +81,7 @@ isAuthorized(const SqlDatabase::TransactionPtr &tx) {
     const char *userName = getenv("LOGNAME");
     if (!userName || !*userName)
         return false;                                   // LOGNAME not set
-    SqlDatabase::StatementPtr q = tx->statement("select uid from users where name = ?")->bind(0, userName);
+    SqlDatabase::StatementPtr q = tx->statement("select id from auth_identities where identity = ?")->bind(0, userName);
     SqlDatabase::Statement::iterator row = q->begin();
     if (row == q->end())
         return false;                                   // No such user name

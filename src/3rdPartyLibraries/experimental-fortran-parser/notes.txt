@@ -46,3 +46,29 @@ September 9th, 2014:
    2) Need to have the stratego_transformations/Makefile.am put generated files into the build tree.
 
 
+January 18, 2016:
+   1) We want to copy additional files from the OFP distribution to the source tree. DONE
+   2) Get new work compiling and linking. DONE
+   3) Build copy_source Makefile rule to cp required files from updates to the OFP git repository. DONE
+   4) Get Craig's OFP round-trip testing into place. (see approved files to diff against at: /home/dquinlan/ROSE/OpenFortranParser/GITHUB/ofp-sdf/tests/rule-tests/pp).
+   5) Add collection of test codes to be tested (eventually all of the ROSE fortran regression tests).
+   6) Markus will prepare the new grammar with the new IR node build functions (especially the Untyped IR nodes which we can test immediately).
+   7) Dan will fix the base classes defined in ROSETTA that are marked to not be used as IR nodes: UntypedExpression, UntypedFunctionDeclaration, and UntypedDeclarationStatement. DONE
+   8) Remove unused files from the git repository.
+        remove dirs: rose_traverse, syntax-v0.14
+        remove files: ASTBuilder.hpp, OFPExpr.cpp, OFPExpr.hpp, OFPNodes.cpp, OFPNodes.hpp, ofp_traverse_productions.cpp, OFPUnparser.cpp, OFPUnparser.hpp,traversal.cpp, traversal.hpp, traverse.cpp, traverse.hpp
+        remove files: ofp-simplify.c
+
+   9) Commit only required files. DONE
+
+Files (with descriptions) added to support experimental fortran work:
+   sdf_syntax/FAST.str                           # stratego definition of FAST (Fortran AST)
+   stratego_transformations/fast2pp.str          # transformations from FAST in preparation for pretty printing (used for round trip testing)
+   stratego_transformations/no-to-none.str       # transformation pass used in transformations to FAST
+   stratego_transformations/ofp2fast.str         # transformations from output of stratego parser to FAST
+   aterm_traversal/SgUntyped.str                 # grammar file representing SgUntyped nodes (eventually LLNL's responsibility), pruned from Markus' grammar generation
+   aterm_traversal/build_SgUntypedNodes.cpp      # build function prototypes (eventually LLNL's responsibility)
+   aterm_traversal/build_SgUntypedNodes.hpp      # header file for build function prototypes (eventually LLNL's responsibility)
+   aterm_traversal/fast2sage.str                 # transformations for converting FAST to SAGE untyped nodes (in SgUntyped.str)
+   aterm_traversal/traverse_SgUntypedNodes.cpp   # C++ traversal implementation to read ATerms representing SgUntyped nodes (calls build functions in build_SgUntypedNodes.cpp)
+   aterm_traversal/traverse_SgUntypedNodes.hpp   # header file for C++ traversal implementation to read ATerms representing SgUntyped nodes (calls build functions in build_SgUntypedNodes.cpp)

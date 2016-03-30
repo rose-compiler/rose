@@ -32,10 +32,12 @@ namespace Partitioner2 {
  *  to look at the <code>args.results.termination</code> enum returned by the callbacks: if it is TERMINATE_NOW or
  *  TERMINATE_PRIOR then the block is forcibly terminated regardless of what would have otherwise happened.
  *
- *  The partitioner expects callbacks to have shared ownership and references them only via Sawyer::SharedPointer.  Therefore,
- *  subclasses should implement an @c instance class method that allocates a new object and returns a shared pointer. */
+ *  The partitioner expects callbacks to have shared ownership (see @ref heap_object_shared_ownership) and references them only
+ *  via @ref Sawyer::SharedPointer.  Therefore, subclasses should implement an @c instance class method that allocates a new
+ *  object and returns a shared pointer. */
 class BasicBlockCallback: public Sawyer::SharedObject {
 public:
+    /** Shared-ownership pointer to a @ref BasicBlockCallback. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<BasicBlockCallback> Ptr;
 
     /** Whether to terminate a basic block. */
@@ -74,8 +76,7 @@ public:
  *  implement a @ref match method that performs the actual matching. */
 class InstructionMatcher: public Sawyer::SharedObject {
 public:
-    /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
-     *  partitioners are copied. */
+    /** Shared-ownership pointer to an @ref InstructionMatcher. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<InstructionMatcher> Ptr;
 
     /** Attempt to match an instruction pattern.
@@ -105,8 +106,7 @@ public:
  *  additional addresses. */
 class FunctionPrologueMatcher: public InstructionMatcher {
 public:
-    /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
-     *  partitioners are copied. */
+    /** Shared-ownership pointer to a @ref FunctionPrologueMatcher. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<FunctionPrologueMatcher> Ptr;
 
     /** Returns the function(s) for the previous successful match.
@@ -132,8 +132,7 @@ public:
  *  combinations of no-ops and zeros.  It's conceivable that some compiler might even emit random garbage. */
 class FunctionPaddingMatcher: public Sawyer::SharedObject {
 public:
-    /** Shared-ownership pointer.  The partitioner never explicitly frees matches. Their pointers are copied when partitioners
-     *  are copied. */
+    /** Shared-ownership pointer to a @ref FunctionPaddingMatcher. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<FunctionPaddingMatcher> Ptr;
 
     /** Attempt to match padding.
@@ -297,10 +296,19 @@ public:
 
 /** Remove execute permissions for zeros.
  *
- *  Scans memory to find consecutive zero bytes and removes execute permission from them.  Returns the set of addresses whose
- *  access permissions were changed.  Only occurrences of at least @p threshold consecutive zeros are changed. If @p threshold
- *  is zero then nothing happens. */
-AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold);
+ *  Scans memory to find consecutive zero bytes and removes execute permission from them. Only occurrences of at least @p
+ *  threshold consecutive zeros are found, and only a subset of those occurrences have their execute permission
+ *  removed. Namely, whenever an interval of addresses is found that contain all zeros, the interval is narrowed by eliminating
+ *  the first few bytes (@p leaveAtFront) and last few bytes (@p leaveAtBack), and execute permissions are removed for this
+ *  narrowed interval.
+ *
+ *  Returns the set of addresses whose access permissions were changed, which may be slightly fewer addresses than which
+ *  contain zeros due to the @p leaveAtFront and @p leaveAtBack.  The set of found zeros can be recovered from the return value
+ *  by iterating over the intervals in the set and inserting the @p leaveAtFront and @p leaveAtBack addresses at each end of
+ *  each interval.
+ *
+ *  If @p threshold is zero or the @p leaveAtFront and @p leaveAtBack sum to at least @p threshold then nothing happens. */
+AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront=16, size_t leaveAtBack=1);
 
 /** Give labels to addresses that are symbols.
  *
@@ -358,45 +366,38 @@ void nameNoopFunctions(const Partitioner&);
 /** Build AST for basic block.
  *
  *  Builds and returns an AST for the specified basic block. The basic block must not be a null pointer, but it need not be in
- *  the CFG.  If the basic block has no instructions then it would violate ROSE's invariants, so a null pointer is returned
- *  instead; however, if @p relaxed is true then an IR node is returned anyway. */
-SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, const Function::Ptr&, bool relaxed=false);
+ *  the CFG. */
+SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, const Function::Ptr&, const AstConstructionSettings&);
 
 /** Build AST for data block.
  *
  *  Builds and returns an AST for the specified data block.  The data block must not be a null pointer, but it need not be in
- *  the CFG.  If @p relaxed is true then IR nodes are created even if they would violate some ROSE invariant, otherwise invalid
- *  data blocks are ignored and a null pointer is returned for them. */
-SgAsmBlock* buildDataBlockAst(const Partitioner&, const DataBlock::Ptr&, bool relaxed=false);
+ *  the CFG. */
+SgAsmBlock* buildDataBlockAst(const Partitioner&, const DataBlock::Ptr&, const AstConstructionSettings&);
 
 /** Build AST for function.
  *
  *  Builds and returns an AST for the specified function.  The function must not be a null pointer, but it need not be in the
  *  CFG.  The function will have children created only for its basic blocks that exist in the CFG (otherwise the partitioner
- *  doesn't know about them).  If no children were created then the returned function IR node violates ROSE's invariants, so a
- *  null pointer is returned instead; however, if @p relaxed is true then an IR node is returned anyway. */
-SgAsmFunction* buildFunctionAst(const Partitioner&, const Function::Ptr&, bool relaxed=false);
+ *  doesn't know about them). */
+SgAsmFunction* buildFunctionAst(const Partitioner&, const Function::Ptr&, const AstConstructionSettings&);
 
 /** Builds the global block AST.
  *
  *  A global block's children are all the functions contained in the AST, which in turn contain SgAsmBlock IR nodes for the
- *  basic blocks, which in turn contain instructions.  If no functions exist in the CFG then the returned node would violate
- *  ROSE's invariants, so a null pointer is returned instead; however, if @p relaxed is true then the IR node is returned
- *  anyway. */
-SgAsmBlock* buildGlobalBlockAst(const Partitioner&, bool relaxed=false);
+ *  basic blocks, which in turn contain instructions. */
+SgAsmBlock* buildGlobalBlockAst(const Partitioner&, const AstConstructionSettings&);
 
 /** Builds an AST from the CFG.
  *
  *  Builds an abstract syntax tree from the control flow graph.  The returned SgAsmBlock will have child functions; each
- *  function (SgAsmFunction) will have child basic blocks; each basic block (SgAsmBlock) will have child instructions.  If @p
- *  relaxed is false then all IR nodes in the returned tree will satisfy ROSE's invariants concerning them at the expense of not
- *  including certain things in the AST; otherwise, when @p relaxed is true, the AST will be as complete as possible but may
- *  violate some invariants.
+ *  function (SgAsmFunction) will have child basic blocks; each basic block (SgAsmBlock) will have child instructions.
  *
  *  This function is the same as @ref buildGlobalBlockAst except it also calls various AST fixup functions. Providing an
  *  interpretation allows more fixups to occur.  Also, if @p interp is non-null then the returned global block is attached to
  *  the interpretation in the AST (any previous global block is detached but not destroyed). */
-SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL, bool relaxed=false);
+SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL,
+                     const AstConstructionSettings &settings = AstConstructionSettings::strict());
 
 /** Fixes pointers in the AST.
  *

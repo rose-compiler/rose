@@ -351,10 +351,10 @@ ParseExp::Result ParseExp::ParseItemType(POETCode* input, int *p_lineno)
                         res = resOfRest.first;
                   }
                   else {
-                      return Result(0,input);
+                  return Result((POETCode*)0,input);
                    }
                }
-               else if (backtrack) return Result(0,input); 
+               else if (backtrack) return Result((POETCode*)0,input); 
                else throw err;
           }
       }
@@ -364,9 +364,9 @@ ParseExp::Result ParseExp::ParseItemType(POETCode* input, int *p_lineno)
                  input = NextToken(resOfRest.second);
                  res = resOfRest.first;
            }
-           else return Result(0,input);
+           else return Result((POETCode*)0,input);
       }
-      else return Result(0,input);
+      else return Result((POETCode*)0,input);
      if (funcall->get_entry().get_code() != 0 && get_head(input) == lp)
      {
         Result resOfTail = ParseExpImpl(NextToken(input),exp_bop->get_entry().get_code(),0, p_lineno);
@@ -433,7 +433,7 @@ ParseExp::ParseExpImpl(POETCode* input, POETCode* bop, POETCode* inherit, int *p
      Result res = ParseItemType(input, p_lineno);
      inherit = res.first; input = res.second;
   }
-  if (inherit == 0) { return Result(0,input); }
+  if (inherit == 0) { return Result((POETCode*)0,input); }
   if (get_tail(input) != 0) {
      POETCode* p_bop = bop;
      for (POETCode* cur_bop=0; (cur_bop = get_head(p_bop)) != 0; p_bop = get_tail(p_bop) )

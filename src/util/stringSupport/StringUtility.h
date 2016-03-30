@@ -169,7 +169,7 @@ ROSE_UTIL_API std::string numberToString(double);
  *  Converts a virtual address to a hexadecimal string with a leading "0x". The string is zero-padded so that it explicitly
  *  represents at least @p nbits bits (four bits per hexadecimal digits). If @p nbits is zero then the function uses 32 bits
  *  for values that fit in 32 bits, otherwise 64 bits. */
-std::string addrToString(uint64_t value, size_t nbits = 0);
+ROSE_UTIL_API std::string addrToString(uint64_t value, size_t nbits = 0);
 
 /** Formatting support for generated code strings. */
 ROSE_UTIL_API std::string indentMultilineString(const std::string& inputString, int statementColumnNumber);
@@ -210,7 +210,7 @@ ROSE_UTIL_API std::list<std::string> tokenize(std::string X, char delim);
  *
  *  Empty strings are removed from the result, which is returned in the @p stringList argument. The return argument is cleared
  *  before the splitting begins. */
-void splitStringIntoStrings( const std::string& inputString, char separator, std::vector<std::string>& stringList );
+ROSE_UTIL_API void splitStringIntoStrings( const std::string& inputString, char separator, std::vector<std::string>& stringList );
 
 /** Remove redundant and blank lines.
  *
@@ -354,12 +354,12 @@ ROSE_UTIL_API std::string makeOneLine(const std::string &s, std::string replacem
  *  linefeeds.  If @p do_pad is true then '=' characters may appear at the end to make the total length a multiple of four.
  *
  * @{ */
-std::string encode_base64(const std::vector<uint8_t> &data, bool do_pad=true);
-std::string encode_base64(const uint8_t *data, size_t nbytes, bool do_padd=true);
+ROSE_UTIL_API std::string encode_base64(const std::vector<uint8_t> &data, bool do_pad=true);
+ROSE_UTIL_API std::string encode_base64(const uint8_t *data, size_t nbytes, bool do_padd=true);
 /** @} */
 
 /** Convert base-64 to binary. */
-std::vector<uint8_t> decode_base64(const std::string &encoded);
+ROSE_UTIL_API std::vector<uint8_t> decode_base64(const std::string &encoded);
 
 /** Join individual strings to form a single string.
  *
@@ -382,8 +382,8 @@ std::string join_range(const std::string &separator, Iterator begin, Iterator en
         retval += (i==begin ? std::string() : separator) + *i;
     return retval;
 }
-std::string join(const std::string &separator, char *strings[], size_t nstrings);
-std::string join(const std::string &separator, const char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(const std::string &separator, char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(const std::string &separator, const char *strings[], size_t nstrings);
 /** @} */
 
 /** Splits strings into parts.

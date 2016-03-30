@@ -19,6 +19,8 @@
 
 #include "sageInterface.h"
 
+#include "Diagnostics.h"
+
 // forward declarations required for templated functions using those functions
 namespace SageInterface {
   ROSE_DLL_API void setOneSourcePositionForTransformation (SgNode * root);
@@ -28,6 +30,11 @@ namespace SageInterface {
 /** Functions that build an AST. */
 namespace SageBuilder 
 {
+
+// DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+  extern Sawyer::Message::Facility mlog;
+  void initDiagnostics();
+
 
 #if 0
 //---------------------AST creation/building/construction-----------------
@@ -833,6 +840,11 @@ buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=
 ROSE_DLL_API SgVariableDeclaration* 
 buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 
+//! Build variable definition
+ROSE_DLL_API SgVariableDefinition* 
+buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitializedName* init_name,  SgInitializer *init);
+
+
 // DQ (8/31/2012): Note that this macro can't be used in header files since it can only be set
 // after sage3.h has been read.  The reason is that this is a portability problem when "rose_config.h"
 // appears in header files of applications using ROSE's header files.
@@ -1422,11 +1434,11 @@ terms of non-untyped IR nodes.
 
 /*! \brief build a concept of scope in the untyped AST.
 */
-ROSE_DLL_API SgUntypedScope* buildUntypedScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedScope* buildUntypedScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
 
-ROSE_DLL_API SgUntypedGlobalScope*   buildUntypedGlobalScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
-ROSE_DLL_API SgUntypedFunctionScope* buildUntypedFunctionScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
-ROSE_DLL_API SgUntypedModuleScope*   buildUntypedModuleScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedGlobalScope*   buildUntypedGlobalScope  (SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedFunctionScope* buildUntypedFunctionScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedModuleScope*   buildUntypedModuleScope  (SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
 
 ROSE_DLL_API SgUntypedFunctionDeclaration*      buildUntypedFunctionDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
 ROSE_DLL_API SgUntypedProgramHeaderDeclaration* buildUntypedProgramHeaderDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
@@ -1444,7 +1456,7 @@ ROSE_DLL_API SgUntypedFile* buildUntypedFile(SgUntypedGlobalScope* scope);
  * Doxygen is not smart enough to handle macro expansion. 
  */
 
-template <class T> ROSE_DLL_API
+template <class T> 
   T* buildUnaryExpression(SgExpression* operand) { 
   SgExpression* myoperand=operand;
   T* result = new T(myoperand, NULL);
@@ -1462,7 +1474,7 @@ template <class T> ROSE_DLL_API
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion. 
  */
-template <class T> ROSE_DLL_API
+template <class T>
 T* buildUnaryExpression_nfi(SgExpression* operand) {
   SgExpression* myoperand = operand;
   T* result = new T(myoperand, NULL);
@@ -1485,7 +1497,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion. 
  */
- template <class T> ROSE_DLL_API
+ template <class T>
    T* buildBinaryExpression(SgExpression* lhs, SgExpression* rhs) {
    SgExpression* mylhs, *myrhs;
    mylhs = lhs;
@@ -1506,7 +1518,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion. 
  */
- template <class T> ROSE_DLL_API
+ template <class T>
    T* buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs) {
    SgExpression* mylhs, *myrhs;
    mylhs = lhs;

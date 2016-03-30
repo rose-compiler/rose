@@ -47,7 +47,13 @@ lexical syntax
   "!" ~[\n\r]*                          -> Comment
   "#" ~[\n\r]*                          -> Comment
 
-  (Comment? EOLOrSemicolon [\ \t]* )+   -> EOStmt
+%% Scott suggested fix
+%% -------------------
+%% Need to track this down as Scott suggests it is not ideal (see email from 2014.10.17)
+%%
+%%  (Comment? EOLOrSemicolon [\ \t]* )+   -> EOStmt
+%%
+  ((Comment? EOL) | ";" [\ \t]*)+       -> EOStmt
 
 %% Comment lines at the start of a file/program are handled separately
 %%

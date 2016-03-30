@@ -915,6 +915,9 @@ Compiling with CMake:
 
 then run make normally (use -j72).
 
+For testing, use:
+ctest -j72 --output-on-failure
+
 Verbose mode:
    make VERBOSE=1 -j24
 
@@ -988,4 +991,4 @@ Compiling ROSE with Intel compiler:
 
 After new desktop machine:
    smgit commit -am "Fixes for Intel compiler and GNU g++ version 4.8.3, also fixed to pass policy tests."
-   smgit push origin HEAD:dquinlan/dq-development-rc
+   smgit push origin HEAD:dquinlan/dq-development-dev

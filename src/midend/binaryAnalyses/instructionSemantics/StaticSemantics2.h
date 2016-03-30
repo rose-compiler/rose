@@ -58,7 +58,7 @@ void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr&
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for reference-counted semantic values. */
+/** Shared-ownership pointer for a static-semantics value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Semantic values for generating static semantic ASTs.
@@ -226,7 +226,7 @@ typedef NullSemantics::StatePtr StatePtr;
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for basic semantic operations. */
+/** Shared-ownership pointer for basic semantic operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Basic semantic operations.
@@ -242,14 +242,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("StaticSemantics");
+        name("StaticSemantics");
         (void) SValue::promote(protoval); // make sure its dynamic type is a StaticSemantics::SValue
     }
 
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("StaticSemantics");
-        (void) SValue::promote(state->get_protoval()); // values must have StaticSemantics::SValue dynamic type
+        name("StaticSemantics");
+        (void) SValue::promote(state->protoval()); // values must have StaticSemantics::SValue dynamic type
     }
 
 public:
@@ -264,14 +264,14 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument because the base class expects one, but it is not used for static semantics. See set_solver() for
+     *  second argument because the base class expects one, but it is not used for static semantics. See @ref solver for
      *  details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
-     *  because the base class expects one, but it is not used for static semantics. See set_solver() for details. */
+     *  because the base class expects one, but it is not used for static semantics. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -415,7 +415,8 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,

@@ -59,7 +59,9 @@ SUBDIRS = \
 
 # DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
 if ROSE_USING_GCC_VERSION_LATER_4_8
-  SUBDIRS += ShiftCalculus ShiftCalculus2 ShiftCalculus3
+  # DQ (3/23/2016): Note that we currently require the dsl_infrastructure directory to be built before both of 
+  # the arrayDSLcompiler and amrShiftDSLcompiler directories.
+  SUBDIRS += ShiftCalculus ShiftCalculus2 ShiftCalculus3 ShiftCalculus4 dsl_infrastructure arrayDSLcompiler amrShiftDSLcompiler
 endif
 
 # Liao, 2014/2/11, with Dan's permission, comment out this project since it is broken now.

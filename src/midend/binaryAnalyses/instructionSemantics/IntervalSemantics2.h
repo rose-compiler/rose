@@ -58,7 +58,7 @@ typedef RangeMap<Interval> Intervals;
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object. SValue objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to an interval semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the IntervalSemantics domain. */
@@ -232,7 +232,7 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStateGenericPtr;
 //                                      Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryState object.  MemoryState objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to an interval memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Byte-addressable memory.
@@ -319,8 +319,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to interval RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** RISC operators for interval domains. */
@@ -330,14 +329,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Interval");
+        name("Interval");
         (void) SValue::promote(protoval); // make sure its dynamic type is an IntervalSemantics::SValue or subclass thereof
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Interval");
-        (void) SValue::promote(state->get_protoval()); // dynamic type must be IntervalSemantics::SValue or subclass thereof
+        name("Interval");
+        (void) SValue::promote(state->protoval());      // dynamic type must be IntervalSemantics::SValue or subclass thereof
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,13 +353,13 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical value. An SMT solver may be specified as the second
-     *  argument for convenience. See set_solver() for details. */
+     *  argument for convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators with specified state. An SMT solver may be specified as the second argument for
-     *  convenience. See set_solver() for details. */
+     *  convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -396,13 +395,13 @@ public:
     /** Create a new SValue from a set of possible bits.  This is just a convience function so that we don't have to
      *  see so many dynamic casts in the source code. */
     virtual SValuePtr svalue_from_bits(size_t nbits, uint64_t possible_bits) {
-        return SValue::promote(protoval)->create_from_bits(nbits, possible_bits);
+        return SValue::promote(protoval())->create_from_bits(nbits, possible_bits);
     }
 
     /** Create a new SValue from a set of intervals.  This is just a convience function so that we don't have to
      *  see so many dynamic casts in the source code. */
     virtual SValuePtr svalue_from_intervals(size_t nbits, const Intervals &intervals) {
-        return SValue::promote(protoval)->create(nbits, intervals);
+        return SValue::promote(protoval())->create(nbits, intervals);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

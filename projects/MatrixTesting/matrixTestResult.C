@@ -54,6 +54,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                "@named{status}{The final disposition of the test; i.e., where it failed. This should be a single "
                "word whose meaning is understood by the test designers and users.}"
                "@named{tester}{The entity that performed the testing, such as a Jenkins node name.}");
+    parser.doc("Output",
+               "Emits the new test ID to standard output on success.");
 
     SwitchGroup sg("Tool-specific switches");
 
@@ -73,6 +75,18 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 typedef Sawyer::Container::Map<std::string /*key*/, std::string /*colname*/> DependencyNames;
 typedef Sawyer::Container::Map<std::string /*colname*/, std::string /*value*/> KeyValuePairs;
 
+static void
+extraDependencies(DependencyNames &depnames /*in,out*/) {
+    depnames.insert("duration", "duration");
+    depnames.insert("noutput", "noutput");
+    depnames.insert("nwarnings", "nwarnings");
+    depnames.insert("os", "os");
+    depnames.insert("rose", "rose");
+    depnames.insert("rose_date", "rose_date");
+    depnames.insert("status", "status");
+    depnames.insert("tester", "tester");
+}
+
 static DependencyNames
 loadDependencyNames(const SqlDatabase::TransactionPtr &tx) {
     DependencyNames retval;
@@ -81,18 +95,39 @@ loadDependencyNames(const SqlDatabase::TransactionPtr &tx) {
         std::string key = row.get<std::string>(0);
         retval.insert(key, "rmc_"+key);
     }
-
-    retval.insert("duration", "duration");
-    retval.insert("noutput", "noutput");
-    retval.insert("nwarnings", "nwarnings");
-    retval.insert("os", "os");
-    retval.insert("rose", "rose");
-    retval.insert("rose_date", "rose_date");
-    retval.insert("status", "status");
-    retval.insert("tester", "tester");
-
     return retval;
 }
+// Load all dependencies from a file. Each line of the file should be a line like what's output by the "matrixNextTest
+// --format=overrides" commane.
+static DependencyNames
+loadDependencyNames(const std::string &fileName) {
+    DependencyNames retval;
+    char buf[4096];
+    unsigned lineNum = 0;
+    boost::regex varValRe("OVERRIDE_([A-Z_]+)='?(.*?)'?");
+    std::ifstream in(fileName.c_str());
+    while (1) {
+        in.getline(buf, sizeof buf);
+        if (in.eof())
+            break;
+        if (!in.good()) {
+            mlog[FATAL] <<fileName <<":" <<lineNum <<": read failed\n";
+            exit(1);
+        }
+
+        ++lineNum;
+        std::string s = buf;
+        boost::smatch captures;
+        if (!boost::regex_match(s, captures, varValRe)) {
+            mlog[FATAL] <<fileName <<":" <<lineNum <<": invalid dependency info: \"" <<StringUtility::cEscape(buf) <<"\"\n";
+            exit(1);
+        }
+        std::string name = boost::to_lower_copy(captures.str(1));
+        retval.insert(name, "rmc_"+name);
+    }
+    return retval;
+}
+
 
 static std::string
 getUserName() {
@@ -104,8 +139,10 @@ getUserName() {
 
 static int
 getUserId(const SqlDatabase::TransactionPtr &tx) {
+    if (tx == NULL)
+        return -1;
     std::string userName = getUserName();
-    SqlDatabase::StatementPtr q = tx->statement("select uid from users where name = ?")->bind(0, userName);
+    SqlDatabase::StatementPtr q = tx->statement("select id from auth_identities where identity = ?")->bind(0, userName);
     SqlDatabase::Statement::iterator row = q->begin();
     if (row == q->end()) {
         mlog[FATAL] <<"no such user: \"" <<StringUtility::cEscape(userName) <<"\"\n";
@@ -148,8 +185,21 @@ main(int argc, char *argv[]) {
 
     // Parse and validate key-value pairs from the command-line
     KeyValuePairs kvpairs;
-    SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
-    DependencyNames dependencyNames = loadDependencyNames(tx);
+    SqlDatabase::TransactionPtr tx;
+    DependencyNames dependencyNames;
+    if (boost::starts_with(settings.databaseUri, "file://")) {
+        if (!settings.dryRun) {
+            mlog[FATAL] <<"file database can only be used with --dry-run\n";
+            exit(1);
+        }
+        std::string fileName = settings.databaseUri.substr(7);
+        dependencyNames = loadDependencyNames(fileName);
+    } else {
+        tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+        dependencyNames = loadDependencyNames(tx);
+    }
+    extraDependencies(dependencyNames);
+
     BOOST_FOREACH (const std::string &kvpair, kvlist) {
         size_t eq = kvpair.find('=');
         if (eq == std::string::npos) {
@@ -198,18 +248,25 @@ main(int argc, char *argv[]) {
     kvpairs.insertMaybe("tester", getTester());
         
     // Generate SQL to insert this information.
-    SqlDatabase::StatementPtr insert = tx->statement("insert into test_results (" +
-                                                     StringUtility::join(", ", kvpairs.keys()) +
-                                                     ") values (" +
-                                                     StringUtility::join(", ", std::vector<std::string>(kvpairs.size(), "?")) +
-                                                     ") returning id");
     int idx = 0;
-    BOOST_FOREACH (const std::string &val, kvpairs.values())
-        insert->bind(idx++, val);
-    idx = insert->execute_int();
-
+    if (tx != NULL) {
+        SqlDatabase::StatementPtr insert = tx->statement("insert into test_results (" +
+                                                         StringUtility::join(", ", kvpairs.keys()) +
+                                                         ") values (" +
+                                                         StringUtility::join(", ",
+                                                                             std::vector<std::string>(kvpairs.size(), "?")) +
+                                                         ") returning id");
+        BOOST_FOREACH (const std::string &val, kvpairs.values())
+            insert->bind(idx++, val);
+        idx = insert->execute_int();
+    }
+    
     if (settings.dryRun) {
-        mlog[WARN] <<"test record #" <<idx <<" not inserted (running with --dry-run)\n";
+        if (idx >= 0) {
+            mlog[WARN] <<"test record #" <<idx <<" not inserted (running with --dry-run)\n";
+        } else {
+            mlog[WARN] <<"test record not inserted (no database and/or running with --dry-run)\n";
+        }
     } else {
         tx->commit();
         mlog[INFO] <<"inserted test record #" <<idx <<"\n";

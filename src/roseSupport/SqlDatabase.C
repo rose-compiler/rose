@@ -4,9 +4,11 @@
 #include "SqlDatabase.h"
 #include "string_functions.h" // i.e., namespace StringUtility
 
+#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #ifndef _MSC_VER
 #include <sys/time.h>
 #else
@@ -109,6 +111,7 @@ public:
 
 };
 
+#ifdef ROSE_HAVE_SQLITE3
 static std::string
 sqlite3_url_documentation() {
     return ("@named{SQLite3}{The uniform resource locator for SQLite3 databases has the format "
@@ -119,8 +122,8 @@ sqlite3_url_documentation() {
             "Each parameter has an optional setting. At this time, the only parameter that is understood is "
             "\"debug\", which takes no value.}");
 }
+#endif
 
-#ifdef ROSE_HAVE_SQLITE3
 // Parse an sqlite3 URL of the form:
 //    sqlite3://FILENAME[?PARAM1[=VALUE1]&...]
 // The only parameter that's currently understood is "debug", which turns on the debug property for the connection.
@@ -166,7 +169,6 @@ sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
     }
     return dbname;
 }
-#endif
 
 static std::string
 postgres_url_documentation() {
@@ -181,7 +183,6 @@ postgres_url_documentation() {
             "to be emitted to standard error as it's executed.}");
 }
 
-#ifdef ROSE_HAVE_LIBPQXX
 // Documentation for lipqxx says pqxx::connection's argument is whatever libpq connect takes, but apparently URLs don't work.
 // This function converts a postgresql connection URL into an old-style libpq connection string.  A url is of the form:
 //    postgresql://[USER[:PASSWORD]@][NETLOC][:PORT][/DBNAME][?PARAM1[=VALUE1]&...]
@@ -289,7 +290,6 @@ postgres_parse_url(const std::string &src, bool *has_debug/*in,out*/)
     std::string retval = StringUtility::listToString(params);
     return retval;
 }
-#endif
 
 size_t
 ConnectionImpl::conn_for_transaction()
@@ -454,6 +454,21 @@ std::string
 Connection::openspec() const
 {
     return impl->open_spec;
+}
+
+// class method
+std::string
+Connection::connectionSpecification(const std::string &url, Driver driver) {
+    if (NO_DRIVER == driver)
+        driver = guess_driver(url);
+    switch (driver) {
+        case SQLITE3:
+            return sqlite3_parse_url(url, NULL);
+        case POSTGRESQL:
+            return postgres_parse_url(url, NULL);
+        default:
+            throw Exception("no suitable driver for \"" + url + "\"");
+    }
 }
 
 TransactionPtr
@@ -844,6 +859,7 @@ public:
     StatementPtr bind(const StatementPtr &stmt, size_t idx, uint64_t);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, double);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::string&);
+    std::vector<size_t> findSubstitutionQuestionMarks(const std::string&);
     std::string expand();
     size_t begin(const StatementPtr &stmt);
     void print(std::ostream&) const;
@@ -864,6 +880,23 @@ public:
 #endif
 };
 
+// Finds '?' in an SQL statement that correspond to the points where positional arguments are bound. These are
+// question marks that are outside things like string literals.
+std::vector<size_t>
+StatementImpl::findSubstitutionQuestionMarks(const std::string &sql) {
+    std::vector<size_t> retval;
+    bool inStringLiteral = false;
+    for (size_t i=0; i<sql.size(); ++i) {
+        if ('\'' == sql[i]) {                           // quotes are escaped by doubling them
+            inStringLiteral = !inStringLiteral;
+        } else if ('?' == sql[i]) {
+            if (!inStringLiteral)
+                retval.push_back(i);
+        }
+    }
+    return retval;
+}
+
 void
 StatementImpl::init()
 {
@@ -872,10 +905,9 @@ StatementImpl::init()
     sqlite3_cursor = NULL;
 #endif
 
-    for (size_t i=0; i<sql.size(); ++i) {
-        if ('?'==sql[i])
-            placeholders.push_back(std::make_pair(i, std::string()));
-    }
+    std::vector<size_t> qmarks = findSubstitutionQuestionMarks(sql);
+    BOOST_FOREACH (size_t i, qmarks)
+        placeholders.push_back(std::make_pair(i, std::string()));
 }
 
 void
@@ -953,25 +985,16 @@ StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::string &val
     return stmt;
 }
 
+// Expand some SQL by replacing substitution '?' with the value of the corresponding bound argument.
 std::string
 StatementImpl::expand()
 {
-    std::string s;
-    size_t sz = sql.size();
-    size_t nph = 0;
-    for (size_t i=0; i<sz; ++i) {
-        if ('?'==sql[i]) {
-            assert(nph<placeholders.size());
-            s += placeholders[nph++].second;
-        } else if (isspace(sql[i]) && s.empty()) {
-            // skip leading white space
-        } else {
-            s += sql[i];
-        }
+    std::string s = sql;
+    for (size_t i=placeholders.size(); i>0; --i) {
+        ASSERT_require(placeholders[i-1].first < s.size());
+        s.replace(placeholders[i-1].first, 1, placeholders[i-1].second);
     }
-    size_t end = s.find_last_not_of(" \t\n\r");
-    if (end!=std::string::npos)
-        s = s.substr(0, end+1);
+    boost::trim(s);
     return s;
 }
 

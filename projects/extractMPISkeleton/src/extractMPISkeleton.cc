@@ -1,5 +1,4 @@
 #include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
 
 #include "rose.h"
 
@@ -15,6 +14,7 @@
 
 #include <Outliner.hh>
 #include <staticSingleAssignment.h>
+#define foreach BOOST_FOREACH
 
 int main(int argc, char **argv) {
 

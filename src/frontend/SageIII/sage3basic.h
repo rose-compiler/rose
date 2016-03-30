@@ -39,7 +39,9 @@
 #include "rosedll.h"
 //tps (05/04/2010): Added compatibility
 #ifdef _MSC_VER
+# if _MSC_VER < 1900
   #define snprintf _snprintf
+# endif
 #endif
 
 // George Vulov (Aug. 23, 2010): This macro is not available in OS X by default

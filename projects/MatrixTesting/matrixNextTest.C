@@ -1,6 +1,9 @@
 #include <rose.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 #include <cstring>
 #include <LinearCongruentialGenerator.h>
 #include <Sawyer/CommandLine.h>
@@ -12,7 +15,8 @@ using namespace Sawyer::Message::Common;
 enum OutputMode {
     OUTPUT_SHELL,                                       // shell script variables "boost=1.59 build=autoconf compiler=gcc-4.8"
     OUTPUT_HUMAN,                                       // one key-value pair per line of output for human consumption
-    OUTPUT_RMC                                          // output RMC specification
+    OUTPUT_RMC,                                         // output RMC specification
+    OUTPUT_OVERRIDES                                    // output entire space as "OVERRIDE_*='VALUES...'"
 };
 
 struct Settings {
@@ -51,11 +55,13 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .argument("style", enumParser<OutputMode>(settings.outputMode)
                         ->with("human", OUTPUT_HUMAN)
                         ->with("rmc", OUTPUT_RMC)
-                        ->with("shell", OUTPUT_SHELL))
+                        ->with("shell", OUTPUT_SHELL)
+                        ->with("overrides", OUTPUT_OVERRIDES))
               .doc("Style of output. The possibilities are:"
                    " @named{human}{Output in a human-friendly format. This is the default.}"
                    " @named{rmc}{Output an RMC specification.}"
-                   " @named{shell}{Output one line of space-separated key=value pairs.}"));
+                   " @named{shell}{Output one line of space-separated key=value pairs.}"
+                   " @named{overrides}{Output entire configuration space as shell OVERRIDE variables.}"));
 
     if (!parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs().empty()) {
         mlog[FATAL] <<"invalid usage; see --help\n";
@@ -65,12 +71,44 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
 typedef Sawyer::Container::Map<std::string /*dependency*/, std::vector<std::string>/*versions*/> Dependencies;
 
+// Load all dependendencies from the database
 static Dependencies
 loadAllDependencies(const SqlDatabase::TransactionPtr &tx) {
     Dependencies dependencies;
     SqlDatabase::StatementPtr q = tx->statement("select name, value from dependencies where enabled <> 0");
     for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
         dependencies.insertMaybeDefault(row.get<std::string>(0)).push_back(row.get<std::string>(1));
+    return dependencies;
+}
+
+// Load all dependencies from a file. Each line of the file should be a line like what's output by the "--format=overrides"
+// switch.
+static Dependencies
+loadAllDependencies(const std::string &fileName) {
+    Dependencies dependencies;
+    char buf[4096];
+    unsigned lineNum = 0;
+    boost::regex varValRe("OVERRIDE_([A-Z_]+)='?(.*?)'?");
+    std::ifstream in(fileName.c_str());
+    while (1) {
+        in.getline(buf, sizeof buf);
+        if (in.eof())
+            break;
+        if (!in.good()) {
+            mlog[FATAL] <<fileName <<":" <<lineNum <<": read failed\n";
+            exit(1);
+        }
+
+        ++lineNum;
+        std::string s = buf;
+        boost::smatch captures;
+        if (!boost::regex_match(s, captures, varValRe)) {
+            mlog[FATAL] <<fileName <<":" <<lineNum <<": invalid dependency info: \"" <<StringUtility::cEscape(buf) <<"\"\n";
+            exit(1);
+        }
+        std::string name = boost::to_lower_copy(captures.str(1));
+        dependencies.insert(name, StringUtility::split(" ", captures.str(2)));
+    }
     return dependencies;
 }
 
@@ -94,19 +132,14 @@ shellEscape(const std::string &s) {
     return escaped;
 }
 
-int
-main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
-    mlog = Sawyer::Message::Facility("tool");
-    Sawyer::Message::mfacilities.insertAndAdjust(mlog);
+static void
+listEntireSpace(const Dependencies &dependencies) {
+    BOOST_FOREACH (const Dependencies::Node &node, dependencies.nodes())
+        std::cout <<"OVERRIDE_" <<boost::to_upper_copy(node.key()) <<"=" <<shellEscape(boost::join(node.value(), " ")) <<"\n";
+}
 
-    Settings settings;
-    parseCommandLine(argc, argv, settings);
-
-    SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
-    Dependencies dependencies = loadAllDependencies(tx);
-
-    // For each dependency, select a random version
+static void
+showRandomPoint(const Settings &settings, const Dependencies &dependencies) {
     LinearCongruentialGenerator prand;
     BOOST_FOREACH (const Dependencies::Node &node, dependencies.nodes()) {
         size_t idx = prand() % node.value().size();
@@ -120,8 +153,35 @@ main(int argc, char *argv[]) {
             case OUTPUT_SHELL:
                 std::cout <<" " <<node.key() <<"=" <<shellEscape(node.value()[idx]);
                 break;
+            default:
+                ASSERT_not_reachable("output format not handled");
         }
     }
     if (settings.outputMode == OUTPUT_SHELL)
         std::cout <<"\n";
+}
+
+int
+main(int argc, char *argv[]) {
+    Sawyer::initializeLibrary();
+    mlog = Sawyer::Message::Facility("tool");
+    Sawyer::Message::mfacilities.insertAndAdjust(mlog);
+
+    Settings settings;
+    parseCommandLine(argc, argv, settings);
+
+    Dependencies dependencies;
+    if (boost::starts_with(settings.databaseUri, "file://")) {
+        std::string fileName = settings.databaseUri.substr(7);
+        dependencies = loadAllDependencies(fileName);
+    } else {
+        SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+        dependencies = loadAllDependencies(tx);
+    }
+
+    if (OUTPUT_OVERRIDES == settings.outputMode) {
+        listEntireSpace(dependencies);
+    } else {
+        showRandomPoint(settings, dependencies);
+    }
 }

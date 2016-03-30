@@ -8,6 +8,7 @@
 #include "Map.h"
 
 #include <cassert>
+#include <boost/any.hpp>
 #include <inttypes.h>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
@@ -96,9 +97,15 @@ class Node;
 class Interior;
 class Leaf;
 
+/** Shared-ownership pointer to an expression @ref Node. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<Node> Ptr;
+
+/** Shared-ownership pointer to an expression @ref Interior node. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<Interior> InteriorPtr;
+
+/** Shared-ownership pointer to an expression @ref Leaf node. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<Leaf> LeafPtr;
+
 typedef std::vector<Ptr> Nodes;
 typedef Map<uint64_t, uint64_t> RenameMap;
 
@@ -197,6 +204,7 @@ protected:
     unsigned flags_;                  /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
     std::string comment_;             /**< Optional comment. Only for debugging; not significant for any calculation. */
     uint64_t hashval_;                /**< Optional hash used as a quick way to indicate that two expressions are different. */
+    mutable boost::any userData_;     /**< Additional user-specified data. This is not part of the hash. */
 
 public:
     // Bit flags
@@ -317,6 +325,21 @@ public:
     void set_comment(const std::string &s) ROSE_DEPRECATED("use 'comment' property instead") {
         comment(s);
     }
+
+    /** Property: User-defined data.
+     *
+     *  User defined data is always optional and does not contribute to the hash value of an expression. The user-defined data
+     *  can be changed at any time by the user even if the expression node to which it is attached is shared between many
+     *  expressions.
+     *
+     * @{ */
+    void userData(boost::any &data) {
+        userData_ = data;
+    }
+    const boost::any& userData() {
+        return userData_;
+    }
+    /** @} */
 
     /** Property: Number of significant bits.
      *
