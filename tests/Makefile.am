@@ -5,7 +5,7 @@ include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
 # we are supporting only Fortran then we can at least run the Fortran tests (same with PHP).
 # SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests translatorTests
 # SUBDIRS = CompileTests roseTests
-SUBDIRS = . CompileTests
+SUBDIRS = . UnitTests CompileTests
 
 if !ROSE_USE_CLANG_FRONTEND
 
