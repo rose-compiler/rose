@@ -344,9 +344,14 @@ FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph &cg/*out*/)
                 return;
             const SgAsmIntegerValuePtrList &succs = block_a->get_successors();
             for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
-                SgAsmBlock *block_b = isSgAsmBlock((*si)->get_baseNode()); /* the called block */
-                SgAsmFunction *func_b = function_of(block_b); /* the called function */
-                if (func_b && block_b==func_b->get_entry_block() && !analyzer->is_edge_filtered(func_a, func_b)) {
+                SgAsmFunction *func_b = isSgAsmFunction((*si)->get_baseNode()); // the called function
+                if (func_b == NULL) {
+                    SgAsmBlock *block_b = isSgAsmBlock((*si)->get_baseNode()); /* the called block */
+                    func_b = function_of(block_b); /* the called function */
+                    if (func_b && func_b->get_entry_va() != block_b->get_address())
+                        continue;
+                }
+                if (func_b && !analyzer->is_edge_filtered(func_a, func_b)) {
                     typename FunctionVertexMap::iterator fi_b = fv_map.find(func_b); /* find vertex for called function */
                     if (fi_b!=fv_map.end())
                         boost::add_edge(source_vertex, fi_b->second, cg);
