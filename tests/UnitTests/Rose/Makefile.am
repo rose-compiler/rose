@@ -3,14 +3,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #------------------------------------------------------------------------------
 # Subdirectories
 #------------------------------------------------------------------------------
-SUBDIRS =         \
-	.               \
-	Rose
+SUBDIRS = \
+	SageBuilder
 
 #------------------------------------------------------------------------------
 # Global Build Flags
 #------------------------------------------------------------------------------
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/UnitTests/include/
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD       = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------
@@ -25,14 +24,25 @@ librose:
 #------------------------------------------------------------------------------
 all-local: librose
 
-check-local:
+check-local: $(TEST_TARGETS)
 
-clean-local:
-	rm -f $(TEST_TARGETS)
+$(TEST_TARGETS):
+	@$(RTH_RUN) CMD="./$(@:.test=)" $(top_srcdir)/scripts/test_exit_status $@
 
 #------------------------------------------------------------------------------
-lib_LTLIBRARIES = libcommon.la
+# Unit Tests
+#------------------------------------------------------------------------------
+# MODIFY THIS SECTION TO ADD NEW TESTS:
+#
+#   1. Add executable name to PASSING_TEST_EXECUTABLES
+#   2. Add new <EXECUTABLE>_SOURCES variable listing the executable's source
+#------------------------------------------------------------------------------
+PASSING_TEST_EXECUTABLES =
 
-libcommon_la_SOURCES = common.C
+#------------------------------------------------------------------------------
+TEST_TARGETS = ${PASSING_TEST_EXECUTABLES:=.test}
+
+check_PROGRAMS = \
+	$(PASSING_TEST_EXECUTABLES)
 #------------------------------------------------------------------------------
 

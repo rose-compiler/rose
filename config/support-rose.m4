@@ -2119,6 +2119,8 @@ projects/TileK/doc/tilek-cuda.doxy
 projects/TileK/doc/tilek-rtl-cuda.doxy
 tests/Makefile
 tests/UnitTests/Makefile
+tests/UnitTests/Rose/Makefile
+tests/UnitTests/Rose/SageBuilder/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
