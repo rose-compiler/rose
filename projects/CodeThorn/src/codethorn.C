@@ -914,7 +914,7 @@ int main( int argc, char * argv[] ) {
   }
   cout << "INIT: Checking input program."<<endl;
   CodeThornLanguageRestrictor lr;
-  lr.checkProgram(root);
+  //lr.checkProgram(root);
   timer.start();
 
   //cout << "INIT: Running variable<->symbol mapping check."<<endl;
