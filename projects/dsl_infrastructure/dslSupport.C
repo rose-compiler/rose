@@ -873,14 +873,14 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
 
           if (classType != NULL)
              {
-#if 1
+#if 0
                printf ("In isDslVariable(): case SgClassType: class name = %s \n",classType->get_name().str());
 #endif
             // Check if this is associated with a template instantiation.
                SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(classType->get_declaration());
                if (templateInstantiationDecl != NULL)
                   {
-#if 1
+#if 0
                     printf ("case SgTemplateInstaiationDecl: class name = %s \n",classType->get_name().str());
                     printf ("case SgTemplateInstaiationDecl: templateInstantiationDecl->get_templateName() = %s \n",templateInstantiationDecl->get_templateName().str());
 #endif
@@ -929,14 +929,14 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
                       // string className = classDeclaration->get_name();
                       // string className = SageInterface::generateUniqueName (classDeclaration);
                          string className = SageInterface::generateUniqueNameForUseAsIdentifier(classDeclaration);
-
+#if 0
                       // DQ (3/22/2016): Output the date collected from the DSL compiler's geneated code.
                          printf ("className = %s dsl_type_names.size()            = %zu \n",className.c_str(),dsl_type_names.size());
                          for (size_t i = 0; i < dsl_type_names.size(); i++)
                             {
                               printf ("   --- dsl_type_name[%zu] = %s \n",i,dsl_type_names[i].c_str());
                             }
-
+#endif
                          std::vector<std::string>::iterator it = find(dsl_type_names.begin(),dsl_type_names.end(),className);
                          if (it != dsl_type_names.end())
                             {
@@ -966,7 +966,7 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
                   }
              }
 
-#if 1
+#if 0
           printf ("Found a DSL variable declaration \n");
 #endif
 #if 0
@@ -999,12 +999,19 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
             // Check if this is found a bit deeper.
                if (varRefExp == NULL)
                   {
+                    ROSE_ASSERT(dotExp->get_lhs_operand() != NULL);
                     SgArrowExp* arrowExp   = isSgArrowExp(dotExp->get_lhs_operand());
                     if (arrowExp != NULL)
                        {
                          varRefExp = isSgVarRefExp(arrowExp->get_rhs_operand());
                        }
-                    ROSE_ASSERT(varRefExp != NULL);
+
+                 // DQ (4/1/2016): Added error checking.
+                    if (varRefExp == NULL)
+                       {
+                         printf ("In isDslFunction(): case SgDotExp: Skipping this case: dotExp->get_lhs_operand() = %p = %s \n",dotExp->get_lhs_operand(),dotExp->get_lhs_operand()->class_name().c_str());
+                       }
+                 // ROSE_ASSERT(varRefExp != NULL);
                   }
 
                if (varRefExp != NULL && memberFunctionRefExp != NULL)
@@ -1014,10 +1021,10 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                     SgInitializedName* initializedName = variableSymbol->get_declaration();
                     ROSE_ASSERT(initializedName != NULL);
 
+#if 0
                     SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
-
                     printf ("In isDslFunction(): case SgDotExp: found function ref name = %s from variable reference for variable name = %s \n",memberFunctionSymbol->get_name().str(),initializedName->get_name().str());
-
+#endif
                 // Add attribute
 #if 0
                    array_assignment_operator_dsl_attribute* dslAttribute = new array_assignment_operator_dsl_attribute();
@@ -1042,8 +1049,9 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                   }
 
                string memberFunctionName = memberFunctionRefExp->get_symbol()->get_name();
+#if 0
                printf ("In isDslFunction(): case SgDotExp: found memberFunctionName = %s \n",memberFunctionName.c_str());
-
+#endif
                std::vector<std::string>::iterator it = find(dsl_function_names.begin(),dsl_function_names.end(),memberFunctionName);
                if (it != dsl_function_names.end())
                   {
@@ -1072,7 +1080,9 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                             {
                            // string className = classDeclaration->get_name();
                               string className = SageInterface::generateUniqueNameForUseAsIdentifier(classDeclaration);
+#if 0
                               printf ("In isDslFunction(): case SgDotExp: case function returning DSL type: class name = %s \n",className.c_str());
+#endif
                             }
                        }
 #if 0
@@ -1090,7 +1100,9 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
 
                string memberFunctionName = memberFunctionSymbol->get_name();
+#if 0
                printf ("In isDslFunction(): case SgMemberFunctionRefExp: memberFunctionName = %s \n",memberFunctionName.c_str());
+#endif
              }
 
           SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
@@ -1098,36 +1110,39 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
              {
             // We might have to narrow these to the specific cases were are interested in.
                SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
-
+#if 0
                printf ("***** functionSymbol->get_name() = %s \n",functionSymbol->get_name().str());
-
+#endif
             // DQ: Added support for new attribute.
                SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
                ROSE_ASSERT(functionDeclaration != NULL);
-
+#if 0
                printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
-
+#endif
                SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
             // ROSE_ASSERT(templateInstantiationFunctionDecl != NULL);
-
+#if 0
                if (templateInstantiationFunctionDecl != NULL)
                   {
                     printf ("--- templateInstantiationFunctionDecl->get_name() = %s \n",templateInstantiationFunctionDecl->get_name().str());
                  // printf ("--- templateInstantiationFunctionDecl->get_template_name() = %s \n",templateInstantiationFunctionDecl->get_template_name().str());
                     printf ("--- templateInstantiationFunctionDecl->get_templateName() = %s \n",templateInstantiationFunctionDecl->get_templateName().str());
                   }
-
+#endif
                if (templateInstantiationFunctionDecl != NULL)
                   {
                     string templateName = (templateInstantiationFunctionDecl != NULL) ? templateInstantiationFunctionDecl->get_templateName() : "";
+#if 0
                     printf ("In isDslFunction(): (unique name mechanisms not used) templateName = %s \n",templateName.c_str());
+#endif
                   }
                  else
                   {
                  // string functionName = functionSymbol->get_name();
                     string functionName = SageInterface::generateUniqueNameForUseAsIdentifier(functionDeclaration);
+#if 0
                     printf ("In isDslFunction(): functionName = %s \n",functionName.c_str());
-
+#endif
 #if 0
                    plus_operator_dsl_attribute* dslAttribute = new plus_operator_dsl_attribute();
 #if 1

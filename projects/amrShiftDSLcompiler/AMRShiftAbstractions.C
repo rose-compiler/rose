@@ -43,3 +43,7 @@ std::vector< std::pair<std::string,std::string> > dsl_member_function_names = { 
 // std::vector<std::pair<std::string,dsl_attribute> > dsl_attribute_list = { {"array", array_dsl_attribute()} };
 std::map<std::string,dsl_attribute> dsl_attribute_map = { {"EXAMPLE_CLASS", dsl_attribute()} };
 
+
+// Specify explicit instantiations for any templated DSL abstraction that need DSL support.
+// Tensor<double>
+LevelData<double> X1;

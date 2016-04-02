@@ -13,6 +13,9 @@ public:
   unsigned int low; ///< Lower bound of Interval
   unsigned int high;///< Upper bound of Interval
 
+  // DQ (3/31/2016): We need every DSL abstraction class currently to have a default constructor.
+  Interval() : low(0), high(0) {}
+
   /// Construct an Interval given upper and lower bounds as unsigned integers. 
   Interval(const unsigned int & a_low, 
    const unsigned int & a_high)
@@ -26,7 +29,8 @@ public:
 /**
   Tensor is used mostly for implementing pointwise operators on RectMDArrays. See the documentation for forall for more information.
 */
-#pragma DSL keyword
+// DQ (3/26/2016): See if we can avoid making this template a DSL abstraction for this next version of the automated DSL compiler.
+// #pragma DSL keyword
 template<class T, unsigned int C, unsigned char... RestD>
 class Tensor : public std::function<T&(unsigned int,decltype(RestD)...)>
 {
@@ -45,7 +49,8 @@ public:
 /**
   Version of Tensor used with const functions. 
 */
-#pragma DSL keyword
+// DQ (3/26/2016): See if we can avoid making this template a DSL abstraction for this next version of the automated DSL compiler.
+// #pragma DSL keyword
 template<class T, unsigned int C, unsigned char... RestD>
 class CTensor : public std::function<const T&(unsigned int,decltype(RestD)...)>
 {

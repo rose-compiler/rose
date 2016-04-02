@@ -88,7 +88,7 @@ DetectionTraversal::evaluateInheritedAttribute (SgNode* astNode, Detection_Inher
   // DQ (2/3/2016): Recognize IR nodes that are representative of target DSL abstractions.
      bool foundTargetDslAbstraction = DSL_Support::isDslAbstraction(astNode);
 
-#if 1
+#if 0
      printf ("In DetectionTraversal::evaluateInheritedAttribute(): astNode = %p = %s: foundTargetDslAbstraction = %s \n",astNode,astNode->class_name().c_str(),foundTargetDslAbstraction ? "true" : "false");
 #endif
 
@@ -194,7 +194,7 @@ DetectionTraversal::evaluateInheritedAttribute (SgNode* astNode, Detection_Inher
         }
 #endif
 
-#if 1
+#if 0
      printf ("Leaving DetectionTraversal::evaluateInheritedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
@@ -210,7 +210,7 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
 
      Detection_SynthesizedAttribute return_synthesizedAttribute(astNode);
 
-#if 1
+#if 0
      printf ("In evaluateSynthesizedAttribute(): astNode = %p = %s synthesizedAttributeList.size() = %zu dslChildren.size() = %zu \n",
           astNode,astNode->class_name().c_str(),synthesizedAttributeList.size(),return_synthesizedAttribute.dslChildren.size());
 #endif
@@ -239,8 +239,11 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
              }
             else
              {
-#if 1
-               printf ("childNode == NULL \n");
+            // The element will be a NULL pointer when there was no SynthesizedAttribute passed from the subtree to the parent, this is OK.
+#if 0
+               printf ("In evaluateSynthesizedAttribute(): in loop childNode == NULL: astNode = %p = %s synthesizedAttributeList.size() = %zu dslChildren.size() = %zu \n",
+                    astNode,astNode->class_name().c_str(),synthesizedAttributeList.size(),return_synthesizedAttribute.dslChildren.size());
+            // printf ("In evaluateSynthesizedAttribute(): childNode == NULL \n");
 #endif
              }
         }
@@ -300,12 +303,12 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
         }
        else
         {
-#if 1
+#if 0
           printf ("no attributes: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
         }
 
-#if 1
+#if 0
      printf ("Leaving evaluateSynthesizedAttribute(): return_synthesizedAttribute.dslChildren.size() = %zu \n",return_synthesizedAttribute.dslChildren.size());
 #endif
 
