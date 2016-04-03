@@ -227,6 +227,22 @@ fi
     done
     echo "])"
 ) >config/support-projects.m4
+
+###############################################################################################################################
+# Read the ROSE version string from the first line of the "ROSE_VERSION" file and insert it wherever it's needed.
+###############################################################################################################################
+
+if [ ! -r ROSE_VERSION ]; then
+    echo "$0: cannot find the 'ROSE_VERSION' file containing the ROSE version string" >&2
+    exit 1
+fi
+rose_version=$(head -n1 ROSE_VERSION)
+if [ "$rose_version" = "" ]; then
+    echo "$0: 'ROSE_VERSION' file does not contain a ROSE version string" >&2
+    exit 1
+fi
+
+sed -i~ -e '/^AC_INIT(/ s/^\(AC_INIT *(\[.*\], *\[\).*\(\] *).*\)/\1'"$rose_version"'\2/' configure.ac
 	
 ###############################################################################################################################
 # Run autoconf tools: aclocal, autoheader, autoconf, and automake
