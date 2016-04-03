@@ -92,6 +92,14 @@ DetectionTraversal::evaluateInheritedAttribute (SgNode* astNode, Detection_Inher
      printf ("In DetectionTraversal::evaluateInheritedAttribute(): astNode = %p = %s: foundTargetDslAbstraction = %s \n",astNode,astNode->class_name().c_str(),foundTargetDslAbstraction ? "true" : "false");
 #endif
 
+     if (foundTargetDslAbstraction == true)
+        {
+       // Lookup the associated attribute class in the dsl_attribute_map and call the copy constructor to build 
+       // the attribute and attach it to the correct IR node.  It turns out that we need the info in the function
+       // that evaluated if this was an attribute, so we don't have enough information at this point.
+        }
+
+
 #if 0
   // OLD CODE (represented by DSL_Support::isDslAbstraction() function).
 

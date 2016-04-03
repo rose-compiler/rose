@@ -852,7 +852,7 @@ DSL_Support::checkAndResetToMakeConsistantCompilerGenerated ( SgInitializedName*
    }
 
 
-#define DEBUG_DETECTED_VARIABLES 0
+#define DEBUG_DETECTED_VARIABLES 1
 
 bool DSL_Support::isDslVariable(SgNode* astNode)
    {
@@ -877,92 +877,62 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
 #if 0
                printf ("In isDslVariable(): case SgClassType: class name = %s \n",classType->get_name().str());
 #endif
-            // Check if this is associated with a template instantiation.
-               SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(classType->get_declaration());
-               if (templateInstantiationDecl != NULL)
+            // Better version of code.
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+               if (classDeclaration != NULL)
                   {
+                 // DQ (3/22/2016): Use new mechanism that will work across translation units.
+                 // string className = classDeclaration->get_name();
+                 // string className = SageInterface::generateUniqueName (classDeclaration);
+                    string className = SageInterface::generateUniqueNameForUseAsIdentifier(classDeclaration);
 #if 0
-                    printf ("case SgTemplateInstaiationDecl: class name = %s \n",classType->get_name().str());
-                    printf ("case SgTemplateInstaiationDecl: templateInstantiationDecl->get_templateName() = %s \n",templateInstantiationDecl->get_templateName().str());
+                 // DQ (3/22/2016): Output the date collected from the DSL compiler's geneated code.
+                    printf ("className = %s dsl_type_names.size()            = %zu \n",className.c_str(),dsl_type_names.size());
+                    for (size_t i = 0; i < dsl_type_names.size(); i++)
+                       {
+                         printf ("   --- dsl_type_name[%zu] = %s \n",i,dsl_type_names[i].c_str());
+                       }
 #endif
-                 // inheritedAttribute.set_StencilDeclaration(templateInstantiationDecl->get_templateName() == "Stencil");
-                 // inheritedAttribute.set_StencilOperatorDeclaration(templateInstantiationDecl->get_templateName() == "StencilOperator");
-
-                 // if (templateInstantiationDecl->get_templateName() == "Stencil")
-                    string templateName = templateInstantiationDecl->get_templateName();
-                    std::vector<std::string>::iterator it = find(dsl_type_names.begin(),dsl_type_names.end(),templateName);
+                    std::vector<std::string>::iterator it = find(dsl_type_names.begin(),dsl_type_names.end(),className);
                     if (it != dsl_type_names.end())
                        {
-                      // DQ (2/8/2015): Ignore compiler generated IR nodes (from template instantiations, etc.).
-                      // Note that simpleCNS.cpp generates one of these from it's use of the tuple template and associated template instantations.
-
-                      // DQ: Test the DSL support.
-                      // ROSE_ASSERT(isMatchingClassType(classType,"Stencil",true) == true);
-                         ROSE_ASSERT(isMatchingClassType(classType,templateName,true) == true);
-
+                      // Save the SgInitializedName associated with the Point type.
+#if DEBUG_DETECTED_VARIABLES
+                         printf ("Detected className = %s typed variable: initializedName = %p name = %s \n",className.c_str(),initializedName,initializedName->get_name().str());
+#endif
                          checkAndResetToMakeConsistantCompilerGenerated(initializedName);
 
                          if (initializedName->isCompilerGenerated() == false)
                             {
-                           // Save the SgInitializedName associated with the stencil.
-                           // stencilInitializedNameList.push_back(initializedName);
-                           // inheritedAttribute.set_StencilDeclaration(true);
-                           // foundStencilVariable = true;
-#if DEBUG_DETECTED_VARIABLES
-                              printf ("In isDslVariable(): detected templateName = %s typed variable: initializedName = %p name = %s \n",templateName.c_str(),initializedName,initializedName->get_name().str());
-                           // printf ("   --- stencilInitializedNameList.size() = %zu \n",stencilInitializedNameList.size());
-#endif
 #if 0
-                              initializedName->get_file_info()->display("In isDslVariable(): initializedName : debug");
-#endif
-                              returnValue = true;
-                            }
-                       }
-                  }
-                 else
-                  {
-                    ROSE_ASSERT(templateInstantiationDecl == NULL);
-
-                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                    if (classDeclaration != NULL)
-                       {
-                      // DQ (3/22/2016): Use new mechanism that will work across translation units.
-                      // string className = classDeclaration->get_name();
-                      // string className = SageInterface::generateUniqueName (classDeclaration);
-                         string className = SageInterface::generateUniqueNameForUseAsIdentifier(classDeclaration);
+                              array_dsl_attribute* dslAttribute = new array_dsl_attribute();
 #if 0
-                      // DQ (3/22/2016): Output the date collected from the DSL compiler's geneated code.
-                         printf ("className = %s dsl_type_names.size()            = %zu \n",className.c_str(),dsl_type_names.size());
-                         for (size_t i = 0; i < dsl_type_names.size(); i++)
-                            {
-                              printf ("   --- dsl_type_name[%zu] = %s \n",i,dsl_type_names[i].c_str());
-                            }
+                              printf ("Adding (array_dsl_attribute to dsl variable) dslAttribute = %p \n",dslAttribute);
 #endif
-                         std::vector<std::string>::iterator it = find(dsl_type_names.begin(),dsl_type_names.end(),className);
-                         if (it != dsl_type_names.end())
-                            {
-                           // Save the SgInitializedName associated with the Point type.
-#if DEBUG_DETECTED_VARIABLES
-                              printf ("Detected className = %s typed variable: initializedName = %p name = %s \n",className.c_str(),initializedName,initializedName->get_name().str());
-#endif
-                              checkAndResetToMakeConsistantCompilerGenerated(initializedName);
+                              ROSE_ASSERT(dslAttribute != NULL);
 
-                              if (initializedName->isCompilerGenerated() == false)
-                                 {
+                           // virtual void addNewAttribute (std::string s, AstAttribute *a);   
+                              initializedName->addNewAttribute(className,dslAttribute);
+#endif
+                            }
+
+                         returnValue = true;
+
+                      // At this point we have the information that we need to lookup the attribute in the dsl_attribute_map.
+                         ROSE_ASSERT(dsl_attribute_map.find(className) != dsl_attribute_map.end());
+
+                      // We might use a virtual factory function to generate a copy of the attribute (but the copy constructor might work).
+                      // dsl_attribute* attribute = new dsl_attribute(dsl_attribute_map[className]);
+                      // dsl_attribute* attribute = dsl_attribute_map[className].second.factory_copy();
+                      // dsl_attribute attribute_in_map = dsl_attribute_map[className];
+                      // dsl_attribute* attribute = dsl_attribute_map[className].factory_copy();
+                      // dsl_attribute* attribute = dsl_attribute_map[className];
+                         dsl_attribute* attribute = dsl_attribute_map[className]->factory_copy();
+                         ROSE_ASSERT(attribute != NULL);
 #if 0
-                                   array_dsl_attribute* dslAttribute = new array_dsl_attribute();
-#if 1
-                                   printf ("Adding (array_dsl_attribute to dsl variable) dslAttribute = %p \n",dslAttribute);
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
 #endif
-                                   ROSE_ASSERT(dslAttribute != NULL);
-
-                                // virtual void addNewAttribute (std::string s, AstAttribute *a);   
-                                   initializedName->addNewAttribute(className,dslAttribute);
-#endif
-                                 }
-
-                              returnValue = true;
-                            }
                        }
                   }
              }
@@ -979,7 +949,7 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
    }
 
 
-#define DEBUG_DETECTED_FUNCTIONS 0
+#define DEBUG_DETECTED_FUNCTIONS 1
 
 bool DSL_Support::isDslFunction(SgNode* astNode)
    {
@@ -1057,7 +1027,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
 #endif
 #if 0
                    array_refexp_dsl_attribute* dslAttribute_refexp = new array_refexp_dsl_attribute();
-#if 1
+#if 0
                    printf ("Adding (array_refexp_dsl_attribute to dsl var ref) dslAttribute = %p \n",dslAttribute_refexp);
 #endif
                    ROSE_ASSERT(dslAttribute_refexp != NULL);
@@ -1067,21 +1037,6 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
 #endif
                   }
 
-#if 0
-               string memberFunctionName = memberFunctionRefExp->get_symbol()->get_name();
-#if 0
-               printf ("In isDslFunction(): case SgDotExp: found memberFunctionName = %s \n",memberFunctionName.c_str());
-#endif
-               std::vector<std::string>::iterator it = find(dsl_function_names.begin(),dsl_function_names.end(),memberFunctionName);
-               if (it != dsl_function_names.end())
-                  {
-                    printf ("Detected function call from DSL variable:  memberFunctionName = %s \n",memberFunctionName.c_str());
-#if 1
-                    printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
-#endif
-                  }
-#else
 #if 0
                printf ("Detected SgDotExp in evaluation of function call: varRefExp = %p arrowExp->get_lhs_operand() = %s memberFunctionRefExp = %p \n",
                     varRefExp,dotExp->get_lhs_operand()->class_name().c_str(),memberFunctionRefExp);
@@ -1111,8 +1066,18 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
-                  }
+                 // At this point we have the information that we need to lookup the attribute in the dsl_attribute_map.
+                    ROSE_ASSERT(dsl_attribute_map.find(memberFunctionName) != dsl_attribute_map.end());
+
+                 // We might use a virtual factory function to generate a copy of the attribute (but the copy constructor might work).
+                 // dsl_attribute* attribute = dsl_attribute_map[className]->factory_copy();
+                    dsl_attribute* attribute = dsl_attribute_map[memberFunctionName]->factory_copy();
+                    ROSE_ASSERT(attribute != NULL);
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
 #endif
+                  }
 
 #if 0
             // DQ (2/16/2015): Check for operator*() in "const Point hi = getOnes() * scalar;"
@@ -1167,6 +1132,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                   }
              }
 
+       // This case does not appear to be used for the DSL abstractions.
           SgArrowExp* arrowExp = isSgArrowExp(functionCallExp->get_function());
           if (arrowExp != NULL)
              {
@@ -1175,7 +1141,9 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
 
                bool supportedArrowExp = false;
 
-               SgVarRefExp* varRefExp = isSgVarRefExp(arrowExp->get_lhs_operand());
+            // This variable is not used anymore.
+            // SgVarRefExp* varRefExp = isSgVarRefExp(arrowExp->get_lhs_operand());
+
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
                ROSE_ASSERT(arrowExp->get_lhs_operand() != NULL);
 #if 0
@@ -1242,6 +1210,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                   }
              }
 
+       // This case does not appear to be used for the DSL abstractions.
        // This is the case for the apply function in the ShiftCalculus.
           SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionCallExp->get_function());
           if (memberFunctionRefExp != NULL)
@@ -1278,6 +1247,18 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                     printf ("Detected member function call from DSL (SgMemberFunctionRefExp):  associatedClassName = %s memberFunctionName = %s \n",associatedClassName.c_str(),memberFunctionName.c_str());
 #endif
                     returnValue = true;
+
+                 // At this point we have the information that we need to lookup the attribute in the dsl_attribute_map.
+                    ROSE_ASSERT(dsl_attribute_map.find(memberFunctionName) != dsl_attribute_map.end());
+
+                 // We might use a virtual factory function to generate a copy of the attribute (but the copy constructor might work).
+                 // dsl_attribute* attribute = dsl_attribute_map[className]->factory_copy();
+                    dsl_attribute* attribute = dsl_attribute_map[memberFunctionName]->factory_copy();
+                    ROSE_ASSERT(attribute != NULL);
+#if 1
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
                   }
 #if 0
                printf ("Exiting as a test! \n");
@@ -1285,64 +1266,13 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
 #endif
              }
 
+       // This case does not appear to be used for the DSL abstractions.
           SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
           if (functionRefExp != NULL)
              {
             // This kind of IR node in a SgFunctionCallExp is supported.
                supportedNode = true;
 
-#if 0
-            // We might have to narrow these to the specific cases were are interested in.
-               SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
-#if 0
-               printf ("***** functionSymbol->get_name() = %s \n",functionSymbol->get_name().str());
-#endif
-            // DQ: Added support for new attribute.
-               SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
-               ROSE_ASSERT(functionDeclaration != NULL);
-#if 0
-               printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
-#endif
-#endif
-#if 0
-               SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
-            // ROSE_ASSERT(templateInstantiationFunctionDecl != NULL);
-#if 0
-               if (templateInstantiationFunctionDecl != NULL)
-                  {
-                    printf ("--- templateInstantiationFunctionDecl->get_name() = %s \n",templateInstantiationFunctionDecl->get_name().str());
-                 // printf ("--- templateInstantiationFunctionDecl->get_template_name() = %s \n",templateInstantiationFunctionDecl->get_template_name().str());
-                    printf ("--- templateInstantiationFunctionDecl->get_templateName() = %s \n",templateInstantiationFunctionDecl->get_templateName().str());
-                  }
-#endif
-               if (templateInstantiationFunctionDecl != NULL)
-                  {
-                    string templateName = (templateInstantiationFunctionDecl != NULL) ? templateInstantiationFunctionDecl->get_templateName() : "";
-#if 1
-                    printf ("In isDslFunction(): (unique name mechanisms not used) templateName = %s \n",templateName.c_str());
-#endif
-                  }
-                 else
-                  {
-                 // string functionName = functionSymbol->get_name();
-                    string functionName = SageInterface::generateUniqueNameForUseAsIdentifier(functionDeclaration);
-#if 1
-                    printf ("In isDslFunction(): functionName = %s \n",functionName.c_str());
-#endif
-
-
-#if 0
-                   plus_operator_dsl_attribute* dslAttribute = new plus_operator_dsl_attribute();
-#if 1
-                   printf ("Adding (plus_operator_dsl_attribute to dsl function call) dslAttribute = %p \n",dslAttribute);
-#endif
-                   ROSE_ASSERT(dslAttribute != NULL);
-
-                // virtual void addNewAttribute (std::string s, AstAttribute *a);   
-                   functionCallExp->addNewAttribute(functionSymbol->get_name(),dslAttribute);
-#endif
-                  }
-#else
             // string functionName = functionRefExp->get_symbol()->get_name();
                SgFunctionDeclaration* functionDeclaration = functionRefExp->get_symbol()->get_declaration();
                ROSE_ASSERT(functionDeclaration != NULL);
@@ -1362,7 +1292,6 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                     ROSE_ASSERT(false);
 #endif
                   }
-#endif
              }
 
 
@@ -1471,7 +1400,7 @@ bool DSL_Support::isDslAbstraction(SgNode* astNode)
              {
             // Select the attribute for this DSL variable.
                ROSE_ASSERT(detectedDslFunction == false);
-#if 0
+#if 1
                printf ("Identified a DSL variable abstraction: astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
 #endif
              }
@@ -1590,7 +1519,8 @@ DSL_Support::dslProcessing(SgProject* project)
 
      printf ("dsl_attribute_map.size()         = %zu \n",dsl_attribute_map.size());
      size_t counter = 0;
-     for (std::map<std::string,dsl_attribute>::iterator i = dsl_attribute_map.begin(); i != dsl_attribute_map.end(); i++)
+  // for (std::map<std::string,dsl_attribute>::iterator i = dsl_attribute_map.begin(); i != dsl_attribute_map.end(); i++)
+     for (std::map<std::string,dsl_attribute*>::iterator i = dsl_attribute_map.begin(); i != dsl_attribute_map.end(); i++)
         {
        // printf ("   --- dsl_attribute_map: counter = %zu value = (%s,%p) \n",counter,i->first.c_str(),i->second.c_str());
           printf ("   --- dsl_attribute_map: counter = %zu value = (%s,dsl_attribute value) \n",counter,i->first.c_str());
@@ -1656,6 +1586,16 @@ DSL_Support::dslProcessing(SgProject* project)
 dsl_attribute::dsl_attribute() {}
 
 dsl_attribute::~dsl_attribute() {}
+
+// virtual dsl_attribute* factory_copy() { return NULL; };
+dsl_attribute* 
+dsl_attribute::factory_copy()
+   {
+     printf ("ERROR: base class virtual function called: dsl_attribute::factory_copy() \n");
+     ROSE_ASSERT(false);
+
+     return NULL;
+   };
 
 string
 dsl_attribute::toString()

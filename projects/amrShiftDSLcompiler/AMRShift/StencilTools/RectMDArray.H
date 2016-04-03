@@ -77,7 +77,8 @@ public:
   \tparam D Number of components in second data index. Defaults to 1. 
   \tparam E Number of components in third data index. Defaults to 1.
 */
-#pragma DSL keyword
+// #pragma DSL keyword
+#pragma DSL keyword novalue
 template <class T=double, unsigned int C=1, unsigned char D=1, unsigned char E=1>
   class RectMDArray {
   public:

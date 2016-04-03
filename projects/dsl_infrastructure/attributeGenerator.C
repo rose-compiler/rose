@@ -32,6 +32,8 @@ AttributeGenerator_InheritedAttribute::AttributeGenerator_InheritedAttribute(con
   // Note that DSL nodes are only identified amonsts children of a specific parent and not anywhere in the AST.
   // But since the traveral function semantics use copy constructors to copy attributes, we still have to copy the DSLnodes set.
   // DSLnodes = X.DSLnodes;
+
+     pragma_string = X.pragma_string;
    }
 
 
@@ -266,12 +268,16 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                ROSE_ASSERT(pragmaDeclaration != NULL);
 
                std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-#if 0
+#if 1
                printf ("Detected marking pragma for DSL keyword: pragmaDeclaration = %p = %s = %s \n",pragmaDeclaration,pragmaDeclaration->class_name().c_str(),pragmaString.c_str());
 #endif
+            // Save the pragma string used to later control specific behavior (e.g. including values in attributes).
+               return_inheritedAttribute.pragma_string = pragmaString;
+
             // We only want to support pragmas that are specific to our DSL keyword markers.
             // DSLnodes.insert(DSLKeywordStatement);
-               if (pragmaString == "DSL keyword")
+            // if (pragmaString == "DSL keyword")
+               if (pragmaString == "DSL keyword" || pragmaString == "DSL keyword novalue")
                   {
 #if 1
                     printf ("\n********************************************* \n");
@@ -287,6 +293,7 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
 
 #if 0
                  // There should always be a next statement after a pragma declaration (at least for where we use our DSL pragmas).
+#error "DEAD CODE!"
                     SgStatement* DSLKeywordStatement = SageInterface::getNextStatement(pragmaDeclaration);
 #else
                  // This code shuld be refactored to be a function to find the statement associated with a pragma, since sometimes
@@ -427,7 +434,20 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
 #endif
                        }
 #endif
-                    DSLnodes.insert(DSLKeywordStatement);
+
+                 // DSLnodes.insert(DSLKeywordStatement);
+                    if (pragmaString == "DSL keyword novalue")
+                       {
+                      // New case added to support where we don't want to add value tracking within the DSL.
+                         DSLnodes_novalue.insert(DSLKeywordStatement);
+                       }
+                      else
+                       {
+                      // Typical case
+                         DSLnodes.insert(DSLKeywordStatement);
+                       }
+
+
 #if 1
                  // Turn on internal debugging.
                     internal_debugging = true;
@@ -447,7 +467,13 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                SgClassDeclaration* classDeclaration = isSgClassDeclaration(astNode);
                ROSE_ASSERT(classDeclaration != NULL);
 
-               if (DSLnodes.find(classDeclaration) != DSLnodes.end())
+            // if (DSLnodes.find(classDeclaration) != DSLnodes.end())
+            // bool isDSLnode = ( (DSLnodes.find(classDeclaration) != DSLnodes.end()) || (DSLnodes_novalue.find(classDeclaration) != DSLnodes_novalue.end()) );
+               bool isDSLnode_valueTracking   = (DSLnodes.find(classDeclaration) != DSLnodes.end());
+               bool isDSLnode_novalueTracking = (DSLnodes_novalue.find(classDeclaration) != DSLnodes_novalue.end());
+               bool isDSLnode                 = isDSLnode_valueTracking || isDSLnode_novalueTracking;
+
+               if (isDSLnode == true)
                   {
                     printf ("\n********************************************* \n");
                     printf ("Build DSL attribute for class = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
@@ -456,11 +482,23 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
 
                     SgType* type = classDeclaration->get_type();
                     ROSE_ASSERT(type != NULL);
+#if 1
+                    printf ("inheritedAttribute.pragma_string = %s \n",inheritedAttribute.pragma_string.c_str());
+#endif
+                    if (inheritedAttribute.pragma_string == "DSL keyword novalue")
+                       {
+                         printf ("Detected restricted use of DSL keyword novalue (for non-template class) \n");
+#if 1
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
 
                  // Maybe we should be saving the SgClassDeclaration to be semetric with the case of SgFunctionDeclaration below?
                  // dsl_type_list.push_back(type);
 #if 1
-                    SgNode* ast_fragment = buildAttribute(type);
+                 // SgNode* ast_fragment = buildAttribute(type);
+                    SgNode* ast_fragment = buildAttribute(type,isDSLnode_valueTracking);
                     ROSE_ASSERT(ast_fragment == NULL);
                  // ROSE_ASSERT(ast_fragment != NULL);
 #endif
@@ -503,7 +541,12 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                          if (defining_templateClassDeclaration != NULL)
                             {
                            // if (DSLnodes.find(templateClassDeclaration) != DSLnodes.end())
-                              if (DSLnodes.find(defining_templateClassDeclaration) != DSLnodes.end())
+                           // if (DSLnodes.find(defining_templateClassDeclaration) != DSLnodes.end())
+                              isDSLnode_valueTracking   = (DSLnodes.find(defining_templateClassDeclaration) != DSLnodes.end());
+                              isDSLnode_novalueTracking = (DSLnodes_novalue.find(defining_templateClassDeclaration) != DSLnodes_novalue.end());
+                              isDSLnode                 = isDSLnode_valueTracking || isDSLnode_novalueTracking;
+
+                              if (isDSLnode == true)
                                  {
                                    printf ("\n********************************************* \n");
                                    printf ("Build DSL attribute for template class instantiation = %p = %s = %s \n",
@@ -513,15 +556,26 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
 
                                    SgType* type = templateInstantiationDecl->get_type();
                                    ROSE_ASSERT(type != NULL);
+#if 1
+                                   printf ("inheritedAttribute.pragma_string = %s \n",inheritedAttribute.pragma_string.c_str());
+#endif
+                                   if (inheritedAttribute.pragma_string == "DSL keyword novalue")
+                                      {
+                                        printf ("Detected restricted use of DSL keyword novalue (for template instantiation) \n");
+#if 1
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
 
                                 // Maybe we should be saving the SgClassDeclaration to be semetric with the case of SgFunctionDeclaration below?
                                 // dsl_type_list.push_back(type);
 #if 1
-                                   SgNode* ast_fragment = buildAttribute(type);
+                                // SgNode* ast_fragment = buildAttribute(type);
+                                   SgNode* ast_fragment = buildAttribute(type,isDSLnode_valueTracking);
                                    ROSE_ASSERT(ast_fragment == NULL);
                                 // ROSE_ASSERT(ast_fragment != NULL);
 #endif
-
                                  }
                             }
                            else
@@ -885,7 +939,8 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
        // dsl_type_names_initializerString    = StringUtility::copyEdit(dsl_type_names_initializerString,"$className",type_name);
        // dsl_attribute_map_initializerString = StringUtility::copyEdit(dsl_attribute_map_initializerString,"$className",type_name);
 
-          dsl_attribute_map_initializerString += " { {\"" + className + "\"},{" + className_dsl_attribute + "()} } ";
+       // dsl_attribute_map_initializerString += " { {\"" + className + "\"},{" + className_dsl_attribute + "()} } ";
+          dsl_attribute_map_initializerString += " { {\"" + className + "\"},{ new " + className_dsl_attribute + "()} } ";
 
           if (i < dsl_type_list.size()-1)
              {
@@ -928,7 +983,9 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
           dsl_function_names_initializerString += "{\"functionName\"}";
        // dsl_member_function_names_initializerString += "{\"memberFunctionName\"}";
        // dsl_attribute_map_initializerString += " { {\"functionName\"},{functionName_dsl_attribute()} } ";
-          dsl_attribute_map_initializerString += "   { {\"functionName\"},{functionName_dsl_attribute()} } ";
+
+       // dsl_attribute_map_initializerString += "   { {\"functionName\"},{functionName_dsl_attribute()} } ";
+          dsl_attribute_map_initializerString += "   { {\"functionName\"},{ new functionName_dsl_attribute()} } ";
 
           if (i < dsl_function_list.size()-1)
              {
@@ -1031,7 +1088,9 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
        // dsl_attribute_map_initializerString += " { \"memberFunctionName\",memberFunctionName_dsl_attribute() } ";
        // dsl_attribute_map_initializerString += " { \"" + member_function_name + "\"," + memberFunctionName_dsl_attribute + "() } ";
        // dsl_attribute_map_initializerString += " { \"" + member_function_name + "\"," + member_function_name_dsl_attribute + "() } ";
-          dsl_attribute_map_initializerString += "   { \"" + member_function_name + "\"," + member_function_name_dsl_attribute + "() } ";
+
+       // dsl_attribute_map_initializerString += "   { \"" + member_function_name + "\"," + member_function_name_dsl_attribute + "() } ";
+          dsl_attribute_map_initializerString += "   { \"" + member_function_name + "\", new " + member_function_name_dsl_attribute + "() } ";
 
           if (i < dsl_member_function_list.size()-1)
              {
@@ -1094,8 +1153,9 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
 
 
 #if 1
+// SgNode* AttributeGeneratorTraversal::buildAttribute(SgType* type)
 SgNode* 
-AttributeGeneratorTraversal::buildAttribute(SgType* type)
+AttributeGeneratorTraversal::buildAttribute(SgType* type, bool isDSLnode_valueTracking)
    {
      printf ("Build DSL attribute for type = %p = %s \n",type,type->class_name().c_str());
 
@@ -1222,19 +1282,34 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type)
                string s = "\n \
      public: \n \
        // Depending on the compile time semantics we want to leverage we may not need an object here. \n \
-          $DSL_NAME value; \n \
+       // $DSL_NAME value; \n \
+          $DSL_VALUE_TRACKING \n \
 \n \
        // I think we can comment out the constructor and destructor. \n \
        // $DSL_NAME_dsl_attribute(); \n \
        // virtual ~$DSL_NAME_dsl_attribute(); \n \
 \n \
        // Required functions \n \
+          virtual $CLASSNAME* factory_copy() { return new $CLASSNAME(*this); } \n \
           std::string toString() { return \"$DSL_NAME_attribute\"; } \n \
           std::string additionalNodeOptions() { return \"fillcolor=\\\"red2\\\",style=filled\"; } \n";
+
+            // Adding support for optional handling of value to support value tracking in transfer functions.
+               if (isDSLnode_valueTracking == true)
+                  {
+                    s = StringUtility::copyEdit(s,"$DSL_VALUE_TRACKING","$DSL_NAME value;");
+                  }
+                 else
+                  {
+                    s = StringUtility::copyEdit(s,"$DSL_VALUE_TRACKING","");
+                  }
 
             // Substitue value defined by name for "$DSL_NAME" in string.
             // ROSE_UTIL_API std::string copyEdit(const std::string& inputString, const std::string & oldToken, const std::string & newToken);
                string new_string = StringUtility::copyEdit(s,"$DSL_NAME",name);
+
+            // Added copy function.
+               new_string = StringUtility::copyEdit(new_string,"$CLASSNAME",attribute_name);
 
             // AstUnparseAttribute* astUnparseAttribute = new AstUnparseAttribute(s,AstUnparseAttribute::e_inside);
             // ROSE_ASSERT(astUnparseAttribute != NULL);
@@ -1431,12 +1506,16 @@ AttributeGeneratorTraversal::buildAttribute(SgFunctionDeclaration* function)
        // virtual ~$DSL_NAME_dsl_attribute(); \n \
 \n \
        // Required functions \n \
+          virtual $CLASSNAME* factory_copy() { return new $CLASSNAME(*this); } \n \
           std::string toString() { return \"$DSL_NAME_attribute\"; } \n \
           std::string additionalNodeOptions() { return \"fillcolor=\\\"lightblue\\\",style=filled\"; } \n";
 
        // Substitue value defined by name for "$DSL_NAME" in string.
        // ROSE_UTIL_API std::string copyEdit(const std::string& inputString, const std::string & oldToken, const std::string & newToken);
           string new_string = StringUtility::copyEdit(s,"$DSL_NAME",name);
+
+       // Added copy function.
+          new_string = StringUtility::copyEdit(new_string,"$CLASSNAME",attribute_name);
 
        // AstUnparseAttribute* astUnparseAttribute = new AstUnparseAttribute(s,AstUnparseAttribute::e_inside);
        // ROSE_ASSERT(astUnparseAttribute != NULL);
