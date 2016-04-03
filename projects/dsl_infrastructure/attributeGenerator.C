@@ -632,7 +632,7 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
 #endif
                  // dsl_function_list.push_back(functionDeclaration);
 
-#define ENABLE_FUNCTION_ATTRIBUTES 0
+#define ENABLE_FUNCTION_ATTRIBUTES 1
 
 #if ENABLE_FUNCTION_ATTRIBUTES
                     SgNode* ast_fragment = buildAttribute(functionDeclaration);
@@ -1329,7 +1329,6 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type)
 #endif
 
 
-#if 1
 SgNode* 
 AttributeGeneratorTraversal::buildAttribute(SgFunctionDeclaration* function)
    {
@@ -1463,8 +1462,6 @@ AttributeGeneratorTraversal::buildAttribute(SgFunctionDeclaration* function)
 
      return NULL;
    }
-#endif
-
 
 
 

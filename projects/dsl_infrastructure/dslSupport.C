@@ -852,6 +852,7 @@ DSL_Support::checkAndResetToMakeConsistantCompilerGenerated ( SgInitializedName*
    }
 
 
+#define DEBUG_DETECTED_VARIABLES 0
 
 bool DSL_Support::isDslVariable(SgNode* astNode)
    {
@@ -907,7 +908,7 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
                            // stencilInitializedNameList.push_back(initializedName);
                            // inheritedAttribute.set_StencilDeclaration(true);
                            // foundStencilVariable = true;
-#if 1
+#if DEBUG_DETECTED_VARIABLES
                               printf ("In isDslVariable(): detected templateName = %s typed variable: initializedName = %p name = %s \n",templateName.c_str(),initializedName,initializedName->get_name().str());
                            // printf ("   --- stencilInitializedNameList.size() = %zu \n",stencilInitializedNameList.size());
 #endif
@@ -941,7 +942,7 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
                          if (it != dsl_type_names.end())
                             {
                            // Save the SgInitializedName associated with the Point type.
-#if 1
+#if DEBUG_DETECTED_VARIABLES
                               printf ("Detected className = %s typed variable: initializedName = %p name = %s \n",className.c_str(),initializedName,initializedName->get_name().str());
 #endif
                               checkAndResetToMakeConsistantCompilerGenerated(initializedName);
@@ -978,6 +979,8 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
    }
 
 
+#define DEBUG_DETECTED_FUNCTIONS 0
+
 bool DSL_Support::isDslFunction(SgNode* astNode)
    {
   // Recognition of DSL function abstractions (likely friend functions of classes defining types of DSL variables 
@@ -989,13 +992,25 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
      if (functionCallExp != NULL)
         {
+          bool supportedNode = false;
+
+          SgExpression* associatedFunction = functionCallExp->get_function();
+          ROSE_ASSERT(associatedFunction != NULL);
+#if 0
+          printf ("Found SgFunctionCallExp: associatedFunction = %p = %s \n",associatedFunction,associatedFunction->class_name().c_str());
+#endif
        // Here we make assumptions on how the stencil is specified in the DSL.
           SgDotExp* dotExp = isSgDotExp(functionCallExp->get_function());
           if (dotExp != NULL)
              {
-               SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_lhs_operand());
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+            // This kind of IR node in a SgFunctionCallExp is supported.
+               supportedNode = true;
 
+               bool supportedDotExp = false;
+
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+#if 0
+               SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_lhs_operand());
             // Check if this is found a bit deeper.
                if (varRefExp == NULL)
                   {
@@ -1013,17 +1028,21 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                        }
                  // ROSE_ASSERT(varRefExp != NULL);
                   }
-
-               if (varRefExp != NULL && memberFunctionRefExp != NULL)
+#endif
+            // if (varRefExp != NULL && memberFunctionRefExp != NULL)
+               if (memberFunctionRefExp != NULL)
                   {
+                    supportedDotExp = true;
+
+#if 0
                  // if (initializedNameList.find(initializedName) != initializedNameList.end())
                     SgVariableSymbol* variableSymbol = isSgVariableSymbol(varRefExp->get_symbol());
                     SgInitializedName* initializedName = variableSymbol->get_declaration();
                     ROSE_ASSERT(initializedName != NULL);
-
 #if 0
                     SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
                     printf ("In isDslFunction(): case SgDotExp: found function ref name = %s from variable reference for variable name = %s \n",memberFunctionSymbol->get_name().str(),initializedName->get_name().str());
+#endif
 #endif
                 // Add attribute
 #if 0
@@ -1048,6 +1067,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
 #endif
                   }
 
+#if 0
                string memberFunctionName = memberFunctionRefExp->get_symbol()->get_name();
 #if 0
                printf ("In isDslFunction(): case SgDotExp: found memberFunctionName = %s \n",memberFunctionName.c_str());
@@ -1056,14 +1076,57 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                if (it != dsl_function_names.end())
                   {
                     printf ("Detected function call from DSL variable:  memberFunctionName = %s \n",memberFunctionName.c_str());
+#if 1
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
                   }
+#else
+#if 0
+               printf ("Detected SgDotExp in evaluation of function call: varRefExp = %p arrowExp->get_lhs_operand() = %s memberFunctionRefExp = %p \n",
+                    varRefExp,dotExp->get_lhs_operand()->class_name().c_str(),memberFunctionRefExp);
+#endif
+               ROSE_ASSERT(memberFunctionRefExp != NULL);
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
+               string memberFunctionName = SageInterface::generateUniqueNameForUseAsIdentifier(memberFunctionDeclaration);
+#if 0
+               printf ("In isDslFunction(): case SgArrowExp: found memberFunctionName = %s \n",memberFunctionName.c_str());
+#endif
+               SgClassDeclaration* classDeclaration = memberFunctionDeclaration->get_associatedClassDeclaration();
+               ROSE_ASSERT(classDeclaration != NULL);
+               string associatedClassName = SageInterface::generateUniqueNameForUseAsIdentifier(classDeclaration);
+#if 0
+               printf ("associatedClassName = %s memberFunctionName = %s \n",associatedClassName.c_str(),memberFunctionName.c_str());
+#endif
+               std::pair< std::string,std::string> namePair(associatedClassName,memberFunctionName);
 
+               std::vector<std::pair< std::string,std::string>>::iterator it = find(dsl_member_function_names.begin(),dsl_member_function_names.end(),namePair);
+               if (it != dsl_member_function_names.end())
+                  {
+#if DEBUG_DETECTED_FUNCTIONS
+                    printf ("Detected member function call from DSL variable:  memberFunctionName = %s \n",memberFunctionName.c_str());
+#endif
+                    returnValue = true;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#endif
+
+#if 0
             // DQ (2/16/2015): Check for operator*() in "const Point hi = getOnes() * scalar;"
             // This is actually the better and most general test for a specific member function 
             // call (since calling off of a variable is not general enough).
                SgFunctionCallExp* nestedFunctionCallExp = isSgFunctionCallExp(dotExp->get_lhs_operand());
                if (nestedFunctionCallExp != NULL)
                   {
+                    SgExpression* expression = functionCallExp->get_function();
+                    ROSE_ASSERT(expression != NULL);
+
+                    printf ("What is this: expression = %p = %s \n",expression,expression->class_name().c_str());
+
+
                     SgType* returnType = nestedFunctionCallExp->get_type();
                     ROSE_ASSERT(returnType != NULL);
 #if 0
@@ -1085,7 +1148,94 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
 #endif
                             }
                        }
+#if 1
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#endif
+
+
+               if (supportedDotExp == false)
+                  {
+                    ROSE_ASSERT(dotExp->get_lhs_operand() != NULL);
+                    printf ("In isDslFunction(): case SgDotExp: dotExp->get_lhs_operand() = %s case not handled \n",dotExp->get_lhs_operand()->class_name().c_str());
+#if 1
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
+
+          SgArrowExp* arrowExp = isSgArrowExp(functionCallExp->get_function());
+          if (arrowExp != NULL)
+             {
+            // This kind of IR node in a SgFunctionCallExp is supported.
+               supportedNode = true;
+
+               bool supportedArrowExp = false;
+
+               SgVarRefExp* varRefExp = isSgVarRefExp(arrowExp->get_lhs_operand());
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+               ROSE_ASSERT(arrowExp->get_lhs_operand() != NULL);
 #if 0
+               printf ("Detected SgArrowExp in evaluation of function call: varRefExp = %p arrowExp->get_lhs_operand() = %s memberFunctionRefExp = %p \n",
+                    varRefExp,arrowExp->get_lhs_operand()->class_name().c_str(),memberFunctionRefExp);
+#endif
+
+               ROSE_ASSERT(memberFunctionRefExp != NULL);
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
+
+
+            // if (varRefExp != NULL && memberFunctionRefExp != NULL)
+               if (memberFunctionRefExp != NULL)
+                  {
+                    supportedArrowExp = true;
+
+                 // string memberFunctionName = memberFunctionRefExp->get_symbol()->get_name();
+                    string memberFunctionName = SageInterface::generateUniqueNameForUseAsIdentifier(memberFunctionDeclaration);
+#if 0
+                    printf ("In isDslFunction(): case SgArrowExp: found memberFunctionName = %s \n",memberFunctionName.c_str());
+#endif
+                 // std::vector<std::string>::iterator it = find(dsl_function_names.begin(),dsl_function_names.end(),memberFunctionName);
+                 // string associatedClassName = "xxx";
+                 // SgClassDeclaration* get_associatedClassDeclaration() const
+                    SgClassDeclaration* classDeclaration = memberFunctionDeclaration->get_associatedClassDeclaration();
+                    ROSE_ASSERT(classDeclaration != NULL);
+                    string associatedClassName = SageInterface::generateUniqueNameForUseAsIdentifier(classDeclaration);
+#if 0
+                    printf ("associatedClassName = %s memberFunctionName = %s \n",associatedClassName.c_str(),memberFunctionName.c_str());
+#endif
+                    std::pair< std::string,std::string> namePair(associatedClassName,memberFunctionName);
+
+                    std::vector<std::pair< std::string,std::string>>::iterator it = find(dsl_member_function_names.begin(),dsl_member_function_names.end(),namePair);
+                    if (it != dsl_member_function_names.end())
+                       {
+#if DEBUG_DETECTED_FUNCTIONS
+                         printf ("Detected member function call from DSL variable pointer:  memberFunctionName = %s \n",memberFunctionName.c_str());
+#endif
+                         returnValue = true;
+#if 1
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+                 else
+                  {
+                 // printf ("Note: In case of SgArrowExp: but varRefExp == NULL and/or memberFunctionRefExp == NULL \n");
+                    printf ("Note: In case of SgArrowExp: but memberFunctionRefExp == NULL \n");
+#if 1
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               if (supportedArrowExp == false)
+                  {
+                    ROSE_ASSERT(arrowExp->get_lhs_operand() != NULL);
+                    printf ("In isDslFunction(): case SgArrowExp: arrowExp->get_lhs_operand() = %s case not handled \n",arrowExp->get_lhs_operand()->class_name().c_str());
+#if 1
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
@@ -1096,18 +1246,52 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
           SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionCallExp->get_function());
           if (memberFunctionRefExp != NULL)
              {
+            // This kind of IR node in a SgFunctionCallExp is supported.
+               supportedNode = true;
+
             // We might have to narrow these to the specific cases were are interested in.
                SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
-
-               string memberFunctionName = memberFunctionSymbol->get_name();
 #if 0
-               printf ("In isDslFunction(): case SgMemberFunctionRefExp: memberFunctionName = %s \n",memberFunctionName.c_str());
+               string tmp_memberFunctionName = memberFunctionSymbol->get_name();
+               printf ("In isDslFunction(): case SgMemberFunctionRefExp: tmp_memberFunctionName = %s \n",tmp_memberFunctionName.c_str());
+#endif
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionSymbol->get_declaration();
+               ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+               string memberFunctionName = SageInterface::generateUniqueNameForUseAsIdentifier(memberFunctionDeclaration);
+#if 0
+               printf ("In isDslFunction(): memberFunctionName = %s \n",memberFunctionName.c_str());
+#endif
+               SgClassDeclaration* classDeclaration = memberFunctionDeclaration->get_associatedClassDeclaration();
+               ROSE_ASSERT(classDeclaration != NULL);
+               string associatedClassName = SageInterface::generateUniqueNameForUseAsIdentifier(classDeclaration);
+#if 0
+               printf ("In isDslFunction(): associatedClassName = %s memberFunctionName = %s \n",associatedClassName.c_str(),memberFunctionName.c_str());
+#endif
+            // string associatedClassName = "xxx";
+               std::pair< std::string,std::string> namePair(associatedClassName,memberFunctionName);
+
+               std::vector<std::pair< std::string,std::string>>::iterator it = find(dsl_member_function_names.begin(),dsl_member_function_names.end(),namePair);
+               if (it != dsl_member_function_names.end())
+                  {
+#if DEBUG_DETECTED_FUNCTIONS
+                    printf ("Detected member function call from DSL (SgMemberFunctionRefExp):  associatedClassName = %s memberFunctionName = %s \n",associatedClassName.c_str(),memberFunctionName.c_str());
+#endif
+                    returnValue = true;
+                  }
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
 #endif
              }
 
           SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
           if (functionRefExp != NULL)
              {
+            // This kind of IR node in a SgFunctionCallExp is supported.
+               supportedNode = true;
+
+#if 0
             // We might have to narrow these to the specific cases were are interested in.
                SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
 #if 0
@@ -1119,6 +1303,8 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
 #if 0
                printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
 #endif
+#endif
+#if 0
                SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
             // ROSE_ASSERT(templateInstantiationFunctionDecl != NULL);
 #if 0
@@ -1132,7 +1318,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                if (templateInstantiationFunctionDecl != NULL)
                   {
                     string templateName = (templateInstantiationFunctionDecl != NULL) ? templateInstantiationFunctionDecl->get_templateName() : "";
-#if 0
+#if 1
                     printf ("In isDslFunction(): (unique name mechanisms not used) templateName = %s \n",templateName.c_str());
 #endif
                   }
@@ -1140,9 +1326,11 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                   {
                  // string functionName = functionSymbol->get_name();
                     string functionName = SageInterface::generateUniqueNameForUseAsIdentifier(functionDeclaration);
-#if 0
+#if 1
                     printf ("In isDslFunction(): functionName = %s \n",functionName.c_str());
 #endif
+
+
 #if 0
                    plus_operator_dsl_attribute* dslAttribute = new plus_operator_dsl_attribute();
 #if 1
@@ -1154,7 +1342,54 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                    functionCallExp->addNewAttribute(functionSymbol->get_name(),dslAttribute);
 #endif
                   }
+#else
+            // string functionName = functionRefExp->get_symbol()->get_name();
+               SgFunctionDeclaration* functionDeclaration = functionRefExp->get_symbol()->get_declaration();
+               ROSE_ASSERT(functionDeclaration != NULL);
+               string functionName = SageInterface::generateUniqueNameForUseAsIdentifier(functionDeclaration);
+#if 0
+               printf ("In isDslFunction(): case SgFunctionRefExp: found functionName = %s \n",functionName.c_str());
+#endif
+               std::vector<std::string>::iterator it = find(dsl_function_names.begin(),dsl_function_names.end(),functionName);
+               if (it != dsl_function_names.end())
+                  {
+#if DEBUG_DETECTED_FUNCTIONS
+                    printf ("Detected function call from DSL SgFunctionRefExp:  functionName = %s \n",functionName.c_str());
+#endif
+                    returnValue = true;
+#if 1
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#endif
              }
+
+
+       // Make a list of the cases we need to consider!
+          SgVarRefExp* varRefExp = isSgVarRefExp(functionCallExp->get_function());
+          if (varRefExp != NULL)
+             {
+               printf ("Case of functionCallExp->get_function() == SgVarRefExp not implemented! \n");
+               supportedNode = true;
+             }
+
+       // Test if the IR node in a SgFunctionCallExp was supported.
+       // We might have to add more cases if we find something not supported.
+          if (supportedNode == false)
+             {
+               SgExpression* associatedFunction = functionCallExp->get_function();
+               ROSE_ASSERT(associatedFunction != NULL);
+#if 1
+               printf ("In support of SgFunctionCallExp: associatedFunction = %p = %s \n",associatedFunction,associatedFunction->class_name().c_str());
+#endif
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+
 
        // Now add attributes to the function arguments.
           SgExprListExp* argumentList = functionCallExp->get_args();
@@ -1236,14 +1471,22 @@ bool DSL_Support::isDslAbstraction(SgNode* astNode)
              {
             // Select the attribute for this DSL variable.
                ROSE_ASSERT(detectedDslFunction == false);
+#if 0
+               printf ("Identified a DSL variable abstraction: astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
+#endif
              }
 
           if (detectedDslFunction == true)
              {
             // Select the attribute for this DSL function.
                ROSE_ASSERT(detectedDslVariable == false);
+#if 1
+               printf ("Identified a DSL function abstraction: astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
+#endif
              }
-
+#if 0
+          printf ("Identified a DSL abstraction: astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
+#endif
           returnValue = true;
         }
 
