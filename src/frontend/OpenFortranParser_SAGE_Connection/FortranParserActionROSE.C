@@ -10816,6 +10816,10 @@ void c_action_label(Token_t * lbl)
         SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
         ROSE_ASSERT(false_body != NULL);
 
+        SgBasicBlock* true_body = isSgBasicBlock(ifStatement->get_true_body());
+        ROSE_ASSERT(true_body != NULL);
+        resetEndingSourcePosition(true_body, elseKeyword);
+
         // Push the false body onto the scope stack
         astScopeStack.push_front(false_body);
 
@@ -10893,7 +10897,7 @@ void c_action_label(Token_t * lbl)
           delete false_body->get_endOfConstruct();
           false_body->set_endOfConstruct(NULL);
         }
-        setSourcePosition(false_body,eos);
+        setSourcePosition(false_body,elseKeyword);
 
         SgBasicBlock* true_body = isSgBasicBlock(ifStatement->get_true_body());
         resetEndingSourcePosition(true_body, elseKeyword);
@@ -10995,7 +10999,13 @@ void c_action_label(Token_t * lbl)
 
         ROSE_ASSERT(endKeyword != NULL);
         resetEndingSourcePosition(astScopeStack.front(), endKeyword);
-
+        SgBasicBlock* fbb = isSgBasicBlock(ifStatement->get_false_body());
+        if( fbb && fbb->get_startOfConstruct()->get_file_id() >= 0 ){
+          resetEndingSourcePosition(ifStatement->get_false_body(), endKeyword);
+        }
+        else{
+          resetEndingSourcePosition(ifStatement->get_true_body(), endKeyword);
+        }
         // ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
         // Pop off the if scope (it is a scope in C/C++, even if not in Fortran)
@@ -11971,7 +11981,7 @@ void c_action_label(Token_t * lbl)
         // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
         body->setCaseInsensitive(true);
 
-        setSourcePosition(body);
+        setSourcePosition(body,eos);
 
         // SgStatement* loopStatement = NULL;
         SgScopeStatement* loopStatement = NULL;
@@ -16123,6 +16133,7 @@ void c_action_label(Token_t * lbl)
 
         ROSE_ASSERT(moduleStatement->get_definition() != NULL);
         astScopeStack.push_front(moduleStatement->get_definition());
+        setSourcePosition(moduleStatement->get_definition(), moduleKeyword);
     }
 
     /** R1106
@@ -18640,7 +18651,7 @@ void c_action_label(Token_t * lbl)
 
         ROSE_ASSERT(keyword1 != NULL);
         resetEndingSourcePosition(astScopeStack.front(), keyword1);
-
+        resetEndingSourcePosition(functionDefinition->get_body(),keyword1);
         ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
         astScopeStack.pop_front();
 
@@ -18900,6 +18911,12 @@ void c_action_label(Token_t * lbl)
 
         astScopeStack.pop_front();
 
+        if(functionDefinition->get_declaration()){
+          functionDefinition->set_startOfConstruct(functionDefinition->get_declaration()->get_startOfConstruct());
+        }
+        if(functionDefinition->get_body()){
+          functionDefinition->get_body()->set_startOfConstruct(functionDefinition->get_declaration()->get_startOfConstruct());
+        }
         // SgScopeStatement* topOfStack = getTopOfScopeStack();
 
         // DQ (11/21/2007): This is not required, and not true for subroutines in an interface block.
