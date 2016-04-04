@@ -696,9 +696,13 @@ lcov_data_dirs = $(shell find $(top_builddir) -type d |sort)
 all-lcov.info:
 	lcov --capture --no-recursion $(patsubst %,-d %,$(lcov_data_dirs)) -o $@
 
+# All coverage with EDG removed. I don't think EDG shows up anyway, but just in case.
+no-edg-lcov.info: all-lcov.info
+	lcov --remove $< "*/EDG/*" -o $@
+
 # Capture only coverage for the ROSE library source code (no tests, tutorials, projects, system headers, boost, etc).
-librose-lcov.info: all-lcov.info
-	lcov --extract $< "$(top_srcdir)/src/*" -o $@
+librose-lcov.info: no-edg-lcov.info
+	lcov --extract $< "$(top_srcdir)/src/*"
 
 # Generate a directory containing the HTML representation of the coverage information for the ROSE library proper.
 librose_lcov_web_pages: librose-lcov.info
