@@ -2454,14 +2454,14 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
         {
           case V_SgClassDeclaration:
           case V_SgTemplateClassDeclaration:
-          case V_SgTemplateInstantiationDecl:
+       // case V_SgTemplateInstantiationDecl:
              {
                SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
                ROSE_ASSERT(classDeclaration != NULL);
 
                string type_name = classDeclaration->get_name();
 #if 0
-               printf ("Process saved DSL type: type_name = %s \n",type_name.c_str());
+               printf ("In SageInterface::generateUniqueNameForUseAsIdentifier_support(): case class or template type: type_name = %s \n",type_name.c_str());
 #endif
                string className = string("scope_") + scope + "_type_name_" + type_name;
 #if 0
@@ -2471,15 +2471,83 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
                break;
              }
 
+       // DQ (3/29/2016): Seperate out the case of the SgTemplateInstantiationDecl.
+          case V_SgTemplateInstantiationDecl:
+             {
+               SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
+               ROSE_ASSERT(templateInstantiationDeclaration != NULL);
+
+            // Note that we can't use the mangled name because they might not be unique across multiple translation units if seperately compiled).
+            // string type_name = templateInstantiationDeclaration->get_name();
+            // string type_name = templateInstantiationDeclaration->get_mangled_name();
+            // string type_name = templateInstantiationDeclaration->get_templateName();
+               string type_name = templateInstantiationDeclaration->get_name();
+#if 0
+               printf ("In SageInterface::generateUniqueNameForUseAsIdentifier_support(): case SgTemplateInstantiationDecl: type_name = %s \n",type_name.c_str());
+#endif
+               string className = string("scope_") + scope + "_type_name_" + type_name;
+
+            // Note that trimSpaces is defined in the name mangling support.
+            // string compressedClassName = trimSpaces(className);
+            // string compressedClassName = SageInterface::get_name(templateInstantiationDeclaration);
+            // ROSE_UTIL_API std::string copyEdit(const std::string& inputString, const std::string & oldToken, const std::string & newToken);
+
+            // We need to turn this template instatiation name into a name that can be used as a C++ identifier.
+               string compressedClassName = StringUtility::copyEdit(className," ","");
+               compressedClassName = StringUtility::copyEdit(compressedClassName,"<","_abs_");
+               compressedClassName = StringUtility::copyEdit(compressedClassName,">","_abe_");
+               compressedClassName = StringUtility::copyEdit(compressedClassName,",","_comma_");
+               compressedClassName = StringUtility::copyEdit(compressedClassName,"*","_star_");
+               compressedClassName = StringUtility::copyEdit(compressedClassName,"&","_ref_");
+#if 0
+               printf ("className = %s compressedClassName = %s \n",className.c_str(),compressedClassName.c_str());
+#endif
+#if 0
+               printf ("templateInstantiationDeclaration->get_scope() = %p = %s scope = %s \n",
+                    templateInstantiationDeclaration->get_scope(),templateInstantiationDeclaration->get_scope()->class_name().c_str(),scope.c_str());
+#endif
+            // s = className;
+               s = compressedClassName;
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
           case V_SgFunctionDeclaration:
           case V_SgTemplateFunctionDeclaration:
           case V_SgTemplateInstantiationFunctionDecl:
              {
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declaration);
                ROSE_ASSERT(functionDeclaration != NULL);
-#if 1
-               printf ("In SageInterface::generateUniqueNameForUseAsIdentifier(): case SgFunctionDeclaration: not implemented \n");
+#if 0
+               printf ("In SageInterface::generateUniqueNameForUseAsIdentifier_support(): case SgFunctionDeclaration: not implemented \n");
 #endif
+            // We might at some point want the qualified name.
+               string original_name = functionDeclaration->get_name();
+
+               string function_name_part = mangleFunctionName(original_name,"return_type");
+               string function_name  = string("scope_") + scope + "_function_name_" + function_name_part;
+
+            // DQ (3/16/2016): Detect name collisions so that we can 
+            // std::map<std::string,int> dsl_attribute_name_collision_map;
+               if (local_name_collision_map.find(function_name) == local_name_collision_map.end())
+                  {
+                    local_name_collision_map.insert(pair<string,int>(function_name,0));
+                  }
+                 else
+                  {
+                    local_name_collision_map[function_name]++;
+
+                    int count = local_name_collision_map[function_name];
+#if 0
+                    printf ("In SageInterface::generateUniqueNameForUseAsIdentifier(): Collision count = %d \n",count);
+#endif
+                    function_name += StringUtility::numberToString(count);
+                  }
+
+               s = function_name;
 #if 0
                printf ("In SageInterface::generateUniqueNameForUseAsIdentifier(): case SgFunctionDeclaration: Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -2493,7 +2561,9 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
              {
                SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(declaration);
                ROSE_ASSERT(memberFunctionDeclaration != NULL);
-
+#if 0
+               printf ("In SageInterface::generateUniqueNameForUseAsIdentifier_support(): case SgMemberFunctionDeclaration: not implemented \n");
+#endif
                SgClassDeclaration* classDeclaration = isSgClassDeclaration(memberFunctionDeclaration->get_associatedClassDeclaration());
                ROSE_ASSERT(classDeclaration != NULL);
 
@@ -2507,7 +2577,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
             // string member_function_scope = SageInterface::get_name(memberFunctionDeclaration->get_scope());
                string member_function_name_part = mangleFunctionName(original_name,"return_type");
             // string member_function_name  = string("scope_") + member_function_scope + "_function_name_" + member_function_name_part;
-               string member_function_name  = string("scope_") + scope + "_function_name_" + member_function_name_part;
+               string member_function_name  = string("scope_") + scope + "_member_function_name_" + member_function_name_part;
 
             // DQ (3/16/2016): Detect name collisions so that we can 
             // std::map<std::string,int> dsl_attribute_name_collision_map;
@@ -2518,9 +2588,10 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
                  else
                   {
                     local_name_collision_map[member_function_name]++;
-#if 1
+
                     int count = local_name_collision_map[member_function_name];
-                    printf ("Collision count = %d \n",count);
+#if 0
+                    printf ("In SageInterface::generateUniqueNameForUseAsIdentifier(): Collision count = %d \n",count);
 #endif
                     member_function_name += StringUtility::numberToString(count);
                   }
@@ -2543,13 +2614,12 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
 #if 0
      printf ("In SageInterface::generateUniqueNameForUseAsIdentifier(): s = %s \n",s.c_str());
 #endif
-#if 1
+#if 0
      if (s != "")
         {
           printf ("In SageInterface::generateUniqueNameForUseAsIdentifier(): s = %s \n",s.c_str());
         }
 #endif
-
 
 #if 0
      printf ("Exiting as a test! \n");
@@ -2570,7 +2640,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* de
   // string s = SageInterface::generateUniqueNameForUseAsIdentifier(declaration);
      string s;
 
-#if 1
+#if 0
      printf ("In generateUniqueNameForUseAsIdentifier(): evaluating declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
 
@@ -2586,7 +2656,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* de
           SgDeclarationStatement* definingDeclaration = declaration->get_definingDeclaration();
           if (definingDeclaration != NULL)
              {
-#if 1
+#if 0
                printf ("In generateUniqueName(): Using the defining declaration = %p since %p was not in the map \n",definingDeclaration,declaration);
 #endif
             // s = generateUniqueName(definingDeclaration);
@@ -2594,9 +2664,16 @@ SageInterface::generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* de
              }
             else
              {
-               printf ("Error: declaration not in SageInterface::local_node_to_name_map: declaration = %p = %s = %s \n",
+            // Note that builtin functions will not have a defining declaration.
+               printf ("Warning: defining declaration not in SageInterface::local_node_to_name_map: declaration = %p = %s using name = %s \n",
                     declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
-               ROSE_ASSERT(false);
+            // ROSE_ASSERT(false);
+
+            // If there is no defining declaration then go ahead and use the non-defining one.
+            // s = SageInterface::get_name(declaration);
+               SgDeclarationStatement* nondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
+               ROSE_ASSERT(nondefiningDeclaration != NULL);
+               s = generateUniqueNameForUseAsIdentifier_support(nondefiningDeclaration);
              }
         }
 
