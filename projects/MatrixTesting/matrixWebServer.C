@@ -656,12 +656,16 @@ sqlDependencyExpression(const Dependency &dep, const std::string &depName) {
 
 static std::string
 sqlDependencyExpression(const Dependencies &deps, const std::string &depName) {
+    if (!deps.exists(depName)) {
+        ASSERT_require(gstate.dependencyNames.exists(depName));
+        return gstate.dependencyNames[depName];
+    }
     return sqlDependencyExpression(deps[depName], depName);
 }
 
 static std::string
 sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
-    std::string where;
+    std::string where = " where test.enabled";
     BOOST_FOREACH (const Dependency &dep, deps.values()) {
         // Get the human value from the combo box. Sometimes a combo box will display (Wt::DisplayRole) a different value than
         // what should be used as the human value. In this case, the underlying model will support Wt::UserRole to return the
@@ -671,7 +675,7 @@ sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
         Bucket<std::string> bucket;
         if (humanValue.compare(WILD_CARD_STR) != 0 && dep.humanValues.getOptional(humanValue).assignTo(bucket)) {
             std::string depColumn = sqlDependencyExpression(dep, dep.name);
-            where += std::string(where.empty() ? " where " : " and ");
+            where += " and ";
             if (bucket.minValue() == bucket.maxValue()) {
                 where += depColumn + " = ?";
                 args.push_back(bucket.minValue());
@@ -682,8 +686,6 @@ sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
             }
         }
     }
-    if (where.empty())
-        where = " where true";
     return where + " ";
 }
 
@@ -2376,7 +2378,10 @@ public:
             Characteristics characteristics;
             args.clear();
             sql = "select " + boost::join(gstate.dependencyNames.values(), ", ") + ", count(*)" +
-                  sqlFromClause() + sqlWhereClause(deps, args) + " and coalesce(test.first_error,'') = ?"
+                  sqlFromClause() +
+                  sqlWhereClause(deps, args) +
+                  " and coalesce(test.first_error,'') = ?"
+                  " and " + passFailExpr + " = 'fail'"
                   " group by " + boost::join(gstate.dependencyNames.values(), ", ");
             args.push_back(message);
             SqlDatabase::StatementPtr q2 = gstate.tx->statement(sql);

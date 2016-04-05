@@ -845,6 +845,31 @@ int main(int argc, char *argv[]) {
             std::cout <<node.value() <<"\t" <<unparseInstructionWithAddress(node.key()) <<"\n";
     }
 
+#if 0 // [Robb P. Matzke 2015-08-06]: example of calling convention analysis
+    {
+        const CallingConvention::Dictionary &dictionary = partitioner.instructionProvider().callingConventions();
+        const CallingConvention::Definition *dfltCc = dictionary.empty() ? NULL : &dictionary.front();
+        partitioner.allFunctionCallingConvention(dfltCc);
+        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+            std::cerr <<"calling conventions for " <<function->printableName() <<":\n";
+            const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+            if (ccAnalysis.hasResults()) {
+                if (!ccAnalysis.didConverge())
+                    std::cerr <<"  warning: non-convergent analysis\n";
+                CallingConvention::Dictionary matches = ccAnalysis.match(dictionary);
+                if (matches.empty()) {
+                    std::cerr <<"  no maches; analysis reports " <<ccAnalysis <<"\n";
+                } else {
+                    BOOST_FOREACH (const CallingConvention::Definition &cc, matches)
+                        std::cerr <<"  " <<cc.comment() <<"\n";
+                }
+            } else {
+                std::cerr <<"  no analysis results\n";
+            }
+        }
+    }
+#endif
+    
 #if 0 // DEBUGGING [Robb P. Matzke 2014-08-23]
     // This should free all symbolic expressions except for perhaps a few held by something we don't know about.
     partitioner.clear();

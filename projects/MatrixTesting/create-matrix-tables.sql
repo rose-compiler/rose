@@ -53,15 +53,25 @@ insert into dependencies values ('build',        'autoconf',         1);
 insert into dependencies values ('build',        'cmake',            0);
 
 -- Compiler is $VENDOR-$VERSION-$LANGUAGE or just $VENDOR-$VERSION or just $VENDOR.
-insert into dependencies values ('compiler',     'gcc-4.2-default',  0);
-insert into dependencies values ('compiler',     'gcc-4.3-default',  0);
-insert into dependencies values ('compiler',     'gcc-4.4-default',  0);
-insert into dependencies values ('compiler',     'gcc-4.4-c++11',    0);
+-- A vendor is not the same thing as a compiler name (gcc vs. g++, llvm vs. clang++, intel vs. icc, etc)
+insert into dependencies values ('compiler',     'gcc-4.0-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.1-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.2-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.3-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.4-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.5-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.6-default',  1);
+insert into dependencies values ('compiler',     'gcc-4.7-default',  1);
 insert into dependencies values ('compiler',     'gcc-4.8-default',  1);
 insert into dependencies values ('compiler',     'gcc-4.8-c++11',    1);
 insert into dependencies values ('compiler',     'gcc-4.9-default',  1);
 insert into dependencies values ('compiler',     'gcc-4.9-c++11',    1);
+insert into dependencies values ('compiler',     'gcc-5.1-default',  1);
+insert into dependencies values ('compiler',     'gcc-5.1-c++11',    1);
 insert into dependencies values ('compiler',     'llvm-3.5-default', 1);
+insert into dependencies values ('compiler',     'llvm-3.5-c++11',   1);
+insert into dependencies values ('compiler',     'llvm-3.7-default', 1);
+insert into dependencies values ('compiler',     'llvm-3.7-c++11',   1);
 
 -- Whether to compile ROSE with debugging support. Value is 'yes' or 'no'.
 -- NOTE: cmake is not set up for all combinations of debug and optimize.
@@ -197,6 +207,7 @@ insert into test_names values ( 'end',              999 );
 
 create table test_results (
     id serial primary key,
+    enabled boolean default true,			-- can be set to false to prevent test from showing in browser
 
     -- who did the testing and reporting
     reporting_user integer references auth_users(id),   -- user making this report
