@@ -207,6 +207,7 @@ insert into test_names values ( 'end',              999 );
 
 create table test_results (
     id serial primary key,
+    enabled boolean default true,			-- can be set to false to prevent test from showing in browser
 
     -- who did the testing and reporting
     reporting_user integer references auth_users(id),   -- user making this report
