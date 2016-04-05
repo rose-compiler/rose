@@ -702,7 +702,7 @@ no-edg-lcov.info: all-lcov.info
 
 # Capture only coverage for the ROSE library source code (no tests, tutorials, projects, system headers, boost, etc).
 librose-lcov.info: no-edg-lcov.info
-	lcov --extract $< "$(top_srcdir)/src/*"
+	lcov --extract $< "$(top_srcdir)/src/*" -o $@
 
 # Generate a directory containing the HTML representation of the coverage information for the ROSE library proper.
 librose_lcov_web_pages: librose-lcov.info
