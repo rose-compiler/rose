@@ -656,6 +656,10 @@ sqlDependencyExpression(const Dependency &dep, const std::string &depName) {
 
 static std::string
 sqlDependencyExpression(const Dependencies &deps, const std::string &depName) {
+    if (!deps.exists(depName)) {
+        ASSERT_require(gstate.dependencyNames.exists(depName));
+        return gstate.dependencyNames[depName];
+    }
     return sqlDependencyExpression(deps[depName], depName);
 }
 
