@@ -10815,10 +10815,19 @@ void c_action_label(Token_t * lbl)
         // Find the previously built false body in the SgIfStmt
         SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
         ROSE_ASSERT(false_body != NULL);
+        if(false_body->get_startOfConstruct()!=NULL){
+          delete false_body->get_startOfConstruct();
+          false_body->set_startOfConstruct(NULL);
+        }
+        if(false_body->get_endOfConstruct()!=NULL){
+          delete false_body->get_endOfConstruct();
+          false_body->set_endOfConstruct(NULL);
+        }
+        setSourcePosition(false_body,elseKeyword);
 
-        SgBasicBlock* true_body = isSgBasicBlock(ifStatement->get_true_body());
-        ROSE_ASSERT(true_body != NULL);
-        resetEndingSourcePosition(true_body, elseKeyword);
+        //SgBasicBlock* true_body = isSgBasicBlock(ifStatement->get_true_body());
+        //ROSE_ASSERT(true_body != NULL);
+        //resetEndingSourcePosition(true_body, elseKeyword);
 
         // Push the false body onto the scope stack
         astScopeStack.push_front(false_body);

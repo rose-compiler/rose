@@ -2325,7 +2325,7 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
   // printf ("Handling ELSE case for if_stmt = %p \n",if_stmt);
   // false body: unparse only if non-empty basic block
      SgBasicBlock* fbb = isSgBasicBlock(if_stmt->get_false_body());
-     if (fbb && fbb->get_statements().size() > 0)
+     if (fbb && (fbb->get_statements().size() > 0 || fbb->getAttachedPreprocessingInfo()!=NULL ))
         {
        // The else statement might just need its own numeric label
        // unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
@@ -2347,6 +2347,7 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
                   {
                  // Call the associated unparse function directly to avoid formatting
                     unparseIfStmt(elseIfStatement, info);
+                    unparseAttachedPreprocessingInfo(if_stmt->get_false_body(), info, PreprocessingInfo::inside);
                   }
                  else
                   {
