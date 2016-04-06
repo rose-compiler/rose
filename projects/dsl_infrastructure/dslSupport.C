@@ -915,6 +915,10 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
                               initializedName->addNewAttribute(className,dslAttribute);
 #endif
                             }
+                           else
+                            {
+                              printf ("Note: initializedName->isCompilerGenerated() == true where we are adding an DSL attribute \n");
+                            }
 
                          returnValue = true;
 
@@ -929,6 +933,9 @@ bool DSL_Support::isDslVariable(SgNode* astNode)
                       // dsl_attribute* attribute = dsl_attribute_map[className];
                          dsl_attribute* attribute = dsl_attribute_map[className]->factory_copy();
                          ROSE_ASSERT(attribute != NULL);
+
+                      // Add the attribute to the SgInitializedName.
+                         initializedName->addNewAttribute(className,attribute);
 #if 0
                          printf ("Exiting as a test! \n");
                          ROSE_ASSERT(false);
@@ -1120,7 +1127,7 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                   }
 #endif
 
-
+            // Make sure that any case we see is processed.
                if (supportedDotExp == false)
                   {
                     ROSE_ASSERT(dotExp->get_lhs_operand() != NULL);
@@ -1299,8 +1306,18 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
           SgVarRefExp* varRefExp = isSgVarRefExp(functionCallExp->get_function());
           if (varRefExp != NULL)
              {
+            // Note this this case only happens outside of the DSL implementation (so we will ignore it for now).
+            // It is a function call from a function pointer variable in a template function in both: 
+            //    include-staging/g++_HEADERS/hdrs4/ext/string_conversions.h, and
+            //    include-staging/g++_HEADERS/hdrs4/ostream
+            // that I do not yet understand (and have not investegated further).
+#if 0
                printf ("Case of functionCallExp->get_function() == SgVarRefExp not implemented! \n");
+#endif
                supportedNode = true;
+#if 0
+               varRefExp->get_file_info()->display("Case of functionCallExp->get_function() == SgVarRefExp not implemented!");
+#endif
              }
 
        // Test if the IR node in a SgFunctionCallExp was supported.
