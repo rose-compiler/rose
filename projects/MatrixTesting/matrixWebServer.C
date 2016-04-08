@@ -2054,6 +2054,11 @@ public:
         args.push_back(boost::lexical_cast<std::string>(testId_));
         sql += where;
 
+        // Just in case the test has been removed and thus the query iterator returns no results.
+        humanConfig_->clear();
+        humanConfig_->elementAt(0, 0)->addWidget(new Wt::WText("Test has been removed from the database."));
+
+        // Iterate over the query. This "for" loop is executed only zero or one time.
         std::string first_error;
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
@@ -2313,7 +2318,7 @@ public:
                           sqlFromClause() +
                           sqlWhereClause(deps, args) +
                           " and " + passFailExpr + " = 'fail'"
-                          " group by status, first_error, test_names.position"
+                          " group by status, coalesce(first_error,''), test_names.position"
                           " order by n desc"
                           " limit 15";
         SqlDatabase::StatementPtr q1 = gstate.tx->statement(sql);
@@ -2358,9 +2363,11 @@ public:
             args.clear();
             SqlDatabase::StatementPtr q4 = gstate.tx->statement("select test.id" + sqlFromClause() +
                                                                 sqlWhereClause(deps, args) +
+                                                                " and test.status = ?"
                                                                 " and coalesce(test.first_error,'') = ?"
                                                                 " and " + passFailExpr + " = 'fail'"
                                                                 " order by test.id");
+            args.push_back(status);
             args.push_back(message);
             bindSqlVariables(q4, args);
             for (SqlDatabase::Statement::iterator iter4 = q4->begin(); iter4 != q4->end(); ++iter4)
@@ -2380,9 +2387,11 @@ public:
             sql = "select " + boost::join(gstate.dependencyNames.values(), ", ") + ", count(*)" +
                   sqlFromClause() +
                   sqlWhereClause(deps, args) +
+                  " and test.status = ?"
                   " and coalesce(test.first_error,'') = ?"
                   " and " + passFailExpr + " = 'fail'"
                   " group by " + boost::join(gstate.dependencyNames.values(), ", ");
+            args.push_back(status);
             args.push_back(message);
             SqlDatabase::StatementPtr q2 = gstate.tx->statement(sql);
             bindSqlVariables(q2, args);
