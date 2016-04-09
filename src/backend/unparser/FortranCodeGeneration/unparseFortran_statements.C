@@ -2161,13 +2161,23 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
        // The last case of a chain of "if else if else if endif" has an empty false block!
           if (falseBlock->get_statements().empty() == false)
              {
-               childIfStatement = isSgIfStmt(*(falseBlock->get_statements().begin()));
+               //childIfStatement = isSgIfStmt(*(falseBlock->get_statements().begin()));
+               int nStmt = 0;
+               for(int i=0;i<falseBlock->get_statements().size();i++){
+                 // ignore pragma declarations in the false body of the parent if stmt
+                 if( isSgPragmaDeclaration(falseBlock->get_statements()[i]) == NULL ){
+                   nStmt +=1;
+                   if(childIfStatement==NULL){
+                     childIfStatement = isSgIfStmt(falseBlock->get_statements()[i]);
+                   }
+                 }
+               }
             // printf ("Test first statement in false block is SgIfStmt: childIfStatement = %p \n",childIfStatement);
                if (childIfStatement != NULL)
                   {
                  // A properly formed elseif has only a single statement in the false block AND was marked as NOT having an associated "END IF"
                  // DXN (02/13/2011): and marked as using the THEN keyword
-                    ifStatementInFalseBody = (falseBlock->get_statements().size() == 1)
+                    ifStatementInFalseBody = (nStmt == 1)
                                 && (childIfStatement->get_has_end_statement() == false)
                                 && childIfStatement->get_use_then_keyword();
 
@@ -2339,6 +2349,9 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
              }
             else
              {
+               if (elseIfStatement != NULL){
+                 unparseAttachedPreprocessingInfo(elseIfStatement, info, PreprocessingInfo::before);
+               }
                unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
                curprint("ELSE ");
 
