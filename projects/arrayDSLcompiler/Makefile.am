@@ -51,9 +51,15 @@ generateDotOfTargetGeneratedCode: generated_dsl_attributes.C generated_dsl_attri
 # depends upon generated_dsl_attributes_header.C insted of generated_dsl_attributes.C.
 arrayDSLcompiler.o : $(builddir)/generated_dsl_attributes.C
 
+attributeGenerator: $(DSL_INFRASTRUCTURE_BIN)/attributeGenerator
+#	$(MAKE) -C../dsl_infrastructure attributeGenerator
+#	cd ../dsl_infrastructure; $(MAKE) attributeGenerator
+	@echo "Can't make attributeGenerator from arrayDSLcompiler directory (not clear why)."
+
 # This is for testing the generation of the DSL code input to the DSL compiler only.
 testAttributeGenerator: attributeGenerator
-	$(DSL_INFRASTRUCTURE_BIN)/attributeGenerator -std=c++11 -DSKIP_ROSE_HEADERS $(srcdir)/array_header.C
+#	$(DSL_INFRASTRUCTURE_BIN)/attributeGenerator -std=c++11 -DSKIP_ROSE_HEADERS $(srcdir)/array_header.C
+	$(DSL_INFRASTRUCTURE_BIN)/attributeGenerator -std=c++11 -DSKIP_ROSE_HEADERS -I$(DSL_INFRASTRUCTURE_SRC) $(srcdir)/array_header.C
 
 testArrayDSLCompiler: arrayDSLcompiler
 	./arrayDSLcompiler -Wunknown-pragmas -DSKIP_ROSE_BUILTIN_DECLARATIONS -c $(srcdir)/array_main.C
