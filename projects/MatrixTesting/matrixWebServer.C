@@ -656,12 +656,16 @@ sqlDependencyExpression(const Dependency &dep, const std::string &depName) {
 
 static std::string
 sqlDependencyExpression(const Dependencies &deps, const std::string &depName) {
+    if (!deps.exists(depName)) {
+        ASSERT_require(gstate.dependencyNames.exists(depName));
+        return gstate.dependencyNames[depName];
+    }
     return sqlDependencyExpression(deps[depName], depName);
 }
 
 static std::string
 sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
-    std::string where;
+    std::string where = " where test.enabled";
     BOOST_FOREACH (const Dependency &dep, deps.values()) {
         // Get the human value from the combo box. Sometimes a combo box will display (Wt::DisplayRole) a different value than
         // what should be used as the human value. In this case, the underlying model will support Wt::UserRole to return the
@@ -671,7 +675,7 @@ sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
         Bucket<std::string> bucket;
         if (humanValue.compare(WILD_CARD_STR) != 0 && dep.humanValues.getOptional(humanValue).assignTo(bucket)) {
             std::string depColumn = sqlDependencyExpression(dep, dep.name);
-            where += std::string(where.empty() ? " where " : " and ");
+            where += " and ";
             if (bucket.minValue() == bucket.maxValue()) {
                 where += depColumn + " = ?";
                 args.push_back(bucket.minValue());
@@ -682,8 +686,6 @@ sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
             }
         }
     }
-    if (where.empty())
-        where = " where true";
     return where + " ";
 }
 
@@ -2052,6 +2054,11 @@ public:
         args.push_back(boost::lexical_cast<std::string>(testId_));
         sql += where;
 
+        // Just in case the test has been removed and thus the query iterator returns no results.
+        humanConfig_->clear();
+        humanConfig_->elementAt(0, 0)->addWidget(new Wt::WText("Test has been removed from the database."));
+
+        // Iterate over the query. This "for" loop is executed only zero or one time.
         std::string first_error;
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
@@ -2311,7 +2318,7 @@ public:
                           sqlFromClause() +
                           sqlWhereClause(deps, args) +
                           " and " + passFailExpr + " = 'fail'"
-                          " group by status, first_error, test_names.position"
+                          " group by status, coalesce(first_error,''), test_names.position"
                           " order by n desc"
                           " limit 15";
         SqlDatabase::StatementPtr q1 = gstate.tx->statement(sql);
@@ -2356,9 +2363,11 @@ public:
             args.clear();
             SqlDatabase::StatementPtr q4 = gstate.tx->statement("select test.id" + sqlFromClause() +
                                                                 sqlWhereClause(deps, args) +
+                                                                " and test.status = ?"
                                                                 " and coalesce(test.first_error,'') = ?"
                                                                 " and " + passFailExpr + " = 'fail'"
                                                                 " order by test.id");
+            args.push_back(status);
             args.push_back(message);
             bindSqlVariables(q4, args);
             for (SqlDatabase::Statement::iterator iter4 = q4->begin(); iter4 != q4->end(); ++iter4)
@@ -2376,8 +2385,13 @@ public:
             Characteristics characteristics;
             args.clear();
             sql = "select " + boost::join(gstate.dependencyNames.values(), ", ") + ", count(*)" +
-                  sqlFromClause() + sqlWhereClause(deps, args) + " and coalesce(test.first_error,'') = ?"
+                  sqlFromClause() +
+                  sqlWhereClause(deps, args) +
+                  " and test.status = ?"
+                  " and coalesce(test.first_error,'') = ?"
+                  " and " + passFailExpr + " = 'fail'"
                   " group by " + boost::join(gstate.dependencyNames.values(), ", ");
+            args.push_back(status);
             args.push_back(message);
             SqlDatabase::StatementPtr q2 = gstate.tx->statement(sql);
             bindSqlVariables(q2, args);
