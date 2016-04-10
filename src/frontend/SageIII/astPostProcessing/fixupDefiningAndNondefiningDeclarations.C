@@ -100,6 +100,33 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
                   // printf ("In FixupAstDefiningAndNondefiningDeclarations::visit(): declaration = %p firstNondefiningClassDeclaration->get_definingDeclaration() = %p \n",declaration,firstNondefiningClassDeclaration->get_definingDeclaration());
                   }
+
+            // DQ (4/10/2016): Fixing bug pointed out by Tim at UCLA.
+            // The issue is with a member function declaration, but could apply to friend functions, so implement fix in terms of SgFunctionDeclaration.
+               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declaration);
+               if (functionDeclaration != NULL)
+                  {
+                    ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+                    if (firstNondefiningDeclaration->get_definingDeclaration() != NULL)
+                       {
+                      // We have identified an inconsistantcy where the defining function pointer has not be uniformally setup.
+#if 0
+                         printf ("We have identified an inconsistantcy where the defining function pointer has not be uniformally setup \n");
+#endif
+                         declaration->set_definingDeclaration(firstNondefiningDeclaration->get_definingDeclaration());
+                       }
+                  }
+
+            // DQ (4/10/2016): Output a warning when this happens.
+               ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+               if (firstNondefiningDeclaration->get_definingDeclaration() != NULL && declaration->get_definingDeclaration() == NULL)
+                  {
+                 // We have identified an inconsistantcy where the defining function pointer has not be uniformally setup.
+#if 1
+                    printf ("Warning: Fixup defining declarations: We have identified an inconsistantcy where the defining declaration has not be uniformally setup \n");
+#endif
+                    declaration->set_definingDeclaration(firstNondefiningDeclaration->get_definingDeclaration());
+                  }
              }
 
        // DQ (12/14/2005): Test the new flag to tell us when we should have defered the 
