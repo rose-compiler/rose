@@ -7386,7 +7386,6 @@ SgSourceFile* SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf
 SgFunctionDeclaration* SageInterface::findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
 {
   return findDeclarationStatement<SgFunctionDeclaration> (root, name, scope, isDefining);
-
 }
 
 
