@@ -68,8 +68,9 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 # DQ (4/10/2016): Added test code from project working on systemc (but this was not really specific to systemc support).
 test_member_function: member_function
 	./member_function -c -I$(srcdir) $(srcdir)/input_member_function.cpp
+#	./member_function -DSKIP_ROSE_BUILTIN_DECLARATIONS -c -I$(srcdir) $(srcdir)/input_member_function.cpp
 
-EXTRA_DIST = $(TESTCODES)
+EXTRA_DIST = $(TESTCODES) input_member_function.cpp input_member_function.h
 
 check-local:
 	@echo "Tests of System C examples."
