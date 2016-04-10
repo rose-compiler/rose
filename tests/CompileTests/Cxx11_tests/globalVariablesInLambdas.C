@@ -114,8 +114,13 @@ Traversal::evaluateInheritedAttribute ( SgNode* astNode, InheritedAttribute inhe
                SgInitializedName* initializedName = variableSymbol->get_declaration();
                ROSE_ASSERT(initializedName != NULL);
 
-            // Save in the global variable list.
-               globalVariables.insert(initializedName);
+            // Check that this is a variable from global scope.
+               SgScopeStatement* scope = initializedName->get_scope();
+               if (isSgGlobal(scope) != NULL)
+                  {
+                 // Save in the global variable list.
+                    globalVariables.insert(initializedName);
+                  }
              }
 
        // Look for declarations of arrays and check the array bounds for global variables.
@@ -206,7 +211,7 @@ main ( int argc, char* argv[] )
   // Case we want to detect:
   //   1) Use of global variables in all lmbda functions in each function.
   //   2) Use of global variables in all functions (independent of use of lambda functions).
-#if 0
+#if 1
      bool onlyInLambdaFunctions = false;
 #else
      bool onlyInLambdaFunctions = true;

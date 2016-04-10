@@ -30,7 +30,11 @@ void bar()
       int val = gvar2 + gvar2;
       int other_val = gvar2 * gvar2;
       // do other stuff
+      other_val = 2 * other_val;
    });
+
+   val++;
+   val--;
 
    for_all([=](int i) {
       int val = gvar4 + gvar4;
