@@ -11259,7 +11259,7 @@ void c_action_label(Token_t * lbl)
         }
 
         body->set_parent(switchStatement);
-        setSourcePosition(body);
+        setSourcePosition(body,eos);
 
         ROSE_ASSERT(astScopeStack.empty() == false);
         astScopeStack.front()->append_statement(switchStatement);
@@ -11346,10 +11346,10 @@ void c_action_label(Token_t * lbl)
             }
         }
 
-        setSourcePosition(caseOrDefaultStatement);
+        setSourcePosition(caseOrDefaultStatement,caseKeyword);
 
         body->set_parent(caseOrDefaultStatement);
-        setSourcePosition(body);
+        setSourcePosition(body,eos);
 
         ROSE_ASSERT(astScopeStack.empty() == false);
         astScopeStack.front()->append_statement(caseOrDefaultStatement);
