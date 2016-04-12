@@ -228,7 +228,7 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarPrintf(SgNode* node) {
   * \author Markus Schordan
   * \date 2012.
  */
-SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
+SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node, bool showWarnings) {
   SgNode* nextNodeToAnalyze1=node;
   if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
     string fName=SgNodeHelper::getFunctionName(funCall);
@@ -237,12 +237,16 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
       if(actualParams.size()==3) {
         SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
         if(!varRefExp) {
-             cerr<<"Warning: unsupported fprint argument #3 (no variable found). Required form of fprintf(stream,\"...%d...\",v)."<<endl;
-             return 0;
+          if(showWarnings) {
+            cerr<<"WARNING: unsupported fprint argument #3 (no variable found). Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+          }
+          return 0;
         }
         return varRefExp;
       } else {
-        cerr<<"Warning: unsupported number of fprintf arguments. Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+        if(showWarnings) {
+          cerr<<"WARNING: unsupported number of fprintf arguments. Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+        }
         return 0;
       }
     }
