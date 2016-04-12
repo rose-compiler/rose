@@ -83,7 +83,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
       replaceTime+=timer.getElapsedTimeInMilliSec();
       assignOpNr++;
     } else {
-      cout<<"WARNING: not an expression. transformation not applied: "<<(*i)->unparseToString()<<endl;
+      cout<<"WARNING: not an expression. transformation not applied: "<<(*i)->class_name()<<":"<<(*i)->unparseToString()<<endl;
     }
     //cout<<"Buildtime: "<<buildTime<<" Replacetime: "<<replaceTime<<endl;
   }
@@ -114,6 +114,21 @@ SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMa
       return SageBuilder::buildAssignOp(lhsCopy2,newExp);
     case V_SgModAssignOp:
       newExp=SageBuilder::buildModOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgIorAssignOp: // bitwise or
+      newExp=SageBuilder::buildBitOrOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgAndAssignOp: // bitwise and
+      newExp=SageBuilder::buildBitAndOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgXorAssignOp:
+      newExp=SageBuilder::buildBitXorOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgLshiftAssignOp:
+      newExp=SageBuilder::buildLshiftOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgRshiftAssignOp:
+      newExp=SageBuilder::buildRshiftOp(lhsCopy,rhsCopy);
       return SageBuilder::buildAssignOp(lhsCopy2,newExp);
     default: /* ignore all other cases - all other expr remain unmodified */
       return 0;

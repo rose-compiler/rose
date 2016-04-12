@@ -693,9 +693,9 @@ int main( int argc, char * argv[] ) {
   vector<int> option_specialize_fun_varinit_const_list;
   if(args.count("specialize-fun-name")) {
     option_specialize_fun_name = args["specialize-fun-name"].as<string>();
-    cout << "DEBUG: option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
+    //cout << "DEBUG: option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
   } else {
-    cout << "DEBUG: option_specialize_fun_name: NONE"<< option_specialize_fun_name<<endl;
+    //cout << "DEBUG: option_specialize_fun_name: NONE"<< option_specialize_fun_name<<endl;
   }
 
   if(args.count("specialize-fun-param")) {
