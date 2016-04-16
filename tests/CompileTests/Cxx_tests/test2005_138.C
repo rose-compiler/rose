@@ -49,7 +49,8 @@ int X<T>::foo()
 // template <>
 
 // DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
-#if (__GNUC__ == 4)
+// #if (__GNUC__ == 4)
+#if ( defined(__clang__) == 0 && __GNUC__ == 4)
 template <>
 #endif
 int X<int>::foo()
@@ -69,7 +70,8 @@ int X<int>::foo()
 
 // DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
 // TOO (2/15/2011): error for Thrifty g++ 3.4.4
-#if (__GNUC__ == 3 && __GNUC_MINOR__ != 4)
+// #if (__GNUC__ == 3 && __GNUC_MINOR__ != 4)
+#if ( defined(__clang__) == 0 && __GNUC__ == 3 && __GNUC_MINOR__ != 4)
 template X<A>;
 
 // Template Instantiation Directive

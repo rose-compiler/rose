@@ -118,8 +118,15 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   }
 
             // DQ (4/10/2016): Output a warning when this happens.
-               ROSE_ASSERT(firstNondefiningDeclaration != NULL);
-               if (firstNondefiningDeclaration->get_definingDeclaration() != NULL && declaration->get_definingDeclaration() == NULL)
+               if (firstNondefiningDeclaration == NULL)
+                  {
+#if 1
+                    printf ("Warning: declaration exists with firstNondefiningDeclaration == NULL: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+                  }
+            // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+            // if (firstNondefiningDeclaration->get_definingDeclaration() != NULL && declaration->get_definingDeclaration() == NULL)
+               if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_definingDeclaration() != NULL && declaration->get_definingDeclaration() == NULL)
                   {
                  // We have identified an inconsistantcy where the defining function pointer has not be uniformally setup.
 #if 1

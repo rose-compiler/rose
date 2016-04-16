@@ -3994,6 +3994,17 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_Cxx_only(false);
         }
 
+
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+   #if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+     // OK, we are supporting Clang using EDG 4.9 and greater.
+   #else
+        printf ("\nERROR: Clang compiler as backend to ROSE is not supported unless using EDG 4.9 version \n");
+        printf ("       or greater (use --enable-edg_version=4.9 or greater to configure ROSE). \n\n");
+        exit(1);
+   #endif
+#endif
+
 #if 0
   // DQ (2/4/2015): Note that the use of "++" is a problem for the CommandlineProcessing::isOption() function's regex engin (I think).
   // The larger point is that these options with "++" are not being recognized, so we will have to search for "-std=c++11" directly 
@@ -4067,9 +4078,13 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
             // Allow C++11 option with versions of EDG 4.9 and later.
 #else
+            // DQ (4/16/2016): Mkae this a more consistant error message to use a later version of EDG.
             // DQ (1/14/2016): Don't allow C++11 option with versions of EDG before EDG 4.9
-               printf ("\nERROR: C++11 support requires configuration of ROSE using EDG 4.9 or later (using EDG 4.7) \n\n");
-               ROSE_ASSERT(false);
+            // printf ("\nERROR: C++11 support requires configuration of ROSE using EDG 4.9 or later (using EDG 4.7) \n\n");
+            // ROSE_ASSERT(false);
+               printf ("\nERROR: C++11 mode in the compiler used as a backend to ROSE is not supported unless using  \n");
+               printf ("       EDG 4.9 version or greater (use --enable-edg_version=4.9 or greater to configure ROSE). \n\n");
+               exit(1);
 #endif
 
                set_Cxx11_only(true);
@@ -6053,7 +6068,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // EDG 4.9 permits emulation modes for specific MSVC versions.  Not clear what version of MSVC we should be emulating.
   // This is the version number for MSVC 5.0, but we need to get a later version.
      int emulate_msvc_version_number = 1100;
-  // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+  // printf ("emulate_msvc_version_number = %d \n",emulate_msvc_version_number);
      commandLine.push_back("--microsoft_version");
      commandLine.push_back(StringUtility::numberToString(emulate_msvc_version_number));
 #endif
@@ -6061,27 +6076,65 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
 #ifndef ROSE_USE_MICROSOFT_EXTENSIONS
 #ifndef _MSC_VER
+  // DQ (4/13/2016): This must use the values of __GNUC__,  __GNUC_MINOR__, and __GNUC_PATCHLEVEL__ 
+  // from the backend compiler.  Note that we don't save the __GNUC_PATCHLEVEL__ for the backend 
+  // compiler, but we can assume it is zero (I think this should work well).
   // DQ (7/3/2013): We don't have to lie to EDG about the version of GNU that it should emulate 
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
-     int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
+  // int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
+  // int emulate_gnu_version_number = BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER*10000 + BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER*100 + 0;
+     int emulate_backend_compiler_version_number = BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER*10000 + BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER*100 + 0;
 
 // #ifdef __INTEL_COMPILER
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
   // DQ (9/6/2015): Reset to specific version of GNU for Intel v14 compiler.
-     emulate_gnu_version_number = 4*10000 + 8*100 + 3;
+     emulate_backend_compiler_version_number = 4*10000 + 8*100 + 3;
 #endif
 
   // DQ (7/3/2014): Testing if we emulate a different version of GNU g++.
-  // emulate_gnu_version_number = 4*10000 + 8*100 + 1;
+  // emulate_backend_compiler_version_number = 4*10000 + 8*100 + 1;
 
      if (SgProject::get_verbose() > 0)
         {
-          printf ("In SgFile::build_EDG_CommandLine(): emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+          printf ("In SgFile::build_EDG_CommandLine(): emulate_backend_compiler_version_number = %d \n",emulate_backend_compiler_version_number);
         }
 
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
      commandLine.push_back("--gnu_version");
-     commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
+#endif
+#ifdef BACKEND_CXX_IS_GNU_COMPILER
+     commandLine.push_back("--gnu_version");
+#endif
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+#if 0
+     printf ("For clang support in ROSE: __GNUC__ = %d __GNUC_MINOR__ = %d __GNUC_PATCHLEVEL__ = %d \n",(int)__GNUC__, (int)__GNUC_MINOR__, (int)__GNUC_PATCHLEVEL__);
+
+  // DQ (4/13/2016): Using Clang we should not be able to generate this number unless it is incorrect.
+  // if (__GNUC__ == 4 && __GNUC_MINOR__ == 2)
+     if (emulate_backend_compiler_version_number == 40200)
+        {
+          printf ("Clang support is setting compiler version incorrectly \n");
+          ROSE_ASSERT(false);
+        }
+
+  // DQ (4/13/2016): In the case of Clang we can catch an interesting bug where the values of the 
+  // compiler used to compile ROSE are used to compute the version of GNU that we want the backend 
+  // compiler to emulated.  In fact the compiler used to compile ROSE can have NOTHING to with the 
+  // version of the compiler used to compiler the ROSE generated code (the backend compiler).
+  // We need to use the values of __GNUC__,  __GNUC_MINOR__, and __GNUC_PATCHLEVEL__ from the
+  // backend compiler to compute the version of GNU (or clang) that we will emulate.
+#if 0
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ == 2))
+  #error "Error incorrect computation of Clang emulated version: ((__GNUC__ == 4) && (__GNUC_MINOR__ == 2))"
+#endif
+#endif
+
+#endif
+     commandLine.push_back("--clang");
+     commandLine.push_back("--clang_version");
+#endif
+     commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
 #endif
 #endif
 
@@ -6311,7 +6364,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
             // CUDA is a C++ extention, add default C++ options
                commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
-               commandLine.push_back("-D__cplusplus=1");
+
+            // DQ (4/13/2016): If we are going to set this, set it to a more reasonable value.
+            // Try letting EDG specify the value of this internal variable.
+            // commandLine.push_back("-D__cplusplus=1");
+            // commandLine.push_back("-D__cplusplus=199711L");
+
                Rose::Cmdline::makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
              }
             else 
@@ -6380,7 +6438,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                   {
                  // The value here should be 1 to match that of GNU gcc (the C++ standard requires this to be "199711L")
                  // initString += " -D__cplusplus=0 ";
-                    commandLine.push_back("-D__cplusplus=1");
+
+                 // DQ (4/13/2016): If we are going to set this, set it to a more reasonable value.
+                 // Try letting EDG specify the value of this internal variable.
+                 // commandLine.push_back("-D__cplusplus=1");
+                 // commandLine.push_back("-D__cplusplus=199711L");
 
                     if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
                        {
@@ -6521,6 +6583,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
             // the GNU header files and it is required for GNU compatability?). I think that setting this predefined macro is 
             // not allowed by EDG in MSVC mode.
                commandLine.push_back("-D__cplusplus=199711L");
+#endif
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+            // DQ (4/13/2016): We need to define this explicitly for the Clang compiler.
+            // Try letting EDG specify the value of this internal variable.
+            // commandLine.push_back("-D__cplusplus=199711L");
 #endif
              }
 
