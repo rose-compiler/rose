@@ -1,0 +1,14 @@
+// -*- c++ -*-
+
+/** @page rosetools ROSE-Based Tools
+ *  A List of Program Transformation Tools Built On Top Of ROSE
+ *
+ * @ref declaration_move "Declaration Move Tool"
+ * 
+ *
+ *  This page is generated from $ROSE/docs/Rose/Tools/roseBasedTools.dox */
+
+/** @defgroup rose_tools ROSE-Based Tools
+ *
+ *  Tools Built Using ROSE. */ 
+
