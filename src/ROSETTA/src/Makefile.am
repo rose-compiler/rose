@@ -123,6 +123,9 @@ CxxGrammarMetaProgram_LDADD = \
   $(ROSE_BOOST_LIBS) \
   $(RT_LIBS)
 
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+CxxGrammarMetaProgram_LDADD += -lstdc++
+
 # DQ (9/11/2008):
 # The rose_paths.c is built in ROSE/src/util and this dependence causes
 # ROSE to rebuild a lot of code each time configure is rerun. Let's see

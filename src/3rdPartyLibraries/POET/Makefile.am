@@ -3,8 +3,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_LTLIBRARIES = libpoet.la
 libpoet_la_SOURCES = poet_AST.cpp codegen.cpp parse.cpp eval.cpp eval_ext.cpp evalOp.cpp driver.cpp tokenize.cpp timing.cpp AutoTuningInterface.cpp poet_yacc.c poet_lex.c
 
-bin_PROGRAMS = pcg
-pcg_SOURCES =   main.cpp 
+
+# DQ (4/12/2016): We don't want to be linking main in the ROSE library build process.
+# If these are required they should be built in tests directories as part of testing POET.
+# This is a particular problem for support of clang in compiling ROSE.
+# bin_PROGRAMS = pcg
+# pcg_SOURCES  = main.cpp 
+
 pcg_LDADD = libpoet.la
 
 
