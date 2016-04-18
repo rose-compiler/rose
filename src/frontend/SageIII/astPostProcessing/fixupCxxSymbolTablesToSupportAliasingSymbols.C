@@ -823,7 +823,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                  // DQ (2/25/2012): Print a warning message when this happens (so far only test2012_08.C).
                     if (SgProject::get_verbose() > 0)
                        {
-                         printf ("WARNING: In FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Not really clear how to handle this case where tmpClassDeclaration->get_definingDeclaration() == NULL! \n");
+                         mprintf ("WARNING: In FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Not really clear how to handle this case where tmpClassDeclaration->get_definingDeclaration() == NULL! \n");
                        }
                   }
 #endif
