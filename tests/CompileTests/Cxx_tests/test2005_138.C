@@ -50,7 +50,7 @@ int X<T>::foo()
 
 // DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
 // #if (__GNUC__ == 4)
-#if ( defined(__clang__) == 0 && __GNUC__ == 4)
+#if ( defined(__clang__) || __GNUC__ == 4)
 template <>
 #endif
 int X<int>::foo()

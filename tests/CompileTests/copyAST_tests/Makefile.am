@@ -59,7 +59,6 @@ LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
    copytest2007_41.C \
    copytest2007_42.C \
    copytest2007_44.C \
-   copytest2007_45.C \
    copytest2007_46.C \
    copytest2007_47.C \
    copytest2007_49.C \
@@ -67,6 +66,11 @@ LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
    copytest2014_01.C \
    copytest2014_02.C \
    copyExampleInput.C
+
+if !USING_CLANG_COMPILER
+LONG_LIST_TESTCODES_REQUIRED_TO_PASS += \
+   copytest2007_45.C 
+endif
 
 # DQ (2/28/2015): These fail due to the fix for the EDG template normalization.
 #  copytest2007_40.C 
@@ -153,7 +157,6 @@ test2003_24.C \
 test2003_25.C \
 test2003_26.C \
 test2003_27.C \
-test2003_28.C \
 test2003_29.C \
 test2003_30.C \
 test2003_31.C \
@@ -182,7 +185,6 @@ test2004_17.C \
 test2004_18.C \
 test2004_19.C \
 test2004_23.C \
-test2004_24.C \
 test2004_26.C \
 test2004_27.C \
 test2004_28.C \
@@ -215,10 +217,8 @@ test2004_58.C \
 test2004_59.C \
 test2004_60.C \
 test2004_61.C \
-test2004_62.C \
 test2004_63.C \
 test2004_64.C \
-test2004_65.C \
 test2004_67.C \
 test2004_68.C \
 test2004_69.C \
@@ -339,7 +339,6 @@ test2005_30.C \
 test2005_31.C \
 test2005_32.C \
 test2005_33.C \
-test2005_36.C \
 test2005_37.C \
 test2005_38.C \
 test2005_40.C \
@@ -379,7 +378,6 @@ test2005_76.C \
 test2005_77.C \
 test2005_78.C \
 test2005_79.C \
-test2005_80.C \
 test2005_81.C \
 test2005_83.C \
 test2005_84.C \
@@ -405,7 +403,6 @@ test2005_106.C \
 test2005_107.C \
 test2005_108.C \
 test2005_109.C \
-test2005_110.C \
 test2005_111.C \
 test2005_112.C \
 test2005_113.C \
@@ -444,7 +441,6 @@ test2005_157.C \
 test2005_158.C \
 test2005_159.C \
 test2005_160.C \
-test2005_162.C \
 test2005_163.C \
 test2005_164.C \
 test2005_165.C \
@@ -465,7 +461,6 @@ test2005_181.C \
 test2005_182.C \
 test2005_183.C \
 test2005_184.C \
-test2005_185.C \
 test2005_187.C \
 test2005_189.C \
 test2005_190.C \
@@ -473,7 +468,6 @@ test2005_191.C \
 test2005_192.C \
 test2005_193.C \
 test2005_194.C \
-test2005_195.C \
 test2005_196.C \
 test2005_197.C \
 test2005_198.C \
@@ -485,7 +479,6 @@ test2005_207.C \
 test2005_208.C \
 test2005_209.C \
 test2006_01.C \
-test2006_02.C \
 test2006_03.C \
 test2006_04.C \
 test2006_05.C \
@@ -498,7 +491,6 @@ test2006_13.C \
 test2006_14.C \
 test2006_16.C \
 test2006_17.C \
-test2006_18.C \
 test2006_19.C \
 test2006_20.C \
 test2006_22.C \
@@ -511,7 +503,6 @@ test2006_37.C \
 test2006_38.C \
 test2006_40.C \
 test2006_41.C \
-test2006_42.C \
 test2006_46.C \
 test2006_47.C \
 test2006_50.C \
@@ -553,8 +544,6 @@ test2006_91.C \
 test2006_92.C \
 test2006_93.C \
 test2006_94.C \
-test2006_95.C \
-test2006_96.C \
 test2006_97.C \
 test2006_98.C \
 test2006_99.C \
@@ -572,13 +561,9 @@ test2006_112.C \
 test2006_113.C \
 test2006_115.C \
 test2006_116.C \
-test2006_117.C \
-test2006_118.C \
 test2006_119.C \
-test2006_120.C \
 test2006_121.C \
 test2006_122.C \
-test2006_123.C \
 test2006_125.C \
 test2006_126.C \
 test2006_129.C \
@@ -674,7 +659,6 @@ test2007_130.C \
 test2007_133.C \
 test2007_135.C \
 test2007_137.C \
-test2007_141.C \
 test2007_142.C \
 test2007_147.C \
 test2007_150.C \
@@ -692,6 +676,30 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 $(FAILING_TESTS)
+
+if !USING_CLANG_COMPILER
+LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
+   test2003_28.C \
+   test2004_24.C \
+   test2004_62.C \
+   test2004_65.C \
+   test2005_36.C \
+   test2005_80.C \
+   test2005_110.C \
+   test2005_162.C \
+   test2005_185.C \
+   test2005_195.C \
+   test2006_02.C \
+   test2006_18.C \
+   test2006_42.C \
+   test2006_95.C \
+   test2006_96.C \
+   test2006_117.C \
+   test2006_118.C \
+   test2006_120.C \
+   test2006_123.C \
+   test2007_141.C 
+endif
 
 # DQ (2/28/2015): These fail due to the fix for the EDG template normalization.
 # test2004_149.C 

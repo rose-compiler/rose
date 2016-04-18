@@ -383,6 +383,11 @@ NEW_TESTCODES = \
 if !USING_CLANG_COMPILER
 # DQ (4/16/2016): Removed this test from the tests/input_codes/cxx/Makefile_Variables file
 # and put it into the Cxx_tests directory since it is a specific problem for Clang testing only.
+# test2005_50.C:  This was removed from being tested in the directory:
+#                 tests/roseTests/programTransformationTests/extractFunctionArgumentsTest/normalizationTranslator
+#                 because this translator does not handle constness for char pointers that are
+#                 assigned from constant string literals (and constness is enforced in the generated 
+#                 code by the Clang compiler). 
 # test2007_141.C: This is a case of a private type output in a template argument that should not be output.
 #                 Note that the supressing the output of template paramters that are not represented 
 #                 in the source code is an outstanding issue in ROSE that will be worked on once we
@@ -393,6 +398,7 @@ if !USING_CLANG_COMPILER
 #                 second as an attribute).  GNU ignores the second conflicting attributue and Clang
 #                 considers it to be an error.
 NEW_TESTCODES += \
+   test2005_50.C \
    test2007_141.C \
    test2012_188.C \
    test2013_243.C 
@@ -1188,7 +1194,13 @@ TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 # DQ (4/13/2016): Why is this suddenly required.  How did the A++ include directory go missing?
-TESTCODE_INCLUDES += $(APP_INCLUDES) 
+# The reason it appears to be required is because clang is defining __GNUC__ to be the value 3
+# and some of the test code use this to trigger that we are using version 3.x version of GNU
+# (since clang tries to pretend that it is GNU but borrows the version number to communicate that
+# it is 3.7.0 in it's emulation of GNU 4.2.1 (this is screwed up within Clang so it requires 
+# extra logic to sort it out and get the emulation correct).  Input codes using __GNUC__ are
+# thus not we setup to be used with clang or ROSE trying ti emulate clang.
+# TESTCODE_INCLUDES += $(APP_INCLUDES) 
 
 # TESTS_THAT_FAIL =
 

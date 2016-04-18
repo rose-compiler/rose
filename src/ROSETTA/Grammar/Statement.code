@@ -10688,7 +10688,17 @@ SgFunctionDeclaration::isTemplateFunction() const
                     returnValue = false;
 
                  // Error checking
-                    ROSE_ASSERT(templateMemberFunction->get_templateDeclaration() != NULL);
+                 // DQ (4/17/2016): We have to allow this in some more complex template instantiations (I think).
+                 // It might be work some discussion and at some point.  The case where this happens is in the 
+                 // instatiation of nexted template inside of outer templates and we only have a record of the
+                 // outer template from the instantiation (in EDG).
+                    if (templateMemberFunction->get_templateDeclaration() == NULL)
+                       {
+#if 0
+                         printf ("Note that templateMemberFunction->get_templateDeclaration() == NULL: We have to allow this in some cases of nested templates \n");
+#endif
+                       }
+                 // ROSE_ASSERT(templateMemberFunction->get_templateDeclaration() != NULL);
 #if 0
                  // DQ (12/23/2011): With the new design we no long have this data member.
 

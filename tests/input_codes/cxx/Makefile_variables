@@ -265,7 +265,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2005_47.C \
 	test2005_48.C \
 	test2005_49.C \
-	test2005_50.C \
 	test2005_51.C \
 	test2005_52.C \
 	test2005_53.C \
@@ -1350,6 +1349,7 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 
 # DQ (4/16/2016): Removed this test and put it into the Cxx_tests directory since it is 
 # a specific problem for Clang testing only.
+# test2005_50.C 
 # test2007_141.C 
 # test2012_188.C 
 # test2013_243.C 

@@ -127,13 +127,19 @@ endif
 SUBDIRS += simulator2
 
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
-# in ROSE, so lets' move on and return to compass later for this level of support.
+# in ROSE, so lets' move on and return to compass later for this level of support
+# of ROSE compiling the compass tool as a test of ROSE.
 #    compass
 
 if !ROSE_USING_ROSE_CODE_GENERATION
 
 # DQ (10/17/2010): This seems to be problem for Java, we can fix this later.
 if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+
+# DQ (4/17/2016): Restrict this to requiring both C/C++ language support and Binary analysis support.
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 if ROSE_BUILD_COMPASS2
    SUBDIRS += compass2
 else
@@ -144,8 +150,13 @@ else
  # compiled in any order. It was originally listed after "haskellport".
    SUBDIRS += palette
 endif
+
    SUBDIRS += binCompass
 endif
+
+endif
+endif
+
 endif
 
 if ROSE_MPI

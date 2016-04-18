@@ -10006,7 +10006,9 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
   // ROSE_ASSERT(sourcefile != NULL);
      if (sourcefile == NULL)
         {
+#if 0
           printf ("NOTE: source file not available in SgUnparse_Info in unparseTemplateDeclarationStatment_support(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
         }
 
   // We only do this denormalization if we are not using C++11 or later version of C++.
