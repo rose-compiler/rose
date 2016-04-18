@@ -204,7 +204,7 @@ protected:
     unsigned flags_;                  /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
     std::string comment_;             /**< Optional comment. Only for debugging; not significant for any calculation. */
     uint64_t hashval_;                /**< Optional hash used as a quick way to indicate that two expressions are different. */
-    mutable boost::any userData_;     /**< Additional user-specified data. This is not part of the hash. */
+    boost::any userData_;             /**< Additional user-specified data. This is not part of the hash. */
 
 public:
     // Bit flags

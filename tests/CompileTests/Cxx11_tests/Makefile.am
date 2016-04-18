@@ -1,5 +1,16 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+noinst_PROGRAMS = globalVariablesInLambdas
+
+globalVariablesInLambdas_SOURCES = globalVariablesInLambdas.C
+
+AM_CPPFLAGS = $(ROSE_INCLUDES)
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
+
+globalVariablesInLambdas_TESTS = test_1.C
+
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test2012_01.C \
@@ -247,6 +258,10 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 
 print_testcodes:
 	echo $(TESTCODES)
+
+globalVariablesInLambdas_test: globalVariablesInLambdas
+	./globalVariablesInLambdas -std=c++11 -c $(srcdir)/globalVariablesInLambdas_test_01.C
+
 
 check-local:
 if ROSE_USE_EDG_VERSION_4_9

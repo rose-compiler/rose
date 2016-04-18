@@ -108,9 +108,12 @@ void initialize() {
         SgAsmExecutableFileFormat::initDiagnostics();
 
      // DQ (3/24/2016): Added use of message logging mechanism to more locations in ROSE (to control output spew).
+#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
         EDG_ROSE_Translation::initDiagnostics();
+#endif
         TestChildPointersInMemoryPool::initDiagnostics();
         FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics();
+        FixupAstDeclarationScope::initDiagnostics();
         NameQualificationTraversal::initDiagnostics();
         UnparseLanguageIndependentConstructs::initDiagnostics();
         SageBuilder::initDiagnostics();
