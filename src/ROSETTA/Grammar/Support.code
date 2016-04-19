@@ -7240,6 +7240,12 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgFunctionType:
              {
                const SgFunctionType* functionType = isSgFunctionType(node);
+
+            // DQ (3/19/2016): Klocworks reports this as an issue, since functionType could be NULL.
+            // So I am adding an assertion to see if this is a reasonalbe solution.  I am not clear 
+            // why all of the other cases in this function are not flagged as issues by Klocworks.
+               ROSE_ASSERT(functionType != NULL);
+
                name = functionType->get_mangled();
                break;
              }
@@ -7703,7 +7709,11 @@ SgSymbolTable::find( const SgFunctionType* functionType)
   // while (p_iterator != p_table->end() && (*p_iterator).first == name)
      while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
-          if (isSgSymbol((*p_iterator).second)->variantT() == functionType->variantT())
+       // DQ (3/19/2016): This is an issue for Klocworks.
+       // if (isSgSymbol((*p_iterator).second)->variantT() == functionType->variantT())
+          SgSymbol* symbol = isSgSymbol((*p_iterator).second);
+          ROSE_ASSERT(symbol != NULL);
+          if (symbol->variantT() == functionType->variantT())
              {
                returnSymbol = p_iterator->second;
                if (returnSymbol->get_symbol_basis() == functionType)
@@ -13191,6 +13201,7 @@ Sg_File_Info::display_static_data( const std::string label )
 
 Sg_File_Info::Sg_File_Info()
    {
+  // DQ (3/19/2016): Note that this asserion does not generate an issue in Klocworks since there is no pre-initialization list.
      assert(this != NULL);
 
 #if 0
@@ -13229,7 +13240,11 @@ Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
      p_physical_line(0),
      p_source_sequence_number(0)
    {
-     assert(this != NULL);
+  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
+  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
+  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
+  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
+  // assert(this != NULL);
 
 #if 0
      printf ("In Sg_File_Info::Sg_File_Info(filename = %s, line = %d, col = %d) \n",filename.c_str(),line,col);
@@ -13283,7 +13298,11 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
      p_source_sequence_number(X.p_source_sequence_number),
      p_fileIDsToUnparse(X.p_fileIDsToUnparse)
    {
-     assert(this != NULL);
+  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
+  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
+  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
+  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
+  // assert(this != NULL);
 
      assert (p_col >= 0);
 
@@ -13337,7 +13356,11 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
      p_physical_line(0),
      p_source_sequence_number(0)
    {
-     assert(this != NULL);
+  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
+  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
+  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
+  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
+  // assert(this != NULL);
 
 #if 0
      printf ("In Sg_File_Info::Sg_File_Info(file_id = %d, line = %d, column = %d) this = %p \n",file_id,line,column,this);
@@ -19715,7 +19738,7 @@ SgIncidenceDirectedGraph::getSuccessors(const SgGraphNode* node, std::vector <Sg
   assert(node);
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
-    //    cerr << "            are : " << edge->get_index() << endl;
+ // cerr << "            are : " << edge->get_index() << endl;
     assert(edge);
     if (edge) {
       SgGraphNode* target = isSgGraphNode(edge->get_to());
@@ -19774,6 +19797,10 @@ SgIncidenceDirectedGraph::getDirectedEdge(SgGraphNode* src, SgGraphNode* trg) {
   for (;it1!=it2; ++it1) {
     //    SgGraphNode* source = it1->first;
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+
+ // DQ (3/19/2016): Klocworks reports this as an issue, since "edge" could be NULL.  Fix by adding an addertion.
+    ROSE_ASSERT(edge != NULL);
+
     SgGraphNode* target = isSgGraphNode(edge->get_to());
     if (target==trg)
       medges.insert(edge);
@@ -19798,6 +19825,10 @@ SgIncidenceDirectedGraph::checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGra
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+
+ // DQ (3/19/2016): Klocworks reports this as an issue, since "edge" could be NULL.  Fix by adding an addertion.
+    ROSE_ASSERT(edge != NULL);
+
     SgGraphNode* target = edge->get_to();
     if (target==trg)
       return true;
