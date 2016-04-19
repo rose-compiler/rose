@@ -483,6 +483,65 @@ Engine::engineSwitches() {
     return sg;
 }
 
+Sawyer::CommandLine::SwitchGroup
+Engine::astConstructionSwitches() {
+    using namespace Sawyer::CommandLine;
+    SwitchGroup sg("AST construction switches");
+
+    sg.insert(Switch("ast-allow-empty-global-block")
+              .intrinsicValue(true, settings_.astConstruction.allowEmptyGlobalBlock)
+              .doc("Allows creation of an empty AST if the partitioner does not find any functions. The "
+                   "@s{no-ast-allow-empty-global-block} switch causes a null AST to be returned instead. The default is to " +
+                   std::string(settings_.astConstruction.allowEmptyGlobalBlock ? "create an empty " : "not create an ") +
+                   "AST."));
+    sg.insert(Switch("no-ast-allow-empty-global-block")
+              .key("ast-allow-empty-global-block")
+              .intrinsicValue(false, settings_.astConstruction.allowEmptyGlobalBlock)
+              .hidden(true));
+
+    sg.insert(Switch("ast-allow-empty-functions")
+              .intrinsicValue(true, settings_.astConstruction.allowFunctionWithNoBasicBlocks)
+              .doc("Allows creation of an AST that has functions with no instructions. This can happen, for instance, when "
+                   "an analysis indicated that a particular virtual address is the start of a function, but no memory is "
+                   "mapped at that address. This is common for things like functions from shared libraries that have not "
+                   "been linked in before the analysis starts.  The @s{no-ast-allow-empty-functions} will instead elide all "
+                   "empty functions from the AST. The default is to " +
+                   std::string(settings_.astConstruction.allowFunctionWithNoBasicBlocks ? "allow " : "elide ") +
+                   "empty functions."));
+    sg.insert(Switch("no-ast-allow-empty-functions")
+              .key("ast-allow-empty-functions")
+              .intrinsicValue(false, settings_.astConstruction.allowFunctionWithNoBasicBlocks)
+              .hidden(true));
+
+    sg.insert(Switch("ast-allow-empty-basic-blocks")
+              .intrinsicValue(true, settings_.astConstruction.allowEmptyBasicBlocks)
+              .doc("Allows creation of an AST that has basic blocks with no instructions. This can happen when an analysis "
+                   "indicates that a basic block exists at a particular virtual address but no memory is mapped at that "
+                   "address. The @s{no-ast-allow-empty-basic-blocks} will instead elide all empty blocks from the AST. The "
+                   "default is to " + std::string(settings_.astConstruction.allowEmptyBasicBlocks ? "allow " : "elide ") +
+                   "empty blocks."));
+    sg.insert(Switch("no-ast-allow-empty-basic-blocks")
+              .key("ast-allow-empty-basic-blocks")
+              .intrinsicValue(false, settings_.astConstruction.allowEmptyBasicBlocks)
+              .hidden(true));
+
+    sg.insert(Switch("ast-copy-instructions")
+              .intrinsicValue(true, settings_.astConstruction.copyAllInstructions)
+              .doc("Casues all instructions to be deep-copied from the partitioner's instruction provider into the AST. "
+                   "Although this slows down AST construction and increases memory since SageIII nodes are not garbage "
+                   "collected, copy instructions ensures that the AST is a tree. Turning off the copying with the "
+                   "@s{no-ast-copy-instructions} switch will result in the AST being a lattice if the partitioner has "
+                   "determined that two or more functions contain the same basic block, and therefore the same instructions. "
+                   "The default is to " + std::string(settings_.astConstruction.copyAllInstructions ? "" : "not ") +
+                   "copy instructions."));
+    sg.insert(Switch("no-ast-copy-instructions")
+              .key("ast-copy-instructions")
+              .intrinsicValue(false, settings_.astConstruction.copyAllInstructions)
+              .hidden(true));
+
+    return sg;
+}
+
 std::string
 Engine::specimenNameDocumentation() {
     return ("The following names are recognized for binary specimens:"
@@ -533,6 +592,7 @@ Engine::commandLineParser(const std::string &purpose, const std::string &descrip
     parser.with(loaderSwitches());
     parser.with(disassemblerSwitches());
     parser.with(partitionerSwitches());
+    parser.with(astConstructionSwitches());
     return parser;
 }
 
@@ -1850,7 +1910,7 @@ Engine::makeNextBasicBlock(Partitioner &partitioner) {
 SgAsmBlock*
 Engine::buildAst(const std::vector<std::string> &fileNames) {
     Partitioner partitioner = partition(fileNames);
-    return Modules::buildAst(partitioner, interp_);
+    return Modules::buildAst(partitioner, interp_, settings_.astConstruction);
 }
 
 SgAsmBlock*

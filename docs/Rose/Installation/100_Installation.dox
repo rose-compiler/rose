@@ -131,7 +131,7 @@
  *      <td>Any version 7</td>
  *      <td>OpenJDK 7</td>
  *      <td>A JDK is required when configuring ROSE with cmake, even if the Java and Fortran frontends are disabled.
- *          See @ref installing_jdk.</td>
+ *          See @ref installing_jdk. Avoid Sun/Oracle version 1.7.0_25.</td>
  *    </tr>
  *    
  *    <tr>

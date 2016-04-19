@@ -443,11 +443,15 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                  // Compute a local scope name
                  //! \todo Compute local scope names correctly (consistently).
                     ostringstream scope_name;
+
                     scope_name << scope->class_name ();
-AstRegExAttribute *attribute = (AstRegExAttribute *) scope -> getAttribute("name");
-if (attribute) {
-scope_name << "_" << attribute -> expression;
-}
+
+                 // DQ (3/15/2016): Only reformatted this code below.
+                    AstRegExAttribute *attribute = (AstRegExAttribute *) scope -> getAttribute("name");
+                    if (attribute != NULL)
+                       {
+                         scope_name << "_" << attribute -> expression;
+                       }
 
                  // Build full name
                     mangled_name = joinMangledQualifiersToString (par_scope_name,scope_name.str ());
@@ -743,11 +747,11 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
 SgName
 mangleFunctionName (const SgName& n, const SgName& ret_type_name )
   {
-    string s_mangled = mangleFunctionNameToString (n.getString (),
-                                                   ret_type_name.str ());
+    string s_mangled = mangleFunctionNameToString (n.getString (), ret_type_name.str ());
     SgName n_mangled (s_mangled.c_str ());
     return n_mangled;
   }
+
 
 string
 mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b, const SgTemplateArgumentPtrList::const_iterator e)
@@ -1163,13 +1167,14 @@ mangleExpression (const SgExpression* expr)
     ostringstream mangled_name;
     if (expr)
       {
-        // Handle value types and simple casts as a special case:
+     // Handle value types and simple casts as a special case:
         const SgValueExp* val = isSgValueExp (expr);
         if (val)
           mangled_name << mangleValueExp (val);
         else // Punt on the rest.
           mangled_name << "EXPR";
       }
+
     return mangled_name.str ();
   }
 

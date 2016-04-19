@@ -712,7 +712,7 @@ AstNodeClass::setSubTreeFunctionSource ( const string& markerString, const strin
 void
 AstNodeClass::setPredeclarationString  ( const string& markerString, const string& filename )
    {
-     bool pureVirtual;     
+     bool pureVirtual = false;
      SETUP_MARKER_STRINGS_MACRO
        
      setPredeclarationString(functionString);
@@ -721,7 +721,7 @@ AstNodeClass::setPredeclarationString  ( const string& markerString, const strin
 void
 AstNodeClass::setPostdeclarationString  ( const string& markerString, const string& filename )
    {
-     bool pureVirtual;     
+     bool pureVirtual = false;
      SETUP_MARKER_STRINGS_MACRO
      setPostdeclarationString(functionString);
    }

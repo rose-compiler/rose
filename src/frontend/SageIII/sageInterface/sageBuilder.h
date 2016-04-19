@@ -19,6 +19,8 @@
 
 #include "sageInterface.h"
 
+#include "Diagnostics.h"
+
 // forward declarations required for templated functions using those functions
 namespace SageInterface {
   ROSE_DLL_API void setOneSourcePositionForTransformation (SgNode * root);
@@ -28,6 +30,11 @@ namespace SageInterface {
 /** Functions that build an AST. */
 namespace SageBuilder 
 {
+
+// DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+  extern Sawyer::Message::Facility mlog;
+  void initDiagnostics();
+
 
 #if 0
 //---------------------AST creation/building/construction-----------------
