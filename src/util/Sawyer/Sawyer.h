@@ -295,6 +295,9 @@
  *  };
  * @endcode */
 
+/** @defgroup sawyer_examples Examples
+ *  @ingroup sawyer */
+
 // Version numbers (conditional compiliation is only so we can test version mismatch handling)
 #ifndef SAWYER_VERSION_MAJOR
 #define SAWYER_VERSION_MAJOR    0
