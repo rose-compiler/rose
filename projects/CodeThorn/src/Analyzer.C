@@ -556,16 +556,7 @@ const EState* Analyzer::takeFromWorkList() {
   return co;
 }
 
-// the following 2 functions have to be protected by a critical section
-bool all_false_non_critical(vector<bool>& v) {
-  ROSE_ASSERT(v.size()>0);
-  bool res=false;
-  for(vector<bool>::iterator i=v.begin();i!=v.end();++i) {
-    res=res||(*i);
-  }
-  return !res;
-}
-
+// the following function has to be protected by a critical section
 void Analyzer::swapWorkLists() {
   EStateWorkList* tmp = estateWorkListCurrent;
   estateWorkListCurrent = estateWorkListNext;
@@ -3035,7 +3026,7 @@ void Analyzer::runSolver12() {
     while(!terminate) {
 #pragma omp critical(ESTATEWL)
       {
-        if (all_false_non_critical(workVector)) {
+        if (all_false(workVector)) {
 	  if ( estateWorkListCurrent->empty() && !(estateWorkListNext->empty()) ){
 	    // swap worklists iff the maximum number of iterations has not been fully computed yet
 	    if (getIterations() == _maxIterations) {
@@ -3070,13 +3061,13 @@ void Analyzer::runSolver12() {
         }
       }
       if(isEmptyWorkList()||isIncompleteSTGReady()) {
-#pragma omp critical(ESTATEWL)
+#pragma omp critical
         {
           workVector[threadNum]=false;
         }
         continue;
       } else {
-#pragma omp critical(ESTATEWL)
+#pragma omp critical
         {
           if(terminateEarly)
             workVector[threadNum]=false;
