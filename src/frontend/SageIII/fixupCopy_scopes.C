@@ -835,9 +835,10 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
             // ROSE_ASSERT(TransformationSupport::getSourceFile(copyDeclarationStatement->get_definingDeclaration()) == TransformationSupport::getSourceFile(copyDeclarationStatement));
                if (TransformationSupport::getSourceFile(copyDeclarationStatement->get_definingDeclaration()) != TransformationSupport::getSourceFile(copyDeclarationStatement))
                   {
-                 // printf ("############# Detected case of copyDeclarationStatement->get_definingDeclaration() in file %s \n",
-                 //      TransformationSupport::getSourceFile(copyDeclarationStatement->get_definingDeclaration())->getFileName().c_str());
-                 // printf ("############# Detected case of copyDeclarationStatement in file %s \n",TransformationSupport::getSourceFile(copyDeclarationStatement)->getFileName().c_str());
+                    printf ("copyDeclarationStatement = %p = %s \n",copyDeclarationStatement,copyDeclarationStatement->class_name().c_str());
+                    printf ("############# Detected case of copyDeclarationStatement->get_definingDeclaration() in file %s \n",
+                         TransformationSupport::getSourceFile(copyDeclarationStatement->get_definingDeclaration())->getFileName().c_str());
+                    printf ("############# Detected case of copyDeclarationStatement in file %s \n",TransformationSupport::getSourceFile(copyDeclarationStatement)->getFileName().c_str());
 
                  // This is not what we want here!
                  // copyDeclarationStatement->set_definingDeclaration(NULL);
