@@ -330,7 +330,7 @@ int main( int argc, char * argv[] ) {
       ("csv-stats",po::value< string >(),"output statistics into a CSV file [arg]")
       ("colors",po::value< string >(),"use colors in output [=yes|no]")
       ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
-      ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first, loop-aware)")
+      ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first, loop-aware, loop-aware-sync)")
       ("help,h", "produce this help message")
       ("help-cegpra", "show options for CEGRPA")
       ("help-eq", "show options for program equivalence checking")
@@ -345,9 +345,9 @@ int main( int argc, char * argv[] ) {
       ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
       ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
       ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
-      ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
+      ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
       ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
-      ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
+      ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
       ("print-all-options",po::value< string >(),"print the default values for all yes/no command line options.")
       ("rewrite","rewrite AST applying all rewrite system rules.")
       ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -537,6 +537,8 @@ int main( int argc, char * argv[] ) {
       analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
     } else if(explorationMode=="loop-aware") {
       analyzer.setExplorationMode(Analyzer::EXPL_LOOP_AWARE);
+    } else if(explorationMode=="loop-aware-sync") {
+      analyzer.setExplorationMode(Analyzer::EXPL_LOOP_AWARE_SYNC);
     } else if(explorationMode=="random-mode1") {
       analyzer.setExplorationMode(Analyzer::EXPL_RANDOM_MODE1);
     } else {
@@ -554,12 +556,12 @@ int main( int argc, char * argv[] ) {
       notSupported=true;
     } else {
       string explorationMode=args["exploration-mode"].as<string>();
-      if(explorationMode!="loop-aware") {
+      if(explorationMode!="loop-aware" && explorationMode!="loop-aware-sync") {
         notSupported=true;
       }
     }
     if(notSupported) {
-      cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware\"." << endl;
+      cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware[-sync]\"." << endl;
       exit(1);
     }
   }
@@ -669,11 +671,18 @@ int main( int argc, char * argv[] ) {
     analyzer.setDisplayDiff(displayDiff);
   }
   int ltlSolverNr=11;
+  int loopAwareSyncSolverNr=12;
   if(args.count("solver")) {
     int solver=args["solver"].as<int>();
     if(analyzer.getModeLTLDriven()) {
       if(solver!=ltlSolverNr) {
         cerr<<"Error: ltl-driven mode requires solver "<<ltlSolverNr<<", but solver "<<solver<<" was selected."<<endl;
+        exit(1);
+      }
+    }
+    if(analyzer.getExplorationMode() == Analyzer::EXPL_LOOP_AWARE_SYNC) {
+      if(solver!=loopAwareSyncSolverNr) {
+        cerr<<"Error: exploration mode loop-aware-sync requires solver "<<loopAwareSyncSolverNr<<", but solver "<<solver<<" was selected."<<endl;
         exit(1);
       }
     }
