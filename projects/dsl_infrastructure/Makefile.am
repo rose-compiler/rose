@@ -6,11 +6,18 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 # bin_PROGRAMS    = attributeGenerator testFunctionCallBack_01 testFunctionCallBack_02 testFunctionCallBack_03 testFunctionCallBack_04 array_main arrayDSLcompiler
 # bin_PROGRAMS    = attributeGenerator array_main arrayDSLcompiler
 # bin_PROGRAMS    = attributeGenerator array_main arrayDSLcompiler amrShiftDSLcompiler
-bin_PROGRAMS    = attributeGenerator array_main arrayDSLcompiler
+
+# Switch between the two different DSL compilers that we build (these need to be in seperate directories at some point soon).
+# bin_PROGRAMS    = attributeGenerator array_main arrayDSLcompiler
+# bin_PROGRAMS    = attributeGenerator array_main amrShiftDSLcompiler
+bin_PROGRAMS    = attributeGenerator
 
 CXX11FLAG = -std=c++11
 
 CPPFLAGS += $(CXX11FLAG)
+
+noinst_LTLIBRARIES = libdsl_infrastructure.la
+libdsl_infrastructure_la_SOURCES = dsl_detection.C dslSupport.C 
 
 attributeGenerator_SOURCES = attributeGenerator.C attributeGenerator.h
 
@@ -18,17 +25,17 @@ attributeGenerator_SOURCES = attributeGenerator.C attributeGenerator.h
 # array_main_SOURCES = array_main.C array.C generated_dsl_attributes.C generated_dsl_attributes_wrapper.C 
 # array_main_SOURCES = array_main.C array.C generated_dsl_attributes.C
 # array_main_SOURCES = array_main.C array.C generated_dsl_attributes.C generated_dsl_attributes_wrapper.C
-array_main_SOURCES = array_main.C array.C 
+# array_main_SOURCES = array_main.C array.C 
 
 # arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C generated_dsl_attributes.C array.C
 # arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C nongenerated_dsl_attributes.C array.C
 # arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C generated_dsl_attributes_wrapper.C generated_dsl_attributes.C generated_dsl_attributes_header.C array.C
 # arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C generated_dsl_attributes_wrapper.C array.C
-arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C array.C 
+# arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C array.C 
 
-amrShiftDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C
+# amrShiftDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C
 
-dsl_detection_SOURCES = dsl_detection.C
+# dsl_detection_SOURCES = dsl_detection.C
 
 
 # DQ (1/19/2016): Added test code for std::function support required in DSL recognition and evaluation.
@@ -43,11 +50,11 @@ testFunctionCallBack_04_SOURCES = testFunctionCallBack_04.C
 
 include_HEADERS = 
 
-ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
+# ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-TESTCODES_REQUIRED_TO_PASS = test2014_01.C
+# TESTCODES_REQUIRED_TO_PASS = test2014_01.C
 
 TESTCODE_CURRENTLY_FAILING =
 
@@ -75,20 +82,20 @@ PASSING_REGRESSION_TEST_Output = ${TESTCODES_REQUIRED_TO_PASS:.C=.C.passing}
 # This is for generating the code used to build the DSL compiler.
 # This needs to have a single target else it will be called twice. Note that generated_dsl_attributes_header.C
 # is also a dependence, but that we can't express it explicitly. 
-$(builddir)/generated_dsl_attributes.C: attributeGenerator
-	./attributeGenerator -std=c++11 -DSKIP_ROSE_HEADERS $(srcdir)/array_header.C
+# $(builddir)/generated_dsl_attributes.C: attributeGenerator
+#	./attributeGenerator -std=c++11 -DSKIP_ROSE_HEADERS $(srcdir)/array_header.C
 
 # Generate DOT graphs of the kind of code we need to generate using ROSE.
-generateDotOfTargetGeneratedCode: generated_dsl_attributes.C generated_dsl_attributes.h 
+# generateDotOfTargetGeneratedCode: generated_dsl_attributes.C generated_dsl_attributes.h 
 #	$(top_builddir)/tests/testGraphGeneration -DSKIP_ROSE_HEADERS -I. $(srcdir)/nongenerated_dsl_attributes.C
 #	$(top_builddir)/tests/testGraphGeneration -std=c++11 $(ROSE_INCLUDES) -I. -I$(top_builddir) $(srcdir)/nongenerated_dsl_attributes.C
 #	$(top_builddir)/tests/testGraphGeneration -std=c++11 -DSKIP_ROSE_HEADERS -rose:skipfinalCompileStep -I. $(srcdir)/nongenerated_dsl_attributes.C
-	$(top_builddir)/tests/testGraphGeneration -std=c++11 -DSKIP_ROSE_HEADERS -rose:skipfinalCompileStep -I. $(srcdir)/dsl_attributes.C
+#	$(top_builddir)/tests/testGraphGeneration -std=c++11 -DSKIP_ROSE_HEADERS -rose:skipfinalCompileStep -I. $(srcdir)/dsl_attributes.C
 
 # This is force to depend upon a single dependent file, even though dslSupport.o 
 # depends upon generated_dsl_attributes_header.C insted of generated_dsl_attributes.C.
-arrayDSLcompiler.o : $(builddir)/generated_dsl_attributes.C
-dslSupport.o : $(builddir)/generated_dsl_attributes.C
+# arrayDSLcompiler.o : $(builddir)/generated_dsl_attributes.C
+# dslSupport.o : $(builddir)/generated_dsl_attributes.C
 
 # This is for testing the generation of the DSL code input to the DSL compiler only.
 testAttributeGenerator: attributeGenerator
@@ -101,16 +108,17 @@ testAttributeGenerator: attributeGenerator
 # testArrayDSLCompiler: generated_dsl_attributes.C generated_dsl_attributes_header.C arrayDSLcompiler 
 # testArrayDSLCompiler: arrayDSLcompiler 
 # testArrayDSLCompiler: $(builddir)/generated_dsl_attributes.C
-testArrayDSLCompiler: arrayDSLcompiler
-	./arrayDSLcompiler -Wunknown-pragmas -DSKIP_ROSE_BUILTIN_DECLARATIONS -c $(srcdir)/array_main.C
+# testArrayDSLCompiler: arrayDSLcompiler
+#	./arrayDSLcompiler -Wunknown-pragmas -DSKIP_ROSE_BUILTIN_DECLARATIONS -c $(srcdir)/array_main.C
 
 # testDSLCompiler: dsl_attributes.C
 
+AMR_INCLUDES = -I$(srcdir)/AMRShift/Multigrid -I$(srcdir)/AMRShift/StencilTools -I$(srcdir)/AMRShift/timer -I$(srcdir)/AMRShift/VisitWriter 
 testAMRShift: attributeGenerator
-	./attributeGenerator -std=c++11 -DSKIP_ROSE_HEADERS -I$(srcdir)/AMRShift/Multigrid -I$(srcdir)/AMRShift/StencilTools -I$(srcdir)/AMRShift/timer -I$(srcdir)/AMRShift/VisitWriter $(srcdir)/AMRShiftAbstractions.C
+	./attributeGenerator -std=c++11 -DSKIP_ROSE_HEADERS $(AMR_INCLUDES) $(srcdir)/AMRShiftAbstractions.C
 
-testAMRShiftCompiler: amrShiftDSLcompiler
-	./amrShiftDSLcompiler -Wunknown-pragmas -DSKIP_ROSE_BUILTIN_DECLARATIONS -c $(srcdir)/array_main.C
+# testAMRShiftCompiler: amrShiftDSLcompiler
+#	./amrShiftDSLcompiler -Wunknown-pragmas -DSKIP_ROSE_BUILTIN_DECLARATIONS -std=c++11 -DSKIP_ROSE_HEADERS $(AMR_INCLUDES) $(srcdir)/AMRShift/Multigrid/multigridTest.cpp
 
 
 check-local:
