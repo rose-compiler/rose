@@ -1279,7 +1279,7 @@ codeCoverage.out: codeCoverage $(srcdir)/inputCode_ExampleCodeCoverage.C
 # "/usr/bin/ld: inputCode_ExampleCodeCoverage.o: Relocations in generic ELF (EM: 8)"
 if !ALTERNATE_BACKEND_C_CROSS_COMPILER
 #	link the input file with the coverageCodeFromShmuel.o file (written by Shmuel, tool specific)
-	$(CXX) -o ExampleCodeCoverage_GeneratedBinary inputCode_ExampleCodeCoverage.o coverageCodeFromShmuel.o
+	$(CXX) $(CXXFLAGS) -o ExampleCodeCoverage_GeneratedBinary inputCode_ExampleCodeCoverage.o coverageCodeFromShmuel.o
 #	Run the input code (collect any output in codeCoverage.out)
 	./ExampleCodeCoverage_GeneratedBinary > codeCoverage.out
 else
