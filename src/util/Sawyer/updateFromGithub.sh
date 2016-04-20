@@ -43,7 +43,7 @@ done
 # Copy some of Sawyers examples. These are needed by ROSE's doxygen
 mkdir -p docs/examples
 for f in \
-    commandLineEx1.C commandLineEx1.out attribute.C
+    commandLineEx1.C commandLineEx1.out attribute.C graphIso.C
 do
     cp "$SAWYER_ROOT/docs/examples/$f" docs/examples/.
 done

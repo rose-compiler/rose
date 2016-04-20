@@ -8,6 +8,7 @@ using namespace std;
 
 #define foreach BOOST_FOREACH
 
+#define DEBUG_QUADRATIC_BEHAVIOR 0
 
 // originally from src/midend/astInlining/typeTraits.C
 // src/midend/astUtil/astInterface/AstInterface.C
@@ -1391,6 +1392,9 @@ if (!sgClassType) { \
 
     // Walks over the call hierarchy and collects all member function in a vector.
     vector<SgMemberFunctionDeclaration*> GetAllMemberFunctionsInClassHierarchy(SgType *type){
+#if DEBUG_QUADRATIC_BEHAVIOR
+      printf ("In GetAllMemberFunctionsInClassHierarchy(): type = %p = %s \n",type,type->class_name().c_str());
+#endif
         vector<SgMemberFunctionDeclaration*> allMemberFunctions;
         
         SgClassType * sgClassType = isSgClassType(type);
@@ -1508,6 +1512,9 @@ if (!sgClassType) { \
         
         ENSURE_CLASS_TYPE(type, false);
         vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In HasNoThrowAssign(): allMemberFunctions.size() = %zu \n",allMemberFunctions.size());
+#endif
         foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
             if (memberFunction->get_specialFunctionModifier().isOperator() && memberFunction->get_name().getString()=="operator="){
                 // check if the function has nothrow attribute
@@ -1534,6 +1541,9 @@ if (!sgClassType) { \
         
         ENSURE_CLASS_TYPE(type, false);
         vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In HasNoThrowCopy(): allMemberFunctions.size() = %zu \n",allMemberFunctions.size());
+#endif
         foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
             if (memberFunction->get_specialFunctionModifier().isConstructor()){
                 // function must have exactly one argument and the argument type must match class type after stripping typedef, const, and ref
@@ -1561,6 +1571,9 @@ if (!sgClassType) { \
         
         ENSURE_CLASS_TYPE(type, false);
         vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In HasNoThrowConstructor(): allMemberFunctions.size() = %zu \n",allMemberFunctions.size());
+#endif
         foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
             if (memberFunction->get_specialFunctionModifier().isConstructor()){
                 // function must have no args
@@ -1595,6 +1608,9 @@ if (!sgClassType) { \
         
         ENSURE_CLASS_TYPE(type, false);
         vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In HasTrivialAssign(): allMemberFunctions.size() = %zu \n",allMemberFunctions.size());
+#endif
         foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
             if (memberFunction->get_specialFunctionModifier().isOperator() && memberFunction->get_name().getString()=="operator="){
                 // function must have exactly one argument and the argument type after stripping typedef, const, and ref must match class type
@@ -1628,6 +1644,9 @@ if (!sgClassType) { \
         
         ENSURE_CLASS_TYPE(type, false);
         vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In HasTrivialCopy(): allMemberFunctions.size() = %zu \n",allMemberFunctions.size());
+#endif
         foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
             if (memberFunction->get_specialFunctionModifier().isConstructor()){
                 // function must have exactly one argument and the argument type after stripping typedef, const, and ref must match passed-in type
@@ -1657,6 +1676,9 @@ if (!sgClassType) { \
         
         ENSURE_CLASS_TYPE(type, false);
         vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In HasTrivialConstructor(): allMemberFunctions.size() = %zu \n",allMemberFunctions.size());
+#endif
         foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
             if (memberFunction->get_specialFunctionModifier().isConstructor()){
                 return false;
@@ -1686,6 +1708,9 @@ if (!sgClassType) { \
         
         ENSURE_CLASS_TYPE(type, false);
         vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In HasTrivialDestructor(): allMemberFunctions.size() = %zu \n",allMemberFunctions.size());
+#endif
         foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
             if (memberFunction->get_specialFunctionModifier().isDestructor()){
                 return false;
@@ -1715,6 +1740,9 @@ if (!sgClassType) { \
         }
         
         vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In HasVirtualDestructor(): allMemberFunctions.size() = %zu \n",allMemberFunctions.size());
+#endif
         foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
             if (memberFunction->get_functionModifier().isVirtual() && memberFunction->get_specialFunctionModifier().isDestructor())
                 return true;
@@ -1778,6 +1806,9 @@ if (!sgClassType) { \
         const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDef);
         set<SgClassDefinition*> inclusiveAncestors(ancestors.begin(), ancestors.end());
         inclusiveAncestors.insert(classDef);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In HasVirtualDestructor(): inclusiveAncestors.size() = %zu \n",inclusiveAncestors.size());
+#endif
         
         // Match types
         foreach(SgClassDefinition* c, inclusiveAncestors) {
@@ -1954,6 +1985,9 @@ if (!sgClassType) { \
         
         ENSURE_CLASS_TYPE(type, false);
         vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+        printf ("In IsPolymorphic(): allMemberFunctions.size() = %zu \n",allMemberFunctions.size());
+#endif
         foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
             if (memberFunction->get_functionModifier().isVirtual())
                 return true;
@@ -2046,6 +2080,9 @@ if (!sgClassType) { \
         // If the most derived type has non-static data members, then none of the base classes can have non-static members.
         if (haveNonStaticData) {
             vector<SgVariableDeclaration *> allVariableDeclarations = GetAllVariableDeclarationsInAncestors(type);
+#if DEBUG_QUADRATIC_BEHAVIOR
+            printf ("In IsStandardLayout(): allVariableDeclarations.size() = %zu \n",allVariableDeclarations.size());
+#endif
             foreach(SgVariableDeclaration* memberVariable, allVariableDeclarations) {
                 if (memberVariable->get_declarationModifier().get_storageModifier().isStatic())
                     continue;
@@ -2060,6 +2097,9 @@ if (!sgClassType) { \
             const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDef);
             set<SgClassDefinition*> exclusiveAncestors(ancestors.begin(), ancestors.end());
             
+#if DEBUG_QUADRATIC_BEHAVIOR
+            printf ("In IsStandardLayout(): exclusiveAncestors.size() = %zu \n",exclusiveAncestors.size());
+#endif
             
             // There can be atmost 1 base class with non-static data members
             int baseClassesWithNonStaticData = 0;
@@ -2090,6 +2130,9 @@ if (!sgClassType) { \
             const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDef);
             set<SgClassDefinition*> exclusiveAncestors(ancestors.begin(), ancestors.end());
             
+#if DEBUG_QUADRATIC_BEHAVIOR
+            printf ("In IsStandardLayout(): exclusiveAncestors.size() = %zu \n",exclusiveAncestors.size());
+#endif
             foreach(SgClassDefinition* c, exclusiveAncestors) {
                 if(c->get_declaration()->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE) ==  firstNonStaticDataMember->stripType(SgType::STRIP_TYPEDEF_TYPE))
                     return false;
