@@ -588,7 +588,7 @@ static SgAsmBlock *
 buildAst(P2::Engine &engine, const P2::Partitioner &partitioner) {
     static SgAsmBlock *gblock = NULL;
     if (NULL==gblock)
-        gblock = P2::Modules::buildAst(partitioner, engine.interpretation());
+        gblock = P2::Modules::buildAst(partitioner, engine.interpretation(), engine.settings().astConstruction);
     return gblock;
 }
 
@@ -827,6 +827,49 @@ int main(int argc, char *argv[]) {
         unparser.unparse(std::cout, gblock);
     }
 
+    
+    // Test what affect shared instructions have on the AST by counting how many times each instruction appears in the AST.  If
+    // instruction copying is enabled, they should all occur once; if not, then there may be instructions that occur multiple
+    // times (but always having the same parent pointer).
+    if (0) {
+        struct InsnCounter: AstSimpleProcessing {
+            typedef Sawyer::Container::Map<SgAsmInstruction*, size_t> InsnCount;
+            InsnCount insnCount;
+            void visit(SgNode *node) {
+                if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                    ++insnCount.insertMaybe(insn, 0);
+            }
+        } insnCounter;
+        insnCounter.traverse(buildAst(engine, partitioner), preorder);
+        BOOST_FOREACH (const InsnCounter::InsnCount::Node &node, insnCounter.insnCount.nodes())
+            std::cout <<node.value() <<"\t" <<unparseInstructionWithAddress(node.key()) <<"\n";
+    }
+
+#if 0 // [Robb P. Matzke 2015-08-06]: example of calling convention analysis
+    {
+        const CallingConvention::Dictionary &dictionary = partitioner.instructionProvider().callingConventions();
+        const CallingConvention::Definition *dfltCc = dictionary.empty() ? NULL : &dictionary.front();
+        partitioner.allFunctionCallingConvention(dfltCc);
+        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+            std::cerr <<"calling conventions for " <<function->printableName() <<":\n";
+            const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+            if (ccAnalysis.hasResults()) {
+                if (!ccAnalysis.didConverge())
+                    std::cerr <<"  warning: non-convergent analysis\n";
+                CallingConvention::Dictionary matches = ccAnalysis.match(dictionary);
+                if (matches.empty()) {
+                    std::cerr <<"  no maches; analysis reports " <<ccAnalysis <<"\n";
+                } else {
+                    BOOST_FOREACH (const CallingConvention::Definition &cc, matches)
+                        std::cerr <<"  " <<cc.comment() <<"\n";
+                }
+            } else {
+                std::cerr <<"  no analysis results\n";
+            }
+        }
+    }
+#endif
+    
 #if 0 // DEBUGGING [Robb P. Matzke 2014-08-23]
     // This should free all symbolic expressions except for perhaps a few held by something we don't know about.
     partitioner.clear();
@@ -834,6 +877,4 @@ int main(int argc, char *argv[]) {
     std::cerr <<"all done; entering busy loop\n";
     while (1);                                          // makes us easy to find in process listings
 #endif
-
-    exit(0);
 }

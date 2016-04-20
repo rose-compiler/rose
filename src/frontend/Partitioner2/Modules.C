@@ -620,12 +620,11 @@ nameConstants(const Partitioner &partitioner) {
 
 SgAsmBlock*
 buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, const Function::Ptr &parentFunction,
-                   bool relaxed) {
-
+                   const AstConstructionSettings &settings) {
     ASSERT_not_null(bb);
     ASSERT_not_null(parentFunction);
     if (bb->isEmpty()) {
-        if (relaxed) {
+        if (settings.allowEmptyBasicBlocks) {
             mlog[WARN] <<"creating an empty basic block AST node at " <<StringUtility::addrToString(bb->address()) <<"\n";
         } else {
             return NULL;
@@ -633,7 +632,20 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
     }
 
     ControlFlowGraph::ConstVertexIterator bblockVertex = partitioner.findPlaceholder(bb->address());
-    SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(bb->instructions());
+
+    std::vector<SgAsmInstruction*> insns = bb->instructions();
+    for (size_t i=0; i<insns.size(); ++i) {
+        if (settings.copyAllInstructions) {
+            SgTreeCopy deep;
+            SgAsmInstruction *newInsn = isSgAsmInstruction(insns[i]->copy(deep));
+            ASSERT_not_null(newInsn);
+            ASSERT_require(newInsn != insns[i]);
+            ASSERT_require(newInsn->get_address() == insns[i]->get_address());
+            insns[i] = newInsn;
+        }
+    }
+
+    SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(insns);
     ast->set_comment(bb->comment());
     unsigned reasons = 0;
 
@@ -662,7 +674,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
     // deltas based on which function was analyzed. We must choose one function's stack deltas and we must make sure they're
     // current. The approach we take is simple: just store the stack deltas each time and let the last one win.
     if (sdAnalysis.hasResults()) {
-        BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+        BOOST_FOREACH (SgAsmInstruction *insn, insns)
             insn->set_stackDeltaIn(sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn)));
     }
 
@@ -698,7 +710,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
 }
 
 SgAsmBlock*
-buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, bool relaxed) {
+buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings &settings) {
     // Build the static data item
     SgUnsignedCharList rawBytes(dblock->size(), 0);
     size_t nRead = partitioner.memoryMap().at(dblock->address()).read(rawBytes).size();
@@ -710,7 +722,7 @@ buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, 
 }
 
 SgAsmFunction*
-buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, bool relaxed) {
+buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, const AstConstructionSettings &settings) {
     ASSERT_not_null(function);
 
     // Build the child basic block IR nodes and remember all the data blocks
@@ -722,7 +734,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
             mlog[WARN] <<function->printableName() <<" bblock "
                        <<StringUtility::addrToString(blockVa) <<" does not exist in the CFG; no AST node created\n";
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            if (SgAsmBlock *child = buildBasicBlockAst(partitioner, bb, function, relaxed))
+            if (SgAsmBlock *child = buildBasicBlockAst(partitioner, bb, function, settings))
                 children.push_back(child);
             BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
                 insertUnique(dblocks, dblock, sortDataBlocks);
@@ -732,7 +744,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
     if (children.empty()) {
-        if (relaxed) {
+        if (settings.allowFunctionWithNoBasicBlocks) {
             mlog[WARN] <<"creating an empty AST node for " <<function->printableName() <<"\n";
         } else {
             return NULL;
@@ -742,7 +754,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     // Build the child data block IR nodes.  The data blocks attached to the SgAsmFunction node are the union of the data
     // blocks owned by the function and the data blocks owned by each of its basic blocks.
     BOOST_FOREACH (const DataBlock::Ptr &dblock, dblocks) {
-        if (SgAsmBlock *child = buildDataBlockAst(partitioner, dblock, relaxed))
+        if (SgAsmBlock *child = buildDataBlockAst(partitioner, dblock, settings))
             children.push_back(child);
     }
 
@@ -802,17 +814,17 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
 }
 
 SgAsmBlock*
-buildGlobalBlockAst(const Partitioner &partitioner, bool relaxed) {
+buildGlobalBlockAst(const Partitioner &partitioner, const AstConstructionSettings &settings) {
     // Create the children first
     std::vector<SgAsmFunction*> children;
     BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
-        if (SgAsmFunction *func = buildFunctionAst(partitioner, function, relaxed)) {
+        if (SgAsmFunction *func = buildFunctionAst(partitioner, function, settings)) {
             children.push_back(func);
         }
     }
     if (children.empty()) {
-        if (relaxed) {
-            mlog[WARN] <<"building an empty global block\n";
+        if (settings.allowEmptyGlobalBlock) {
+            mlog[WARN] <<"building an empty AST binary global block\n";
         } else {
             return NULL;
         }
@@ -828,8 +840,8 @@ buildGlobalBlockAst(const Partitioner &partitioner, bool relaxed) {
 }
 
 SgAsmBlock*
-buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, bool relaxed) {
-    if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, relaxed)) {
+buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, const AstConstructionSettings &settings) {
+    if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, settings)) {
         fixupAstPointers(global, interp);
         fixupAstCallingConventions(partitioner, global);
         if (interp) {

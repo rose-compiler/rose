@@ -13,6 +13,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # Ubuntu 14.04 it takes >12 hours.
 .PHONY: rebuild-stringify
 rebuild-stringify:
+	rm -f $(srcdir)/stringify.C
 	$(AM_V_GEN) $(top_srcdir)/scripts/stringify.pl		\
 	    --generic --header --output=$(srcdir)/stringify.C	\
 	    $(top_srcdir)/src ../frontend/SageIII

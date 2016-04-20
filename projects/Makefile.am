@@ -1,10 +1,22 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Add Projects that are associated with capabilities that belong to ROSE here. Or better yet, just add a "rose.config" file to
-# your project directory and then you don't have to change any of the ROSE build system -- your project will be found
-# automatically by the "build" script, your rose.config will be incorporated into the configuration system, and your project
-# will become part of the recursive "make" commands.   To disable your project, just rename its rose.config file and rerun
-# "build" and "configure". [RPM 2012-03-29]
+########################################################################################################################
+# List of all project subdirectories (SUBDIRS)
+########################################################################################################################
+
+# Ideally, each project's makefile should know whether it should build anything based on what features (such as
+# dependencies, frontend languages) are available and selected by the configuration.  However, some of the earlier
+# projects have errors if you run "make" in the project directory when ROSE is not configured to support the project,
+# thus we have various "if" statements here to support that.
+#
+# Projects that use the "rose.config" mechanism need not be listed here. Their makefile MUST know how to avoid building
+# the project if its dependencies are not met.
+#
+# To use the "rose.config" mechanism: add a "rose.config" file to your project directory and then you don't have to
+# change any of the ROSE build system -- your project will be found automatically by the "build" script, your
+# rose.config will be incorporated into the configuration system, and your project will become part of the recursive
+# "make" commands.  To disable your project, just rename its rose.config file and rerun "build" and "configure".
+
 SUBDIRS = \
 	AstEquivalence \
 	BabelPreprocessor \
@@ -54,25 +66,23 @@ SUBDIRS = \
 	LineDeleter \
 	$(OPTIONAL_PROJECTS)
 
-# DQ (3/16/2015): Removed for temporary teesting.
-#	BinFuncDetect 
-
 # DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
 if ROSE_USING_GCC_VERSION_LATER_4_8
-  SUBDIRS += ShiftCalculus ShiftCalculus2 ShiftCalculus3 ShiftCalculus4 dsl_infrastructure
+  # DQ (3/23/2016): Note that we currently require the dsl_infrastructure directory to be built before both of 
+  # the arrayDSLcompiler and amrShiftDSLcompiler directories.
+  SUBDIRS += ShiftCalculus ShiftCalculus2 ShiftCalculus3 ShiftCalculus4 dsl_infrastructure arrayDSLcompiler amrShiftDSLcompiler
 endif
 
 # Liao, 2014/2/11, with Dan's permission, comment out this project since it is broken now.
 #   BinaryDataStructureRecognition 
-# DQ (9/2/2013): This fails to compile (at least with some versions of Boost).
 
+# DQ (9/2/2013): This fails to compile (at least with some versions of Boost).
 if ROSE_WITH_ISL
   SUBDIRS += RosePolly
 endif
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
 # UpcTranslation (fails only a single test code shared_2.upc)
-
 
 # DQ (6/25/2011): Removed from being tested (failing symbolicAnalysisFramework/tests/test_examples/dominator_example.cpp)
 # Matzke (10/31/2014): Removed symbolicAnalysisFramework from being compiled. It depends on boost having been installed with
@@ -105,9 +115,7 @@ if !ROSE_USE_INSURE
 #   SUBDIRS += haskellport 
 endif
 endif
-
 endif
-
 endif
 endif
 
@@ -186,11 +194,55 @@ SUBDIRS += TileK
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU
 
+
+########################################################################################################################
+# Associate projects with developers
+########################################################################################################################
+
+# List the projects you want to be tested after your name. By doing so, you are sponsoring the project and will
+# be responsible for fixing bugs (either yourself or by delegation).  The names listed here should be the same as the names
+# listed here will be intersected with the $(SUBDIRS) value before tests are run, which means you can safely list
+# subdirectories that might not be present or might not be configured.
+
+PROJECTS_ROBB    = BinaryAnalysisTools
+PROJECTS_JUSTIN  = compass2 compass binCompass
+PROJECTS_DAN     =
+PROJECTS_MARKUS  =
+PROJECTS_PEIHUNG =
+PROJECTS_LEO     =
+
+
+########################################################################################################################
+# Rules for testing projects having particular core developer sponsors
+########################################################################################################################
+
+developer_projects = $(foreach subdir, $(1), $(if $(findstring $(subdir), $(SUBDIRS)), $(subdir)))
+
+check-projects-robb:
+	@for project in $(call developer_projects, $(PROJECTS_ROBB)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-justin:
+	@for project in $(call developer_projects, $(PROJECTS_JUSTIN)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-dan:
+	@for project in $(call developer_projects, $(PROJECTS_DAN)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-markus:
+	@for project in $(call developer_projects, $(PROJECTS_MARKUS)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-peihung:
+	@for project in $(call developer_projects, $(PROJECTS_PEIHUNG)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-leo:
+	@for project in $(call developer_projects, $(PROJECTS_LEO)); do		\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+
+
+
 EXTRA_DIST = StaticDynamicAnalysis
-
-
-check-local:
-	@echo "***************************************************************************"
-	@echo "****** ROSE/projects: make check rule complete (terminated normally) ******"
-	@echo "***************************************************************************"
-
