@@ -6103,9 +6103,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
      commandLine.push_back("--gnu_version");
 #endif
+
 #ifdef BACKEND_CXX_IS_GNU_COMPILER
      commandLine.push_back("--gnu_version");
+#else
+   #ifdef USE_CMAKE
+  // DQ (4/20/2016): When using CMAKE the BACKEND_CXX_IS_GNU_COMPILER is not defiled.
+     commandLine.push_back("--gnu_version");
+   #endif
 #endif
+
+
 #ifdef BACKEND_CXX_IS_CLANG_COMPILER
 #if 0
      printf ("For clang support in ROSE: __GNUC__ = %d __GNUC_MINOR__ = %d __GNUC_PATCHLEVEL__ = %d \n",(int)__GNUC__, (int)__GNUC_MINOR__, (int)__GNUC_PATCHLEVEL__);
