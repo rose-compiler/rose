@@ -42,6 +42,24 @@ namespace CodeThorn {
  */
   class AstNodeInfo : public AstAttribute {
   public:
+    // MS 2016: necessary with the new attribute mechanism but possibly not
+    // necessary if the mechanism is adapted. Look for
+    // (*i)->addNewAttribute("info",attr); in Analyzer.C
+    virtual std::string attribute_class_name() const {
+      return "AstNodeInfo";
+    }
+    virtual AstNodeInfo* copy() {
+      AstNodeInfo* newNodeInfo=new AstNodeInfo();
+      newNodeInfo->label=this->label;
+      newNodeInfo->initialLabel=this->initialLabel;
+      newNodeInfo->finalLabelsSet=this->finalLabelsSet;
+      return newNodeInfo;
+    }
+    AstNodeInfo::OwnershipPolicy
+      getOwnershipPolicy() const ROSE_OVERRIDE {
+      return CONTAINER_OWNERSHIP;
+    }
+
   AstNodeInfo():label(0),initialLabel(0){}
     std::string toString() { std::stringstream ss;
       ss<<"\\n lab:"<<label<<" ";

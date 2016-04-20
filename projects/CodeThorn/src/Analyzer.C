@@ -991,8 +991,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       // return without expr
       return elistify(createEState(edge.target,*(currentEState.pstate()),cset));
     } else {
+      VariableId returnVarId;
+#pragma omp critical(VAR_ID_MAPPING) 
+      {
+	returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      }
       PState newPState=analyzeAssignRhs(*(currentEState.pstate()),
-                                        variableIdMapping.createUniqueTemporaryVariableId(string("$return")),
+                                        returnVarId,
                                         expr,
                                         cset);
       return elistify(createEState(edge.target,newPState,cset));
@@ -1057,7 +1062,10 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       PState newPState=*currentEState.pstate();
       // we only create this variable here to be able to find an existing $return variable!
       VariableId returnVarId;
-      returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+#pragma omp critical(VAR_ID_MAPPING) 
+      {
+        returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      }
 
       if(newPState.find(returnVarId)!=newPState.end()) {
 	AValue evalResult=newPState[returnVarId];
@@ -1082,7 +1090,10 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
       PState newPState=*currentEState.pstate();
       VariableId returnVarId;
-      returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+#pragma omp critical(VAR_ID_MAPPING) 
+      {
+        returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      }
       // no effect if $return does not exist
       newPState.deleteVar(returnVarId);
       cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
