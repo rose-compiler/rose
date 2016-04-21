@@ -143,7 +143,10 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // Need to fixup the scope and perhaps build the SgVariableDefinition object!
      SgInitializedName* initializedName_copy = isSgInitializedName(copy);
      ROSE_ASSERT(initializedName_copy != NULL);
-     ROSE_ASSERT (initializedName_copy->get_declptr() != __null);
+
+  // DQ (4/21/2016): Replacing "__null" with more portable (non-gnu specific) use using "NULL".
+  // ROSE_ASSERT (initializedName_copy->get_declptr() != __null);
+     ROSE_ASSERT (initializedName_copy->get_declptr() != NULL);
 
      // fprintf(stderr, "SgInitializedName::fixupCopy_scopes(%p) this=%p\n", copy, this);
      // fprintf(stderr, "Copy's scope is %p, my scope is %p\n", initializedName_copy->get_scope(), this->get_scope());
