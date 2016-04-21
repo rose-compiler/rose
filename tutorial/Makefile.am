@@ -40,6 +40,7 @@ endif
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 noinst_PROGRAMS += 				\
    binaryCallGraph				\
+   binaryFunctionCfg				\
    binaryHelloWorld				\
    binaryStrings				\
    binaryAttribute
