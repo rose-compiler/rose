@@ -19443,7 +19443,13 @@ bool SageInterface::getForLoopInformations(
   SgVarRefExp * rhs_var_ref = isSgVarRefExp(rhs_exp);
   bool rhs_it = (rhs_var_ref != NULL) && (rhs_var_ref->get_symbol() == iterator);
 
-  assert(lhs_it xor rhs_it);
+// DQ (4/21/2016): Replacing use of bitwise xor with something more approriate for logical types.
+// Note that the xor logica operator does not exist in C/C++ and that this is a case of using the
+// bitwise xor operator on boolean values (not a great idea).  Note that logical "a xor b" is 
+// equivalent to "!a != !b"  the use of "!" only make sure that the "!=" is applied to a boolean 
+// value.  Since these are boolean typed values we can use "a != b", directly.
+// assert(lhs_it xor rhs_it);
+  assert(lhs_it != rhs_it);
 
   upper_bound = lhs_it ? bin_test->get_rhs_operand_i() : bin_test->get_lhs_operand_i();
 
