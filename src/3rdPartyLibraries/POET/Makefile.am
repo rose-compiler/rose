@@ -7,8 +7,8 @@ libpoet_la_SOURCES = poet_AST.cpp codegen.cpp parse.cpp eval.cpp eval_ext.cpp ev
 # DQ (4/12/2016): We don't want to be linking main in the ROSE library build process.
 # If these are required they should be built in tests directories as part of testing POET.
 # This is a particular problem for support of clang in compiling ROSE.
-# bin_PROGRAMS = pcg
-# pcg_SOURCES  = main.cpp 
+bin_PROGRAMS = pcg
+pcg_SOURCES  = main.cpp 
 
 pcg_LDADD = libpoet.la
 
@@ -26,3 +26,6 @@ AM_CPPFLAGS += -DPOET_VERSION="\"1.03.06\"" -I$(top_srcdir)/src/midend/programTr
 
 include  $(top_srcdir)/src/3rdPartyLibraries/POET/Make.inc
 rosedir= $(rose_srcdir)/src/3rdPartyLibraries/POET
+
+clean-local:
+	rm -f pcg 

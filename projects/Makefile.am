@@ -57,7 +57,6 @@ SUBDIRS = \
 	taintcheck \
 	ManyCoreRuntime \
 	ManyCoreRuntime2 \
-	StencilManyCore \
 	Fortran_to_C \
 	mint \
 	vectorization \
@@ -65,6 +64,11 @@ SUBDIRS = \
 	RoseBlockLevelTracing \
 	LineDeleter \
 	$(OPTIONAL_PROJECTS)
+
+# DQ (4/20/2016): Clang has a problem within compiling POET, which is used in the StencilManyCore project.
+if !USING_CLANG_COMPILER
+SUBDIRS += StencilManyCore 
+endif
 
 # DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
 if ROSE_USING_GCC_VERSION_LATER_4_8
