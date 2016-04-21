@@ -2999,6 +2999,7 @@ void Analyzer::runSolver12() {
   vector<bool> workVector(_numberOfThreadsToUse);
   set_finished(workVector,true);
   bool terminate=false;
+  bool terminatedWithIncompleteStg = false;
   bool terminateEarly=false;
   //omp_set_dynamic(0);     // Explicitly disable dynamic teams
   omp_set_num_threads(workers);
@@ -3020,24 +3021,25 @@ void Analyzer::runSolver12() {
 
   cout <<"STATUS: Running parallel solver 12 with "<<workers<<" threads."<<endl;
   printStatusMessage(true);
-# pragma omp parallel shared(workVector, terminate) private(threadNum)
+# pragma omp parallel shared(workVector, terminate, terminatedWithIncompleteStg) private(threadNum)
   {
     threadNum=omp_get_thread_num();
     while(!terminate) {
 #pragma omp critical(ESTATEWL)
       {
         if (all_false(workVector)) {
+          if ( (estateWorkListCurrent->empty() && estateWorkListNext->empty())) { 
+            terminate = true;
+	  }
 	  if ( estateWorkListCurrent->empty() && !(estateWorkListNext->empty()) ){
 	    // swap worklists iff the maximum number of iterations has not been fully computed yet
 	    if (getIterations() == _maxIterations) {
 	      terminate = true;
+	      terminatedWithIncompleteStg = true;
 	    } else {
 	      swapWorkLists();
 	      _swapWorkListsCount++;
 	    }
-	  }
-          if ( (estateWorkListCurrent->empty() && estateWorkListNext->empty()) || isIncompleteSTGReady()) { 
-            terminate = true;
 	  }
 	  isActiveGlobalTopify();
 	}
@@ -3175,7 +3177,7 @@ void Analyzer::runSolver12() {
   if (!isPrecise()) {
     _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
   }
-  if(isIncompleteSTGReady()) {
+  if(terminatedWithIncompleteStg || isIncompleteSTGReady()) {
     printStatusMessage(true);
     cout << "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
