@@ -119,7 +119,7 @@ bool Analyzer::isIncompleteSTGReady() {
     return false;
   else if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
     return true;
-  else if ((_maxIterations!=-1) && ((long int) _iterations>_maxIterations))
+  else if ((_maxIterations!=-1) && ((long int) getIterations() > _maxIterations))
     return true;
   else // at least one maximum mode is active, but the corresponding limit has not yet been reached
     return false;
@@ -218,16 +218,32 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
   // report we are alive
   stringstream ss;
   if(forceDisplay) {
+    long pstateSetSize;
+    long estateSetSize;
+    long transitionGraphSize;
+    long constraintSetMaintainerSize;
+    long estateWorkListCurrentSize;
+#pragma omp critical(HASHSET)
+    {
+      pstateSetSize = pstateSet.size();
+      estateSetSize = estateSet.size();
+      transitionGraphSize = getTransitionGraph()->size();
+      constraintSetMaintainerSize = constraintSetMaintainer.size();
+    }
+#pragma omp critical(ESTATEWL)
+    {
+      estateWorkListCurrentSize = estateWorkListCurrent->size();
+    }
     ss <<color("white")<<"Number of pstates/estates/trans/csets/wl/iter: ";
-    ss <<color("magenta")<<pstateSet.size()
+    ss <<color("magenta")<<pstateSetSize
        <<color("white")<<"/"
-       <<color("cyan")<<estateSet.size()
+       <<color("cyan")<<estateSetSize
        <<color("white")<<"/"
-       <<color("blue")<<getTransitionGraph()->size()
+       <<color("blue")<<transitionGraphSize
        <<color("white")<<"/"
-       <<color("yellow")<<constraintSetMaintainer.size()
+       <<color("yellow")<<constraintSetMaintainerSize
        <<color("white")<<"/"
-       <<estateWorkListCurrent->size()
+       <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
       ;
     ss<<endl;
@@ -300,7 +316,7 @@ bool Analyzer::isActiveGlobalTopify() {
     return true;
   } else {
     if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop)
-        || (_maxIterationsForcedTop!=-1 && _iterations>_maxIterationsForcedTop) ) {
+        || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop) ) {
       _topifyModeActive=true;
       eventGlobalTopifyTurnedOn();
       boolOptions.registerOption("rers-binary",false);
@@ -387,7 +403,9 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
   cout<<"STATUS: switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
   //switch to the counter for approximated loop iterations if currently in a mode that counts iterations
   if (getExplorationMode()==EXPL_LOOP_AWARE || getExplorationMode()==EXPL_LOOP_AWARE_SYNC) {
+#pragma omp atomic
     _iterations--;
+#pragma omp atomic
     _approximated_iterations++;
   }
 }
@@ -528,12 +546,10 @@ const EState* Analyzer::popWorkList() {
     if(estate) {
       estateWorkListCurrent->pop_front();
       if(getExplorationMode()==EXPL_LOOP_AWARE && isLoopCondLabel(estate->label())) {
-        //cout<<"DEBUG: popFromWorkList: "<<_curr_iteration_cnt<<","<<_next_iteration_cnt<<":"<<_iterations<<endl;
         if(_curr_iteration_cnt==0) {
           _curr_iteration_cnt= (_next_iteration_cnt - 1);
           _next_iteration_cnt=0;
           incIterations();
-          //cout<<"STATUS: Started analyzing loop iteration "<<_iterations<<"-"<<_approximated_iterations<<endl;
         } else {
           _curr_iteration_cnt--;
         }
