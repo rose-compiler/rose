@@ -220,7 +220,6 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
   // Now edit the list to remove elements appearing within the exclude list
      Grammar::editStringList ( localList, localExcludeList );
 
-     string prevParam;
      for( stringListIterator = localList.begin();
           stringListIterator != localList.end();
           stringListIterator++ )
@@ -230,9 +229,6 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
           switch ( (*stringListIterator)->getIsInConstructorParameterList() )
              {
                case NO_CONSTRUCTOR_PARAMETER:
-                 // DQ (11/20/2004): This test does not appear to work to skip cases where the initializer is empty
-                 // the reason is that getDefaultInitializerString() returns a char* and the wrong operator!= is being used!
-                 // if ((*stringListIterator)->getDefaultInitializerString() != "")
                     if (string( (*stringListIterator)->getDefaultInitializerString()) != "")
                        {
                          returnString = returnString + "     p_" + variableNameString + " " + 
@@ -255,6 +251,20 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
 
      return returnString;
    }
+
+string
+AstNodeClass::buildConstructorBodyForAllDataMembers() {
+  string returnString;
+  vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+  for( vector<GrammarString *>::iterator stringListIterator = localList.begin();
+       stringListIterator != localList.end();
+       stringListIterator++ ) {
+    string variableNameString = (*stringListIterator)->getVariableNameString();
+    returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
+  }
+  return returnString;
+}
+
 
 StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionHeader ()
    {

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <fstream>
 #include <map>
+#include <iostream>
 
 using namespace std;
 
@@ -1236,6 +1237,35 @@ Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarStri
      return complete;
    }
 
+// NEW CONSTRUCTORS
+// this function is used when creating the prototype for the all-data-members constructor.
+// it creates the string that is inserted into classname::classname(<string-goes-here>)
+string
+Grammar::buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & node ) {
+  //return "int,int,int,int /*FAKE, TODO for all parameters*/";
+  string result;
+  vector<GrammarString *> includeList;
+  vector<GrammarString *> excludeList;
+  // now generate the additions to the lists from the parent node subtree lists
+  generateStringListsFromLocalLists ( node, includeList, excludeList, &AstNodeClass::getMemberDataPrototypeList );
+  
+  int generatedParam=0;
+  for(vector<GrammarString *>::iterator gIt = includeList.begin(); gIt != includeList.end(); gIt++) {
+    GrammarString *memberFunctionCopy= *gIt;
+    ROSE_ASSERT (memberFunctionCopy != NULL);
+    GrammarString& dataMember = **gIt;
+    string dataMemberParameter=dataMember.getConstructorPrototypeParameterString();
+    string filter="static";
+    if(dataMemberParameter.substr(0,filter.size())!=filter) {
+      if(generatedParam>0)
+	result+=",";
+      result+=dataMemberParameter;
+      generatedParam++;
+    }
+  }
+  return result+" /* NEW CONSTRUCTOR */";
+}
+
 string
 Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool* complete )
    {
@@ -1374,6 +1404,14 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
                string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
+	       /* generate constructor prototype only for UntypedNode classes.*/ 
+	       string typeNameOfInterest="SgUntyped";
+	       std::cout<<"DEBUG:"<<className.substr(0,typeNameOfInterest.size())<<endl;
+	       if(className.substr(0,typeNameOfInterest.size())==typeNameOfInterest) {
+		 string constructorParameterString_3 = buildConstructorParameterListStringForAllDataMembers(node);
+		 constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_3 + "); \n";
+	       }
+	       
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
                returnValue->setIsInConstructorParameterList(CONSTRUCTOR_PARAMETER);
                returnValue->defaultInitializerString = defaultInitializer;
@@ -1459,6 +1497,12 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
     string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
   }
+
+  // NEW CONSTRUCTOR xxx
+  string constructorAllDataMembers="/* NEW CONSTRUCTOR: IMPLEMENTATION TODO:\n";
+  constructorAllDataMembers+=node.buildConstructorBodyForAllDataMembers();
+  constructorAllDataMembers+=" */";
+  constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ALL_DATA_MEMBERS",constructorAllDataMembers);
 
   returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
 }
