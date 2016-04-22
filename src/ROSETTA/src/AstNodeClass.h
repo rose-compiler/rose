@@ -223,6 +223,9 @@ class AstNodeClass
 
   std::string buildConstructorBody( bool withInitializers, ConstructParamEnum config );
 
+  // builds a constructor body for passing all data members as parameters
+  std::string buildConstructorBodyForAllDataMembers();
+
   // AJ ( 10/26/2004)
   // Builds the destructor body
   std::string buildDestructorBody();
