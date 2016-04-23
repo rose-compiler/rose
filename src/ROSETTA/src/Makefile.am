@@ -124,7 +124,9 @@ CxxGrammarMetaProgram_LDADD = \
   $(RT_LIBS)
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+if USING_CLANG_COMPILER
 CxxGrammarMetaProgram_LDADD += -lstdc++
+endif
 
 # DQ (9/11/2008):
 # The rose_paths.c is built in ROSE/src/util and this dependence causes

@@ -12,6 +12,11 @@ pcg_SOURCES  = main.cpp
 
 pcg_LDADD = libpoet.la
 
+# DQ (4/23/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+if USING_CLANG_COMPILER
+pcg_LDADD += -lstdc++
+endif
+
 
 EXTRA_DIST = ASTeval.h     error_config.h     poet_AST.h           poet_ASTvisitor.h  poet_SymbolTable.h  timing.h \
             ASTfactory.h  poet_ASTeval.h     poetAST.h            poet_config.h      poet_yacc.h         windows_includes.h \
