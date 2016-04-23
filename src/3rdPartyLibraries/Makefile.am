@@ -24,10 +24,7 @@ else
 SUBDIRS += MSTL libharu-2.1.0 antlr-jars qrose
 endif
 
-# DQ (4/20/2016): Clang has a problem within compiling POET.
-if !USING_CLANG_COMPILER
 SUBDIRS += POET
-endif
 
 # Pei-Hung (12/17/2014): installing POCC
 if ROSE_WITH_POCC

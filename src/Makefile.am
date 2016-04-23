@@ -140,13 +140,13 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
    $(top_builddir)/src/midend/programTransformation/singleStatementToBlockNormalization/libSingleStatementToBlockNormalization.la \
-   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/libmidend.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(top_builddir)/src/util/libroseSawyer.la \
+   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
@@ -242,7 +242,9 @@ if ROSE_USE_GCC_OMP
 endif
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+if USING_CLANG_COMPILER
 librose_la_LIBADD += -lstdc++
+endif
 
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
 librose_la_LDFLAGS = -no-undefined
@@ -281,8 +283,11 @@ testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # testSharedRoseLib_LDFLAGS  = $(ROSE_DWARF_LIBS_WITH_PATH)
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
-# testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lstdc++ 
+testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+if USING_CLANG_COMPILER
+testSharedRoseLib_LDADD += -lstdc++ 
+endif
 
 # AM_LDFLAGS = $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
 # AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
@@ -350,10 +355,11 @@ rose_config_CPPFLAGS =									\
 	-DBUILD_LDFLAGS='"$(subst ",\",$(rose_config_build_ldflags))"'
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
-# rose_config_LIBADD += -lstdc++
-# rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lstdc++
+rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+if USING_CLANG_COMPILER
+rose_config_LDADD += -lstdc++
+endif
 
 print:
 	@echo "libroseLibraries = $(libroseLibraries)"
