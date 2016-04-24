@@ -1263,7 +1263,7 @@ Grammar::buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & n
       generatedParam++;
     }
   }
-  return result+" /* NEW CONSTRUCTOR */";
+  return result;
 }
 
 string
@@ -1406,10 +1406,9 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
 
 	       /* generate constructor prototype only for UntypedNode classes.*/ 
 	       string typeNameOfInterest="SgUntyped";
-	       std::cout<<"DEBUG:"<<className.substr(0,typeNameOfInterest.size())<<endl;
 	       if(className.substr(0,typeNameOfInterest.size())==typeNameOfInterest) {
 		 string constructorParameterString_3 = buildConstructorParameterListStringForAllDataMembers(node);
-		 constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_3 + "); \n";
+		 constructorPrototype = constructorPrototype + "/* NEW CONSTRUCTOR:TODO      " + string(className) + "(" + constructorParameterString_3 + ");*/ \n";
 	       }
 	       
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
@@ -1498,7 +1497,7 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
   }
 
-  // NEW CONSTRUCTOR xxx
+  // NEW CONSTRUCTOR
   string constructorAllDataMembers="/* NEW CONSTRUCTOR: IMPLEMENTATION TODO:\n";
   constructorAllDataMembers+=node.buildConstructorBodyForAllDataMembers();
   constructorAllDataMembers+=" */";
