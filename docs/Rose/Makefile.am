@@ -119,11 +119,22 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex \
 # requirements.tex
 
 roseDirectoryMap.pdf: Makefile
-	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;
+#	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;
+#	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='\.git\|acmacros\|autom4te.cache\|docs\|libltdl\|scripts' --basename -o=roseDirectoryMap.ps;
+	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='acmacros\|projects' --basename -o=roseDirectoryMap.ps;
 #	convert -geometry 5000 roseDirectoryMap.ps roseDirectoryMap.pdf
 	w=`grep '^%%BoundingBox: [0-9]' roseDirectoryMap.ps | awk '{print $$4*10;}'` ; \
 	h=`grep '^%%BoundingBox: [0-9]' roseDirectoryMap.ps | awk '{print $$5*10;}'` ; \
 	ps2pdf -g$${w}x$${h} roseDirectoryMap.ps roseDirectoryMap.pdf
+
+roseSrcDirectoryMap.png: Makefile
+#	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;
+#	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='\.git\|acmacros\|autom4te.cache\|docs\|libltdl\|scripts' --basename -o=roseDirectoryMap.ps;
+	$(top_srcdir)/scripts/lsdot $(top_srcdir)/src --format=png --exclude='3rdPartyLibraries\|ROSETTA\|EDG_4.4\|EDG_4.7\|EDG_4.8' --basename -o=roseSrcDirectoryMap.png;
+#	convert -geometry 5000 roseDirectoryMap.ps roseDirectoryMap.pdf
+#	w=`grep '^%%BoundingBox: [0-9]' roseDirectoryMap.ps | awk '{print $$4*10;}'` ; \
+#	h=`grep '^%%BoundingBox: [0-9]' roseDirectoryMap.ps | awk '{print $$5*10;}'` ; \
+#	ps2pdf -g$${w}x$${h} roseDirectoryMap.ps roseDirectoryMap.pdf
 
 if USE_ROSE_IN_BUILD_TREE_VAR
 SET_ROSE_IN_BUILD_TREE=env ROSE_IN_BUILD_TREE=$(top_builddir)
