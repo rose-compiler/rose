@@ -40,6 +40,7 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
+
 /* DQ (9/1/2014): Define this for the Intel compiler (to avoid Intel specific code not handled by EDG) */
 #ifdef __INTEL_COMPILER
   #define _OVERRIDE_COMPLEX_SPECIALIZATION_
@@ -65,6 +66,13 @@
   extern int  _FENV_PUBAPI feclearexcept (int __excepts) ;
   extern int  _FENV_PUBAPI fegetexceptflag (fexcept_t *__flagp, int __excepts) ;
   extern int  _FENV_PUBAPI fesetexceptflag (const fexcept_t *__flagp, int __excepts) ;
+#endif
+
+/* DQ (4/16/2016): Added Clang support.  Turn off the use of the type generic 
+   math header file.  It is not yet clear what we should do with these.
+ */
+#ifdef __clang__
+   #define __TGMATH_H
 #endif
 
 /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
