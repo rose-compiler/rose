@@ -1021,26 +1021,26 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                     printf ("In isDslFunction(): case SgDotExp: found function ref name = %s from variable reference for variable name = %s \n",memberFunctionSymbol->get_name().str(),initializedName->get_name().str());
 #endif
 #endif
-                // Add attribute
+                 // Add attribute
 #if 0
-                   array_assignment_operator_dsl_attribute* dslAttribute = new array_assignment_operator_dsl_attribute();
+                    array_assignment_operator_dsl_attribute* dslAttribute = new array_assignment_operator_dsl_attribute();
 #if 1
-                   printf ("Adding (array_assignment_operator_dsl_attribute to dsl function call) dslAttribute = %p \n",dslAttribute);
+                    printf ("Adding (array_assignment_operator_dsl_attribute to dsl function call) dslAttribute = %p \n",dslAttribute);
 #endif
-                   ROSE_ASSERT(dslAttribute != NULL);
+                    ROSE_ASSERT(dslAttribute != NULL);
 
-                // virtual void addNewAttribute (std::string s, AstAttribute *a);   
-                   functionCallExp->addNewAttribute(memberFunctionSymbol->get_name(),dslAttribute);
+                 // virtual void addNewAttribute (std::string s, AstAttribute *a);   
+                    functionCallExp->addNewAttribute(memberFunctionSymbol->get_name(),dslAttribute);
 #endif
 #if 0
-                   array_refexp_dsl_attribute* dslAttribute_refexp = new array_refexp_dsl_attribute();
+                    array_refexp_dsl_attribute* dslAttribute_refexp = new array_refexp_dsl_attribute();
 #if 0
-                   printf ("Adding (array_refexp_dsl_attribute to dsl var ref) dslAttribute = %p \n",dslAttribute_refexp);
+                    printf ("Adding (array_refexp_dsl_attribute to dsl var ref) dslAttribute = %p \n",dslAttribute_refexp);
 #endif
-                   ROSE_ASSERT(dslAttribute_refexp != NULL);
+                    ROSE_ASSERT(dslAttribute_refexp != NULL);
 
-                // virtual void addNewAttribute (std::string s, AstAttribute *a);   
-                   varRefExp->addNewAttribute(initializedName->get_name(),dslAttribute_refexp);
+                 // virtual void addNewAttribute (std::string s, AstAttribute *a);   
+                    varRefExp->addNewAttribute(initializedName->get_name(),dslAttribute_refexp);
 #endif
                   }
 
@@ -1080,6 +1080,8 @@ bool DSL_Support::isDslFunction(SgNode* astNode)
                  // dsl_attribute* attribute = dsl_attribute_map[className]->factory_copy();
                     dsl_attribute* attribute = dsl_attribute_map[memberFunctionName]->factory_copy();
                     ROSE_ASSERT(attribute != NULL);
+
+                    functionCallExp->addNewAttribute(memberFunctionName,attribute);
 #if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);

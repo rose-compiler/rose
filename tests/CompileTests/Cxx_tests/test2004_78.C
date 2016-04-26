@@ -99,7 +99,10 @@ namespace A
    }
 
 // void A::B::foobar2();
+
+#ifndef __clang__
 class A::B::X;
+#endif
 
 int main()
    {

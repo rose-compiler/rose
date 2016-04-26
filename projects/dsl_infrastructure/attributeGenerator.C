@@ -884,6 +884,8 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
      string dsl_member_function_names_initializerString;
      string dsl_attribute_map_initializerString;
 
+  // Note that there could in principal be only DSL functions and no DSL types, but this is a corner 
+  // case in the DSL design (that can be addressed later).
      if (dsl_type_list.empty() == false)
         {
        // initializerString = " = { ";
@@ -940,7 +942,26 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
        // dsl_attribute_map_initializerString = StringUtility::copyEdit(dsl_attribute_map_initializerString,"$className",type_name);
 
        // dsl_attribute_map_initializerString += " { {\"" + className + "\"},{" + className_dsl_attribute + "()} } ";
-          dsl_attribute_map_initializerString += " { {\"" + className + "\"},{ new " + className_dsl_attribute + "()} } ";
+       // dsl_attribute_map_initializerString += " { {\"" + className + "\"},{ new " + className_dsl_attribute + "()} } ";
+          dsl_attribute_map_initializerString += "   {\" " + className + "\", new " + className_dsl_attribute + "() } ";
+
+       // if (dsl_type_varRef_list.find(type) != dsl_type_varRef_list.end())
+          if (dsl_type_varRef_list.find(type) != dsl_type_varRef_list.end())
+             {
+            // This type has variables that require value tracking and associated attributes for all variable references fo this values.
+
+            // Add the seperator between the attributes list and map entries.
+               dsl_type_names_initializerString    += ", \n";
+               dsl_attribute_map_initializerString += ", \n";
+
+            // Add suffix to indicate this is for the DSL variable reference expression support.
+               className               += "_varRef";
+               className_dsl_attribute += "_varRef";
+
+               dsl_type_names_initializerString += "   \"" + className + "\" ";
+            // dsl_attribute_map_initializerString += " { {\"" + className + "\"},{ new " + className_dsl_attribute + "()} } ";
+               dsl_attribute_map_initializerString += "   {\" " + className + "\", new " + className_dsl_attribute + "() } ";
+             }
 
           if (i < dsl_type_list.size()-1)
              {
@@ -1080,7 +1101,7 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
        // dsl_member_function_names_initializerString += "{\"memberFunctionName\"}";
        // dsl_member_function_names_initializerString += "\"memberFunctionName\"";
        // dsl_member_function_names_initializerString += " { \"" + class_name + "\" \"" + member_function_name + "\" } ";
-          dsl_member_function_names_initializerString += " { \"" + className + "\", \"" + member_function_name + "\" } ";
+          dsl_member_function_names_initializerString += "   { \"" + className + "\", \"" + member_function_name + "\" } ";
 
        // string memberFunctionName_dsl_attribute = member_function_name + "_dsl_attribute";
 
@@ -1097,7 +1118,8 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
             // initializerString += ",";
             // dsl_type_names_initializerString += ",";
             // dsl_function_names_initializerString += ",";
-               dsl_member_function_names_initializerString += ",";
+            // dsl_member_function_names_initializerString += ",";
+               dsl_member_function_names_initializerString += ", \n";
             // dsl_attribute_map_initializerString += ",";
                dsl_attribute_map_initializerString += ", \n";
              }
@@ -1152,6 +1174,81 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
    }
 
 
+void
+AttributeGeneratorTraversal::buildClassDeclaration(string attribute_name, SgClassDeclaration* & generatedClass, SgClassDefinition* & generatedClassDefinition)
+   {
+     SgClassDeclaration* nonDefiningDecl              = NULL;
+     bool buildTemplateInstantiation                  = false; 
+     SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+
+  // Note that this will not add an associated symbol to the associated scope.
+  // SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration_nfi(attribute_name,SgClassDeclaration::e_class,global_scope_header,nonDefiningDecl,buildTemplateInstantiation,templateArgumentsList);
+     generatedClass = SageBuilder::buildClassDeclaration_nfi(attribute_name,SgClassDeclaration::e_class,global_scope_header,nonDefiningDecl,buildTemplateInstantiation,templateArgumentsList);
+     ROSE_ASSERT(generatedClass != NULL);
+
+  // Make sure there is an associated symbol for the generated class.
+     SgClassSymbol* generatedClassSymbol = global_scope_requiredSourceCode->lookup_class_symbol(attribute_name,NULL);
+     ROSE_ASSERT(generatedClassSymbol == NULL);
+
+     SgClassDeclaration* generatedClass_nondefiningDeclaration = isSgClassDeclaration(generatedClass->get_firstNondefiningDeclaration());
+     ROSE_ASSERT(generatedClass_nondefiningDeclaration != NULL);
+     generatedClassSymbol = new SgClassSymbol(generatedClass_nondefiningDeclaration);
+     ROSE_ASSERT(generatedClassSymbol != NULL);
+
+  // Add the symbol to the scope (then we can test for the symbol to avoid adding a class with the same name redundently).
+     global_scope_requiredSourceCode->insert_symbol(attribute_name,generatedClassSymbol);
+
+  // Make sure there is an associated symbol for the generated class.
+     generatedClassSymbol = global_scope_requiredSourceCode->lookup_class_symbol(attribute_name,NULL);
+     ROSE_ASSERT(generatedClassSymbol != NULL);
+
+     ROSE_ASSERT(generatedClass->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(generatedClass->get_endOfConstruct() != NULL);
+
+  // generatedClass->get_startOfConstruct()->display("In buildAttribute(): added class to global scope: debug");
+
+  // Add the base class
+  // Lookup the base class by name
+  // SgBaseClassPtrList p_inheritances
+  // SgClassSymbol* baseClassSymbol = global_scope_header->lookup_class_symbol("dsl_attribute",NULL);
+     ROSE_ASSERT(global_scope_requiredSourceCode != NULL);
+     SgClassSymbol* baseClassSymbol = global_scope_requiredSourceCode->lookup_class_symbol("dsl_attribute",NULL);
+     ROSE_ASSERT(baseClassSymbol != NULL);
+
+     SgClassDeclaration* baseClassDeclaration = baseClassSymbol->get_declaration();
+     ROSE_ASSERT(baseClassDeclaration != NULL);
+
+  // SgClassDefinition* generatedClassDefinition = generatedClass->get_definition();
+     generatedClassDefinition = generatedClass->get_definition();
+     ROSE_ASSERT(generatedClassDefinition != NULL);
+#if 1
+     printf ("generatedClassDefinition = %p \n",generatedClassDefinition);
+#endif
+     SgBaseClassPtrList & baseClassList = generatedClassDefinition->get_inheritances();
+#if 1
+     printf ("before adding base class: baseClassList.size()           = %zu \n",baseClassList.size());
+     printf ("generatedClass                                           = %p \n",generatedClass);
+     printf ("   --- generatedClass->get_definingDeclaration()         = %p \n",generatedClass->get_definingDeclaration());
+     printf ("   --- generatedClass->get_firstNondefiningDeclaration() = %p \n",generatedClass->get_firstNondefiningDeclaration());
+#endif
+     ROSE_ASSERT(baseClassList.size() == 0);
+
+  // This builder function adds it to the inheritance list.
+     bool isVirtual = false;
+     bool isDirect  = false;
+     SgBaseClass* baseClass = SageBuilder::buildBaseClass(baseClassDeclaration,generatedClassDefinition,isVirtual,isDirect);
+     ROSE_ASSERT(baseClass != NULL);
+#if 1
+     printf ("baseClassDeclaration     = %p = %s \n",baseClassDeclaration,baseClassDeclaration->class_name().c_str());
+     printf ("generatedClassDefinition = %p = %s \n",generatedClassDefinition,generatedClassDefinition->class_name().c_str());
+#endif
+#if 1
+     printf ("after adding base class: baseClassList.size() = %zu \n",baseClassList.size());
+#endif
+     ROSE_ASSERT(baseClassList.size() == 1);
+   }
+
+
 #if 1
 // SgNode* AttributeGeneratorTraversal::buildAttribute(SgType* type)
 SgNode* 
@@ -1187,9 +1284,9 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type, bool isDSLnode_valueTr
 #endif
 
        // SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration(attribute_name,global_scope_header);
-          SgClassDeclaration* nonDefiningDecl              = NULL;
-          bool buildTemplateInstantiation                  = false; 
-          SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+       // SgClassDeclaration* nonDefiningDecl              = NULL;
+       // bool buildTemplateInstantiation                  = false; 
+       // SgTemplateArgumentPtrList* templateArgumentsList = NULL;
 #if 1
           printf ("In buildAttribute(SgType*): attribute_name = %s \n",attribute_name.str());
 #endif
@@ -1200,9 +1297,16 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type, bool isDSLnode_valueTr
              {
             // Start of if (generatedClassSymbol == NULL)
 
+#if 1
+               SgClassDeclaration* generatedClass           = NULL;
+               SgClassDefinition*  generatedClassDefinition = NULL;
+               buildClassDeclaration(attribute_name,generatedClass,generatedClassDefinition);
+#else
             // Note that this will not add an associated symbol to the associated scope.
                SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration_nfi(attribute_name,SgClassDeclaration::e_class,global_scope_header,nonDefiningDecl,buildTemplateInstantiation,templateArgumentsList);
                ROSE_ASSERT(generatedClass != NULL);
+
+#error "DEAD CODE!"
 
             // Make sure there is an associated symbol for the generated class.
                SgClassSymbol* generatedClassSymbol = global_scope_requiredSourceCode->lookup_class_symbol(attribute_name,NULL);
@@ -1219,6 +1323,8 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type, bool isDSLnode_valueTr
             // Make sure there is an associated symbol for the generated class.
                generatedClassSymbol = global_scope_requiredSourceCode->lookup_class_symbol(attribute_name,NULL);
                ROSE_ASSERT(generatedClassSymbol != NULL);
+
+#error "DEAD CODE!"
 
                ROSE_ASSERT(generatedClass->get_startOfConstruct() != NULL);
                ROSE_ASSERT(generatedClass->get_endOfConstruct() != NULL);
@@ -1250,6 +1356,8 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type, bool isDSLnode_valueTr
 #endif
                ROSE_ASSERT(baseClassList.size() == 0);
 
+#error "DEAD CODE!"
+
             // This builder function adds it to the inheritance list.
                bool isVirtual = false;
                bool isDirect  = false;
@@ -1262,7 +1370,11 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type, bool isDSLnode_valueTr
 #if 1
                printf ("after adding base class: baseClassList.size() = %zu \n",baseClassList.size());
 #endif
+
+#error "DEAD CODE!"
+
                ROSE_ASSERT(baseClassList.size() == 1);
+#endif
 #if 0
             // For each class we want the class member declarations to be:
                     public:
@@ -1294,57 +1406,61 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type, bool isDSLnode_valueTr
           std::string toString() { return \"$DSL_NAME_attribute\"; } \n \
           std::string additionalNodeOptions() { return \"fillcolor=\\\"red2\\\",style=filled\"; } \n";
 
+            // Reuse this string to define the class to be used to represent varRefExp IR nodes for this value.
+               string s_varRefExp = s;
+
             // Adding support for optional handling of value to support value tracking in transfer functions.
                if (isDSLnode_valueTracking == true)
                   {
                     s = StringUtility::copyEdit(s,"$DSL_VALUE_TRACKING","$DSL_NAME value;");
+                    s_varRefExp = StringUtility::copyEdit(s_varRefExp,"$DSL_VALUE_TRACKING","int variableID;");
                   }
                  else
                   {
+                 // Clear the data member substring in we are not supporting value tracking.
                     s = StringUtility::copyEdit(s,"$DSL_VALUE_TRACKING","");
+                    s_varRefExp = StringUtility::copyEdit(s_varRefExp,"$DSL_VALUE_TRACKING","");
                   }
 
             // Substitue value defined by name for "$DSL_NAME" in string.
             // ROSE_UTIL_API std::string copyEdit(const std::string& inputString, const std::string & oldToken, const std::string & newToken);
-               string new_string = StringUtility::copyEdit(s,"$DSL_NAME",name);
+            // string new_string = StringUtility::copyEdit(s,"$DSL_NAME",name);
+               s = StringUtility::copyEdit(s,"$DSL_NAME",name);
 
             // Added copy function.
-               new_string = StringUtility::copyEdit(new_string,"$CLASSNAME",attribute_name);
+            // new_string = StringUtility::copyEdit(new_string,"$CLASSNAME",attribute_name);
+               s = StringUtility::copyEdit(s,"$CLASSNAME",attribute_name);
 
             // AstUnparseAttribute* astUnparseAttribute = new AstUnparseAttribute(s,AstUnparseAttribute::e_inside);
             // ROSE_ASSERT(astUnparseAttribute != NULL);
             // generatedClassDefinition->addAttribute(astUnparseAttribute);
             // SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribute::RelativePositionType inputlocation )
-               SageInterface::addTextForUnparser(generatedClassDefinition,new_string,AstUnparseAttribute::e_inside);
-#if 0
-               ROSE_ASSERT(global_scope_requiredSourceCode);
+            // SageInterface::addTextForUnparser(generatedClassDefinition,new_string,AstUnparseAttribute::e_inside);
+               SageInterface::addTextForUnparser(generatedClassDefinition,s,AstUnparseAttribute::e_inside);
 
-            // Find the template class and build an template instantiation directive to force the instantiation (instead of generating code directly).
-            // SgDeclarationStatement* declarationStatement = generatedClass;
-               SgDeclarationStatement* declarationStatement = generatedClass->get_firstNondefiningDeclaration();
-               ROSE_ASSERT(declarationStatement != NULL);
-
-               ROSE_ASSERT(declarationStatement->get_startOfConstruct() != NULL);
-               ROSE_ASSERT(declarationStatement->get_endOfConstruct() != NULL);
-
-               SgTemplateInstantiationDirectiveStatement* templateInstantiationDirective = new SgTemplateInstantiationDirectiveStatement(declarationStatement);
-
-               SageInterface::appendStatement(templateInstantiationDirective,global_scope_source);
-               ROSE_ASSERT(templateInstantiationDirective->get_parent() != NULL);
-            // templateInstantiationDirective->set_parent(global_scope_source);
-
-               ROSE_ASSERT(declarationStatement->get_parent() == NULL);
-               declarationStatement->set_parent(templateInstantiationDirective);
-               ROSE_ASSERT(declarationStatement->get_parent() != NULL);
-
-               ROSE_ASSERT(templateInstantiationDirective->get_startOfConstruct() != NULL);
-               ROSE_ASSERT(templateInstantiationDirective->get_endOfConstruct() != NULL);
-#else
             // Put the class declaration into the header file.
             // We can share this, for now, though generally it is a bad idea.
                SageInterface::appendStatement(generatedClass,global_scope_header);
             // SageInterface::appendStatement(generatedClass,global_scope_source);
-#endif
+
+            // Where we are suppporting value tracking we require an attribute for each variable to represent all possible DSL 
+            // variable references to the DSL variable.
+               if (isDSLnode_valueTracking == true)
+                  {
+                    SgClassDeclaration* generatedClass_varRefExp           = NULL;
+                    SgClassDefinition*  generatedClassDefinition_varRefExp = NULL;
+                    attribute_name += "_varRef";
+
+                    buildClassDeclaration(attribute_name,generatedClass_varRefExp,generatedClassDefinition_varRefExp);
+
+                    s_varRefExp = StringUtility::copyEdit(s_varRefExp,"$DSL_NAME",name);
+                    s_varRefExp = StringUtility::copyEdit(s_varRefExp,"$CLASSNAME",attribute_name);
+                    SageInterface::addTextForUnparser(generatedClassDefinition_varRefExp,s_varRefExp,AstUnparseAttribute::e_inside);
+                    SageInterface::appendStatement(generatedClass_varRefExp,global_scope_header);
+
+                 // dsl_type_varRef_list.push_back(type);
+                    dsl_type_varRef_list.insert(type);
+                  }
 
             // End of if (generatedClassSymbol == NULL)
              }
