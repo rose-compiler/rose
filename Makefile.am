@@ -697,8 +697,9 @@ all-lcov.info:
 	lcov --capture --no-recursion $(patsubst %,-d %,$(lcov_data_dirs)) -o $@
 
 # Capture only coverage for the ROSE library source code (no tests, tutorials, projects, system headers, boost, etc).
+# (04/26/2016) Pei-Hung lcov has issue to output extracted result to librose-lcov.info with -o option. Using piping instead.
 librose-lcov.info: all-lcov.info
-	lcov --extract $< "$(top_srcdir)/src/*" -o $@
+	lcov --extract $< "$(top_srcdir)/src/*" > $@
 
 # Generate a directory containing the HTML representation of the coverage information for the ROSE library proper.
 # THIS INCLUDES EDG SOURCES; DO NOT DISTRIBUTE THIS DIRECTORY
