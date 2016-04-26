@@ -346,7 +346,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // Find data pointers
     SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
     size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().get_nbits();
-    Sawyer::Container::Set<uint64_t> addrSeen;
+    Sawyer::Container::Set<SymbolicExpr::Hash> addrSeen;
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
         BaseSemantics::MemoryCellStatePtr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
         BOOST_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->allCells())

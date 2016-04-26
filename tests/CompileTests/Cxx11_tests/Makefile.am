@@ -9,7 +9,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 
-globalVariablesInLambdas_TESTS = test_1.C
+# globalVariablesInLambdas_TESTS = test_1.C
 
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
