@@ -350,9 +350,10 @@
  *
  *  @section installation_build Building the library
  *
- *  To build the library, run "make" and "make install" in $ROSE_BLD.  You may specify an amount of parallelism with make's
- *  "-j" switch.  Ensure that your machine meets the minimum hardware requirements before starting. A parallel build will
- *  require more than the minimum.
+ *  To build and install the ROSE library, run "make -C $ROSE_BLD install-rose-library". If you run "make" without specifying
+ *  the "install-rose-library" target then additional tests, projects, and tutorials are also built. You may specify an amount
+ *  of parallelism with make's "-j" switch.  Ensure that your machine meets the minimum hardware requirements before
+ *  starting. A parallel build will require more than the minimum.
  *
  *  If you encounter errors about downloading EDG binary tarballs, see @ref installing_edg.
  *
