@@ -29,10 +29,24 @@ compilerVendorName=$ax_cv_cxx_compiler_vendor
   # MS 10/22/2015: Support for LLVM
   # clang|clang++|clang-*|clang++-*)
   clang)
-    macroString="{\"--preinclude\", \"rose_edg_required_macros_and_functions.h\"}"
+           # macroString="{\"--preinclude\", \"rose_edg_required_macros_and_functions.h\"}"
+             BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER --version |& grep -Po '(?<=version )[^;]+' | cut -d\. -f1 | cut -d\( -f1`
+             BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER --version |& grep -Po '(?<=version )[^;]+' | cut -d\. -f2 | cut -d\( -f1`
+             BACKEND_GCC_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER --version |& grep -Po '(?<=version )[^;]+' | cut -d\. -f3 | cut -d\( -f1`
+             if test x$BACKEND_GCC_PATCHLEVEL = x ; then
+               echo "Warning: cannot extract the patch level from $BACKEND_CXX_COMPILER -dumpversion" 
+               echo "patchlevel is assumed to be 0"
+               BACKEND_GCC_PATCHLEVEL="0"
+             fi 
+             macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\""
+
+             macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
+
+             macroString="${macroString}}"
+
   # compilerVendorName=llvm
-  # echo "Support for clang as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
-  # echo "Support for clang as a backend for compiling ROSE generated code \"$macroString\" ";
+    echo "Support for clang as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
+    echo "Support for clang as a backend for compiling ROSE generated code \"$macroString\" ";
   ;;
   
   # Support for GNU gcc or g++ as a backend for compiling ROSE generated code
@@ -200,6 +214,7 @@ compilerVendorName=$ax_cv_cxx_compiler_vendor
 # AM_CONDITIONAL(USING_GNU_COMPILER,test "x$compilerVendorName" = xGNU)
   AM_CONDITIONAL(USING_INTEL_COMPILER,test "x$compilerVendorName" = xintel)
   AM_CONDITIONAL(USING_GNU_COMPILER,test "x$compilerVendorName" = xgnu)
+  AM_CONDITIONAL(USING_CLANG_COMPILER,test "x$compilerVendorName" = xclang)
 
 # DQ (1/27/2010): Setup automake conditionals so that we can optionally skip files in ROSE that don't compile.
   AM_CONDITIONAL(ROSE_USING_ROSE,test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator || test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration || test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis || test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO)
@@ -250,17 +265,22 @@ compilerVendorName=$ax_cv_cxx_compiler_vendor
   if test "x$compilerVendorName" = xintel; then
    # using_intel_compiler=true
    # AC_DEFINE([CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
-     AC_DEFINE([BACKEND_CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
+     AC_DEFINE([BACKEND_CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE generated code.])
   fi
 # if test "x$compilerVendorName" = xGNU; then
   if test "x$compilerVendorName" = xgnu; then
    # using_gnu_compiler=true
    # AC_DEFINE([CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
-     AC_DEFINE([BACKEND_CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
+     AC_DEFINE([BACKEND_CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE generated code.])
+  fi
+
+  if test "x$compilerVendorName" = xclang; then
+     AC_DEFINE([BACKEND_CXX_IS_CLANG_COMPILER],[1],[Is this a Clang compiler being used to compile ROSE generated code.])
   fi
 # AC_DEFINE([CXX_IS_INTEL_COMPILER],test "x$compilerVendorName" = xIntel,[Is this an Intel compiler being used to compile ROSE.])
 # AC_DEFINE([CXX_IS_INTEL_COMPILER],[`test $using_intel_compiler`],[Is this an Intel compiler being used to compile ROSE.])
 # AC_DEFINE([CXX_IS_GNU_COMPILER],[`test $using_gnu_compiler`],[Is this a GNU compiler being used to compile ROSE.])
+
 
 # This string has all compiler specific predefined macros listed
   echo "Backend compiler specific macroString = $macroString"
@@ -320,6 +340,8 @@ compilerVendorName=$ax_cv_cxx_compiler_vendor
 
   AC_SUBST(GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX)
 
+  #echo "Exiting as a test in compiler-defs"
+  #exit 1
 
 # AC_LANG_RESTORE
   AC_LANG_POP(C++)
