@@ -14,7 +14,8 @@ X::X(int i)
    }
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// #if ( __GNUC__ == 3 )
+#if ( defined(__clang__) == 0 && __GNUC__ == 3 )
 
 // Test use of default parameters in template member function declarations
 template<typename T>

@@ -33,7 +33,14 @@ void foobar_14()  __attribute__((always_inline));
 void foobar_15()  __attribute__((nothrow));
 
 // Note that weakref does not apply to extern variables or function declarations.
+#ifdef __clang__
+// DQ (4/16/2016): See test2016_20.C for an example of this for testing clang backend with ROSE.
+// void foobar_16a();
+// static void foobar_16()  __attribute__((weakref)) __attribute__ ((alias("foobar_16a")));
+// static void foobar_16() __attribute__ ((alias("foobar_16a"))) __attribute__((weakref));
+#else
 static void foobar_16()  __attribute__((weakref));
+#endif
 
 // Example of type attribute.
 // Note that zero alignment is no alignment.

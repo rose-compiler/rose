@@ -19,7 +19,8 @@ typedef int bool;
 #endif
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// #if ( __GNUC__ == 3 )
+#if ( defined(__clang__) == 0 && __GNUC__ == 3 )
 
 #include "A++.h"
 // #include "ROSE_TRANSFORMATION_SOURCE.h"
