@@ -30,4 +30,6 @@ $CONSTRUCTOR_BODY
 
 // Generated constructor (all data members)
 
+#if 0
 $CONSTRUCTOR_ALL_DATA_MEMBERS
+#endif
