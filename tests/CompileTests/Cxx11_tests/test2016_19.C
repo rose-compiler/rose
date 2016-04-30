@@ -1,7 +1,5 @@
 // is_trivial example
 #include <iostream>
-
-#if __cplusplus >= 201103L
 #include <type_traits>
 
 class A {};
@@ -19,5 +17,4 @@ int main() {
   std::cout << "D: " << std::is_trivial<D>::value << std::endl;
   return 0;
 }
-#endif
 

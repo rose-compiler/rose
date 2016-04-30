@@ -211,7 +211,7 @@ main ( int argc, char* argv[] )
   // Case we want to detect:
   //   1) Use of global variables in all lmbda functions in each function.
   //   2) Use of global variables in all functions (independent of use of lambda functions).
-#if 1
+#if 0
      bool onlyInLambdaFunctions = false;
 #else
      bool onlyInLambdaFunctions = true;
@@ -223,7 +223,8 @@ main ( int argc, char* argv[] )
   // Call the traversal starting at the project (root) node of the AST
      astTraversal.traverseInputFiles(project,inheritedAttribute);
 
-     return 0;
+  // return 0;
+     return backendCompilesUsingOriginalInputFile(project);
    }
 
 

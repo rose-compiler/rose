@@ -704,12 +704,16 @@ was just float or double for complex<float> or complex<double>.
 #if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
 /* C++ case is different because the header files will define a complex type (see hdrs1/complex) */
 
+/* DQ (4/29/2016): Comment this out for at least C++11 support of complex header.
   #define __complex__
   #define __real__ 
   #define __imag__ 
+*/
 
 /* DQ (9/26/2006): Plum Hall uses this for C++ code, but I think that we have define it away */
+/* DQ (4/29/2016): Comment this out for at least C++11 support of complex header.
   #define _Complex
+*/
 
 /* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
    don't like this fix).  This is required when constant folding is turned off.

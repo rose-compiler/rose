@@ -377,7 +377,10 @@ NEW_TESTCODES = \
    test2016_15.C \
    test2016_16.C \
    test2016_17.C \
-   test2016_18.C
+   test2016_18.C \
+   test2016_19.C \
+   test2016_20.C \
+   test2016_21.C
 
 
 if !USING_CLANG_COMPILER
