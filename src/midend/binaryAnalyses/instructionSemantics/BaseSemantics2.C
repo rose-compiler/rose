@@ -984,7 +984,7 @@ Dispatcher::processInstruction(SgAsmInstruction *insn)
     InsnProcessor *iproc = iproc_lookup(insn);
     try {
         if (!iproc)
-            throw Exception("no dispatch ability for instruction", insn);
+            throw Exception("no dispatch ability for \"" + insn->get_mnemonic() + "\" instruction", insn);
         iproc->process(shared_from_this(), insn);
     } catch (Exception &e) {
         // If the exception was thrown by something that didn't have an instruction available, then add the instruction

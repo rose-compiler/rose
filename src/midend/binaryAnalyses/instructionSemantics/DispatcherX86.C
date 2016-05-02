@@ -584,7 +584,7 @@ struct IP_cmpstrings: P {
     void p(D d, Ops ops, I insn, A args) {
         if (insn->get_kind()==x86_cmpsd && args.size() == 2) {
             // This is a floating point instruction: compare scalar double-precision floating-point values
-            throw BaseSemantics::Exception("no dispatch ability for instruction", insn);
+            throw BaseSemantics::Exception("no dispatch ability for \"" + insn->get_mnemonic() + "\" instruction", insn);
         }
 
         assert_args(insn, args, 0);
