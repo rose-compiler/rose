@@ -3,7 +3,11 @@
  */
 
 /*******START CODE ***********/
+#ifdef __clang__
+int main()
+#else
 main()
+#endif
 {
     int m;
     for (m =0; m < 10; m++);

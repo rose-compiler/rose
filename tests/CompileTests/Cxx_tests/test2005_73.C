@@ -25,7 +25,8 @@ class A
 #if 1
 
 // Template instantiation directive (for a class)
-#if (__GNUC__ == 3)
+// #if (__GNUC__ == 3)
+#if ( defined(__clang__) == 0 && __GNUC__ == 3 )
 #if (__GNUC_MINOR__ == 4)
 // TOO (2/15/2011): template A<int>; is error for Thrifty (gcc 3.4.4)
 template class A<int>;
@@ -42,7 +43,8 @@ template A<int>;
 template inline void A<int>::f(int x);
 #endif
 
-#if (__GNUC__ == 4) && (__GNUC_MINOR__ <= 4)
+// #if (__GNUC__ == 4) && (__GNUC_MINOR__ <= 4)
+#if ( defined(__clang__) == 0 && __GNUC__ == 4 && __GNUC_MINOR__ <= 4)
 // This example using inline templates fails for g++ version 4.8.1.
 // Template instantiation directives (for a function)
 // template inline void A<int>::g<int>(int y,int u);

@@ -627,7 +627,6 @@ test2007_130.C \
 test2007_133.C \
 test2007_135.C \
 test2007_137.C \
-test2007_141.C \
 test2007_142.C \
 test2007_147.C \
 test2007_150.C \
@@ -642,6 +641,13 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C
+
+
+if !USING_CLANG_COMPILER
+TESTCODES_REQUIRED_TO_PASS += \
+  test2007_141.C 
+endif
+
 
 if !OS_MACOSX
  # DQ (1/12/2010): This appears to fail under Mac OSX (at least version 10.5).

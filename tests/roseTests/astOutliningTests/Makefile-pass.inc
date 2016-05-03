@@ -145,7 +145,6 @@ test2004_72.C \
 test2004_73.C \
 test2004_74.C \
 test2004_75.C \
-test2004_76.C \
 test2004_77.C \
 test2004_78.C \
 test2004_79.C \
@@ -233,7 +232,6 @@ test2004_163.C \
 test2004_164.C \
 test2005_01.C \
 test2005_02.C \
-test2005_03.C \
 test2005_04.C \
 test2005_05.C \
 test2005_06.C \
@@ -241,9 +239,7 @@ test2005_07.C \
 test2005_08.C \
 test2005_09.C \
 test2005_10.C \
-test2005_11.C \
 test2005_12.C \
-test2005_13.C \
 test2005_14.C \
 test2005_15.C \
 test2005_16.C \
@@ -292,12 +288,10 @@ test2005_62.C \
 test2005_63.C \
 test2005_64.C \
 test2005_65.C \
-test2005_66.C \
 test2005_67.C \
 test2005_68.C \
 test2005_70.C \
 test2005_71.C \
-test2005_72.C \
 test2005_73.C \
 test2005_74.C \
 test2005_75a.C \
@@ -312,7 +306,6 @@ test2005_82.C \
 test2005_83.C \
 test2005_84.C \
 test2005_86.C \
-test2005_87.C \
 test2005_88.C \
 test2005_89.C \
 test2005_90.C \
@@ -371,12 +364,9 @@ test2005_143.C \
 test2005_144.C \
 test2005_145.C \
 test2005_146.C \
-test2005_147.C \
-test2005_148.C \
 test2005_149.C \
 test2005_150.C \
 test2005_152.C \
-test2005_153.C \
 test2005_154.C \
 test2005_155.C \
 test2005_156.C \
@@ -395,7 +385,6 @@ test2005_169.C \
 test2005_170.C \
 test2005_171.C \
 test2005_173.C \
-test2005_174.C \
 test2005_175.C \
 test2005_176.C \
 test2005_177.C \
@@ -613,7 +602,6 @@ test2007_133.C \
 test2007_135.C \
 test2007_137.C \
 test2007_140.C \
-test2007_141.C \
 test2007_142.C \
 test2007_147.C \
 test2007_150.C \
@@ -626,7 +614,6 @@ test2007_158.C \
 test2007_159.C \
 test2007_160.C \
 test2007_161.C \
-test2007_162.C \
 test2007_163.C \
 test2007_164.C \
 test2007_165.C \
@@ -646,6 +633,23 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 inputBug317.C
+
+if !USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2004_76.C \
+   test2005_03.C \
+   test2005_11.C \
+   test2005_13.C \
+   test2005_66.C \
+   test2005_72.C \
+   test2005_87.C \
+   test2005_147.C \
+   test2005_148.C \
+   test2005_153.C \
+   test2005_174.C \
+   test2007_141.C \
+   test2007_162.C 
+endif
 
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT = \

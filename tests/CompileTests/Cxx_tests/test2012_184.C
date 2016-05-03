@@ -10,6 +10,7 @@ void foo(int x,int y)
 
 int x = 0;
 
+#if !defined(__clang__)
 #if __GNUC__ > 4 || \
   (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
                      (__GNUC_MINOR__ == 4 && \
@@ -20,4 +21,7 @@ int x = 0;
 #else
   void foo(int x, int y = x);
 #endif
-
+#else
+  // printf("clang and gcc version >=4.4.0\n");
+  void foo(int x, int y);
+#endif

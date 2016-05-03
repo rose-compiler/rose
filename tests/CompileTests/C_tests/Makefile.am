@@ -1159,6 +1159,7 @@ clean-local:
 	rm -f *.err *.passed *.failed
 	rm -f token_trailing_*.c token_leading_*.c
 	rm -f test2014_83 test2014_93
+	rm -f test2015_162 test2015_86
 
 ################################################################################
 #

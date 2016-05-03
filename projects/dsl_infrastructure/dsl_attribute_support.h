@@ -54,6 +54,10 @@ class dsl_attribute : public AstAttribute
           dsl_attribute();
           virtual ~dsl_attribute();
 
+       // Factory copy mechanism.
+       // virtual dsl_attribute* factory_copy() { return NULL; };
+          virtual dsl_attribute* factory_copy();
+
           std::string toString();
           std::string additionalNodeOptions();
 
@@ -68,7 +72,8 @@ class dsl_attribute : public AstAttribute
    };
 
 // References to dsl attributes in a map inexed by the name of the dsl abstraction.
-extern std::map<std::string,dsl_attribute> dsl_attribute_map;
+// extern std::map<std::string,dsl_attribute> dsl_attribute_map;
+extern std::map<std::string,dsl_attribute*> dsl_attribute_map;
 #endif
 
 #if 0

@@ -681,3 +681,33 @@ lcov_genhtml: coverage.info
 # Overall coverage rate:
 #   lines......: 42.7% (377904 of 885133 lines)
 #   functions..: 53.0% (100721 of 189865 functions)
+
+########################################################################################################################
+# Robb's version of lcov commands, although they should work anywhere.
+########################################################################################################################
+
+# We want to snarf up all the *.gcno and *.gcda files in the build tree, but lcov will refuse to recurse into
+# subdirectories when the parent directory has no such files, so list the directories explicitly. The sort is
+# only so we have some idea of the progress of the long-running command to create lcov.info.
+lcov_data_dirs = $(shell find $(top_builddir) -type d |sort)
+
+# Capture *.gcda files from the build tree for whatever programs we've happened to run so far. This could be
+# the ROSETTA-generator plus any tests, tutorials, and projects.  This can take a long time to run!
+all-lcov.info:
+	lcov --capture --no-recursion $(patsubst %,-d %,$(lcov_data_dirs)) -o $@
+
+# Capture only coverage for the ROSE library source code (no tests, tutorials, projects, system headers, boost, etc).
+# (04/26/2016) Pei-Hung lcov has issue to output extracted result to librose-lcov.info with -o option. Using piping instead.
+librose-lcov.info: all-lcov.info
+	lcov --extract $< "$(top_srcdir)/src/*" > $@
+
+# Generate a directory containing the HTML representation of the coverage information for the ROSE library proper.
+# THIS INCLUDES EDG SOURCES; DO NOT DISTRIBUTE THIS DIRECTORY
+librose_lcov_web_pages: librose-lcov.info
+	genhtml					\
+		--title librose			\
+		--legend			\
+		--demangle-cpp			\
+		--prefix $(top_srcdir)		\
+		--ignore-errors=source		\
+		--output-directory $@ $<
