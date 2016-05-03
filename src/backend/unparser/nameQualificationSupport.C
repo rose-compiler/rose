@@ -1,7 +1,17 @@
 #include "sage3basic.h"
+
+#include "Diagnostics.h"
+
 #include "nameQualificationSupport.h"
 
 using namespace std;
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+Sawyer::Message::Facility NameQualificationTraversal::mlog;
+
 
 #define DEBUG_NAME_QUALIFICATION_LEVEL 0
 
@@ -56,6 +66,16 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNa
      t.traverse(node,ih);
    }
 
+void NameQualificationTraversal::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("NameQualificationTraversal", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
 
 // DQ (7/23/2011): This function is only used locally.
 // void generateNameQualificationSupportWithScope( SgNode* node, const NameQualificationTraversal & parentTraversal, SgScopeStatement* currentScope )
@@ -441,6 +461,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
 
        // DQ (3/28/2015): Adding GNU C language extension.
           case V_SgTypeOfType:
+
+       // DQ (4/29/2016): Added support for complex types.
+          case V_SgTypeComplex:
 
           case V_SgTypeShort:
           case V_SgTypeLong:
@@ -3775,7 +3798,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             }
                            else
                             {
-                              printf ("Warning: In name qualification support: alternativeDecaration == NULL (see test2005_103.C) \n");
+                              mprintf ("Warning: In name qualification support: alternativeDecaration == NULL (see test2005_103.C) \n");
                             }
                        }
                   }

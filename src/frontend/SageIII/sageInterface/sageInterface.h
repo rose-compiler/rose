@@ -333,6 +333,31 @@ struct hash_nodeptr
     */
      std::string get_name ( const SgToken* token );
 
+  // DQ (3/20/2016): Added to refactor some of the DSL infrastructure support.
+   /*! \brief Generate a useful name to support construction of identifiers from declarations.
+
+       This function permits names to be generated that will be unique across translation units
+       (a specific requirement different from the context of the get_name() functions above).
+
+       \internal This supports only a restricted set of declarations presently.
+    */
+     std::string generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration );
+     std::string generateUniqueNameForUseAsIdentifier_support ( SgDeclarationStatement* declaration );
+
+   /*! \brief Global map of name collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     extern std::map<std::string,int>     local_name_collision_map;
+     extern std::map<std::string,SgNode*> local_name_to_node_map;
+     extern std::map<SgNode*,std::string> local_node_to_name_map;
+
+   /*! \brief Traversal to set the global map of names to node and node to names.collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void computeUniqueNameForUseAsIdentifier( SgNode* astNode );
+
+   /*! \brief Reset map variables used to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void reset_name_collision_map();
+
  //@}
 
  //------------------------------------------------------------------------
@@ -1204,60 +1229,102 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
  statement.  If fortranLabel is non-empty, continues (CYCLEs) to that label
  within nested loops are included in the returned list.
 */
-  std::vector<SgContinueStmt*> findContinueStmts(SgStatement* code, const std::string& fortranLabel = "");
-  std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
-  std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
+std::vector<SgContinueStmt*> findContinueStmts(SgStatement* code, const std::string& fortranLabel = "");
+std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
+std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
 
 //! Collect all variable references in a subtree
-  void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
+void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
 
   //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
-  template <typename T>
-  T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
-  {
-    bool found = false;
-    if (!root) return 0;
-    T* decl = dynamic_cast<T*>(root);
-    if (decl!=NULL)
-    {
-      if (scope)
-      {
-        if ((decl->get_scope() == scope)&&
-            (decl->search_for_symbol_from_symbol_table()->get_name()==name))
-        { 
-          found = true;
-        }
-      }
-      else // Liao 2/9/2010. We should allow NULL scope
-      {
-        if(decl->search_for_symbol_from_symbol_table()->get_name()==name)
-        {
-          found = true;
-       }
-      }
-    }
-
-   if (found)
+template <typename T>
+T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
    {
-     if (isDefining)
-     {
-       ROSE_ASSERT (decl->get_definingDeclaration() != NULL);
-       return dynamic_cast<T*> (decl->get_definingDeclaration()); 
-     }
-     else 
-       return decl;
-   }
+     bool found = false;
 
-    std::vector<SgNode*> children = root->get_traversalSuccessorContainer();
-    for (std::vector<SgNode*>::const_iterator i = children.begin();
-            i != children.end(); ++i)
-    {
-     T* target= findDeclarationStatement<T> (*i,name, scope, isDefining);
-     if (target)
-       return target;
-    }
-    return 0;
-  }
+#if 0
+     printf ("In findDeclarationStatement(): root       = %p \n",root);
+     printf ("In findDeclarationStatement(): name       = %s \n",name.c_str());
+     printf ("In findDeclarationStatement(): scope      = %p \n",scope);
+     printf ("In findDeclarationStatement(): isDefining = %s \n",isDefining ? "true" : "false");
+#endif
+
+  // Do we really want a NULL pointer to be acceptable input to this function? 
+  // Maybe we should have an assertion that it is non-null?
+     if (!root) return NULL;
+
+     T* decl = dynamic_cast<T*>(root);
+
+#if 0
+     printf ("In findDeclarationStatement(): decl       = %p \n",decl);
+#endif
+
+     if (decl != NULL)
+        {
+          if (scope)
+             {
+               if ((decl->get_scope() == scope) && (decl->search_for_symbol_from_symbol_table()->get_name() == name))
+                  { 
+                    found = true;
+                  }
+             }
+            else // Liao 2/9/2010. We should allow NULL scope
+             {
+               SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
+#if 0
+               printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table() = %p \n",symbol);
+               printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table()->get_name() = %s \n",symbol->get_name().str());
+#endif
+               if (decl->search_for_symbol_from_symbol_table()->get_name() == name)
+                  {
+                    found = true;
+                  }
+             }
+        }
+
+     if (found)
+        {
+          if (isDefining)
+             {
+#if 0
+               printf ("In findDeclarationStatement(): decl->get_firstNondefiningDeclaration() = %p \n",decl->get_firstNondefiningDeclaration());
+               printf ("In findDeclarationStatement(): decl->get_definingDeclaration()         = %p \n",decl->get_definingDeclaration());
+#endif
+               ROSE_ASSERT (decl->get_definingDeclaration() != NULL);
+#if 0
+               printf ("In findDeclarationStatement(): returing decl->get_definingDeclaration() = %p \n",decl->get_definingDeclaration());
+#endif
+               return dynamic_cast<T*> (decl->get_definingDeclaration()); 
+             }
+            else 
+             {
+#if 0
+               printf ("In findDeclarationStatement(): returing decl = %p \n",decl);
+#endif
+               return decl;
+             }
+        }
+
+     std::vector<SgNode*> children = root->get_traversalSuccessorContainer();
+
+#if 0
+     printf ("In findDeclarationStatement(): children.size() = %zu \n",children.size());
+#endif
+
+  // DQ (4/10/2016): Note that if we are searching for a function member that has it's defining 
+  // declaration defined outside of the class then it will not be found in the child list.
+     for (std::vector<SgNode*>::const_iterator i = children.begin(); i != children.end(); ++i)
+        {
+          T* target = findDeclarationStatement<T> (*i,name,scope,isDefining);
+
+          if (target)
+             {
+               return target;
+             }
+        }
+
+     return NULL;
+   }
 //! Topdown traverse a subtree from root to find the first function declaration matching the given name, scope (optional, can be NULL), and defining or nondefining flag. This is an instantiation of findDeclarationStatement<T>.
   SgFunctionDeclaration* findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining);
 

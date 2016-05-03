@@ -84,10 +84,13 @@ process_headers()
        targetName="`echo "$srcName" | sed "s|$src_dir|$target_dir|g"`"
        rm "$targetName" # In case targetName is a link to something in the base include directory
        case "`basename $srcName`" in
-         "complex" )
-           echo "Processing complex header file (commenting out private constructor) at $targetName"
-           sed -e 's@complex(_ComplexT __z)@// ***commented out for ROSE*** complex(_ComplexT __z)@g' "$srcName" > "$targetName" 2>/dev/null
-           ;;
+# DQ (4/29/2016): I think this case is no longer required.  If it is then we should revisit it anyway.
+# At the very least this fix for the problem is not the correc fix for C++11 code which has a macro 
+# before the function name.
+#        "complex" )
+#          echo "Processing complex header file (commenting out private constructor) at $targetName"
+#          sed -e 's@complex(_ComplexT __z)@// ***commented out for ROSE*** complex(_ComplexT __z)@g' "$srcName" > "$targetName" 2>/dev/null
+#          ;;
          "c++config.h" )
            # JJW (10/29/2007): In GCC 4.2, the system header files use the visibility
            # attribute which EDG 3.3 does not support.  A #define can be changed to turn

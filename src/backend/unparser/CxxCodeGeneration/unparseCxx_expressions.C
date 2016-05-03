@@ -464,7 +464,9 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
   // DQ (5/7/2013): I think these should be false so that the full type will be output.
      if (info.isTypeFirstPart()  == true)
         {
+#if 0
           printf ("WARNING: In unparseTemplateName(): info.isTypeFirstPart() == true \n");
+#endif
         }
   // ROSE_ASSERT(info.isTypeFirstPart()  == false);
      ROSE_ASSERT(info.isTypeSecondPart() == false);
