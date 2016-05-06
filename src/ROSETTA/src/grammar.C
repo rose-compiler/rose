@@ -1258,7 +1258,7 @@ Grammar::buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & n
     string filter="static";
     if(dataMemberParameter.substr(0,filter.size())!=filter) {
       if(generatedParam>0)
-	result+=",";
+        result+=",";
       result+=dataMemberParameter;
       generatedParam++;
     }
@@ -1404,13 +1404,13 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
                string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
-	       /* generate constructor prototype only for UntypedNode classes.*/ 
-	       string typeNameOfInterest="SgUntyped";
-	       if(className.substr(0,typeNameOfInterest.size())==typeNameOfInterest) {
-		 string constructorParameterString_3 = buildConstructorParameterListStringForAllDataMembers(node);
-		 constructorPrototype = constructorPrototype + "/* NEW CONSTRUCTOR:TODO      " + string(className) + "(" + constructorParameterString_3 + ");*/ \n";
-	       }
-	       
+               /* generate constructor prototype only for UntypedNode classes.*/ 
+               string typeNameOfInterest="SgUntyped";
+               if(className.substr(0,typeNameOfInterest.size())==typeNameOfInterest) {
+                 string constructorParameterString_3 = buildConstructorParameterListStringForAllDataMembers(node);
+                 constructorPrototype = constructorPrototype + "/* NEW CONSTRUCTOR:TODO      " + string(className) + "(" + constructorParameterString_3 + ");*/ \n";
+               }
+               
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
                returnValue->setIsInConstructorParameterList(CONSTRUCTOR_PARAMETER);
                returnValue->defaultInitializerString = defaultInitializer;
