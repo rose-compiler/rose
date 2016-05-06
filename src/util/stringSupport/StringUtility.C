@@ -220,131 +220,39 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
    }
 
 std::string
-StringUtility::listToString ( const std::list<std::string> & X, bool separateStrings )
-   {
-  // Build a string representing the concatination of the list of strings
-
-     std::string returnString;
-  // printf ("In listToString: Print out the list of variable names (X.size() = %" PRIuPTR "): \n",X.size());
-     std::list<std::string>::const_iterator listStringElementIterator;
-     for (listStringElementIterator = X.begin(); 
-                     listStringElementIterator != X.end();
-                     listStringElementIterator++)
-        {
-       // display each string representing a variable name
-#if 0
-          printf ("     std::string element (length=%d) in nameStringList = %s \n",
-                          (*listStringElementIterator).length(),
-                          (*listStringElementIterator).c_str());
-#endif
-       // returnString += (*listStringElementIterator) + "\n";
-          returnString += *listStringElementIterator + " ";
-          if (separateStrings)
-               returnString += "\n";
-        }
-
-  // printf ("In listToString: returnString = %s \n",returnString.c_str());
-     return returnString;
-   }
+StringUtility::listToString(const std::list<std::string> &container, bool separateStrings) {
+    std::string separator = separateStrings ? " \n" : " ";
+    std::string retval = join_range(separator, container.begin(), container.end());
+    if (!container.empty())
+        retval += separator;
+    return retval;
+}
 
 std::string
-StringUtility::listToString ( const std::vector<std::string> & X, bool separateStrings )
-   {
-  // Build a string representing the concatination of the vector of strings
-     std::string returnString;
-     std::vector<std::string>::const_iterator listStringElementIterator;
-     for (listStringElementIterator = X.begin(); 
-                     listStringElementIterator != X.end();
-                     listStringElementIterator++)
-        {
-          returnString += *listStringElementIterator + " ";
-          if (separateStrings)
-               returnString += "\n";
-        }
+StringUtility::listToString(const std::vector<std::string> &container, bool separateStrings) {
+    std::string separator = separateStrings ? " \n" : " ";
+    std::string retval = join_range(separator, container.begin(), container.end());
+    if (!container.empty())
+        retval += separator;
+    return retval;
+}
 
-     return returnString;
-   }
+std::string
+StringUtility::listToString(const std::list<int> &container, bool separateStrings) {
+    std::string separator = separateStrings ? " \n" : " ";
+    std::string retval = join_range(separator, container.begin(), container.end());
+    if (!container.empty())
+        retval += separator;
+    return retval;
+}
 
 std::list<std::string>
-StringUtility::stringToList ( const std::string & X )
-   {
-  // Build a list of strings representing the input string spearated at newline characters ("\n"'s)
-  // All CR are removed, the list returned has no CR in the list OR within the list elements
-
-  // Create a return value
-     std::list<std::string> returnStringList;
-
-  // Build a local copy of the input string
-     std::string remainingSubstring = X;
-
-     int currentPos = 0;
-  // std::string::size_type nextPos = remainingSubstring.find('\n');
-     size_t nextPos = remainingSubstring.find('\n');
-  // int subStringLength = 0;
-
-#if 0
-     printf ("Initial value: currentPos = %d nextPos = %d remainingSubstring.length() = %d \n",
-                     currentPos,nextPos,remainingSubstring.length());
-#endif
-
-  // If there is no trailing '\n' then at least include the input X string into the list
-     if (nextPos == std::string::npos)
-          returnStringList.push_back(X);
-
-     while (nextPos != std::string::npos)
-        {
-          int nextSubStringLength = (nextPos - currentPos) + 0;
-          std::string substring = remainingSubstring.substr(0,nextSubStringLength+0);
-#if 0
-          printf ("In stringToList: substring = [%s] \n",substring.c_str());
-#endif
-          returnStringList.push_back(substring);
-          remainingSubstring =
-                  remainingSubstring.substr(nextPos+1,(remainingSubstring.length()-nextSubStringLength)-0);
-#if 0
-          printf ("nextSubStringLength = %d substring = %s\n",nextSubStringLength,substring.c_str());
-          printf ("remainingSubstring.length() = %d remainingSubstring = \n%s \n",
-                          remainingSubstring.length(),remainingSubstring.c_str());
-#endif
-          currentPos = 0;
-          nextPos = remainingSubstring.find('\n');
-#if 0
-          printf ("Value in loop: currentPos = %d nextPos = %d \n",currentPos,nextPos);
-#endif
-        }
-
-  // Remove any strings consisting of only CRs and null strings saved within the list
-     returnStringList.remove("\n");
-     returnStringList.remove("");
-
-#if 0
-     printf ("Exiting in StringUtility::stringToList \n");
-     ROSE_ABORT();
-#endif
-
-  // return by value (copy constructor will be called)
-     return returnStringList;
-   }
-
-std::string
-StringUtility::listToString ( const std::list<int> & X, bool separateStrings )
-   {
-  // Build a string representing the concatenation of the list of strings
-
-     std::string returnString;
-     std::list<int>::const_iterator listStringElementIterator;
-     for (listStringElementIterator  = X.begin(); 
-                     listStringElementIterator != X.end();
-                     listStringElementIterator++)
-        {
-       // display each string representing a number
-          returnString += numberToString(*listStringElementIterator) + " ";
-          if (separateStrings)
-               returnString += "\n";
-        }
-
-     return returnString;
-   }
+StringUtility::stringToList(const std::string &input) {
+    std::vector<std::string> substrings = split('\n', input);
+    std::list<std::string> retval(substrings.begin(), substrings.end());
+    retval.remove("");
+    return retval;
+}
 
 std::list<std::string>
 StringUtility:: tokenize ( std::string X, char delim ) {
