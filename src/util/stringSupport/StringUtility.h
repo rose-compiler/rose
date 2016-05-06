@@ -23,6 +23,45 @@
  *  eventually move to other name spaces. */
 namespace StringUtility {
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Character-escaping functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Escapes HTML special characters.
+ *
+ *  Replaces "<", ">", and "&" with HTML character names and returns the result. */
+ROSE_UTIL_API std::string htmlEscape(const std::string&);
+
+/** Escapes characters that are special to C/C++.
+ *
+ *  Replaces special characters in the input so that it is suitable for the contents of a C string literal. That is, things
+ *  like double quotes, line-feeds, tabs, non-printables, etc. are replace by their C backslash escaped versions. Returns the
+ *  resulting string. */
+ROSE_UTIL_API std::string cEscape(const std::string&);
+
+
+// [Robb Matzke 2016-05-06]: I am deprecating escapeNewLineCharaters because:
+//   1. Its name is spelled wrong: "Charater"
+//   2. "newline" in this context is a single word and should be capitalized as "Newline" not "NewLine"
+//   3. Its name is misleading because it also escapes double quotes.
+//   4. It escapes newlines using "l" rather than the more customary "n".
+// I would just remove it, but it seems to be used in some projects and the tutorial.
+
+/** Escapes line feeds and double quotes.
+ *
+ *  Scans the input string character by character and replaces line-feed characters with a backslash followed by the letter "l"
+ *  and replaces double quotes by a backslash followed by a double qoute. */
+ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&) ROSE_DEPRECATED("tell us if you use this");
+
+
+
+
+
+
+
+
+
 /** String with source location information.
  *
  *  The location information is a file name string (empty means generated code) and a line number. Line numbers are one-origin;
@@ -253,24 +292,6 @@ ROSE_UTIL_API unsigned long generate_checksum(std::string s);
  *
  *  Returns a new string by converting each of the input characters to lower case with @c tolower. */
 ROSE_UTIL_API std::string convertToLowerCase(const std::string &inputString);
-
-/** Escapes line feeds and double quotes.
- *
- *  Scans the input string character by character and replaces line-feed characters with a backslash followed by the letter "l"
- *  and replaces double quotes by a backslash followed by a double qoute. */
-ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&);
-
-/** Escapes HTML special characters.
- *
- *  Replaces "<", ">", and "&" with HTML character names and returns the result. */
-ROSE_UTIL_API std::string htmlEscape(const std::string&);
-
-/** Escapes characters that are special to C/C++.
- *
- *  Replaces special characters in the input so that it is suitable for the contents of a C string literal. That is, things
- *  like double quotes, line-feeds, tabs, non-printables, etc. are replace by their C backslash escaped versions. Returns the
- *  resulting string. */
-ROSE_UTIL_API std::string cEscape(const std::string&);
 
 /** Convert an ASCII hexadecimal character to an integer.
  *
