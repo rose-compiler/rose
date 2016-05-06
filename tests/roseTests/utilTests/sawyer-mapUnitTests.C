@@ -63,6 +63,21 @@ void insert_one() {
     ASSERT_always_require(uno==1);
 }
 
+static void
+insert_default() {
+    Sawyer::Container::Map<int, std::string> map;
+    map.insert(1, "aaa");
+    map.insert(2, "bbb");
+    ASSERT_always_require(map.size()==2);
+
+    map.insertDefault(1);
+    ASSERT_always_require(map[1] == "");
+
+    map.insertDefault(3);
+    ASSERT_always_require(map.size()==3);
+    ASSERT_always_require(map[3] == "");
+}
+
 template<class Map>
 void insert_other() {
     std::cout <<"insert values from another map:\n";
@@ -101,11 +116,65 @@ void insert_other() {
 }
 
 template<class Map>
+void accessors() {
+    Map map;
+    map.insert("aaa", 1);
+    map.insert("bbb", 2);
+    const Map &cmap = map;
+
+    // Array-like
+    ASSERT_always_require(map["aaa"] == 1);
+    ASSERT_always_require(map["bbb"] == 2);
+    try {
+        map["ccc"];
+        ASSERT_not_reachable("should have thrown std::domain_error");
+    } catch (const std::domain_error&) {
+    }
+    ASSERT_always_require(cmap["aaa"] == 1);
+    ASSERT_always_require(cmap["bbb"] == 2);
+    try {
+        cmap["ccc"];
+        ASSERT_not_reachable("should have thrown std::domain_error");
+    } catch (const std::domain_error&) {
+    }
+
+    // get
+    ASSERT_always_require(map.get("aaa") == 1);
+    ASSERT_always_require(map.get("bbb") == 2);
+    try {
+        map.get("ccc");
+        ASSERT_not_reachable("should have thrown std::domain_error");
+    } catch (const std::domain_error&) {
+    }
+    ASSERT_always_require(cmap.get("aaa") == 1);
+    ASSERT_always_require(cmap.get("bbb") == 2);
+    try {
+        cmap.get("ccc");
+        ASSERT_not_reachable("should have thrown std::domain_error");
+    } catch (const std::domain_error&) {
+    }
+
+    // getOrElse
+    int dflt = 911;
+    const int cdflt = 911;
+    ASSERT_always_require(map.getOrElse("aaa", dflt) == 1);
+    ASSERT_always_require(map.getOrElse("bbb", dflt) == 2);
+    ASSERT_always_require(map.getOrElse("ccc", dflt) == 911);
+    ASSERT_always_require(map.getOrElse("ccc", cdflt) == 911);
+    ASSERT_always_require(cmap.getOrElse("aaa", dflt) == 1);
+    ASSERT_always_require(cmap.getOrElse("bbb", dflt) == 2);
+    ASSERT_always_require(cmap.getOrElse("ccc", dflt) == 911);
+    ASSERT_always_require(cmap.getOrElse("ccc", cdflt) == 911);
+}
+
+template<class Map>
 void find() {
     std::cout <<"find values by key:\n";
     Map map;
     map.insert("eye", 1).insert("nose", 2).insert("mouth", 3).insert("neck", 4).insert("", 100);
     std::cout <<"    initial map: " <<map <<"\n";
+
+    const Map &cmap = map;
 
     typename Map::NodeIterator iter;
     iter = map.find("mouth");
@@ -113,13 +182,27 @@ void find() {
     ASSERT_always_require(iter->key()=="mouth");
     ASSERT_always_require(iter->value()==3);
 
+    typename Map::ConstNodeIterator citer;
+    citer = cmap.find("mouth");
+    ASSERT_always_require(citer!=cmap.nodes().end());
+    ASSERT_always_require(citer->key()=="mouth");
+    ASSERT_always_require(citer->value()==3);
+
     iter = map.find("");
     ASSERT_always_require(iter!=map.nodes().end());
     ASSERT_always_require(iter->key()=="");
     ASSERT_always_require(iter->value()==100);
 
+    citer = cmap.find("");
+    ASSERT_always_require(citer!=cmap.nodes().end());
+    ASSERT_always_require(citer->key()=="");
+    ASSERT_always_require(citer->value()==100);
+
     iter = map.find("forehead");
     ASSERT_always_require(iter==map.nodes().end());
+
+    citer = cmap.find("forehead");
+    ASSERT_always_require(citer==cmap.nodes().end());
 }
 
 template<class Map>
@@ -207,6 +290,23 @@ void erase_other() {
 }
 
 template<class Map>
+void insert_multiple() {
+    Map m1;
+    m1.insert("aaa", 1);
+    m1.insert("bbb", 2);
+
+    Map m2;
+    m2.insert("bbb", 3);
+    m2.insert("ccc", 4);
+
+    m1.insertMaybeMultiple(m2.nodes());
+    ASSERT_always_require(m1.size()==3);
+    ASSERT_always_require(m1["aaa"] == 1);
+    ASSERT_always_require(m1["bbb"] == 2);
+    ASSERT_always_require(m1["ccc"] == 4);
+}
+
+template<class Map>
 void iterators() {
     std::cout <<"iterator functionality:\n";
 
@@ -221,12 +321,15 @@ void iterators() {
 
     typename Map::ConstKeyIterator cki = ni;
     typename Map::ConstKeyIterator ck2 = cni;
+    ASSERT_always_require(ck2 == cni);
 
     typename Map::ValueIterator vi = ni;
 
     typename Map::ConstValueIterator cvi = vi;
     typename Map::ConstValueIterator cvi2 = ni;
+    ASSERT_always_require(cvi2 == ni);
     typename Map::ConstValueIterator cvi3 = cni;
+    ASSERT_always_require(cvi3 == cni);
 
     // Node iterators
     ASSERT_always_require(ni!=map.nodes().end());
@@ -336,7 +439,35 @@ void iterators() {
 template<class Map>
 void erase_iterator() {
     std::cout <<"erase nodes according to iterator:\n";
-    std::cout <<"    NOT IMPLEMENTED YET\n";
+
+    Map map;
+    map.insert("aaa", 1);
+    map.insert("bbb", 2);
+    map.insert("ccc", 3);
+
+    typename Map::NodeIterator ni = map.find("bbb");
+    map.eraseAt(ni);
+    ASSERT_always_require(map.size()==2);
+    ASSERT_always_require(map.exists("aaa"));
+    ASSERT_always_require(!map.exists("bbb"));
+    ASSERT_always_require(map.exists("ccc"));
+
+    typename Map::ConstKeyIterator ki = map.keys().begin();
+    ASSERT_always_require(*ki == "aaa");
+    map.eraseAt(ki);
+    ASSERT_always_require(map.size()==1);
+    ASSERT_always_require(!map.exists("aaa"));
+    ASSERT_always_require(!map.exists("bbb"));
+    ASSERT_always_require(map.exists("ccc"));
+
+    typename Map::ValueIterator vi = map.values().end();
+    --vi;
+    ASSERT_always_require(*vi == 3);
+    map.eraseAt(vi);
+    ASSERT_always_require(map.size()==0);
+    ASSERT_always_require(!map.exists("aaa"));
+    ASSERT_always_require(!map.exists("bbb"));
+    ASSERT_always_require(!map.exists("ccc"));
 }
 
 void hull() {
@@ -353,6 +484,7 @@ void hull() {
     map2.insert(1, "abc");
     map2.insert(2, "def");
     map2.insert(3, "ghi");
+    ASSERT_always_require(map2.hull() == Sawyer::Container::Interval<int>::hull(1, 3));
 }
 
 void lowerBound() {
@@ -366,6 +498,79 @@ void lowerBound() {
     ASSERT_always_require(map1.lowerBound(6)==map1.nodes().end());
 }
 
+static void
+copy_ctor() {
+    typedef const char* SrcKey;
+    typedef std::string DstKey;
+    typedef int SrcValue;
+    typedef double DstValue;
+    typedef Sawyer::Container::Map<SrcKey, SrcValue> SrcMap;
+    typedef Sawyer::Container::Map<DstKey, DstValue> DstMap;
+
+    SrcMap m1;
+    m1.insert("aaa", 1);
+    m1.insert("bbb", 2);
+    ASSERT_always_require(m1.size()==2);
+
+    const SrcMap m2(m1);
+    ASSERT_always_require(m2.size()==m1.size());
+
+    DstMap m3(m1);
+    ASSERT_always_require(m3.size()==m1.size());
+
+    DstMap m4(m2);
+    ASSERT_always_require(m4.size()==m2.size());
+}
+
+static void
+assignment() {
+    typedef const char* SrcKey;
+    typedef std::string DstKey;
+    typedef int SrcValue;
+    typedef double DstValue;
+    typedef Sawyer::Container::Map<SrcKey, SrcValue> SrcMap;
+    typedef Sawyer::Container::Map<DstKey, DstValue> DstMap;
+
+    SrcMap m1;
+    m1.insert("aaa", 1);
+    m1.insert("bbb", 2);
+    ASSERT_always_require(m1.size() == 2);
+
+    SrcMap m2;
+    m2.insert("xxx", 7);
+    m2.insert("yyy", 8);
+    m2.insert("zzz", 9);
+    ASSERT_always_require(m2.size() == 3);
+    m2 = m1;
+    ASSERT_always_require(m2.size() == m1.size());
+
+    const SrcMap m3 = m1;
+    ASSERT_always_require(m3.size() == m1.size());
+    SrcMap m4;
+    m4.insert("xxx", 7);
+    m4.insert("yyy", 8);
+    m4.insert("zzz", 9);
+    ASSERT_always_require(m4.size() == 3);
+    m4 = m3;
+    ASSERT_always_require(m4.size() == m3.size());
+
+    DstMap m5;
+    m5.insert("xxx", 7);
+    m5.insert("yyy", 8);
+    m5.insert("zzz", 9);
+    ASSERT_always_require(m5.size() == 3);
+    m5 = m1;
+    ASSERT_always_require(m5.size() == m1.size());
+    
+    DstMap m6;
+    m6.insert("xxx", 7);
+    m6.insert("yyy", 8);
+    m6.insert("zzz", 9);
+    ASSERT_always_require(m6.size() == 3);
+    m6 = m3;
+    ASSERT_always_require(m6.size() == m3.size());
+}
+
 int main() {
     typedef std::string Key;
     typedef int Value;
@@ -375,14 +580,19 @@ int main() {
 
     default_ctor<Map>();
     insert_one<Map>();
+    insert_default();
     insert_other<Map>();
+    accessors<Map>();
     find<Map>();
     test_existence<Map>();
     hull();
     clear_all<Map>();
     erase_one<Map>();
     erase_other<Map>();
+    insert_multiple<Map>();
     iterators<Map>();
     erase_iterator<Map>();
     lowerBound();
+    copy_ctor();
+    assignment();
 }
