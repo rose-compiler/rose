@@ -9,7 +9,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 
-globalVariablesInLambdas_TESTS = test_1.C
+# globalVariablesInLambdas_TESTS = test_1.C
 
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
@@ -109,6 +109,11 @@ test2016_13.C \
 test2016_14.C \
 test2016_15.C \
 test2016_16.C \
+test2016_17.C \
+test2016_18.C \
+test2016_19.C \
+test2016_20.C \
+test2016_21.C \
 last.C
 
 # New test codes not yet tested in regression tests.
@@ -260,7 +265,7 @@ print_testcodes:
 	echo $(TESTCODES)
 
 globalVariablesInLambdas_test: globalVariablesInLambdas
-	./globalVariablesInLambdas -std=c++11 -c $(srcdir)/globalVariablesInLambdas_test_01.C
+	./globalVariablesInLambdas -std=c++11 --edg:no_warnings -c $(srcdir)/globalVariablesInLambdas_test_01.C
 
 
 check-local:
