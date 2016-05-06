@@ -309,6 +309,14 @@ public:
         Engine(const CFG &cfg, TransferFunction &xfer, MergeFunction merge = MergeFunction())
             : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0) {}
 
+        /** Data-flow control flow graph.
+         *
+         *  Returns a reference to the control flow graph that's being used for the data-flow analysis. The return value is the
+         *  same control flow graph as which was supplied to the constructor. */
+        const CFG &cfg() const {
+            return cfg_;
+        }
+        
         /** Reset engine to initial state.
          *
          *  This happens automatically by methods such as @ref runToFixedPoint. */

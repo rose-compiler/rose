@@ -24,7 +24,7 @@ void foo()
 
 void bar()
 {
-   int val = otherGlobalVar;
+  int val = otherGlobalVar;
 
    for_all([=](int i) {
       int val = gvar2 + gvar2;

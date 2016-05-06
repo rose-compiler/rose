@@ -58,17 +58,18 @@ public:
     //                                  Construction
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Construct a set that cannot store any members.
+    /** Construct an empty set that cannot store any members.
      *
      *  This object can only represent the empty set, but it's useful to have this default constructor in order to create a set
      *  that can be stored in a vector of sets, among other things. */
     DenseIntegerSet()
         : head_(&head_, &head_) {}
 
-    /** Construct a set that can hold values from the specified domain.
+    /** Construct an empty set that can hold values from the specified domain.
      *
-     *  Constructs a set whose members can be chosen from the specified domain. The domain can be specified as an interval or
-     *  as a least and greated value.
+     *  Constructs a set whose members can be chosen from the specified domain. The domain can be specified as an interval,
+     *  as a least and greated value, or as the number of values. If specified as the number of values, @em N, then the domain
+     *  is zero through <em>N-1</em>, inclusive.  The set is initially empty.
      *
      * @{ */
     explicit DenseIntegerSet(const Interval<Value> &domain)
@@ -83,6 +84,12 @@ public:
         size_t n = (size_t)greatest - (size_t)least + 1;
         ASSERT_require(n != 0 || !domain_.isEmpty());
         members_.resize(n);
+    }
+
+    explicit DenseIntegerSet(Value n)
+        : domain_(Interval<Value>::baseSize(0, n)), members_(n), head_(&head_, &head_), nMembers_(n) {
+        if (0 == n)
+            domain_ = Interval<Value>();
     }
     /** @} */
 
@@ -367,6 +374,29 @@ public:
         head_.prev = &m;
         ++nMembers_;
         return true;
+    }
+
+    /** Insert all possible members.
+     *
+     *  Causes the set to contain all elements that are part of its domain. */
+    void insertAll() {
+        if (!members_.empty()) {
+            for (size_t i=0; i<members_.size(); ++i) {
+                if (0 == i) {
+                    members_[0].prev = &head_;
+                    head_.next = &members_[0];
+                } else {
+                    members_[i].prev = &members_[i-1];
+                }
+                if (i+1 < members_.size()) {
+                    members_[i].next = &members_[i+1];
+                } else {
+                    members_[i].next = &head_;
+                    head_.prev = &members_[i];
+                }
+            }
+            nMembers_ = members_.size();
+        }
     }
 
     /** Insert many values from another set.

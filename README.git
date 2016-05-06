@@ -992,3 +992,7 @@ Compiling ROSE with Intel compiler:
 After new desktop machine:
    smgit commit -am "Fixes for Intel compiler and GNU g++ version 4.8.3, also fixed to pass policy tests."
    smgit push origin HEAD:dquinlan/dq-development-dev
+
+Debugging ROSE Matrix Testing errors using rmc build VMs:
+   "rmc" to testup the environment
+   "rmc config" to kick-off the configure, make, make check process.

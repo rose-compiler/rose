@@ -138,6 +138,11 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	upperCase.c \
 	variables.c 
 
+if USING_CLANG_COMPILER
+C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
+        axpy_ompacc.c \
+        axpy_ompacc2.c
+else
 C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc2.c \
@@ -152,6 +157,7 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 	jacobi-ompacc-opt1.c \
 	jacobi-ompacc-opt2.c \
 	jacobi-ompacc-multiGPU.c
+endif
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
         jacobi-ompacc2.cpp \
