@@ -265,120 +265,49 @@ StringUtility:: tokenize ( std::string X, char delim ) {
     return l;
 }
 
-// DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
-// #ifdef USE_ROSE   
-#if 0
-// Liao, 2/11/2009, Alternative to boost::lexical_cast,
-// since ROSE has problem in compiling it. Bug 313
-// https://outreach.scidac.gov/tracker/index.php?func=detail&aid=313&group_id=24&atid=185
-template <typename T>
-static std::string numToString(T x)
-   {
-     std::ostringstream os;
-     os << x;
-     return os.str();
-   }
-#endif
+std::string
+StringUtility::numberToString(long long x) {
+    return boost::lexical_cast<std::string>(x);
+}
 
 std::string
-StringUtility::numberToString ( long long x )
-   {
-// DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
-// #ifndef USE_ROSE     
-     return boost::lexical_cast<std::string>(x);
-// #else
-//   return numToString<long long>(x);
-//#endif
-   }
+StringUtility::numberToString(unsigned long long x) {
+    return boost::lexical_cast<std::string>(x);
+}
 
 std::string
-StringUtility::numberToString ( unsigned long long x )
-   {
-// DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
-// #ifndef USE_ROSE     
-     return boost::lexical_cast<std::string>(x);
-// #else     
-//   return numToString<unsigned long long >(x);
-// #endif     
-   }
+StringUtility::numberToString(long x) {
+    return boost::lexical_cast<std::string>(x);
+}
 
 std::string
-StringUtility::numberToString ( long x )
-   {
-// DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
-// #ifndef USE_ROSE     
-     return boost::lexical_cast<std::string>(x);
-// #else     
-//   return numToString<long>(x);
-// #endif     
-   }
+StringUtility::numberToString(unsigned long x) {
+    return boost::lexical_cast<std::string>(x);
+}
 
 std::string
-StringUtility::numberToString ( unsigned long x )
-   {
-// DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
-// #ifndef USE_ROSE     
-     return boost::lexical_cast<std::string>(x);
-// #else     
-//   return numToString<unsigned long>(x);
-// #endif     
-   }
+StringUtility::numberToString(int x) {
+    return boost::lexical_cast<std::string>(x);
+}
 
 std::string
-StringUtility::numberToString ( int x )
-   {
-// DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
-// #ifndef USE_ROSE     
-     return boost::lexical_cast<std::string>(x);
-// #else     
-//   return numToString<int >(x);
-// #endif     
-   }
+StringUtility::numberToString(unsigned int x) {
+    return boost::lexical_cast<std::string>(x);
+}
 
 std::string
-StringUtility::numberToString ( unsigned int x )
-   {
-// DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
-// #ifndef USE_ROSE     
-     return boost::lexical_cast<std::string>(x);
-// #else     
-//      return numToString<unsigned int >(x);
-// #endif     
-   }
-
-#if 0
-string
-// StringUtility::numberToString ( unsigned int x )
-StringUtility::numberToString ( size_t x )
-   {
-  // Build a string representing the dimensionOfArrayStatement
-     char numberString[128];
-     sprintf (numberString,"%lu",x);
-  // printf ("numberString = %s \n",numberString);
-     return string(numberString);
-   }
-#endif
-
-// DQ (8/10/2010): Changed to take parameter as const.
-std::string
-StringUtility::numberToString ( const void* x )
-   {
-  // Build a string representing the dimensionOfArrayStatement
-     char numberString[128];
-     sprintf (numberString,"%p",x);
-  // printf ("numberString = %s \n",numberString);
-     return std::string(numberString);
-   }
+StringUtility::numberToString(const void* x) {
+    char numberString[128];
+    sprintf(numberString, "%p", x);
+    return std::string(numberString);
+}
 
 std::string
-StringUtility::numberToString ( double x )
-   {
-  // Build a string representing the dimensionOfArrayStatement
-     char numberString[128];
-     sprintf (numberString,"%2.2f",x);
-  // printf ("numberString = %s \n",numberString);
-     return std::string(numberString);
-   }
+StringUtility::numberToString(double x) {
+    char numberString[128];
+    sprintf(numberString, "%2.2f", x);
+    return std::string(numberString);
+}
 
 #ifndef _MSC_VER
 // #if !defined(__STRICT_ANSI__) && defined(_GLIBCXX_USE_INT128)

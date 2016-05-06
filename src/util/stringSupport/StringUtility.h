@@ -137,6 +137,23 @@ ROSE_UTIL_API std::list<std::string> stringToList(const std::string&);
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Functions for converting numbers to strings
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/** Convert an integer to a string.
+ *
+ *  These functions are wrappers around <code>boost::lexical_cast<std::string></code>.
+ *
+ *  @{ */
+ROSE_UTIL_API std::string numberToString(long long);
+ROSE_UTIL_API std::string numberToString(unsigned long long);
+ROSE_UTIL_API std::string numberToString(long);
+ROSE_UTIL_API std::string numberToString(unsigned long);
+ROSE_UTIL_API std::string numberToString(int);
+ROSE_UTIL_API std::string numberToString(unsigned int);
+/** @} */
 
 
 
@@ -244,19 +261,6 @@ ROSE_UTIL_API FileWithLineNumbers copyEdit(const FileWithLineNumbers& inputStrin
                                            const std::string& newToken);
 ROSE_UTIL_API FileWithLineNumbers copyEdit(const FileWithLineNumbers& inputString, const std::string& oldToken,
                                            const FileWithLineNumbers& newToken);
-/** @} */
-
-/** Convert an integer to a string.
- *
- *  These functions are wrappers around <code>boost::lexical_cast<std::string></code>.
- *
- *  @{ */
-ROSE_UTIL_API std::string numberToString(long long);
-ROSE_UTIL_API std::string numberToString(unsigned long long);
-ROSE_UTIL_API std::string numberToString(long);
-ROSE_UTIL_API std::string numberToString(unsigned long);
-ROSE_UTIL_API std::string numberToString(int);
-ROSE_UTIL_API std::string numberToString(unsigned int);
 /** @} */
 
 /** Convert an integer to a hexadecimal string. */
