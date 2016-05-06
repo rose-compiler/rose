@@ -640,6 +640,13 @@ ROSE_UTIL_API std::string getAbsolutePathFromRelativePath(const std::string &rel
  *  in the last component of the file name.  Consider using boost::filesystem instead. */
 ROSE_UTIL_API std::string fileNameSuffix(const std::string &fileName);
 
+
+// [Robb Matzke 2016-05-06]: I am deprecating "findfile" because:
+//   1. It appears to not be used anywhere in ROSE, projects, tests, or documentation.
+//   2. The name is spelled wrong (should be "findFile")
+//   3. File operations should not be in StringUtility since they have nothing to do with string manipulation
+//   4. rose::FileSystem::findNames does something similar.
+
 /** Find file names non-recursively.
  *
  *  Scans the directory named @p pathString and returns a list of files in that directory which have @p patternString as a
@@ -648,7 +655,8 @@ ROSE_UTIL_API std::string fileNameSuffix(const std::string &fileName);
  *
  *  This function does not work for non-POSIX systems. Consider using boost::filesystem instead, which has a directory iterator
  *  that works for non-POSIX systems also. */
-ROSE_UTIL_API std::list<std::string> findfile(std::string patternString, std::string pathString);
+ROSE_UTIL_API std::list<std::string> findfile(std::string patternString, std::string pathString)
+    SAWYER_DEPRECATED("use rose::FileSystem functions instead"); // ROSE_DEPRECATED is not defined here
 
 /* File name location.
  *

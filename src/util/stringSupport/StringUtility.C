@@ -76,7 +76,7 @@ StringUtility::htmlEscape(const std::string& s) {
     return s2;
 }
 
-
+// [Robb Matzke 2016-05-06] deprecated
 std::list<std::string> 
 StringUtility::findfile(std::string patternString, std::string pathString)
    {
@@ -120,7 +120,6 @@ StringUtility::findfile(std::string patternString, std::string pathString)
    }
 
 
-//Read all the words in a file into an vector of strings
 std::vector<std::string> 
 StringUtility::readWordsInFile( std::string filename)
    {
@@ -131,14 +130,13 @@ StringUtility::readWordsInFile( std::string filename)
                    << "\" which is meant to include the styles to enforce with " 
                    << "the name checker." << std::endl;
                                   exit(1);    // abort program
-                                      
-                                  }
+     }
 
      std::string current_word;
 
      while(file_op >> current_word){
-       //First word denotes what the regular expression should operate
-       //upon. Second word denotes the regular expression
+       // First word denotes what the regular expression should operate
+       // upon. Second word denotes the regular expression
        variantsToUse.push_back(current_word);
      }
 
