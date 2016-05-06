@@ -40,6 +40,7 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
+
 /* DQ (9/1/2014): Define this for the Intel compiler (to avoid Intel specific code not handled by EDG) */
 #ifdef __INTEL_COMPILER
   #define _OVERRIDE_COMPLEX_SPECIALIZATION_
@@ -65,6 +66,13 @@
   extern int  _FENV_PUBAPI feclearexcept (int __excepts) ;
   extern int  _FENV_PUBAPI fegetexceptflag (fexcept_t *__flagp, int __excepts) ;
   extern int  _FENV_PUBAPI fesetexceptflag (const fexcept_t *__flagp, int __excepts) ;
+#endif
+
+/* DQ (4/16/2016): Added Clang support.  Turn off the use of the type generic 
+   math header file.  It is not yet clear what we should do with these.
+ */
+#ifdef __clang__
+   #define __TGMATH_H
 #endif
 
 /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
@@ -696,12 +704,16 @@ was just float or double for complex<float> or complex<double>.
 #if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
 /* C++ case is different because the header files will define a complex type (see hdrs1/complex) */
 
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 4))
+/* DQ (5/02/2016): These need to be defined away for the case of GNU 4.2 (and I think anything less than GNU 4.4). */
+/* Note that Clang will pertend to be GNU 4.2.1. */
+#ifndef __clang__
   #define __complex__
   #define __real__ 
   #define __imag__ 
-
-/* DQ (9/26/2006): Plum Hall uses this for C++ code, but I think that we have define it away */
   #define _Complex
+#endif
+#endif
 
 /* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
    don't like this fix).  This is required when constant folding is turned off.

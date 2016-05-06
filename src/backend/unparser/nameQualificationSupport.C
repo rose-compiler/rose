@@ -462,6 +462,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
        // DQ (3/28/2015): Adding GNU C language extension.
           case V_SgTypeOfType:
 
+       // DQ (4/29/2016): Added support for complex types.
+          case V_SgTypeComplex:
+
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
