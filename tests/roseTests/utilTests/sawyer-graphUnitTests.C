@@ -419,11 +419,6 @@ void assignment() {
     // graph is deleted now.
     for (typename Graph::VertexIterator vi=g2.vertices().begin(); vi!=g2.vertices().end(); ++vi) {
         typename Graph::Vertex &vertex = *vi;
-#if 1 /*DEBUGGING [Robb Matzke 2014-06-02]*/
-        typename Graph::EdgeIterator xxx=vertex.outEdges().begin();
-        ++xxx;
-        typename Graph::EdgeIterator yyy=vertex.outEdges().end();
-#endif
         for (typename Graph::EdgeIterator ei=vertex.outEdges().begin(); ei!=vertex.outEdges().end(); ++ei) {
             typename Graph::Edge &edge = *ei;
             ASSERT_always_require(edge.source()->id() == vertex.id());

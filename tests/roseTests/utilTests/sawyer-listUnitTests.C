@@ -11,6 +11,7 @@
 #include <Sawyer/PoolAllocator.h>
 #include <boost/foreach.hpp>
 #include <iostream>
+#include <set>
 #include <string>
 
 using namespace Sawyer::Container;
@@ -84,6 +85,83 @@ void push_values() {
 }
 
 template<class List>
+void capacity() {
+    List list;
+    list.capacity(100);
+    ASSERT_always_require(list.capacity() >= 100);
+
+    list.pushBack("aaa");
+    list.pushBack("bbb");
+    ASSERT_always_require(list.capacity() >= 100);
+
+    list.capacity(1);
+    ASSERT_always_require(list.capacity() >= 1);
+    ASSERT_always_require(list.capacity() >= list.size());
+}
+
+template<class List>
+void accessors() {
+    List list;
+    list.pushBack("aaa");
+    list.pushBack("bbb");
+    const List clist(list);
+
+    ASSERT_always_require(list.frontNode().value() == "aaa");
+    ASSERT_always_require(clist.frontNode().value() == "aaa");
+
+    ASSERT_always_require(list.backNode().value() == "bbb");
+    ASSERT_always_require(clist.backNode().value() == "bbb");
+
+    ASSERT_always_require(list.frontValue() == "aaa");
+    ASSERT_always_require(clist.frontValue() == "aaa");
+
+    ASSERT_always_require(list.backValue() == "bbb");
+    ASSERT_always_require(clist.backValue() == "bbb");
+
+    ASSERT_always_require(list.indexedNode(0).value() == "aaa");
+    ASSERT_always_require(list.indexedNode(1).value() == "bbb");
+    ASSERT_always_require(clist.indexedNode(0).value() == "aaa");
+    ASSERT_always_require(clist.indexedNode(1).value() == "bbb");
+
+    ASSERT_always_require(list.indexedValue(0) == "aaa");
+    ASSERT_always_require(list.indexedValue(1) == "bbb");
+    ASSERT_always_require(clist.indexedValue(0) == "aaa");
+    ASSERT_always_require(clist.indexedValue(1) == "bbb");
+
+    ASSERT_always_require(list[0] == "aaa");
+    ASSERT_always_require(list[1] == "bbb");
+    ASSERT_always_require(clist[0] == "aaa");
+    ASSERT_always_require(clist[1] == "bbb");
+
+    ASSERT_always_require(list.getOptional(0));
+    ASSERT_always_require(*list.getOptional(0) == "aaa");
+    ASSERT_always_require(list.getOptional(1));
+    ASSERT_always_require(*list.getOptional(1) == "bbb");
+    ASSERT_always_require(!list.getOptional(2));
+    ASSERT_always_require(clist.getOptional(0));
+    ASSERT_always_require(*clist.getOptional(0) == "aaa");
+    ASSERT_always_require(clist.getOptional(1));
+    ASSERT_always_require(*clist.getOptional(1) == "bbb");
+    ASSERT_always_require(!clist.getOptional(2));
+
+    std::string s = "zzz";
+    ASSERT_always_require(list.getOrElse(0, s) == "aaa");
+    ASSERT_always_require(list.getOrElse(1, s) == "bbb");
+    ASSERT_always_require(list.getOrElse(2, s) == "zzz");
+    
+    ASSERT_always_require(clist.getOrElse(0, s) == "aaa");
+    ASSERT_always_require(clist.getOrElse(1, s) == "bbb");
+    ASSERT_always_require(clist.getOrElse(2, s) == "zzz");
+
+    ASSERT_always_require(list.getOrDefault(0) == "aaa");
+    ASSERT_always_require(list.getOrDefault(1) == "bbb");
+    ASSERT_always_require(list.getOrDefault(2) == "");
+    ASSERT_always_require(clist.getOrDefault(0) == "aaa");
+    ASSERT_always_require(clist.getOrDefault(1) == "bbb");
+    ASSERT_always_require(clist.getOrDefault(2) == "");
+}
+
+template<class List>
 void iterators() {
     std::cout <<"iterators:\n";
     List list;
@@ -117,6 +195,7 @@ void iterators() {
     ++iter;
     ASSERT_always_require(iter==list.nodes().end());
 
+
 #if 0 /* [Robb Matzke 2014-04-18] */
     ASSERT_always_require(list[0]=="third");
     ASSERT_always_require(list.at(1)=="fourth");
@@ -142,6 +221,154 @@ void iterators() {
         std::cout <<" " <<*i;
     std::cout <<"\n";
 #endif
+}
+
+static void
+node_iterators() {
+    typedef IndexedList<std::pair<int, int> > L1;
+
+    L1 list;
+    list.pushBack(std::make_pair(1,2));
+    L1::NodeIterator i = list.nodes().begin();
+    ASSERT_always_require(i != list.nodes().end());
+
+    // Access value through the node
+    L1::Node &node = *i;
+    ASSERT_always_require(node.value().first == 1);
+    ASSERT_always_require(node.value().second == 2);
+    ASSERT_always_require((*node).first == 1);
+    ASSERT_always_require((*node).second == 2);
+    ASSERT_always_require(node->first == 1);
+    ASSERT_always_require(node->second == 2);
+
+    // Same, but constant node
+    const L1::Node &cnode = *i;
+    ASSERT_always_require(cnode.value().first == 1);
+    ASSERT_always_require(cnode.value().second == 2);
+    ASSERT_always_require((*cnode).first == 1);
+    ASSERT_always_require((*cnode).second == 2);
+    ASSERT_always_require(cnode->first == 1);
+    ASSERT_always_require(cnode->second == 2);
+
+    // assignment
+    L1::NodeIterator i2 = i;
+    ASSERT_always_require(i2 == i);
+
+    L1::ConstNodeIterator ci = i;
+    ASSERT_always_require(ci == i);
+    L1::ConstNodeIterator ci2 = ci;
+    ASSERT_always_require(ci2 == ci);
+
+    // pre-increment
+    L1::NodeIterator i3 = ++i2;
+    ASSERT_always_require(i3 == i2);
+    ASSERT_always_require(i3 == list.nodes().end());
+
+    L1::ConstNodeIterator ci3 = ++ci2;
+    ASSERT_always_require(ci3 == ci2);
+    ASSERT_always_require(ci3 == list.nodes().end());
+
+    // pre-decrement (from the end iterator nonetheless)
+    L1::NodeIterator i4 = --i2;
+    ASSERT_always_require(i4 == i2);
+    ASSERT_always_require(i4 == list.nodes().begin());
+
+    L1::ConstNodeIterator ci4 = --ci2;
+    ASSERT_always_require(ci4 == ci2);
+    ASSERT_always_require(ci4 == list.nodes().begin());
+
+    // post-increment
+    L1::NodeIterator i5 = i2++;
+    ASSERT_always_require(i5 == list.nodes().begin());
+    ASSERT_always_require(i2 == list.nodes().end());
+
+    L1::ConstNodeIterator ci5 = ci2++;
+    ASSERT_always_require(ci5 == list.nodes().begin());
+    ASSERT_always_require(ci2 == list.nodes().end());
+
+    // post-decrement
+    L1::NodeIterator i6 = i2--;
+    ASSERT_always_require(i6 == list.nodes().end());
+    ASSERT_always_require(i2 == list.nodes().begin());
+
+    L1::ConstNodeIterator ci6 = ci2--;
+    ASSERT_always_require(ci6 == list.nodes().end());
+    ASSERT_always_require(ci2 == list.nodes().begin());
+}
+
+static void
+value_iterators() {
+    typedef IndexedList<std::pair<int, int> > L1;
+
+    L1 list;
+    list.pushBack(std::make_pair(1, 2));
+
+    L1::ValueIterator i = list.values().begin();
+    ASSERT_always_require(i != list.values().end());
+
+    // Access to the value
+    L1::Value &v = *i;
+    ASSERT_always_require(v.first == 1);
+    ASSERT_always_require(v.second == 2);
+
+    ASSERT_always_require(i->first == 1);
+    ASSERT_always_require(i->second == 2);
+
+    // assignment
+    L1::ValueIterator i2 = i;
+    ASSERT_always_require(i2 == i);
+
+    L1::ConstValueIterator ci = i;
+    ASSERT_always_require(ci == i);
+    L1::ConstValueIterator ci2 = ci;
+    ASSERT_always_require(ci2 == ci);
+
+    // pre-increment
+    L1::ValueIterator i3 = ++i2;
+    ASSERT_always_require(i3 == i2);
+    ASSERT_always_require(i3 == list.values().end());
+
+    L1::ConstValueIterator ci3 = ++ci2;
+    ASSERT_always_require(ci3 == ci2);
+    ASSERT_always_require(ci3 == list.values().end());
+
+    // pre-decrement (from the end iterator nonetheless)
+    L1::ValueIterator i4 = --i2;
+    ASSERT_always_require(i4 == i2);
+    ASSERT_always_require(i4 == list.values().begin());
+
+    L1::ConstValueIterator ci4 = --ci2;
+    ASSERT_always_require(ci4 == ci2);
+    ASSERT_always_require(ci4 == list.values().begin());
+
+    // post-increment
+    L1::ValueIterator i5 = i2++;
+    ASSERT_always_require(i5 == list.values().begin());
+    ASSERT_always_require(i2 == list.values().end());
+
+    L1::ConstValueIterator ci5 = ci2++;
+    ASSERT_always_require(ci5 == list.values().begin());
+    ASSERT_always_require(ci2 == list.values().end());
+
+    // post-decrement
+    L1::ValueIterator i6 = i2--;
+    ASSERT_always_require(i6 == list.values().end());
+    ASSERT_always_require(i2 == list.values().begin());
+
+    L1::ConstValueIterator ci6 = ci2--;
+    ASSERT_always_require(ci6 == list.values().end());
+    ASSERT_always_require(ci2 == list.values().begin());
+
+    // Const value iterator from node iterator
+    L1::ConstValueIterator i7 = list.nodes().begin();
+    ASSERT_always_require(i7 != list.values().end());
+    ASSERT_always_require(i7->first == 1);
+    ASSERT_always_require(i7->second == 2);
+    L1::ConstNodeIterator cni = list.nodes().begin();
+    L1::ConstValueIterator ci7 = cni;
+    ASSERT_always_require(ci7 != list.values().end());
+    ASSERT_always_require(ci7->first == 1);
+    ASSERT_always_require(ci7->second == 2);
 }
 
 template<class List>
@@ -270,6 +497,37 @@ void node_erasure() {
 }
 
 template<class List>
+void erase_index() {
+    List list;
+
+    list.pushBack("3");
+    list.pushFront("2");
+    list.pushBack("4");
+    list.pushFront("1");
+    list.pushBack("5");
+    list.pushFront("0");
+    ASSERT_always_require(list.size() == 6);
+
+    std::set<std::string> set;
+    set.insert("0");
+    set.insert("1");
+    set.insert("2");
+    set.insert("3");
+    set.insert("4");
+    set.insert("5");
+
+    set.erase(list[4]);
+    list.erase(4);
+
+    BOOST_FOREACH (const std::string &s, list.values()) {
+        std::set<std::string>::iterator si = set.find(s);
+        ASSERT_always_require(si != set.end());
+        set.erase(si);
+    }
+    ASSERT_always_require(set.empty());
+}
+
+template<class List>
 void erase_range() {
     std::cout <<"range erasure:\n";
     
@@ -298,6 +556,14 @@ void erase_range() {
     ASSERT_always_require(next==list.nodes().end());
 }
 
+class MyString {
+public:
+    std::string s;
+
+    MyString() {}
+    MyString(const std::string &s): s(s) {}
+};
+
 template<class List>
 void copy_ctor() {
     std::cout <<"copy constructor:\n";
@@ -311,6 +577,7 @@ void copy_ctor() {
     list.pushBack("sixth");                             // id=5
     std::cout <<"  initial list:     " <<list <<"\n";
 
+    // Copy construct from the same type
     List list2(list);
     std::cout <<"  copy constructed: " <<list2 <<"\n";
     ASSERT_always_require(list2.size()==6);
@@ -322,6 +589,28 @@ void copy_ctor() {
     ASSERT_always_require(list.size()==6);
     ASSERT_always_require(list.frontNode().value()=="first");
     ASSERT_always_require(list.backNode().value()=="sixth");
+
+    // Copy construct from a different type
+    IndexedList<MyString> l2(list);
+    ASSERT_always_require(l2.size()==6);
+    ASSERT_always_require(l2.frontNode().value().s == "first");
+    ASSERT_always_require(l2.backNode().value().s == "sixth");
+}
+
+template<class List>
+void assignment() {
+    List src;
+    src.pushBack("aaa");
+    src.pushBack("bbb");
+    src.pushBack("ccc");
+
+    List dst1;
+    dst1.pushBack("xxx");
+    dst1.pushBack("yyy");
+    dst1 = src;
+    ASSERT_always_require(dst1.size() == 3);
+    ASSERT_always_require(dst1.frontValue() == "aaa");
+    ASSERT_always_require(dst1.backValue() == "ccc");
 }
 
 template<class List>
@@ -331,6 +620,18 @@ void list_assignment() {
     List list2;
     list2.pushBack("aaa");                              // will be clobbered
     list2.pushBack("bbb");                              // ditto
+
+    // Copy constructor
+    List list3(list2);
+    ASSERT_always_require(list3.size()==2);
+    ASSERT_always_require(list3.frontValue() == "aaa");
+    ASSERT_always_require(list3.backValue() == "bbb");
+
+    list3.frontValue() = "zzz";
+    ASSERT_always_require(list3.frontValue() == "zzz");
+    ASSERT_always_require(list2.frontValue() == "aaa");
+
+    // Assignment operator
     {
         List list;                                      // destroyed at end of scope
         list.pushFront("third");                        // id=0
@@ -393,7 +694,6 @@ void iter_from_ptr() {
 #endif
 }
 
-
 // This tests that the STL std::list elements can have an iterator to themselves.
 struct Elmt1 {
     int payload;
@@ -419,6 +719,16 @@ void user_allocator() {
     list.pushBack(123);
 }
 
+template<class List>
+void debugging() {
+    std::cout <<"debugging:\n";
+    List list;
+    list.pushBack("one");
+    list.pushBack("two");
+    list.pushFront("zero");
+    list.dump(std::cout);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main() {
     Sawyer::initializeLibrary();
@@ -428,15 +738,22 @@ int main() {
     default_ctor<L1>();
     insert_values<L1>();
     push_values<L1>();
+    capacity<L1>();
+    accessors<L1>();
+    node_iterators();
+    value_iterators();
     iterators<L1>();
     mid_insertion<L1>();
     fill_ctor<L1>();
     fill_insertion<L1>();
     list_insertion<L1>();
     node_erasure<L1>();
+    erase_index<L1>();
     erase_range<L1>();
     copy_ctor<L1>();
+    assignment<L1>();
     list_assignment<L1>();
     iter_from_ptr<L1>();
     user_allocator();
+    debugging<L1>();
 }

@@ -77,11 +77,17 @@ demo1() {
 
     // Lets add some edges
     TrainGraph::EdgeIterator ab = g.insertEdge(albuquerque, boston, 58); // 58 hours, etc.
+    ASSERT_always_require(ab != g.edges().end());
     TrainGraph::EdgeIterator ba = g.insertEdge(boston, albuquerque, 54);
+    ASSERT_always_require(ba != g.edges().end());
     TrainGraph::EdgeIterator ac = g.insertEdge(albuquerque, chicago, 27);
+    ASSERT_always_require(ac != g.edges().end());
     TrainGraph::EdgeIterator ca = g.insertEdge(chicago, albuquerque, 24);
+    ASSERT_always_require(ca != g.edges().end());
     TrainGraph::EdgeIterator bc = g.insertEdge(boston, chicago, 23);
+    ASSERT_always_require(bc != g.edges().end());
     TrainGraph::EdgeIterator cb = g.insertEdge(chicago, boston, 25);
+    ASSERT_always_require(cb != g.edges().end());
     ASSERT_always_require(g.nEdges() == 6);
 
     // We can add vertices at the same time if they don't exist.

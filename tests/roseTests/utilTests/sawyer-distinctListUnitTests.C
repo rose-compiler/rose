@@ -98,16 +98,20 @@ testMap() {
     ASSERT_always_require(map.size()==2);
 }
 
+static void
+default_ctor() {
+    DistinctList<int> dl;
+    ASSERT_always_require(dl.isEmpty());
+    ASSERT_always_require(dl.size()==0);
+    ASSERT_always_forbid(dl.exists(0));
+}
 
 static void
-test() {
+push_pop() {
     typedef DistinctList<int> List;
     int item;
 
     List dl;
-    ASSERT_always_require(dl.isEmpty());
-    ASSERT_always_require(dl.size()==0);
-    ASSERT_always_forbid(dl.exists(0));
 
     dl.pushFront(5);                                    // ( 5 )
     ASSERT_always_forbid(dl.isEmpty());
@@ -163,9 +167,148 @@ test() {
     ASSERT_always_forbid(dl.exists(3));
 }
 
+static void
+pop_empty() {
+    DistinctList<std::string> empty;
+
+    try {
+        empty.popFront();
+        ASSERT_not_reachable("should have thrown");
+    } catch (const std::runtime_error&) {
+    }
+
+    try {
+        empty.popBack();
+        ASSERT_not_reachable("should have thrown");
+    } catch (const std::runtime_error&) {
+    }
+
+}
+
+static void
+copy_ctor() {
+    DistinctList<int> s1;
+    s1.pushBack(1);
+    s1.pushBack(2);
+    const DistinctList<int> &cs1 = s1;
+
+    DistinctList<int> d1 = cs1;
+    ASSERT_always_require(d1.size() == s1.size());
+
+    DistinctList<double> d2 = cs1;
+    ASSERT_always_require(d2.size() == s1.size());
+}
+
+static void
+clear() {
+    DistinctList<int> s1;
+    s1.pushBack(1);
+    s1.pushBack(2);
+    ASSERT_always_require(s1.size() == 2);
+
+    s1.clear();
+    ASSERT_always_require(s1.size() == 0);
+}
+
+static void
+assignment() {
+    DistinctList<int> s1;
+    s1.pushBack(1);
+    s1.pushBack(2);
+    const DistinctList<int> &cs1 = s1;
+
+    DistinctList<double> d1;
+    d1.pushBack(7);
+    d1.pushBack(8);
+    d1.pushBack(9);
+    ASSERT_always_require(d1.size() == 3);
+    d1 = cs1;
+    ASSERT_always_require(d1.size() == cs1.size());
+}
+
+static void
+position() {
+    DistinctList<std::string> list;
+    list.pushBack("bbb");
+    list.pushFront("aaa");
+    list.pushBack("ccc");
+    const DistinctList<std::string> &clist = list;
+
+    ASSERT_always_require(clist.position("aaa") == 0);
+    ASSERT_always_require(clist.position("bbb") == 1);
+    ASSERT_always_require(clist.position("ccc") == 2);
+    ASSERT_always_require(clist.position("zzz") == list.size());
+}
+
+static void
+reference() {
+    DistinctList<std::string> list;
+    list.pushBack("bbb");
+    list.pushFront("aaa");
+    list.pushBack("ccc");
+    const DistinctList<std::string> &clist = list;
+    ASSERT_always_require(clist.front() == "aaa");
+    ASSERT_always_require(clist.back() == "ccc");
+
+    const DistinctList<std::string> empty;
+    try {
+        empty.front();
+        ASSERT_not_reachable("should have thrown");
+    } catch (const std::runtime_error&) {
+    }
+
+    try {
+        empty.back();
+        ASSERT_not_reachable("should have thrown");
+    } catch (const std::runtime_error&) {
+    }
+}
+
+static void
+erase() {
+    DistinctList<std::string> list;
+    list.pushBack("bbb");
+    list.pushFront("aaa");
+    list.pushBack("ccc");
+    ASSERT_always_require(list.exists("aaa"));
+    ASSERT_always_require(list.exists("bbb"));
+    ASSERT_always_require(list.exists("ccc"));
+
+    list.erase("bbb");
+    ASSERT_always_require(list.exists("aaa"));
+    ASSERT_always_require(!list.exists("bbb"));
+    ASSERT_always_require(list.exists("ccc"));
+
+    list.erase("zzz");
+    ASSERT_always_require(list.exists("aaa"));
+    ASSERT_always_require(!list.exists("bbb"));
+    ASSERT_always_require(list.exists("ccc"));
+}
+
+static void
+list() {
+    DistinctList<std::string> l;
+    l.pushBack("bbb");
+    l.pushFront("aaa");
+    l.pushBack("ccc");
+
+    const std::list<std::string> &items = l.items();
+    ASSERT_always_require(items.size() == 3);
+}
+
 int
 main() {
     Sawyer::initializeLibrary();
     testMap();
-    test();
+
+    default_ctor();
+    push_pop();
+    pop_empty();
+    copy_ctor();
+    clear();
+    assignment();
+    position();
+    reference();
+    erase();
+    list();
 }

@@ -10,7 +10,7 @@
 using namespace Sawyer::Container;
 
 static void
-testInsertErase() {
+default_ctor() {
     Set<int> set;
     ASSERT_always_require2(set.isEmpty(), "a default-constructed set is empty");
     ASSERT_always_require2(set.size() == 0, "a default-constructed set has no members");
@@ -18,7 +18,18 @@ testInsertErase() {
     ASSERT_always_require2(!set.exists(0), "member zero has not been inserted yet");
     ASSERT_always_require2(!set.exists(1), "member one has not been inserted yet");
     ASSERT_always_require2(!set.exists(2), "member two has not been inserted yet");
+}
 
+static void
+scalar_ctor() {
+    Set<int> set(100);
+    ASSERT_always_require(set.size() == 1);
+    ASSERT_always_require(set.hull().least() == 100);
+}
+
+static void
+testInsertErase() {
+    Set<int> set;
     bool inserted = set.insert(0);
     ASSERT_always_require2(inserted, "member should have been inserted");
     ASSERT_always_require2(!set.isEmpty(), "a singleton set is not empty");
@@ -83,6 +94,75 @@ testInsertErase() {
 }
 
 static void
+iterator_ctors() {
+    std::set<int> s1;
+    s1.insert(2);
+    s1.insert(3);
+    s1.insert(1);
+    s1.insert(4);
+    s1.insert(0);
+    const std::set<int> &cs1 = s1;
+
+    Set<float> d1(s1.begin(), s1.end());
+    ASSERT_always_require(d1.size() == s1.size());
+
+    Set<float> d2(cs1.begin(), cs1.end());
+    ASSERT_always_require(d2.size() == cs1.size());
+
+    Set<double> d3(d1.values());
+    ASSERT_always_require(d3.size() == d1.size());
+
+    const Set<float> &d4 = d2;
+    Set<double> d5(d4.values());
+    ASSERT_always_require(d5.size() == d4.size());
+
+    std::vector<int> v;
+    v.push_back(1);
+    v.push_back(2);
+    v.push_back(2);
+    v.push_back(1);
+    Set<int> d6(v.begin(), v.end());
+    ASSERT_always_require(d6.size() == 2);
+}
+
+static void
+predicates() {
+    Set<int> s1;
+    s1.insert(1);
+    s1.insert(2);
+    s1.insert(3);
+
+    Set<int> s2;
+    s2.insert(3);
+    s2.insert(4);
+
+    Set<int> s3;
+    s3.insert(7);
+    s3.insert(8);
+    s3.insert(9);
+
+    const Set<int> &cs1 = s1;
+    const Set<int> &cs2 = s2;
+    const Set<int> &cs3 = s3;
+
+    ASSERT_always_require(cs1.existsAny(cs2));
+    ASSERT_always_require(cs2.existsAny(cs1));
+    ASSERT_always_require(cs1.existsAny(cs1));
+    ASSERT_always_require(!cs1.existsAny(cs3));
+
+    ASSERT_always_require(!cs1.existsAll(cs2));
+    ASSERT_always_require(!cs2.existsAll(cs1));
+    ASSERT_always_require(cs1.existsAll(cs1));
+
+    ASSERT_always_require(cs1 == cs1);
+    ASSERT_always_forbid(cs1 == cs2);
+
+    ASSERT_always_require(cs1 != cs2);
+    ASSERT_always_forbid(cs1 != cs1);
+}
+
+
+static void
 testTheoryOperators() {
     Set<int> s1;
     s1.insert(2);
@@ -118,6 +198,9 @@ testTheoryOperators() {
     s3 &= s2;
     ASSERT_always_require(s3.size()==0);                // {}
 
+    s3 = s1 & s2;
+    ASSERT_always_require(s3.size()==1);                // {2}
+
     //-------
     // union
     //-------
@@ -128,6 +211,9 @@ testTheoryOperators() {
 
     s3 = s2;
     s3 |= s1;
+    ASSERT_always_require(s3.size()==6);                // {2, 3, 5, 6, 7, 12}
+
+    s3 = s1 | s2;
     ASSERT_always_require(s3.size()==6);                // {2, 3, 5, 6, 7, 12}
 
     //------------
@@ -141,10 +227,17 @@ testTheoryOperators() {
     s3 = s2;
     s3 -= s1;
     ASSERT_always_require(s3.size()==2);                // {6, 12}
+
+    s3 = s1 - s2;
+    ASSERT_always_require(s3.size()==3);                // {3, 5, 7}
 }
 
 int
 main() {
+    default_ctor();
+    scalar_ctor();
     testInsertErase();
+    iterator_ctors();
+    predicates();
     testTheoryOperators();
 }
