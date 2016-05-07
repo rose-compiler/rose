@@ -220,7 +220,6 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
   // Now edit the list to remove elements appearing within the exclude list
      Grammar::editStringList ( localList, localExcludeList );
 
-     string prevParam;
      for( stringListIterator = localList.begin();
           stringListIterator != localList.end();
           stringListIterator++ )
@@ -230,9 +229,6 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
           switch ( (*stringListIterator)->getIsInConstructorParameterList() )
              {
                case NO_CONSTRUCTOR_PARAMETER:
-                 // DQ (11/20/2004): This test does not appear to work to skip cases where the initializer is empty
-                 // the reason is that getDefaultInitializerString() returns a char* and the wrong operator!= is being used!
-                 // if ((*stringListIterator)->getDefaultInitializerString() != "")
                     if (string( (*stringListIterator)->getDefaultInitializerString()) != "")
                        {
                          returnString = returnString + "     p_" + variableNameString + " " + 
@@ -255,6 +251,20 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
 
      return returnString;
    }
+
+string
+AstNodeClass::buildConstructorBodyForAllDataMembers() {
+  string returnString;
+  vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+  for( vector<GrammarString *>::iterator stringListIterator = localList.begin();
+       stringListIterator != localList.end();
+       stringListIterator++ ) {
+    string variableNameString = (*stringListIterator)->getVariableNameString();
+    returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
+  }
+  return returnString;
+}
+
 
 StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionHeader ()
    {
@@ -588,27 +598,16 @@ AstNodeClass::addGrammarPrefixToName()
      ROSE_ASSERT(!GrammarString::isContainedIn(name,grammarName));
 
   // Set the name to include the grammar's prefix
-  // Modify this statement to avoid Insure++ warning
-  // ((AstNodeClass*)this)->name = stringConcatinate( GrammarString::stringDuplicate(grammarName), name );
      string newNameWithPrefix = grammarName + name;
      this->name = newNameWithPrefix;
-
-  // Set the name to include the grammar's prefix
-
-  // printf ("In AstNodeClass::addGrammarPrefixToName() tag = %s \n",tag);
-  // ROSE_ASSERT (getGrammar()->parentGrammar != NULL);
 
      string grammarTagName = "";
      if (getGrammar()->parentGrammar != NULL)
           grammarTagName = grammarName;
 
-  // Modify this statement to avoid Insure++ warning
-  // ((AstNodeClass*)this)->tag  = stringConcatinate( GrammarString::stringDuplicate(grammarTagName), tag  );
-  // char* tempTag = stringConcatinate( GrammarString::stringDuplicate(grammarTagName), tag  );
      string tempTag = grammarTagName + tag;
      this->tag  = tempTag;
 
-  // display("Inside of addGrammarPrefixToName");
    }
 
 void 
@@ -651,6 +650,18 @@ AstNodeClass::setFunctionPrototype ( const GrammarString & inputMemberFunction )
      string functionString = StringUtility::toString(Grammar::extractStringFromFile ( startMarkerString, endMarkerString, filename, directory )); \
      GrammarString* codeString = new GrammarString(functionString);                  \
      codeString->setVirtual(pureVirtual);
+
+GrammarString* AstNodeClass::setupMarkerStrings(string markerString,string filename, bool pureVirtual) {
+  string startSuffix = "_START";
+  string endSuffix   = "_END";
+  string startMarkerString = markerString + startSuffix;
+  string endMarkerString   = markerString + endSuffix;
+  string directory = "";
+  string functionString = StringUtility::toString(Grammar::extractStringFromFile ( startMarkerString, endMarkerString, filename, directory ));
+  GrammarString* codeString = new GrammarString(functionString);
+  codeString->setVirtual(pureVirtual);
+  return codeString;
+}
 
 void
 AstNodeClass::setFunctionPrototype ( const string& markerString, const string& filename, bool pureVirtual )
@@ -703,9 +714,8 @@ AstNodeClass::setSubTreeFunctionSource ( const string& markerString, const strin
   // We might want to include the path name into the filename string
   // so we don't need to have a directory input parameter
      SETUP_MARKER_STRINGS_MACRO
-  // subTreeMemberFunctionSourceList.addElement(*codeString);
-     AstNodeClass::addElementToList ( getMemberFunctionSourceList(AstNodeClass::SUBTREE_LIST,AstNodeClass::INCLUDE_LIST),
-                                           *codeString );
+       AstNodeClass::addElementToList ( getMemberFunctionSourceList(AstNodeClass::SUBTREE_LIST,AstNodeClass::INCLUDE_LIST),
+                                        *codeString );
    }
 
 
