@@ -365,7 +365,7 @@ class Grammar
                                                std::vector<GrammarString *> & constructorParameterList,
                                                ConstructParamEnum config );
           std::string buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool *complete = 0 );
-
+          std::string buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & node ); // NEW
 
        // DQ 11/6/2006): Support for building newer from of constructors (withouth source position information).
           void markNodeForConstructorWithoutSourcePositionInformation ( AstNodeClass & node );
@@ -386,6 +386,7 @@ class Grammar
           StringUtility::FileWithLineNumbers buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node );
 
           StringUtility::FileWithLineNumbers buildConstructor ( AstNodeClass & node );
+          StringUtility::FileWithLineNumbers buildConstructorForAllDataMembers ( AstNodeClass & node); // NEW
 
           StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ( AstNodeClass & node );
 
