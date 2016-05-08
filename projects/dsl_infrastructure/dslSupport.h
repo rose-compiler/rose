@@ -32,6 +32,12 @@ namespace DSL_Support
      bool isDslFunction(SgNode* astNode);
      bool isDslMemberFunction(SgNode* astNode);
 
+  // DQ (5/5/2016): Need to finish the support for SgVarRefExp.
+     bool isDslVarRefExp(SgNode* astNode);
+
+  // DQ (5/5/2016): This permits refactoring of code.
+     bool isDslType(SgNode* astNode, std::string & type_name);
+
   // DQ (2/3/2016): Added function to detect DSL target abstractions.
      bool isDslAbstraction(SgNode* astNode);
 

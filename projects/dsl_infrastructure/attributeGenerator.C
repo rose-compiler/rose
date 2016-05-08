@@ -19,6 +19,12 @@
 // #include "dslSupport.h"
 // using namespace DSL_Support;
 
+// DQ (5/5/2016): We need this to access the isDslType() functions.
+// But the DSL support uses the results of the attribute generator, 
+// so catch 22 (we need to use the internal data structures used for 
+// the attribute code generation more directly).
+// #include "dslSupport.h"
+
 using namespace std;
 
 
@@ -675,6 +681,34 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
 #endif
                        }
                   }
+                 else
+                  {
+                 // The goal here is to find any friend functions specified in the DSL abstractions.  An alternative might be to 
+                 // check the types of the function (return type and all argument types), if any are DSL types then we want to
+                 // track this function as a DSL function.
+
+                    SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
+                    ROSE_ASSERT(functionType != NULL);
+
+                    SgType* returnType = functionType->get_return_type();
+                    ROSE_ASSERT(returnType != NULL);
+
+                    string type_name;
+
+                 // We can't call this function because it's use requires the code that we generation from the executable 
+                 // represented by this file.  So we need to use the internal data structures (which we use to generate the 
+                 // code that the DSL infrastructure requires) more directly instead.
+                 // bool returntypeIsDslType = DSL_Support::isDslType(returnType,type_name);
+                    bool returntypeIsDslType = false;
+
+                    printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
+
+                    if (returntypeIsDslType == true)
+                       {
+                         printf ("Found a non-member function returning a DSL type: type_name = %s \n",type_name.c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
 
             // if (DSLnodes.find(functionDeclaration) != DSLnodes.end())
                if (classDeclaration != NULL && DSLnodes.find(classDeclaration) != DSLnodes.end())
@@ -943,7 +977,7 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
 
        // dsl_attribute_map_initializerString += " { {\"" + className + "\"},{" + className_dsl_attribute + "()} } ";
        // dsl_attribute_map_initializerString += " { {\"" + className + "\"},{ new " + className_dsl_attribute + "()} } ";
-          dsl_attribute_map_initializerString += "   {\" " + className + "\", new " + className_dsl_attribute + "() } ";
+          dsl_attribute_map_initializerString += "   {\"" + className + "\", new " + className_dsl_attribute + "() } ";
 
        // if (dsl_type_varRef_list.find(type) != dsl_type_varRef_list.end())
           if (dsl_type_varRef_list.find(type) != dsl_type_varRef_list.end())
@@ -960,7 +994,7 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
 
                dsl_type_names_initializerString += "   \"" + className + "\" ";
             // dsl_attribute_map_initializerString += " { {\"" + className + "\"},{ new " + className_dsl_attribute + "()} } ";
-               dsl_attribute_map_initializerString += "   {\" " + className + "\", new " + className_dsl_attribute + "() } ";
+               dsl_attribute_map_initializerString += "   {\"" + className + "\", new " + className_dsl_attribute + "() } ";
              }
 
           if (i < dsl_type_list.size()-1)
@@ -1023,10 +1057,15 @@ AttributeGeneratorTraversal::modify_dsl_variable_initializers()
 #endif
         }
 
-#if 0
+#if 1
      printf ("dsl_type_list.empty()            = %s \n",dsl_type_list.empty()            ? "true" : "false");
      printf ("dsl_function_list.empty()        = %s \n",dsl_function_list.empty()        ? "true" : "false");
      printf ("dsl_member_function_list.empty() = %s \n",dsl_member_function_list.empty() ? "true" : "false");
+#endif
+
+#if 1
+     printf ("Review the construction of the dsl_function_list \n");
+     ROSE_ASSERT(false);
 #endif
 
      if ( (dsl_type_list.empty() == false || dsl_function_list.empty() == false) && (dsl_member_function_list.empty() == false) )

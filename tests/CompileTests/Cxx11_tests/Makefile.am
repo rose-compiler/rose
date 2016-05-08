@@ -114,7 +114,19 @@ test2016_18.C \
 test2016_19.C \
 test2016_20.C \
 test2016_21.C \
+test2016_22.C \
+test2016_23.C \
+test2016_24.C \
+test2016_25.C \
+test2016_29.C \
+test2016_30.C \
 last.C
+
+# DQ (5/8/2016): Demonstration of bug in GNU 4.9.2 header files (test2016_31.C)
+# test2016_26.C
+# test2016_27.C
+# test2016_28.C
+# test2016_31.C
 
 # New test codes not yet tested in regression tests.
 # test2015_15.C 
