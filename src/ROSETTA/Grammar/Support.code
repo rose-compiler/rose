@@ -8146,12 +8146,20 @@ SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArgum
   // DQ (8/8/2013): I don't think that we need to handle the case of where there is both a valid SgTemplateParameterPtrList and SgTemplateArgumentPtrList.
      bool returnValue = false;
 
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+     printf ("In TOP SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments(): templateParameterList = %p templateArgumentsList = %p \n",templateParameterList,templateArgumentsList);
+#endif
+
      if (templateParameterList != NULL)
         {
        // Note that this should be a template case if template parameters were specified.
 
        // DQ (8/19/2013): template classes need to use both the template parameter list and the template argument list.
           returnValue = hasMatchingTemplateParametersOrNoTemplateParameters(templateParameterList,symbol);
+
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+          printf ("In SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments(): after evaluation of templateParameterList: templateParameterList = %p templateArgumentsList = %p returnValue = %s \n",templateParameterList,templateArgumentsList,returnValue ? "true" : "false");
+#endif
 
           if (returnValue == true && templateArgumentsList != NULL)
              {
@@ -8172,7 +8180,7 @@ SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArgum
         }
        else
         {
-       // This is not a template and is either an instantiation of a templae or non-instantiation (normal class, function, etc.).
+       // This is not a template and is either an instantiation of a template or non-instantiation (normal class, function, etc.).
           returnValue = hasMatchingTemplateArgumentsOrNoTemplateArguments(templateArgumentsList,symbol);
         }
 
@@ -8985,11 +8993,33 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
             else
              {
             // DQ (8/22/2012): Consider if this make sense...yes, if it is not a template instantiation then matching is based on name in a specific scope only.
+            // DQ (5/8/2016): Actually it is based on the name and the template parameters (I think the number of template parameters only, but I am not certain).
 
+#if 1
+            // DQ (5/8/2016): If the list is not empty then it had a different number of arguments and so it can't be the same (return false)
+               if (templateParametersOrArgumentsListFromSymbol.empty() == false)
+                  {
+                 // && (templateParametersOrArgumentsList->size() == templateParametersOrArgumentsListFromSymbol.size())
+                 // Check if they are the same size...
+                 // DQ (5/8/2016): If the list is not empty then it had a different number of arguments and so it can't be the same (return false)
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                    printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateParametersOrArgumentsListFromSymbol.empty() == false: different size list: (return false) \n");
+#endif
+                    returnValue = false;
+                  }
+                 else
+                  {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                    printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateParametersOrArgumentsListFromSymbol.empty() == true (return true) \n");
+#endif
+                    returnValue = true;
+                  }
+#else
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateClassInstantiation == NULL (return true) \n");
 #endif
                returnValue = true;
+#endif
              }
         }
        else
@@ -9117,6 +9147,10 @@ SgSymbolTable::find_template_function(const SgName& nm, const SgType* t, SgTempl
    {
   // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
   // ROSE_ASSERT(t != NULL);
+
+#if 0
+     printf ("In SgSymbolTable::find_template_function(): nm = %s t = %p templateParameterList = %p size = %zu \n",nm.str(),t,templateParameterList,templateParameterList->size());
+#endif
 
      SgTemplateFunctionSymbol *s = find_symbol_with_type_support<SgTemplateFunctionSymbol>(nm,t,templateParameterList,NULL);
 
