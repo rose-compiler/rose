@@ -485,6 +485,13 @@ AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [C
 # Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
 # This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
 # AC_LANG_PUSH(C)
+
+# Get frontend compiler vendor 
+AX_COMPILER_VENDOR
+FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
+unset ax_cv_cxx_compiler_vendor
+
+# Get backend compiler vendor
   saved_compiler_name=$CXX
   CXX=$BACKEND_CXX_COMPILER
   echo "After resetting CXX to be the backend compiler: CXX = $CXX"
@@ -497,6 +504,7 @@ AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [C
 # echo "Output the names of the vendor for the C or C++ backend compilers."
 # echo "Using back-end C   compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_c_compiler_vendor   for processing of unparsed source files from ROSE preprocessors."
   echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+  BACKEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
 
   CXX=$saved_compiler_name
   echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
@@ -561,6 +569,7 @@ GET_COMPILER_SPECIFIC_DEFINES
 # SETUP_BACKEND_COMPILER_SPECIFIC_REFERENCES
 # JJW (12/10/2008): We don't preprocess the header files for the new interface,
 # but we still need to use the original C++ header directories
+ROSE_CONFIGURE_SECTION([Backend C/C++ compiler specific references])
 SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
 SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
 
