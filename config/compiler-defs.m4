@@ -27,7 +27,6 @@ dnl the last steps of m4 processing.
 dnl DQ (2/1/2016): Change the switch to the vendor name computed from the macro call to AX COMPILER VENDOR (autoconf macro).
 case "$compilerVendorName" in
     clang)
-        AC_MSG_NOTICE([Support for LLVM as a backend for compiling ROSE generated code])
         BACKEND_GCC_MAJOR=$(echo |\
             $BACKEND_CXX_COMPILER --version 2>&1 |\
             grep -Po '(?<=version )@<:@^;@:>@+' |\
@@ -63,7 +62,6 @@ case "$compilerVendorName" in
 
     dnl Support for GNU gcc or g++ as a backend for compiling ROSE generated code
     gnu)
-        AC_MSG_NOTICE([Support for GCC as a backend for compiling ROSE generated code])
         BACKEND_GCC_MAJOR=$(echo |$BACKEND_CXX_COMPILER -dumpversion |cut -d. -f1)
         BACKEND_GCC_MINOR=$(echo |$BACKEND_CXX_COMPILER -dumpversion |cut -d. -f2)
         BACKEND_GCC_PATCHLEVEL=$(echo |$BACKEND_CXX_COMPILER -dumpversion |cut -d. -f3)
@@ -87,7 +85,6 @@ case "$compilerVendorName" in
 
     dnl Support for Intel icc as a backend for compiling ROSE generated code
     intel)
-        AC_MSG_NOTICE([Support for Intel as a backend for compiling ROSE generated code])
         BACKEND_INTEL_MAJOR=$(echo |$BACKEND_CXX_COMPILER -dumpversion |cut -d. -f1)
         BACKEND_INTEL_MINOR=$(echo |$BACKEND_CXX_COMPILER -dumpversion |cut -d. -f2)
         BACKEND_INTEL_PATCHLEVEL=$(echo |$BACKEND_CXX_COMPILER -dumpversion |cut -d. -f3)
@@ -140,7 +137,7 @@ case "$compilerVendorName" in
      rose)
         dnl DQ (2/1/2016): I think this is an error.  If we want to compile ROSE using ROSE then the backend should be
         dnl specificed to NOT be ROSE (e.g. gcc/g++).
-        AC_MSG_ERROR([to compile ROSE using ROSE the backend should be specificed to NOT be ROSE (e.g. gcc/g++)])
+        AC_MSG_ERROR([to compile ROSE using ROSE the backend should be specificed to NOT be ROSE (e.g. use gcc/g++)])
         ;;
  
      *)
@@ -241,12 +238,6 @@ BACKEND_COMPILER_VERSION_PATCHLEVEL_NUMBER="$BACKEND_GCC_PATCHLEVEL"
 
 dnl DQ (9/14/2009): generate a name to use with the name of the ROSE EDG binary so that we can be version number specific.
 GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX="$BACKEND_COMPILER_VERSION_NAME-$BACKEND_COMPILER_VERSION_MAJOR_NUMBER.$BACKEND_COMPILER_VERSION_MINOR_NUMBER"
-
-dnl I doubt this is ever defined since vendor names are lower case. [Robb Matzke, 2016-05-09]
-AM_CONDITIONAL(BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING,
-    [test "$BACKEND_COMPILER_VERSION_NAME"          = "GNU" -a \
-          "$BACKEND_COMPILER_VERSION_MAJOR_NUMBER"  = 4 -a \
-          "$BACKEND_COMPILER_VERSION_MINOR_NUMBER"  = 2])
 
 dnl DQ (9/30/2009): Exempt a set of old compiler versions from some testing. This is an attept to define a class of compiler
 dnl versions that we should not test because it can generate internal compiler errors.  Specifically I am turning off the
