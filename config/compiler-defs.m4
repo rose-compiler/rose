@@ -24,15 +24,15 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
     case "$CXX_COMPILER_VENDOR" in
         clang)
             CXX_VERSION_MAJOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
-                grep -Po '(?<=version )@<:@^;@:>@+' |\
+                grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f1 |\
                 cut -d\( -f1)
             CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
-                grep -Po '(?<=version )@<:@^;@:>@+' |\
+                grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f2 |\
                 cut -d\( -f1)
             CXX_VERSION_PATCH=$($CXX_COMPILER_COMMAND --version 2>&1 |\
-                grep -Po '(?<=version )@<:@^;@:>@+' |\
+                grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f3 |\
                 cut -d\( -f1)
             ;;
@@ -76,12 +76,12 @@ dnl Arguments:
 dnl     argument 1: string to prepend, without the trailing underscore. E.g., "BACKEND".
 dnl ========================================================================================================================
 AC_DEFUN([SAVE_CXX_VERSION_INFO], [
-    AC_MSG_NOTICE([    c++ compiler command         ($1[]_CXX_COMPILER_COMMAND) = $CXX_COMPILER_COMMAND])
-    AC_MSG_NOTICE([    c++ compiler vendor           ($1[]_CXX_COMPILER_VENDOR) = $CXX_COMPILER_VENDOR])
-    AC_MSG_NOTICE([    c++ compiler version triplet  ($1[]_CXX_VERSION_TRIPLET) = $CXX_VERSION_TRIPLET])
-    AC_MSG_NOTICE([    c++ compiler major version      ($1[]_CXX_VERSION_MAJOR) = $CXX_VERSION_MAJOR])
-    AC_MSG_NOTICE([    c++ compiler minor version      ($1[]_CXX_VERSION_MINOR) = $CXX_VERSION_MINOR])
-    AC_MSG_NOTICE([    c++ compiler patch version      ($1[]_CXX_VERSION_PATCH) = $CXX_VERSION_PATCH])
+    AC_MSG_NOTICE([    c++ compiler command         ($1[]_CXX_COMPILER_COMMAND) = "$CXX_COMPILER_COMMAND"])
+    AC_MSG_NOTICE([    c++ compiler vendor           ($1[]_CXX_COMPILER_VENDOR) = "$CXX_COMPILER_VENDOR"])
+    AC_MSG_NOTICE([    c++ compiler version triplet  ($1[]_CXX_VERSION_TRIPLET) = "$CXX_VERSION_TRIPLET"])
+    AC_MSG_NOTICE([    c++ compiler major version      ($1[]_CXX_VERSION_MAJOR) = "$CXX_VERSION_MAJOR"])
+    AC_MSG_NOTICE([    c++ compiler minor version      ($1[]_CXX_VERSION_MINOR) = "$CXX_VERSION_MINOR"])
+    AC_MSG_NOTICE([    c++ compiler patch version      ($1[]_CXX_VERSION_PATCH) = "$CXX_VERSION_PATCH"])
 
     $1[]_CXX_COMPILER_COMMAND="$CXX_COMPILER_COMMAND"
     $1[]_CXX_COMPILER_VENDOR="$CXX_COMPILER_VENDOR"
