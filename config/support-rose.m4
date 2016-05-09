@@ -420,15 +420,15 @@ CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
 AC_ARG_ENABLE(assertion-behavior,
     AS_HELP_STRING([--enable-assertion-behavior[=MODE]],
         [Specifies the default behavior for failing ROSE assertions. This behavior can be changed at runtime either
-	 via ROSE command-line switches or the rose API. Most developers (the ROSE team and users that
-	 are developing transformations) will probably want "abort" since this gives the most useful post-mortem
-	 information. On the other hand, end users usually don't need or expect post-mortem capabilities and sometimes
-	 even perceive them as low code quality, in which case "exit" with non-zero status is the best behavior. Finally,
-	 the "throw" behavior can be used as a compromise for tool developers to more gracefully recover from a ROSE
-	 error that would otherwise be fatal.  When --enable-assertion-behavior is not specified then "exit" is used.
-	 Some assertions can be disabled altogether (e.g., when an optimized library is desired) by defining NDEBUG.
-	 Caveats: this switch affects the behavior of the ROSE_ASSERT macro and the Sawyer ASSERT_* macros, but not
-	 plain old "assert"; the NDEBUG define applies to Sawyer ASSERT_* macros and plain old "assert" but not
+         via ROSE command-line switches or the rose API. Most developers (the ROSE team and users that
+         are developing transformations) will probably want "abort" since this gives the most useful post-mortem
+         information. On the other hand, end users usually don't need or expect post-mortem capabilities and sometimes
+         even perceive them as low code quality, in which case "exit" with non-zero status is the best behavior. Finally,
+         the "throw" behavior can be used as a compromise for tool developers to more gracefully recover from a ROSE
+         error that would otherwise be fatal.  When --enable-assertion-behavior is not specified then "exit" is used.
+         Some assertions can be disabled altogether (e.g., when an optimized library is desired) by defining NDEBUG.
+         Caveats: this switch affects the behavior of the ROSE_ASSERT macro and the Sawyer ASSERT_* macros, but not
+         plain old "assert"; the NDEBUG define applies to Sawyer ASSERT_* macros and plain old "assert" but not
          ROSE_ASSERT.]))
 
 case "$enable_assertion_behavior" in
@@ -437,7 +437,7 @@ case "$enable_assertion_behavior" in
     throw)    assertion_behavior=ROSE_ASSERTION_THROW ;;
     *)
         AC_MSG_ERROR(["--enable-assertion-behavior should be "abort", "exit", or "throw"])
-	;;
+        ;;
 esac
 
 AC_DEFINE_UNQUOTED([ROSE_ASSERTION_BEHAVIOR], [$assertion_behavior], [Determines how failed assertions should behave.])
@@ -947,38 +947,38 @@ AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (tes
 # TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
 
 AC_ARG_WITH(
-	[ppl],
-	AS_HELP_STRING([--with-ppl@<:@=DIR@:>@], [use Parma Polyhedral Library (PPL)]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
-		exit 1
-	else
-		has_ppl_path="yes"
-		ppl_path="$withval"
-	fi
-	],
-	[has_ppl_path="no"]
+        [ppl],
+        AS_HELP_STRING([--with-ppl@<:@=DIR@:>@], [use Parma Polyhedral Library (PPL)]),
+        [
+        if test "$withval" = "no"; then
+                echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+                exit 1
+        elif test "$withval" = "yes"; then
+                echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+                exit 1
+        else
+                has_ppl_path="yes"
+                ppl_path="$withval"
+        fi
+        ],
+        [has_ppl_path="no"]
 )
 
 AC_ARG_ENABLE(
-	ppl,
-	AS_HELP_STRING(
-		[--enable-ppl],
-		[Support for Parma Polyhedral Library (PPL)]
-	)
+        ppl,
+        AS_HELP_STRING(
+                [--enable-ppl],
+                [Support for Parma Polyhedral Library (PPL)]
+        )
 )
 AM_CONDITIONAL(
-	ROSE_USE_PPL,
-	[test "x$enable_ppl" = "xyes"])
+        ROSE_USE_PPL,
+        [test "x$enable_ppl" = "xyes"])
 if test "x$enable_ppl" = "xyes"; then
-	if test "x$has_ppl_path" = "xyes"; then
-		PPL_PATH="$ppl_path"
-		AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
-	fi
+        if test "x$has_ppl_path" = "xyes"; then
+                PPL_PATH="$ppl_path"
+                AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
+        fi
 fi
 AC_SUBST(ROSE_USE_PPL)
 AC_SUBST(PPL_PATH)
@@ -988,38 +988,38 @@ AC_SUBST(PPL_PATH)
 # *********************************************************************************
 
 AC_ARG_WITH(
-	[cloog],
-	AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
-		exit 1
-	else
-		has_cloog_path="yes"
-		cloog_path="$withval"
-	fi
-	],
-	[has_cloog_path="no"]
+        [cloog],
+        AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
+        [
+        if test "$withval" = "no"; then
+                echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+                exit 1
+        elif test "$withval" = "yes"; then
+                echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+                exit 1
+        else
+                has_cloog_path="yes"
+                cloog_path="$withval"
+        fi
+        ],
+        [has_cloog_path="no"]
 )
 
 AC_ARG_ENABLE(
-	cloog,
-	AS_HELP_STRING(
-		[--enable-cloog],
-		[Support for Cloog]
-	)
+        cloog,
+        AS_HELP_STRING(
+                [--enable-cloog],
+                [Support for Cloog]
+        )
 )
 AM_CONDITIONAL(
-	ROSE_USE_CLOOG,
-	[test "x$enable_cloog" = "xyes"])
+        ROSE_USE_CLOOG,
+        [test "x$enable_cloog" = "xyes"])
 if test "x$enable_cloog" = "xyes"; then
-	if test "x$has_cloog_path" = "xyes"; then
-		CLOOG_PATH="$cloog_path"
-		AC_DEFINE([ROSE_USE_CLOOG], [], [Whether to use Cloog support or not within ROSE])
-	fi
+        if test "x$has_cloog_path" = "xyes"; then
+                CLOOG_PATH="$cloog_path"
+                AC_DEFINE([ROSE_USE_CLOOG], [], [Whether to use Cloog support or not within ROSE])
+        fi
 fi
 AC_SUBST(ROSE_USE_CLOOG)
 AC_SUBST(CLOOG_PATH)
@@ -1029,38 +1029,38 @@ AC_SUBST(CLOOG_PATH)
 # **************************************************************************************
 
 AC_ARG_WITH(
-	[scoplib],
-	AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
-		exit 1
-	else
-		has_scoplib_path="yes"
-		scoplib_path="$withval"
-	fi
-	],
-	[has_scoplib_path="no"]
+        [scoplib],
+        AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
+        [
+        if test "$withval" = "no"; then
+                echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+                exit 1
+        elif test "$withval" = "yes"; then
+                echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+                exit 1
+        else
+                has_scoplib_path="yes"
+                scoplib_path="$withval"
+        fi
+        ],
+        [has_scoplib_path="no"]
 )
 
 AC_ARG_ENABLE(
-	scoplib,
-	AS_HELP_STRING(
-		[--enable-scoplib],
-		[Support for ScopLib]
-	)
+        scoplib,
+        AS_HELP_STRING(
+                [--enable-scoplib],
+                [Support for ScopLib]
+        )
 )
 AM_CONDITIONAL(
-	ROSE_USE_SCOPLIB,
-	[test "x$enable_scoplib" = "xyes"])
+        ROSE_USE_SCOPLIB,
+        [test "x$enable_scoplib" = "xyes"])
 if test "x$enable_scoplib" = "xyes"; then
-	if test "x$has_scoplib_path" = "xyes"; then
-		SCOPLIB_PATH="$scoplib_path"
-		AC_DEFINE([ROSE_USE_SCOPLIB], [], [Whether to use ScopLib support or not within ROSE])
-	fi
+        if test "x$has_scoplib_path" = "xyes"; then
+                SCOPLIB_PATH="$scoplib_path"
+                AC_DEFINE([ROSE_USE_SCOPLIB], [], [Whether to use ScopLib support or not within ROSE])
+        fi
 fi
 AC_SUBST(ROSE_USE_SCOPLIB)
 AC_SUBST(SCOPLIB_PATH)
@@ -1070,38 +1070,38 @@ AC_SUBST(SCOPLIB_PATH)
 # *************************************************************************************
 
 AC_ARG_WITH(
-	[candl],
-	AS_HELP_STRING([--with-candl@<:@=DIR@:>@], [use Candl]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
-		exit 1
-	else
-		has_candl_path="yes"
-		candl_path="$withval"
-	fi
-	],
-	[has_candl_path="no"]
+        [candl],
+        AS_HELP_STRING([--with-candl@<:@=DIR@:>@], [use Candl]),
+        [
+        if test "$withval" = "no"; then
+                echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+                exit 1
+        elif test "$withval" = "yes"; then
+                echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+                exit 1
+        else
+                has_candl_path="yes"
+                candl_path="$withval"
+        fi
+        ],
+        [has_candl_path="no"]
 )
 
 AC_ARG_ENABLE(
-	candl,
-	AS_HELP_STRING(
-		[--enable-candl],
-		[Support for Candl]
-	)
+        candl,
+        AS_HELP_STRING(
+                [--enable-candl],
+                [Support for Candl]
+        )
 )
 AM_CONDITIONAL(
-	ROSE_USE_CANDL,
-	[test "x$enable_candl" = "xyes"])
+        ROSE_USE_CANDL,
+        [test "x$enable_candl" = "xyes"])
 if test "x$enable_candl" = "xyes"; then
-	if test "x$has_candl_path" = "xyes"; then
-		CANDL_PATH="$candl_path"
-		AC_DEFINE([ROSE_USE_CANDL], [], [Whether to use Candl support or not within ROSE])
-	fi
+        if test "x$has_candl_path" = "xyes"; then
+                CANDL_PATH="$candl_path"
+                AC_DEFINE([ROSE_USE_CANDL], [], [Whether to use Candl support or not within ROSE])
+        fi
 fi
 AC_SUBST(ROSE_USE_CANDL)
 AC_SUBST(CANDL_PATH)
@@ -1289,7 +1289,7 @@ AC_MSG_RESULT($CXX_STATIC_LIB_UPDATE and $CXX_DYNAMIC_LIB_UPDATE)
 # BTNG.
 AC_MSG_CHECKING(for A++P++)
 AC_ARG_WITH(AxxPxx,
-[  --with-AxxPxx=PATH	Specify the prefix where A++P++ is installed],
+[  --with-AxxPxx=PATH   Specify the prefix where A++P++ is installed],
 ,
 if test "$AxxPxx_PREFIX" ; then 
    with_AxxPxx="$AxxPxx_PREFIX"
@@ -1571,7 +1571,7 @@ AC_ARG_WITH(QRose, [  --with-QRose=PATH     prefix of QRose installation],
        exit 1
     fi
    ],
-	[with_QRose=no])
+        [with_QRose=no])
 
 AC_SUBST(QROSE_PREFIX)
 AM_CONDITIONAL(ROSE_USE_QROSE,test "x$with_QRose" != xno)
@@ -2464,13 +2464,13 @@ AC_CONFIG_COMMANDS([default],[[
 
 # Generate rose_paths.C
 AC_CONFIG_COMMANDS([rose_paths.C], [[
-	make src/util/rose_paths.C
+        make src/util/rose_paths.C
 ]])
 
 # Generate public config file from private config file. The public config file adds "ROSE_" to the beginning of
 # certain symbols. See scripts/publicConfiguration.pl for details.
 AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
-	make rosePublicConfig.h
+        make rosePublicConfig.h
 ]])
 
 # [TOO1, 2014-04-22]
@@ -2479,9 +2479,9 @@ AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
 # Rewrite the definitions for srcdir, top_srcdir, builddir, and top_builddir so they use the "abs_" versions instead.
 #AC_CONFIG_COMMANDS([absoluteNames],
 #[[
-#	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
-#	find . -name Makefile | xargs sed -i~ \
-#	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
+#       echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
+#       find . -name Makefile | xargs sed -i~ \
+#           -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
 #]])
 
 
