@@ -211,7 +211,7 @@ main ( int argc, char* argv[] )
   // Case we want to detect:
   //   1) Use of global variables in all lmbda functions in each function.
   //   2) Use of global variables in all functions (independent of use of lambda functions).
-#if 0
+#if 1
      bool onlyInLambdaFunctions = false;
 #else
      bool onlyInLambdaFunctions = true;

@@ -380,7 +380,16 @@ NEW_TESTCODES = \
    test2016_18.C \
    test2016_19.C \
    test2016_20.C \
-   test2016_21.C
+   test2016_21.C \
+   test2016_25.C \
+   test2016_26.C \
+   test2016_27.C 
+
+# DQ (5/8/2016): Example of large cpp preprocessed file that is failing to unparse correctly.
+# Previously these were failing in the frontend (now fixed).
+#  test2016_22.C 
+#  test2016_23.C 
+#  test2016_24.C 
 
 
 if !USING_CLANG_COMPILER

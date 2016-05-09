@@ -5476,6 +5476,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
    }
 
+
 void
 SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
    {
@@ -6617,6 +6618,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      commandLine.push_back("--sys_include");
      commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
 #endif
+#endif
+
+#ifdef BACKEND_CXX_IS_GNU_COMPILER
+   #if (ROSE_BOOST_VERSION >= 105800)
+  // DQ (5/6/2016): Adding macro to control use of Boost in later versions of Bosot (1.58 and later).
+  // Not clear if this is specific to GNU, but lets initially be conservative.
+     commandLine.push_back("-DBOOST_NO_ALIGNMENT");
+   #endif
 #endif
 
 #if 0

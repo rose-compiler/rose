@@ -44,6 +44,12 @@
 /* DQ (9/1/2014): Define this for the Intel compiler (to avoid Intel specific code not handled by EDG) */
 #ifdef __INTEL_COMPILER
   #define _OVERRIDE_COMPLEX_SPECIALIZATION_
+
+/* DQ (4/3/2016): This appears to work fine as a definition for the missing macro support for the Intel V16 compiler. 
+   Note that undefining the macro does not work well, and results in references to undefined functions.  
+   This appears to be a clang specific macro function (compiler extension) that is supported in Intel V16 C++ cpmpiler.
+ */
+#define __has_include_next(file) 1
 #endif
 
 /* DQ (8/28/2015): Adding specialized support for Intel compiler. */

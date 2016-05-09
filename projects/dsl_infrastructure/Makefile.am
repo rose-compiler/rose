@@ -19,7 +19,11 @@ CPPFLAGS += $(CXX11FLAG)
 noinst_LTLIBRARIES = libdsl_infrastructure.la
 libdsl_infrastructure_la_SOURCES = dsl_detection.C dslSupport.C 
 
+# attributeGenerator_SOURCES = attributeGenerator.C attributeGenerator.h
 attributeGenerator_SOURCES = attributeGenerator.C attributeGenerator.h
+
+# DQ (5/5/2016): Add use of dsl_infrastrcutre library to the attributeGenerator.
+# attributeGenerator_LDADD = -ldsl_infrastructure
 
 # Note that dsl_attributes.C is ultimately a generated file.
 # array_main_SOURCES = array_main.C array.C generated_dsl_attributes.C generated_dsl_attributes_wrapper.C 
