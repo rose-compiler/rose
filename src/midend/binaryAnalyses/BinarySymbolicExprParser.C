@@ -508,6 +508,10 @@ protected:
                "{Signed division. Divides the first operand by the second. Both operands are interpreted as signed "
                "values, but they need not have the same width. The result width is the same as the width of the first "
                "operand.}";
+
+        ops_.insert("set",          SymbolicExpr::OP_SET);
+        doc += "@named{set}"
+               "{A set of expressions.  This expression can evaluate to any of its arguments.}";
         
         ops_.insert("sextend",      SymbolicExpr::OP_SEXTEND);
         doc += "@named{sextend}"

@@ -65,7 +65,7 @@ public:
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a partial-symbolic semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the PartialSymbolicSemantics domain. A value is either known or unknown. Unknown values have
@@ -144,8 +144,8 @@ public:
         return retval;
     }
 
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
-                                                                           SMTSolver*) const ROSE_OVERRIDE;
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other,const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
     
     /** Virtual allocating constructor. Creates a new semantic value with full control over all aspects of the value. */
     virtual BaseSemantics::SValuePtr create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const {
@@ -214,7 +214,7 @@ typedef BaseSemantics::MemoryCellListPtr MemoryStatePtr;
 //                                      Complete state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to partial symbolic semantics state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class State> StatePtr;
 
 /** Represents the entire state of the machine. This state expects to use a subclass of BaseSemantics::MemoryCellList as
@@ -229,14 +229,14 @@ protected:
         : BaseSemantics::State(registers, memory) {
         // This state should use PartialSymbolicSemantics values (or subclasses thereof)
         ASSERT_not_null(registers);
-        (void) SValue::promote(registers->get_protoval());
+        (void) SValue::promote(registers->protoval());
         ASSERT_not_null(memory);
         (void) SValue::promote(memory->get_addr_protoval());
         (void) SValue::promote(memory->get_val_protoval());
 
         // This state should use a memory that is not byte restricted.
         MemoryStatePtr mcl = MemoryState::promote(memory);
-        ASSERT_require(!mcl->get_byte_restricted());
+        ASSERT_require(!mcl->byteRestricted());
     }
 
     State(const State &other): BaseSemantics::State(other) {}
@@ -297,8 +297,7 @@ public:
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to partial symbolic semantics RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for this semantic domain. */
@@ -311,11 +310,11 @@ protected:
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), map(NULL) {
-        set_name("PartialSymbolic");
+        name("PartialSymbolic");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), map(NULL) {
-        set_name("PartialSymbolic");
+        name("PartialSymbolic");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,6 +1,7 @@
 #include "FileSystem.h"
 #include <boost/foreach.hpp>
 #include <set>
+#include <fstream>
 
 #if BOOST_FILESYSTEM_VERSION == 2                       // FIXME[Robb P. Matzke 2014-11-18]: Remove version 2 support
 #include <LinearCongruentialGenerator.h>
@@ -166,6 +167,36 @@ findNamesRecursively(const Path &root) {
     return findNamesRecursively(root, isExisting, isDirectory);
 }
 
+// This doesn't make any sense! First, BOOST_COMPILED_WITH_CXX11 is never defined in any version of boost. Second, even if it
+// were defined, it would come from boost header files which are always compiled with the same compile as that which is
+// compiling this source file. [Robb Matzke 2016-02-17]
+//#if (__cplusplus >= 201103L) 
+//#if !defined(BOOST_COMPILED_WITH_CXX11)
+//   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
+//#else
+//   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
+//#endif
+//#endif
+
+void
+copyFile(const Path &src, const Path &dst) {
+    // Do not use boost::filesystem::copy_file in boost 1.56 and earlier because it is not possible to cross link c++11 rose
+    // with c++89 boost when using this symbol.  Boost issue #6124 fixed in boost 1.57 and later. Our solution is to use C++
+    // stream I/O instead, which should still work on non-POSIX systems (Microsoft) although the exception situations might not
+    // be exactly precise as POSIX. Use path::string rather than path::native in order to support Filesystem version 2.
+    std::ifstream in(src.string().c_str(), std::ios::binary);
+    std::ofstream out(dst.string().c_str(), std::ios::binary);
+    out <<in.rdbuf();
+    if (in.fail()) {
+        throw boost::filesystem::filesystem_error("read failed", src,
+                                                  boost::system::error_code(errno, boost::system::system_category()));
+    }
+    if (out.fail()) {
+        throw boost::filesystem::filesystem_error("write failed", dst,
+                                                  boost::system::error_code(errno, boost::system::system_category()));
+    }
+}
+
 // Copies files to dstDir so that their name relative to dstDir is the same as their name relative to root
 void
 copyFiles(const std::vector<Path> &fileNames, const Path &root, const Path &dstDir) {
@@ -173,29 +204,9 @@ copyFiles(const std::vector<Path> &fileNames, const Path &root, const Path &dstD
     BOOST_FOREACH (const Path &fileName, fileNames) {
         Path dirName = dstDir / makeRelative(fileName.parent_path(), root);
         if (dirs.insert(dirName).second)
-           {
-             boost::filesystem::create_directories(dirName);
-           }
-
-#if (__cplusplus >= 201103L) 
-#if !defined(BOOST_COMPILED_WITH_CXX11)
-   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
-#else
-   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
-#endif
-#endif
-
-     // DQ (10/20/2015): Boost support for copy_file() is not uniform acorss C++98 and C++11.
-     // I think this need to be addressed seperately in ROSE.
-     // boost::filesystem::copy_file(fileName, dirName / fileName.filename());
-#if (__cplusplus >= 201103L) && !defined(BOOST_COMPILED_WITH_CXX11)
-     // copy_file(fileName, dirName / fileName.filename());
-        printf ("Error: C++11 support for compiling ROSE requires BOOST to be compiled in C++11 mode! (required for copy_file() support) \n");
-     // ROSE_ASSERT(false);
-        assert(false);
-#else
-        boost::filesystem::copy_file(fileName, dirName / fileName.filename());
-#endif
+            boost::filesystem::create_directories(dirName);
+        Path outputName = dirName / fileName.filename();
+        copyFile(fileName, outputName);
     }
 }
 

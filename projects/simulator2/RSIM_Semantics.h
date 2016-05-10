@@ -115,16 +115,28 @@ public:
 
 public:
     virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    create(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+           rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+        ASSERT_not_reachable("no architecture or thread available");
+    }
+
+    virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(Architecture arch, RSIM_Thread *thread,
            const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(arch, thread, protoval, solver);
+    }
+
+    virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    create(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+           rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+        ASSERT_not_reachable("no architecture or thread available");
     }
 
     virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(Architecture arch, RSIM_Thread *thread,
            const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-           rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(arch, thread, state, solver);
     }
 
@@ -160,7 +172,7 @@ public:
 
 public:
     virtual void hlt() {
-        throw Halt(get_insn()->get_address());
+        throw Halt(currentInstruction()->get_address());
     }
 
     virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;

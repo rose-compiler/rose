@@ -75,6 +75,7 @@ enum StackCleanup {
  *
  *  The same type is used for input parameters, output parameters, and in-out parameters. Return values are a kind of
  *  output parameter, although the API usually does not include the return value when it talks about "parameters". */
+  #undef ABSOLUTE
 class ParameterLocation {
 public:
     /** Type of location. */
@@ -232,7 +233,8 @@ public:
      *
      *  Constructs a new calling convention with no name or parameters. */
     Definition()
-        : wordWidth_(0), regDict_(NULL), stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {}
+        : wordWidth_(0), regDict_(NULL), stackParameterOrder_(ORDER_UNSPECIFIED), nonParameterStackSize_(0),
+          stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {}
 
     /** Construct a new calling convention.
      *
@@ -240,8 +242,8 @@ public:
      *  is a more complete name for the convention perhaps including the operating system and architecture but not containing
      *  line termination. */
     Definition(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionary *regDict)
-        : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict), stackAlignment_(0),
-          stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
+        : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict), stackParameterOrder_(ORDER_UNSPECIFIED),
+          nonParameterStackSize_(0), stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
         ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
     }
 
@@ -744,21 +746,21 @@ public:
     Analysis()
         : regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
-    /** Construct an analysis using specified disassembler.
+    /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    Analysis(Disassembler *d)
+    explicit Analysis(Disassembler *d)
         : regDict_(NULL), hasResults_(false), didConverge_(false) {
         init(d);
     }
 
-    /** Construct an analysis using specified dispatcher.
+    /** Construct an analysis using a specified dispatcher.
      *
      *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain
      *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::MemoryCellList "MemoryCellList" and
      *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
      *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
-    Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
+    explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
     /** Property: Default calling convention.

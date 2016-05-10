@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 if test $# -ne 3; then
   echo "Usage: $0 build cpu os_vendor" >&2

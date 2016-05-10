@@ -204,7 +204,7 @@ public:
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
-        StatePtr state = State::promote(get_state());
+        StatePtr state = State::promote(currentState());
         state->saveRead(addr, retval);
         return retval;
     }
@@ -309,8 +309,13 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // Build the initial state
     initialState_ = xfer.initialState();
     BaseSemantics::RegisterStateGenericPtr initialRegState =
-        BaseSemantics::RegisterStateGeneric::promote(initialState_->get_register_state());
+        BaseSemantics::RegisterStateGeneric::promote(initialState_->registerState());
     initialRegState->initialize_large();
+
+    // Allow data-flow merge operations to create sets of values up to a certain cardinality. This is optional.
+    SymbolicSemantics::MergerPtr merger = SymbolicSemantics::Merger::instance(10 /*arbitrary*/);
+    initialState_->registerState()->merger(merger);
+    initialState_->memoryState()->merger(merger);
 
     // Run the data-flow analysis
     bool converged = true;
@@ -343,8 +348,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().get_nbits();
     Sawyer::Container::Set<uint64_t> addrSeen;
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
-        BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(state->get_memory_state());
-        BOOST_FOREACH (BaseSemantics::MemoryCellPtr &cell, memState->get_cells())
+        BaseSemantics::MemoryCellStatePtr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
+        BOOST_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->allCells())
             conditionallySavePointer(cell->get_address(), addrSeen, dataWordSize, dataPointers_);
     }
 
@@ -354,7 +359,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     addrSeen.clear();
     const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
-        SymbolicSemantics::SValuePtr ip = SymbolicSemantics::SValue::promote(state->readRegister(IP, ops.get()));
+        SymbolicSemantics::SValuePtr ip =
+            SymbolicSemantics::SValue::promote(state->readRegister(IP, ops->undefined_(IP.get_nbits()), ops.get()));
         SymbolicExpr::Ptr ipExpr = ip->get_expression();
         if (!addrSeen.exists(ipExpr->hash())) {
             bool isSignificant = false;

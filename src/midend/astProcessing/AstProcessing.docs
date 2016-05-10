@@ -1,6 +1,6 @@
  /*!
      \defgroup AstProcessingClasses AST Processing
-     \ingroup ROSE_MidEndGroup
+     \ingroup rose_midend
 
      \authors Markus Schordan\n 
               (preliminary versions developed by Quinlan and Kowarschik using a different algorithm for combing attributes and a single interface)
@@ -107,33 +107,5 @@
      node. \n
 
      \internal This class is derived from the SgTreeTraversal class.
-  */
-
- /*! \class AstAttributeMechanism AstAttributeMechanism.h
-     \ingroup AstProcessingClasses
-
-     \brief This mechanism provides capabilities to define a mapping from strings to AstAttributes. An instance of this class is accessible at each ROSE AST node in the data member 'attribute'.
-
-
-     Each node of the ROSE AST contains an AstAttributeMechanism,
-     accessible as data member 'attribute'. Using this mechnism attributes can be attached to AST nodes.\n
-     example: class MyAstAttribute : public AstAttribute { public: MyAstAttribute(int v):val(v){} ... private: int val; };\n
-              node->attribute.add("myattribute1",new MyAstAttribute(5));\n
-              MyAstAttribute* accessexample = node->attribute["myattribute1"];\n
-  */
-
- /*! \class AstAttribute AstAttributeMechanism.h
-     \ingroup AstProcessingClasses
-
-     \brief Base class for attributes that can be attached to AST nodes using the attribute mechanism in each AST node.
-
-     
-     Objects of class AstAttribute can be be attached to ROSE AST
-     nodes. An attribute must be a subclass of AstAttribute.  Each
-     node of the ROSE AST contains an AstAttributeMechanism,
-     accessible as data member 'attribute'. Using this mechnism attributes can be attached to AST nodes.\n
-     example: class MyAstAttribute : public AstAttribute { public: MyAstAttribute(int v):val(v){} ... private: int val; };\n
-              node->attribute.add("myattribute1",new MyAstAttribute(5));\n
-              MyAstAttribute* accessexample = node->attribute["myattribute1"];\n
   */
 

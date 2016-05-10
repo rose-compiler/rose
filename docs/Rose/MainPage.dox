@@ -50,13 +50,14 @@
  *
  * @subsection mainpage_gtoc_current Current release
  *
- *  @li [The ROSE website](http://rosecompiler.org)
+ *  @li [Internal Global Table of Contents](http://toc.rosecompiler.org/)
+ *  @li [The ROSE public website](http://rosecompiler.org)
  *  @li @ref installation "Download and installation"
  *  @li [Source code analysis tutorial](http://rosecompiler.org/ROSE_Tutorial/ROSE-Tutorial.pdf) (PDF)
  *  @li @ref binary_tutorial
  *  @li [ROSE user manual](http://rosecompiler.org/ROSE_UserManual/ROSE-UserManual.pdf) (PDF)
- *  @li @ref other_publications
- *  @li [Project talks](http://rosecompiler.org/ROSE_HTML_Reference/ProjectTalks.html)
+ *  @li @ref rosetools "ROSE-Based Tools"
+ *  @li [Publications](http://rosecompiler.org/?page_id=182)
  *  @li [Public mailing list](https://mailman.nersc.gov/mailman/listinfo/rose-public) for anyone that uses ROSE.
  *  @li [Developers mailing list](https://mailman.nersc.gov/mailman/listinfo/rose-developer) for anyone who
  *      contributes to the ROSE project.
@@ -70,8 +71,8 @@
  *
  * @subsection mainpage_gtoc_previous Other releases
  *
- *  The documentation you're currently viewing is for ROSE-0.9.6a. Other releases can be found
- *  [here](http://rosecompiler.org/docs/all-versions).
+ *  The documentation you're currently viewing is for a specific version of ROSE. Documentation for other releases can be found
+ *  [here](http://doxygen.rosecompiler.org).
  *
  *
  *

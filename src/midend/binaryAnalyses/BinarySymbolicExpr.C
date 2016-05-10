@@ -9,6 +9,8 @@
 #include "Combinatorics.h"
 
 #include <boost/foreach.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -18,15 +20,28 @@ namespace SymbolicExpr {
 //                                      Supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint64_t
-Leaf::nameCounter_ = 0;
+// A mutex that's used by various methods in this namespace
+static boost::mutex symbolicExprMutex;
+
+// Returns the next name counter. If @p useThis is specified then return that value and make sure the next value to be
+// returned is larger.
+static uint64_t
+nextNameCounter(uint64_t useThis = (uint64_t)(-1)) {
+    static boost::mutex mutex;
+    static uint64_t counter = 0;
+    boost::lock_guard<boost::mutex> lock(mutex);
+    if (useThis == (uint64_t)(-1))
+        return ++counter;
+    counter = std::max(counter, useThis);
+    return useThis;
+}
 
 const uint64_t
 MAX_NNODES = UINT64_MAX;
 
 std::string
 toStr(Operator o) {
-    static char buf[64];
+    char buf[64];
     std::string s = stringifyBinaryAnalysisSymbolicExprOperator(o, "OP_");
     ASSERT_require(s.size()<sizeof buf);
     strcpy(buf, s.c_str());
@@ -126,12 +141,33 @@ ExpressionLessp::operator()(const Ptr &a, const Ptr &b) {
     return a->hash() < b->hash();
 }
 
+Ptr
+setToIte(const Ptr &set) {
+    ASSERT_not_null(set);
+    InteriorPtr iset = set->isInteriorNode();
+    if (!iset || iset->getOperator() != OP_SET)
+        return set;
+    ASSERT_require(iset->nChildren() >= 1);
+    Ptr condVar = makeVariable(32);
+    Ptr retval;
+    for (size_t i=iset->nChildren(); i>0; --i) {
+        Ptr member = iset->child(i-1);
+        if (!retval) {
+            retval = member;
+        } else {
+            Ptr cond = makeEq(condVar, makeInteger(32, i));
+            retval = makeIte(cond, member, retval);
+        }
+    }
+    return retval;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Base node
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Ptr
-Node::newFlags(unsigned newFlags) const {
+Node::newFlags(unsigned newFlags) {
     if (newFlags == flags_)
         return sharedFromThis();
     if (InteriorPtr inode = isInteriorNode())
@@ -148,8 +184,7 @@ Node::newFlags(unsigned newFlags) const {
 }
     
 std::set<LeafPtr>
-Node::getVariables() const
-{
+Node::getVariables() {
     struct T1: public Visitor {
         std::set<LeafPtr> vars;
         VisitAction preVisit(const Ptr&) {
@@ -166,24 +201,75 @@ Node::getVariables() const
     return t1.vars;
 }
 
-uint64_t
-Node::hash() const
-{
-    if (0==hashval_) {
-        // FIXME: We could build the hash with a traversal rather than
-        // from a string.  But this method is quick and easy. [Robb P. Matzke 2013-09-10]
-        std::ostringstream ss;
-        Formatter formatter;
-        formatter.show_comments = Formatter::CMT_SILENT;
-        print(ss, formatter);
-        hashval_ = Combinatorics::fnv1a64_digest(ss.str());
+struct Hasher: Visitor {
+    virtual VisitAction preVisit(const Ptr &node) ROSE_OVERRIDE {
+        return 0 == node->isHashed() ? CONTINUE : TRUNCATE;
     }
+
+    virtual VisitAction postVisit(const Ptr &node) ROSE_OVERRIDE {
+        if (!node->isHashed()) {                        // probably true, but some other thread may have beaten us here.
+            uint64_t h = hash(hash(node->domainWidth(), node->nBits()), node->flags());
+            if (LeafPtr leaf = node->isLeafNode()) {
+                if (leaf->isNumber()) {
+                    if (leaf->nBits() <= 64) {
+                        h = hash(h, leaf->toInt());
+                    } else {
+                        for (size_t i=0; i<leaf->nBits(); i+=64) {
+                            typedef Sawyer::Container::BitVector::BitRange BitRange;
+                            size_t j = std::min(i+64, leaf->nBits());
+                            h = hash(h, leaf->bits().toInteger(BitRange::hull(i, j-1)));
+                        }
+                    }
+                } else {
+                    // It's okay to not hash whether the leaf is a variable or memory because variables always have a zero
+                    // domain width and memory has a non-zero width, which is already incorporated into the hash from above.
+                    h = hash(h, leaf->nameId());
+                }
+            } else {
+                InteriorPtr inode = node->isInteriorNode();
+                ASSERT_not_null(inode);
+                h = hash(h, inode->getOperator());
+                BOOST_FOREACH (const Ptr &child, inode->children()) {
+                    ASSERT_require(child->isHashed());
+                    h = hash(h, child->hash());
+                }
+            }
+            node->hash(h);
+        }
+        return CONTINUE;
+    }
+
+    // Incorporates data into the existing hash, h, and returns a new hash. This is no particular well-known algorithm, but
+    // testing showed that it gives pretty well-distributed results for close values, particularly when called on two or more
+    // pieces of data.
+    uint64_t hash(uint64_t h, uint64_t data) {
+        for (size_t i=0; i<64-6; i += 6) {
+            unsigned sa = ((data >> i) ^ h ^ i) & 0x3f;
+            h = (h >> (64-sa)) | (h << sa);
+            h ^= data;
+        }
+        return h;
+    }
+};
+
+uint64_t
+Node::hash() {
+    if (0==hashval_) {
+        Hasher hasher;
+        depthFirstTraversal(hasher);
+    }
+    boost::unique_lock<boost::mutex> lock(symbolicExprMutex);
     return hashval_;
 }
 
 void
-Node::assertAcyclic() const
-{
+Node::hash(uint64_t h) {
+    boost::unique_lock<boost::mutex> lock(symbolicExprMutex);
+    hashval_ = h;
+}
+
+void
+Node::assertAcyclic() {
 #ifndef NDEBUG
     struct T1: Visitor {
         std::vector<const Node*> ancestors;
@@ -203,18 +289,18 @@ Node::assertAcyclic() const
 }
 
 uint64_t
-Node::nNodesUnique() const {
+Node::nNodesUnique() {
     std::vector<Ptr> exprs(1, sharedFromThis());
     return SymbolicExpr::nNodesUnique(exprs.begin(), exprs.end());
 }
 
 std::vector<Ptr>
-Node::findCommonSubexpressions() const {
+Node::findCommonSubexpressions() {
     return SymbolicExpr::findCommonSubexpressions(std::vector<Ptr>(1, sharedFromThis()));
 }
 
 void
-Node::printFlags(std::ostream &o, unsigned flags, char &bracket) const {
+Node::printFlags(std::ostream &o, unsigned flags, char &bracket) {
     if ((flags & INDETERMINATE) != 0) {
         o <<bracket <<"indet";
         bracket = ',';
@@ -376,7 +462,7 @@ Interior::adjustWidth() {
                 throw Exception(toStr(op_) + " operator expects three arguments");
             if (!child(0)->isScalar())
                 throw Exception(toStr(op_) + " operator's first argument (condition) must be scalar");
-            if (!child(0)->nBits() == 1)
+            if (child(0)->nBits() != 1)
                 throw Exception(toStr(op_) + " operator's first argument (condition) must be Boolean");
             if (child(1)->nBits() != child(2)->nBits() || child(1)->domainWidth() != child(2)->domainWidth())
                 throw Exception(toStr(op_) + " operator's second and third arguments must have equal width");
@@ -511,8 +597,7 @@ Interior::adjustBitFlags(unsigned flags) {
 }
 
 void
-Interior::print(std::ostream &o, Formatter &fmt) const
-{
+Interior::print(std::ostream &o, Formatter &fmt) {
     struct FormatGuard {
         Formatter &fmt;
         FormatGuard(Formatter &fmt): fmt(fmt) {
@@ -599,8 +684,7 @@ Interior::print(std::ostream &o, Formatter &fmt) const
 }
 
 bool
-Interior::mustEqual(const Ptr &other_, SMTSolver *solver/*NULL*/) const
-{
+Interior::mustEqual(const Ptr &other_, SMTSolver *solver/*NULL*/) {
     bool retval = false;
     if (this==getRawPointer(other_)) {
         retval = true;
@@ -616,8 +700,7 @@ Interior::mustEqual(const Ptr &other_, SMTSolver *solver/*NULL*/) const
 }
 
 bool
-Interior::mayEqual(const Ptr &other, SMTSolver *solver/*NULL*/) const
-{
+Interior::mayEqual(const Ptr &other, SMTSolver *solver/*NULL*/) {
     bool retval = false;
     if (this==getRawPointer(other)) {
         return true;
@@ -633,8 +716,7 @@ Interior::mayEqual(const Ptr &other, SMTSolver *solver/*NULL*/) const
 }
 
 int
-Interior::compareStructure(const Ptr &other_) const
-{
+Interior::compareStructure(const Ptr &other_) {
     InteriorPtr other = other_->isInteriorNode();
     if (this==getRawPointer(other)) {
         return 0;
@@ -660,8 +742,7 @@ Interior::compareStructure(const Ptr &other_) const
 }
 
 bool
-Interior::isEquivalentTo(const Ptr &other_) const
-{
+Interior::isEquivalentTo(const Ptr &other_) {
     bool retval = false;
     InteriorPtr other = other_->isInteriorNode();
     if (this==getRawPointer(other)) {
@@ -699,8 +780,7 @@ Interior::isEquivalentTo(const Ptr &other_) const
 }
 
 Ptr
-Interior::substitute(const Ptr &from, const Ptr &to) const
-{
+Interior::substitute(const Ptr &from, const Ptr &to) {
     ASSERT_require(from!=NULL && to!=NULL && from->nBits()==to->nBits());
     if (isEquivalentTo(from))
         return to;
@@ -722,8 +802,7 @@ Interior::substitute(const Ptr &from, const Ptr &to) const
 }
 
 VisitAction
-Interior::depthFirstTraversal(Visitor &v) const
-{
+Interior::depthFirstTraversal(Visitor &v) {
     Ptr self = sharedFromThis();
     VisitAction action = v.preVisit(self);
     if (CONTINUE==action) {
@@ -739,8 +818,7 @@ Interior::depthFirstTraversal(Visitor &v) const
 }
 
 InteriorPtr
-Interior::associative() const
-{
+Interior::associative() {
     Nodes newOperands;
     std::list<Ptr> worklist(children_.begin(), children_.end());
     bool modified = false;
@@ -830,8 +908,7 @@ commutative_order(const Ptr &a, const Ptr &b)
 }
 
 InteriorPtr
-Interior::commutative() const
-{
+Interior::commutative() {
     const Nodes &orig_operands = children();
     Nodes sorted_operands = orig_operands;
     std::sort(sorted_operands.begin(), sorted_operands.end(), commutative_order);
@@ -844,8 +921,7 @@ Interior::commutative() const
 }
 
 Ptr
-Interior::involutary() const
-{
+Interior::involutary() {
     if (InteriorPtr inode = isInteriorNode()) {
         if (1==inode->nChildren()) {
             if (InteriorPtr sub1 = inode->child(0)->isInteriorNode()) {
@@ -862,8 +938,7 @@ Interior::involutary() const
 //   (shift a (shift b x)) ==> (shift (add a b) x)
 // making sure a and b are extended to the same width
 Ptr
-Interior::additiveNesting() const
-{
+Interior::additiveNesting() {
     InteriorPtr nested = child(1)->isInteriorNode();
     if (nested!=NULL && nested->getOperator()==getOperator()) {
         ASSERT_require(nested->nChildren()==nChildren());
@@ -885,8 +960,7 @@ Interior::additiveNesting() const
 }
 
 Ptr
-Interior::identity(uint64_t ident) const
-{
+Interior::identity(uint64_t ident) {
     Nodes args;
     bool modified = false;
     for (Nodes::const_iterator ci=children_.begin(); ci!=children_.end(); ++ci) {
@@ -921,22 +995,19 @@ Interior::identity(uint64_t ident) const
 }
 
 Ptr
-Interior::unaryNoOp() const
-{
+Interior::unaryNoOp() {
     return 1==nChildren() ? child(0) : sharedFromThis();
 }
 
 Ptr
-Interior::rewrite(const Simplifier &simplifier) const
-{
+Interior::rewrite(const Simplifier &simplifier) {
     if (Ptr simplified = simplifier.rewrite(this))
         return simplified;
     return sharedFromThis();
 }
 
 Ptr
-Interior::foldConstants(const Simplifier &simplifier) const
-{
+Interior::foldConstants(const Simplifier &simplifier) {
     Nodes newOperands;
     bool modified = false;
     Nodes::const_iterator ci1 = children_.begin();
@@ -966,8 +1037,7 @@ Interior::foldConstants(const Simplifier &simplifier) const
 }
 
 Ptr
-AddSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
-{
+AddSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     Sawyer::Container::BitVector accumulator((*begin)->nBits());
     unsigned flags = 0;
     for (/*void*/; begin!=end; ++begin) {
@@ -978,8 +1048,7 @@ AddSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 }
 
 Ptr
-AddSimplifier::rewrite(const Interior *inode) const
-{
+AddSimplifier::rewrite(Interior *inode) const {
     // A and B are duals if they have one of the following forms:
     //    (1) A = x           AND  B = (negate x)
     //    (2) A = x           AND  B = (invert x)   [adjust constant]
@@ -1025,6 +1094,32 @@ AddSimplifier::rewrite(const Interior *inode) const
         }
     };
 
+    // Rewrite (add ... (negate (add a b)) ...) => (add ... (negate a) (negate b) ...)
+    struct distributeNegations {
+        Ptr operator()(Interior *add) {
+            Nodes children;
+            bool distributed = false;
+            for (size_t i=0; i<add->nChildren(); ++i) {
+                bool pushed = false;
+                InteriorPtr addArg = add->child(i)->isInteriorNode();
+                if (addArg && addArg->getOperator()==OP_NEGATE && addArg->nChildren()==1) {
+                    if (InteriorPtr negateArg = addArg->child(0)->isInteriorNode()) {
+                        if (negateArg && negateArg->getOperator()==OP_ADD && negateArg->nChildren()>0) {
+                            for (size_t j=0; j<negateArg->nChildren(); ++j)
+                                children.push_back(makeNegate(negateArg->child(j)));
+                            pushed = distributed = true;
+                        }
+                    }
+                }
+                if (!pushed)
+                    children.push_back(add->child(i));
+            }
+            if (!distributed)
+                return Ptr();
+            return Interior::create(0, OP_ADD, children, add->comment());
+        }
+    };
+
     // Arguments that are negated cancel out similar arguments that are not negated
     bool had_duals = false;
     Sawyer::Container::BitVector adjustment(inode->nBits());
@@ -1041,8 +1136,14 @@ AddSimplifier::rewrite(const Interior *inode) const
             }
         }
     }
-    if (!had_duals)
+
+    // Otherwise distribute negations across adds:
+    //   (add ... (negate (add a b)) ...) => (add ... (negate a) (negate b) ...)
+    if (!had_duals) {
+        if (Ptr distributed = distributeNegations()(inode))
+            return distributed;
         return Ptr();
+    }
 
     // Build the new expression
     children.erase(std::remove(children.begin(), children.end(), Ptr()), children.end());
@@ -1056,8 +1157,7 @@ AddSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-AndSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
-{
+AndSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     Sawyer::Container::BitVector accumulator((*begin)->nBits(), true);
     unsigned flags = 0;
     for (/*void*/; begin!=end; ++begin) {
@@ -1068,8 +1168,7 @@ AndSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 }
 
 Ptr
-AndSimplifier::rewrite(const Interior *inode) const
-{
+AndSimplifier::rewrite(Interior *inode) const {
     // Result is zero if any argument is zero
     for (size_t i=0; i<inode->nChildren(); ++i) {
         LeafPtr child = inode->child(i)->isLeafNode();
@@ -1090,8 +1189,7 @@ AndSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-OrSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
-{
+OrSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     Sawyer::Container::BitVector accumulator((*begin)->nBits());
     unsigned flags = 0;
     for (/*void*/; begin!=end; ++begin) {
@@ -1102,8 +1200,7 @@ OrSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
 }
 
 Ptr
-OrSimplifier::rewrite(const Interior *inode) const
-{
+OrSimplifier::rewrite(Interior *inode) const {
     // Result has all bits set if any argument has all bits set
     for (size_t i=0; i<inode->nChildren(); ++i) {
         LeafPtr child = inode->child(i)->isLeafNode();
@@ -1114,8 +1211,7 @@ OrSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
-{
+XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     Sawyer::Container::BitVector accumulator((*begin)->nBits());
     unsigned flags = 0;
     for (++begin; begin!=end; ++begin) {
@@ -1126,8 +1222,7 @@ XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 }
 
 Ptr
-XorSimplifier::rewrite(const Interior *inode) const
-{
+XorSimplifier::rewrite(Interior *inode) const {
     SMTSolver *solver = NULL;   // FIXME
 
     // If any pairs of arguments are equal, then they don't contribute to the final answer.
@@ -1156,8 +1251,7 @@ XorSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-SmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
-{
+SmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than 64 bits
     // because Sawyer::Container::BitVector does not provide a multiplication method.
     size_t totalWidth = 0;
@@ -1176,8 +1270,7 @@ SmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) con
 }
 
 Ptr
-UmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
-{
+UmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than 64 bits
     // because Sawyer::Container::BitVector does not provide a multiplication method.
     size_t totalWidth = 0;
@@ -1196,8 +1289,7 @@ UmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) con
 }
 
 Ptr
-ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
-{
+ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     // first arg is high-order bits. Although this is nice to look at, it makes the operation a bit more difficult.
     size_t resultSize = 0;
     for (Nodes::const_iterator ti=begin; ti!=end; ++ti)
@@ -1218,8 +1310,7 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
 }
 
 Ptr
-ConcatSimplifier::rewrite(const Interior *inode) const
-{
+ConcatSimplifier::rewrite(Interior *inode) const {
     SMTSolver *solver = NULL; // FIXME
 
     // If all the concatenated expressions are extract expressions, all extracting bits from the same expression and
@@ -1255,8 +1346,7 @@ ConcatSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-ExtractSimplifier::rewrite(const Interior *inode) const
-{
+ExtractSimplifier::rewrite(Interior *inode) const {
     LeafPtr from_node = inode->child(0)->isLeafNode();
     LeafPtr to_node   = inode->child(1)->isLeafNode();
     Ptr operand   = inode->child(2);
@@ -1360,8 +1450,7 @@ ExtractSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-AsrSimplifier::rewrite(const Interior *inode) const
-{
+AsrSimplifier::rewrite(Interior *inode) const {
     ASSERT_require(2==inode->nChildren());
 
     // Constant folding
@@ -1377,8 +1466,7 @@ AsrSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-InvertSimplifier::rewrite(const Interior *inode) const
-{
+InvertSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr operand_node = inode->child(0)->isLeafNode();
     if (operand_node==NULL || !operand_node->isNumber())
@@ -1389,8 +1477,7 @@ InvertSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-NegateSimplifier::rewrite(const Interior *inode) const
-{
+NegateSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr operand_node = inode->child(0)->isLeafNode();
     if (operand_node==NULL || !operand_node->isNumber())
@@ -1401,8 +1488,7 @@ NegateSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-IteSimplifier::rewrite(const Interior *inode) const
-{
+IteSimplifier::rewrite(Interior *inode) const {
     // Is the condition known?
     LeafPtr cond_node = inode->child(0)->isLeafNode();
     if (cond_node!=NULL && cond_node->isNumber()) {
@@ -1419,16 +1505,14 @@ IteSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-NoopSimplifier::rewrite(const Interior *inode) const
-{
+NoopSimplifier::rewrite(Interior *inode) const {
     if (1==inode->nChildren())
         return inode->child(0);
     return Ptr();
 }
 
 Ptr
-RolSimplifier::rewrite(const Interior *inode) const
-{
+RolSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
@@ -1445,8 +1529,7 @@ RolSimplifier::rewrite(const Interior *inode) const
     return Ptr();
 }
 Ptr
-RorSimplifier::rewrite(const Interior *inode) const
-{
+RorSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
@@ -1464,8 +1547,7 @@ RorSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-UextendSimplifier::rewrite(const Interior *inode) const
-{
+UextendSimplifier::rewrite(Interior *inode) const {
     // Noop case
     size_t oldsize = inode->child(1)->nBits();
     size_t newsize = inode->nBits();
@@ -1489,8 +1571,7 @@ UextendSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-SextendSimplifier::rewrite(const Interior *inode) const
-{
+SextendSimplifier::rewrite(Interior *inode) const {
     // Noop case
     size_t oldsize = inode->child(1)->nBits();
     size_t newsize = inode->nBits();
@@ -1514,8 +1595,7 @@ SextendSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-EqSimplifier::rewrite(const Interior *inode) const
-{
+EqSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1532,8 +1612,7 @@ EqSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-SgeSimplifier::rewrite(const Interior *inode) const
-{
+SgeSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1550,8 +1629,7 @@ SgeSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-SgtSimplifier::rewrite(const Interior *inode) const
-{
+SgtSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1564,8 +1642,7 @@ SgtSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-SleSimplifier::rewrite(const Interior *inode) const
-{
+SleSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1582,8 +1659,7 @@ SleSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-SltSimplifier::rewrite(const Interior *inode) const
-{
+SltSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1596,8 +1672,7 @@ SltSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-UgeSimplifier::rewrite(const Interior *inode) const
-{
+UgeSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1614,8 +1689,7 @@ UgeSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-UgtSimplifier::rewrite(const Interior *inode) const
-{
+UgtSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1628,8 +1702,7 @@ UgtSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-UleSimplifier::rewrite(const Interior *inode) const
-{
+UleSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1646,8 +1719,7 @@ UleSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-UltSimplifier::rewrite(const Interior *inode) const
-{
+UltSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1660,8 +1732,7 @@ UltSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-ZeropSimplifier::rewrite(const Interior *inode) const
-{
+ZeropSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->isNumber())
@@ -1671,8 +1742,7 @@ ZeropSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-SdivSimplifier::rewrite(const Interior *inode) const
-{
+SdivSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1690,8 +1760,7 @@ SdivSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-SmodSimplifier::rewrite(const Interior *inode) const
-{
+SmodSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1710,8 +1779,7 @@ SmodSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-UdivSimplifier::rewrite(const Interior *inode) const
-{
+UdivSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1730,8 +1798,7 @@ UdivSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-UmodSimplifier::rewrite(const Interior *inode) const
-{
+UmodSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1750,8 +1817,7 @@ UmodSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_width) const
-{
+ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_width) const {
     if (!strength1 || !strength2)
         return Ptr();
 
@@ -1780,8 +1846,7 @@ ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_wi
 }
 
 Ptr
-ShlSimplifier::rewrite(const Interior *inode) const
-{
+ShlSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
@@ -1827,8 +1892,7 @@ ShlSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-ShrSimplifier::rewrite(const Interior *inode) const
-{
+ShrSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
@@ -1873,8 +1937,7 @@ ShrSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-LssbSimplifier::rewrite(const Interior *inode) const
-{
+LssbSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->isNumber()) {
@@ -1887,8 +1950,7 @@ LssbSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-MssbSimplifier::rewrite(const Interior *inode) const
-{
+MssbSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->isNumber()) {
@@ -1901,18 +1963,49 @@ MssbSimplifier::rewrite(const Interior *inode) const
 }
 
 Ptr
-Interior::simplifyTop() const
-{
+SetSimplifier::rewrite(Interior *inode) const {
+    SMTSolver *solver = NULL;                           // FIXME[Robb Matzke 2015-11-03]
+
+    // (set x) => x
+    if (1 == inode->nChildren())
+        return inode->child(0);
+
+    // Remove duplicate arguments
+    bool removedDuplicate = false;
+    Nodes elements;
+    BOOST_FOREACH (const Ptr &elmt1, inode->children()) {
+        bool isDuplicate = false;
+        BOOST_FOREACH (const Ptr &elmt2, elements) {
+            if (elmt1->mustEqual(elmt2, solver)) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (!isDuplicate) {
+            elements.push_back(elmt1);
+        } else {
+            removedDuplicate = true;
+        }
+    }
+    if (!removedDuplicate)
+        return Ptr();
+    if (1==elements.size())
+        return elements[0];
+    return Interior::create(0, inode->getOperator(), elements, inode->comment());
+}
+
+Ptr
+Interior::simplifyTop() {
     Ptr node = sharedFromThis();
     while (InteriorPtr inode = node->isInteriorNode()) {
         Ptr newnode = node;
         switch (inode->getOperator()) {
             case OP_ADD:
-                newnode = inode->associative()->commutative()->identity(0);
+                newnode = inode->rewrite(AddSimplifier());
+                if (newnode==node)
+                    newnode = inode->associative()->commutative()->identity(0);
                 if (newnode==node)
                     newnode = inode->foldConstants(AddSimplifier());
-                if (newnode==node)
-                    newnode = inode->rewrite(AddSimplifier());
                 break;
             case OP_AND:
             case OP_BV_AND:
@@ -1989,6 +2082,11 @@ Interior::simplifyTop() const
                 break;
             case OP_SDIV:
                 newnode = inode->rewrite(SdivSimplifier());
+                break;
+            case OP_SET:
+                newnode = inode->associative()->commutative();
+                if (newnode==node)
+                    newnode = inode->rewrite(SetSimplifier());
                 break;
             case OP_SEXTEND:
                 newnode = inode->rewrite(SextendSimplifier());
@@ -2084,7 +2182,7 @@ Leaf::createVariable(size_t nbits, const std::string &comment, unsigned flags) {
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = nbits;
     node->leafType_ = BITVECTOR;
-    node->name_ = nameCounter_++;
+    node->name_ = nextNameCounter();
     LeafPtr retval(node);
     return retval;
 }
@@ -2097,8 +2195,7 @@ Leaf::createExistingVariable(size_t nbits, uint64_t id, const std::string &comme
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = nbits;
     node->leafType_ = BITVECTOR;
-    node->name_ = id;
-    nameCounter_ = std::max(nameCounter_, id+1);
+    node->name_ = nextNameCounter(id);
     LeafPtr retval(node);
     return retval;
 }
@@ -2138,7 +2235,7 @@ Leaf::createMemory(size_t addressWidth, size_t valueWidth, const std::string &co
     node->nBits_ = valueWidth;
     node->domainWidth_ = addressWidth;
     node->leafType_ = MEMORY;
-    node->name_ = nameCounter_++;
+    node->name_ = nextNameCounter();
     LeafPtr retval(node);
     return retval;
 }
@@ -2154,54 +2251,47 @@ Leaf::createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, 
     node->nBits_ = valueWidth;
     node->domainWidth_ = addressWidth;
     node->leafType_ = MEMORY;
-    node->name_ = id;
-    nameCounter_ = std::max(nameCounter_, id+1);
+    node->name_ = nextNameCounter(id);
     LeafPtr retval(node);
     return retval;
 }
     
 bool
-Leaf::isNumber() const
-{
+Leaf::isNumber() {
     return CONSTANT==leafType_;
 }
 
 uint64_t
-Leaf::toInt() const
-{
+Leaf::toInt() {
     ASSERT_require(isNumber());
     ASSERT_require(nBits() <= 64);
     return bits_.toInteger();
 }
 
 const Sawyer::Container::BitVector&
-Leaf::bits() const
-{
+Leaf::bits() {
     ASSERT_require(isNumber());
     return bits_;
 }
 
 bool
-Leaf::isVariable() const
-{
+Leaf::isVariable() {
     return BITVECTOR==leafType_;
 }
 
 bool
-Leaf::isMemory() const
-{
+Leaf::isMemory() {
     return MEMORY==leafType_;
 }
 
 uint64_t
-Leaf::nameId() const
-{
+Leaf::nameId() {
     ASSERT_require(isVariable() || isMemory());
     return name_;
 }
 
 std::string
-Leaf::toString() const {
+Leaf::toString() {
     if (isNumber())
         return "0x" + bits().toHex();
     if (isVariable())
@@ -2213,14 +2303,12 @@ Leaf::toString() const {
 }
 
 void
-Leaf::print(std::ostream &o, Formatter &formatter) const 
-{
+Leaf::print(std::ostream &o, Formatter &formatter) {
     printAsSigned(o, formatter);
 }
 
 void
-Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
-{
+Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) {
     bool showed_comment = false;
     if (isNumber()) {
         if (bits_.size() == 1) {
@@ -2310,8 +2398,7 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
 }
 
 bool
-Leaf::mustEqual(const Ptr &other_, SMTSolver *solver) const
-{
+Leaf::mustEqual(const Ptr &other_, SMTSolver *solver) {
     bool retval = false;
     LeafPtr other = other_->isLeafNode();
     if (this==getRawPointer(other)) {
@@ -2333,8 +2420,7 @@ Leaf::mustEqual(const Ptr &other_, SMTSolver *solver) const
 }
 
 bool
-Leaf::mayEqual(const Ptr &other_, SMTSolver *solver) const
-{
+Leaf::mayEqual(const Ptr &other_, SMTSolver *solver) {
     bool retval = false;
     LeafPtr other = other_->isLeafNode();
     if (this==getRawPointer(other)) {
@@ -2352,8 +2438,7 @@ Leaf::mayEqual(const Ptr &other_, SMTSolver *solver) const
 }
 
 int
-Leaf::compareStructure(const Ptr &other_) const
-{
+Leaf::compareStructure(const Ptr &other_) {
     LeafPtr other = other_->isLeafNode();
     if (this==getRawPointer(other)) {
         return 0;
@@ -2372,8 +2457,7 @@ Leaf::compareStructure(const Ptr &other_) const
 }
 
 bool
-Leaf::isEquivalentTo(const Ptr &other_) const
-{
+Leaf::isEquivalentTo(const Ptr &other_) {
     bool retval = false;
     LeafPtr other = other_->isLeafNode();
     if (this==getRawPointer(other)) {
@@ -2389,8 +2473,7 @@ Leaf::isEquivalentTo(const Ptr &other_) const
 }
 
 Ptr
-Leaf::substitute(const Ptr &from, const Ptr &to) const
-{
+Leaf::substitute(const Ptr &from, const Ptr &to) {
     ASSERT_require(from!=NULL && to!=NULL && from->nBits()==to->nBits());
     if (isEquivalentTo(from))
         return to;
@@ -2398,8 +2481,7 @@ Leaf::substitute(const Ptr &from, const Ptr &to) const
 }
 
 VisitAction
-Leaf::depthFirstTraversal(Visitor &v) const
-{
+Leaf::depthFirstTraversal(Visitor &v) {
     Ptr self = sharedFromThis();
     VisitAction retval = v.preVisit(self);
     if (TERMINATE!=retval)
@@ -2413,7 +2495,7 @@ Leaf::depthFirstTraversal(Visitor &v) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream&
-operator<<(std::ostream &o, const Node &node) {
+operator<<(std::ostream &o, Node &node) {
     Formatter fmt;
     node.print(o, fmt);
     return o;
@@ -2564,6 +2646,16 @@ makeRol(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags)
 Ptr
 makeRor(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags) {
     return Interior::create(0, OP_ROR, sa, a, comment, flags);
+}
+
+Ptr
+makeSet(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SET, a, b, comment, flags);
+}
+
+Ptr
+makeSet(const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SET, a, b, c, comment, flags);
 }
 
 Ptr

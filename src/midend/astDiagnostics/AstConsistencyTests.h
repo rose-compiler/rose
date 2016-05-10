@@ -145,7 +145,7 @@ class TestAstForUniqueStatementsInScopes : public AstSimpleProcessing
           void visit ( SgNode* node );
    };
 
-// DQ (4/2/2012): This appears to be a test that we have not got into palce yet.
+// DQ (4/2/2012): This appears to be a test that we have not got into place yet.
 // the test code: test2012_59.C demonstrates an example where a IR node is shared
 // between the global scope and a class definition scope.  This causes an error 
 // in the generated code, so we want to detect this case.
@@ -333,6 +333,10 @@ class TestChildPointersInMemoryPool : public ROSE_VisitTraversal
           virtual ~TestChildPointersInMemoryPool() {};
       //! static function to do test on any IR node
           static void test();
+
+       // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+          static Sawyer::Message::Facility mlog;
+          static void initDiagnostics();
 
           virtual void visit( SgNode * );
    };

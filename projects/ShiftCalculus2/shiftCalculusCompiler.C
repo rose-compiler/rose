@@ -44,8 +44,10 @@ int main( int argc, char * argv[] )
     {
       std::cout<<"Turning on CUDA code generation ..."<<std::endl;
       b_gen_cuda = true;
-      argvList.push_back("-rose:openmp:lowering");
-      OmpSupport::enable_accelerator = true;
+      // avoid invoking the built in lowering, just create AST
+      //argvList.push_back("-rose:openmp:ast_only");
+      //argvList.push_back("-rose:openmp:lowering");
+      //OmpSupport::enable_accelerator = true;
     }
     else
       b_gen_cuda = false;
@@ -278,10 +280,10 @@ int main( int argc, char * argv[] )
 
      OmpSupport::enable_accelerator = true;
      cur_file->set_openmp_lowering(true);
-//     cur_file->set_openmp(true);
-//     cur_file->set_openmp_parse_only(false);
-
+     cur_file->set_openmp(true);
+     cur_file->set_openmp_parse_only(false);
      // process OpenMP directives, including omp target
+     // This will translate inserted pragmas again
      OmpSupport::processOpenMP(isSgSourceFile(cur_file));
 
 #if 0 // use rose:output instead to control this

@@ -11,6 +11,17 @@ EXTRA_DIST = tests.conf
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
+# Test that rose::FileSystem::copyFile works
+noinst_PROGRAMS += testCopyFile
+testCopyFile_SOURCES = testCopyFile.C
+testCopyFile_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += testCopyFile.passed
+testCopyFile.passed: testCopyFile
+	@$(RTH_RUN)						\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testCopyFile"			\
+		$(top_srcdir)/scripts/test_exit_status $@
+
 # Test that boost::regex works
 noinst_PROGRAMS += testBoostRegex
 testBoostRegex_SOURCES = testBoostRegex.C
@@ -109,6 +120,18 @@ rangeMapTests.passed: rangeMapTests rangeMapTests.ans $(top_srcdir)/scripts/test
 		CMD="$(abspath $<)"				\
 		ANS="$(srcdir)/rangeMapTests.ans"		\
 		$(top_srcdir)/scripts/test_with_answer $@
+
+# Test AstAttributeMechanism
+noinst_PROGRAMS += attributeTests
+attributeTests_SOURCES = attributeTests.C
+attributeTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += attributeTests.passed
+attributeTests.passed: attributeTests
+	@$(RTH_RUN)						\
+		TITLE="AstAttributeMechanism tests [$@]"	\
+		CMD="$(abspath $<)"				\
+		$(top_srcdir)/scripts/test_exit_status $@
+
 
 check-local: $(TEST_TARGETS)
 

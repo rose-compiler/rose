@@ -33,6 +33,10 @@ noinst_PROGRAMS = \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
     buildJavaPackage createAbstractHandles moveDeclarationToInnermostScope buildStatementFromString
 
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
+
 # list of test SAGE AST builders 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
@@ -159,6 +163,7 @@ generatedCodeExamples = \
   buildJavaPackage.passed 
 
 # section for declaration moving tool
+#  inputmoveDeclarationToInnermostScope_23.C 
 #--------------------------------------------
 MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_1.C \
@@ -182,13 +187,18 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_20.C \
   inputmoveDeclarationToInnermostScope_21.C \
   inputmoveDeclarationToInnermostScope_22.C \
+  inputmoveDeclarationToInnermostScope_23.C \
+  inputmoveDeclarationToInnermostScope_24.C \
+  inputmoveDeclarationToInnermostScope_25.C \
+  inputmoveDeclarationToInnermostScope_26.C \
+  inputmoveDeclarationToInnermostScope_27.C \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
   inputmoveDeclarationToInnermostScope_test2015_127.C 
 
 # DQ (12/23/2014): This fails because the normal unparsing (without token unparsing) is failing.
 # inputmoveDeclarationToInnermostScope_test2014_26.C
 
-MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
+#MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
 
 # identity translator cannot handle them properly  
 # 17: shared SgArrayType issue
@@ -197,22 +207,23 @@ MOVE_DECLS_TESTCODES_FAILING = \
   inputmoveDeclarationToInnermostScope_test2014_18.C \
   inputmoveDeclarationToInnermostScope_test2014_22.C
 
-MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
-  $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
-  $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED)
+#MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
+#  $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
+#  $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED)
 
 MOVE_DECLS_TESTCODES_CURRENTLY_FAILING = 
 
 MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
-MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
+#MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
 
 MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
-MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
+#MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
 
+MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v3_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
 
 PASSING_MOVE_DECLS_TESTCODES_RESULTS = \
-   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
-   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
+   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) 
+#   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
 
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
 MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
@@ -262,6 +273,7 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_01.C \
   inputmoveDeclarationToInnermostScope_test2015_02.C \
   inputmoveDeclarationToInnermostScope_test2015_03.C \
+  inputmoveDeclarationToInnermostScope_test2015_04.C \
   inputmoveDeclarationToInnermostScope_test2015_05.C \
   inputmoveDeclarationToInnermostScope_test2015_06.C \
   inputmoveDeclarationToInnermostScope_test2015_07.C \
@@ -302,6 +314,7 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_42.C \
   inputmoveDeclarationToInnermostScope_test2015_43.C \
   inputmoveDeclarationToInnermostScope_test2015_44.C \
+  inputmoveDeclarationToInnermostScope_test2015_45.C \
   inputmoveDeclarationToInnermostScope_test2015_46.C \
   inputmoveDeclarationToInnermostScope_test2015_47.C \
   inputmoveDeclarationToInnermostScope_test2015_48.C \
@@ -318,6 +331,7 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_59.C \
   inputmoveDeclarationToInnermostScope_test2015_60.C \
   inputmoveDeclarationToInnermostScope_test2015_61.C \
+  inputmoveDeclarationToInnermostScope_test2015_62.C \
   inputmoveDeclarationToInnermostScope_test2015_63.C \
   inputmoveDeclarationToInnermostScope_test2015_64.C \
   inputmoveDeclarationToInnermostScope_test2015_65.C \
@@ -359,6 +373,8 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_103.C \
   inputmoveDeclarationToInnermostScope_test2015_104.C \
   inputmoveDeclarationToInnermostScope_test2015_105.C \
+  inputmoveDeclarationToInnermostScope_test2015_106.C \
+  inputmoveDeclarationToInnermostScope_test2015_107.C \
   inputmoveDeclarationToInnermostScope_test2015_108.C \
   inputmoveDeclarationToInnermostScope_test2015_109.C \
   inputmoveDeclarationToInnermostScope_test2015_110.C \
@@ -377,20 +393,63 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_124.C \
   inputmoveDeclarationToInnermostScope_test2015_125.C \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
-  inputmoveDeclarationToInnermostScope_test2015_127.C 
+  inputmoveDeclarationToInnermostScope_test2015_127.C \
+  inputmoveDeclarationToInnermostScope_test2015_128.C \
+  inputmoveDeclarationToInnermostScope_test2015_129.C \
+  inputmoveDeclarationToInnermostScope_test2015_130.C \
+  inputmoveDeclarationToInnermostScope_test2015_131.C \
+  inputmoveDeclarationToInnermostScope_test2015_132.C \
+  inputmoveDeclarationToInnermostScope_test2015_134.C \
+  inputmoveDeclarationToInnermostScope_test2015_135.C \
+  inputmoveDeclarationToInnermostScope_test2015_137.C \
+  inputmoveDeclarationToInnermostScope_test2015_139.C \
+  inputmoveDeclarationToInnermostScope_test2015_143.C \
+  inputmoveDeclarationToInnermostScope_test2015_144.C \
+  inputmoveDeclarationToInnermostScope_test2015_145.C \
+  inputmoveDeclarationToInnermostScope_test2015_146.C \
+  inputmoveDeclarationToInnermostScope_test2015_147.C \
+  inputmoveDeclarationToInnermostScope_test2015_148.C \
+  inputmoveDeclarationToInnermostScope_test2015_149.C \
+  inputmoveDeclarationToInnermostScope_test2015_150.C \
+  inputmoveDeclarationToInnermostScope_test2015_151.C \
+  inputmoveDeclarationToInnermostScope_test2015_152.C \
+  inputmoveDeclarationToInnermostScope_test2015_153.C \
+  inputmoveDeclarationToInnermostScope_test2015_154.C \
+  inputmoveDeclarationToInnermostScope_test2015_155.C \
+  inputmoveDeclarationToInnermostScope_test2015_156.C \
+  inputmoveDeclarationToInnermostScope_test2015_157.C \
+  inputmoveDeclarationToInnermostScope_test2015_158.C \
+  inputmoveDeclarationToInnermostScope_test2015_159.C \
+  inputmoveDeclarationToInnermostScope_test2015_160.C \
+  inputmoveDeclarationToInnermostScope_test2015_161.C \
+  inputmoveDeclarationToInnermostScope_test2015_162.C \
+  inputmoveDeclarationToInnermostScope_test2015_163.C \
+  inputmoveDeclarationToInnermostScope_test2015_164.C \
+  inputmoveDeclarationToInnermostScope_test2015_165.C \
+  inputmoveDeclarationToInnermostScope_test2015_166.C \
+  inputmoveDeclarationToInnermostScope_test2015_167.C \
+  inputmoveDeclarationToInnermostScope_test2015_168.C 
+
+# DQ (11/13/2015): Note that inputmoveDeclarationToInnermostScope_test2015_141.C 
+# and inputmoveDeclarationToInnermostScope_test2015_133.C only fail when using 
+# the -rose:merge_decl_assign option.
 
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
 FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2014_09.C \
   inputmoveDeclarationToInnermostScope_test2014_12.C \
-  inputmoveDeclarationToInnermostScope_test2015_04.C \
-inputmoveDeclarationToInnermostScope_test2015_100.C \
-inputmoveDeclarationToInnermostScope_test2015_101.C \
-inputmoveDeclarationToInnermostScope_test2015_106.C \
-inputmoveDeclarationToInnermostScope_test2015_107.C \
-inputmoveDeclarationToInnermostScope_test2015_114.C \
-inputmoveDeclarationToInnermostScope_test2015_45.C \
-inputmoveDeclarationToInnermostScope_test2015_62.C
+  inputmoveDeclarationToInnermostScope_test2015_100.C \
+  inputmoveDeclarationToInnermostScope_test2015_101.C \
+  inputmoveDeclarationToInnermostScope_test2015_114.C \
+  inputmoveDeclarationToInnermostScope_test2015_133.C \
+  inputmoveDeclarationToInnermostScope_test2015_136.C \
+  inputmoveDeclarationToInnermostScope_test2015_138.C \
+  inputmoveDeclarationToInnermostScope_test2015_140.C \
+  inputmoveDeclarationToInnermostScope_test2015_141.C \
+  inputmoveDeclarationToInnermostScope_test2015_142.C
+
+# DQ (11/28/2015: Test codes demonstrating imperfect formatting:
+#  inputmoveDeclarationToInnermostScope_test2015_04.C 
 
 
 # DQ (8/16/2015): Failing test with bugfix for type transformations.
@@ -437,13 +496,15 @@ PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS = \
    $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS) 
 
 PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS = \
-   $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
-   $(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
+   $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) 
+#   $(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
 
 REFERENCE_PATH = $(top_srcdir)/tests/roseTests/astInterfaceTests/referenceResults
 MOVE_DECLS_DIFF_FILES=$(PASSING_MOVE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
 
 MOVE_MERGE_DECLS_DIFF_FILES=$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
+MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES=$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS:.C=.C.diff)
+
 DIFF=diff
 #$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
 $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
@@ -454,13 +515,16 @@ $(MOVE_MERGE_DECLS_DIFF_FILES):$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation with merge by diff ..."; \
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
 
+$(MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES):$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS)
+	echo "Verifying moveDeclarationToInnermostScope translation with merge and token unparsing by diff ..."; \
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
 
 # DQ (6/28/2015): Added additional test using new option: -rose:merge_decl_assign
 $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
 	echo "Test without new option: -rose:merge_decl_assign"
-	./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
+	$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
 	echo "Test using new option: -rose:merge_decl_assign"
-	./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -rose:merge_decl_assign -c -rose:debug $(srcdir)/$(@:rose_%=%)
+	$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -rose:merge_decl_assign -c -rose:debug $(srcdir)/$(@:rose_%=%)
 
 # Without new option fails for test2015_04.C?
 # With new option fails for test2014_12.C
@@ -483,13 +547,15 @@ test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_
 if ROSE_USING_GCC_VERSION_LATER_4_4
 move_diff_check: move_decls_diff_check move_merge_decls_diff_check test_move_decls_with_token_unparsing
 else
-move_diff_check: move_decls_diff_check move_merge_decls_diff_check
+move_diff_check: move_decls_diff_check move_merge_decls_diff_check 
 endif
 
 # only move , no merge
 move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)
 # both move and merge
 move_merge_decls_diff_check: $(MOVE_MERGE_DECLS_DIFF_FILES)
+
+move_merge_decls_no_var_norm_diff_check: $(MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES)
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -502,10 +568,6 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
     rose_inputdoLoopNormalization.f \
     rose_inputbuildLabelStatement2.f
 endif
-
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
-# VALGRIND = valgrind $(VALGRIND_OPTIONS)
-VALGRIND =
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -800,16 +862,20 @@ endif
 
 # rules for declaration moving tests
 $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking $(srcdir)/$(@:rose_%=%)
+		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking $(srcdir)/$(@:rose_%=%)
 
-$(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_%=%)
+#$(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
+#		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_%=%)
 
 $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
+		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
 
-$(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
+$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v3_%=%) moveDeclarationToInnermostScope 
+		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:suppress_variable_declaration_normalization -rose:trans-tracking $(srcdir)/$(@:rose_v3_%=%) -rose:output $@
+
+
+#$(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2%=%) moveDeclarationToInnermostScope 
+#		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange
@@ -911,11 +977,29 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputmoveDeclarationToInnermostScope_test2015_16.h \
        inputmoveDeclarationToInnermostScope_test2015_22.h \
        inputmoveDeclarationToInnermostScope_test2015_40.h \
+       inputmoveDeclarationToInnermostScope_test2015_142.h \
+       inputmoveDeclarationToInnermostScope_19.C \
+       inputmoveDeclarationToInnermostScope_20.C \
+       inputmoveDeclarationToInnermostScope_21.C \
+       inputmoveDeclarationToInnermostScope_22.C \
+       inputmoveDeclarationToInnermostScope_23.C \
+       inputmoveDeclarationToInnermostScope_24.C \
+       inputmoveDeclarationToInnermostScope_25.C \
+       inputmoveDeclarationToInnermostScope_26.C \
+       inputmoveDeclarationToInnermostScope_27.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_15.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_16.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_17.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_18.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_19.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_20.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_21.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_22.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_23.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_24.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_25.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_26.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_27.C \
        referenceResults/withmerge/rose_v2_inputmoveDeclarationToInnermostScope_22.C
 
 
@@ -928,6 +1012,9 @@ unit-tests:
 
 # move_decls_diff_check move_merge_decls_diff_check
 check-local: $(generatedCodeExamples) move_diff_check 
+	@echo "*****************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/astInterface_tests: make check rule complete (terminated normally) ******"
+	@echo "*****************************************************************************************************"
 
 clean-local:
 	rm -f $(generatedCodeExamples) *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS) $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)
@@ -936,3 +1023,4 @@ clean-local:
 	rm -f $(addsuffix .passed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
 	rm -f $(addsuffix .failed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
 	rm -f $(addsuffix .diff, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
+	rm -rf rose_*.C

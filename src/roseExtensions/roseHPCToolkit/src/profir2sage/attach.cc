@@ -35,11 +35,11 @@ namespace RoseHPCT
 {
 //! A quick reference to all file and non-stmt nodes of the original Profile IR trees
 // This gives a global view of where to find hot portions
-std::set<const RoseHPCT::IRNode *> profFileNodes_;
-std::set<const RoseHPCT::IRNode *> profStmtNodes_;
+ROSE_DLL_API std::set<const RoseHPCT::IRNode *> profFileNodes_;
+ROSE_DLL_API std::set<const RoseHPCT::IRNode *> profStmtNodes_;
 // a map of all profile tree's nodes to matched ROSE AST tree of the current SgProject
 // Ideally, the profile trees of different metric set should be merged into one single tree
-std::map<const RoseHPCT::IRNode *, std::set<SgLocatedNode *> > profSageMap_;
+ROSE_DLL_API std::map<const RoseHPCT::IRNode *, std::set<SgLocatedNode *> > profSageMap_;
 }
 
 //! Tell if a Sage node's file info. matches a given filename

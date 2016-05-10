@@ -1,100 +1,87 @@
 /* Interpretation DOS */
 0x00000100: ================================== Function (entry point, graph) <_start>
-0x00000100: Function stack delta: +2
 
 0x000000cc: Basic block reasons: 
-0x000000cc: 8a 8c 30 02             |..0.    |<sp-2147418112>   mov    cl, byte ds:[si + 0x0230<560>]
-0x000000d0: e8 4d 00                |.M.     |<sp-2147418112>   call   0x0120<288,<Func>>
-0x000000d0: Outgoing stack delta: -2
-0x000000d0: Successor blocks: 0x00000120, 0x000000d3
+0x000000cc: 8a 8c 30 02             |..0.    |          mov    cl, byte ds:[si + 0x0230<560>]
+0x000000d0: e8 4d 00                |.M.     |          call   0x0120<288,<Func>>
+0x000000d0: Successor blocks: 0x00000120<<Func>>, 0x000000d3
 
 0x000000d3: Basic block reasons: 
-0x000000d3: 8a 97 42 02             |..B.    |<sp-2147418112>   mov    dl, byte ds:[bx + 0x0242<578>]
-0x000000d7: 8b ea                   |..      |<sp-2147418112>   mov    bp, dx
-0x000000d7: Outgoing stack delta: +0
+0x000000d3: 8a 97 42 02             |..B.    |          mov    dl, byte ds:[bx + 0x0242<578>]
+0x000000d7: 8b ea                   |..      |          mov    bp, dx
 0x000000d7: Successor blocks: 0x000000d9
 
 0x000000d9: Basic block reasons: 
-0x000000d9: 26 88 4e 00             |&.N.    |<sp-2147418112>   mov    byte es:[bp + 0x0000], cl
-0x000000dd: 26 88 9e 00 01          |&....   |<sp-2147418112>   mov    byte es:[bp + 0x0100<256,_start>], bl
-0x000000e2: 03 e8                   |..      |<sp-2147418112>   add    bp, ax
-0x000000e4: 81 fd 00 01             |....    |<sp-2147418112>   cmp    bp, 0x0100<256,_start>
-0x000000e4: Outgoing stack delta: +0
+0x000000d9: 26 88 4e 00             |&.N.    |          mov    byte es:[bp + 0x0000], cl
+0x000000dd: 26 88 9e 00 01          |&....   |          mov    byte es:[bp + 0x0100<256,_start>], bl
+0x000000e2: 03 e8                   |..      |          add    bp, ax
+0x000000e4: 81 fd 00 01             |....    |          cmp    bp, 0x0100<256,_start>
 0x000000e4: Successor blocks: 0x000000e8
 
 0x000000e8: Basic block reasons: 
-0x000000e8: 72 ef                   |r.      |<sp-2147418112>   jb     0x00d9<<BBlock>>
-0x000000e8: Outgoing stack delta: +0
+0x000000e8: 72 ef                   |r.      |          jb     0x00d9<<BBlock>>
 0x000000e8: Successor blocks: 0x000000d9, 0x000000ea
 
 0x000000ea: Basic block reasons: 
-0x000000ea: 43                      |C       |<sp-2147418112>   inc    bx
-0x000000eb: fe cd                   |..      |<sp-2147418112>   dec    ch
-0x000000ed: 75 e4                   |u.      |<sp-2147418112>   jne    0x00d3<<BBlock>>
-0x000000ed: Outgoing stack delta: +0
+0x000000ea: 43                      |C       |          inc    bx
+0x000000eb: fe cd                   |..      |          dec    ch
+0x000000ed: 75 e4                   |u.      |          jne    0x00d3<<BBlock>>
 0x000000ed: Successor blocks: 0x000000d3, 0x000000ef
 
 0x000000ef: Basic block reasons: 
-0x000000ef: 8a 8c 39 02             |..9.    |<sp-2147418112>   mov    cl, byte ds:[si + 0x0239<569>]
-0x000000f3: e8 2a 00                |.*.     |<sp-2147418112>   call   0x0120<288,<Func>>
-0x000000f3: Outgoing stack delta: -2
-0x000000f3: Successor blocks: 0x00000120, 0x000000f6
+0x000000ef: 8a 8c 39 02             |..9.    |          mov    cl, byte ds:[si + 0x0239<569>]
+0x000000f3: e8 2a 00                |.*.     |          call   0x0120<288,<Func>>
+0x000000f3: Successor blocks: 0x00000120<<Func>>, 0x000000f6
 
 0x000000f6: Basic block reasons: 
-0x000000f6: 87 df                   |..      |<sp-2147418112>   xchg   di, bx
-0x000000f6: Outgoing stack delta: +0
+0x000000f6: 87 df                   |..      |          xchg   di, bx
 0x000000f6: Successor blocks: 0x000000f8
 
 0x000000f8: Basic block reasons: 
-0x000000f8: 8a 97 82 02             |....    |<sp-2147418112>   mov    dl, byte ds:[bx + 0x0282<642>]
-0x000000fc: 8b ea                   |..      |<sp-2147418112>   mov    bp, dx
-0x000000fe: 43                      |C       |<sp-2147418112>   inc    bx
-0x000000ff: 43                      |C       |<sp-2147418112>   inc    bx
-0x000000ff: Outgoing stack delta: +0
+0x000000f8: 8a 97 82 02             |....    |          mov    dl, byte ds:[bx + 0x0282<642>]
+0x000000fc: 8b ea                   |..      |          mov    bp, dx
+0x000000fe: 43                      |C       |          inc    bx
+0x000000ff: 43                      |C       |          inc    bx
 0x000000ff: Successor blocks: 0x00000100
 
 0x00000100: Basic block reasons: entry point
-0x00000100: 26 88 8e 00 02          |&....   |<sp-2147418112>   mov    byte es:[bp + 0x0200<512>], cl
-0x00000105: 26 88 9e 00 03          |&....   |<sp-2147418112>   mov    byte es:[bp + 0x0300<768>], bl
-0x0000010a: 03 e8                   |..      |<sp-2147418112>   add    bp, ax
-0x0000010c: 81 fd 00 01             |....    |<sp-2147418112>   cmp    bp, 0x0100<256,_start>
-0x00000110: 72 ee                   |r.      |<sp-2147418112>   jb     0x0100<256,_start>
-0x00000110: Outgoing stack delta: +0
+0x00000100: 26 88 8e 00 02          |&....   |          mov    byte es:[bp + 0x0200<512>], cl
+0x00000105: 26 88 9e 00 03          |&....   |          mov    byte es:[bp + 0x0300<768>], bl
+0x0000010a: 03 e8                   |..      |          add    bp, ax
+0x0000010c: 81 fd 00 01             |....    |          cmp    bp, 0x0100<256,_start>
+0x00000110: 72 ee                   |r.      |          jb     0x0100<256,_start>
 0x00000110: Successor blocks: 0x00000100, 0x00000112
 
 0x00000112: Basic block reasons: 
-0x00000112: 4b                      |K       |<sp-2147418112>   dec    bx
-0x00000113: fe cd                   |..      |<sp-2147418112>   dec    ch
-0x00000115: 75 e1                   |u.      |<sp-2147418112>   jne    0x00f8<<BBlock>>
-0x00000115: Outgoing stack delta: +0
+0x00000112: 4b                      |K       |          dec    bx
+0x00000113: fe cd                   |..      |          dec    ch
+0x00000115: 75 e1                   |u.      |          jne    0x00f8<<BBlock>>
 0x00000115: Successor blocks: 0x000000f8, 0x00000117
 
 0x00000117: Basic block reasons: 
-0x00000117: 87 fb                   |..      |<sp-2147418112>   xchg   bx, di
-0x00000119: 46                      |F       |<sp-2147418112>   inc    si
-0x0000011a: 83 fe 09                |...     |<sp-2147418112>   cmp    si, 0x09
-0x0000011d: 72 ad                   |r.      |<sp-2147418112>   jb     0x00cc<<BBlock>>
-0x0000011d: Outgoing stack delta: +0
+0x00000117: 87 fb                   |..      |          xchg   bx, di
+0x00000119: 46                      |F       |          inc    si
+0x0000011a: 83 fe 09                |...     |          cmp    si, 0x09
+0x0000011d: 72 ad                   |r.      |          jb     0x00cc<<BBlock>>
 0x0000011d: Successor blocks: 0x000000cc, 0x0000011f
 
 0x0000011f: Basic block reasons: 
-0x0000011f: c3                      |.       |<sp-2147418112>   ret    
-0x0000011f: Outgoing stack delta: +2
+0x0000011f: c3                      |.       |          ret    
 0x0000011f: Successor blocks: unknown
 
 0x00000120: ================================== Function (function call, graph) unknown name
 0x00000120: Function stack delta: +2
 
 0x00000120: Basic block reasons: entry point
-0x00000120: 8a e9                   |..      |<sp-2147418112>   mov    ch, cl
-0x00000122: 91                      |.       |<sp-2147418112>   xchg   cx, ax
-0x00000123: b1 04                   |..      |<sp-2147418112>   mov    cl, 0x04
-0x00000125: d2 ec                   |..      |<sp-2147418112>   shr    ah, cl
-0x00000127: 24 0f                   |$.      |<sp-2147418112>   and    al, 0x0f
-0x00000129: 91                      |.       |<sp-2147418112>   xchg   cx, ax
-0x0000012a: b8 01 00                |...     |<sp-2147418112>   mov    ax, 0x0001
-0x0000012d: d3 e0                   |..      |<sp-2147418112>   shl    ax, cl
-0x0000012f: c3                      |.       |<sp-2147418112>   ret    
+0x00000120: 8a e9                   |..      |<sp+0 >   mov    ch, cl
+0x00000122: 91                      |.       |<sp+0 >   xchg   cx, ax
+0x00000123: b1 04                   |..      |<sp+0 >   mov    cl, 0x04
+0x00000125: d2 ec                   |..      |<sp+0 >   shr    ah, cl
+0x00000127: 24 0f                   |$.      |<sp+0 >   and    al, 0x0f
+0x00000129: 91                      |.       |<sp+0 >   xchg   cx, ax
+0x0000012a: b8 01 00                |...     |<sp+0 >   mov    ax, 0x0001
+0x0000012d: d3 e0                   |..      |<sp+0 >   shl    ax, cl
+0x0000012f: c3                      |.       |<sp+0 >   ret    
 0x0000012f: Outgoing stack delta: +2
 0x0000012f: Successor blocks: unknown
 

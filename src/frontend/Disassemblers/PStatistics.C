@@ -8,19 +8,16 @@
 #include <boost/graph/connected_components.hpp>
 
 #ifdef _MSC_VER
-#include <float.h>                              // for _isnan
-#define isnan(x) _isnan(x)
-#include <boost/math/special_functions/erf.hpp> // for erf
-using boost::math::erf;
-#define _USE_MATH_DEFINES                       // for M_LN2
-#include <math.h>
+    #include <float.h>                                  // for _isnan
+    #define isnan(x) _isnan(x)
+    #include <boost/math/special_functions/erf.hpp> // for erf
+    using boost::math::erf;
+    #define _USE_MATH_DEFINES                       // for M_LN2
+    #include <math.h>
+#elif __cplusplus >= 201103L
+    // isnan is already declared in this scope
 #else
-// DQ (10/15/2015): Added support for C++11 usage (works for GNU comilers, e.g. detects use of -std=c++11 mode)
-  #if (__cplusplus == 201103)
- // DQ (bug reported by CERT): isnan is already in the namespace for c++11 mode (so nothing to do).
-  #else
     using std::isnan;
-  #endif
 #endif
 
 namespace rose {
@@ -724,7 +721,11 @@ Partitioner::count_size_variance(const InstructionMap &insns)
     }
     return variance;
 }
-
+#ifdef _MSC_VER
+#define UNUSED_VAR
+#else
+#define UNUSED_VAR __attribute__((unused))
+#endif
 Partitioner::RegionStats *
 Partitioner::region_statistics()
 {
@@ -827,7 +828,7 @@ Partitioner::region_statistics(const ExtentMap &addresses)
             /* Add instruction as vertex to CFG */
             std::pair<Addr2Vertex::iterator, bool> inserted = va2id.insert(std::make_pair(va, va2id.size()));
             if (inserted.second) {
-                CFGVertex vertex __attribute__((unused)) = add_vertex(cfg);
+                CFGVertex vertex UNUSED_VAR = add_vertex(cfg);
                 assert(vertex==inserted.first->second);
             }
 

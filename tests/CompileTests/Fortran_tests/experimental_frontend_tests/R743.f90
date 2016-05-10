@@ -1,0 +1,4 @@
+LOGICAL :: Doit(10)
+INTEGER :: A(10)
+10 WHERE (Doit) A = 13
+END PROGRAM

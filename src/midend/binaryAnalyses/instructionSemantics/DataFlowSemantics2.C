@@ -73,8 +73,9 @@ public:
 
     // Override virtual methods...
 public:
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
-                                                                           SMTSolver*) const ROSE_OVERRIDE {
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
+                        SMTSolver*) const ROSE_OVERRIDE {
         TODO("[Robb P. Matzke 2015-08-10]");
     }
 
@@ -154,7 +155,7 @@ class InnerRiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit InnerRiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("DataFlow(Inner)");
+        name("DataFlow(Inner)");
     }
 
     // Static allocating constructor; no state since register and memory I/O methods are no-ops
@@ -335,7 +336,8 @@ public:
         return mergeSources(a->get_width() + b->get_width(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
         ASSERT_not_reachable("readRegister is not possible for this semantic domain");
 #ifdef _MSC_VER
         return BaseSemantics::SValuePtr();
@@ -376,11 +378,11 @@ public:
 
 void
 RiscOperators::init(const BaseSemantics::RiscOperatorsPtr &userDomain) {
-    set_name("DataFlow(Outer)");
-    regdict_ = userDomain->get_state()->get_register_state()->get_register_dictionary();
-    InnerRiscOperatorsPtr innerDomain = InnerRiscOperators::instance(userDomain->get_solver());
+    name("DataFlow(Outer)");
+    regdict_ = userDomain->currentState()->registerState()->get_register_dictionary();
+    InnerRiscOperatorsPtr innerDomain = InnerRiscOperators::instance(userDomain->solver());
     innerDomainId_ = add_subdomain(innerDomain, "DataFlow(Inner)");
-    userDomainId_ = add_subdomain(userDomain, userDomain->get_name());
+    userDomainId_ = add_subdomain(userDomain, userDomain->name());
 }
 
 void
@@ -429,11 +431,11 @@ RiscOperators::insertDataFlowEdges(const BaseSemantics::SValuePtr &svalue_, cons
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg) {
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);
-    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::readRegister(reg));
+    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::readRegister(reg, dflt));
     BaseSemantics::RiscOperatorsPtr innerDomain = get_subdomain(innerDomainId_);
-    SValuePtr value = SValue::promote(innerDomain->get_protoval()->undefined_(reg.get_nbits()));
+    SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.get_nbits()));
     value->insert(AbstractLocation(reg, regdict_));
     result->set_subvalue(innerDomainId_, value);
     return result;

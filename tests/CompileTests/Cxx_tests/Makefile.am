@@ -210,7 +210,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_184.C \
    test2014_185.C \
    test2014_186.C \
-   test2014_188.C \
    test2014_189.C \
    test2014_190.C \
    test2014_191.C \
@@ -304,7 +303,124 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_81.C \
    test2015_97.C \
    lulesh.C \
-   luleshTALC.C
+   luleshTALC.C \
+   $(NEW_TESTCODES)
+
+# DQ (11/13/2015): Added test codes:
+NEW_TESTCODES = \
+   test2015_85.C \
+   test2015_86.C \
+   test2015_88.C \
+   test2015_89.C \
+   test2015_99.C \
+   test2015_100.C \
+   test2015_101.C \
+   test2015_102.C \
+   test2015_103.C \
+   test2015_104.C \
+   test2015_106.C \
+   test2015_107.C \
+   test2015_108.C \
+   test2015_110.C \
+   test2015_111.C \
+   test2015_112.C \
+   test2015_113.C \
+   test2015_114.C \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_117.C \
+   test2015_118.C \
+   test2015_119.C \
+   test2015_121.C \
+   test2015_122.C \
+   test2015_123.C \
+   test2015_124.C \
+   test2015_125.C \
+   test2015_128.C \
+   test2015_130.C \
+   test2015_131.C \
+   test2015_132.C \
+   test2015_133.C \
+   test2015_134.C \
+   test2015_137.C \
+   test2015_138.C \
+   test2015_139.C \
+   test2015_140.C \
+   test2015_141.C \
+   test2015_142.C \
+   test2015_143.C \
+   test2015_144.C \
+   test2015_145.C \
+   test2015_146.C \
+   test2015_147.C \
+   test2015_148.C \
+   test2015_149.C \
+   test2015_150.C \
+   test2015_151.C \
+   test2015_152.C \
+   test2015_153.C \
+   test2015_154.C \
+   test2016_01.C \
+   test2016_02.C \
+   test2016_03.C \
+   test2016_04.C \
+   test2016_05.C \
+   test2016_06.C \
+   test2016_07.C \
+   test2016_08.C \
+   test2016_09.C \
+   test2016_10.C \
+   test2016_11.C \
+   test2016_12.C \
+   test2016_13.C \
+   test2016_14.C \
+   test2016_15.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C
+
+if !ROSE_USE_EDG_VERSION_4_7
+if !ROSE_USING_BOOST_VERSION_1_57
+# These boost 1.57 specific tests fail in EDG 4.7 and pass in EDG 4.9, so
+# avoid testing them in this combination.  The issue is fixed in EDG 4.9.
+NEW_TESTCODES += \
+   test2014_187.C \
+   test2014_187_work_around.C \
+   test2014_188.C \
+   test2015_120.C 
+endif
+endif
+
+# Failing test codes:
+#   test2015_147.C 
+#   test2015_149.C 
+#   test2015_150.C 
+#   test2015_151.C 
+#   test2015_152.C 
+#   test2015_153.C 
+#   test2015_154.C
+
+# DQ (11/28/2015): I think maybe this only works with the Intel compiler.
+ICPC_SPECIFIC_TESTCODES = \
+   test2015_72_icpc.C \
+   test2015_82.C \
+   test2015_83.C \
+   test2015_84.C \
+   test2015_87.C \
+   test2015_92.C \
+   test2015_93.C \
+   test2015_98.C \
+   test2015_105.C \
+   test2015_109.C 
+
+# DQ (11/28/2015): This code demonstrates an IR node sharing violation.
+#  test2015_87.C 
+#  test2015_90.C 
+#  test2015_91.C 
+#  test2015_94.C 
+#  test2015_95.C 
+#  test2015_96.C 
+
 
 # DQ (9/24/2015): This test code fails with the older versions of g++ (version 4.4.7).
 # This is now handled using conditional compilation in the test code directly.
@@ -327,10 +443,30 @@ if !USING_INTEL_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_304.C \
    test2014_159.C \
-   test2014_187.C \
-   test2014_187_work_around.C \
    test2014_211.C \
    test2015_55.C
+endif
+
+# These should not be tested with the EDG 4.7 frontend (pass only in ROSE with the EDG 4.9 frontend).
+# I thnk this has much less to do with Intel compiler being used.
+# test2014_187.C 
+# test2014_187_work_around.C 
+
+# DQ (12/19/2015): I think these test codes use language builtin functions not present with the same signature in
+# older GNU versions (e.g. "__builtin_isgreater()") and types not present in older GNU versions (e.g. "__int128")
+if ROSE_USING_GCC_VERSION_LATER_4_8
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2015_126.C \
+   test2015_127.C \
+   test2015_129.C 
+endif
+
+# DQ (12/20/2015): I think these test codes use language builtin functions not present with the same signature in
+# older GNU versions (e.g. "__decltype()").
+if ROSE_USING_GCC_VERSION_LATER_4_4
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2015_135.C \
+   test2015_136.C
 endif
 
 # DQ (5/28/2015): Removed this file because it is used by the makefile rule: 
@@ -375,6 +511,7 @@ endif
 #  test2014_105.C 
 #  test2014_106.C 
 
+# DQ (12/13/2015): Note that most of these now appear to pass now, but they need to be checked more carefully.
 # DQ (8/14/2014) List these files explicitly to avoid failing the policy tests.
 TESTS_NOT_PASSING = \
    test2009_25.C \
@@ -1039,6 +1176,11 @@ PASSING_TEST_Sources = $(addsuffix .passed, $(filter-out $(TESTS_THAT_FAIL), $(T
 TEST_Objects_FoldedConstants = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS:.C=.foldedConstants-o}
 TEST_Objects_UnfoldedConstants = ${ALL_TESTCODES:.C=.unfoldedConstants-o}
 
+# DQ (12/29/2015): Adding tests for unnormalized declarations (variables and typedefs).
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_UNNORMALIZED = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS)
+
+TEST_Objects_unnormalized = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_UNNORMALIZED:.C=.unnormalized-o}
+
 # VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -1072,6 +1214,10 @@ if !ROSE_USE_INSURE
 		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
 		TITLE="testTranslator $(notdir $<) [$@]" \
 		$(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) -rose:suppress_variable_declaration_normalization -rose:skipfinalCompileStep $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
+		TITLE="testTranslator $(notdir $<) [$@]" \
+		$(top_srcdir)/scripts/test_exit_status $@
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
@@ -1096,6 +1242,10 @@ $(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
 # DQ (9/18/2011): This is the equivalent to the default using testTranslator (so not critical to run this).
 $(TEST_Objects_UnfoldedConstants): ../../testTranslatorUnfoldedConstants
 	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.C) && touch $@
+
+# DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
+$(TEST_Objects_unnormalized): ../../testTranslator
+	$(VALGRIND) ../../testTranslator -rose:suppress_variable_declaration_normalization $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unnormalized-o=.C) && touch $@
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
 testParser:../../testParser
@@ -1188,6 +1338,10 @@ test_common_configure_test_with_link_part_3.passed: $(TEST_TRANSLATOR)
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_3
 	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
 
+# DQ (12/28/2015): Added test for new option to not normalize variable declarations.
+test_suppress_variable_declaration_normalization.passed: $(TEST_TRANSLATOR)
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) -rose:suppress_variable_declaration_normalization $(ROSE_FLAGS) -c $(srcdir)/test_multible_variables_in_variable_declaration.C" $(top_srcdir)/scripts/test_exit_status $@
+
 testOption:
 	$(TEST_TRANSLATOR) -rose:verbose 0 -nostdinc -c $(srcdir)/test2015_08.C
 
@@ -1244,7 +1398,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
      test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
      test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
-     test2004_82.C test2014_130.h test2015_08.h test2015_29.h
+     test2004_82.C test2014_130.h test2015_08.h test2015_29.h test2015_85.h
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h
@@ -1299,6 +1453,9 @@ hpctoolkit:
 #	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
 
+# check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+# check-local: $(TEST_Objects_unnormalized) $(PASSING_TEST_Sources) $(FAILING_TEST_targets) 
+# check-local: $(TEST_Objects_unnormalized)
 check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed

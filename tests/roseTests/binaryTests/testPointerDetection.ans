@@ -35,8 +35,8 @@ Pointer detection analysis for function 0x080483b0 "simple03"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
+    32-bit pointer at v19744[32]
     32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
-    32-bit pointer at v20760[32]
 
 Pointer detection analysis for function 0x080483bc "simple04"
   Instructions:
@@ -74,8 +74,8 @@ Pointer detection analysis for function 0x080483d2 "simple06"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
+    32-bit pointer at v20227[32]
     32-bit pointer at 0x080497f0<134518768>[32]
-    32-bit pointer at v21219[32]
 
 Pointer detection analysis for function 0x080483e0 "simple07"
   Instructions:
@@ -189,7 +189,7 @@ Pointer detection analysis for function 0x08048444 "simple15"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at v22624[32]
+    32-bit pointer at v21707[32]
     32-bit pointer at 0x080497fc<134518780>[32]
 
 Pointer detection analysis for function 0x08048452 "simple16"
@@ -311,8 +311,8 @@ Pointer detection analysis for function 0x080484c7 "simple24"
     0x080484d8: leave  
     0x080484d9: ret    
   Code pointers:
-    32-bit pointer at esp_0[32]
     32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
+    32-bit pointer at esp_0[32]
   Data pointers:
 
 Pointer detection analysis for function 0x080484da "simple25"
@@ -365,6 +365,115 @@ Pointer detection analysis for function 0x08048506 "flow02"
     0x08048519: mov    eax, dword ds:[eax]
     0x0804851b: pop    ebp
     0x0804851c: ret    
+  Code pointers:
+    32-bit pointer at esp_0[32]
+  Data pointers:
+    32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])
+    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
+
+Pointer detection analysis for function 0x0804851d "flow03"
+  Instructions:
+    0x0804851d: push   ebp
+    0x0804851e: mov    ebp, esp
+    0x08048520: sub    esp, 0x10
+    0x08048523: cmp    dword ss:[ebp + 0x08], 0x00
+    0x08048527: je     0x0804852e
+    0x08048529: mov    eax, dword ss:[ebp + 0x0c]
+    0x0804852c: jmp    0x08048531
+    0x0804852e: mov    eax, dword ss:[ebp + 0x10]
+    0x08048531: mov    dword ss:[ebp + 0xfc<-4>], eax
+    0x08048534: mov    eax, dword ss:[ebp + 0xfc<-4>]
+    0x08048537: mov    eax, dword ds:[eax]
+    0x08048539: leave  
+    0x0804853a: ret    
+  Code pointers:
+    32-bit pointer at esp_0[32]
+  Data pointers:
+    32-bit pointer at (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
+
+Pointer detection analysis for function 0x0804853b "flow04"
+  Instructions:
+    0x0804853b: push   ebp
+    0x0804853c: mov    ebp, esp
+    0x0804853e: sub    esp, 0x10
+    0x08048541: mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+    0x08048548: mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
+    0x0804854f: jmp    0x0804855d
+    0x08048551: mov    eax, dword ss:[ebp + 0x0c]
+    0x08048554: mov    eax, dword ds:[eax]
+    0x08048556: add    dword ss:[ebp + 0xfc<-4>], eax
+    0x08048559: add    dword ss:[ebp + 0xf8<-8>], 0x01
+    0x0804855d: mov    eax, dword ss:[ebp + 0xf8<-8>]
+    0x08048560: cmp    eax, dword ss:[ebp + 0x08]
+    0x08048563: jl     0x08048551
+    0x08048565: mov    eax, dword ss:[ebp + 0xfc<-4>]
+    0x08048568: leave  
+    0x08048569: ret    
+  WARNING: Analysis did not converge; following info may be incomplete
+  Code pointers:
+    32-bit pointer at esp_0[32]
+  Data pointers:
+    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
+
+Pointer detection analysis for function 0x0804856a "flow05"
+  Instructions:
+    0x0804856a: push   ebp
+    0x0804856b: mov    ebp, esp
+    0x0804856d: sub    esp, 0x10
+    0x08048570: mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+    0x08048577: mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
+    0x0804857e: jmp    0x0804859d
+    0x08048580: mov    eax, dword ss:[ebp + 0xf8<-8>]
+    0x08048583: and    eax, 0x01
+    0x08048586: test   al, al
+    0x08048588: je     0x08048591
+    0x0804858a: mov    eax, dword ss:[ebp + 0x0c]
+    0x0804858d: mov    eax, dword ds:[eax]
+    0x0804858f: jmp    0x08048596
+    0x08048591: mov    eax, dword ss:[ebp + 0x10]
+    0x08048594: mov    eax, dword ds:[eax]
+    0x08048596: add    dword ss:[ebp + 0xfc<-4>], eax
+    0x08048599: add    dword ss:[ebp + 0xf8<-8>], 0x01
+    0x0804859d: mov    eax, dword ss:[ebp + 0xf8<-8>]
+    0x080485a0: cmp    eax, dword ss:[ebp + 0x08]
+    0x080485a3: jl     0x08048580
+    0x080485a5: mov    eax, dword ss:[ebp + 0xfc<-4>]
+    0x080485a8: leave  
+    0x080485a9: ret    
+  WARNING: Analysis did not converge; following info may be incomplete
+  Code pointers:
+    32-bit pointer at esp_0[32]
+  Data pointers:
+    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
+    32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])
+
+Pointer detection analysis for function 0x080485aa "flow06"
+  Instructions:
+    0x080485aa: push   ebp
+    0x080485ab: mov    ebp, esp
+    0x080485ad: sub    esp, 0x10
+    0x080485b0: mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+    0x080485b7: mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
+    0x080485be: jmp    0x080485e0
+    0x080485c0: mov    eax, dword ss:[ebp + 0xf8<-8>]
+    0x080485c3: and    eax, 0x01
+    0x080485c6: test   al, al
+    0x080485c8: je     0x080485d4
+    0x080485ca: mov    eax, dword ss:[ebp + 0x0c]
+    0x080485cd: mov    eax, dword ds:[eax]
+    0x080485cf: add    dword ss:[ebp + 0xfc<-4>], eax
+    0x080485d2: jmp    0x080485dc
+    0x080485d4: mov    eax, dword ss:[ebp + 0x10]
+    0x080485d7: mov    eax, dword ds:[eax]
+    0x080485d9: add    dword ss:[ebp + 0xfc<-4>], eax
+    0x080485dc: add    dword ss:[ebp + 0xf8<-8>], 0x01
+    0x080485e0: mov    eax, dword ss:[ebp + 0xf8<-8>]
+    0x080485e3: cmp    eax, dword ss:[ebp + 0x08]
+    0x080485e6: jl     0x080485c0
+    0x080485e8: mov    eax, dword ss:[ebp + 0xfc<-4>]
+    0x080485eb: leave  
+    0x080485ec: ret    
+  WARNING: Analysis did not converge; following info may be incomplete
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:

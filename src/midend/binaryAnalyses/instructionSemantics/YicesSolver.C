@@ -261,8 +261,7 @@ YicesSolver::parse_evidence()
                 size_t nbits = rest-s;
                 s = rest;
 
-                char vname[64];
-                snprintf(vname, sizeof vname, "v%"PRIu64, vnum);
+                std::string vname = "v" + StringUtility::numberToString(vnum);
                 ASSERT_require(evidence.find(vname)==evidence.end());
                 evidence[vname] = std::pair<size_t, uint64_t>(nbits, val);
             }
@@ -492,6 +491,7 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn)
             case SymbolicExpr::OP_ROL:        throw Exception("OP_ROL not implemented");
             case SymbolicExpr::OP_ROR:        throw Exception("OP_ROR not implemented");
             case SymbolicExpr::OP_SDIV:       throw Exception("OP_SDIV not implemented");
+            case SymbolicExpr::OP_SET:        out_set(o, in);                                 break;
             case SymbolicExpr::OP_SEXTEND:    out_sext(o, in);                                break;
             case SymbolicExpr::OP_SLT:        out_binary(o, "bv-slt", in);                    break;
             case SymbolicExpr::OP_SLE:        out_binary(o, "bv-sle", in);                    break;
@@ -566,6 +566,17 @@ YicesSolver::out_ite(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
         out_expr(o, in->child(i));
     }
     o <<")";
+}
+
+// Output for "set" operator. (set a b c) gets translated to the symbolic expression (ite v1 a (ite v1 b c)), which
+// in turn gets translated to Yices output.
+void
+YicesSolver::out_set(std::ostream &o, const SymbolicExpr::InteriorPtr &in) {
+    ASSERT_not_null(in);
+    ASSERT_require(in->getOperator() == SymbolicExpr::OP_SET);
+    ASSERT_require(in->nChildren() >= 2);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in);
+    out_expr(o, ite);
 }
 
 /** Output for left-associative, binary operators. The identity_element is sign-extended and used as the second operand
@@ -778,9 +789,8 @@ YicesSolver::ctx_define(const std::vector<SymbolicExpr::Ptr> &exprs, Definitions
                         defns->insert(leaf->nameId());
                         yices_type bvtype = yices_mk_bitvector_type(self->context, leaf->nBits());
                         ASSERT_not_null(bvtype);
-                        char name[64];
-                        snprintf(name, sizeof name, "v%"PRIu64, leaf->nameId());
-                        yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(self->context, name, bvtype);
+                        std::string name = "v" + StringUtility::numberToString(leaf->nameId());
+                        yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(self->context, name.c_str(), bvtype);
                         ASSERT_not_null(vdecl);
                     }
                 } else if (leaf->isMemory()) {
@@ -790,9 +800,8 @@ YicesSolver::ctx_define(const std::vector<SymbolicExpr::Ptr> &exprs, Definitions
                         yices_type range = yices_mk_bitvector_type(self->context, leaf->nBits());
                         yices_type ftype = yices_mk_function_type(self->context, &domain, 1, range);
                         ASSERT_not_null(ftype);
-                        char name[64];
-                        snprintf(name, sizeof name, "m%"PRIu64, leaf->nameId());
-                        yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(self->context, name, ftype);
+                        std::string name = "m" + StringUtility::numberToString(leaf->nameId());
+                        yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(self->context, name.c_str(), ftype);
                         ASSERT_not_null(vdecl);
                     }
                 }
@@ -858,9 +867,8 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
             }
         } else {
             ASSERT_require(ln->isMemory() || ln->isVariable());
-            char name[64];
-            sprintf(name, "%c%"PRIu64, ln->isMemory()?'m':'v', ln->nameId());
-            yices_var_decl vdecl = yices_get_var_decl_from_name(context, name);
+            std::string name = (ln->isMemory()?"m":"v") + StringUtility::numberToString(ln->nameId());
+            yices_var_decl vdecl = yices_get_var_decl_from_name(context, name.c_str());
             ASSERT_not_null(vdecl);
             retval = yices_mk_var_from_decl(context, vdecl);
         }
@@ -887,6 +895,7 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
             case SymbolicExpr::OP_READ:       retval = ctx_read(in);                                  break;
             case SymbolicExpr::OP_ROL:        throw Exception("OP_ROL not implemented");
             case SymbolicExpr::OP_ROR:        throw Exception("OP_ROR not implemented");
+            case SymbolicExpr::OP_SET:        retval = ctx_set(in);                                   break;
             case SymbolicExpr::OP_SDIV:       throw Exception("OP_SDIV not implemented");
             case SymbolicExpr::OP_SEXTEND:    retval = ctx_sext(in);                                  break;
             case SymbolicExpr::OP_SLT:        retval = ctx_binary(yices_mk_bv_slt, in);               break;
@@ -953,6 +962,18 @@ YicesSolver::ctx_ite(const SymbolicExpr::InteriorPtr &in)
     yices_expr retval = yices_mk_ite(context, cond, ctx_expr(in->child(1)), ctx_expr(in->child(2)));
     ASSERT_not_null(retval);
     return retval;
+}
+#endif
+
+#ifdef ROSE_HAVE_LIBYICES
+// Create Yices expression for "set" operator.
+yices_expr
+YicesSolver::ctx_set(const SymbolicExpr::InteriorPtr &in) {
+    ASSERT_not_null(in);
+    ASSERT_require(in->getOperator() == SymbolicExpr::OP_SET);
+    ASSERT_require(in->nChildren() >= 2);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in);
+    return ctx_expr(ite);
 }
 #endif
 

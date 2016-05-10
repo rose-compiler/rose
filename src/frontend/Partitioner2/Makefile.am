@@ -11,7 +11,6 @@ noinst_LTLIBRARIES = libPartitioner.la
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libPartitioner_la_SOURCES =			\
 	AddressUsageMap.C			\
-	Attribute.C				\
 	BasicBlock.C				\
 	CfgPath.C				\
 	Config.C				\
@@ -22,6 +21,7 @@ libPartitioner_la_SOURCES =			\
 	Exception.C				\
 	Function.C				\
 	FunctionCallGraph.C			\
+	FunctionNoop.C				\
 	GraphViz.C				\
 	InstructionProvider.C			\
 	MayReturnAnalysis.C			\

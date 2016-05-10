@@ -374,7 +374,7 @@ public:
     //   <name> <value>                 -- set (and then show) one register
     void registerCommand(RSIM_Thread *thread, std::vector<std::string> &cmd) {
         if (cmd.empty()) {
-            out_ <<*thread->operators()->get_state()->get_register_state();
+            out_ <<*thread->operators()->currentState()->registerState();
         } else if (cmd[0]=="check") {
             cmd.erase(cmd.begin());
             registerCheckGdbCommand(thread, cmd);
@@ -577,7 +577,7 @@ public:
                     break;
                 case 'o': {
                     char buffer[64];
-                    sprintf(buffer, "0%"PRIo64, value);
+                    sprintf(buffer, "0%" PRIo64, value);
                     out_ <<buffer <<"\n";
                     va += nBytes;
                     break;
@@ -585,14 +585,14 @@ public:
                 case 'd': {
                     char buffer[64];
                     int64_t sv = IntegerOps::signExtend2(value, 8*nBytes, 8*sizeof(value));
-                    sprintf(buffer, "%"PRId64, sv);
+                    sprintf(buffer, "%" PRId64, sv);
                     out_ <<buffer <<"\n";
                     va += nBytes;
                     break;
                 }
                 case 'u': {
                     char buffer[64];
-                    sprintf(buffer, "%"PRIu64, value);
+                    sprintf(buffer, "%" PRIu64, value);
                     out_ <<buffer <<"\n";
                     va += nBytes;
                     break;

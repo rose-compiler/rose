@@ -1,11 +1,11 @@
 #ifndef ROSE_Partitioner2_BasicBlock_H
 #define ROSE_Partitioner2_BasicBlock_H
 
-#include <Partitioner2/Attribute.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Semantics.h>
 
+#include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
@@ -29,9 +29,9 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *
  *  A basic block is a read-only object once it reaches the BB_COMPLETE state, and can thus be shared between partitioners and
  *  threads.  The memory for these objects is shared and managed by a shared pointer implementation. */
-class BasicBlock: public Sawyer::SharedObject, public Attribute::StoredValues {
+class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
 public:
-    /** Shared pointer to a basic block. */
+    /** Shared pointer to a basic block. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;
 
     /** Basic block successor. */
@@ -87,8 +87,6 @@ private:
     Sawyer::Cached<std::set<rose_addr_t> > ghostSuccessors_;// non-followed successors from opaque predicates, all insns
     Sawyer::Cached<bool> isFunctionCall_;               // is this block semantically a function call?
     Sawyer::Cached<bool> isFunctionReturn_;             // is this block semantically a return from the function?
-    Sawyer::Cached<BaseSemantics::SValuePtr> stackDeltaIn_;// intra-function stack delta at entrance to basic block
-    Sawyer::Cached<BaseSemantics::SValuePtr> stackDeltaOut_;// intra-function stack delta at exit from basic block
     Sawyer::Cached<bool> mayReturn_;                    // a function return is reachable from this basic block in the CFG
 
     void clearCache() const {
@@ -96,8 +94,6 @@ private:
         ghostSuccessors_.clear();
         isFunctionCall_.clear();
         isFunctionReturn_.clear();
-        stackDeltaIn_.clear();
-        stackDeltaOut_.clear();
         mayReturn_.clear();
     }
 
@@ -107,8 +103,6 @@ public:
         ghostSuccessors_ = other->ghostSuccessors_;
         isFunctionCall_ = other->isFunctionCall_;
         isFunctionReturn_ = other->isFunctionReturn_;
-        stackDeltaIn_ = other->stackDeltaIn_;
-        stackDeltaOut_ = other->stackDeltaOut_;
         mayReturn_ = other->mayReturn_;
     }
     
@@ -359,15 +353,48 @@ public:
      *  the top of the stack. */
     const Sawyer::Cached<bool>& isFunctionReturn() const { return isFunctionReturn_; }
 
-    /** Stack delta.
-     *
-     *  The stack delta is the value of the stack pointer at this basic block minus the value at the entrance to the
-     *  function. See @ref Partitioner::basicBlockStackDelta for details about how it is computed and what it means.
-     *
-     * @{ */
-    const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDeltaIn() const { return stackDeltaIn_; }
-    const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDeltaOut() const { return stackDeltaOut_; }
-    /** @} */
+//     /** Property: Initial stack pointer.
+//      *
+//      *  Stack pointer at the entrance to the basic block relative to the stack pointer at the entrance to the basic block's
+//      *  function.  This property caches the value computed elsewhere. See also, @ref stackDeltaOut and @ref stackDelta.
+//      *
+//      *  The @ref stackDeltaInConcrete method is a read-only accessor for the @ref stackDeltaIn property that returns the stack
+//      *  delta expression as either a 64-bit signed value or the @ref SgAsmInstruction::INVALID_STACK_DELTA constant.
+//      *
+//      * @{ */
+//     BaseSemantics::SValuePtr stackDeltaIn() const;
+//     void stackDeltaIn(const BaseSemantics::SValuePtr&);
+//     int64_t stackDeltaInConcrete() const;
+//     /** @} */
+// 
+//     /** Property: Final stack pointer.
+//      *
+//      *  Stack pointer at the exit of the basic block relative to the stack pointer at the entrance to the basic block's
+//      *  function.  This property caches the value computed elsewhere. See also, @ref stackDeltaIn and @ref stackDelta.
+//      *
+//      *  The @ref stackDeltaOutConcrete method is a read-only accessor for the @ref stackDeltaOut property that returns the
+//      *  stack delta expression as either a 64-bit signed value or the @ref SgAsmInstruction::INVALID_STACK_DELTA constant.
+//      *
+//      * @{ */
+//     BaseSemantics::SValuePtr stackDeltaOut() const;
+//     void stackDeltaOut(const BaseSemantics::SValuePtr&);
+//     int64_t stackDeltaOutConcrete() const;
+//     /** @} */
+// 
+//     /** Property: Stack delta.
+//      *
+//      *  The stack delta is the difference between the final and initial stack pointers for this basic block if available. There
+//      *  are two forms of this function: @ref stackDelta returns a symbolic expression or null, and @ref stackDeltaConcrete
+//      *  returns a 64-bit signed value or the @ref SgAsmInstruction::INVALID_STACK_DELTA constant.
+//      *
+//      *  The symbolic stack delta is a property that can be queried or set. It is set by the stack pointer analysis. The
+//      *  concrete version is a wrapper that returns a numeric value from the symbolic value.
+//      *
+//      * @{ */
+//     BaseSemantics::SValuePtr stackDelta() const;
+//     void stackDelta(const BaseSemantics::SValuePtr&);
+//     int64_t stackDeltaConcrete() const;
+//     /** @} */
 
     /** May-return property.
      *

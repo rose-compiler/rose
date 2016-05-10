@@ -59,7 +59,8 @@ SValue::number_(size_t nbits, uint64_t number) const
 }
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
+                            SMTSolver *solver) const {
     SValuePtr other = SValue::promote(other_);
     SValuePtr retval = create_empty(other->get_width());
     bool changed = false;
@@ -70,7 +71,8 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *s
             if (thisValue==NULL) {
                 retval->subvalues.push_back(otherValue);
                 changed = true;
-            } else if (BaseSemantics::SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, solver).orDefault()) {
+            } else if (BaseSemantics::SValuePtr mergedValue =
+                       thisValue->createOptionalMerge(otherValue, merger, solver).orDefault()) {
                 changed = true;
                 retval->subvalues.push_back(mergedValue);
             } else {
@@ -322,7 +324,7 @@ RiscOperators::add_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain, c
     if (idx>=formatter.subdomain_names.size())
         formatter.subdomain_names.resize(idx+1, "");
     formatter.subdomain_names[idx] = name;
-    SValue::promote(get_protoval())->set_subvalue(idx, subdomain->get_protoval());
+    SValue::promote(protoval())->set_subvalue(idx, subdomain->protoval());
     return idx;
 }
 
@@ -350,7 +352,7 @@ void
 RiscOperators::print(std::ostream &stream, BaseSemantics::Formatter &formatter) const
 {
     for (Subdomains::const_iterator sdi=subdomains.begin(); sdi!=subdomains.end(); ++sdi)
-        stream <<"== " <<(*sdi)->get_name() <<" ==\n" <<(**sdi + formatter);
+        stream <<"== " <<(*sdi)->name() <<" ==\n" <<(**sdi + formatter);
 }
 
 void
@@ -804,11 +806,11 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg)
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt)
 {
     SValuePtr retval = svalue_empty(reg.get_nbits());
     SUBDOMAINS(sd, ())
-        retval->set_subvalue(sd.idx(), sd->readRegister(reg));
+        retval->set_subvalue(sd.idx(), sd->readRegister(reg, sd(dflt)));
     return retval;
 }
 

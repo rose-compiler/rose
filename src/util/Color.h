@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <Sawyer/Map.h>
 #include <string>
+#include <rosedll.h>
 
 namespace rose {
 
@@ -25,9 +26,11 @@ T clip(T c) {
 }
 
 class HSV;
-
+#ifdef _MSC_VER
+  #undef RGB
+#endif
 /** Colors in RGB space. */
-class RGB {
+class ROSE_UTIL_API RGB {
     Component r_, g_, b_, a_;
 
 public:
@@ -66,7 +69,7 @@ public:
  *
  *  Use this one when possible since most manipulations of color are defined in this domain and therefore must otherwise be
  *  converted to/from the RGB space. */
-class HSV {
+class ROSE_UTIL_API HSV {
     Component h_, s_, v_, a_;
 public:
 
@@ -107,7 +110,7 @@ public:
 /** Mapping from floating point to color.
  *
  *  Maps a floating point value in the range [0..1] to a color by linear interpolation between specified colors. */
-class Gradient {
+class ROSE_UTIL_API Gradient {
 public:
     typedef Sawyer::Container::Map<double, HSV> ColorMap;
 
@@ -189,24 +192,24 @@ HSV invertBrightness(const HSV&);
  *  Makes a color darker according to @p amount, which should be in the range [0..1].  If @p amount is zero then the value is
  *  not changed, if @p amount is one then the color becomes black, others are interpolated linearly. This method does not
  *  affect the hue, saturation, or alpha. */
-HSV darken(const HSV&, double amount);
+ROSE_UTIL_API HSV darken(const HSV&, double amount);
 
 /** Lighten a color.
  *
  *  Makes a color lighter by adjusting its value upward by the specified ratio.  A value of zero does not affect the lightness
  *  while a value of one will make it white. Other values are linearly interpolated between those two points. */
-HSV lighten(const HSV&, double amount);
+ROSE_UTIL_API HSV lighten(const HSV&, double amount);
 
 /** Make a color less saturated.
  *
  *  Makes a color less saturated according to @p amount. An amount of zero does not change the saturation, one removes all
  *  saturation, and other values are linearly interpolated between those two extremes. */
-HSV fade(const HSV&, double amount);
+ROSE_UTIL_API HSV fade(const HSV&, double amount);
 
 /** Create an HTML color string.
  *
  *  HTML color strings are of the form "#RRGGBB". */
-std::string toHtml(const RGB&);
+ROSE_UTIL_API std::string toHtml(const RGB&);
 
 // printing
 std::ostream& operator<<(std::ostream&, const RGB&);

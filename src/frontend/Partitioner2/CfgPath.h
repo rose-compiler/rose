@@ -290,7 +290,7 @@ findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /
  *  user since they are redundant after this insertion--they represent a short-circuit over the called function(s).
  *
  *  Returns true if some function was inserted, false if no changes were made to @p paths.  If @p newVertices is non-null then
- *  the all newly inserted vertices are also pushed onto the end of the vector.
+ *  all newly inserted vertices are also pushed onto the end of the vector.
  *
  * @{ */
 bool
@@ -342,7 +342,7 @@ public:
     public:
         virtual ~ShouldInline() {}
 
-        /**  Predicates are reference counted. */
+        /**  Shared ownership pointer to a predicate object. See @ref heap_object_shared_ownership. */
         typedef Sawyer::SharedPointer<ShouldInline> Ptr;
 
         /** Factory class method. */

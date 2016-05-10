@@ -413,7 +413,7 @@ EXTRA_DIST = CMakeLists.txt \
    AstRewrite.tex ProgramAnalysis.tex AstProcessing.tex testing.tex astMerge.tex installRose.tex \
    roseExecutionOutput.txt roseHelpOutput.txt asm_code_samples_gcc.pdf introduction_start.tex \
    rose_exam_1.tex rose_exam_traversals_1.tex git_collaboration_diagram.pdf \
-   HowToDocument.dox
+   HowToDocument.dox Attributes.dox
 
 # DQ (3/4/2009): Removed requirements.tex since it is not longer used.
 # requirements.tex

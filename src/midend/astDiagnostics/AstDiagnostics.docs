@@ -84,7 +84,7 @@ work will implement a numbe of tests useful for debugging the AST:
 
  /*!
      \defgroup AstDiagnosticsClasses AST Diagnostics
-     \ingroup ROSE_MidEndGroup
+     \ingroup rose_midend
 
      \brief This is the AST Diagnostics Tests/Warnings/Statictics Reporting Mechanism.
 

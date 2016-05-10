@@ -22,13 +22,13 @@ Interval::to_string(uint64_t n)
 {
     const char *fmt = NULL;
     if (n<=9) {
-        fmt = "%"PRIu64;
+        fmt = "%" PRIu64;
     } else if (n<=0xff) {
-        fmt = "0x%02"PRIx64;
+        fmt = "0x%02" PRIx64;
     } else if (n<=0xffff) {
-        fmt = "0x%04"PRIx64;
+        fmt = "0x%04" PRIx64;
     } else {
-        fmt = "0x%08"PRIx64;
+        fmt = "0x%08" PRIx64;
     }
     char buf[64];
     snprintf(buf, sizeof buf, fmt, n);
@@ -62,7 +62,7 @@ Interval::print(std::ostream &o) const
  *******************************************************************************************************************************/
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SMTSolver*) const {
     // There's no official way to represent BOTTOM
     throw BaseSemantics::NotImplemented("SValue merging for IntervalSemantics is not supported", NULL);
 }
@@ -152,7 +152,7 @@ SValue::possible_bits() const
 
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
-                        BaseSemantics::RiscOperators *ops)
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     ASSERT_not_implemented("[Robb Matzke 2013-03-14]");
     BaseSemantics::SValuePtr retval;
@@ -161,7 +161,7 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantic
 
 void
 MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                         BaseSemantics::RiscOperators *ops)
+                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     ASSERT_not_implemented("[Robb Matzke 2013-03-14]");
 }

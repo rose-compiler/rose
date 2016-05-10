@@ -3,12 +3,14 @@
 
 #include <BaseSemantics2.h>
 #include <BinaryCallingConvention.h>
-#include <Partitioner2/Attribute.h>
+#include <BinaryStackDelta.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 
+#include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 
 #include <set>
@@ -19,7 +21,7 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Shared-ownership pointer for function. */
+/** Shared-ownership pointer for function. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class Function> FunctionPtr;
 
 /** Describes one function.
@@ -33,7 +35,7 @@ typedef Sawyer::SharedPointer<class Function> FunctionPtr;
  *  A function may exist as part of the partitioner's control flow graph, or in a detached state.  When a function is
  *  represented by the control flow graph then it is in a frozen state, meaning that its basic blocks and data blocks cannot be
  *  adjusted adjusted; one must use the partitioner interface to do so. */
-class Function: public Sawyer::SharedObject, public Attribute::StoredValues {
+class Function: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
 public:
     /** Manner in which a function owns a block. */
     enum Ownership { OWN_UNOWNED=0,                     /**< Function does not own the block. */
@@ -52,15 +54,17 @@ private:
     std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
-    CallingConvention::Analysis ccAnalysis_;            // analysis showing how registers etc. are used
+    CallingConvention::Analysis ccAnalysis_;            // analysis computing how registers etc. are used
+    StackDelta::Analysis stackDeltaAnalysis_;           // analysis computing stack deltas for each block and whole function
+    InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
 
     // The following members are caches either because their value is seldom needed and expensive to compute, or because the
     // value is best computed at a higher layer (e.g., in the partitioner) yet it makes the most sense to store it here. Make
     // sure clearCache() resets these to initial values.
-    Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr> stackDelta_;// net change in stack pointer
+    Sawyer::Cached<bool> isNoop_;
 
     void clearCache() {
-        stackDelta_.clear();
+        isNoop_.clear();
     }
     
 protected:
@@ -118,14 +122,25 @@ public:
      *  Partitioner::insertFunction). */
     const std::set<rose_addr_t>& basicBlockAddresses() const { return bblockVas_; }
 
-    /** Add a basic block to this function.  This method does not adjust the partitioner CFG. Basic blocks cannot be added by
-     *  this method when this function is attached to the CFG since it would cause the CFG to become outdated with respect to
-     *  this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.  If the
-     *  specified address is already part of the function then it is not added a second time. */
-    void insertBasicBlock(rose_addr_t bblockVa) {       // no-op if exists
+    /** Predicate to test whether a function owns a basic block address. */
+    bool ownsBasicBlock(rose_addr_t bblockVa) const {
+        return bblockVas_.find(bblockVa) != bblockVas_.end();
+    }
+
+    /** Add a basic block to this function.
+     *
+     *  This method does not adjust the partitioner CFG. Basic blocks cannot be added by this method when this function is
+     *  attached to the CFG since it would cause the CFG to become outdated with respect to this function, but as long as the
+     *  function is detached blocks can be inserted and removed arbitrarily.  If the specified address is already part of the
+     *  function then it is not added a second time.
+     *
+     *  Returns true if the block is inserted, false if the block was already part of this function. */
+    bool insertBasicBlock(rose_addr_t bblockVa) {
         ASSERT_forbid(isFrozen_);
-        clearCache();
-        bblockVas_.insert(bblockVa);
+        bool wasInserted = bblockVas_.insert(bblockVa).second;
+        if (wasInserted)
+            clearCache();
+        return wasInserted;
     }
 
     /** Remove a basic block from this function.  This method does not adjust the partitioner CFG.  Basic blocks cannot be
@@ -178,15 +193,39 @@ public:
 
     /** Property: Stack delta.
      *
-     *  The stack delta is the net change in the stack pointer between the entrance to the function and its return.
-     *  See @ref Partitioner::functionStackDelta for details about how it is computed and what it means.
-     *
-     *  This property is updated by a specific stack delta analysis, which usually runs faster than a more complete data-flow
-     *  analysis. However, the @ref callingConventionAnalysis results might also contain a stack delta as a concrete value, and
-     *  that analysis is more complete.
+     *  The set or computed stack delta. If a stack delta override has been set (@ref stackDeltaOverride) then that value is
+     *  returned. Otherwise, if the stack delta analysis has been run and a stack delta is known, it is returned. Otherwise a
+     *  null pointer is returned. Calling this method returns previously computed values rather than running a potentially
+     *  expensive analysis.
      *
      * @{ */
-    const Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
+    InstructionSemantics2::BaseSemantics::SValuePtr stackDelta() const;
+    int64_t stackDeltaConcrete() const;
+    /** @} */
+
+    /** Property: Stack delta override.
+     *
+     *  This is the value returned by @ref stackDelta in preference to using the stack delta analysis results. It allows a user
+     *  to override the stack delta analysis.  The partitioner will not run stack delta analysis if an override value is set.
+     *
+     * @{ */
+    InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride() const;
+    void stackDeltaOverride(const InstructionSemantics2::BaseSemantics::SValuePtr &delta);
+    /** @} */
+
+    /** Property: Stack delta analysis results.
+     *
+     *  This property holds the results from stack delta analysis. It contains the stack entry and exit values for each basic
+     *  block computed from data flow, and the overall stack delta for the function. The analysis is not updated by this class;
+     *  objects of this class only store the results provided by something else.
+     *
+     *  The @c hasResults and @c didConverge methods invoked on the return value will tell you whether an analysis has run and
+     *  whether the results are valid, respectively.
+     *
+     * @{ */
+    const StackDelta::Analysis& stackDeltaAnalysis() const { return stackDeltaAnalysis_; }
+    StackDelta::Analysis& stackDeltaAnalysis() { return stackDeltaAnalysis_; }
+    /** @} */
 
     /** Property: Calling convention analysis results.
      *
@@ -210,6 +249,12 @@ public:
      *  included if the name is empty. */
     std::string printableName() const;
 
+    /** Cached results of function no-op analysis.
+     *
+     *  If a value is cached, then the analysis has run and the cached value is true if the analysis proved that the function
+     *  is a no-op. */
+    const Sawyer::Cached<bool>& isNoop() const { return isNoop_; }
+
 private:
     friend class Partitioner;
     void freeze() { isFrozen_ = true; }
@@ -217,6 +262,7 @@ private:
 };
 
 typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;
+typedef Sawyer::Container::Set<Function::Ptr> FunctionSet;
 
 } // namespace
 } // namespace

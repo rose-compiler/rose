@@ -9,6 +9,7 @@ add_library(midend_binary OBJECT
   BinaryNoOperation.C
   BinaryPointerDetection.C
   BinaryReturnValueUsed.C
+  BinaryStackDelta.C
   BinaryString.C
   BinarySymbolicExpr.C
   BinarySymbolicExprParser.C
@@ -37,7 +38,10 @@ add_library(midend_binary OBJECT
   instructionSemantics/IntervalSemantics.C
   instructionSemantics/IntervalSemantics2.C
   instructionSemantics/LlvmSemantics2.C
+  instructionSemantics/MemoryCell.C
   instructionSemantics/MemoryCellList.C
+  instructionSemantics/MemoryCellMap.C
+  instructionSemantics/MemoryCellState.C
   instructionSemantics/MultiSemantics2.C
   instructionSemantics/NullSemantics2.C
   instructionSemantics/PartialSymbolicSemantics.C
@@ -67,6 +71,7 @@ install(
     BinaryMagic.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
+    BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h
     BinarySymbolicExpr.h
@@ -93,7 +98,10 @@ install(
     instructionSemantics/InsnSemanticsExpr.h
     instructionSemantics/IntervalSemantics2.h
     instructionSemantics/IntervalSemantics.h
+    instructionSemantics/MemoryCell.h
     instructionSemantics/MemoryCellList.h
+    instructionSemantics/MemoryCellMap.h
+    instructionSemantics/MemoryCellState.h
     instructionSemantics/MultiSemantics2.h
     instructionSemantics/MultiSemantics.h
     instructionSemantics/NullSemantics2.h

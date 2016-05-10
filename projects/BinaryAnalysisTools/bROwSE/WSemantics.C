@@ -70,7 +70,7 @@ public:
             switch (mode) {
                 case WSemantics::REG_INIT:
                 case WSemantics::REG_FINAL: {
-                    RegisterStateGenericPtr regState = RegisterStateGeneric::promote(state->get_register_state());
+                    RegisterStateGenericPtr regState = RegisterStateGeneric::promote(state->registerState());
                     RegisterNames regName(regState->get_register_dictionary());
                     BOOST_FOREACH (const RegisterStateGeneric::RegPair &reg_val, regState->get_stored_registers()) {
                         const RegisterDescriptor &reg = reg_val.desc;
@@ -93,12 +93,12 @@ public:
                     // RiscOperators for accessing multi-byte memory. We access a clone of the memory state so we're not
                     // affecting things like latestWriter addresses in the real state.
                     RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
-                    ops->set_state(state->clone());
+                    ops->currentState(state->clone());
 
 #if 1 // DEBUGGING [Robb Matzke 2015-01-13]
                     {
                         std::cerr <<"ROBB: full memory state (reverse chronological order):\n";
-                        MemoryCellListPtr memState = MemoryCellList::promote(state->get_memory_state());
+                        MemoryCellListPtr memState = MemoryCellList::promote(state->memoryState());
                         BOOST_FOREACH (const MemoryCellPtr &cell, memState->get_cells()) {
                             std::ostringstream s1, s2;
                             s1 <<*cell->get_address();
@@ -110,7 +110,7 @@ public:
 
                     // Stack pointer at the very start of this function.
                     const RegisterDescriptor SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
-                    SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops.get());
+                    SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
                     const RegisterDescriptor SS = ctx_.partitioner.instructionProvider().stackSegmentRegister();
 
                     // Function arguments
@@ -259,8 +259,21 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         return;
     bblock_ = bblock;
     mode_ = mode;
-    function_ = bblock_ ? ctx_.partitioner.basicBlockFunctionOwner(bblock) : P2::Function::Ptr();
 
+#if 0 // [Robb Matzke 2015-12-14]: old code, assuming basic blocks are not shared
+    function_ = bblock_ ? ctx_.partitioner.basicBlockFunctionOwner(bblock) : P2::Function::Ptr();
+#else // Partly fixed code, still assuming basic blocks are not shared.
+    if (function_) {
+        if (bblock_ == NULL || !function_->ownsBasicBlock(bblock_->address()))
+            function_ = P2::Function::Ptr();
+    } else {
+        BOOST_FOREACH (const P2::Function::Ptr &f, ctx_.partitioner.functionsOwningBasicBlock(bblock)) {
+            function_ = f;                              // chosen arbitrarily as the first one, if any
+            break;
+        }
+    }
+#endif
+        
     if (bblock && function_) {
         typedef BaseSemantics::RegisterStateGeneric RegState;
         typedef BaseSemantics::MemoryCellList MemState;
@@ -273,7 +286,8 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         
         const RegisterDescriptor &SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
         BaseSemantics::RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
-        BaseSemantics::SValuePtr initialStackPointer = df.initialStates[0]->readRegister(SP, ops.get());
+        BaseSemantics::SValuePtr initialStackPointer =
+            df.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
 
         BOOST_FOREACH (const P2::DataFlow::DfCfg::Vertex &vertex, df.dfCfg.vertices()) {
             if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK && vertex.value().bblock() == bblock) {

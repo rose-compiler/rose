@@ -11,6 +11,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
+/** Shared-ownership pointer for symbolic memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class SymbolicMemory> SymbolicMemoryPtr;
 
 /** Purely symbolic memory state.
@@ -63,8 +64,9 @@ public:
     /** @} */
 
 public:
-    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
-                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual bool
+    merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+          BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
     virtual void clear() ROSE_OVERRIDE;
 

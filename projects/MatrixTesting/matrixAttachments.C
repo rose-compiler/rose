@@ -81,7 +81,7 @@ isAuthorized(const SqlDatabase::TransactionPtr &tx) {
     const char *userName = getenv("LOGNAME");
     if (!userName || !*userName)
         return false;                                   // LOGNAME not set
-    SqlDatabase::StatementPtr q = tx->statement("select uid from users where name = ?")->bind(0, userName);
+    SqlDatabase::StatementPtr q = tx->statement("select id from auth_identities where identity = ?")->bind(0, userName);
     SqlDatabase::Statement::iterator row = q->begin();
     if (row == q->end())
         return false;                                   // No such user name
@@ -197,7 +197,7 @@ main(int argc, char *argv[]) {
                                           ->bind(0, testId)
                                           ->bind(1, attachmentId);
             for (SqlDatabase::Statement::iterator row=q->begin(); row!=q->end(); ++row)
-                std::cerr <<row.get<std::string>(0);
+                std::cout <<row.get<std::string>(0);
         }
     }
 

@@ -4,6 +4,7 @@
 #include <bROwSE/bROwSE.h>
 
 #include <BinaryDataFlow.h>                             // ROSE
+#include <BinaryCallingConvention.h>                    // ROSE
 #include <Partitioner2/DataFlow.h>
 
 namespace bROwSE {
@@ -42,6 +43,7 @@ int64_t functionStackDelta(P2::Partitioner&, const P2::Function::Ptr&);
 SgAsmFunction *functionAst(P2::Partitioner&, const P2::Function::Ptr&);
 rose::BinaryAnalysis::DataFlow::VariableList functionVariables(P2::Partitioner&, const P2::Function::Ptr&);
 FunctionDataFlow functionDataFlow(P2::Partitioner&, const P2::Function::Ptr&);
+const rose::BinaryAnalysis::CallingConvention::Definition* functionCallingConvention(P2::Partitioner&, const P2::Function::Ptr&);
 
 /** Interface for computing some property of a function. */
 class FunctionAnalyzer: public Sawyer::SharedObject {
@@ -183,7 +185,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NBytes).orElse(0) < b->attr<size_t>(ATTR_NBytes).orElse(0);
+        return a->attributeOrElse(ATTR_NBytes, (size_t)0) < b->attributeOrElse(ATTR_NBytes, (size_t)0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNBytes(p, f);
@@ -212,7 +214,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NInsns).orElse(0) < b->attr<size_t>(ATTR_NInsns).orElse(0);
+        return a->attributeOrElse(ATTR_NInsns, (size_t)0) < b->attributeOrElse(ATTR_NInsns, (size_t)0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNInsns(p, f);
@@ -300,7 +302,8 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NDiscontiguousBlocks).orElse(0) < b->attr<size_t>(ATTR_NDiscontiguousBlocks).orElse(0);
+        return (a->attributeOrElse(ATTR_NDiscontiguousBlocks, (size_t)0) <
+                b->attributeOrElse(ATTR_NDiscontiguousBlocks, (size_t)0));
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNDiscontiguousBlocks(p, f);
@@ -331,7 +334,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NIntervals).orElse(0) < b->attr<size_t>(ATTR_NIntervals).orElse(0);
+        return a->attributeOrElse(ATTR_NIntervals, (size_t)0) < b->attributeOrElse(ATTR_NIntervals, (size_t)0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNIntervals(p, f);
@@ -411,7 +414,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NCallers).orElse(0) < b->attr<size_t>(ATTR_NCallers).orElse(0);
+        return a->attributeOrElse(ATTR_NCallers, (size_t)0) < b->attributeOrElse(ATTR_NCallers, (size_t)0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNCallers(p, f);
@@ -441,7 +444,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NCallees).orElse(0) < b->attr<size_t>(ATTR_NCallees).orElse(0);
+        return a->attributeOrElse(ATTR_NCallees, (size_t)0) < b->attributeOrElse(ATTR_NCallees, (size_t)0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNCallees(p, f);
@@ -471,7 +474,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NReturns).orElse(0) < b->attr<size_t>(ATTR_NReturns).orElse(0);
+        return a->attributeOrElse(ATTR_NReturns, (size_t)0) < b->attributeOrElse(ATTR_NReturns, (size_t)0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNReturns(p, f);
@@ -502,8 +505,8 @@ public:
         ASSERT_not_reachable("invalid may-return value");
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return (a->attr<MayReturn>(ATTR_MayReturn).orElse(MAYRETURN_UNKNOWN) <
-                b->attr<MayReturn>(ATTR_MayReturn).orElse(MAYRETURN_UNKNOWN));
+        return (a->attributeOrElse(ATTR_MayReturn, MAYRETURN_UNKNOWN) ,
+                b->attributeOrElse(ATTR_MayReturn, MAYRETURN_UNKNOWN));
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         switch (functionMayReturn(p, f)) {
@@ -541,13 +544,13 @@ public:
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         // order: inapt, unknown, concrete.
-        int64_t aDelta = a->attr<int64_t>(ATTR_StackDelta).orElse(SgAsmInstruction::INVALID_STACK_DELTA);
-        int64_t bDelta = b->attr<int64_t>(ATTR_StackDelta).orElse(SgAsmInstruction::INVALID_STACK_DELTA);
+        int64_t aDelta = a->attributeOrElse(ATTR_StackDelta, SgAsmInstruction::INVALID_STACK_DELTA);
+        int64_t bDelta = b->attributeOrElse(ATTR_StackDelta, SgAsmInstruction::INVALID_STACK_DELTA);
         if (aDelta == SgAsmInstruction::INVALID_STACK_DELTA) {
             if (aDelta == bDelta) {
                 // ATTR_MayReturn should exist since the stack delta is invalid.  See data() method.
-                MayReturn aMayRet = a->attr<MayReturn>(ATTR_MayReturn).orElse(MAYRETURN_UNKNOWN);
-                MayReturn bMayRet = b->attr<MayReturn>(ATTR_MayReturn).orElse(MAYRETURN_UNKNOWN);
+                MayReturn aMayRet = a->attributeOrElse(ATTR_MayReturn, MAYRETURN_UNKNOWN);
+                MayReturn bMayRet = b->attributeOrElse(ATTR_MayReturn, MAYRETURN_UNKNOWN);
                 return aMayRet==MAYRETURN_NO && bMayRet!=MAYRETURN_NO;
             } else {
                 return true;                            // b is concrete
@@ -561,6 +564,41 @@ public:
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         int64_t delta = functionStackDelta(p, f);
         return SgAsmInstruction::INVALID_STACK_DELTA==delta ? NAN : (double)delta;
+    }
+};
+
+/** Calling convention analysis. */
+class FunctionCallingConvention: public FunctionAnalyzer {
+public:
+    static Ptr instance() {
+        return Ptr(new FunctionCallingConvention);
+    }
+    Wt::WString header() const ROSE_OVERRIDE {
+        return "CallConv";
+    }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Calling convention";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return ("Calling convention name. This is only the first (closest match) calling convention definition that "
+                "matches the function's behavior; other calling convention definitions might also be valid.");
+    }
+    boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        const rose::BinaryAnalysis::CallingConvention::Definition *ccdef = functionCallingConvention(p, f);
+        return ccdef ? Wt::WString(ccdef->name()) : Wt::WString("unknown");
+    }
+    bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
+        static const rose::BinaryAnalysis::CallingConvention::Definition *NO_CC_DEF = NULL;
+        const rose::BinaryAnalysis::CallingConvention::Definition *adef = a->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
+        const rose::BinaryAnalysis::CallingConvention::Definition *bdef = b->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
+        if (NULL==adef || NULL==bdef)
+            return NULL==adef && NULL!=bdef;
+        return adef->name().compare(bdef->name()) < 0;
+    }
+    double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        const rose::BinaryAnalysis::CallingConvention::Definition *ccdef = NULL;
+        ccdef = f->attributeOrElse(ATTR_CallConvDef, ccdef);
+        return ccdef ? 1.0 : 0.0;
     }
 };
 

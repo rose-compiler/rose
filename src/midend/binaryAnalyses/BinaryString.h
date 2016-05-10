@@ -214,14 +214,14 @@ void initDiagnostics();
  *  distinct Unicode characters.  The CharacterEncodingForm (CEF) is responsible for converting a code point to a sequence
  *  of one or more code values, or vice versa.  Each code value, which may be multiple bytes, is eventually encoded into a
  *  sequence of octets by the @ref CharacterEncodingScheme (CES). */
-class CharacterEncodingForm: public Sawyer::SharedObject {
+class ROSE_DLL_API CharacterEncodingForm: public Sawyer::SharedObject {
 protected:
     State state_;
 public:
     CharacterEncodingForm(): state_(INITIAL_STATE) {}
     virtual ~CharacterEncodingForm() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref CharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CharacterEncodingForm> Ptr;
 
     /** Create a new encoder from this one. */
@@ -256,12 +256,14 @@ public:
 /** A no-op character encoding form.
  *
  *  Encodes code points to code values and vice versa such that code points are equal to code values. */
-class NoopCharacterEncodingForm: public CharacterEncodingForm {
+class ROSE_DLL_API NoopCharacterEncodingForm: public CharacterEncodingForm {
     CodePoint cp_;
 protected:
     NoopCharacterEncodingForm(): cp_(0) {}
 public:
+    /** Shared-ownership pointer to a @ref NoopCharacterEncodingFormat. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<NoopCharacterEncodingForm> Ptr;
+
     static Ptr instance() { return Ptr(new NoopCharacterEncodingForm); }
     virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new NoopCharacterEncodingForm(*this)); }
     virtual std::string name() const ROSE_OVERRIDE { return "no-op"; }
@@ -277,12 +279,14 @@ NoopCharacterEncodingForm::Ptr noopCharacterEncodingForm();
 /** UTF-8 character encoding form.
  *
  *  Encodes each code point as one to six 8-bit code values. */
-class Utf8CharacterEncodingForm: public CharacterEncodingForm {
+class ROSE_DLL_API Utf8CharacterEncodingForm: public CharacterEncodingForm {
     CodePoint cp_;
 protected:
     Utf8CharacterEncodingForm(): cp_(0) {}
 public:
+    /** Shared-ownership pointer to a @ref Utf8CharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<Utf8CharacterEncodingForm> Ptr;
+
     static Ptr instance() { return Ptr(new Utf8CharacterEncodingForm); }
     virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new Utf8CharacterEncodingForm(*this)); }
     virtual std::string name() const ROSE_OVERRIDE { return "UTF-8"; }
@@ -298,12 +302,14 @@ Utf8CharacterEncodingForm::Ptr utf8CharacterEncodingForm();
 /** UTF-16 character encoding form.
  *
  *  Encodes each code point as one or two 16-bit code values. */
-class Utf16CharacterEncodingForm: public CharacterEncodingForm {
+class ROSE_DLL_API Utf16CharacterEncodingForm: public CharacterEncodingForm {
     CodePoint cp_;
 protected:
     Utf16CharacterEncodingForm(): cp_(0) {}
 public:
+    /** Shared-ownership pointer to a @ref Utf16CharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<Utf16CharacterEncodingForm> Ptr;
+
     static Ptr instance() { return Ptr(new Utf16CharacterEncodingForm); }
     virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new Utf16CharacterEncodingForm(*this)); }
     virtual std::string name() const ROSE_OVERRIDE { return "UTF-16"; }
@@ -321,14 +327,14 @@ Utf16CharacterEncodingForm::Ptr utf16CharacterEncodingForm();
  *  A code value (one or more of which compose a code point, or a single character in a coded character set), is encoded as
  *  one or more octets.  For instance, a UTF-16 code value will be converted to two octets in big or little endian order
  *  depending on the character encoding scheme. */
-class CharacterEncodingScheme: public Sawyer::SharedObject {
+class ROSE_DLL_API CharacterEncodingScheme: public Sawyer::SharedObject {
 protected:
     State state_;
 public:
     CharacterEncodingScheme(): state_(INITIAL_STATE) {}
     virtual ~CharacterEncodingScheme() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref CharacterEncodingScheme. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CharacterEncodingScheme> Ptr;
 
     /** Create a new copy of this encoder. */
@@ -364,7 +370,7 @@ public:
  *  This character encoding scheme converts code value to a sequence of octets in big- or little-endian order, and vice
  *  versa. It needs to know the number of octets per code value, and the byte order of the octets per code value is larger
  *  than one. */
-class BasicCharacterEncodingScheme: public CharacterEncodingScheme {
+class ROSE_DLL_API BasicCharacterEncodingScheme: public CharacterEncodingScheme {
     size_t octetsPerValue_;
     ByteOrder::Endianness sex_;
     CodeValue cv_;
@@ -396,14 +402,14 @@ BasicCharacterEncodingScheme::Ptr basicCharacterEncodingScheme(size_t octetsPerV
  *
  *  Strings that are length-encoded must specify a length encoding scheme that gives the length of the string measured in
  *  code points. */
-class LengthEncodingScheme: public Sawyer::SharedObject {
+class ROSE_DLL_API LengthEncodingScheme: public Sawyer::SharedObject {
 protected:
     State state_;
 public:
     LengthEncodingScheme(): state_(INITIAL_STATE) {}
     virtual ~LengthEncodingScheme() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref LengthEncodingScheme. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<LengthEncodingScheme> Ptr;
 
     /** Create a new copy of this encoder. */
@@ -438,7 +444,7 @@ public:
  *  This length encoding scheme converts a length to a sequence of octets in big- or little-endian order, and vice
  *  versa. It needs to know the number of octets per length value, and the byte order of the octets if the length is
  *  greater than one. */
-class BasicLengthEncodingScheme: public LengthEncodingScheme {
+class ROSE_DLL_API BasicLengthEncodingScheme: public LengthEncodingScheme {
     size_t octetsPerValue_;
     ByteOrder::Endianness sex_;
     size_t length_;
@@ -469,11 +475,11 @@ BasicLengthEncodingScheme::Ptr basicLengthEncodingScheme(size_t octetsPerValue,
 /** Valid code point predicate.
  *
  *  This predicate tests that the specified code point is valid for a string. */
-class CodePointPredicate: public Sawyer::SharedObject {
+class ROSE_DLL_API CodePointPredicate: public Sawyer::SharedObject {
 public:
     virtual ~CodePointPredicate() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref CodePointPredicate. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CodePointPredicate> Ptr;
 
     /** Name of predicate. */
@@ -487,7 +493,7 @@ public:
  *
  *  Returns true if the code point is a printable US-ASCII character.  Printable characters are seven-bit code points for
  *  which C's @c isprint predicate returns true (anything but control characters). */
-class PrintableAscii: public CodePointPredicate {
+class ROSE_DLL_API PrintableAscii: public CodePointPredicate {
 protected:
     PrintableAscii() {}
 public:
@@ -504,7 +510,7 @@ PrintableAscii::Ptr printableAscii();
 /** Matches any code point.
  *
  *  Returns true for all code points. */
-class AnyCodePoint: public CodePointPredicate {
+class ROSE_DLL_API AnyCodePoint: public CodePointPredicate {
 protected:
     AnyCodePoint() {}
 public:
@@ -520,7 +526,7 @@ AnyCodePoint::Ptr anyCodePoint();
  *
  *  A string encoding scheme indicates how a string (sequence of code points) is encoded as a sequence of octets and vice
  *  versa. */
-class StringEncodingScheme: public Sawyer::SharedObject {
+class ROSE_DLL_API StringEncodingScheme: public Sawyer::SharedObject {
 protected:
     State state_;                                       // decoding state
     CodePoints codePoints_;                             // unconsumed code points
@@ -539,7 +545,7 @@ protected:
 public:
     virtual ~StringEncodingScheme() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref StringEncodingScheme. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<StringEncodingScheme> Ptr;
 
     /** Name of encoding */
@@ -616,7 +622,7 @@ public:
 /** Length-prefixed string encoding scheme.
  *
  *  A string encoding where the octets for the characters are prefixed with an encoded length. */
-class LengthEncodedString: public StringEncodingScheme {
+class ROSE_DLL_API LengthEncodedString: public StringEncodingScheme {
     LengthEncodingScheme::Ptr les_;
     Sawyer::Optional<size_t> declaredLength_;           // decoded length
 protected:
@@ -624,7 +630,7 @@ protected:
                         const CharacterEncodingScheme::Ptr &ces, const CodePointPredicate::Ptr &cpp)
         : StringEncodingScheme(cef, ces, cpp), les_(les) {}
 public:
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref LengthEncodedString. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<LengthEncodedString> Ptr;
 
     static Ptr instance(const LengthEncodingScheme::Ptr &les, const CharacterEncodingForm::Ptr &cef,
@@ -681,7 +687,7 @@ LengthEncodedString::Ptr lengthEncodedPrintableAsciiWide(size_t lengthSize, Byte
  *
  *  A string whose character octets are followed by octets for a special code point that marks the end of the string but is
  *  not included as part of the string's characters.  An example is C-style NUL-terminated ASCII. */
-class TerminatedString: public StringEncodingScheme {
+class ROSE_DLL_API TerminatedString: public StringEncodingScheme {
     CodePoints terminators_;
     Sawyer::Optional<CodePoint> terminated_;            // decoded termination
 protected:
@@ -689,7 +695,7 @@ protected:
                      const CodePointPredicate::Ptr &cpp, const CodePoints &terminators)
         : StringEncodingScheme(cef, ces, cpp), terminators_(terminators) {}
 public:
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref TerminatedString. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<TerminatedString> Ptr;
 
     static Ptr instance(const CharacterEncodingForm::Ptr &cef, const CharacterEncodingScheme::Ptr &ces,
@@ -744,7 +750,7 @@ TerminatedString::Ptr nulTerminatedPrintableAsciiWide(size_t charSize, ByteOrder
  *
  *  Represents a string by specifying the encoding and an interval of virtual addresses where the encoded octets are
  *  stored. */
-class EncodedString {
+class ROSE_DLL_API EncodedString {
     StringEncodingScheme::Ptr encoder_;             // how string is encoded
     AddressInterval where_;                         // where encoded string is located
 public:
@@ -793,7 +799,7 @@ public:
  *  specfieid by the user.
  *
  *  See the @ref rose::BinaryAnalysis::Strings "Strings" namespace for details. */
-class StringFinder {
+class ROSE_DLL_API StringFinder {
 public:
     /** Settings and properties.
      *

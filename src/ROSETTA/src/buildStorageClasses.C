@@ -4,7 +4,7 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 #include "grammarString.h"
 #include <sstream>
 
@@ -13,7 +13,7 @@ using namespace std;
 // JJW helper macros
 #define DO_ON_CHILDREN(NODE, FUNCTION) \
   do { \
-    vector<Terminal *>::const_iterator treeNodeIterator; \
+    vector<AstNodeClass *>::const_iterator treeNodeIterator; \
     for(treeNodeIterator = (NODE).subclasses.begin(); \
         treeNodeIterator != (NODE).subclasses.end(); \
         treeNodeIterator++ ) \
@@ -26,7 +26,7 @@ using namespace std;
 
 #define DO_ON_CHILDREN_TO_STRING(NODE, RESULT, FUNCTION) \
   do { \
-    vector<Terminal *>::const_iterator treeNodeIterator; \
+    vector<AstNodeClass *>::const_iterator treeNodeIterator; \
     for(treeNodeIterator = (NODE).subclasses.begin(); \
         treeNodeIterator != (NODE).subclasses.end(); \
         treeNodeIterator++ ) \
@@ -57,7 +57,7 @@ using namespace std;
  *   * readEasyStorageDataFromFile: reads back the data od the EasyStroage classes from file
  */
 string
-Grammar::buildStringForStorageClassSource ( Terminal & node )
+Grammar::buildStringForStorageClassSource ( AstNodeClass & node )
    {
 
      std::string pickOutIRNodeData ;
@@ -109,7 +109,7 @@ Grammar::buildStringForStorageClassSource ( Terminal & node )
  * calling the method above and replacing all the $CLASSNAME, etc. 
  */
 void
-Grammar::buildStorageClassSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildStorageClassSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      string sourceFileInsertionSeparator = "MEMBER_FUNCTION_DEFINITIONS";
      string fileName = "../Grammar/grammarStorageClassDefinitionMacros.macro";
@@ -132,7 +132,7 @@ Grammar::buildStorageClassSourceFiles( Terminal & node, StringUtility::FileWithL
 /* JH (11/07/2005): build the source IR node constructors that take its corresponding StorageClass type
 */
 void
-Grammar::buildIRNodeConstructorOfStorageClassSource( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildIRNodeConstructorOfStorageClassSource( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      string sourceFileInsertionSeparator = "CONSTRUCTOR_SOURCE";
      string fileName = "../Grammar/grammarSourceOfIRNodesAstFileIOSupport.macro";
@@ -147,7 +147,7 @@ Grammar::buildIRNodeConstructorOfStorageClassSource( Terminal & node, StringUtil
   // Now apply the edit/subsitution specified within the grammar (by the user)
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
   // JH Add the parent in position   
-     Terminal *term = &node;
+     AstNodeClass *term = &node;
      ROSE_ASSERT( term  != NULL );
      std::string parent = " ";
      if ( term->getBaseClass() != NULL )
@@ -168,7 +168,7 @@ Grammar::buildIRNodeConstructorOfStorageClassSource( Terminal & node, StringUtil
  * takes the root of an AST. 
  */
 std::string
-Grammar::buildStaticDataMemberListClassConstructor(Terminal & node)
+Grammar::buildStaticDataMemberListClassConstructor(AstNodeClass & node)
    {
      std::string classMembers = node.buildStaticDataMemberListConstructor();
      string temp = classMembers;
@@ -182,7 +182,7 @@ Grammar::buildStaticDataMemberListClassConstructor(Terminal & node)
  * classes from a AstSpecificDataManagingClass object.
  */
 std::string
-Grammar::buildStaticDataMemberListSetStaticDataSource(Terminal & node)
+Grammar::buildStaticDataMemberListSetStaticDataSource(AstNodeClass & node)
    {
      std::string classMembers = node.buildStaticDataMemberListSetStaticData();
      string temp = classMembers;
@@ -196,12 +196,12 @@ Grammar::buildStaticDataMemberListSetStaticDataSource(Terminal & node)
  * static members of the IR nodes. 
  */
 std::string
-Grammar::buildStaticDataMemberListClassEntries(Terminal & node)
+Grammar::buildStaticDataMemberListClassEntries(AstNodeClass & node)
    {
      std::string classMembers = node.buildStaticDataMemberList();
      string temp = classMembers;
      classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
-     vector<Terminal *>::const_iterator treeListIterator;
+     vector<AstNodeClass *>::const_iterator treeListIterator;
      DO_ON_CHILDREN_TO_STRING(node, classMembers, buildStaticDataMemberListClassEntries);
      return classMembers;
    }
@@ -211,7 +211,7 @@ Grammar::buildStaticDataMemberListClassEntries(Terminal & node)
  * AstSpecificDataMangingClass, i.e. AstSpecificDataMangingClassStorageClass.  
  */
 std::string
-Grammar::buildDataMemberStorageClass(Terminal & node)
+Grammar::buildDataMemberStorageClass(AstNodeClass & node)
    {
      std::string classMembers = node.buildStaticDataMemberListOfStorageClass();
      string temp = classMembers;
@@ -225,7 +225,7 @@ Grammar::buildDataMemberStorageClass(Terminal & node)
  * in the AstSpecificDataManagingClass.
  */
 std::string
-Grammar::buildAccessFunctionSources(Terminal & node)
+Grammar::buildAccessFunctionSources(AstNodeClass & node)
    {
      std::string functionSource = node.buildAccessFunctionsForStaticDataMemberSource();
      string temp = functionSource;
@@ -239,7 +239,7 @@ Grammar::buildAccessFunctionSources(Terminal & node)
  * that takes its corresponding StorageClass (AstSpecificDataManagingClassStorageClass)
  */
 std::string
-Grammar::generateStaticDataConstructorSource(Terminal & node)
+Grammar::generateStaticDataConstructorSource(AstNodeClass & node)
    {
      std::string functionSource = node.buildStaticDataConstructorSource();
      string temp = functionSource;
@@ -253,7 +253,7 @@ Grammar::generateStaticDataConstructorSource(Terminal & node)
  * writeEasyStorageDataToFile of AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::generateStaticDataWriteEasyStorageDataToFileSource(Terminal & node)
+Grammar::generateStaticDataWriteEasyStorageDataToFileSource(AstNodeClass & node)
    {
      std::string functionSource = node.buildStaticDataWriteEasyStorageDataToFileSource();
      string temp = functionSource;
@@ -267,7 +267,7 @@ Grammar::generateStaticDataWriteEasyStorageDataToFileSource(Terminal & node)
  * readEasyStorageDataFromFile of AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::generateStaticDataReadEasyStorageDataFromFileSource(Terminal & node)
+Grammar::generateStaticDataReadEasyStorageDataFromFileSource(AstNodeClass & node)
    {
      std::string functionSource = node.buildStaticDataReadEasyStorageDataFromFileSource();
      string temp = functionSource;
@@ -281,7 +281,7 @@ Grammar::generateStaticDataReadEasyStorageDataFromFileSource(Terminal & node)
  * arrangeStaticDataOfEasyStorageClassesInOneBlock of AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource(Terminal & node)
+Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource(AstNodeClass & node)
    {
      std::string functionSource = node.buildStaticDataArrangeEasyStorageInOnePoolSource();
      string temp = functionSource;
@@ -295,7 +295,7 @@ Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource(Terminal & node)
  * deleteStaticDataOfEasyStorageClasses of AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(Terminal & node)
+Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(AstNodeClass & node)
    {
      std::string functionSource = node.buildStaticDataDeleteEasyStorageMemoryPoolSource();
      string temp = functionSource;
@@ -309,7 +309,7 @@ Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(Terminal & node)
  * AstSpecificDataManagingClassStorageClass that takes the data out of a AstSpecificDataManaging object
  */
 std::string
-Grammar::buildStaticStorageClassPickOutSource(Terminal & node)
+Grammar::buildStaticStorageClassPickOutSource(AstNodeClass & node)
    {
      std::string functionSource = node.buildSourceForStoringStaticMembers();
      string temp = functionSource;
@@ -323,7 +323,7 @@ Grammar::buildStaticStorageClassPickOutSource(Terminal & node)
  * functions of the data members contained in AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::buildAccessFunctionsOfClassEntries(Terminal & node)
+Grammar::buildAccessFunctionsOfClassEntries(AstNodeClass & node)
    {
      std::string accessFunctions = node.buildAccessFunctionsForStaticDataMember();
      string temp = accessFunctions;
@@ -335,7 +335,7 @@ Grammar::buildAccessFunctionsOfClassEntries(Terminal & node)
 //#########################################################################################################
 //JH (11/24/2005): Method that generates the code of the headers of the IR nodes StorageClasses
 void
-Grammar::buildStorageClassHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildStorageClassHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      string marker   = "DATA_MEMBER_DECLARATIONS";
      string fileName = "../Grammar/grammarStorageClassDeclatationMacros.macro";
@@ -347,7 +347,7 @@ Grammar::buildStorageClassHeaderFiles( Terminal & node, StringUtility::FileWithL
      editStringStart = headerBeforeInsertion;
 #if 1
   // JH Add the parent in position
-     Terminal *term = &(node);
+     AstNodeClass *term = &(node);
      ROSE_ASSERT( term  != NULL );
      std::string parent = " ";
      if ( term->getBaseClass() != NULL )
@@ -589,17 +589,17 @@ Grammar::generateStorageClassesFiles()
    }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  Fuction definition for Terminal ...
+//  Fuction definition for AstNodeClass ...
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 //#########################################################################################################
 /* JH (12/01/2005): function for splitting the Sg-class member data into their diffrent types.
      Since I need this twice or more, I decided to build an own method! A big advantage is 
      that if we have a variable, that is not handled yet, it runs into a special case TO_HANDLE!
 */
-Terminal::TypeEvaluation
-Terminal::evaluateType(std::string& varTypeString)
+AstNodeClass::TypeEvaluation
+AstNodeClass::evaluateType(std::string& varTypeString)
    {
-     Terminal::TypeEvaluation returnType;
+     AstNodeClass::TypeEvaluation returnType;
      unsigned int length = varTypeString.size();
      bool typeIsStarPointer = ( varTypeString.find("*") != std::string::npos) ;
      if ( varTypeString == "const char*" )
@@ -800,7 +800,8 @@ Terminal::evaluateType(std::string& varTypeString)
        {
           returnType = ASTATTRIBUTEMECHANISM;
        }
-     else  if ( varTypeString == "hash_iterator" )
+     else  if ( varTypeString == "hash_iterator" ||
+                varTypeString == "const rose::BinaryAnalysis::CallingConvention::Definition*")
        {
           returnType = SKIP_TYPE;
        }
@@ -846,6 +847,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgOmpClause::omp_schedule_kind_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_reduction_operator_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_map_operator_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_map_dist_data_enum" ) ||
                  ( varTypeString == "SgProcedureHeaderStatement::subprogram_kind_enum" ) ||
                  ( varTypeString == "SgLabelSymbol::label_type_enum" ) ||
                  ( varTypeString == "SgAsmFunction::function_kind_enum" ) ||
@@ -896,6 +898,8 @@ Terminal::evaluateType(std::string& varTypeString)
               // DQ (11/26/2013): Added to support use of enums from SgToken class.
                  ( varTypeString == "SgToken::ROSE_Fortran_Operators" ) ||
                  ( varTypeString == "SgToken::ROSE_Fortran_Keywords" ) ||
+              // DQ (12/9/2015): Added to support use of enums from SgUntypedType class.
+                 ( varTypeString == "SgUntypedType::type_enum" ) ||
                  false 
               )
        {
@@ -965,13 +969,13 @@ Terminal::evaluateType(std::string& varTypeString)
    if a data has to be stored and also in which manner. The static data members become static data 
    become static data members in the StorageClasses. 
 */
-std::string Terminal::buildStorageClassHeader ()
+std::string AstNodeClass::buildStorageClassHeader ()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
      string s;
      string classNameString = this-> name;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -1062,7 +1066,7 @@ std::string Terminal::buildStorageClassHeader ()
  *    Thus, we copy the pointers, replace the pointers by its global indices in the container, store the 
  *    container and copy back the original ones.
  */
-string Terminal::buildStorageClassPickOutIRNodeDataSource ()
+string AstNodeClass::buildStorageClassPickOutIRNodeDataSource ()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
@@ -1075,9 +1079,9 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
      s += "     assert ( source->p_freepointer != NULL) ; \n";
      s += "#endif \n" ;
 
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                GrammarString *data = *stringListIterator;
@@ -1486,16 +1490,16 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
    have to call this method on all suitable members! But since we what to avoid repeatings in the call of 
    the methods, we skip dublicates (realized by the addString)!
 */
-string Terminal::buildStorageClassDeleteStaticDataSource ()
+string AstNodeClass::buildStorageClassDeleteStaticDataSource ()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      std::string s  ;
      std::string addString ;
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                addString = "";
@@ -1576,16 +1580,16 @@ string Terminal::buildStorageClassDeleteStaticDataSource ()
 /* JH (10/28/2005) : Similar to the method above, but it arranges the static data of the EasyStorage to be 
    contained in one block!
 */
-string Terminal::buildStorageClassArrangeStaticDataInOneBlockSource ()
+string AstNodeClass::buildStorageClassArrangeStaticDataInOneBlockSource ()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      std::string s;
      std::string addString;
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                addString = "";
@@ -1668,7 +1672,7 @@ string Terminal::buildStorageClassArrangeStaticDataInOneBlockSource ()
    its corresponding StorageClass as parameter! Since we call the the initalization for the parents, 
    we only need to handle the data members of the IR node itself!
 */
-string Terminal::buildSourceForIRNodeStorageClassConstructor ()
+string AstNodeClass::buildSourceForIRNodeStorageClassConstructor ()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
@@ -1680,7 +1684,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
           s += "     p_freepointer = AST_FileIO::IS_VALID_POINTER() ; \n";
         }
      s += "     assert ( p_freepointer == AST_FileIO::IS_VALID_POINTER() ) ; \n";
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -1920,7 +1924,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                        std::cout << " There is a class not handled in buildStorageClasses.C, Line " << __LINE__ << endl ;
                        std::cout << "In class " + classNameString + " caused by variable " + varTypeString + " p_" + varNameString << endl ;
                        /* Does the type need to be added to one of the lists above?
-                        * See Terminal::evaluateType(std::string& varTypeString) */
+                        * See AstNodeClass::evaluateType(std::string& varTypeString) */
                        assert (!"Stop immediately, since variable to build is not found ... " ) ;
                       break;
                   }
@@ -1932,16 +1936,16 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 /* JH (10/28/2005) : build method for writing the static data members of the EasyStorage classes to disk.
    this looks up all members and build the call for the suitable ones!
 */
-string Terminal::buildStorageClassWriteStaticDataToFileSource ()
+string AstNodeClass::buildStorageClassWriteStaticDataToFileSource ()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      std::string s;
      std::string addString;
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                addString = "";
@@ -2021,16 +2025,16 @@ string Terminal::buildStorageClassWriteStaticDataToFileSource ()
 /* JH (10/28/2005) : This methods builds the source for reading the static data members of the EasyStorage
    classes, caused by the StorageClasses to disk! 
 */
-string Terminal::buildStorageClassReadStaticDataFromFileSource()
+string AstNodeClass::buildStorageClassReadStaticDataFromFileSource()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      std::string s;
      std::string addString;
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                addString = "";
@@ -2111,14 +2115,14 @@ string Terminal::buildStorageClassReadStaticDataFromFileSource()
    in EasyStorage classes. 
    REMARK: This checking of the data members INCLUDES the checking of the data memebers of the parent! 
 */
-bool Terminal::hasMembersThatAreStoredInEasyStorageClass()
+bool AstNodeClass::hasMembersThatAreStoredInEasyStorageClass()
    {
      bool hasMembersThatWillBeStoredInEasyStorage = false;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
-     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
+     for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
-          copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+          copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
              {
                GrammarString *data = *stringListIterator;
@@ -2189,12 +2193,12 @@ bool Terminal::hasMembersThatAreStoredInEasyStorageClass()
 //#########################################################################################################
 /* JH (10/28/2005) : Checking, wheather a teminal or nonterminal has static data members
 */
-bool Terminal::hasStaticMembers()
+bool AstNodeClass::hasStaticMembers()
    {
      bool hasStaticDataMembers = false;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2215,13 +2219,13 @@ bool Terminal::hasStaticMembers()
    we want to call the storing and reading of the EasyStorage classes caused by the static data members not
    explicitly!
 */
-std::string Terminal::buildStaticDataMemberList()
+std::string AstNodeClass::buildStaticDataMemberList()
    {
      std::string s;
      std::string classNameString = this->name;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2240,13 +2244,13 @@ std::string Terminal::buildStaticDataMemberList()
 /* JH (04/04/2006) Method for generating the constructor source contributed by an IR node to the 
  * AstSpecificDataManagingClass
  */
-std::string Terminal::buildStaticDataMemberListConstructor()
+std::string AstNodeClass::buildStaticDataMemberListConstructor()
    {
      std::string s;
      std::string classNameString = this->name;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2265,14 +2269,14 @@ std::string Terminal::buildStaticDataMemberListConstructor()
 /* JH (04/05/2006) Method for generating the data member list within the AstSpecificDataManaginClass which
  * are added by an IR node. 
  */
-std::string Terminal::buildStaticDataMemberListSetStaticData()
+std::string AstNodeClass::buildStaticDataMemberListSetStaticData()
    {
      std::string s;
      std::string classNameString = this->name;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
       
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2308,14 +2312,14 @@ std::string Terminal::buildStaticDataMemberListSetStaticData()
 /* JH (04/05/2006) Method for generating the data member list within the 
  * AstSpecificDataManagingClassStorageClass which are added by an IR node. 
  */
-std::string Terminal::buildStaticDataMemberListOfStorageClass()
+std::string AstNodeClass::buildStaticDataMemberListOfStorageClass()
    {
      std::string s;
      std::string classNameString = this->name;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
 
-     copyList = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
 
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
@@ -2388,13 +2392,13 @@ std::string Terminal::buildStaticDataMemberListOfStorageClass()
 /* JH (04/05/2006) Method for generating the access functions headers of the AstSpecificDataManagingClass, 
  * that are yielded by an IR node. 
  */
-std::string Terminal::buildAccessFunctionsForStaticDataMember()
+std::string AstNodeClass::buildAccessFunctionsForStaticDataMember()
    {
      std::string s;
      std::string classNameString = this->name;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2413,13 +2417,13 @@ std::string Terminal::buildAccessFunctionsForStaticDataMember()
 /* JH (04/05/2006) Method for generating the access functions source of the AstSpecificDataManagingClass, 
  * that are yielded by an IR node. 
  */
-std::string Terminal::buildAccessFunctionsForStaticDataMemberSource()
+std::string AstNodeClass::buildAccessFunctionsForStaticDataMemberSource()
    {
      std::string s;
      std::string classNameString = this->name;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2441,13 +2445,13 @@ std::string Terminal::buildAccessFunctionsForStaticDataMemberSource()
 //#########################################################################################################
 /* JH (10/28/2005) : The pickOutData generation of the AstSpecificDataMangaingClassStroageClass
  */
-string Terminal::buildSourceForStoringStaticMembers ()
+string AstNodeClass::buildSourceForStoringStaticMembers ()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      string s;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2518,14 +2522,14 @@ string Terminal::buildSourceForStoringStaticMembers ()
 /* JH (10/28/2005) : Building the contribute of an IR node to the constructor of 
  * AstSpecificDataManagingClass that takes its corresponding StorageClass as parameter. 
  */
-string Terminal::buildStaticDataConstructorSource ()
+string AstNodeClass::buildStaticDataConstructorSource ()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
 
      string classNameString = this-> name;
      string s  ;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2584,13 +2588,13 @@ string Terminal::buildStaticDataConstructorSource ()
 /* JH (10/28/2005) : Writing the static data members of the AstSpecificDataManagingClassStorageClasses to 
  * file.
  */
-string Terminal::buildStaticDataWriteEasyStorageDataToFileSource()
+string AstNodeClass::buildStaticDataWriteEasyStorageDataToFileSource()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      string s  ;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           std::string addString;
@@ -2647,14 +2651,14 @@ string Terminal::buildStaticDataWriteEasyStorageDataToFileSource()
    buildStorageClassReadStaticDataFromFileSource, that soes the same for the StorageClasses!!!!!!!!!
 */
  
-string Terminal::buildStaticDataReadEasyStorageDataFromFileSource()
+string AstNodeClass::buildStaticDataReadEasyStorageDataFromFileSource()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
 
      string classNameString = this-> name;
      string s  ( "" );
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2711,13 +2715,13 @@ string Terminal::buildStaticDataReadEasyStorageDataFromFileSource()
    from disk and rebuilds the EasyStorage data of them! Do not mistake this method with the 
    buildStorageClassReadStaticDataFromFileSource, that soes the same for the StorageClasses!!!!!!!!!
 */
-string Terminal::buildStaticDataArrangeEasyStorageInOnePoolSource()
+string AstNodeClass::buildStaticDataArrangeEasyStorageInOnePoolSource()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      string s;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2771,13 +2775,13 @@ string Terminal::buildStaticDataArrangeEasyStorageInOnePoolSource()
    for the static data members of the IR nodes! Do not mistake this method with the 
    buildStorageClassReadStaticDataFromFileSource, that does the same for the StorageClasses!!!!!!!!!
 */
-string Terminal::buildStaticDataDeleteEasyStorageMemoryPoolSource()
+string AstNodeClass::buildStaticDataDeleteEasyStorageMemoryPoolSource()
    {
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      string s;
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;

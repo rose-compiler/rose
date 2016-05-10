@@ -297,7 +297,7 @@ In a few words: time, size, details, and debugging.  And the fact that
 optimizing compilers tend to be good adversaries.  Here are some of
 the things we needed to overcome:
 
-1.  (Size) Each specimen typically contains hundres of instructions
+1.  (Size) Each specimen typically contains hundreds of instructions
     (thousands when dynamically linked).  Each function is fuzz tested
     hundreds of times.  Each test needs reproducible sequences of
     inputs, and each sequence can contain thousands of values. Each
@@ -400,7 +400,7 @@ two orders of magnitude and many of our other queries ran faster also.
 
 Our first large successful run was a comparison of grep compiled with
 GCC using no optimization (-O0) and full optimization (-O3), using
-40,320 permuations of an input group having eight integer values. This
+40,320 permutations of an input group having eight integer values. This
 run took about 14 hours on 10 CPUs, ran 4.7 million tests on 116
 functions, and processed just over half a trillion x86 instructions at
 approx 10 million instructions per second. The database dump (SQL from

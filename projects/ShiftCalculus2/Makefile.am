@@ -81,6 +81,25 @@ test10: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -std=c++11 $(srcdir)/laplacian_lite_v3.cpp
 	g++ -std=c++11 rose_laplacian_lite_v3.cpp $(srcdir)/Box.cpp -I$(srcdir) -o $@ 
 
+test11: shiftCalculusCompiler
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for C++ code                   ********"
+	@echo "********************************************************************************************"
+	./shiftCalculusCompiler -c -std=c++11 $(srcdir)/laplacian_multibox.cpp
+	g++ -std=c++11 rose_laplacian_multibox.cpp $(srcdir)/Box.cpp $(srcdir)/BLIterator.cpp $(srcdir)/BoxLayout.cpp  $(srcdir)/CH_Timer.cpp $(srcdir)/PowerItoI.cpp  -I$(srcdir) -o $@ 
+
+test11_ref: 
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for C++ code                   ********"
+	@echo "********************************************************************************************"
+	g++ -std=c++11 $(srcdir)/refCode/laplacian_multibox_manual.cpp $(srcdir)/Box.cpp $(srcdir)/BLIterator.cpp $(srcdir)/BoxLayout.cpp  $(srcdir)/CH_Timer.cpp $(srcdir)/PowerItoI.cpp  -I$(srcdir) -o $@ 
+
+test11_mpi: 
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for C++ code                   ********"
+	@echo "********************************************************************************************"
+	mpic++ -g -std=c++11 $(srcdir)/refCode/laplacian_multibox_mpi.cpp $(srcdir)/Box.cpp $(srcdir)/BLIterator.cpp $(srcdir)/BoxLayout.cpp  $(srcdir)/CH_Timer.cpp $(srcdir)/PowerItoI.cpp  -I$(srcdir) -o $@ 
+
 POLYOPT_PATH=$(top_builddir)/projects/PolyOpt2
 
 test10poly: shiftCalculusCompiler
@@ -114,9 +133,6 @@ test10MLM: shiftCalculusCompiler
 	@echo "********************************************************************************************"
 	$(MLM_PATH)/src/mlm $(srcdir)/laplacian_lite_v3_MLM.cpp -I$(srcdir) -std=c++11 -rose:Cxx11 -rose:skipfinalCompileStep -rose:o rose_MLM_laplacian_lite_v3.cpp
 
-test11: shiftCalculusCompiler
-	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNS.cpp
-
 rose_laplacian_lite.cu: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output rose_laplacian_lite.cu $(srcdir)/laplacian_lite.cpp
 rose_laplacian_lite_v2.cu: shiftCalculusCompiler
@@ -128,11 +144,14 @@ rose_laplacian_lite_v3.cu: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
 
 # wait until the dsl compiler generates correct sequential code
-rose_laplacian_lite_v4_mpi.cpp: mpiCodeGenerator
+rose_test_mpi_v1.cpp: mpiCodeGenerator $(srcdir)/refCode/test_mpi_v1.cpp
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: code generation for MPI ********"
 	@echo "********************************************************************************************"
-	./mpiCodeGenerator -c -std=c++11 -I$(srcdir) -I$(srcdir)/runtime -I$(srcdir)/runtime/dummyMPI -rose:output $@  $(srcdir)/refCode/rose_laplacian_lite_v4.cpp 
+	./mpiCodeGenerator  -rose:openmp:ast_only -c -std=c++11 -I$(srcdir) -I$(srcdir)/runtime -I$(srcdir)/runtime/dummyMPI $(srcdir)/refCode/test_mpi_v1.cpp
+
+test_mpi_v1.out: rose_test_mpi_v1.cpp
+	mpicxx -std=c++11 -I$(srcdir) -I$(srcdir)/runtime  $< $(srcdir)/Box.cpp $(srcdir)/runtime/xomp_mpi.c -o $@
 
 #rose_laplacian_lite_v3_mpi.cpp: shiftCalculusCompiler
 #	@echo "********************************************************************************************"
@@ -158,18 +177,22 @@ test12: shiftCalculusCompiler
 localTests: test4 test2 test5 test6 test7 test8
 
 #rose_laplacian_lite_v3_mpi.cpp
-mpiTests: rose_laplacian_lite_v4_mpi.cpp 
+#rose_laplacian_lite_v4_mpi.cpp 
+mpiTests: test_mpi_v1.out #rose_test_mpi_v1.cpp 
 
 cudaTests: rose_laplacian_lite_v3.cu rose_laplacian_lite_v3_GPU_collapsed.cu 
 
 demo: test10 cudaTests test10poly test10vector test10MLM
-demo2015: test10 cudaTests test10vector 
+demo2015: test10 cudaTests test10vector mpiTests 
+#mpiTests
 
 check-local:
 	@echo "Tests for Shift Calculus examples."
 #	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) $(PASSING_REGRESSION_TEST_Output)
-	@$(MAKE) localTests cudaTests
+# demo2015 collects successful code generations for March meeting
+	@$(MAKE) demo2015
+#	@$(MAKE) localTests cudaTests
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: make check rule complete (terminated normally) ********"
 	@echo "********************************************************************************************"
@@ -179,7 +202,8 @@ EXTRA_DIST = refCode]ls/laplacian_mpi.cpp refCode/laplacian_mpi_v1_1.cpp refCode
              refCode/laplacian_mpi_wrt.cpp refCode/laplacian_mpi_v1_2.cpp refCode/laplacian_mpi_v2_2.cpp refCode/laplacian_mpi_v4.cpp \
 	     refCode/laplacian_mpi_v4_wrt.cpp refCode/rose_laplacian_lite_v4.cpp refCode/laplacian_mpi_v3.cpp refCode/laplacian_mpi_v4.1_wrt.cpp \
 	     refCode/laplacian_mpi_v4.2_wrt.cpp refCode/laplacian_mpi_v4.3_wrt.cpp refCode/laplacian_mpi_v4.4_wrt.cpp \
-	     refCode/rose_laplacian_lite_v4.1.cpp runtime/libxomp_mpi.h runtime/test_xomp_init_mpi.c runtime/xomp_mpi.c
+	     refCode/rose_laplacian_lite_v4.1.cpp runtime/libxomp_mpi.h runtime/test_xomp_init_mpi.c runtime/xomp_mpi.c \
+	     refCode/test_mpi_v1.cpp refCode/rose_test_mpi_v1.cpp
 CLEANFILES = 
 
 clean-local:

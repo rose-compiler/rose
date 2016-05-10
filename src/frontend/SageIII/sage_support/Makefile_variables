@@ -5,6 +5,9 @@ fSageSupport_la_sources=\
 	$(fSageSupportPath)/keep_going.cpp \
 	$(fSageSupportPath)/cmdline.cpp
 
+# DQ (2/2/2016): Added dependence to force this to be recompiled.
+$(fSageSupportPath)/cmdline.lo: ${top_builddir}/rose_config.h
+
 fSageSupport_includeHeaders=\
 	$(fSageSupportPath)/sage_support.h \
 	$(fSageSupportPath)/keep_going.h \

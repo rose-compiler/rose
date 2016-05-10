@@ -1410,7 +1410,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                               << "'" << include_path_no_quotes << "'"
                               << std::endl;
                   }
-               } catch (const filesystem_error& ex) {
+              } catch (const boost::filesystem::filesystem_error& ex) {
                   std::cout  << "[ERROR] "
                           << "Exception processing argument to -I: "
                           << "'" << include_path_no_quotes << "'"
@@ -3654,6 +3654,32 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
+  // DQ (12/14/2015): Added more token handling support to improve the source position infor stored in the AST Sg_File_Info objects.
+  // Turn on the output of the tokens from the parser (only applies to C and Fortran support).
+  //
+     set_use_token_stream_to_improve_source_position_info(false);
+     ROSE_ASSERT (get_use_token_stream_to_improve_source_position_info() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(use_token_stream_to_improve_source_position_info)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("use_token_stream_to_improve_source_position_info mode ON \n");
+          set_use_token_stream_to_improve_source_position_info(true);
+        }
+
+  //
+  // DQ (12/23/2015): Suppress long-standing normalization of variable declarations with multiple 
+  // variables to be converted to individual variable declarations.
+  //
+     set_suppress_variable_declaration_normalization(false);
+     ROSE_ASSERT (get_suppress_variable_declaration_normalization() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(suppress_variable_declaration_normalization)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("suppress_variable_declaration_normalization mode ON \n");
+          set_suppress_variable_declaration_normalization(true);
+        }
+
+  //
   // DQ (1/30/2014): Added more token handling support (internal testing).
   //
      set_unparse_tokens_testing(0);
@@ -4037,6 +4063,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
                if ( SgProject::get_verbose() >= 1 )
                     printf ("Cxx11 mode ON \n");
+
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+            // Allow C++11 option with versions of EDG 4.9 and later.
+#else
+            // DQ (1/14/2016): Don't allow C++11 option with versions of EDG before EDG 4.9
+               printf ("\nERROR: C++11 support requires configuration of ROSE using EDG 4.9 or later (using EDG 4.7) \n\n");
+               ROSE_ASSERT(false);
+#endif
+
                set_Cxx11_only(true);
                set_Cxx11_gnu_only(false);
 
@@ -4535,6 +4570,26 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              {
                printf ("Warning, Non Fortran2003 source file name specificed with explicit -rose:Fortran2003 Fortran 2003 language option! \n");
                set_F2003_only(false);
+             }
+        }
+
+  // DQ (1/25/2016): Allow defaults to be set based on filename extension.
+  // set_F2008_only(false);
+  // ROSE_ASSERT (get_F2008_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(f2008|F2008|Fortran2008)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Fortran2008 only mode ON \n");
+          set_F2008_only(true);
+          set_Fortran_only(true);
+
+       // DQ (1/25/2016): We might want to skip the syntax checking.
+          set_skip_syntax_check(true);
+
+          if (get_sourceFileUsesFortran2008FileExtension() == false)
+             {
+               printf ("Warning, Non Fortran2008 source file name specificed with explicit -rose:Fortran2008 Fortran 2008 language option! \n");
+               set_F2008_only(false);
              }
         }
 
@@ -5135,6 +5190,27 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_experimental_fortran_frontend(true);
         }
 
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     set_experimental_fortran_frontend_OFP_test(false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend_OFP_test",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Using experimental fortran frontend_OFP_test (explicitly set: ON) \n");
+          set_experimental_fortran_frontend_OFP_test(true);
+        }
+
+  // DQ (1/25/2016): we want to enforce that we only use F08 with the new experimental mode.
+     if (get_experimental_fortran_frontend() == false)
+        {
+       // We only want to allow Fortran 2008 mode to work with the new experimental fortran frontend.
+          if (get_F2008_only() == true)
+             {
+               printf ("ERROR: Fortran 2008 mode is only supported with the -rose:experimental_fortran_frontend option \n");
+               exit(1);
+            // ROSE_ASSERT(false);
+             }
+        }
 
   // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
   // ****************
@@ -5457,6 +5533,13 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(output_parser_actions)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
+
+  // DQ (12/14/2015): Strip out the new option (so it will not be used on the backend compiler).
+     optionCount = sla(argv, "-rose:", "($)", "(use_token_stream_to_improve_source_position_info)",1);
+
+  // DQ (12/23/2015): Suppress variable declaration normalizations
+     optionCount = sla(argv, "-rose:", "($)", "(suppress_variable_declaration_normalization)",1);
+
      int integerOption_token_tests = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(unparse_tokens_testing)", &integerOption_token_tests, 1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_using_leading_and_trailing_token_mappings)",1);
@@ -5604,6 +5687,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
+
+  // DQ (1/23/2016): Added support for OFP testing within new experimental Fortran support.
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend_OFP_test)",1);
 
   // DQ (9/15/2013): Remove this from being output to the backend compiler.
      optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);
@@ -6273,7 +6359,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           printf ("   --- get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
           printf ("   --- get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
           printf ("   --- get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
-       // printf ("   --- get_F2008_only()          = %s \n",(get_F2008_only() == true) ? "true" : "false");
+          printf ("   --- get_F2008_only()          = %s \n",(get_F2008_only() == true) ? "true" : "false");
           printf ("   --- get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
           printf ("   --- get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
           printf ("   --- get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
@@ -7998,8 +8084,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                        }
                       else
-                       { // compilation only, object name is already specified, single file case, nothing else to tweak for the command line
+                       {
+                      // compilation only, object name is already specified, single file case, nothing else to tweak for the command line
+#if DEBUG_COMPILER_COMMAND_LINE
+                      // DQ (11/8/2015): Put this in #if to avoid output spew.
                          printf ("get_compileOnly() == true: get_multifile_support() == false: \n");
+#endif
                        }
                   }
              }

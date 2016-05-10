@@ -1,0 +1,15 @@
+MODULE A
+INTEGER :: b, c
+END MODULE
+MODULE AA
+INTEGER :: b, c
+END MODULE
+MODULE AAA
+INTEGER :: m, n
+END MODULE
+USE a
+USE , INTRINSIC :: iso_c_binding
+USE , NON_INTRINSIC :: A
+USE aa, d=>b, e=>c
+USE aaa, ONLY: m, f=>n
+END PROGRAM

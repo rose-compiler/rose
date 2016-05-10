@@ -6,6 +6,8 @@ MOSTLYCLEANFILES =
 TEST_TARGETS =
 BINARY_SPECIMENS = $(top_srcdir)/binaries/samples
 
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 ########################################################################################################################
 ########################################################################################################################
 ########################################################################################################################
@@ -288,10 +290,10 @@ TEST_TARGETS += testAdaptiveRegisters.passed
 testAdaptiveRegisters.passed: $(BINARY_SPECIMENS)/x86-64-adaptiveRegs		\
 			      $(srcdir)/TestAnswers/testAdaptiveRegisters.ans	\
 			      debugSemantics
-	@$(RTH_RUN)										\
-		TITLE="RegisterStateGeneric [$@]"						\
-		CMD="./debugSemantics --test-adaptive-registers --semantics=symbolic $<"	\
-		ANS=$(srcdir)/TestAnswers/testAdaptiveRegisters.ans				\
+	@$(RTH_RUN)												\
+		TITLE="RegisterStateGeneric [$@]"								\
+		CMD="./debugSemantics --test-adaptive-registers --semantics=symbolic --track-writers=last $<"	\
+		ANS=$(srcdir)/TestAnswers/testAdaptiveRegisters.ans						\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 
@@ -306,3 +308,6 @@ clean-local:
 	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
 
 check-local: $(TEST_TARGETS)
+
+
+endif

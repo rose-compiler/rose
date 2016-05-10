@@ -12,11 +12,11 @@ RiscOperators::linePrefix() {
     if (stream_) {
         const char *sep = "";
         if (subdomain_) {
-            stream_ <<subdomain_->get_name() <<"@" <<subdomain_.get();
+            stream_ <<subdomain_->name() <<"@" <<subdomain_.get();
             sep = " ";
         }
-        if (SgAsmInstruction *insn = get_insn()) {
-            stream_ <<sep <<"insn@" <<StringUtility::addrToString(insn->get_address()) <<"[" <<(nInsns_-1) <<"]";
+        if (SgAsmInstruction *insn = currentInstruction()) {
+            stream_ <<sep <<"insn@" <<StringUtility::addrToString(insn->get_address()) <<"[" <<(nInsns()-1) <<"]";
             sep = " ";
         }
         if (*sep)
@@ -71,10 +71,10 @@ RiscOperators::check_width(const BaseSemantics::SValuePtr &a, size_t nbits, cons
 std::string
 RiscOperators::register_name(const RegisterDescriptor &a) 
 {
-    BaseSemantics::StatePtr state = subdomain_->get_state();
+    BaseSemantics::StatePtr state = subdomain_->currentState();
     BaseSemantics::RegisterStatePtr regstate;
     if (state!=NULL)
-        regstate = state->get_register_state();
+        regstate = state->registerState();
     RegisterNames regnames(regstate!=NULL ? regstate->get_register_dictionary() : NULL);
     return regnames(a);
 }
@@ -257,38 +257,38 @@ RiscOperators::after_exception()
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::get_protoval() const
+RiscOperators::protoval() const
 {
     checkSubdomain();
-    return subdomain_->get_protoval();
+    return subdomain_->protoval();
 }
 
 void
-RiscOperators::set_solver(SMTSolver *solver)
+RiscOperators::solver(SMTSolver *s)
 {
     checkSubdomain();
-    subdomain_->set_solver(solver);
+    subdomain_->solver(s);
 }
 
 SMTSolver *
-RiscOperators::get_solver() const
+RiscOperators::solver() const
 {
     checkSubdomain();
-    return subdomain_->get_solver();
+    return subdomain_->solver();
 }
 
 BaseSemantics::StatePtr
-RiscOperators::get_state() const
+RiscOperators::currentState() const
 {
     checkSubdomain();
-    return subdomain_->get_state();
+    return subdomain_->currentState();
 }
 
 void
-RiscOperators::set_state(const BaseSemantics::StatePtr &state)
+RiscOperators::currentState(const BaseSemantics::StatePtr &state)
 {
     checkSubdomain();
-    subdomain_->set_state(state);
+    subdomain_->currentState(state);
 }
 
 void
@@ -299,31 +299,30 @@ RiscOperators::print(std::ostream &stream, BaseSemantics::Formatter &fmt) const
 }
 
 size_t
-RiscOperators::get_ninsns() const
+RiscOperators::nInsns() const
 {
     checkSubdomain();
-    return subdomain_->get_ninsns();
+    return subdomain_->nInsns();
 }
 
 void
-RiscOperators::set_ninsns(size_t n)
+RiscOperators::nInsns(size_t n)
 {
     checkSubdomain();
-    subdomain_->set_ninsns(n);
+    subdomain_->nInsns(n);
 }
 
 SgAsmInstruction *
-RiscOperators::get_insn() const
+RiscOperators::currentInstruction() const
 {
     checkSubdomain();
-    return subdomain_->get_insn();
+    return subdomain_->currentInstruction();
 }
 
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn)
 {
-    ++nInsns_;
-    cur_insn = insn;
+    BaseSemantics::RiscOperators::startInstruction(insn);
     before("startInstruction", insn, true /*show address*/);
     try {
         subdomain_->startInstruction(insn);
@@ -351,6 +350,7 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn)
         after_exception();
         throw;
     }
+    BaseSemantics::RiscOperators::finishInstruction(insn);
 }
 
 BaseSemantics::SValuePtr
@@ -1149,11 +1149,11 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &a)
+RiscOperators::readRegister(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b)
 {
-    before("readRegister", a);
+    before("readRegister", a, b);
     try {
-        return check_width(after(subdomain_->readRegister(a)), a.get_nbits());
+        return check_width(after(subdomain_->readRegister(a, b)), a.get_nbits());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;

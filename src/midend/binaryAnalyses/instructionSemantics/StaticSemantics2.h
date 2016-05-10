@@ -58,7 +58,7 @@ void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr&
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for reference-counted semantic values. */
+/** Shared-ownership pointer for a static-semantics value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Semantic values for generating static semantic ASTs.
@@ -149,8 +149,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr&,
-                                                                           SMTSolver*) const ROSE_OVERRIDE {
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE {
         throw BaseSemantics::NotImplemented("StaticSemantics is not suitable for dataflow analysis", NULL);
     }
 
@@ -226,7 +226,7 @@ typedef NullSemantics::StatePtr StatePtr;
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for basic semantic operations. */
+/** Shared-ownership pointer for basic semantic operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Basic semantic operations.
@@ -242,14 +242,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("StaticSemantics");
+        name("StaticSemantics");
         (void) SValue::promote(protoval); // make sure its dynamic type is a StaticSemantics::SValue
     }
 
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("StaticSemantics");
-        (void) SValue::promote(state->get_protoval()); // values must have StaticSemantics::SValue dynamic type
+        name("StaticSemantics");
+        (void) SValue::promote(state->protoval()); // values must have StaticSemantics::SValue dynamic type
     }
 
 public:
@@ -264,14 +264,14 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument because the base class expects one, but it is not used for static semantics. See set_solver() for
+     *  second argument because the base class expects one, but it is not used for static semantics. See @ref solver for
      *  details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
-     *  because the base class expects one, but it is not used for static semantics. See set_solver() for details. */
+     *  because the base class expects one, but it is not used for static semantics. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -373,8 +373,6 @@ public:
     virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel_,
                                          const BaseSemantics::SValuePtr &a_,
                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
- // DQ (10/15/2015): These are incorrectly marked as "override" according to GNU 4.8.3 using c++11 mode.
-#if 0
     virtual BaseSemantics::SValuePtr isEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr isNotEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr isUnsignedLessThan(const BaseSemantics::SValuePtr&,
@@ -399,35 +397,6 @@ public:
                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr subtract(const BaseSemantics::SValuePtr &a_,
                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-#else
-    virtual BaseSemantics::SValuePtr isEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr isNotEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr isUnsignedLessThan(const BaseSemantics::SValuePtr&,
-                                                        const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr isUnsignedLessThanOrEqual(const BaseSemantics::SValuePtr&,
-                                                               const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr isUnsignedGreaterThan(const BaseSemantics::SValuePtr&,
-                                                           const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr isUnsignedGreaterThanOrEqual(const BaseSemantics::SValuePtr&,
-                                                                  const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr isSignedLessThan(const BaseSemantics::SValuePtr&,
-                                                      const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr isSignedLessThanOrEqual(const BaseSemantics::SValuePtr&,
-                                                             const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr isSignedGreaterThan(const BaseSemantics::SValuePtr&,
-                                                         const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr isSignedGreaterThanOrEqual(const BaseSemantics::SValuePtr&,
-                                                                const BaseSemantics::SValuePtr&);
- // DQ (10/15/2015): These are correct to use the "orverrise" keyword.
-    virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual BaseSemantics::SValuePtr subtract(const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_);
-#endif
-
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
@@ -446,7 +415,8 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,

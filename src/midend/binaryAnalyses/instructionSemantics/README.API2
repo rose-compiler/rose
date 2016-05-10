@@ -335,7 +335,7 @@ to this:
         BaseSemantics::ValueTypePtr
         unsignedMultiply(const BaseSemantics::ValueTypePtr &a, const BaseSemantics::ValueTypePtr &b) override {
             ValueTypePtr retval = undefined_(a->get_width() + b->get_width()); 
-            retval->set_state(VAL_UNDEFINED);
+            retval->currentState(VAL_UNDEFINED);
             return retval;
         }
     };

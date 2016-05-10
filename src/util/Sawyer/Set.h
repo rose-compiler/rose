@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -298,7 +298,7 @@ public:
      *
      *  Returns a new set which has only those members that are common to this set and the @p other set. */
     Set operator&(const Set &other) const {
-        Set retval;
+        Set retval = *this;
         retval &= other;
         return retval;
     }
@@ -307,7 +307,7 @@ public:
      *
      *  Returns a new set containing the union of all members of this set and the @p other set. */
     Set operator|(const Set &other) const {
-        Set retval;
+        Set retval = *this;
         retval |= other;
         return retval;
     }
@@ -316,7 +316,7 @@ public:
      *
      *  Returns a new set containing those elements of @p this set that are not members of the @p other set. */
     Set operator-(const Set &other) const {
-        Set retval;
+        Set retval = *this;
         retval -= other;
         return retval;
     }

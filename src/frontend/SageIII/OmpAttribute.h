@@ -49,6 +49,8 @@ namespace OmpSupport
     e_target_update, 
     e_map, // map clauses
     e_device,
+    e_begin, // 10/29/2015, experimental begin/end directives for SPMD code blocks, without changing variable scopes
+    e_end,
 
     e_threadprivate,
     e_parallel_for,
@@ -256,6 +258,14 @@ namespace OmpSupport
       // Pretty print for debugging purpose
       void print();
       ~OmpAttributeList();
+
+      // This attribute attempts to manage its own memory by calling "delete" whenever the attribute is removed from an AST
+      // node.  It avoids memory leaks by not allowing OmpAttributeList attributes to be copied (no virtual "copy"
+      // constructor), and it never tries to replace one OmpAttributeList object with another with AstAttributeMechanism's
+      // "set" or "replace" methods or the corresponding methods in SgNode. However, it leaks memory if an AST node is deleted.
+      virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+          return CUSTOM_OWNERSHIP;
+      }
   };                      
 
   // One attribute object stores all information within an OpenMP pragma (directive and clauses)
@@ -299,12 +309,20 @@ namespace OmpSupport
       // We store a list (vector) of dimension bounds for each array variable
       std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions;  
       
+      // dist_data (dim1_policy, dim2_policy, dim3_policy) for mapped arrays
+      // we use std::map <variable, policy_vector> to represent this.
+      // the policy vector contains up to three pair of (policy, optional size)
+      // e.g.  map(x[0:n][0:m] dist_data(duplicate, block(2)))
+      // -----------------------------------
+      std::map <SgSymbol* ,  std::vector < std::pair<omp_construct_enum, SgExpression*> >   >  dist_data_policies; 
+ 
       //! Find the relevant clauses for a variable 
       std::vector<enum omp_construct_enum> get_clauses(const std::string& variable);
 
       //! Insert dist_data policy for one dimension of an array into its policy vector (duplicate, block(n), cyclic(4)) (up to size 3)
       bool appendDistDataPolicy(SgVariableSymbol* array_symbol, omp_construct_enum dist_data_policy, SgExpression* size_exp = NULL);
 
+     //!Obtain data distribution policy for an array. There are up to 3 pairs for 3-D.
      std::vector < std::pair < omp_construct_enum, SgExpression*> > getDistDataPolicy (SgVariableSymbol* array_symbol); 
        
       //!--------Expressions -----------------------------
@@ -435,13 +453,7 @@ namespace OmpSupport
       // A reverse map from a variable to the clauses the variable appears
       std::map<std::string, std::vector<omp_construct_enum> > var_clauses;
 
-      // dist_data (dim1_policy, dim2_policy, dim3_policy) for mapped arrays
-      // we use std::map <variable, policy_vector> to represent this.
-      // the policy vector contains up to three pair of (policy, optional size)
-      // e.g.  map(x[0:n][0:m] dist_data(duplicate, block(2)))
-      // -----------------------------------
-      std::map <SgVariableSymbol* ,  std::vector < std::pair<omp_construct_enum, SgExpression*> >   >  dist_data_policies; 
-      
+     
       // expressions ----------------------
       // e.g.: if (exp), num_threads(exp), schedule(,exp), collapse(exp)
       std::map<omp_construct_enum, std::pair<std::string, SgExpression*> > expressions;

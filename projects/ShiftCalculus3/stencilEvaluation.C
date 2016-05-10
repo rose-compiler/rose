@@ -453,6 +453,18 @@ StencilEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Stenc
              }
        // ROSE_ASSERT(astAttributeContainer->size() == 1);
 #endif
+
+#if 1
+       // Example iterating over attributes using the SgNode attribute API.
+       // BOOST_FOREACH (const std::string &attributeName, obj_1->get_attributeMechanism()->getAttributeIdentifiers()) 
+          BOOST_FOREACH (const std::string &attributeName, astAttributeContainer->getAttributeIdentifiers()) 
+             {
+               std::cout << "attribute \"" << StringUtility::cEscape(attributeName) << "\" pointer is " << astNode->getAttribute(attributeName) << "\n";
+             }
+
+          printf ("Implementation using new attribute API not implemented! \n");
+          ROSE_ASSERT(false);
+#else
        // Loop over all the attributes at this IR node
           for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
              {
@@ -1245,6 +1257,7 @@ StencilEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Stenc
                   }
 #endif
              }
+#endif
 
 #if 0
           printf ("Exiting as a test! \n");

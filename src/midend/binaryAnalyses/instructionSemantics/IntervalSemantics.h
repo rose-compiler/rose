@@ -37,13 +37,13 @@ static Interval inin(uint64_t first, uint64_t last) {
 static std::string to_string(uint64_t n) {
     const char *fmt = NULL;
     if (n<=9) {
-        fmt = "%"PRIu64;
+        fmt = "%" PRIu64;
     } else if (n<=0xff) {
-        fmt = "0x%02"PRIx64;
+        fmt = "0x%02" PRIx64;
     } else if (n<=0xffff) {
-        fmt = "0x%04"PRIx64;
+        fmt = "0x%04" PRIx64;
     } else {
-        fmt = "0x%08"PRIx64;
+        fmt = "0x%08" PRIx64;
     }
     char buf[64];
     snprintf(buf, sizeof buf, fmt, n);

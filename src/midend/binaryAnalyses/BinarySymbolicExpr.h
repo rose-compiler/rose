@@ -8,7 +8,9 @@
 #include "Map.h"
 
 #include <cassert>
+#include <boost/any.hpp>
 #include <inttypes.h>
+#include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
@@ -65,6 +67,7 @@ enum Operator {
     OP_ROL,                 /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). A is unsigned. */
     OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B). A is unsigned.  */
     OP_SDIV,                /**< Signed division. Two operands, A/B. Result width is width(A). */
+    OP_SET,                 /**< Set of expressions. Any number of operands in any order. */
     OP_SEXTEND,             /**< Signed extension at msb. Extend B to A bits by replicating B's most significant bit. */
     OP_SGE,                 /**< Signed greater-than-or-equal. Two operands of equal width. Result is Boolean. */
     OP_SGT,                 /**< Signed greater-than. Two operands of equal width. Result is Boolean. */
@@ -85,7 +88,7 @@ enum Operator {
     OP_UMOD,                /**< Unsigned modulus. Two operands, A%B. Result width is width(B). */
     OP_UMUL,                /**< Unsigned multiplication. Two operands, A*B. Result width is width(A)+width(B). */
     OP_WRITE,               /**< Write (update) memory with a new value. Arguments are memory, address and value. */
-    OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
+    OP_ZEROP                /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
 };
 
 std::string toStr(Operator);
@@ -94,9 +97,15 @@ class Node;
 class Interior;
 class Leaf;
 
-typedef Sawyer::SharedPointer<const Node> Ptr;
-typedef Sawyer::SharedPointer<const Interior> InteriorPtr;
-typedef Sawyer::SharedPointer<const Leaf> LeafPtr;
+/** Shared-ownership pointer to an expression @ref Node. See @ref heap_object_shared_ownership. */
+typedef Sawyer::SharedPointer<Node> Ptr;
+
+/** Shared-ownership pointer to an expression @ref Interior node. See @ref heap_object_shared_ownership. */
+typedef Sawyer::SharedPointer<Interior> InteriorPtr;
+
+/** Shared-ownership pointer to an expression @ref Leaf node. See @ref heap_object_shared_ownership. */
+typedef Sawyer::SharedPointer<Leaf> LeafPtr;
+
 typedef std::vector<Ptr> Nodes;
 typedef Map<uint64_t, uint64_t> RenameMap;
 
@@ -146,6 +155,7 @@ public:
 };
 
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Base Node Type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,10 +165,10 @@ public:
  *  Every node has a specified number of significant bits that is constant over the life of the node.
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
- *  lattice and not a graph with cycles), tree nodes are always referenced through shared-ownership pointers
- *  (<code>Sawyer::SharedPointer<const T></code> where @p T is one of the tree node types: @ref Node, @ref Interior, or @ref
- *  Leaf.  For convenience, we define Ptr, InteriorPtr, and LeafPtr typedefs.  The pointers themselves collectively own the
- *  pointer to the tree node and thus the tree node pointer should never be deleted explicitly.
+ *  lattice and not a graph with cycles), two things are required: First, tree nodes are always referenced through
+ *  shared-ownership pointers that collectively own the expression node (expressions are never explicitly deleted). Second,
+ *  expression nodes are immutable once they're instantiated.  There are a handful of exceptions to the immutable rule:
+ *  comments and attributes are allowed to change since they're not significant to hashing or arithmetic operations.
  *
  *  Each node has a bit flags property, the bits of which are defined by the user.  New nodes are created having all bits
  *  cleared unless the user specifies a value in the constructor.  Bits are significant for hashing. Simplifiers produce
@@ -183,13 +193,18 @@ public:
  *  @li Relational Operator Rule:  Simplification of relational operators to produce a Boolean constant will act as if they are
  *      performing constant folding even if the simplification is on variables.  E.g., <code>(ule v1 v1)</code> results in true
  *      with flags the same as @c v1. */
-class Node: public Sawyer::SharedObject, public Sawyer::SharedFromThis<Node>, public Sawyer::SmallObject {
+class Node
+    : public Sawyer::SharedObject,
+      public Sawyer::SharedFromThis<Node>,
+      public Sawyer::SmallObject,
+      public Sawyer::Attribute::Storage { // Attributes are not significant for hashing or arithmetic
 protected:
     size_t nBits_;                    /**< Number of significant bits. Constant over the life of the node. */
     size_t domainWidth_;              /**< Width of domain for unary functions. E.g., memory. */
     unsigned flags_;                  /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
-    mutable std::string comment_;     /**< Optional comment. Only for debugging; not significant for any calculation. */
-    mutable uint64_t hashval_;        /**< Optional hash used as a quick way to indicate that two expressions are different. */
+    std::string comment_;             /**< Optional comment. Only for debugging; not significant for any calculation. */
+    uint64_t hashval_;                /**< Optional hash used as a quick way to indicate that two expressions are different. */
+    boost::any userData_;             /**< Additional user-specified data. This is not part of the hash. */
 
 public:
     // Bit flags
@@ -222,18 +237,18 @@ public:
      *  If an SMT solver is specified then that solver is used to answer this question, otherwise equality is established by
      *  looking only at the structure of the two expressions. Two expressions can be equal without being the same width (e.g.,
      *  a 32-bit constant zero is equal to a 16-bit constant zero). */
-    virtual bool mustEqual(const Ptr &other, SMTSolver*) const = 0;
+    virtual bool mustEqual(const Ptr &other, SMTSolver*) = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    bool must_equal(const Ptr& other, SMTSolver *solver) const ROSE_DEPRECATED("use mustEqual instead") {
+    bool must_equal(const Ptr& other, SMTSolver *solver) ROSE_DEPRECATED("use mustEqual instead") {
         return mustEqual(other, solver);
     }
 
     /** Returns true if two expressions might be equal, but not necessarily be equal. */
-    virtual bool mayEqual(const Ptr &other, SMTSolver*) const = 0;
+    virtual bool mayEqual(const Ptr &other, SMTSolver*) = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    bool may_equal(const Ptr &other, SMTSolver *solver) const ROSE_DEPRECATED("use mayEqual instead") {
+    bool may_equal(const Ptr &other, SMTSolver *solver) ROSE_DEPRECATED("use mayEqual instead") {
         return mayEqual(other, solver);
     }
     
@@ -242,10 +257,10 @@ public:
      *  Two leaf nodes are equivalent if they are the same width and have equal values or are the same variable. Two interior
      *  nodes are equivalent if they are the same width, the same operation, have the same number of children, and those
      *  children are all pairwise equivalent. */
-    virtual bool isEquivalentTo(const Ptr &other) const = 0;
+    virtual bool isEquivalentTo(const Ptr &other) = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    bool equivalent_to(const Ptr& other) const ROSE_DEPRECATED("use isEquivalentTo instead") {
+    bool equivalent_to(const Ptr& other) ROSE_DEPRECATED("use isEquivalentTo instead") {
         return isEquivalentTo(other);
     }
     
@@ -254,10 +269,10 @@ public:
      *  Returns -1 if @p this is less than @p other, 0 if they are structurally equal, and 1 if @p this is greater than @p
      *  other.  This function returns zero when an only when @ref isEquivalentTo returns zero, but @ref isEquivalentTo can be
      *  much faster since it uses hashing. */
-    virtual int compareStructure(const Ptr &other) const = 0;
+    virtual int compareStructure(const Ptr &other) = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    int structural_compare(const Ptr& other) const ROSE_DEPRECATED("use compareStructure instead") {
+    int structural_compare(const Ptr& other) ROSE_DEPRECATED("use compareStructure instead") {
         return compareStructure(other);
     }
     
@@ -266,15 +281,15 @@ public:
      *  Finds all occurrances of @p from in this expression and replace them with @p to. If a substitution occurs, then a new
      *  expression is returned. The matching of @p from to sub-parts of this expression uses structural equivalence, the
      *  @ref isEquivalentTo predicate. The @p from and @p to expressions must have the same width. */
-    virtual Ptr substitute(const Ptr &from, const Ptr &to) const = 0;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to) = 0;
 
     /** Returns true if the expression is a known numeric value.
      *
      *  The value itself is stored in the @ref number property. */
-    virtual bool isNumber() const = 0;
+    virtual bool isNumber() = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    bool is_known() const ROSE_DEPRECATED("use isNumber instead") {
+    bool is_known() ROSE_DEPRECATED("use isNumber instead") {
         return isNumber();
     }
 
@@ -282,10 +297,10 @@ public:
      *
      *  Returns the integer value of a node for which @ref isKnown returns true.  The high-order bits, those beyond the number
      *  of significant bits returned by the @ref nBits propert, are guaranteed to be zero. */
-    virtual uint64_t toInt() const = 0;
+    virtual uint64_t toInt() = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    uint64_t get_value() const ROSE_DEPRECATED("use toInt instead") {
+    uint64_t get_value() ROSE_DEPRECATED("use toInt instead") {
         return toInt();
     }
 
@@ -297,27 +312,42 @@ public:
      *  not considered significant for comparisons, computing hash values, etc.
      *
      * @{ */
-    const std::string& comment() const { return comment_; }
-    void comment(const std::string &s) const { comment_ = s; } // comments are mutable, so this is const
+    const std::string& comment() { return comment_; }
+    void comment(const std::string &s) { comment_ = s; }
     /** @} */
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    const std::string& get_comment() const ROSE_DEPRECATED("use 'comment' property instead") {
+    const std::string& get_comment() ROSE_DEPRECATED("use 'comment' property instead") {
         return comment();
     }
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    void set_comment(const std::string &s) const ROSE_DEPRECATED("use 'comment' property instead") {
+    void set_comment(const std::string &s) ROSE_DEPRECATED("use 'comment' property instead") {
         comment(s);
     }
+
+    /** Property: User-defined data.
+     *
+     *  User defined data is always optional and does not contribute to the hash value of an expression. The user-defined data
+     *  can be changed at any time by the user even if the expression node to which it is attached is shared between many
+     *  expressions.
+     *
+     * @{ */
+    void userData(boost::any &data) {
+        userData_ = data;
+    }
+    const boost::any& userData() {
+        return userData_;
+    }
+    /** @} */
 
     /** Property: Number of significant bits.
      *
      *  An expression with a known value is guaranteed to have all higher-order bits cleared. */
-    size_t nBits() const { return nBits_; }
+    size_t nBits() { return nBits_; }
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    size_t get_nbits() const ROSE_DEPRECATED("use 'nBits' property instead") {
+    size_t get_nbits() ROSE_DEPRECATED("use 'nBits' property instead") {
         return nBits();
     }
 
@@ -325,35 +355,35 @@ public:
      *
      *  This property is significant for hashing, comparisons, and possibly other operations, therefore it is immutable.  To
      *  change the flags one must create a new expression; see @ref newFlags. */
-    unsigned flags() const { return flags_; }
+    unsigned flags() { return flags_; }
 
-    unsigned get_flags() const ROSE_DEPRECATED("use 'flags' property instead") {
+    unsigned get_flags() ROSE_DEPRECATED("use 'flags' property instead") {
         return flags();
     }
 
     /** Sets flags. Since symbolic expressions are immutable it is not possible to change the flags directly. Therefore if the
      *  desired flags are different than the current flags a new expression is created that is the same in every other
      *  respect. If the flags are not changed then the original expression is returned. */
-    Ptr newFlags(unsigned flags) const;
+    Ptr newFlags(unsigned flags);
 
     /** Property: Width for memory expressions.
      *
      *  The return value is non-zero if and only if this tree node is a memory expression. */
-    size_t domainWidth() const { return domainWidth_; }
+    size_t domainWidth() { return domainWidth_; }
 
     /** Check whether expression is scalar.
      *
      *  Everything is scalar except for memory. */
-    bool isScalar() const { return 0 == domainWidth_; }
+    bool isScalar() { return 0 == domainWidth_; }
 
     /** Traverse the expression.
      *
      *  The expression is traversed in a depth-first visit.  The final return value is the final return value of the last call
      *  to the visitor. */
-    virtual VisitAction depthFirstTraversal(Visitor&) const = 0;
+    virtual VisitAction depthFirstTraversal(Visitor&) = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    VisitAction depth_first_traversal(Visitor &v) const ROSE_DEPRECATED("use depthFirstTraversal instead") {
+    VisitAction depth_first_traversal(Visitor &v) ROSE_DEPRECATED("use depthFirstTraversal instead") {
         return depthFirstTraversal(v);
     }
 
@@ -372,57 +402,64 @@ public:
      *  When an overflow occurs the result is meaningless.
      *
      *  @sa nNodesUnique */
-    virtual uint64_t nNodes() const = 0;
+    virtual uint64_t nNodes() = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    uint64_t nnodes() const ROSE_DEPRECATED("use nNodes() instead") {
+    uint64_t nnodes() ROSE_DEPRECATED("use nNodes() instead") {
         return nNodes();
     }
 
     /** Number of unique nodes in expression. */
-    uint64_t nNodesUnique() const;
+    uint64_t nNodesUnique();
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    uint64_t nnodesUnique() const ROSE_DEPRECATED("use nNodesUnique instead") {
+    uint64_t nnodesUnique() ROSE_DEPRECATED("use nNodesUnique instead") {
         return nNodesUnique();
     }
 
     /** Returns the variables appearing in the expression. */
-    std::set<LeafPtr> getVariables() const;
+    std::set<LeafPtr> getVariables();
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    std::set<LeafPtr> get_variables() const ROSE_DEPRECATED("use getVariables instead") {
+    std::set<LeafPtr> get_variables() ROSE_DEPRECATED("use getVariables instead") {
         return getVariables();
     }
 
-    /** Dynamic cast of this object to an interior node. */
-    InteriorPtr isInteriorNode() const {
-        return sharedFromThis().dynamicCast<const Interior>();
+    /** Dynamic cast of this object to an interior node.
+     *
+     *  Returns null if the cast is not valid. */
+    InteriorPtr isInteriorNode() {
+        return sharedFromThis().dynamicCast<Interior>();
     }
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    InteriorPtr isInternalNode() const ROSE_DEPRECATED("use isInteriorNode instead") {
+    InteriorPtr isInternalNode() ROSE_DEPRECATED("use isInteriorNode instead") {
         return isInteriorNode();
     }
 
-    /** Dynamic cast of this object to a leaf node. */
-    LeafPtr isLeafNode() const {
-        return sharedFromThis().dynamicCast<const Leaf>();
+    /** Dynamic cast of this object to a leaf node.
+     *
+     *  Returns null if the cast is not valid. */
+    LeafPtr isLeafNode() {
+        return sharedFromThis().dynamicCast<Leaf>();
     }
 
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
      *  hash has been computed; if a node happens to actually hash to zero, it will not be cached and will be recomputed for
      *  every call to hash(). */
-    bool isHashed() const { return hashval_ != 0; }
+    bool isHashed() { return hashval_ != 0; }
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    bool is_hashed() const ROSE_DEPRECATED("use isHashed instead") {
+    bool is_hashed() ROSE_DEPRECATED("use isHashed instead") {
         return isHashed();
     }
 
     /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
      *  is computed and cached. */
-    uint64_t hash() const;
+    uint64_t hash();
+
+    // used internally to set the hash value
+    void hash(uint64_t);
 
     /** A node with formatter. See the with_format() method. */
     class WithFormatter {
@@ -447,28 +484,28 @@ public:
      * 
      * @endcode
      * @{ */
-    WithFormatter withFormat(Formatter &fmt) const { return WithFormatter(sharedFromThis(), fmt); }
-    WithFormatter operator+(Formatter &fmt) const { return withFormat(fmt); }
+    WithFormatter withFormat(Formatter &fmt) { return WithFormatter(sharedFromThis(), fmt); }
+    WithFormatter operator+(Formatter &fmt) { return withFormat(fmt); }
     /** @} */
 
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    WithFormatter with_format(Formatter &fmt) const ROSE_DEPRECATED("use withFormat instead") {
+    WithFormatter with_format(Formatter &fmt) ROSE_DEPRECATED("use withFormat instead") {
         return withFormat(fmt);
     }
 
     /** Print the expression to a stream.  The output is an S-expression with no line-feeds. The format of the output is
      *  controlled by the mutable Formatter argument.
      *  @{ */
-    virtual void print(std::ostream&, Formatter&) const = 0;
-    void print(std::ostream &o) const { Formatter fmt; print(o, fmt); }
+    virtual void print(std::ostream&, Formatter&) = 0;
+    void print(std::ostream &o) { Formatter fmt; print(o, fmt); }
     /** @} */
 
     /** Asserts that expressions are acyclic. This is intended only for debugging. */
-    void assertAcyclic() const;
+    void assertAcyclic();
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    void assert_acyclic() const {
+    void assert_acyclic() {
         return assertAcyclic();
     }
 
@@ -477,10 +514,10 @@ public:
      *  Returns a vector of the largest common subexpressions. The list is computed by performing a depth-first search on this
      *  expression and adding expressions to the return vector whenever a subtree is encountered a second time. Therefore the
      *  if a common subexpression A contains another common subexpression B then B will appear earlier in the list than A. */
-    std::vector<Ptr> findCommonSubexpressions() const;
+    std::vector<Ptr> findCommonSubexpressions();
 
 protected:
-    void printFlags(std::ostream &o, unsigned flags, char &bracket) const;
+    void printFlags(std::ostream &o, unsigned flags, char &bracket);
 };
 
 /** Operator-specific simplification methods. */
@@ -497,7 +534,7 @@ public:
 
     /** Rewrite the entire expression to something simpler. Returns the new node if the node can be simplified, otherwise
      *  returns null. */
-    virtual Ptr rewrite(const Interior*) const {
+    virtual Ptr rewrite(Interior*) const {
         return Ptr();
     }
 };
@@ -519,19 +556,19 @@ typedef Sawyer::Container::Set<Ptr, ExpressionLessp> ExpressionSet;
 
 struct AddSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct AndSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct OrSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct XorSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct SmulSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
@@ -541,79 +578,79 @@ struct UmulSimplifier: Simplifier {
 };
 struct ConcatSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct ExtractSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct AsrSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct InvertSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct NegateSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct IteSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct NoopSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct RolSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct RorSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct UextendSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct SextendSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct EqSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct SgeSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct SgtSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct SleSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct SltSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct UgeSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct UgtSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct UleSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct UltSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct ZeropSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct SdivSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct SmodSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct UdivSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct UmodSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct ShiftSimplifier: Simplifier {
     bool newbits;
@@ -622,18 +659,22 @@ struct ShiftSimplifier: Simplifier {
 };
 struct ShlSimplifier: ShiftSimplifier {
     ShlSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct ShrSimplifier: ShiftSimplifier {
     ShrSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct LssbSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
 struct MssbSimplifier: Simplifier {
-    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
+struct SetSimplifier: Simplifier {
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
+};
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -688,56 +729,56 @@ public:
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual bool mustEqual(const Ptr &other, SMTSolver*) const;
-    virtual bool mayEqual(const Ptr &other, SMTSolver*) const;
-    virtual bool isEquivalentTo(const Ptr &other) const;
-    virtual int compareStructure(const Ptr& other) const;
-    virtual Ptr substitute(const Ptr &from, const Ptr &to) const;
-    virtual bool isNumber() const {
+    virtual bool mustEqual(const Ptr &other, SMTSolver*);
+    virtual bool mayEqual(const Ptr &other, SMTSolver*);
+    virtual bool isEquivalentTo(const Ptr &other);
+    virtual int compareStructure(const Ptr& other);
+    virtual Ptr substitute(const Ptr &from, const Ptr &to);
+    virtual bool isNumber() {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
-    virtual uint64_t toInt() const { ASSERT_forbid2(true, "not a number"); return 0;}
-    virtual VisitAction depthFirstTraversal(Visitor&) const;
-    virtual uint64_t nNodes() const { return nnodes_; }
+    virtual uint64_t toInt() { ASSERT_forbid2(true, "not a number"); return 0;}
+    virtual VisitAction depthFirstTraversal(Visitor&);
+    virtual uint64_t nNodes() { return nnodes_; }
 
     /** Returns the number of children. */
-    size_t nChildren() const { return children_.size(); }
+    size_t nChildren() { return children_.size(); }
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    size_t nchildren() const ROSE_DEPRECATED("use nChildren instead") {
+    size_t nchildren() ROSE_DEPRECATED("use nChildren instead") {
         return nChildren();
     }
 
     /** Returns the specified child. */
-    Ptr child(size_t idx) const { ASSERT_require(idx<children_.size()); return children_[idx]; }
+    Ptr child(size_t idx) { ASSERT_require(idx<children_.size()); return children_[idx]; }
 
     /** Property: Children.
      *
      *  The children are the operands for an operator expression. */
-    const Nodes& children() const { return children_; }
+    const Nodes& children() { return children_; }
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    Nodes get_children() const ROSE_DEPRECATED("use 'children' property instead") {
+    Nodes get_children() ROSE_DEPRECATED("use 'children' property instead") {
         return children();
     }
 
     /** Returns the operator. */
-    Operator getOperator() const { return op_; }
+    Operator getOperator() { return op_; }
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    Operator get_operator() const ROSE_DEPRECATED("use getOperator instead") {
+    Operator get_operator() ROSE_DEPRECATED("use getOperator instead") {
         return getOperator();
     }
 
     /** Simplifies the specified interior node. Returns a new node if necessary, otherwise returns this. */
-    Ptr simplifyTop() const;
+    Ptr simplifyTop();
 
     /** Perform constant folding.  This method returns either a new expression (if changes were mde) or the original
      *  expression. The simplifier is specific to the kind of operation at the node being simplified. */
-    Ptr foldConstants(const Simplifier&) const;
+    Ptr foldConstants(const Simplifier&);
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    Ptr constant_folding(const Simplifier &simplifier) const ROSE_DEPRECATED("use foldConstants instead") {
+    Ptr constant_folding(const Simplifier &simplifier) ROSE_DEPRECATED("use foldConstants instead") {
         return foldConstants(simplifier);
     }
 
@@ -745,10 +786,10 @@ public:
      *  interior node type. Call this only if the top node is a truly non-associative. A new node is returned only if
      *  changed. When calling both nonassociative and commutative, it's usually more appropriate to call nonassociative
      *  first. */
-    InteriorPtr associative() const;
+    InteriorPtr associative();
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    InteriorPtr nonassociative() const ROSE_DEPRECATED("use 'associative' instead") {
+    InteriorPtr nonassociative() ROSE_DEPRECATED("use 'associative' instead") {
         return associative();
     }
 
@@ -756,36 +797,34 @@ public:
      *  before the leaf nodes. Call this only if the top node is truly commutative.  A new node is returned only if
      *  changed. When calling both nonassociative and commutative, it's usually more appropriate to call nonassociative
      *  first. */
-    InteriorPtr commutative() const;
+    InteriorPtr commutative();
 
     /** Simplifies involutary operators.  An involutary operator is one that is its own inverse.  This method should only be
      *  called if this node is an interior node whose operator has the involutary property (such as invert or negate). Returns
      *  either a new expression that is simplified, or the original expression. */
-    Ptr involutary() const;
+    Ptr involutary();
 
     /** Simplifies nested shift-like operators. Simplifies (shift AMT1 (shift AMT2 X)) to (shift (add AMT1 AMT2) X). */
-    Ptr additiveNesting() const;
+    Ptr additiveNesting();
 
-    Ptr additive_nesting() const ROSE_DEPRECATED("use additiveNesting instead") {
+    Ptr additive_nesting() ROSE_DEPRECATED("use additiveNesting instead") {
         return additiveNesting();
     }
 
     /** Removes identity arguments. Returns either a new expression or the original expression. */
-    Ptr identity(uint64_t ident) const;
+    Ptr identity(uint64_t ident);
 
     /** Replaces a binary operator with its only argument. Returns either a new expression or the original expression. */
-    Ptr unaryNoOp() const;
+    Ptr unaryNoOp();
 
     /** Simplify an interior node. Returns a new node if this node could be simplified, otherwise returns this node. When
      *  the simplification could result in a leaf node, we return an OP_NOOP interior node instead. */
-    Ptr rewrite(const Simplifier &simplifier) const;
+    Ptr rewrite(const Simplifier &simplifier);
 
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) ROSE_OVERRIDE;
 
 protected:
-    /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this node
-     *  is not part of other expressions.  It is safe to call add_child() on a node that was just created and not used anywhere
-     *  yet. If you add a new child, then you probably need to call adjustWidth after the last one is added. */
+    /** Appends @p child as a new child of this node. This must only be called from constructors. */
     void addChild(const Ptr &child);
 
     // [Robb P. Matzke 2015-10-09]: deprecated
@@ -793,10 +832,10 @@ protected:
         addChild(child);
     }
 
-    /** Adjust width based on operands. This should only be called from constructors. */
+    /** Adjust width based on operands. This must only be called from constructors. */
     void adjustWidth();
 
-    /** Adjust user-defined bit flags. This should only be called from constructors.  Flags are the union of the operand flags
+    /** Adjust user-defined bit flags. This must only be called from constructors.  Flags are the union of the operand flags
      *  subject to simplification rules, unioned with the specified flags. */
     void adjustBitFlags(unsigned extraFlags);
 };
@@ -821,8 +860,6 @@ private:
         : Node(""), leafType_(CONSTANT), name_(0) {}
     explicit Leaf(const std::string &comment, unsigned flags=0)
         : Node(comment, flags), leafType_(CONSTANT), name_(0) {}
-
-    static uint64_t nameCounter_;
 
 public:
     /** Construct a new free variable with a specified number of significant bits. */
@@ -891,37 +928,37 @@ public:
     }
     
     // from base class
-    virtual bool isNumber() const ROSE_OVERRIDE;
-    virtual uint64_t toInt() const ROSE_OVERRIDE;
-    virtual bool mustEqual(const Ptr &other, SMTSolver*) const ROSE_OVERRIDE;
-    virtual bool mayEqual(const Ptr &other, SMTSolver*) const ROSE_OVERRIDE;
-    virtual bool isEquivalentTo(const Ptr &other) const ROSE_OVERRIDE;
-    virtual int compareStructure(const Ptr& other) const ROSE_OVERRIDE;
-    virtual Ptr substitute(const Ptr &from, const Ptr &to) const ROSE_OVERRIDE;
-    virtual VisitAction depthFirstTraversal(Visitor&) const ROSE_OVERRIDE;
-    virtual uint64_t nNodes() const ROSE_OVERRIDE { return 1; }
+    virtual bool isNumber() ROSE_OVERRIDE;
+    virtual uint64_t toInt() ROSE_OVERRIDE;
+    virtual bool mustEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
+    virtual bool mayEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
+    virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
+    virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to) ROSE_OVERRIDE;
+    virtual VisitAction depthFirstTraversal(Visitor&) ROSE_OVERRIDE;
+    virtual uint64_t nNodes() ROSE_OVERRIDE { return 1; }
 
     /** Property: Bits stored for numeric values. */
-    const Sawyer::Container::BitVector& bits() const;
+    const Sawyer::Container::BitVector& bits();
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    const Sawyer::Container::BitVector& get_bits() const ROSE_DEPRECATED("use 'bits' property instead") {
+    const Sawyer::Container::BitVector& get_bits() ROSE_DEPRECATED("use 'bits' property instead") {
         return bits();
     }
     
     /** Is the node a bitvector variable? */
-    virtual bool isVariable() const;
+    virtual bool isVariable();
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    bool is_variable() const ROSE_DEPRECATED("use isVariable instead") {
+    bool is_variable() ROSE_DEPRECATED("use isVariable instead") {
         return isVariable();
     }
 
     /** Does the node represent memory? */
-    virtual bool isMemory() const;
+    virtual bool isMemory();
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    bool is_memory() const ROSE_DEPRECATED("use isMemory instead") {
+    bool is_memory() ROSE_DEPRECATED("use isMemory instead") {
         return isMemory();
     }
 
@@ -929,10 +966,10 @@ public:
      *
      *  The output functions print variables as "vN" where N is an integer. It is this N that this method returns.  It should
      *  only be invoked on leaf nodes for which @ref isNumber returns false. */
-    uint64_t nameId() const;
+    uint64_t nameId();
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    uint64_t get_name() const ROSE_DEPRECATED("use nameId instead") {
+    uint64_t get_name() ROSE_DEPRECATED("use nameId instead") {
         return nameId();
     }
 
@@ -940,27 +977,27 @@ public:
      *
      *  Variables are returned as "vN", memory is returned as "mN", and constants are returned as a hexadecimal string, where N
      *  is a variable or memory number. */
-    std::string toString() const;
+    std::string toString();
 
     // documented in super class
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) ROSE_OVERRIDE;
 
     /** Prints an integer interpreted as a signed value. */
-    void printAsSigned(std::ostream&, Formatter&, bool asSigned=true) const;
+    void printAsSigned(std::ostream&, Formatter&, bool asSigned=true);
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    void print_as_signed(std::ostream &stream, Formatter &formatter, bool as_signed=true) const
+    void print_as_signed(std::ostream &stream, Formatter &formatter, bool as_signed=true)
         ROSE_DEPRECATED("use printAsSigned instead") {
         printAsSigned(stream, formatter, as_signed);
     }
 
     /** Prints an integer interpreted as an unsigned value. */
-    void printAsUnsigned(std::ostream &o, Formatter &f) const {
+    void printAsUnsigned(std::ostream &o, Formatter &f) {
         printAsSigned(o, f, false);
     }
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    void print_as_unsigned(std::ostream &o, Formatter &f) const ROSE_DEPRECATED("use printAsUnsigned instead") {
+    void print_as_unsigned(std::ostream &o, Formatter &f) ROSE_DEPRECATED("use printAsUnsigned instead") {
         printAsUnsigned(o, f);
     }
 };
@@ -1008,6 +1045,8 @@ Ptr makeBooleanOr(const Ptr &a, const Ptr &b, const std::string &comment="", uns
 Ptr makeRead(const Ptr &mem, const Ptr &addr, const std::string &comment="", unsigned flags=0);
 Ptr makeRol(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeRor(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeSet(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeSet(const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment="", unsigned flags=0);
 Ptr makeSignedDiv(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
 Ptr makeSignExtend(const Ptr &newSize, const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeSignedGe(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
@@ -1038,8 +1077,11 @@ Ptr makeZerop(const Ptr &a, const std::string &comment="", unsigned flags=0);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-std::ostream& operator<<(std::ostream &o, const Node&);
+std::ostream& operator<<(std::ostream &o, Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
+
+/** Convert a set to an ite expression. */
+Ptr setToIte(const Ptr&);
 
 /** Counts the number of nodes.
  *

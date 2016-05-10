@@ -90,6 +90,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     std::string description =
         "Disassembles the specimens and presents various information depending on switches.";
     Parser parser = engine.commandLineParser(purpose, description);
+    parser.errorStream(mlog[FATAL]);
 
     // Switches for output
     SwitchGroup out("Output switches");
@@ -162,11 +163,11 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     out.insert(Switch("list-instruction-addresses")
                .intrinsicValue(true, settings.doListInstructionAddresses)
-               .doc("Produce a listing of instruction addresses.  Each line of output will contain three space-separated "
-                    "items: the address interval for the instruction (address followed by \"+\" followed by size), the "
-                    "address of the basic block to which the instruction belongs, and the address of the function to which "
-                    "the basic block belongs.  If the basic block doesn't belong to a function then the string \"nil\" is "
-                    "printed for the function address field.  This listing is disabled with the "
+               .doc("Produce a listing of instruction addresses.  Each line of output will contain at least two "
+                    "space-separated items: the address interval for the instruction (address followed by \"+\" followed by "
+                    "size), and the address of the basic block to which the instruction belongs. These fields are followed "
+                    "by zero or more function entry addresses for the functions that own the basic block. Basic blocks are "
+                    "usually owned by zero or one function.  This listing is disabled with the "
                     "@s{no-list-instruction-addresses} switch.  The default is to " +
                     std::string(settings.doListInstructionAddresses?"":"not ") + "show this information."));
     out.insert(Switch("no-list-instruction-addresses")
@@ -587,7 +588,7 @@ static SgAsmBlock *
 buildAst(P2::Engine &engine, const P2::Partitioner &partitioner) {
     static SgAsmBlock *gblock = NULL;
     if (NULL==gblock)
-        gblock = P2::Modules::buildAst(partitioner, engine.interpretation());
+        gblock = P2::Modules::buildAst(partitioner, engine.interpretation(), engine.settings().astConstruction);
     return gblock;
 }
 
@@ -639,7 +640,6 @@ selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Se
     }
     ASSERT_not_implemented("function selection criteria is not implemented yet");
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -776,11 +776,13 @@ int main(int argc, char *argv[]) {
     if (settings.doListInstructionAddresses) {
         std::vector<P2::BasicBlock::Ptr> bblocks = partitioner.basicBlocks();
         BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, bblocks) {
-            P2::Function::Ptr function = partitioner.findFunctionOwningBasicBlock(bblock);
+            std::vector<P2::Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
             BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
                 std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size();
                 std::cout <<"\t" <<StringUtility::addrToString(bblock->address());
-                std::cout <<"\t" <<(function ? StringUtility::addrToString(function->address()) : std::string("nil")) <<"\n";
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
+                    std::cout <<"\t" <<StringUtility::addrToString(function->address());
+                std::cout <<"\n";
             }
         }
     }
@@ -825,21 +827,49 @@ int main(int argc, char *argv[]) {
         unparser.unparse(std::cout, gblock);
     }
 
-#if 0 // [Robb P. Matzke 2015-02-06]: dead code example
-    std::cout <<"Unreachable code (basic blocks with no incoming edges):\n";
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
-        if (vertex.value().type() == P2::V_BASIC_BLOCK && vertex.nInEdges() == 0) {
-            P2::BasicBlock::Ptr bblock = vertex.value().bblock();
-            std::cout <<"  " <<bblock->printableName();
-            if (P2::Function::Ptr function = vertex.value().function())
-                std::cout <<" in " <<function->printableName();
-            std::cout <<":\n";
-            BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
-                std::cout <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+    
+    // Test what affect shared instructions have on the AST by counting how many times each instruction appears in the AST.  If
+    // instruction copying is enabled, they should all occur once; if not, then there may be instructions that occur multiple
+    // times (but always having the same parent pointer).
+    if (0) {
+        struct InsnCounter: AstSimpleProcessing {
+            typedef Sawyer::Container::Map<SgAsmInstruction*, size_t> InsnCount;
+            InsnCount insnCount;
+            void visit(SgNode *node) {
+                if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                    ++insnCount.insertMaybe(insn, 0);
+            }
+        } insnCounter;
+        insnCounter.traverse(buildAst(engine, partitioner), preorder);
+        BOOST_FOREACH (const InsnCounter::InsnCount::Node &node, insnCounter.insnCount.nodes())
+            std::cout <<node.value() <<"\t" <<unparseInstructionWithAddress(node.key()) <<"\n";
+    }
+
+#if 0 // [Robb P. Matzke 2015-08-06]: example of calling convention analysis
+    {
+        const CallingConvention::Dictionary &dictionary = partitioner.instructionProvider().callingConventions();
+        const CallingConvention::Definition *dfltCc = dictionary.empty() ? NULL : &dictionary.front();
+        partitioner.allFunctionCallingConvention(dfltCc);
+        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+            std::cerr <<"calling conventions for " <<function->printableName() <<":\n";
+            const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+            if (ccAnalysis.hasResults()) {
+                if (!ccAnalysis.didConverge())
+                    std::cerr <<"  warning: non-convergent analysis\n";
+                CallingConvention::Dictionary matches = ccAnalysis.match(dictionary);
+                if (matches.empty()) {
+                    std::cerr <<"  no maches; analysis reports " <<ccAnalysis <<"\n";
+                } else {
+                    BOOST_FOREACH (const CallingConvention::Definition &cc, matches)
+                        std::cerr <<"  " <<cc.comment() <<"\n";
+                }
+            } else {
+                std::cerr <<"  no analysis results\n";
+            }
         }
     }
 #endif
-
+    
 #if 0 // DEBUGGING [Robb P. Matzke 2014-08-23]
     // This should free all symbolic expressions except for perhaps a few held by something we don't know about.
     partitioner.clear();
@@ -847,6 +877,4 @@ int main(int argc, char *argv[]) {
     std::cerr <<"all done; entering busy loop\n";
     while (1);                                          // makes us easy to find in process listings
 #endif
-
-    exit(0);
 }

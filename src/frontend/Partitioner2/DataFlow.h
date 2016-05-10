@@ -12,14 +12,14 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Dataflow utilities. */
+/** Data-flow utilities. */
 namespace DataFlow {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Control Flow Graph
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** CFG vertex for dataflow analysis.
+/** CFG vertex for data-flow analysis.
  *
  *  @sa DfCfg */
 class DfCfgVertex {
@@ -66,19 +66,19 @@ public:
     const Function::Ptr& callee() const { return callee_; }
 };
 
-/** Control flow graph used by dataflow analysis.
+/** Control flow graph used by data-flow analysis.
  *
- *  The CFG used for dataflow is slightly different than the global CFG maintained by the partitioner. The partitioner's global
+ *  The CFG used for data-flow is slightly different than the global CFG maintained by the partitioner. The partitioner's global
  *  CFG is tuned for discovering basic blocks and deciding which basic blocks are owned by which functions, whereas a
- *  dataflow's CFG is tuned for performing data flow analysis.  A dataflow CFG is usually constructed from the partitioner's
+ *  data-flow's CFG is tuned for performing data flow analysis.  A data-flow CFG is usually constructed from the partitioner's
  *  global CFG, but differs in the following ways:
  *
- *  @li First, dataflow analysis is usually performed on a subset of the partitioner's global CFG. This function uses the @p
+ *  @li First, data-flow analysis is usually performed on a subset of the partitioner's global CFG. This function uses the @p
  *      startVertex to select some connected subgraph, such as a subgraph corresponding to a single function definition when
  *      given the entry block.
  *
- *  @li Function return blocks (e.g., RET instructions) are handled differently during dataflow.  In the partitioner's global
- *      CFG each return block is marked as a function return and has single successor--the indeterminate vertex.  In a dataflow
+ *  @li Function return blocks (e.g., RET instructions) are handled differently during data-flow.  In the partitioner's global
+ *      CFG each return block is marked as a function return and has single successor--the indeterminate vertex.  In a data-flow
  *      CFG the return blocks are not handled specially, but rather all flow into a single special return vertex that has no
  *      instructions.  This allows data to be merged from all the return points.
  *
@@ -86,13 +86,13 @@ public:
  *      (or edges) going to the entry block of the called function(s) and a special call-return edge to the return site if
  *      there is one (usually the fall-through address). A data-flow analysis often needs to perform some special action for
  *      the call-return, thus a call-return edge in the global CFG gets transformed to an edge-vertex-edge sequence in the
- *      dataflow CFG where the middle vertex is a special CALLRET vertex with no instructions. */
+ *      data-flow CFG where the middle vertex is a special CALLRET vertex with no instructions. */
 typedef Sawyer::Container::Graph<DfCfgVertex> DfCfg;
 
-/** Predicate that decides when to use inter-procedural dataflow.
+/** Predicate that decides when to use inter-procedural data-flow.
  *
  *  The predicate is invoked with the global CFG and a function call edge and should return true if the called function should
- *  be included into the dataflow graph.  If it returns false then the graph will have a single FAKED_CALL vertex to represent
+ *  be included into the data-flow graph.  If it returns false then the graph will have a single FAKED_CALL vertex to represent
  *  the called function. */
 class InterproceduralPredicate {
 public:
@@ -112,7 +112,7 @@ extern NotInterprocedural NOT_INTERPROCEDURAL;
 /** Unpacks a vertex into a list of instructions. */
 std::vector<SgAsmInstruction*> vertexUnpacker(const DfCfgVertex&);
 
-/** build a cfg useful for dataflow analysis.
+/** build a cfg useful for data-flow analysis.
  *
  *  The returned CFG will be constructed from the global CFG vertices that are reachable from @p startVertex such that the
  *  reached vertex belongs to the same function as @p startVertex.
@@ -121,9 +121,15 @@ std::vector<SgAsmInstruction*> vertexUnpacker(const DfCfgVertex&);
 DfCfg buildDfCfg(const Partitioner&, const ControlFlowGraph&, const ControlFlowGraph::ConstVertexIterator &startVertex,
                  InterproceduralPredicate &predicate = NOT_INTERPROCEDURAL);
 
-/** Emit a dataflow CFG as a GraphViz file. */
+/** Emit a data-flow CFG as a GraphViz file. */
 void dumpDfCfg(std::ostream&, const DfCfg&);
 
+/** Choose best function for data-flow summary vertex.
+ *
+ *  When replacing a function call edge with a function summary, we insert a data-flow vertex that points to a function. During
+ *  the data-flow processing, the function's information summarizes the data-flow state changes that are necessary. If multiple
+ *  functions own the target block of a function call edge then we need to choose the "best" function to use. */
+Function::Ptr bestSummaryFunction(const FunctionSet &functions);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Transfer function
@@ -133,7 +139,7 @@ void dumpDfCfg(std::ostream&, const DfCfg&);
 // instruction semantics state.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Dataflow transfer functor. */
+/** Data-Flow transfer functor. */
 class TransferFunction {
     BaseSemantics::DispatcherPtr cpu_;
     BaseSemantics::SValuePtr callRetAdjustment_;
@@ -152,6 +158,11 @@ public:
     /** Construct an initial state. */
     BaseSemantics::StatePtr initialState() const;
 
+    /** Property: Virtual CPU.
+     *
+     *  This is the same pointer specified in the constructor. */
+    BaseSemantics::DispatcherPtr cpu() const { return cpu_; }
+
     /** Property: Default calling convention.
      *
      *  The default calling convention is used whenever a call is made to a function that has no calling convention
@@ -164,16 +175,16 @@ public:
     void defaultCallingConvention(const CallingConvention::Definition *x) { defaultCallingConvention_ = x; }
     /** @} */
 
-    // Required by dataflow engine: should return a deep copy of the state
+    // Required by data-flow engine: should return a deep copy of the state
     BaseSemantics::StatePtr operator()(const BaseSemantics::StatePtr &incomingState) const {
         return incomingState ? incomingState->clone() : BaseSemantics::StatePtr();
     }
 
-    // Required by dataflow engine: compute new output state given a vertex and input state.
+    // Required by data-flow engine: compute new output state given a vertex and input state.
     BaseSemantics::StatePtr operator()(const DfCfg&, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const;
 };
 
-/** Dataflow engine. */
+/** Data-Flow engine. */
 typedef rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction> Engine;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -35,10 +35,19 @@
 // DQ (3/19/2012): We need this for a function in calss: TestForParentsMatchingASTStructure
 #include "stringify.h"
 
+// DQ (3/24/2016): Adding message logging.
+#include "Diagnostics.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace rose;
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/24/2016): Adding Message logging mechanism.
+Sawyer::Message::Facility TestChildPointersInMemoryPool::mlog;
+
 
 /*! \file
 
@@ -2474,7 +2483,12 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
      ROSE_ASSERT(node != NULL);
 
 #if 0
-     printf ("In TestAstForUniqueNodesInAST::visit (): IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+     printf ("In TestAstForUniqueNodesInAST::visit (): IR node = %p = %s = %s in the AST. \n",node,node->class_name().c_str(),SageInterface::generateUniqueName(node,true).c_str());
+     Sg_File_Info* source_position = node->get_file_info();
+     if (source_position != NULL)
+        {
+          printf ("   --- line %d \n",source_position->get_line());
+        }
 #endif
 
      if (astNodeSet.find(node) != astNodeSet.end())
@@ -2521,7 +2535,13 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
                     printf ("Warning: found a shared IR node = %p = %s in the AST (not a SgLocatedNode) \n",node,node->class_name().c_str());
              }
 
+#define ENFORCE_UNIQUE_IR_NODES 0
+
+#if ENFORCE_UNIQUE_IR_NODES
+          if ( SgProject::get_verbose() >= 0 )
+#else
           if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+#endif
              {
                printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
 
@@ -2531,12 +2551,34 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
                     printf ("*** (possible sharing violation) declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
                     ROSE_ASSERT(declarationStatement->get_parent() != NULL);
                     printf ("       --- declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(),declarationStatement->get_parent()->class_name().c_str());
+                    SgLocatedNode* parent = isSgLocatedNode(declarationStatement->get_parent());
+                    parent->get_startOfConstruct()->display("parent: debug");
+
                     printf ("       --- declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
                     printf ("       --- declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
+                    declarationStatement->get_startOfConstruct()->display("declarationStatement: debug");
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationStatement);
+                    if (classDeclaration != NULL)
+                       {
+                         printf ("       --- classDeclaration name = %s \n",classDeclaration->get_name().str());
+                       }
                   }
              }
 
-#if 0
+#if ENFORCE_UNIQUE_IR_NODES
+       // DQ (11/28/2015): The older failing tests (below) are now fixed; but there 
+       // are some newer failing tests (within Boost header files):
+       // test2015_87.C 
+       // test2015_90.C 
+       // test2015_91.C 
+       // test2015_94.C 
+       // test2015_95.C 
+       // test2015_96.C 
+       // test2015_127.C
+       // Also the RoseExample_tests fail (since they include the same boost issues).
+       // So we still can not yet enforce this AST consistancy test.
+
+       // DQ (11/23/2015): As of this date, we can now enforce this test (I think).
        // DQ (4/8/2014): This now only fails for Boost examples, so I this is the good news,
        // however, it means that I still can't enforce this everywhere. These tests:
        // test2013_234.C
@@ -2575,16 +2617,22 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
 
           ROSE_ASSERT(false);
 #else
+
        // DQ (4/26/2012): debugging... (test2012_67.C)
+#if ENFORCE_UNIQUE_IR_NODES
+          if ( SgProject::get_verbose() >= 0 )
+#else
           if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+#endif
              {
-               printf ("In TestAstForUniqueNodesInAST::visit (): Rare issue (only effects Boost examples) \n");
+               printf ("In TestAstForUniqueNodesInAST::visit (): Rare issue (only effects Boost examples): node = %p = %s \n",node,node->class_name().c_str());
              }
 #endif
         }
 #if 0
      printf ("In TestAstForUniqueNodesInAST::visit(): astNodeSet.insert(node = %p = %s) \n",node,node->class_name().c_str());
 #endif
+
      astNodeSet.insert(node);
    }
 
@@ -3208,6 +3256,16 @@ TestAstSymbolTables::visit ( SgNode* node )
                             {
                               printf ("Error: initializedName->get_symbol_from_symbol_table() == NULL initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
                               initializedName->get_startOfConstruct()->display("Error: initializedName->get_symbol_from_symbol_table() == NULL");
+                              SgLocatedNode* locatedNodeParent = isSgLocatedNode(initializedName->get_parent());
+                              ROSE_ASSERT(locatedNodeParent != NULL);
+                              locatedNodeParent->get_startOfConstruct()->display("Error: initializedName->get_symbol_from_symbol_table() == NULL: locatedNodeParent");
+
+                              SgScopeStatement* scope = initializedName->get_scope();
+                              ROSE_ASSERT(scope != NULL);
+                              ROSE_ASSERT(scope->get_symbol_table() != NULL);
+
+                              printf ("In TestAstSymbolTables::visit(): output the symbol tables for the scope = %p = %s \n",scope,scope->class_name().c_str());
+                              scope->get_symbol_table()->print();
                             }
 #if 0
                          printf ("In TestAstSymbolTables::visit(): local_symbol = %p = %s \n",local_symbol,local_symbol != NULL ? local_symbol->class_name().c_str() : "null");
@@ -4951,6 +5009,17 @@ TestChildPointersInMemoryPool::test()
      t.traverseMemoryPool();
    }
 
+void TestChildPointersInMemoryPool::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("TestChildPointersInMemoryPool", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
+
 
 // DQ (9/13/2006): Implemented by Ghassan to verify that for 
 // each node, it appears in its parent's list of children.
@@ -5141,7 +5210,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             {
                               if (SgProject::get_verbose() > 0)
                                  {
-                                   printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                                   mprintf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
                                         node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
                                  }
                             }
@@ -5166,7 +5235,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                                  }
                                 else
                                  {
-                                   printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                                   mprintf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
                                         node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
                                  }
                             }
@@ -6322,6 +6391,9 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
                   }
              }
         }
+
+  // DQ (3/4/2016): Klocworks reports a problem with "node->get_parent() != NULL".
+     ROSE_ASSERT(node != NULL);
 
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
         {

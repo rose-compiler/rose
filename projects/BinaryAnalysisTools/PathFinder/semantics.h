@@ -110,14 +110,14 @@ protected:
                   const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
                   rose::BinaryAnalysis::SMTSolver *solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
-        set_name("FindPath");
+        name("FindPath");
     }
 
     RiscOperators(const rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
                   const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
                   rose::BinaryAnalysis::SMTSolver *solver)
         : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
-        set_name("FindPath");
+        name("FindPath");
     }
 
 public:
@@ -196,7 +196,8 @@ public:
     finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
 
     virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    readRegister(const RegisterDescriptor &reg,
+                 const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
     virtual void
     writeRegister(const RegisterDescriptor &reg,

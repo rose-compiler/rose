@@ -236,7 +236,7 @@ BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
-    ASSERT_not_null(get_state());
+    ASSERT_not_null(currentState());
     (void) SValue::promote(addr);
     (void) SValue::promote(cond);
     return dflt->copy();
@@ -246,7 +246,7 @@ void
 RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                          const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond)
 {
-    ASSERT_not_null(get_state());
+    ASSERT_not_null(currentState());
     (void) SValue::promote(addr);
     (void) SValue::promote(data);
     (void) SValue::promote(cond);
