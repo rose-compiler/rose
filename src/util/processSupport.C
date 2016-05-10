@@ -12,6 +12,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include "rosedll.h"
 
 // DQ (3/22/2009): This should be required, but only MSVS catches it.
 #include <assert.h>
@@ -147,25 +148,25 @@ void ROSE_ABORT() __THROW __attribute__ ((__noreturn__))
 
 namespace rose {
 
-void
+ROSE_UTIL_API void
 abortOnFailedAssertion(const char *mesg, const char *expr, const std::string &note, const char *fileName,
                        unsigned lineNumber, const char *functionName) {
     abort();
 }
 
-void
+ROSE_UTIL_API void
 exitOnFailedAssertion(const char *mesg, const char *expr, const std::string &note, const char *fileName,
                        unsigned lineNumber, const char *functionName) {
     exit(1);
 }
 
-void
+ROSE_UTIL_API void
 throwOnFailedAssertion(const char *mesg, const char *expr, const std::string &note, const char *fileName,
                        unsigned lineNumber, const char *functionName) {
     throw FailedAssertion(mesg, expr, note, fileName, lineNumber, functionName);
 }
 
-void
+ROSE_UTIL_API void
 failedAssertionBehavior(Sawyer::Assert::AssertFailureHandler handler) {
     if (handler) {
         Sawyer::Assert::assertFailureHandler = handler;
@@ -184,7 +185,7 @@ failedAssertionBehavior(Sawyer::Assert::AssertFailureHandler handler) {
     }
 }
 
-Sawyer::Assert::AssertFailureHandler
+  Sawyer::Assert::AssertFailureHandler
 failedAssertionBehavior() {
     return Sawyer::Assert::assertFailureHandler;
 }

@@ -158,8 +158,8 @@ void FailSafe::removeAttribute(FailSafe::Attribute* attribute, SgNode* node)
   (cur_list->attriList).erase (h_pos);
   if ((cur_list->attriList).size() ==0)
   {
-    delete cur_list;
     node->removeAttribute("FailSafeAttributeList");
+    delete cur_list;
   }
 }
 

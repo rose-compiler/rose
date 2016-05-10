@@ -131,19 +131,19 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     fprintf(f, "%s%-*s = %d\n", p, w, "version", get_version());
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "augStr", get_augmentation_string().c_str());
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "eh_data", get_eh_data(), get_eh_data());
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "eh_data", get_eh_data(), get_eh_data());
     fprintf(f, "%s%-*s = %s\n", p, w, "sig_frame", get_sig_frame()?"yes":"no");
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "code_align",
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "code_align",
             get_code_alignment_factor(), get_code_alignment_factor());
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRId64")\n", p, w, "data_align",
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRId64 ")\n", p, w, "data_align",
             get_data_alignment_factor(), get_data_alignment_factor());
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "aug_length",
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "aug_length",
             get_augmentation_data_length(), get_augmentation_data_length());
     fprintf(f, "%s%-*s = %d\n", p, w, "lsda_encoding", get_lsda_encoding());
     fprintf(f, "%s%-*s = %d\n", p, w, "prh_encoding", get_prh_encoding());
     if (get_prh_encoding()>=0) {
         fprintf(f, "%s%-*s = 0x%02x (%u)\n", p, w, "prh_arg", get_prh_arg(), get_prh_arg());
-        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "prh_addr", get_prh_addr(), get_prh_addr());
+        fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "prh_addr", get_prh_addr(), get_prh_addr());
     }
     fprintf(f, "%s%-*s = %d\n", p, w, "addr_encoding", get_addr_encoding());
     if (get_instructions().size()>0) {
@@ -242,7 +242,7 @@ SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = %s\n", p, w, "begin_rva", get_begin_rva().to_string().c_str());
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n", p, w, "size", get_size(), get_size());
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes\n", p, w, "size", get_size(), get_size());
     fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "aug_data",
             get_augmentation_data().size(), get_augmentation_data().size());
     hexdump(f, 0, std::string(p)+"data at ", get_augmentation_data());
@@ -463,9 +463,15 @@ SgAsmElfEHFrameSection::parse()
                 }
 
                 /* Call frame instructions */
-                rose_addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
-                fde->get_instructions() = read_content_local_ucl(at, cf_insn_size);
-                ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
+                if (length_field_size + record_size < at - record_offset) {
+                    mlog[ERROR] <<"ELF CIE " <<StringUtility::addrToString(get_offset()+cie_offset)
+                                <<", FED " <<StringUtility::addrToString(get_offset()+record_offset)
+                                <<": invalid call frame instructions size (skipping)\n";
+                } else {
+                    rose_addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
+                    fde->get_instructions() = read_content_local_ucl(at, cf_insn_size);
+                    ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
+                }
             }
         }
 

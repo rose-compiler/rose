@@ -74,6 +74,7 @@ EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 noinst_LTLIBRARIES += libroseSawyer.la
 libroseSawyer_la_SOURCES =			\
 	Sawyer/Assert.C				\
+	Sawyer/Attribute.C			\
 	Sawyer/CommandLine.C			\
 	Sawyer/GraphTraversal.C			\
 	Sawyer/Markup.C				\
@@ -91,6 +92,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/AddressSegment.h			\
 	Sawyer/AllocatingBuffer.h		\
 	Sawyer/Assert.h				\
+	Sawyer/Attribute.h			\
 	Sawyer/BiMap.h				\
 	Sawyer/BitVector.h			\
 	Sawyer/BitVectorSupport.h		\
@@ -99,8 +101,11 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Callbacks.h			\
 	Sawyer/CommandLine.h			\
 	Sawyer/DefaultAllocator.h		\
+	Sawyer/DenseIntegerSet.h		\
 	Sawyer/DistinctList.h			\
+	Sawyer/Exception.h			\
 	Sawyer/Graph.h				\
+	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
 	Sawyer/GraphTraversal.h			\
 	Sawyer/IndexedList.h			\
@@ -125,9 +130,14 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/StaticBuffer.h			\
 	Sawyer/Stopwatch.h			\
 	Sawyer/Synchronization.h		\
+	Sawyer/ThreadWorkers.h			\
 	Sawyer/WarningsOff.h			\
 	Sawyer/WarningsRestore.h
+
 EXTRA_DIST += Sawyer/CMakeLists.txt
+
+# These are used in the doxygen documentation examples
+EXTRA_DIST += Sawyer/docs/examples/commandLineEx1.C Sawyer/docs/examples/graphIso.C
 
 ########################################################################################################################
 # automake boilerplate

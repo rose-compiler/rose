@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -229,7 +229,16 @@ public:
     //     object.ownershipCount();
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /** Obtain the pointed-to object.  The pointed-to object is returned. Returns null for empty pointers. */
+
+    /** Obtain the pointed-to object.
+     *
+     *  The pointed-to object is returned. Returns null for empty pointers. An idiom for getting a raw pointer for a shared
+     *  pointer that's known to be non-null is to dereference the shared pointer and then take the address:
+     *
+     *  @code
+     *   SharedPointer<MyType> ptr = ...;
+     *   MyType *obj = &*ptr;
+     *  @endcode */
     friend Pointee* getRawPointer(const SharedPointer &ptr) {
         return ptr.pointee_;
     }
@@ -241,8 +250,6 @@ public:
 private:
     static size_t ownershipCount(Pointee *rawPtr);
 };
-
-
 
 /** Make pointer point to nothing.
  *
@@ -268,14 +275,21 @@ public:
 
     /** Copy constructor.
      *
-     *  Shared objects are not typically copy-constructed, but we must support it anyway in case the user wants to
-     *  copy-construct some shared object.  The new object has a ref-count of zero. */
+     *  The reference count of the new object is set to zero since no pointers can exist yet. */
     SharedObject(const SharedObject &other): nrefs_(0) {}
+
+    /** Assignment.
+     *
+     *  Assigning one object to another doesn't change the reference count or mutex of either object. */
+    SharedObject& operator=(const SharedObject &other) {
+        return *this;
+    }
 
     /** Virtual destructor. Verifies that the reference count is zero. */
     virtual ~SharedObject() {
         ASSERT_require(nrefs_==0);
     }
+
 };
 
 /** Creates SharedPointer from this.

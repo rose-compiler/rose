@@ -113,12 +113,12 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (p_flags & PF_PROC_MASK) fputs(" proc", f);
     if (p_flags & PF_RESERVED) fputs(" *", f);
     fputc('\n', f);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "offset", p_offset, p_offset);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n",                 p, w, "vaddr",  p_vaddr, p_vaddr);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n",                 p, w, "paddr",  p_paddr, p_paddr);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "filesz", p_filesz, p_filesz);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "memsz",  p_memsz, p_memsz);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "align",  p_align, p_align);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes into file\n", p, w, "offset", p_offset, p_offset);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n",                 p, w, "vaddr",  p_vaddr, p_vaddr);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n",                 p, w, "paddr",  p_paddr, p_paddr);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes\n",           p, w, "filesz", p_filesz, p_filesz);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes\n",           p, w, "memsz",  p_memsz, p_memsz);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes\n",           p, w, "align",  p_align, p_align);
     if (p_extra.size()>0) {
         fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, "extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);

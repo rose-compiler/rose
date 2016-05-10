@@ -29,10 +29,11 @@ fi
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
 for f in \
-    Access Assert AddressMap AddressSegment AllocatingBuffer BiMap BitVector BitVectorSupport Buffer CommandLine Cached \
-    Callbacks DefaultAllocator DistinctList Graph GraphBoost GraphTraversal IndexedList Interval IntervalMap IntervalSet \
-    IntervalSetMap Map MappedBuffer Markup MarkupPod Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set \
-    SharedPointer SmallObject Stack StaticBuffer Stopwatch Synchronization WarningsOff WarningsRestore
+    Access Assert AddressMap AddressSegment AllocatingBuffer Attribute BiMap BitVector BitVectorSupport Buffer CommandLine \
+    Cached Callbacks DefaultAllocator DenseIntegerSet Exception DistinctList Graph GraphAlgorithm GraphBoost GraphTraversal \
+    IndexedList Interval IntervalMap IntervalSet IntervalSetMap Map MappedBuffer Markup MarkupPod Message NullBuffer Optional \
+    PoolAllocator ProgressBar Sawyer Set SharedPointer SmallObject Stack StaticBuffer Stopwatch Synchronization ThreadWorkers \
+    WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
@@ -42,7 +43,7 @@ done
 # Copy some of Sawyers examples. These are needed by ROSE's doxygen
 mkdir -p docs/examples
 for f in \
-    commandLineEx1.C commandLineEx1.out
+    commandLineEx1.C commandLineEx1.out attribute.C graphIso.C
 do
     cp "$SAWYER_ROOT/docs/examples/$f" docs/examples/.
 done

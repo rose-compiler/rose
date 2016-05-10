@@ -333,6 +333,31 @@ struct hash_nodeptr
     */
      std::string get_name ( const SgToken* token );
 
+  // DQ (3/20/2016): Added to refactor some of the DSL infrastructure support.
+   /*! \brief Generate a useful name to support construction of identifiers from declarations.
+
+       This function permits names to be generated that will be unique across translation units
+       (a specific requirement different from the context of the get_name() functions above).
+
+       \internal This supports only a restricted set of declarations presently.
+    */
+     std::string generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration );
+     std::string generateUniqueNameForUseAsIdentifier_support ( SgDeclarationStatement* declaration );
+
+   /*! \brief Global map of name collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     extern std::map<std::string,int>     local_name_collision_map;
+     extern std::map<std::string,SgNode*> local_name_to_node_map;
+     extern std::map<SgNode*,std::string> local_node_to_name_map;
+
+   /*! \brief Traversal to set the global map of names to node and node to names.collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void computeUniqueNameForUseAsIdentifier( SgNode* astNode );
+
+   /*! \brief Reset map variables used to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void reset_name_collision_map();
+
  //@}
 
  //------------------------------------------------------------------------
@@ -663,6 +688,12 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
   //! Dumps a located node's preprocessing information.
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
 
+//! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file, add to be the last #include .. by default among existing headers, Or as the first header. Recommended for use.
+PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader, bool asLastHeader);
+
+//! Insert a new header right before stmt,  if there are existing headers attached to stmt, insert it as the last or first header as specified by asLastHeader
+void insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader);
+
 //! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file
 PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader = false, PreprocessingInfo::RelativePositionType position = PreprocessingInfo::before);
 
@@ -992,6 +1023,9 @@ ROSE_DLL_API bool templateArgumentEquivalence(SgTemplateArgument * arg1, SgTempl
 //! Verify that 2 SgTemplateArgumentPtrList are equivalent.
 ROSE_DLL_API bool templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2);
 
+//! Test for equivalence of types independent of access permissions (private or protected modes for members of classes).
+ROSE_DLL_API bool isEquivalentType (const SgType* lhs, const SgType* rhs);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1075,6 +1109,12 @@ ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i-- is normalized to i+=-1
 //!           i-=s is normalized to i+= -s
 ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop, bool foldConstant = true);
+
+//! Normalize a for loop's test expression 
+//!           i<x is normalized to i<= (x-1) and
+//!           i>x is normalized to i>= (x+1)
+ROSE_DLL_API bool normalizeForLoopTest(SgForStatement* loop);
+ROSE_DLL_API bool normalizeForLoopIncrement(SgForStatement* loop);
 
 //!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
 ROSE_DLL_API bool doLoopNormalization(SgFortranDo* loop);
@@ -1195,6 +1235,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 
 //! Collect all variable references in a subtree
   void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
+
   //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
@@ -1590,6 +1631,9 @@ ROSE_DLL_API void moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeSt
 //! Append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 ROSE_DLL_API void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
+//! Append a statement to the end of SgForInitStatement
+ROSE_DLL_API void appendStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt);
+
 //! Append a list of statements to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 ROSE_DLL_API void appendStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
 
@@ -1600,6 +1644,9 @@ ROSE_DLL_API void appendStatementWithDependentDeclaration( SgDeclarationStatemen
 //! Prepend a statement to the beginning of the current scope, handling side
 //! effects as appropriate
 ROSE_DLL_API void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
+
+//! Prepend a statement to the beginning of SgForInitStatement
+ROSE_DLL_API void prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt);
 
 //! prepend a list of statements to the beginning of the current scope,
 //! handling side effects as appropriate
@@ -1703,7 +1750,7 @@ ROSE_DLL_API void appendExpressionList(SgExprListExp *, const std::vector<SgExpr
 
 //! Set parameter list for a function declaration, considering existing parameter list etc.
 template <class actualFunction> 
-ROSE_DLL_API void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
+void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
 
   // TODO consider the difference between C++ and Fortran
   // fixup the scope of arguments,no symbols for nondefining function declaration's arguments
@@ -1797,6 +1844,9 @@ ROSE_DLL_API void moveDeclarationToAssociatedNamespace ( SgDeclarationStatement*
 ROSE_DLL_API bool isTemplateInstantiationNode(SgNode* node);
 
 ROSE_DLL_API void wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root);
+
+// DQ (12/1/2015): Adding support for fixup internal data struuctures that have references to statements (e.g. macro expansions).
+ROSE_DLL_API void resetInternalMapsForTargetStatement(SgStatement* sourceStatement);
 
 //@}
 //------------------------------------------------------------------------
@@ -1929,8 +1979,19 @@ ROSE_DLL_API void removeConsecutiveLabels(SgNode* top);
  *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
  *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
  *  The original assignment stmt will be removed by default
+ *  This function is a bit ambiguous about the merge direction, to be phased out.
  */
 ROSE_DLL_API bool mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt = true);
+
+
+//! Merge an assignment into its upstream declaration statement. Callers should make sure the merge is semantically correct.
+ROSE_DLL_API bool mergeAssignmentWithDeclaration (SgExprStatement* assign_stmt, SgVariableDeclaration* decl, bool removeAssignStmt = true);
+
+//! Merge a declaration statement into a matching followed variable assignment. Callers should make sure the merge is semantically correct (by not introducing compilation errors). This function simply does the merge transformation, without eligibility check.
+/*! 
+ *  e.g.  int i;  i=10;  becomes int i=10;  the original int i; will be deleted after the merge
+ */
+ROSE_DLL_API bool mergeDeclarationWithAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt);
 
 //! Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
 /*! Return the generated assignment statement, if any

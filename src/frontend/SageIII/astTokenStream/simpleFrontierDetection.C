@@ -293,6 +293,7 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNo
                     n->set_containsTransformation(true);
                   }
              }
+
 #endif
         }
 
@@ -329,6 +330,7 @@ SimpleFrontierDetectionForTokenStreamMapping::numberOfNodesInSubtree(SgSourceFil
 void
 simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
    {
+  // DQ (11/8/2015): This function sets the nodes as containing transforamtions (which is essential).
   // DQ (4/14/2015): After an more detailed evaluation of this function it does not acomplish it's objectives.
 
   // This frontier detection happens before we associate token subsequences to the AST (in a seperate map).

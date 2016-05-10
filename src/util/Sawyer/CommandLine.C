@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -1705,6 +1705,26 @@ Parser::readArgsFromFile(const std::string &filename) {
             ss <<"unterminated quote at line " <<nlines <<" in " <<filename;
             throw std::runtime_error(ss.str());
         }
+    }
+    return retval;
+}
+
+SAWYER_EXPORT std::vector<std::string>
+Parser::expandIncludedFiles(const std::vector<std::string> &args) {
+    std::vector<std::string> retval;
+    BOOST_FOREACH (const std::string &arg, args) {
+        bool wasExpanded = false;
+        BOOST_FOREACH (std::string &prefix, inclusionPrefixes_) {
+            if (boost::starts_with(arg, prefix) && arg.size() > prefix.size()) {
+                std::string filename = arg.substr(prefix.size());
+                std::vector<std::string> expanded = readArgsFromFile(filename);
+                retval.insert(retval.end(), expanded.begin(), expanded.end());
+                wasExpanded = true;
+                break;
+            }
+        }
+        if (!wasExpanded)
+            retval.push_back(arg);
     }
     return retval;
 }

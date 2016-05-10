@@ -386,6 +386,7 @@ SgFuncDecl_attr
 SgFunctionCallExp
 SgFunctionDeclaration
 SgFunctionDefinition
+SgFunctionParameterScope
 SgFunctionModifier
 SgFunctionParameterList
 SgFunctionParameterRefExp
@@ -527,10 +528,12 @@ SgOmpTargetStatement
 SgOmpTargetDataStatement
 SgOmpSimdStatement
 SgOmpClause
+SgOmpBeginClause
 SgOmpCollapseClause
 SgOmpCopyinClause
 SgOmpCopyprivateClause
 SgOmpDefaultClause
+SgOmpEndClause
 SgOmpExpressionClause
 SgOmpFirstprivateClause
 SgOmpIfClause
@@ -747,7 +750,7 @@ SgUntypedModuleScope
 SgUntypedGlobalScope
 SgUntypedModuleDeclaration
 SgUntypedStatementList
-SgUntypedDeclarationList
+SgUntypedDeclarationStatementList
 SgUntypedFunctionDeclarationList
 SgUntypedInitializedNameList
 SgUpcBarrierStatement

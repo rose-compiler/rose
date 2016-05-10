@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -11,10 +11,12 @@
 
 namespace Sawyer {
 
-static void
-init() {
-  Message::initializeLibrary();
-}
+class Initializer {
+public:
+    void operator()() {
+        Message::initializeLibrary();
+    }
+};
 
 #if SAWYER_MULTI_THREADED
 static boost::once_flag initFlag = BOOST_ONCE_INIT;
@@ -29,11 +31,16 @@ initializeLibrary(size_t vmajor, size_t vminor, size_t vpatch, bool withThreads)
         throw std::runtime_error("inconsistent compiling/linking with libsawyer: version number mismatch");
     if (withThreads != SAWYER_MULTI_THREADED)
         throw std::runtime_error("inconsistent compiling/linking with libsawyer: thread support mismatch");
-    
+
+    Initializer init;
 #if SAWYER_MULTI_THREADED
-    boost::call_once(&init, initFlag);
+    boost::call_once(initFlag, init);
 #else
-    init();
+    static bool initialized = false;
+    if (!initialized) {
+        init();
+        initialized = true;
+    }
 #endif
     return true;
 }

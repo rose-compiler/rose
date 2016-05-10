@@ -216,6 +216,22 @@ HEADER_START
 
           SgDeclarationStatement* getAssociatedDeclaration() const;
 
+#if 0
+       // DQ (11/28/2015): This has been moved from the SgModifierType class to the SgType class since it is a general requirement.
+       // DQ (11/28/2015): Adding operator==() function to use in symbol table lookup when template 
+       // arguments or parameters resolve to SgModifierType and we need to know if it is the same type.
+       // One might expect that with type tables they would only be the same if there were the same 
+       // pointer, but I think this is not alwasy true for SgModifierType nodes.
+       // bool operator== (const SgType & Y) const;
+#endif
+       // DQ (12/8/2015): Insead of the operator==(), we require a more nuanced approach.
+       // There are concepts of type equivalence (where for example a typedef of an int would 
+       // be the same type as the int) and type intechangablity, where two equivalent types will
+       // can be substituted for each other (which might not be possible if one of them has 
+       // only private access permissions.
+      //! Type equivalence is the concept of equality between types independent of access permissions (e.g. private or protected types in a class).
+          bool isEquivalentType (const SgType * other_type) const;
+
 HEADER_END
 
 
@@ -446,6 +462,15 @@ HEADER_MODIFIER_TYPE_START
 
           static SgModifierType* insertModifierTypeIntoTypeTable( SgModifierType* result );
 
+#if 0
+       // DQ (11/28/2015): This has been move to the SgType class since it is a general requirement.
+       // DQ (11/28/2015): Adding operator==() function to use in symbol table lookup when template 
+       // arguments or parameters resolve to SgModifierType and we need to know if it is the same type.
+       // One might expect that with type tables they would only be the same if there were the same 
+       // pointer, but I think this is not alwasy true for SgModifierType nodes.
+       // bool operator== (const SgModifierType & X, const SgModifierType & Y);
+          bool operator== (const SgModifierType & Y) const;
+#endif
 #if 0
           void unsetRestrict();
           void setRestrict();
@@ -2461,6 +2486,310 @@ SgType::set_type_kind ( SgExpression* type_kind )
      p_type_kind = type_kind;
    }
 
+
+bool
+SgType::isEquivalentType (const SgType* other_type) const
+   {
+  // DQ (12/8/2015): This implementation is now refactored into a function implemented in the SageInterface.
+
+     return SageInterface::isEquivalentType(this,other_type);
+   }
+
+#if 0
+// DQ (11/28/2015): Implementation of type equivalence required to support differentiating template instantiations in the symbol table handling.
+// This code needs to be reviewed, since it is critical to the template name lookup (which a lot of general robustness depends upon).
+// bool SgType::operator== (const SgType & Y) const
+bool
+SgType::isEquivalentType (const SgType & Y) const;
+   {
+  // DQ (11/28/2015): A better goal for this function should be to define it as a recursive function.
+
+     bool isSame = false;
+
+  // While debugging avoid infinte loops (most type chains in STL and boost are only a 3-4 long in test2015_127.C, nesting is how it goes wild).
+     static int counter = 0;
+
+     const SgType & X = *this;
+
+  // DQ (11/28/2015): We don't want to strip off everything.
+  // SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
+
+  // I think we need to compute the type chain to evaluate equalence.
+  // Rose_STL_Container< SgType*> getInternalTypes () const
+
+     Rose_STL_Container<SgType*> X_typeChain = X.getInternalTypes();
+     Rose_STL_Container<SgType*> Y_typeChain = Y.getInternalTypes();
+
+#define DEBUG_TYPE_EQUIVALENCE 0
+
+#if DEBUG_TYPE_EQUIVALENCE
+     printf ("In SgType::operator==(): evaluation of type equivalence for lhs and rhs: counter = %d \n",counter);
+#endif
+#if DEBUG_TYPE_EQUIVALENCE
+  // Debugging output.
+     printf ("Output of type chain for lhs: \n");
+     for (size_t i = 0; i < X_typeChain.size(); i++)
+        {
+          SgType* element_type = X_typeChain[i];
+          printf ("X_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          SgModifierType* modifierType = isSgModifierType(element_type);
+          if (modifierType != NULL)
+             {
+            // modifierType->get_typeModifier().display("X type chain");
+               string s = modifierType->get_typeModifier().displayString();
+               printf ("   --- type chain modifier: %s \n",s.c_str());
+             }
+        }
+
+     printf ("Output of type chain for rhs: \n");
+     for (size_t i = 0; i < Y_typeChain.size(); i++)
+        {
+          SgType* element_type = Y_typeChain[i];
+          printf ("Y_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          SgModifierType* modifierType = isSgModifierType(element_type);
+          if (modifierType != NULL)
+             {
+            // modifierType->get_typeModifier().display("Y type chain");
+               string s = modifierType->get_typeModifier().displayString();
+               printf ("   --- type chain modifier: %s \n",s.c_str());
+             }          
+        }
+#endif
+
+  // Increment the static variable to control the recursive d3epth while we debug this.
+     counter++;
+
+  // DQ (11/28/2015): exit in stead of infinte recursion.
+     if (counter > 100) 
+        {
+       // DQ (11/28/2015): I htink this is a reasonable limit.
+          printf ("ERROR: In SgType::operator==(): recursive limit exceeded for : counter = %d \n",counter);
+          ROSE_ASSERT(false);
+
+          return false;
+        }
+
+  // bool exit = false;
+
+  // DQ (11/28/2015): exit in stead of infinte recursion.
+     if (counter > 90) 
+        {
+          printf ("In SgType::operator==(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+        }
+
+  // Strip off ant typedefs since they are equivalent by definition.
+     SgType* X_element_type = X.stripType( STRIP_TYPEDEF_TYPE );
+     SgType* Y_element_type = Y.stripType( STRIP_TYPEDEF_TYPE );
+
+  // DQ (11/29/2015): We need to handle reference (when they are both references we can support then uniformally).
+     SgReferenceType* X_referenceType = isSgReferenceType(X_element_type);
+     SgReferenceType* Y_referenceType = isSgReferenceType(Y_element_type);
+
+     if (X_referenceType != NULL && Y_referenceType != NULL)
+        {
+          X_element_type = X_referenceType->get_base_type();
+          Y_element_type = Y_referenceType->get_base_type();
+
+          counter--;
+
+       // Recursive call.
+          return (*X_element_type) == (*Y_element_type);
+        }
+       else
+        {
+        }
+
+     SgModifierType* X_modifierType = isSgModifierType(X_element_type);
+     SgModifierType* Y_modifierType = isSgModifierType(Y_element_type);
+
+#if DEBUG_TYPE_EQUIVALENCE
+     printf ("In SgType::operator==(): counter = %d: type chain X_element_type = %p = %s Y_element_type = %p = %s \n",
+          counter,X_element_type,X_element_type->class_name().c_str(),Y_element_type,Y_element_type->class_name().c_str());
+#endif
+
+     if (X_modifierType != NULL && Y_modifierType != NULL)
+        {
+       // Handle the case of both modifiers.
+#if DEBUG_TYPE_EQUIVALENCE
+          printf ("In SgType::operator==(): loop: these are the both SgModifierType nodes: isSame = %s \n",isSame ? "true" : "false");
+#endif
+          if (X_modifierType == Y_modifierType)
+             {
+               isSame = true;
+#if DEBUG_TYPE_EQUIVALENCE
+               printf ("In SgType::operator==(): loop: these are the same modifier type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+             }
+            else
+             {
+               if (X_modifierType->get_typeModifier() == Y_modifierType->get_typeModifier())
+                  {
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SgType::operator==(): loop: these are equivalent modifiers: check the base type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                 // Recursive call.
+                    isSame = (*X_modifierType->get_base_type()) == (*Y_modifierType->get_base_type());
+                  }
+                 else
+                  {
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SgType::operator==(): loop: these are not equivalent modifier types: check for default settings: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                 // if (X_modifierType->get_typeModifier().isDefault() == true)
+                    if (X_modifierType->get_typeModifier().isIdentity() == true)
+                       {
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SgType::operator==(): loop: found self-similar setting for lhs: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                         X_element_type = X_modifierType->get_base_type();
+                       }
+
+                 // if (Y_modifierType->get_typeModifier().isDefault() == true)
+                    if (Y_modifierType->get_typeModifier().isIdentity() == true)
+                       {
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SgType::operator==(): loop: found self-similar setting for rhs: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                         Y_element_type = Y_modifierType->get_base_type();
+                       }
+
+                 // NOTE: If either of these are a SgTypedefType then the typedefs will be stripped away at the top of the recursive call.
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SgType::operator==(): loop: recursive call on different adjusted modifier types: before recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                 // Recursive call on non-default modifier base types.
+                    isSame = (*X_element_type) == (*Y_element_type);
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SgType::operator==(): loop: these are different modifier types: after recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                  }
+             }
+        }
+       else
+        {
+       // At least one of these is not a SgModifierType.
+
+          if (X_modifierType != NULL || Y_modifierType != NULL)
+             {
+               bool isReduceable = false;
+
+            // if (X_modifierType != NULL && X_modifierType->get_typeModifier().isDefault() == true)
+               if (X_modifierType != NULL && X_modifierType->get_typeModifier().isIdentity() == true)
+                  {
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SgType::operator==(): loop: found default setting for lhs: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                    X_element_type = X_modifierType->get_base_type();
+                    isReduceable = true;
+                  }
+
+            // if (Y_modifierType != NULL && Y_modifierType->get_typeModifier().isDefault() == true)
+            // if (Y_modifierType != NULL && Y_modifierType->get_typeModifier().isIdentity() == true)
+               if (Y_modifierType != NULL && Y_modifierType->get_typeModifier().isIdentity() == true)
+                  {
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SgType::operator==(): loop: found default setting for rhs: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                    Y_element_type = Y_modifierType->get_base_type();
+                    isReduceable = true;
+                  }
+
+            // NOTE: If either of these are a SgTypedefType then the typedefs will be stripped away at the top of the recursive call.
+#if DEBUG_TYPE_EQUIVALENCE
+               printf ("In SgType::operator==(): loop: these are different modifier types: after recursive call to compare base types: isReduceable = %s \n",isReduceable ? "true" : "false");
+#endif
+               if (isReduceable == true)
+                  {
+                 // Recursive call on non-default modifier base types.
+                    isSame = (*X_element_type) == (*Y_element_type);
+                  }
+                 else
+                  {
+                 // Neither of these types were reducable.
+                    isSame = false;
+                  }
+
+#if DEBUG_TYPE_EQUIVALENCE
+               printf ("In SgType::operator==(): loop: these are different modifier types: after recursive call to compare base types: isReduceable = %s isSame = %s \n",
+                    isReduceable ? "true" : "false",isSame ? "true" : "false");
+#endif
+             }
+            else
+             {
+            // Neither of these are SgModifierType nodes.
+            // X_element_type = X_element_type->stripType( STRIP_TYPEDEF_TYPE );
+            // Y_element_type = Y_element_type->stripType( STRIP_TYPEDEF_TYPE );
+
+               if (X_element_type == Y_element_type)
+                  {
+                    isSame = true;
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SgType::operator==(): resolved to equal types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                  }
+                 else
+                  {
+                    bool isReduceable = false;
+
+                 // DQ (11/29/2015): We need to handle reference (when they are both references we can support then uniformally).
+                    SgReferenceType* X_referenceType = isSgReferenceType(X_element_type);
+                    SgReferenceType* Y_referenceType = isSgReferenceType(Y_element_type);
+
+                    if (X_referenceType != NULL || Y_referenceType != NULL)
+                       {
+
+                         if (X_referenceType != NULL)
+                            {
+                              X_element_type = X_referenceType->get_base_type();
+                              isReduceable = true;
+                            }
+
+                         if (Y_referenceType != NULL)
+                            {
+                              Y_element_type = Y_referenceType->get_base_type();
+                              isReduceable = true;
+                            }
+
+                         if (isReduceable == true)
+                            {
+                           // Recursive call on non-default modifier base types.
+                              isSame = (*X_element_type) == (*Y_element_type);
+                            }
+                           else
+                            {
+                           // Neither of these types were reducable.
+                              isSame = false;
+                            }
+                       }
+                      else
+                       {
+                      // DQ (11/29/2015): I think we need to add support for SgPointerType as well.
+
+                      // Recursive call on non-typedef base types.
+                         isSame = (*X_element_type) == (*Y_element_type);
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SgType::operator==(): loop: evaluation of inner types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                       }
+                  }
+             }
+        }
+
+  // Decrement the static variable to control the recursive depth while we debug this.
+     counter--;
+
+#if DEBUG_TYPE_EQUIVALENCE
+     printf ("In SgType::operator==(): isSame = %s \n",isSame ? "true" : "false");
+#endif
+
+     return isSame;
+   }
+#endif
+
+
+
+
+
 SOURCE_MAIN_TYPE_END
 
 
@@ -3151,8 +3480,13 @@ SgJavaParameterizedType::get_name() const {
                 }
                 SgType *type = (*i) -> get_type();
                 SgArrayType *array_type = isSgArrayType(type);
-                ROSE_ASSERT(array_type || isSgNamedType(type));
-                name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+
+             // DQ (3/19/2016): Klocworks reports the use of isSgNamedType(type) as an issue, since it could be NULL (as it sees it).
+             // ROSE_ASSERT(array_type || isSgNamedType(type));
+             // name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+                SgNamedType *named_type = isSgNamedType(type);
+                ROSE_ASSERT(array_type != NULL || named_type != NULL);
+                name += (array_type ? array_type -> get_name() : named_type -> get_name()).getString();
             }
             name += ">";
         }
@@ -3280,25 +3614,33 @@ SgJavaWildcardType::is_unbound() {
 }
 
 SgName
-SgJavaWildcardType::get_name() const {
-    string name = "?";
+SgJavaWildcardType::get_name() const 
+   {
+     string name = "?";
 
-    if (p_bound_type != NULL) {
-        if (p_has_extends) {
-            name += " extends ";
+     if (p_bound_type != NULL) 
+        {
+          if (p_has_extends) {
+              name += " extends ";
+          }
+          else if (p_has_super) {
+              name += " super ";
+          }
+
+          SgType *type = p_bound_type;
+          SgArrayType *array_type = isSgArrayType(type);
+	  ROSE_ASSERT(array_type || isSgNamedType(type));
+
+       // DQ (3/19/2016): Klocworks reports the use of isSgNamedType(type) as an issue, since it could be NULL (as it sees it).
+       // ROSE_ASSERT(array_type || isSgNamedType(type));
+       // name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+          SgNamedType *named_type = isSgNamedType(type);
+          ROSE_ASSERT(array_type != NULL || named_type != NULL);
+          name += (array_type ? array_type -> get_name() : named_type -> get_name()).getString();
         }
-        else if (p_has_super) {
-            name += " super ";
-        }
 
-        SgType *type = p_bound_type;
-        SgArrayType *array_type = isSgArrayType(type);
-	ROSE_ASSERT(array_type || isSgNamedType(type));
-        name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
-    }
-
-    return SgName(name);
-}
+     return SgName(name);
+   }
 
 SgName
 SgJavaWildcardType::get_qualified_name() const {
@@ -3607,6 +3949,310 @@ SgModifierType::get_typeModifier (void) const
      assert (this != NULL);
      return p_typeModifier;
    }
+
+#if 0
+// DQ (11/28/2015): I think that I might not require this (not that I have reviewed the new implementation).
+// It appears that it is already implemented as a friend function (acording to doxygen documentation).
+// Actually it shows up in Doxygen, but it does not appear to be implemented.
+// That was a mistake, it appears that the SgTypeModifier has an operator==(), but not the SgModifierType.
+// These names make it easy to get confused!
+bool
+// SgModifierType::operator== (const SgModifierType & X, const SgModifierType & Y)
+SgModifierType::operator== (const SgModifierType & Y) const
+   {
+  // return ( (X.get_base_type() == Y.get_base_type()) &&  (X.get_typeModifier() == Y.get_typeModifier()) );
+     bool isSame = false;
+
+#error "DEAD CODE!"
+
+     const SgModifierType & X = *this;
+
+  // DQ (11/28/2015): We don't want to strip off everything.
+  // SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
+
+  // I think we need to compute the type chain to evaluate equalence.
+  // Rose_STL_Container< SgType*> getInternalTypes () const
+
+  // Rose_STL_Container<SgType*> X_typeChain = X.get_base_type()->getInternalTypes();
+  // Rose_STL_Container<SgType*> Y_typeChain = Y.get_base_type()->getInternalTypes();
+     Rose_STL_Container<SgType*> X_typeChain = X.getInternalTypes();
+     Rose_STL_Container<SgType*> Y_typeChain = Y.getInternalTypes();
+
+#if 1
+     for (size_t i = 0; i < X_typeChain.size(); i++)
+        {
+          SgType* element_type = X_typeChain[i];
+          printf ("X_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          SgModifierType* modifierType = isSgModifierType(element_type);
+          if (modifierType != NULL)
+             {
+               modifierType->get_typeModifier().display("X type chain");
+             }
+        }
+     for (size_t i = 0; i < Y_typeChain.size(); i++)
+        {
+          SgType* element_type = Y_typeChain[i];
+          printf ("Y_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          SgModifierType* modifierType = isSgModifierType(element_type);
+          if (modifierType != NULL)
+             {
+               modifierType->get_typeModifier().display("Y type chain");
+             }          
+        }
+
+     int counter = 0;
+     bool exit = false;
+
+     Rose_STL_Container<SgType*>::iterator i = X_typeChain.begin();
+     Rose_STL_Container<SgType*>::iterator j = Y_typeChain.begin();
+     while ( counter < 10 && exit == false && (i != X_typeChain.end() && j != Y_typeChain.end()))
+        {
+#if 1
+          printf ("In SgModifierType::operator==(): counter = %d: type chain *i = %p = %s *j = %p = %s \n",counter,*i,(*i)->class_name().c_str(),*j,(*j)->class_name().c_str());
+#endif
+          SgType* X_element_type = *i;
+          SgType* Y_element_type = *j;
+
+          if (X_element_type == Y_element_type)
+             {
+               isSame = true;
+               exit = true;
+#if 1
+               printf ("In SgModifierType::operator==(): loop: X_element_type == Y_element_type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+             }
+            else
+             {
+            // SgType* X_type = X.get_base_type()->stripType( STRIP_TYPEDEF_TYPE );
+            // SgType* Y_type = Y.get_base_type()->stripType( STRIP_TYPEDEF_TYPE );
+
+               X_element_type = X_element_type->stripType( STRIP_TYPEDEF_TYPE );
+               Y_element_type = Y_element_type->stripType( STRIP_TYPEDEF_TYPE );
+#if 0
+               SgTypedefType* X_typedefType = isSgTypedefType(X_element_type);
+               SgTypedefType* Y_typedefType = isSgTypedefType(Y_element_type);
+               if (X_typedefType != NULL && X_typedefType == Y_typedefType)
+                  {
+                    isSame = true;
+                    exit = true;
+#if 1
+                    printf ("In SgModifierType::operator==(): loop: these are the same typedef type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                  }
+                 else
+                  {
+                    if (X_typedefType != NULL || Y_typedefType != NULL)
+                       {
+                         if (X_typedefType != NULL)
+                            {
+                              i++;
+                            }
+                         if (Y_typedefType != NULL)
+                            {
+                              j++;
+                            }
+                       }
+#else
+                  {
+#endif
+                 // if ()
+                       {
+                         SgModifierType* X_modifierType = isSgModifierType(X_element_type);
+                         SgModifierType* Y_modifierType = isSgModifierType(Y_element_type);
+
+                         if (X_modifierType != NULL && X_modifierType == Y_modifierType)
+                            {
+                              isSame = true;
+                              exit = true;
+#if 1
+                              printf ("In SgModifierType::operator==(): loop: these are the same modifier type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                            }
+                           else
+                            {
+                              if (X_modifierType != NULL || Y_modifierType != NULL)
+                                 {
+                                   if (X_modifierType != NULL && Y_modifierType != NULL)
+                                      {
+                                        if (X_modifierType->get_typeModifier() == Y_modifierType->get_typeModifier())
+                                           {
+                                             i++;
+                                             j++;
+                                           }
+                                          else
+                                           {
+                                             isSame = false;
+                                             exit = true;
+#if 1
+                                             printf ("In SgModifierType::operator==(): loop: these are different modifier types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                                           }
+                                      }
+                                     else
+                                      {
+                                     // Skip past default modifiers.
+                                        if (X_modifierType != NULL)
+                                           {
+                                             if (X_modifierType->get_typeModifier().isDefault() == true)
+                                                {
+                                                  i++;
+                                                }
+                                               else
+                                                {
+                                                  isSame = false;
+                                                  exit = true;
+#if 1
+                                                  printf ("In SgModifierType::operator==(): loop: X is a non-default modifier type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                                                }
+                                           }
+                                          else
+                                           {
+                                             isSame = false;
+                                             exit = true;
+#if 1
+                                             printf ("In SgModifierType::operator==(): loop: X_element_type is not a modifier: X_element_type = %p = %s \n",X_element_type,X_element_type->class_name().c_str());
+#endif
+                                           }
+
+                                     // Skip past default modifiers.
+                                        if (Y_modifierType != NULL)
+                                           {
+                                             if (Y_modifierType->get_typeModifier().isDefault() == true)
+                                                {
+                                                  j++;
+                                                }
+                                               else
+                                                {
+                                                  isSame = false;
+                                                  exit = true;
+#if 1
+                                                  printf ("In SgModifierType::operator==(): loop: Y is a non-default modifier type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                                                }
+                                           }
+                                          else
+                                           {
+                                             isSame = false;
+                                             exit = true;
+#if 1
+                                             printf ("In SgModifierType::operator==(): loop: Y_element_type is not a modifier: Y_element_type = %p = %s \n",Y_element_type,Y_element_type->class_name().c_str());
+#endif
+                                           }
+                                      }
+                                 }
+                                else
+                                 {
+                                // if (X_typedefType != NULL || Y_typedefType != NULL)
+                                // if (X_modifierType == NULL && Y_modifierType == NULL)
+                                // if (X_typedefType == NULL && Y_typedefType == NULL && X_modifierType == NULL && Y_modifierType == NULL) 
+                                   if ( (X_typedefType == NULL && X_modifierType == NULL) || (Y_typedefType == NULL && Y_modifierType == NULL) ) 
+                                      {
+#if 0
+                                        printf ("In SgModifierType::operator==(): loop: one of both are neither a typedef or modifier type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                                        if (X_element_type == Y_element_type)
+                                           {
+                                             isSame = true;
+                                             exit = true;
+#if 1
+                                             printf ("In SgModifierType::operator==(): loop: X_element_type == Y_element_type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                                           }
+                                          else
+                                           {
+                                             isSame = false;
+                                             exit = true;
+#if 1
+                                             printf ("In SgModifierType::operator==(): loop: X_element_type != Y_element_type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                                           }
+                                      }
+#if 0
+                                     else
+                                      {
+#if 1
+                                        printf ("In SgModifierType::operator==(): loop: both of them are not a modifier or typedef type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                                        if (X_modifierType == NULL || Y_modifierType == NULL)
+                                           {
+                                           }
+                                      }
+#endif
+                                 }
+                            }
+                       }
+                  }
+             }
+
+       // Use a counter to avoid long type chains while we debug this code.
+          counter++;
+        }
+#endif
+#if 1
+     printf ("In SgModifierType::operator==(): after using loop over type chains: isSame = %s \n",isSame ? "true" : "false");
+#endif
+
+#error "DEAD CODE!"
+
+#if 0
+     isSame = false;
+
+  // SgType* X_type = X.get_base_type()->stripType();
+  // SgType* Y_type = Y.get_base_type()->stripType();
+  // SgType* X_type = X.get_base_type()->stripType( STRIP_MODIFIER_TYPE | STRIP_TYPEDEF_TYPE );
+  // SgType* Y_type = Y.get_base_type()->stripType( STRIP_MODIFIER_TYPE | STRIP_TYPEDEF_TYPE );
+     SgType* X_type = X.get_base_type()->stripType( STRIP_TYPEDEF_TYPE );
+     SgType* Y_type = Y.get_base_type()->stripType( STRIP_TYPEDEF_TYPE );
+
+     ROSE_ASSERT(X_type != NULL);
+     ROSE_ASSERT(Y_type != NULL);
+
+#if 1
+     printf ("In SgModifierType::operator==(): base_type X = %p = %s Y = %p = %s \n",X.get_base_type(),X.get_base_type()->class_name().c_str(),Y.get_base_type(),Y.get_base_type()->class_name().c_str());
+     printf ("   --- stripped base types: X = %p = %s Y = %p = %s \n",X_type,X_type->class_name().c_str(),Y_type,Y_type->class_name().c_str());
+#endif
+
+  // if (X.get_base_type() == Y.get_base_type())
+     if (X_type == Y_type)
+        {
+#if 1
+          printf ("In SgModifierType::operator==(): base_type are the same: get_base_type() = %p = %s \n",X.get_base_type(),X.get_base_type()->class_name().c_str());
+          X.get_typeModifier().display("In SgModifierType::operator==()");
+          Y.get_typeModifier().display("In SgModifierType::operator==()");
+#endif
+          if (X.get_typeModifier() == Y.get_typeModifier())
+             {
+#if 1
+               printf ("In SgModifierType::operator==(): internal typeModifiers are the same \n");
+#endif
+               isSame = true;
+             }
+        }
+       else
+        {
+#if 0
+          SgModifierType* X_modifier = isSgModifierType(X_type);
+          SgModifierType* Y_modifier = isSgModifierType(Y_type);
+          if (X_modifier->get_typeModifier().isDefault())
+             {
+               X_type = X_modifier->get_base_type();
+             }
+#endif
+        }
+#endif
+
+#if 1
+     printf ("In SgModifierType::operator==(): isSame = %s \n",isSame ? "true" : "false");
+#endif
+
+#error "DEAD CODE!"
+
+     return isSame;
+   }
+#endif
+
+
 
 #if 0
 bool
@@ -3965,6 +4611,9 @@ SgName
 SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList) 
    {
   // Note that this is a static member function.
+#if 0
+     printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): TOP \n");
+#endif
 
   // process argument type
      SgName arg_names;
@@ -3973,6 +4622,7 @@ SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * type
           const SgTypePtrList & args = typeList->get_arguments ();
           arg_names = mangleTypes (args.begin (), args.end ());
         }
+
 #if 0
      printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): arg_names = %s \n",arg_names.str());
 #endif
@@ -4923,7 +5573,9 @@ SgName
 SgArrayType::get_name(void) const {
     string dimensions = "[]";
     SgType *type = p_base_type;
-    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) {
+
+    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) 
+    {
         dimensions += "[]";
         type = array_type -> get_base_type();
     }
@@ -4959,9 +5611,19 @@ SgArrayType::get_name(void) const {
     else if (isSgTypeString(type)) {
         name = "String";
     }
-    else if (isSgNamedType(type)) {
-        name = isSgNamedType(type) -> get_name().getString();
+    else 
+    { 
+   // DQ (3/19/2016): Klocworks reports this as an issue because the result of the 2nd call to isSgNamedType() 
+   // is not clearly the same result as the first call.  The fix is to just make a single call and save the result.
+   // if (isSgNamedType(type)) 
+      SgNamedType* namedType = isSgNamedType(type);
+      if (namedType != NULL) 
+         {
+        // name = isSgNamedType(type) -> get_name().getString();
+           name = namedType -> get_name().getString();
+         }
     }
+
     name += dimensions;
 
     return SgName(name);
@@ -4971,7 +5633,9 @@ SgName
 SgArrayType::get_qualified_name(void) const {
     string dimensions = "[]";
     SgType *type = p_base_type;
-    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) {
+
+    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) 
+    {
         dimensions += "[]";
         type = array_type -> get_base_type();
     }
@@ -5007,9 +5671,19 @@ SgArrayType::get_qualified_name(void) const {
     else if (isSgTypeString(type)) {
         name = "String";
     }
-    else if (isSgNamedType(type)) {
-        name = isSgNamedType(type) -> get_qualified_name().getString();
+    else 
+    {
+   // DQ (3/19/2016): Klocworks reports this as an issue because the result of the 2nd call to isSgNamedType() 
+   // is not clearly the same result as the first call.  The fix is to just make a single call and save the result.
+   // if (isSgNamedType(type)) 
+      SgNamedType* namedType = isSgNamedType(type);
+      if (namedType != NULL) 
+         {
+        // name = isSgNamedType(type) -> get_qualified_name().getString();
+           name = namedType -> get_qualified_name().getString();
+         }
     }
+
     name += dimensions;
 
     return SgName(name);
@@ -5036,6 +5710,13 @@ SgArrayType::get_mangled(void) const
 
 #if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
      printf ("In SgArrayType::get_mangled(): mangled base type name = %s \n",base_name.str());
+#endif
+
+  // DQ (2/14/2016): Adding support for variable length arrays.
+     const bool is_variable_length_array = this->get_is_variable_length_array();
+
+#if 0
+     printf ("In SgArrayType::get_mangled(): is_variable_length_array = %s \n",is_variable_length_array ? "true" : "false");
 #endif
 
      const SgExpression* index_exp = get_index();
@@ -5110,7 +5791,16 @@ SgArrayType::get_mangled(void) const
                  // t = associatedScope->get_type_table()->lookup_type(name);
                  // index_name = associatedScope->get_mangled_name();
 #else
-                    index_name = index_declaration->get_mangled_name();
+                 // DQ (2/14/2016): Adding support for VLA types (if we evaluate the mangled name we will cause endless recursion).
+                 // index_name = index_declaration->get_mangled_name();
+                    if (is_variable_length_array == true)
+                       {
+                         index_name = "vla_dimention";
+                       }
+                      else
+                       {
+                         index_name = index_declaration->get_mangled_name();
+                       }
 #endif
 #if 0
                     printf ("SgInitializedName part of index_name = %s \n",index_name.str());
@@ -5256,7 +5946,9 @@ SgArrayType::get_mangled(void) const
                   << index_name.str ()
                   << "_Ae_";
 
-  // printf ("SgArrayType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#if 0
+     printf ("SgArrayType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
 
      return mangled_name;
    }
@@ -6571,6 +7263,34 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
        // Only look for pointers to type in the global type table.
           SgType* t = get_globalTypeTable()->lookup_type(name);
 
+       // DQ (2/23/2016): Add test and reset type returned from globalTypeTable if it is not a SgDeclType.
+       // I have at least one case where the type table returns a SgModifierType (not clear if that is correct behavior).
+       // Detect this case for now and make sure it can't happen in general.
+          if (t != NULL && isSgDeclType(t) == NULL)
+             {
+               printf ("Error: This name = %s does not return the correct type from the globalTypeTable: t = %p = %s reset t == NULL \n",name.str(),t,t->class_name().c_str());
+
+            // Note: were we detect that this is a SgModifierType it is a default built SgModifierType.
+            // This kind of SgModifierType is only used in the frontend to support references to types 
+            // in templates that have not been defined yet.  It is rare to see these.  In this case the
+            // modifier's name mangling does not change the name and so that name can appear in the 
+            // globalTypeTable() and a SgModifierType.  For now we are issuing a warning about this and
+            // forcing a new SgDeclType type to be used.
+               SgModifierType* modifierType = isSgModifierType(t);
+               if (modifierType != NULL)
+                  {
+#if 0
+                    SgTypeModifier & typeModifier = modifierType->get_typeModifier();
+                    typeModifier.display("does not return the correct type from the globalTypeTable");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+               t = NULL;
+             }
+
           if (t == NULL)
              {
             // The pointer type was not found in the type table, put it into the global type table.
@@ -6602,7 +7322,17 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
                newType = NULL;
 
                newType = isSgDeclType(t);
+
+            // DQ (2/23/2016): Added assertion.
+               if (newType == NULL)
+                  {
+                    printf ("In createType(SgExpression* base_expression, SgExpression* kind): isSgDeclType(t) == NULL: error: t = %p = %s \n",t,t->class_name().c_str());
+                  }
+               assert(newType != NULL);
              }
+
+       // DQ (2/23/2016): Added assertion.
+          assert(newType != NULL);
 
           base_type->p_decltype_ref_to = newType;
           assert(base_type->p_decltype_ref_to != NULL);
