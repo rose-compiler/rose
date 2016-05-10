@@ -72,7 +72,7 @@ class AstUnparseAttribute : public AstAttribute
           virtual std::string toString( RelativePositionType inputlocation );
 
           //! required for ast attribute mechanism
-          virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const;
+          virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE;
 
    };
 
