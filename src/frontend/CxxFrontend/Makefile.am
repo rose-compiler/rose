@@ -33,7 +33,7 @@ EDGBIN_SIGNATURE      = $(shell cat $(EDGBIN_SIGNATURE_FILE) 2>/dev/null)
 # not to use EDGBIN_NAME as a target or dependency in this makefile since make needs to parse those before the
 # $(EDGBIN_SIGNATURE_FILE) can be created.
 EDGBIN_NAME_PREFIX = roseBinaryEDG-@ROSE_EDG_MAJOR_VERSION_NUMBER@-@ROSE_EDG_MINOR_VERSION_NUMBER@
-EDGBIN_NAME_SUFFIX = $(build_triplet_without_redhat)-$(FRONTEND_CXX_VENDOR_AND_VERSION)
+EDGBIN_NAME_SUFFIX = $(build_triplet_without_redhat)-$(FRONTEND_CXX_VENDOR_AND_VERSION2)
 EDGBIN_NAME        = $(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
 
 # All the .PHONY's need to be outside any automake "if" statements otherwise automake complains.
