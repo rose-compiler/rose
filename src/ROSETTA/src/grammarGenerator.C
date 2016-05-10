@@ -187,7 +187,9 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
   
   // c++11: set<string> filteredMemberVariablesSet={...};
   string nonAtermMemberVariables[]={"parent","freepointer","isModified","containsTransformation","startOfConstruct","endOfConstruct","attachedPreprocessingInfoPtr"
-                                    ,"containsTransformationToSurroundingWhitespace","attributeMechanism","source_sequence_value","need_paren","lvalue","operatorPosition","originalExpressionTree"};
+                                    ,"containsTransformationToSurroundingWhitespace","attributeMechanism","source_sequence_value","need_paren","lvalue","operatorPosition","originalExpressionTree"
+                                    ,"uses_operator_syntax"
+};
   set<string> filteredMemberVariablesSet(nonAtermMemberVariables, nonAtermMemberVariables + sizeof(nonAtermMemberVariables)/sizeof(nonAtermMemberVariables[0]) );
 
   if(grammarnode->isLeafNode()) {
