@@ -391,7 +391,7 @@ int main( int argc, char * argv[] ) {
     }
 
     if (args.count("version")) {
-      cout << "CodeThorn version 1.6.0\n";
+      cout << "CodeThorn version 1.7.0\n";
       cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
       return 0;
     }
