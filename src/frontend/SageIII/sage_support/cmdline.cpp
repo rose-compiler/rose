@@ -6591,7 +6591,37 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
             // This is not consistant with GNU, but required for Intel header file compatablity (or is is that Intel is using 
             // the GNU header files and it is required for GNU compatability?). I think that setting this predefined macro is 
             // not allowed by EDG in MSVC mode.
-               commandLine.push_back("-D__cplusplus=199711L");
+            // commandLine.push_back("-D__cplusplus=199711L");
+#if 0
+               printf ("In build_EDG_CommandLine(): setting __cplusplus: this = %p get_Cxx11_only() = %s \n",this,get_Cxx11_only() ? "true" : "false");
+#endif
+            // DQ (5/9/2016): This is a fix for the Intel specific C++11 support.
+               if (get_Cxx11_only() == true)
+                  {
+                 // DQ (5/10/2016): This allows some C++11 specific header files to work with the Intel compiler (see Cxx11_tests/test2016_32.C).
+                 // commandLine.push_back("-D__cplusplus=199711L");
+                    commandLine.push_back("-D__cplusplus=201103L");
+
+                 // DQ (5/10/2016): Added to support Intel v16 C++11 mode.
+                    commandLine.push_back("-D__SSE4_2__");
+                    commandLine.push_back("-D__SSE4_1__");
+                    commandLine.push_back("-D__SSSE3__");
+                    commandLine.push_back("-D__SSE3__");
+                  }
+                 else
+                  {
+                    if (get_Cxx14_only() == true)
+                       {
+                         printf ("C++14 support for Intel compiler not implemented in ROSE yet! \n");
+                         ROSE_ASSERT(false);
+
+                         commandLine.push_back("-D__cplusplus=201400L");
+                       }
+                      else
+                       {
+                         commandLine.push_back("-D__cplusplus=199711L");
+                       }
+                  }
 #endif
 #ifdef BACKEND_CXX_IS_CLANG_COMPILER
             // DQ (4/13/2016): We need to define this explicitly for the Clang compiler.

@@ -518,6 +518,15 @@ SageInterface::hasTemplateSyntax( const SgName & name )
   // DQ (6/7/2012): We need to avoid the identification of the "operator<()" as valid template syntax.
      usingTemplateSyntax = (nameString.find('<') != string::npos) && (nameString.find('>') != string::npos);
 
+  // DQ (5/10/2016): Debugging case of C++11 using the Intel v16 compiler and it's associated mutex header file.
+  // See Cxx11_tests/test2016_32.C for an example that demonstrates this problem.
+     if (nameString == "<unnamed>")
+        {
+          printf ("In SageInterface::hasTemplateSyntax(): Identified case of name == <unnamed> \n");
+
+          usingTemplateSyntax = false;
+        }
+
   // return (name.getString().find('<') == string::npos);
      return usingTemplateSyntax;
    }

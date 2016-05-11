@@ -283,12 +283,17 @@ globalVariablesInLambdas_test: globalVariablesInLambdas
 check-local:
 if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_8
-	@echo "C11 tests using GNU version 4.8 backend compiler."
+	@echo "C++11 tests using GNU version 4.8 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
 else
 if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "C11 tests using GNU version 4.9 backend compiler."
+	@echo "C++11 tests using GNU version 4.9 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
+else
+if USING_INTEL_COMPILER
+	@echo "C++11 tests using Intel backend compiler."
+	@$(MAKE) $(PASSING_TEST_Objects)
+endif
 endif
 endif
 else

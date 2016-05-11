@@ -2651,7 +2651,7 @@ public:
         // Build a table showing some results
         addWidget(new Wt::WText("<p>This table shows the number of tests that pass as a percent of the number of tests that "
                                 "were run subject to the constraints listed below.  The table is organized so each row is a "
-                                "Boost version and each column is a compiler since these are the two most sensitive ROSE "
+                                "compiler and each column is a boost version since these are the two most sensitive ROSE "
                                 "dependencies. Green represents cases where all tested configurations passed, and red "
                                 "represents where all failed, with a spectrum of colors between those two extremes. Cells "
                                 "that are dark gray indicate that no tests were run, and cells that are partly desaturated "
@@ -2662,8 +2662,8 @@ public:
         tableModel_->setDepMajorIsData(true);
         tableModel_->setRoundToInteger(true);
         tableModel_->setHumanReadable(true);
-        tableModel_->setDepMajorName("boost");
-        tableModel_->setDepMinorName("compiler");
+        tableModel_->setDepMajorName("compiler");
+        tableModel_->setDepMinorName("boost");
         tableModel_->setChartValueType(CVT_PASS_RATIO);
         tableView_ = new Wt::WTableView;
         tableView_->setModel(tableModel_);
