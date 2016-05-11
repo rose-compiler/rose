@@ -78,9 +78,7 @@ class LockGuard2 {
     Mutex &m1_, &m2_;
 public:
     LockGuard2(Mutex &m1, Mutex &m2): m1_(m1), m2_(m2) {
-#if SAWYER_MULTI_THREADED
         boost::lock(m1, m2);
-#endif
     }
     ~LockGuard2() {
         m1_.unlock();
@@ -88,6 +86,11 @@ public:
     }
 };
 
+template<>
+class LockGuard2<NullMutex> {
+public:
+    LockGuard2(NullMutex&, NullMutex&) {}
+};
 
 /** Traits for thread synchronization. */
 template<typename SyncTag>
@@ -114,6 +117,7 @@ struct SynchronizationTraits<MultiThreadedTag> {
     //typedef ... ConditionVariable; -- does not make sense to use this in a single-threaded program
     typedef NullBarrier Barrier;
 #endif
+    typedef Sawyer::LockGuard2<Mutex> LockGuard2;
 };
 
 
@@ -127,6 +131,7 @@ struct SynchronizationTraits<SingleThreadedTag> {
     typedef NullLockGuard RecursiveLockGuard;
     //typedef ... ConditionVariable; -- does not make sense to use this in a single-threaded program
     typedef NullBarrier Barrier;
+    typedef Sawyer::LockGuard2<Mutex> LockGuard2;
 };
 
 // Used internally.

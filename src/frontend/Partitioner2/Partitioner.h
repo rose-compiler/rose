@@ -275,7 +275,7 @@ namespace Partitioner2 {
  *    behavior can only be modified by registering callbacks.  High-level behavior is implemented above this class such as in
  *    module functions (various Module*.h files) or engines derived from the @ref Engine class.  Additional data can be
  *    attached to a partitioner via attributes (see @ref Attribute). */
-class ROSE_DLL_API Partitioner: public Sawyer::Attribute::Storage {     // final
+class ROSE_DLL_API Partitioner: public Sawyer::Attribute::Storage<> {     // final
 public:
     typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks; /**< See @ref cfgAdjustmentCallbacks. */
     typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
@@ -369,7 +369,7 @@ public:
         *this = other;                                  // then delegate to the assignment operator
     }
     Partitioner& operator=(const Partitioner &other) {
-        Sawyer::Attribute::Storage::operator=(other);
+        Sawyer::Attribute::Storage<>::operator=(other);
         config_ = other.config_;
         instructionProvider_ = other.instructionProvider_;
         memoryMap_ = other.memoryMap_;

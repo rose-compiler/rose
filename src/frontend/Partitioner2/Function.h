@@ -35,7 +35,7 @@ typedef Sawyer::SharedPointer<class Function> FunctionPtr;
  *  A function may exist as part of the partitioner's control flow graph, or in a detached state.  When a function is
  *  represented by the control flow graph then it is in a frozen state, meaning that its basic blocks and data blocks cannot be
  *  adjusted adjusted; one must use the partitioner interface to do so. */
-class Function: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
+class Function: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
     /** Manner in which a function owns a block. */
     enum Ownership { OWN_UNOWNED=0,                     /**< Function does not own the block. */
