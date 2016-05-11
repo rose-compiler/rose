@@ -146,8 +146,8 @@
  *    <tr>
  *      <td><a href="http://www.boost.org">Boost</a></td>
  *      <td>Required</td>
- *      <td>1.47 through 1.53</td>
- *      <td>1.47 through 1.53</td>
+ *      <td>1.47 through 1.60, except 1.48 and 1.54</td>
+ *      <td>1.47 through 1.60</td>
  *      <td>C++ portable runtime features. ROSE and/or software used by ROSE requires the following Boost libraries: chrono,
  *      date_time, filesystem, iostreams, program_options, random, regex, signals, system, thread, and wave. See @ref
  *      installing_boost. More info [here](http://theboostcpplibraries.com/).</td>
@@ -237,8 +237,8 @@
  *    <tr>
  *      <td><a href="https://github.com/jbeder/yaml-cpp">yaml-cpp</a></td>
  *      <td>Optional</td>
- *      <td>0.5.1</td>
- *      <td>0.5.1</td>
+ *      <td>0.5.1 through 0.5.3</td>
+ *      <td>0.5.1 through 0.5.3</td>
  *      <td>For reading YAML or JSON configuration files and storing results. Yaml-cpp must be compiled against the same
  *      version of boost used by ROSE. See @ref installing_yamlcpp.</td>
  *    </td>
@@ -246,16 +246,16 @@
  *    <tr>
  *      <td><a href="http://dlib.net">Dlib</a></td>
  *      <td>Optional</td>
+ *      <td>18.11 - 18.17</td>
  *      <td>18.10 - 18.17</td>
- *      <td>18.17</td>
  *      <td>For certain binary analysis algorithms. See @ref installing_dlib.</td>
  *    </tr>
  *
  *    <tr>
  *      <td><a href="http://www.webtoolkit.eu/wt">Wt</a></td>
  *      <td>Optional</td>
- *      <td>3.3.3 or 3.3.4</td>
- *      <td>3.3.3</td>
+ *      <td>3.3.3 through 3.3.5</td>
+ *      <td>3.3.3 through 3.3.5</td>
  *      <td>For binary analysis tools that present results through a web server. Wt must be compiled against the same version
  *      of Boost used by ROSE. See @ref installing_wt.</td>
  *    </tr>
