@@ -108,5 +108,14 @@ generateSequentialName(size_t length) {
     return letters;
 }
 
+SAWYER_EXPORT void
+checkBoost() {
+    // We do not support boost 1.54 with C++11 because of boost ticket #9215 [https://svn.boost.org/trac/boost/ticket/9215]. It
+    // is better if we check for this at runtime rather than compile time because many other features of boost 1.54 work
+    // fine. If we allow the user to continue, then boost::any's move constructor will enter infinite recursion eventually
+    // ending with a segmentation fault (although probably not occuring as a result of calling just Storage's c'tor).
+    ASSERT_always_forbid2(BOOST_VERSION == 105400 && __cplusplus >= 201103L,
+                          "boost::any move constructor has infinite recursion in boost-1.54");
+}
 
 } // namespace
