@@ -459,10 +459,10 @@ public:
 
     /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
      *  is computed and cached. */
-    Hash hash() ROSE_DEPRECATED("TESTING");
+    Hash hash();
 
     // used internally to set the hash value
-    void hash(Hash) ROSE_DEPRECATED("TESTING");
+    void hash(Hash);
 
     /** A node with formatter. See the with_format() method. */
     class WithFormatter {
