@@ -1,0 +1,42 @@
+-------
+Marking
+-------
+C
+C++
+Fortran
+UntypedNodes
+GNUExtension (StatementExpression)
+
+-------------------
+Remove data members
+-------------------
+
+Reasoning: Only used by unparser with token-based unparsing:
+IGNORE: bool:isModified, bool:containsTransformation
+
+Reasoning: Source position information:
+IGNORE: ListStarOfSg_File_Info:startOfConstruct
+IGNORE: ListStarOfSg_File_Info:endOfConstruct
+IGNORE: Sg_File_Info:operatorPosition
+
+Reasoning: Use translation units as input/output:
+IGNORE: AttachedPreprocessingInfoType:attachedPreprocessingInfoPtr
+
+Reasoning: ?
+IGNORE: bool:uses_operator_syntax
+
+Reasoning: difficult to keep right in rewrite:
+IGNORE: bool:lvalue
+
+---
+
+Constructor generation:
+$CONSTRUCTOR_ALL_DATA_MEMBERS
+buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
+->buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node )
+  ->buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & node )
+
+buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
+->buildConstructor (node);
+  ->constructorLoopBody(...,node,...)
+    ->node.buildConstructorBodyForAllDataMembers();

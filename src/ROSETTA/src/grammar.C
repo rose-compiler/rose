@@ -1242,7 +1242,6 @@ Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarStri
 // it creates the string that is inserted into classname::classname(<string-goes-here>)
 string
 Grammar::buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & node ) {
-  //return "int,int,int,int /*FAKE, TODO for all parameters*/";
   string result;
   vector<GrammarString *> includeList;
   vector<GrammarString *> excludeList;
@@ -1498,11 +1497,15 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
   }
 
   // NEW CONSTRUCTOR
-  string constructorAllDataMembers="/* NEW CONSTRUCTOR: IMPLEMENTATION TODO:\n";
-  constructorAllDataMembers+=node.buildConstructorBodyForAllDataMembers();
-  constructorAllDataMembers+=" */";
+  string constructorAllDataMembers;
+  // generate new constructor only for Untyped nodes.
+  if(node.basename.substr(0,7)=="Untyped") {
+    cout<<"Generating constructor implementation for "<<node.basename<<endl;
+    constructorAllDataMembers+=="/* NEW CONSTRUCTOR: IMPLEMENTATION TODO:\n";
+    constructorAllDataMembers+=node.buildConstructorBodyForAllDataMembers();
+    constructorAllDataMembers+=" */";
+  }
   constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ALL_DATA_MEMBERS",constructorAllDataMembers);
-
   returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
 }
 

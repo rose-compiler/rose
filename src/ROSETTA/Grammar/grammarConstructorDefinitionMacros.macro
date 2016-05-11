@@ -28,8 +28,7 @@ $CONSTRUCTOR_BODY
      assert(is$CLASSNAME(this) != NULL);
    }
 
+#if 1
 // Generated constructor (all data members)
-
-#if 0
 $CONSTRUCTOR_ALL_DATA_MEMBERS
 #endif
