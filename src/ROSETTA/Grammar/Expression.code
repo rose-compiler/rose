@@ -5412,6 +5412,15 @@ SgPointerDerefExp::get_type() const
                goto keepStripping;
              }
 
+       // DQ (5/10/2016): Added this for the case of the C++11 support.
+          case V_SgRvalueReferenceType:
+             {
+               SgRvalueReferenceType* rvalueReferenceType = isSgRvalueReferenceType(someType);
+            // returnType = rvalueReferenceType;
+               someType = rvalueReferenceType->get_base_type();
+               goto keepStripping;
+             }
+
 // #ifndef ROSE_USE_EDG_VERSION_4
 #ifndef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (12/31/2008): This is the old behavior from EDG version 3.x (which I don't want to change since it is stable)
@@ -5502,6 +5511,7 @@ SgPointerDerefExp::get_type() const
                returnType = voidType;
                break;
              }
+
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
        // expression (not required to be an lvalue)!
