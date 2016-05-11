@@ -1499,9 +1499,9 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
   // NEW CONSTRUCTOR
   string constructorAllDataMembers;
   // generate new constructor only for Untyped nodes.
-  if(node.basename.substr(0,7)=="Untyped") {
-    cout<<"Generating constructor implementation for "<<node.basename<<endl;
-    constructorAllDataMembers+=="/* NEW CONSTRUCTOR: IMPLEMENTATION TODO:\n";
+  if(node.baseName.substr(0,7)=="Untyped") {
+    cout<<"Generating constructor implementation for "<<node.baseName<<endl;
+    constructorAllDataMembers+="/* NEW CONSTRUCTOR: IMPLEMENTATION TODO:\n";
     constructorAllDataMembers+=node.buildConstructorBodyForAllDataMembers();
     constructorAllDataMembers+=" */";
   }
