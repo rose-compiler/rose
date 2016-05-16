@@ -70,6 +70,10 @@ class AstUnparseAttribute : public AstAttribute
 
        //! This is selective in putting out only the strings that match a specific location.
           virtual std::string toString( RelativePositionType inputlocation );
+
+          //! required for ast attribute mechanism
+          virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE;
+
    };
 
 // This is the "endif" for ROSE_AST_UNPARSE_ATTRIBUTE_HEADER include guard
