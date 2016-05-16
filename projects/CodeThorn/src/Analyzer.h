@@ -42,6 +42,24 @@ namespace CodeThorn {
  */
   class AstNodeInfo : public AstAttribute {
   public:
+    // MS 2016: necessary with the new attribute mechanism but possibly not
+    // necessary if the mechanism is adapted. Look for
+    // (*i)->addNewAttribute("info",attr); in Analyzer.C
+    virtual std::string attribute_class_name() const {
+      return "AstNodeInfo";
+    }
+    virtual AstNodeInfo* copy() {
+      AstNodeInfo* newNodeInfo=new AstNodeInfo();
+      newNodeInfo->label=this->label;
+      newNodeInfo->initialLabel=this->initialLabel;
+      newNodeInfo->finalLabelsSet=this->finalLabelsSet;
+      return newNodeInfo;
+    }
+    AstNodeInfo::OwnershipPolicy
+      getOwnershipPolicy() const ROSE_OVERRIDE {
+      return CONTAINER_OWNERSHIP;
+    }
+
   AstNodeInfo():label(0),initialLabel(0){}
     std::string toString() { std::stringstream ss;
       ss<<"\\n lab:"<<label<<" ";
@@ -92,6 +110,7 @@ namespace CodeThorn {
     bool isEmptyWorkList();
     const EState* topWorkList();
     const EState* popWorkList();
+    void swapWorkLists();
     
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
@@ -209,6 +228,7 @@ namespace CodeThorn {
     void runSolver9();
     void runSolver10();
     void runSolver11();
+    void runSolver12();
     void runSolver();
     // first: list of new states (worklist), second: set of found existing states
     typedef pair<EStateWorkList,EStateSet> SubSolverResultType;
@@ -321,7 +341,7 @@ namespace CodeThorn {
     void setPatternSearchRepetitions(size_t patternReps) { _patternSearchRepetitions=patternReps; }
     void setPatternSearchMaxSuffixDepth(size_t suffixDepth) { _patternSearchMaxSuffixDepth=suffixDepth; }
     void setPatternSearchAssertTable(PropertyValueTable* patternSearchAsserts) { _patternSearchAssertTable = patternSearchAsserts; };
-    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_RANDOM_MODE1 };
+    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_LOOP_AWARE_SYNC, EXPL_RANDOM_MODE1 };
     void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
     void eventGlobalTopifyTurnedOn();
     bool isIncompleteSTGReady();
@@ -381,7 +401,10 @@ namespace CodeThorn {
     std::list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
-    EStateWorkList estateWorkList;
+    EStateWorkList* estateWorkListCurrent;
+    EStateWorkList* estateWorkListNext;
+    EStateWorkList estateWorkListOne;
+    EStateWorkList estateWorkListTwo;
     EStateSet estateSet;
     PStateSet pstateSet;
     ConstraintSetMaintainer constraintSetMaintainer;
@@ -416,6 +439,7 @@ namespace CodeThorn {
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
     bool _topifyModeActive;
+    int _swapWorkListsCount; // currently only used for debugging purposes
     int _iterations;
     int _approximated_iterations;
     int _curr_iteration_cnt;
