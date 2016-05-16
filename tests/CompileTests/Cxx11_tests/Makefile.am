@@ -297,6 +297,11 @@ else
 if USING_INTEL_COMPILER
 	@echo "C++11 tests using Intel backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
+else
+if USING_CLANG_COMPILER
+	@echo "C++11 tests using Clang backend compiler."
+	@$(MAKE) $(PASSING_TEST_Objects)
+endif
 endif
 endif
 endif
