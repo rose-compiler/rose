@@ -754,6 +754,7 @@ bgl_time_remove_vertex()
     // testing performance when we already know its bad, and why would ROSE generic graph algorithms want to ever delete a
     // vertex knowing that performance is bad and that they have to specialize based on graph type.
     std::cout <<"  remove vertex:   not implemented for this graph type\n";
+    return Totals();
 #else
     GraphType g;
     start_deadman(2);

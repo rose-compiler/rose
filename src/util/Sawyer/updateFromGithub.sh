@@ -50,6 +50,28 @@ do
     cp "$SAWYER_ROOT/docs/examples/$f" docs/examples/.
 done
 
+# Copy some of Sawyer's unit tests into the ROSE source tree.  The destination location should be changed to be the same
+# as the rest of the unit testing, but that location has not been decided yet.
+for f in                                       \
+    Container/addressMapUnitTests.C            \
+    Container/bitvecTests.C                    \
+    Container/denseIntegerSetUnitTests.C       \
+    Container/distinctListUnitTests.C          \
+    Container/graphIsomorphismTests.C          \
+    Container/graphUnitTests.C                 \
+    Container/indexedGraphDemo.C               \
+    Container/intervalSetMapUnitTests.C                \
+    Container/intervalUnitTests.C              \
+    Container/lineVectorUnitTests.C            \
+    Container/listUnitTests.C                  \
+    Container/mapUnitTests.C                   \
+    Container/optionalUnitTests.C              \
+    Container/setUnitTests.C
+do
+    srcbase="$SAWYER_ROOT/tests/$f";
+    ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/roseTests/utilTests/sawyer-$(basename "$f")
+done
+
 
 # Add a comment to the Message.h file
 sed --in-place -e '1i// See also rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h' Message.h

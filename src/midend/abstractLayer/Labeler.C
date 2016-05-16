@@ -111,7 +111,7 @@ void LabelProperty::initializeIO(VariableIdMapping* variableIdMapping) {
       _ioValue=ot.intVal;
       break;
     case SgNodeHelper::Pattern::OutputTarget::UNKNOWNPRINTF:
-      cerr<<"WARNING: non-supported output operation:"<<_node->unparseToString()<<endl;
+      //cerr<<"WARNING: non-supported output operation:"<<_node->unparseToString()<<endl;
       break;
     case SgNodeHelper::Pattern::OutputTarget::UNKNOWNOPERATION:
       ;//intentionally ignored (filtered)
