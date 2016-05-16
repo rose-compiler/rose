@@ -73,7 +73,7 @@ AC_DEFUN([AX_COMPILER_VENDOR],
            metrowerks: __MWERKS__
            watcom:    __WATCOMC__
            portland:  __PGI
-	   tcc:       __TINYC__
+           tcc:       __TINYC__
            unknown:   UNKNOWN"
   for ventest in $vendors; do
     case $ventest in
