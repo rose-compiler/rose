@@ -4615,7 +4615,32 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
                isSgTemplateInstantiationFunctionDecl(first_nondefining_declaration)->get_templateArguments() :
                isSgTemplateInstantiationMemberFunctionDecl(first_nondefining_declaration)->get_templateArguments();
 
+          ROSE_ASSERT(templateArgumentsList != NULL);
+#if 0
+       // printf ("templateArgumentsList                                           = %p \n",templateArgumentsList);
+          printf ("templateArgumentsList = %p templateArgumentsList->size() = %zu \n",templateArgumentsList,templateArgumentsList->size());
+          printf ("templateArgumentsList_from_first_nondefining_declaration.size()      = %zu \n",templateArgumentsList_from_first_nondefining_declaration.size());
+#endif
+#if 0
+          bool templateArgumentListsAreEquivalent = SageInterface::templateArgumentListEquivalence(*templateArgumentsList, templateArgumentsList_from_first_nondefining_declaration);
+          if (templateArgumentListsAreEquivalent == false)
+             {
+               printf ("after test: nameWithoutTemplateArguments = %s \n",nameWithoutTemplateArguments.str());
+               printf ("after test: nameWithTemplateArguments    = %s \n",nameWithTemplateArguments.str());
+               printf ("after test: templateArgumentsList        = %p \n",templateArgumentsList);
+               printf ("after test: templateArgumentsList_from_first_nondefining_declaration.size() = %zu \n",templateArgumentsList_from_first_nondefining_declaration.size());
+               if (first_nondefining_declaration != NULL)
+                  {
+                    printf ("first_nondefining_declaration = %p = %s = %s \n",first_nondefining_declaration,
+                         first_nondefining_declaration->class_name().c_str(),first_nondefining_declaration->get_name().str());
+                    ROSE_ASSERT(first_nondefining_declaration->get_file_info() != NULL);
+                    first_nondefining_declaration->get_file_info()->display("first_nondefining_declaration: debug");
+                  }
+             }
+          ROSE_ASSERT(templateArgumentListsAreEquivalent == true);
+#else
           ROSE_ASSERT(SageInterface::templateArgumentListEquivalence(*templateArgumentsList, templateArgumentsList_from_first_nondefining_declaration));
+#endif
         }
 
      SgTemplateParameterPtrList* templateParameterList = NULL;
