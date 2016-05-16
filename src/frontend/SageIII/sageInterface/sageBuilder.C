@@ -8996,10 +8996,68 @@ SgAtStmt* SageBuilder::buildAtStmt(SgExpression *expression, SgBasicBlock *body)
        return at_stmt;
 }
 
+// MH (11/12/2014): Added atomic support
+SgAtomicStmt* SageBuilder::buildAtomicStmt(SgBasicBlock *body)
+{
+       ROSE_ASSERT(body != NULL);
+       SgAtomicStmt *atomic_stmt = new SgAtomicStmt(body);
+       ROSE_ASSERT(atomic_stmt);
+       body->set_parent(atomic_stmt);
+       setOneSourcePositionForTransformation(atomic_stmt);
+
+       return atomic_stmt;
+}
+
+
+SgWhenStmt* SageBuilder::buildWhenStmt(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgWhenStmt *when_stmt = new SgWhenStmt(expression, body);
+       SageInterface::setSourcePosition(when_stmt);
+       expression->set_parent(when_stmt);
+       body->set_parent(when_stmt);
+
+       return when_stmt;
+}
+
+// MH (9/14/2014): Added atexpr support
+SgAtExp* SageBuilder::buildAtExp(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgAtExp *at_exp = new SgAtExp(expression, body);
+       SageInterface::setSourcePosition(at_exp);
+       expression->set_parent(at_exp);
+       body->set_parent(at_exp);
+
+       return at_exp;
+}
+
+// MH (11/7/2014): Added finish expression support
+SgFinishExp* SageBuilder::buildFinishExp(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgFinishExp *finish_exp = new SgFinishExp(expression, body);
+       SageInterface::setSourcePosition(finish_exp);
+       expression->set_parent(finish_exp);
+       body->set_parent(finish_exp);
+
+       return finish_exp;
+}
+
+
 SgHereExp* SageBuilder::buildHereExpression()
 {
        SgHereExp *here = new SgHereExp(NULL);
        return here;
+}
+
+SgDotDotExp* SageBuilder::buildDotDotExp()
+{
+       SgDotDotExp *dotdot = new SgDotDotExp(NULL);
+       return dotdot;
 }
 
 

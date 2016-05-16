@@ -2383,6 +2383,13 @@ HEADER_FINISH_STATEMENT_END
 HEADER_AT_STATEMENT_START
 HEADER_AT_STATEMENT_END
 
+HEADER_ATOMIC_STATEMENT_START
+HEADER_ATOMIC_STATEMENT_END
+
+HEADER_WHEN_STATEMENT_START
+HEADER_WHEN_STATEMENT_END
+
+
 HEADER_TRY_STATEMENT_START
 
           SgStatementPtrList & get_catch_statement_seq(); 
@@ -15240,6 +15247,7 @@ SgFinishStmt::post_construction_initialization()
 
 SOURCE_FINISH_STATEMENT_END
 
+
 SOURCE_AT_STATEMENT_START
 
 void
@@ -15248,6 +15256,27 @@ SgAtStmt::post_construction_initialization()
        }
 
 SOURCE_AT_STATEMENT_END
+
+
+SOURCE_ATOMIC_STATEMENT_START
+
+void
+SgAtomicStmt::post_construction_initialization()
+   {
+   }
+
+SOURCE_ATOMIC_STATEMENT_END
+
+
+SOURCE_WHEN_STATEMENT_START
+
+void
+SgWhenStmt::post_construction_initialization()
+       {
+       }
+
+SOURCE_WHEN_STATEMENT_END
+
 
 SOURCE_TRY_STATEMENT_START
 
