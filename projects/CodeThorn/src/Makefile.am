@@ -25,6 +25,7 @@ libspray_la_SOURCES=\
  CFAnalysis.h \
  DFAnalysisBase.h \
  DFTransferFunctions.h \
+ DotGraphCfgFrontend.h \
  IntervalAnalysis.h \
  IntervalAstAttribute.h \
  IntervalAstAttributeInterface.h \
@@ -53,6 +54,7 @@ libspray_la_SOURCES=\
  CppExprEvaluator.C \
  DFAnalysisBase.C \
  DFTransferFunctions.C \
+ DotGraphCfgFrontend.C \
  Flow.C \
  IntervalAnalysis.C \
  IntervalAstAttribute.C \

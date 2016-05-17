@@ -8,15 +8,15 @@
 using namespace SPRAY;
 using namespace std;
 
-Edge::Edge():source(0),target(0){
+Edge::Edge():source(0),target(0),_annotation(""){
 }
-Edge::Edge(Label source0,Label target0):source(source0),target(target0){
+Edge::Edge(Label source0,Label target0):source(source0),target(target0),_annotation(""){
   // _types is an empty set by default (we may want to use EDGE_UNKNOWN instead)
 }
-Edge::Edge(Label source0,EdgeType et,Label target0):source(source0),target(target0){
+Edge::Edge(Label source0,EdgeType et,Label target0):source(source0),target(target0),_annotation(""){
   _types.insert(et);
 }
-Edge::Edge(Label source0,set<EdgeType> tset,Label target0):source(source0),target(target0){
+Edge::Edge(Label source0,set<EdgeType> tset,Label target0):source(source0),target(target0),_annotation(""){
   _types=tset;
 }
 
@@ -157,6 +157,15 @@ string Edge::toDotColored() const {
   return ss.str();
 }
 
+string Edge::toDotAnnotationOnly() const {
+  stringstream ss;
+  ss<<source<<"->"<<target;
+  ss<<" [label=\""<<getAnnotation()<<"\"";
+  ss<<" color="<<color()<<" ";
+  ss<<"]";
+  return ss.str();
+}
+
 string Edge::dotEdgeStyle() const {
   if(isType(EDGE_EXTERNAL)) 
     return "dotted";
@@ -213,7 +222,7 @@ bool SPRAY::operator!=(const InterEdge& e1, const InterEdge& e2) {
 bool SPRAY::operator==(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
-  return e1.source==e2.source && e1.typesCode()==e2.typesCode() && e1.target==e2.target;
+  return e1.source==e2.source && e1.typesCode()==e2.typesCode() && e1.target==e2.target && e1.getAnnotation() == e2.getAnnotation();
 }
 bool SPRAY::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
@@ -225,13 +234,21 @@ bool SPRAY::operator<(const Edge& e1, const Edge& e2) {
     return e1.source<e2.source;
   if(e1.target!=e2.target)
     return e1.target<e2.target;
-  return e1.typesCode()<e2.typesCode();
+  if(e1.typesCode()!=e2.typesCode())
+    return e1.typesCode()<e2.typesCode();
+  return e1.getAnnotation()<e2.getAnnotation();
 }
 
 long Edge::typesCode() const {
   long h=1;
   for(set<EdgeType>::iterator i=_types.begin();i!=_types.end();++i) {
     h+=(1<<*i);
+  }
+  int m = _types.size();
+  int k = 0;
+  for (string::iterator i=getAnnotation().begin(); i!=getAnnotation().end(); ++i) {
+    h+=(static_cast<unsigned char>(*i)<<(k*8 + m));
+    k++;
   }
   return h;
 }
@@ -267,6 +284,7 @@ SPRAY::Flow Flow::reverseFlow() {
 void Flow::resetDotOptions() {
   _dotOptionDisplayLabel=true;
   _dotOptionDisplayStmt=true;
+  _dotOptionEdgeAnnotationsOnly=false;
   _dotOptionFixedColor=false;
   _fixedColor="black";
   _dotOptionHeaderFooter=true;
@@ -306,6 +324,10 @@ void Flow::setDotOptionDisplayLabel(bool opt) {
 }
 void Flow::setDotOptionDisplayStmt(bool opt) {
   _dotOptionDisplayStmt=opt;
+}
+
+void Flow::setDotOptionEdgeAnnotationsOnly(bool opt) {
+  _dotOptionEdgeAnnotationsOnly=opt;
 }
 
 void Flow::setDotOptionFixedColor(bool opt) {
@@ -382,7 +404,11 @@ string Flow::toDot(Labeler* labeler) {
   }
   for(Flow::iterator i=begin();i!=end();++i) {
     Edge e=*i;
-    ss<<(_dotOptionFixedColor?e.toDotFixedColor(_fixedColor):e.toDotColored())<<";\n";
+    if (_dotOptionEdgeAnnotationsOnly) {
+      ss<<e.toDotAnnotationOnly()<<";\n";
+    } else {
+      ss<<(_dotOptionFixedColor?e.toDotFixedColor(_fixedColor):e.toDotColored())<<";\n";
+    }
   }
   if(_dotOptionHeaderFooter)
     ss<<"}";

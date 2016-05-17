@@ -35,6 +35,7 @@
 #include "EquivalenceChecking.h"
 // test
 #include "Evaluator.h"
+#include "DotGraphCfgFrontend.h"
 
 using namespace std;
 
@@ -274,6 +275,7 @@ int main( int argc, char * argv[] ) {
     experimentalOptions.add_options()
       ("annotate-terms",po::value< string >(),"annotate term representation of expressions in unparsed program.")
       ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
+      ("cfg-dot-input",po::value< string >(),"reads a CFG from a given .dot file.")
       ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
       ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
       ("precision-exact-constraints",po::value< string >(),"(experimental) use precise constraint extraction [=yes|no]")
@@ -456,6 +458,20 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("normalize",true);
 
   boolOptions.processOptions();
+
+  //TODO: remove this temporary test
+  if (args.count("cfg-dot-input")) {
+    DotGraphCfgFrontend dotGraphCfgFrontend;
+    string filename = args["cfg-dot-input"].as<string>();
+    Flow cfg = dotGraphCfgFrontend.parseDotCfg(filename);
+    cfg.setDotOptionDisplayLabel(false);
+    cfg.setDotOptionDisplayStmt(false);
+    cfg.setDotOptionEdgeAnnotationsOnly(true);
+    write_file("cfg.dot", cfg.toDot(NULL));
+    cout << "generated cfg.dot."<<endl;
+    cout << "DEBUG: parseDotCfg test complete." << endl;
+    exit(0);
+  }
 
   Analyzer analyzer;
   global_analyzer=&analyzer;
@@ -758,7 +774,8 @@ int main( int argc, char * argv[] ) {
   }
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
-    if (string(argv[i]).find("--csv-assert")==0
+    if (string(argv[i]).find("--cfg-dot-input")==0
+        || string(argv[i]).find("--csv-assert")==0
         || string(argv[i]).find("--csv-stats")==0
         || string(argv[i]).find("--csv-stats-cegpra")==0
         || string(argv[i]).find("--csv-stats-size-and-ltl")==0
