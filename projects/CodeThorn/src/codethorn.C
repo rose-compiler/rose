@@ -348,6 +348,8 @@ int main( int argc, char * argv[] ) {
       ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
       ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
       ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
+      ("max-memory-stg",po::value< int >(),"Stop computing the STG after it amounts to approximately <arg> Bytes of memory. (default: no limit). Currently requires --solver=12.")
+      ("resource-limit-diff",po::value< int >(),"Check if the resource limit is reached every <arg> computed estates.")
       ("print-all-options",po::value< string >(),"print the default values for all yes/no command line options.")
       ("rewrite","rewrite AST applying all rewrite system rules.")
       ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -599,6 +601,25 @@ int main( int argc, char * argv[] ) {
     analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
+  if (args.count("max-memory-stg")) {
+    bool notSupported=false;
+    if(args.count("solver")) {
+      int solver=args["solver"].as<int>();
+      if (solver != 12) {
+	notSupported = true;
+      }
+    } else {
+      cout<<"ERROR: solver 12 is currently not the default solver."<<endl;
+      notSupported=true; 
+    }
+    if(notSupported) {
+      cout << "Error: option \"--max-memory-stg\" currently requires \"--solver=12\"." << endl;
+      exit(1);
+    }
+    long int maxBytes = args["max-memory-stg"].as<int>();
+    analyzer.setMaxBytesStg(maxBytes);
+  }
+
   if(args.count("reconstruct-assert-paths")) {
     string previousAssertFilePath=args["reconstruct-assert-paths"].as<string>();
     PropertyValueTable* previousAssertResults=analyzer.loadAssertionsToReconstruct(previousAssertFilePath);
@@ -669,6 +690,10 @@ int main( int argc, char * argv[] ) {
   if(args.count("display-diff")) {
     int displayDiff=args["display-diff"].as<int>();
     analyzer.setDisplayDiff(displayDiff);
+  }
+  if(args.count("resource-limit-diff")) {
+    int resourceLimitDiff=args["resource-limit-diff"].as<int>();
+    analyzer.setResourceLimitDiff(resourceLimitDiff);
   }
   int ltlSolverNr=11;
   int loopAwareSyncSolverNr=12;

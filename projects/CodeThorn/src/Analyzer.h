@@ -299,6 +299,7 @@ namespace CodeThorn {
     PropertyValueTable* loadAssertionsToReconstruct(string filePath);
     
     void setDisplayDiff(int diff) { _displayDiff=diff; }
+    void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
     void setSolver(int solver) { _solver=solver; }
     int getSolver() { return _solver;}
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
@@ -333,6 +334,7 @@ namespace CodeThorn {
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
+    void setMaxBytesStg(long int maxBytes) { _maxBytesStg=maxBytes; }
     void setStartPState(PState startPState) { _startPState=startPState; }
     void setReconstructMaxInputDepth(size_t inputDepth) { _reconstructMaxInputDepth=inputDepth; }
     void setReconstructMaxRepetitions(size_t repetitions) { _reconstructMaxRepetitions=repetitions; }
@@ -412,6 +414,7 @@ namespace CodeThorn {
     TransitionGraph backupTransitionGraph;
     set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
     int _displayDiff;
+    int _resourceLimitDiff;
     int _numberOfThreadsToUse;
     int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
@@ -422,6 +425,7 @@ namespace CodeThorn {
     long int _maxIterations;
     long int _maxTransitionsForcedTop;
     long int _maxIterationsForcedTop;
+    long int _maxBytesStg;
     PState _startPState;
     int _reconstructMaxInputDepth;
     int _reconstructMaxRepetitions;

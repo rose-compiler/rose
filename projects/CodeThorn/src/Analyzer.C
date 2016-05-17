@@ -65,6 +65,7 @@ Analyzer::Analyzer():
   cfanalyzer(0),
   _globalTopifyMode(GTM_IO),
   _displayDiff(10000),
+  _resourceLimitDiff(10000),
   _numberOfThreadsToUse(1),
   _semanticFoldThreshold(5000),
   _solver(5),
@@ -1638,7 +1639,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   assert(currentEState);
   variableValueMonitor.init(currentEState);
   addToWorkList(currentEState);
-  //cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
+  // cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
   cout << "INIT: finished."<<endl;
 }
 
@@ -1933,12 +1934,12 @@ void Analyzer::removeNonIOStates() {
     return;
   }
   // sort EStates so that those with minimal (indegree * outdegree) come first
-  std::list<const EState*>* worklist = new list<const EState*>(states.begin(), states.end());
-  worklist->sort(boost::bind(&CodeThorn::Analyzer::indegreeTimesOutdegreeLessThan,this,_1,_2));
+  std::list<const EState*> worklist = list<const EState*>(states.begin(), states.end());
+  worklist.sort(boost::bind(&CodeThorn::Analyzer::indegreeTimesOutdegreeLessThan,this,_1,_2));
   int totalStates=states.size();
   int statesVisited =0;
   // iterate over all states, reduce those that are neither the start state nor standard input / output
-  for(std::list<const EState*>::iterator i=worklist->begin();i!=worklist->end();++i) {
+  for(std::list<const EState*>::iterator i=worklist.begin();i!=worklist.end();++i) {
     if(! ((*i) == transitionGraph.getStartEState()) ) {
       if(! ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO()) ) {
 	transitionGraph.reduceEState2(*i);
@@ -3009,7 +3010,8 @@ void Analyzer::runSolver12() {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
   }
   cout<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
-  size_t prevStateSetSize=0; // force immediate report at start
+  size_t prevStateSetSizeDisplay=0; // force immediate report at start
+  size_t prevStateSetSizeResource=0; // force immediate report at start
   int threadNum;
   int workers=_numberOfThreadsToUse;
   vector<bool> workVector(_numberOfThreadsToUse);
@@ -3062,10 +3064,43 @@ void Analyzer::runSolver12() {
       }
 
       //cout<<"DEBUG: running : WL:"<<estateWorkListCurrent->size()<<endl;
-      if(threadNum==0 && _displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
-        printStatusMessage(true);
-        prevStateSetSize=estateSet.size();
+      unsigned long estateSetSize;
+#pragma omp critical(HASHSET)
+      {
+	estateSetSize = estateSet.size();
       }
+      if(threadNum==0 && _displayDiff && (estateSetSize>(prevStateSetSizeDisplay+_displayDiff))) {
+        printStatusMessage(true);
+        prevStateSetSizeDisplay=estateSetSize;
+      }
+
+      if (args.count("max-memory-stg")) {
+#pragma omp critical(HASHSET)
+	{
+	  estateSetSize = estateSet.size();
+	}
+	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
+	  long totalMemoryStg = 0;
+#pragma omp critical(HASHSET)
+	  {
+	    totalMemoryStg+=getPStateSet()->memorySize(); // pstateSetBytes
+	    totalMemoryStg+=getEStateSet()->memorySize(); // eStateSetBytes
+	    long transitionGraphSize=getTransitionGraph()->size();
+	    totalMemoryStg+=transitionGraphSize*sizeof(Transition); // transitionGraphBytes
+	    totalMemoryStg+=getConstraintSetMaintainer()->memorySize(); // constraintSetsBytes
+	    //cout << "DEBUG: total memory stg:" << totalMemoryStg << "(" <<getPStateSet()->memorySize()<<"/"<<getEStateSet()->memorySize()<<"/"<<transitionGraphSize*sizeof(Transition)<<"/"<<getConstraintSetMaintainer()->memorySize()<<")"<< endl;
+	  }
+	  if (totalMemoryStg >= _maxBytesStg) {
+#pragma omp critical(ESTATEWL)
+	    {
+	      terminate = true;
+	      terminatedWithIncompleteStg = true;
+	    }
+	  }
+	  prevStateSetSizeResource=estateSetSize;
+	}
+      }
+
       //perform reduction to I/O/worklist states only if specified threshold was reached
       if (ioReductionActive) {
 #pragma omp critical
