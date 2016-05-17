@@ -8,11 +8,19 @@
 int main()
    {
      printf ("__cplusplus         = %zu \n",__cplusplus);
+
 #ifdef __clang__
      printf ("__clang__           = %d  \n",__clang__);
 #else
      printf ("Not a clang compiler \n");
 #endif
+
+#ifdef __INTEL_COMPILER
+     printf ("__INTEL_COMPILER    = %d  \n",__INTEL_COMPILER);
+#else
+     printf ("Not an Intel compiler \n");
+#endif
+
 #ifdef GLIBCXX_BEGIN_NAMESPACE
      printf ("GLIBCXX_BEGIN_NAMESPACE IS defined \n");
 #else

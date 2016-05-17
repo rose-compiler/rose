@@ -124,6 +124,7 @@ test2016_33.C \
 test2016_34.C \
 test2016_35.C \
 test2016_36.C \
+test2016_37.C \
 last.C
 
 # DQ (5/8/2016): Demonstration of bug in GNU 4.9.2 header files (test2016_31.C)

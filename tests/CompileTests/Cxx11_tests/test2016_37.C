@@ -17,6 +17,8 @@
 
 #if GCC_VERSION < 40700
 
+#warning "Using user defined nullptr_t type."
+
 class nullptr_t
    {
      public:
@@ -26,6 +28,14 @@ class nullptr_t
      private:
           void operator&();
    };
+
+#else
+
+// I think we need this when the macro predicate is false.
+
+#warning "Using nullptr_t type from std."
+
+// using namespace std;
 
 #endif
 
