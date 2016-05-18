@@ -70,18 +70,60 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
 ])
 
 dnl ========================================================================================================================
+dnl This macro runs the C++ compiler ($CXX) to figure out what macros are defined that relate to the compiler version
+dnl number.  The macros are stored in the CXX_VERSION_DEFINES shell variable as a space-separated list of elements where
+dnl each element has the format "-Dname=value".
+dnl
+dnl Arguments:
+dnl     none
+dnl Input:
+dnl     $CXX
+dnl Output:
+dnl     $CXX_VERSION_MACROS
+dnl ========================================================================================================================
+AC_DEFUN([GET_CXX_VERSION_MACROS],[
+
+    # Prior to 2016-05-18 we set various version-related macros using the version information that was detected by the
+    # GET_CXX_VERSION_INFO macro. However, that info was sometimes wrong (e.g., "g++ -dumpversion" sometimes doesn't
+    # report the patch level, in which case we incorrectly define __GNUC_PATCHLEVEL__ to zero).  Dan determined that
+    # the "-dM" switch is accepted by GNU g++, LLVM clang++, and Intel icpc, so we now use that instead. This gives
+    # correct values for the macros and it makes this function much smaller.
+    tmp_input=/tmp/compiler-defs-$$.C
+    tmp_output=/tmp/compiler-defs-$$.out
+    touch $tmp_input
+    if ! $CXX -E -dM $tmp_input >$tmp_output; then
+        AC_MSG_ERROR([compiler command failed: $CXX -E -dM $tmp_input])
+    fi
+
+    CXX_VERSION_MACROS=
+    for symbol in __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__; do
+        value="$(sed -ne "s/#define $symbol //p" <$tmp_output)"
+        if test "$value" != ""; then
+            if test "$CXX_VERSION_MACROS" = ""; then
+                CXX_VERSION_MACROS="-D$symbol=$value"
+            else
+                CXX_VERSION_MACROS="$CXX_VERSION_MACROS -D$symbol=$value"
+            fi
+        fi
+    done
+
+    rm -f $tmp_input $tmp_output
+])
+
+dnl ========================================================================================================================
 dnl Squirrels away the results of GET_CXX_VERSION_INFO into shell variables by prepending them with other characters. For
 dnl example, one might call GET_CXX_VERSION_INFO and then save the results by prepending "BACKEND_" to their names.
 dnl Arguments:
 dnl     argument 1: string to prepend, without the trailing underscore. E.g., "BACKEND".
 dnl ========================================================================================================================
 AC_DEFUN([SAVE_CXX_VERSION_INFO], [
-    AC_MSG_NOTICE([    c++ compiler command         ($1[]_CXX_COMPILER_COMMAND) = "$CXX_COMPILER_COMMAND"])
-    AC_MSG_NOTICE([    c++ compiler vendor           ($1[]_CXX_COMPILER_VENDOR) = "$CXX_COMPILER_VENDOR"])
-    AC_MSG_NOTICE([    c++ compiler version triplet  ($1[]_CXX_VERSION_TRIPLET) = "$CXX_VERSION_TRIPLET"])
-    AC_MSG_NOTICE([    c++ compiler major version      ($1[]_CXX_VERSION_MAJOR) = "$CXX_VERSION_MAJOR"])
-    AC_MSG_NOTICE([    c++ compiler minor version      ($1[]_CXX_VERSION_MINOR) = "$CXX_VERSION_MINOR"])
-    AC_MSG_NOTICE([    c++ compiler patch version      ($1[]_CXX_VERSION_PATCH) = "$CXX_VERSION_PATCH"])
+    AC_MSG_NOTICE([    c++ compiler command         $1[]_CXX_COMPILER_COMMAND = "$CXX_COMPILER_COMMAND"])
+    AC_MSG_NOTICE([    c++ compiler vendor           $1[]_CXX_COMPILER_VENDOR = "$CXX_COMPILER_VENDOR"])
+    AC_MSG_NOTICE([    c++ compiler version triplet  $1[]_CXX_VERSION_TRIPLET = "$CXX_VERSION_TRIPLET"])
+    AC_MSG_NOTICE([    c++ compiler major version      $1[]_CXX_VERSION_MAJOR = "$CXX_VERSION_MAJOR"])
+    AC_MSG_NOTICE([    c++ compiler minor version      $1[]_CXX_VERSION_MINOR = "$CXX_VERSION_MINOR"])
+    AC_MSG_NOTICE([    c++ compiler patch version      $1[]_CXX_VERSION_PATCH = "$CXX_VERSION_PATCH" (0 means not reported)])
+    AC_MSG_NOTICE([    c++ compiler version macros    $1[]_CXX_VERSION_MACROS = "$CXX_VERSION_MACROS"])
 
     $1[]_CXX_COMPILER_COMMAND="$CXX_COMPILER_COMMAND"
     $1[]_CXX_COMPILER_VENDOR="$CXX_COMPILER_VENDOR"
@@ -89,6 +131,7 @@ AC_DEFUN([SAVE_CXX_VERSION_INFO], [
     $1[]_CXX_VERSION_MINOR="$CXX_VERSION_MINOR"
     $1[]_CXX_VERSION_PATCH="$CXX_VERSION_PATCH"
     $1[]_CXX_VERSION_TRIPLET="$CXX_VERSION_TRIPLET"
+    $1[]_CXX_VERSION_MACROS="$CXX_VERSION_MACROS"
 ])
 
 dnl ========================================================================================================================
@@ -118,6 +161,7 @@ dnl     BACKEND_CXX_VERSION_MAJOR
 dnl     BACKEND_CXX_VERSION_MINOR
 dnl     BACKEND_CXX_VERSION_PATCH
 dnl     BACKEND_CXX_VERSION_TRIPLET
+dnl     BACKEND_CXX_VERSION_MACROS
 dnl ========================================================================================================================
 AC_DEFUN([SAVE_BACKEND_VERSION_INFO],[
     SAVE_CXX_VERSION_INFO(BACKEND)
@@ -141,83 +185,28 @@ AC_DEFUN([SAVE_BACKEND_VERSION_INFO],[
 ])
             
 dnl ========================================================================================================================
-dnl This macro gets a list of arguments that need to be passed to a compiler when the compiler is used as the backend
-dnl for ROSE.  This macro uses shell variables that have been initialized by GET_CXX_VERSION_INFO above, namely:
-dnl     CXX_COMPILER_VENDOR
-dnl     CXX_VERSION_MAJOR
-dnl     CXX_VERSION_MINOR
-dnl     CXX_VERSION_PATCH
-dnl The result is conveyed to the caller as a shell variable, macroString which is a string of comma-separated, quoted
-dnl compiler arguments with the whole string enclosed in curly braces.
+dnl This function gets a list of macros (compiler -D switches) that are defined by the backend compiler and which therefore
+dnl must also be defined when ROSE runs the C++ frontend.  This function handles only the version-related macros, but in
+dnl theory, the frontend should pre-define all the same things as the backend so that the frontend and backend both follow
+dnl the same paths through header files.
+dnl
+dnl Arguments:
+dnl     None
+dnl Input:
+dnl     BACKEND_CXX_* variables saved by previous call to SAVE_VERSION_INFO
+dnl Output:
+dnl     The result is conveyed to the caller as a shell variable, macroString which is a string of comma-separated, quoted
+dnl     compiler arguments with the whole string enclosed in curly braces.
 dnl ========================================================================================================================
 AC_DEFUN([GET_BACKEND_COMPILER_MACROS],[
-    macroString=
-    case "$CXX_COMPILER_VENDOR" in
-        clang)
-            macroString="\"-D__GNUG__=$CXX_VERSION_MAJOR\""
-            macroString="$macroString, \"-D__GNUC__=$CXX_VERSION_MAJOR\""
-            macroString="$macroString, \"-D__GNUC_MINOR__=$CXX_VERSION_MINOR\""
-            macroString="$macroString, \"-D__GNUC_PATCHLEVEL__=$CXX_VERSION_PATCH\""
-            macroString="$macroString, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
-            macroString="{${macroString}}"
-            ;;
+    if test "$BACKEND_CXX_COMPILER_COMMAND" = ""; then
+        AC_MSG_ERROR([should have determined backend compiler characteristics already])
+    fi
 
-        gnu)
-            macroString="\"-D__GNUG__=$CXX_VERSION_MAJOR\""
-            macroString="$macroString, \"-D__GNUC__=$CXX_VERSION_MAJOR\""
-            macroString="$macroString, \"-D__GNUC_MINOR__=$CXX_VERSION_MINOR\""
-            macroString="$macroString, \"-D__GNUC_PATCHLEVEL__=$CXX_VERSION_PATCH\""
-            macroString="$macroString, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
-            macroString="{${macroString}}"
-            ;;
-
-        intel)
-            tmpFile="/tmp/tmpICCMacroExtraction`uname -n`$$.C"
-            echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
-            extra_icc_defines=$("icpc" -# "test.C" 2>&1 |\
-                grep "\-D" |\
-                grep "GNUG\|__GNUC_PATCHLEVEL__\|__GNUC_MINOR__\|__GNUC__" |\
-                sed ':a; /\\$/N; s/\\\n//; ta' |\
-                sed 's/\\\//')
-            rm -f "$tmpFile"
-            tmp_macro=
-            for macro_i in $extra_icc_defines; do
-                tmp_macro="$tmp_macro, \"$macro_i\""
-            done
-
-            # Note that ${tmp_macro} starts with a comma, so I have padded the start of the macroString with
-            # -D__ROSE_DUMMY_FIRST_MACRO__.
-            macroString=" \"-D__ROSE_DUMMY_FIRST_MACRO__\" ${tmp_macro}"
-
-            # DQ (4/4/2014): Commented this out again, we need this to get the /usr/include/math.h to be included 
-            # by the #include_next directive in the Intel specific math.h, plus I think we support throw options better now.
-            # The problem is demonstrated in test2014_36.C where M_PI is not defined because the #include_next is not 
-            # processed to bring in the /usr/include/math.h file that is included using the #include_next directive.
-            # macroString="-D__PURE_INTEL_C99_HEADERS__ ${tmp_macro} \
-            #    --preinclude rose_edg_macros_and_functions_required_for_icc.h"
-            # DQ (1/9/2010): I put this back and commented out the problem directly in the UPC file: lock.upc directly.
-            # DQ (1/9/2010): This causes an error in math.h with an inconstant use of __THROW with the declaration of "abs()".
-            #   from math.h _LIBIMF_EXT _LIBIMF_INT   _LIBIMF_PUBAPI abs( _LIBIMF_INT __x );
-            # macroString="{\"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
-            # macroString="{ \"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
-
-            # DQ (11/1/2011): We need this same mechanism for C++'s use of EDG 4.x as we did for EDG 3.3 (but for C code
-            # this was not required; and was simpler).
-            # if test x$enable_new_edg_interface = xyes; then
-            #   :
-            # else
-            #   macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
-            # fi
-            macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
-
-            macroString="{${macroString}}"
-            ;;
-
-        *)
-            AC_MSG_ERROR([cannot set backend compiler macros for $CXX_COMPILER_VENDOR $CXX_COMPILER_COMMAND command])
-            ;;
-    esac
-    AC_MSG_NOTICE([    c++ backend macros                         (macroString) = $macroString])
+    macroString="$(echo "$BACKEND_CXX_VERSION_MACROS" |sed -e 's/ -D/, -D/g')"
+    macroString="$macroString, --preinclude \"rose_edg_required_macros_and_functions.h\""
+    macroString="{$macroString}"
+    AC_MSG_NOTICE([    c++ backend macros                            macroString = $macroString])
 ])
 
 dnl ========================================================================================================================
@@ -234,6 +223,7 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
 
     ROSE_CONFIGURE_SECTION([Frontend compiler version])
     GET_CXX_VERSION_INFO([$CXX], [$FRONTEND_CXX_COMPILER_VENDOR])
+    GET_CXX_VERSION_MACROS
     SAVE_CXX_VERSION_INFO(FRONTEND)
 
     dnl ------------------------------------------------
@@ -244,10 +234,11 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
 
     backendCompilerBaseName=$(basename "$BACKEND_CXX_COMPILER")
     GET_CXX_VERSION_INFO([$BACKEND_CXX_COMPILER], [$BACKEND_CXX_COMPILER_VENDOR])
-    SAVE_BACKEND_VERSION_INFO()
+    GET_CXX_VERSION_MACROS
+    SAVE_BACKEND_VERSION_INFO
 
     # Use the info from GET_CXX_VERSION_INFO to get a list of backend switches in macroStrings.
-    GET_BACKEND_COMPILER_MACROS()
+    GET_BACKEND_COMPILER_MACROS
 
 
     dnl ------------------------------------------------
