@@ -95,6 +95,8 @@ codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
+  ParProAnalyzer.C                 \
+  ParProAnalyzer.h                 \
   ArrayElementAccessData.h \
   ArrayElementAccessData.C \
   CollectionOperators.h            \
@@ -152,6 +154,8 @@ codethorn_SOURCES = \
   Timer.h                          \
   TransitionGraph.h                \
   TransitionGraph.C                \
+  ParProTransitionGraph.h          \
+  ParProTransitionGraph.C          \
   VariableValueMonitor.h \
   VariableValueMonitor.C \
   Visualizer.C                     \

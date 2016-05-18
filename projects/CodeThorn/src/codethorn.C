@@ -36,6 +36,7 @@
 // test
 #include "Evaluator.h"
 #include "DotGraphCfgFrontend.h"
+#include "ParProAnalyzer.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -480,20 +481,16 @@ int main( int argc, char * argv[] ) {
       cout << "generated " << outputFilename <<"."<<endl;
       counter++;
     }
+    
+    vector<Flow> cfgsAsVector;
+    cfgsAsVector.reserve(cfgs.size());
+    copy(begin(cfgs), end(cfgs), back_inserter(cfgsAsVector));
+    ParProAnalyzer parProAnalyzer(cfgsAsVector);
+    parProAnalyzer.initializeSolver();
+    parProAnalyzer.runSolver();
+    
     cout << "DEBUG: parseDotCfg test complete." << endl;
     exit(0);
-#if 0
-    DotGraphCfgFrontend dotGraphCfgFrontend;
-    string filename = args["cfg-dot-input"].as<string>();
-    Flow cfg = dotGraphCfgFrontend.parseDotCfg(filename);
-    cfg.setDotOptionDisplayLabel(false);
-    cfg.setDotOptionDisplayStmt(false);
-    cfg.setDotOptionEdgeAnnotationsOnly(true);
-    write_file("cfg.dot", cfg.toDot(NULL));
-    cout << "generated cfg.dot."<<endl;
-    cout << "DEBUG: parseDotCfg test complete." << endl;
-    exit(0);
-#endif 
   }
 
   Analyzer analyzer;
