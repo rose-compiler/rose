@@ -35,7 +35,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
  # DQ (2/2/2016): Adding additional parameters to this function call.
  # "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
-   "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "${ax_cv_cxx_compiler_vendor}"
+   "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "$BACKEND_CXX_COMPILER_VENDOR"
 
    error_code=$?
    echo "error_code = $error_code"
@@ -153,17 +153,19 @@ compilerNameCxx="`basename ${BACKEND_CXX_COMPILER}`"
  # includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
 
  # Set new variables to pass in the function call below.
-   compilerVendorName=$ax_cv_cxx_compiler_vendor
+   compilerVendorName="$BACKEND_CXX_COMPILER_VENDOR"
    language="c++"
 
  # DQ (2/2/2016): Adding additional parameters to this function call.
  # if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
-   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
+ # [Matzke 2016-05-18]: Square brackets are quote characters in M4, so use "@<:@" and "@:>@" quadrigraphs instead. Ugly!
+   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS@<:@0@:>@})"; then
       AC_MSG_FAILURE([$compilerHeaderDirs])
    fi
 
  # DQ (2/2/2016): Added error checking (though this already appears to be present).
-   if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+ # [Matzke 2016-05-18]: Square brackets are quote characters in M4, so use "@<:@" and "@:>@" quadrigraphs instead. Ugly!
+   if test "${PIPESTATUS@<:@0@:>@}" -ne 0; then
        echo "In SETUP BACKEND CXX COMPILER SPECIFIC REFERENCES: get_compiler_header_dirs failed"
        exit 1
    fi
@@ -207,7 +209,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
    mkdir -p "./include-staging/${compilerName}_HEADERS"
  # "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
-   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "${ax_cv_cxx_compiler_vendor}"
+   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "$BACKEND_CXX_COMPILER_VENDOR"
 
    error_code=$?
    echo "error_code = $error_code"
@@ -298,16 +300,18 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
  # fi
  #  includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
 
-   compilerVendorName=$ax_cv_cxx_compiler_vendor
+   compilerVendorName="$BACKEND_CXX_COMPILER_VENDOR"
    language="c"
 
  # if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
-   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
+ # [Matzke 2016-05-18]: Square brackets are quote characters in M4, so use "@<:@" and "@:>@" quadrigraphs instead. Ugly!
+   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS@<:@0@:>@})"; then
       AC_MSG_FAILURE([$compilerHeaderDirs])
    fi
 
  # DQ (2/2/2016): Added error checking (though this already appears to be present).
-   if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+ # [Matzke 2016-05-18]: Square brackets are quote characters in M4, so use "@<:@" and "@:>@" quadrigraphs instead. Ugly!
+   if test "${PIPESTATUS@<:@0@:>@}" -ne 0; then
        echo "In SETUP BACKEND C COMPILER SPECIFIC REFERENCES: get_compiler_header_dirs failed"
        exit 1
    fi
