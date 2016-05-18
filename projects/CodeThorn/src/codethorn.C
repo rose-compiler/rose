@@ -37,6 +37,9 @@
 #include "Evaluator.h"
 #include "DotGraphCfgFrontend.h"
 
+//BOOST includes
+#include "boost/lexical_cast.hpp"
+
 using namespace std;
 
 namespace po = boost::program_options;
@@ -463,6 +466,25 @@ int main( int argc, char * argv[] ) {
   if (args.count("cfg-dot-input")) {
     DotGraphCfgFrontend dotGraphCfgFrontend;
     string filename = args["cfg-dot-input"].as<string>();
+    list<Flow> cfgs = dotGraphCfgFrontend.parseDotCfgs(filename);
+    int counter = 0;
+    for(list<Flow>::iterator i=cfgs.begin(); i!=cfgs.end(); i++) {
+      Flow cfg = *i;
+      cout << "DEBUG: current cfg's start state id is: " << cfg.getStartLabel().getId() << endl;
+      cfg.setDotOptionDisplayLabel(false);
+      cfg.setDotOptionDisplayStmt(false);
+      cfg.setDotOptionEdgeAnnotationsOnly(true);
+      string outputFilename = "cfg" + boost::lexical_cast<string>(counter) + ".dot";
+      cout << "DEBUG: outputFilename: " << outputFilename << endl;
+      write_file(outputFilename, cfg.toDot(NULL));
+      cout << "generated " << outputFilename <<"."<<endl;
+      counter++;
+    }
+    cout << "DEBUG: parseDotCfg test complete." << endl;
+    exit(0);
+#if 0
+    DotGraphCfgFrontend dotGraphCfgFrontend;
+    string filename = args["cfg-dot-input"].as<string>();
     Flow cfg = dotGraphCfgFrontend.parseDotCfg(filename);
     cfg.setDotOptionDisplayLabel(false);
     cfg.setDotOptionDisplayStmt(false);
@@ -471,6 +493,7 @@ int main( int argc, char * argv[] ) {
     cout << "generated cfg.dot."<<endl;
     cout << "DEBUG: parseDotCfg test complete." << endl;
     exit(0);
+#endif 
   }
 
   Analyzer analyzer;

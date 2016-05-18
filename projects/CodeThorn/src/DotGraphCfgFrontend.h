@@ -31,6 +31,12 @@ namespace SPRAY {
     //DotGraphCfgFrontend();
     // parse the CFG contained in the "filename" .dot-file and return a Flow CFG.
     Flow parseDotCfg(std::string filename);
+    // parse the CFGs contained in the "filename" .dot-file and return a list of Flow CFGs.
+    std::list<Flow> parseDotCfgs(std::string filename);
+
+  private:
+    size_t determineStartNode(boost::unordered_set<size_t>& mostRecentSourceNodes, 
+			      boost::unordered_set<size_t>& mostRecentTargetNodes);
   };
 
 } // end of namespace SPRAY

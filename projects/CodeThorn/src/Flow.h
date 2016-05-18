@@ -86,6 +86,8 @@ namespace SPRAY {
     Flow outEdges(Label label);
     Flow edgesOfType(EdgeType edgeType);
     Flow outEdgesOfType(Label label, EdgeType edgeType);
+    Label getStartLabel() { return _startLabel; }
+    void setStartLabel(Label label) { _startLabel = label; }
     void setDotOptionDisplayLabel(bool opt);
     void setDotOptionDisplayStmt(bool opt);
     void setDotOptionEdgeAnnotationsOnly(bool opt);
@@ -122,6 +124,7 @@ namespace SPRAY {
     bool _boostified;
     Sawyer::Container::Graph< Label, EdgeType>  _SawyerflowGraph;
     FlowGraph _flowGraph;
+    Label _startLabel;
   };
   
   class InterEdge {
