@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST =
+EXTRA_DIST = README
 
 noinst_PROGRAMS = translator
 translator_SOURCES = translator.C
@@ -64,8 +64,3 @@ check-local: $(test_targets)
 clean-local:
 	rm -f $(specimen_names)
 	rm -f $(test_targets) $(test_targets:.passed=.failed)
-
-
-
-
-EXTRA_DIST += mixedCase README
