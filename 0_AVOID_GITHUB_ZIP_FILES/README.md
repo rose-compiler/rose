@@ -1,3 +1,6 @@
+Github "Download ZIP" button is not supported
+=============================================
+
 The "Download ZIP" button on Github has two problems:
 
 1. The archive does not contain Git metadata (.git directory) which
