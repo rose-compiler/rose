@@ -196,15 +196,27 @@ dnl Input:
 dnl     BACKEND_CXX_* variables saved by previous call to SAVE_VERSION_INFO
 dnl Output:
 dnl     The result is conveyed to the caller as a shell variable, macroString which is a string of comma-separated, quoted
-dnl     compiler arguments with the whole string enclosed in curly braces.
+dnl     compiler arguments with the whole string enclosed in curly braces. It is done this way so it can be interpolated
+dnl     directly in to C++ code that initializes a "char const *[]".
 dnl ========================================================================================================================
 AC_DEFUN([GET_BACKEND_COMPILER_MACROS],[
     if test "$BACKEND_CXX_COMPILER_COMMAND" = ""; then
         AC_MSG_ERROR([should have determined backend compiler characteristics already])
     fi
 
-    macroString="$(echo "$BACKEND_CXX_VERSION_MACROS" |sed -e 's/ -D/, -D/g')"
-    macroString="$macroString, --preinclude \"rose_edg_required_macros_and_functions.h\""
+    # Convert space-separated list of "-Dname=value" pairs to a C++ char*[] initializer stored in macroString
+    # E.g., convert:
+    #     -Dapple=red -Dbanana=yellow
+    # to
+    #     {"-Dapple=red", "-Dbanana=yellow"}
+    macroString=""
+    for macro in $BACKEND_CXX_VERSION_MACROS --preinclude rose_edg_required_macros_and_functions.h; do
+        if test "$macroString" = ""; then
+            macroString="\"$macro\""
+        else
+            macroString="$macroString \"$macro\""
+        fi
+    done
     macroString="{$macroString}"
     AC_MSG_NOTICE([    c++ backend macros                            macroString = $macroString])
 ])
