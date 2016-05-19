@@ -246,16 +246,21 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   return s;
 }
 
-#if 0
-string Visualizer::transitionGraphToDot() {
+string Visualizer::parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph) {
+  EStateTransitionMap* outEdgesMap = parProTransitionGraph->getOutEdgesMap();
   stringstream ss;
-  for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-    ss <<"\""<<estateToString((*j).source)<<"\""<< "->" <<"\""<<estateToString((*j).target)<<"\"";
-    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
+  ss << "digraph G {" << endl;
+  for(EStateTransitionMap::iterator i=outEdgesMap->begin(); i!=outEdgesMap->end(); i++) {
+    const ParProEState* source = i->first;
+    ParProTransitions outEdges = i->second;
+    for (ParProTransitions::iterator k=outEdges.begin(); k!=outEdges.end(); k++) {
+      ss <<"  \""<<source->toString()<<"\""<< "->" <<"\""<<k->target->toString()<<"\"";
+      ss <<" [label=\""<<k->edge.getAnnotation()<<"\"]"<<";"<<endl;      
+    }
   }
+  ss << "}" << endl;
   return ss.str();
 }
-#endif
 
 string Visualizer::transitionGraphToDot() {
   tg1=true;

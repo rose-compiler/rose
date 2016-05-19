@@ -478,7 +478,6 @@ int main( int argc, char * argv[] ) {
       cfg.setDotOptionDisplayStmt(false);
       cfg.setDotOptionEdgeAnnotationsOnly(true);
       string outputFilename = "cfg" + boost::lexical_cast<string>(counter) + ".dot";
-      cout << "DEBUG: outputFilename: " << outputFilename << endl;
       write_file(outputFilename, cfg.toDot(NULL));
       cout << "generated " << outputFilename <<"."<<endl;
       counter++;
@@ -491,7 +490,13 @@ int main( int argc, char * argv[] ) {
     parProAnalyzer.setAnnotationMap(edgeAnnotationMap);
     parProAnalyzer.initializeSolver();
     parProAnalyzer.runSolver();
-    
+    ParProTransitionGraph* transitionGraph = parProAnalyzer.getTransitionGraph();
+    cout << "DEBUG: transitionGraph->size() = " << transitionGraph->size() << endl;
+    Visualizer visualizer;
+    string dotStg = visualizer.parProTransitionGraphToDot(transitionGraph);
+    string outputFilename = "stgParallelProgram.dot";
+    write_file(outputFilename, dotStg);
+    cout << "generated " << outputFilename <<"."<<endl;
     cout << "DEBUG: parseDotCfg test complete." << endl;
     exit(0);
   }

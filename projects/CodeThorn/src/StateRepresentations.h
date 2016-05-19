@@ -183,7 +183,7 @@ class ParProEState {
   ParProEState():_parProLabel(ParProLabel()){}
   ParProEState(ParProLabel label):_parProLabel(label){}
   ParProLabel getLabel() const { return _parProLabel; }
-  string toString();
+  string toString() const;
   
   private:
   ParProLabel _parProLabel; 

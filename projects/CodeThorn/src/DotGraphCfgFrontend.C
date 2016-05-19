@@ -106,7 +106,7 @@ CfgsAndAnnotationMap DotGraphCfgFrontend::parseDotCfgs(string filename) {
 	if (boost::regex_search(line, what, edge_name_expr)) {
 	  edge_label = what[1];
 	}
-	cout << "DEBUG: parsed transition: (" << node_labels.first << ", "<< edge_label << ", "<< node_labels.second << ")"<<endl;
+	//	cout << "DEBUG: parsed transition: (" << node_labels.first << ", "<< edge_label << ", "<< node_labels.second << ")"<<endl;
 	// add the edge to the CFG
 	Label source = Label(node_labels.first);
 	mostRecentSourceNodes.insert(node_labels.first);

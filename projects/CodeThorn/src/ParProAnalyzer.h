@@ -11,6 +11,7 @@
 #include "Flow.h"
 #include "StateRepresentations.h"
 #include "ParProTransitionGraph.h"
+#include "DotGraphCfgFrontend.h"
 
 // CodeThorn includes
 
@@ -28,7 +29,6 @@ using namespace CodeThorn;
 namespace CodeThorn {
 
   typedef std::list<const ParProEState*> ParProWorklist;
-  typedef boost::unordered_map<std::string, boost::unordered_map<int, std::list<Edge> > > EdgeAnnotationMap;
 
   // Analyzes the state space of a parallel program. 
   class ParProAnalyzer {
@@ -48,7 +48,7 @@ ParProAnalyzer(std::vector<Flow>& cfgs): _cfgs(cfgs),
 
 
   private:
-    std::list<ParProEState> parProTransferFunction(const ParProEState*);
+    std::list<std::pair<Edge, ParProEState> > parProTransferFunction(const ParProEState*);
     ParProEState transfer(const ParProEState* eState, Edge e, unsigned int cfgId);
     bool feasibleAccordingToGlobalState(Edge e, const ParProEState*);
     bool isIncompleteStgReady();

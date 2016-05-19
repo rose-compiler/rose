@@ -517,7 +517,7 @@ bool CodeThorn::operator!=(const ParProEState& e1, const ParProEState& e2) {
   return !(e1==e2);
 }
 
-string ParProEState::toString() {
+string ParProEState::toString() const {
   ParProLabel label = getLabel();
   bool firstEntry = true;
   stringstream ss;

@@ -10,6 +10,7 @@
 #include "Labeler.h"
 #include "CFAnalysis.h"
 #include "StateRepresentations.h"
+#include "ParProTransitionGraph.h"
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
 
@@ -55,6 +56,7 @@ class Visualizer {
   std::string transitionGraphDotHtmlNode(SPRAY::Label lab);
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
+  std::string parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph);
   // used for displaying abstract ("topified") transition graphs.
   std::string transitionGraphWithIOToDot(CodeThorn::EStatePtrSet displayedEStates, 
                                     bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);

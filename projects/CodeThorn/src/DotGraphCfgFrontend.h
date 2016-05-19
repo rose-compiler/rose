@@ -12,7 +12,6 @@
 #include "Flow.h"
 
 // CodeThorn includes
-#include "ParProAnalyzer.h" // currently only for the typedef EdgeAnnotationMap
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -24,6 +23,7 @@
 
 namespace SPRAY {
 
+  typedef boost::unordered_map<std::string, boost::unordered_map<int, std::list<Edge> > > EdgeAnnotationMap;
   typedef std::pair<std::list<Flow>, EdgeAnnotationMap> CfgsAndAnnotationMap;
 
   // Parses a .dot-file digraph into a Flow CFG

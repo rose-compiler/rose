@@ -18,6 +18,7 @@ void ParProAnalyzer::initializeSolver() {
   const ParProEState* startStatePtr= _eStateSet.processNewOrExisting(startState);
   // add the start state to the worklist
   worklist.push_back(startStatePtr);
+  _transitionGraph.setStartState(startStatePtr);
 }
 
 void ParProAnalyzer::runSolver() {
@@ -56,14 +57,14 @@ void ParProAnalyzer::runSolver() {
         assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         assert(currentEStatePtr);
-	list<ParProEState> newEStateList = parProTransferFunction(currentEStatePtr);
-	for (list<ParProEState>::iterator i=newEStateList.begin(); i!=newEStateList.end(); i++) {
-	  ParProEStateSet::ProcessingResult pres = _eStateSet.process(*i);
+	list<pair<Edge, ParProEState> > newEStateList = parProTransferFunction(currentEStatePtr);
+	for (list<pair<Edge, ParProEState> >::iterator i=newEStateList.begin(); i!=newEStateList.end(); i++) {
+	  ParProEStateSet::ProcessingResult pres = _eStateSet.process(i->second);
           const ParProEState* newEStatePtr = pres.second;
 	  if (pres.first == true) {
 	    addToWorkList(newEStatePtr);
 	  }
-	  // TODO: record transition in the STG here
+	  _transitionGraph.add(ParProTransition(currentEStatePtr, i->first, newEStatePtr));
 	}
       } // conditional: test if work is available
     } // while
@@ -79,14 +80,14 @@ void ParProAnalyzer::runSolver() {
 
   // TODO: remove this temporary test
   cout << "DEBUG: _eStateSet size: " << _eStateSet.size() << endl;
-  cout << "DEBUG: _eStateSet elements: " << endl;
-  for (ParProEStateSet::iterator i=_eStateSet.begin(); i!=_eStateSet.end(); i++) {
-    cout << "DEBUG: " << (*i)->toString() << endl;
-  }
+  //  cout << "DEBUG: _eStateSet elements: " << endl;
+  //  for (ParProEStateSet::iterator i=_eStateSet.begin(); i!=_eStateSet.end(); i++) {
+  //    cout << "DEBUG: " << (*i)->toString() << endl;
+  //  }
 }
 
-list<ParProEState> ParProAnalyzer::parProTransferFunction(const ParProEState* source) {
-  list<ParProEState> result;
+list<pair<Edge, ParProEState> > ParProAnalyzer::parProTransferFunction(const ParProEState* source) {
+  list<pair<Edge, ParProEState> > result;
   ParProLabel sourceLabel = source->getLabel();
   // compute successor EStates based on the out edges of every CFG (one per parallel component)
   //  for (ParProLabel::iterator i=sourceLabel.begin(); i!=sourceLabel.end(); i++) {
@@ -98,7 +99,7 @@ list<ParProEState> ParProAnalyzer::parProTransferFunction(const ParProEState* so
       // TODO: combine "feasibleAccordingToGlobalState(...)" and "transfer(...)" to avoid 2nd lookup and iteration
       if (feasibleAccordingToGlobalState(e, source)) {
 	ParProEState target = transfer(source, e, i);
-	result.push_back(target);
+	result.push_back(pair<Edge, ParProEState>(e, target));
       }
     } // for each outgoing CFG edge of a particular parallel component's current label
   } // for each parallel component of the analyzed system
