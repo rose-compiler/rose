@@ -95,6 +95,7 @@ list<ParProEState> ParProAnalyzer::parProTransferFunction(const ParProEState* so
     Flow outEdges = _cfgs[i].outEdges(sourceLabel[i]);
     for(Flow::iterator k=outEdges.begin(); k!=outEdges.end(); k++) { 
       Edge e=*k;
+      // TODO: combine "feasibleAccordingToGlobalState(...)" and "transfer(...)" to avoid 2nd lookup and iteration
       if (feasibleAccordingToGlobalState(e, source)) {
 	ParProEState target = transfer(source, e, i);
 	result.push_back(target);
@@ -104,13 +105,39 @@ list<ParProEState> ParProAnalyzer::parProTransferFunction(const ParProEState* so
   return result;
 }
 
-// TODO: implement evaluation based on communication/synchronization between parallel components
-bool ParProAnalyzer::feasibleAccordingToGlobalState(Edge e, const ParProEState*) { return true; }
+bool ParProAnalyzer::feasibleAccordingToGlobalState(Edge e, const ParProEState* eState) {
+  ParProLabel sourceLabel = eState->getLabel();
+  EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
+  ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
+  boost::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
+  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); i++) {
+    bool foundAnEdgeInCfg = false;
+    for (list<Edge>::iterator k=i->second.begin(); k!=i->second.end(); k++) {
+      if (sourceLabel[i->first] == k->source) {
+	foundAnEdgeInCfg = true;
+	break;
+      }
+    }
+    if (!foundAnEdgeInCfg) {
+      return false;
+    } 
+  }
+  return true;
+}
 
-// TODO: implement semantics of CFG edges
 ParProEState ParProAnalyzer::transfer(const ParProEState* eState, Edge e, unsigned int cfgId) {
   ParProLabel targetLabel = eState->getLabel();
-  targetLabel[cfgId] = e.target;
+  EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
+  ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
+  boost::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
+  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); i++) {
+    for (list<Edge>::iterator k=i->second.begin(); k!=i->second.end(); k++) {
+      if (targetLabel[i->first] == k->source) {
+        targetLabel[i->first] = k->target;
+	break;
+      }
+    }
+  }
   return ParProEState(targetLabel);
 }
 

@@ -12,7 +12,7 @@
 #include "Flow.h"
 
 // CodeThorn includes
-
+#include "ParProAnalyzer.h" // currently only for the typedef EdgeAnnotationMap
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -24,6 +24,8 @@
 
 namespace SPRAY {
 
+  typedef std::pair<std::list<Flow>, EdgeAnnotationMap> CfgsAndAnnotationMap;
+
   // Parses a .dot-file digraph into a Flow CFG
   class DotGraphCfgFrontend {
   public:
@@ -32,7 +34,7 @@ namespace SPRAY {
     // parse the CFG contained in the "filename" .dot-file and return a Flow CFG.
     Flow parseDotCfg(std::string filename);
     // parse the CFGs contained in the "filename" .dot-file and return a list of Flow CFGs.
-    std::list<Flow> parseDotCfgs(std::string filename);
+    CfgsAndAnnotationMap parseDotCfgs(std::string filename);
 
   private:
     size_t determineStartNode(boost::unordered_set<size_t>& mostRecentSourceNodes, 

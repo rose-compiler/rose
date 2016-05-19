@@ -5,11 +5,8 @@
 using namespace SPRAY;
 using namespace std;
 
-
 Flow DotGraphCfgFrontend::parseDotCfg(string filename) {
-
   Flow edgeSet;
-
   ifstream dot_graph(filename.c_str());
   boost::regex transition_expr("[ ]*[[:digit:]]+[ ]*->[ ]*[[:digit:]]+.*");
   boost::regex integer_expr("[[:digit:]]+");
@@ -52,11 +49,14 @@ Flow DotGraphCfgFrontend::parseDotCfg(string filename) {
   }
   return edgeSet;
 } 
-list<Flow> DotGraphCfgFrontend::parseDotCfgs(string filename) {
+
+CfgsAndAnnotationMap DotGraphCfgFrontend::parseDotCfgs(string filename) {
  
   //note: nodes with no incoming or outgoing edges are currently ignored. 
 
   list<Flow> cfgs;
+  EdgeAnnotationMap edgesByAnnotation;
+  int mostRecentCfgId = 0;
   Flow mostRecentCfg;
   // data structures to determine a start state
   boost::unordered_set<size_t> mostRecentSourceNodes;
@@ -79,6 +79,7 @@ list<Flow> DotGraphCfgFrontend::parseDotCfgs(string filename) {
 	  Label startLabel = Label(startNode);
 	  mostRecentCfg.setStartLabel(startLabel);
 	  cfgs.push_back(mostRecentCfg);
+	  mostRecentCfgId++;
 	}
 	firstCfg = false;
 	mostRecentCfg = Flow();
@@ -106,7 +107,7 @@ list<Flow> DotGraphCfgFrontend::parseDotCfgs(string filename) {
 	  edge_label = what[1];
 	}
 	cout << "DEBUG: parsed transition: (" << node_labels.first << ", "<< edge_label << ", "<< node_labels.second << ")"<<endl;
-	//TODO: add Edge to the CFG here
+	// add the edge to the CFG
 	Label source = Label(node_labels.first);
 	mostRecentSourceNodes.insert(node_labels.first);
 	Label target = Label(node_labels.second);
@@ -114,6 +115,31 @@ list<Flow> DotGraphCfgFrontend::parseDotCfgs(string filename) {
 	Edge edge = Edge(source, target);
 	edge.setAnnotation(edge_label);
         mostRecentCfg.insert(edge);
+	// add an entry to the CFG annotation map
+	EdgeAnnotationMap::iterator res = edgesByAnnotation.find(edge.getAnnotation());
+	if (res == edgesByAnnotation.end()) {
+	  // no edge with that annoation so far, create a new entry in the map
+	  boost::unordered_map<int, list<Edge> > edgesInThisCfg;
+          list<Edge> newEdgeList;
+	  newEdgeList.push_back(edge);
+	  edgesInThisCfg[mostRecentCfgId] = newEdgeList; 
+	  //	  edgesWithThisAnnotation.push_back(pair<int, Edge>(mostRecentCfgId, edge));
+	  // edgesByAnnotation[edge.getAnnotation()] = edgesWithThisAnnotation;
+	  edgesByAnnotation[edge.getAnnotation()] = edgesInThisCfg;
+	} else {
+	  boost::unordered_map<int, std::list<Edge> >::iterator cfgRes = res->second.find(mostRecentCfgId);
+	  if (cfgRes == res->second.end()) {
+	    // already found other edges with this annotation, but not in this CFG. Add an entry for this CFG
+	    list<Edge> newEdgeList;
+	    newEdgeList.push_back(edge);
+	    res->second[mostRecentCfgId] = newEdgeList; 
+	  } else {
+	    // other edges with the same annotation exist within the same CFG, add to the list for this CFG
+	    cfgRes->second.push_back(edge);
+	  }
+	  // an entry exists in the map, append this edge to the list for its annotation
+	  //res->second.push_back(pair<int, Edge>(mostRecentCfgId, edge));
+	}
       }
     }
     // the entire file has been parsed, add the last cfg to the list
@@ -123,7 +149,7 @@ list<Flow> DotGraphCfgFrontend::parseDotCfgs(string filename) {
     cfgs.push_back(mostRecentCfg);
     dot_graph.close();
   }
-  return cfgs;
+  return CfgsAndAnnotationMap(cfgs, edgesByAnnotation);
 }
 
 size_t DotGraphCfgFrontend::determineStartNode(boost::unordered_set<size_t>& mostRecentSourceNodes, 

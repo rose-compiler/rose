@@ -467,7 +467,9 @@ int main( int argc, char * argv[] ) {
   if (args.count("cfg-dot-input")) {
     DotGraphCfgFrontend dotGraphCfgFrontend;
     string filename = args["cfg-dot-input"].as<string>();
-    list<Flow> cfgs = dotGraphCfgFrontend.parseDotCfgs(filename);
+    CfgsAndAnnotationMap cfgsAndMap = dotGraphCfgFrontend.parseDotCfgs(filename);
+    list<Flow> cfgs = cfgsAndMap.first;
+    EdgeAnnotationMap edgeAnnotationMap = cfgsAndMap.second;
     int counter = 0;
     for(list<Flow>::iterator i=cfgs.begin(); i!=cfgs.end(); i++) {
       Flow cfg = *i;
@@ -486,6 +488,7 @@ int main( int argc, char * argv[] ) {
     cfgsAsVector.reserve(cfgs.size());
     copy(begin(cfgs), end(cfgs), back_inserter(cfgsAsVector));
     ParProAnalyzer parProAnalyzer(cfgsAsVector);
+    parProAnalyzer.setAnnotationMap(edgeAnnotationMap);
     parProAnalyzer.initializeSolver();
     parProAnalyzer.runSolver();
     

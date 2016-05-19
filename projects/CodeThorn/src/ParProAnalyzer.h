@@ -23,11 +23,12 @@
 #include "boost/algorithm/string/regex.hpp"
 
 using namespace SPRAY;
+using namespace CodeThorn;
 
 namespace CodeThorn {
 
   typedef std::list<const ParProEState*> ParProWorklist;
-  typedef boost::unordered_map<std::string, std::list<int> > EdgeAnnotationMap;
+  typedef boost::unordered_map<std::string, boost::unordered_map<int, std::list<Edge> > > EdgeAnnotationMap;
 
   // Analyzes the state space of a parallel program. 
   class ParProAnalyzer {
@@ -40,6 +41,7 @@ ParProAnalyzer(std::vector<Flow>& cfgs): _cfgs(cfgs),
     void runSolver();
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
+    void setAnnotationMap(EdgeAnnotationMap& emap) { _annotationToEdges = emap; }
     std::vector<Flow>* getCfgs() { return &_cfgs; }
     ParProTransitionGraph* getTransitionGraph() { return &_transitionGraph; }
     bool isPrecise();
@@ -60,7 +62,7 @@ ParProAnalyzer(std::vector<Flow>& cfgs): _cfgs(cfgs),
     ParProEStateSet _eStateSet;
     ParProWorklist worklist;
     int _numberOfThreadsToUse;
-    EdgeAnnotationMap _edgeAnnotation2CfgIds;
+    EdgeAnnotationMap _annotationToEdges;
   };
 
 } // end of namespace CodeThorn
