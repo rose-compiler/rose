@@ -31,6 +31,9 @@ main(int argc, char *argv[]) {
     map.insert("+HASH+",        "#");
     map.insert("+SQUOTE+",      "'");
     map.insert("+DQUOTE+",      "\"");
+    map.insert("+DOT+",         ".");
+    map.insert("+SLASH+",       "/");
+    map.insert("+BSLASH+",      "\\");
     for (Strings::iterator arg = args.begin(); arg != args.end(); ++arg) {
         std::string translated;
         for (size_t i=0; i<arg->size(); ++i) {
