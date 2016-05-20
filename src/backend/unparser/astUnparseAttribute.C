@@ -66,6 +66,6 @@ AstUnparseAttribute::replacementStringExists()
    }
 
 AstUnparseAttribute::OwnershipPolicy
-AstUnparseAttribute::getOwnershipPolicy() const ROSE_OVERRIDE {
+AstUnparseAttribute::getOwnershipPolicy() const {
   return CONTAINER_OWNERSHIP;
 }

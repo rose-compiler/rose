@@ -223,7 +223,8 @@ main ( int argc, char* argv[] )
   // Call the traversal starting at the project (root) node of the AST
      astTraversal.traverseInputFiles(project,inheritedAttribute);
 
-     return 0;
+  // return 0;
+     return backendCompilesUsingOriginalInputFile(project);
    }
 
 

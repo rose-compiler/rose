@@ -95,5 +95,5 @@ class Y
 
 
 
-
-int main;
+// DQ (5/11/2016): GNU 6.1 does not allow a global variable to be named "main".
+// int main;

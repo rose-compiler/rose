@@ -518,6 +518,15 @@ SageInterface::hasTemplateSyntax( const SgName & name )
   // DQ (6/7/2012): We need to avoid the identification of the "operator<()" as valid template syntax.
      usingTemplateSyntax = (nameString.find('<') != string::npos) && (nameString.find('>') != string::npos);
 
+  // DQ (5/10/2016): Debugging case of C++11 using the Intel v16 compiler and it's associated mutex header file.
+  // See Cxx11_tests/test2016_32.C for an example that demonstrates this problem.
+     if (nameString == "<unnamed>")
+        {
+          printf ("In SageInterface::hasTemplateSyntax(): Identified case of name == <unnamed> \n");
+
+          usingTemplateSyntax = false;
+        }
+
   // return (name.getString().find('<') == string::npos);
      return usingTemplateSyntax;
    }
@@ -7386,7 +7395,6 @@ SgSourceFile* SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf
 SgFunctionDeclaration* SageInterface::findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
 {
   return findDeclarationStatement<SgFunctionDeclaration> (root, name, scope, isDefining);
-
 }
 
 
@@ -19444,7 +19452,13 @@ bool SageInterface::getForLoopInformations(
   SgVarRefExp * rhs_var_ref = isSgVarRefExp(rhs_exp);
   bool rhs_it = (rhs_var_ref != NULL) && (rhs_var_ref->get_symbol() == iterator);
 
-  assert(lhs_it xor rhs_it);
+// DQ (4/21/2016): Replacing use of bitwise xor with something more approriate for logical types.
+// Note that the xor logica operator does not exist in C/C++ and that this is a case of using the
+// bitwise xor operator on boolean values (not a great idea).  Note that logical "a xor b" is 
+// equivalent to "!a != !b"  the use of "!" only make sure that the "!=" is applied to a boolean 
+// value.  Since these are boolean typed values we can use "a != b", directly.
+// assert(lhs_it xor rhs_it);
+  assert(lhs_it != rhs_it);
 
   upper_bound = lhs_it ? bin_test->get_rhs_operand_i() : bin_test->get_lhs_operand_i();
 

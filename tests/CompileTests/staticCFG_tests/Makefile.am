@@ -604,17 +604,17 @@ check-local: check-cxx check-c check-c99 check-fortran
 
 clean-local:
 #	DQ (8/25/2011): This gnerates a command line that is too long for OSX and ends in an error.
-#	The problem appears to be ther there are too many *.dot files...(with long names).
+#	The problem appears to be that there are too many *.dot files...(with long names).
 #	rm -f *.o *.temp.c *-o *.mod *.dot
 	rm -f *.o 
 	rm -f *.temp.c 
 	rm -f *-o 
 	rm -f *.mod *.rmod
-#	rm -f *.dot
 	rm -f limits_*.dot
 	rm -f test_*.dot
 	rm -f *.dot
 	rm -rf QMTest
 	rm -f *.passed *.failed *.err *.out
 	rm -f *.temp.int.c
+	rm -f *.log
 

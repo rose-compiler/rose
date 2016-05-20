@@ -88,7 +88,7 @@ DetectionTraversal::evaluateInheritedAttribute (SgNode* astNode, Detection_Inher
   // DQ (2/3/2016): Recognize IR nodes that are representative of target DSL abstractions.
      bool foundTargetDslAbstraction = DSL_Support::isDslAbstraction(astNode);
 
-#if 0
+#if 1
      printf ("In DetectionTraversal::evaluateInheritedAttribute(): astNode = %p = %s: foundTargetDslAbstraction = %s \n",astNode,astNode->class_name().c_str(),foundTargetDslAbstraction ? "true" : "false");
 #endif
 
