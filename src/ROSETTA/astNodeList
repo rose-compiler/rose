@@ -813,4 +813,10 @@ SgJavaParameterType
 SgAsyncStmt
 SgFinishStmt
 SgAtStmt
+SgAtomicStmt
+//SgClassPropertyList
+SgWhenStmt
+SgAtExp
+SgFinishExp
 SgHereExp
+SgDotDotExp
