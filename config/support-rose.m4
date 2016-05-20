@@ -2143,8 +2143,6 @@ tests/CompilerOptionsTests/testHeaderFileOutput/Makefile
 tests/CompilerOptionsTests/testOutputFileOption/Makefile
 tests/CompilerOptionsTests/testGnuOptions/Makefile
 tests/CompilerOptionsTests/testFileNamesAndExtensions/Makefile
-tests/CompilerOptionsTests/testFileNamesAndExtensions/fileNames/Makefile
-tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/Makefile
 tests/CompilerOptionsTests/testGenerateSourceFileNames/Makefile
 tests/CompilerOptionsTests/testIncludeOptions/Makefile
 tests/CompileTests/Makefile
