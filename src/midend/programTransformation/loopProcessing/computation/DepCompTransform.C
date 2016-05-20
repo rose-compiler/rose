@@ -501,7 +501,7 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
    LoopTreeNode* shift = 0;
    if (unit.carrybyroot)
        shift = unit.root; 
-   int copyopt;
+   int copyopt = 0;
    if (!is_init) 
       copyopt |= INIT_COPY;
    if  (has_write)

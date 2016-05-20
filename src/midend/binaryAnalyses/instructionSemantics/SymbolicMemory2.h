@@ -11,6 +11,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
+/** Shared-ownership pointer for symbolic memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class SymbolicMemory> SymbolicMemoryPtr;
 
 /** Purely symbolic memory state.
@@ -19,13 +20,13 @@ typedef boost::shared_ptr<class SymbolicMemory> SymbolicMemoryPtr;
  *  symbolically. The memory state can be passed to SMT solvers and included in if-then-else symbolic expressions to represent
  *  different memory states according to different paths through a specimen. */
 class SymbolicMemory: public MemoryState {
-    InsnSemanticsExpr::TreeNodePtr mem_;
+    SymbolicExpr::Ptr mem_;
 protected:
     // All memory states should be heap allocated; use instance(), create(), or clone() instead.
     explicit SymbolicMemory(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryState(addrProtoval, valProtoval) {
         // Initially assume that addresses are 32 bits wide and values are 8 bits wide. We can change this on the first access.
-        mem_ = InsnSemanticsExpr::LeafNode::create_memory(32, 8);
+        mem_ = SymbolicExpr::makeMemory(32, 8);
     }
 
 public:
@@ -58,24 +59,24 @@ public:
     /** Property: the symbolic expression for the memory.
      *
      * @{ */
-    InsnSemanticsExpr::TreeNodePtr expression() const { return mem_; }
-    void expression(const InsnSemanticsExpr::TreeNodePtr &mem);
+    SymbolicExpr::Ptr expression() const { return mem_; }
+    void expression(const SymbolicExpr::Ptr &mem);
     /** @} */
 
 public:
-    // documented in base class
+    virtual bool
+    merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+          BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
     virtual void clear() ROSE_OVERRIDE;
 
-    // documented in base class
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
-    // documented in base class
     virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
 public:
-    // documented in base class
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 };
     

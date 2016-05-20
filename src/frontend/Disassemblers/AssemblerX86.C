@@ -45,7 +45,7 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             ss <<"IntegerValue {value="
                <<StringUtility::addrToString(ee->get_absoluteValue(), ee->get_significantBits())
                <<"}";
-            fprintf(f, ss.str().c_str());
+            fprintf(f, "%s", ss.str().c_str());
             break;
         }
         case V_SgAsmFloatValueExpression: {
@@ -1671,7 +1671,8 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
 
     static size_t nassembled=0;
     if (0==++nassembled % 10000)
-        fprintf(stderr, "AssemblerX86[va 0x%08"PRIx64"]: assembled %" PRIuPTR " instructions\n", insn->get_address(), nassembled);
+        fprintf(stderr, "AssemblerX86[va 0x%08" PRIx64 "]: assembled %" PRIuPTR " instructions\n",
+                insn->get_address(), nassembled);
 
     /* Instruction */
     if (p_debug) {

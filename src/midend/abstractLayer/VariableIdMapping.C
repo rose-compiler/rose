@@ -89,6 +89,14 @@ bool VariableIdMapping::hasArrayType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgArrayType(type)!=0;
 }
+bool VariableIdMapping::isConstantArray(VariableId varId) {
+  if(hasArrayType(varId)) {
+    // TODO: use new function: hasConstantArrayType.
+    return true;
+  } else {
+    return false;
+  }
+}
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -264,11 +272,24 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   * \date 2012.
  */
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
+  ROSE_ASSERT(varid.isValid());
+  ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToSym.size());
   return mappingVarIdToSym[varid._id];
 }
 //SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
 //  return varId.getSymbol();
 //}
+
+void VariableIdMapping::setSize(VariableId variableId, size_t size) {
+  ROSE_ASSERT(hasArrayType(variableId));
+  mappingVarIdToSize[variableId._id]=size;
+}
+
+size_t VariableIdMapping::getSize(VariableId variableId) {
+  ROSE_ASSERT(hasArrayType(variableId));
+  return mappingVarIdToSize[variableId._id];
+}
+
 
 /*! 
   * \author Markus Schordan
@@ -287,7 +308,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
         if(sym) {
           found=true;
-          if(modeVariableIdForEachArrayElement && SgNodeHelper::isArrayDeclaration(varDecl)) {
+          if(/*modeVariableIdForEachArrayElement &&*/ SgNodeHelper::isArrayDeclaration(varDecl)) {
             SgNode* initName0=varDecl->get_traversalSuccessorByIndex(1); // get-InitializedName
             ROSE_ASSERT(initName0);
             SgInitializedName* initName=isSgInitializedName(initName0);
@@ -303,8 +324,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
               arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initName->get_initializer()));
             }
             if(arraySize > 0) {
-              //cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
-              //cout<<"INFO: found array decl: size: "<<arraySize;
+              //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<varDecl->unparseToString()<<endl;
               registerNewArraySymbol(sym, arraySize);
               symbolSet.insert(sym);
               found = false;
@@ -481,7 +501,7 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
   * \date 2012.
  */
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
-  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId));
+  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId))!=0;
 }
 
 /*! 
@@ -511,12 +531,20 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
   ROSE_ASSERT(arraySize>0);
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
     // map symbol to var-id of array variable symbol
-    mappingSymToVarId[sym]=mappingVarIdToSym.size();
-    for(int i=0;i<arraySize;i++) {
-    // assign one var-id for each array element
-      //cout<<"registering "<<i<<endl;
+    size_t newVariableIdCode=mappingVarIdToSym.size();
+    mappingSymToVarId[sym]=newVariableIdCode;
+    VariableId tmpVarId=variableIdFromCode(newVariableIdCode);
+    if(getModeVariableIdForEachArrayElement()) {
+      // assign one var-id for each array element
+      for(int i=0;i<arraySize;i++) {
+        mappingVarIdToSym.push_back(sym);
+      }
+    } else {
+      // assign one vari-id for entire array
       mappingVarIdToSym.push_back(sym);
     }
+    // size needs to be set *after* mappingVarIdToSym has been updated
+    setSize(tmpVarId,arraySize);
   } else {
     cerr<< "Error: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
     exit(1);
@@ -579,6 +607,11 @@ VariableId::toString() const {
   stringstream ss;
   ss<<"V"<<_id;
   return ss.str();
+}
+
+string
+VariableId::toString(VariableIdMapping& vim) const {
+  return vim.uniqueShortVariableName(*this);
 }
 
 #if 0

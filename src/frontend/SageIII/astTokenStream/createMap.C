@@ -4,6 +4,7 @@
 #include <algorithm>
 using namespace std;
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // #ifndef USE_ROSE
 // If we are using ROSE to compile ROSE source code then the Wave support is not present.
 createMap::createMap(std::vector<SgNode*>& linAST, token_container& tokStream)
@@ -12,12 +13,13 @@ createMap::createMap(std::vector<SgNode*>& linAST, token_container& tokStream)
      buildMaps();
    }
 // #endif
-
+#endif
 
 void
 createMap::buildMaps()
    {
 #ifndef USE_ROSE
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // If we are using ROSE to compile ROSE source code then the Wave support is not present.
      separator* astScopes         = mapSeparatorsAST(linearizedAST);
      separator* curlyBraceScopes  = mapSeparatorsTokenStream(tokenStream);
@@ -26,6 +28,7 @@ createMap::buildMaps()
      curlyBraceScopes->outputValues(tokenStream);
      internalMatchBetweenASTandTokenStreamSeparator(astScopes,curlyBraceScopes);
 #endif
+#endif
    }
 
 void
@@ -33,6 +36,7 @@ createMap::internalMatchBetweenASTandTokenStreamSeparator(separator*
                                                           ast, separator* token){
 
 #ifndef USE_ROSE
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // If we are using ROSE to compile ROSE source code then the Wave support is not present.
     ROSE_ASSERT(ast != NULL);
     ROSE_ASSERT(token != NULL);
@@ -93,7 +97,7 @@ createMap::internalMatchBetweenASTandTokenStreamSeparator(separator*
             sep_it != tokenBraceMapForThisScope.end(); ++sep_it){
 
             if( 
-               (eq_it->begin_pos == sep_it->begin_pos)
+               eq_it->begin_pos == sep_it->begin_pos
 
               ){
                 tokenBraceMapForThisScope.erase(sep_it);
@@ -141,11 +145,12 @@ createMap::internalMatchBetweenASTandTokenStreamSeparator(separator*
             ++ast_it;
         }
     }
-
+#endif
 #endif
 }
 
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // #ifndef USE_ROSE
 // If we are using ROSE to compile ROSE source code then the Wave support is not present.
 //get the token stream provided in the constructor
@@ -154,6 +159,7 @@ token_container& createMap::get_tokenStream()
     return tokenStream;
 };
 // #endif
+#endif
 
 //get the linearized AST provided in the constructor
 std::vector<SgNode*>&               createMap::get_linearizedAST()
@@ -176,6 +182,7 @@ void
 createMap::printNodeToTokenMap()
    {
 #ifndef USE_ROSE
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
   // If we are using ROSE to compile ROSE source code then the Wave support is not present.
     std::cout << "BEGIN printing node to token map" << std::endl;
     std::cout << "SIZE: " << nodeToTokenMap.size() << std::endl;
@@ -210,6 +217,7 @@ createMap::printNodeToTokenMap()
         std::cout << std::endl;
     };
     std::cout << "END printing node to token map" << std::endl;   
+#endif
 #endif
    }
 

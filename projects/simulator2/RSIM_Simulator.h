@@ -224,6 +224,15 @@ public:
     Settings& settings() { return settings_; }
     /** @} */
 
+    /** Update first argument with full path name.
+     *
+     *  Replaces the first executable argument, corresponding to argv[0], with an absolute name. For linux, this is done by
+     *  consulting the $PATH environment variable. */
+    virtual void updateExecutablePath() = 0;
+
+    /** Construct the AST for the main executable without further linking or mapping. */
+    virtual SgAsmInterpretation* parseMainExecutable(RSIM_Process*);
+
     /** Set the name of the global semaphore.
      *
      *  A semaphore is needed in order to synchronize certain operations between simulators whose specimens might be
@@ -733,7 +742,7 @@ public:
 
     /** Initialize registers. This happens once while the process is being loaded and before its stack is initialized. The
      * instruction pointer need not be initialized here since the loader will do that later. */
-    virtual PtRegs initialRegistersArch() = 0;
+    virtual PtRegs initialRegistersArch(RSIM_Process*) = 0;
 
     /** Architecture specific loading and initialization using native method. */
     virtual void loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*, int existingPid=-1) = 0;
@@ -746,6 +755,9 @@ public:
 
     /** Initialize the simulated operating system. */
     virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) = 0;
+
+    /** Called immediately after a new thread is created. */
+    virtual void threadCreated(RSIM_Thread*) {}
 
     /***************************************************************************************************************************/
     

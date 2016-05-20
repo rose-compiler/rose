@@ -1,9 +1,11 @@
-#include <sage3basic.h>
+#include <rose.h>
 
+#include <BinaryStackVariable.h>                        // ROSE
+#include <BinarySymbolicExpr.h>                         // ROSE
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WToggleButton.h>
-#include <InsnSemanticsExpr.h>                          // ROSE
+#include <MemoryCellList.h>                             // ROSE
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
 #include <Wt/WPanel>
@@ -45,23 +47,22 @@ public:
     }
 
     std::string toString(const BaseSemantics::SValuePtr &valueBase) {
-        using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
         SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(valueBase);
-        LeafNodePtr leaf = value->get_expression()->isLeafNode();
-        if (leaf && leaf->is_known()) {
-            if (1==leaf->get_nbits()) {
-                return leaf->get_value() ? "true" : "false";
-            } else if (leaf->get_nbits()<=64) {
-                uint64_t v = leaf->get_value();
-                return StringUtility::toHex2(v, leaf->get_nbits());
+        SymbolicExpr::LeafPtr leaf = value->get_expression()->isLeafNode();
+        if (leaf && leaf->isNumber()) {
+            if (1==leaf->nBits()) {
+                return leaf->toInt() ? "true" : "false";
+            } else if (leaf->nBits()<=64) {
+                uint64_t v = leaf->toInt();
+                return StringUtility::toHex2(v, leaf->nBits());
             } else {
-                return leaf->get_bits().toHex();
+                return leaf->bits().toHex();
             }
         }
         return "? " + StringUtility::plural(valueBase->get_width(), "bits");
     }
 
-    void reload(const P2::DataFlow::State::Ptr &state, WSemantics::Mode mode, const FunctionDataFlow &dfInfo) {
+    void reload(const BaseSemantics::StatePtr &state, WSemantics::Mode mode, const FunctionDataFlow &dfInfo) {
         using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
         layoutAboutToBeChanged().emit();
         locValPairs_.clear();
@@ -69,8 +70,7 @@ public:
             switch (mode) {
                 case WSemantics::REG_INIT:
                 case WSemantics::REG_FINAL: {
-                    RegisterStateGenericPtr regState =
-                        RegisterStateGeneric::promote(state->semanticState()->get_register_state());
+                    RegisterStateGenericPtr regState = RegisterStateGeneric::promote(state->registerState());
                     RegisterNames regName(regState->get_register_dictionary());
                     BOOST_FOREACH (const RegisterStateGeneric::RegPair &reg_val, regState->get_stored_registers()) {
                         const RegisterDescriptor &reg = reg_val.desc;
@@ -93,12 +93,12 @@ public:
                     // RiscOperators for accessing multi-byte memory. We access a clone of the memory state so we're not
                     // affecting things like latestWriter addresses in the real state.
                     RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
-                    ops->set_state(state->semanticState()->clone());
+                    ops->currentState(state->clone());
 
 #if 1 // DEBUGGING [Robb Matzke 2015-01-13]
                     {
                         std::cerr <<"ROBB: full memory state (reverse chronological order):\n";
-                        MemoryCellListPtr memState = MemoryCellList::promote(state->semanticState()->get_memory_state());
+                        MemoryCellListPtr memState = MemoryCellList::promote(state->memoryState());
                         BOOST_FOREACH (const MemoryCellPtr &cell, memState->get_cells()) {
                             std::ostringstream s1, s2;
                             s1 <<*cell->get_address();
@@ -110,26 +110,26 @@ public:
 
                     // Stack pointer at the very start of this function.
                     const RegisterDescriptor SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
-                    SValuePtr stackPtr = dfInfo.initialStates[0]->semanticState()->readRegister(SP, ops.get());
+                    SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
                     const RegisterDescriptor SS = ctx_.partitioner.instructionProvider().stackSegmentRegister();
 
                     // Function arguments
-                    BOOST_FOREACH (const P2::DataFlow::StackVariable &var, state->findFunctionArguments(stackPtr)) {
+                    BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findFunctionArguments(ops, stackPtr)) {
                         char name[64];
-                        sprintf(name, "arg_%"PRIx64, var.offset);
-                        SValuePtr value = ops->undefined_(8*var.nBytes);
-                        value = ops->readMemory(SS, var.address, value, ops->boolean_(true));
+                        sprintf(name, "arg_%"PRIx64, var.location.offset);
+                        SValuePtr value = ops->undefined_(8*var.location.nBytes);
+                        value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
                     }
 
                     // Function local variables
-                    BOOST_FOREACH (const P2::DataFlow::StackVariable &var, state->findLocalVariables(stackPtr)) {
+                    BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findLocalVariables(ops, stackPtr)) {
                         char name[64];
-                        sprintf(name, "var_%"PRIx64, -var.offset);
-                        SValuePtr value = ops->undefined_(8*var.nBytes);
-                        value = ops->readMemory(SS, var.address, value, ops->boolean_(true));
+                        sprintf(name, "var_%"PRIx64, -var.location.offset);
+                        SValuePtr value = ops->undefined_(8*var.location.nBytes);
+                        value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
@@ -138,7 +138,7 @@ public:
                     // Global variables
                     ASSERT_require(SP.get_nbits() % 8 == 0);
                     const size_t wordNBytes = SP.get_nbits() / 8;
-                    BOOST_FOREACH (const AbstractLocation &var, state->findGlobalVariables(wordNBytes)) {
+                    BOOST_FOREACH (const AbstractLocation &var, P2::DataFlow::findGlobalVariables(ops, wordNBytes)) {
                         if (var.isAddress() && var.nBytes()>0 &&
                             var.getAddress()->is_number() && var.getAddress()->get_width()<=64) {
                             rose_addr_t va = var.getAddress()->get_number();
@@ -259,8 +259,21 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         return;
     bblock_ = bblock;
     mode_ = mode;
-    function_ = bblock_ ? ctx_.partitioner.basicBlockFunctionOwner(bblock) : P2::Function::Ptr();
 
+#if 0 // [Robb Matzke 2015-12-14]: old code, assuming basic blocks are not shared
+    function_ = bblock_ ? ctx_.partitioner.basicBlockFunctionOwner(bblock) : P2::Function::Ptr();
+#else // Partly fixed code, still assuming basic blocks are not shared.
+    if (function_) {
+        if (bblock_ == NULL || !function_->ownsBasicBlock(bblock_->address()))
+            function_ = P2::Function::Ptr();
+    } else {
+        BOOST_FOREACH (const P2::Function::Ptr &f, ctx_.partitioner.functionsOwningBasicBlock(bblock)) {
+            function_ = f;                              // chosen arbitrarily as the first one, if any
+            break;
+        }
+    }
+#endif
+        
     if (bblock && function_) {
         typedef BaseSemantics::RegisterStateGeneric RegState;
         typedef BaseSemantics::MemoryCellList MemState;
@@ -273,7 +286,8 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         
         const RegisterDescriptor &SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
         BaseSemantics::RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
-        BaseSemantics::SValuePtr initialStackPointer = df.initialStates[0]->semanticState()->readRegister(SP, ops.get());
+        BaseSemantics::SValuePtr initialStackPointer =
+            df.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
 
         BOOST_FOREACH (const P2::DataFlow::DfCfg::Vertex &vertex, df.dfCfg.vertices()) {
             if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK && vertex.value().bblock() == bblock) {

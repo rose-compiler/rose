@@ -9,80 +9,54 @@
 
 #include "BaseSemantics2.h"
 #include "integerOps.h"
-#include "rangemap.h"
+#include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
 
-/** An interval analysis semantic domain.
- *
- *  Each value in this domain is a set of intervals in the 32-bit unsigned integer space.  The intervals are represented by
- *  ROSE's Range type and the set of ranges is represented by ROSE's RangeMap class. In other words, a semantic value is
- *  actually a discontiguous set of intervals rather than the single interval that's usually used in these kinds of analyses. */
+/** An interval analysis semantic domain. */
 namespace IntervalSemantics {
 
-/** Range of possible values.  We only define this so the range-printing methods are a bit more intuitive for semantic
- *  analysis.  Otherwise we'll end up using the Extent::print() method which is more suitable for things like section
- *  addresses. */
-class Interval: public Range<uint64_t> {
-public:
-    Interval(): Range<uint64_t>() {}
-    explicit Interval(uint64_t first): Range<uint64_t>(first) {}
-    Interval(uint64_t first, uint64_t size): Range<uint64_t>(first, size) {}
-    Interval(const Range<uint64_t> &other): Range<uint64_t>(other) {} /*implicit*/
-
-    static Interval inin(uint64_t first, uint64_t last) ROSE_OVERRIDE {
-        ASSERT_require(first<=last);
-        Interval retval;
-        retval.first(first);
-        retval.last(last);
-        return retval;
-    }
-
-    /** Convert a bit mask to a string. */
-    static std::string to_string(uint64_t n);
-
-    void print(std::ostream &o) const ROSE_OVERRIDE;
-};
-
-std::ostream& operator<<(std::ostream &o, const Interval &x);
+/* Single contiguous interval. */
+typedef Sawyer::Container::Interval<uint64_t> Interval;
 
 /** Set of intervals. */
-typedef RangeMap<Interval> Intervals;
+typedef Sawyer::Container::IntervalSet<Interval> Intervals;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object. SValue objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to an interval semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the IntervalSemantics domain. */
 class SValue: public BaseSemantics::SValue {
 protected:
-    Intervals p_intervals;
+    Intervals intervals_;
 
 protected:
     // Protected constructors. See base class and public members for documentation
     explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
-        p_intervals.insert(Interval::inin(0, IntegerOps::genMask<uint64_t>(nbits)));
+        intervals_.insert(Interval::hull(0, IntegerOps::genMask<uint64_t>(nbits)));
     }
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         number &= IntegerOps::genMask<uint64_t>(nbits);
-        p_intervals.insert(Interval(number));
+        intervals_.insert(number);
     }
     SValue(size_t nbits, uint64_t v1, uint64_t v2): BaseSemantics::SValue(nbits) {
         v1 &= IntegerOps::genMask<uint64_t>(nbits);
         v2 &= IntegerOps::genMask<uint64_t>(nbits);
         ASSERT_require(v1<=v2);
-        p_intervals.insert(Interval::inin(v1, v2));
+        intervals_.insert(Interval::hull(v1, v2));
     }
     SValue(size_t nbits, const Intervals &intervals): BaseSemantics::SValue(nbits) {
-        ASSERT_require(!intervals.empty());
-        ASSERT_require((intervals.max() <= IntegerOps::genMask<uint64_t>(nbits)));
-        p_intervals = intervals;
+        ASSERT_require(!intervals.isEmpty());
+        ASSERT_require((intervals.greatest() <= IntegerOps::genMask<uint64_t>(nbits)));
+        intervals_ = intervals;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,6 +105,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors inherited from the super class
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
@@ -147,6 +124,9 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors first defined at this level of the class hierarchy
@@ -176,30 +156,32 @@ public:
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+
     virtual bool is_number() const ROSE_OVERRIDE {
-        return 1==p_intervals.size();
+        return 1==intervals_.size();
     }
     
     virtual uint64_t get_number() const {
-        ASSERT_require(1==p_intervals.size());
-        return p_intervals.min();
+        ASSERT_require(1==intervals_.size());
+        return intervals_.least();
     }
 
-    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const ROSE_OVERRIDE {
-        output <<p_intervals <<"[" <<get_width() <<"]";
-    }
+    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods introduced at this level of the class hierarchy
 public:
     /** Returns the rangemap stored in this value. */
     const Intervals& get_intervals() const {
-        return p_intervals;
+        return intervals_;
     }
 
     /** Changes the rangemap stored in the value. */
     void set_intervals(const Intervals &intervals) {
-        p_intervals = intervals;
+        intervals_ = intervals;
     }
 
     /** Returns all possible bits that could be set. */
@@ -220,7 +202,7 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStateGenericPtr;
 //                                      Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryState object.  MemoryState objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to an interval memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Byte-addressable memory.
@@ -283,14 +265,15 @@ public:
     /** Read a byte from memory.
      *
      *  In order to read a multi-byte value, use RiscOperators::readMemory(). */
-    virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
-                                                BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr
+    readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+               BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
     /** Write a byte to memory.
      *
      *  In order to write a multi-byte value, use RiscOperators::writeMemory(). */
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE;
+                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 };
 
 
@@ -306,8 +289,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to interval RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** RISC operators for interval domains. */
@@ -317,14 +299,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Interval");
+        name("Interval");
         (void) SValue::promote(protoval); // make sure its dynamic type is an IntervalSemantics::SValue or subclass thereof
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Interval");
-        (void) SValue::promote(state->get_protoval()); // dynamic type must be IntervalSemantics::SValue or subclass thereof
+        name("Interval");
+        (void) SValue::promote(state->protoval());      // dynamic type must be IntervalSemantics::SValue or subclass thereof
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -341,13 +323,13 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical value. An SMT solver may be specified as the second
-     *  argument for convenience. See set_solver() for details. */
+     *  argument for convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators with specified state. An SMT solver may be specified as the second argument for
-     *  convenience. See set_solver() for details. */
+     *  convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -383,13 +365,13 @@ public:
     /** Create a new SValue from a set of possible bits.  This is just a convience function so that we don't have to
      *  see so many dynamic casts in the source code. */
     virtual SValuePtr svalue_from_bits(size_t nbits, uint64_t possible_bits) {
-        return SValue::promote(protoval)->create_from_bits(nbits, possible_bits);
+        return SValue::promote(protoval())->create_from_bits(nbits, possible_bits);
     }
 
     /** Create a new SValue from a set of intervals.  This is just a convience function so that we don't have to
      *  see so many dynamic casts in the source code. */
     virtual SValuePtr svalue_from_intervals(size_t nbits, const Intervals &intervals) {
-        return SValue::promote(protoval)->create(nbits, intervals);
+        return SValue::promote(protoval())->create(nbits, intervals);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

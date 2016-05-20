@@ -44,6 +44,10 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += PythonFrontend
 endif
 
+if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+   SUBDIRS += MatlabFrontend
+endif
+
 SUBDIRS += DLX
 
 # Until we revisit this this, we want to include specific documentation that has been put into this directory.
@@ -59,12 +63,13 @@ EXTRA_DIST = CMakeLists.txt frontend.docs
 
 nobase_pkginclude_HEADERS=			\
 	Partitioner2/AddressUsageMap.h		\
-	Partitioner2/Attribute.h		\
 	Partitioner2/BasicBlock.h		\
 	Partitioner2/BasicTypes.h		\
+	Partitioner2/CfgPath.h			\
 	Partitioner2/Config.h			\
 	Partitioner2/ControlFlowGraph.h		\
 	Partitioner2/DataBlock.h		\
+	Partitioner2/DataFlow.h			\
 	Partitioner2/Engine.h			\
 	Partitioner2/Exception.h		\
 	Partitioner2/Function.h			\

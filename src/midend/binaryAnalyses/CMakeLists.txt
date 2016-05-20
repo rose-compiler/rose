@@ -1,6 +1,5 @@
 add_library(midend_binary OBJECT
   AbstractLocation.C
-  binary_analysis.C
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
@@ -8,9 +7,14 @@ add_library(midend_binary OBJECT
   BinaryFunctionCall.C
   BinaryMagic.C
   BinaryNoOperation.C
+  BinaryPointerDetection.C
   BinaryReturnValueUsed.C
+  BinaryStackDelta.C
   BinaryString.C
+  BinarySymbolicExpr.C
+  BinarySymbolicExprParser.C
   BinaryTaintedFlow.C
+  BinaryToSource.C
   DwarfLineMapper.C
   GraphAlgorithms.C
   RoseBin_CallGraphAnalysis.cpp
@@ -30,17 +34,21 @@ add_library(midend_binary OBJECT
   instructionSemantics/DispatcherM68k.C
   instructionSemantics/DispatcherPowerpc.C
   instructionSemantics/DispatcherX86.C
-  instructionSemantics/findConstants.C
   instructionSemantics/FindRegisterDefs.C
-  instructionSemantics/InsnSemanticsExpr.C
   instructionSemantics/IntervalSemantics.C
   instructionSemantics/IntervalSemantics2.C
   instructionSemantics/LlvmSemantics2.C
-  instructionSemantics/NullSemantics2.C
+  instructionSemantics/MemoryCell.C
+  instructionSemantics/MemoryCellList.C
+  instructionSemantics/MemoryCellMap.C
+  instructionSemantics/MemoryCellState.C
   instructionSemantics/MultiSemantics2.C
+  instructionSemantics/NullSemantics2.C
   instructionSemantics/PartialSymbolicSemantics.C
   instructionSemantics/PartialSymbolicSemantics2.C
+  instructionSemantics/RegisterStateGeneric.C
   instructionSemantics/SMTSolver.C
+  instructionSemantics/SourceAstSemantics2.C
   instructionSemantics/StaticSemantics2.C
   instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics.C
@@ -54,7 +62,6 @@ add_dependencies(midend_binary rosetta_generated)
 install(
   FILES
     AbstractLocation.h
-    binary_analysis.h
     BinaryAnalysisUtils.h
     BinaryCallingConvention.h
     BinaryControlFlow.h
@@ -64,8 +71,13 @@ install(
     BinaryMagic.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
+    BinaryStackDelta.h
+    BinaryStackVariable.h
     BinaryString.h
+    BinarySymbolicExpr.h
+    BinarySymbolicExprParser.h
     BinaryTaintedFlow.h
+    BinaryToSource.h
     dataflowanalyses/InterruptAnalysis.h
     dataflowanalyses/RoseBin_DataFlowAbstract.h
     dataflowanalyses/RoseBin_DefUseAnalysis.h
@@ -81,12 +93,15 @@ install(
     instructionSemantics/DispatcherM68k.h
     instructionSemantics/DispatcherPowerpc.h
     instructionSemantics/DispatcherX86.h
-    instructionSemantics/findConstants.h
     instructionSemantics/FindRegisterDefs.h
     instructionSemantics/flowEquations.h
     instructionSemantics/InsnSemanticsExpr.h
     instructionSemantics/IntervalSemantics2.h
     instructionSemantics/IntervalSemantics.h
+    instructionSemantics/MemoryCell.h
+    instructionSemantics/MemoryCellList.h
+    instructionSemantics/MemoryCellMap.h
+    instructionSemantics/MemoryCellState.h
     instructionSemantics/MultiSemantics2.h
     instructionSemantics/MultiSemantics.h
     instructionSemantics/NullSemantics2.h
@@ -94,7 +109,9 @@ install(
     instructionSemantics/PartialSymbolicSemantics2.h
     instructionSemantics/PartialSymbolicSemantics.h
     instructionSemantics/ReadWriteRegisterFragment.h
+    instructionSemantics/RegisterStateGeneric.h
     instructionSemantics/SMTSolver.h
+    instructionSemantics/SourceAstSemantics2.h
     instructionSemantics/StaticSemantics2.h
     instructionSemantics/SymbolicMemory2.h
     instructionSemantics/SymbolicSemantics2.h

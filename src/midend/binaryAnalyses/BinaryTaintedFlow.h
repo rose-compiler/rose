@@ -50,7 +50,7 @@ public:
         VarTaintList taints_;
 
     public:
-        /** Smart pointer for taint states. */
+        /** Shared-ownership pointer to taint states. See @ref heap_object_shared_ownership. */
         typedef boost::shared_ptr<State> Ptr;
 
     protected:
@@ -107,7 +107,7 @@ public:
         void print(std::ostream&) const;
     };
 
-    /** Reference counting pointer to @ref State.
+    /** Reference counting pointer to State.
      *
      *  State objects are reference counted and should not be deleted explicitly. */
     typedef State::Ptr StatePtr;

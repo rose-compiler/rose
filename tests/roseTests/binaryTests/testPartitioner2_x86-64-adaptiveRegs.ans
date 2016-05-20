@@ -1,0 +1,110 @@
+/* Interpretation ELF */
+0x004000e0: ================================== Function (entry point, graph) <_start>
+0x004000e0: Function does not return to caller.
+
+0x004000e0: Basic block reasons: entry point, CFG head
+0x004000e0: f4                      |.       |<sp+0 >   hlt    
+0x004000e0: Outgoing stack delta: +0
+0x004000e0: Successor blocks: none
+
+0x004000e1: ================================== Function (pattern, graph) unknown name
+0x004000e1: Function stack delta: +8
+
+0x004000e1: Basic block reasons: entry point, CFG head
+0x004000e1: 55                      |U       |<sp+0 >   push   rbp
+0x004000e2: 48 89 e5                |H..     |<sp-8 >   mov    rbp, rsp
+0x004000e5: 48 b8 00 01 02 03 04 05 |H.......|
+0x004000ed: 06 07                   |..      |<sp-8 >   mov    rax, 0x0706050403020100<506097522914230528>
+0x004000ef: 48 89 04 25 00 00 00 00 |H..%....|<sp-8 >   mov    qword ds:[0x0000000000000000], rax
+0x004000f7: 89 04 25 08 00 00 00    |..%.... |<sp-8 >   mov    dword ds:[0x0000000000000008], eax
+0x004000fe: 66 89 04 25 0c 00 00 00 |f..%....|<sp-8 >   mov    word ds:[0x000000000000000c], ax
+0x00400106: 88 04 25 0e 00 00 00    |..%.... |<sp-8 >   mov    byte ds:[0x000000000000000e], al
+0x0040010d: 66 89 04 25 0f 00 00 00 |f..%....|<sp-8 >   mov    word ds:[0x000000000000000f], ax
+0x00400115: 89 04 25 11 00 00 00    |..%.... |<sp-8 >   mov    dword ds:[0x0000000000000011], eax
+0x0040011c: 48 89 04 25 15 00 00 00 |H..%....|<sp-8 >   mov    qword ds:[0x0000000000000015], rax
+0x00400124: 88 24 25 1d 00 00 00    |.$%.... |<sp-8 >   mov    byte ds:[0x000000000000001d], ah
+0x0040012b: c9                      |.       |<sp-8 >   leave  
+0x0040012c: c3                      |.       |<sp+0 >   ret    
+0x0040012c: Outgoing stack delta: +8
+0x0040012c: Successor blocks: unknown
+
+0x0040012d: ================================== Function (pattern, graph) unknown name
+0x0040012d: Function stack delta: +8
+
+0x0040012d: Basic block reasons: entry point, CFG head
+0x0040012d: 55                      |U       |<sp+0 >   push   rbp
+0x0040012e: 48 89 e5                |H..     |<sp-8 >   mov    rbp, rsp
+0x00400131: 48 b8 00 01 02 03 04 05 |H.......|
+0x00400139: 06 07                   |..      |<sp-8 >   mov    rax, 0x0706050403020100<506097522914230528>
+0x0040013b: 48 bc c2 17 70 13 00 00 |H...p...|
+0x00400143: 00 00                   |..      |<sp-8 >   mov    rsp, 0x00000000137017c2
+0x00400145: 48 89 04 25 00 00 00 00 |H..%....|<sp-1821304894>   mov    qword ds:[0x0000000000000000], rax
+0x0040014d: 89 04 25 08 00 00 00    |..%.... |<sp-1821304894>   mov    dword ds:[0x0000000000000008], eax
+0x00400154: 66 89 04 25 0c 00 00 00 |f..%....|<sp-1821304894>   mov    word ds:[0x000000000000000c], ax
+0x0040015c: 88 04 25 0e 00 00 00    |..%.... |<sp-1821304894>   mov    byte ds:[0x000000000000000e], al
+0x00400163: c9                      |.       |<sp-1821304894>   leave  
+0x00400164: c3                      |.       |<sp+0 >   ret    
+0x00400164: Outgoing stack delta: +8
+0x00400164: Successor blocks: unknown
+
+0x00400165: ================================== Function (pattern, graph) unknown name
+0x00400165: Function stack delta: +8
+
+0x00400165: Basic block reasons: entry point, CFG head
+0x00400165: 55                      |U       |<sp+0 >   push   rbp
+0x00400166: 48 89 e5                |H..     |<sp-8 >   mov    rbp, rsp
+0x00400169: 48 b8 00 01 02 03 04 05 |H.......|
+0x00400171: 06 07                   |..      |<sp-8 >   mov    rax, 0x0706050403020100<506097522914230528>
+0x00400173: b8 f0 f1 f2 f3          |.....   |<sp-8 >   mov    eax, 0xf3f2f1f0
+0x00400178: 66 b8 e0 e1             |f...    |<sp-8 >   mov    ax, 0xe1e0<-7712>
+0x0040017c: b0 d0                   |..      |<sp-8 >   mov    al, 0xd0<-48>
+0x0040017e: 66 b8 c0 c1             |f...    |<sp-8 >   mov    ax, 0xc1c0<-15936>
+0x00400182: b8 b0 b1 b2 b3          |.....   |<sp-8 >   mov    eax, 0xb3b2b1b0
+0x00400187: 48 b8 a0 a1 a2 a3 a4 a5 |H.......|
+0x0040018f: a6 a7                   |..      |<sp-8 >   mov    rax, 0xa7a6a5a4a3a2a1a0<-6366218896703053408>
+0x00400191: b4 ff                   |..      |<sp-8 >   mov    ah, 0xff<-1>
+0x00400193: c9                      |.       |<sp-8 >   leave  
+0x00400194: c3                      |.       |<sp+0 >   ret    
+0x00400194: Outgoing stack delta: +8
+0x00400194: Successor blocks: unknown
+
+0x00400195: ================================== Function (pattern, graph) unknown name
+0x00400195: Function stack delta: +8
+
+0x00400195: Basic block reasons: entry point, CFG head
+0x00400195: 55                      |U       |<sp+0 >   push   rbp
+0x00400196: 48 89 e5                |H..     |<sp-8 >   mov    rbp, rsp
+0x00400199: 48 bc c2 17 70 13 00 00 |H...p...|
+0x004001a1: 00 00                   |..      |<sp-8 >   mov    rsp, 0x00000000137017c2
+0x004001a3: 48 b8 00 01 02 03 04 05 |H.......|
+0x004001ab: 06 07                   |..      |<sp-1821304894>   mov    rax, 0x0706050403020100<506097522914230528>
+0x004001ad: b8 f0 f1 f2 f3          |.....   |<sp-1821304894>   mov    eax, 0xf3f2f1f0
+0x004001b2: 66 b8 e0 e1             |f...    |<sp-1821304894>   mov    ax, 0xe1e0<-7712>
+0x004001b6: b0 d0                   |..      |<sp-1821304894>   mov    al, 0xd0<-48>
+0x004001b8: 66 b8 c0 c1             |f...    |<sp-1821304894>   mov    ax, 0xc1c0<-15936>
+0x004001bc: b8 b0 b1 b2 b3          |.....   |<sp-1821304894>   mov    eax, 0xb3b2b1b0
+0x004001c1: 48 b8 a0 a1 a2 a3 a4 a5 |H.......|
+0x004001c9: a6 a7                   |..      |<sp-1821304894>   mov    rax, 0xa7a6a5a4a3a2a1a0<-6366218896703053408>
+0x004001cb: b4 ff                   |..      |<sp-1821304894>   mov    ah, 0xff<-1>
+0x004001cd: c9                      |.       |<sp-1821304894>   leave  
+0x004001ce: c3                      |.       |<sp+0 >   ret    
+0x004001ce: Outgoing stack delta: +8
+0x004001ce: Successor blocks: unknown
+
+0x004001cf: ================================== Function (pattern, graph) unknown name
+0x004001cf: Function stack delta: +8
+
+0x004001cf: Basic block reasons: entry point, CFG head
+0x004001cf: 55                      |U       |<sp+0 >   push   rbp
+0x004001d0: 48 89 e5                |H..     |<sp-8 >   mov    rbp, rsp
+0x004001d3: 48 b8 00 01 02 03 04 05 |H.......|
+0x004001db: 06 07                   |..      |<sp-8 >   mov    rax, 0x0706050403020100<506097522914230528>
+0x004001dd: 48 bc c1 17 70 13 00 00 |H...p...|
+0x004001e5: 00 00                   |..      |<sp-8 >   mov    rsp, 0x00000000137017c1
+0x004001e7: 89 04 25 00 00 00 00    |..%.... |<sp-1821304895>   mov    dword ds:[0x0000000000000000], eax
+0x004001ee: 48 89 04 25 04 00 00 00 |H..%....|<sp-1821304895>   mov    qword ds:[0x0000000000000004], rax
+0x004001f6: c9                      |.       |<sp-1821304895>   leave  
+0x004001f7: c3                      |.       |<sp+0 >   ret    
+0x004001f7: Outgoing stack delta: +8
+0x004001f7: Successor blocks: unknown
+

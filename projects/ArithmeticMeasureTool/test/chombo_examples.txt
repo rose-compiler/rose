@@ -1,0 +1,29 @@
+[liaoch@hopper07:~/workspace/ExReDi]grep -r "chflops=chflops" *
+
+lib/src/AMRTools/f/2d.Linux.64.g++.gfortran.DEBUG/InterpF.f: chflops=chflops+2*chiterations
+
+lib/src/AMRTools/f/2d.Linux.64.g++.gfortran.DEBUG/QuadCFInterpF.f: chflops=chflops+chiterations*13
+lib/src/BoxTools/f/2d.Linux.64.g++.gfortran.DEBUG/CellToEdgeF.f: chflops=chflops+chiterations*2
+
+lib/src/BoxTools/f/2d.Linux.64.g++.gfortran.DEBUG/EdgeToCellF.f: chflops=chflops+chiterations*2
+lib/src/AMRElliptic/f/2d.Linux.64.g++.gfortran.DEBUG/AMRPoissonOpF.f: chflops=chflops+chiterations*(3*2 +4)
+
+
+lib/src/AMRTools/QuadCFInterpF.ChF:      chflops=chflops+chiterations*13
+lib/src/AMRTools/InterpF.ChF:       chflops=chflops+2*chiterations
+lib/src/BoxTools/CellToEdgeF.ChF:        chflops=chflops+chiterations*2
+lib/src/BoxTools/EdgeToCellF.ChF:      chflops=chflops+chiterations*2
+lib/src/AMRElliptic/AMRPoissonOpF.ChF:      chflops=chflops+chiterations*2
+
+lib/src/AMRTools/p/2d.Linux.64.g++.gfortran.DEBUG/InterpF.cpre: chflops=chflops+chiterations
+lib/src/AMRTools/p/2d.Linux.64.g++.gfortran.DEBUG/QuadCFInterpF.cpre: chflops=chflops+chiterations*(3*2 +16)
+lib/src/AMRElliptic/p/2d.Linux.64.g++.gfortran.DEBUG/AMRPoissonOpF.cpre: chflops=chflops+chiterations*(3*2 +4)
+lib/src/BoxTools/p/2d.Linux.64.g++.gfortran.DEBUG/CellToEdgeF.cpre: chflops=chflops+chiterations*2
+lib/src/BoxTools/p/2d.Linux.64.g++.gfortran.DEBUG/EdgeToCellF.cpre: chflops=chflops+chiterations*2
+
+
+lib/src/AMRTools/p/2d.Linux.64.g++.gfortran.DEBUG/InterpF.C: chflops=chflops+2*chiterations
+lib/src/AMRTools/p/2d.Linux.64.g++.gfortran.DEBUG/QuadCFInterpF.C: chflops=chflops+chiterations*(3*CH_SPACEDIM+16)
+lib/src/BoxTools/p/2d.Linux.64.g++.gfortran.DEBUG/CellToEdgeF.C: chflops=chflops+chiterations*2
+lib/src/BoxTools/p/2d.Linux.64.g++.gfortran.DEBUG/EdgeToCellF.C: chflops=chflops+chiterations*2
+

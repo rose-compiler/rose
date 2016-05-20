@@ -11,6 +11,7 @@
 #include <iostream>
 #include <climits>
 #include "Miscellaneous.h"
+#include "Miscellaneous2.h"
 
 using namespace std;
 
@@ -168,7 +169,7 @@ AType::BoolLattice AType::BoolLattice::glb(AType::BoolLattice other) {
 // operator== : C++ default used
 string AType::BoolLattice::toString() const {
   switch(value) {
-  case TOP: return "⊤" /*"top"*/; /* AP: not shure how legal this is */
+  case TOP: return "⊤" /*"top"*/; /* AP: not sure how portable this is */
   case BOT: return "⊥" /*"bot"*/;
   case TRUE: return "true";
   case FALSE: return "false";
@@ -197,8 +198,35 @@ AType::ConstIntLattice::ConstIntLattice(Top e) {valueType=AType::ConstIntLattice
 // type conversion
 AType::ConstIntLattice::ConstIntLattice(Bot e) {valueType=AType::ConstIntLattice::BOT;intValue=0;}
 // type conversion
+AType::ConstIntLattice::ConstIntLattice(unsigned char x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;}
+AType::ConstIntLattice::ConstIntLattice(signed char x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;}
+AType::ConstIntLattice::ConstIntLattice(short x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;}
 AType::ConstIntLattice::ConstIntLattice(int x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=x;}
-
+AType::ConstIntLattice::ConstIntLattice(long int x) {
+  if((x<INT_MIN || x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(long long int x) {
+  if((x<INT_MIN || x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(unsigned short int x) {
+  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(unsigned int x) {
+  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(unsigned long int x) {
+  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(unsigned long long int x) {
+  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+int AType::ConstIntLattice::intLength() { return sizeof(int); }
 
 bool AType::ConstIntLattice::isTop() const {return valueType==AType::ConstIntLattice::TOP;}
 bool AType::ConstIntLattice::isTrue() const {return valueType==AType::ConstIntLattice::CONSTINT && intValue!=0;}
@@ -213,7 +241,7 @@ long AType::ConstIntLattice::hash() const {
   throw "Error: ConstIntLattice hash: unknown value.";
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator!() {
+AType::ConstIntLattice AType::ConstIntLattice::operatorNot() {
   AType::ConstIntLattice tmp;
   switch(valueType) {
   case AType::ConstIntLattice::CONSTINT: 
@@ -232,8 +260,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator!() {
   return tmp;
 }
 
-
-AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorOr(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
@@ -261,7 +288,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other)
   throw "Error: ConstIntLattice operation|| failed.";
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator&&(ConstIntLattice other) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorAnd(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
@@ -303,19 +330,14 @@ bool AType::ConstIntLatticeCmp::operator()(const AType::ConstIntLattice& c1, con
   return AType::strictWeakOrderingIsSmaller(c1,c2);
 }
 
-bool AType::CppCapsuleConstIntLatticeLessComparator::operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const {
-  return AType::strictWeakOrderingIsSmaller(c1.getValue(),c2.getValue());
+bool AType::ConstIntLattice::operator==(AType::ConstIntLattice other) const {
+  return AType::strictWeakOrderingIsEqual(*this,other);
+}
+bool AType::ConstIntLattice::operator<(AType::ConstIntLattice other) const {
+  return AType::strictWeakOrderingIsSmaller(*this,other);
 }
 
-bool AType::CppCapsuleConstIntLattice::operator==(AType::CppCapsuleConstIntLattice other) const {
-  return AType::strictWeakOrderingIsEqual(getValue(),other.getValue());
-}
-bool AType::CppCapsuleConstIntLattice::operator<(AType::CppCapsuleConstIntLattice other) const {
-  return AType::strictWeakOrderingIsSmaller(getValue(),other.getValue());
-}
-
-
-AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorEq(ConstIntLattice other) const {
   // all TOP cases
   if(valueType==TOP || other.valueType==TOP) { 
     return AType::Top();
@@ -333,11 +355,11 @@ AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other)
     return ConstIntLattice(false);
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator!=(ConstIntLattice other) const {
-  return !(*this==other);
+AType::ConstIntLattice AType::ConstIntLattice::operatorNotEq(ConstIntLattice other) const {
+  return ((*this).operatorEq(other)).operatorNot();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorLess(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -348,7 +370,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) 
   return getIntValue()<other.getIntValue();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator<=(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorLessOrEq(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -359,7 +381,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator<=(ConstIntLattice other)
   return getIntValue()<=other.getIntValue();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator>=(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorMoreOrEq(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -370,7 +392,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator>=(ConstIntLattice other)
   return getIntValue()>=other.getIntValue();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator>(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorMore(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -396,13 +418,13 @@ string AType::ConstIntLattice::toString() const {
 }
 
 void AType::ConstIntLattice::fromStream(istream& is) {
-  if(CodeThorn::Parse::checkWord("top",is)) {
+  if(SPRAY::Parse::checkWord("top",is)) {
     valueType=TOP;
     intValue=0;
-  } else if(CodeThorn::Parse::checkWord("bot",is)) {
+  } else if(SPRAY::Parse::checkWord("bot",is)) {
     valueType=BOT;
     intValue=0;
-  } else if(CodeThorn::Parse::integer(is,intValue)) {
+  } else if(SPRAY::Parse::integer(is,intValue)) {
     valueType=CONSTINT;
   } else {
     throw "Error: ConstIntLattic::fromStream failed.";
@@ -423,7 +445,7 @@ int AType::ConstIntLattice::getIntValue() const {
 }
 
 // arithmetic operators
-AType::ConstIntLattice AType::ConstIntLattice::operator-() {
+AType::ConstIntLattice AType::ConstIntLattice::operatorUnaryMinus() {
   AType::ConstIntLattice tmp;
   switch(valueType) {
   case AType::ConstIntLattice::CONSTINT: 
@@ -433,12 +455,10 @@ AType::ConstIntLattice AType::ConstIntLattice::operator-() {
   case AType::ConstIntLattice::TOP: tmp=Top();break;
   case AType::ConstIntLattice::BOT: tmp=Bot();break;
   default:
-    throw "Error: ConstIntLattice operation '!' failed.";
+    throw "Error: ConstIntLattice operation unaryMinus failed.";
   }
   return tmp;
 }
-
-//#define ARITH_TOP
 
 AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())

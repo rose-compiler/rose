@@ -394,7 +394,7 @@ public:
     /** Find the beginnings of basic blocks based on instruction type and call targets.
      *
      *  \deprecated This function is deprecated.  Basic blocks are now represented by Partitioner::BasicBlock. */
-    BasicBlockStarts detectBasicBlocks(const Disassembler::InstructionMap&) const __attribute__((deprecated));
+  BasicBlockStarts detectBasicBlocks(const Disassembler::InstructionMap&) const ROSE_DEPRECATED("");
 
     /** Information about each function starting address.
      *
@@ -416,7 +416,7 @@ public:
      *
      *  \deprecated This function has been replaced by pre_cfg(), analyze_cfg(), and post_cfg() */
     FunctionStarts detectFunctions(SgAsmInterpretation*, const Disassembler::InstructionMap &insns,
-                                   BasicBlockStarts &bb_starts/*out*/) const __attribute__((deprecated));
+                                   BasicBlockStarts &bb_starts/*out*/) const ROSE_DEPRECATED("replaced by pre_cfg");
 
 
     /*************************************************************************************************************************

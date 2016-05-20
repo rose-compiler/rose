@@ -7,8 +7,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # AM_LDFLAGS += -Wl,-rpath -Wl,@prefix@/lib @prefix@/lib/librose.so
 
-# INCLUDES = -I@prefix@/include $(ROSE_INCLUDES)
-INCLUDES = $(ROSE_INCLUDES) 
+# AM_CPPFLAGS = -I@prefix@/include $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
 noinst_PROGRAMS = astStructRecognition
 

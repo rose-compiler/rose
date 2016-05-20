@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WAddressSpace.h>
 #include <bROwSE/WFunctionList.h>
 
@@ -51,9 +52,11 @@ WFunctionList::init() {
     model_->analyzers().push_back(FunctionImported::instance());
     model_->analyzers().push_back(FunctionExported::instance());
     model_->analyzers().push_back(FunctionNCallers::instance());
+    model_->analyzers().push_back(FunctionNCallees::instance());
     model_->analyzers().push_back(FunctionNReturns::instance());
     model_->analyzers().push_back(FunctionMayReturn::instance());
     model_->analyzers().push_back(FunctionStackDelta::instance());
+    model_->analyzers().push_back(FunctionCallingConvention::instance());
 
     // Function table
     tableView_ = new Wt::WTableView;
@@ -74,7 +77,7 @@ WFunctionList::init() {
 
     // Startup. Initialize the ATTR_Heat values so they're not returned as NaN on the first redraw.
     BOOST_FOREACH (const P2::Function::Ptr &function, ctx_.partitioner.functions())
-        function->attr<double>(ATTR_Heat, 0.0);
+        function->setAttribute(ATTR_Heat, 0.0);
     updateFunctionHeatMaps();
 }
 

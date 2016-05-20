@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/Application.h>
 
 #include <bROwSE/WAssemblyListing.h>
@@ -548,7 +549,13 @@ Application::updateAddressCrossReferences(rose_addr_t va) {
 void
 Application::gotoReference(const P2::Reference &ref) {
     if (P2::BasicBlock::Ptr bblock = ref.basicBlock()) {
-        if (P2::Function::Ptr function = ctx_.partitioner.basicBlockFunctionOwner(bblock)) {
+        P2::Function::Ptr function = ref.function();
+        if (function == NULL) {
+            std::vector<P2::Function::Ptr> functions = ctx_.partitioner.functionsOwningBasicBlock(bblock);
+            if (!functions.empty())
+                function = functions[0];
+        }
+        if (function) {
             changeFunction(function);
             changeTab(FunctionSummaryTab);
         }

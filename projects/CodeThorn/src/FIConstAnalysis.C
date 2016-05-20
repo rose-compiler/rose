@@ -76,8 +76,8 @@ bool FIConstAnalysis::determineVariable(SgNode* node, VariableId& varId, Variabl
   }
 }
 
-
-bool FIConstAnalysis::analyzeAssignment(SgAssignOp* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result) {
+bool FIConstAnalysis::analyzeAssignment(SgExpression* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result) {
+  ROSE_ASSERT(isSgAssignOp(assignOp)||isSgCompoundAssignOp(assignOp));
   const VariableId varId;
   const ConstIntLattice varValue;
   SgNode* lhs=SgNodeHelper::getLhs(assignOp);
@@ -128,7 +128,7 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
       VariableValuePair res=analyzeVariableDeclaration(varDecl,varIdMapping);
-      if(detailedOutput) cout<<"analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
+      if(detailedOutput) cout<<"INFO: analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
       //update map
       map[res.varId].insert(res.varValue);
     }
@@ -136,13 +136,33 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
       VariableValuePair res;
       bool hasLhsVar=analyzeAssignment(assignOp,varIdMapping,&res);
       if(hasLhsVar) {
-        //cout<<"analyzing variable assignment  :"<<res.toString(varIdMapping)<<endl;
+        if(detailedOutput) cout<<"INFO: analyzing variable assignment (SgAssignOp)  :"<<res.toString(varIdMapping)<<endl;
         map[res.varId].insert(res.varValue);
       } else {
         // not handled yet (the new def-use sets allow to handle this better)
-        cerr<<"Warning: ignoring assignment."<<endl;
+        cerr<<"Warning: unknown lhs of assignment."<<endl;
+        // TODO: all vars have to go to top and all additional entries must be top
+        exit(1);
       }
     }
+    // check for operators: +=, -=, ...
+    if(SgCompoundAssignOp* assignOp=isSgCompoundAssignOp(*i)) {
+      VariableValuePair res;
+      bool hasLhsVar=analyzeAssignment(assignOp,varIdMapping,&res);
+      if(hasLhsVar) {
+        if(detailedOutput) cout<<"INFO: analyzing variable assignment (SgCompoundAssignOp)  :"<<res.toString(varIdMapping)<<endl;
+        // set properly to Top (update of variable)
+#if 0
+        ConstIntLattice topVal(AType::Top);
+#endif
+        map[res.varId].insert(ConstIntLattice(Top()));
+      } else {
+        cerr<<"Warning: unknown lhs of compound assignment."<<endl;
+        // TODO: all vars have to go to top and all additional entries must be top
+        exit(1);
+      }
+    }
+
     // ignore everything else (as of now)
   }
 }
@@ -163,7 +183,7 @@ VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice min0, ConstIntLat
   _width=max0-min0;
   _min=min0;
   _max=max0;
-  if((_width<0).isTrue())
+  if((_width.operatorLess(0)).isTrue())
     _width=ConstIntLattice(0);
   ConstIntLattice one=AType::ConstIntLattice(1);
   _width=(VariableValueRangeInfo::_width+one);
@@ -187,22 +207,22 @@ VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice value) {
 VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map) {
   ROSE_ASSERT(map.size()>0);
   ROSE_ASSERT(varId.isValid());
-  set<CppCapsuleConstIntLattice> cppCapsuleSet=map[varId];
+  set<ConstIntLattice> intSet=map[varId];
   AType::ConstIntLattice minVal;
   AType::ConstIntLattice maxVal;
   // in case the set of collected assignments is empty, bot is returned (min and max remain bot).
-  if(cppCapsuleSet.size()==0)
+  if(intSet.size()==0)
     return VariableValueRangeInfo(AType::ConstIntLattice(AType::Bot()));
-  for(set<CppCapsuleConstIntLattice>::iterator i=cppCapsuleSet.begin();i!=cppCapsuleSet.end();++i) {
-    AType::ConstIntLattice aint=(*i).getValue();
+  for(set<ConstIntLattice>::iterator i=intSet.begin();i!=intSet.end();++i) {
+    AType::ConstIntLattice aint=(*i);
     if(aint.isTop()) {
       return VariableValueRangeInfo(AType::ConstIntLattice(AType::Top()));
     }
  
     if(minVal.isBot() && maxVal.isBot()) { minVal=aint; maxVal=aint; continue; }
-    if((aint<minVal).isTrue())
+    if((aint.operatorLess(minVal)).isTrue())
       minVal=aint;
-    if((aint>maxVal).isTrue())
+    if((aint.operatorMore(maxVal)).isTrue())
       maxVal=aint;
   }
   if(minVal.isBot()||maxVal.isBot())
@@ -213,11 +233,11 @@ VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableI
 // returns true if is in set
 // returns false if not in set
 // returns top if set contains top
-ConstIntLattice VariableConstInfo::isConstInSet(ConstIntLattice val, set<CppCapsuleConstIntLattice> valSet) {
-  if(valSet.find(CppCapsuleConstIntLattice(ConstIntLattice(AType::Top())))!=valSet.end()) {
+ConstIntLattice VariableConstInfo::isConstInSet(ConstIntLattice val, set<ConstIntLattice> valSet) {
+  if(valSet.find(ConstIntLattice(ConstIntLattice(AType::Top())))!=valSet.end()) {
     return ConstIntLattice(AType::Top());
   }
-  if(valSet.find(CppCapsuleConstIntLattice(val))!=valSet.end()) {  
+  if(valSet.find(ConstIntLattice(val))!=valSet.end()) {  
     return ConstIntLattice(true);
   }
   return ConstIntLattice(false);
@@ -232,9 +252,9 @@ int VariableConstInfo::arraySize(VariableId varId) {
 }
 
 bool VariableConstInfo::haveEmptyIntersection(VariableId varId1,VariableId varId2) {
-  set<CppCapsuleConstIntLattice> var1Set=(*_map)[varId1];
-  set<CppCapsuleConstIntLattice> var2Set=(*_map)[varId2];
-  for(set<CppCapsuleConstIntLattice>::iterator i=var1Set.begin();
+  set<ConstIntLattice> var1Set=(*_map)[varId1];
+  set<ConstIntLattice> var2Set=(*_map)[varId2];
+  for(set<ConstIntLattice>::iterator i=var1Set.begin();
       i!=var1Set.end();
       ++i) {
     if(var2Set.find(*i)!=var2Set.end()) {
@@ -250,11 +270,11 @@ bool VariableConstInfo::isAny(VariableId varId) {
 bool VariableConstInfo::isUniqueConst(VariableId varId) {
   ROSE_ASSERT(_map);
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()==ConstIntLattice(1)).isTrue();
+  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width().operatorEq(ConstIntLattice(1))).isTrue();
 }
 bool VariableConstInfo::isMultiConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()>ConstIntLattice(1)).isTrue();
+  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width().operatorMore(ConstIntLattice(1))).isTrue();
 }
 size_t VariableConstInfo::width(VariableId varId) {
   ConstIntLattice width=createVariableValueRangeInfo(varId,*_map).width();
@@ -290,7 +310,7 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
 
   // initialize map such that it is resized to number of variables of interest
   for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
-    set<CppCapsuleConstIntLattice> emptySet;
+    set<ConstIntLattice> emptySet;
     varConstIntMap[*i]=emptySet;
   }
   cout<<"STATUS: Initialized const map for "<<varConstIntMap.size()<< " variables."<<endl;
@@ -302,16 +322,16 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
   cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 #if 0
   int filteredVars=0;
-  set<CppCapsuleConstIntLattice> emptySet;
+  set<ConstIntLattice> emptySet;
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
     VariableId globalVarId=variableIdMapping.variableId(*i);
     if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
       VariableValuePair p=analyzeVariableDeclaration(*i,variableIdMapping);
       ConstIntLattice varValue=p.varValue;
       varConstIntMap[p.varId]=emptySet; // create mapping
-      varConstIntMap[p.varId].insert(CppCapsuleConstIntLattice(varValue));
+      varConstIntMap[p.varId].insert(ConstIntLattice(varValue));
       variablesOfInterest.insert(p.varId);
-      //set<CppCapsuleConstIntLattice>& myset=varConstIntMap[p.varId];
+      //set<ConstIntLattice>& myset=varConstIntMap[p.varId];
     } else {
       filteredVars++;
     }
@@ -398,7 +418,7 @@ EvalValueType FIConstAnalysis::evalSgAndOp(EvalValueType lhsResult,EvalValueType
   if(lhsResult.isFalse()) {
     res=lhsResult;
   } else {
-    res=(lhsResult&&rhsResult);
+    res=(lhsResult.operatorAnd(rhsResult));
   }
   return res;
 }
@@ -409,7 +429,7 @@ EvalValueType FIConstAnalysis::evalSgOrOp(EvalValueType lhsResult,EvalValueType 
   if(lhsResult.isTrue()) {
     res=lhsResult;
   } else {
-    res=(lhsResult||rhsResult);
+    res=(lhsResult.operatorOr(rhsResult));
   }
   return res;
 }
@@ -590,12 +610,12 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     switch(node->variantT()) {
     case V_SgAndOp: res=evalSgAndOp(lhsResult,rhsResult);break;
     case V_SgOrOp : res=evalSgOrOp(lhsResult,rhsResult);break;
-    case V_SgEqualityOp: res=(lhsResult==rhsResult);break;
-    case V_SgNotEqualOp: res=(lhsResult!=rhsResult);break;
-    case V_SgGreaterOrEqualOp: res=(lhsResult>=rhsResult);break;
-    case V_SgGreaterThanOp: res=(lhsResult>rhsResult);break;
-    case V_SgLessThanOp: res=(lhsResult<rhsResult);break;
-    case V_SgLessOrEqualOp: res=(lhsResult<=rhsResult);break;
+    case V_SgEqualityOp: res=(lhsResult.operatorEq(rhsResult));break;
+    case V_SgNotEqualOp: res=(lhsResult.operatorNotEq(rhsResult));break;
+    case V_SgGreaterOrEqualOp: res=(lhsResult.operatorMoreOrEq(rhsResult));break;
+    case V_SgGreaterThanOp: res=(lhsResult.operatorMore(rhsResult));break;
+    case V_SgLessThanOp: res=(lhsResult.operatorLess(rhsResult));break;
+    case V_SgLessOrEqualOp: res=(lhsResult.operatorLessOrEq(rhsResult));break;
     case V_SgPntrArrRefExp: res=AType::Top();break;
     default:cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<" using top as default."<<endl; res=AType::Top();break;
     }
@@ -604,9 +624,9 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     assert(child);
     EvalValueType childVal=eval(child);
     switch(node->variantT()) {
-    case V_SgNotOp: res=!childVal;break;
+    case V_SgNotOp: res=childVal.operatorNot();break;
     case V_SgCastExp: res=childVal;break; // requires refinement for different types
-    case V_SgMinusOp: res=-childVal; break;
+    case V_SgMinusOp: res=childVal.operatorUnaryMinus(); break;
     case V_SgPointerDerefExp: res=AType::Top();break;
     default:cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
@@ -716,13 +736,13 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
     myfile<<",";    
     //myfile<<arraySize<<",";
 #if 1
-    set<CppCapsuleConstIntLattice> valueSet=(*i).second;
+    set<ConstIntLattice> valueSet=(*i).second;
     stringstream setstr;
     myfile<<"{";
-    for(set<CppCapsuleConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
+    for(set<ConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
       if(i!=valueSet.begin())
         myfile<<",";
-      myfile<<(*i).getValue().toString();
+      myfile<<(*i).toString();
     }
     myfile<<"}";
 #endif

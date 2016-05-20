@@ -1,9 +1,3 @@
-/** 
- * \file lib/sage/function-declaration.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #include "MFB/Sage/function-declaration.hpp"
 #include "MFB/Sage/namespace-declaration.hpp"
@@ -14,12 +8,11 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MFB {
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
 
-/*!
- * \addtogroup grp_mfb_sage_funcdecl
- * @{
-*/
+namespace MFB {
 
 bool ignore(const std::string & name);
 bool ignore(SgScopeStatement * scope);
@@ -57,6 +50,8 @@ void  Driver<Sage>::loadSymbols<SgFunctionDeclaration>(size_t file_id, SgSourceF
   for (it_function_decl = function_decl.begin(); it_function_decl != function_decl.end(); it_function_decl++) {
     SgFunctionDeclaration * function_decl = *it_function_decl;
 
+    if (isSgMemberFunctionDeclaration(function_decl)) continue;
+
     if (function_decl->get_startOfConstruct()->get_raw_filename() != file->get_sourceFileNameWithPath()) continue;
 
     if (ignore(function_decl->get_scope())) continue;
@@ -73,8 +68,10 @@ void  Driver<Sage>::loadSymbols<SgFunctionDeclaration>(size_t file_id, SgSourceF
   std::set<SgFunctionSymbol *>::iterator it;
   for (it = function_symbols.begin(); it != function_symbols.end(); it++)
     if (resolveValidParent<SgFunctionSymbol>(*it)) {
-      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, size_t>(*it, file_id));
-//    std::cout << " Function Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+      p_symbol_to_file_id_map[*it] = file_id;
+#if VERBOSE
+      std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgFunctionDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#endif
     }
 }
 

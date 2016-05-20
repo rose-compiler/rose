@@ -280,11 +280,25 @@ typedef Rose_STL_Container<SgInitializedName*> SgInitializedNamePtrList;
 typedef SgInitializedNamePtrList*              SgInitializedNamePtrListPtr;
 
 class SgDeclarationStatement;
+
+// DQ (1/28/2016): Different ways of documenting typedefs (none appear to be working with Doxygen).
+/** \typedef SgDeclarationStatementPtrList
+    \brief This is socumentation for the following typedef 
+ */
 typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrList;
+
+/** \typedef SgDeclarationStatementPtrListPtr
+    \brief This is socumentation for the following typedef 
+ */
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
 // tps (8/20/2007): Added support for binaries.
+/** \typedef SgAsmBlockPtrList
+    This is socumentation for the following typedef 
+ */
 typedef Rose_STL_Container<SgAsmBlock*>     SgAsmBlockPtrList;
+
+/** This is socumentation for the following typedef */
 typedef SgAsmBlockPtrList*                  SgAsmBlockPtrListPtr;
 
 // JJW (8/28/2008): Added SgAsmInterpretation
@@ -652,6 +666,9 @@ typedef SgLambdaCapturePtrList*                  SgLambdaCapturePtrListPtr;
 class TokenStreamSequenceToNodeMapping;
 class FrontierNode;
 class PreviousAndNextNodeData;
+
+// DQ (11/30/2015): Added support for mapping of the AST to macro expansions.
+class MacroExpansion;
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:
@@ -2243,26 +2260,22 @@ void Range<rose_addr_t>::print(std::ostream &o) const
         o <<"<empty>";
     } else if (1==size()) {
         char buf[64];
-        sprintf(buf, "0x%08"PRIx64, first());
+     // DQ (10/20/2015): Note that whitespace is required before PRIx64 (to avoid compiler warning).
+        sprintf(buf, "0x%08" PRIx64, first());
         o << buf;
     } else {
         char buf[64];
-        sprintf(buf, "0x%08"PRIx64"+0x%08"PRIx64"=0x%08"PRIx64, first(), size(), first()+size());
+     // DQ (10/20/2015): Note that whitespace is required before PRIx64 (to avoid compiler warning).
+        sprintf(buf, "0x%08" PRIx64 "+0x%08" PRIx64 "=0x%08" PRIx64, first(), size(), first()+size());
         o <<buf;
     }
 }
 
 // This resolves a linker error when building ROSE with Visual Studio.
 // If the above function is not called within the same file, the compiler
-// fails to generate the symbol.
+// fails to generate the symbol, so we use explicit instantiation.
 #ifdef _MSC_VER
-namespace {
-void instantiate_range_print_msvc()
-{
-  static Range<rose_addr_t> g;
-  g.print(std::cout);
-}
-}
+template class Range<rose_addr_t>;
 #endif
 
 // Support for global function type symbol table (moved to be static data pointer)
@@ -2654,8 +2667,28 @@ SgNode::set_isModified ( bool isModified)
   // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
      if (SgProject::get_verbose() >= 3)
         {
-          printf ("SgNode::set_isModified() called for node = %p = %s \n",this,this->class_name().c_str());
-
+       // DQ (10/6/2015): Skip the output of this debug info for SgUnparse_Info IR nodes.
+       // printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
+       // if (!(isSgUnparse_Info(this) != NULL || isSgToken(this) != NULL))
+          if (isSgUnparse_Info(this) == NULL && isSgToken(this) == NULL)
+             {
+               printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
+#if 1
+               if (SgProject::get_verbose() >= 4)
+                  {
+                    printf ("Exiting as a test (when verbose >= 3) in SgNode::set_isModified \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
+             }
+#if 0
+       // DQ (10/13/2015): Chasing a issue in the move tool.
+          if (isSgForStatement(this) != NULL)
+             {
+               printf ("Exiting as a test in SgNode::set_isModified (found SgForStatemen) \n");
+               ROSE_ASSERT(false);
+             }
+#endif
 #if 0
           printf ("Exiting as a test in SgNode::set_isModified \n");
           ROSE_ASSERT(false);
@@ -2845,8 +2878,8 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
                if ( (length > 2) && (argv[i][length-2] == '.') && ( (argv[i][length-1] == 'c') || (argv[i][length-1] == 'C') ) )
                   {
                  // printf ("Found a filename = %s \n",argv[i]);
-                 // ROSE::sourceFileNamesWithPath    [fileNameCounter] = strdup(argv[i]);
-                 // ROSE::sourceFileNamesWithoutPath [fileNameCounter] = strdup(argv[i]);
+                 // rose::sourceFileNamesWithPath    [fileNameCounter] = strdup(argv[i]);
+                 // rose::sourceFileNamesWithoutPath [fileNameCounter] = strdup(argv[i]);
                  // argv[i] = "rose_transformation.C";
                  // transformation_argv[i] = "rose_transformation.C";
                     transformation_argv[i] = strdup(newFileName.c_str());

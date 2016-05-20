@@ -87,14 +87,14 @@ mpaGenericDataflow_extraDist=\
 	$(mpaGenericDataflowPath)/CMakeLists.txt
 
 
-mpaGenericDataflow_cleanLocal=\
-	rm -rf \
-		$(mpaGenericDataflowPath)/Templates.DB \
-		$(mpaGenericDataflowPath)/ii_files \
-		$(mpaGenericDataflowPath)/ti_files \
-		$(mpaGenericDataflowPath)/cxx_templates
+mpaGenericDataflow_cleanLocal=
+#	rm -rf \
+#		$(mpaGenericDataflowPath)/Templates.DB \
+#		$(mpaGenericDataflowPath)/ii_files \
+#		$(mpaGenericDataflowPath)/ti_files \
+#		$(mpaGenericDataflowPath)/cxx_templates
 
 
-mpaGenericDataflow_distCleanLocal=\
-	rm -rf \
-		$(mpaGenericDataflowPath)/Templates.DB
+mpaGenericDataflow_distCleanLocal=
+#	rm -rf \
+#		$(mpaGenericDataflowPath)/Templates.DB

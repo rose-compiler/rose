@@ -103,23 +103,15 @@ namespace SgNodeHelper {
   //! returns function name of SgFunctionDefinition, SgFunctionDeclaration, SgFunctionCall.
   std::string getFunctionName(SgNode* node);
 
-  /*! This is a lookup function currently not available in ROSE: It
-     determines for a given function-call-expression its corresponding
-     function-definition if available in the AST. There are three cases:
-
-     case 1: the associated declaration is a defining declaration. In
-     this case this directly referenced definition is returned
-     (available in ROSE).  
-
-     case 2: the associated declaration is a forward declaration. In
-     this case the entire AST is searched for the correct function
-     definition (this lookup is currently not available in
-     ROSE).
-
-     case 3: no definition is available.  (e.g. this is the case for
-     linked stdlib functions). In this case a null-pointer is
-     returned. This is determined after case 2 has been
-     checked.
+  /*! This function determines for a given function-call-expression
+     its corresponding function-definition (by using
+     get_definingDeclaration).  This function has constant
+     complexity. It does not perform a search, but uses the
+     information as present in the AST. If this information is not
+     sufficient to determine the definition of a function it returns
+     0. For a consistent AST this will find all definitions in the
+     same file. It does not find definitions in a other SgFile
+     subtrees.
   */
   SgFunctionDefinition* determineFunctionDefinition(SgFunctionCallExp* fCall);
 
@@ -293,33 +285,58 @@ namespace SgNodeHelper {
   // returns the list of initializers of an array or struct (e.g. for int a[]={1,2,3} it return the list 1,2,3)
   SgExpressionPtrList& getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl);
 
-  /* replaces expression e1 by expression e2. Currently it uses the SageInterface::rewriteExpression function
-     but wraps around some addtional checks that significantly improve performance of the replace operation.
+  /*! replaces expression e1 by expression e2. Currently it uses the
+     SageInterface::rewriteExpression function but wraps around some
+     addtional checks that significantly improve performance of the
+     replace operation.
   */
   void replaceExpression(SgExpression* e1, SgExpression* e2, bool mode=false);
 
-  /* replaces the ast with root 'node' with the string 's'. The string is attached to the AST and the unparser uses
-     string s instead of unparsing this substree. This function can be used to generate C++ extensions.
+  /*! replaces the ast with root 'node' with the string 's'. The
+     string is attached to the AST and the unparser uses string s
+     instead of unparsing this substree. This function can be used to
+     generate C++ extensions.
   */
   void replaceAstWithString(SgNode* node, std::string s);
+
+  /*! collects all pragmas with name 'pragmaName' and creates a list
+     of all pragma strings (with stripped off prefix) and the
+     associated SgNode. */
+  typedef std::list<std::pair<std::string,SgNode*> > PragmaList;
+  PragmaList collectPragmaLines(std::string pragmaName,SgNode* root);
+
+  /*! return the verbatim pragma string as it is found in the source
+     code this string includes the leading "#pragma".
+  */
+  std::string getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl);
+
+    // replace in string 'str' each string 'from' with string 'to'.
+    void replaceString(std::string& str, const std::string& from, const std::string& to);
+
+    // checks whether prefix 'prefix' is a prefix in string 's'.
+    bool isPrefix(const std::string& prefix, const std::string& s);
+
+    // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
+    bool isLastChildOf(SgNode* elem, SgNode* parent);
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
     //! tests several patterns and returns pointer to FunctionCallExp inside that matched pattern, otherwise 0.
-    SgFunctionCallExp* matchFunctionCall(SgNode *);
+    SgFunctionCallExp* matchFunctionCall(SgNode*);
     //! tests pattern SgReturnStmt(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
-    SgFunctionCallExp* matchReturnStmtFunctionCallExp(SgNode *);
+    SgFunctionCallExp* matchReturnStmtFunctionCallExp(SgNode*);
     //! tests pattern SgExprStatement(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
-    SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode *);
-    //! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp, otherwise 0.
-    SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode *);
+    SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode*);
+    //! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp otherwise 0.
+    SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode*);
+    std::pair<SgVarRefExp*,SgFunctionCallExp*> matchExprStmtAssignOpVarRefExpFunctionCallExp2(SgNode*);
 
     //! tests pattern SgFunctionCall(...) where the name of the function is scanf with 2 params
     SgVarRefExp* matchSingleVarScanf(SgNode* node);
     //! tests pattern SgFunctionCall(...) where the name of the function is printf with 2 params
     SgVarRefExp* matchSingleVarPrintf(SgNode* node);
     //! tests pattern SgFunctionCall(...) where the name of the function is fprintf with 3 params
-    SgVarRefExp* matchSingleVarFPrintf(SgNode* node);
+    SgVarRefExp* matchSingleVarFPrintf(SgNode* node,bool showWarnings=false);
 
     struct OutputTarget {
       bool isKnown();
@@ -333,9 +350,9 @@ namespace SgNodeHelper {
 
     //! tests pattern for an assert
     bool matchAssertExpr(SgNode* node);
-
+    
   } // end of namespace Pattern
-
+  
 } // end of namespace SgNodeHelper
 
 #endif

@@ -6,9 +6,9 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 if ROSE_WITH_ROSEQT
 
 if ROSE_MPI
-INCLUDES += -DROSE_MPI $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I. $(ROSE_QT_WIDGETS_INCLUDES)
+AM_CPPFLAGS += -DROSE_MPI $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I. $(ROSE_QT_WIDGETS_INCLUDES)
 else
-INCLUDES += $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I. $(ROSE_QT_WIDGETS_INCLUDES)
+AM_CPPFLAGS += $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I. $(ROSE_QT_WIDGETS_INCLUDES)
 endif
 
 $(compass_build_tooldir)/compass/libCompassCheckers.la:

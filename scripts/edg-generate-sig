@@ -10,73 +10,13 @@ edg-generate-sig - generate or find an EDG binary tarball version number
 
 =head1 SYNOPSIS
 
-edg-generate-sig --find[=verbose] [--no-fetch] [--ntries=N] [--progress] [COMMIT]
-
-edg-generate-sig --generate=DIRECTORY
-
-edg-generate-sig [--old] [COMMIT]
+edg-generate-sig TOP_SRCDIR TOP_BLDDIR
 
 =head1 DESCRIPTION
 
 End users do not generally have licenses for EDG source code. Therefore, the ROSE team compiles an EDG binary library
 for most ROSE public releases.  EDG binary version numbers are SHA1 hashes that are generated from the parts of ROSE
 upon which the EDG library depends.
-
-This shell script fulfills three purposes:
-
-=over
-
-=item *
-
-when called with "--find" it downloads the latest list of available EDG version numbers and tries to figure out
-which one would work best for the specified commit.
-
-=item *
-
-when called with "--generate=DIRECTORY" it will scan the directory for EDG binary tarballs and build a manifest file for
-end users.  This is normally only used by the ROSE team to update the download site.
-
-=item *
-
-when called without "--find" or "--generate" it calculates the EDG version number for the specied commit (default
-HEAD).  This is normally only used by the ROSE team when building an EDG binary tarball.
-
-=back
-
-=head1 SWITCHES
-
-=over
-
-=item --find=verbose
-
-Once can get more information about the commit that was used to generate the EDG binary by using "--find=verbose", which
-causes the commit info to be emitted to standard error.  Multiple commits may have the same EDG binary version number,
-in which case only the most recent matching commit (reachable from the one specified on the command-line) is shown.
-
-=item --no-fetch
-
-The "--no-fetch" switch prevents this script from trying to download the edg_binaries.txt file from the EDG binaries
-server, and use the edg_binaries.txt already stored in the current working directory.
-
-=item --generate=DIRECTORY
-
-Generates a new manifest file by extracting version numbers from the EDG tarballs in the specified DIRECTORY.
-
-=item --ntries=N
-
-Controls how many commits should be checked to find a version.  The higher the number, the harder this script loooks for
-a suitable version.  The default is 500.
-
-=item --old
-
-This script is able to generate old-style MD5 hashes that were once used by scripts/bincompat-sig.  These hashes are
-much slower to compute because they do not use information already stored in Git tree objects. This switch is DEPRECATED.
-
-=item --progress
-
-Show progress on the stderr stream.
-
-=back
 
 =head1 BUGS
 
@@ -105,258 +45,96 @@ help () {
 }
 
 # Parse command-line switches
-manifest=edg_binaries.txt
-find=
-fetch="$manifest"
-generate=
-hasher=generate_edg_hash
-ntries=1
-progress=
+do_dump=
 while [ "$#" -gt 0 ]; do
     case "$1" in
-	--find) find=yes; shift ;;
-	--find=verbose) find=verbose; shift ;;
 	--help|-h|-\?) help; exit 0 ;;
-	--no-fetch) fetch=; shift ;;
-	--generate=*) generate="${1#--generate=}"; shift ;;
-	--ntries=*) ntries="${1#--ntries=}"; shift ;;
-	--old) hasher=generate_edg_hash_old; shift ;; #DEPRECATED
-	--progress) progress=yes; shift ;;
+	--dump) do_dump=yes; shift ;;
 	-*) echo "$myname: unrecognized switch: $1" >&2; exit 1 ;;
 	*) break
     esac
 done
-if [ "$#" -gt 1 ]; then
-    echo "usage: $myname [--find] [COMMIT]" >&2
+
+if [ "$#" -ne 2 ]; then
+    echo "usage: $myname TOP_SRCDIR TOP_BLDDIR" >&2
     echo "       for details, see: $0 --help" >&2
     exit 1;
 fi
-commit="${1-HEAD}"
+
+ROSE_SRC="$1"
+ROSE_BLD="$2"
+
+# These are the ROSETTA-generated files on which the EDG binary tarball depends
+EDG_GENERATED_DEPENDENCIES=("$ROSE_BLD/src/frontend/SageIII/Cxx_Grammar.h"
+			    "$ROSE_BLD/src/frontend/SageIII/AstQueryMemoryPool.h"
+			    "$ROSE_BLD/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h"
+			    "$ROSE_BLD/src/frontend/SageIII/Cxx_GrammarMemoryPoolSupport.h"
+			    "$ROSE_BLD/src/frontend/SageIII/AST_FILE_IO.h"
+			    "$ROSE_BLD/src/frontend/SageIII/StorageClasses.h")
 
 #------------------------------------------------------------------------------------------------------------------------
-show_introduction () {
-    echo "  EDG is the C/C++ frontend from the Edison Design Group and is not distributed"
-    echo "  as part of the ROSE source code. However, the ROSE team routinely compiles"
-    echo "  EDG and makes binary versions available for download and linking with ROSE."
-    echo "  The binary version of EDG must be compatible with the version of ROSE with"
-    echo "  which it is being linked, and we use hashes to compute the EDG binary version"
-    echo "  number from its ROSE dependecies with \$ROSE/scripts/$myname."
-}
-
-#------------------------------------------------------------------------------------------------------------------------
-# Find the top of the ROSE source tree. We do that by assuming that this script lives in ROSE's "scripts". A better way
-# might be to scan upward throught the directory hierarchy until we reach a directory that contains a ".git" directory, but
-# we can't assume that we even have a git repo (the user might have downloaded a ROSE tarball).
-if [ "$ROSE_SRC" = "" ]; then
-    [ "$mydir" != "" ] && ROSE_SRC="$(cd $mydir/.. && pwd)"
-    if [ "$ROSE_SRC" = "" ]; then
-	echo "$myname: can't find the top of the ROSE source tree; invoke again with the ROSE_SRC environment variable set." >&2
+# Make sure ROSE source and build directories exist and that they look reasonable.
+check_directories() {
+    if [ ! -d "$ROSE_SRC/." ]; then
+	echo "$myname: ROSE source directory not found: $ROSE_SRC" >&2
 	exit 1
     fi
-fi
-
-#------------------------------------------------------------------------------------------------------------------------
-# Returns success if $ROSE_SRC is a git repository, otherwise fails.
-is_git_repo () {
-    (cd "$ROSE_SRC" && git rev-parse --show-toplevel >/dev/null 2>&1)
-    return $?
-}
-
-#------------------------------------------------------------------------------------------------------------------------
-# Echo the SHA1 hash that represents the EDG binary library version number for the specified commit.  The EDG SHA1 hash
-# is calculated by hashing the ls-tree lines for the things upon which EDG depends. Namely,
-#   util                         - a tree object, whose SHA1 depends recursively on everything under it.
-#   src/ROSETTA                  - ditto.
-#   src/frontend/CxxFrontend/EDG - the EDG source code submodule; i.e., a commit SHA1 for the EDG source code.
-#
-# Note that the hash does *not* depend on everything that influences the EDG binary.  For instance, compiler options. Compiling
-# with -D_GLIBCXX_DEBUG and without generate two incompatible EDG binaries, but they both have the same hash.
-#
-# Note that this list is *not* the same as was used in the original scripts/bincompat-sig. That script omitted "util".
-# The current list comes from the src/frontend/CxxFrontend/Makefile.am, although we include all of ROSETTA instead of just
-# ROSETTA/src because ROSETTA/src depends on some other stuff in ROSETTA.
-#
-# We use SHA1 for two reasons: first, the old bincompat-sig script used MD5, and since MD5 sums are a different size
-# than SHA1 sums, we can tell the difference between how EDG binary library version number were created; second, we can
-# generate SHA1 hashes via git without depending on the user having ancillary programs.
-generate_edg_hash () {
-    local committish="${1-HEAD}"
-    local commit=$(cd $ROSE_SRC && git rev-parse "$committish")
-    local edg_dependencies="util src/ROSETTA src/frontend/CxxFrontend/EDG"
-    local head_tree=$(cd $ROSE_SRC && git rev-parse $commit^{tree})
-    (cd $ROSE_SRC; git ls-tree --full-tree $head_tree $edg_dependencies |git hash-object --stdin)
-}
-
-# DEPRECATED: This is the same as the method used by the old scripts/bincompat-sig and is *much* slower. It produces a
-# 32-character MD5 hash.
-generate_edg_hash_old () {
-    local committish="${1-HEAD}"
-    local commit=$(cd $ROSE_SRC && git rev-parse "$committish")
-    local head_tree=$(cd $ROSE_SRC && git rev-parse $commit^{tree})
-    (cd $ROSE_SRC && git ls-tree --full-tree -r $head_tree) |sed -n '/\t\(src\/ROSETTA\/\|src\/frontend\/CxxFrontend\/EDG\)/p' |\
-	while read MODE TYPE HASH NAME; do
-	    echo -en "$NAME\000"
-	    echo -en "$HASH\000"
-    done |md5sum - |cut -d' ' -f1
-}
-
-#------------------------------------------------------------------------------------------------------------------------
-# Download a list of EDG binary versions that are currently available from the ROSE team and place them in the
-# manifest file in the CWD.  Each line of this file contains a single EDG version number in no particular order (or
-# a "#"-introduced comment or blank line.
-get_available_edg_versions () {
-    if [ "$fetch" != "" ]; then
-	local EDGBIN_REMOTE_TARBALLS=$(grep '^EDGBIN_REMOTE_TARBALLS' $ROSE_SRC/src/frontend/CxxFrontend/Makefile.am |head -n1)
-	EDGBIN_REMOTE_TARBALLS="${EDGBIN_REMOTE_TARBALLS#EDGBIN_REMOTE_TARBALLS*=}"
-	local wget_switches=
-	[ "$find" != "verbose" ] && wget_switches=--quiet
-	if ! wget $wget_switches -O "$manifest" "$EDGBIN_REMOTE_TARBALLS/$manifest"; then
-	    echo "*** error downloading EDG binary manifest" >&2
-	    show_introduction >&2
-	    echo >&2
-	    echo "  The list of available EDG binary tarballs could not be downloaded. You can" >&2
-	    echo "  try to download the file manually." >&2
-	    echo >&2
-	    echo "  Download: $EDGBIN_REMOTE_TARBALLS/$manifest" >&2
-	    echo "  Save as: $(pwd)/$manifest" >&2
-	    echo >&2
-            exit 1
-        fi
+    if [ ! -d "$ROSE_SRC/scripts" ]; then
+	echo "$myname: doesn't seem to be the top of the ROSE source tree: $ROSE_SRC" >&2
+	exit 1
     fi
-    local nversions=$(grep '^[0-9a-f]' "$manifest" |wc -l)
-    if [ $nversions -eq 0 ]; then
-	echo "$0: $manifest contains no EDG version numbers" >&2
+    if [ ! -d "$ROSE_BLD/." ]; then
+	echo "$myname: ROSE build directory not found: $ROSE_BLD" >&2
+	exit 1
+    fi
+    if [ ! -d "$ROSE_BLD/src/frontend/SageIII" ]; then
+	echo "$myname: doesn't seem to be the top of the ROSE build tree: $ROSE_BLD" >&2
 	exit 1
     fi
 }
 
 #------------------------------------------------------------------------------------------------------------------------
-# Generate an EDG manifest file by scanning the specified directory.
-generate_manifest () {
-    local dir="${1-.}"
-    (
-	echo "# Automatically generated by $USER at $(hostname --fqdn) on $(date)"
-	echo "# for directory $dir"
-	echo "# See $0 --help"
-	echo "#"
-	echo "# This file contains a list of EDG binary versions that are currently available from the"
-	echo "# ROSE compiler team.  The EDG binary version is a computed binary compatibility signature"
-	echo "# relative to your version of ROSE."
-	echo "#"
-	echo "# It is safe to delete this file, in which case a fresh version will be downloaded from"
-	echo "# http://rosecompiler.org"
-	echo "#"
-	(
-	    cd "$dir"
-	    ls |sed -n 's/^.*\([0-9a-f]\{40\}\)\.tar\.gz$/\1/p'
-	    ls |sed -n 's/^.*\([0-9a-f]\{32\}\)\.tar\.gz$/\1/p'
-	) |sort |uniq
-    ) >"$manifest"
-    [ $? -ne 0 ] && exit 1
-}
+# Concatenate all sources on which EDG depends.
+cat_edg_dependencies() {
+    local edg_hash=$(cd "$ROSE_SRC" &&
+			    git ls-tree --full-tree HEAD src/frontend/CxxFrontend/EDG 2>/dev/null |\
+				cut -d' ' -f3 |cut -c1-7)
+    [ "$edg_hash" = "" ] && \
+	edg_hash=$(head -n1 "$ROSE_BLD/src/frontend/CxxFrontend/EDG-submodule-sha1" |cut -c1-7)
 
-#------------------------------------------------------------------------------------------------------------------------
-# Find the best available EDG version.  What we're actually looking for is the EDG binary version corresponding to
-# the merge-base between the user's current branch and the current master branch of the ROSE central repository (the branch
-# that's used to generate the EDG binaries in the first place).  And we're trying to do this without knowing anything about
-# the central repository (because the user might not have clone/fetched from the central repo).
-find_best_edg_version () {
-    local start=${1-HEAD} hasher="${2-generate_edg_hash}"
-    head -n1 "$manifest" >/dev/null || exit 1 # only for its error message
-    for commit in $(cd $ROSE_SRC && git rev-list -n $ntries $start); do
-	local need_vers=$($hasher $commit)
-	if grep --quiet -- "^$need_vers" "$manifest"; then
-	    [ -n "$progress" ] && echo >&2
-	    echo $need_vers
-	    echo "EDG for commit $(cd $ROSE_SRC && git --no-pager log -n1 --pretty=format:'%h %cD' $commit)" >&2
-	    [ "$find" = "verbose" ] && (cd $ROSE_SRC && git --no-pager log -n1 $commit) >&2
-	    return
+    if [ "$edg_hash" = "" ]; then
+	echo "$0: This is not a Git archive." >&2
+	echo "     You'll need to obtain the SHA1 for the src/frontend/CxxFrontend/EDG submodule and place" >&2
+	echo "     its first 7 characters in a file named src/frontend/CxxFrontend/EDG-submodule-sha1 in your" >&2
+	echo "     ROSE build tree. The best way to find this is to go to to /src/frontend/CxxFrontend/EDG at" >&2
+	echo "     github.com or where ever you downloaded this source tree and copy the 7-letter hash found there." >&2
+	exit 1
+    fi
+
+    echo $edg_hash
+    for f in "${EDG_GENERATED_DEPENDENCIES[@]}"; do
+	if [ ! -r "$f" ]; then
+	    echo "$myname: cannot read generated EDG dependency: $f" >&2
+	    exit 1
 	fi
-	[ -n "$progress" ] && echo -n "." >&2
+	grep -v '#line' "$f"
     done
-    [ -n "$progress" ] && echo >&2
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Generate the SHA1 hash by for the source files (some generated) on which EDG depends.
+generate_edg_hash() {
+    local sha1=$(cat_edg_dependencies |sha1sum |cut -d' ' -f1)
+    echo "4.$sha1"		# this is version 4 of edg dependency hashing
 }
 
 #------------------------------------------------------------------------------------------------------------------------
 
-if [ -n "$generate" ]; then
-    generate_manifest "$generate"
+check_directories
 
-elif [ "$find" = "" ]; then
-    $hasher $commit
-
+if [ "$do_dump" != "" ]; then
+    cat_edg_dependencies
 else
-    get_available_edg_versions;
-
-    # Look for a hard-coded version number
-    sig=
-    if [ "$commit" = "" -o "$commit" = "HEAD" ]; then
-	[ -r "$ROSE_SRC/bincompat-sig" ] && sig="$(head -n1 $ROSE_SRC/bincompat-sig)"
-    fi
-
-    # Try to find the best version (which requires us to be in a git repository)
-    if [ "$sig" = "" ] && is_git_repo; then
-        [ -n "$progress" ] && echo -n "checking for EDG (SHA1)..." >&2
-	sig=$(find_best_edg_version $commit generate_edg_hash)
-    fi
-    if [ "$sig" = "" ] && is_git_repo; then
-	[ -n "$progress" ] && echo -n "checking for EDG (MD5)..." >&2
-	sig=$(find_best_edg_version $commit generate_edg_hash_old)  #DEPRECATED
-    fi
-    
-
-    # Diagnostics
-    if [ "$sig" = "" ]; then
-	(
-	    echo
-	    echo "*** error finding EDG binary version"
-	    if [ $ntries -eq 1 ]; then
-		echo "$myname: could not find an exact version of the EDG binary."
-	    else
-		echo "$myname: could not find a close enough version of the EDG binary."
-	    fi
-
-	    show_introduction
-
-	    if [ $ntries -eq 1 ]; then
-		echo
-		echo "  We could not find a version of EDG that is an exact match"
-		echo "  for your version of ROSE.  If you're feeling lucky, you can try extending"
-		echo "  the search and choosing a close match, but there is no guarantee that"
-		echo "  the chosen binary EDG will be compatible with your version of ROSE--be"
-		echo "  ready for strange behavior, core dumps, etc.  You can perform an extended"
-		echo "  search by using the --ntries=N switch for this script ($myname),"
-		echo "  or running \"make EDGBIN_NTRIES=N\"."
-	    else
-		echo "  We could not find a close version of EDG within $ntries tries."
-	    fi
-
-	    echo
-	    echo "  The following information is relevant:"
-	    echo "    Time          = $(date)"
-	    echo "    ROSE src dir  = $ROSE_SRC"
-	    echo -n "    nTries        = $ntries"
-	    [ $ntries -eq 1 ] || echo -n " (caveat emptor)"
-	    echo
-	    if is_git_repo; then
-		echo "    Commit        = $(cd $ROSE_SRC && git rev-parse $commit) $commit"
-	    else
-		echo "    Commit        = <this is not a Git repository>"
-	    fi
-	    if [ -r "$manifest" ]; then
-		echo "    Manifest file = $(git hash-object $manifest)"
-		echo "    Num versions  = $(grep '^[0-9a-f]' $manifest |wc -l)"
-	    else
-		echo "    Manifest file = not found"
-	    fi
-	    if is_git_repo; then
-		echo "    Need (SHA1)   = $(generate_edg_hash $commit)"
-		echo "    Need (MD5)    = $(generate_edg_hash_old $commit)" #DEPRECATED
-	    fi
-	    echo
-	) >&2
-	exit 1
-    fi
-    echo $sig
+    generate_edg_hash
 fi
 exit 0

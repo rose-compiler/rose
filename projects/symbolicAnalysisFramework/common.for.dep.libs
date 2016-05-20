@@ -1,6 +1,6 @@
 # generic dataflow inside the ROSE src tree
 GDF_SRC_ROOT=$(top_srcdir)/src/midend/programAnalysis/genericDataflow
-INCLUDES=$(ROSE_INCLUDES) \
+AM_CPPFLAGS =$(ROSE_INCLUDES) \
            -I$(GDF_SRC_ROOT)/ \
            -I$(GDF_SRC_ROOT)/analysis \
            -I$(GDF_SRC_ROOT)/arrIndexLabeler \
@@ -17,7 +17,7 @@ INCLUDES=$(ROSE_INCLUDES) \
 SAF_BUILD_ROOT=$(top_builddir)/projects/symbolicAnalysisFramework
 SAF_SRC_ROOT=$(top_srcdir)/projects/symbolicAnalysisFramework
 
-INCLUDES+= \
+AM_CPPFLAGS += \
            -I$(SAF_SRC_ROOT)/include \
            -I$(SAF_SRC_ROOT)/src/chkptRangeAnalysis \
            -I$(SAF_SRC_ROOT)/src/external \

@@ -520,6 +520,9 @@ enum ROSE_Fortran_Additional_Info
        // DQ (4/14/2007): Modified to make this a const array
           static const token_element ROSE_Fortran_keyword_map[127];
 
+       // DQ (11/20/2015): Added function to detect CR to support unparsing of whitespace defined up to an including only the first CR.
+          bool isCarriageReturn() const;
+
 HEADER_TOKEN_END
 
 
@@ -628,6 +631,19 @@ HEADER_UNTYPED_REFERENCE_EXPRESSION_START
 HEADER_UNTYPED_REFERENCE_EXPRESSION_END
 
 HEADER_UNTYPED_TYPE_START
+     public:
+          enum type_enum
+             {
+               e_unknown, //! default unspecified type as identified by parser.
+               e_void,    //! void type as identified by parser.
+               e_int,     //! int type as identified by parser.
+               e_float,   //! float type as identified by parser.
+               e_double,  //! double type as identified by parser.
+               e_complex, //! complex type as identified by parser.
+               e_char,    //! character type as identified by parser.
+               e_last,    //! last type 
+             };
+
 HEADER_UNTYPED_TYPE_END
 
 HEADER_UNTYPED_ARRAY_TYPE_START
@@ -645,8 +661,8 @@ HEADER_UNTYPED_FILE_END
 HEADER_UNTYPED_STATEMENT_LIST_START
 HEADER_UNTYPED_STATEMENT_LIST_END
 
-HEADER_UNTYPED_DECLARATION_LIST_START
-HEADER_UNTYPED_DECLARATION_LIST_END
+HEADER_UNTYPED_DECLARATION_STATEMENT_LIST_START
+HEADER_UNTYPED_DECLARATION_STATEMENT_LIST_END
 
 HEADER_UNTYPED_FUNCTION_DECLARATION_LIST_START
 HEADER_UNTYPED_FUNCTION_DECLARATION_LIST_END
@@ -1398,6 +1414,13 @@ const SgToken::token_element SgToken::ROSE_Fortran_keyword_map[127] =
    };
 
 
+bool
+SgToken::isCarriageReturn() const
+   {
+  // DQ (11/20/2015): Added function to detect CR to support unparsing of whitespace defined up to an including only the first CR.
+     return (get_lexeme_string() == "\n");
+   }
+
 SOURCE_TOKEN_END
 
 SOURCE_ATERM_NODE_START
@@ -1530,8 +1553,8 @@ SOURCE_UNTYPED_FILE_END
 SOURCE_UNTYPED_STATEMENT_LIST_START
 SOURCE_UNTYPED_STATEMENT_LIST_END
 
-SOURCE_UNTYPED_DECLARATION_LIST_START
-SOURCE_UNTYPED_DECLARATION_LIST_END
+SOURCE_UNTYPED_DECLARATION_STATEMENT_LIST_START
+SOURCE_UNTYPED_DECLARATION_STATEMENT_LIST_END
 
 SOURCE_UNTYPED_FUNCTION_DECLARATION_LIST_START
 SOURCE_UNTYPED_FUNCTION_DECLARATION_LIST_END

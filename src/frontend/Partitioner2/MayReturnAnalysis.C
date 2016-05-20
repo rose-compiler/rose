@@ -308,25 +308,51 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexIter
 
                 // Can we get the may-return value immediately, or do we need to follow outgoing edges first?
                 if (t.vertex()->value().type() == V_BASIC_BLOCK) {
-                    Function::Ptr function = t.vertex()->value().function();
                     BasicBlock::Ptr bb = t.vertex()->value().bblock();
-                    if (function)
-                        SAWYER_MESG(debug) <<"[" <<depth <<"]     block is owned by " <<function->printableName() <<"\n";
-                    bool functionListed = false;        // function's blacklisted or whitelisted value if listed
-                    if (function && function->address()==t.vertex()->value().address() &&
-                        config_.functionMayReturn(function).assignTo(functionListed)) {
-                        // Whitelisted or blacklisted by name
-                        SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<function->printableName()
-                                           <<" is " <<(functionListed?"whitelisted":"blacklisted") <<"\n";
-                        vertexInfo[t.vertex()->id()].result = functionListed;
+
+                    // Properties of functions that own this block.
+                    Function::Ptr isBlackListed, isWhiteListed, isDynamicLinked;
+                    BOOST_FOREACH (const Function::Ptr &function, t.vertex()->value().owningFunctions().values()) {
+                        if (function->address() == t.vertex()->value().address()) {
+                            bool b = false;
+                            if (config_.functionMayReturn(function).assignTo(b)) {
+                                if (b) {
+                                    isWhiteListed = function;
+                                } else {
+                                    isBlackListed = function;
+                                }
+                            } else if (boost::ends_with(function->name(), "@plt") ||
+                                       boost::ends_with(function->name(), "@iat")) {
+                                isDynamicLinked = function;
+                            }
+                        }
+                    }
+
+                    if (isWhiteListed && isBlackListed) {
+                        // Block is owned by functions that are both white and black listed for may-return. Assume white.
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     block "
+                                           <<StringUtility::addrToString(t.vertex()->value().address())
+                                           <<" belongs to white- and black-listed functions (assuming white).\n";
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]         example white: " <<isWhiteListed->printableName() <<"\n"
+                                           <<"[" <<depth <<"]         example black: " <<isBlackListed->printableName() <<"\n";
+                        vertexInfo[t.vertex()->id()].result = true;
                         t.skipChildren();
-                    } else if (function && function->address()==t.vertex()->value().address() &&
-                               (boost::ends_with(function->name(), "@plt") || boost::ends_with(function->name(), "@iat"))) {
+                    } else if (isWhiteListed) {
+                        // Block is whitelisted by some owning function.
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<isWhiteListed->printableName() <<" is whitelisted\n";
+                        vertexInfo[t.vertex()->id()].result = true;
+                        t.skipChildren();
+                    } else if (isBlackListed) {
+                        // Block is blacklisted by some owning function.
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<isWhiteListed->printableName() <<" is blacklisted\n";
+                        vertexInfo[t.vertex()->id()].result = false;
+                        t.skipChildren();
+                    } else if (isDynamicLinked) {
                         // Dynamically linked functions return or not by definition
-                        functionListed = assumeFunctionsReturn_;
-                        SAWYER_MESG(debug) <<"[" <<depth <<"]    " <<function->printableName()
-                                           <<" is " <<(functionListed?"whitelisted":"blacklisted") <<" by /@plt$/ pattern\n";
-                        vertexInfo[t.vertex()->id()].result = functionListed;
+                        bool b = assumeFunctionsReturn_;
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]    " <<isDynamicLinked->printableName()
+                                           <<" is " <<(b?"whitelisted":"blacklisted") <<" by /@plt$/ pattern\n";
+                        vertexInfo[t.vertex()->id()].result = b;
                         t.skipChildren();
                     } else if (t.vertex()->nOutEdges()==1 && t.vertex()->outEdges().begin()->target()==nonexistingVertex_) {
                         // Non-existing vertex returns or not by definition
@@ -437,17 +463,18 @@ Partitioner::allFunctionMayReturn() const {
     size_t nFunctions = cg.graph().nVertices();
     std::vector<bool> visited(nFunctions, false);
     Sawyer::ProgressBar<size_t> progress(nFunctions, mlog[MARCH], "may-return analysis");
-    for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId, ++progress) {
+    for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
         if (!visited[cgVertexId]) {
             typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
             for (Traversal t(cg.graph(), cg.graph().findVertex(cgVertexId), ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
                 if (t.event() == ENTER_VERTEX) {
                     if (visited[t.vertex()->id()])
                         t.skipChildren();
-                } else {
+                } else if (!visited[t.vertex()->id()]) {
                     ASSERT_require(t.event() == LEAVE_VERTEX);
                     functionOptionalMayReturn(t.vertex()->value());
                     visited[t.vertex()->id()] = true;
+                    ++progress;
                 }
             }
         }

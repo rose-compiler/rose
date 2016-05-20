@@ -2,6 +2,7 @@
 #include "BinaryReturnValueUsed.h"
 #include "BinaryControlFlow.h"
 #include "DispatcherX86.h"
+#include "MemoryCellList.h"
 #include "NullSemantics2.h"
 #include "WorkLists.h"
 
@@ -109,16 +110,21 @@ public:
     virtual BaseSemantics::RegisterStatePtr clone() const ROSE_OVERRIDE {
         return RegisterStatePtr(new RegisterState(*this));
     }
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &other, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+        throw BaseSemantics::NotImplemented("ReturnValueUsed semantics is not suitable for dataflow", NULL);
+    }
     virtual void clear()ROSE_OVERRIDE {
         wroteValue_ = readUninitialized_ = false;
     }
     virtual void zero()ROSE_OVERRIDE {
         wroteValue_ = readUninitialized_ = false;
     }
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators*)ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt,
+                                                  BaseSemantics::RiscOperators*) ROSE_OVERRIDE {
         if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !wroteValue_)
             readUninitialized_ = true;
-        return get_protoval()->undefined_(reg.get_nbits());
+        return protoval()->undefined_(reg.get_nbits());
     }
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr&,
                                BaseSemantics::RiscOperators*)ROSE_OVERRIDE {
@@ -137,6 +143,7 @@ public:
     bool readUninitialized() {
         return readUninitialized_;
     }
+
 };
     
 // The actual analysis for a function call starting at a function call return point and terminating each path whenever we reach

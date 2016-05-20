@@ -43,7 +43,9 @@ FixUpGlobalFunctionTypeTable::visit(SgNode* node)
   // We could improve the performance by optimizing the computation of mangled names.
   // We could also improve the performance by optimizing the globalFunctionTypeSymbolTable->lookup_function_type().
 
-#if 0
+#define DEBUG_FUNCTION_TYPE_TABLE 0
+
+#if DEBUG_FUNCTION_TYPE_TABLE
   // compute some statistical data about redundant function types
      static int numberOfFunctionTypesProcessed = 0;
      static int numberOfRedudantFunctionTypesProcessed = 0;
@@ -54,24 +56,37 @@ FixUpGlobalFunctionTypeTable::visit(SgNode* node)
      SgFunctionType* functionType = isSgFunctionType(node);
      ROSE_ASSERT(functionType != NULL);
 
+#if DEBUG_FUNCTION_TYPE_TABLE
+     printf ("Processing SgFunctionType = %p = %s numberOfFunctionTypesProcessed = %d \n",functionType,functionType->class_name().c_str(),numberOfFunctionTypesProcessed);
+#endif
+
      SgFunctionTypeTable* globalFunctionTypeSymbolTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(globalFunctionTypeSymbolTable != NULL);
 
-  // printf ("Processing SgFunctionType = %p = %s \n",functionType,functionType->get_mangled().str());
+#if DEBUG_FUNCTION_TYPE_TABLE
+     printf ("Processing SgFunctionType: calling functionType->get_mangled(): functionType = %p = %s \n",functionType,functionType->class_name().c_str());
+#endif
 
   // DQ (3/10/2007): The computation of the mangled name data is only 0.254 sec of the total time of 6.765 sec for an example file (test2001_11.C)
      const SgName mangleTypeName = functionType->get_mangled();
 
+#if DEBUG_FUNCTION_TYPE_TABLE
+     printf ("AFTER call to functionType->get_mangled(): mangleTypeName = %s \n",mangleTypeName.str());
+#endif
+
   // DQ (3/10/2007): This symbol table test (together with the insertion of the symbol) is expensive (26/27ths of the cost)
      if (globalFunctionTypeSymbolTable->lookup_function_type(mangleTypeName) == NULL)
         {
+#if DEBUG_FUNCTION_TYPE_TABLE
        // printf ("Function type not in table, ADDING it: SgFunctionType = %p = %s \n",functionType,functionType->get_mangled().str());
+          printf ("Function type not in table, ADDING it: SgFunctionType = %p mangleTypeName = %s \n",functionType,mangleTypeName.str());
+#endif
           globalFunctionTypeSymbolTable->insert_function_type(mangleTypeName,functionType);
         }
        else
         {
        // printf ("Function type already in the table, SKIP adding it, this is a redundantly generated function type: SgFunctionType = %p = %s \n",functionType,functionType->get_mangled().str());
-#if 0
+#if DEBUG_FUNCTION_TYPE_TABLE
           numberOfRedudantFunctionTypesProcessed++;
           printf ("Function type already in the table: numberOfFunctionTypesProcessed = %ld numberOfRedudantFunctionTypesProcessed = %ld \n",numberOfFunctionTypesProcessed,numberOfRedudantFunctionTypesProcessed);
 #endif
@@ -201,10 +216,10 @@ FixupAstSymbolTables::visit ( SgNode* node )
             // cout << "[" << idx << "] " << (*i).first.str();
                ROSE_ASSERT ( (*i).first.str() != NULL );
                ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
-
-            // printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
-            //      idx,(*i).first.str(),(*i).second->sage_class_name());
-
+#if 0
+               printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
+                       idx,(*i).first.str(),(*i).second->class_name().c_str());
+#endif
                SgSymbol* symbol = isSgSymbol((*i).second);
                ROSE_ASSERT ( symbol != NULL );
 

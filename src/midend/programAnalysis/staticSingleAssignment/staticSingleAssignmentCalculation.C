@@ -230,7 +230,7 @@ void StaticSingleAssignment::run(bool interprocedural, bool treatPointersAsStruc
 #endif
 
     //Get a list of all the functions that we'll process
-    unordered_set<SgFunctionDefinition*> interestingFunctions;
+    boost::unordered_set<SgFunctionDefinition*> interestingFunctions;
     vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
 
     FunctionFilter functionFilter;
@@ -449,11 +449,11 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
     if (getDebug())
         printOriginalDefTable();
     //Keep track of visited nodes
-    unordered_set<SgNode*> visited;
+    boost::unordered_set<SgNode*> visited;
 
     set<FilteredCfgNode> worklist;
 
-    FilteredCfgNode current = FilteredCfgNode(func->cfgForBeginning());
+    FilteredCfgNode current= FilteredCfgNode(func->cfgForBeginning());
     worklist.insert(current);
 
     while (!worklist.empty())

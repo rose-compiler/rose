@@ -280,6 +280,14 @@ HEADER_LIST_DECLARATIONS
 HEADER_EXPRESSION_LIST_EXPRESSION_END
 
 
+HEADER_MATRIX_EXP_START
+HEADER_MATRIX_EXP_END
+
+HEADER_RANGE_EXP_START
+//Append an expression to the range
+SgRangeExp* append(SgExpression *exp);
+HEADER_RANGE_EXP_END
+
 HEADER_VAR_REF_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
@@ -882,6 +890,8 @@ HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_END
 HEADER_MINUS_OPERATOR_START
 HEADER_MINUS_OPERATOR_END
 
+HEADER_MATRIX_TRANSPOSE_OPERATOR_START
+HEADER_MATRIX_TRANSPOSE_OPERATOR_END
 
 HEADER_UNARY_ADD_OPERATOR_START
 HEADER_UNARY_ADD_OPERATOR_END
@@ -1290,6 +1300,16 @@ HEADER_COMPOUND_ASSIGNMENT_OPERATOR_START
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_COMPOUND_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_ELEMENT_WISE_OP_START
+
+
+          // virtual bool isLValue() const;
+          // virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
+HEADER_ELEMENT_WISE_OP_END
+
 
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
@@ -5392,6 +5412,15 @@ SgPointerDerefExp::get_type() const
                goto keepStripping;
              }
 
+       // DQ (5/10/2016): Added this for the case of the C++11 support.
+          case V_SgRvalueReferenceType:
+             {
+               SgRvalueReferenceType* rvalueReferenceType = isSgRvalueReferenceType(someType);
+            // returnType = rvalueReferenceType;
+               someType = rvalueReferenceType->get_base_type();
+               goto keepStripping;
+             }
+
 // #ifndef ROSE_USE_EDG_VERSION_4
 #ifndef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (12/31/2008): This is the old behavior from EDG version 3.x (which I don't want to change since it is stable)
@@ -5482,6 +5511,7 @@ SgPointerDerefExp::get_type() const
                returnType = voidType;
                break;
              }
+
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
        // expression (not required to be an lvalue)!
@@ -6406,6 +6436,58 @@ SOURCE_TUPLE_EXP_END
 SOURCE_LIST_EXP_START
 SOURCE_LIST_EXP_END
 
+
+SOURCE_MATRIX_EXP_START
+
+SgType*
+SgMatrixExp::get_type() const
+   {
+     return SageBuilder::buildMatrixType();
+   }
+
+SOURCE_MATRIX_EXP_END
+
+SOURCE_RANGE_EXP_START
+
+SgRangeExp* SgRangeExp::append(SgExpression *exp)
+{
+  //start:end
+  //or start:increment:end
+
+  ROSE_ASSERT(exp != NULL);
+  
+  if(p_start == NULL)
+    {
+      p_start = exp;
+    }
+  else
+    {
+      if(p_end == NULL)
+	{
+	  p_end = exp;
+	}
+      else
+	{
+	  if(p_stride == NULL)
+	    {
+	      //Swap stride with end. 1:2 then 1:2:3 comes, 2 was end. now 2 becomes stride
+	      p_stride = p_end;
+	      p_end = exp;	      
+	    }
+	  else
+	    {
+	      //cannot do more appends. Max 3 items allowed. Raise an error
+	      return NULL;
+	    }
+	}
+    }
+
+  exp->set_parent(this);
+  return this;
+}
+
+SOURCE_RANGE_EXP_END
+
 SOURCE_COMPREHENSION_START
 SOURCE_COMPREHENSION_END
 
@@ -6568,13 +6650,21 @@ SgAggregateInitializer::replace_expression(SgExpression* o, SgExpression* n)
 SgType*
 SgAggregateInitializer::get_type() const
    {
+#if 0
+     printf ("In SgAggregateInitializer::get_type(): p_expression_type = %p \n",p_expression_type);
+#endif
      if (p_expression_type != NULL)
         {
+#if 0
+          printf ("SgAggregateInitializer::get_type(): p_expression_type != NULL: return p_expression_type = %p = %s \n",p_expression_type,p_expression_type->class_name().c_str());
+#endif
           return p_expression_type;
         }
        else
         {
-       // printf ("SgAggregateInitializer::get_type(): default case\n");
+#if 0
+          printf ("SgAggregateInitializer::get_type(): default case: return SgTypeDefault::createType()\n");
+#endif
           return SgTypeDefault::createType();
         }
    }

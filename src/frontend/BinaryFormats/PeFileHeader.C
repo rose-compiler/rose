@@ -738,7 +738,6 @@ SgAsmPEFileHeader::reallocate()
      * don't change (i.e., don't increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust
      * it as little as possible.  The RVA/Size pairs are considered to be part of the NT Optional Header. */
     size_t oh_size = p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
-    size_t rvasize_offset; /*offset with respect to "oh" buffer allocated below*/
     if (4==get_word_size()) {
         oh_size += sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
@@ -749,10 +748,8 @@ SgAsmPEFileHeader::reallocate()
     unsigned char *oh = new unsigned char[oh_size];
     if (4==get_word_size()) {
         encode((PE32OptHeader_disk*)oh);
-        rvasize_offset = sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
         encode((PE64OptHeader_disk*)oh);
-        rvasize_offset = sizeof(PE64OptHeader_disk);
     } else {
         delete[] oh;
         throw FormatError("unsupported PE word size");
@@ -855,7 +852,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_cpu_type",          p_e_cpu_type, p_e_cpu_type);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_nsections",         p_e_nsections);
     fprintf(f, "%s%-*s = %u (%s)\n",                   p, w, "e_time",              p_e_time, time_str);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_coff_symtab",       p_e_coff_symtab, p_e_coff_symtab);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "e_coff_symtab",   p_e_coff_symtab, p_e_coff_symtab);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_coff_nsyms",        p_e_coff_nsyms);
     if (p_coff_symtab) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n",           p, w, "coff_symtab",
@@ -863,7 +860,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         fprintf(f, "%s%-*s = none\n",                  p, w, "coff_symtab");
     }
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_nt_hdr_size",       p_e_nt_hdr_size, p_e_nt_hdr_size);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "e_nt_hdr_size",   p_e_nt_hdr_size, p_e_nt_hdr_size);
     fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_flags",             p_e_flags, p_e_flags);
     fprintf(f, "%s%-*s = 0x%04x %s\n",                 p, w, "e_opt_magic",         p_e_opt_magic,
             0x10b == p_e_opt_magic ? "PE32" : (0x20b == p_e_opt_magic ? "PE32+" : "other"));
@@ -896,7 +893,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         int nprint __attribute__((unused)) = snprintf(p2, sizeof p2, "%s.pair[%d].", p, i);
         assert((size_t)nprint<sizeof p2);
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p2));
-        fprintf(f, "%s%-*s = rva %s,\tsize 0x%08"PRIx64" (%"PRIu64")\n", p2, w, "..",
+        fprintf(f, "%s%-*s = rva %s,\tsize 0x%08" PRIx64 " (%" PRIu64 ")\n", p2, w, "..",
                 p_rvasize_pairs->get_pairs()[i]->get_e_rva().to_string().c_str(),
                 p_rvasize_pairs->get_pairs()[i]->get_e_size(), p_rvasize_pairs->get_pairs()[i]->get_e_size());
     }

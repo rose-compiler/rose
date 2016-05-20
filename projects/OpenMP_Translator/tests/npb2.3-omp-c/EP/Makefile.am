@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Automake conditional to control use of ROSE with OpenMP
 # if ROSE_USE_OMNI_OPENMP
 
-# INCLUDES = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES)
 # bin_PROGRAMS = copyExample
 # copyExample_SOURCES = copyExample.C
 # copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)

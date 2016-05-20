@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -13,9 +13,11 @@
 #include <cstdio>
 #include <string>
 
-/** @mainpage
+/** @defgroup sawyer Sawyer Support Library
  *
- *  %Sawyer is a library that provides the following:
+ *  %Sawyer is a library for library writers. It's used by software such as [ROSE](http://rosecompiler.org) and part of %Sawyer
+ *  is distributed with ROSE. The complete, canonical documentation for %Sawyer is located
+ *  [here](https://www.hoosierfocus.com/~matzke/sawyer). %Sawyer is a library that provides the following:
  *
  *  @li Conditionally enable streams for program diagnostics.  These are C++ <code>std::ostreams</code> organized by software
  *      component and message importance and which can be enabled/disabled with a simple language. A complete plumbing system
@@ -41,8 +43,12 @@
  *      Sawyer::Container::IntervalMap "IntervalMap" similar to STL's <code>std::set</code> and <code>std::map</code>
  *      containers but optimized for cases when very large numbers of keys are adjacent; @ref Sawyer::Container::Map "Map",
  *      similar to STL's <code>std::map</code> but with an API that's consistent with other containers in this library; @ref
- *      Sawyer::Container::BitVector "BitVector" bit vectors with operations defined across index intervals.  These can be
- *      found in the Sawyer::Container namespace.
+ *      Sawyer::Container::BitVector "BitVector" bit vectors with operations defined across index intervals.  These and many
+ *      others can be found in the Sawyer::Container namespace.
+ *
+ *   @li Multi-threading support: %Sawyer is designed to be used in multi-threaded programs. It also provides some capabilities
+ *       not usually found in thread libraries, such as the ability to execute user-supplied functions concurrently subject to
+ *       user-defined constraints on their execution order (see @ref Sawyer::ThreadWorkers).
  *
  *   @li Miscellaneous: @ref Sawyer::SynchronizedPoolAllocator "PoolAllocator" (synchronized and unsynchronized variants) to
  *       allocate memory from large pools rather than one object at a time; and @ref Sawyer::SmallObject "SmallObject", a base
@@ -59,10 +65,13 @@
  *      Doxygen, PerlDoc, TeX, etc. The markup language supports calling of C++ functors to transform the text as it is
  *      processed.
  *
- *  <b>Good starting places for reading documentation are the [namespaces](namespaces.html).</b> */
+ *  @li C/C++ lexical analyzer
+ *
+ *  <b>The @ref Sawyer namespace is a good place to start for documentation.</b> */
 
 
-/** @defgroup installation Installation
+/** @defgroup sawyer_installation Installation
+ *  @ingroup sawyer
  *
  *  %Sawyer can be downloaded from <a href="https://github.com/matzke1/sawyer">GitHub</a>. For example:
  *
@@ -74,7 +83,7 @@
  *  %Sawyer uses <a href="http://www.cmake.org/">cmake</a> as its configuration and build system and building is typically
  *  performed in a separate directory from the source. The author usually creates various "_build-whatever" directories at the
  *  top level of the source code directory, but the build directories can be located anywhere. CMake operates in two steps:
- *  first one configures the build environment using the "cmake" commnd, then the library is built and installed.  Here is a
+ *  first one configures the build environment using the "cmake" command, then the library is built and installed.  Here is a
  *  typical configuration step:
  *
  * @code
@@ -86,7 +95,8 @@
  *
  *  The @c BOOST_ROOT should be the directory containing Boost's "include" and "lib" directories. It's necessary only when
  *  Boost isn't installed in a well-known location.  In addition to Boost header files, %Sawyer also requires these Boost
- *  libraries: iostreams, system, filesystem, regex, chrono, and thread.
+ *  libraries: iostreams, system, filesystem, regex, chrono, and thread. These libraries should have been compiled with the
+ *  same C++ compiler and switches as %Sawyer.
  *
  *  The @c CMAKE_BUILD_TYPE can be specified to control whether a debug or release version of the library is created. Its value
  *  should be the word "Debug" or "Release". The default is "Release".  For instance, "-DCMAKE_BUILD_TYPE=Debug".
@@ -169,7 +179,8 @@
  *
  *  Then fire up the Visual Studio IDE, open the project file, right click on a "solution", and select "Build". */
 
-/** @defgroup design_goals Library design goals
+/** @defgroup sawyer_design_goals Library design goals
+ *  @ingroup sawyer
  *
  *  Goals that influence the design of this library.
  *
@@ -195,7 +206,8 @@
  *      there is a choice between functionality and efficiencey, functionality wins. */
 
 
-/** @defgroup smart_pointers Reference counting smart pointers
+/** @defgroup sawyer_smart_pointers Reference counting smart pointers
+ *  @ingroup sawyer
  *
  *  Pointers that automatically delete the underlying object.
  *
@@ -256,7 +268,8 @@
  * @endcode */
 
 
-/** @defgroup class_properties Class properties
+/** @defgroup sawyer_class_properties Class properties
+ *  @ingroup sawyer
  *
  *  Data members that that store a simple value.
  *
@@ -266,7 +279,7 @@
  *
  *  All writer properties return a reference to the object that is modified so that property settings can be chained.  If the
  *  class uses the reference-counting smart-pointer paradigm, then a pointer to the object is returned instead. (See @ref
- *  smart_pointers).
+ *  sawyer_smart_pointers).
  *
  * @code
  *  class SomeClass {
@@ -282,6 +295,9 @@
  *  };
  * @endcode */
 
+/** @defgroup sawyer_examples Examples
+ *  @ingroup sawyer */
+
 // Version numbers (conditional compiliation is only so we can test version mismatch handling)
 #ifndef SAWYER_VERSION_MAJOR
 #define SAWYER_VERSION_MAJOR    0
@@ -292,11 +308,25 @@
 // Macros for thread-safety portability. This allows Sawyer to be compiled with or without thread support and not have a huge
 // proliferation of conditional compilation directives in the main body of source code.
 #ifdef _REENTRANT
-#   define SAWYER_MULTI_THREADED 1
-#   define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::MultiThreadedTag>
+    #define SAWYER_MULTI_THREADED 1
+    #define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::MultiThreadedTag>
 #else
-#   define SAWYER_MULTI_THREADED 0
-#   define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::SingleThreadedTag>
+    #define SAWYER_MULTI_THREADED 0
+    #define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::SingleThreadedTag>
+#endif
+
+#ifdef _REENTRANT
+    #if __cplusplus >= 201103L
+       #define SAWYER_THREAD_LOCAL thread_local
+    #elif defined(_MSC_VER)
+        // Visual C++, Intel (Windows), C++ Builder, Digital Mars C++
+        #define SAWYER_THREAD_LOCAL __declspec(thread)
+    #else
+       // Solaris Studio, IBM XL, GNU, LLVM, Intel (linux)
+       #define SAWYER_THREAD_LOCAL __thread
+    #endif
+#else
+     #define SAWYER_THREAD_LOCAL /*void*/
 #endif
 
 #ifdef BOOST_WINDOWS

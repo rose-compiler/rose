@@ -208,8 +208,10 @@ if ROSE_WITH_ATERM
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal/libexperimentalRoseFortran.la
-   libroseExperimentalOpenFortranParserlibraries =
+#   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal/libexperimentalRoseFortran.la
+
+# DQ (9/26/2015): This is defined in src/Makefile.am
+#   libroseExperimentalOpenFortranParserlibraries =
 #   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
 #   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal -lexperimentalRoseFortran
     ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalOFP
@@ -223,6 +225,10 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #    ROSE_INTEL_COMPILER_MATH_LIBS += -limf
 endif
 ROSE_INTEL_COMPILER_MATH_LIBS += -lm
+endif
+
+if USING_CLANG_COMPILER
+# DQ (4/13/2016): Is there were we put the support to include -lstdc++.so on the link line directly?
 endif
 
 # DQ (3/6/2013): We need to build a SWIG path that can't include the isystem option.
@@ -307,13 +313,13 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
      -I"$(JAVA_HOME)/include" \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
-     -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend \
+      $(ROSE_CLANG_FRONTEND_INCLUDE) \
      -I$(top_srcdir)/src/frontend/PythonFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryFormats \
      -I$(top_srcdir)/src/frontend/BinaryLoader \
      -I$(top_srcdir)/src/frontend/Disassemblers \
-     -I$(top_srcdir)/src/frontend/CxxFrontend/Clang \
+      $(ROSE_CLANG_INCLUDE) \
      -I$(top_srcdir)/src/backend/unparser \
      -I$(top_srcdir)/src/backend/unparser/formatSupport \
      -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \
@@ -415,6 +421,14 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(BOOST_CPPFLAGS)
 endif
 
+# DQ (10/23/2015): These paths have been replaces with the following variables.
+# These variable are empty for now (reflecting the default usage, and need to 
+# be set properly where ever Clang support is processed as a configure option.
+#    -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend 
+#    -I$(top_srcdir)/src/frontend/CxxFrontend/Clang 
+#    $(ROSE_CLANG_FRONTEND_INCLUDE) 
+#    $(ROSE_CLANG_INCLUDE) 
+
 SWIG_ROSE_INCLUDES = $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
 ROSE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH) 
 
@@ -451,11 +465,17 @@ ROSE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYS
 ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
 
 # ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
-ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
-  $(SQLITE_DATABASE_LIBS) $(QT_LIBS)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
+
+# MS 10/19/2015: added ROSE_BOOST_LIBS variable to share exact same
+# boost libs list in ROSE an in the ROSTTA Makefiles.
+ROSE_BOOST_LIBS=$(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
-  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
+  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)
+
+ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
+  $(SQLITE_DATABASE_LIBS) $(QT_LIBS) $(ROSE_BOOST_LIBS) \
+  $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
   $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
   $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) $(ROSE_EXPERIMENTAL_OFP_LIBS) \
@@ -518,3 +538,8 @@ RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
+
+# DQ (9/27/2015): Added to support new use of AM_CPPFLAGS instead of INCLUDES 
+# (depreicated in automake and for which many warnings are generated).
+CPPFLAGS = $(AM_CPPFLAGS)
+

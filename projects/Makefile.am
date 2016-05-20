@@ -1,10 +1,22 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Add Projects that are associated with capabilities that belong to ROSE here. Or better yet, just add a "rose.config" file to
-# your project directory and then you don't have to change any of the ROSE build system -- your project will be found
-# automatically by the "build" script, your rose.config will be incorporated into the configuration system, and your project
-# will become part of the recursive "make" commands.   To disable your project, just rename its rose.config file and rerun
-# "build" and "configure". [RPM 2012-03-29]
+########################################################################################################################
+# List of all project subdirectories (SUBDIRS)
+########################################################################################################################
+
+# Ideally, each project's makefile should know whether it should build anything based on what features (such as
+# dependencies, frontend languages) are available and selected by the configuration.  However, some of the earlier
+# projects have errors if you run "make" in the project directory when ROSE is not configured to support the project,
+# thus we have various "if" statements here to support that.
+#
+# Projects that use the "rose.config" mechanism need not be listed here. Their makefile MUST know how to avoid building
+# the project if its dependencies are not met.
+#
+# To use the "rose.config" mechanism: add a "rose.config" file to your project directory and then you don't have to
+# change any of the ROSE build system -- your project will be found automatically by the "build" script, your
+# rose.config will be incorporated into the configuration system, and your project will become part of the recursive
+# "make" commands.  To disable your project, just rename its rose.config file and rerun "build" and "configure".
+
 SUBDIRS = \
 	AstEquivalence \
 	BabelPreprocessor \
@@ -13,11 +25,11 @@ SUBDIRS = \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
-   ConstructNameSimilarityAnalysis \
+	ConstructNameSimilarityAnalysis \
 	DataFaultTolerance \
 	DatalogAnalysis \
 	DocumentationGenerator \
-   EditDistanceMetric \
+	EditDistanceMetric \
 	FiniteStateModelChecker \
 	fuse \
 	graphColoring \
@@ -26,7 +38,7 @@ SUBDIRS = \
 	MacroRewrapper \
 	MapleDSL \
 	OpenMP_Analysis \
-   OpenMP_Checker \
+	OpenMP_Checker \
 	QtDesignerPlugins \
 	RoseQt \
 	arrayOptimization \
@@ -42,9 +54,9 @@ SUBDIRS = \
 	roseToLLVM \
 	RTC \
 	PowerAwareCompiler \
-   taintcheck \
+	taintcheck \
 	ManyCoreRuntime \
-	StencilManyCore \
+	ManyCoreRuntime2 \
 	Fortran_to_C \
 	mint \
 	vectorization \
@@ -53,26 +65,28 @@ SUBDIRS = \
 	LineDeleter \
 	$(OPTIONAL_PROJECTS)
 
-# DQ (3/16/2015): Removed for temporary teesting.
-#	BinFuncDetect 
-#  CodeThorn
+# DQ (4/20/2016): Clang has a problem within compiling POET, which is used in the StencilManyCore project.
+if !USING_CLANG_COMPILER
+SUBDIRS += StencilManyCore 
+endif
 
 # DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
 if ROSE_USING_GCC_VERSION_LATER_4_8
-  SUBDIRS += ShiftCalculus ShiftCalculus2 ShiftCalculus3
+  # DQ (3/23/2016): Note that we currently require the dsl_infrastructure directory to be built before both of 
+  # the arrayDSLcompiler and amrShiftDSLcompiler directories.
+  SUBDIRS += ShiftCalculus ShiftCalculus2 ShiftCalculus3 ShiftCalculus4 dsl_infrastructure arrayDSLcompiler amrShiftDSLcompiler
 endif
 
 # Liao, 2014/2/11, with Dan's permission, comment out this project since it is broken now.
 #   BinaryDataStructureRecognition 
-# DQ (9/2/2013): This fails to compile (at least with some versions of Boost).
 
+# DQ (9/2/2013): This fails to compile (at least with some versions of Boost).
 if ROSE_WITH_ISL
   SUBDIRS += RosePolly
 endif
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
 # UpcTranslation (fails only a single test code shared_2.upc)
-
 
 # DQ (6/25/2011): Removed from being tested (failing symbolicAnalysisFramework/tests/test_examples/dominator_example.cpp)
 # Matzke (10/31/2014): Removed symbolicAnalysisFramework from being compiled. It depends on boost having been installed with
@@ -88,11 +102,6 @@ if !USING_XTENSA_BACKEND_COMPILER
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
 # OpenMP_Translator
-
-# TOO (2/16/2011): Disabled for Thrifty compiler (gcc 3.4.4) due to errors during make check
-if !USING_GCC_3_4_4_BACKEND_COMPILER
-#  SUBDIRS += backstroke haskellport 
-   SUBDIRS += backstroke
 
 # DQ (9/2/2013): This is overly complex to process with internal debugging turned on in the new EDG support.
 if !ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
@@ -111,28 +120,30 @@ if !ROSE_USE_INSURE
 endif
 endif
 endif
-
-endif
-
 endif
 endif
 
 # DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
-# DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).
 if !ROSE_USING_ROSE_ANALYSIS
-   SUBDIRS += RTED simulator
+   SUBDIRS += RTED
 endif
 
 SUBDIRS += simulator2
 
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
-# in ROSE, so lets' move on and return to compass later for this level of support.
+# in ROSE, so lets' move on and return to compass later for this level of support
+# of ROSE compiling the compass tool as a test of ROSE.
 #    compass
 
 if !ROSE_USING_ROSE_CODE_GENERATION
 
 # DQ (10/17/2010): This seems to be problem for Java, we can fix this later.
 if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+
+# DQ (4/17/2016): Restrict this to requiring both C/C++ language support and Binary analysis support.
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 if ROSE_BUILD_COMPASS2
    SUBDIRS += compass2
 else
@@ -143,8 +154,13 @@ else
  # compiled in any order. It was originally listed after "haskellport".
    SUBDIRS += palette
 endif
+
    SUBDIRS += binCompass
 endif
+
+endif
+endif
+
 endif
 
 if ROSE_MPI
@@ -174,8 +190,10 @@ if ROSE_WITH_ATERM
 endif
 
 # Pei-Hung (12/17/2014): adding PolyOpt only when POCC is available
+# Pei-Hung (09/24/2015): MultiLevelMemory requires POCC
 if ROSE_WITH_POCC
-   SUBDIRS += PolyOpt2
+   SUBDIRS += PolyOpt2 \
+	MultiLevelMemory
 endif
 
 # DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 
@@ -185,17 +203,61 @@ SUBDIRS += SatSolver
 # endif
 
 SUBDIRS += PolyhedralModel
-# SUBDIRS += demos-dlx-mdcg
+SUBDIRS += TileK
 # SUBDIRS += rose-tooling
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU
 
+
+########################################################################################################################
+# Associate projects with developers
+########################################################################################################################
+
+# List the projects you want to be tested after your name. By doing so, you are sponsoring the project and will
+# be responsible for fixing bugs (either yourself or by delegation).  The names listed here should be the same as the names
+# listed here will be intersected with the $(SUBDIRS) value before tests are run, which means you can safely list
+# subdirectories that might not be present or might not be configured.
+
+PROJECTS_ROBB    = BinaryAnalysisTools
+PROJECTS_JUSTIN  = compass2 compass binCompass
+PROJECTS_DAN     =
+PROJECTS_MARKUS  =
+PROJECTS_PEIHUNG =
+PROJECTS_LEO     =
+
+
+########################################################################################################################
+# Rules for testing projects having particular core developer sponsors
+########################################################################################################################
+
+developer_projects = $(foreach subdir, $(1), $(if $(findstring $(subdir), $(SUBDIRS)), $(subdir)))
+
+check-projects-robb:
+	@for project in $(call developer_projects, $(PROJECTS_ROBB)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-justin:
+	@for project in $(call developer_projects, $(PROJECTS_JUSTIN)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-dan:
+	@for project in $(call developer_projects, $(PROJECTS_DAN)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-markus:
+	@for project in $(call developer_projects, $(PROJECTS_MARKUS)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-peihung:
+	@for project in $(call developer_projects, $(PROJECTS_PEIHUNG)); do	\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+check-projects-leo:
+	@for project in $(call developer_projects, $(PROJECTS_LEO)); do		\
+		$(MAKE) -C $$project check || exit 1;				\
+	done
+
+
+
 EXTRA_DIST = StaticDynamicAnalysis
-
-
-check-local:
-	@echo "***************************************************************************"
-	@echo "****** ROSE/projects: make check rule complete (terminated normally) ******"
-	@echo "***************************************************************************"
-

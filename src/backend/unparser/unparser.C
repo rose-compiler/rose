@@ -393,7 +393,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // transformations.  This also make simple analysis much cheaper since the hidel list computation is
   // expensive (in this implementation).
   // DQ (8/6/2007): Only compute the hidden lists if working with C++ code!
-     if (isCxxFile)
+     if (isCxxFile == true)
         {
        // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
        // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
@@ -465,6 +465,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // AST is built, instead of before it is unparsed.  This makes no difference if we don't do transformations, but if transformations
   // are done if this is computed here then statements removed from the AST showup in the white space between statements (an error).
 
+#error "DEAD CODE!"
+
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
   // if (SageInterface::is_C_language() == true)
   // if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
@@ -479,12 +481,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // *** Next we have to attached the data base ***
           buildTokenStreamMapping(file);
 
+#error "DEAD CODE!"
+
 #if 1
           if ( SgProject::get_verbose() > 0 )
              {
                printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %" PRIuPTR " \n",file->get_token_list().size());
              }
 #endif
+
+#error "DEAD CODE!"
 
 #if 0
           printf ("DONE: Building token stream mapping map! \n");
@@ -1732,7 +1738,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
 
        // DQ (5/31/2005): Get the filename from a traversal back through the parents to the SgFile
        // fileNameOfStatementsToUnparse = locatedNode->getFileName();
-       // fileNameOfStatementsToUnparse = ROSE::getFileNameByTraversalBackToFileNode(locatedNode);
+       // fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
           if (locatedNode->get_parent() == NULL)
              {
             // DQ (7/29/2005):
@@ -1755,7 +1761,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                  else
                   {
 #if 1
-                    fileNameOfStatementsToUnparse = ROSE::getFileNameByTraversalBackToFileNode(locatedNode);
+                    fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
 #else
                     SgSourceFile* sourceFile = TransformationSupport::getSourceFile(locatedNode);
                     ROSE_ASSERT(sourceFile != NULL);
@@ -1943,8 +1949,8 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     SgFile* file = project->get_fileList()[i];
                     ROSE_ASSERT(file != NULL);
                     string unparsedFileString = globalUnparseToString_OpenMPSafe(file,NULL,NULL,inputUnparseInfoPointer);
-                 // string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
-                 // string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                 // string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
+                 // string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
                     string prefixString       = string("/* TOP:")      + file->getFileName() + string(" */ \n");
                     string suffixString       = string("\n/* BOTTOM:") + file->getFileName() + string(" */ \n\n");
                     returnString += prefixString + unparsedFileString + suffixString;
@@ -2069,8 +2075,8 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                               SgFile* file = &(project->get_file(i));
                               ROSE_ASSERT(file != NULL);
                               string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
-                              string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
-                              string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                              string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
+                              string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
                               returnString += prefixString + unparsedFileString + suffixString;
                             }
                          break;
@@ -2146,8 +2152,8 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                               SgFile* file = &(project->get_file(i));
                               ROSE_ASSERT(file != NULL);
                               string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
-                              string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
-                              string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                              string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
+                              string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
                               returnString += prefixString + unparsedFileString + suffixString;
                             }
 #else
@@ -2337,7 +2343,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 #endif
                if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
-                    outputFilename = ROSE::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/rose_" + file->get_sourceFileNameWithoutPath();
+                    outputFilename = rose::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/rose_" + file->get_sourceFileNameWithoutPath();
 #if 0
                     printf ("Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
 #endif
@@ -2509,7 +2515,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         {
        // MS: commented out the following output
        // if ( file.get_verbose() == true )
-            // printf ("### ROSE::skip_unparse == true: Skipping all source code generation by ROSE generated preprocessor! \n");
+            // printf ("### rose::skip_unparse == true: Skipping all source code generation by ROSE generated preprocessor! \n");
         }
        else
         {
@@ -2639,14 +2645,14 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                                     _forced_transformation_format,
                                     _unparse_includes );
 
-       // printf ("ROSE::getFileName(file) = %s \n",ROSE::getFileName(file));
+       // printf ("rose::getFileName(file) = %s \n",rose::getFileName(file));
        // printf ("file->get_file_info()->get_filenameString = %s \n",file->get_file_info()->get_filenameString().c_str());
 
        // DQ (7/19/2007): Remove lineNumber from constructor parameter list.
        // int lineNumber = 0;  // Zero indicates that ALL lines should be unparsed
-       // Unparser roseUnparser ( &file, &ROSE_OutputFile, ROSE::getFileName(&file), roseOptions, lineNumber );
-       // Unparser roseUnparser ( &ROSE_OutputFile, ROSE::getFileName(&file), roseOptions, lineNumber, NULL, repl );
-       // Unparser roseUnparser ( &ROSE_OutputFile, ROSE::getFileName(file), roseOptions, lineNumber, unparseHelp, unparseDelegate );
+       // Unparser roseUnparser ( &file, &ROSE_OutputFile, rose::getFileName(&file), roseOptions, lineNumber );
+       // Unparser roseUnparser ( &ROSE_OutputFile, rose::getFileName(&file), roseOptions, lineNumber, NULL, repl );
+       // Unparser roseUnparser ( &ROSE_OutputFile, rose::getFileName(file), roseOptions, lineNumber, unparseHelp, unparseDelegate );
        // Unparser roseUnparser ( &ROSE_OutputFile, file->get_file_info()->get_filenameString(), roseOptions, lineNumber, unparseHelp, unparseDelegate );
 
           Unparser roseUnparser ( &ROSE_OutputFile, file->get_file_info()->get_filenameString(), roseOptions, unparseHelp, unparseDelegate );

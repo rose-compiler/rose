@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -104,7 +104,7 @@ typedef void (*AssertFailureHandler)(const char *mesg, const char *expr, const s
 /** %Optional user callback to handle assertion failures.  If this variable has a non-null value, then that function is called
  *  after the failed assertion message is emitted. This allows the user to terminate the program some other way than the
  *  default @c abort call.  In any case, this function should not return; if it does, then @c abort is called. */
-extern AssertFailureHandler assertFailureHandler;
+SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
 
 } // namespace
 } // namespace

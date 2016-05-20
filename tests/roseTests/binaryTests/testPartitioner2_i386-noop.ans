@@ -6,47 +6,47 @@
 0x080480a0: e9 53 00 00 00          |.S...   |<sp+0 >   jmp    0x080480f8<main>
 0x080480f8: e8 a8 ff ff ff          |.....   |<sp+0 >   call   0x080480a5<test1>
 0x080480f8: Outgoing stack delta: -4
-0x080480f8: Successor blocks: 0x080480a5, 0x080480fd
+0x080480f8: Successor blocks: 0x080480a5<test1>, 0x080480fd
 
 0x080480fd: Basic block reasons: 
 0x080480fd: e8 ac ff ff ff          |.....   |<sp+0 >   call   0x080480ae<test2>
 0x080480fd: Outgoing stack delta: -4
-0x080480fd: Successor blocks: 0x080480ae, 0x08048102
+0x080480fd: Successor blocks: 0x080480ae<test2>, 0x08048102
 
 0x08048102: Basic block reasons: 
 0x08048102: e8 aa ff ff ff          |.....   |<sp+0 >   call   0x080480b1<test3>
 0x08048102: Outgoing stack delta: -4
-0x08048102: Successor blocks: 0x080480b1, 0x08048107
+0x08048102: Successor blocks: 0x080480b1<test3>, 0x08048107
 
 0x08048107: Basic block reasons: 
 0x08048107: e8 b5 ff ff ff          |.....   |<sp+0 >   call   0x080480c1<test4a>
 0x08048107: Outgoing stack delta: -4
-0x08048107: Successor blocks: 0x080480c1, 0x0804810c
+0x08048107: Successor blocks: 0x080480c1<test4a>, 0x0804810c
 
 0x0804810c: Basic block reasons: 
 0x0804810c: e8 bf ff ff ff          |.....   |<sp+0 >   call   0x080480d0<test4b>
 0x0804810c: Outgoing stack delta: -4
-0x0804810c: Successor blocks: 0x080480d0, 0x08048111
+0x0804810c: Successor blocks: 0x080480d0<test4b>, 0x08048111
 
 0x08048111: Basic block reasons: 
 0x08048111: e8 c8 ff ff ff          |.....   |<sp+0 >   call   0x080480de<test5>
 0x08048111: Outgoing stack delta: -4
-0x08048111: Successor blocks: 0x080480de, 0x08048116
+0x08048111: Successor blocks: 0x080480de<test5>, 0x08048116
 
 0x08048116: Basic block reasons: 
 0x08048116: e8 c6 ff ff ff          |.....   |<sp+0 >   call   0x080480e1<test6>
 0x08048116: Outgoing stack delta: -4
-0x08048116: Successor blocks: 0x080480e1, 0x0804811b
+0x08048116: Successor blocks: 0x080480e1<test6>, 0x0804811b
 
 0x0804811b: Basic block reasons: 
 0x0804811b: e8 c6 ff ff ff          |.....   |<sp+0 >   call   0x080480e6<test7>
 0x0804811b: Outgoing stack delta: -4
-0x0804811b: Successor blocks: 0x080480e6, 0x08048120
+0x0804811b: Successor blocks: 0x080480e6<test7>, 0x08048120
 
 0x08048120: Basic block reasons: 
 0x08048120: e8 c4 ff ff ff          |.....   |<sp+0 >   call   0x080480e9<test8>
 0x08048120: Outgoing stack delta: -4
-0x08048120: Successor blocks: 0x080480e9, 0x08048125
+0x08048120: Successor blocks: 0x080480e9<test8>, 0x08048125
 
 0x08048125: Basic block reasons: 
 0x08048125: f4                      |.       |<sp+0 >   hlt    

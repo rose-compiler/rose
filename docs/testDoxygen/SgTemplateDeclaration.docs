@@ -6,7 +6,7 @@
 \class SgTemplateDeclaration
 \brief This class represents the concept of a template declaration.
 
-   This template declaration is internally marked as being either a
+This template declaration is internally marked as being either a
      - class (e_template_class), 
      - member class (e_template_m_class), 
      - function (e_template_function), 
@@ -23,19 +23,19 @@ independent of its structural location within the source code.
 \todo Template declarations marked as friend don't seem to be marked as friend internally.
 
 \todo The scope of a SgTemplateDeclaration should be a SgTemplateInstantiationDefn, since
-    it could be associated which more than one definition.  What we need, and don't have
-    yet, is a SgTemplateDefinition to accompany the SgTemplateDeclaration then a 
-    SgTemplateDeclaration could have a SgTemplateDefinition for a parent and or scope
-    when it is a member function or namespace or global scope (typically), otherwise.
+it could be associated which more than one definition.  What we need, and don't have
+yet, is a SgTemplateDefinition to accompany the SgTemplateDeclaration then a 
+SgTemplateDeclaration could have a SgTemplateDefinition for a parent and or scope
+when it is a member function or namespace or global scope (typically), otherwise.
 
 \todo Make the "*PtrList" typed objects non-pointer data members (lists) instead of
-    pointer to lists.
+pointer to lists.
 
 \note Template specializations appear in syntax to be a template declaration (with
-    explicit template arguments), but they are really just an explicit template
-    instantiation. Thus Sage III stores such template specializations as template
-    instantiations and references the associated template declaration
-    (SgTemplateDeclaration) internally.
+explicit template arguments), but they are really just an explicit template
+instantiation. Thus Sage III stores such template specializations as template
+instantiations and references the associated template declaration
+(SgTemplateDeclaration) internally.
 
 
 \sa
@@ -50,7 +50,7 @@ independent of its structural location within the source code.
 /*! \var SgTemplateDeclaration::p_name
 \brief This is the name of the template
 
-   This is the name of the template (e.g. for "template<class T> class X;",
+This is the name of the template (e.g. for "template<class T> class X;",
 the name is "X".
 
 */
@@ -58,7 +58,7 @@ the name is "X".
 /*! \var SgTemplateDeclaration::p_string
 \brief This is the full template declaration as a string only.
 
-   This is the template declaration as a string (e.g. for "template<class T> class X {};",
+This is the template declaration as a string (e.g. for "template<class T> class X {};",
 the string is "template<class T> class X {};".
 
 \todo Check the accuracy of this statement in the unparser!
@@ -68,8 +68,8 @@ the string is "template<class T> class X {};".
 /*! \var SgTemplateDeclaration::p_template_kind
 \brief This is the classification of the template declaration
 
-   This is the classification of the template declaration.
-   This template declaration is internally marked as being either a
+This is the classification of the template declaration.
+This template declaration is internally marked as being either a
      - class (e_template_class), 
      - member class (e_template_m_class), 
      - function (e_template_function), 
@@ -81,7 +81,7 @@ the string is "template<class T> class X {};".
 /*! \var SgTemplateDeclaration::p_templateParameters
 \brief This is the STL list of pointers template parameters (SgTemplateParameter objects)
 
-  This is the STL list of pointers to template parameters (SgTemplateParameter objects)
+This is the STL list of pointers to template parameters (SgTemplateParameter objects)
 For example, for "template<class T> class X;", the STL list would contain a SgTemplateParameter
 representing T.
 
@@ -90,7 +90,7 @@ representing T.
 /*! \var SgTemplateDeclaration::p_scope
 \brief This is the scope of the template declaration.
 
-   This is stored explicitly since name qualification can be used to 
+This is stored explicitly since name qualification can be used to 
 place some declarations in positions that are different from their
 scope if it were computed structureally from the parent pointer data.
 
@@ -105,7 +105,7 @@ scope if it were computed structureally from the parent pointer data.
 \fn SgTemplateDeclaration::SgTemplateDeclaration ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgTemplateDeclaration base class.
+This constructor builds the SgTemplateDeclaration base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -118,14 +118,14 @@ scope if it were computed structureally from the parent pointer data.
 \fn SgTemplateDeclaration::~SgTemplateDeclaration()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgTemplateDeclaration::isSgTemplateDeclaration (SgNode *s)
 \brief Cast function (from derived class to SgTemplateDeclaration pointer).
 
-   This functions returns a SgTemplateDeclaration pointer for any input of a 
+This functions returns a SgTemplateDeclaration pointer for any input of a 
 pointer to an object derived from a SgTemplateDeclaration.
 
 \return Returns valid pointer to SgTemplateDeclaration if input is derived from a SgLocatedNode.
@@ -135,7 +135,7 @@ pointer to an object derived from a SgTemplateDeclaration.
 \fn SgTemplateDeclaration::isSgTemplateDeclaration (const SgNode *s)
 \brief Cast function (from derived class to SgTemplateDeclaration pointer).
 
-   This functions returns a SgTemplateDeclaration pointer for any input of a 
+This functions returns a SgTemplateDeclaration pointer for any input of a 
 pointer to an object derived from a SgTemplateDeclaration.
 
 \return Returns valid pointer to SgTemplateDeclaration if input is derived from a SgLocatedNode.

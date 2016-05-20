@@ -108,7 +108,7 @@ vector<SgVarRefExp*> SgNodeHelper::determineVariablesInSubtree(SgNode* node) {
   vector<SgVarRefExp*> varVec;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgVarRefExp* v=isSgVarRefExp(node)) {
+    if(SgVarRefExp* v=isSgVarRefExp(*i)) {
       varVec.push_back(v);
     }
   }
@@ -228,7 +228,7 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarPrintf(SgNode* node) {
   * \author Markus Schordan
   * \date 2012.
  */
-SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
+SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node, bool showWarnings) {
   SgNode* nextNodeToAnalyze1=node;
   if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
     string fName=SgNodeHelper::getFunctionName(funCall);
@@ -237,12 +237,16 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
       if(actualParams.size()==3) {
         SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
         if(!varRefExp) {
-             cerr<<"Warning: unsupported fprint argument #3 (no variable found). Required form of fprintf(stream,\"...%d...\",v)."<<endl;
-             return 0;
+          if(showWarnings) {
+            cerr<<"WARNING: unsupported fprint argument #3 (no variable found). Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+          }
+          return 0;
         }
         return varRefExp;
       } else {
-        cerr<<"Warning: unsupported number of fprintf arguments. Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+        if(showWarnings) {
+          cerr<<"WARNING: unsupported number of fprintf arguments. Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+        }
         return 0;
       }
     }
@@ -659,29 +663,36 @@ bool SgNodeHelper::isForwardFunctionDeclaration(SgNode* node) {
  */
 SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallExp* funCall) {
   if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration()) {
-    if(SgFunctionDefinition* funDef=funDecl->get_definition()) {
-      return funDef;
-    } else {
-      // forward declaration (we have not found the function definition yet)
-      // 1) use parent pointers and search for Root node (likely to be SgProject node)
-      SgNode* root=funDecl;
-      SgNode* parent=0;
-      while(!SgNodeHelper::isAstRoot(root)) {
-        parent=SgNodeHelper::getParent(root);
-        root=parent;
-      }
-      assert(root);
-      // 2) search in AST for the function's definition now
-      RoseAst ast(root);
-      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-        if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
-          if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
-            SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
-            SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
-            if(sym1!=0 && sym1==sym2) {
-              SgFunctionDefinition* fundef2=funDecl2->get_definition();
-              assert(fundef2);
-              return fundef2;
+    if(SgDeclarationStatement* defFunDecl=funDecl->get_definingDeclaration()) {
+      if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(defFunDecl)) {
+        if(SgFunctionDefinition* funDef=funDecl2->get_definition()) {
+          return funDef;
+        } else {
+          //cout<<"INFO: no definition found for call: "<<funCall->unparseToString()<<endl;
+          return 0;
+          // the following code is dead code: searching the AST is inefficient. This code will refactored and removed from here.
+          // forward declaration (we have not found the function definition yet)
+          // 1) use parent pointers and search for Root node (likely to be SgProject node)
+          SgNode* root=defFunDecl;
+          SgNode* parent=0;
+          while(!SgNodeHelper::isAstRoot(root)) {
+            parent=SgNodeHelper::getParent(root);
+            root=parent;
+          }
+          assert(root);
+          // 2) search in AST for the function's definition now
+          RoseAst ast(root);
+          for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+            if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
+              if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
+                SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
+                SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
+                if(sym1!=0 && sym1==sym2) {
+                  SgFunctionDefinition* fundef2=funDecl2->get_definition();
+                  assert(fundef2);
+                  return fundef2;
+                }
+              }
             }
           }
         }
@@ -796,15 +807,36 @@ SgFunctionCallExp* SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(SgNode*
 
 /*! 
   * \author Markus Schordan
-  * \date 2012.
+  * \date 2015.
  */
 SgFunctionCallExp* SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode* node) {
-  if(SgNode* sexp=isSgExprStatement(node))
-    if(SgNode* assignOp=isSgAssignOp(SgNodeHelper::getExprStmtChild(sexp)))
-      if(isSgVarRefExp(SgNodeHelper::getLhs(assignOp)))
-        if(SgFunctionCallExp* fcp=isSgFunctionCallExp(SgNodeHelper::getRhs(assignOp)))
-          return fcp;
-  return 0;
+  std::pair<SgVarRefExp*,SgFunctionCallExp*>  p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
+  return p.second;
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2015.
+ */
+std::pair<SgVarRefExp*,SgFunctionCallExp*> SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(SgNode* node) {
+  if(SgNode* sexp=isSgExprStatement(node)) {
+    if(SgNode* assignOp=isSgAssignOp(SgNodeHelper::getExprStmtChild(sexp))) {
+      SgNode* lhs=SgNodeHelper::getLhs(assignOp);
+      SgNode* rhs=SgNodeHelper::getRhs(assignOp);
+      if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
+        /* the result of a function call may be casted. skip those
+           casts to find the actual function call node.
+        */
+        while(isSgCastExp(rhs)) {
+          rhs=SgNodeHelper::getFirstChild(rhs);
+        }
+        if(SgFunctionCallExp* fcp=isSgFunctionCallExp(rhs)) {
+          return std::make_pair(var,fcp);
+        }
+      }
+    }
+  }
+  return std::make_pair((SgVarRefExp*)0,(SgFunctionCallExp*)0);
 }
 
 
@@ -1064,6 +1096,7 @@ SgNode* SgNodeHelper::getLastOfBlock(SgNode* node) {
   * \author Markus Schordan
   * \date 2013.
  */
+// TODO: refactor with new function SgNodeHelper::replaceString
 void replaceInString(string toReplace, string with, string& str) {
   size_t index = 0;
   while (index<str.size()) {
@@ -1071,7 +1104,7 @@ void replaceInString(string toReplace, string with, string& str) {
     index = str.find(toReplace, index);
     if (index == string::npos) break;
     
-    /* replace the subsring */
+    /* replace the substring */
     str.replace(index, toReplace.size(), with);
     /* advance index forward past the replaced string */
     index += with.size();
@@ -1269,10 +1302,14 @@ int SgNodeHelper::numChildren(SgNode* node) {
 }
 
 void SgNodeHelper::replaceExpression(SgExpression* e1, SgExpression* e2, bool mode) {
-  SgExpression* p=isSgExpression(e1->get_parent());
-  if(p && mode==false) {
-    p->replace_expression(e1,e2);
-    e2->set_parent(p);
+  SgExpression* pe=isSgExpression(e1->get_parent());
+  SgExprStatement* ps=isSgExprStatement(e1->get_parent());
+  if(pe && mode==false) {
+    pe->replace_expression(e1,e2);
+    e2->set_parent(pe);
+  } else if(ps && mode==false) {
+    ps->replace_expression(e1,e2);
+    e2->set_parent(ps);
   } else {
     SageInterface::replaceExpression(e1,e2,mode); // this function is more general but very slow
   }
@@ -1325,4 +1362,78 @@ SgExpressionPtrList& SgNodeHelper::getInitializerListOfAggregateDeclaration(SgVa
   }
   cerr<<"Error: getInitializerListOfArrayVariable failed."<<endl;
   exit(1);
+}
+
+SgNodeHelper::PragmaList
+SgNodeHelper::collectPragmaLines(string pragmaName,SgNode* root) {
+  PragmaList l;
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    std::list<SgPragmaDeclaration*> pragmaNodes;
+    ROSE_ASSERT(pragmaNodes.size()==0);
+    // SgPragmaDeclaration(SgPragma),..., SgStatement
+    // collects consecutive pragma declarations
+    while(i!=ast.end()&&(isSgPragmaDeclaration(*i)||isSgPragma(*i))) {
+      if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
+        pragmaNodes.push_back(pragmaDecl);
+      }
+      ++i;
+    }
+    if(i!=ast.end()) {
+      for(std::list<SgPragmaDeclaration*>::iterator p=pragmaNodes.begin();p!=pragmaNodes.end();++p) {
+        string str=SgNodeHelper::getPragmaDeclarationString(*p);
+        SgNodeHelper::replaceString(str,"#pragma ","");
+        if(SgNodeHelper::isPrefix(pragmaName,str)) {
+          SgPragmaDeclaration* lastPragmaDecl=pragmaNodes.back();
+          // ensure we did not collect pragmas at the end of a block
+          if(!(isLastChildOf(lastPragmaDecl,lastPragmaDecl->get_parent()))) {
+            if(SgStatement* assocStmt=isSgStatement(*i)) {
+              SgNodeHelper::replaceString(str,pragmaName+" ","");
+              //cout<<"PRAGMA REVERSE: "<<str<<" : "<<(assocStmt)->unparseToString()<<endl;
+              l.push_back(make_pair(str,assocStmt));
+            } else {
+              std::cerr<<"Error: "<<SgNodeHelper::sourceLineColumnToString(*p)<<": reverse pragma not associated with a method or statement."<<endl
+                       <<"Pragma         : "<<str<<endl
+                       <<"Associated code: "<<assocStmt->unparseToString()<<endl;
+              exit(1);
+            }
+          } else {
+            std::cerr<<"Error: "<<SgNodeHelper::sourceLineColumnToString(*p)<<": pragma at end of block. This is not allowed."<<endl;
+            exit(1);
+          }
+        }
+      }
+    }
+  }
+  return l;
+}
+
+void SgNodeHelper::replaceString(std::string& str, const std::string& from, const std::string& to) {
+  if(from.empty())
+    return;
+  size_t start_pos = 0;
+  while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+    str.replace(start_pos, from.length(), to);
+    start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+  }
+}
+
+bool SgNodeHelper::isPrefix( const std::string& prefix, const std::string& s )
+{
+  return std::equal(
+                    prefix.begin(),
+                    prefix.begin() + prefix.size(),
+                    s.begin() 
+                    );
+}
+
+bool SgNodeHelper::isLastChildOf(SgNode* elem, SgNode* parent) {
+  std::vector<SgNode*> children=parent->get_traversalSuccessorContainer();
+  return elem==children.back();
+}
+
+std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl) {
+  SgPragma* pragma=pragmaDecl->get_pragma();
+  ROSE_ASSERT(pragma);
+  return pragma->get_pragma();
 }

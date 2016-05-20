@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -74,7 +74,6 @@ Word bitMask(size_t offset, size_t nbits) {
     Word mask = nbits == bitsPerWord<Word>::value ? Word(-1) : (Word(1) << nbits) - 1;
     return mask << offset;
 }
-
 
 /** Invoke the a processor for a vector traversal.
  *
@@ -969,6 +968,21 @@ boost::uint64_t toInteger(const Word *words, const BitRange &range) {
     // Convert the temporary bit vector to an integer
     for (size_t i=0; i<nTmpWords; ++i)
         result |= (boost::uint64_t)tmp[i] << (i * bitsPerWord<Word>::value);
+    return result;
+}
+
+/** Convert a small bit vector to an integer.
+ *
+ *  Faster version of @ref toInteger for instances where the range offset is zero, and the size is not greater than 64 bits. */
+template<class Word>
+boost::uint64_t toInteger(const Word *words, size_t nbits) {
+    boost::uint64_t result = 0;
+    ASSERT_require(nbits <= 64);
+    size_t nTmpWords = numberOfWords<Word>(nbits);
+    for (size_t i=0; i<nTmpWords; ++i)
+        result |= (boost::uint64_t)words[i] << (i * bitsPerWord<Word>::value);
+    if (nbits < 64)
+        result &= ~((~UINT64_C(0)) << nbits);
     return result;
 }
 

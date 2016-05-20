@@ -31,7 +31,7 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 
 void
 Grammar::setUpBinaryInstructions()
@@ -118,7 +118,8 @@ Grammar::setUpBinaryInstructions()
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
     AsmInstruction.setDataPrototype("SgAsmStatementPtrList", "sources", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmInstruction.setDataPrototype("int64_t", "stackDelta", "= SgAsmInstruction::INVALID_STACK_DELTA",
+    // stack pointer at start of instruction relative to start of instruction's function
+    AsmInstruction.setDataPrototype("int64_t", "stackDeltaIn", "= SgAsmInstruction::INVALID_STACK_DELTA",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmInstruction.setDataPrototype("SgAsmExprListExp*", "semantics", "= NULL",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
@@ -179,7 +180,7 @@ Grammar::setUpBinaryInstructions()
 
 
     // Direct register references, like x86 EAX (as opposed to, say, ST(0)).  The only purpose of this class is because SageIII
-    // doesn't allow traversals on non-terminal classes.
+    // doesn't allow traversals on non-AstNodeClass classes.
     NEW_TERMINAL_MACRO(AsmDirectRegisterExpression,
                        "AsmDirectRegisterExpression", "AsmDirectRegisterExpressionTag");
     AsmDirectRegisterExpression.setDataPrototype("unsigned", "psr_mask", "=0", // for ARM
@@ -340,6 +341,7 @@ Grammar::setUpBinaryInstructions()
     // Floating-point types.
     NEW_TERMINAL_MACRO(AsmFloatType, "AsmFloatType", "AsmFloatTypeTag");
     AsmFloatType.setFunctionPrototype("HEADER_FLOAT_TYPE", "../Grammar/BinaryInstruction.code");
+    AsmFloatType.setPredeclarationString("HEADER_FLOAT_TYPE_PREDECLARATION", "../Grammar/BinaryInstruction.code");
     AsmFloatType.setDataPrototype("size_t", "significandOffset", "=(size_t)(-1)", // offset to significand lsb; read-only
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmFloatType.setDataPrototype("size_t", "significandNBits", "=(size_t)(-1)", // size of significand in bits; read-only
@@ -351,6 +353,8 @@ Grammar::setUpBinaryInstructions()
     AsmFloatType.setDataPrototype("size_t", "exponentNBits", "=(size_t)(-1)", // number of bits in the exponent; read-only
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmFloatType.setDataPrototype("uint64_t", "exponentBias", "=0", // zero-point of exponent; read-only
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmFloatType.setDataPrototype("unsigned", "flags", "=0", // read-only
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
     // Scalar types
@@ -392,6 +396,7 @@ Grammar::setUpBinaryInstructions()
     // references to addresses or data which are described by symbols (not to be confused with the binary's symbol table) in
     // the function's symbol table (the SgAsmFunction::symbol_table member).
     NEW_TERMINAL_MACRO(AsmFunction, "AsmFunction", "AsmFunctionTag");
+    AsmFunction.setPredeclarationString("HEADER_BINARY_FUNCTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
     AsmFunction.setFunctionPrototype("HEADER_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
     AsmFunction.setFunctionSource("SOURCE_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
     AsmFunction.setDataPrototype("std::string", "name", "= \"\"",
@@ -414,13 +419,21 @@ Grammar::setUpBinaryInstructions()
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
     AsmFunction.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::FunctionCall
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    // net effect of function on the stack pointer
     AsmFunction.setDataPrototype("int64_t", "stackDelta", "= SgAsmInstruction::INVALID_STACK_DELTA",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmFunction.setDataPrototype("const rose::BinaryAnalysis::CallingConvention::Definition*", "callingConvention", "=NULL",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
     // Instruction basic block. One entry point (first instruction) and one exit point (last instruction).  However,
     // SgAsmBlock is also used for other things, such as collections of functions.
+    //
+    // statementList and successors should have been pointers to nodes that contain the list rather than being the lists
+    // themselves because ROSETTA doesn't allow traversals on multiple list data members--we can traverse either one list or
+    // the other, but not both.  It's too late to change how this part of the AST is structured because so much user code
+    // already depends on it, therefore we can only traverse statementList and not successors. [Robb Matzke 2016-02-25]
     NEW_TERMINAL_MACRO(AsmBlock, "AsmBlock", "AsmBlockTag");
     AsmBlock.setFunctionPrototype("HEADER_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
     AsmBlock.setFunctionSource("SOURCE_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
@@ -444,6 +457,7 @@ Grammar::setUpBinaryInstructions()
                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmBlock.setDataPrototype("double", "code_likelihood", "= 0.0",
                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    // stack pointer at end of basic block relative to start of block's function
     AsmBlock.setDataPrototype("int64_t", "stackDeltaOut", "= SgAsmInstruction::INVALID_STACK_DELTA",
                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

@@ -6,6 +6,7 @@
 #include <ConcreteSemantics2.h>
 #include <NullSemantics2.h>
 #include <DispatcherX86.h>
+#include <DispatcherM68k.h>
 
 class RSIM_Thread;
 
@@ -19,8 +20,8 @@ typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::Register
 typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RegisterStatePtr RegisterStatePtr;
 typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::State State;
 typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::StatePtr StatePtr;
-typedef rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86 Dispatcher;
-typedef rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86Ptr DispatcherPtr;
+typedef rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::Dispatcher Dispatcher;
+typedef rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::DispatcherPtr DispatcherPtr;
 
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
@@ -47,12 +48,12 @@ struct Interrupt {
  *  <ul>
  *    <li>There is a 1:1 correspondence between simulated threads and RiscOperators objects, and each has a pointer to the
  *        other.</li>
- *    <li>Writing to a segment register will cause its shadow register to be updated. The shadow registers are not stored in
- *        the semantic state, but rather are stored in a SegmentInfo table inedexed by segment register.</li>
+ *    <li>Writing to an x86 segment register will cause its shadow register to be updated. The shadow registers are not stored
+ *        in the semantic state, but rather are stored in a SegmentInfo table inedexed by segment register.</li>
  *    <li>All memory reads and writes resolve to the simulated process MemoryMap rather than being stored in the semantic
- *        state.  The addresses supplied to these methods are adjusted according to the segment shadow registers.</li>
- *    <li>The @c interrupt operator is intercepted and results in either a syscall being processed or an interrupt exception
- *        being thrown.</li>
+ *        state.  The addresses supplied to these methods are adjusted according to the segment shadow registers for x86.</li>
+ *    <li>The x86 @c interrupt operator is intercepted and results in either a syscall being processed or an interrupt
+ *        exception being thrown.</li>
  *  </ul> */
 class RiscOperators: public rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators {
 public:
@@ -69,6 +70,8 @@ public:
         }
     };
 private:
+    Architecture architecture_;
+    bool allocateOnDemand_;                             // allocate rather than returning an error?
     RSIM_Thread *thread_;
     typedef Sawyer::Container::Map<X86SegmentRegister, SegmentInfo> SegmentInfoMap;
 
@@ -77,48 +80,64 @@ private:
     SegmentInfoMap segmentInfo_;
     
 protected:
-    RiscOperators(RSIM_Thread *thread, const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+    RiscOperators(Architecture arch, RSIM_Thread *thread,
+                  const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
                   rose::BinaryAnalysis::SMTSolver *solver)
-        : Super(protoval, solver), thread_(thread) {}
+        : Super(protoval, solver), architecture_(arch), allocateOnDemand_(false), thread_(thread) {}
 
-    RiscOperators(RSIM_Thread *thread, const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+    RiscOperators(Architecture arch, RSIM_Thread *thread,
+                  const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
                   rose::BinaryAnalysis::SMTSolver *solver)
-        : Super(state, solver), thread_(thread) {}
+        : Super(state, solver), architecture_(arch), allocateOnDemand_(false), thread_(thread) {}
 
 public:
-    static RiscOperatorsPtr instance(RSIM_Thread *thread, const RegisterDictionary *regdict,
+    static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread, const RegisterDictionary *regdict,
                                      rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         using namespace rose::BinaryAnalysis::InstructionSemantics2;
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
         BaseSemantics::StatePtr state = State::instance(registers, memory);
-        return RiscOperatorsPtr(new RiscOperators(thread, state, solver));
+        return RiscOperatorsPtr(new RiscOperators(arch, thread, state, solver));
     }
 
-    static RiscOperatorsPtr instance(RSIM_Thread *thread,
+    static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
                                      const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
                                      rose::BinaryAnalysis::SMTSolver *solver=NULL) {
-        return RiscOperatorsPtr(new RiscOperators(thread, protoval, solver));
+        return RiscOperatorsPtr(new RiscOperators(arch, thread, protoval, solver));
     }
 
-    static RiscOperatorsPtr instance(RSIM_Thread *thread,
+    static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
                                      const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
                                      rose::BinaryAnalysis::SMTSolver *solver=NULL) {
-        return RiscOperatorsPtr(new RiscOperators(thread, state, solver));
+        return RiscOperatorsPtr(new RiscOperators(arch, thread, state, solver));
     }
 
 public:
     virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(RSIM_Thread *thread, const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+    create(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
            rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
-        return instance(thread, protoval, solver);
+        ASSERT_not_reachable("no architecture or thread available");
     }
 
     virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(RSIM_Thread *thread, const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+    create(Architecture arch, RSIM_Thread *thread,
+           const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+           rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
+        return instance(arch, thread, protoval, solver);
+    }
+
+    virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    create(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
            rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
-        return instance(thread, state, solver);
+        ASSERT_not_reachable("no architecture or thread available");
+    }
+
+    virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    create(Architecture arch, RSIM_Thread *thread,
+           const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+           rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
+        return instance(arch, thread, state, solver);
     }
 
 public:
@@ -129,6 +148,10 @@ public:
     }
 
 public:
+    // Property that controls allocate or error.
+    bool allocateOnDemand() const { return allocateOnDemand_; }
+    void allocateOnDemand(bool b) { allocateOnDemand_ = b; }
+
     // Thread that owns these operators and the associated register state
     RSIM_Thread* thread() const { return thread_; }
 
@@ -144,9 +167,12 @@ public:
     // Dump lots of info to the TRACE_STATE stream (even if it is disabled)
     void dumpState();
 
+    // Architecture
+    Architecture architecture() const { return architecture_; }
+
 public:
     virtual void hlt() {
-        throw Halt(get_insn()->get_address());
+        throw Halt(currentInstruction()->get_address());
     }
 
     virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;

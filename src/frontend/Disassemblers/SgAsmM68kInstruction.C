@@ -2,6 +2,7 @@
  * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
+#include "AsmUnparser_compat.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
 #include "DispatcherM68k.h"
@@ -236,8 +237,8 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
 
         // Look at the top of the stack
         SValuePtr top = SValue::promote(ops->readMemory(RegisterDescriptor(), ops->readRegister(dispatcher->REG_A[7]),
-                                                        ops->get_protoval()->undefined_(32),
-                                                        ops->get_protoval()->boolean_(true)));
+                                                        ops->protoval()->undefined_(32),
+                                                        ops->protoval()->boolean_(true)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
             if (target_va) {
                 SValuePtr ip = SValue::promote(ops->readRegister(dispatcher->REG_PC));

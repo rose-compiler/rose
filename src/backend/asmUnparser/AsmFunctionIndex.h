@@ -60,8 +60,8 @@ namespace BinaryAnalysis {
   Num Entry-Addr Begin-Addr  End-Addr  Insns/ Bytes      Reason        Kind         Hash                     Name              
  ---- ---------- ---------- ---------- ------------ ---------------- -------- ---------------- --------------------------------
     0 0x08048278 0x0804828e 0x0804828f     8/23     .C..S...........  unknown                  _init                           
-    1 0x080482a0 0x080482a0 0x080482a6     1/6      .C.I............  unknown                  malloc@plt                      
-    2 0x080482b0 0x080482b0 0x080482b6     1/6      .C.I............  unknown                  __libc_start_main@plt           
+    1 0x080482a0 0x080482a0 0x080482a6     1/6      .C.I............  unknown                  malloc@@plt                      
+    2 0x080482b0 0x080482b0 0x080482b6     1/6      .C.I............  unknown                  __libc_start_main@@plt           
     3 0x080482c0 0x080482e1 0x080482e2    14/34     E...S...........  unknown                  _start                          
     4 0x080482e4 0x08048304 0x08048305    15/33     .C..S...........  unknown                  call_gmon_start                 
     5 0x08048310 0x0804833e 0x0804833f    16/47     .C..S...........  unknown                  __do_global_dtors_aux           
@@ -455,7 +455,7 @@ public:
     /** Print calling convention. */
     class CallingConventionCallback: public OutputCallback {
     public:
-        CallingConventionCallback(): OutputCallback("Kind", 8) {}
+        CallingConventionCallback(): OutputCallback("CallConv", 8) {}
         virtual bool operator()(bool enabled, const DataArgs&);
     } callingConventionCallback;
 

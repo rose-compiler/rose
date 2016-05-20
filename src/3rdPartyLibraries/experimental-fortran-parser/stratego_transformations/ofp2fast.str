@@ -1,0 +1,759 @@
+module ofp2fast
+
+imports
+   libstratego-lib
+   Main
+   FAST
+   ofp-simplify
+
+signature
+  constructors
+
+  // These extra constructors are not part of FAST but used in intermediate stages
+  //
+  SpecPart : ListStarOfDecl -> SpecPart
+  ExecPart : ListStarOfStmt -> ExecPart
+  FuncPart : ListStarOfDecl -> FuncPart
+
+  no-end   : NoEndStmt
+
+  // Ambiguities
+  amb : list -> choice
+
+  xFunctionStmt       : label * name * args * prefix * result * binding -> xFunctionStmt
+
+  Comment   : A -> B            /* comments are put in annotations */
+  OfpString : A -> B            /* node for a string literal */
+  ERROR     : A -> B            /* error reporting for a node */
+
+  comment : A -> B              /* need a better way to remove comments */
+
+  COLON     :      COLON
+
+strategies //=================START OF STRATEGIES============================
+
+  main = io-wrap(ofp2fast)
+
+  ofp2fast =
+      ofp-simplify
+//    ; outermost(to-comment)
+//    ; outermost(from-comment)
+    ; innermost(ofp-to-ast)
+    ; topdown(try(fast-fixup-spec-part))
+    ; topdown(try(fast-fixup-do-constructs))
+    ; topdown(try(fast-cleanup))
+
+//TODO check to see if +> should goto <+ (AND ELSEWHERE)
+transfer-type(|type) =
+     ?Var(name,unknown-type(),init)
+  ;  !Var(name,type,init)
+ +>  ?Var(name,ArrayType(unknown-type(),dims,codims),init)
+  ;  !Var(name,ArrayType(type,dims,codims),init)
+
+// TODO - try to remove usage of Some()
+//ofp-add-some = ?None() < id + !Some(<id>)
+  ofp-add-some = id
+
+//  ofp-name       = is-string < !OfpName (<id>)       + !None()
+//  ofp-name-some  = is-string < !Some(OfpName (<id>)) + !None()
+//  ofp-name-fail  = is-string ; !OfpName (<id>)
+
+//  ofp-label      = is-string < !Label(<id>) + !None()
+
+//  ofp-spec       = is-string < !Some(OfpGenericSpec(Name(<id>))) + !None()
+
+  ofp-char-select = id
+  ofp-kind = id
+//ofp-args = !OfpArgList(<id>)
+
+//ofp-prefix = is-list < !OfpPrefix(<id>) + !OfpPrefix([])
+//ofp-suffix = ?no-language-binding() < !OfpSuffix([]) + !OfpSuffix(<id>)
+
+//  ofp-var-def = is-string < !VarDef(Name(<id>)) + !ERROR(<id>)
+//  ofp-var-ref = is-string < !VarRef(Name(<id>)) + id
+
+rules //========================START OF RULES===============================
+
+  to-comment:    eos(_)       -> comment("\n")
+  from-comment:  comment(str) -> eos(str)
+
+  fast-cleanup:  SpecPart(lst) -> lst
+  fast-cleanup:  ExecPart(lst) -> lst
+  fast-cleanup:  FuncPart(lst) -> lst
+
+  fast-cleanup:    xFunctionStmt(label,prefix,name,args,result,binding)
+                ->  FunctionStmt(label,prefix,name,args,result,binding)
+
+
+  ofp-extract-name:  SubmoduleStmt    (_,_,name,_)          -> name
+  ofp-extract-name:  MpSubprogramStmt (_,name,_)            -> name
+
+  ofp-extract-result:   no-suffix()                         -> no-result()
+  ofp-extract-result:   Suffix(_,no-result())               -> no-result()
+  ofp-extract-result:   Suffix(no-result(),_)               -> no-result()
+  ofp-extract-result:   Suffix(Result(name),_)              -> Result(name)
+  ofp-extract-result:   Suffix(_,Result(name))              -> Result(name)
+
+  ofp-extract-binding:  no-suffix()                         -> no-language-binding()
+  ofp-extract-binding:  Suffix(_,no-language-binding())     -> no-language-binding()
+  ofp-extract-binding:  Suffix(no-language-binding(),_)     -> no-language-binding()
+  ofp-extract-binding:  Suffix(_,LanguageBinding(name))     -> LanguageBinding(name)
+  ofp-extract-binding:  Suffix(LanguageBinding(name),_)     -> LanguageBinding(name)
+
+  ofp-extract-subprograms:  no-subprogram-part()            -> FuncPart([])
+  ofp-extract-subprograms:  SubprogramPart(_,subprograms)   -> FuncPart(subprograms)
+
+  ofp-extract-contains:  no-subprogram-part()               -> None()
+  ofp-extract-contains:  SubprogramPart(contains,_)         -> contains
+
+  ofp-fixup-scope:
+      Scope(spec,exec,funcs) -> Scope(spec,exec,<ofp-extract-subprograms>funcs)
+
+// The fast-fixup-spec-part strategy transfers statements in the execution-part to the
+// specification-part.  The statements transferred are in the execution-part because
+// of ambiguities in the grammar related to format, entry, and data statements being
+// in both the declaration-construct and the execution-part-construct.
+//
+fast-fixup-spec-part =
+{spec_list
+  :  ?Scope(SpecPart(slist),ExecPart(elist),funcs)
+  ;  <concat>[slist,<take-while(is-specification-part)> elist] => spec_list
+  ;  <drop-while(is-specification-part)> elist
+  ;  !Scope(SpecPart(spec_list),ExecPart(<id>),funcs)
+}
+
+// TODO - add derived-type-def, enum-def, interface-block
+//        procedure-declaration-stmt, stmt-function-stmt, access-stmt, allocatable-stmt
+//        bind-stmt, comdimension-stmt, common-stmt
+// Probably also entry-stmt, data-stmt, and format-stmt that precede any truly executable
+// statements.
+//
+is-specification-part =
+     ?ImplicitStmt(_,_)
+ +>  ?ParameterStmt(_,_)
+ +>  ?TypeDeclarationStmt(_,_,_,_)
+
+// Call the recursive strategy fast-fixup-do-construct (directly below) to build multiple
+// BlockDoConstructs from a series of do statements.
+//
+fast-fixup-do-constructs =
+{exec_list
+  :  ?Scope(spec_part,ExecPart(elist),funcs)
+  ;  <fast-fixup-do-construct> ([],elist)
+  ;  ?(before,rest)
+  ;  !Scope(spec_part,ExecPart(<concat>[before,rest]),funcs)
+}
+
+// This strategy uses recursion to build multiple BlockDoConstructs from
+// a series of do statements.  Each pass attempts to build one BlockDoConstruct.
+// It exits the recursive loop when the try(<fast-fixup-do-construct>) recursion
+// fails.
+//
+fast-fixup-do-construct =
+     ?(exec_list,remaining)
+  ;  <split-fetch-keep(match-begin-block-do)> remaining
+  ;  ?(before,begin_do,after)
+  ;  <complete-block-do-construct> ([BlockDoConstruct(begin_do,[],no-end())],[],after)
+  ;  ?(do_construct,rest)
+  ;  !(<concat>[exec_list, before, [do_construct]], rest)
+  ;  try(<fast-fixup-do-construct> <id>)
+
+// Starting with an initial NonlabelDoStmt this strategy completes a
+// BlockDoConstruct by matching it with an EndDoStmt.  If an embedded
+// do loop is found it first has to build the innermost BlockDoConstruct
+// and via recursion and attach it to the block of the immediate outer
+// BlockDoConstruct, and so on ...
+complete-block-do-construct =
+     ?([],inner,exec_list)            // terminating condition
+  ;  !(inner,exec_list)
+
+ <+  ?(outer,inner,exec_list)         // match an end-do
+  ;  !outer
+  ;  ?[BlockDoConstruct(begin_do,block,no-end()) | do_list]
+  ;  <split-fetch-keep(match-end-do)> <next-is-end-do> exec_list
+  ;  ?(end_block,end_do,tail)
+  ;  !BlockDoConstruct(begin_do,<flatten-list><concat>[block,[inner],end_block],end_do)
+  ;  <complete-block-do-construct> (do_list,<id>,tail)
+
+ <+  ?(outer,inner,exec_list)         // match an inner begin-do
+  ;  !outer
+  ;  ?[BlockDoConstruct(begin_do,begin_block,no-end()) | do_list]
+  ;  <split-fetch-keep(match-begin-block-do)> <next-is-begin-do> exec_list
+  ;  ?(next_block,next_do,tail)
+  ;  !BlockDoConstruct(next_do,[],no-end())
+  ;  !(<concat>[[<id>]
+                 , [BlockDoConstruct(begin_do
+                     ,<flatten-list> <concat>[begin_block,next_block],no-end())]
+                 , do_list]
+            , [], tail)
+  ;  <complete-block-do-construct> <id>
+
+// matches if next part of a do construct is the end-do
+next-is-end-do =
+     ?exec_list
+  ;  <split-fetch-keep(match-begin-or-end-do)> exec_list
+  ;  ?(_,EndDoStmt(_,_),_)
+  ;  !exec_list
+
+// matches if next part of a do construct is an imbedded do-loop
+next-is-begin-do =
+     ?exec_list
+  ;  <split-fetch-keep(match-begin-or-end-do)> exec_list
+  ;  ?(_,NonlabelDoStmt(_,_,_),_)
+  ;  !exec_list
+
+match-begin-or-end-do =
+     ?NonlabelDoStmt(_,_,_)
+ <+  ?EndDoStmt(_,_)
+
+match-begin-block-do =
+     ?NonlabelDoStmt(_,_,_)
+
+match-end-do =
+     ?EndDoStmt(_,_)
+
+
+//R201
+  ofp-to-ast:  Program(no-comments(), ProgramUnits) -> Program(ProgramUnits)
+  ofp-to-ast:  Program(str,           ProgramUnits) -> Program(ProgramUnits) {Comment(str)}
+
+//R204
+  ofp-to-ast:
+    SpecificationPart(l1)                       -> SpecPart(l1)
+
+  ofp-to-ast:
+    InitialSpecPart(l1)                         -> SpecPart(l1)
+
+//R208
+  ofp-to-ast:  SpecAndExecPart(stmts)           -> ExecPart(stmts)
+
+//R404
+ofp-to-ast:  IntrinsicType(type)                -> type
+
+ofp-to-ast:  INTEGER(no-kind())                 -> INTEGER()
+ofp-to-ast:  REAL(no-kind())                    -> REAL()
+ofp-to-ast:  COMPLEX(no-kind())                 -> COMPLEX()
+ofp-to-ast:  LOGICAL(no-kind())                 -> LOGICAL()
+
+ofp-to-ast:  CHARACTER(no-char-selector())           -> CHARACTER()
+ofp-to-ast:  CHARACTER(CharSelector(len,no-kind()))  -> CHARACTER(len)
+ofp-to-ast:  CHARACTER(CharSelector(len,kind))       -> CHARACTER(len,kind)
+
+//R405
+ofp-to-ast:  KindSelector(k)                    -> Kind(k)
+ofp-to-ast:  KindSelector_STAR(k)               -> Kind(k)
+
+//R408
+ofp-to-ast:
+  IntLiteralConstant(val,no-kind())             -> IntVal(val)
+ofp-to-ast:
+  IntLiteralConstant(val,kind)                  -> IntVal(val,Kind(kind))
+
+//R413
+ofp-to-ast:
+  RealLiteralConstant(val,no-kind())            -> RealVal(val)
+ofp-to-ast:
+  RealLiteralConstant(val,kind)                 -> RealVal(val,Kind(kind))
+
+//R420
+ofp-to-ast: CharSelector_KIND_LEN(kind,len)     -> CharSelector(len,kind)
+
+//R421
+ofp-to-ast: LengthSelector(expr)                -> expr
+ofp-to-ast: no-length-selector()                -> no-char-length()
+
+//R424
+ofp-to-ast:  TRUE(no-kind())                    -> TRUE()
+ofp-to-ast:  FALSE(no-kind())                   -> FALSE()
+
+//R426
+ofp-to-ast:    DerivedTypeStmt(label,attrs,name,params,eos("\n"))
+            -> DerivedTypeStmt(label,attrs,name,params)
+ofp-to-ast:    DerivedTypeStmt(label,attrs,name,params,eos(str))
+            -> DerivedTypeStmt(label,attrs,name,params) {Comment(str)}
+
+//R429
+ofp-to-ast:    EndTypeStmt(label,name,eos("\n"))
+            -> EndTypeStmt(label,name)
+ofp-to-ast:    EndTypeStmt(label,name,eos(str))
+            -> EndTypeStmt(label,name) {Comment(str)}
+
+//R432
+ofp-to-ast:    TypeParamDefStmt(label,kind,attrs,decls,eos("\n"))
+            -> TypeParamDefStmt(label,kind,attrs,decls)
+ofp-to-ast:    TypeParamDefStmt(label,kind,attrs,decls,eos(str))
+            -> TypeParamDefStmt(label,kind,attrs,decls) {Comment(str)}
+
+//R436
+ofp-to-ast:    DataComponentDefStmt(label,type,attrs,components,eos("\n"))
+            -> DataComponentDefStmt(label,type,attrs,<map(transfer-type(|type))>components)
+ofp-to-ast:    DataComponentDefStmt(label,type,attrs,components,eos(str))
+            -> DataComponentDefStmt(label,type,attrs,<map(transfer-type(|type))>components) {Comment(str)}
+
+//R438
+ofp-to-ast:    ComponentDecl(name,[],[],no-char-length(),init)
+            -> Var(name,unknown-type(),init)
+ofp-to-ast:    ComponentDecl(name,dims,codims,no-char-length(),init)
+            -> Var(name,ArrayType(unknown-type(),dims,codims),init)
+
+//R445
+ofp-to-ast:    TypeBoundProcedurePart(contains,private,bindings)
+            -> TypeBoundProcPart(private,bindings)
+
+//R452
+ofp-to-ast:    FinalProcedureStmt(label,names,eos("\n"))
+            -> FinalProcedureStmt(label,names)
+ofp-to-ast:    FinalProcedureStmt(label,names,eos(str))
+            -> FinalProcedureStmt(label,names) {Comment(str)}
+
+//R501
+ofp-to-ast:    TypeDeclarationStmt(label,type,attrs,vars,eos("\n"))
+            -> TypeDeclarationStmt(label,type,attrs,<map(transfer-type(|type))>vars)
+ofp-to-ast:    TypeDeclarationStmt(label,type,attrs,vars,eos(str))
+            -> TypeDeclarationStmt(label,type,attrs,<map(transfer-type(|type))>vars) {Comment(str)}
+
+//R503
+ofp-to-ast:    EntityDecl(name,[],[],no-char-length(),init)
+            -> Var(name,unknown-type(),init)
+ofp-to-ast:    EntityDecl(name,dims,codims,no-char-length(),init)
+            -> Var(name,ArrayType(unknown-type(),dims,codims),init)
+
+//R510
+//  ofp-to-ast:  DeferredCoshape()                -> DimSpec(no-lower-bound(), COLON())
+  ofp-to-ast:  DeferredCoshape()                -> Range(no-lower-bound(), COLON())
+
+//R511
+  ofp-to-ast:  ExplicitCoshape(lower,upper)     -> Range(lower,upper)
+
+//R516
+ofp-to-ast:  ExplicitShape(lower,upper)         -> Range(lower,upper)
+//  ofp-to-ast:  ExplicitShapeSpecList(list)    -> OfpExplicitShape(list)
+
+//R519
+//  ofp-to-ast:  AssumedShapeSpec(AssumedOrDeferredShapeSpec()) -> DimSpec(None(),":")
+ofp-to-ast:  AssumedShape(lower)                -> Range(lower,COLON())
+
+//R520
+//  ofp-to-ast:  DeferredShape()                -> DimSpec(no-lower-bound(), COLON())
+  ofp-to-ast:  DeferredShape()                  -> Range(no-lower-bound(), COLON())
+
+//R521
+//  ofp-to-ast:  AssumedSizeSpec(OfpExplicitShape(list), lower)
+//                            -> OfpAssumedSize(<concat>[list, [DimSpec(lower,"*")]])
+//  ofp-to-ast:  AssumedSizeSpec(OfpExplicitShape(list))
+//                            -> OfpAssumedSize(<concat>[list, [DimSpec(None(),"*")]])
+
+//R522
+//ofp-to-ast:  ImpliedShapeSpecList(spec,list)    -> OfpImpliedShape(<concat>[[spec],list])
+
+//R522a
+//  ofp-to-ast:  AssumedRankSpec()                  -> OfpAssumedRank([DimSpec(None(),<ofp-add-some>"..")])
+
+//R523
+//  ofp-to-ast:  IN()                    -> OfpIntent(IN())
+//  ofp-to-ast:  OUT()                   -> OfpIntent(OUT())
+//  ofp-to-ast:  INOUT()                 -> OfpIntent(INOUT())
+
+//R524
+ofp-to-ast:  AccessStmt(label,spec,list,eos("\n"))  -> AccessStmt(label,spec,list)
+ofp-to-ast:  AccessStmt(label,spec,list,eos(str))   -> AccessStmt(label,spec,list)  {Comment(str)}
+
+//R526
+ofp-to-ast:  AllocatableStmt(label,list,eos("\n"))  -> AllocatableStmt(label,list)
+ofp-to-ast:  AllocatableStmt(label,list,eos(str))   -> AllocatableStmt(label,list)  {Comment(str)}
+
+//R527
+ofp-to-ast =
+      ?AllocatableDecl(name,[],[])                  ;  !Var(name,unknown-type(),no-init())
+  <+  ?AllocatableDecl(name,dims,codims)            ;  !Var(name,ArrayType(unknown-type(),dims,codims),no-init())
+
+//R528
+ofp-to-ast:  AsynchronousStmt(label,list,eos("\n")) -> AsynchronousStmt(label,list)
+ofp-to-ast:  AsynchronousStmt(label,list,eos(str))  -> AsynchronousStmt(label,list)  {Comment(str)}
+
+
+// assumed-size-spec and implied-shape-spec are ambiguous with only rank 1 array declarations
+//    - The following four rules remove the ambiguity by choosing assumed-size over
+//      implied-shape arrays. If there is an initializer then likely it really is implied-shape.
+//
+//  ofp-to-ast:  AssumedOrImpliedSpec()
+//                            -> OfpAssumedSize([DimSpec(None(),"*")])
+//  ofp-to-ast:  AssumedOrImpliedSpec(lower)
+//                            -> OfpAssumedSize([DimSpec(lower,"*")])
+
+//  rm-assumed-size: OfpAssumedSize([l]) -> l
+
+//  ofp-to-ast:  OfpImpliedShape(l1) -> OfpImpliedShape( <map(rm-assumed-size)>l1 )
+
+// Operators...
+
+//R559
+ofp-to-ast:  VolatileStmt(label,names,eos("\n")) -> VolatileStmt(label,names)
+ofp-to-ast:  VolatileStmt(label,names,eos(str))  -> VolatileStmt(label,names) {Comment(str)}
+
+//R560 - TODO: implicit-spec-list
+  ofp-to-ast:  ImplicitNoneStmt(label,eos("\n")) -> ImplicitStmt(label,[])
+  ofp-to-ast:  ImplicitNoneStmt(label,eos(str) ) -> ImplicitStmt(label,[]) {Comment(str)}
+
+//R626
+ofp-to-ast =
+     ?AllocateStmt(label,type,allocations,opts,eos("\n"))
+  ;  !AllocateStmt(label,type,allocations,opts)
+ <+  ?AllocateStmt(label,type,allocations,opts,eos(str))
+  ;  !AllocateStmt(label,type,allocations,opts)  {Comment(str)}
+
+//R633
+ofp-to-ast:  AllocateShapeSpec(lower,upper)      -> Range(lower,upper)
+
+//R637
+ofp-to-ast:  AllocateCoshapeSpec(lower,upper)    -> Range(lower,upper)
+
+//R640
+ofp-to-ast =
+     ?DeallocateStmt(label,objects,opts,eos("\n"))
+  ;  !DeallocateStmt(label,objects,opts)
+ <+  ?DeallocateStmt(label,objects,opts,eos(str))
+  ;  !DeallocateStmt(label,objects,opts)  {Comment(str)}
+
+//R703
+//  ofp-to-ast:  DefinedUnaryOp(op)           -> OfpDefinedOp(op)
+
+//R713
+//  ofp-to-ast:  RelOp_EQ()                   -> EQ()
+//  ofp-to-ast:  RelOp_NE()                   -> NE()
+//  ofp-to-ast:  RelOp_LT()                   -> LT()
+//  ofp-to-ast:  RelOp_LE()                   -> LE()
+//  ofp-to-ast:  RelOp_GT()                   -> GT()
+//  ofp-to-ast:  RelOp_GE()                   -> GE()
+
+//R723
+//  ofp-to-ast:  DefinedBinaryOp(op)          -> OfpDefinedOp(op)
+
+//R732
+ofp-to-ast:  AssignmentStmt(label,var,expr,eos("\n")) -> AssignmentStmt(label,var,expr)
+ofp-to-ast:  AssignmentStmt(label,var,expr,eos(str) ) -> AssignmentStmt(label,var,expr) {Comment(str)}
+
+//R733
+ofp-to-ast:    PointerAssignmentStmt(label,obj,list,expr,eos("\n"))
+            -> PointerAssignmentStmt(label,obj,list,expr)
+ofp-to-ast:    PointerAssignmentStmt(label,obj,list,expr,eos(str) )
+            -> PointerAssignmentStmt(label,obj,list,expr) {Comment(str)}
+
+//R734
+ofp-to-ast:  no-component-name()                      -> no-name()
+
+//R735
+ofp-to-ast:  BoundsRemapping(lb,ub)                   -> Triplet(lb,ub,no-stride())
+
+//R751
+ofp-to-ast =  ?ForallConstructStmt(label,name,header,eos("\n")); !ForallConstructStmt(label,name,header)
+          <+  ?ForallConstructStmt(label,name,header,eos(str) ); !ForallConstructStmt(label,name,header) {Comment(str)}
+
+//R758
+ofp-to-ast =  ?EndForallStmt(label,name,eos("\n"))             ;  !EndForallStmt(label,name)
+          <+  ?EndForallStmt(label,name,eos(str) )             ;  !EndForallStmt(label,name) {Comment(str)}
+
+//R801
+ofp-to-ast:  Block(execs) -> execs
+
+//R803
+ofp-to-ast =  ?AssociateStmt(label,name,list,eos("\n"))  ;  !AssociateStmt(label,name,list)
+          <+  ?AssociateStmt(label,name,list,eos(str) )  ;  !AssociateStmt(label,name,list) {Comment(str)}
+
+//R806
+ofp-to-ast =  ?EndAssociateStmt(label,name,eos("\n"))    ;  !EndAssociateStmt(label,name)
+          <+  ?EndAssociateStmt(label,name,eos(str) )    ;  !EndAssociateStmt(label,name) {Comment(str)}
+
+//R807
+ofp-to-ast =
+      ?BlockConstruct(BlockStmt(label,name,eos("\n")),specs,execs,end)
+   ;  !Block(label,name,Scope(specs,execs,[]),end)
+  <+  ?BlockConstruct(BlockStmt(label,name,eos(str)),specs,execs,end)
+   ;  !Block(label,name,Scope(specs,execs,[]),end) {Comment(str)}
+
+//R809
+ofp-to-ast =  ?EndBlockStmt(label,name,eos("\n"))    ;  !EndBlockStmt(label,name)
+          <+  ?EndBlockStmt(label,name,eos(str) )    ;  !EndBlockStmt(label,name) {Comment(str)}
+
+//R817
+ofp-to-ast =  ?NonlabelDoStmt(label,name,control,eos("\n")) ;  !NonlabelDoStmt(label,name,control)
+          <+  ?NonlabelDoStmt(label,name,control,eos(str) ) ;  !NonlabelDoStmt(label,name,control) {Comment(str)}
+
+//R822
+ofp-to-ast =  ?EndDoStmt(label,name,eos("\n"))       ;  !EndDoStmt(label,name)
+          <+  ?EndDoStmt(label,name,eos(str) )       ;  !EndDoStmt(label,name) {Comment(str)}
+
+//R831
+ofp-to-ast =  ?CycleStmt(label,name,eos("\n"))       ;  !CycleStmt(label,name)
+          <+  ?CycleStmt(label,name,eos(str) )       ;  !CycleStmt(label,name) {Comment(str)}
+
+//R833
+ofp-to-ast =  ?IfThenStmt(label,name,expr,eos("\n")) ;  !IfThenStmt(label,name,expr)
+          <+  ?IfThenStmt(label,name,expr,eos(str))  ;  !IfThenStmt(label,name,expr) {Comment(str)}
+
+//R834
+ofp-to-ast =  ?ElseIfStmt(label,name,expr,eos("\n")) ;  !ElseIfStmt(label,name,expr)
+          <+  ?ElseIfStmt(label,name,expr,eos(str))  ;  !ElseIfStmt(label,name,expr) {Comment(str)}
+
+//R835
+ofp-to-ast =  ?ElseStmt(label,name,eos("\n"))        ;  !ElseStmt(label,name)
+          <+  ?ElseStmt(label,name,eos(str))         ;  !ElseStmt(label,name) {Comment(str)}
+
+//R836
+ofp-to-ast =  ?EndIfStmt(label,name,eos("\n"))       ;  !EndIfStmt(label,name)
+          <+  ?EndIfStmt(label,name,eos(str))        ;  !EndIfStmt(label,name) {Comment(str)}
+
+//R850
+ofp-to-ast =  ?ExitStmt(label,name,eos("\n"))        ;  !ExitStmt(label,name)
+          <+  ?ExitStmt(label,name,eos(str) )        ;  !ExitStmt(label,name) {Comment(str)}
+
+//R851
+ofp-to-ast =  ?GotoStmt(label,name,eos("\n"))        ;  !GotoStmt(label,name)
+          <+  ?GotoStmt(label,name,eos(str) )        ;  !GotoStmt(label,name) {Comment(str)}
+
+//R852
+ofp-to-ast =  ?ComputedGotoStmt(label,list,expr,eos("\n"));  !ComputedGotoStmt(label,list,expr)
+          <+  ?ComputedGotoStmt(label,list,expr,eos(str) );  !ComputedGotoStmt(label,list,expr) {Comment(str)}
+
+//R853
+ofp-to-ast =  ?ArithmeticIfStmt(label,expr,l1,l2,l3,eos("\n"));  !ArithmeticIfStmt(label,expr,l1,l2,l3)
+          <+  ?ArithmeticIfStmt(label,expr,l1,l2,l3,eos(str) );  !ArithmeticIfStmt(label,expr,l1,l2,l3) {Comment(str)}
+
+//R854
+ofp-to-ast =  ?ContinueStmt(label,eos("\n"))         ;  !ContinueStmt(label)
+          <+  ?ContinueStmt(label,eos(str) )         ;  !ContinueStmt(label) {Comment(str)}
+
+//R855
+ofp-to-ast =  ?StopStmt(label,code,eos("\n"))        ;  !StopStmt(label,code)
+          <+  ?StopStmt(label,code,eos(str) )        ;  !StopStmt(label,code) {Comment(str)}
+
+//R856
+ofp-to-ast =  ?ErrorStopStmt(label,code,eos("\n"))   ;  !ErrorStopStmt(label,code)
+          <+  ?ErrorStopStmt(label,code,eos(str) )   ;  !ErrorStopStmt(label,code) {Comment(str)}
+
+//F77
+ofp-to-ast =  ?PauseStmt(label,code,eos("\n"))       ;  !PauseStmt(label,code)
+          <+  ?PauseStmt(label,code,eos(str) )       ;  !PauseStmt(label,code) {Comment(str)}
+
+//R858
+ofp-to-ast =  ?SyncAllStmt(label,list,eos("\n"))        ;  !SyncAllStmt(label,list)
+          <+  ?SyncAllStmt(label,list,eos(str) )        ;  !SyncAllStmt(label,list) {Comment(str)}
+
+//R860
+ofp-to-ast =  ?SyncImagesStmt(label,set,list,eos("\n")) ;  !SyncImagesStmt(label,set,list)
+          <+  ?SyncImagesStmt(label,set,list,eos(str) ) ;  !SyncImagesStmt(label,set,list) {Comment(str)}
+
+//R862
+ofp-to-ast =  ?SyncMemoryStmt(label,list,eos("\n"))     ;  !SyncMemoryStmt(label,list)
+          <+  ?SyncMemoryStmt(label,list,eos(str) )     ;  !SyncMemoryStmt(label,list) {Comment(str)}
+
+//R863
+ofp-to-ast =  ?LockStmt(label,var,list,eos("\n"))       ;  !LockStmt(label,var,list)
+          <+  ?LockStmt(label,var,list,eos(str) )       ;  !LockStmt(label,var,list) {Comment(str)}
+
+//R865
+ofp-to-ast =  ?UnlockStmt(label,var,list,eos("\n"))     ;  !UnlockStmt(label,var,list)
+          <+  ?UnlockStmt(label,var,list,eos(str) )     ;  !UnlockStmt(label,var,list) {Comment(str)}
+
+//R904
+ofp-to-ast =  ?OpenStmt(label,list,eos("\n"))           ;  !OpenStmt(label,list)
+          <+  ?OpenStmt(label,list,eos(str) )           ;  !OpenStmt(label,list) {Comment(str)}
+
+//R908
+ofp-to-ast =  ?CloseStmt(label,list,eos("\n"))          ;  !CloseStmt(label,list)
+          <+  ?CloseStmt(label,list,eos(str) )          ;  !CloseStmt(label,list) {Comment(str)}
+
+//R911
+ofp-to-ast =  ?WriteStmt(label,iocontrol,out,eos("\n")) ;  !WriteStmt(label,iocontrol,out)
+          <+  ?WriteStmt(label,iocontrol,out,eos(str) ) ;  !WriteStmt(label,iocontrol,out) {Comment(str)}
+
+//R912
+ofp-to-ast =  ?PrintStmt(label,format,out,eos("\n")) ;  !PrintStmt(label,format,out)
+          <+  ?PrintStmt(label,format,out,eos(str) ) ;  !PrintStmt(label,format,out) {Comment(str)}
+
+//R922
+ofp-to-ast =  ?WaitStmt(label,list,eos("\n"))        ;  !WaitStmt(label,list)
+          <+  ?WaitStmt(label,list,eos(str) )        ;  !WaitStmt(label,list) {Comment(str)}
+
+//R924
+ofp-to-ast =  ?BackspaceStmt(label,list,eos("\n"))   ;  !BackspaceStmt(label,list)
+          <+  ?BackspaceStmt(label,list,eos(str) )   ;  !BackspaceStmt(label,list) {Comment(str)}
+
+//R926
+ofp-to-ast =  ?RewindStmt(label,list,eos("\n"))      ;  !RewindStmt(label,list)
+          <+  ?RewindStmt(label,list,eos(str) )      ;  !RewindStmt(label,list) {Comment(str)}
+
+//R928
+ofp-to-ast =  ?FlushStmt(label,list,eos("\n"))       ;  !FlushStmt(label,list)
+          <+  ?FlushStmt(label,list,eos(str) )       ;  !FlushStmt(label,list) {Comment(str)}
+
+//R930
+ofp-to-ast =  ?InquireStmt(label,list,eos("\n"))     ;  !InquireStmt(label,list)
+          <+  ?InquireStmt(label,list,eos(str) )     ;  !InquireStmt(label,list) {Comment(str)}
+
+ofp-to-ast =  ?InquireLengthStmt(label,var,list,eos("\n")) ;  !InquireLengthStmt(label,var,list)
+          <+  ?InquireLengthStmt(label,var,list,eos(str) ) ;  !InquireLengthStmt(label,var,list) {Comment(str)}
+
+//R1001
+ofp-to-ast =  ?FormatStmt(label,fspec,eos("\n"))     ;  !FormatStmt(label,fspec)
+          <+  ?FormatStmt(label,fspec,eos(str) )     ;  !FormatStmt(label,fspec) {Comment(str)}
+
+//R1101
+ofp-to-ast:  MainProgram(begin,spec,exec,funcs,end)
+               -> MainProgram(begin,<ofp-fixup-scope>Scope(spec,exec,funcs),end)
+
+//R1102
+ofp-to-ast =  ?ProgramStmt(label,name,eos("\n"))     ;  !ProgramStmt(label,name)
+          <+  ?ProgramStmt(label,name,eos(str) )     ;  !ProgramStmt(label,name) {Comment(str)}
+
+//R1102
+ofp-to-ast =  ?EndProgramStmt(label,name,eos("\n"))  ;  !EndProgramStmt(label,name)
+          <+  ?EndProgramStmt(label,name,eos(str) )  ;  !EndProgramStmt(label,name) {Comment(str)}
+
+//R1104
+  ofp-to-ast:  Module(begin,spec,no-module-subprogram-part(),end)
+                  -> Module(begin, Scope(spec, ExecPart([]), FuncPart([])), end)
+  ofp-to-ast:  Module(begin,spec,ModuleSubprogramPart(contains,l),end)
+                  -> Module(begin, Scope(spec, ExecPart([]), FuncPart(l)),  end)
+
+//R1105
+  ofp-to-ast:  ModuleStmt(label,name,eos("\n")) -> ModuleStmt(label,name)
+  ofp-to-ast:  ModuleStmt(label,name,eos(str) ) -> ModuleStmt(label,name) {Comment(str)}
+
+//R1106
+  ofp-to-ast:  EndModuleStmt(label,name,eos("\n")) -> EndModuleStmt(label,name)
+  ofp-to-ast:  EndModuleStmt(label,name,eos(str) ) -> EndModuleStmt(label,name) {Comment(str)}
+
+//R1109
+ofp-to-ast:
+  UseStmt(label,nature,name,list,eos("\n"))     -> UseStmt(label,nature,name,list)
+ofp-to-ast:
+  UseStmt(label,nature,name,list,eos(str))      -> UseStmt(label,nature,name,list) {Comment(str)}
+ofp-to-ast:
+  UseOnlyStmt(label,nature,name,list,eos("\n")) -> UseOnlyStmt(label,nature,name,list)
+ofp-to-ast:
+  UseOnlyStmt(label,nature,name,list,eos(str))  -> UseOnlyStmt(label,nature,name,list) {Comment(str)}
+
+//R1116
+  ofp-to-ast:  Submodule(begin,spec,no-module-subprogram-part(),end)
+                  -> Submodule(begin, Scope(spec,ExecPart([]),FuncPart([])), end)
+  ofp-to-ast:  Submodule(begin,spec,ModuleSubprogramPart(contains,l),end)
+                  -> Submodule(begin, Scope(spec,ExecPart([]),FuncPart(l)), end)
+
+//R1117
+  ofp-to-ast:  SubmoduleStmt(label,parent,name,eos("\n")) -> SubmoduleStmt(label,parent,name)
+  ofp-to-ast:  SubmoduleStmt(label,parent,name,eos(str) ) -> SubmoduleStmt(label,parent,name) {Comment(str)}
+
+//R1119
+  ofp-to-ast:  EndSubmoduleStmt(label,name,eos("\n")) -> EndSubmoduleStmt(label,name)
+  ofp-to-ast:  EndSubmoduleStmt(label,name,eos(str) ) -> EndSubmoduleStmt(label,name) {Comment(str)}
+
+//R1121
+ofp-to-ast =  ?BlockDataStmt(label,name,eos("\n"))    ;  !BlockDataStmt(label,name)
+          <+  ?BlockDataStmt(label,name,eos(str) )    ;  !BlockDataStmt(label,name) {Comment(str)}
+
+//R1122
+ofp-to-ast =  ?EndBlockDataStmt(label,name,eos("\n")) ;  !EndBlockDataStmt(label,name)
+          <+  ?EndBlockDataStmt(label,name,eos(str) ) ;  !EndBlockDataStmt(label,name) {Comment(str)}
+
+//R1203
+ofp-to-ast =  ?InterfaceStmt(label,spec,eos("\n"))    ;  !InterfaceStmt(label,spec)
+          <+  ?InterfaceStmt(label,spec,eos(str) )    ;  !InterfaceStmt(label,spec) {Comment(str)}
+
+ofp-to-ast =  ?AbstractInterfaceStmt(label,eos("\n")) ;  !AbstractInterfaceStmt(label)
+          <+  ?AbstractInterfaceStmt(label,eos(str) ) ;  !AbstractInterfaceStmt(label) {Comment(str)}
+
+//R1204
+ofp-to-ast =  ?EndInterfaceStmt(label,spec,eos("\n")) ;  !EndInterfaceStmt(label,spec)
+          <+  ?EndInterfaceStmt(label,spec,eos(str) ) ;  !EndInterfaceStmt(label,spec) {Comment(str)}
+
+//R1206
+ofp-to-ast =  ?ProcedureStmt(label,spec,eos("\n"))    ;  !ProcedureStmt(label,spec)
+          <+  ?ProcedureStmt(label,spec,eos(str) )    ;  !ProcedureStmt(label,spec) {Comment(str)}
+
+ofp-to-ast =  ?ModuleProcedureStmt(label,spec,eos("\n"))  ;  !ModuleProcedureStmt(label,spec)
+          <+  ?ModuleProcedureStmt(label,spec,eos(str) )  ;  !ModuleProcedureStmt(label,spec) {Comment(str)}
+
+//R1207
+//  ofp-to-ast:  GenericSpec(Name(name))        -> OfpGenericSpec(Name(name))
+//  ofp-to-ast:  GenericSpec_AE()               -> OfpGenericSpec(ASSIGNMENT())
+//  ofp-to-ast:  GenericSpec(spec)              -> OfpGenericSpec(spec)
+
+//R1209
+ofp-to-ast =  ?ImportStmt(label,names,eos("\n"))    ;  !ImportStmt(label,names)
+          <+  ?ImportStmt(label,names,eos(str) )    ;  !ImportStmt(label,names) {Comment(str)}
+
+//R1210
+ofp-to-ast =  ?ExternalStmt(label,names,eos("\n"))  ;  !ExternalStmt(label,names)
+          <+  ?ExternalStmt(label,names,eos(str) )  ;  !ExternalStmt(label,names) {Comment(str)}
+
+//R1211
+ofp-to-ast =
+      ?ProcedureDeclarationStmt(label,intr,specs,decls,eos("\n"))
+   ;  !ProcedureDeclarationStmt(label,intr,specs,decls)
+  <+  ?ProcedureDeclarationStmt(label,intr,specs,decls,eos(str))
+   ;  !ProcedureDeclarationStmt(label,intr,specs,decls) {Comment(str)}
+
+//R1218
+ofp-to-ast =  ?IntrinsicStmt(label,names,eos("\n")) ;  !IntrinsicStmt(label,names)
+          <+  ?IntrinsicStmt(label,names,eos(str) ) ;  !IntrinsicStmt(label,names) {Comment(str)}
+
+//R1219
+ofp-to-ast:  ProcedureDesignator(expr)              ->  expr
+
+//R1220
+ofp-to-ast =  ?CallStmt(label,proc,args,eos("\n"))  ;  !CallStmt(label,proc,args)
+          <+  ?CallStmt(label,proc,args,eos(str) )  ;  !CallStmt(label,proc,args) {Comment(str)}
+
+//R1222
+ofp-to-ast =  ?ActualArgSpec(keyword,AltReturnSpec(label))  ;  !Arg(keyword,AltReturn(label))
+          <+  ?ActualArgSpec(no-keyword(),expr)             ;  !expr
+          <+  ?ActualArgSpec(   keyword  ,expr)             ;  !Arg(keyword,expr)
+
+//R1227
+  ofp-to-ast:  FunctionSubprogram(begin,spec,exec,funcs,end)
+                   -> Function(begin,<ofp-fixup-scope>Scope(spec,exec,funcs),end)
+
+//R1228
+  ofp-to-ast:  FunctionStmt(label,prefix,name,args,suffix,eos)
+                   -> xFunctionStmt(label,prefix,name,args,<ofp-extract-result> suffix,
+                                                           <ofp-extract-binding>suffix)
+  ofp-to-ast:  no-prefix() -> []
+
+//R1232
+  ofp-to-ast:  EndFunctionStmt(label,name,eos("\n")) -> EndFunctionStmt(label,name)
+  ofp-to-ast:  EndFunctionStmt(label,name,eos(str) ) -> EndFunctionStmt(label,name) {Comment(str)}
+
+//R1233
+  ofp-to-ast:  SubroutineSubprogram(begin,spec,exec,funcs,end)
+                   -> Subroutine(begin,<ofp-fixup-scope>Scope(spec,exec,funcs),end)
+
+//R1234
+ofp-to-ast:  SubroutineStmt(label,prefix,name,args,binding,eos("\n"))
+                   -> SubroutineStmt(label,prefix,name,args,binding)
+ofp-to-ast:  SubroutineStmt(label,prefix,name,args,binding,eos(str) )
+                   -> SubroutineStmt(label,prefix,name,args,binding) {Comment(str)}
+
+//R1236
+ofp-to-ast:  EndSubroutineStmt(label,name,eos("\n")) -> EndSubroutineStmt(label,name)
+ofp-to-ast:  EndSubroutineStmt(label,name,eos(str) ) -> EndSubroutineStmt(label,name) {Comment(str)}
+
+//R1237
+ofp-to-ast:  SeparateModuleSubprogram(begin,spec,exec,funcs,end)
+                      -> MpSubprogram(begin,<ofp-fixup-scope>Scope(spec,exec,funcs),end)
+
+//R1238
+ofp-to-ast =  ?MpSubprogramStmt(label,name,eos("\n"))     ;  !MpSubprogramStmt(label,name)
+          <+  ?MpSubprogramStmt(label,name,eos(str) )     ;  !MpSubprogramStmt(label,name) {Comment(str)}
+
+//R1239
+ofp-to-ast =  ?EndMpSubprogramStmt(label,name,eos("\n"))  ;  !EndMpSubprogramStmt(label,name)
+          <+  ?EndMpSubprogramStmt(label,name,eos(str) )  ;  !EndMpSubprogramStmt(label,name) {Comment(str)}
+
+//R1240
+ofp-to-ast =  ?EntryStmt(label,name,args,suffix,eos("\n"));  !EntryStmt(label,name,args,suffix)
+          <+  ?EntryStmt(label,name,args,suffix,eos(str) );  !EntryStmt(label,name,args,suffix) {Comment(str)}
+
+//R1241
+ofp-to-ast =  ?ReturnStmt(label,expr,eos("\n"))           ;  !ReturnStmt(label,expr)
+          <+  ?ReturnStmt(label,expr,eos(str) )           ;  !ReturnStmt(label,expr) {Comment(str)}

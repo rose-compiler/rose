@@ -1,0 +1,146 @@
+// -*- c++ -*-
+
+/** @mainpage notitle
+ * 
+ * @image html compass_rose.gif
+ *
+ * <table border=0>
+ *   <tr>
+ *     <td>Developed at [Lawrence Livermore National Laboratory](https://llnl.gov) (LLNL), ROSE is an open source compiler
+ *         infrastructure to build source-to-source program transformation and analysis tools for large-scale C (C89 and C98),
+ *         C++ (C++98 and C++11), UPC, Fortran (77, 95, 2003), OpenMP, Java, Python, PHP, and Binary applications.  ROSE users
+ *         range from experienced compiler researchers to library and tool developers who may have minimal compiler
+ *         experience. ROSE is particularly well suited for building custom tools for static analysis, program optimization,
+ *         arbitrary program transformation, domain-specific optimizations, complex loop optimizations, performance analysis,
+ *         and cyber-security.</td>
+ *     <td>@image html roseDiagrams.jpg</td>
+ *   </tr>
+ * </table>
+ *
+ *
+ * 
+ * @section mainpage_goal Goal
+ *
+ * The primary goal of the ROSE project is to optimize applications within the U.S. Department of Energy (DOE).
+ *
+ * ROSE aims to be:
+ *
+ * @li A library (and set of associated tools) to quickly and easily apply compiler techniques to one's code in
+ *     order to improve application performance and developer productivity.
+ * @li A research and development compiler infrastructure for for writing custom source-to-source translators to
+ *     perform source code transformations, analysis, and optimizations.
+ *
+ *
+ * 
+ * @section mainpage_approach Approach
+ *
+ * @li Cutting-edge research on source- and high-level compiler analysis and optimization algorithms.
+ * @li Best-practice software development to incorporate existing compiler techniques to and develop new ones.
+ * @li  Pre-built ROSE tools to perform program transformation, analysis and optimization of source code.
+ * @li An easy-to-use API to build customized, domain-specific compiler-based analysis, transformation,
+ *     and optimization tools.
+ *
+ *
+ *
+ * @section mainpage_gtoc Resources
+ *
+ *  <!-- Note: The ROSE web-page is listed here intentionally. Even if this Doxygen mainpage ever replaces the front page at
+ *       rosecompiler.org, we still want users that generated their own local copy of the website to be able to click on this
+ *       link and go to ROSE's public website. [Robb P. Matzke 2015-09-25] -->
+ *
+ * @subsection mainpage_gtoc_current Current release
+ *
+ *  @li [Internal Global Table of Contents](http://toc.rosecompiler.org/)
+ *  @li [The ROSE public website](http://rosecompiler.org)
+ *  @li @ref installation "Download and installation"
+ *  @li [Source code analysis tutorial](http://rosecompiler.org/ROSE_Tutorial/ROSE-Tutorial.pdf) (PDF)
+ *  @li @ref binary_tutorial
+ *  @li [ROSE user manual](http://rosecompiler.org/ROSE_UserManual/ROSE-UserManual.pdf) (PDF)
+ *  @li @ref rosetools "ROSE-Based Tools"
+ *  @li [Publications](http://rosecompiler.org/?page_id=182)
+ *  @li [Public mailing list](https://mailman.nersc.gov/mailman/listinfo/rose-public) for anyone that uses ROSE.
+ *  @li [Developers mailing list](https://mailman.nersc.gov/mailman/listinfo/rose-developer) for anyone who
+ *      contributes to the ROSE project.
+ *  @li [Core mailing list](https://mailman.nersc.gov/mailman/listinfo/rose-core) for anyone who has write access to
+ *      our internal repositories.
+ *  @li [Projects using ROSE](http://rosecompiler.org/?page_id=16)
+ *  @li [Highlights](http://rosecompiler.org/?page_id=25)
+ *  @li [Outreach](http://rosecompiler.org/?page_id=28)
+ *  @li @ref developer_docs
+ *  @li [About us](http://rosecompiler.org/?page_id=31)
+ *
+ * @subsection mainpage_gtoc_previous Other releases
+ *
+ *  The documentation you're currently viewing is for a specific version of ROSE. Documentation for other releases can be found
+ *  [here](http://doxygen.rosecompiler.org).
+ *
+ *
+ *
+ * @section mainpage_contributors Contributors to this release
+ *
+ * <!-- These are the people that contributed since the last major release of ROSE.  The complete history of all contributors
+ *      is at the "About us" page at rosecompiler.org. -->
+ * 
+ * @authors LLNL staff:
+ *            <b>Dan Quinlan and Chunhua Liao, Robb Matzke, Markus Schordan, Justin Too</b> \n
+ *          LLNL post-docs:
+ *            Thomas Panas,
+ *            Jeremiah Willcock,
+ *            Qing Yi,
+ *            Rich Vuduc \n
+ *          LLNL student interns: 
+ *            Gergo Barany (Technical University of Vienna),
+ *            Michael Byrd (University of California at Davis),
+ *            Gabriel Coutinho (Imperial College London),
+ *            Peter Collingbourne (Imperial College London),
+ *            Valentin David (University of Bergen, Norway),
+ *            Jochen Haerdtlein (University of Erlanger, Germany),
+ *            Vera Hauge (University of Oslo, Norway),
+ *            Christian Iwainsky (University of Erlanger, Germany),
+ *            Lingxiao Jiang (University of California at Davis),
+ *            Alin Jula (Texas A\&M),
+ *            Han Kim (University of California at San Diego),
+ *            Milind Kulkarni (Cornell University),
+ *            Markus Kowarschik (University of Erlanger, Germany),
+ *            Gary Lee (University of California at Berkeley and Purdue University),
+ *            Chunhua Liao (University of Houston),
+ *            Ghassan Misherghi. (University of California at Davis),
+ *            Peter Pirkelbauer (Texas A\&M),
+ *            Bobby Philip (University of Colorado),
+ *            Radu Popovici (Cornell University),
+ *            Robert Preissl (Austria),
+ *            Andreas Saebjornsen (University of Oslo, Norway),
+ *            Sunjeev Sikand (University of California at San Diego),
+ *            Andy Stone (Colorado State University at Fort Collins),
+ *            Danny Thorne (University of Kentucky), 
+ *            Nils Thuerey (University of Erlanger, Germany), 
+ *            Ramakrishna Upadrasta (Colorado State University at Fort Collins),
+ *            Christian Wiess(Munich University of Technology, Germany), 
+ *            Jeremiah Willcock (Indiana University),
+ *            Brian White (Cornell University),
+ *            Gary Yuan (University of California at Davis), and
+ *            Yuan Zhao (Rice University).
+ *
+ *
+ *
+ * @section mainpage_next Next steps
+ *
+ *  ROSE is an open source project that can be installed from source code. See @ref installation.
+ *
+ *
+ *
+ *  @todo The "all-versions" link doesn't work yet.  Eventually that link will point back into the top of the documentation for
+ *        each released version of ROSE, both older and newer than this version. [Robb P. Matzke 2015-09-26]
+ *
+ *  @todo The links to the "ROSE tutorial" (at least the source code part) and the "ROSE user manual" are to versions
+ *        served from http://rosecompiler.org, which might not match this release of ROSE. A better approach might be to use
+ *        relative linking: it would point to a version consistent with the documentation you're now reading, including the
+ *        case when a user generates their own local copies and has no Internet connection. These documents may move into
+ *        doxygen, in which case this is no longer an issue. [Robb P. Matzke 2015-09-25]
+ *
+ *  @todo We have two sources of research publications. They need to be combined. [Robb P. Matzke 2015-09-25]
+ *
+ *  @todo We have two sources for "outreach" that need to be combined: one at rosecompiler.org and the other on the
+ *        doxygen-generated mainpage.  Both are out of date. [Robb P. Matzke 2015-09-26]
+ *
+ *  @todo The "Hightlights" (sic) page says "Recent highlights" but the last one is from 2012. [Robb P. Matzke 2015-09-26] */

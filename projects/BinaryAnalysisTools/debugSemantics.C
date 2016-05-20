@@ -2,11 +2,13 @@
 
 #include <rose.h>
 
+#include <BinaryNoOperation.h>
 #include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
 #include <DispatcherX86.h>
 #include <IntervalSemantics2.h>
+#include <MemoryCellList.h>
 #include <NullSemantics2.h>
 #include <PartialSymbolicSemantics2.h>
 #include <Partitioner2/Engine.h>
@@ -64,14 +66,20 @@ struct Settings {
     std::string opsClassName;                           // name of RiscOperators class, abbreviated
     std::string solverName;                             // name of SMT solver
     bool trace;                                         // use TraceSemantics?
-    bool showUseDef;                                    // show use-def information if available?
     bool showInitialValues;                             // show initial values in register states?
     bool showStates;                                    // show register and memory state after each instruction?
     bool showInitialState;                              // show initial state if showStates is set?
     AddressInterval bblockInterval;                     // which basic blocks to process
+    bool useMemoryMap;                                  // state uses MemoryMap to initialize memory?
+    bool runNoopAnalysis;                               // run no-op analysis on each instruction individually?
+    bool testAdaptiveRegisterState;                     // test RegisterStateGeneric
+    SymbolicSemantics::DefinersMode computingDefiners;  // whether to track which instructions define each value
+    SymbolicSemantics::WritersMode computingWriters;    // whether to track which instructions write to each location
     Settings()
-        : trace(false), showUseDef(true), showInitialValues(false), showStates(true), showInitialState(false),
-          bblockInterval(AddressInterval::whole()) {}
+        : trace(false), showInitialValues(false), showStates(true), showInitialState(false),
+          bblockInterval(AddressInterval::whole()), useMemoryMap(false), runNoopAnalysis(false),
+          testAdaptiveRegisterState(false), computingDefiners(SymbolicSemantics::TRACK_NO_DEFINERS),
+          computingWriters(SymbolicSemantics::TRACK_NO_WRITERS) {}
 };
 
 static std::vector<std::string>
@@ -136,7 +144,64 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .doc("Restrict semantics to only those basic blocks that start at the specified address(es). The @v{interval} "
                     "can be a single address, a pair of address separated by \",\" (inclusive) or \"-\" (end is not inclusive), "
                     "or an address and size separated by \"+\".  The default is to process all basic blocks.\n"));
-               
+
+    ctl.insert(Switch("use-memory-map")
+               .intrinsicValue(true, settings.useMemoryMap)
+               .doc("Adds the specimen's memory map to the memory state and/or RISC operators if they support using a memory "
+                    "map. For most domains that allow this, it essentially initializes memory based on values loaded from "
+                    "the executable.  The @s{no-use-memory-map} turns this off. The default is to " +
+                    std::string(settings.useMemoryMap?"":"not ") + "use the memory map."));
+    ctl.insert(Switch("no-use-memory-map")
+               .key("use-memory-map")
+               .intrinsicValue(false, settings.useMemoryMap)
+               .hidden(true));
+
+    ctl.insert(Switch("noop-analysis")
+               .intrinsicValue(true, settings.runNoopAnalysis)
+               .doc("Runs the no-op analysis on each instruction and reports when an instruction has no effect on the "
+                    "machine except to change the instruction pointer.  The @s{no-noop-analysis} switch turns this off. "
+                    "The default is to " + std::string(settings.runNoopAnalysis?"":"not ") + "run this analysis."));
+    ctl.insert(Switch("no-noop-analysis")
+               .key("noop-analysis")
+               .intrinsicValue(false, settings.runNoopAnalysis)
+               .hidden(true));
+
+    ctl.insert(Switch("test-adaptive-registers")
+               .intrinsicValue(true, settings.testAdaptiveRegisterState)
+               .doc("Allows the RegisterStateGeneric::accessModifiesExistingLocations property to be turned on or off based "
+                    "on the contents of the stack pointer register.  While the stack pointer contains the value "
+                    "0x137017c1 the set of stored register locations is not allowed to change. E.g., reading AL when the "
+                    "register state is storing AX will not cause it to start sorting AL and AH instead of AX. The "
+                    "@s{no-test-adaptive-registers} switch disables this feature. The default is to " +
+                    std::string(settings.testAdaptiveRegisterState?"":"not ") + " operate in this mode."));
+    ctl.insert(Switch("no-test-adaptive-registers")
+               .key("test-adaptive-registers")
+               .intrinsicValue(false, settings.testAdaptiveRegisterState)
+               .hidden(true));
+
+    ctl.insert(Switch("track-definers")
+               .argument("how", enumParser<SymbolicSemantics::DefinersMode>(settings.computingDefiners)
+                         ->with("none", SymbolicSemantics::TRACK_NO_DEFINERS)
+                         ->with("last", SymbolicSemantics::TRACK_LATEST_DEFINER)
+                         ->with("all", SymbolicSemantics::TRACK_ALL_DEFINERS))
+               .doc("Controls whether a domain that supports tracking value definers does so.  For instance, the "
+                    "symbolic domain can keep a list of defining instructions for each symbolic value. Turning on any "
+                    "form of definers also turns on the output of such definers.  The @v{how} can be one of these words: "
+                    "@named{none}{Do not compute definers.}"
+                    "@named{last}{Track only the latest defining instruction per value.}"
+                    "@named{all}{Track all defining instructions per value.}"));
+
+    ctl.insert(Switch("track-writers")
+               .argument("how", enumParser<SymbolicSemantics::WritersMode>(settings.computingWriters)
+                         ->with("none", SymbolicSemantics::TRACK_NO_WRITERS)
+                         ->with("last", SymbolicSemantics::TRACK_LATEST_WRITER)
+                         ->with("all", SymbolicSemantics::TRACK_ALL_WRITERS))
+               .doc("Controls whether a domain that supports tracking writers does so.  This means that each location "
+                    "(registers and memory) will have a list of instructions that wrote to that location. The allowed "
+                    "arguments are:"
+                    "@named{none}{Do not track writers.}"
+                    "@named{last}{Track only the latest writing instruction per location.}"
+                    "@named{all}{Track all writing instructions per location.}"));
 
     //------------------------------------------------
     SwitchGroup out("Output switches");
@@ -148,16 +213,6 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     out.insert(Switch("no-show-states")
                .key("show-states")
                .intrinsicValue(false, settings.showStates)
-               .hidden(true));
-
-    out.insert(Switch("usedef")
-               .intrinsicValue(true, settings.showUseDef)
-               .doc("Turns on display of use-def information if the semantics value type supports it and @s{show-states} "
-                    "is enabled.  The @s{no-usedef} switch disables this feature. The default is to " +
-                    std::string(settings.showUseDef?"":"not ") + "show this information."));
-    out.insert(Switch("no-usedef")
-               .key("usedef")
-               .intrinsicValue(false, settings.showUseDef)
                .hidden(true));
 
     out.insert(Switch("show-initial-values")
@@ -180,6 +235,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .key("show-initial-state")
                .intrinsicValue(false, settings.showInitialState)
                .hidden(true));
+
     
     //------------------------------------------------
     parser.doc("Synopsis", "@prop{programName} @s{semantics} @v{class} [@v{switches}] @v{specimen_name}");
@@ -294,8 +350,10 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::MemoryState\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState\n"
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
-                  <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::MemoryState\n"
-                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryState\n";
+                  <<"  p2-list          rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState\n"
+                  <<"  p2-map           rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState\n"
+                  <<"  symbolic-list    rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState\n"
+                  <<"  symbolic-map     rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState\n";
         exit(0);
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
@@ -309,36 +367,42 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
         return NullSemantics::MemoryState::instance(protoval, protoaddr);
     } else if (className == "partial") {
         BaseSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
-        return ops->get_state()->get_memory_state();
-    } else if (className == "partitioner2") {
-        return P2::Semantics::MemoryState::instance(protoval, protoaddr);
-    } else if (className == "symbolic") {
-        return SymbolicSemantics::MemoryState::instance(protoval, protoaddr);
+        return ops->currentState()->memoryState();
+    } else if (className == "p2-list" || className == "partitioner2") {
+        return P2::Semantics::MemoryListState::instance(protoval, protoaddr);
+    } else if (className == "p2-map") {
+        return P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
+    } else if (className == "symbolic-list" || className == "symbolic") {
+        return SymbolicSemantics::MemoryListState::instance(protoval, protoaddr);
+    } else if (className == "symbolic-map") {
+        return SymbolicSemantics::MemoryMapState::instance(protoval, protoaddr);
     } else {
         throw std::runtime_error("unrecognized memory state class name \"" + className + "\"; see --mstate=list\n");
     }
 }
 
-static BaseSemantics::RiscOperatorsPtr
-makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
-    const std::string &className = settings.opsClassName;
-    if (className == "list") {
-        std::cout <<"semantic class names:\n"
+static void
+listRiscOperators() {
+    std::cout <<"semantic class names:\n"
 #ifdef EXAMPLE_EXTENSIONS
-                  <<"  example          com::example::semantics::RiscOperators\n"
+              <<"  example          com::example::semantics::RiscOperators\n"
 #endif
-                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
-                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
-                  <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
-                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
-                  <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators\n"
-                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators\n";
-        exit(0);
-    } else if (className.empty()) {
+              <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
+              <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
+              <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
+              <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
+              <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators\n"
+              <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators\n";
+}
+
+static BaseSemantics::RiscOperatorsPtr
+makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::Partitioner &partitioner) {
+    const std::string &className = settings.opsClassName;
+    if (className.empty())
         throw std::runtime_error("--semantics switch is required");
-    }
     
     SMTSolver *solver = makeSolver(settings);
+    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);
     BaseSemantics::MemoryStatePtr mstate = makeMemoryState(settings, protoval, protoval, regdict);
@@ -356,11 +420,18 @@ makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
     } else if (className == "null") {
         return NullSemantics::RiscOperators::instance(state, solver);
     } else if (className == "partial") {
-        return PartialSymbolicSemantics::RiscOperators::instance(state, solver);
+        PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(state, solver);
+        if (settings.useMemoryMap)
+            ops->set_memory_map(new MemoryMap(engine.memoryMap()));
+        return ops;
     } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);
     } else if (className == "symbolic") {
-        return SymbolicSemantics::RiscOperators::instance(state, solver);
+        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(state, solver);
+        ops->computingDefiners(settings.computingDefiners);
+        ops->computingRegisterWriters(settings.computingWriters);
+        ops->computingMemoryWriters(settings.computingWriters);
+        return ops;
     } else {
         throw std::runtime_error("unrecognized semantic class name \"" + className + "\"; see --semantics=list\n");
     }
@@ -381,15 +452,13 @@ adjustSettings(Settings &settings) {
         settings.mstateClassName = settings.opsClassName;
 }
 
-// Test the API for various combinations of classes.  Sorry this is so long and doesn't handle every case -- that's the pitfal
-// of trying to mix runtime configuration and C++ templates.
+// Test the API for various combinations of classes.
 static void
-testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
+testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::Partitioner &partitioner) {
     std::cout <<"=====================================================================================\n"
               <<"=== Performing basic API tests                                                    ===\n"
               <<"=====================================================================================\n";
-    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
-    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, regdict);
+    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, engine, partitioner);
     if (settings.opsClassName == settings.valueClassName &&
         settings.opsClassName == settings.rstateClassName &&
         settings.opsClassName == settings.mstateClassName) {
@@ -423,12 +492,12 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
             tester.test(ops);
         } else if (settings.opsClassName == "partitioner2") {
             TestSemantics<P2::Semantics::SValuePtr, P2::Semantics::RegisterStateGenericPtr,
-                          P2::Semantics::MemoryStatePtr, P2::Semantics::StatePtr,
+                          P2::Semantics::MemoryListStatePtr, P2::Semantics::StatePtr,
                           P2::Semantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName == "symbolic") {
             TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
-                          SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
                           SymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else {
@@ -445,15 +514,27 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
                           PartialSymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName=="partitioner2" && settings.valueClassName=="partitioner2" &&
-                   settings.rstateClassName=="x86" && settings.mstateClassName=="partitioner2") {
+                   settings.rstateClassName=="x86" && settings.mstateClassName=="p2-list") {
             TestSemantics<P2::Semantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
-                          P2::Semantics::MemoryStatePtr, P2::Semantics::StatePtr,
+                          P2::Semantics::MemoryListStatePtr, P2::Semantics::StatePtr,
+                          P2::Semantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName=="partitioner2" && settings.valueClassName=="partitioner2" &&
+                   settings.rstateClassName=="x86" && settings.mstateClassName=="p2-map") {
+            TestSemantics<P2::Semantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
+                          P2::Semantics::MemoryMapStatePtr, P2::Semantics::StatePtr,
                           P2::Semantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
-            settings.rstateClassName=="x86" && settings.mstateClassName=="symbolic") {
+                   settings.rstateClassName=="x86" && settings.mstateClassName=="symbolic-list") {
             TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
-                          SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
+                   settings.rstateClassName=="symbolic" && settings.mstateClassName=="symbolic-map") {
+            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          SymbolicSemantics::MemoryMapStatePtr, BaseSemantics::StatePtr,
                           SymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else {
@@ -471,7 +552,8 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
 }
 
 static void
-runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const P2::Partitioner &partitioner) {
+runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
+             const P2::Engine &engine, const P2::Partitioner &partitioner) {
     if (!settings.bblockInterval.isContaining(bblock->address()))
         return;
 
@@ -479,11 +561,11 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
               <<"=== Starting a new basic block                                                    ===\n"
               <<"=====================================================================================\n";
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
-    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, regdict);
+    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, engine, partitioner);
 
     BaseSemantics::Formatter formatter;
     formatter.set_suppress_initial_values(!settings.showInitialValues);
-    formatter.set_show_latest_writers(settings.showUseDef);
+    formatter.set_show_latest_writers(settings.computingWriters != SymbolicSemantics::TRACK_NO_WRITERS);
 
     BaseSemantics::DispatcherPtr dispatcher = partitioner.instructionProvider().dispatcher();
     if (!dispatcher)
@@ -510,6 +592,25 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
         std::cout <<"Initial state:\n" <<(*ops+formatter) <<"\n";
     BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
         std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+
+        // See the comments in $ROSE/binaries/samples/x86-64-adaptiveRegs.s for details
+        if (settings.testAdaptiveRegisterState) {
+            BaseSemantics::RegisterStateGenericPtr regState =
+                boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(ops->currentState()->registerState());
+            if (regState) {
+                RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+                BaseSemantics::SValuePtr sp = ops->readRegister(SP);
+                unsigned magic = sp->is_number() ? sp->get_number() : 0;
+                unsigned settings = (magic & 0xfffffffc) == 0x137017c0 ? (magic & 3) : 3;
+                regState->accessModifiesExistingLocations(settings & 1);
+                regState->accessCreatesLocations(settings & 2);
+                std::cout <<"RegisterStateGeneric: accessModifiesExistingLocations="
+                          <<(regState->accessModifiesExistingLocations() ? "yes" : "no")
+                          <<", accessCreatesLocations="
+                          <<(regState->accessCreatesLocations() ? "yes" : "no") <<"\n";
+            }
+        }
+
         try {
             dispatcher->processInstruction(insn);
         } catch (const BaseSemantics::Exception &e) {
@@ -517,6 +618,17 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
         }
         if (settings.showStates)
             std::cout <<(*ops+formatter) <<"\n";
+
+        if (settings.runNoopAnalysis) {
+            // Use a different state for no-op analysis, otherwise it will end up messing with the state we're using for our
+            // own semantics.
+            BaseSemantics::RiscOperatorsPtr ops2 = makeRiscOperators(settings, engine, partitioner);
+            BaseSemantics::DispatcherPtr dispatcher2 = partitioner.instructionProvider().dispatcher();
+            dispatcher2 = dispatcher2->create(ops2);
+            NoOperation nopAnalyzer(dispatcher2);
+            if (nopAnalyzer.isNoop(insn))
+                std::cerr <<"Instruction has no effect (other than changing the instruction pointer register)\n";
+        }
     }
 }
 
@@ -531,16 +643,19 @@ main(int argc, char *argv[]) {
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
     adjustSettings(settings);
-    (void) makeRiscOperators(settings, RegisterDictionary::dictionary_i386());// for "list" side effects
+    if (settings.opsClassName == "list") {
+        listRiscOperators();
+        exit(0);
+    }
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
     // Parse, disassemble, and partition
     P2::Partitioner partitioner = engine.partition(specimenNames);
 
-    testSemanticsApi(settings, partitioner);
+    testSemanticsApi(settings, engine, partitioner);
     
     // Run sementics on each basic block
     BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, partitioner.basicBlocks())
-        runSemantics(bblock, settings, partitioner);
+        runSemantics(bblock, settings, engine, partitioner);
 }

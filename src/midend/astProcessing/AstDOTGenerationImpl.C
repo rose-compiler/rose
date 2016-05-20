@@ -302,10 +302,11 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
         if (astAttributeContainer != NULL)
         {
         // Loop over all the attributes at this IR node
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          AstAttributeMechanism::AttributeIdentifiers attrIdentifiers = astAttributeContainer->getAttributeIdentifiers();
+          for (AstAttributeMechanism::AttributeIdentifiers::iterator i = attrIdentifiers.begin(); i!=attrIdentifiers.end(); ++i)
                  {
-                // std::string name = i->first;
-                   AstAttribute* attribute = i->second;
+                   std::string name = *i;
+                   AstAttribute* attribute = astAttributeContainer->operator[](name);
                    ROSE_ASSERT(attribute != NULL);
 
                 // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
@@ -376,8 +377,8 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
                    string original_filename = file->getFileName();
 
                 // DQ (7/4/2008): Fix filenamePostfix to go before the "."
-                // string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
-//                 string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
+                // string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
+//                 string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
                    string filename = string("./") + StringUtility::stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
 
                 // printf ("generated filename for dot file (from SgSourceFile or SgBinaryComposite) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());

@@ -28,7 +28,7 @@ factorial(T n)
 
 /** Simulate flipping a coin. Randomly returns true or false with equal probability. See also,
  *  LinearCongruentialGenerator::flip_coin(). */
-bool flip_coin();
+ROSE_UTIL_API bool flip_coin();
 
 /** Permute a vector according to the specified permutation number. The permutation number should be between zero (inclusive)
  *  and the factorial of the values size (exclusive).  A permutation number of zero is a no-op; higher permutation numbers
@@ -73,17 +73,17 @@ shuffle(std::vector<T> &vector, size_t nitems=(size_t)(-1), size_t limit=(size_t
  *  characters via digest_to_string().  If called when a SHA1 algorithm is not available (due to ROSE configuration) an
  *  empty vector is returned.
  * @{ */
-std::vector<uint8_t> sha1_digest(const uint8_t *data, size_t size);
-std::vector<uint8_t> sha1_digest(const std::vector<uint8_t> &data);
-std::vector<uint8_t> sha1_digest(const std::string &data);
+ROSE_UTIL_API std::vector<uint8_t> sha1_digest(const uint8_t *data, size_t size);
+ROSE_UTIL_API std::vector<uint8_t> sha1_digest(const std::vector<uint8_t> &data);
+ROSE_UTIL_API std::vector<uint8_t> sha1_digest(const std::string &data);
 /** @} */
 
 /** Compute the Fowler–Noll–Vo fast string hash.  This is not a cryptographic hash. Speed is marginally slower than Murmur
  *  hash, but collision rate is slightly less.
  * @{ */
-uint64_t fnv1a64_digest(const uint8_t *data, size_t size);
-uint64_t fnv1a64_digest(const std::vector<uint8_t> &data);
-uint64_t fnv1a64_digest(const std::string &data);
+ROSE_UTIL_API uint64_t fnv1a64_digest(const uint8_t *data, size_t size);
+ROSE_UTIL_API uint64_t fnv1a64_digest(const std::vector<uint8_t> &data);
+ROSE_UTIL_API uint64_t fnv1a64_digest(const std::string &data);
 /** @} */
 
 
@@ -91,9 +91,9 @@ uint64_t fnv1a64_digest(const std::string &data);
  *  length. The output will be twice as long as the input.  If you're using this to convert binary data to a printable format
  *  you're doing it wrong--use StringUtility::encode_base64() instead.
  * @{ */
-std::string digest_to_string(const uint8_t *data, size_t size);
-std::string digest_to_string(const std::vector<uint8_t> &digest);
-std::string digest_to_string(const std::string &data);
+ROSE_UTIL_API std::string digest_to_string(const uint8_t *data, size_t size);
+ROSE_UTIL_API std::string digest_to_string(const std::vector<uint8_t> &digest);
+ROSE_UTIL_API std::string digest_to_string(const std::string &data);
 /** @} */
 
 } // namespace

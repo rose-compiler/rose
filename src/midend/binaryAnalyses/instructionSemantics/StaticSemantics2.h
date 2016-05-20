@@ -2,6 +2,7 @@
 #ifndef Rose_StaticSemantics2_H
 #define Rose_StaticSemantics2_H
 
+#include "Disassembler.h"
 #include "NullSemantics2.h"
 
 namespace rose {
@@ -26,12 +27,12 @@ namespace InstructionSemantics2 {       // documented elsewhere
  *  attached can be many times larger than when using dynamic semantics.
  *
  *  By default, ROSE does not generate the static semantics, and each instruction's @ref SgAsmInstruction::get_semantics
- *  "semantics" property will be null.  Semantics can be added to any instruction by @ref RiscOperators::processInstruction
- *  "executing" the instruction in this StaticSemantics domain.  Each time the instruction is executed in this domain its
- *  previous semantics are thrown away and recalculated, so you should generally only do this once; that's the nature that
- *  makes these semantics "static".  If you want to calculate static semantics for lots of instructions, which is often the
- *  case, the @ref attachInstructionSemantics functions can do that: they process an entire AST, adding semantics to all the
- *  instructions they find. */
+ *  "semantics" property will be null.  Semantics can be added to any instruction by @ref
+ *  BaseSemantics::RiscOperators::processInstruction "executing" the instruction in this StaticSemantics domain.  Each time the
+ *  instruction is executed in this domain its previous semantics are thrown away and recalculated, so you should generally
+ *  only do this once; that's the nature that makes these semantics "static".  If you want to calculate static semantics for
+ *  lots of instructions, which is often the case, the @ref attachInstructionSemantics functions can do that: they process an
+ *  entire AST, adding semantics to all the instructions they find. */
 namespace StaticSemantics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,7 +58,7 @@ void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr&
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for reference-counted semantic values. */
+/** Shared-ownership pointer for a static-semantics value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Semantic values for generating static semantic ASTs.
@@ -98,6 +99,11 @@ public:
         return SValuePtr(new SValue(1, SgAsmRiscOperation::OP_undefined));
     }
 
+    /** Instantiate a data-flow bottom value. */
+    static SValuePtr instance_bottom(size_t nbits) {
+        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_bottom));
+    }
+
     /** Instantiate an undefined value.
      *
      *  Undefined values end up being a SgAsmRiscOperation of type OP_undefined which has a single child which is an integer
@@ -122,6 +128,9 @@ public:
     }
 
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_bottom(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance_undefined(nbits);
     }
@@ -139,6 +148,10 @@ public:
         if (new_width!=0 && new_width!=retval->get_width())
             retval->set_width(new_width);
         return retval;
+    }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE {
+        throw BaseSemantics::NotImplemented("StaticSemantics is not suitable for dataflow analysis", NULL);
     }
 
 public:
@@ -159,11 +172,14 @@ public:
         ASSERT_not_reachable("no implementation necessary");
     }
     
-
     virtual void set_width(size_t nbits) {
         ASSERT_not_reachable("no implementation necessary");
     }
 
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+    
     virtual bool is_number() const ROSE_OVERRIDE {
         return false;
     }
@@ -210,7 +226,7 @@ typedef NullSemantics::StatePtr StatePtr;
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for basic semantic operations. */
+/** Shared-ownership pointer for basic semantic operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Basic semantic operations.
@@ -226,14 +242,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("StaticSemantics");
+        name("StaticSemantics");
         (void) SValue::promote(protoval); // make sure its dynamic type is a StaticSemantics::SValue
     }
 
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("StaticSemantics");
-        (void) SValue::promote(state->get_protoval()); // values must have StaticSemantics::SValue dynamic type
+        name("StaticSemantics");
+        (void) SValue::promote(state->protoval()); // values must have StaticSemantics::SValue dynamic type
     }
 
 public:
@@ -248,14 +264,14 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument because the base class expects one, but it is not used for static semantics. See set_solver() for
+     *  second argument because the base class expects one, but it is not used for static semantics. See @ref solver for
      *  details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
-     *  because the base class expects one, but it is not used for static semantics. See set_solver() for details. */
+     *  because the base class expects one, but it is not used for static semantics. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -399,7 +415,8 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,

@@ -3613,13 +3613,8 @@ class StackFrame {
    \item Binary (DQ) \\
    \begin{enumerate}
       \item InstructionSemantics \\
-	Implemented in the X86InstructionSemantics class, which
-	requires a policy class (such as FindConstantsPolicy) at
-	compile time.
-
-	The implementation only supports 32-bit x86 and is not well
-	documented.
-      
+      See doxygen documentation for the
+      rose::BinaryAnalysis::InstructionSemantics2 namespace.
       \item Library Identification (FLIRT) \\
       This has not yet been moved from {\tt developersScratchSpace/Dan/libraryIdentification\_tests}
       to a more useful location in ROSE.  Likely should be put in the {\em midend} as part
@@ -4679,7 +4674,7 @@ typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
          These function support common operations on strings used within ROSE and 
          useful within ROSE-based tools.
    \begin{enumerate}
-      \item {\bf int ROSE::containsString ( const std::string \& masterString, const std::string \& targetString );} \\
+      \item {\bf int rose::containsString ( const std::string \& masterString, const std::string \& targetString );} \\
       Returns result (zero or nonzero) based on containment of {\em targetString} in {\em masterString}.
       \fixme{This function might not be significant enough to be in the API.}
    \end{enumerate}
@@ -4689,23 +4684,23 @@ typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
    and this API provides simple access to these functions.
    \fixme{These function currently are in the {\bf ROSE} namespace which we would like to eliminate.}
    \begin{enumerate}
-      \item {\bf string ROSE::getWorkingDirectory ();} \\
+      \item {\bf string rose::getWorkingDirectory ();} \\
       Returns working directory of ROSE installation, uses call to {\em getcwd()}.
 
-      \item {\bf std::string ROSE::getSourceDirectory ( std::string fileNameWithPath );} \\
+      \item {\bf std::string rose::getSourceDirectory ( std::string fileNameWithPath );} \\
       Return the source directory associated with an installation of ROSE.
 
-      \item {\bf string ROSE::getPathFromFileName ( const string fileName );} \\
+      \item {\bf string rose::getPathFromFileName ( const string fileName );} \\
       Returns the path associated with the input filename string.
 
-      \item {\bf std::string ROSE::stripPathFromFileName ( const std::string \& fileNameWithPath );} \\
+      \item {\bf std::string rose::utility\_stripPathFromFileName ( const std::string \& fileNameWithPath );} \\
       Returns the path associated with the file.
 
-      \item {\bf std::string ROSE::getFileNameWithoutPath ( SgStatement* statementPointer );} \\
+      \item {\bf std::string rose::getFileNameWithoutPath ( SgStatement* statementPointer );} \\
       Returns the name of file associated the specific statement of the AST. The returned
       string excludes the files path.
 
-      \item {\bf std::string ROSE::getFileName ( SgLocatedNode* locatedNodePointer );} \\
+      \item {\bf std::string rose::getFileName ( SgLocatedNode* locatedNodePointer );} \\
       Returns the name of file associated the specific statement or expression of the AST.
       The returned string is the absolute path plus file name.
    \end{enumerate}

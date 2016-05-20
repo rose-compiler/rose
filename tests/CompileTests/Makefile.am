@@ -66,7 +66,8 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
       OvertureCode P++Tests A++Code \
       ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
       sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests \
-      UnparseHeadersTests
+      UnparseHeadersTests \
+      STL_tests
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
@@ -82,15 +83,19 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
 endif
 
+if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+   SUBDIRS += Matlab_tests
+endif
+
 SUBDIRS += CudaTests
 
 # Used to check all C and C++ test codes: not really specific to EDG 4.x
 SUBDIRS += frontend_integration
 
 # DQ (2/15/2014): Adding systemc tests (part of general C++ robustness tests)
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 SUBDIRS += systemc_tests
-
-SUBDIRS += TileK
+endif
 
 # end of ROSE_USE_CLANG_FRONTEND
 # endif

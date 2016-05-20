@@ -31,17 +31,17 @@ mpaPointerAnal_extraDist=\
 	$(mpaPointerAnalPath)/SteensgaardPtrAnal.h
 
 
-mpaPointerAnal_cleanLocal=\
-	rm -rf \
-		$(mpaPointerAnalPath)/Templates.DB \
-		$(mpaPointerAnalPath)/ii_files \
-		$(mpaPointerAnalPath)/ti_files \
-		$(mpaPointerAnalPath)/cxx_templates
+mpaPointerAnal_cleanLocal=
+#	rm -rf \
+#		$(mpaPointerAnalPath)/Templates.DB \
+#		$(mpaPointerAnalPath)/ii_files \
+#		$(mpaPointerAnalPath)/ti_files \
+#		$(mpaPointerAnalPath)/cxx_templates
 
 
-mpaPointerAnal_distCleanLocal=\
-	rm -rf \
-		$(mpaPointerAnalPath)/Templates.DB
+mpaPointerAnal_distCleanLocal=
+#	rm -rf \
+#		$(mpaPointerAnalPath)/Templates.DB
 
 
 

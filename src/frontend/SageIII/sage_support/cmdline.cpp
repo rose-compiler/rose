@@ -106,6 +106,11 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
           printf ("In makeSysIncludeList(): bottom of loop: argString_result = %s \n",argString_result.c_str());
 #endif
         }
+
+#if 0
+     std::string argString_result = CommandlineProcessing::generateStringFromArgList(result,false,false);
+     printf ("In makeSysIncludeList(): bottom of function: argString_result = %s \n",argString_result.c_str());
+#endif
    }
 
 /*-----------------------------------------------------------------------------
@@ -672,7 +677,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
   // Default
           cout << version_message() << endl;
-       // ROSE::usage(0);
+       // rose::usage(0);
           SgFile::usage(0);
           exit(0);
         }
@@ -691,7 +696,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // printf ("option --help found \n");
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
        // version();
-       // ROSE::usage(0);
+       // rose::usage(0);
           cout << version_message() << endl;
           SgFile::usage(0);
           exit(0);
@@ -1268,9 +1273,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           unsigned int length = argv[i].size();
 
        // printf ("assemble compiler command line option: argv[%d] = %s length = %d \n",i,argv[i],length);
-       // printf ("ROSE::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
-       //     ROSE::sourceFileNamesWithoutPath[sourceFileNameCounter]);
-       // ROSE_ASSERT (ROSE::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
+       // printf ("rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
+       //     rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
+       // ROSE_ASSERT (rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
 
        // DQ (12/8/2007): This leverages existing support in commandline processing
        // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
@@ -1405,7 +1410,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                               << "'" << include_path_no_quotes << "'"
                               << std::endl;
                   }
-               } catch (const filesystem_error& ex) {
+              } catch (const boost::filesystem::filesystem_error& ex) {
                   std::cout  << "[ERROR] "
                           << "Exception processing argument to -I: "
                           << "'" << include_path_no_quotes << "'"
@@ -3463,7 +3468,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-","(h|help)",true)      == true )
         {
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-       // ROSE::usage(0);
+       // rose::usage(0);
           cout << version_message() << endl;
           usage(0);
        // exit(0);
@@ -3646,6 +3651,32 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("unparse tokens mode ON \n");
           set_unparse_tokens(true);
+        }
+
+  //
+  // DQ (12/14/2015): Added more token handling support to improve the source position infor stored in the AST Sg_File_Info objects.
+  // Turn on the output of the tokens from the parser (only applies to C and Fortran support).
+  //
+     set_use_token_stream_to_improve_source_position_info(false);
+     ROSE_ASSERT (get_use_token_stream_to_improve_source_position_info() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(use_token_stream_to_improve_source_position_info)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("use_token_stream_to_improve_source_position_info mode ON \n");
+          set_use_token_stream_to_improve_source_position_info(true);
+        }
+
+  //
+  // DQ (12/23/2015): Suppress long-standing normalization of variable declarations with multiple 
+  // variables to be converted to individual variable declarations.
+  //
+     set_suppress_variable_declaration_normalization(false);
+     ROSE_ASSERT (get_suppress_variable_declaration_normalization() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(suppress_variable_declaration_normalization)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("suppress_variable_declaration_normalization mode ON \n");
+          set_suppress_variable_declaration_normalization(true);
         }
 
   //
@@ -4032,6 +4063,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
                if ( SgProject::get_verbose() >= 1 )
                     printf ("Cxx11 mode ON \n");
+
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+            // Allow C++11 option with versions of EDG 4.9 and later.
+#else
+            // DQ (4/16/2016): Mkae this a more consistant error message to use a later version of EDG.
+            // DQ (1/14/2016): Don't allow C++11 option with versions of EDG before EDG 4.9
+            // printf ("\nERROR: C++11 support requires configuration of ROSE using EDG 4.9 or later (using EDG 4.7) \n\n");
+            // ROSE_ASSERT(false);
+               printf ("\nERROR: C++11 mode in the compiler used as a backend to ROSE is not supported unless using  \n");
+               printf ("       EDG 4.9 version or greater (use --enable-edg_version=4.9 or greater to configure ROSE). \n\n");
+               exit(1);
+#endif
+
                set_Cxx11_only(true);
                set_Cxx11_gnu_only(false);
 
@@ -4140,6 +4184,80 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                ROSE_ASSERT(get_Cxx14_gnu_only() == true);
              }
         }
+#endif
+
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+  // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
+#if 0
+     printf ("Intel compiler being used as backend compiler: Identified this = %p -std=c++11 via more direct command line argument evaluation \n",this);
+#endif
+
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("Intel compiler being used: Cxx11 mode ON \n");
+
+#if 0     
+     printf ("After detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
+#endif
+
+  // DQ (10/7/2015): The file was already determined to be C or C++, or the associated command line option was used to specify it explicitly.
+     if (get_C_only() == true)
+        {
+       // This is the case of a C file.
+          ROSE_ASSERT(get_Cxx_only() == false);
+
+          set_Cxx11_only(false);
+          set_Cxx11_gnu_only(false);
+
+       // Set gnu specific level of C99 support to false.
+       // set_Cxx11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+
+       // DQ (10/7/2015): I think that Intel compiler is trying to be consitant with C99.
+          set_C99_only(true);
+          set_C99_gnu_only(false);
+
+       // DQ (10/7/2015): I don't think that the Intel compiler for C code is C11.
+       // printf ("Is the Intel icc compiler for C code really C11? \n");
+
+          set_C11_only(false);
+          set_C11_gnu_only(false);
+
+          ROSE_ASSERT(get_C_only() == true);
+        }
+       else
+        {
+       // This is the case of a C++ file.
+          set_Cxx11_only(true);
+          set_Cxx11_gnu_only(false);
+
+       // Set gnu specific level of C99 support to false.
+       // set_Cxx11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+          set_C11_only(false);
+          set_C11_gnu_only(false);
+
+          ROSE_ASSERT(get_C_only() == false);
+
+       // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+       // set_C_only(false);
+
+          ROSE_ASSERT(get_Cxx11_only() == true);
+        }
+#endif
+
+#if 0
+     printf ("After part 2 detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After part 2 detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
 #endif
 
 #if 0
@@ -4456,6 +4574,26 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              {
                printf ("Warning, Non Fortran2003 source file name specificed with explicit -rose:Fortran2003 Fortran 2003 language option! \n");
                set_F2003_only(false);
+             }
+        }
+
+  // DQ (1/25/2016): Allow defaults to be set based on filename extension.
+  // set_F2008_only(false);
+  // ROSE_ASSERT (get_F2008_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(f2008|F2008|Fortran2008)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Fortran2008 only mode ON \n");
+          set_F2008_only(true);
+          set_Fortran_only(true);
+
+       // DQ (1/25/2016): We might want to skip the syntax checking.
+          set_skip_syntax_check(true);
+
+          if (get_sourceFileUsesFortran2008FileExtension() == false)
+             {
+               printf ("Warning, Non Fortran2008 source file name specificed with explicit -rose:Fortran2008 Fortran 2008 language option! \n");
+               set_F2008_only(false);
              }
         }
 
@@ -5056,6 +5194,27 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_experimental_fortran_frontend(true);
         }
 
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     set_experimental_fortran_frontend_OFP_test(false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend_OFP_test",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Using experimental fortran frontend_OFP_test (explicitly set: ON) \n");
+          set_experimental_fortran_frontend_OFP_test(true);
+        }
+
+  // DQ (1/25/2016): we want to enforce that we only use F08 with the new experimental mode.
+     if (get_experimental_fortran_frontend() == false)
+        {
+       // We only want to allow Fortran 2008 mode to work with the new experimental fortran frontend.
+          if (get_F2008_only() == true)
+             {
+               printf ("ERROR: Fortran 2008 mode is only supported with the -rose:experimental_fortran_frontend option \n");
+               exit(1);
+            // ROSE_ASSERT(false);
+             }
+        }
 
   // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
   // ****************
@@ -5306,6 +5465,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
    }
 
+
 void
 SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
    {
@@ -5378,6 +5538,13 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(output_parser_actions)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
+
+  // DQ (12/14/2015): Strip out the new option (so it will not be used on the backend compiler).
+     optionCount = sla(argv, "-rose:", "($)", "(use_token_stream_to_improve_source_position_info)",1);
+
+  // DQ (12/23/2015): Suppress variable declaration normalizations
+     optionCount = sla(argv, "-rose:", "($)", "(suppress_variable_declaration_normalization)",1);
+
      int integerOption_token_tests = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(unparse_tokens_testing)", &integerOption_token_tests, 1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_using_leading_and_trailing_token_mappings)",1);
@@ -5525,6 +5692,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
+
+  // DQ (1/23/2016): Added support for OFP testing within new experimental Fortran support.
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend_OFP_test)",1);
 
   // DQ (9/15/2013): Remove this from being output to the backend compiler.
      optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);
@@ -5756,8 +5926,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // numberOfCommandLineArguments are parameters for the new command line that will be build
   // for EDG.
 
-  // printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s \n",get_file_info()->get_filenameString().c_str());
-  // printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s = %s \n",get_file_info()->get_filenameString().c_str(),get_sourceFileNameWithPath().c_str());
+#if 0
+     printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s \n",get_file_info()->get_filenameString().c_str());
+     printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s = %s \n",get_file_info()->get_filenameString().c_str(),get_sourceFileNameWithPath().c_str());
+#endif
+
      ROSE_ASSERT(get_file_info()->get_filenameString() == get_sourceFileNameWithPath());
 
   // ROSE_ASSERT (p_useBackendOnly == false);
@@ -5784,6 +5957,19 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      Rose_STL_Container<string> configDefs(configDefsArray, configDefsArray + sizeof(configDefsArray) / sizeof(*configDefsArray));
      Rose_STL_Container<string> Cxx_ConfigIncludeDirs(Cxx_ConfigIncludeDirsRaw, Cxx_ConfigIncludeDirsRaw + sizeof(Cxx_ConfigIncludeDirsRaw) / sizeof(const char*));
      Rose_STL_Container<string> C_ConfigIncludeDirs(C_ConfigIncludeDirsRaw, C_ConfigIncludeDirsRaw + sizeof(C_ConfigIncludeDirsRaw) / sizeof(const char*));
+
+#if 0
+  // printf ("CXX_INCLUDE_STRING = %s \n",CXX_INCLUDE_STRING);
+  // printf ("CXX_INCLUDE_STRING = %s \n",Cxx_ConfigIncludeDirsRaw);
+     printf ("CXX_INCLUDE_STRING = %s \n",Cxx_ConfigIncludeDirsRaw[0]);
+#endif
+
+#if 0
+     for (size_t i=0; i < Cxx_ConfigIncludeDirs.size(); i++)
+        {
+          printf ("Cxx_ConfigIncludeDirs[%" PRIuPTR "] = %s \n",i,Cxx_ConfigIncludeDirs[i].c_str());
+        }
+#endif
 
 #if 0
      for (size_t i=0; i < configDefs.size(); i++)
@@ -5836,15 +6022,27 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // printf ("C_ConfigIncludeString   = %s \n",C_ConfigIncludeString.c_str());
 #endif
 
+#if 0
+     std::string tmp5_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,true);
+     printf ("tmp5_translatorCommandLineString = %s \n",tmp5_translatorCommandLineString.c_str());
+#endif
+
      vector<string> commandLine;
 
-    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
-    #ifdef ROSE_BOOST_PATH
-    // Search dir for header files, after all directories specified by -I but
-    // before the standard system directories.
-    commandLine.push_back("--sys_include");
-    commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
-    #endif
+#if 0
+  // DQ (8/17/2015): Moved this specification of the boost path to after the generation of the -I include_dirs 
+  // to handle the case where a different version of boost is explicitly specified in the -I include_dirs.
+  // This allows ROSE to reproduce the behavior of the GNU g++ and Intel icpc compilers.
+  // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+#ifdef ROSE_BOOST_PATH
+  // Search dir for header files, after all directories specified by -I but before the standard system directories.
+#if 0
+     printf ("Adding boost path = %s \n",ROSE_BOOST_PATH);
+#endif
+     commandLine.push_back("--sys_include");
+     commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+#endif
+#endif
 
 #ifdef ROSE_USE_MICROSOFT_EXTENSIONS
   // DQ (4/21/2014): Add Microsoft specific options:
@@ -5860,7 +6058,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // EDG 4.9 permits emulation modes for specific MSVC versions.  Not clear what version of MSVC we should be emulating.
   // This is the version number for MSVC 5.0, but we need to get a later version.
      int emulate_msvc_version_number = 1100;
-  // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+  // printf ("emulate_msvc_version_number = %d \n",emulate_msvc_version_number);
      commandLine.push_back("--microsoft_version");
      commandLine.push_back(StringUtility::numberToString(emulate_msvc_version_number));
 #endif
@@ -5868,21 +6066,73 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
 #ifndef ROSE_USE_MICROSOFT_EXTENSIONS
 #ifndef _MSC_VER
+  // DQ (4/13/2016): This must use the values of __GNUC__,  __GNUC_MINOR__, and __GNUC_PATCHLEVEL__ 
+  // from the backend compiler.  Note that we don't save the __GNUC_PATCHLEVEL__ for the backend 
+  // compiler, but we can assume it is zero (I think this should work well).
   // DQ (7/3/2013): We don't have to lie to EDG about the version of GNU that it should emulate 
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
-     int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
+  // int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
+  // int emulate_gnu_version_number = BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER*10000 + BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER*100 + 0;
+     int emulate_backend_compiler_version_number = BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER*10000 + BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER*100 + 0;
+
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+  // DQ (9/6/2015): Reset to specific version of GNU for Intel v14 compiler.
+     emulate_backend_compiler_version_number = 4*10000 + 8*100 + 3;
+#endif
 
   // DQ (7/3/2014): Testing if we emulate a different version of GNU g++.
-  // emulate_gnu_version_number = 4*10000 + 8*100 + 1;
+  // emulate_backend_compiler_version_number = 4*10000 + 8*100 + 1;
 
      if (SgProject::get_verbose() > 0)
         {
-          printf ("In SgFile::build_EDG_CommandLine(): emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+          printf ("In SgFile::build_EDG_CommandLine(): emulate_backend_compiler_version_number = %d \n",emulate_backend_compiler_version_number);
         }
 
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
      commandLine.push_back("--gnu_version");
-     commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
+#endif
+
+#ifdef BACKEND_CXX_IS_GNU_COMPILER
+     commandLine.push_back("--gnu_version");
+#else
+   #ifdef USE_CMAKE
+  // DQ (4/20/2016): When using CMAKE the BACKEND_CXX_IS_GNU_COMPILER is not defiled.
+     commandLine.push_back("--gnu_version");
+   #endif
+#endif
+
+
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+#if 0
+     printf ("For clang support in ROSE: __GNUC__ = %d __GNUC_MINOR__ = %d __GNUC_PATCHLEVEL__ = %d \n",(int)__GNUC__, (int)__GNUC_MINOR__, (int)__GNUC_PATCHLEVEL__);
+
+  // DQ (4/13/2016): Using Clang we should not be able to generate this number unless it is incorrect.
+  // if (__GNUC__ == 4 && __GNUC_MINOR__ == 2)
+     if (emulate_backend_compiler_version_number == 40200)
+        {
+          printf ("Clang support is setting compiler version incorrectly \n");
+          ROSE_ASSERT(false);
+        }
+
+  // DQ (4/13/2016): In the case of Clang we can catch an interesting bug where the values of the 
+  // compiler used to compile ROSE are used to compute the version of GNU that we want the backend 
+  // compiler to emulated.  In fact the compiler used to compile ROSE can have NOTHING to with the 
+  // version of the compiler used to compiler the ROSE generated code (the backend compiler).
+  // We need to use the values of __GNUC__,  __GNUC_MINOR__, and __GNUC_PATCHLEVEL__ from the
+  // backend compiler to compute the version of GNU (or clang) that we will emulate.
+#if 0
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ == 2))
+  #error "Error incorrect computation of Clang emulated version: ((__GNUC__ == 4) && (__GNUC_MINOR__ == 2))"
+#endif
+#endif
+
+#endif
+     commandLine.push_back("--clang");
+     commandLine.push_back("--clang_version");
+#endif
+     commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
 #endif
 #endif
 
@@ -6112,7 +6362,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
             // CUDA is a C++ extention, add default C++ options
                commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
-               commandLine.push_back("-D__cplusplus=1");
+
+            // DQ (4/13/2016): If we are going to set this, set it to a more reasonable value.
+            // Try letting EDG specify the value of this internal variable.
+            // commandLine.push_back("-D__cplusplus=1");
+            // commandLine.push_back("-D__cplusplus=199711L");
+
                Rose::Cmdline::makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
              }
             else 
@@ -6160,7 +6415,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           printf ("   --- get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
           printf ("   --- get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
           printf ("   --- get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
-       // printf ("   --- get_F2008_only()          = %s \n",(get_F2008_only() == true) ? "true" : "false");
+          printf ("   --- get_F2008_only()          = %s \n",(get_F2008_only() == true) ? "true" : "false");
           printf ("   --- get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
           printf ("   --- get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
           printf ("   --- get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
@@ -6181,7 +6436,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                   {
                  // The value here should be 1 to match that of GNU gcc (the C++ standard requires this to be "199711L")
                  // initString += " -D__cplusplus=0 ";
-                    commandLine.push_back("-D__cplusplus=1");
+
+                 // DQ (4/13/2016): If we are going to set this, set it to a more reasonable value.
+                 // Try letting EDG specify the value of this internal variable.
+                 // commandLine.push_back("-D__cplusplus=1");
+                 // commandLine.push_back("-D__cplusplus=199711L");
 
                     if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
                        {
@@ -6314,6 +6573,50 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
             // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
                commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
+
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+            // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
+            // This is not consistant with GNU, but required for Intel header file compatablity (or is is that Intel is using 
+            // the GNU header files and it is required for GNU compatability?). I think that setting this predefined macro is 
+            // not allowed by EDG in MSVC mode.
+            // commandLine.push_back("-D__cplusplus=199711L");
+#if 0
+               printf ("In build_EDG_CommandLine(): setting __cplusplus: this = %p get_Cxx11_only() = %s \n",this,get_Cxx11_only() ? "true" : "false");
+#endif
+            // DQ (5/9/2016): This is a fix for the Intel specific C++11 support.
+               if (get_Cxx11_only() == true)
+                  {
+                 // DQ (5/10/2016): This allows some C++11 specific header files to work with the Intel compiler (see Cxx11_tests/test2016_32.C).
+                 // commandLine.push_back("-D__cplusplus=199711L");
+                    commandLine.push_back("-D__cplusplus=201103L");
+
+                 // DQ (5/10/2016): Added to support Intel v16 C++11 mode.
+                    commandLine.push_back("-D__SSE4_2__");
+                    commandLine.push_back("-D__SSE4_1__");
+                    commandLine.push_back("-D__SSSE3__");
+                    commandLine.push_back("-D__SSE3__");
+                  }
+                 else
+                  {
+                    if (get_Cxx14_only() == true)
+                       {
+                         printf ("C++14 support for Intel compiler not implemented in ROSE yet! \n");
+                         ROSE_ASSERT(false);
+
+                         commandLine.push_back("-D__cplusplus=201400L");
+                       }
+                      else
+                       {
+                         commandLine.push_back("-D__cplusplus=199711L");
+                       }
+                  }
+#endif
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+            // DQ (4/13/2016): We need to define this explicitly for the Clang compiler.
+            // Try letting EDG specify the value of this internal variable.
+            // commandLine.push_back("-D__cplusplus=199711L");
+#endif
              }
 
 #if 0
@@ -6321,6 +6624,28 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           ROSE_ASSERT(false);
 #endif
         }
+
+#if 1
+  // DQ (8/17/2015): Moved this specification of the boost path to after the generation of the -I include_dirs 
+  // to handle the case where a different version of boost is explicitly specified in the -I include_dirs.
+  // This allows ROSE to reproduce the behavior of the GNU g++ and Intel icpc compilers.
+#ifdef ROSE_BOOST_PATH
+  // Search dir for header files, after all directories specified by -I but before the standard system directories.
+#if 0
+     printf ("Adding (after -I include dirs) boost path = %s \n",ROSE_BOOST_PATH);
+#endif
+     commandLine.push_back("--sys_include");
+     commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+#endif
+#endif
+
+#ifdef BACKEND_CXX_IS_GNU_COMPILER
+   #if (ROSE_BOOST_VERSION >= 105800)
+  // DQ (5/6/2016): Adding macro to control use of Boost in later versions of Bosot (1.58 and later).
+  // Not clear if this is specific to GNU, but lets initially be conservative.
+     commandLine.push_back("-DBOOST_NO_ALIGNMENT");
+   #endif
+#endif
 
 #if 0
      printf ("Exting as a test! \n");
@@ -6332,6 +6657,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
   // Separate the string into substrings consistent with the structure of argv command line input
      inputCommandLine = commandLine;
+
+#if 0
+     std::string tmp6_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,true);
+     printf ("tmp6_translatorCommandLineString = %s \n",tmp6_translatorCommandLineString.c_str());
+#endif
 
   // DQ (11/1/2011): Do we need this for the new EDG 4.3 work?
   // #ifndef ROSE_USE_NEW_EDG_INTERFACE
@@ -6976,6 +7306,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 
   // display("at base of build_EDG_CommandLine()");
+
+#if 0
+     std::string tmp7_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,true);
+     printf ("Leaving build_EDG_CommandLine(): tmp7_translatorCommandLineString = %s \n",tmp7_translatorCommandLineString.c_str());
+#endif
 
 #if 0
      printf ("Exiting at base of build_EDG_CommandLine() \n");
@@ -7664,8 +7999,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
-     std::string oldFileNamePathOnly = ROSE::getPathFromFileName(sourceFileName.c_str());
-     std::string oldFileName         = ROSE::stripPathFromFileName(sourceFileName.c_str());
+     std::string oldFileNamePathOnly = rose::getPathFromFileName(sourceFileName.c_str());
+     std::string oldFileName         = rose::utility_stripPathFromFileName(sourceFileName.c_str());
 
 #if 0
      printf ("oldFileNamePathOnly = %s \n",oldFileNamePathOnly.c_str());
@@ -7852,8 +8187,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                        }
                       else
-                       { // compilation only, object name is already specified, single file case, nothing else to tweak for the command line
+                       {
+                      // compilation only, object name is already specified, single file case, nothing else to tweak for the command line
+#if DEBUG_COMPILER_COMMAND_LINE
+                      // DQ (11/8/2015): Put this in #if to avoid output spew.
                          printf ("get_compileOnly() == true: get_multifile_support() == false: \n");
+#endif
                        }
                   }
              }

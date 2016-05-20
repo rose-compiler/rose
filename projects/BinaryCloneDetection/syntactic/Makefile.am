@@ -22,7 +22,7 @@ if ROSE_USE_SQLITE_DATABASE
 # would also avoid the SSL/Java conflict mentioned in the ROSE manual. [RPM 2013-04-11]
 if ROSE_USE_SSL_SUPPORT
 
-INCLUDES = $(ROSE_INCLUDES)  $(SQLITE_DATABASE_INCLUDE)
+AM_CPPFLAGS = $(ROSE_INCLUDES)  $(SQLITE_DATABASE_INCLUDE)
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 # (Re)creates the tables for syntactic clone detection
@@ -134,10 +134,10 @@ EXTRA_DIST = 					\
 	callLSH.h				\
 	collateByHash.C				\
 	createCloneDetectionVectorsBinary.h	\
-        createCloneDetectionVectorsSource.h     \
 	createSignatureVectors.h		\
 	createVectors.C				\
 	findExactClones.h			\
+	lshParameterFinding.h			\
 	lsh/BasicDefinitions.h			\
 	lsh/BucketHashing.C			\
 	lsh/BucketHashing.h			\

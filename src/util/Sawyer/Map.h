@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -245,6 +245,7 @@ public:
         boost::iterator_range<OtherIterator> otherNodes = other.nodes();
         for (OtherIterator otherIter=otherNodes.begin(); otherIter!=otherNodes.end(); ++otherIter)
             map_.insert(map_.end(), std::make_pair(Key(otherIter->key()), Value(otherIter->value())));
+        return *this;
     }
         
 
@@ -444,7 +445,7 @@ public:
     const Value& get(const Key &key) const {
         typename StlMap::const_iterator found = map_.find(key);
         if (found==map_.end())
-            throw std::range_error("key lookup failure; key is not in map domain");
+            throw std::domain_error("key lookup failure; key is not in map domain");
         return found->second;
     }
     /** @} */
@@ -594,7 +595,7 @@ public:
     template<class OtherNodeIterator>
     Map& insertMaybeMultiple(const boost::iterator_range<OtherNodeIterator> &range) {
         for (OtherNodeIterator otherIter=range.begin(); otherIter!=range.end(); ++otherIter)
-            insert(Key(otherIter->key()), Value(otherIter->value()));
+            insertMaybe(Key(otherIter->key()), Value(otherIter->value()));
         return *this;
     }
 
@@ -646,7 +647,11 @@ public:
         return *this;
     }
     Map& eraseAt(const ConstKeyIterator &iter) {
-        map_.erase(iter.base());
+        // std::map can't erase using a const_iterator
+        ASSERT_require(iter != keys().end());
+        typename StlMap::iterator stdIter = map_.find(*iter);
+        ASSERT_require(stdIter != map_.end());
+        map_.erase(stdIter);
         return *this;
     }
     Map& eraseAt(const ValueIterator &iter) {

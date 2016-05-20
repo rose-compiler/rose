@@ -2,14 +2,14 @@
 
 void fallbackSimpleSort(int *fmap,int *eclass,int lo,int hi)
 {
-  int i;
-  unsigned int ec_tmp;
   if (lo == hi) 
     return ;
   if (hi - lo > 3) {
+    int i;
+    unsigned int ec_tmp;
     for ((i = hi - 4 , ec_tmp = 0); i >= lo; i--) {
-      int tmp;
       int j;
+      int tmp;
       tmp = fmap[i];
       ec_tmp = eclass[tmp];
       for (j = i + 4; j <= hi && ec_tmp > eclass[fmap[j]]; j += 4) 
@@ -17,9 +17,10 @@ void fallbackSimpleSort(int *fmap,int *eclass,int lo,int hi)
       fmap[j - 4] = tmp;
     }
   }
-  for (i = hi - 1; i >= lo; i--) {
-    int tmp;
+  for (int i = hi - 1; i >= lo; i--) {
     int j;
+    int tmp;
+    unsigned int ec_tmp;
     tmp = fmap[i];
     ec_tmp = eclass[tmp];
     for (j = i + 1; j <= hi && ec_tmp > eclass[fmap[j]]; j++) 

@@ -1,7 +1,6 @@
 #include "SignatureReader.h"
 
 #include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
 
 #include <vector>
 #include <iostream>
@@ -14,6 +13,7 @@
 #include <boost/graph/transitive_closure.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/labeled_graph.hpp>
+#define foreach BOOST_FOREACH
 
 #include "rose.h"
 

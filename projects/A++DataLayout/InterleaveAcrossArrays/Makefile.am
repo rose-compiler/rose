@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/includes \
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)/includes \
 	 -I$(top_srcdir)/projects/A++DataLayout \
 	 -I$(top_srcdir)/projects/A++DataLayout/include \
 	 -I$(top_srcdir)/projects/A++DataLayout/InterleaveAcrossArrays \

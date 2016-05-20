@@ -103,9 +103,12 @@ MarkOverloadedTemplateInstantiations::visit ( SgNode *node )
                     printf ("      istemplatedMemberFunction = %s \n",istemplatedMemberFunction ? "true" : "false");
 #endif
 #if 0
+                 // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
                  // DQ (8/29/2005): Generate different code (marks different template instantiations for 
                  // output) depending upon the backend compiler.
-                    string compilerType = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+                 // string compilerType = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+
+#error "DEAD CODE!"
 
                     if (compilerType == "g++")
                        {
@@ -140,6 +143,8 @@ MarkOverloadedTemplateInstantiations::visit ( SgNode *node )
                        {
                          printf ("Non GNU compilers not handled for case of generating code for gnu compilers ... \n");
                       // ROSE_ASSERT(false);
+
+#error "DEAD CODE!"
 
                       // DQ (8/10/2006): Treat other compilers as we would the g++ 3.4.x or later compilers
                          if (memberFunctionInstantiation->isSpecialization() == false)

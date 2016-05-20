@@ -3,9 +3,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
 ATERM_INCLUDE_DIR = $(ATERM_INSTALL_PATH)/include
 
-# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection -I${top_builddir}/src/3rdPartyLibraries/experimental_fortran-parser
-# INCLUDES = $(ROSE_INCLUDES) -I$(ATERM_INCLUDE_DIR) -I$(top_srcdir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection -I${top_srcdir}/src/3rdPartyLibraries/experimental-fortran-parser -I${top_builddir}/src/3rdPartyLibraries/experimental-fortran-parser
-INCLUDES = $(ROSE_INCLUDES) -I$(ATERM_INCLUDE_DIR) -I$(top_srcdir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection -I${top_srcdir}/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection -I${top_builddir}/src/3rdPartyLibraries/experimental_fortran-parser
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(ATERM_INCLUDE_DIR) -I$(top_srcdir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection -I${top_srcdir}/src/3rdPartyLibraries/experimental-fortran-parser -I${top_builddir}/src/3rdPartyLibraries/experimental-fortran-parser
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(ATERM_INCLUDE_DIR) -I$(top_srcdir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection -I${top_srcdir}/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal
 
 #EXTRA_DIST = CMakeLists.txt preproc-fortran.ll preproc-fortran-fixed.ll
 #DISTCLEANFILES = preproc-fortran.cc preproc-fortran-fixed.cc
@@ -16,7 +16,8 @@ noinst_LTLIBRARIES = libexperimentalRoseFortran.la
 
 # if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-  libexperimentalRoseFortran_la_SOURCES = fortran_support.C $(srcdir)/UntypedASTBuilder.cpp 
+# libexperimentalRoseFortran_la_SOURCES = fortran_support.C $(srcdir)/UntypedASTBuilder.cpp 
+  libexperimentalRoseFortran_la_SOURCES = fortran_support.C
 # fortran_support.C fortran_error_handler.C openFortranParser_main.C jserver.C ofp.C FortranModuleInfo.C FortranParserState.C preproc-fortran.ll preproc-fortran-fixed.ll
 else
 # Compile using a function that represents the API of the Open Fortran Parser

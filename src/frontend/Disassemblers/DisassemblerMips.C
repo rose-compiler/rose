@@ -87,18 +87,14 @@ DisassemblerMips::can_disassemble(SgAsmGenericHeader *header) const
 SgAsmInstruction *
 DisassemblerMips::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
 {
-    // Instructions are always four-byte, naturally-aligned, little endian.
+    // Instructions are always four-byte, naturally-aligned, in big- or little-endian order.
     insn_va = start_va;
     if (start_va & 0x03)
         throw Exception("non-aligned instruction", start_va);
     uint32_t insn_disk; // instruction in file byte order
     if (4!=map->at(start_va).limit(4).require(get_protection()).read((uint8_t*)&insn_disk).size())
         throw Exception("short read", start_va);
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-02-13]*/
-    unsigned insn_bits = SgAsmExecutableFileFormat::le_to_host(insn_disk);
-#else
-    unsigned insn_bits = ByteOrder::be_to_host(insn_disk);
-#endif
+    unsigned insn_bits = ByteOrder::disk_to_host(get_sex(), insn_disk);
     SgAsmMipsInstruction *insn = disassemble_insn(insn_bits);
     if (!insn)
         throw Exception("cannot disassemble MIPS instruction: " + StringUtility::addrToString(insn_bits));
@@ -1013,14 +1009,18 @@ static struct Mips32_bnel: Mips32 {
                                   d->makeBranchTargetRelative(gIM(ib), 0, 16));
     }
 } mips32_bnel;
-
+#ifdef _MSC_VER
+#define UNUSED_VAR
+#else
+#define UNUSED_VAR __attribute__((unused))
+#endif
 // BREAK -- breakpoint
 static struct Mips32_break: Mips32 {
     Mips32_break(): Mips32(Release1,
                            sOP(000)|sFN(015),
                            mOP()   |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned code __attribute__((unused)) = extract<6, 25>(ib); // only available by reading the instruction
+        unsigned code UNUSED_VAR = extract<6, 25>(ib); // only available by reading the instruction
         return d->makeInstruction(mips_break, "break");
     }
 } mips32_break;
@@ -1225,7 +1225,7 @@ static struct Mips32_clo: Mips32 {
                          sOP(034)|sR3(0)|sFN(041),
                          mOP()   |mR3() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        bool valid __attribute__((unused)) = gR1(ib) == gR2(ib); // r1 must be same register number as r2
+        bool valid UNUSED_VAR = gR1(ib) == gR2(ib); // r1 must be same register number as r2
         return d->makeInstruction(mips_clo, "clo",
                                   d->makeRegister(gR2(ib)), d->makeRegister(gR0(ib)));
     }
@@ -1237,7 +1237,7 @@ static struct Mips32_clz: Mips32 {
                          sOP(034)|sR3(0)|sFN(040),
                          mOP()   |mR3() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        bool valid __attribute__((unused)) = gR1(ib) == gR2(ib); // r1 must be same register number as r2
+        bool valid UNUSED_VAR = gR1(ib) == gR2(ib); // r1 must be same register number as r2
         return d->makeInstruction(mips_clz, "clz",
                                   d->makeRegister(gR2(ib)), d->makeRegister(gR0(ib)));
     }
@@ -3287,7 +3287,7 @@ static struct Mips32_syscall: Mips32 {
                              sOP(000)|sFN(014),
                              mOP()   |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned code __attribute__((unused)) = extract<6, 25>(ib);
+        unsigned code UNUSED_VAR = extract<6, 25>(ib);
         return d->makeInstruction(mips_syscall, "syscall");
     }
 } mips32_syscall;
@@ -3298,7 +3298,7 @@ static struct Mips32_teq: Mips32 {
                          sOP(000)|sFN(064),
                          mOP()   |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned code __attribute__((unused)) = extract<6, 15>(ib);
+        unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(mips_teq, "teq",
                                   d->makeRegister(gR0(ib)), d->makeRegister(gR1(ib)));
     }
@@ -3321,7 +3321,7 @@ static struct Mips32_tge: Mips32 {
                          sOP(000)|sFN(060),
                          mOP()   |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned code __attribute__((unused)) = extract<6, 15>(ib);
+        unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(mips_tge, "tge",
                                   d->makeRegister(gR0(ib)), d->makeRegister(gR1(ib)));
     }
@@ -3355,7 +3355,7 @@ static struct Mips32_tgeu: Mips32 {
                           sOP(000)|sFN(061),
                           mOP()   |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned code __attribute__((unused)) = extract<6, 15>(ib);
+        unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(mips_tgeu, "tgeu",
                                   d->makeRegister(gR0(ib)), d->makeRegister(gR1(ib)));
     }
@@ -3427,7 +3427,7 @@ static struct Mips32_tlt: Mips32 {
                          sOP(000)|sFN(062),
                          mOP()   |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned code __attribute__((unused)) = extract<6, 15>(ib);
+        unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(mips_tlt, "tlt",
                                   d->makeRegister(gR0(ib)), d->makeRegister(gR1(ib)));
     }
@@ -3461,7 +3461,7 @@ static struct Mips32_tltu: Mips32 {
                           sOP(000)|sFN(063),
                           mOP()   |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned code __attribute__((unused)) = extract<6, 15>(ib);
+        unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(mips_tltu, "tltu",
                                   d->makeRegister(gR0(ib)), d->makeRegister(gR1(ib)));
     }
@@ -3473,7 +3473,7 @@ static struct Mips32_tne: Mips32 {
                          sOP(000)|sFN(066),
                          mOP()   |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned code __attribute__((unused)) = extract<6, 15>(ib);
+        unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(mips_tne, "tne",
                                   d->makeRegister(gR0(ib)), d->makeRegister(gR1(ib)));
     }
@@ -3540,7 +3540,7 @@ static struct Mips32_wait: Mips32 {
                           sOP(020)|shift_to<25, 25>(1)|sFN(040),
                           mOP()   |mask_for<25, 25>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned impl __attribute__((unused)) = extract<6, 24>(ib);
+        unsigned impl UNUSED_VAR = extract<6, 24>(ib);
         return d->makeInstruction(mips_wait, "wait");
     }
 } mips32_wait;
@@ -3591,7 +3591,7 @@ static struct Mips32_xori: Mips32 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-DisassemblerMips::init()
+DisassemblerMips::init(ByteOrder::Endianness sex)
 {
     set_registers(RegisterDictionary::dictionary_mips32());     // only a default
     REG_IP = *get_registers()->lookup("pc");
@@ -3599,7 +3599,8 @@ DisassemblerMips::init()
 
     set_wordsize(4);
     set_alignment(4);
-    set_sex(ByteOrder::ORDER_MSB);
+    set_sex(sex);
+    callingConventions(CallingConvention::dictionaryMips());
 
     insert_idis(&mips32_abs_s);
     insert_idis(&mips32_abs_d);

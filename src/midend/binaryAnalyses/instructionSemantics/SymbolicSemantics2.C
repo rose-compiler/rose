@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "MemoryCellList.h"
 #include "SymbolicSemantics2.h"
 #include "integerOps.h"
 
@@ -21,16 +22,75 @@ public:
     }
 };
 
-/*******************************************************************************************************************************
- *                                      SValue
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      SValue
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool
+SValue::isBottom() const {
+    return 0 != (get_expression()->flags() & SymbolicExpr::Node::BOTTOM);
+}
+
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger_,
+                            SMTSolver *solver) const {
+    SValuePtr other = SValue::promote(other_);
+    ASSERT_require(get_width() == other->get_width());
+    MergerPtr merger = merger_.dynamicCast<Merger>();
+    bool changed = false;
+    unsigned mergedFlags = get_expression()->flags() | other->get_expression()->flags();
+    SValuePtr retval = SValue::promote(copy());
+    retval->set_expression(retval->get_expression()->newFlags(mergedFlags));
+
+    // If one or the other is BOTTOM then the return value should be BOTTOM.  Some simplifications (like "xor x x => 0") might
+    // cause the BOTTOM flag to be removed, and we can't have that, so make sure BOTTOM stays set!
+    if (isBottom())
+        return Sawyer::Nothing(); // no change
+    if (other->isBottom())
+        return bottom_(get_width());
+
+    // Merge symbolic expressions. The merge of x and y is the set {x, y}. If the size of this set is greater than the set size
+    // limit (or 1 if merger is null) then the result is bottom.  Normal set simplifcations happen first (e.g., {x, x} => {x}
+    // => x).
+    if (!get_expression()->mustEqual(other->get_expression(), solver)) {
+        ExprPtr expr = SymbolicExpr::makeSet(get_expression(), other->get_expression(), "", mergedFlags);
+        size_t exprSetSize = expr->isInteriorNode() && expr->isInteriorNode()->getOperator()==SymbolicExpr::OP_SET ?
+                             expr->isInteriorNode()->nChildren() : (size_t)1;
+        size_t setSizeLimit = merger ? merger->setSizeLimit() : (size_t)1;
+        if (exprSetSize > setSizeLimit) {
+            expr = SymbolicExpr::makeVariable(retval->get_width());
+            mergedFlags |= SymbolicExpr::Node::BOTTOM;
+        }
+        retval->set_expression(expr);
+        changed = true;
+    }
+
+    // Merge flags.
+    if (get_expression()->flags() != mergedFlags) {
+        retval->set_expression(retval->get_expression()->newFlags(mergedFlags));
+        changed = true;
+    }
+
+    // Merge definers
+    InsnSet mergedDefiners = retval->get_defining_instructions();
+    InsnSet otherDefiners = other->get_defining_instructions();
+    BOOST_FOREACH (SgAsmInstruction *definer, otherDefiners) {
+        if (mergedDefiners.insert(definer).second)
+            changed = true;
+    }
+    retval->add_defining_instructions(mergedDefiners);
+
+    return changed ? Sawyer::Optional<BaseSemantics::SValuePtr>(retval) : Sawyer::Nothing();
+}
 
 uint64_t
 SValue::get_number() const
 {
-    LeafNodePtr leaf = expr->isLeafNode();
+    LeafPtr leaf = expr->isLeafNode();
     ASSERT_not_null(leaf);
-    return leaf->get_value();
+    return leaf->toInt();
 }
 
 SValuePtr
@@ -76,7 +136,9 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) con
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
-    return get_expression()->may_equal(other->get_expression(), solver);
+    if (isBottom() || other->isBottom())
+        return true;
+    return get_expression()->mayEqual(other->get_expression(), solver);
 }
 
 bool
@@ -84,31 +146,32 @@ SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) co
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
-    return get_expression()->must_equal(other->get_expression(), solver);
+    if (isBottom() || other->isBottom())
+        return false;
+    return get_expression()->mustEqual(other->get_expression(), solver);
 }
 
 std::string
 SValue::get_comment() const
 {
-    return get_expression()->get_comment();
+    return get_expression()->comment();
 }
 
 void
 SValue::set_comment(const std::string &s) const
 {
-    get_expression()->set_comment(s);
+    get_expression()->comment(s);
 }
 
 void
 SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 {
     Formatter *formatter = dynamic_cast<Formatter*>(&formatter_);
-    InsnSemanticsExpr::Formatter dflt_expr_formatter;
-    InsnSemanticsExpr::Formatter &expr_formatter = formatter ? formatter->expr_formatter : dflt_expr_formatter;
+    SymbolicExpr::Formatter dflt_expr_formatter;
+    SymbolicExpr::Formatter &expr_formatter = formatter ? formatter->expr_formatter : dflt_expr_formatter;
+    std::string closing;
 
-    if (defs.empty()) {
-        stream <<(*expr + expr_formatter);
-    } else {
+    if (!defs.empty()) {
         stream <<"{defs={";
         size_t ndefs=0;
         for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
@@ -116,55 +179,60 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
             if (insn!=NULL)
                 stream <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
         }
-        stream <<"}, expr=" <<(*expr+expr_formatter) <<"}";
+        stream <<"}, expr=";
+        closing = "}";
     }
+
+    if (isBottom()) {
+        stream <<"BOTTOM (";
+        closing = ")" + closing;
+    }
+
+    stream <<(*expr + expr_formatter) <<closing;
 }
     
 
-/*******************************************************************************************************************************
- *                                      Memory state
- *******************************************************************************************************************************/
 
-MemoryState::CellCompressorChoice MemoryState::cc_choice;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      List-base Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MemoryListState::CellCompressorChoice MemoryListState::cc_choice;
 
 SValuePtr
-MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                                BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                                const CellList &cells)
+MemoryListState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                                    BaseSemantics::RiscOperators *addrOps,
+                                                    BaseSemantics::RiscOperators *valOps, const CellList &cells)
 {
-    bool compute_usedef = true;
-    if (RiscOperators *addrOpsSymbolic = dynamic_cast<RiscOperators*>(addrOps)) {
-        compute_usedef = addrOpsSymbolic->get_compute_usedef();
-    } else if (RiscOperators *valOpsSymbolic = dynamic_cast<RiscOperators*>(valOps)) {
-        compute_usedef = valOpsSymbolic->get_compute_usedef();
-    }
-
     if (1==cells.size())
         return SValue::promote(cells.front()->get_value()->copy());
+
+    RiscOperators *valOpsSymbolic = dynamic_cast<RiscOperators*>(valOps);
+    ASSERT_not_null(valOpsSymbolic);
+    DefinersMode valDefinersMode = valOpsSymbolic->computingDefiners();
+
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
-    TreeNodePtr expr = LeafNode::create_memory(address->get_width(), dflt->get_width());
-    InsnSet definers;
+    ExprPtr expr = SymbolicExpr::makeMemory(address->get_width(), dflt->get_width());
+    InsnSet addrDefiners, valDefiners;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
         SValuePtr cell_addr = SValue::promote((*ci)->get_address());
         SValuePtr cell_value  = SValue::promote((*ci)->get_value());
-        expr = InternalNode::create(8, InsnSemanticsExpr::OP_WRITE,
-                                    expr, cell_addr->get_expression(), cell_value->get_expression());
-        if (compute_usedef) {
-            const InsnSet &cell_definers = cell_value->get_defining_instructions();
-            definers.insert(cell_definers.begin(), cell_definers.end());
+        expr = SymbolicExpr::makeWrite(expr, cell_addr->get_expression(), cell_value->get_expression());
+        if (valDefinersMode != TRACK_NO_DEFINERS) {
+            const InsnSet &definers = cell_value->get_defining_instructions();
+            valDefiners.insert(definers.begin(), definers.end());
         }
     }
-    SValuePtr retval = SValue::promote(address->undefined_(8)); // "address" used only to lookup virtual function
-    retval->set_expression(InternalNode::create(8, InsnSemanticsExpr::OP_READ, expr, address->get_expression()));
-    if (compute_usedef)
-        retval->add_defining_instructions(definers);
+    SValuePtr retval = SValue::promote(valOps->undefined_(dflt->get_width()));
+    retval->set_expression(SymbolicExpr::makeRead(expr, address->get_expression()));
+    retval->set_defining_instructions(valDefiners);
     return retval;
 }
 
 SValuePtr
-MemoryState::CellCompressorSimple::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                              const CellList &cells)
+MemoryListState::CellCompressorSimple::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                                  BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                                  const CellList &cells)
 {
     if (1==cells.size())
         return SValue::promote(cells.front()->get_value()->copy());
@@ -172,54 +240,66 @@ MemoryState::CellCompressorSimple::operator()(const SValuePtr &address, const Ba
 }
 
 SValuePtr
-MemoryState::CellCompressorChoice::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                              const CellList &cells)
+MemoryListState::CellCompressorChoice::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                                  BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                                  const CellList &cells)
 {
-    if (addrOps->get_solver() || valOps->get_solver())
+    if (addrOps->solver() || valOps->solver())
         return cc_mccarthy(address, dflt, addrOps, valOps, cells);
     return cc_simple(address, dflt, addrOps, valOps, cells);
 }
 
 BaseSemantics::SValuePtr
-MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
-                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
-{
-    size_t nbits = dflt->get_width();
+MemoryListState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
+                            BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+    size_t nBits = dflt->get_width();
     SValuePtr address = SValue::promote(address_);
-    ASSERT_require(8==nbits); // SymbolicSemantics::MemoryState assumes that memory cells contain only 8-bit data
-    bool short_circuited;
-    CellList matches = scan(address, nbits, addrOps, valOps, short_circuited/*out*/);
+    ASSERT_require(8==nBits); // SymbolicSemantics::MemoryListState assumes that memory cells contain only 8-bit data
+
+    CellList::iterator cursor = get_cells().begin();
+    CellList cells = scan(cursor /*in,out*/, address, nBits, addrOps, valOps);
 
     // If we fell off the end of the list then the read could be reading from a memory location for which no cell exists.
-    if (!short_circuited) {
-        BaseSemantics::MemoryCellPtr tmpcell = protocell->create(address, dflt);
-        cells.push_front(tmpcell);
-        matches.push_back(tmpcell);
+    if (cursor == get_cells().end()) {
+        BaseSemantics::MemoryCellPtr newCell = insertReadCell(address, dflt);
+        cells.push_back(newCell);
     }
+    updateReadProperties(cells);
 
-    ASSERT_require(dflt->get_width()==nbits);
-    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, matches);
+    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, cells);
     ASSERT_require(retval->get_width()==8);
     return retval;
 }
 
 void
-MemoryState::writeMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &value,
-                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
+MemoryListState::writeMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &value,
+                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     ASSERT_require(8==value->get_width());
     BaseSemantics::MemoryCellList::writeMemory(address, value, addrOps, valOps);
 }
 
-/*******************************************************************************************************************************
- *                                      RISC operators
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Map-based Memory State
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BaseSemantics::MemoryCellMap::CellKey
+MemoryMapState::generateCellKey(const BaseSemantics::SValuePtr &addr_) const {
+    SValuePtr addr = SValue::promote(addr_);
+    return addr->get_expression()->hash();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
 {
-    BaseSemantics::StatePtr state = get_state();
+    BaseSemantics::StatePtr state = currentState();
 
     // Substitute in registers
     struct RegSubst: RegisterState::Visitor {
@@ -230,10 +310,10 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
             return val->substitute(from, to);
         }
     } regsubst(from, to);
-    RegisterState::promote(state->get_register_state())->traverse(regsubst);
+    RegisterState::promote(state->registerState())->traverse(regsubst);
 
     // Substitute in memory
-    struct MemSubst: BaseSemantics::MemoryCellList::Visitor {
+    struct MemSubst: BaseSemantics::MemoryCell::Visitor {
         SValuePtr from, to;
         MemSubst(const SValuePtr &from, const SValuePtr &to): from(from), to(to) {}
         virtual void operator()(BaseSemantics::MemoryCellPtr &cell) {
@@ -243,13 +323,28 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
             cell->set_value(val->substitute(from, to));
         }
     } memsubst(from, to);
-    MemoryState::promote(state->get_memory_state())->traverse(memsubst);
+    MemoryState::promote(state->memoryState())->traverse(memsubst);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::filterResult(const BaseSemantics::SValuePtr &a_) {
+    if (trimThreshold_ == 0)
+        return a_;
+    SValuePtr a = SValue::promote(a_);
+    if (a->get_expression()->nNodes() <= trimThreshold_)
+        return a_;
+
+    SymbolicExpr::Ptr expr = SymbolicExpr::makeVariable(a->get_width(),
+                                                        a->get_expression()->comment(),
+                                                        a->get_expression()->flags());
+    a->set_expression(expr);
+    return a;
 }
 
 void
 RiscOperators::interrupt(int majr, int minr)
 {
-    get_state()->clear();
+    currentState()->clear();
 }
 
 BaseSemantics::SValuePtr
@@ -258,12 +353,22 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(a->get_width()));
 
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_AND,
-                                                        a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeAnd(a->get_expression(), b->get_expression()));
+
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -272,12 +377,22 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(a->get_width()));
     
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_OR,
-                                                        a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeOr(a->get_expression(), b->get_expression()));
+
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -286,31 +401,51 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval;
-    // We leave these simplifications here because InsnSemanticsExpr doesn't yet have a way to pass an SMT solver to its
+    // We leave these simplifications here because SymbolicExpr doesn't yet have a way to pass an SMT solver to its
     // simplifier.
     if (a->is_number() && b->is_number() && a->get_width()<=64) {
         retval = svalue_number(a->get_width(), a->get_number() ^ b->get_number());
-    } else if (a->get_expression()->must_equal(b->get_expression(), solver)) {
+    } else if (a->get_expression()->mustEqual(b->get_expression(), solver())) {
         retval = svalue_number(a->get_width(), 0);
     } else {
-        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_XOR,
-                                                  a->get_expression(), b->get_expression()));
+        retval = svalue_expr(SymbolicExpr::makeXor(a->get_expression(), b->get_expression()));
     }
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
     
 BaseSemantics::SValuePtr
 RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_INVERT, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-    return retval;
+    if (a->isBottom())
+        return filterResult(bottom_(a->get_width()));
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeInvert(a->get_expression()));
+
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -319,18 +454,23 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     SValuePtr a = SValue::promote(a_);
     ASSERT_require(end_bit<=a->get_width());
     ASSERT_require(begin_bit<end_bit);
-    SValuePtr retval = svalue_expr(InternalNode::create(end_bit-begin_bit, InsnSemanticsExpr::OP_EXTRACT,
-                                                        LeafNode::create_integer(32, begin_bit),
-                                                        LeafNode::create_integer(32, end_bit),
-                                                        a->get_expression()));
-    if (compute_usedef) {
-        if (retval->get_width()==a->get_width()) {
-            retval->defined_by(NULL, a->get_defining_instructions());
-        } else {
-            retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-        }
+    if (a->isBottom())
+        return filterResult(bottom_(end_bit-begin_bit));
+
+    SymbolicExpr::Ptr beginExpr = SymbolicExpr::makeInteger(32, begin_bit);
+    SymbolicExpr::Ptr endExpr = SymbolicExpr::makeInteger(32, end_bit);
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeExtract(beginExpr, endExpr, a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            if (retval->get_width() != a->get_width())
+                retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -338,21 +478,41 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &lo_bits_, const BaseSemant
 {
     SValuePtr lo = SValue::promote(lo_bits_);
     SValuePtr hi = SValue::promote(hi_bits_);
-    SValuePtr retval = svalue_expr(InternalNode::create(lo->get_width()+hi->get_width(), InsnSemanticsExpr::OP_CONCAT,
-                                                        hi->get_expression(), lo->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, lo->get_defining_instructions(), hi->get_defining_instructions());
-    return retval;
+    if (lo->isBottom() || hi->isBottom())
+        return filterResult(bottom_(lo->get_width() + hi->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeConcat(hi->get_expression(), lo->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(lo);
+            retval->add_defining_instructions(hi);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    SValuePtr retval = svalue_expr(InternalNode::create(1, InsnSemanticsExpr::OP_ZEROP, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-    return retval;
+    if (a->isBottom())
+        return filterResult(bottom_(1));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeZerop(a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -365,64 +525,121 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     ASSERT_require(1==sel->get_width());
     ASSERT_require(a->get_width()==b->get_width());
 
+    // (ite bottom A B) should be A when A==B. However, SymbolicExpr would have already simplified that to A.
+    if (sel->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
     SValuePtr retval;
     if (sel->is_number()) {
         retval = SValue::promote(sel->get_number() ? a->copy() : b->copy());
-        if (compute_usedef)
-            retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions());
-        return retval;
+        switch (computingDefiners_) {
+            case TRACK_NO_DEFINERS:
+                break;
+            case TRACK_ALL_DEFINERS:
+#if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
+                retval->add_defining_instructions(sel->get_number() ? a : b);
+#endif
+                retval->add_defining_instructions(sel); // fall through...
+            case TRACK_LATEST_DEFINER:
+                retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+                break;
+        }
+        return filterResult(retval);
     }
-    if (solver) {
+    if (solver()) {
         // If the selection expression cannot be true, then return b
-        TreeNodePtr assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
-                                                     sel->get_expression(),
-                                                     LeafNode::create_integer(1, 1));
-        bool can_be_true = SMTSolver::SAT_NO != solver->satisfiable(assertion);
+        ExprPtr assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 1));
+        bool can_be_true = SMTSolver::SAT_NO != solver()->satisfiable(assertion);
         if (!can_be_true) {
             retval = SValue::promote(b->copy());
-            if (compute_usedef)
-                retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions());
-            return retval;
+            switch (computingDefiners_) {
+                case TRACK_NO_DEFINERS:
+                    break;
+                case TRACK_ALL_DEFINERS:
+#if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
+                    retval->add_defining_instructions(b);
+#endif
+                    retval->add_defining_instructions(sel); // fall through...
+                case TRACK_LATEST_DEFINER:
+                    retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+                    break;
+            }
+            return filterResult(retval);
         }
 
         // If the selection expression cannot be false, then return a
-        assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
-                                         sel->get_expression(), LeafNode::create_integer(1, 0));
-        bool can_be_false = SMTSolver::SAT_NO != solver->satisfiable(assertion);
+        assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 0));
+        bool can_be_false = SMTSolver::SAT_NO != solver()->satisfiable(assertion);
         if (!can_be_false) {
             retval = SValue::promote(a->copy());
-            if (compute_usedef)
-                retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions());
-            return retval;
+            switch (computingDefiners_) {
+                case TRACK_NO_DEFINERS:
+                    break;
+                case TRACK_ALL_DEFINERS:
+#if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
+                    retval->add_defining_instructions(a);
+#endif
+                    retval->add_defining_instructions(sel); // fall through...
+                case TRACK_LATEST_DEFINER:
+                    retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+                    break;
+            }
+            return filterResult(retval);
         }
     }
-    retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ITE, sel->get_expression(),
-                                              a->get_expression(), b->get_expression()));
-    if (compute_usedef) {
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions(),
-                           a->get_defining_instructions(), b->get_defining_instructions());
+    retval = svalue_expr(SymbolicExpr::makeIte(sel->get_expression(), a->get_expression(), b->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);
+            retval->add_defining_instructions(sel); // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_LSSB, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-    return retval;
+    if (a->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeLssb(a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_MSSB, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-    return retval;
+    if (a->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeMssb(a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -430,11 +647,21 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROL,
-                                                        sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || sa->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeRol(sa->get_expression(), a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -442,11 +669,21 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROR,
-                                                        sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || sa->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeRor(sa->get_expression(), a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -454,11 +691,21 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHL0,
-                                                        sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || sa->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeShl0(sa->get_expression(), a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -466,11 +713,21 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHR0,
-                                                        sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || sa->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeShr0(sa->get_expression(), a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -478,28 +735,43 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ASR,
-                                                        sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || sa->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeAsr(sa->get_expression(), a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
-    SValuePtr retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_UEXTEND,
-                                                        LeafNode::create_integer(32, new_width),
-                                                        a->get_expression()));
-    if (compute_usedef) {
-        if (retval->get_width()==a->get_width()) {
-            retval->defined_by(NULL, a->get_defining_instructions());
-        } else {
-            retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-        }
+    if (a->isBottom())
+        return filterResult(bottom_(new_width));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, new_width),
+                                                            a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            if (retval->get_width() != a->get_width())
+                retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -508,11 +780,21 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
-                                                        a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeAdd(a->get_expression(), b->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -520,22 +802,36 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSeman
                               const BaseSemantics::SValuePtr &c, BaseSemantics::SValuePtr &carry_out/*out*/)
 {
     ASSERT_require(a->get_width()==b->get_width() && c->get_width()==1);
+    if (a->isBottom() || b->isBottom() || c->isBottom()) {
+        carry_out = bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
+    }
     BaseSemantics::SValuePtr aa = unsignedExtend(a, a->get_width()+1);
     BaseSemantics::SValuePtr bb = unsignedExtend(b, a->get_width()+1);
     BaseSemantics::SValuePtr cc = unsignedExtend(c, a->get_width()+1);
     BaseSemantics::SValuePtr sumco = add(aa, add(bb, cc));
-    carry_out = extract(xor_(aa, xor_(bb, sumco)), 1, a->get_width()+1);
-    return add(a, add(b, unsignedExtend(c, a->get_width())));
+    carry_out = filterResult(extract(xor_(aa, xor_(bb, sumco)), 1, a->get_width()+1));
+    return filterResult(add(a, add(b, unsignedExtend(c, a->get_width()))));
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_NEGATE, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-    return retval;
+    if (a->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeNegate(a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -543,11 +839,21 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SDIV,
-                                                        a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeSignedDiv(a->get_expression(), b->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -555,11 +861,21 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    SValuePtr retval = svalue_expr(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_SMOD,
-                                                        a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(b->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeSignedMod(a->get_expression(), b->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -568,11 +884,20 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
-    SValuePtr retval = svalue_expr(InternalNode::create(retwidth, InsnSemanticsExpr::OP_SMUL,
-                                                        a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(retwidth));
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeSignedMul(a->get_expression(), b->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -580,11 +905,21 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_UDIV,
-                                                        a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(a->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeDiv(a->get_expression(), b->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -592,11 +927,21 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    SValuePtr retval = svalue_expr(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_UMOD,
-                                                        a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(b->get_width()));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeMod(a->get_expression(), b->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -605,35 +950,57 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
-    SValuePtr retval = svalue_expr(InternalNode::create(retwidth, InsnSemanticsExpr::OP_UMUL,
-                                                        a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-    return retval;
+    if (a->isBottom() || b->isBottom())
+        return filterResult(bottom_(retwidth));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeMul(a->get_expression(), b->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
-    SValuePtr retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_SEXTEND,
-                                                        LeafNode::create_integer(32, new_width),
-                                                        a->get_expression()));
-    if (compute_usedef) {
-        if (retval->get_width()==a->get_width()) {
-            retval->defined_by(NULL, a->get_defining_instructions());
-        } else {
-            retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-        }
+    if (a->isBottom())
+        return filterResult(bottom_(new_width));
+
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeSignExtend(SymbolicExpr::makeInteger(32, new_width),
+                                                                a->get_expression()));
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            if (retval->get_width() != a->get_width())
+                retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg) 
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) 
 {
     PartialDisableUsedef du(this);
-    return BaseSemantics::RiscOperators::readRegister(reg);
+    BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg, dflt);
+
+    if (currentInstruction()) {
+        RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
+        regs->updateReadProperties(reg);
+    }
+
+    return filterResult(result);
 }
 
 void
@@ -643,11 +1010,21 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
     PartialDisableUsedef du(this);
     BaseSemantics::RiscOperators::writeRegister(reg, a);
 
-    // Update latest writer info when appropriate and able to do so.
-    if (SgAsmInstruction *insn = get_insn()) {
-        RegisterStatePtr regs = boost::dynamic_pointer_cast<RegisterState>(get_state()->get_register_state());
-        if (regs!=NULL)
-            regs->set_latest_writer(reg, insn->get_address());
+    // Update register properties and writer info.
+    RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
+    SgAsmInstruction *insn = currentInstruction();
+    if (insn) {
+        switch (computingRegisterWriters()) {
+            case TRACK_NO_WRITERS:
+                break;
+            case TRACK_LATEST_WRITER:
+                regs->setWriters(reg, insn->get_address());
+                break;
+            case TRACK_ALL_WRITERS:
+                regs->insertWriters(reg, insn->get_address());
+                break;
+        }
+        regs->updateWriteProperties(reg, (insn ? BaseSemantics::IO_WRITE : BaseSemantics::IO_INIT));
     }
 }
 
@@ -660,38 +1037,63 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     ASSERT_require(0 == nbits % 8);
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     if (condition->is_number() && !condition->get_number())
-        return dflt;
+        return filterResult(dflt);
+    if (address->isBottom())
+        return filterResult(bottom_(dflt->get_width()));
 
     PartialDisableUsedef du(this);
 
-    // Read the bytes and concatenate them together. InsnSemanticsExpr will simplify the expression so that reading after
+    // Read the bytes and concatenate them together. SymbolicExpr will simplify the expression so that reading after
     // writing a multi-byte value will return the original value written rather than a concatenation of byte extractions.
     SValuePtr retval;
-    InsnSet defs;
+    InsnSet allDefiners;
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr currentMem = currentState()->memoryState();
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
-        size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
+        size_t byteOffset = ByteOrder::ORDER_MSB==currentMem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, this, this));
+
+        // Read the default value from the initial memory state first. We want to use whatever value is in the initial memory
+        // state if the address is not present in the current memory state. As a side effect, if this value is not in the
+        // initial memory it will be added.
+        if (initialState())
+            byte_dflt = initialState()->readMemory(byte_addr, byte_dflt, this, this);
+
+        // Read a byte from the current memory state. Adds the new value as a side effect if necessary.
+        SValuePtr byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
         if (0==bytenum) {
             retval = byte_value;
-        } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
+        } else if (ByteOrder::ORDER_MSB==currentMem->get_byteOrder()) {
             retval = SValue::promote(concat(byte_value, retval));
-        } else {
+        } else if (ByteOrder::ORDER_LSB==currentMem->get_byteOrder()) {
             retval = SValue::promote(concat(retval, byte_value));
+        } else {
+            // See BaseSemantics::MemoryState::set_byteOrder
+            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", currentInstruction());
         }
-        if (compute_usedef) {
-            const InsnSet &definers = byte_value->get_defining_instructions();
-            defs.insert(definers.begin(), definers.end());
+
+        // Accumulating the bytes of a multibyte read is sort of like a merge operation in the way it treats definers. Since
+        // we're returning a value that's composed of multiple bytes, the latest definers for the reutrn value are the union of
+        // the latest definers for the individual bytes. Similarly, for TRACK_ALL_DEFINERS, the set of all definers for the
+        // return value is the union of the all-definers sets of the individual bytes.
+        if (computingDefiners() == TRACK_ALL_DEFINERS || computingDefiners() == TRACK_LATEST_DEFINER) {
+            const InsnSet &byteDefiners = byte_value->get_defining_instructions();
+            allDefiners.insert(byteDefiners.begin(), byteDefiners.end());
         }
     }
 
     ASSERT_require(retval!=NULL && retval->get_width()==nbits);
-    if (compute_usedef)
-        retval->defined_by(NULL, defs);
-    return retval;
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            retval->add_defining_instructions(allDefiners);
+            break;
+    }
+    return filterResult(retval);
 }
 
 void
@@ -702,25 +1104,62 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     if (condition->is_number() && !condition->get_number())
         return;
+    if (address->isBottom())
+        return;
     SValuePtr value = SValue::promote(value_->copy());
     PartialDisableUsedef du(this);
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
-        size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
+        size_t byteOffset = 0;
+        if (1 == nbytes) {
+            // void
+        } else if (ByteOrder::ORDER_MSB == mem->get_byteOrder()) {
+            byteOffset = nbytes - (bytenum+1);
+        } else if (ByteOrder::ORDER_LSB == mem->get_byteOrder()) {
+            byteOffset = bytenum;
+        } else {
+            // See BaseSemantics::MemoryState::set_byteOrder
+            throw BaseSemantics::Exception("multi-byte write with memory having unspecified byte order", currentInstruction());
+        }
+
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        state->writeMemory(byte_addr, byte_value, this, this);
+        currentState()->writeMemory(byte_addr, byte_value, this, this);
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
-        if (compute_memwriters) {
-            if (SgAsmInstruction *insn = get_insn()) {
-                if (BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
-                    BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
-                    ASSERT_not_null(cell); // we just wrote to it!
-                    cell->latestWriter(insn->get_address());
+        if (computingMemoryWriters() != TRACK_NO_WRITERS) {
+            if (SgAsmInstruction *insn = currentInstruction()) {
+                if (BaseSemantics::MemoryCellListPtr cellList =
+                    boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
+                    if (BaseSemantics::MemoryCellPtr cell = cellList->latestWrittenCell()) {
+                        switch (computingMemoryWriters()) {
+                            case TRACK_NO_WRITERS:
+                                break;
+                            case TRACK_LATEST_WRITER:
+                                cell->setWriter(insn->get_address());
+                                break;
+                            case TRACK_ALL_WRITERS:
+                                cell->insertWriter(insn->get_address());
+                                break;
+                        }
+                    }
+                } else if (BaseSemantics::MemoryCellMapPtr cellMap =
+                           boost::dynamic_pointer_cast<BaseSemantics::MemoryCellMap>(mem)) {
+                    if (BaseSemantics::MemoryCellPtr cell = cellMap->latestWrittenCell()) {
+                        switch (computingMemoryWriters()) {
+                            case TRACK_NO_WRITERS:
+                                break;
+                            case TRACK_LATEST_WRITER:
+                                cell->setWriter(insn->get_address());
+                                break;
+                            case TRACK_ALL_WRITERS:
+                                cell->insertWriter(insn->get_address());
+                                break;
+                        }
+                    }
                 }
             }
         }

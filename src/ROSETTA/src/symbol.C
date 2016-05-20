@@ -1,7 +1,7 @@
 
 #include "grammar.h"
 #include "ROSETTA_macros.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 
 // What should be the behavior of the default constructor for Grammar
 
@@ -24,8 +24,8 @@ Grammar::setUpSymbols ()
   // NEW_TERMINAL_MACRO ( TypeSymbol,           "TypeSymbol",           "TYPE_NAME" );
      NEW_TERMINAL_MACRO ( FunctionTypeSymbol,   "FunctionTypeSymbol",   "FUNCTYPE_NAME" );
 
-  // DQ (12/26/2011): Added TemplateClassSymbol and changed ClassSymbol to be a non-terminal.
-  // DQ (5/7/2004): ClassSymbol is not longer a nonterminal (change to be a terminal)
+  // DQ (12/26/2011): Added TemplateClassSymbol and changed ClassSymbol to be a non-AstNodeClass.
+  // DQ (5/7/2004): ClassSymbol is not longer a nonterminal (change to be a AstNodeClass)
   // NEW_TERMINAL_MACRO ( ClassSymbol,          "ClassSymbol",          "CLASS_NAME" );
      NEW_TERMINAL_MACRO    ( TemplateClassSymbol,  "TemplateClassSymbol",  "TEMPLATE_CLASS_NAME" );
      NEW_NONTERMINAL_MACRO ( ClassSymbol, TemplateClassSymbol, "ClassSymbol", "CLASS_NAME", true);
@@ -121,16 +121,19 @@ Grammar::setUpSymbols ()
      Symbol.setAutomaticGenerationOfCopyFunction(false);
 
 #if 1
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/24/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.  Beata appears to use attributes
   // on SgTypes (even though they are shared; doesn't appear to be a problem for them).
+  // Symbol.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Symbol.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Symbol.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Symbol.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
 
-  // Skip building a parse function for this terminal/nonterminal of the Grammar
+  // Skip building a parse function for this AstNodeClass/nonterminal of the Grammar
      if (isRootGrammar() == false)
         {
           Symbol.excludeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code" );
@@ -153,7 +156,7 @@ Grammar::setUpSymbols ()
      FunctionTypeSymbol.setDataPrototype   ( "SgName" , "name", "= \"\"",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionTypeSymbol.setDataPrototype   ( "SgType*", "type", "= NULL",
-                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE);
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/25/2004): This function should be modified (customized) to return p_declaration->firstNondefiningDeclaration() 
   // instead of p_declaration!  This way only nondefining declarations are shared (though all declarations share a 
@@ -221,7 +224,7 @@ Grammar::setUpSymbols ()
   // DefaultSymbol.setDataPrototype       ( "SgName", "name", "= SgdefaultName",
   //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DefaultSymbol.setDataPrototype       ( "SgType*", "type", "= NULL",
-                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/30/2009): Added support for namespace alias to the NamespaceSymbol.
   // DQ (12/23/2005): This has been here for a long time, but in trying to remove unused SgName 

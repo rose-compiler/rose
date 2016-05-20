@@ -67,7 +67,7 @@ ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatH
 // other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
 ROSE_DLL_API int backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_USE_ROSE_macro = false );
 
-// DQ (2/6/2010): This backend forces all code to be generated but still uses the beakend vendor 
+// DQ (2/6/2010): This backend forces all code to be generated but still uses the backend vendor 
 // compiler to compile the original code.  This is a step between backendUsingOriginalInputFile(),
 // which does not generate code; and backend() which generated code and compiles it.  The use of
 // this backend permits an intermediate test of robustness where the code that we generate might
@@ -132,7 +132,7 @@ struct generateDOTExtendedforMultipleFile ;
 // src/util/stringSupport/string_functions.h:223: Error: Previous declaration of 'getPathFromFileName'
 // So exclude this code below.
 
-namespace ROSE
+namespace rose
    {
   // This class serves as a catch all location for functions of general use within ROSE
   // we have added variables that are set using command line parameters to avoid the use of
@@ -165,7 +165,7 @@ namespace ROSE
           ROSE_DLL_API std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
 
           std::string getFileNameWithoutPath ( SgStatement* statementPointer );
-          ROSE_DLL_API std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
+          ROSE_DLL_API std::string utility_stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
 
           ROSE_DLL_API std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
 
@@ -204,6 +204,12 @@ namespace ROSE
        // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
           extern std::multimap<int,SgStatement*> redundantlyMappedTokensToStatementMultimap;
           extern std::set<int> redundantTokenEndingsSet;
+
+       // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
+          extern std::map<SgScopeStatement*,SgStatement*> representativeWhitespaceStatementMap;
+
+       // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
+          extern std::map<SgStatement*,MacroExpansion*> macroExpansionMap;
    };
 
 

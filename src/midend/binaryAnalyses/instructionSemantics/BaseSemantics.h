@@ -17,7 +17,7 @@ namespace BinaryAnalysis {
  *  transformation of machine instructions in ROSE internal representation to some other representation (e.g., ROSE RISC or
  *  LLVM) where the other representation is built by "executing" the instruction.
  *
- * @section IS1 Components of instruction semantics
+ * @section old_semantics_IS1 Components of instruction semantics
  *
  *  ROSE's binary semantics framework has two major components: the dispatchers and the semantic domains. The
  *  instruction dispatcher "executes" a machine instruction by translating it into a sequence of RISC-like operations, and
@@ -62,7 +62,7 @@ namespace BinaryAnalysis {
  *  order to instantiate a dispatcher with the specified RISC semantics.  It is possible (and normal) to define multiple
  *  versions of a dispatcher each with a different semantic policy and each tuned for a specific kind of analysis.
  *
- *  @section IS2 Nomenclature choice
+ *  @section old_semantics_IS2 Nomenclature choice
  *
  *  The dispatcher class templates currently have names X86InstructionSemantics.  We may change "Semantics" to "Dispatcher"
  *  since "semantics" is already present in the fully qualified name, and since "dispatcher" is a nounified verb that
@@ -80,7 +80,7 @@ namespace BinaryAnalysis {
  *  case) and nested types (the value type in our case); unlike callbacks, policies typically contain several related
  *  functions (the RISC operators in our case).
  *
- *  @section IS3 Specialization
+ *  @section old_semantics_IS3 Specialization
  *
  *  The instruction semantics architecture is designed to allow users to specialize nearly every part of it.  Most of the
  *  components are class templates whose arguments are types that provide mostly orthogonal parts of the templatized
@@ -90,7 +90,7 @@ namespace BinaryAnalysis {
  *  state in order to use memory mapped via ROSE's MemoryMap class, and its policy in order to handle system calls (among
  *  other things).
  *
- *  @section IS4 Future work
+ *  @section old_semantics_IS4 Future work
  *
  *  <em>Table-driven dispatch.</em> The current dispatchers are implemented with a huge switch statement selecting for each
  *  possible machine instruction.  This design doesn't lend itself well to users being able to augment/override individual
@@ -108,7 +108,7 @@ namespace BinaryAnalysis {
  *  semantic policies.  For instance, the policy for a concrete semantic domain might use the host machine's native IEEE
  *  floating point to emulate the target machine's floating-point operations.
  *
- *  @section IS5 Example
+ *  @section old_semantics_IS5 Example
  *
  *  See actual source code for examples since this interface is an active area of ROSE development (Dec-2012). In order to
  *  use one of ROSE's predefined semantic domains you'll likely need to define some types and variables, something along

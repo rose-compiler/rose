@@ -1,5 +1,16 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+noinst_PROGRAMS = globalVariablesInLambdas
+
+globalVariablesInLambdas_SOURCES = globalVariablesInLambdas.C
+
+AM_CPPFLAGS = $(ROSE_INCLUDES)
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
+
+# globalVariablesInLambdas_TESTS = test_1.C
+
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test2012_01.C \
@@ -86,7 +97,43 @@ test2015_11.C \
 test2015_12.C \
 test2015_13.C \
 test2015_14.C \
+test2016_01.C \
+test2016_03.C \
+test2016_04.C \
+test2016_06.C \
+test2016_07.C \
+test2016_10.C \
+test2016_11.C \
+test2016_12.C \
+test2016_13.C \
+test2016_14.C \
+test2016_15.C \
+test2016_16.C \
+test2016_17.C \
+test2016_18.C \
+test2016_19.C \
+test2016_20.C \
+test2016_21.C \
+test2016_22.C \
+test2016_23.C \
+test2016_24.C \
+test2016_25.C \
+test2016_29.C \
+test2016_30.C \
+test2016_33.C \
+test2016_34.C \
+test2016_35.C \
 last.C
+
+# DQ (5/8/2016): Demonstration of bug in GNU 4.9.2 header files (test2016_31.C)
+# test2016_26.C
+# test2016_27.C
+# test2016_28.C
+# test2016_31.C
+
+# New test codes not yet tested in regression tests.
+# test2015_15.C 
+# test2015_16.C 
 
 # Failing tests:
 # test2014_10.C
@@ -232,15 +279,24 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 print_testcodes:
 	echo $(TESTCODES)
 
+globalVariablesInLambdas_test: globalVariablesInLambdas
+	./globalVariablesInLambdas -std=c++11 --edg:no_warnings -c $(srcdir)/globalVariablesInLambdas_test_01.C
+
+
 check-local:
 if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_8
-	@echo "C11 tests using GNU version 4.8 backend compiler."
+	@echo "C++11 tests using GNU version 4.8 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
 else
 if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "C11 tests using GNU version 4.9 backend compiler."
+	@echo "C++11 tests using GNU version 4.9 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
+else
+if USING_INTEL_COMPILER
+	@echo "C++11 tests using Intel backend compiler."
+	@$(MAKE) $(PASSING_TEST_Objects)
+endif
 endif
 endif
 else

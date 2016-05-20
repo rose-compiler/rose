@@ -25,7 +25,10 @@ namespace BinaryAnalysis {
  *  which instruction semantics dispatcher can be used with the instructions, etc. */
 class InstructionProvider: public Sawyer::SharedObject {
 public:
+    /** Shared-ownership pointer to an @ref InstructionProvider. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<InstructionProvider> Ptr;
+
+    /** Mapping from address to instruction. */
     typedef Sawyer::Container::Map<rose_addr_t, SgAsmInstruction*> InsnMap;
 
 private:
@@ -96,6 +99,9 @@ public:
 
     /** Returns the register dictionary. */
     const RegisterDictionary* registerDictionary() const { return disassembler_->get_registers(); }
+
+    /** Returns the calling convention dictionary. */
+    const CallingConvention::Dictionary& callingConventions() const { return disassembler_->callingConventions(); }
 
     /** Register used as the instruction pointer. */
     RegisterDescriptor instructionPointerRegister() const { return disassembler_->instructionPointerRegister(); }

@@ -1,6 +1,9 @@
 #include "sage3basic.h"
 #include "BaseSemantics2.h"
+#include "Diagnostics.h"
 #include "DispatcherPowerpc.h"
+
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -31,7 +34,7 @@ public:
         DispatcherPowerpcPtr dispatcher = DispatcherPowerpc::promote(dispatcher_);
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
-        ASSERT_require(insn!=NULL && insn==operators->get_insn());
+        ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
         dispatcher->advanceInstructionPointer(insn);
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         p(dispatcher.get(), operators.get(), insn, operands);
@@ -76,18 +79,18 @@ struct IP_addc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr carries = ops->number_(32, 0);
+        BaseSemantics::SValuePtr no = ops->boolean_(false);
         BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32), d->read(args[2], 32),
-                                                              ops->boolean_(false), carries);
+                                                              no, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
 
         // This should be a helper function to read/write CA (and other flags)
         // The value 0xdfffffff is the mask for the Carry (CA) flag
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        BaseSemantics::SValuePtr ones = ops->number_(32, 0xdfffffffu);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), ones), v1));
     }
 };
 
@@ -97,19 +100,17 @@ struct IP_adde: P {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr carry_in = ops->extract(ops->readRegister(d->REG_XER), 29, 30);
         BaseSemantics::SValuePtr carries = ops->number_(32, 0);
-        BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32),
-                                                              d->read(args[2], 32),
-                                                              carry_in, carries);
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32), arg2, carry_in, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
 
         // This should be a helper function to read/write CA (and other flags)
         // The value 0xdfffffff is the mask for the Carry (CA) flag
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        BaseSemantics::SValuePtr ones = ops->number_(32, 0xdfffffffu);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), ones), v1));
     }
 };
 
@@ -133,19 +134,18 @@ struct IP_addic: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr carries = ops->number_(32, 0);
-        BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32),
-                                                              ops->signExtend(ops->extract(d->read(args[2], 32), 0, 16), 32),
-                                                              ops->boolean_(false), carries);
+        BaseSemantics::SValuePtr no = ops->boolean_(false);
+        BaseSemantics::SValuePtr v1 = ops->signExtend(ops->extract(d->read(args[2], 32), 0, 16), 32);
+        BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32), v1, no, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
 
         // This should be a helper function to read/write CA (and other flags)
         // The value 0xdfffffff is the mask for the Carry (CA) flag
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr v2 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        BaseSemantics::SValuePtr ones = ops->number_(32, 0xdfffffffu);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), ones), v2));
         if (record)
             d->record(result);
     }
@@ -155,8 +155,9 @@ struct IP_addic: P {
 struct IP_addis: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->add(d->read(args[1], 32),
-                                   ops->concat(ops->number_(16, 0), ops->extract(d->read(args[2], 32), 0, 16))));
+        BaseSemantics::SValuePtr v1 = ops->extract(d->read(args[2], 32), 0, 16);
+        BaseSemantics::SValuePtr v2 = ops->concat(ops->number_(16, 0), v1);
+        d->write(args[0], ops->add(d->read(args[1], 32), v2));
     }
 };
 
@@ -166,18 +167,16 @@ struct IP_addme: P {
         assert_args(insn, args, 2);
         BaseSemantics::SValuePtr carry_in = ops->extract(ops->readRegister(d->REG_XER), 29, 30);
         BaseSemantics::SValuePtr carries = ops->number_(32, 0);
-        BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32),
-                                                              ops->number_(32, 0xffffffffu),
-                                                              carry_in, carries);
+        BaseSemantics::SValuePtr ones = ops->number_(32, 0xffffffffu);
+        BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32), ones, carry_in, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
+
         // This should be a helper function to read/write CA (and other flags)
         // The value 0xdfffffffu is the mask for the Carry (CA) flag
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), ones), v1));
     }
 };
 
@@ -187,19 +186,16 @@ struct IP_addze: P {
         assert_args(insn, args, 2);
         BaseSemantics::SValuePtr carry_in = ops->extract(ops->readRegister(d->REG_XER), 29, 30);
         BaseSemantics::SValuePtr carries = ops->number_(32, 0);
-        BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32),
-                                                              d->number_(32, 0),
-                                                              carry_in, carries);
+        BaseSemantics::SValuePtr zero = d->number_(32, 0);
+        BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32), zero, carry_in, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
 
         // This should be a helper function to read/write CA (and other flags)
         // The value 0xdfffffff is the mask for the Carry (CA) flag
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        BaseSemantics::SValuePtr ones = ops->number_(32, 0xdfffffffu);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), ones), v1));
     }
 };
 
@@ -209,7 +205,8 @@ struct IP_and: P {
     IP_and(bool record): record(record) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr result = ops->and_(d->read(args[1], 32), d->read(args[2], 32));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        BaseSemantics::SValuePtr result = ops->and_(d->read(args[1], 32), arg2);
         d->write(args[0], result);
         if (record)
             d->record(result);
@@ -222,7 +219,8 @@ struct IP_andc: P {
     IP_andc(bool record): record(record) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr result = ops->and_(d->read(args[1], 32), ops->invert(d->read(args[2], 32)));
+        BaseSemantics::SValuePtr v1 = ops->invert(d->read(args[2], 32));
+        BaseSemantics::SValuePtr result = ops->and_(d->read(args[1], 32), v1);
         d->write(args[0], result);
         if (record)
             d->record(result);
@@ -235,9 +233,9 @@ struct IP_andis: P {
     IP_andis(bool record): record(record) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr result = ops->and_(d->read(args[1], 32),
-                                                    ops->concat(ops->number_(16, 0),
-                                                                ops->extract(d->read(args[2], 32), 0, 16)));
+        BaseSemantics::SValuePtr v1 = ops->extract(d->read(args[2], 32), 0, 16);
+        BaseSemantics::SValuePtr v2 = ops->concat(ops->number_(16, 0), v1);
+        BaseSemantics::SValuePtr result = ops->and_(d->read(args[1], 32), v2);
         d->write(args[0], result);
         if (record)
             d->record(result);
@@ -252,7 +250,8 @@ struct IP_b: P {
         assert_args(insn, args, 1);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        BaseSemantics::SValuePtr target = ops->add(d->read(args[0], 32), ops->number_(32, insn->get_address()));
+        BaseSemantics::SValuePtr v1 = ops->number_(32, insn->get_address());
+        BaseSemantics::SValuePtr target = ops->add(d->read(args[0], 32), v1);
         ops->writeRegister(d->REG_IAR, target);
     }
 };
@@ -285,8 +284,10 @@ struct IP_bc: P {
         bool bo_2 = boConstant & 0x4;
         bool bo_1 = boConstant & 0x8;
         bool bo_0 = boConstant & 0x10;
-        if (!bo_2) 
-            ops->writeRegister(d->REG_CTR, ops->add(ops->readRegister(d->REG_CTR), ops->number_(32, -1)));
+        if (!bo_2) {
+            BaseSemantics::SValuePtr negOne = ops->number_(32, -1);
+            ops->writeRegister(d->REG_CTR, ops->add(ops->readRegister(d->REG_CTR), negOne));
+        }
         BaseSemantics::SValuePtr ctr_ok;
         if (bo_2) {
             ctr_ok = ops->boolean_(true);
@@ -299,8 +300,10 @@ struct IP_bc: P {
         ASSERT_require(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
-        BaseSemantics::SValuePtr target = (ops->add(d->read(args[2], 32), ops->number_(32, insn->get_address())));
-        ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, ops->readRegister(d->REG_IAR)));
+        BaseSemantics::SValuePtr v1 = ops->number_(32, insn->get_address());
+        BaseSemantics::SValuePtr target = (ops->add(d->read(args[2], 32), v1));
+        BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
+        ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, iar));
     }
 };
 
@@ -320,8 +323,10 @@ struct IP_bca: P {
         bool bo_2 = boConstant & 0x4;
         bool bo_1 = boConstant & 0x8;
         bool bo_0 = boConstant & 0x10;
-        if (!bo_2)
-            ops->writeRegister(d->REG_CTR, ops->add(ops->readRegister(d->REG_CTR), ops->number_(32, -1)));
+        if (!bo_2) {
+            BaseSemantics::SValuePtr negOne = ops->number_(32, -1);
+            ops->writeRegister(d->REG_CTR, ops->add(ops->readRegister(d->REG_CTR), negOne));
+        }
         BaseSemantics::SValuePtr ctr_ok;
         if (bo_2) {
             ctr_ok = ops->boolean_(true);
@@ -335,7 +340,8 @@ struct IP_bca: P {
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
         BaseSemantics::SValuePtr target = d->read(args[2], 32);
-        ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, ops->readRegister(d->REG_IAR)));
+        BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
+        ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, iar));
     }
 };
 
@@ -356,10 +362,9 @@ struct IP_bcctr: P {
         ASSERT_require(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
-        ops->writeRegister(d->REG_IAR, ops->ite(cond_ok,
-                                                ops->and_(ops->readRegister(d->REG_CTR),
-                                                          ops->number_(32, 0xfffffffc)),
-                                                ops->readRegister(d->REG_IAR)));
+        BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
+        BaseSemantics::SValuePtr mask = ops->number_(32, 0xfffffffc);
+        ops->writeRegister(d->REG_IAR, ops->ite(cond_ok, ops->and_(ops->readRegister(d->REG_CTR), mask), iar));
     }
 };
 
@@ -379,8 +384,10 @@ struct IP_bclr: P {
         bool bo_2 = boConstant & 0x4;
         bool bo_1 = boConstant & 0x8;
         bool bo_0 = boConstant & 0x10;
-        if (!bo_2) 
-            ops->writeRegister(d->REG_CTR, ops->add(ops->readRegister(d->REG_CTR), ops->number_(32, -1)));
+        if (!bo_2) {
+            BaseSemantics::SValuePtr negOne = ops->number_(32, -1);
+            ops->writeRegister(d->REG_CTR, ops->add(ops->readRegister(d->REG_CTR), negOne));
+        }
         BaseSemantics::SValuePtr ctr_ok;
         if (bo_2) {
             ctr_ok = ops->boolean_(true);
@@ -393,8 +400,10 @@ struct IP_bclr: P {
         ASSERT_require(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
-        BaseSemantics::SValuePtr target = ops->and_(ops->readRegister(d->REG_LR), ops->number_(32, 0xfffffffc));
-        ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, ops->readRegister(d->REG_IAR)));
+        BaseSemantics::SValuePtr mask = ops->number_(32, 0xfffffffc);
+        BaseSemantics::SValuePtr target = ops->and_(ops->readRegister(d->REG_LR), mask);
+        BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
+        ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, iar));
     }
 };
 
@@ -410,14 +419,14 @@ struct IP_cmp: P {
         // Bias both sides and use unsigned compare.
         // ops->invert(ops->xor_(RA,number<32>(0x80000000U))) yields "(RA+bias)-1"
         // Check if UI + (-RA) - 1 >= 0, test for UI > RA
-        ops->addWithCarries(ops->invert(ops->xor_(ra, ops->number_(32, 0x80000000u))),
-                            ops->xor_(rb, ops->number_(32, 0x80000000u)),
-                            ops->boolean_(false), carries);
-        BaseSemantics::SValuePtr c = ops->ite(ops->equalToZero(ops->xor_(ra, rb)),
-                                              ops->number_(3, 1),
-                                              ops->ite(ops->extract(carries, 31, 32),
-                                                       ops->number_(3, 4),
-                                                       ops->number_(3, 2)));
+        BaseSemantics::SValuePtr no = ops->boolean_(false);
+        BaseSemantics::SValuePtr v1 = ops->xor_(rb, ops->number_(32, 0x80000000u));
+        ops->addWithCarries(ops->invert(ops->xor_(ra, ops->number_(32, 0x80000000u))), v1, no, carries);
+        BaseSemantics::SValuePtr two = ops->number_(3, 2);
+        BaseSemantics::SValuePtr four = ops->number_(3, 4);
+        BaseSemantics::SValuePtr v2 = ops->ite(ops->extract(carries, 31, 32), four, two);
+        BaseSemantics::SValuePtr one = ops->number_(3, 1);
+        BaseSemantics::SValuePtr c = ops->ite(ops->equalToZero(ops->xor_(ra, rb)), one, v2);
         SgAsmRegisterReferenceExpression* bf = isSgAsmRegisterReferenceExpression(args[0]);
         ASSERT_require(bf && bf->get_descriptor().get_major() == powerpc_regclass_cr && bf->get_descriptor().get_nbits() == 4);
         // This should be a helper function!
@@ -438,14 +447,14 @@ struct IP_cmpi: P {
         // Bias both sides and use unsigned compare.
         // ops->invert(ops->xor_(RA,number<32>(0x80000000U))) yields "(RA+bias)-1"
         // Check if UI + (-RA) - 1 >= 0, test for UI > RA
-        ops->addWithCarries(ops->invert(ops->xor_(ra, ops->number_(32, 0x80000000u))),
-                            ops->xor_(si, ops->number_(32, 0x80000000u)),
-                            ops->boolean_(false), carries);
-        BaseSemantics::SValuePtr c = ops->ite(ops->equalToZero(ops->xor_(ra, si)),
-                                              ops->number_(3, 1),
-                                              ops->ite(ops->extract(carries, 31, 32),
-                                                       ops->number_(3, 4),
-                                                       ops->number_(3, 2)));
+        BaseSemantics::SValuePtr no = ops->boolean_(false);
+        BaseSemantics::SValuePtr v1 = ops->xor_(si, ops->number_(32, 0x80000000u));
+        ops->addWithCarries(ops->invert(ops->xor_(ra, ops->number_(32, 0x80000000u))), v1, no, carries);
+        BaseSemantics::SValuePtr two = ops->number_(3, 2);
+        BaseSemantics::SValuePtr four = ops->number_(3, 4);
+        BaseSemantics::SValuePtr v2 = ops->ite(ops->extract(carries, 31, 32), four, two);
+        BaseSemantics::SValuePtr one = ops->number_(3, 1);
+        BaseSemantics::SValuePtr c = ops->ite(ops->equalToZero(ops->xor_(ra, si)), one, v2);
         SgAsmRegisterReferenceExpression *bf = isSgAsmRegisterReferenceExpression(args[0]);
         ASSERT_require(bf && bf->get_descriptor().get_major() == powerpc_regclass_cr && bf->get_descriptor().get_nbits() == 4);
         // This should be a helper function!
@@ -465,12 +474,13 @@ struct IP_cmpl: P {
         // Need to check if ops->boolean_(false) or ops->boolean_(true) should be used!
         // ops->invert(RA) yields "(-RA)-1"
         // Check if UI + (-RA) - 1 >= 0, test for UI > RA
-        ops->addWithCarries(ops->invert(ra), ui, ops->boolean_(false), carries);
-        BaseSemantics::SValuePtr c = ops->ite(ops->equalToZero(ops->xor_(ra, ui)),
-                                              ops->number_(3, 1),
-                                              ops->ite(ops->extract(carries, 31, 32),
-                                                       ops->number_(3, 4),
-                                                       ops->number_(3, 2)));
+        BaseSemantics::SValuePtr no = ops->boolean_(false);
+        ops->addWithCarries(ops->invert(ra), ui, no, carries);
+        BaseSemantics::SValuePtr two = ops->number_(3, 2);
+        BaseSemantics::SValuePtr four = ops->number_(3, 4);
+        BaseSemantics::SValuePtr v1 = ops->ite(ops->extract(carries, 31, 32), four, two);
+        BaseSemantics::SValuePtr one = ops->number_(3, 1);
+        BaseSemantics::SValuePtr c = ops->ite(ops->equalToZero(ops->xor_(ra, ui)), one, v1);
         SgAsmRegisterReferenceExpression* bf = isSgAsmRegisterReferenceExpression(args[0]);
         ASSERT_require(bf && bf->get_descriptor().get_major() == powerpc_regclass_cr && bf->get_descriptor().get_nbits()==4);
         // This should be a helper function!
@@ -485,10 +495,10 @@ struct IP_cntlzw: P {
         assert_args(insn, args, 2);
         BaseSemantics::SValuePtr rs = d->read(args[1], 32);
         // Using xor to do the subtract from 31
-        BaseSemantics::SValuePtr result = ops->ite(ops->equalToZero(rs),
-                                                   ops->number_(32, 32),
-                                                   ops->xor_(ops->mostSignificantSetBit(rs),
-                                                             ops->number_(32, 31)));
+        BaseSemantics::SValuePtr thirtyOne = ops->number_(32, 31);
+        BaseSemantics::SValuePtr v1 = ops->xor_(ops->mostSignificantSetBit(rs), thirtyOne);
+        BaseSemantics::SValuePtr thirtyTwo = ops->number_(32, 32);
+        BaseSemantics::SValuePtr result = ops->ite(ops->equalToZero(rs), thirtyTwo, v1);
         d->write(args[0], result);
     }
 };
@@ -497,7 +507,8 @@ struct IP_cntlzw: P {
 struct IP_divw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->signedDivide(d->read(args[1], 32), d->read(args[2], 32)));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        d->write(args[0], ops->signedDivide(d->read(args[1], 32), arg2));
     }
 };
 
@@ -505,7 +516,8 @@ struct IP_divw: P {
 struct IP_divwu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->unsignedDivide(d->read(args[1], 32), d->read(args[2], 32)));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        d->write(args[0], ops->unsignedDivide(d->read(args[1], 32), arg2));
     }
 };
 
@@ -513,7 +525,8 @@ struct IP_divwu: P {
 struct IP_lbz: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], ops->concat(d->read(args[1], 8), ops->number_(24, 0)));
+        BaseSemantics::SValuePtr zero = ops->number_(24, 0);
+        d->write(args[0], ops->concat(d->read(args[1], 8), zero));
     }
 };
 
@@ -526,7 +539,8 @@ struct IP_lbzu: P {
         ASSERT_not_null(binaryAdd);
         SgAsmExpression *ra = binaryAdd->get_lhs();
         BaseSemantics::SValuePtr addr = d->effectiveAddress(args[1], 32);
-        d->write(args[0], ops->concat(d->read(args[1], 8), ops->number_(24, 0)));
+        BaseSemantics::SValuePtr zero = ops->number_(24, 0);
+        d->write(args[0], ops->concat(d->read(args[1], 8), zero));
         d->write(ra, addr);
     }
 };
@@ -543,7 +557,8 @@ struct IP_lha: P {
 struct IP_lhz: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], ops->concat(d->read(args[1], 16), ops->number_(16, 0)));
+        BaseSemantics::SValuePtr zero = ops->number_(16, 0);
+        d->write(args[0], ops->concat(d->read(args[1], 16), zero));
     }
 };
 
@@ -576,7 +591,8 @@ struct IP_lwzu: P {
         ASSERT_not_null(binaryAdd);
         SgAsmExpression *ra = binaryAdd->get_lhs();
         BaseSemantics::SValuePtr addr = d->effectiveAddress(args[1], 32);
-        d->write(args[0], ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32), ops->boolean_(true)));
+        BaseSemantics::SValuePtr yes = ops->boolean_(true);
+        d->write(args[0], ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32), yes));
         d->write(ra, addr);
     }
 };
@@ -601,7 +617,8 @@ struct IP_move: P {
 struct IP_mulhw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->extract(ops->signedMultiply(d->read(args[1], 32), d->read(args[2], 32)), 32, 64));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        d->write(args[0], ops->extract(ops->signedMultiply(d->read(args[1], 32), arg2), 32, 64));
     }
 };
 
@@ -609,7 +626,8 @@ struct IP_mulhw: P {
 struct IP_mulhwu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->extract(ops->unsignedMultiply(d->read(args[1], 32), d->read(args[2], 32)), 32, 64));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        d->write(args[0], ops->extract(ops->unsignedMultiply(d->read(args[1], 32), arg2), 32, 64));
     }
 };
 
@@ -617,7 +635,8 @@ struct IP_mulhwu: P {
 struct IP_mullw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->extract(ops->signedMultiply(d->read(args[1], 32), d->read(args[2], 32)), 0, 32));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        d->write(args[0], ops->extract(ops->signedMultiply(d->read(args[1], 32), arg2), 0, 32));
     }
 };
 
@@ -633,7 +652,8 @@ struct IP_neg: P {
 struct IP_nor: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->invert(ops->or_(d->read(args[1], 32), d->read(args[2], 32))));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        d->write(args[0], ops->invert(ops->or_(d->read(args[1], 32), arg2)));
     }
 };
 
@@ -643,7 +663,8 @@ struct IP_or: P {
     IP_or(bool record): record(record) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr result = ops->or_(d->read(args[1], 32), d->read(args[2], 32));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        BaseSemantics::SValuePtr result = ops->or_(d->read(args[1], 32), arg2);
         d->write(args[0], result);
         if (record)
             d->record(result);
@@ -654,7 +675,8 @@ struct IP_or: P {
 struct IP_orc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->or_(d->read(args[1], 32), ops->invert(d->read(args[2], 32))));
+        BaseSemantics::SValuePtr v1 = ops->invert(d->read(args[2], 32));
+        d->write(args[0], ops->or_(d->read(args[1], 32), v1));
     }
 };
 
@@ -662,8 +684,9 @@ struct IP_orc: P {
 struct IP_oris: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->or_(d->read(args[1], 32),
-                                   ops->concat(ops->number_(16, 0), ops->extract(d->read(args[2], 32), 0, 16))));
+        BaseSemantics::SValuePtr v1 = ops->extract(d->read(args[2], 32), 0, 16);
+        BaseSemantics::SValuePtr v2 = ops->concat(ops->number_(16, 0), v1);
+        d->write(args[0], ops->or_(d->read(args[1], 32), v2));
     }
 };
 
@@ -683,7 +706,8 @@ struct IP_rlwimi: P {
         uint32_t mask = build_mask(mb_value, me_value);
         BaseSemantics::SValuePtr rotatedReg = ops->rotateLeft(rs, sh);
         BaseSemantics::SValuePtr bitMask = ops->number_(32, mask);
-        BaseSemantics::SValuePtr result = ops->or_(ops->and_(rotatedReg, bitMask), ops->and_(ra, ops->invert(bitMask)));
+        BaseSemantics::SValuePtr v1 = ops->and_(ra, ops->invert(bitMask));
+        BaseSemantics::SValuePtr result = ops->or_(ops->and_(rotatedReg, bitMask), v1);
         d->write(args[0], result);
     }
 };
@@ -727,10 +751,10 @@ struct IP_slw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr shiftCount = ops->extract(d->read(args[2], 32), 0, 6);
-        d->write(args[0], ops->ite(ops->extract(shiftCount, 5, 6),
-                                   ops->number_(32, 0),
-                                   ops->shiftLeft(d->read(args[1], 32),
-                                                  ops->extract(shiftCount, 0, 5))));
+        BaseSemantics::SValuePtr v1 = ops->extract(shiftCount, 0, 5);
+        BaseSemantics::SValuePtr v2 = ops->shiftLeft(d->read(args[1], 32), v1);
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        d->write(args[0], ops->ite(ops->extract(shiftCount, 5, 6), zero, v2));
     }
 };
 
@@ -745,11 +769,10 @@ struct IP_srawi: P {
         BaseSemantics::SValuePtr hasValidBits = ops->invert(ops->equalToZero(ops->and_(rs, mask)));
         BaseSemantics::SValuePtr carry_out = ops->and_(hasValidBits, negative);
         d->write(args[0], ops->shiftRightArithmetic(rs, sh));
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        BaseSemantics::SValuePtr v2 = ops->number_(32, 0xdfffffffu);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), v2), v1));
     }
 };
 
@@ -758,10 +781,10 @@ struct IP_srw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr shiftCount = ops->extract(d->read(args[2], 32), 0, 6);
-        d->write(args[0], ops->ite(ops->extract(shiftCount, 5, 6),
-                                   ops->number_(32, 0),
-                                   ops->shiftRight(d->read(args[1], 32),
-                                                   ops->extract(shiftCount, 0, 5))));
+        BaseSemantics::SValuePtr v1 = ops->extract(shiftCount, 0, 5);
+        BaseSemantics::SValuePtr v2 = ops->shiftRight(d->read(args[1], 32), v1);
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        d->write(args[0], ops->ite(ops->extract(shiftCount, 5, 6), zero, v2));
     }
 };
 
@@ -820,7 +843,8 @@ struct IP_stwu: P {
         ASSERT_not_null(binaryAdd);
         SgAsmExpression *ra = binaryAdd->get_lhs();
         BaseSemantics::SValuePtr addr = d->effectiveAddress(args[1], 32);
-        ops->writeMemory(RegisterDescriptor(), addr, d->read(args[0], 32), ops->boolean_(true));
+        BaseSemantics::SValuePtr yes = ops->boolean_(true);
+        ops->writeMemory(RegisterDescriptor(), addr, d->read(args[0], 32), yes);
         d->write(ra, addr);
     }
 };
@@ -831,7 +855,8 @@ struct IP_subf: P {
     IP_subf(bool record): record(record) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr result = ops->add(ops->negate(d->read(args[1], 32)), d->read(args[2], 32));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        BaseSemantics::SValuePtr result = ops->add(ops->negate(d->read(args[1], 32)), arg2);
         d->write(args[0], result);
         if (record)
             d->record(result);
@@ -843,18 +868,18 @@ struct IP_subfc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr carries = ops->number_(32, 0);
-        BaseSemantics::SValuePtr result = ops->addWithCarries(ops->invert(d->read(args[1], 32)),
-                                                              d->read(args[2], 32), ops->boolean_(true), carries);
+        BaseSemantics::SValuePtr yes = ops->boolean_(true);
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        BaseSemantics::SValuePtr result = ops->addWithCarries(ops->invert(d->read(args[1], 32)), arg2, yes, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
 
         // This should be a helper function to read/write CA (and other flags)
         // The value 0xdfffffff is the mask for the Carry (CA) flag
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        BaseSemantics::SValuePtr v2 = ops->number_(32, 0xdfffffffu);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), v2), v1));
     }
 };
 
@@ -865,18 +890,17 @@ struct IP_subfe: P {
         // This should be a helper function to read CA (and other flags)
         BaseSemantics::SValuePtr carry_in = ops->extract(ops->readRegister(d->REG_XER), 29, 30);
         BaseSemantics::SValuePtr carries = ops->number_(32, 0);
-        BaseSemantics::SValuePtr result = ops->addWithCarries(ops->invert(d->read(args[1], 32)),
-                                                              d->read(args[2], 32), carry_in, carries);
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        BaseSemantics::SValuePtr result = ops->addWithCarries(ops->invert(d->read(args[1], 32)), arg2, carry_in, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
 
         // This should be a helper function to read/write CA (and other flags)
         // The value 0xdfffffff is the mask for the Carry (CA) flag
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        BaseSemantics::SValuePtr v2 = ops->number_(32, 0xdfffffffu);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), v2), v1));
     }
 };
 
@@ -886,19 +910,18 @@ struct IP_subfic: P {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr carries = ops->number_(32, 0);
         // To do the subtraction we invert the first operand and add.  To add "1" we set the carry in to true.
-        BaseSemantics::SValuePtr result = ops->addWithCarries(ops->invert(d->read(args[1], 32)),
-                                                              ops->signExtend(ops->extract(d->read(args[2], 32), 0, 16), 32),
-                                                              ops->boolean_(true), carries);
+        BaseSemantics::SValuePtr yes = ops->boolean_(true);
+        BaseSemantics::SValuePtr v1 = ops->signExtend(ops->extract(d->read(args[2], 32), 0, 16), 32);
+        BaseSemantics::SValuePtr result = ops->addWithCarries(ops->invert(d->read(args[1], 32)), v1, yes, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
 
         // This should be a helper function to read/write CA (and other flags)
         // The value 0xDFFFFFFFU is the mask for the Carry (CA) flag
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr v2 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        BaseSemantics::SValuePtr v3 = ops->number_(32, 0xdfffffffu);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), v3), v2));
     }
 };
 
@@ -909,18 +932,16 @@ struct IP_subfze: P {
         // This should be a helper function to read CA (and other flags)
         BaseSemantics::SValuePtr carry_in = ops->extract(ops->readRegister(d->REG_XER), 29, 30);
         BaseSemantics::SValuePtr carries = ops->number_(32, 0);
-        BaseSemantics::SValuePtr result = ops->addWithCarries(ops->invert(d->read(args[1], 32)),
-                                                              ops->number_(32, 0), carry_in, carries);
+        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr result = ops->addWithCarries(ops->invert(d->read(args[1], 32)), zero, carry_in, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
 
         // This should be a helper function to read/write CA (and other flags)
         // The value 0xdfffffff is the mask for the Carry (CA) flag
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER),
-                                                          ops->number_(32, 0xdfffffffu)),
-                                                ops->ite(carry_out,
-                                                         ops->number_(32, 0x20000000u),
-                                                         ops->number_(32, 0))));
+        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
+        BaseSemantics::SValuePtr v2 = ops->number_(32, 0xdfffffffu);
+        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), v2), v1));
     }
 };
 
@@ -930,7 +951,8 @@ struct IP_xor: P {
     IP_xor(bool record): record(record) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr result = ops->xor_(d->read(args[1], 32),d->read(args[2], 32));
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        BaseSemantics::SValuePtr result = ops->xor_(d->read(args[1], 32), arg2);
         d->write(args[0], result);
         if (record)
             d->record(result);
@@ -941,8 +963,9 @@ struct IP_xor: P {
 struct IP_xoris: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        d->write(args[0], ops->xor_(d->read(args[1], 32),
-                                    ops->concat(ops->number_(16, 0), ops->extract(d->read(args[2], 32), 0, 16))));
+        BaseSemantics::SValuePtr v1 = ops->extract(d->read(args[2], 32), 0, 16);
+        BaseSemantics::SValuePtr v2 = ops->concat(ops->number_(16, 0), v1);
+        d->write(args[0], ops->xor_(d->read(args[1], 32), v2));
     }
 };
 
@@ -1060,6 +1083,24 @@ DispatcherPowerpc::regcache_init()
 }
 
 void
+DispatcherPowerpc::memory_init() {
+    if (BaseSemantics::StatePtr state = currentState()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
+            switch (memory->get_byteOrder()) {
+                case ByteOrder::ORDER_LSB:
+                    break;
+                case ByteOrder::ORDER_MSB:
+                    mlog[WARN] <<"x86 memory state is using big-endian byte order\n";
+                    break;
+                case ByteOrder::ORDER_UNSPECIFIED:
+                    memory->set_byteOrder(ByteOrder::ORDER_LSB);
+                    break;
+            }
+        }
+    }
+}
+
+void
 DispatcherPowerpc::set_register_dictionary(const RegisterDictionary *regdict)
 {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
@@ -1079,11 +1120,11 @@ DispatcherPowerpc::stackPointerRegister() const {
 void
 DispatcherPowerpc::record(const BaseSemantics::SValuePtr &result)
 {
-    BaseSemantics::SValuePtr c = operators->ite(operators->equalToZero(result),
-                                                operators->number_(3, 1),
-                                                operators->ite(operators->extract(result, 31, 32),
-                                                               operators->number_(3, 4),
-                                                               operators->number_(3, 2)));
+    BaseSemantics::SValuePtr two = operators->number_(3, 2);
+    BaseSemantics::SValuePtr four = operators->number_(3, 4);
+    BaseSemantics::SValuePtr v1 = operators->ite(operators->extract(result, 31, 32), four, two);
+    BaseSemantics::SValuePtr one = operators->number_(3, 1);
+    BaseSemantics::SValuePtr c = operators->ite(operators->equalToZero(result), one, v1);
     BaseSemantics::SValuePtr so = operators->extract(operators->readRegister(REG_XER), 31, 32);
     // Put "SO" into the lower bits, and "c" into the higher order bits
     operators->writeRegister(REG_CR0, operators->concat(so, c));

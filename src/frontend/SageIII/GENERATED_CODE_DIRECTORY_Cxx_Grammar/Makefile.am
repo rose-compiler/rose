@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # into smaller files (to avoid a few large 300K line files).
 SUBDIRS = 
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 EXTRA_DIST = CMakeLists.txt 
 

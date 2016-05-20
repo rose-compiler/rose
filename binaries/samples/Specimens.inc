@@ -48,6 +48,7 @@ dos_exe_x86_specimens =				\
 # elf_*_amd64_specimens
 
 elf_exe_amd64_specimens =			\
+    x86-64-adaptiveRegs				\
     x86-64-ctrlaltdel				\
     x86-64-nologin				\
     x86-64-pivot_root				\
@@ -182,9 +183,24 @@ pe_so_x86_specimens =
 
 raw_insns_x86_specimens =			\
     buffer2.raw					\
+    i386-initialState				\
     vm-final.raw
 raw_rot13_x86_specimens =			\
     buffer2.rot13
+
+#------------------------------------------------------------------------------------------------------------------------
+# Big specimens not intended to be unit tests and which might take too long on slow hardware. Anything over about 500k.
+
+large_specimens =				\
+    PFE32.EXE					\
+    bgl-helloworld-mpicc			\
+    bgl-helloworld-mpixlc			\
+    hello.mip					\
+    libTest-amd64.a				\
+    pocketputty.exe				\
+    pocketputty2.exe				\
+    puttytel.exe				\
+    vm-final.raw
 
 ###############################################################################################################################
 # Other distributed files, not necessarily binary specimens
@@ -194,6 +210,7 @@ other_distributed =				\
     i386-fld.s					\
     i386-fnstsw.s				\
     i386-fst.s					\
+    i386-initialState.s				\
     i386-int3.s					\
     i386-lea.s					\
     i386-mixed.s				\
@@ -212,7 +229,8 @@ other_distributed =				\
     pentium-movd.s				\
     pentium-xmm.s				\
     vm-final.README				\
-    vm-final.ipd
+    vm-final.ipd				\
+    x86-64-adaptiveRegs.s
 
 # The name "any_any_any_specimens" is a bit strange, so lets have an alias
 all_specimens = $(any_any_any_specimens)

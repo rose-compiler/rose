@@ -4,8 +4,11 @@
 
 /*!
 \class SgQualifiedName
-\brief This class represents a OLD concept of the structure require for qualified names when they were in the AST, they are not used now (name qualification was reimplemented in 2011 as a step before the unparser and is no longer a part of the
-structure in the AST).
+
+\brief This class represents a OLD concept of the structure require
+for qualified names when they were in the AST, they are not used now
+(name qualification was reimplemented in 2011 as a step before the
+unparser and is no longer a part of the structure in the AST).
 
 */
 

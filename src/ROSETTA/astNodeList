@@ -340,6 +340,13 @@ SgDotExp
 SgDotStarOp
 SgDoubleVal
 SgElaboratedTypeModifier
+SgElementwiseOp
+SgElementwiseAddOp
+SgElementwiseDivideOp
+SgElementwiseLeftDivideOp
+SgElementwiseMultiplyOp
+SgElementwisePowerOp
+SgElementwiseSubtractOp
 SgElseDirectiveStatement
 SgElseWhereStatement
 SgElseifDirectiveStatement
@@ -379,6 +386,7 @@ SgFuncDecl_attr
 SgFunctionCallExp
 SgFunctionDeclaration
 SgFunctionDefinition
+SgFunctionParameterScope
 SgFunctionModifier
 SgFunctionParameterList
 SgFunctionParameterRefExp
@@ -440,6 +448,7 @@ SgLambdaCapture
 SgLambdaCaptureList
 SgLambdaExp
 SgLambdaRefExp
+SgLeftDivideOp
 SgLessOrEqualOp
 SgLessThanOp
 SgLineDirectiveStatement
@@ -454,6 +463,10 @@ SgLongIntVal
 SgLongLongIntVal
 SgLshiftAssignOp
 SgLshiftOp
+SgMagicColonExp
+SgMatrixExp
+SgMatrixTransposeOp
+SgMatlabForStatement
 SgMemberFunctionDeclaration
 SgMemberFunctionRefExp
 SgMemberFunctionSymbol
@@ -515,10 +528,12 @@ SgOmpTargetStatement
 SgOmpTargetDataStatement
 SgOmpSimdStatement
 SgOmpClause
+SgOmpBeginClause
 SgOmpCollapseClause
 SgOmpCopyinClause
 SgOmpCopyprivateClause
 SgOmpDefaultClause
+SgOmpEndClause
 SgOmpExpressionClause
 SgOmpFirstprivateClause
 SgOmpIfClause
@@ -553,6 +568,7 @@ SgPointerAssignOp
 SgPointerDerefExp
 SgPointerMemberType
 SgPointerType
+SgPowerOp
 SgPragma
 SgPragmaDeclaration
 SgPrintStatement
@@ -564,6 +580,7 @@ SgPythonGlobalStmt
 SgPythonPrintStmt
 SgQualifiedName
 SgQualifiedNameType
+SgRangeExp
 SgReadStatement
 SgRealPartOp
 SgRefExp
@@ -662,6 +679,8 @@ SgTypeLong
 SgTypeLongDouble
 SgTypeLongLong
 SgTypeModifier
+SgTypeMatrix
+SgTypeTuple
 SgTypeNullptr
 SgTypeOfType
 SgTypeShort
@@ -731,7 +750,7 @@ SgUntypedModuleScope
 SgUntypedGlobalScope
 SgUntypedModuleDeclaration
 SgUntypedStatementList
-SgUntypedDeclarationList
+SgUntypedDeclarationStatementList
 SgUntypedFunctionDeclarationList
 SgUntypedInitializedNameList
 SgUpcBarrierStatement

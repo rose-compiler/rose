@@ -3,6 +3,7 @@
 
 #include "RoseAst.h"
 
+#if 0
 bool isTemplateInstantiationNode(SgNode* node) 
    {
      return isSgTemplateInstantiationDecl(node)
@@ -13,6 +14,7 @@ bool isTemplateInstantiationNode(SgNode* node)
          || isSgTemplateInstantiationDirectiveStatement(node)
          ;
    }
+#endif
 
 void markNodeToBeUnparsed(SgNode* node) {
   Sg_File_Info* fileInfo=node->get_file_info();
@@ -32,17 +34,47 @@ void markNodeToBeUnparsed(SgNode* node) {
   }
 }
 
-int markAllTemplateInstantiationsToBeUnparsed(SgProject* root) {
-  RoseAst ast(root);
-  int n=0;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(isTemplateInstantiationNode(*i)) {
-      markNodeToBeUnparsed(*i);
-      n++;
-    }
-  }
-  return n;
-}
+int markAllTemplateInstantiationsToBeUnparsed(SgProject* root) 
+   {
+     RoseAst ast(root);
+     int n = 0;
+     for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) 
+        {
+       // if (isTemplateInstantiationNode(*i)) 
+          if (SageInterface::isTemplateInstantiationNode(*i)) 
+             {
+               markNodeToBeUnparsed(*i);
+               n++;
+             }
+       }
+
+     return n;
+   }
+
+#if 0
+// Moved to the SageInterface as general support for fixup of instantiated templates.
+int wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root) 
+   {
+  // DQ (7/19/2015): This function can't use an iterator since it will be 
+  // doing transformations on the AST and will cause iterator invalidation errors.
+
+     std::vector<SgStatement*> templateInstantiationVector;
+
+     RoseAst ast(root);
+
+     int n = 0;
+     for (RoseAst::iterator i= ast.begin(); i!=ast.end(); ++i) 
+        {
+          if (isTemplateInstantiationNode(*i)) 
+             {
+               markNodeToBeUnparsed(*i);
+               n++;
+             }
+       }
+
+     return n;
+   }
+#endif
 
 
 int main( int argc, char * argv[] )
@@ -59,6 +91,9 @@ int main( int argc, char * argv[] )
      AstTests::runAllTests(project);
 
      markAllTemplateInstantiationsToBeUnparsed(project);
+
+  // DQ (9/17/2015): Call fixup function for template instatiations so that they can be unparsed with the GNU g++ backend compiler.
+     SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(project);
 
 #if 0
   // Output an optional graph of the AST (just the tree, when active)

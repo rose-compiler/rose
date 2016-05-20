@@ -1,34 +1,15 @@
 #ifndef __GRAMMARSTRING_H__
 #define __GRAMMARSTRING_H__
 
-#include <string>
-#include "ROSETTA_macros.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string>
+#include "grammar.h"
 #include "string_functions.h"
-
-// BP : 11/30/01
-// #ifndef STL_LIST_IS_BROKEN
-// #include STL_LIST_HEADER_FILE
-// #endif
-
-// BP : 11/30/01
-// #ifndef NAMESPACE_IS_BROKEN
-// using namespace std;
-// #endif
-
-// BP : 11/30/01
-// #ifndef IOSTREAM_IS_BROKEN
-// #include IOSTREAM_HEADER_FILE
-// #endif
 
 #include <iostream>
 
-// using namespace std;
-
-// class GrammarTreeNode;   // forward declaration
-class Terminal;
+class AstNodeClass;
 
 class GrammarString
 {
@@ -45,13 +26,14 @@ class GrammarString
   std::string typeNameString;
   std::string variableNameString;
   std::string defaultInitializerString;
-  ConstructParamEnum isInConstructorParameterList;
-
+ private:
+  ConstructParamEnum p_isInConstructorParameterList;
+ public:
   CopyConfigEnum toBeCopied; // used to guide cloning of AST nodes
 
   // We introduce a new data member which determines if a data member to
   // be defined is to be traversed in the course of a tree traversal
-  TraversalFlag toBeTraversed;
+  TraversalEnum toBeTraversed;
 
   // The sum of the ascii characters in functionNameString
   // (provides fast string comparision features)
@@ -60,7 +42,7 @@ class GrammarString
   BuildAccessEnum automaticGenerationOfDataAccessFunctions;
 
 // DQ & AJ (12/3/2004): Added support for deleation of data members
-  DeleteFlag toBeDeleted;
+  DeleteEnum toBeDeleted;
 
   // functions
   virtual ~GrammarString();
@@ -72,14 +54,14 @@ class GrammarString
                  const std::string& defaultInitializer, 
                  const ConstructParamEnum& isConstructorParameter,
                  const BuildAccessEnum& buildAccessFunctions,
-                 const TraversalFlag& toBeTraversedDuringTreeTraversal,
-                 const DeleteFlag& delete_flag,
+                 const TraversalEnum& toBeTraversedDuringTreeTraversal,
+                 const DeleteEnum& delete_flag,
                  const CopyConfigEnum& toBeCopied);
   GrammarString( const GrammarString & X );
   GrammarString & operator= ( const GrammarString & X );
 
   void setVirtual ( const bool & X );
-  virtual std::string getFunctionNameString ( Terminal & node );
+  virtual std::string getFunctionNameString ( AstNodeClass & node );
 
   std::string getConstructorPrototypeParameterString();
   std::string getConstructorSourceParameterString();
@@ -96,13 +78,13 @@ class GrammarString
   int getKey() const;
 
 // DQ & AJ (12/3/2004): Added support for deleation of data members
-  DeleteFlag getToBeDeleted() const;
+  DeleteEnum getToBeDeleted() const;
 
   friend bool operator!= ( const GrammarString & X, const GrammarString & Y );
   friend bool operator== ( const GrammarString & X, const GrammarString & Y );
   // char* getFunctionNameStringTestAgainstExclusions ( GrammarTreeNode & node );
   std::string getFunctionNameStringTestAgainstExclusions 
-    ( Terminal & node,
+    ( AstNodeClass & node,
       std::vector<GrammarString *> &,
       std::vector<GrammarString *> & excludeList );
 
@@ -113,17 +95,20 @@ class GrammarString
   // MS 2014: 
   std::string infoFieldsToString() const;
 
-// DQ (10/8/2014): This returns the name of the type where this data member is a container.
-// The container type is required as part of ATerm support in reading the ATerms and generating
-// the ROSE IR.
-  std::string containerElementTypeString(Terminal & node) const;
-  std::string containerAppendFunctionNameString(Terminal & node) const;
+  // DQ (10/8/2014): This returns the name of the type where this data member is a container.
+  // The container type is required as part of ATerm support in reading the ATerms and generating
+  // the ROSE IR.
+  std::string containerElementTypeString(AstNodeClass & node) const;
+  std::string containerAppendFunctionNameString(AstNodeClass & node) const;
 
   void setIsInConstructorParameterList(ConstructParamEnum X);
   ConstructParamEnum getIsInConstructorParameterList() const;
 
-  void setToBeTraversed(const TraversalFlag& X);
-  TraversalFlag getToBeTraversed() const;
+  void setIsInConstructorParameterList();
+  bool isInConstructorParameterList() const;
+
+  void setToBeTraversed(const TraversalEnum& X);
+  TraversalEnum getToBeTraversed() const;
 
   void setToBeCopied(const CopyConfigEnum& X) { toBeCopied = X; }
   CopyConfigEnum getToBeCopied() const { return toBeCopied; }

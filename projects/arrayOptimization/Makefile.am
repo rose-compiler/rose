@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = test
 
-INCLUDES = \
+AM_CPPFLAGS = \
      $(ROSE_INCLUDES) 
 #     -I$(top_srcdir)/src/util \
 #     -I$(top_srcdir)/src/util/support \

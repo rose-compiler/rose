@@ -1,7 +1,6 @@
 #ifndef bROwSE_H
 #define bROwSE_H
 
-#include <rose.h>
 #include <Color.h>                                      // ROSE
 #include <Diagnostics.h>                                // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE
@@ -52,21 +51,23 @@ struct Settings {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Attributes initialized by the first construction of a Context object (where they are documented)
-extern P2::Attribute::Id ATTR_NBytes;
-extern P2::Attribute::Id ATTR_NInsns;
-extern P2::Attribute::Id ATTR_NIntervals;
-extern P2::Attribute::Id ATTR_NDiscontiguousBlocks;
-extern P2::Attribute::Id ATTR_CfgGraphVizFile;
-extern P2::Attribute::Id ATTR_CfgImage;
-extern P2::Attribute::Id ATTR_CfgVertexCoords;
-extern P2::Attribute::Id ATTR_CallGraph;
-extern P2::Attribute::Id ATTR_NCallers;
-extern P2::Attribute::Id ATTR_NReturns;
-extern P2::Attribute::Id ATTR_MayReturn;
-extern P2::Attribute::Id ATTR_StackDelta;
-extern P2::Attribute::Id ATTR_Ast;
-extern P2::Attribute::Id ATTR_Heat;
-extern P2::Attribute::Id ATTR_DataFlow;
+extern Sawyer::Attribute::Id ATTR_NBytes;
+extern Sawyer::Attribute::Id ATTR_NInsns;
+extern Sawyer::Attribute::Id ATTR_NIntervals;
+extern Sawyer::Attribute::Id ATTR_NDiscontiguousBlocks;
+extern Sawyer::Attribute::Id ATTR_CfgGraphVizFile;
+extern Sawyer::Attribute::Id ATTR_CfgImage;
+extern Sawyer::Attribute::Id ATTR_CfgVertexCoords;
+extern Sawyer::Attribute::Id ATTR_CallGraph;
+extern Sawyer::Attribute::Id ATTR_NCallers;
+extern Sawyer::Attribute::Id ATTR_NCallees;
+extern Sawyer::Attribute::Id ATTR_NReturns;
+extern Sawyer::Attribute::Id ATTR_MayReturn;
+extern Sawyer::Attribute::Id ATTR_StackDelta;
+extern Sawyer::Attribute::Id ATTR_Ast;
+extern Sawyer::Attribute::Id ATTR_Heat;
+extern Sawyer::Attribute::Id ATTR_DataFlow;
+extern Sawyer::Attribute::Id ATTR_CallConvDef;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Context passed around to pretty much all the widgets.

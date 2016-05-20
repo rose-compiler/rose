@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <stdint.h>
+#include <stdlib.h>
 
 std::vector<uint8_t> compressVector(const uint16_t data[], const size_t dataSize);
 void decompressVector(const uint8_t compressedData[], size_t compressedDataSize, uint16_t result[]);

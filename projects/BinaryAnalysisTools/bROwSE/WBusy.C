@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WBusy.h>
 
 #include <Wt/WBreak>

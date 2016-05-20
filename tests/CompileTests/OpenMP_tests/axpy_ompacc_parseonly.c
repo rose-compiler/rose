@@ -59,7 +59,7 @@ REAL check(REAL*A, REAL*B, int n)
 // reference CPU version
 void axpy_omp(REAL* x, REAL* y, long n, REAL a) {
   int i;
-#pragma omp parallel for shared(x, y, n, a) private(i)
+//#pragma omp parallel for shared(x, y, n, a) private(i)
   for (i = 0; i < n; ++i)
   {
     y[i] += a * x[i];
@@ -70,7 +70,7 @@ void axpy_omp(REAL* x, REAL* y, long n, REAL a) {
 void axpy_ompacc(REAL* x, REAL* y, int n, REAL a) {
   int i;
 //For testing parsing only, 3 policies are used for even 1-D arrays.  
-#pragma omp target device (gpu0) map(tofrom: y[0:n] dist_data(block, duplicate, cyclic(5)) ) map(to: x dist_data(block(5), cyclic(3)),a,n)
+#pragma omp target device (mpi) map(tofrom: y[0:n] dist_data(block, duplicate, cyclic(5)) ) map(to: x[0:n] dist_data(block(5), cyclic(3)),a,n)
 #pragma omp parallel for shared(x, y, n, a) private(i)
   for (i = 0; i < n; ++i)
     y[i] += a * x[i];
@@ -82,18 +82,22 @@ int main(int argc, char *argv[])
   REAL *y_omp, *y_ompacc, *x;
   REAL a = 123.456;
 
+#pragma omp target device(mpi:all) begin
   n = VEC_LEN;
   y_omp = (REAL *) malloc(n * sizeof(REAL));
   y_ompacc = (REAL *) malloc(n * sizeof(REAL));
   x = (REAL *) malloc(n * sizeof(REAL));
+#pragma omp target device(mpi:all) end  
 
+#pragma omp target device(mpi:master) begin
   srand48(1<<12);
   init(x, n);
   init(y_ompacc, n);
   memcpy(y_ompacc, y_omp, n*sizeof(REAL));
+#pragma omp target device(mpi:master) end
 
   int num_threads;
-  #pragma omp parallel shared (num_threads)
+//  #pragma omp parallel shared (num_threads)
   {
     if (omp_get_thread_num() == 0)
       num_threads = omp_get_num_threads();

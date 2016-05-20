@@ -1,9 +1,10 @@
+#include <rose.h>
 #include <bROwSE/WStatus.h>
 
+#include <BinarySymbolicExpr.h>                         // ROSE
 #include <boost/algorithm/string/trim.hpp>
 #include <Color.h>                                      // ROSE
 #include <Diagnostics.h>                                // ROSE
-#include <InsnSemanticsExpr.h>                          // ROSE
 #include <Sawyer/SharedPointer.h>
 #include <sys/resource.h>
 #include <Wt/WAbstractTableModel>
@@ -313,7 +314,7 @@ WStatus::redraw() {
 
     // Semantics info
     {
-        Sawyer::SynchronizedPoolAllocator &exprPool = BinaryAnalysis::InsnSemanticsExpr::TreeNode::poolAllocator();
+        Sawyer::SynchronizedPoolAllocator &exprPool = BinaryAnalysis::SymbolicExpr::Node::poolAllocator();
         std::pair<size_t, size_t> exprAllocs = exprPool.nAllocated();
         wSemanticsAllocated_->setText(numberToString(exprAllocs.first));
         wSemanticsReserved_->setText(numberToString(exprAllocs.second));

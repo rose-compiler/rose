@@ -1,5 +1,7 @@
 #include "sage3basic.h"
 #include "StaticSemantics2.h"
+
+#include "Disassembler.h"
 #include "stringify.h"
 
 namespace rose {
@@ -49,7 +51,7 @@ void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr 
 BaseSemantics::SValuePtr
 RiscOperators::makeSValue(size_t nbits, SgAsmExpression *expr) {
     ASSERT_not_null(expr);
-    SValuePtr v = SValue::promote(get_protoval()->undefined_(nbits));
+    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
     v->ast(expr);
     return v;
 }
@@ -57,7 +59,7 @@ RiscOperators::makeSValue(size_t nbits, SgAsmExpression *expr) {
 // Make an SValue for a RISC operator that takes no arguments. The width in bits is therefore required.
 BaseSemantics::SValuePtr
 RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op) {
-    SValuePtr v = SValue::promote(get_protoval()->undefined_(nbits));
+    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
     v->ast(SageBuilderAsm::buildRiscOperation(op));
     return v;
 }
@@ -65,7 +67,7 @@ RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op) {
 // RISC operator that takes one operand.
 BaseSemantics::SValuePtr
 RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValuePtr &a_) {
-    SValuePtr v = SValue::promote(get_protoval()->undefined_(nbits));
+    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
     SValuePtr a = SValue::promote(a_);
     v->ast(SageBuilderAsm::buildRiscOperation(op, a->ast()));
     return v;
@@ -75,7 +77,7 @@ RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, con
 BaseSemantics::SValuePtr
 RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValuePtr &a_,
                           const BaseSemantics::SValuePtr &b_) {
-    SValuePtr v = SValue::promote(get_protoval()->undefined_(nbits));
+    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     v->ast(SageBuilderAsm::buildRiscOperation(op, a->ast(), b->ast()));
@@ -86,7 +88,7 @@ RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, con
 BaseSemantics::SValuePtr
 RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValuePtr &a_,
                           const BaseSemantics::SValuePtr &b_, const BaseSemantics::SValuePtr &c_) {
-    SValuePtr v = SValue::promote(get_protoval()->undefined_(nbits));
+    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     SValuePtr c = SValue::promote(c_);
@@ -99,7 +101,7 @@ BaseSemantics::SValuePtr
 RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValuePtr &a_,
                           const BaseSemantics::SValuePtr &b_, const BaseSemantics::SValuePtr &c_,
                           const BaseSemantics::SValuePtr &d_) {
-    SValuePtr v = SValue::promote(get_protoval()->undefined_(nbits));
+    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     SValuePtr c = SValue::promote(c_);
@@ -111,7 +113,7 @@ RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, con
 // Save the semantic effect in the current instruction.
 void
 RiscOperators::saveSemanticEffect(const BaseSemantics::SValuePtr &a_) {
-    if (SgAsmInstruction *insn = get_insn()) {
+    if (SgAsmInstruction *insn = currentInstruction()) {
         SValuePtr a = SValue::promote(a_);
         ASSERT_not_null(a->ast());
 
@@ -429,7 +431,7 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg) {
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
     BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));
     return makeSValue(reg.get_nbits(), SgAsmRiscOperation::OP_readRegister, regExpr);
 }

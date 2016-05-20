@@ -224,7 +224,7 @@ SRecord::print(std::ostream &out) const {
         throw std::runtime_error("S-Record address " + StringUtility::addrToString(addr_) +
                                  " needs more than " + StringUtility::numberToString(addressNBytes(type_)) + " bytes");
     }
-    mfprintf(out)("%0*"PRIX64, 2*(int)addressNBytes(type_), addr_);
+    mfprintf(out)("%0*" PRIX64, 2*(int)addressNBytes(type_), addr_);
 
     // Data
     BOOST_FOREACH (uint8_t byte, data_)

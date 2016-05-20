@@ -2,6 +2,7 @@
 #include "AsmUnparser_compat.h"
 
 #include <BinaryString.h>
+#include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
@@ -389,9 +390,9 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
 }
 
 AddressIntervalSet
-deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold) {
+deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
     AddressIntervalSet changes;
-    if (0==threshold)
+    if (leaveAtFront + leaveAtBack >= threshold)
         return changes;
     rose_addr_t va = map.hull().least();
     AddressInterval zeros;
@@ -422,9 +423,10 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold) {
         }
         va += nRead;
     }
-    if (zeros.size()>=threshold) {
-        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
-        changes.insert(zeros);
+    if (zeros.size() >= threshold && zeros.size() >= leaveAtFront + leaveAtBack) {
+        AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront, zeros.greatest()-leaveAtBack);
+        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+        changes.insert(affected);
     }
     return changes;
 }
@@ -617,10 +619,12 @@ nameConstants(const Partitioner &partitioner) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SgAsmBlock*
-buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bool relaxed) {
+buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, const Function::Ptr &parentFunction,
+                   const AstConstructionSettings &settings) {
     ASSERT_not_null(bb);
+    ASSERT_not_null(parentFunction);
     if (bb->isEmpty()) {
-        if (relaxed) {
+        if (settings.allowEmptyBasicBlocks) {
             mlog[WARN] <<"creating an empty basic block AST node at " <<StringUtility::addrToString(bb->address()) <<"\n";
         } else {
             return NULL;
@@ -628,15 +632,26 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
     }
 
     ControlFlowGraph::ConstVertexIterator bblockVertex = partitioner.findPlaceholder(bb->address());
-    SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(bb->instructions());
+
+    std::vector<SgAsmInstruction*> insns = bb->instructions();
+    for (size_t i=0; i<insns.size(); ++i) {
+        if (settings.copyAllInstructions) {
+            SgTreeCopy deep;
+            SgAsmInstruction *newInsn = isSgAsmInstruction(insns[i]->copy(deep));
+            ASSERT_not_null(newInsn);
+            ASSERT_require(newInsn != insns[i]);
+            ASSERT_require(newInsn->get_address() == insns[i]->get_address());
+            insns[i] = newInsn;
+        }
+    }
+
+    SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(insns);
     ast->set_comment(bb->comment());
     unsigned reasons = 0;
 
-    // Is this block an entry point for a function?
-    if (Function::Ptr function = partitioner.functionExists(bb->address())) {
-        if (function->address() == bb->address())
-            reasons |= SgAsmBlock::BLK_ENTRY_POINT;
-    }
+    // Is this block an entry point for any function (not just the parent function)?
+    if (bblockVertex->value().isEntryBlock())
+        reasons |= SgAsmBlock::BLK_ENTRY_POINT;
 
     // Does this block have any predecessors?
     if (bblockVertex != partitioner.cfg().vertices().end() && bblockVertex->nInEdges()==0)
@@ -645,19 +660,24 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
     ast->set_reason(reasons);
     ast->set_code_likelihood(1.0);                      // FIXME[Robb P. Matzke 2014-08-07]
 
-    // Outgoing stack delta
-    if (bb->stackDeltaOut().isCached()) {
-        BaseSemantics::SValuePtr v = bb->stackDeltaOut().get();
-        if (v->is_number() && v->get_width()<=64) {
-            int64_t delta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-            ast->set_stackDeltaOut(delta);
-        } else {
-            ast->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
-        }
-    } else {
-        ast->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
+    // Stack delta analysis results for this block in the context of the owning function. If blocks are shared they can have
+    // different stack deltas (e.g., eax might have different values in function F and G which means the block "sub esp, eax"
+    // has a different stack delta in each function.  Since we're creating a SgAsmBlock for a particular function we need to
+    // use stack delta results in the context of that function.
+    const StackDelta::Analysis &sdAnalysis = parentFunction->stackDeltaAnalysis();
+    ast->set_stackDeltaOut(sdAnalysis.toInt(sdAnalysis.basicBlockOutputStackDeltaWrtFunction(bb->address())));
+
+    // Stack delta analysis results for each instruction in the context of the owning function.  Instructions are shared in the
+    // AST if their blocks are shared in the partitioner.  In the AST we share instructions instead of blocks because this
+    // makes it easier to attach analysis results to blocks without worrying about whether they're shared -- it's less likely
+    // that binary analysis results are attached to instructions.  The problem is that an instruction can have multiple stack
+    // deltas based on which function was analyzed. We must choose one function's stack deltas and we must make sure they're
+    // current. The approach we take is simple: just store the stack deltas each time and let the last one win.
+    if (sdAnalysis.hasResults()) {
+        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+            insn->set_stackDeltaIn(sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn)));
     }
-    
+
     // Cache the basic block successors in the AST since we've already computed them.  If the basic block is in the CFG then we
     // can use the CFG's edges to initialize the AST successors since they are canonical. Otherwise we'll use the successors
     // from bb. In any case, we fill in the successor SgAsmIntegerValueExpression objects with only the address and not
@@ -690,7 +710,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
 }
 
 SgAsmBlock*
-buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, bool relaxed) {
+buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings &settings) {
     // Build the static data item
     SgUnsignedCharList rawBytes(dblock->size(), 0);
     size_t nRead = partitioner.memoryMap().at(dblock->address()).read(rawBytes).size();
@@ -702,7 +722,7 @@ buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, 
 }
 
 SgAsmFunction*
-buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, bool relaxed) {
+buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, const AstConstructionSettings &settings) {
     ASSERT_not_null(function);
 
     // Build the child basic block IR nodes and remember all the data blocks
@@ -714,7 +734,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
             mlog[WARN] <<function->printableName() <<" bblock "
                        <<StringUtility::addrToString(blockVa) <<" does not exist in the CFG; no AST node created\n";
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            if (SgAsmBlock *child = buildBasicBlockAst(partitioner, bb, relaxed))
+            if (SgAsmBlock *child = buildBasicBlockAst(partitioner, bb, function, settings))
                 children.push_back(child);
             BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
                 insertUnique(dblocks, dblock, sortDataBlocks);
@@ -724,7 +744,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
     if (children.empty()) {
-        if (relaxed) {
+        if (settings.allowFunctionWithNoBasicBlocks) {
             mlog[WARN] <<"creating an empty AST node for " <<function->printableName() <<"\n";
         } else {
             return NULL;
@@ -734,7 +754,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     // Build the child data block IR nodes.  The data blocks attached to the SgAsmFunction node are the union of the data
     // blocks owned by the function and the data blocks owned by each of its basic blocks.
     BOOST_FOREACH (const DataBlock::Ptr &dblock, dblocks) {
-        if (SgAsmBlock *child = buildDataBlockAst(partitioner, dblock, relaxed))
+        if (SgAsmBlock *child = buildDataBlockAst(partitioner, dblock, settings))
             children.push_back(child);
     }
 
@@ -772,12 +792,14 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
 
-    // What is the net change in stack pointer for this function?
-    int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA;
-    if (function->stackDelta().isCached()) {
-        BaseSemantics::SValuePtr v = function->stackDelta().get();
-        if (v && v->is_number() && v->get_width()<=64)
-            stackDelta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
+    // Function's calling convention. For now, we just set the function's calling convention to the best one on a local
+    // basis. A separate pass later can choose the globally best conventions.  Don't run the analysis if it hasn't been run
+    // already (sometimes users request that we skip this expensive analysis).
+    const CallingConvention::Definition *bestCallingConvention = NULL;
+    if (function->callingConventionAnalysis().hasResults()) {
+        CallingConvention::Dictionary conventions = partitioner.functionCallingConventionDefinitions(function);
+        if (!conventions.empty())
+            bestCallingConvention = new CallingConvention::Definition(conventions.front());
     }
     
     // Build the AST
@@ -786,22 +808,23 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     ast->set_name(function->name());
     ast->set_comment(function->comment());
     ast->set_may_return(mayReturn);
-    ast->set_stackDelta(stackDelta);
+    ast->set_stackDelta(function->stackDeltaConcrete());
+    ast->set_callingConvention(bestCallingConvention);
     return ast;
 }
 
 SgAsmBlock*
-buildGlobalBlockAst(const Partitioner &partitioner, bool relaxed) {
+buildGlobalBlockAst(const Partitioner &partitioner, const AstConstructionSettings &settings) {
     // Create the children first
     std::vector<SgAsmFunction*> children;
     BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
-        if (SgAsmFunction *func = buildFunctionAst(partitioner, function, relaxed)) {
+        if (SgAsmFunction *func = buildFunctionAst(partitioner, function, settings)) {
             children.push_back(func);
         }
     }
     if (children.empty()) {
-        if (relaxed) {
-            mlog[WARN] <<"building an empty global block\n";
+        if (settings.allowEmptyGlobalBlock) {
+            mlog[WARN] <<"building an empty AST binary global block\n";
         } else {
             return NULL;
         }
@@ -817,9 +840,10 @@ buildGlobalBlockAst(const Partitioner &partitioner, bool relaxed) {
 }
 
 SgAsmBlock*
-buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, bool relaxed) {
-    if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, relaxed)) {
+buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, const AstConstructionSettings &settings) {
+    if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, settings)) {
         fixupAstPointers(global, interp);
+        fixupAstCallingConventions(partitioner, global);
         if (interp) {
             if (SgAsmBlock *oldGlobalBlock = interp->get_global_block())
                 oldGlobalBlock->set_parent(NULL);
@@ -874,7 +898,15 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
                    const SgAsmGenericSectionPtrList &mappedSections)
             : insnIndex(insnIndex), bblockIndex(bblockIndex), funcIndex(funcIndex), mappedSections(mappedSections) {}
         void visit(SgNode *node) {
-            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+            std::vector<SgAsmIntegerValueExpression*> ivals;
+            if (SgAsmBlock *blk = isSgAsmBlock(node)) {
+                // SgAsmBlock::p_successors is not traversed due to limitations of ROSETTA, so traverse explicitly.
+                ivals = blk->get_successors();
+            } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+                ivals.push_back(ival);
+            }
+
+            BOOST_FOREACH (SgAsmIntegerValueExpression *ival, ivals) {
                 if (ival->get_baseNode()==NULL) {
                     rose_addr_t va = ival->get_absoluteValue();
                     SgAsmNode *base = NULL;
@@ -889,6 +921,65 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
         }
     } fixerUpper(indexer.insnIndex, indexer.bblockIndex, indexer.funcIndex, mappedSections);
     fixerUpper.traverse(ast, preorder);
+}
+
+void
+fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
+    // Pass 1: Sort all calling conventions by number of occurrences within the partitioner.
+    Sawyer::Container::Map<std::string, size_t> totals; // how many times does each calling convention name match?
+    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+        const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+        if (!ccAnalysis.hasResults())
+            continue;                                   // don't run analysis if not run already
+        BOOST_FOREACH (const CallingConvention::Definition &ccDef, partitioner.functionCallingConventionDefinitions(function))
+            ++totals.insertMaybe(ccDef.name(), 0);
+    }
+
+    // Pass 2: For each function in the AST, select the matching definition that's most frequent overall. If there's a tie, use
+    // the first one from the function's definition list since this list is presumably sorted by how frequently the convention
+    // is used by the whole world.
+    BOOST_FOREACH (SgAsmFunction *astFunction, SageInterface::querySubTree<SgAsmFunction>(ast)) {
+        if (Function::Ptr function = partitioner.functionExists(astFunction->get_address())) {
+            const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+            if (!ccAnalysis.hasResults())
+                continue;                               // don't run analysis if not run already
+            CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
+            const CallingConvention::Definition *ccBest = NULL;
+            BOOST_FOREACH (const CallingConvention::Definition &ccDef, ccDefs) {
+                if (NULL==ccBest) {
+                    ccBest = &ccDef;
+                } else if (totals.getOrElse(ccDef.name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
+                    ccBest = &ccDef;
+                }
+            }
+            if (ccBest) {
+                // We cannot delete previously stored calling conventions because there's no clear rule about whether they need
+                // to be allocated on the heap, and if so, who owns them or what allocator was used.
+                astFunction->set_callingConvention(new CallingConvention::Definition(*ccBest));
+            }
+        }
+    }
+}
+
+std::vector<Function::Ptr>
+findNoopFunctions(const Partitioner &partitioner) {
+    partitioner.allFunctionIsNoop();
+    std::vector<Function::Ptr> retval;
+    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+        if (function->isNoop().getOptional().orElse(false))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    return retval;
+}
+
+void
+nameNoopFunctions(const Partitioner &partitioner) {
+    BOOST_FOREACH (const Function::Ptr &function, findNoopFunctions(partitioner)) {
+        if (function->name().empty()) {
+            std::string newName = "noop_" + StringUtility::addrToString(function->address()).substr(2) + "() -> void";
+            function->name(newName);
+        }
+    }
 }
 
 } // namespace

@@ -66,7 +66,7 @@ public:
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object. SValue objects are referece counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a multi-semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the MultiSemantics domain.
@@ -114,6 +114,8 @@ public:
     // Virtual allocating constructors
 public:
 
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE;
+
     /** Create a new undefined MultiSemantics value.  The returned value is constructed by calling the virtual undefined_()
      *  for each subdomain value in "this".  If you want a multidomain value that has no valid subvalues, then use
      *  the create_empty() method instead. */
@@ -138,6 +140,9 @@ public:
         return BaseSemantics::SValuePtr(new SValue(*this));
     }
     
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods
 public:
@@ -151,6 +156,8 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual void set_width(size_t nbits) ROSE_OVERRIDE;
+
+    virtual bool isBottom() const ROSE_OVERRIDE;
 
     /** Determines if the value is a concrete number.  In the MultiSemantics domain, a value is a concrete number if and only
      *  if it has at least one valid subdomain value and all valid subdomain values are concrete numbers, and all are the same
@@ -197,6 +204,8 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void RegisterState;
+
+/** Shared-ownership pointer to a multi-semantics register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> RegisterStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,6 +213,8 @@ typedef boost::shared_ptr<void> RegisterStatePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void MemoryState;
+
+/** Shared-ownership pointer to a multi-semantics memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> MemoryStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -211,14 +222,15 @@ typedef boost::shared_ptr<void> MemoryStatePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void State;
+
+/** Shared-ownership pointer to a multi-semantics state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<void> StatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to multi-semantics RISC operators. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the MultiSemantics domain.
@@ -237,14 +249,14 @@ protected:
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Multi");
+        name("Multi");
         (void) SValue::promote(protoval); // check that its dynamic type is a MultiSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Multi");
-        (void) SValue::promote(state->get_protoval()); // dynamic type must be a MultiSemantics::SValue
+        name("Multi");
+        (void) SValue::promote(state->protoval());      // dynamic type must be a MultiSemantics::SValue
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,7 +347,7 @@ public:
 
     /** Convenience function for SValue::create_empty(). */
     virtual SValuePtr svalue_empty(size_t nbits) {
-        return SValue::promote(get_protoval())->create_empty(nbits);
+        return SValue::promote(protoval())->create_empty(nbits);
     }
     
     /** Iterates over valid subdomains whose inputs are valid. This is intended to be used in a "for" loop inside a RISC
@@ -404,6 +416,7 @@ public:
     virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr boolean_(bool) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr filterCallTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr filterReturnTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr filterIndirectJumpTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
@@ -447,7 +460,28 @@ public:
                                                     const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a,
                                                       const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpToInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*,
+                                                 const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpConvert(const BaseSemantics::SValuePtr&, SgAsmFloatType*, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsNan(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsDenormalized(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsInfinity(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSign(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpEffectiveExponent(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpAdd(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                           SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSubtract(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpMultiply(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpDivide(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                              SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,

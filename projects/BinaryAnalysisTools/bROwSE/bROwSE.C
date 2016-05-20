@@ -1,43 +1,49 @@
+#include <rose.h>
 #include <bROwSE/bROwSE.h>
+
+using namespace rose::BinaryAnalysis;
 
 namespace bROwSE {
 
 Sawyer::Message::Facility mlog;
 
-P2::Attribute::Id ATTR_NBytes(-1);
-P2::Attribute::Id ATTR_NInsns(-1);
-P2::Attribute::Id ATTR_NIntervals(-1);
-P2::Attribute::Id ATTR_NDiscontiguousBlocks(-1);
-P2::Attribute::Id ATTR_CfgGraphVizFile(-1);
-P2::Attribute::Id ATTR_CfgImage(-1);
-P2::Attribute::Id ATTR_CfgVertexCoords(-1);
-P2::Attribute::Id ATTR_CallGraph(-1);
-P2::Attribute::Id ATTR_NCallers(-1);
-P2::Attribute::Id ATTR_NReturns(-1);
-P2::Attribute::Id ATTR_MayReturn(-1);
-P2::Attribute::Id ATTR_StackDelta(-1);
-P2::Attribute::Id ATTR_Ast(-1);
-P2::Attribute::Id ATTR_Heat(-1);
-P2::Attribute::Id ATTR_DataFlow(-1);
-
+Sawyer::Attribute::Id ATTR_NBytes(-1);
+Sawyer::Attribute::Id ATTR_NInsns(-1);
+Sawyer::Attribute::Id ATTR_NIntervals(-1);
+Sawyer::Attribute::Id ATTR_NDiscontiguousBlocks(-1);
+Sawyer::Attribute::Id ATTR_CfgGraphVizFile(-1);
+Sawyer::Attribute::Id ATTR_CfgImage(-1);
+Sawyer::Attribute::Id ATTR_CfgVertexCoords(-1);
+Sawyer::Attribute::Id ATTR_CallGraph(-1);
+Sawyer::Attribute::Id ATTR_NCallers(-1);
+Sawyer::Attribute::Id ATTR_NCallees(-1);
+Sawyer::Attribute::Id ATTR_NReturns(-1);
+Sawyer::Attribute::Id ATTR_MayReturn(-1);
+Sawyer::Attribute::Id ATTR_StackDelta(-1);
+Sawyer::Attribute::Id ATTR_Ast(-1);
+Sawyer::Attribute::Id ATTR_Heat(-1);
+Sawyer::Attribute::Id ATTR_DataFlow(-1);
+Sawyer::Attribute::Id ATTR_CallConvDef(-1);
 void
 Context::init() {
-    if (ATTR_NBytes == P2::Attribute::INVALID_ID) {
-        ATTR_NBytes               = P2::Attribute::registerName("Size in bytes");
-        ATTR_NInsns               = P2::Attribute::registerName("Number of instructions");
-        ATTR_NIntervals           = P2::Attribute::registerName("Number of contiguous intervals");
-        ATTR_NDiscontiguousBlocks = P2::Attribute::registerName("Number of discontigous basic blocks");
-        ATTR_CfgGraphVizFile      = P2::Attribute::registerName("CFG GraphViz file name");
-        ATTR_CfgImage             = P2::Attribute::registerName("CFG JPEG file name");
-        ATTR_CfgVertexCoords      = P2::Attribute::registerName("CFG vertex coordinates");
-        ATTR_CallGraph            = P2::Attribute::registerName("Function call graph");
-        ATTR_NCallers             = P2::Attribute::registerName("Number of call sites from whence function is called");
-        ATTR_NReturns             = P2::Attribute::registerName("Number of returning basic blocks");
-        ATTR_MayReturn            = P2::Attribute::registerName("May return to caller?");
-        ATTR_StackDelta           = P2::Attribute::registerName("Stack pointer delta");
-        ATTR_Ast                  = P2::Attribute::registerName("Abstract syntax tree");
-        ATTR_Heat                 = P2::Attribute::registerName("Heat value for color gradients [0..1]");
-        ATTR_DataFlow             = P2::Attribute::registerName("Data flow information");
+    if (ATTR_NBytes == Sawyer::Attribute::INVALID_ID) {
+        ATTR_NBytes               = Sawyer::Attribute::declare("Size in bytes");
+        ATTR_NInsns               = Sawyer::Attribute::declare("Number of instructions");
+        ATTR_NIntervals           = Sawyer::Attribute::declare("Number of contiguous intervals");
+        ATTR_NDiscontiguousBlocks = Sawyer::Attribute::declare("Number of discontigous basic blocks");
+        ATTR_CfgGraphVizFile      = Sawyer::Attribute::declare("CFG GraphViz file name");
+        ATTR_CfgImage             = Sawyer::Attribute::declare("CFG JPEG file name");
+        ATTR_CfgVertexCoords      = Sawyer::Attribute::declare("CFG vertex coordinates");
+        ATTR_CallGraph            = Sawyer::Attribute::declare("Function call graph");
+        ATTR_NCallers             = Sawyer::Attribute::declare("Number of call sites from whence function is called");
+        ATTR_NCallees             = Sawyer::Attribute::declare("Number of calls made by this function");
+        ATTR_NReturns             = Sawyer::Attribute::declare("Number of returning basic blocks");
+        ATTR_MayReturn            = Sawyer::Attribute::declare("May return to caller?");
+        ATTR_StackDelta           = Sawyer::Attribute::declare("Stack pointer delta");
+        ATTR_Ast                  = Sawyer::Attribute::declare("Abstract syntax tree");
+        ATTR_Heat                 = Sawyer::Attribute::declare("Heat value for color gradients [0..1]");
+        ATTR_DataFlow             = Sawyer::Attribute::declare("Data flow information");
+        ATTR_CallConvDef          = Sawyer::Attribute::declare("Calling convention definition");
     }
 }
 

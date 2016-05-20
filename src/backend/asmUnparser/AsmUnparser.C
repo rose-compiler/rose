@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
+#include "Disassembler.h"
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -583,7 +584,7 @@ AsmUnparser::InsnBlockEntry::operator()(bool enabled, const InsnArgs &args)
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(block);
             char buf[32];
             if (func && is_first_insn) {
-                snprintf(buf, sizeof buf, "F%08"PRIx64, func->get_entry_va());
+                snprintf(buf, sizeof buf, "F%08" PRIx64, func->get_entry_va());
             } else {
                 sprintf(buf, "%*s", 9, "");
             }
@@ -605,9 +606,9 @@ bool
 AsmUnparser::InsnStackDelta::operator()(bool enabled, const InsnArgs &args) {
     static const int deltaWidth = 2;                    // min column width for delta digits
     if (enabled) {
-        int64_t delta = args.insn->get_stackDelta();
+        int64_t delta = args.insn->get_stackDeltaIn();
         if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
-            mfprintf(args.output)("<sp%+-*"PRId64">", deltaWidth+1, delta);
+            mfprintf(args.output)("<sp%+-*" PRId64 ">", deltaWidth+1, delta);
         } else {
             args.output <<std::string(deltaWidth+5, ' ');
         }
@@ -762,7 +763,7 @@ AsmUnparser::BasicBlockOutgoingStackDelta::operator()(bool enabled, const BasicB
         int64_t n = args.block->get_stackDeltaOut();
         if (n != SgAsmInstruction::INVALID_STACK_DELTA) {
             args.output <<args.unparser->line_prefix();
-            mfprintf(args.output)("Outgoing stack delta: %+"PRId64"\n", n);
+            mfprintf(args.output)("Outgoing stack delta: %+" PRId64 "\n", n);
         }
     }
     return enabled;
@@ -882,7 +883,7 @@ AsmUnparser::StaticDataBlockEntry::operator()(bool enabled, const StaticDataArgs
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(block);
             char buf[32];
             if (func && is_first_data) {
-                snprintf(buf, sizeof buf, "F%08"PRIx64, func->get_entry_va());
+                snprintf(buf, sizeof buf, "F%08" PRIx64, func->get_entry_va());
             } else {
                 sprintf(buf, "%*s", 9, "");
             }
@@ -912,7 +913,7 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
             addr_fmt = strdup(args.unparser->get_prefix_format().c_str());
             if (show_offset) {
                 start_address = 0;
-                sprintf(prefix, "0x%08"PRIx64"+", args.data->get_address());
+                sprintf(prefix, "0x%08" PRIx64 "+", args.data->get_address());
                 tmp_fmt.prefix = prefix;
             } else {
                 start_address = args.data->get_address();
@@ -1194,7 +1195,7 @@ AsmUnparser::FunctionAttributes::operator()(bool enabled, const FunctionArgs &ar
 
         if (args.func->get_stackDelta() != SgAsmInstruction::INVALID_STACK_DELTA) {
             args.output <<args.unparser->line_prefix();
-            mfprintf(args.output)("Function stack delta: %+"PRId64"\n", args.func->get_stackDelta());
+            mfprintf(args.output)("Function stack delta: %+" PRId64 "\n", args.func->get_stackDelta());
         }
     }
     return enabled;

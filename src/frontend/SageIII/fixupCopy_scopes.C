@@ -141,9 +141,12 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 #endif
 
   // Need to fixup the scope and perhaps build the SgVariableDefinition object!
-
      SgInitializedName* initializedName_copy = isSgInitializedName(copy);
      ROSE_ASSERT(initializedName_copy != NULL);
+
+  // DQ (4/21/2016): Replacing "__null" with more portable (non-gnu specific) use using "NULL".
+  // ROSE_ASSERT (initializedName_copy->get_declptr() != __null);
+     ROSE_ASSERT (initializedName_copy->get_declptr() != NULL);
 
      // fprintf(stderr, "SgInitializedName::fixupCopy_scopes(%p) this=%p\n", copy, this);
      // fprintf(stderr, "Copy's scope is %p, my scope is %p\n", initializedName_copy->get_scope(), this->get_scope());
@@ -835,9 +838,10 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
             // ROSE_ASSERT(TransformationSupport::getSourceFile(copyDeclarationStatement->get_definingDeclaration()) == TransformationSupport::getSourceFile(copyDeclarationStatement));
                if (TransformationSupport::getSourceFile(copyDeclarationStatement->get_definingDeclaration()) != TransformationSupport::getSourceFile(copyDeclarationStatement))
                   {
-                 // printf ("############# Detected case of copyDeclarationStatement->get_definingDeclaration() in file %s \n",
-                 //      TransformationSupport::getSourceFile(copyDeclarationStatement->get_definingDeclaration())->getFileName().c_str());
-                 // printf ("############# Detected case of copyDeclarationStatement in file %s \n",TransformationSupport::getSourceFile(copyDeclarationStatement)->getFileName().c_str());
+                    printf ("copyDeclarationStatement = %p = %s \n",copyDeclarationStatement,copyDeclarationStatement->class_name().c_str());
+                    printf ("############# Detected case of copyDeclarationStatement->get_definingDeclaration() in file %s \n",
+                         TransformationSupport::getSourceFile(copyDeclarationStatement->get_definingDeclaration())->getFileName().c_str());
+                    printf ("############# Detected case of copyDeclarationStatement in file %s \n",TransformationSupport::getSourceFile(copyDeclarationStatement)->getFileName().c_str());
 
                  // This is not what we want here!
                  // copyDeclarationStatement->set_definingDeclaration(NULL);
@@ -1325,8 +1329,8 @@ SgVariableDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // Iterate over both lists to match up the correct pairs of SgInitializedName objects
      while ( (i_original != variableList_original.end()) && (i_copy != variableList_copy.end()) )
         {
-       // printf ("Looping over the initialized names in the variable declaration variable = %p = %s \n",(*i_copy),(*i_copy)->get_name().str());
-
+        //printf ("Looping over the initialized names in the variable declaration variable = %p = %s \n",(*i_copy),(*i_copy)->get_name().str());
+          ROSE_ASSERT ( (*i_copy)->get_declptr() != NULL);
           (*i_original)->fixupCopy_scopes(*i_copy,help);
 
           i_original++;

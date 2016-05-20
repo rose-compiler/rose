@@ -8,7 +8,10 @@
 
 #include "BaseSemantics2.h"
 #include "SMTSolver.h"
-#include "InsnSemanticsExpr.h"
+#include "BinarySymbolicExpr.h"
+#include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
+#include "MemoryCellMap.h"
 
 #include <map>
 #include <vector>
@@ -37,26 +40,74 @@ namespace InstructionSemantics2 {       // documented elsewhere
 *  naive comparison of the expression trees. */
 namespace SymbolicSemantics {
 
-typedef InsnSemanticsExpr::LeafNode LeafNode;
-typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
-typedef InsnSemanticsExpr::InternalNode InternalNode;
-typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
-typedef InsnSemanticsExpr::TreeNode TreeNode;
-typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
+typedef SymbolicExpr::Leaf LeafNode;
+typedef SymbolicExpr::LeafPtr LeafPtr;
+typedef SymbolicExpr::Interior InteriorNode;
+typedef SymbolicExpr::InteriorPtr InteriorPtr;
+typedef SymbolicExpr::Node ExprNode;
+typedef SymbolicExpr::Ptr ExprPtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Merging symbolic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Shared-ownership pointer for a merge control object. See @ref heap_object_shared_ownership. */
+typedef Sawyer::SharedPointer<class Merger> MergerPtr;
+
+/** Controls merging of symbolic values. */
+class Merger: public BaseSemantics::Merger {
+    size_t setSizeLimit_;
+protected:
+    Merger(): BaseSemantics::Merger(), setSizeLimit_(1) {}
+
+public:
+    /** Shared-ownership pointer for a @ref Merger object. See @ref heap_object_shared_ownership. */
+    typedef MergerPtr Ptr;
+
+    /** Allocating constructor. */
+    static Ptr instance() {
+        return Ptr(new Merger);
+    }
+
+    /** Allocating constructor. */
+    static Ptr instance(size_t n) {
+        Ptr retval = Ptr(new Merger);
+        retval->setSizeLimit(n);
+        return retval;
+    }
+
+    /** Property: Maximum set size.
+     *
+     *  The maximum number of members in a set when merging two expressions.  For instance, when merging expressions "x" and
+     *  "y" with a limit of one (the default), the return value is bottom, but if the size limit is two or more, the return
+     *  value is (set x y).  Merging two sets (or a set and a singlton) works the same way: if the union of the two sets is
+     *  larger than the size limit then bottom is returned, otherwise the union is returned.
+     *
+     *  A limit of zero has the same effect as a limit of one since a singleton set is represented by just the naked member
+     *  (that is, (set x) gets simplified to just x).
+     *
+     * @{ */
+    size_t setSizeLimit() const { return setSizeLimit_; }
+    void setSizeLimit(size_t n) { setSizeLimit_ = n; }
+    /** @} */
+};
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer for symbolic semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Formatter for symbolic values. */
 class Formatter: public BaseSemantics::Formatter {
 public:
-    InsnSemanticsExpr::Formatter expr_formatter;
+    SymbolicExpr::Formatter expr_formatter;
 };
 
 /** Type of values manipulated by the SymbolicSemantics domain.
@@ -64,11 +115,11 @@ public:
  *  Values of type type are used whenever a value needs to be stored, such as memory addresses, the values stored at those
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
- *  An SValue points to an expression composed of the TreeNode types defined in InsnSemanticsExpr.h, and also stores the set of
+ *  An SValue points to an expression composed of the ExprNode types defined in BinarySymbolicExpr.h, and also stores the set of
  *  instructions that were used to define the value.  This provides a framework for some simple forms of value-based def-use
  *  analysis. See get_defining_instructions() for details.
  * 
- *  @section Unk_Uinit Unknown versus Uninitialized Values
+ *  @section symbolic_semantics_unknown Unknown versus Uninitialized Values
  *
  *  One sometimes needs to distinguish between registers (or other named storage locations) that contain an
  *  "unknown" value versus registers that have not been initialized. By "unknown" we mean a value that has no
@@ -130,7 +181,7 @@ public:
 class SValue: public BaseSemantics::SValue {
 protected:
     /** The symbolic expression for this value.  Symbolic expressions are reference counted. */
-    TreeNodePtr expr;
+    ExprPtr expr;
 
     /** Instructions defining this value.  Any instruction that saves the value to a register or memory location
      *  adds itself to the saved value. */
@@ -140,12 +191,12 @@ protected:
     // Real constructors
 protected:
     explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
-        expr = LeafNode::create_variable(nbits);
+        expr = SymbolicExpr::makeVariable(nbits);
     }
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
-        expr = LeafNode::create_integer(nbits, number);
+        expr = SymbolicExpr::makeInteger(nbits, number);
     }
-    SValue(TreeNodePtr expr): BaseSemantics::SValue(expr->get_nbits()) {
+    SValue(ExprPtr expr): BaseSemantics::SValue(expr->nBits()) {
         this->expr = expr;
     }
 
@@ -154,27 +205,35 @@ protected:
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(LeafNode::create_variable(1)));
+        return SValuePtr(new SValue(SymbolicExpr::makeVariable(1)));
+    }
+
+    /** Instantiate a new data-flow bottom value of specified width. */
+    static SValuePtr instance_bottom(size_t nbits) {
+        return SValuePtr(new SValue(SymbolicExpr::makeVariable(nbits, "", ExprNode::BOTTOM)));
     }
 
     /** Instantiate a new undefined value of specified width. */
     static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(LeafNode::create_variable(nbits)));
+        return SValuePtr(new SValue(SymbolicExpr::makeVariable(nbits)));
     }
 
     /** Instantiate a new unspecified value of specified width. */
     static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::UNSPECIFIED)));
+        return SValuePtr(new SValue(SymbolicExpr::makeVariable(nbits, "", ExprNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
     static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(LeafNode::create_integer(nbits, value)));
+        return SValuePtr(new SValue(SymbolicExpr::makeInteger(nbits, value)));
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_bottom(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance_undefined(nbits);
     }
@@ -193,6 +252,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -211,13 +272,15 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
-    // the size of the InsnSemanticsExpr, which might be shared with many unrelated values whose size we don't want to affect.
+    // the size of the SymbolicExpr, which might be shared with many unrelated values whose size we don't want to affect.
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
         ASSERT_require(nbits==get_width());
     }
 
+    virtual bool isBottom() const ROSE_OVERRIDE;
+
     virtual bool is_number() const ROSE_OVERRIDE {
-        return expr->is_known();
+        return expr->isNumber();
     }
 
     virtual uint64_t get_number() const ROSE_OVERRIDE;
@@ -230,15 +293,20 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods first declared in this class...
 public:
-    /** Substitute one value for another throughout a value. For example, if this value is "(add esp_0, -12)" and we substitute
-     *  "esp_0" with "(add stack_frame 4)", this method would return "(add stack_frame -8)".  It is also possible for the @p
-     *  from value to be a more complicated expression. This method attempts to match @p from at all nodes of this expression
-     *  and substitutes at eac node that matches.  The @p from and @p to must have the same width. */
+    /** Substitute one value for another throughout a value.
+     *
+     *  For example, if this value is "(add esp_0, -12)" and we substitute "esp_0" with "(add stack_frame 4)", this method
+     *  would return "(add stack_frame -8)".  It is also possible for the @p from value to be a more complicated
+     *  expression. This method attempts to match @p from at all nodes of this expression and substitutes at eac node that
+     *  matches.  The @p from and @p to must have the same width. */
     virtual SValuePtr substitute(const SValuePtr &from, const SValuePtr &to) const;
 
-    /** Adds instructions to the list of defining instructions.  Adds the specified instruction and defining sets into this
-     *  value and returns a reference to this value. See also add_defining_instructions().
-     *  @{ */
+    /** Adds instructions to the list of defining instructions.
+     *
+     *  Adds the specified instruction and defining sets into this value and returns a reference to this value. See also
+     *  add_defining_instructions().
+     *
+     * @{ */
     virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2, const InsnSet &set3) {
         add_defining_instructions(set3);
         defined_by(insn, set1, set2);
@@ -256,15 +324,16 @@ public:
     }
     /** @} */
 
-    /** Returns the expression stored in this value.  Expressions are reference counted; the reference count of the returned
-     *  expression is not incremented. */
-    virtual const TreeNodePtr& get_expression() const {
+    /** Returns the expression stored in this value.
+     *
+     *  Expressions are reference counted; the reference count of the returned expression is not incremented. */
+    virtual const ExprPtr& get_expression() const {
         return expr;
     }
 
     /** Changes the expression stored in the value.
      * @{ */
-    virtual void set_expression(const TreeNodePtr &new_expr) {
+    virtual void set_expression(const ExprPtr &new_expr) {
         expr = new_expr;
     }
     virtual void set_expression(const SValuePtr &source) {
@@ -272,8 +341,10 @@ public:
     }
     /** @} */
 
-    /** Returns the set of instructions that defined this value.  The return value is a flattened lattice represented as a set.
-     *  When analyzing this basic block starting with an initial default state:
+    /** Returns the set of instructions that defined this value.
+     *
+     *  The return value is a flattened lattice represented as a set.  When analyzing this basic block starting with an initial
+     *  default state:
      *
      *  @code
      *  1: mov eax, 2
@@ -282,14 +353,17 @@ public:
      *  4: mov ebx, 3
      *  @endcode
      *
-     *  the defining set for EAX will be instructions {1, 2} and the defining set for EBX will be {4}.  Defining sets for other
-     *  registers are the empty set. */
+     *  the defining set for the value stored in EAX will be instructions {1, 2} and the defining set for the value stored in
+     *  EBX will be {4}.  Defining sets for values stored in other registers are the empty set. */
     virtual const InsnSet& get_defining_instructions() const {
         return defs;
     }
 
-    /** Adds definitions to the list of defining instructions. Returns the number of items added that weren't already in the
-     *  list of defining instructions.  @{ */
+    /** Adds definitions to the list of defining instructions.
+     *
+     *  Returns the number of items added that weren't already in the list of defining instructions.
+     *
+     * @{ */
     virtual size_t add_defining_instructions(const InsnSet &to_add);
     virtual size_t add_defining_instructions(const SValuePtr &source) {
         return add_defining_instructions(source->get_defining_instructions());
@@ -297,7 +371,10 @@ public:
     virtual size_t add_defining_instructions(SgAsmInstruction *insn);
     /** @} */
 
-    /** Set definint instructions.  This discards the old set of defining instructions and replaces it with the specified set.
+    /** Set defining instructions.
+     *
+     *  This discards the old set of defining instructions and replaces it with the specified set.
+     *
      *  @{ */
     virtual void set_defining_instructions(const InsnSet &new_defs) {
         defs = new_defs;
@@ -319,11 +396,11 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Memory state
+//                                      List-based Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryState object.  MemoryState objects are reference counted and should not be explicitly deleted. */
-typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
+/** Shared-ownership pointer for symbolic list-based memory state. See @ref heap_object_shared_ownership. */
+typedef boost::shared_ptr<class MemoryListState> MemoryListStatePtr;
 
 /** Byte-addressable memory.
  *
@@ -338,8 +415,10 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *  may-alias the address being read (stopping when it hits a must-alias cell).  If no must-alias cell is found, then a new
  *  cell is added to the memory and the may-alias list.  In any case, if the may-alias list contains exactly one cell, that
  *  cell's value is returned; otherwise a CellCompressor is called.  The default CellCompressor either returns a McCarthy
- *  expression or the default value depending on whether an SMT solver is being used. */
-class MemoryState: public BaseSemantics::MemoryCellList {
+ *  expression or the default value depending on whether an SMT solver is being used.
+ *
+ *  @sa MemoryMapState */
+class MemoryListState: public BaseSemantics::MemoryCellList {
 public:
     /** Functor for handling a memory read that found more than one cell that might alias the requested address. */
     struct CellCompressor {
@@ -393,32 +472,33 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+    explicit MemoryListState(const BaseSemantics::MemoryCellPtr &protocell)
         : BaseSemantics::MemoryCellList(protocell), cell_compressor(&cc_choice) {}
 
-    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+    MemoryListState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
         : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cell_compressor(&cc_choice) {}
 
-    MemoryState(const MemoryState &other)
+    MemoryListState(const MemoryListState &other)
         : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
-    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
-        return MemoryStatePtr(new MemoryState(protocell));
+    static MemoryListStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MemoryListStatePtr(new MemoryListState(protocell));
     }
 
     /** Instantiates a new memory state having specified prototypical value.  This constructor uses BaseSemantics::MemoryCell
      * as the cell type. */
-    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
-        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
+    static  MemoryListStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval,
+                                        const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryListStatePtr(new MemoryListState(addrProtoval, valProtoval));
     }
 
     /** Instantiates a new deep copy of an existing state. */
-    static MemoryStatePtr instance(const MemoryStatePtr &other) {
-        return MemoryStatePtr(new MemoryState(*other));
+    static MemoryListStatePtr instance(const MemoryListStatePtr &other) {
+        return MemoryListStatePtr(new MemoryListState(*other));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -432,22 +512,22 @@ public:
     }
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const ROSE_OVERRIDE {
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const {
         return instance(protocell);
     }
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
     virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
-        return MemoryStatePtr(new MemoryState(*this));
+        return BaseSemantics::MemoryStatePtr(new MemoryListState(*this));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
-     *  not have a run-time type that is a SymbolicSemantics::MemoryState or subclass thereof. */
-    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
-        MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+     *  not have a run-time type that is a SymbolicSemantics::MemoryListState or subclass thereof. */
+    static MemoryListStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
+        MemoryListStatePtr retval = boost::dynamic_pointer_cast<MemoryListState>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -481,6 +561,109 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Map-based Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Shared-ownership pointer to symbolic memory state. See @ref heap_object_shared_ownership. */
+typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
+
+/** Byte-addressable memory.
+ *
+ *  This class represents an entire state of memory via a map of memory cells.  The cells are indexed in the map using the hash
+ *  of their symbolic virtual address, therefore querying using an address that is equal but structurally different will fail
+ *  to find the cell. This memory state does not resolve aliasing.  For instance, storing a value at virtual address esp + 24
+ *  and then querying ebp + 8 will always assume that they are two non-aliasing addresses unless ROSE is able to simplify one
+ *  of the expressions to exactly match the other.
+ *
+ *  Although this state has less precision than the list-based state (@ref MemoryListState), it operatates in logorithmic time
+ *  instead of linear time, and by using hashing it avoids a relatively expensive comparison of address expressions at each
+ *  step.
+ *
+ *  This class should not be confused with @ref MemoryMap. The former is used by instruction semantics to represent the state
+ *  of memory such as during data-flow, while the latter is a model for mapping concrete values to concrete addresses similar
+ *  to how operating systems map parts of files into an address space.
+ *
+ *  @sa MemoryListState */
+class MemoryMapState: public BaseSemantics::MemoryCellMap {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
+protected:
+    explicit MemoryMapState(const BaseSemantics::MemoryCellPtr &protocell)
+        : BaseSemantics::MemoryCellMap(protocell) {}
+
+    MemoryMapState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : BaseSemantics::MemoryCellMap(addrProtoval, valProtoval) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
+public:
+    /** Instantiates a new memory state having specified prototypical cells and value. */
+    static MemoryMapStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MemoryMapStatePtr(new MemoryMapState(protocell));
+    }
+
+    /** Instantiates a new memory state having specified prototypical value.  This constructor uses BaseSemantics::MemoryCell
+     *  as the cell type. */
+    static MemoryMapStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval,
+                                      const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryMapStatePtr(new MemoryMapState(addrProtoval, valProtoval));
+    }
+
+    /** Instantiates a new deep copy of an existing state. */
+    static MemoryMapStatePtr instance(const MemoryMapStatePtr &other) {
+        return MemoryMapStatePtr(new MemoryMapState(*other));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
+    /** Virtual constructor. Creates a memory state having specified prototypical value.  This constructor uses
+     * BaseSemantics::MemoryCell as the cell type. */
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const ROSE_OVERRIDE {
+        return instance(addrProtoval, valProtoval);
+    }
+
+    /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const {
+        return instance(protocell);
+    }
+
+    /** Virtual copy constructor. Creates a new deep copy of this memory state. */
+    virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
+        return BaseSemantics::MemoryStatePtr(new MemoryMapState(*this));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
+     *  not have a run-time type that is a SymbolicSemantics::MemoryMapState or subclass thereof. */
+    static MemoryMapStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
+        MemoryMapStatePtr retval = boost::dynamic_pointer_cast<MemoryMapState>(x);
+        ASSERT_not_null(retval);
+        return retval;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods we override from the super class (documented in the super class)
+public:
+    virtual CellKey generateCellKey(const BaseSemantics::SValuePtr &addr_) const ROSE_OVERRIDE;
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Default memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// List-base memory was the type originally used by this domain. We must keep it that way because some analysis, including 3rd
+// party, assumes that the state is list-based.  New analysis can use the map-based state by instantiating it when the symbolic
+// risc operators are constructed.
+typedef MemoryListState MemoryState;
+typedef MemoryListStatePtr MemoryStatePtr;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Complete state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -492,8 +675,21 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** How to update the list of writers stored at each abstract location. */
+enum WritersMode {
+    TRACK_NO_WRITERS,                                   /**< Do not track writers. */
+    TRACK_LATEST_WRITER,                                /**< Save only the latest writer. */
+    TRACK_ALL_WRITERS                                   /**< Save all writers. */
+};
+
+/** How to update the list of definers stored in each semantic value. */
+enum DefinersMode {
+    TRACK_NO_DEFINERS,                                  /**< Do not track definers. */
+    TRACK_LATEST_DEFINER,                               /**< Save only the latest definer. */
+    TRACK_ALL_DEFINERS                                  /**< Save all definers. */
+};
+
+/** Shared-ownership pointer to symbolic RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the SymbolicSemantics domain.
@@ -520,17 +716,17 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false), omit_cur_insn(false),
-          compute_memwriters(true) {
-        set_name("Symbolic");
+        : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
+        name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), compute_usedef(false), omit_cur_insn(false),
-          compute_memwriters(true) {
-        set_name("Symbolic");
-        (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
+        : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
+        name("Symbolic");
+        (void) SValue::promote(state->protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -541,19 +737,19 @@ public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
+        BaseSemantics::MemoryStatePtr memory = MemoryListState::instance(protoval, protoval);
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument for convenience. See set_solver() for details. */
+     *  second argument for convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
-     *  for convenience. See set_solver() for details. */
+     *  for convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -587,15 +783,15 @@ public:
 public:
     virtual BaseSemantics::SValuePtr boolean_(bool b) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
-        if (compute_usedef && !omit_cur_insn)
-            retval->defined_by(get_insn());
+        if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
+            retval->defined_by(currentInstruction());
         return retval;
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
-        if (compute_usedef && !omit_cur_insn)
-            retval->defined_by(get_insn());
+        if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
+            retval->defined_by(currentInstruction());
         return retval;
     }
 
@@ -603,8 +799,8 @@ public:
     // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
     // implementations.
 protected:
-    SValuePtr svalue_expr(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
-        SValuePtr newval = SValue::promote(protoval->undefined_(expr->get_nbits()));
+    SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
+        SValuePtr newval = SValue::promote(protoval()->undefined_(expr->nBits()));
         newval->set_expression(expr);
         newval->set_defining_instructions(defs);
         return newval;
@@ -612,6 +808,10 @@ protected:
 
     SValuePtr svalue_undefined(size_t nbits) {
         return SValue::promote(undefined_(nbits));
+    }
+
+    SValuePtr svalue_bottom(size_t nbits) {
+        return SValue::promote(bottom_(nbits));
     }
 
     SValuePtr svalue_unspecified(size_t nbits) {
@@ -629,33 +829,124 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration properties
 protected:
-    bool compute_usedef;                                // if true, add use-def info to each value
     bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer
-    bool compute_memwriters;                            // if true, add latest writer to each memory cell
+    DefinersMode computingDefiners_;                    // whether to track definers (instruction VAs) of SValues
+    WritersMode computingMemoryWriters_;                // whether to track writers (instruction VAs) to memory.
+    WritersMode computingRegisterWriters_;              // whether to track writers (instruction VAs) to registers.
+    size_t trimThreshold_;                              // max size of expressions (zero means no maximimum)
 
 public:
-    /** Accessor for the compute_usedef property.  If compute_usedef is set, then RISC operators will update the set of
-     *  defining instructions in their return values, computing the new set from the sets of definers for the RISC operands and
-     *  possibly the current instruction (the current instruction is usually not a definer if it simply copies data verbatim).
+
+    // [Robb P. Matzke 2015-09-17] deprecated API
+    bool computingUseDef() const ROSE_DEPRECATED("use computingDefiners instead") {
+        return computingDefiners() == TRACK_ALL_DEFINERS;
+    }
+    void computingUseDef(bool b) ROSE_DEPRECATED("use computingDefiners instead") {
+        computingDefiners(TRACK_ALL_DEFINERS);
+    }
+
+    // [Robb P. Matzke 2015-08-10] deprecated API
+    void set_compute_usedef(bool b=true) ROSE_DEPRECATED("use computingDefiners instead") {
+        computingDefiners(b ? TRACK_ALL_DEFINERS : TRACK_NO_DEFINERS);
+    }
+    void clear_compute_usedef() ROSE_DEPRECATED("use computingDefiners instead") {
+        computingDefiners(TRACK_NO_DEFINERS);
+    }
+    bool get_compute_usedef() ROSE_DEPRECATED("use computingDefiners instead") {
+        return computingDefiners() == TRACK_ALL_DEFINERS;
+    }
+
+    /** Property: Track which instructions define a semantic value.
+     *
+     *  Each semantic value (@ref SValue) is capable of storing a set of instruction addresses. This property controls how
+     *  operations that produce new semantic values adjust those definers-sets in the new value.
+     *
+     *  @li @c TRACK_NO_DEFINERS: Each new semantic value will have a default-constructed definers-set (probably empty). Using
+     *      this setting makes the definers-set available for other uses.
+     *
+     *  @li @c TRACK_LATEST_DEFINER: The new values will have the default-constructed definers-set unioned with the address of
+     *      the current instruction (if there is a current instruction).
+     *
+     *  @li @c TRACK_ALL_DEFINERS: The new values will have a default-constructed definers-set unioned with the address of the
+     *      current instruciton (if there is one), and the addresses of the definers-sets of the operands. Certain operations
+     *      are able to simplify these sets. For example, an exclusive-or whose two operands are equal will return a zero
+     *      result whose only definer is the current instruction.
+     *
      * @{ */
-    void set_compute_usedef(bool b=true) { compute_usedef = b; }
-    void clear_compute_usedef() { set_compute_usedef(false); }
-    bool get_compute_usedef() const { return compute_usedef; }
+    void computingDefiners(DefinersMode m) { computingDefiners_ = m; }
+    DefinersMode computingDefiners() const { return computingDefiners_; }
     /** @} */
 
-    /** Property: track latest writer to each memory location.
+    /** Property: Track which instructions write to each memory location.
      *
-     *  If true, then each @ref writeMemory operation will update the affected memory cells with latest-writer information if
-     *  possible (depending on the type of memory state being used.
+     *  Each memory location stores a set of addresses that represent the instructions that wrote to that location. This
+     *  property controls how each @ref writeMemory operation updates that set.
+     *
+     *  @li @c TRACK_NO_WRITERS: Does not update the memory state's writers information. Using this setting will make that
+     *      data structure available for other purposes. The data structure can store a set of addresses independently for each
+     *      memory cell.
+     *
+     *  @li @c TRACK_LATEST_WRITER:  Each write operation clobbers all previous write information for the affected
+     *      memory address and stores the address of the current instruction (if there is one).
+     *
+     *  @li @c TRACK_ALL_WRITERS: Each write operation inserts the instruction address into the set of addresses stored for the
+     *      affected memory cell without removing any addresses that are already associated with that cell. While this works
+     *      well for analysis over a small region of code (like a single function), it might cause the writer sets to become
+     *      very large when the same memory state is used over large regions (like a whole program).
      *
      * @{ */
-    void set_compute_memwriters(bool b = true) { compute_memwriters = b; }
-    void clear_compute_memwriters() { compute_memwriters = false; }
-    bool get_compute_memwriters() const { return compute_memwriters; }
+    void computingMemoryWriters(WritersMode m) { computingMemoryWriters_ = m; }
+    WritersMode computingMemoryWriters() const { return computingMemoryWriters_; }
+    /** @} */
+
+    // [Robb P. Matzke 2015-08-10] deprecated API
+    void set_compute_memwriters(bool b = true) ROSE_DEPRECATED("use computingMemoryWriters instead") {
+        computingMemoryWriters(b ? TRACK_LATEST_WRITER : TRACK_NO_WRITERS);
+    }
+    void clear_compute_memwriters() ROSE_DEPRECATED("use computingMemoryWriters instead") {
+        computingMemoryWriters(TRACK_NO_WRITERS);
+    }
+    bool get_compute_memwriters() const ROSE_DEPRECATED("use computingMemoryWriters instead") {
+        return computingMemoryWriters() != TRACK_NO_WRITERS;
+    }
+
+    /** Property: Track latest writer to each register.
+     *
+     *  Controls whether each @ref writeRegister operation updates the list of writers.  The following values are allowed for
+     *  this property:
+     *
+     *  @li @c TRACK_NO_WRITERS: Does not update the register state's writers information. Using this setting will make that
+     *      data structure available for other purposes. The data structure can store a set of addresses independently for each
+     *      bit of each register.
+     *
+     *  @li @c TRACK_LATEST_WRITER:  Each write operation clobbers all previous write information for the affected
+     *      register. This information is stored per bit so that if instruction 1 writes to EAX and then instruction 2 writes
+     *      to AX then the high-order 16 bits of EAX will have {1} as the writer set while the low order bits will have {2} as
+     *      its writer set.
+     *
+     *  @li @c TRACK_ALL_WRITERS: Each write operation inserts the instruction address into the set of addresses stored for the
+     *      affected register (or register part) without removing any addresses that are already associated with that
+     *      register. While this works well for analysis over a small region of code (like a single function), it might cause
+     *      the writer sets to become very large when the same register state is used over large regions (like a whole
+     *      program).
+     *
+     * @{ */
+    void computingRegisterWriters(WritersMode m) { computingRegisterWriters_ = m; }
+    WritersMode computingRegisterWriters() const { return computingRegisterWriters_; }
     /** @} */
 
     // Used internally to control whether cur_insn should be omitted from the list of definers.
     bool getset_omit_cur_insn(bool b) { bool retval = omit_cur_insn; omit_cur_insn=b; return retval; }
+
+    /** Property: Maximum size of expressions.
+     *
+     *  Symbolic expressions can get very large very quickly. This property controls how large a symbolic expression can grow
+     *  before it's substituted with a new variable.  The default, zero, means to never limit the size of expressions.
+     *
+     * @{ */
+    void trimThreshold(size_t n) { trimThreshold_ = n; }
+    size_t trimThreshold() const { return trimThreshold_; }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
@@ -722,7 +1013,13 @@ public:
      * @endcode
      */
     virtual void substitute(const SValuePtr &from, const SValuePtr &to);
-    
+
+    /** Filters results from RISC operators.
+     *
+     *  Checks that the size of the specified expression doesn't exceed the @ref trimThreshold. If not (or the threshold is
+     *  zero), returns the argument, otherwise returns a new variable. */
+    virtual BaseSemantics::SValuePtr filterResult(const BaseSemantics::SValuePtr&);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
@@ -775,7 +1072,8 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,

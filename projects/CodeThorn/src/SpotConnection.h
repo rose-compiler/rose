@@ -97,7 +97,10 @@ namespace CodeThorn {
       void resetLtlResults();
       // only resets a specific entry in the results table.
       void resetLtlResults(int property);
-
+      //maps an integer ioVal to its ioVal'th letter in the alphabet. Prepended by 'i' for 1 to "maxIntVal"
+      // and 'o' for "maxIntVal" to 26 (RERS format)
+      std::string int2PropName(int ioVal, int maxInVal);
+      void setModeLTLDriven(bool ltlDriven);
     private:
       //Removes every "WU" in a string with 'W". Necessary because only accepts this syntax.
       string& parseWeakUntil(std::string& ltl_string);
@@ -131,10 +134,6 @@ namespace CodeThorn {
       //small helper function for filter_run_IO_only
       std::string formatIOChar(std::string prop, bool firstEntry, bool cycleStart);
 
-      //maps an integer ioVal to its ioVal'th letter in the alphabet. Prepended by 'i' for 1 to "maxIntVal"
-      // and 'o' for "maxIntVal" to 26 (RERS format)
-      std::string int2PropName(int ioVal, int maxInVal);
-
       //returns a list of all those properties that still have an unknown value as of now. The returned
       // list has to be deleted by the calling function.
       std::list<LtlProperty>* getUnknownFormulae();
@@ -143,6 +142,7 @@ namespace CodeThorn {
       std::list<LtlProperty> behaviorProperties; 
       //a container for the results of the LTL property evaluation
       PropertyValueTable* ltlResults;
+      bool modeLTLDriven;
   };
 };
 #endif

@@ -245,7 +245,7 @@ public:
                             name += " (" + StringUtility::addrToString(defn->get_entry_va()) + ")";
 
                         /* Print the whole line at once */
-                        mfprintf(m)("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu %s %s\n",
+                        mfprintf(m)("    %3zu 0x%08" PRIx64" 0x%08" PRIx64" %5zu/%-6zu %s %s\n",
                                     ++nfuncs, func_start, func_end, insns.size(), nbytes,
                                     defn->reason_str(true).c_str(), name.c_str());
 
@@ -330,7 +330,7 @@ public:
                  * address of a CALL instruction in executable memory.  This only handles CALLs encoded in two or five
                  * bytes. */
                 bool bp_not_pushed = false;
-                const RegisterDescriptor &REG_SP = args.thread->dispatcher()->REG_anySP;
+                const RegisterDescriptor &REG_SP = args.thread->get_process()->disassembler()->stackPointerRegister();
                 uint64_t sp = args.thread->operators()->readRegister(REG_SP)->get_number();
                 uint64_t top = 0;
                 bool isTopValid = false;
@@ -436,7 +436,7 @@ public:
             std::string operation = args.how==MemoryMap::READABLE ? "READ" : "WRITE";
             for (size_t i=0; i<operation.size(); i++)
                 operation[i] = tolower(operation[i]);
-            mfprintf(mesg)("MemoryAccessWatcher: triggered for %s access at 0x%08"PRIx64" for %zu byte%s\n",
+            mfprintf(mesg)("MemoryAccessWatcher: triggered for %s access at 0x%08" PRIx64" for %zu byte%s\n",
                            operation.c_str(), args.va, args.nbytes, 1==args.nbytes?"":"s");
         }
         return enabled;
@@ -487,12 +487,12 @@ public:
         if (armed) {
             size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
             if (nread<nbytes && report_short) {
-                mfprintf(args.thread->tracing(TRACE_MISC))("MemoryChecker: read failed at 0x%08"PRIx64"\n", va+nread);
+                mfprintf(args.thread->tracing(TRACE_MISC))("MemoryChecker: read failed at 0x%08" PRIx64"\n", va+nread);
                 armed = false;
             } else {
                 for (size_t i=0; i<nread && i<nbytes; i++) {
                     if (answer[i]!=buffer[i]) {
-                        mfprintf(args.thread->tracing(TRACE_MISC))("MemoryChecker: memory changed at 0x%08"PRIx64
+                        mfprintf(args.thread->tracing(TRACE_MISC))("MemoryChecker: memory changed at 0x%08" PRIx64
                                                                    " from 0x%02x to 0x%02x", va+i, answer[i], buffer[i]);
                         if (show_stack_frames)
                             args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC));
@@ -622,7 +622,7 @@ public:
                         nwrite += n;
                     }
                     if (nread<to_read) {
-                        mfprintf(m)("MemoryDumper: read failed at 0x%08"PRIx64"\n", va+nread);
+                        mfprintf(m)("MemoryDumper: read failed at 0x%08" PRIx64"\n", va+nread);
                         close(fd);
                         goto error;
                     }
@@ -636,7 +636,7 @@ public:
                 size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
                 int fd = -1;
                 if (nread < nbytes)
-                    mfprintf(m)("MemoryDumper: read failed at 0x%08"PRIx64"\n", va+nread);
+                    mfprintf(m)("MemoryDumper: read failed at 0x%08" PRIx64"\n", va+nread);
                 std::string s = SgAsmExecutableFileFormat::hexdump(va, buffer, nread, fmt);
                 if (!filename.empty()) {
                     if (-1==(fd=open(filename.c_str(), O_TRUNC|O_CREAT|O_RDWR, 0666))) {
@@ -711,7 +711,7 @@ public:
             if (new_value) {
                 total_written = args.thread->get_process()->mem_write(new_value, memaddr, nbytes, perms);
                 if (total_written!=nbytes)
-                    fprintf(stderr, "MemoryInitializer write failed at 0x%08"PRIx64"\n", memaddr+total_written);
+                    fprintf(stderr, "MemoryInitializer write failed at 0x%08" PRIx64"\n", memaddr+total_written);
             } else {
                 int fd = open(filename.c_str(), O_RDONLY);
                 if (fd<0) {
@@ -727,7 +727,7 @@ public:
                     total_written += nwrite;
                     va += nwrite;
                     if (nwrite!=(size_t)nread) {
-                        fprintf(stderr, "MemoryInitializer write failed at 0x%08"PRIx64"\n", va);
+                        fprintf(stderr, "MemoryInitializer write failed at 0x%08" PRIx64"\n", va);
                         break;
                     }
                 }
@@ -799,7 +799,7 @@ public:
 
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && args.insn->get_address()==when)
-            SAWYER_MESG(args.thread->tracing(TRACE_MISC)) <<*args.thread->operators()->get_state()->get_register_state();
+            SAWYER_MESG(args.thread->tracing(TRACE_MISC)) <<*args.thread->operators()->currentState()->registerState();
         return enabled;
     }
 };

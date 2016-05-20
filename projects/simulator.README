@@ -1,0 +1,9 @@
+The old "simulator" project was removed by Robb Matzke on 2015-09-10
+because:
+
+1. The "simulator2" project supersedes it
+
+2. It used internal/deprecated ROSE APIs.
+
+3. It handled only x86-32 instructions and emulated only
+   Linux-x86 (32-bit).

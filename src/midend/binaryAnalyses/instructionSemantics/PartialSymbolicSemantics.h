@@ -43,26 +43,6 @@ namespace PartialSymbolicSemantics {
 
     extern uint64_t name_counter;
 
-    /** Formatter that renames variables on the fly.  When this formatter is used, named variables are renamed using
-     *  lower numbers. This is useful for human-readable output because variable names tend to get very large (like
-     *  "v904885611"). */
-    class Formatter: public BaseSemantics::Formatter {
-    protected:
-        typedef std::map<uint64_t, uint64_t> Map;
-        Map renames;
-        size_t next_name;
-    public:
-        Formatter(): next_name(1) {}
-        uint64_t rename(uint64_t orig_name) {
-            if (0==orig_name)
-                return orig_name;
-            std::pair<Map::iterator, bool> inserted = renames.insert(std::make_pair(orig_name, next_name));
-            if (!inserted.second)
-                return orig_name;
-            return next_name++;
-        }
-    };
-
     /** A value is either known or unknown. Unknown values have a base name (unique ID number), offset, and sign. */
     template<size_t nBits>
     struct ValueType {
@@ -113,8 +93,7 @@ namespace PartialSymbolicSemantics {
             BaseSemantics::Formatter fmt;
             print(o, fmt);
         }
-        void print(std::ostream &o, BaseSemantics::Formatter &fmt_) const {
-            Formatter *fmt = dynamic_cast<Formatter*>(&fmt_);
+        void print(std::ostream &o, const BaseSemantics::Formatter &fmt) const {
             FormatRestorer restorer(o); // restore format flags when we leave this scope
             uint64_t sign_bit = (uint64_t)1 << (nBits-1); /* e.g., 80000000 */
             uint64_t val_mask = sign_bit - 1;             /* e.g., 7fffffff */
@@ -123,7 +102,7 @@ namespace PartialSymbolicSemantics {
 
             if (name!=0) {
                 /* This is a named value rather than a constant. */
-                uint64_t renamed = fmt ? fmt->rename(name) : name;
+                uint64_t renamed = name;
                 const char *sign = negate ? "-" : "";
                 o <<sign <<"v" <<std::dec <<renamed;
                 if (negative) {
@@ -211,8 +190,9 @@ namespace PartialSymbolicSemantics {
             BaseSemantics::Formatter fmt;
             print(o, s, fmt);
         }
+
         void print_diff_registers(std::ostream &o, const State&,
-                                  BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const;
+                                  const BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const;
         /** @} */
 
         /** Tests registers of two states for equality. */
@@ -967,7 +947,7 @@ namespace PartialSymbolicSemantics {
 
     template<template<size_t> class ValueType>
     void
-    State<ValueType>::print_diff_registers(std::ostream &o, const State &other, BaseSemantics::Formatter &fmt) const
+    State<ValueType>::print_diff_registers(std::ostream &o, const State &other, const BaseSemantics::Formatter &fmt) const
     {
 #ifndef CXX_IS_ROSE_ANALYSIS
         // DQ (5/22/2010): This code does not compile using ROSE, it needs to be investigated to be reduced to an bug
@@ -1186,7 +1166,7 @@ namespace PartialSymbolicSemantics {
         }
 
         std::stringstream s;
-        Formatter fmt;
+        BaseSemantics::Formatter fmt;
         print_diff(s, fmt);
         ROSE_ASSERT(gcry_md_get_algo_dlen(GCRY_MD_SHA1)==20);
         gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());

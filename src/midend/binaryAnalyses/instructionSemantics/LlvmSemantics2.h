@@ -13,12 +13,12 @@ namespace LlvmSemantics {
 
 typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
-typedef InsnSemanticsExpr::LeafNode LeafNode;
-typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
-typedef InsnSemanticsExpr::InternalNode InternalNode;
-typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
-typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
-typedef InsnSemanticsExpr::TreeNodes TreeNodes;
+typedef SymbolicExpr::Leaf LeafNode;
+typedef SymbolicExpr::LeafPtr LeafPtr;
+typedef SymbolicExpr::Interior InteriorNode;
+typedef SymbolicExpr::InteriorPtr InteriorPtr;
+typedef SymbolicExpr::Ptr ExpressionPtr;
+typedef SymbolicExpr::Nodes TreeNodes;
 
 typedef SymbolicSemantics::SValuePtr SValuePtr;
 typedef SymbolicSemantics::SValue SValue;
@@ -32,11 +32,12 @@ typedef SymbolicSemantics::MemoryState MemoryState;
 typedef BaseSemantics::StatePtr StatePtr;
 typedef BaseSemantics::State State;
 
+/** Shared-ownership pointer to LLVM RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public SymbolicSemantics::RiscOperators {
 private:
-    typedef Map<uint64_t /*hash*/, LeafNodePtr /*term*/> Rewrites;
+    typedef Map<SymbolicExpr::Hash, LeafPtr> Rewrites;
     typedef Map<uint64_t, std::string> Variables;
 
     Rewrites rewrites;                                  // maps expressions to LLVM variables
@@ -46,18 +47,19 @@ private:
     TreeNodes  mem_writes;                              // memory write operations (OP_WRITE expressions)
     int indent_level;                                   // level of indentation (might be negative, but prefix() clips to zero
     std::string indent_string;                          // white space per indentation level
+    int llvmVersion_;                                   // 1000000*major + 1000*minor + patch. e.g., 3005000 = llvm-3.5.0
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    ") {
-        set_name("Llvm");
+        : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
+        name("Llvm");
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    ") {
-        set_name("Llvm");
+        : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
+        name("Llvm");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,6 +108,20 @@ public:
         assert(retval!=NULL);
         return retval;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+public:
+    /** Property: LLVM version.
+     *
+     *  Different versions of LLVM have different assembly syntaxes which are not backward compatible, and this property which
+     *  dialect is emitted. This property is set to a*x^2 + b*x + c where a, b, and c are the three-part LLVM version number
+     *  "a.b.c" and x is 1000.  The special value zero is reserved to mean that the version number is unknown.
+     *
+     * @{ */
+    int llvmVersion() const { return llvmVersion_; }
+    void llvmVersion(int v) { llvmVersion_ = v; }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from the super class
@@ -176,15 +192,15 @@ public:
     virtual void make_current();
 
     /** Register a rewrite. */
-    virtual void add_rewrite(const TreeNodePtr &from, const LeafNodePtr &to);
+    virtual void add_rewrite(const ExpressionPtr &from, const LeafPtr &to);
 
     /** Register an LLVM variable. Returns the LLVM variable name including its sigil. If the variable doesn't exist yet then
      *  it's added to the list of known variables. */
-    virtual std::string add_variable(const LeafNodePtr&);
+    virtual std::string add_variable(const LeafPtr&);
 
     /** Returns the LLVM name for a variable, including the sigil.  If the specified ROSE variable has no corresponding
      *  LLVM definition, then the empty string is returned. */
-    virtual std::string get_variable(const LeafNodePtr&);
+    virtual std::string get_variable(const LeafPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // New methods to emit the machine state
@@ -240,14 +256,14 @@ public:
     virtual std::string llvm_integer_type(size_t nbits);
 
     /** Convert a ROSE variable or integer to an LLVM term. A term must be a constant or a variable reference (rvalue). */
-    virtual std::string llvm_term(const TreeNodePtr&);
+    virtual std::string llvm_term(const ExpressionPtr&);
 
     /** Convert a ROSE variable to an LLVM lvalue. The variable must not have been used as an lvalue previously since LLVM uses
      *  single static assignment (SSA) format. */
-    virtual std::string llvm_lvalue(const LeafNodePtr&);
+    virtual std::string llvm_lvalue(const LeafPtr&);
 
     /** Create a temporary variable. */
-    virtual LeafNodePtr next_temporary(size_t nbits);
+    virtual LeafPtr next_temporary(size_t nbits);
 
     /** Obtain the name for an LLVM label, excluding the "%" sigil. */
     virtual std::string next_label();
@@ -278,16 +294,16 @@ public:
      *
      * and returns the symbolic variable "v6".
      * @{ */
-    virtual LeafNodePtr emit_expression(std::ostream&, const SValuePtr&);
-    virtual LeafNodePtr emit_expression(std::ostream&, const TreeNodePtr&);
-    virtual LeafNodePtr emit_expression(std::ostream&, const LeafNodePtr&);
+    virtual LeafPtr emit_expression(std::ostream&, const SValuePtr&);
+    virtual LeafPtr emit_expression(std::ostream&, const ExpressionPtr&);
+    virtual LeafPtr emit_expression(std::ostream&, const LeafPtr&);
     /** @} */
 
 protected:
     /** Emit an assignment and add a rewrite rule.  The left hand side is a new LLVM temporary variable (which is returned). If
      *  @p rhs is an LLVM unamed local variable then @p rhs is returned. Otherwise, a rewrite rule is added so that future
      *  appearances of the right hand side will be replaced by the left hand side in calls to emit_expression(). */
-    virtual LeafNodePtr emit_assignment(std::ostream&, const TreeNodePtr &rhs);
+    virtual LeafPtr emit_assignment(std::ostream&, const ExpressionPtr &rhs);
 
     /** Emit an operation as LLVM instructions.  These "emit" methods take operands that are symbolic expressions and output
      *  LLVM instructions that implement the expression.  The return value is either an LLVM term (variable or integer) or
@@ -295,40 +311,41 @@ protected:
      *  expression "(add (negate v3))" where the "add" is a no-op that simply returns its only argument.  Because these "emit"
      *  methods might return an expression, it is customary to call emit_expression() on their return value.
      *  @{ */
-    virtual TreeNodePtr emit_zero_extend(std::ostream&, const TreeNodePtr &value, size_t nbits);
-    virtual TreeNodePtr emit_sign_extend(std::ostream&, const TreeNodePtr &value, size_t nbits);
-    virtual TreeNodePtr emit_truncate(std::ostream&, const TreeNodePtr &value, size_t nbits);
-    virtual TreeNodePtr emit_unsigned_resize(std::ostream&, const TreeNodePtr &value, size_t nbits);
-    virtual TreeNodePtr emit_binary(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_signed_binary(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_unsigned_binary(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_logical_right_shift(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_logical_right_shift_ones(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_arithmetic_right_shift(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_left_shift(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_left_shift_ones(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_lssb(std::ostream&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_mssb(std::ostream&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_extract(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &from, size_t result_nbits);
-    virtual TreeNodePtr emit_invert(std::ostream&, const TreeNodePtr &value);
-    virtual TreeNodePtr emit_left_associative(std::ostream&, const std::string &llvm_op, const TreeNodes &operands);
-    virtual TreeNodePtr emit_concat(std::ostream&, TreeNodes operands);
-    virtual TreeNodePtr emit_signed_divide(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
-    virtual TreeNodePtr emit_unsigned_divide(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
-    virtual TreeNodePtr emit_signed_modulo(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
-    virtual TreeNodePtr emit_unsigned_modulo(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
-    virtual TreeNodePtr emit_signed_multiply(std::ostream&, const TreeNodes &operands);
-    virtual TreeNodePtr emit_unsigned_multiply(std::ostream&, const TreeNodes &operands);
-    virtual TreeNodePtr emit_rotate_left(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_rotate_right(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_compare(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_ite(std::ostream&, const TreeNodePtr &cond, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_memory_read(std::ostream&, const TreeNodePtr &address, size_t nbits);
-    virtual TreeNodePtr emit_global_read(std::ostream&, const std::string &varname, size_t nbits);
-    virtual void        emit_memory_write(std::ostream&, const TreeNodePtr &address, const TreeNodePtr &value);
+    virtual ExpressionPtr emit_zero_extend(std::ostream&, const ExpressionPtr &value, size_t nbits);
+    virtual ExpressionPtr emit_sign_extend(std::ostream&, const ExpressionPtr &value, size_t nbits);
+    virtual ExpressionPtr emit_truncate(std::ostream&, const ExpressionPtr &value, size_t nbits);
+    virtual ExpressionPtr emit_unsigned_resize(std::ostream&, const ExpressionPtr &value, size_t nbits);
+    virtual ExpressionPtr emit_binary(std::ostream&, const std::string &llvm_op, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_signed_binary(std::ostream&, const std::string &llvm_op, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_unsigned_binary(std::ostream&, const std::string &llvm_op, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_logical_right_shift(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_logical_right_shift_ones(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_arithmetic_right_shift(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_left_shift(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_left_shift_ones(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_lssb(std::ostream&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_mssb(std::ostream&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_extract(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &from, size_t result_nbits);
+    virtual ExpressionPtr emit_invert(std::ostream&, const ExpressionPtr &value);
+    virtual ExpressionPtr emit_left_associative(std::ostream&, const std::string &llvm_op, const TreeNodes &operands);
+    virtual ExpressionPtr emit_concat(std::ostream&, TreeNodes operands);
+    virtual ExpressionPtr emit_signed_divide(std::ostream&, const ExpressionPtr &numerator, const ExpressionPtr &denominator);
+    virtual ExpressionPtr emit_unsigned_divide(std::ostream&, const ExpressionPtr &numerator, const ExpressionPtr &denominator);
+    virtual ExpressionPtr emit_signed_modulo(std::ostream&, const ExpressionPtr &numerator, const ExpressionPtr &denominator);
+    virtual ExpressionPtr emit_unsigned_modulo(std::ostream&, const ExpressionPtr &numerator, const ExpressionPtr &denominator);
+    virtual ExpressionPtr emit_signed_multiply(std::ostream&, const TreeNodes &operands);
+    virtual ExpressionPtr emit_unsigned_multiply(std::ostream&, const TreeNodes &operands);
+    virtual ExpressionPtr emit_rotate_left(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_rotate_right(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_compare(std::ostream&, const std::string &llvm_op, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_ite(std::ostream&, const ExpressionPtr &cond, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_memory_read(std::ostream&, const ExpressionPtr &address, size_t nbits);
+    virtual ExpressionPtr emit_global_read(std::ostream&, const std::string &varname, size_t nbits);
+    virtual void        emit_memory_write(std::ostream&, const ExpressionPtr &address, const ExpressionPtr &value);
     /** @} */
 };
 
+/** Shared-ownership pointer to an LLVM transcoder. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class Transcoder> TranscoderPtr;
 
 /** Translates machine instructions to LLVM. */
@@ -360,6 +377,18 @@ public:
         BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, 32);
         return instance(dispatcher);
     }
+
+    /** Property: LLVM version number.
+     *
+     *  The version number controls the dialect of assembly to be emitted. Since LLVM assembly is used mostly as an
+     *  internal representation within LLVM, its syntax changes from version to version in ways that are not backward
+     *  compatible.  The version number set here is a*x^2 + b*x + c where a b and c are the LLVM version triplet "a.b.c" and x
+     *  is 1000.  The value zero is reserved to mean that the version number is unknown.
+     *
+     * @{ */
+    int llvmVersion() const;
+    void llvmVersion(int version);
+    /** @} */
 
     /** Property to determine whether function fragments should be emitted. A function fragment is a basic block that belongs
      *  to a function but doesn't participate in its control flow graph.  These fragments are usually added to ROSE functions

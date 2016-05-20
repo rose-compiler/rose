@@ -1,7 +1,7 @@
 
 #include "grammar.h"
 #include "ROSETTA_macros.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 
 #if 0
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
@@ -10,6 +10,7 @@
    #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS is NOT defined and SHOULD BE..."
 #endif
 #endif
+
 
 /*
   DQ (3/2/2004): After March 1st meeting with Bjarne, it seems clear we should 
@@ -77,6 +78,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (DoWhileStmt,               "DoWhileStmt",               "DO_WHILE_STMT" );
      NEW_TERMINAL_MACRO (SwitchStatement,           "SwitchStatement",           "SWITCH_STMT" );
      NEW_TERMINAL_MACRO (CatchOptionStmt,           "CatchOptionStmt",           "CATCH_STMT" );
+
+  // DQ (2/10/2016): Adding support for C99 function parameter references in nondefining function declarations.
+     NEW_TERMINAL_MACRO (FunctionParameterScope,    "FunctionParameterScope",    "FUNCTION_PARAMETER_SCOPE" );
 
      NEW_TERMINAL_MACRO (VariableDefinition,        "VariableDefinition",        "VAR_DEFN_STMT" );
   // NEW_TERMINAL_MACRO (ClassDeclaration,          "ClassDeclaration",          "CLASS_DECL_STMT" );
@@ -248,6 +252,9 @@ Grammar::setUpStatements ()
           "IOStatement", "IO_STATEMENT", false);
 #endif
 
+     //SK(08/20/2015): Matlab For-loop
+     NEW_TERMINAL_MACRO (MatlabForStatement,    "MatlabForStatement",    "MATLAB_FOR_STATEMENT");
+     
 
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
@@ -387,7 +394,7 @@ Grammar::setUpStatements ()
   // NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT", true );
      NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn | TemplateClassDefinition, "ClassDefinition",  "CLASS_DEFN_STMT", true );
 
-  // DQ (6/10/2011): Changed this to be a non-terminal and added TemplateFunctionDefinition
+  // DQ (6/10/2011): Changed this to be a non-AstNodeClass and added TemplateFunctionDefinition
      NEW_NONTERMINAL_MACRO (FunctionDefinition, TemplateFunctionDefinition, "FunctionDefinition",  "FUNC_DEFN_STMT", true );
 
   // Note that the associate statement is really a scope, with its own declarations of variables declared by reference to 
@@ -396,11 +403,11 @@ Grammar::setUpStatements ()
           Global                       | BasicBlock           | IfStmt               | ForStatement       | FunctionDefinition |
           ClassDefinition              | WhileStmt            | DoWhileStmt          | SwitchStatement    | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement   | FortranDo          | ForAllStatement    |
-          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement | JavaLabelStatement
-       /* | TemplateInstantiationDefn */,
+          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement | JavaLabelStatement | MatlabForStatement |
+          FunctionParameterScope /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
 
-  // DQ (3/22/2004): Added to support template member functions (removed MemberFunctionDeclaration as terminal)
+  // DQ (3/22/2004): Added to support template member functions (removed MemberFunctionDeclaration as AstNodeClass)
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): New design...
      NEW_NONTERMINAL_MACRO (MemberFunctionDeclaration, TemplateMemberFunctionDeclaration | TemplateInstantiationMemberFunctionDecl,"MemberFunctionDeclaration","MFUNC_DECL_STMT", true);
@@ -865,6 +872,10 @@ Grammar::setUpStatements ()
      StaticAssertionDeclaration.setDataPrototype ( "SgName", "string_literal", "= \"\"",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+     FunctionParameterScope.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_SCOPE", "../Grammar/Statement.code" );
+
+
      FunctionDeclaration.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
 
@@ -964,16 +975,16 @@ Grammar::setUpStatements ()
   // In the case where these are X terminals/nonterminals the data members should be X versions of these.
   // It is difficult for it to be either the X or non_X version since these are different types.
   // There are three cases to consider:
-  //   1) Data member is an X version (matching Xness of the outer terminal)
+  //   1) Data member is an X version (matching Xness of the outer AstNodeClass)
   //           Implementation proceedure: build X version
-  //   2) Data member is a non X version (not matching the Xness of the outer terminal)
+  //   2) Data member is a non X version (not matching the Xness of the outer AstNodeClass)
   //           Implementation proceedure: build non X version
-  //   3) Data member can be the X OR non X version (independent of the Xness of the outer terminal)
+  //   3) Data member can be the X OR non X version (independent of the Xness of the outer AstNodeClass)
   //           Implementation proceedure: build X and non X versions?
 
-  // In this case we want the Xness of the data member to match that of the outer terminal
+  // In this case we want the Xness of the data member to match that of the outer AstNodeClass
      FunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type", "= NULL",
-                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (4/18/2005): Removed this data member since it is redundent with the firstNondefiningDeclaration in the base class (SgDeclarationStatement)
   // QY: need forward definition so that we can set definition pointer as NULL for forward decls 
@@ -994,7 +1005,7 @@ Grammar::setUpStatements ()
 #if 0
   // QY:11/2/04 isn't p_orig_return_type already stored in p_type? should go through p_type then
   // FunctionDeclaration.setDataPrototype ( "SgType*", "orig_return_type", "= NULL",
-  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL | DEF2TYPE_TRAVERSAL, NO_DELETE);
+  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionDeclaration.setDataPrototype ( "int", "from_template", "= 0",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -1101,7 +1112,7 @@ Grammar::setUpStatements ()
   // (but not to the formal type system).  I am not clear if this type should be traversed, I think 
   // not, since it is a function type used only for the representation of syntax.
      FunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type_syntax", "= NULL",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL /* || DEF2TYPE_TRAVERSAL */, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/9/2014): Added boolean flag to communicate when the function's type syntax is different from 
   // the function's type.  However, when the type_syntax is non-null, it is always an equivalent type.
@@ -1122,6 +1133,10 @@ Grammar::setUpStatements ()
   // DQ (8/3/2014): Added support for C++11 new function return type syntax.
      FunctionDeclaration.setDataPrototype("bool","using_new_function_return_type_syntax","= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/10/2016): Adding support for a scope to put function parameters to support C99 cases such as: "foobar(int size, int array[size]);"
+     FunctionDeclaration.setDataPrototype ( "SgFunctionParameterScope*", "functionParameterScope", "= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -1464,9 +1479,9 @@ Grammar::setUpStatements ()
   // DQ (10/17/2007): Modified to reflect that the SgClassType should be cloned instead of copied, however, 
   // we might need a copy constructor to support this!
   // ClassDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ClassDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
      ClassDeclaration.setDataPrototype ( "SgClassDefinition*", "definition", "= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1720,11 +1735,11 @@ Grammar::setUpStatements ()
   // DQ (12/12/2011): SgTemplateType IR nodes were never used in the EDG 3.3 connection. They are only used in the newer EDG 4.3 connection.
   // DQ (11/20/2011): OLD INCORRECT COMMENT: Template declarations don't have a type, the SgTemplateType is used for template instantiations only.
   // TemplateClassDeclaration.setDataPrototype ( "SgTemplateType*", "type", "= NULL",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
   // TemplateClassDeclaration.setDataPrototype ( "SgType*", "type", "= NULL",
-  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
      TemplateClassDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
      TemplateClassDeclaration.setDataPrototype ( "SgTemplateClassDefinition*", "definition", "= NULL",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1815,7 +1830,7 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionDefinition*", "definition", "= NULL",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1977,6 +1992,10 @@ Grammar::setUpStatements ()
   // DQ (4/16/2005): Added support for explicit template instantiation to IR (required to address template linking issues)
      TemplateInstantiationDirectiveStatement.setFunctionPrototype  ( "HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
 
+  // DQ (11/23/2015): After fixing up the AST generation to make the declaration a unique IR node, we can allow this to be traversed.
+  // DQ (11/23/2015): Mark this IR node as CLONE_TREE instead of CLONE_PTR (which will not compile since IR nodes don't have copy constructors, by design).
+  // DQ (11/23/2015): Mark this IR node as CLONE_PTR instead of NO_COPY_DATA.
+  // DQ (11/21/2015): Mark this IR node as NO_COPY_DATA instead of CLONE_TREE (which is the default).
   // DQ (4/8/2014): Restored the original behavior (traversing the associated child declaration).
   // Upon investigation, it is not a shared IR node and traversing it is important to the 
   // support for the AST Copy mechanims (else we fail test2006_08.C and test2008_37.C).
@@ -1993,8 +2012,17 @@ Grammar::setUpStatements ()
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
   // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_TREE);
      TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_TREE);
+
 
   // DQ (8/2/2014): Added to support C++11 "extern template class vector<float>;" used to specify 
   // that a template should not be instantiated (see Cxx11_tests/test2014_18.C).
@@ -2186,7 +2214,7 @@ Grammar::setUpStatements ()
 
   // DQ (10/18/2007): Modified to force AST copy mechanim to copy the type (using CLONE_PTR option).
      EnumDeclaration.setDataPrototype ( "SgEnumType*", "type", "= NULL",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
 #if 0
      EnumDeclaration.setDataPrototype ( "SgInitializedNamePtrList", "enumerators", "= NULL",
@@ -2236,7 +2264,7 @@ Grammar::setUpStatements ()
 
   // DQ (8/12/2014): Adding support for enum field type specifier.
      EnumDeclaration.setDataPrototype ( "SgType*", "field_type", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
   // DQ (8/12/2014): Adding support for C++11 scoped enum declarations.
      EnumDeclaration.setDataPrototype("bool","isScopedEnum","= false",
@@ -2578,9 +2606,9 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TypedefDeclaration.setDataPrototype ( "SgTypedefType*", "type", "= NULL",
-  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypedefDeclaration.setDataPrototype ( "SgTypedefType*", "type", "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
   // DQ (7/22/2004): Where this has been changed to be a valid pointer in the AST 
   // (fix to EDG/Sage connetion), its traversal now causes a cycle in the example 
@@ -3110,6 +3138,17 @@ Grammar::setUpStatements ()
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ForAllStatement.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+     //SK: Matlab specific for loop
+     MatlabForStatement.setFunctionPrototype ("HEADER_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
+     MatlabForStatement.setDataPrototype ( "SgExpression*", "index", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     MatlabForStatement.setDataPrototype ( "SgExpression*", "range", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     MatlabForStatement.setDataPrototype ( "SgBasicBlock*", "body", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     
 
   // DQ (3/22/2007): Added new Fortran Nonblocked do loop construct. For example: "do 10 i=... \n 10 a = 1 \n"
      FortranNonblockedDo.setFunctionPrototype ( "HEADER_FORTRAN_NONBLOCKED_DO", "../Grammar/Statement.code" );
@@ -3643,7 +3682,7 @@ Grammar::setUpStatements ()
   // within the root grammar (the C+ grammar)).
      if (isRootGrammar() == false)
         {
-       // Use the specialized unparse function for this terminal
+       // Use the specialized unparse function for this AstNodeClass
           Global.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
           Global.setFunctionSource     ( "SOURCE_GLOBAL_STATEMENT_PARSER", "../Grammar/Statement.code" );
         }
@@ -3670,6 +3709,9 @@ Grammar::setUpStatements ()
   // DQ (7/25/2014): Adding support for C11 static assertions.
      StaticAssertionDeclaration.setFunctionSource  ( "SOURCE_STATIC_ASSERTION_DECLARATION", "../Grammar/Statement.code" );
 
+  // DQ (2/10/2016): Adding support for a scope for function parametes in non-defining declarations.
+     FunctionParameterScope.setFunctionSource  ( "SOURCE_FUNCTION_PARAMETER_SCOPE", "../Grammar/Statement.code" );
+
      FunctionDeclaration.setFunctionSource  ( "SOURCE_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDeclaration.setFunctionSource  ( "SOURCE_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
 
@@ -3678,7 +3720,7 @@ Grammar::setUpStatements ()
   // within the root grammar (the C+ grammar)).
      if (isRootGrammar() == false)
         {
-       // Use the specialized unparse function for this terminal
+       // Use the specialized unparse function for this AstNodeClass
           FunctionDeclaration.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
           FunctionDeclaration.setFunctionSource     ( "SOURCE_FUNCTION_DECLARATION_STATEMENT_PARSER", "../Grammar/Statement.code" );
         }
@@ -3691,7 +3733,7 @@ Grammar::setUpStatements ()
   // within the root grammar (the C+ grammar)).
      if (isRootGrammar() == false)
         {
-       // Use the specialized unparse function for this terminal
+       // Use the specialized unparse function for this AstNodeClass
           FunctionDefinition.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
           FunctionDefinition.setFunctionSource     ( "SOURCE_FUNCTION_DEFINTION_STATEMENT_PARSER", "../Grammar/Statement.code" );
         }
@@ -3948,6 +3990,9 @@ Grammar::setUpStatements ()
      ForAllStatement.setFunctionSource            ( "SOURCE_FORALL_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
+
+     MatlabForStatement.setFunctionSource            ( "SOURCE_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
+
 #if 0
   // Every node needs a definition of the post_construction_initialization() member function
      CommentStatement.setFunctionSource         ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
@@ -3991,7 +4036,7 @@ Grammar::setUpStatements ()
      FortranIncludeLine.setFunctionSource               ( "SOURCE_FORTRAN_INCLUDE_LINE", "../Grammar/Statement.code" );
 
 #if USE_OMP_IR_NODES     
-     // define members for each terminal/non-terminal
+     // define members for each AstNodeClass/non-AstNodeClass
      //------------------------------------------------------------
     // every statement needs post_construction_initialization(){} but why ???
 

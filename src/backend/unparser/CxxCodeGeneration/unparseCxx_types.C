@@ -50,7 +50,6 @@ Unparse_Type::generateElaboratedType(SgDeclarationStatement* declarationStatemen
 
 string get_type_name(SgType* t)
    {
-
 #if 0
      printf ("In get_type_name(t = %p): t->class_name() = %s \n",t,t->class_name().c_str());
 #endif
@@ -141,8 +140,12 @@ string get_type_name(SgType* t)
                     usingGcc = true;
                   #endif
                 #else
-                  string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                  usingGcc = (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx");
+               // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+               // string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+               // usingGcc = (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx");
+                  #if BACKEND_CXX_IS_GNU_COMPILER
+                     usingGcc = true;
+                  #endif
                 #endif
 
                 if (usingGcc) {
@@ -214,7 +217,7 @@ string get_type_name(SgType* t)
                 SgClassDeclaration* decl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = decl->get_qualified_name();
 #if 0
-                printf ("In unparseType(%p): nm = %s \n",t,nm.str());
+                printf ("In get_type_name(%p): nm = %s \n",t,nm.str());
 #endif
                 if (nm.getString() != "")
                     return nm.getString();
@@ -254,57 +257,85 @@ string get_type_name(SgType* t)
                }
 
           case T_MODIFIER:
-               {
-                SgModifierType* mod_type = isSgModifierType(t);
-                ROSE_ASSERT(mod_type != NULL);
-                string res;
-                bool unparse_base = true;
-                if (mod_type->get_typeModifier().isOpenclGlobal())
+             {
+               SgModifierType* mod_type = isSgModifierType(t);
+               ROSE_ASSERT(mod_type != NULL);
+               string res;
+               bool unparse_base = true;
+               if (mod_type->get_typeModifier().isOpenclGlobal())
                     res = "__global " + res;
-                if (mod_type->get_typeModifier().isOpenclLocal())
+               if (mod_type->get_typeModifier().isOpenclLocal())
                     res = "__local " + res;
-                if (mod_type->get_typeModifier().isOpenclConstant())
+               if (mod_type->get_typeModifier().isOpenclConstant())
                     res = "__constant " + res;
-                if ( isSgReferenceType(mod_type->get_base_type()) ||
-                     isSgPointerType(mod_type->get_base_type()) ) {
+               if ( isSgReferenceType(mod_type->get_base_type()) ||
+                     isSgPointerType(mod_type->get_base_type()) ) 
+                  {
                     res = get_type_name(mod_type->get_base_type());
                     unparse_base = false;
-                }
-                if (mod_type->get_typeModifier().haveAddressSpace()) {
+                  }
+               if (mod_type->get_typeModifier().haveAddressSpace()) 
+                  {
                     std::ostringstream outstr;
                     outstr << mod_type->get_typeModifier().get_address_space_value(); 
                     res = res + "__attribute__((address_space(" + outstr.str() + ")))";
-                }
-                if (mod_type->get_typeModifier().get_constVolatileModifier().isConst())
+                  }
+               if (mod_type->get_typeModifier().get_constVolatileModifier().isConst())
                     res = res + "const ";
-                if (mod_type->get_typeModifier().get_constVolatileModifier().isVolatile())
+               if (mod_type->get_typeModifier().get_constVolatileModifier().isVolatile())
                     res = res + "volatile ";
-                if (mod_type->get_typeModifier().isRestrict())
-                   {
-                  // DQ (9/2/2014): Added support for mpiicpc used at LLNL.
-                  // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
+               if (mod_type->get_typeModifier().isRestrict())
+                  {
+                 // DQ (9/2/2014): Added support for mpiicpc used at LLNL.
+                 // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
+#if 1
+                 // DQ (4/16/2016): Use the new refactored form of this support code.
+                    res = res + Unparse_Type::unparseRestrictKeyword();
+#else
 
-                     bool usingGcc = false;
-                     #ifdef USE_CMAKE
+#error "DEAD CODE!"
+                    bool usingGcc = false;
+                    #ifdef USE_CMAKE
                        #ifdef CMAKE_COMPILER_IS_GNUCC
-                         usingGcc = true;
+                          usingGcc = true;
                        #endif
-                     #else
-                       string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                       usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+                    #else
+                    // DQ (4/16/2016): The clang compiler also uses the GNU form of the restrict keyword.
+                    // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+                    // string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+                    // usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+                    // #if BACKEND_CXX_IS_GNU_COMPILER
+                       #if BACKEND_CXX_IS_GNU_COMPILER || BACKEND_CXX_IS_CLANG_COMPILER
+                          usingGcc = true;
+                       #endif
 #if 0
-                     printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
+                    string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+                    printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
 #endif
-                     #endif
-                     if ( usingGcc )
-                        res = res + "__restrict__ ";
-                     else
-                        res = res + "restrict ";
-                   }
-                 if (unparse_base)
+                    #endif
+#error "DEAD CODE!"
+                    if ( usingGcc )
+                       {
+#if 0
+                         printf ("Using GNU form of restrict keyword! \n");
+#endif
+                         res = res + "__restrict__ ";
+                       }
+                      else
+                       {
+#if 0
+                         printf ("Using non-GNU form of restrict keyword! \n");
+#endif
+                         res = res + "restrict ";
+                       }
+#error "DEAD CODE!"
+#endif
+                  }
+               if (unparse_base)
                     res = res + get_type_name(mod_type->get_base_type());
-                  return res;
-                }
+
+               return res;
+             }
 #if 0
           case T_QUALIFIED_NAME:
              {
@@ -420,9 +451,12 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      curprint(string("\n/* Top of unparseType: class_name() = ") + type->class_name() + " */ \n");
 #endif
 
-#if 0
-     printf ("In unparseType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
-     printf ("In unparseType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition()  == true) ? "true" : "false");
+#if 1
+     if (info.SkipClassDefinition() != info.SkipEnumDefinition())
+        {
+          printf ("In unparseType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+          printf ("In unparseType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition()  == true) ? "true" : "false");
+        }
 #endif
   // DQ (1/13/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
@@ -755,8 +789,17 @@ Unparse_Type::unparseDeclType(SgType* type, SgUnparse_Info& info)
 
      ROSE_ASSERT(decltype_node->get_base_expression() != NULL);
 
+#if 0
+     printf ("In Unparse_Type::unparseDeclType(): decltype_node = %p \n",decltype_node);
+#endif
+
      if (info.isTypeFirstPart() == true)
         {
+#if 0
+       // DQ (12/13/2015): We need to know if this is using the C++11 mode, else we need to output "__decltype(" instead.
+          info.display("debugging decltype for non-c++11 mode");
+          printf ("decltype_node->get_base_expression() = %p = %s \n",decltype_node->get_base_expression(),decltype_node->get_base_expression()->class_name().c_str());
+#endif
           SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(decltype_node->get_base_expression());
           if (functionParameterRefExp != NULL)
              {
@@ -2413,16 +2456,18 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      SgTypedefType* typedef_type = isSgTypedefType(type);
      ROSE_ASSERT(typedef_type != NULL);
 
-#if 0
+#define DEBUG_TYPEDEF_TYPE 0
+
+#if DEBUG_TYPEDEF_TYPE
      printf ("Inside of Unparse_Type::unparseTypedefType name = %p = %s \n",typedef_type,typedef_type->get_name().str());
   // curprint ( "\n/* Inside of Unparse_Type::unparseTypedefType */ \n";
 #endif
-#if 0
+#if DEBUG_TYPEDEF_TYPE
      curprint ( string("\n /* info.isWithType()       = ") + ((info.isWithType()       == true) ? "true" : "false") + " */ \n");
      curprint ( string("\n /* info.SkipBaseType()     = ") + ((info.SkipBaseType()     == true) ? "true" : "false") + " */ \n");
      curprint ( string("\n /* info.isTypeSecondPart() = ") + ((info.isTypeSecondPart() == true) ? "true" : "false") + " */ \n");
 #endif
-#if 0
+#if DEBUG_TYPEDEF_TYPE
      printf ("In unparseTypedefType(): info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
      printf ("In unparseTypedefType(): info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
      printf ("In unparseTypedefType(): info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
@@ -2432,7 +2477,7 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      if ((info.isWithType() && info.SkipBaseType()) || info.isTypeSecondPart())
         {
        /* do nothing */;
-#if 0
+#if DEBUG_TYPEDEF_TYPE
           printf ("Inside of Unparse_Type::unparseTypedefType (do nothing) \n");
 #endif
        // curprint ( "\n /* Inside of Unparse_Type::unparseTypedefType (do nothing) */ \n");
@@ -2442,7 +2487,7 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
        // could be a scoped typedef type
        // check if currrent type's parent type is the same as the context type */
        // SgNamedType *ptype = NULL;
-#if 0
+#if DEBUG_TYPEDEF_TYPE
           printf ("Inside of Unparse_Type::unparseTypedefType (normal handling) \n");
 #endif
        // curprint ( "\n /* Inside of Unparse_Type::unparseTypedefType (normal handling) */ \n";
@@ -2648,9 +2693,11 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
 #endif
         }
 
-#if 0
+#if DEBUG_TYPEDEF_TYPE
      printf ("Leaving Unparse_Type::unparseTypedefType \n");
-  // curprint ( "\n/* Leaving Unparse_Type::unparseTypedefType */ \n";
+#endif
+#if DEBUG_TYPEDEF_TYPE
+     curprint("\n/* Leaving Unparse_Type::unparseTypedefType */ \n");
 #endif
    }
 
@@ -2662,18 +2709,24 @@ Unparse_Type::unparseRestrictKeyword()
      string returnString;
 
   // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
-  bool usingGcc = false;
-  #ifdef USE_CMAKE
-    #ifdef CMAKE_COMPILER_IS_GNUCC
-      usingGcc = true;
-    #endif
-  #else
-    string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-    usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
-#if 0
-     printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
-#endif
-  #endif
+     bool usingGcc = false;
+     #ifdef USE_CMAKE
+        #ifdef CMAKE_COMPILER_IS_GNUCC
+           usingGcc = true;
+        #endif
+     #else
+     // DQ (4/16/2016): The clang compiler also uses the GNU form of the restrict keyword.
+     // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+     // string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+     // usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+     // #if BACKEND_CXX_IS_GNU_COMPILER
+        #if BACKEND_CXX_IS_GNU_COMPILER || BACKEND_CXX_IS_CLANG_COMPILER
+           usingGcc = true;
+        #endif
+        #if 0
+           printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
+        #endif
+     #endif
 
   // Liao 6/11/2008, Preserve the original "restrict" for UPC
   // regardless types of the backend compiler
@@ -2688,11 +2741,17 @@ Unparse_Type::unparseRestrictKeyword()
              {
             // GNU uses a string variation on the C99 spelling of the "restrict" keyword
             // DQ (12/12/2012): We need the white space before and after the keyword.
+#if 0
+               printf ("Using GNU form of restrict keyword! \n");
+#endif
                returnString = " __restrict__ ";
              }
             else
              {
             // DQ (12/12/2012): We need the white space before and after the keyword.
+#if 0
+               printf ("Using non-GNU form of restrict keyword! \n");
+#endif
                returnString = " restrict ";
              }
         }
@@ -3199,6 +3258,19 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
   //      ArrayType(base_type, 2)
   //        ArrayType(int, 10), because of the front-end
 
+#if 0
+     info.display("In unparseArrayType()");
+#endif
+
+     bool is_variable_length_array = array_type->get_is_variable_length_array();
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(info.get_decl_stmt());
+     bool isFunctionPrototype = ( (functionDeclaration != NULL) && (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration()) );
+
+#if 0
+     printf ("In unparseArrayType(): is_variable_length_array = %s \n",is_variable_length_array ? "true" : "false");
+     printf ("In unparseArrayType(): isFunctionPrototype      = %s \n",isFunctionPrototype ? "true" : "false");
+#endif
+
 #if DEBUG_ARRAY_TYPE
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
@@ -3374,7 +3446,35 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                     if (ninfo2.supressArrayBound() == false)
                        {
                       // Unparse the array bound.
-                         unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+
+                      // DQ (2/12/2016): Adding support for variable length arrays.
+                      // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                         SgExpression* indexExpression = array_type->get_index();
+                         SgNullExpression* nullExpression = isSgNullExpression(indexExpression);
+
+                      // DQ (2/14/2016): Since the array type's index is updated after seeing the function definition, we need to always use the VLA syntax for reliabily.
+                      // if (nullExpression != NULL && array_type->get_is_variable_length_array() == true)
+                         if (is_variable_length_array == true && isFunctionPrototype == true)
+                            {
+                           // The is the canonical normalized form for a type specified in a function parameter list of a prototype function.
+                              curprint("*");
+                            }
+                           else
+                            {
+                           // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                              if (is_variable_length_array == true && isFunctionPrototype == false)
+                                 {
+#if 0
+                                   printf ("We need to output the expression used in the defining declaration's array type \n");
+                                   curprint(" /* We need to output the expression used in the defining declaration's array type */ ");
+#endif
+                                   unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                                 }
+                                else
+                                 {
+                                   unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                                 }
+                            }
                        }
                       else
                        {
@@ -3389,6 +3489,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                   }
 
                curprint("]");
+
 #if DEBUG_ARRAY_TYPE
                printf ("ninfo.isTypeSecondPart() == true: needParen = %s Calling unparseType(array_type->get_base_type(), ninfo); \n",needParen ? "true" : "false");
 #endif
@@ -3531,9 +3632,13 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // DQ (5/4/2013): This code was copied from the function argument processing which does handle the types properly.
   // So this code needs to be refactored.
 
-#if 0
-     printf ("In outputType(): referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+#define DEBUG_OUTPUT_TYPE 0
+
+#if DEBUG_OUTPUT_TYPE
+     printf ("In outputType(): referenceNode     = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+     printf ("In outputType(): referenceNodeType = %p = %s \n",referenceNodeType,referenceNodeType->class_name().c_str());
      curprint(string("\n/* In outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
+     curprint(string("\n/* In outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
 #endif
 
 #if 0
@@ -3583,15 +3688,16 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // ninfo_for_type.set_name_qualification_length(initializedName->get_name_qualification_length_for_type());
   // ninfo_for_type.set_global_qualification_required(initializedName->get_global_qualification_required_for_type());
   // ninfo_for_type.set_type_elaboration_required(initializedName->get_type_elaboration_required_for_type());
-#if 0
-     printf ("In outputType(): BEFORE: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
-     printf ("In outputType(): BEFORE: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
-     printf ("In outputType(): BEFORE: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
-#endif
 
      SgTemplateArgument* templateArgument = isSgTemplateArgument(referenceNode);
+
      if (templateArgument != NULL)
         {
+#if DEBUG_OUTPUT_TYPE
+          printf ("In outputType(): BEFORE: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
+          printf ("In outputType(): BEFORE: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
+          printf ("In outputType(): BEFORE: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
+#endif
        // Transfer values from old variables to the newly added variables (which will be required to support the refactoring into a template of common code.
           templateArgument->set_name_qualification_length_for_type    (templateArgument->get_name_qualification_length());
           templateArgument->set_global_qualification_required_for_type(templateArgument->get_global_qualification_required());
@@ -3615,6 +3721,9 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
                if (aggregateInitializer != NULL)
                   {
                  // We don't have to transfer any data in this case.
+#if 0
+                    printf ("Nothing to do for this case of referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+#endif
                   }
                  else
                   {
@@ -3632,14 +3741,15 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // ninfo_for_type.set_reference_node_for_qualification(initializedName);
      ninfo_for_type.set_reference_node_for_qualification(referenceNode);
 
-#if 0
+#if DEBUG_OUTPUT_TYPE
      printf ("In outputType(): ninfo_for_type.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
      printf ("In outputType(): ninfo_for_type.SkipEnumDefinition()  = %s \n",(ninfo_for_type.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
+
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
-#if 0
+#if DEBUG_OUTPUT_TYPE
      curprint("\n/* outputType(): output the 1st part of the type */ \n");
 #endif
 
@@ -3647,7 +3757,7 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // unp->u_type->unparseType(tmp_type, ninfo_for_type);
      unp->u_type->unparseType(referenceNodeType, ninfo_for_type);
 
-#if 0
+#if DEBUG_OUTPUT_TYPE
      curprint("\n/* DONE - outputType(): output the 1st part of the type */ \n");
 #endif
 
@@ -3674,12 +3784,14 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // info.display("unparse_helper(): output the 2nd part of the type");
 
   // printf ("unparse_helper(): output the 2nd part of the type \n");
-  // curprint( "\n/* unparse_helper(): output the 2nd part of the type */ \n");
+#if DEBUG_OUTPUT_TYPE
+     curprint( "\n/* unparse_helper(): output the 2nd part of the type */ \n");
+#endif
   // unp->u_type->unparseType(tmp_type, info);
   // unp->u_type->unparseType(templateArgumentType, info);
      unp->u_type->unparseType(referenceNodeType, newInfo);
 
-#if 0
+#if DEBUG_OUTPUT_TYPE
      printf ("DONE: outputType(): \n");
      curprint( "\n/* DONE: outputType(): */ \n");
 #endif

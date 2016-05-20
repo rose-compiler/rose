@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = \
+AM_CPPFLAGS = \
      $(ROSE_INCLUDES)  -Wall $(MAPLE_INCLUDES) $(LIBFFI_CFLAGS)
 
 bin_PROGRAMS = coreInterpreter mpiInterpreter smtInterpreter test_smtlib

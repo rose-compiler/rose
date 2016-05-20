@@ -5,6 +5,7 @@
 
 #include "Diagnostics.h"
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <errno.h>
@@ -162,88 +163,63 @@ RSIM_Process::get_ninsns() const
     return retval;
 }
 
-SgAsmGenericHeader*
+int
 RSIM_Process::load(int existingPid /*=-1*/) {
     FILE *trace = (tracingFlags_ & tracingFacilityBit(TRACE_LOADER)) ? tracingFile_ : NULL;
     if (existingPid != -1)
         simulator->settings().nativeLoad = true;
 
-    // Find the executable in $PATH if necessary and update the simulator's exeArgs[0]
-    ASSERT_require(!simulator->exeName().empty() && !simulator->exeArgs().empty());
-    if (!boost::contains(simulator->exeName(), "/")) {
-        ASSERT_not_null(getenv("PATH"));
-        std::string path_env = getenv("PATH");
-        size_t len;
-        for (size_t pos=0; pos!=std::string::npos && pos<path_env.size(); pos+=len+1) {
-            size_t colon = path_env.find_first_of(":;", pos);
-            len = colon==std::string::npos ? path_env.size()-pos : colon-pos;
-            std::string path = path_env.substr(pos, len);
-            std::string fullname = path + "/" + simulator->exeName();
-            if (access(fullname.c_str(), R_OK)>=0) {
-                simulator->exeArgs()[0] = fullname;
-                break;
-            }
+    // Convert simulated argv[0] to a full path name if appropriate (e.g. using $PATH environment variable) and optionally
+    // check that the executable exists.
+    simulator->updateExecutablePath();
+
+    // Link the main binary into the AST without further linking, mapping, or relocating.
+    if (trace)
+        fprintf(trace, "loading %s...\n", simulator->exeArgs()[0].c_str());
+    interpretation_ = simulator->parseMainExecutable(this);
+    if (interpretation_) {
+        mainHeader_ = interpretation_->get_headers()->get_headers().front();
+        ASSERT_not_null(mainHeader_);
+        headers_.push_back(mainHeader_);
+        project_ = SageInterface::getProject();
+        entryPointOriginalVa_ = entryPointStartVa_ = mainHeader_->get_entry_rva() + mainHeader_->get_base_va();
+
+        // Check architecture
+        if (!simulator->isSupportedArch(mainHeader_)) {
+            mlog[ERROR] <<"specimen architecture is not supported by this simulator class\n";
+            return -ENOEXEC;
         }
     }
 
-    // Make sure the executable is found and readable (it need not be executable since ROSE is simulating execution)
-    if (access(simulator->exeArgs()[0].c_str(), R_OK)<0) {
-        std::cerr <<simulator->exeArgs()[0] <<": " <<strerror(errno) <<"\n";
-        exit(1);
-    }
-
-    /* Link the main binary into the AST without further linking, mapping, or relocating. */
-    if (trace)
-        fprintf(trace, "loading %s...\n", simulator->exeArgs()[0].c_str());
-    char *frontend_args[4];
-    frontend_args[0] = strdup("-");
-    frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
-    frontend_args[2] = strdup(simulator->exeArgs()[0].c_str());
-    frontend_args[3] = NULL;
-    project = frontend(3, frontend_args);
-
-    /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
-     * (we'll use the PE interpretation). */
-    interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
-    SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
-    headers_.push_back(fhdr);
-    entryPointOriginalVa_ = entryPointStartVa_ = fhdr->get_entry_rva() + fhdr->get_base_va();
-
-    // Check architecture
-    if (!simulator->isSupportedArch(fhdr)) {
-        mlog[ERROR] <<"specimen architecture is not supported by this simulator class\n";
-        return NULL;
-    }
-    wordSize_ = 8 * fhdr->get_word_size();
-
     /* Find a disassembler. */
-    if (!disassembler) {
-        disassembler = Disassembler::lookup(interpretation)->clone();
-        ASSERT_not_null(disassembler);
-        disassembler->set_progress_reporting(-1); /* turn off progress reporting */
+    if (!disassembler_) {
+        disassembler_ = Disassembler::lookup(interpretation_)->clone();
+        ASSERT_not_null(disassembler_);
+        disassembler_->set_progress_reporting(-1); /* turn off progress reporting */
     }
+    wordSize_ = disassembler_->instructionPointerRegister().get_nbits();
 
     // Initialize state: memory and registers. Stack initialization happens later.
     if (simulator->settings().nativeLoad) {
-        simulator->loadSpecimenNative(this, disassembler, existingPid);
+        simulator->loadSpecimenNative(this, disassembler_, existingPid);
     } else {
         /* Link the interpreter into the AST */
-        simulator->loadSpecimenArch(this, interpretation, interpname);
+        simulator->loadSpecimenArch(this, interpretation_, interpname);
     }
 
     // Initialize the operating system, at least those parts that we're simulating.
-    simulator->initializeSimulatedOs(this, fhdr);
+    simulator->initializeSimulatedOs(this, mainHeader_);
 
     // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
     // special about the main thread other than its ID is the thread group for the process.
-    PtRegs initialRegisters = simulator->initialRegistersArch();
+    PtRegs initialRegisters = simulator->initialRegistersArch(this);
     if (!simulator->settings().nativeLoad)
         initialRegisters.ip = entryPointStartVa_;
     pid_t mainTid = clone_thread(0, 0, 0, initialRegisters, false/*don't start*/);
     RSIM_Thread *thread = get_thread(mainTid);
 
     mfprintf(thread->tracing(TRACE_THREAD))("new thread with tid %d", thread->get_tid());
-    return fhdr;
+    return 0;
 }
 
 void
@@ -264,8 +240,8 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     /* Get current instruction pointer. We subtract the size of the current instruction if we're in the middle of processing
      * an instruction because it would have already been incremented by the semantics. */ 
     uint32_t eip = readIP().known_value();
-    if (get_insn())
-        eip -= get_insn()->get_size();
+    if (currentInstruction())
+        eip -= currentInstruction()->get_size();
 
     SgAsmGenericFile *ef = new SgAsmGenericFile;
     ef->set_truncate_zeros(false);
@@ -709,8 +685,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
      * [RPM 2011-02-09] */
     {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
-        insn = isSgAsmX86Instruction(disassembler->disassembleOne(&get_memory(), va)); /* might throw Disassembler::Exception */
-        ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
+        insn = disassembler_->disassembleOne(&get_memory(), va); // might throw Disassembler::Exception
         icache[va] = insn;
     }
 
@@ -1119,10 +1094,6 @@ pid_t
 RSIM_Process::clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const PtRegs &regs,
                            bool startRunning)
 {
-#ifndef ROSE_THREADS_ENABLED
-    fprintf(stderr, "ROSE library is not thread safe; multiple threads cannot be simulated.\n");
-    abort();
-#endif
     Clone clone_info(this, flags, parent_tid_va, child_tls_va, regs);
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(clone_info.mutex);
     try {
@@ -1136,6 +1107,7 @@ RSIM_Process::clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_
     clone_info.cond.wait(clone_info.mutex);
 
     RSIM_Thread *child = get_thread(clone_info.newtid);
+    get_simulator()->threadCreated(child);
     if (startRunning)
         child->start();
 
@@ -1146,7 +1118,7 @@ void
 RSIM_Process::clone_thread_helper(void *_clone_info)
 {
     /* clone_info points to the creating thread's stack (inside clone_thread). Since the creator's clone_thread doesn't return
-     * until after we've signaled clone_info.cond and released clone_info.mutex, its safe to access it here in this thread. */
+     * until after we've signaled clone_info.cond and released clone_info.mutex, it's safe to access it here in this thread. */
     Clone *clone_info = (Clone*)_clone_info;
     ROSE_ASSERT(clone_info!=NULL);
     RSIM_Process *process = clone_info->process;
@@ -1350,12 +1322,12 @@ RSIM_Process::disassemble(bool fast, MemoryMap *map/*=null*/)
             map->require(MemoryMap::EXECUTABLE).keep();
         }
         rose_addr_t start_va = 0; // arbitrary since we set the disassembler's SEARCH_UNUSED bit
-        unsigned search = disassembler->get_search();
-        disassembler->set_search(search | Disassembler::SEARCH_UNUSED);
+        unsigned search = disassembler_->get_search();
+        disassembler_->set_search(search | Disassembler::SEARCH_UNUSED);
         Disassembler::AddressSet successors;
         Disassembler::BadMap bad;
-        insns = disassembler->disassembleBuffer(map, start_va, &successors, &bad);
-        disassembler->set_search(search);
+        insns = disassembler_->disassembleBuffer(map, start_va, &successors, &bad);
+        disassembler_->set_search(search);
     } else {
         if (!map) {
             map = allocated_map = new MemoryMap;
@@ -1363,7 +1335,7 @@ RSIM_Process::disassemble(bool fast, MemoryMap *map/*=null*/)
             map->require(MemoryMap::READABLE).keep(); // keep only readable memory; probably includes all executable too
         }
         Partitioner partitioner;
-        block = partitioner.partition(interpretation, disassembler, map);
+        block = partitioner.partition(interpretation_, disassembler_, map);
         insns = partitioner.get_instructions();
     }
     delete allocated_map; allocated_map=NULL;

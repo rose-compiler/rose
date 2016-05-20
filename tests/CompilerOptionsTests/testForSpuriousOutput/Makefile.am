@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
-# INCLUDES = $(ROSE_INCLUDES) -I$(srcdir) 
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir) 
 
 ## Add bugs to this line as they are fixed so that they can be used as test problems
 ## At least we should not reintroduce these fixed bugs again later.
@@ -39,7 +39,7 @@ endif
 # Test the -E option with all of these example files
 $(CXX_TEST_Objects): $(CXX_TESTCODES)
 	@rm -f outputFile; \
-	$(TEST_TRANSLATOR) $(INCLUDES) -c $(srcdir)/$(@:.o=.C) >& outputFile; \
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C) >& outputFile; \
 	outputLines=`wc -l < outputFile`; \
 	echo "Spurious lines of output = $$outputLines"; \
 	if test $$outputLines -eq 0; then \
@@ -58,7 +58,7 @@ $(CXX_TEST_Objects): $(CXX_TESTCODES)
 
 $(F90_TEST_Objects): $(F90_TESTCODES)
 	@rm -f outputFile; \
-	$(TEST_TRANSLATOR) $(INCLUDES) -c $(srcdir)/$(@:.o=.f90) >& outputFile; \
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.f90) >& outputFile; \
 	outputLines=`wc -l < outputFile`; \
 	echo "Spurious lines of output = $$outputLines"; \
 	if test $$outputLines -eq 0; then \

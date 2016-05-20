@@ -6,7 +6,7 @@
 \class SgAsmStmt
 \brief This class represents the concept of a C Assembler statement.
 
-    This IR node supports the gnu standard names for registers, and specifially
+This IR node supports the gnu standard names for registers, and specifially
 the X86 register set.  Other register sets could be supported, for details contact
 the ROSE development team.  More information about the use of asm statements can
 be easily found on the web. 
@@ -18,11 +18,11 @@ wide-spread use.
 \internal Test code for this include test2006_98.C and test2006_99.C.
 
 \todo This should not be a SgDeclaration (should be a regular SgStatement).
-      Where "asm" is used in declarations (e.g. "int x asm("ax") = 0;") this
-      is a SgVariableDeclaration.  A asm statment is really just another kind
-      of statement (e.g "asm ("template",output operand, input operand);").
-      This sort of statement is not a declaration (as I understand it).  This
-      will be fixed in a later release.
+Where "asm" is used in declarations (e.g. "int x asm("ax") = 0;") this
+is a SgVariableDeclaration.  A asm statment is really just another kind
+of statement (e.g "asm ("template",output operand, input operand);").
+This sort of statement is not a declaration (as I understand it).  This
+will be fixed in a later release.
 
 \sa
 \ref SgAsmStmt_usage  "Example of using a SgAsmStmt object"
@@ -35,10 +35,12 @@ wide-spread use.
 
 
 /*! \var SgExpressionPtrList SgAsmStmt::p_operands
-\brief This is a list of expressions; first the asm template, followed by the output
-    operand, and all input operands.
+\brief List of expressions.
 
-   Note that the first element of the list if always a SgStringVal IR node containing the
+List of expressions: first the asm template, followed by the output
+operand, and all input operands.
+
+Note that the first element of the list if always a SgStringVal IR node containing the
 asm template string, the second operand is an output operand (SgAsmOp), the rest of the 
 expressions in this list are the input operands (also SgAsmOp).
 
@@ -47,7 +49,7 @@ expressions in this list are the input operands (also SgAsmOp).
 /*! \var SgAsmStmt::AsmRegisterNameList SgAsmStmt::p_clobberRegisterList
 \brief This is the clobber list (list of registers where side-effects happen).
 
-   This is a list of enum values (type SgInitializedName::asm_register_name_enum)
+This is a list of enum values (type SgInitializedName::asm_register_name_enum)
 that are standard gnu names for registers.  The only currently supported register
 set is X86, other register sets could be supported in the future.
 
@@ -61,7 +63,7 @@ set is X86, other register sets could be supported in the future.
 \fn SgAsmStmt::SgAsmStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgAsmStmt base class.
+This constructor builds the SgAsmStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -74,14 +76,14 @@ set is X86, other register sets could be supported in the future.
 \fn SgAsmStmt::~SgAsmStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgAsmStmt::isSgAsmStmt (SgNode *s)
 \brief Cast function (from derived class to SgAsmStmt pointer).
 
-   This functions returns a SgAsmStmt pointer for any input of a 
+This functions returns a SgAsmStmt pointer for any input of a 
 pointer to an object derived from a SgAsmStmt.
 
 \return Returns valid pointer to SgAsmStmt if input is derived from a SgLocatedNode.
@@ -91,7 +93,7 @@ pointer to an object derived from a SgAsmStmt.
 \fn SgAsmStmt::isSgAsmStmt (const SgNode *s)
 \brief Cast function (from derived class to SgAsmStmt pointer).
 
-   This functions returns a SgAsmStmt pointer for any input of a 
+This functions returns a SgAsmStmt pointer for any input of a 
 pointer to an object derived from a SgAsmStmt.
 
 \return Returns valid pointer to SgAsmStmt if input is derived from a SgLocatedNode.

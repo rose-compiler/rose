@@ -9,9 +9,9 @@
 \internal 
 
 \todo The unparse function "unparseIfStmt" associated with this IR node
-      is implemented using a loop.  I think this should be changed to be more
-      conventional and structural (consistant with the design of the rest of 
-      the unparsing).
+is implemented using a loop.  I think this should be changed to be more
+conventional and structural (consistant with the design of the rest of 
+the unparsing).
 */
 
 /*
@@ -46,7 +46,7 @@
 \fn SgIfStmt::SgIfStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgIfStmt base class.
+This constructor builds the SgIfStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -59,14 +59,14 @@
 \fn SgIfStmt::~SgIfStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgIfStmt::isSgIfStmt (SgNode *s)
 \brief Cast function (from derived class to SgIfStmt pointer).
 
-   This functions returns a SgIfStmt pointer for any input of a 
+This functions returns a SgIfStmt pointer for any input of a 
 pointer to an object derived from a SgIfStmt.
 
 \return Returns valid pointer to SgIfStmt if input is derived from a SgLocatedNode.
@@ -76,7 +76,7 @@ pointer to an object derived from a SgIfStmt.
 \fn SgIfStmt::isSgIfStmt (const SgNode *s)
 \brief Cast function (from derived class to SgIfStmt pointer).
 
-   This functions returns a SgIfStmt pointer for any input of a 
+This functions returns a SgIfStmt pointer for any input of a 
 pointer to an object derived from a SgIfStmt.
 
 \return Returns valid pointer to SgIfStmt if input is derived from a SgLocatedNode.
@@ -131,6 +131,102 @@ pointer to an object derived from a SgIfStmt.
 \brief Access function for p_false_body.
 
 \param false_body SgBasicBlock pointer
+\return Returns void.
+*/
+
+
+/* Documentation ofr Fortran specific data members */
+
+SgLabelRefExp* else_numeric_label()
+/*!
+\fn SgIfStmt::set_else_numeric_label(SgLabelRefExp* label)
+\brief Access function for p_else_numeric_label (Fortran only).
+
+\param lable used for end of if statement (Fortran only).
+\return Returns void.
+*/
+
+/*!
+\fn SgIfStmt::get_else_numeric_label()
+\brief Access function for p_else_numeric_label (Fortran only).
+
+\param lable used for end of if statement (Fortran only).
+\return Returns SgLabelRefExp pointer.
+*/
+
+/*!
+\fn SgIfStmt::set_end_numeric_label(SgLabelRefExp* label)
+\brief Access function for p_end_numeric_label (Fortran only).
+
+\param lable used for end of if statement (Fortran only).
+\return Returns void.
+*/
+
+/*!
+\fn SgIfStmt::get_end_numeric_label()
+\brief Access function for p_end_numeric_label (Fortran only).
+
+\param lable used for end of if statement (Fortran only).
+\return Returns SgLabelRefExp pointer.
+*/
+
+/*!
+\fn SgIfStmt::set_string_label(std::string label)
+\brief Access function for p_string_label (Fortran only; string required to addess generality of Fortran numeric and named labels).
+
+\param label used for Fortran only.
+\return Returns void.
+*/
+
+/*!
+\fn SgIfStmt::get_string_label()
+\brief Access function for p_string_label (Fortran only; string required to addess generality of Fortran numeric and named labels).
+
+\return Returns std::string.
+*/
+
+/*!
+\fn SgIfStmt::get_has_end_statement()
+\brief Fortran specific function to indicate if the Fortran "if" statement has an "end" construct (C/C++ useage always returns false).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgIfStmt::set_has_end_statement(bool value)
+\brief Fortran specific function to indicate if the Fortran "if" statement has an "end" construct (C/C++ useage always returns false).
+
+\param value to use in setting associated (Fortran specific) data member.
+\return Returns void.
+*/
+
+/*!
+\fn SgIfStmt::get_use_then_keyword()
+\brief Fortran specific function to indicate if the Fortran "if" statement uses the "then" construct (C/C++ useage always returns false).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgIfStmt::set_use_then_keyword(bool value)
+\brief Fortran specific function to indicate if the Fortran "if" statement uses the "then" construct (C/C++ useage always returns false).
+
+\param value to use in setting associated (Fortran specific) data member.
+\return Returns void.
+*/
+
+/*!
+\fn SgIfStmt::get_is_else_if_statement()
+\brief Fortran specific function to indicate "else if" form of "if" construct (C/C++ useage always returns false).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgIfStmt::set_is_else_if_statement(bool value)
+\brief Fortran specific function to indicate "else if" form of "if" construct (C/C++ useage always returns false).
+
+\param value to use in setting associated (Fortran specific) data member.
 \return Returns void.
 */
 

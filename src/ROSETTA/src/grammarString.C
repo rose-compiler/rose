@@ -3,7 +3,7 @@
 // ################################################################
 
 #include "grammarString.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 #include "string_functions.h"
 #include <string>
 #include <sstream>
@@ -44,32 +44,38 @@ GrammarString::infoFieldsToString() const {
   //ss<<","<<pureVirtualFunction;
   ss<<"access=";
 #if 1
-  switch(automaticGenerationOfDataAccessFunctions.getValue()) {
-  case TAG_NO_ACCESS_FUNCTIONS: ss<<"no";break;
-  case TAG_BUILD_ACCESS_FUNCTIONS: ss<<"yes";break;
-  case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:ss<<"yes(non-mod)";break;
-  case TAG_BUILD_LIST_ACCESS_FUNCTIONS:ss<<"list";break;
+  switch(automaticGenerationOfDataAccessFunctions) {
+  case NO_ACCESS_FUNCTIONS: ss<<"no";break;
+  case BUILD_ACCESS_FUNCTIONS: ss<<"yes";break;
+  case BUILD_FLAG_ACCESS_FUNCTIONS:ss<<"yes(non-mod)";break;
+  case BUILD_LIST_ACCESS_FUNCTIONS:ss<<"list";break;
   default:
         cerr<<"Error: unknown data access function type."<<endl;
         ROSE_ASSERT(0);
   }
 #endif
-  ss<<","<<"constr="<<   isInConstructorParameterList.getValue();
+  ss<<","<<"constr="<<   getIsInConstructorParameterList();
   ss<<","<<"init="<<"\""<<defaultInitializerString<<"\"";
-  ss<<","<<"copy="<<toBeCopied.getValue();
-  ss<<","<<"del="<<   toBeDeleted.getValue();
+  ss<<","<<"copy="<<toBeCopied;
+  ss<<","<<"del="<<   toBeDeleted;
 #endif
     return ss.str();
 }
 
 
+bool
+GrammarString::isInConstructorParameterList() const
+   {
+     return p_isInConstructorParameterList==CONSTRUCTOR_PARAMETER;
+   }
+
 ConstructParamEnum
 GrammarString::getIsInConstructorParameterList() const
    {
-     return isInConstructorParameterList;
+     return p_isInConstructorParameterList;
    }
 
-TraversalFlag
+TraversalEnum
 GrammarString::getToBeTraversed() const
    {
      return toBeTraversed;
@@ -722,20 +728,20 @@ GrammarString::getDataAccessFunctionPrototypeString () const
      string variableNameStringTmp = string(variableNameString);
 
      string returnString;
-     switch (automaticGenerationOfDataAccessFunctions.getValue()) 
+     switch (automaticGenerationOfDataAccessFunctions) 
         {
-          case TAG_NO_ACCESS_FUNCTIONS:
+          case NO_ACCESS_FUNCTIONS:
                break;
 
-          case TAG_BUILD_ACCESS_FUNCTIONS:
-          case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
+          case BUILD_ACCESS_FUNCTIONS:
+          case BUILD_FLAG_ACCESS_FUNCTIONS:
                returnString = "     public: \n         " + typeNameStringTmp + " get_" +
                          variableNameStringTmp + "() const;\n         void set_"  
                          + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
                          variableNameStringTmp + ");\n";
                break;
 
-          case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
+          case BUILD_LIST_ACCESS_FUNCTIONS:
                returnString = "     public: \n         const " + typeNameStringTmp + 
                          "& " + " get_" + variableNameStringTmp + "() const;\n         " + 
                          typeNameStringTmp + "& " + "get_" + variableNameStringTmp
@@ -749,7 +755,7 @@ GrammarString::getDataAccessFunctionPrototypeString () const
    }
 
 string
-GrammarString::getFunctionNameString ( Terminal & node )
+GrammarString::getFunctionNameString ( AstNodeClass & node )
    {
 
   // printf ("Inside of GrammarString::getFunctionNameString(node) \n");
@@ -852,58 +858,52 @@ GrammarString::~GrammarString()
 GrammarString::GrammarString()
    : pureVirtualFunction(0), functionNameString(""), 
      typeNameString(""), variableNameString(""), 
-     defaultInitializerString(""), isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
-     toBeCopied(COPY_DATA), toBeTraversed(true), key(0),
+     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
+     toBeCopied(COPY_DATA), toBeTraversed(DEF_TRAVERSAL), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
-     toBeDeleted(false)
+     toBeDeleted(NO_DELETE)
    {
    }
 
-// DQ & AJ (12/3/2004): Added support for deleation of data members
 GrammarString::GrammarString( 
-   const string& inputTypeNameString, const string& inputVariableNameString, const string& inputDefaultInitializerString,
+   const string& inputTypeNameString,
+   const string& inputVariableNameString,
+   const string& inputDefaultInitializerString,
    const ConstructParamEnum& isConstructorParameter, 
    const BuildAccessEnum& inputAutomaticGenerationOfDataAccessFunctions,
-   const TraversalFlag& toBeTraversedDuringTreeTraversal, 
-   const DeleteFlag& delete_flag,
+   const TraversalEnum& toBeTraversedDuringTreeTraversal, 
+   const DeleteEnum& delete_flag,
    const CopyConfigEnum& _toBeCopied)
-  // DQ (12/7/2003): Reordered parameters
-   : pureVirtualFunction(0), functionNameString(""), 
-     typeNameString(inputTypeNameString), variableNameString(inputVariableNameString), 
-     defaultInitializerString(inputDefaultInitializerString), isInConstructorParameterList(isConstructorParameter), 
-     toBeCopied(_toBeCopied), toBeTraversed(true), key(0),
-     automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
+   : pureVirtualFunction(0), 
+     typeNameString(inputTypeNameString),
+     variableNameString(inputVariableNameString), 
+     defaultInitializerString(inputDefaultInitializerString),
+     p_isInConstructorParameterList(isConstructorParameter), 
+     toBeCopied(_toBeCopied), 
+     toBeTraversed(toBeTraversedDuringTreeTraversal),
      toBeDeleted(delete_flag)
 {
-  string tempString = defaultInitializerString;
-// printf ("GrammarString constructor: tempString.length() = %d tempString = %s \n",
-//      tempString.length(),tempString.c_str());
+  //string tempString = defaultInitializerString;
+  // printf ("GrammarString constructor: tempString.length() = %d tempString = %s \n",
+  //      tempString.length(),tempString.c_str());
 
   // setup the main function string from the type and variable name (not indented properly)
   functionNameString = inputTypeNameString + " " + inputVariableNameString + " " + inputDefaultInitializerString + ";";
   
   // Compute the key once as the object is constructed (this is used to test equality between strings)
   key = computeKey();
-  automaticGenerationOfDataAccessFunctions = 
-    inputAutomaticGenerationOfDataAccessFunctions;
-  
-  // Set the flag which determines if the data member occurs in the parameter
-  // lists of the constructors of the class (and all its derived classes)
-  // setIsInConstructorParameterList(isConstructorParameter);
 
-  // Set the flag which determines if the data member is to be traversed
-  // in the course of a tree traversal
-  setToBeTraversed(toBeTraversedDuringTreeTraversal);
+  automaticGenerationOfDataAccessFunctions = inputAutomaticGenerationOfDataAccessFunctions;
 }
 
 GrammarString::GrammarString( const string& inputFunctionNameString )
   // DQ (12/7/2003): Reordered parameters
    : pureVirtualFunction(0), functionNameString(inputFunctionNameString), 
      typeNameString(""), variableNameString(""), 
-     defaultInitializerString(""), isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
-     toBeCopied(COPY_DATA), toBeTraversed(true), key(0),
+     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
+     toBeCopied(COPY_DATA), toBeTraversed(DEF_TRAVERSAL), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
-     toBeDeleted(false)
+     toBeDeleted(NO_DELETE)
    {
   // Compute the key once as the object is constructed (this is used to test equality between strings)
      key = computeKey();
@@ -913,10 +913,10 @@ GrammarString::GrammarString( const GrammarString & X )
   // DQ (12/7/2003): Reordered parameters
    : pureVirtualFunction(0), functionNameString(""), 
      typeNameString(""), variableNameString(""), 
-     defaultInitializerString(""), isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
-     toBeCopied(X.toBeCopied), toBeTraversed(true), key(0),
+     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
+     toBeCopied(X.toBeCopied), toBeTraversed(DEF_TRAVERSAL), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
-     toBeDeleted(false)
+     toBeDeleted(NO_DELETE)
    {
   // printf ("Calling the GrammarString copy CONSTRUCTOR! \n");
 
@@ -941,7 +941,7 @@ GrammarString::operator= ( const GrammarString & X )
      key                                      = X.key;
      pureVirtualFunction                      = X.pureVirtualFunction;
      automaticGenerationOfDataAccessFunctions = X.automaticGenerationOfDataAccessFunctions;
-     isInConstructorParameterList             = X.isInConstructorParameterList;
+     p_isInConstructorParameterList             = X.p_isInConstructorParameterList;
      toBeTraversed                            = X.toBeTraversed;
      toBeCopied                               = X.toBeCopied;
      toBeDeleted                              = X.toBeDeleted;
@@ -1006,7 +1006,7 @@ operator== ( const GrammarString & X, const GrammarString & Y )
    }
 
 // DQ & AJ (12/3/2004): Added support for deleation of data members
-DeleteFlag
+DeleteEnum
 GrammarString::getToBeDeleted() const
    {
      return toBeDeleted;
@@ -1048,13 +1048,19 @@ GrammarString::setAutomaticGenerationOfDataAccessFunctions ( const BuildAccessEn
    }
 
 void
-GrammarString::setIsInConstructorParameterList(ConstructParamEnum X)
+GrammarString::setIsInConstructorParameterList()
 {
-  isInConstructorParameterList= X;
+  p_isInConstructorParameterList=CONSTRUCTOR_PARAMETER;
 }
 
 void
-GrammarString::setToBeTraversed(const TraversalFlag& X)
+GrammarString::setIsInConstructorParameterList(ConstructParamEnum X)
+{
+  p_isInConstructorParameterList= X;
+}
+
+void
+GrammarString::setToBeTraversed(const TraversalEnum& X)
 {
   toBeTraversed= X;
 }
@@ -1227,14 +1233,14 @@ GrammarString::buildDestructorSource()
    }
 
 string
-GrammarString::containerElementTypeString(Terminal & node) const
+GrammarString::containerElementTypeString(AstNodeClass & node) const
    {
   // DQ (10/8/2014): This returns the name of the type where this data member is a container.
   // The container type is required as part of ATerm support in reading the ATerms and generating
   // the ROSE IR.
 
      string typenameString = this->getTypeNameString();
-     Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+     AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
      string returnString = "";
 
@@ -1242,8 +1248,8 @@ GrammarString::containerElementTypeString(Terminal & node) const
      printf ("In GrammarString::containerElementTypeString(): node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
 #endif
 
-  // ROSE_ASSERT(typeKind == Terminal::SGCLASS_POINTER_LIST);
-     if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+  // ROSE_ASSERT(typeKind == AstNodeClass::SGCLASS_POINTER_LIST);
+     if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST)
         {
        // return the case using a switch over the types (for now).
           if (typenameString == "SgFilePtrList")
@@ -1590,7 +1596,7 @@ GrammarString::containerElementTypeString(Terminal & node) const
         }
        else
         {
-          printf ("ERROR: GrammarString::containerElementTypeString() only defined for Terminal::SGCLASS_POINTER_LIST type data members \n");
+          printf ("ERROR: GrammarString::containerElementTypeString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
           printf ("   --- typenameString = %s \n",typenameString.c_str());
           ROSE_ASSERT(false);
         }
@@ -1600,13 +1606,13 @@ GrammarString::containerElementTypeString(Terminal & node) const
 
 
 string
-GrammarString::containerAppendFunctionNameString(Terminal & node) const
+GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
    {
   // DQ (10/8/2014): This returns the name of the append function for the container.
   // This is not standardized in ROSE (and shoudl be).
 
      string typenameString = this->getTypeNameString();
-     Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+     AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
   // Maybe this is the simplest way to handle this.
   // string returnString = "append";
@@ -1617,8 +1623,8 @@ GrammarString::containerAppendFunctionNameString(Terminal & node) const
      printf ("In GrammarString::containerAppendFunctionNameString(): node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
 #endif
 
-  // ROSE_ASSERT(typeKind == Terminal::SGCLASS_POINTER_LIST);
-     if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+  // ROSE_ASSERT(typeKind == AstNodeClass::SGCLASS_POINTER_LIST);
+     if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST)
         {
        // return the case using a switch over the types (for now).
           if (typenameString == "SgFilePtrList")
@@ -1925,6 +1931,10 @@ GrammarString::containerAppendFunctionNameString(Terminal & node) const
                // returnString = "SgAsmElfSymverDefinedAux";
                goto done;
              }
+          if (typenameString == "SgLambdaCapturePtrList")
+            {
+            goto done;
+            }
 #if 0
           if (typenameString == "SgAsmElfSymverDefinedAuxList")
              {
@@ -1956,7 +1966,7 @@ GrammarString::containerAppendFunctionNameString(Terminal & node) const
         }
        else
         {
-          printf ("ERROR: GrammarString::containerAppendFunctionNameString() only defined for Terminal::SGCLASS_POINTER_LIST type data members \n");
+          printf ("ERROR: GrammarString::containerAppendFunctionNameString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
           printf ("   --- typenameString = %s \n",typenameString.c_str());
           ROSE_ASSERT(false);
         }

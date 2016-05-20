@@ -59,6 +59,7 @@ namespace OmpSupport
 { 
   omp_rtl_enum rtl_type = e_gomp; /* default to  generate code targetting gcc's gomp */
   bool enable_accelerator = false; /* default is to not recognize and lowering OpenMP accelerator directives */
+  bool enable_debugging = false; /* default is not to debug the process */
 
   // A flag to control if device data environment runtime functions are used to automatically manage data as much as possible.
   // instead of generating explicit data allocation, copy, free functions. 
@@ -1180,7 +1181,7 @@ namespace OmpSupport
       hasOrder = true;
 
     // Grab or calculate chunk_size
-    SgExpression* my_chunk_size = NULL; 
+//    SgExpression* my_chunk_size = NULL; 
     bool hasSpecifiedSize = false;
     Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpScheduleClause);
     if (clauses.size() !=0)
@@ -1194,7 +1195,7 @@ namespace OmpSupport
       if (orig_chunk_size)
       {
         hasSpecifiedSize = true;
-        my_chunk_size = orig_chunk_size;
+        //my_chunk_size = orig_chunk_size;
       }
     }
 
@@ -1605,6 +1606,21 @@ void transOmpTargetLoop_RoundRobin(SgNode* node)
   //for reduction
   per_block_declarations.clear(); // must reset to empty or wrong reference to stale content generated previously
   transOmpVariables(target, bb1,NULL, true);
+  
+  // Liao, 11/11/2014, clean up copied OmpAttribute
+  if (new_loop->attributeExists("OmpAttributeList"))
+     new_loop->removeAttribute("OmpAttributeList");
+#if 0
+  AstAttributeMechanism* astAttributeContainer = new_loop ->get_attributeMechanism();
+  if (astAttributeContainer != NULL)
+  {
+    for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+    {
+      AstAttribute* attribute = i->second;
+      ROSE_ASSERT(attribute != NULL);
+    }
+  }
+#endif
 
 }
 
@@ -2129,7 +2145,7 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
   }
   
 //! A helper function to categorize variables collected from map clauses
-static   
+
 void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, // all variables collected from map clauses
           std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >&  array_dimensions, // array bounds  info
                                     std::set<SgSymbol*>& array_syms, // variable symbols which are array types (explicit or as a pointer)
@@ -2211,8 +2227,7 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
 }                    
 
   // Check if a variable is in the clause's variable list
-// TODO: move to header
- static bool isInClauseVariableList(SgOmpClause* cls, SgSymbol* var)
+bool isInClauseVariableList(SgOmpClause* cls, SgSymbol* var)
 {
   ROSE_ASSERT (cls && var); 
   SgOmpVariablesClause* var_cls = isSgOmpVariablesClause(cls);
@@ -2231,7 +2246,7 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
 
  // ! Replace all references to original symbol with references to new symbol
 // return the number of references being replaced. 
- // TODO: move to SageInterface
+// TODO: move to SageInterface
 //static int replaceVariableReferences(SgNode* subtree, const SgVariableSymbol* origin_sym, SgVariableSymbol* new_sym )
 static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol*, SgVariableSymbol*> symbol_map)
 {
@@ -2400,8 +2415,9 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
 
 // find different map clauses from the clause list, and all array information
 // dimension map is the same for all the map clauses under the same omp target directive
-static void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses, 
-    std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > > & array_dimensions,
+void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses, 
+    std::map<SgSymbol*, std::vector< std::pair <SgExpression*, SgExpression*> > > & array_dimensions,
+    std::map<SgSymbol*, std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > > &  dist_data_policies,
     SgOmpMapClause** map_alloc_clause, SgOmpMapClause** map_to_clause, SgOmpMapClause** map_from_clause, SgOmpMapClause** map_tofrom_clause
     )
 {
@@ -2423,7 +2439,10 @@ static void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses,
     SgOmpMapClause* m_cls = isSgOmpMapClause (*iter);
     ROSE_ASSERT (m_cls != NULL);
     if (iter == map_clauses.begin()) // retrieve once is enough
+    {
       array_dimensions = m_cls->get_array_dimensions();
+      dist_data_policies = m_cls->get_dist_data_policies ();
+    }
 
     SgOmpClause::omp_map_operator_enum map_operator = m_cls->get_operation();
     if (map_operator == SgOmpClause::e_omp_map_alloc)
@@ -2854,6 +2873,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
   SgOmpMapClause* map_tofrom_clause = NULL;
   // dimension map is the same for all the map clauses under the same omp target directive
   std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions; 
+  std::map<SgSymbol*, std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > > dist_data_policies; // no in use, for compatible reason
 
   // a map between original symbol and its device version : used for variable replacement 
   std::map <SgVariableSymbol*, SgVariableSymbol*>  cpu_gpu_var_map; 
@@ -2873,7 +2893,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     device_expression = getClauseExpression (target_directive_stmt, VariantVector(V_SgOmpDeviceClause));
 
  
-  extractMapClauses (map_clauses, array_dimensions, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
+  extractMapClauses (map_clauses, array_dimensions, dist_data_policies, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
   std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
   std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
 
@@ -3132,6 +3152,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     SgOmpMapClause* map_tofrom_clause = NULL;
     // dimension map is the same for all the map clauses under the same omp target directive
     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions; 
+    std::map<SgSymbol*, std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > > dist_data_policies; // no in use, for compatible reason
 
    // a map between original symbol and its device version (replacement) 
    std::map <SgVariableSymbol*, SgVariableSymbol*>  cpu_gpu_var_map; 
@@ -3145,7 +3166,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
 #endif
   all_mapped_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause));
 
-    extractMapClauses (map_clauses, array_dimensions, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
+    extractMapClauses (map_clauses, array_dimensions, dist_data_policies, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
     std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
     std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
 

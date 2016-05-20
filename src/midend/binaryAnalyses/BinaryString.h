@@ -8,15 +8,14 @@
 namespace rose {
 namespace BinaryAnalysis {
 
-/** %Analysis for finding strings in memory.
+/** Suport for finding strings in memory.
  *
- *  This analysis looks for various kinds of strings in specimen memory.  A string is a sequence of characters encoded in one
- *  of a variety of ways in memory.  For instance, NUL-terminated ASCII is a common encoding from C compilers.  The characters
- *  within the string must all satisfy some valid-character predicate.
- *
- *  The terms used in this analysis are based on the Unicode standard, and are defined here in terms of string encoding
- *  (translation of a string as printed to a sequence of octets). Although this analysis can encode strings, its main purpose
- *  is decoding strings from an octet stream into a sequence of code points.
+ *  This namespace provides support for various kinds of strings in specimen memory, including an @ref StringFinder "analysis"
+ *  that searches for strings in specimen memory.  A string is a sequence of characters encoded in one of a variety of ways in
+ *  memory.  For instance, NUL-terminated ASCII is a common encoding from C compilers.  The characters within the string must
+ *  all satisfy some valid-character predicate.  The terms used in this analysis are based on the Unicode standard, and are
+ *  defined here in terms of string encoding (translation of a string as printed to a sequence of octets). Although this
+ *  analysis can encode strings, its main purpose is decoding strings from an octet stream into a sequence of code points.
  *
  *  Unicode and its parallel standard, the ISO/IEC 10646 Universal Character Set, together constitute a modern, unified
  *  character encoding. Rather than mapping characters directly to octets (bytes), they separately define what characters are
@@ -85,47 +84,50 @@ namespace BinaryAnalysis {
  *  ASCII, etc.
  *
  * @code
- *  #include <rose/BinaryString.h>
+ *  #include <rose/BinaryString.h>              // binary analysis string support
  *  using namespace rose::BinaryAnalysis::Strings;
- *  MemoryMap map = ...;            // initialized elsewhere
+ *  MemoryMap map = ...;                        // initialized elsewhere
  *
- *  StringFinder finder;            // holds settings
- *  finder.minLength(5);            // no strings shorter than 5 characters
- *  finder.maxLength(65536);        // ignore very long strings
- *  finder.includeCommonEncoders(); // how to match strings
+ *  StringFinder finder;                        // holds settings
+ *  finder.settings().minLength = 5;            // no strings shorter than 5 characters
+ *  finder.settings().maxLength = 65536;        // ignore very long strings
+ *  finder.insertCommonEncoders();              // how to match strings
+ *  finder.find(map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE));
  *
- *  std::vector<EncodedString> strings = finder.find(map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE));
- *  BOOST_FOREACH (const EncodedString &string, strings) {
+ *  BOOST_FOREACH (const EncodedString &string, finder.strings()) {
  *      std::cout <<"string at " <<string.address() <<" for " <<string.size() <<" bytes\n";
  *      std::cout <<"encoding: " <<string.encoder()->name() <<"\n";
  *      std::cout <<"narrow value: \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n"; // std::string
  *      std::cout <<"wide value: " <<string.wide() <<"\n"; // std::wstring
  *  }
+ *
+ *  // This works too if you're not picky about the output format
+ *  std::cout <<finder;
  * @endcode
  *
  * @section ex2 Example 2
  *
- *  This analysis is tuned for searching for strings at unknown locations while trying to decode multiple encodings
- *  simultaneously. If all you want to do is read a single string from a known location having a known encoding then you're
- *  probabily better off reading it directly from the MemoryMap. This analysis can be used for that, but it's probably
- *  overkill. In any case, here's the overkill version to find a 2-byte little endian length-encoded UTF-8 string:
+ *  The @ref StringFinder analysis is tuned for searching for strings at unknown locations while trying to decode multiple
+ *  encodings simultaneously. If all you want to do is read a single string from a known location having a known encoding then
+ *  you're probabily better off reading it directly from the @ref MemoryMap. The @ref StringFinder analysis can be used for
+ *  that, but it's probably overkill. In any case, here's the overkill version to find a 2-byte little endian length-encoded
+ *  UTF-8 string:
  *
  * @code
  *  #include <rose/BinaryString.h>
  *  using namespace rose::BinaryAnalysis::Strings;
- *  MemoryMap map = ...;            // initialized elsewhere
- *  rose_addr_t stringVa = ...;     // starting address of string
+ *  MemoryMap map = ...;                        // initialized elsewhere
+ *  rose_addr_t stringVa = ...;                 // starting address of string
  *
- *  StringFinder finder;            // holds settings
- *  finder.minLength(0);            // no strings shorter than 5 characters
- *  finder.maxLength(65536);        // ignore very long strings
+ *  StringFinder finder;                        // holds settings
+ *  finder.settings().minLength = 0;            // no strings shorter than 5 characters
+ *  finder.settings().maxLength = 65536;        // ignore very long strings
  *  finder.encoder(lengthEncodedString(basicLengthEncoder(2, ByteOrder::ORDER_LSB), // 2-byte little-endian length
  *                                     utf8CharacterEncodingForm(),                 // UTF-8 encoding
  *                                     basicCharacterEncodingScheme(1),             // 1:1 mapping to octets
  *                                     anyCodePoint());                             // allow any characters
- *
  *  std::wstring s;                                   
- *  BOOST_FOREACH (const EncodedString &string, finder.find(map.at(stringVa))) {
+ *  BOOST_FOREACH (const EncodedString &string, finder.find(map.at(stringVa)).strings()) {
  *      s = string.wide();
  *      break;
  *  }
@@ -195,7 +197,9 @@ enum State {
     INITIAL_STATE    = -3,                              /**< Initial state just after a reset. */
     ERROR_STATE      = -4,                              /**< Decoder is in an error condition. */
     USER_DEFINED_0   = 0,                               /**< First user-defined value. */
-    USER_DEFINED_MAX = 128,                             /**< Maximum user-defined value. */
+    USER_DEFINED_1   = 1,                               /**< Second user-defined value. */
+    USER_DEFINED_2   = 2,                               /**< Third user-defined value. */
+    USER_DEFINED_MAX = 128                              /**< Maximum user-defined value. */
 };
 
 /** Returns true for COMPLETED_STATE or FINAL_STATE. */
@@ -210,14 +214,14 @@ void initDiagnostics();
  *  distinct Unicode characters.  The CharacterEncodingForm (CEF) is responsible for converting a code point to a sequence
  *  of one or more code values, or vice versa.  Each code value, which may be multiple bytes, is eventually encoded into a
  *  sequence of octets by the @ref CharacterEncodingScheme (CES). */
-class CharacterEncodingForm: public Sawyer::SharedObject {
+class ROSE_DLL_API CharacterEncodingForm: public Sawyer::SharedObject {
 protected:
     State state_;
 public:
     CharacterEncodingForm(): state_(INITIAL_STATE) {}
     virtual ~CharacterEncodingForm() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref CharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CharacterEncodingForm> Ptr;
 
     /** Create a new encoder from this one. */
@@ -252,12 +256,14 @@ public:
 /** A no-op character encoding form.
  *
  *  Encodes code points to code values and vice versa such that code points are equal to code values. */
-class NoopCharacterEncodingForm: public CharacterEncodingForm {
+class ROSE_DLL_API NoopCharacterEncodingForm: public CharacterEncodingForm {
     CodePoint cp_;
 protected:
     NoopCharacterEncodingForm(): cp_(0) {}
 public:
+    /** Shared-ownership pointer to a @ref NoopCharacterEncodingFormat. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<NoopCharacterEncodingForm> Ptr;
+
     static Ptr instance() { return Ptr(new NoopCharacterEncodingForm); }
     virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new NoopCharacterEncodingForm(*this)); }
     virtual std::string name() const ROSE_OVERRIDE { return "no-op"; }
@@ -273,12 +279,14 @@ NoopCharacterEncodingForm::Ptr noopCharacterEncodingForm();
 /** UTF-8 character encoding form.
  *
  *  Encodes each code point as one to six 8-bit code values. */
-class Utf8CharacterEncodingForm: public CharacterEncodingForm {
+class ROSE_DLL_API Utf8CharacterEncodingForm: public CharacterEncodingForm {
     CodePoint cp_;
 protected:
     Utf8CharacterEncodingForm(): cp_(0) {}
 public:
+    /** Shared-ownership pointer to a @ref Utf8CharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<Utf8CharacterEncodingForm> Ptr;
+
     static Ptr instance() { return Ptr(new Utf8CharacterEncodingForm); }
     virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new Utf8CharacterEncodingForm(*this)); }
     virtual std::string name() const ROSE_OVERRIDE { return "UTF-8"; }
@@ -294,12 +302,14 @@ Utf8CharacterEncodingForm::Ptr utf8CharacterEncodingForm();
 /** UTF-16 character encoding form.
  *
  *  Encodes each code point as one or two 16-bit code values. */
-class Utf16CharacterEncodingForm: public CharacterEncodingForm {
+class ROSE_DLL_API Utf16CharacterEncodingForm: public CharacterEncodingForm {
     CodePoint cp_;
 protected:
     Utf16CharacterEncodingForm(): cp_(0) {}
 public:
+    /** Shared-ownership pointer to a @ref Utf16CharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<Utf16CharacterEncodingForm> Ptr;
+
     static Ptr instance() { return Ptr(new Utf16CharacterEncodingForm); }
     virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new Utf16CharacterEncodingForm(*this)); }
     virtual std::string name() const ROSE_OVERRIDE { return "UTF-16"; }
@@ -317,14 +327,14 @@ Utf16CharacterEncodingForm::Ptr utf16CharacterEncodingForm();
  *  A code value (one or more of which compose a code point, or a single character in a coded character set), is encoded as
  *  one or more octets.  For instance, a UTF-16 code value will be converted to two octets in big or little endian order
  *  depending on the character encoding scheme. */
-class CharacterEncodingScheme: public Sawyer::SharedObject {
+class ROSE_DLL_API CharacterEncodingScheme: public Sawyer::SharedObject {
 protected:
     State state_;
 public:
     CharacterEncodingScheme(): state_(INITIAL_STATE) {}
     virtual ~CharacterEncodingScheme() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref CharacterEncodingScheme. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CharacterEncodingScheme> Ptr;
 
     /** Create a new copy of this encoder. */
@@ -360,7 +370,7 @@ public:
  *  This character encoding scheme converts code value to a sequence of octets in big- or little-endian order, and vice
  *  versa. It needs to know the number of octets per code value, and the byte order of the octets per code value is larger
  *  than one. */
-class BasicCharacterEncodingScheme: public CharacterEncodingScheme {
+class ROSE_DLL_API BasicCharacterEncodingScheme: public CharacterEncodingScheme {
     size_t octetsPerValue_;
     ByteOrder::Endianness sex_;
     CodeValue cv_;
@@ -392,14 +402,14 @@ BasicCharacterEncodingScheme::Ptr basicCharacterEncodingScheme(size_t octetsPerV
  *
  *  Strings that are length-encoded must specify a length encoding scheme that gives the length of the string measured in
  *  code points. */
-class LengthEncodingScheme: public Sawyer::SharedObject {
+class ROSE_DLL_API LengthEncodingScheme: public Sawyer::SharedObject {
 protected:
     State state_;
 public:
     LengthEncodingScheme(): state_(INITIAL_STATE) {}
     virtual ~LengthEncodingScheme() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref LengthEncodingScheme. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<LengthEncodingScheme> Ptr;
 
     /** Create a new copy of this encoder. */
@@ -434,7 +444,7 @@ public:
  *  This length encoding scheme converts a length to a sequence of octets in big- or little-endian order, and vice
  *  versa. It needs to know the number of octets per length value, and the byte order of the octets if the length is
  *  greater than one. */
-class BasicLengthEncodingScheme: public LengthEncodingScheme {
+class ROSE_DLL_API BasicLengthEncodingScheme: public LengthEncodingScheme {
     size_t octetsPerValue_;
     ByteOrder::Endianness sex_;
     size_t length_;
@@ -465,11 +475,11 @@ BasicLengthEncodingScheme::Ptr basicLengthEncodingScheme(size_t octetsPerValue,
 /** Valid code point predicate.
  *
  *  This predicate tests that the specified code point is valid for a string. */
-class CodePointPredicate: public Sawyer::SharedObject {
+class ROSE_DLL_API CodePointPredicate: public Sawyer::SharedObject {
 public:
     virtual ~CodePointPredicate() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref CodePointPredicate. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CodePointPredicate> Ptr;
 
     /** Name of predicate. */
@@ -483,7 +493,7 @@ public:
  *
  *  Returns true if the code point is a printable US-ASCII character.  Printable characters are seven-bit code points for
  *  which C's @c isprint predicate returns true (anything but control characters). */
-class PrintableAscii: public CodePointPredicate {
+class ROSE_DLL_API PrintableAscii: public CodePointPredicate {
 protected:
     PrintableAscii() {}
 public:
@@ -500,7 +510,7 @@ PrintableAscii::Ptr printableAscii();
 /** Matches any code point.
  *
  *  Returns true for all code points. */
-class AnyCodePoint: public CodePointPredicate {
+class ROSE_DLL_API AnyCodePoint: public CodePointPredicate {
 protected:
     AnyCodePoint() {}
 public:
@@ -516,7 +526,7 @@ AnyCodePoint::Ptr anyCodePoint();
  *
  *  A string encoding scheme indicates how a string (sequence of code points) is encoded as a sequence of octets and vice
  *  versa. */
-class StringEncodingScheme: public Sawyer::SharedObject {
+class ROSE_DLL_API StringEncodingScheme: public Sawyer::SharedObject {
 protected:
     State state_;                                       // decoding state
     CodePoints codePoints_;                             // unconsumed code points
@@ -535,7 +545,7 @@ protected:
 public:
     virtual ~StringEncodingScheme() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref StringEncodingScheme. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<StringEncodingScheme> Ptr;
 
     /** Name of encoding */
@@ -612,7 +622,7 @@ public:
 /** Length-prefixed string encoding scheme.
  *
  *  A string encoding where the octets for the characters are prefixed with an encoded length. */
-class LengthEncodedString: public StringEncodingScheme {
+class ROSE_DLL_API LengthEncodedString: public StringEncodingScheme {
     LengthEncodingScheme::Ptr les_;
     Sawyer::Optional<size_t> declaredLength_;           // decoded length
 protected:
@@ -620,7 +630,7 @@ protected:
                         const CharacterEncodingScheme::Ptr &ces, const CodePointPredicate::Ptr &cpp)
         : StringEncodingScheme(cef, ces, cpp), les_(les) {}
 public:
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref LengthEncodedString. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<LengthEncodedString> Ptr;
 
     static Ptr instance(const LengthEncodingScheme::Ptr &les, const CharacterEncodingForm::Ptr &cef,
@@ -677,7 +687,7 @@ LengthEncodedString::Ptr lengthEncodedPrintableAsciiWide(size_t lengthSize, Byte
  *
  *  A string whose character octets are followed by octets for a special code point that marks the end of the string but is
  *  not included as part of the string's characters.  An example is C-style NUL-terminated ASCII. */
-class TerminatedString: public StringEncodingScheme {
+class ROSE_DLL_API TerminatedString: public StringEncodingScheme {
     CodePoints terminators_;
     Sawyer::Optional<CodePoint> terminated_;            // decoded termination
 protected:
@@ -685,7 +695,7 @@ protected:
                      const CodePointPredicate::Ptr &cpp, const CodePoints &terminators)
         : StringEncodingScheme(cef, ces, cpp), terminators_(terminators) {}
 public:
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref TerminatedString. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<TerminatedString> Ptr;
 
     static Ptr instance(const CharacterEncodingForm::Ptr &cef, const CharacterEncodingScheme::Ptr &ces,
@@ -740,7 +750,7 @@ TerminatedString::Ptr nulTerminatedPrintableAsciiWide(size_t charSize, ByteOrder
  *
  *  Represents a string by specifying the encoding and an interval of virtual addresses where the encoded octets are
  *  stored. */
-class EncodedString {
+class ROSE_DLL_API EncodedString {
     StringEncodingScheme::Ptr encoder_;             // how string is encoded
     AddressInterval where_;                         // where encoded string is located
 public:
@@ -783,13 +793,13 @@ public:
     void decode(const MemoryMap&);
 };
 
-/** Analysis to find encoded strings.
+/** %Analysis to find encoded strings.
  *
  *  This analysis searches user-specified parts of a binary specimen's memory space to find strings encoded in various formats
  *  specfieid by the user.
  *
  *  See the @ref rose::BinaryAnalysis::Strings "Strings" namespace for details. */
-class StringFinder {
+class ROSE_DLL_API StringFinder {
 public:
     /** Settings and properties.
      *
@@ -846,7 +856,7 @@ public:
      *  be used to find any strings. */
     StringFinder(): discardingCodePoints_(false) {}
 
-    /** Property: Analysis settings often set from a command-line.
+    /** Property: %Analysis settings often set from a command-line.
      *
      * @{ */
     const Settings& settings() const { return settings_; }
@@ -879,9 +889,12 @@ public:
      *  Returns the switch group that describes the command-line switches for this analysis. The caller can provide a @ref
      *  Settings object that will be adjusted when the command-line is parsed and applied; if no argument is supplied then the
      *  settings of this analysis are affected. In either case, the settings or analysis object must still be allocated when
-     *  the command-line is parsed. */
+     *  the command-line is parsed.
+     *
+     * @{ */
     static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
     Sawyer::CommandLine::SwitchGroup commandLineSwitches();
+    /** @} */
 
     /** Inserts common encodings.
      *
@@ -913,7 +926,8 @@ public:
 
     /** Finds strings by searching memory.
      *
-     *  Clears previous analysis results and searches for new strings.
+     *  Clears previous analysis results (e.g., @ref reset) and then searches for new strings.  The resulting strings can be
+     *  obtained from the @ref strings method.
      *
      *  The memory constraints indicate where to search for strings, and the properties of this StringFinder class determine
      *  how to find strings. Specifically, this class must have at least one encoding registered in order to find anything (see
@@ -940,8 +954,12 @@ public:
      * @endcode */
     StringFinder& find(const MemoryMap::ConstConstraints&, Sawyer::Container::MatchFlags flags=0);
 
-    /** Obtain strings that were found. */
+    /** Obtain strings that were found.
+     *
+     * @{ */
     const std::vector<EncodedString>& strings() const { return strings_; }
+    std::vector<EncodedString>& strings() { return strings_; }
+    /** @} */
 
     /** Print results.
      *

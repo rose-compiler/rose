@@ -117,6 +117,7 @@ RSIM_Linux64::init() {
     SC_REG(110, getppid,                        default);
     SC_REG(111, getpgrp,                        default);
     SC_REG(133, mknod,                          default);
+    SC_REG(137, statfs,                         statfs);
     SC_REG(138, fstatfs,                        fstatfs);
     SC_REG(145, sched_getscheduler,             sched_getscheduler);
     SC_REG(145, sched_get_priority_max,         default);
@@ -226,7 +227,7 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
 }
     
 PtRegs
-RSIM_Linux64::initialRegistersArch() {
+RSIM_Linux64::initialRegistersArch(RSIM_Process*) {
     if (settings().nativeLoad)
         return initialRegs_;
 
@@ -263,93 +264,93 @@ RSIM_Linux64::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
         auxv_.push_back(33);
         auxv_.push_back(vdsoMappedVa());
         if (trace)
-            fprintf(trace, "AT_SYSINFO_PHDR(0x21):  0x%016"PRIx64"\n", auxv_.back());
+            fprintf(trace, "AT_SYSINFO_PHDR(0x21):  0x%016" PRIx64"\n", auxv_.back());
     }
 
     auxv_.push_back(0x10);
     auxv_.push_back(0xbfebfbfful);
     if (trace)
-        fprintf(trace, "AT_HWCAP(0x10):         0x%016"PRIx64"\n", auxv_.back());
+        fprintf(trace, "AT_HWCAP(0x10):         0x%016" PRIx64"\n", auxv_.back());
 
     auxv_.push_back(0x06);
     auxv_.push_back(4096);
     if (trace)
-        fprintf(trace, "AT_PAGESZ(0x06):        %"PRId64"\n", auxv_.back());
+        fprintf(trace, "AT_PAGESZ(0x06):        %" PRId64"\n", auxv_.back());
 
     auxv_.push_back(0x11);
     auxv_.push_back(100);
     if (trace)
-        fprintf(trace, "AT_CLKTCK(0x11):        %"PRId64"\n", auxv_.back());
+        fprintf(trace, "AT_CLKTCK(0x11):        %" PRId64"\n", auxv_.back());
 
     auxv_.push_back(3);
     auxv_.push_back(segmentTableVa(fhdr));
     if (trace)
-        fprintf(trace, "AT_PHDR(0x03):          0x%016"PRIx64"\n", auxv_.back());
+        fprintf(trace, "AT_PHDR(0x03):          0x%016" PRIx64"\n", auxv_.back());
 
     auxv_.push_back(4);
     auxv_.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk));
     if (trace)
-        fprintf(trace, "AT_PHENT(0x04):         0x%"PRId64"\n", auxv_.back());
+        fprintf(trace, "AT_PHENT(0x04):         0x%" PRId64"\n", auxv_.back());
 
     auxv_.push_back(5);
     auxv_.push_back(fhdr->get_e_phnum());
     if (trace)
-        fprintf(trace, "AT_PHNUM(0x05):         %"PRId64"\n", auxv_.back());
+        fprintf(trace, "AT_PHNUM(0x05):         %" PRId64"\n", auxv_.back());
 
     auxv_.push_back(7);
     auxv_.push_back(fhdr->get_section_by_name(".interp") ? interpreterBaseVa() : 0);
     if (trace)
-        fprintf(trace, "AT_BASE(0x07):          0x%016"PRIx64"\n", auxv_.back());
+        fprintf(trace, "AT_BASE(0x07):          0x%016" PRIx64"\n", auxv_.back());
         
     auxv_.push_back(8);
     auxv_.push_back(0);
     if (trace)
-        fprintf(trace, "AT_FLAGS(0x08):         0x%016"PRIx64"\n", auxv_.back());
+        fprintf(trace, "AT_FLAGS(0x08):         0x%016" PRIx64"\n", auxv_.back());
 
     auxv_.push_back(9);
     auxv_.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
     if (trace)
-        fprintf(trace, "AT_ENTRY(0x09):         0x%016"PRIx64"\n", auxv_.back());
+        fprintf(trace, "AT_ENTRY(0x09):         0x%016" PRIx64"\n", auxv_.back());
 
     auxv_.push_back(0x0b);
     auxv_.push_back(getuid());
     if (trace)
-        fprintf(trace, "AT_UID(0x0b):           %"PRId64"\n", auxv_.back());
+        fprintf(trace, "AT_UID(0x0b):           %" PRId64"\n", auxv_.back());
 
     auxv_.push_back(0x0c);
     auxv_.push_back(geteuid());
     if (trace)
-        fprintf(trace, "AT_EUID(0x0c):          %"PRId64"\n", auxv_.back());
+        fprintf(trace, "AT_EUID(0x0c):          %" PRId64"\n", auxv_.back());
 
     auxv_.push_back(0x0d);
     auxv_.push_back(getgid());
     if (trace)
-        fprintf(trace, "AT_GID(0x0d):           %"PRId64"\n", auxv_.back());
+        fprintf(trace, "AT_GID(0x0d):           %" PRId64"\n", auxv_.back());
 
     auxv_.push_back(0x0e);
     auxv_.push_back(getegid());
     if (trace)
-        fprintf(trace, "AT_EGID(0x0e):          %"PRId64"\n", auxv_.back());
+        fprintf(trace, "AT_EGID(0x0e):          %" PRId64"\n", auxv_.back());
 
     auxv_.push_back(0x17);
     auxv_.push_back(false);
     if (trace)
-        fprintf(trace, "AT_SECURE(0x17):        %"PRId64"\n", auxv_.back());
+        fprintf(trace, "AT_SECURE(0x17):        %" PRId64"\n", auxv_.back());
 
     auxv_.push_back(0x19);
     auxv_.push_back(randomDataVa);
     if (trace)
-        fprintf(trace, "AT_RANDOM(0x19):        0x%016"PRIx64"\n", auxv_.back());
+        fprintf(trace, "AT_RANDOM(0x19):        0x%016" PRIx64"\n", auxv_.back());
 
     auxv_.push_back(0x1f);
     auxv_.push_back(execfn_va);
     if (trace)
-        fprintf(trace, "AT_EXECFN(0x1f):        0x%016"PRIx64" (%s)\n", auxv_.back(), exeArgs()[0].c_str());
+        fprintf(trace, "AT_EXECFN(0x1f):        0x%016" PRIx64" (%s)\n", auxv_.back(), exeArgs()[0].c_str());
 
     auxv_.push_back(0x0f);
     auxv_.push_back(platformVa);
     if (trace)
-        fprintf(trace, "AT_PLATFORM(0x0f):      0x%016"PRIx64" (%s)\n", auxv_.back(), platform);
+        fprintf(trace, "AT_PLATFORM(0x0f):      0x%016" PRIx64" (%s)\n", auxv_.back(), platform);
 
     // AT_NULL
     auxv_.push_back(0);
@@ -503,7 +504,7 @@ RSIM_Linux64::syscall_connect_body(RSIM_Thread *t, int callno) {
 void
 RSIM_Linux64::syscall_fstatfs_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fstatfs").d().d().p();
+    t->syscall_enter("fstatfs").d().p();
 }
 
 void
@@ -919,6 +920,45 @@ RSIM_Linux64::syscall_stat_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux64::syscall_stat_leave(RSIM_Thread *t, int callno) {
     t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_64), print_kernel_stat_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_statfs_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("statfs").d().p();
+}
+
+void
+RSIM_Linux64::syscall_statfs_body(RSIM_Thread *t, int callno)
+{
+    bool error;
+    std::string name = t->get_process()->read_string(t->syscall_arg(0), 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    rose_addr_t sbVa = t->syscall_arg(1);
+
+    struct statfs_64 host_statfs;
+    int result = syscall(SYS_statfs, name.c_str(), &host_statfs);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+    if (sizeof(host_statfs) != t->get_process()->mem_write(&host_statfs, sbVa, sizeof host_statfs)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_statfs_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().arg(1).P(sizeof(struct statfs_64), print_statfs_64);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

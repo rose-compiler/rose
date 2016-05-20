@@ -5,6 +5,9 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 [
  # BP : 11/20/2001, create a directory to store header files which are compiler specific
    compilerName="`basename $BACKEND_CXX_COMPILER`"
+
+   # echo "In GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS: Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+
    chmod u+x "${srcdir}/config/create_system_headers"
    if test "$ROSE_CXX_HEADERS_DIR" = ""; then
       dnl AC_MSG_NOTICE([ROSE_CXX_HEADERS_DIR not set ...])
@@ -21,12 +24,32 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # DQ (9/1/2009): Output the absolute path
    echo "absolutePath_srcdir = ${absolutePath_srcdir}"
 
+ # This is a way to make this a global shaell variable, but it is better to pass it as a parameter to the function.
+ # export language="cxx"
+ # This language name is used as a parameter to the backend compiler, so it must be "c" or "c++"
+   language="c++"
+ # echo "In generate backend compiler specific headers: language = $language"
+
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
    mkdir -p "./include-staging/${compilerName}_HEADERS"
-   "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
+
+ # DQ (2/2/2016): Adding additional parameters to this function call.
+ # "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
+   "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "${ax_cv_cxx_compiler_vendor}"
+
+   error_code=$?
+   echo "error_code = $error_code"
+   if test $error_code != 0; then
+        echo "Error in generate backend CXX compiler specific headers: call to ${srcdir}/config/create_system_headers: nonzero exit code returned to caller error_code = $error_code"
+        exit 1
+   fi
 
    echo "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
    echo "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+
+ # DQ (2/2/2016): Debugging new support for detected the compiler vendor.
+ # echo "Exiting after call to create_system_headers in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
+ # exit 1
 
  # DQ (8/14/2010): GNU 4.5 includes some code that will not compile and appears to not be valid C++ code.
  # We fixup a specific GNU 4.5 issues use of "return { __mask };"
@@ -59,23 +82,24 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # Copy alternative SSE and MMX headers to be seen by ROSE ahead of the originals.
    cp ${srcdir}/config/rose_specific_emmintrin.h ./include-staging/${compilerName}_HEADERS/emmintrin.h
    cp ${srcdir}/config/rose_specific_xmmintrin.h ./include-staging/${compilerName}_HEADERS/xmmintrin.h
+ # DQ (8/29/2015): This file is also required since the one available in the Intel header files will 
+ # not compie with EDG (requires MS decl_spec grammar).
+   cp ${srcdir}/config/rose_specific_mmintrin.h  ./include-staging/${compilerName}_HEADERS/mmintrin.h
 
-# Phlin (6/18/2012): Added support for SSE4.2.
+ # Phlin (6/18/2012): Added support for SSE4.2.
    cp ${srcdir}/config/rose_specific_ammintrin.h ./include-staging/${compilerName}_HEADERS/ammintrin.h
    cp ${srcdir}/config/rose_specific_nmmintrin.h ./include-staging/${compilerName}_HEADERS/nmmintrin.h
    cp ${srcdir}/config/rose_specific_pmmintrin.h ./include-staging/${compilerName}_HEADERS/pmmintrin.h
    cp ${srcdir}/config/rose_specific_smmintrin.h ./include-staging/${compilerName}_HEADERS/smmintrin.h
    cp ${srcdir}/config/rose_specific_tmmintrin.h ./include-staging/${compilerName}_HEADERS/tmmintrin.h
 
-# Phlin (6/18/2012): Added support for AVX.
-# Only GCC 4.6+ supports AVX instructions.
+ # Phlin (6/18/2012): Added support for AVX.
+ # Only GCC 4.6+ supports AVX instructions.
    if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
       if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "6"; then
    cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
       fi
    fi
-
-
 
    error_code=$?
    echo "error_code = $error_code"
@@ -128,9 +152,22 @@ compilerNameCxx="`basename ${BACKEND_CXX_COMPILER}`"
  # fi
  # includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
 
-   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
+ # Set new variables to pass in the function call below.
+   compilerVendorName=$ax_cv_cxx_compiler_vendor
+   language="c++"
+
+ # DQ (2/2/2016): Adding additional parameters to this function call.
+ # if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
+   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
       AC_MSG_FAILURE([$compilerHeaderDirs])
    fi
+
+ # DQ (2/2/2016): Added error checking (though this already appears to be present).
+   if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+       echo "In SETUP BACKEND CXX COMPILER SPECIFIC REFERENCES: get_compiler_header_dirs failed"
+       exit 1
+   fi
+
    includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, $compilerHeaderDirs"
    includeString="$includeString \"/usr/include\"}"
 
@@ -142,7 +179,8 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
 [
    compilerName="`basename $BACKEND_C_COMPILER`"
 
-   echo "C compilerName = ${compilerName}"
+   # echo "C compilerName = ${compilerName}"
+   # echo "In GENERATE BACKEND C COMPILER SPECIFIC HEADERS: Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
 
    chmod u+x "${srcdir}/config/create_system_headers"
 
@@ -161,16 +199,26 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # DQ (9/1/2009): Output the absolute path
    echo "absolutePath_srcdir = ${absolutePath_srcdir}"
 
+ # This is a way to make this a global shaell variable, but it is better to pass it as a parameter to the function.
+ # export language="c"
+   language="c"
+ # echo "In generate backend compiler specific headers: language = $language"
+
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
    mkdir -p "./include-staging/${compilerName}_HEADERS"
-   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
+ # "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
+   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "${ax_cv_cxx_compiler_vendor}"
 
    error_code=$?
    echo "error_code = $error_code"
    if test $error_code != 0; then
-        echo "Error in ${srcdir}/config/create_system_headers: nonzero exit code returned to caller error_code = $error_code"
+        echo "Error in generate backend C compiler specific headers: call to ${srcdir}/config/create_system_headers: nonzero exit code returned to caller error_code = $error_code"
         exit 1
    fi
+
+ # DQ (2/2/2016): Debugging new support for detected the compiler vendor.
+ # echo "Exiting after call to create_system_headers in GENERATE BACKEND C COMPILER SPECIFIC HEADERS"
+ # exit 1
 
  # DQ (9/15/2010): Copy the upc.h header file from the config directory to our include-staging/${compilerName}_HEADERS directory.
  # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
@@ -186,6 +234,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # Copy alternative SSE and MMX headers to be seen by ROSE ahead of the originals.
    cp ${srcdir}/config/rose_specific_emmintrin.h ./include-staging/${compilerName}_HEADERS/emmintrin.h
    cp ${srcdir}/config/rose_specific_xmmintrin.h ./include-staging/${compilerName}_HEADERS/xmmintrin.h
+   cp ${srcdir}/config/rose_specific_mmintrin.h  ./include-staging/${compilerName}_HEADERS/mmintrin.h
 
  # Phlin (6/18/2012): Added support for SSE4.2.
    cp ${srcdir}/config/rose_specific_ammintrin.h ./include-staging/${compilerName}_HEADERS/ammintrin.h
@@ -249,13 +298,27 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
  # fi
  #  includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
 
-   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
+   compilerVendorName=$ax_cv_cxx_compiler_vendor
+   language="c"
+
+ # if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
+   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
       AC_MSG_FAILURE([$compilerHeaderDirs])
    fi
+
+ # DQ (2/2/2016): Added error checking (though this already appears to be present).
+   if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+       echo "In SETUP BACKEND C COMPILER SPECIFIC REFERENCES: get_compiler_header_dirs failed"
+       exit 1
+   fi
+
    includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, $compilerHeaderDirs"
    includeString="$includeString \"/usr/include\"}"
 
    echo "includeString = $includeString"
    AC_DEFINE_UNQUOTED([C_INCLUDE_STRING],$includeString,[Include path for backend C compiler.])
+
+ # echo "Exiting as a test in SETUP BACKEND C COMPILER SPECIFIC REFERENCES"
+ # exit 1
 ])
 

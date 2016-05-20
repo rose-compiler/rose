@@ -24,7 +24,7 @@ static void test1_get()
     m.insert(std::make_pair(3, 7));
 
     boost::optional<int> v1 = m.get(1);
-    REQUIRE(v1, "v1 should be initialized");
+    REQUIRE(v1.is_initialized(), "v1 should be initialized");
     REQUIRE(v1==9, NULL);
 
     boost::optional<int> v2 = m.get(999);

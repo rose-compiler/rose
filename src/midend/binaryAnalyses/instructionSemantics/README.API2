@@ -24,7 +24,7 @@ need to make all their choices at compile time.
 Some problems we've discovered with this design:
 
 1. Some ValueTypes (e.g., the symbolic expression trees defined by
-   InsnSemanticsExpr) aren't templates--they make the value bit width
+   SymbolicExpr) aren't templates--they make the value bit width
    a run-time parameter.  In order to get these to be used in the
    instruction semantics framework, they need to be shoehorned in with
    an adapter class template (e.g., SymbolicSemantics::ValueType). In
@@ -65,7 +65,7 @@ Some problems we've discovered with this design:
 6. Having all the class template and member function template
    definitions in header files makes compiling very slow.  Check out
    how long it takes to compile projects/simulator, which uses
-   instruction semantics extensively.
+   instruction semantics extensively (since removed).
 
 7. The current X86InstructionSemantics class template uses a huge
    switch statement to handle individual kinds of x86 instructions. In
@@ -198,7 +198,7 @@ in class templates.
 Since these are no longer templates, they can be moved to *.C files
 and therefore compiled into the ROSE library.  This should drastically
 improve compile time for user code that makes extensive use of
-instruction semantics (like projects/simulator).
+instruction semantics (like projects/simulator, since removed).
 
 10. Make instruction dispatchers table-driven
 
@@ -287,7 +287,7 @@ the old API). A RISC operator in the old API:
        } else if (b.is_known() && 0==b.known_value()) {
            return a;
        }
-       retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ADD,
+       retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_ADD,
                                                     a.get_expression(),
                                                     b.get_expression()));
        retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -302,7 +302,7 @@ to
        SValuePtr a = SValue::promote(a_);
        SValuePtr b = SValue::promote(b_);
        assert(a->get_width()==b->get_width());
-       SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
+       SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), SymbolicExpr::OP_ADD,
                                                            a->get_expression(), b->get_expression()));
        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
        return retval;
@@ -335,7 +335,7 @@ to this:
         BaseSemantics::ValueTypePtr
         unsignedMultiply(const BaseSemantics::ValueTypePtr &a, const BaseSemantics::ValueTypePtr &b) override {
             ValueTypePtr retval = undefined_(a->get_width() + b->get_width()); 
-            retval->set_state(VAL_UNDEFINED);
+            retval->currentState(VAL_UNDEFINED);
             return retval;
         }
     };

@@ -1,6 +1,0 @@
-dnl List of all makefiles for this project                                                      -*- autoconf -*-
-AC_CONFIG_FILES([projects/assemblyToSourceAst/Makefile
-                 projects/assemblyToSourceAst/tests/Makefile
-                ])
-
-

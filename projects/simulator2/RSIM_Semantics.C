@@ -1,5 +1,7 @@
 #include <rose.h>
 #include <Diagnostics.h>
+#include <DisassemblerX86.h>
+#include <DisassemblerM68k.h>
 
 #include "RSIM_Semantics.h"
 #include "RSIM_Thread.h"
@@ -8,6 +10,7 @@
 #include "TraceSemantics2.h"
 #endif
 
+using namespace rose;
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
@@ -64,20 +67,44 @@ struct IP_sysenter: public X86::InsnProcessor {
 
 DispatcherPtr
 createDispatcher(RSIM_Thread *owningThread) {
-    const RegisterDictionary *regs = owningThread->get_process()->get_disassembler()->get_registers();
-    RiscOperatorsPtr ops = RiscOperators::instance(owningThread, regs, NULL);
-    size_t wordSize = regs->findLargestRegister(x86_regclass_gpr, x86_gpr_ax).get_nbits();
+    BinaryAnalysis::Disassembler *disassembler = owningThread->get_process()->disassembler();
+    Architecture arch = ARCH_NONE;
+    if (dynamic_cast<BinaryAnalysis::DisassemblerX86*>(disassembler)) {
+        arch = ARCH_X86;
+    } else if (dynamic_cast<BinaryAnalysis::DisassemblerM68k*>(disassembler)) {
+        arch = ARCH_M68k;
+    } else {
+        TODO("architecture not supported");
+    }
+
+    const RegisterDictionary *regs = disassembler->get_registers();
+    RiscOperatorsPtr ops = RiscOperators::instance(arch, owningThread, regs, NULL);
+    size_t wordSize = disassembler->instructionPointerRegister().get_nbits();
     ASSERT_require(wordSize == 32 || wordSize == 64);
-#if 0 // DEBUGGING [Robb P. Matzke 2015-06-01]
+
+#if 0 // DEBUGGING [Robb P. Matzke 2015-07-30]
     std::cerr <<"Using TraceSemantics for debugging (" <<__FILE__ <<":" <<__LINE__ <<")\n";
     TraceSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(ops);
     traceOps->stream().disable();                       // turn it on only when we need it
-    DispatcherPtr dispatcher = DispatcherX86::instance(traceOps, wordSize, regs);
-#else
-    DispatcherPtr dispatcher = DispatcherX86::instance(ops, wordSize, regs);
+    ops = traceOps;
 #endif
-    dispatcher->iproc_set(x86_cpuid, new IP_cpuid);
-    dispatcher->iproc_set(x86_sysenter, new IP_sysenter);
+
+    DispatcherPtr dispatcher;
+    switch (arch) {
+        case ARCH_X86:
+            dispatcher = DispatcherX86::instance(ops, wordSize, regs);
+            dispatcher->iproc_set(x86_cpuid, new IP_cpuid);
+            dispatcher->iproc_set(x86_sysenter, new IP_sysenter);
+            ops->allocateOnDemand(false);               // OS controls what memory is available
+            break;
+        case ARCH_M68k:
+            dispatcher = DispatcherM68k::instance(ops, wordSize, regs);
+            ops->allocateOnDemand(true);                // No OS, so make all memory available
+            break;
+        default:
+            ASSERT_not_reachable("invalid architecture");
+    }
+
     return dispatcher;
 }
 
@@ -87,6 +114,7 @@ createDispatcher(RSIM_Thread *owningThread) {
 
 void
 RiscOperators::loadShadowRegister(X86SegmentRegister sr, unsigned gdtIdx) {
+    ASSERT_require(ARCH_X86 == architecture_);
     SegmentInfo segment(thread_->gdt_entry(gdtIdx));
     if (64 == thread_->get_process()->wordSize()) {
         if (sr != x86_segreg_fs && sr != x86_segreg_gs)
@@ -98,6 +126,7 @@ RiscOperators::loadShadowRegister(X86SegmentRegister sr, unsigned gdtIdx) {
 
 RiscOperators::SegmentInfo&
 RiscOperators::segmentInfo(X86SegmentRegister sr) {
+    ASSERT_require(ARCH_X86 == architecture_);
     return segmentInfo_[sr];
 }
 
@@ -106,38 +135,41 @@ RiscOperators::dumpState() {
     Sawyer::Message::Stream out(thread_->tracing(TRACE_STATE));
     out.enable();
     out <<"Semantic state for thread " <<thread_->get_tid() <<":\n";
-    if (get_insn()) {
-        out <<"  instruction #" <<get_ninsns() <<" at " <<unparseInstructionWithAddress(get_insn()) <<"\n";
+    if (currentInstruction()) {
+        out <<"  instruction #" <<nInsns() <<" at " <<unparseInstructionWithAddress(currentInstruction()) <<"\n";
     } else {
-        out <<"  processed " <<StringUtility::plural(get_ninsns(), "instructions") <<"\n";
+        out <<"  processed " <<StringUtility::plural(nInsns(), "instructions") <<"\n";
     }
 
     out <<"  registers:\n";
     BaseSemantics::Formatter format;
     format.set_line_prefix("    ");
-    out <<(*get_state()->get_register_state()+format);
+    out <<(*currentState()->registerState()+format);
 
     out <<"  memory:\n";
     thread_->get_process()->mem_showmap(out, "memory:", "    ");
 
-    out <<"  segments:\n";
-    RegisterNames regNames(get_state()->get_register_state()->get_register_dictionary());
-    BOOST_FOREACH (const SegmentInfoMap::Node &node, segmentInfo_.nodes()) {
-        RegisterDescriptor segreg(x86_regclass_segment, node.key(), 0, 16);
-        out <<"    " <<regNames(segreg) <<": base=" <<StringUtility::addrToString(node.value().base)
-            <<" limit=" <<StringUtility::addrToString(node.value().limit)
-            <<" present=" <<(node.value().present?"yes":"no") <<"\n";
+    if (ARCH_X86 == architecture_) {
+        out <<"  segments:\n";
+        RegisterNames regNames(currentState()->registerState()->get_register_dictionary());
+        BOOST_FOREACH (const SegmentInfoMap::Node &node, segmentInfo_.nodes()) {
+            RegisterDescriptor segreg(x86_regclass_segment, node.key(), 0, 16);
+            out <<"    " <<regNames(segreg) <<": base=" <<StringUtility::addrToString(node.value().base)
+                <<" limit=" <<StringUtility::addrToString(node.value().limit)
+                <<" present=" <<(node.value().present?"yes":"no") <<"\n";
+        }
     }
 }
 
 void
 RiscOperators::startInstruction(SgAsmInstruction* insn) {
     Super::startInstruction(insn);
-    SAWYER_MESG(thread_->tracing(TRACE_INSN)) <<"#" <<get_ninsns() <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+    SAWYER_MESG(thread_->tracing(TRACE_INSN)) <<"#" <<nInsns() <<" " <<unparseInstructionWithAddress(insn) <<"\n";
 }
 
 void
 RiscOperators::interrupt(int majr, int minr) {
+    ASSERT_require(ARCH_X86 == architecture_);
     if (x86_exception_int == majr && 0x80 == minr) {
         thread_->emulate_syscall();
     } else if (x86_exception_sysenter == majr) {
@@ -146,7 +178,7 @@ RiscOperators::interrupt(int majr, int minr) {
     } else if (x86_exception_syscall == majr) {
         thread_->emulate_syscall();
     } else if (x86_exception_int == majr) {
-        throw Interrupt(get_insn()->get_address(), minr);
+        throw Interrupt(currentInstruction()->get_address(), minr);
     } else {
         FIXME("interrupt/exception type not handled [Robb P. Matzke 2015-04-22]");
     }
@@ -155,7 +187,7 @@ RiscOperators::interrupt(int majr, int minr) {
 void
 RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value) {
     Super::writeRegister(reg, value);
-    if (reg.get_major() == x86_regclass_segment) {
+    if (ARCH_X86 == architecture_ && reg.get_major() == x86_regclass_segment) {
         ASSERT_require2(0 == value->get_number() || 3 == (value->get_number() & 7), "GDT and privilege level 3");
         loadShadowRegister((X86SegmentRegister)reg.get_minor(), value->get_number() >> 3);
     }
@@ -168,42 +200,62 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     RSIM_Process *process = thread_->get_process();
     rose_addr_t offset = address->get_number();
     rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(address->get_width());
+    rose_addr_t addr = offset & addrMask;
+    if (!cond->get_number())
+        return dflt;
 
     // Check the address against the memory segment information
     ASSERT_require(dflt->get_width() % 8 == 0);
     size_t nBytes = dflt->get_width() / 8;
-    ASSERT_require(segreg.is_valid());
-    ASSERT_require(segmentInfo_.exists((X86SegmentRegister)segreg.get_minor()));
-    SegmentInfo &segment = segmentInfo_[(X86SegmentRegister)segreg.get_minor()];
-    ASSERT_require(segment.present);
-    ASSERT_require(offset <= segment.limit);
-    ASSERT_require(((offset + nBytes - 1) & addrMask) <= segment.limit);
-
-    if (!cond->get_number())
-        return dflt;
-
-    rose_addr_t addr = (segment.base + offset) & addrMask;
+    if (ARCH_X86 == architecture_) {
+        ASSERT_require(segreg.is_valid());
+        ASSERT_require(segmentInfo_.exists((X86SegmentRegister)segreg.get_minor()));
+        SegmentInfo &segment = segmentInfo_[(X86SegmentRegister)segreg.get_minor()];
+        ASSERT_require(segment.present);
+        ASSERT_require(offset <= segment.limit);
+        ASSERT_require(((offset + nBytes - 1) & addrMask) <= segment.limit);
+        addr = (segment.base + offset) & addrMask;
+        SAWYER_MESG(mesg) <<"  readMemory(" <<StringUtility::addrToString(segment.base) <<"+"
+                          <<StringUtility::addrToString(offset) <<"=" <<StringUtility::addrToString(addr) <<") ";
+    } else {
+        SAWYER_MESG(mesg) <<"  readMemory(" <<StringUtility::addrToString(addr) <<") ";
+    }
 
     // Read the data from memory
     uint8_t buffer[16];
     ASSERT_require(nBytes <= sizeof buffer);
     size_t nRead = process->mem_read(buffer, addr, nBytes);
     if (nRead != nBytes) {
-        bool isMapped = process->mem_is_mapped(addr + nRead);
-        throw RSIM_SignalHandling::mk_sigfault(SIGSEGV, isMapped?SEGV_ACCERR:SEGV_MAPERR, addr+nRead);
+        if (allocateOnDemand_) {
+            // Reading from unallocated memory returns zeros rather than allocating anything.
+            for (size_t i=0; i<nBytes; ++i) {
+                if (process->mem_read(buffer+i, addr+i, 1) != 0)
+                    buffer[i] = 0;
+            }
+        } else {
+            bool isMapped = process->mem_is_mapped(addr + nRead);
+            throw RSIM_SignalHandling::mk_sigfault(SIGSEGV, isMapped?SEGV_ACCERR:SEGV_MAPERR, addr+nRead);
+        }
     }
 
-    // Convert to a little-endian value
+    // Convert guest bytes read to host byte order
+    ASSERT_require(ByteOrder::host_order() == ByteOrder::ORDER_LSB);
     Sawyer::Container::BitVector bv(8*nBytes);
-    for (size_t i=0; i<nRead; ++i)
-        bv.fromInteger(Sawyer::Container::BitVector::BitRange::baseSize(i*8, 8), buffer[i]);
+    switch (architecture_) {
+        case ARCH_X86:                                  // guest memory is little-endian
+            for (size_t i=0; i<nRead; ++i)
+                bv.fromInteger(Sawyer::Container::BitVector::BitRange::baseSize(i*8, 8), buffer[i]);
+            break;
+        case ARCH_M68k:                                 // guest memory is big-endian
+            for (size_t i=0; i<nRead; ++i)
+                bv.fromInteger(Sawyer::Container::BitVector::BitRange::baseSize(i*8, 8), buffer[nBytes-(i+1)]);
+            break;
+        default:
+            ASSERT_not_reachable("invalid architecture");
+    }
     BaseSemantics::SValuePtr retval = svalue_number(bv);
 
-    // Diagnostics
-    mesg <<"  readMemory(" <<StringUtility::addrToString(segment.base) <<"+"
-         <<StringUtility::addrToString(offset) <<"=" <<StringUtility::addrToString(addr)
-         <<") -> " <<*retval <<"\n";
-
+    SAWYER_MESG(mesg) <<"-> " <<*retval <<"\n";
     return retval;
 }
 
@@ -215,40 +267,86 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     rose_addr_t offset = address->get_number();
     rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(address->get_width());
     SValuePtr value = SValue::promote(value_);
+    rose_addr_t addr = offset & addrMask;
+    if (!cond->get_number())
+        return;
 
     // Check the address against the memory segment information
     ASSERT_require(value->get_width() % 8 == 0);
     size_t nBytes = value->get_width() / 8;
-    ASSERT_require(segreg.is_valid());
-    ASSERT_require(segmentInfo_.exists((X86SegmentRegister)segreg.get_minor()));
-    SegmentInfo &segment = segmentInfo_[(X86SegmentRegister)segreg.get_minor()];
-    ASSERT_require(segment.present);
-    ASSERT_require(offset <= segment.limit);
-    ASSERT_require(((offset + nBytes - 1) & addrMask) <= segment.limit);
+    if (ARCH_X86 == architecture_) {
+        ASSERT_require(segreg.is_valid());
+        ASSERT_require(segmentInfo_.exists((X86SegmentRegister)segreg.get_minor()));
+        SegmentInfo &segment = segmentInfo_[(X86SegmentRegister)segreg.get_minor()];
+        ASSERT_require(segment.present);
+        ASSERT_require(offset <= segment.limit);
+        ASSERT_require(((offset + nBytes - 1) & addrMask) <= segment.limit);
+        addr = (segment.base + offset) & addrMask;
+        SAWYER_MESG(mesg) <<"  writeMemory(" <<StringUtility::addrToString(segment.base) <<"+"
+                          <<StringUtility::addrToString(offset) <<"=" <<StringUtility::addrToString(addr)
+                          <<", " <<*value <<")\n";
+    } else {
+        SAWYER_MESG(mesg) <<"  writeMemory(" <<StringUtility::addrToString(addr) <<", " <<*value <<")\n";
+    }
 
-    if (!cond->get_number())
-        return;
-
-    rose_addr_t addr = (segment.base + offset) & addrMask;
-
-    mesg <<"  writeMemory(" <<StringUtility::addrToString(segment.base) <<"+"
-         <<StringUtility::addrToString(offset) <<"=" <<StringUtility::addrToString(addr)
-         <<", " <<*value <<")\n";
-
-    // Convert to a little-endian value
+    // Convert host bytes to guest memory byte order.
+    ASSERT_require(ByteOrder::host_order() == ByteOrder::ORDER_LSB);
     uint8_t buffer[16];
     ASSERT_require(nBytes <= sizeof buffer);
-    for (size_t i=0; i<nBytes; ++i)
-        buffer[i] = value->bits().toInteger(Sawyer::Container::BitVector::BitRange::baseSize(i*8, 8));
+    switch (architecture_) {
+        case ARCH_X86:                                  // guest memory is little-endian
+            for (size_t i=0; i<nBytes; ++i)
+                buffer[i] = value->bits().toInteger(Sawyer::Container::BitVector::BitRange::baseSize(i*8, 8));
+            break;
+        case ARCH_M68k:
+            for (size_t i=0; i<nBytes; ++i)
+                buffer[nBytes-(i+1)] = value->bits().toInteger(Sawyer::Container::BitVector::BitRange::baseSize(i*8, 8));
+            break;
+        default:
+            ASSERT_not_reachable("invalid architecture");
+    }
 
-    // Write buffer to memory map or simulate a segmentation fault. According to GLibc documentation Section 24.2.1 "Program
-    // Error Signals", attempts to write to memory that is not mapped results in SIGBUS, and writing to memory mapped without
-    // write permission results in SIGSEGV.  However, actual experience (e.g., syscall_tst.117.shmdt.01) shows that mapping a
-    // shared memory segment, then unmapping it, then trying to write to it will result in SIGSEGV rather than SIGBUS.
+    // Write buffer to memory map.
     size_t nWritten = process->mem_write(buffer, addr, nBytes);
     if (nWritten != nBytes) {
-        bool isMapped = process->mem_is_mapped(addr + nWritten);
-        throw RSIM_SignalHandling::mk_sigfault(SIGSEGV, isMapped ? SEGV_ACCERR : SEGV_MAPERR, addr+nWritten);
+        if (allocateOnDemand_) {
+            for (size_t i=0; i<nBytes; ++i) {
+                if (process->mem_write(buffer+i, addr+i, 1) == 0 && buffer[i] != 0) {
+                    // If memory is mapped then it must have no write permission. Treat this like an error.
+                    if (process->get_memory().at(addr+i).exists())
+                        throw RSIM_SignalHandling::mk_sigfault(SIGSEGV, SEGV_ACCERR, addr+i);
+
+                    // This address (addr+i) is not mapped, but try to map the whole page being careful to not occlude anything
+                    // that's already mapped.
+                    static const rose_addr_t pageSize = 8192;
+                    rose_addr_t begin = alignDown(addr+i, pageSize);    // candidate first address to map
+                    rose_addr_t end = alignUp(addr+i+1, pageSize);      // candidate end (exclusive) address to map
+                    Sawyer::Optional<rose_addr_t> loMapped =            // optional last lower address already mapped
+                        process->get_memory().atOrBefore(addr).next(Sawyer::Container::MATCH_BACKWARD);
+                    Sawyer::Optional<rose_addr_t> hiMapped =            // optional next higher address already mapped
+                        process->get_memory().atOrAfter(addr).next();
+                    if (loMapped)
+                        begin = std::max(begin, *loMapped+1);
+                    if (hiMapped)
+                        end = std::min(end, *hiMapped);
+                    AddressInterval newArea = AddressInterval::baseSize(begin, end-begin);
+                    ASSERT_forbid(process->get_memory().isOverlapping(newArea));
+                    process->get_memory().insert(newArea,
+                                                 MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(newArea.size()), 0,
+                                                                    MemoryMap::READ_WRITE_EXECUTE, "demand allocated"));
+                    process->get_memory().dump(thread_->tracing(TRACE_MMAP));
+                    nWritten = process->mem_write(buffer+i, addr+i, 1);
+                    ASSERT_require(nWritten == 1);
+                }
+            }
+        } else {
+            // Generate a fault. According to GLibc documentation Section 24.2.1 "Program Error Signals", attempts to write to
+            // memory that is not mapped results in SIGBUS, and writing to memory mapped without write permission results in
+            // SIGSEGV.  However, actual experience (e.g., syscall_tst.117.shmdt.01) shows that mapping a shared memory
+            // segment, then unmapping it, then trying to write to it will result in SIGSEGV rather than SIGBUS.
+            bool isMapped = process->mem_is_mapped(addr + nWritten);
+            throw RSIM_SignalHandling::mk_sigfault(SIGSEGV, isMapped ? SEGV_ACCERR : SEGV_MAPERR, addr+nWritten);
+        }
     }
 }
 

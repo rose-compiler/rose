@@ -152,14 +152,14 @@ void FailSafe::removeAttribute(FailSafe::Attribute* attribute, SgNode* node)
 
   AttributeList* cur_list =  getAttributeList(node);
   ROSE_ASSERT (cur_list != NULL);
-  (cur_list->attriList);
+  // (cur_list->attriList);
   vector <Attribute* >::iterator h_pos = find ((cur_list->attriList).begin(), (cur_list->attriList).end(), attribute);
   ROSE_ASSERT (h_pos != (cur_list->attriList).end());
   (cur_list->attriList).erase (h_pos);
   if ((cur_list->attriList).size() ==0)
   {
-    delete cur_list;
     node->removeAttribute("FailSafeAttributeList");
+    delete cur_list;
   }
 }
 
@@ -746,7 +746,8 @@ FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* p
   c_sgnode = getNextStatement(pragmaDecl);
   //A pragma can show up in front of the structured block affected 
   // or follow declarations it relies on (as data predicate)
-  if (c_sgnode == NULL);
+  // MS: 11/22/2015 removed ';' from "if (c_sgnode == NULL);"
+  if (c_sgnode == NULL)
     c_sgnode = pragmaDecl; // use the pragma as the anchor AST to enable scope search
   assert (c_sgnode != NULL);
     

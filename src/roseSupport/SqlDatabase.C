@@ -4,9 +4,11 @@
 #include "SqlDatabase.h"
 #include "string_functions.h" // i.e., namespace StringUtility
 
+#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #ifndef _MSC_VER
 #include <sys/time.h>
 #else
@@ -110,8 +112,20 @@ public:
 };
 
 #ifdef ROSE_HAVE_SQLITE3
+static std::string
+sqlite3_url_documentation() {
+    return ("@named{SQLite3}{The uniform resource locator for SQLite3 databases has the format "
+            "\"sqlite3://@v{filename}[?@v{param1}[=@v{value1}][&@v{additional_parameters}...]]\" "
+            "where @v{filename} is the name of a file in the local filesystem (use a third slash if the name "
+            "is an absolute name from the root of the filesystem). The file name can be followed by zero or "
+            "parameters separated from the file name by a question mark and from each other by an ampersand. "
+            "Each parameter has an optional setting. At this time, the only parameter that is understood is "
+            "\"debug\", which takes no value.}");
+}
+#endif
+
 // Parse an sqlite3 URL of the form:
-//    sqlite3://[FILENAME][?PARAM1[=VALUE1]&...]
+//    sqlite3://FILENAME[?PARAM1[=VALUE1]&...]
 // The only parameter that's currently understood is "debug", which turns on the debug property for the connection.
 static std::string
 sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
@@ -155,9 +169,20 @@ sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
     }
     return dbname;
 }
-#endif
 
-#ifdef ROSE_HAVE_LIBPQXX
+static std::string
+postgres_url_documentation() {
+    return ("@named{PostgreSQL}{The uniform resource locator for PostgreSQL databases has the format "
+            "\"postgresql://[@v{user}[:@v{password}]@][@v{hostname}[:@v{port}]][/@v{database}]"
+            "[?@v{param1}[=@v{value1}][&@v{additional_parameters}...]]\" where @v{user} is the database user "
+            "name; @v{password} is the user's password; @v{hostname} is the host name or IP address of the database "
+            "server, defaulting to the localhost; @v{port} is the TCP port number at which the server listens; "
+            "and @v{database} is the name of the database. The rest of the URI consists of optional parameters separated "
+            "from the prior part of the URI by a question mark and separated from each other by ampersands.  The only "
+            "parameter that is understood at this time is \"debug\", which takes no value and causes each SQL statement "
+            "to be emitted to standard error as it's executed.}");
+}
+
 // Documentation for lipqxx says pqxx::connection's argument is whatever libpq connect takes, but apparently URLs don't work.
 // This function converts a postgresql connection URL into an old-style libpq connection string.  A url is of the form:
 //    postgresql://[USER[:PASSWORD]@][NETLOC][:PORT][/DBNAME][?PARAM1[=VALUE1]&...]
@@ -265,7 +290,6 @@ postgres_parse_url(const std::string &src, bool *has_debug/*in,out*/)
     std::string retval = StringUtility::listToString(params);
     return retval;
 }
-#endif
 
 size_t
 ConnectionImpl::conn_for_transaction()
@@ -430,6 +454,21 @@ std::string
 Connection::openspec() const
 {
     return impl->open_spec;
+}
+
+// class method
+std::string
+Connection::connectionSpecification(const std::string &url, Driver driver) {
+    if (NO_DRIVER == driver)
+        driver = guess_driver(url);
+    switch (driver) {
+        case SQLITE3:
+            return sqlite3_parse_url(url, NULL);
+        case POSTGRESQL:
+            return postgres_parse_url(url, NULL);
+        default:
+            throw Exception("no suitable driver for \"" + url + "\"");
+    }
 }
 
 TransactionPtr
@@ -820,6 +859,7 @@ public:
     StatementPtr bind(const StatementPtr &stmt, size_t idx, uint64_t);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, double);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::string&);
+    std::vector<size_t> findSubstitutionQuestionMarks(const std::string&);
     std::string expand();
     size_t begin(const StatementPtr &stmt);
     void print(std::ostream&) const;
@@ -840,6 +880,23 @@ public:
 #endif
 };
 
+// Finds '?' in an SQL statement that correspond to the points where positional arguments are bound. These are
+// question marks that are outside things like string literals.
+std::vector<size_t>
+StatementImpl::findSubstitutionQuestionMarks(const std::string &sql) {
+    std::vector<size_t> retval;
+    bool inStringLiteral = false;
+    for (size_t i=0; i<sql.size(); ++i) {
+        if ('\'' == sql[i]) {                           // quotes are escaped by doubling them
+            inStringLiteral = !inStringLiteral;
+        } else if ('?' == sql[i]) {
+            if (!inStringLiteral)
+                retval.push_back(i);
+        }
+    }
+    return retval;
+}
+
 void
 StatementImpl::init()
 {
@@ -848,10 +905,9 @@ StatementImpl::init()
     sqlite3_cursor = NULL;
 #endif
 
-    for (size_t i=0; i<sql.size(); ++i) {
-        if ('?'==sql[i])
-            placeholders.push_back(std::make_pair(i, std::string()));
-    }
+    std::vector<size_t> qmarks = findSubstitutionQuestionMarks(sql);
+    BOOST_FOREACH (size_t i, qmarks)
+        placeholders.push_back(std::make_pair(i, std::string()));
 }
 
 void
@@ -929,25 +985,16 @@ StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::string &val
     return stmt;
 }
 
+// Expand some SQL by replacing substitution '?' with the value of the corresponding bound argument.
 std::string
 StatementImpl::expand()
 {
-    std::string s;
-    size_t sz = sql.size();
-    size_t nph = 0;
-    for (size_t i=0; i<sz; ++i) {
-        if ('?'==sql[i]) {
-            assert(nph<placeholders.size());
-            s += placeholders[nph++].second;
-        } else if (isspace(sql[i]) && s.empty()) {
-            // skip leading white space
-        } else {
-            s += sql[i];
-        }
+    std::string s = sql;
+    for (size_t i=placeholders.size(); i>0; --i) {
+        ASSERT_require(placeholders[i-1].first < s.size());
+        s.replace(placeholders[i-1].first, 1, placeholders[i-1].second);
     }
-    size_t end = s.find_last_not_of(" \t\n\r");
-    if (end!=std::string::npos)
-        s = s.substr(0, end+1);
+    boost::trim(s);
     return s;
 }
 
@@ -1481,6 +1528,20 @@ std::ostream& operator<<(std::ostream &o, const Exception &x) { x.print(o); retu
 std::ostream& operator<<(std::ostream &o, const Connection &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const Transaction &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const Statement &x) { x.print(o); return o; }
+
+std::string
+uriDocumentation() {
+    std::string s;
+#ifdef ROSE_HAVE_SQLITE3
+    s += sqlite3_url_documentation();
+#endif
+#ifdef ROSE_HAVE_LIBPQXX
+    s += postgres_url_documentation();
+#endif
+    if (s.empty())
+        s = "No database drivers are configured.";
+    return s;
+}
 
 /*******************************************************************************************************************************
  *                                      Tables

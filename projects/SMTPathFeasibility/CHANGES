@@ -1,0 +1,16 @@
+April 1, 2015
+
+Changed src/smtQueryLib.cpp 
+--
+to remove the unnecessary loop from SgVariableDeclaration. I thought I had to get the pointer via
+
+SgInitializedNamPtrList List = varDecl->get_variables();
+
+and then get the first one. Instead you can use
+
+SageInterface::getFirstInitializedName(varDecl);
+
+thus removing an obnoxious loop that worked but was very clunky.
+--
+
+

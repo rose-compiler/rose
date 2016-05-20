@@ -4,7 +4,7 @@ SUBDIRS = HeaderFilesGraphGenerator HeaderFilesNotIncludedList
 
 # bin_PROGRAMS = reverse
 # reverse_SOURCES = reverse.cpp
-# INCLUDES = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES)
 # LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = 

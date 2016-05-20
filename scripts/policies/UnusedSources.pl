@@ -18,7 +18,7 @@ ways:
    (3) Mention the file in some rule or variable to indicate your
        acknowlegement that you intentionally do not use the file.
 
-After fixing your files (and perhaps some others if you're feeling
+After fixing your files (and perhaps some others if you are feeling
 generous), rerun this policy checker (e.g., "make check-policies"
 in the "src" build directory), look at how many failures are still
 present, and adjust the limit downward at the top of the
@@ -36,13 +36,21 @@ my $warning = " (warning)";	# non-empty means issue warnings rather than errors,
 # Each key is the base name of the file;
 # Each value is an array of filenames that map to this key.
 my %index;
-push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp|c|C|cpp)$/} FileLister->new(@ARGV)->all_files;
+for my $file (FileLister->new(@ARGV)->all_files()) {
+    next unless $file =~ /\.(h|hh|hpp|c|C|cpp)$/;
+    next if $file =~ /\b(tests|projects)\//;
+    my($basename) = $file =~ /([^\/]+)$/;
+    my($key) = lc $basename;
+    $index{$key} = [] unless exists $index{$key};
+    push @{$index{$key}}, $file;
+}
 
 # Look for file names in makefiles (Makefile.am and CMakeList.txt) and remove those that we find
 # from the %index.
 my $files = FileLister->new(@ARGV);
 while (my $file = $files->next_file) {
   next unless $file =~ /\/(Makefile\.am|Makefile_variables|CMakeList\.txt|make_rule\.inc|Makefile-.*\.inc)$/;
+  next if $file =~ /\b(tests|projects)\//; # skip test and project directories
   if (open FILE, "<", $file) {
     while (<FILE>) {
       s/#.*//;

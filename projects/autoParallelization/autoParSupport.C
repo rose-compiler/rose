@@ -17,6 +17,8 @@ namespace AutoParallelization
   bool enable_diff;
   bool b_unique_indirect_index;
   bool enable_distance;
+  bool keep_c99_loop_init = false; // no longer in use. 
+
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
@@ -62,7 +64,15 @@ namespace AutoParallelization
     }
     else
       enable_distance = false;
-
+#if 0
+    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","keep_loop_init",true))
+    {
+      cout<<" Keep C99 style loop initialization like for (int i=0;...)..."<<endl;
+      keep_c99_loop_init = true;
+    }
+    else
+      keep_c99_loop_init = false;
+#endif
 
     //Save -debugdep, -annot file .. etc, 
     // used internally in ReadAnnotation and Loop transformation

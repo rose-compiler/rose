@@ -111,7 +111,7 @@ void LabelProperty::initializeIO(VariableIdMapping* variableIdMapping) {
       _ioValue=ot.intVal;
       break;
     case SgNodeHelper::Pattern::OutputTarget::UNKNOWNPRINTF:
-      cerr<<"WARNING: non-supported output operation:"<<_node->unparseToString()<<endl;
+      //cerr<<"WARNING: non-supported output operation:"<<_node->unparseToString()<<endl;
       break;
     case SgNodeHelper::Pattern::OutputTarget::UNKNOWNOPERATION:
       ;//intentionally ignored (filtered)
@@ -156,7 +156,7 @@ string LabelProperty::labelTypeToString(LabelType lt) {
   case LABEL_FUNCTIONEXIT: return "functionexit";
   case LABEL_BLOCKBEGIN: return "blockbegin";
   case LABEL_BLOCKEND: return "blockend";
-  case LABEL_EMPTY_STMT: return "blockend";
+  case LABEL_EMPTY_STMT: return "emptystmt";
   default:
     cerr<<"Error: unknown label type."<<endl;
     exit(1);
@@ -197,6 +197,8 @@ Labeler::Labeler(SgNode* start) {
   computeNodeToLabelMapping();
 }
 
+Labeler::~Labeler(){}
+
 // returns number of labels to be associated with node
 int Labeler::isLabelRelevantNode(SgNode* node) {
   if(node==0) 
@@ -229,11 +231,12 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgForStatement:
     //  case V_SgForInitStatement: // TODO: investigate: we might not need this
   case V_SgBreakStmt:
+  case V_SgContinueStmt:
+  case V_SgGotoStatement:
   case V_SgVariableDeclaration:
   case V_SgLabelStatement:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
-  case V_SgGotoStatement:
   case V_SgSwitchStatement:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
@@ -402,6 +405,17 @@ bool Labeler::isConditionLabel(Label lab) {
   return SgNodeHelper::isCond(getNode(lab));
 }
 
+bool Labeler::isSwitchExprLabel(Label lab) {
+  SgNode* node=getNode(lab);
+  if(SgNodeHelper::isCond(node)) {
+    SgLocatedNode* loc=isSgLocatedNode(node);
+    if(loc) {
+      return isSgSwitchStatement(loc->get_parent());
+    }
+  }
+  return false;
+}
+
 bool Labeler::isFirstLabelOfMultiLabeledNode(Label lab) {
   return isFunctionCallLabel(lab)||isFunctionEntryLabel(lab)||isBlockBeginLabel(lab);
 }
@@ -547,6 +561,13 @@ IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labele
     (*i).initializeIO(variableIdMapping);
   }
   computeNodeToLabelMapping();
+}
+
+IOLabeler::~IOLabeler() {
+}
+
+bool IOLabeler::isStdIOLabel(Label label) {
+  return mappingLabelToLabelProperty[label.getId()].isIOLabel();
 }
 
 bool IOLabeler::isStdOutLabel(Label label) {

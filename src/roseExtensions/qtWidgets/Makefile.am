@@ -34,7 +34,7 @@ if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libRoseQtWidgets.la
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 buildDir = $(top_builddir)/src/roseExtensions/qtWidgets
 

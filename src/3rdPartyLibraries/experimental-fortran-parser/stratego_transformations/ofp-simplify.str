@@ -7,6 +7,17 @@ imports
 signature
   constructors
 
+// These constructors are commonly used simplifications that prepended by "Ofp".
+// This saves space in the AST and is easier to read.  However,
+// WARNING, as such, they don't follow the Fortran syntax definition.
+//------------------------------------------------------------------------------
+
+//   Moved to Main.sdf
+//   VarRef            : ObjectName                          -> VarRef
+     VarDef            : Variable                            -> VarDef
+
+//------------------------------------------------------------------------------
+
    CommonStmt        : A * B * C -> D
    InitialSpecPart   : A -> B
    SpecificationPart : A -> B
@@ -29,19 +40,19 @@ strategies //=================START OF STRATEGIES============================
     io-wrap(ofp-simplify)
 
   ofp-simplify =
-//      outermost(ofp-disamb)
-//    ; innermost(ofp-simplify-ast)
-      innermost(ofp-simplify-ast)
+      outermost(ofp-disamb)
+    ; innermost(ofp-simplify-ast)
+
 
 rules //========================START OF RULES===============================
 
 // Disambiguation rules
 //
 
-//R631 : C633 ... AllocateShapeSpecList shall appear
-// TODO - remove: solved by adding {avoid} to Allocation with arity 1
-//ofp-disamb:  amb([Allocation(u),   Allocation(x,y)  ]) -> Allocation(x,y)
-//ofp-disamb:  amb([Allocation(u,v), Allocation(x,y,z)]) -> Allocation(x,y,z)
+//R631 : C633: AllocateShapeSpecList shall appear .... 
+// Sometimes the DataRef swallows up too much; take second choice as it
+// uses AllocateShapeSpec and AllocateCoarraySpec.
+ofp-disamb:  amb([Allocation(u,v,w), Allocation(x,y,z)]) -> Allocation(x,y,z)
 
 //R703,R723
 //ofp-disamb:  amb([DefinedOperator(x), DefinedOperator(y)]) -> DefinedOperator(x)
@@ -80,9 +91,6 @@ ofp-simplify-ast:  opt-array-spec(spec)           -> spec
 ofp-simplify-ast:  opt-coarray-spec(spec)         -> spec
 ofp-simplify-ast:  opt-char-length(length)        -> length
 
-//R508
-ofp-simplify-ast:  language-binding-name(str)     -> str
-
 //R511
 ofp-simplify-ast:  explicit-coshape-spec-list(list,final)   -> <conc>(list, [final])
 ofp-simplify-ast:  final-cobounds-entry(lower)              -> ExplicitCoshape(no-lower-bound(),STAR())
@@ -104,7 +112,7 @@ ofp-simplify-ast:  DataRef([str])                 -> str
 //R612
 ofp-simplify-ast:
   PartRef(name,no-section-subscripts(),
-               no-image-selector())               -> name
+               no-image-selector())               -> VarRef(name)
 
 //R622
 ofp-simplify-ast:  opt-stride(stride)             -> stride
@@ -112,10 +120,15 @@ ofp-simplify-ast:  opt-stride(stride)             -> stride
 //R624
 ofp-simplify-ast:  ImageSelector(list)            -> list  // reduces '[' list ']' to list
 
-//R701
-ofp-simplify-ast:  Primary(expr)                  -> expr  // reduces '(' Expr ')' to Expr
+//ofp-simplify-ast:  DataRef([PartRef(obj,_,_)])  -> obj
 
-//ofp-simplify-ast:  DataRef([PartRef(obj,_,_)])    -> obj
+//R636
+ofp-simplify-ast:  AllocateCoarraySpec(list,lb)   -> <concat>[list,[AllocateCoshapeSpec(lb,"*")]]
+
+//R732 - transform a VarRef to a VarDef if incorrectly transformed earlier by R612
+ofp-simplify-ast:
+  AssignmentStmt(label,VarRef(var),expr,eos)      -> AssignmentStmt(label,VarDef(var),expr,eos)
+
 
 //R752
 ofp-simplify-ast:  type-spec-colon(spec)          -> spec

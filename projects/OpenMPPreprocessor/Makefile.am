@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = parallelSTLQuery OpenMPPreprocessor
 
@@ -46,7 +46,7 @@ FORCE_TEST_CODES_TO_RUN:
 $(TEST_Objects): $(TESTCODES) FORCE_TEST_CODES_TO_RUN OpenMPPreprocessor
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
-	./OpenMPPreprocessor -I$(srcdir) $(ROSE_FLAGS) $(INCLUDES) $(NANOS_INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	./OpenMPPreprocessor -I$(srcdir) $(ROSE_FLAGS) $(AM_CPPFLAGS) $(NANOS_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
 

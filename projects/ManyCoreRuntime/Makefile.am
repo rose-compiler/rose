@@ -2,8 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = docs
 
-# INCLUDES = $(ROSE_INCLUDES)
-INCLUDES = 
+# AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_CPPFLAGS = 
 
 # LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lz
 # LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

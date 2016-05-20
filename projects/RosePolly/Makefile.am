@@ -11,7 +11,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 # GMP_PATH = /Users/konstantinid1/Development/opt
 # ISL_PATH = /Users/konstantinid1/Internship/Tools/ISL
 # CLOOG_PATH = /Users/konstantinid1/Internship/Tools/CLOOG
-INCLUDES = \
+AM_CPPFLAGS = \
   -I$(srcdir)/include \
   -I$(ISL_INSTALL_PATH)/include \
   -I$(CLOOG_PATH)/include \

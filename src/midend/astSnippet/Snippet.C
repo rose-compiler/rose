@@ -5,9 +5,6 @@
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
-/* Needed for __attribute__ definition on Visual Studio */
-#include "threadSupport.h"
-
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -183,6 +180,11 @@ static std::string getJavaClassNameFromFileName(const std::string fileName)
 
     return boost::erase_last_copy(notDir, ".java");
 }
+#ifdef _MSC_VER
+#define UNUSED_VAR
+#else
+#define UNUSED_VAR __attribute__((unused))
+#endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 // Parse java file based on addJavaSource.cpp test case
@@ -231,7 +233,7 @@ static SgFile* parseJavaFile(const std::string &fileName)
             }
         }
         struct stat sb;
-        int status __attribute__((unused)) = stat(dirName.c_str(), &sb);
+        int status UNUSED_VAR = stat(dirName.c_str(), &sb);
         assert(0==status);
         assert(boost::filesystem::is_directory(dirName));
         if (dirName!=tempDirectory) {
@@ -910,9 +912,9 @@ Snippet::replaceVariable(SgVarRefExp *vref, SgExpression *replacement)
 {
     struct Replacer: public SimpleReferenceToPointerHandler {
         SgNode *nodeToReplace, *replacement;
-        bool replaced;
+        size_t replaced;
         Replacer(SgNode *nodeToReplace, SgNode *replacement)
-            : nodeToReplace(nodeToReplace), replacement(replacement), replaced(false) {}
+            : nodeToReplace(nodeToReplace), replacement(replacement), replaced(0) {}
         void operator()(SgNode *&node, const SgName &debugStringName, bool/*traverse*/) {
             if (node==nodeToReplace) {
                 node = replacement;

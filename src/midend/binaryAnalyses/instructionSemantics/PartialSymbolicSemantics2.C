@@ -23,6 +23,14 @@ Formatter::rename(uint64_t orig_name)
  *                                      SValue
  *******************************************************************************************************************************/
 
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
+                            SMTSolver *solver) const {
+    if (must_equal(other_, solver))
+        return Sawyer::Nothing();
+    return bottom_(get_width());
+}
+
 bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const 
 {
@@ -117,7 +125,7 @@ RiscOperators::instance(const RegisterDictionary *regdict)
 #endif
     BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
     MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-    memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
+    memory->byteRestricted(false); // because extracting bytes from a word results in new variables for this domain
     BaseSemantics::StatePtr state = State::instance(registers, memory);
     SMTSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(state, solver));
@@ -127,7 +135,7 @@ RiscOperators::instance(const RegisterDictionary *regdict)
 void
 RiscOperators::interrupt(int majr, int minr)
 {
-    get_state()->clear();
+    currentState()->clear();
 }
 
 BaseSemantics::SValuePtr
@@ -409,7 +417,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr b = SValue::promote(b_);
     if (!b->name) {
         if (0==b->offset)
-            throw BaseSemantics::Exception("division by zero", get_insn());
+            throw BaseSemantics::Exception("division by zero", currentInstruction());
         if (!a->name)
             return number_(a->get_width(),
                            (IntegerOps::signExtend2(a->offset, a->get_width(), 64) /
@@ -431,7 +439,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     if (a->name || b->name)
         return undefined_(b->get_width());
     if (0==b->offset)
-        throw BaseSemantics::Exception("division by zero", get_insn());
+        throw BaseSemantics::Exception("division by zero", currentInstruction());
     return number_(b->get_width(),
                    (IntegerOps::signExtend2(a->offset, a->get_width(), 64) %
                     IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
@@ -474,7 +482,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr b = SValue::promote(b_);
     if (!b->name) {
         if (0==b->offset)
-            throw BaseSemantics::Exception("division by zero", get_insn());
+            throw BaseSemantics::Exception("division by zero", currentInstruction());
         if (!a->name)
             return number_(a->get_width(), a->offset / b->offset);
         if (1==b->offset)
@@ -491,7 +499,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr b = SValue::promote(b_);
     if (!b->name) {
         if (0==b->offset)
-            throw BaseSemantics::Exception("division by zero", get_insn());
+            throw BaseSemantics::Exception("division by zero", currentInstruction());
         if (!a->name)
             return number_(b->get_width(), a->offset % b->offset);
         /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the
@@ -553,7 +561,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
         return;
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    state->writeMemory(address, value, this, this);
+    currentState()->writeMemory(address, value, this, this);
 }
     
 BaseSemantics::SValuePtr
@@ -562,18 +570,23 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &dflt_,
                           const BaseSemantics::SValuePtr &condition)
 {
-    size_t nbits = dflt_->get_width();
+    BaseSemantics::SValuePtr dflt = dflt_;
+    size_t nbits = dflt->get_width();
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     ASSERT_require2(nbits % 8 == 0, "read from memory must be in byte units");
     if (condition->is_number() && !condition->get_number())
-        return dflt_;
+        return dflt;
 
-    // Default values come from an optional memory map if possible, otherwise use the passed-in default.
-    BaseSemantics::SValuePtr dflt = dflt_;
+    // Use the initial memory state if there is one.
+    if (initialState())
+        dflt = initialState()->readMemory(address, dflt, this, this);
+
+    // Use the concrete MemoryMap if there is one.  Only those areas of the map that are readable and not writable are used.
     if (map && address->is_number()) {
         size_t nbytes = nbits/8;
         uint8_t *buf = new uint8_t[nbytes];
-        size_t nread = map->readQuick(buf, address->get_number(), nbytes);
+        size_t nread = map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE)
+                       .at(address->get_number()).limit(nbytes).read(buf).size();
         if (nread == nbytes) {
             ByteOrder::convert(buf, nbytes, map->byteOrder(), ByteOrder::ORDER_LSB);
             uint64_t dflt_val = 0;
@@ -585,7 +598,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     }
     
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    SValuePtr retval = SValue::promote(state->readMemory(address, dflt, this, this));
+    SValuePtr retval = SValue::promote(currentState()->readMemory(address, dflt, this, this));
     return retval;
 }
 

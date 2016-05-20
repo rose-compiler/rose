@@ -1,27 +1,27 @@
 \chapter{Binary Analysis}
 
-This chapter discusses the capabilities of ROSE to read, analyze and transform 
-(transformations to the binary file format) binary executables.
+% This tutorial has been replaced by a doxygen version.
 
-Binary support in ROSE is currently based on a custom build \emph{ROSE Disassembler} (for ARM, x86, and PowerPC).
+See doxgyen ``Getting started with binary analysis'' chapter.
 
-The following code reads in a binary and creates a binary ROSE AST:
-
-{\mySmallFontSize
-\begin{verbatim}
-     SgProject* project = frontend(argc,argv);
-\end{verbatim}
-}
-
-Similarily, one can unparse the AST to assembly using a call to the backend, cf. Figure ~\ref{Tutorial:examplesourcecode2}.
-
-The best documentation for ROSE's binary analysis capabilities is
-found in the doxygen-generated API reference manual which can be found
-on the ROSE web site. Please refer to the following documented
-entities: class AsmUnparser, class Assembler, class BinaryLoader,
-namespace BinaryAnalysis, class Disassembler, class MemoryMap, class
-Partitioner, class SymbolicSemantics, class PartialSymbolicSemantics,
-class RegisterDictionary, and class X86InstructionSemantics.
+%% This chapter discusses the capabilities of ROSE to read, analyze and transform 
+%% (transformations to the binary file format) binary executables.
+%% 
+%% Binary support in ROSE is currently based on a custom build \emph{ROSE Disassembler} (for ARM, x86, and PowerPC).
+%% 
+%% The following code reads in a binary and creates a binary ROSE AST:
+%% 
+%% {\mySmallFontSize
+%% \begin{verbatim}
+%%      SgProject* project = frontend(argc,argv);
+%% \end{verbatim}
+%% }
+%% 
+%% Similarily, one can unparse the AST to assembly using a call to the backend, cf. Figure ~\ref{Tutorial:examplesourcecode2}.
+%% 
+%% The best documentation for ROSE's binary analysis capabilities is
+%% found in the doxygen-generated API reference manual. Start with the
+%% Binary Analysis FAQ in that manual.
 
 %\subsection{IdaPro-mysql}
 
@@ -82,12 +82,12 @@ class RegisterDictionary, and class X86InstructionSemantics.
 %}
 
 
-\section{The ControlFlowGraph}
-
-Based on a control flow traversal of the binary AST, a separate control flow graph
-is created that can be used for further analyses.
-
-TODO: Describe recent work on binary CFG.
+%% \section{The ControlFlowGraph}
+%% 
+%% Based on a control flow traversal of the binary AST, a separate control flow graph
+%% is created that can be used for further analyses.
+%% 
+%% TODO: Describe recent work on binary CFG.
 
 %{\mySmallFontSize
 %\begin{verbatim}
@@ -146,7 +146,7 @@ Another feature is the buffer overflow analysis. By traversing the CFG, we can d
 
 \section{Dynamic Analysis}
 
-   Recent work in ROSE has added support for dynamic analysis and for mixing of dynamic
+   ROSE has support for dynamic analysis and for mixing of dynamic
 and static analysis using the Intel Pin framework. This optional support in ROSE
 requires a configure option ({\tt --with-IntelPin=$<path$>}).  The {\tt path} in
 the configure option is the {\bf absolute path} to the top level directory of the location of

@@ -171,6 +171,19 @@ void postProcessingSupport (SgNode* node)
   // once on an entire project is more efficient than calling it once per
   // file.
 
+#if 0
+  // DQ (11/23/2015): Before we do any modifications, check for unique IR nodes in the AST (see test2015_121.C).
+#if 1
+     printf ("Checking for unique nodes in the AST before AST post-processing: issolating possible multiple references friend function \n");
+#endif
+
+     testAstForUniqueNodes(node);
+
+#if 1
+     printf ("DONE: Checking for unique nodes in the AST before AST post-processing: issolating possible multiple references friend function \n");
+#endif
+#endif
+
   // JJW (12/5/2008): Turn off C and C++ postprocessing steps when the new EDG
   // interface is being used (it should produce correct, complete ASTs on its
   // own and do its own fixups)
@@ -188,6 +201,15 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 #endif
+
+// DQ (10/27/2015): Added test to detect cycles in typedef types.
+#define DEBUG_TYPEDEF_CYCLES 0
+
+#if DEBUG_TYPEDEF_CYCLES
+          printf ("Calling TestAstForCyclesInTypedefs() \n");
+          TestAstForCyclesInTypedefs::test();
+#endif
+
 #if 0
        // DQ (4/26/2013): Debugging code.
           printf ("In postProcessingSupport: Test 1: Calling postProcessingTestFunctionCallArguments() \n");
@@ -198,19 +220,39 @@ void postProcessingSupport (SgNode* node)
           fixupEdgBugDuplicateVariablesInAST();
 #endif
 
+#if DEBUG_TYPEDEF_CYCLES
+          printf ("Calling TestAstForCyclesInTypedefs() \n");
+          TestAstForCyclesInTypedefs::test();
+#endif
+
        // DQ (5/1/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
        // Liao 11/21/2012. AstPostProcessing() is called within both Frontend and Midend
        // so we have to detect the mode first before asserting no transformation generated file info objects
           if (SageBuilder::SourcePositionClassificationMode != SageBuilder::e_sourcePositionTransformation)
+             {
                detectTransformations(node);
+             }
+
+#if DEBUG_TYPEDEF_CYCLES
+          printf ("Calling TestAstForCyclesInTypedefs() \n");
+          TestAstForCyclesInTypedefs::test();
+#endif
 
           if (SgProject::get_verbose() > 1)
              {
                printf ("Calling fixupTypeReferences() \n");
              }
 
+#if 0
+       // DQ (10/27/2015): This has been moved to the EDG/ROSE connection (called before memory management of EDG is done).
        // DQ (8/12/2012): reset all of the type references (to intermediately generated types).
           fixupTypeReferences();
+#endif
+
+#if DEBUG_TYPEDEF_CYCLES
+          printf ("Calling TestAstForCyclesInTypedefs() \n");
+          TestAstForCyclesInTypedefs::test();
+#endif
 
           if (SgProject::get_verbose() > 1)
              {
@@ -220,6 +262,11 @@ void postProcessingSupport (SgNode* node)
        // Reset and test and parent pointers so that it matches our definition 
        // of the AST (as defined by the AST traversal mechanism).
           topLevelResetParentPointer(node);
+
+#if DEBUG_TYPEDEF_CYCLES
+          printf ("Calling TestAstForCyclesInTypedefs() \n");
+          TestAstForCyclesInTypedefs::test();
+#endif
 
           if (SgProject::get_verbose() > 1)
              {
@@ -232,6 +279,11 @@ void postProcessingSupport (SgNode* node)
        // resetParentPointersInMemoryPool();
           resetParentPointersInMemoryPool(node);
 
+#if DEBUG_TYPEDEF_CYCLES
+          printf ("Calling TestAstForCyclesInTypedefs() \n");
+          TestAstForCyclesInTypedefs::test();
+#endif
+
           if (SgProject::get_verbose() > 1)
              {
                printf ("Calling fixupAstDefiningAndNondefiningDeclarations() \n");
@@ -243,6 +295,10 @@ void postProcessingSupport (SgNode* node)
        // non-defining declaration reference to the defining declaration.
           fixupAstDefiningAndNondefiningDeclarations(node);
 
+#if DEBUG_TYPEDEF_CYCLES
+          printf ("Calling TestAstForCyclesInTypedefs() \n");
+          TestAstForCyclesInTypedefs::test();
+#endif
           if (SgProject::get_verbose() > 1)
              {
                printf ("Calling fixupAstDeclarationScope() \n");
@@ -252,6 +308,11 @@ void postProcessingSupport (SgNode* node)
        // We need it to be a rule in ROSE that the scope of the declarations are consistant between defining and all non-defining declaration).
           fixupAstDeclarationScope(node);
 
+#if DEBUG_TYPEDEF_CYCLES
+          printf ("Calling TestAstForCyclesInTypedefs() \n");
+          TestAstForCyclesInTypedefs::test();
+          printf ("DONE: Calling TestAstForCyclesInTypedefs() \n");
+#endif
           if (SgProject::get_verbose() > 1)
              {
                printf ("Calling fixupAstSymbolTables() \n");
@@ -365,7 +426,7 @@ void postProcessingSupport (SgNode* node)
        // values will be visited.  However, the default should be to save the original expression trees
        // and remove the constant folded values since this represents the original code.
 #if 1
-       // DQ (1/28/2014): This is mostly neeed for C++ so that name qualification will be handled on 
+       // DQ (1/28/2014): This is mostly needed for C++, so that name qualification will be handled on 
        // the original expression trees.  This function replaces the constant folded values with the
        // original expression trees so that the support for them is seamless.
        // resetConstantFoldedValues(node);  Avoiding this function for C dramatically improves the 
@@ -434,6 +495,14 @@ void postProcessingSupport (SgNode* node)
 
           if (SgProject::get_verbose() > 1)
              {
+               printf ("Calling fixupFileInfoInconsistanties() \n");
+             }
+
+       // DQ (11/14/2015): Fixup inconsistancies across the multiple Sg_File_Info obejcts in SgLocatedNode and SgExpression IR nodes.
+          fixupFileInfoInconsistanties(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
                printf ("Calling checkIsModifiedFlag() \n");
              }
 
@@ -454,8 +523,10 @@ void postProcessingSupport (SgNode* node)
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
        // Liao 11/21/2012. AstPostProcessing() is called within both Frontend and Midend
        // so we have to detect the mode first before asserting no transformation generated file info objects
-          if (SageBuilder::SourcePositionClassificationMode !=SageBuilder::e_sourcePositionTransformation)
+          if (SageBuilder::SourcePositionClassificationMode != SageBuilder::e_sourcePositionTransformation)
+             {
                detectTransformations(node);
+             }
 
 #if 0
        // DQ (4/26/2013): Debugging code.

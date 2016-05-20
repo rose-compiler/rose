@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -18,6 +18,15 @@
 
 namespace Sawyer {
 namespace Container {
+
+#ifdef BOOST_WINDOWS
+/** Log base 2.
+ *
+ *  Returns the logorithm base 2 of n by the change-of-base formula. */
+inline double log2(double n) {
+    return log(n) / log(2.0);
+}
+#endif
 
 /** Bit vectors.
  *
@@ -139,6 +148,9 @@ public:
                 break;
             case 4:
                 result.fromHex(str);
+                break;
+            default:
+                assert(!"invalid radix");
                 break;
         }
         return result;
@@ -1086,6 +1098,8 @@ public:
      *  Returns the bits of this vector by interpreting them as an unsigned integer.  If this vector contains more than 64 bits
      *  then only the low-order 64 bits are considered. */
     boost::uint64_t toInteger() const {
+        if (size() <= 64)
+            return BitVectorSupport::toInteger(data(), size());
         return BitVectorSupport::toInteger(data(), hull());
     }
 

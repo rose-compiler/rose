@@ -11,9 +11,15 @@
 // DQ (11/30/2013): Added more support for token handling.
 #include "previousAndNextNode.h"
 
-
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/24/2016): Adding Message logging mechanism.
+Sawyer::Message::Facility UnparseLanguageIndependentConstructs::mlog;
+
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_HIDDEN_LIST_DATA 0
@@ -26,6 +32,19 @@ using namespace std;
 SgStatement* global_lastStatementUnparsed = NULL;
 
 UnparseLanguageIndependentConstructs::unparsed_as_enum_type global_unparsed_as = UnparseLanguageIndependentConstructs::e_unparsed_as_error;
+
+void 
+UnparseLanguageIndependentConstructs::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("UnparseLanguageIndependentConstructs", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
+
 
 std::string
 UnparseLanguageIndependentConstructs::unparsed_as_kind(unparsed_as_enum_type x)
@@ -258,7 +277,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        else
         {
        // Compare the file names from the file info object in each statement
-       // char* statementfilename = ROSE::getFileName(stmt);
+       // char* statementfilename = rose::getFileName(stmt);
        // const char* statementfilename = "default";
           string statementfilename = "default";
 
@@ -302,7 +321,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
              {
             // DQ (8/17/2005): Need to replace this with call to compare Sg_File_Info::file_id 
             // numbers so that we can remove the string comparision operator.
-            // statementfilename = ROSE::getFileName(stmt);
+            // statementfilename = rose::getFileName(stmt);
 
             // DQ (9/20/2013): We need to use the physical file name in checking which statements to unparse.
             // statementfilename = stmt->get_file_info()->get_filenameString();
@@ -1014,8 +1033,12 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
 int
 UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream)
    {
+  // DQ (11/13/2015): Note that this function name is shared with one defined (overloaded) in the unparseCxx_Statements.C file.
+
      ROSE_ASSERT(sourceFile != NULL);
      ROSE_ASSERT(stmt != NULL);
+
+#define OUTPUT_TOKEN_STREAM_FOR_DEBUGGING 0
 
   // DQ (11/12/2014): turn this off to test test2014_101.c (which demonstrates an error, but for which this fixes the error).
   // DQ (1/29/2014): Control use of format mechanism to unparse the token stream vs. a higher fedelity 
@@ -1049,6 +1072,22 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
           printf ("In unparseStatementFromTokenStream(): stmt = %p = %s redundantStatement = %s \n",stmt,stmt->class_name().c_str(),redundantStatement ? "true" : "false");
 #endif
+#if 0
+          curprint( string("/* In unparseStatementFromTokenStream(): redundantStatement = ") + (redundantStatement ? "true" : "false") + " */");
+#endif
+       // DQ (11/13/2015): Comment added: redundant statements are generated when multiple 
+       // statements in the AST are mapped to a single token sequence for a single statement 
+       // in the token stream.  This happens for normalizations, generally, but really only
+       // in the case of a variable declaration with multiple variables which in the AST is
+       // currently normalized to multiple variable declaration statements, but in the token
+       // stream is the original variable declaration with multiple variables.  I have 
+       // worked out the fix in the front-end to support mulple SgInitializedName objects in
+       // a single SgVariableDeclStatement, but we have not taken the step to eliminate this
+       // normalization because it would likely break code where people have grown dependent
+       // on it.  So this de-normalization will have to be added as an option in ROSE so that
+       // we can permit the evaluation of existing code, in a staged release of a future version
+       // which will eliminate this normalization.  For now we record the variable declarations
+       // that appear after the first one as redundant in the token-based unparsing.
           if (redundantStatement == false)
              {
             // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
@@ -1178,7 +1217,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                                  {
                                    SgDeclarationStatement* decl = globalScope->get_declarations()[i];
                                    ROSE_ASSERT(decl != NULL);
-#if 0
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                                    printf ("   --- global scope statements: i = %p = %s \n",decl,decl->class_name().c_str());
 #endif
                                    if (statementFromFile(decl, getFileName(), info) == true)
@@ -1208,7 +1247,17 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                        }
 
+                 // DQ (11/13/2015): We want to unparse the leading tokens for a statement if there is an associated comment 
+                 // or CPP directive, but even if NOT we want to unparse the associated whitespace.  This handles only the 
+                 // case where there is an associated comment or CPP directive.
+#if 0
+                 // DQ (11/13/2015): Original version of code.
                     bool unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
+#else
+                 // DQ (11/13/2015): I think this is the better code to use.
+                    bool unparseLeadingTokenStream = true;
+#endif
+
 #if 0
                     printf ("In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(): stmt = %p = %s unparseLeadingTokenStream = %s \n",stmt,stmt->class_name().c_str(),unparseLeadingTokenStream ? "true" : "false");
                     curprint(string("\n/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): unparseLeadingTokenStream = ") + (unparseLeadingTokenStream ? "true" : "false") + " */");
@@ -1219,7 +1268,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                             {
                               for (int j = tokenSubsequence->leading_whitespace_start; j <= tokenSubsequence->leading_whitespace_end; j++)
                                  {
-#if 0
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                                    printf ("Output leading whitespace tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1249,7 +1298,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                for (int j = tokenSubsequence->token_subsequence_start; j <= tokenSubsequence->token_subsequence_end; j++)
                   {
-#if 0
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                     printf ("Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1432,7 +1481,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        {
                          for (int j = tokenSubsequence->trailing_whitespace_start; j <= tokenSubsequence->trailing_whitespace_end; j++)
                             {
-#if 0
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                               printf ("Output trailing whitespace tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1550,7 +1599,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
          + " */ \n");
      char buffer[100];
      snprintf (buffer,100,"%p",stmt);
-     curprint ("\n/* Top of unparseStatement " + stmt->class_name() + " at: " + buffer + " */ \n");
+     curprint ("\n/* Top of unparseStatement() " + stmt->class_name() + " at: " + buffer + " */ \n");
 #endif
 
 #if 0
@@ -1562,7 +1611,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
   // ROSE_ASSERT(stmt->get_endOfConstruct() != NULL);
 
-     curprint ( string("\n/* Top of unparseStatement (UnparseLanguageIndependentConstructs)" ) + string(stmt->sage_class_name()) + " */\n ");
+     curprint ( string("\n/* Top of unparseStatement(): (UnparseLanguageIndependentConstructs)" ) + string(stmt->sage_class_name()) + " */\n ");
      ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
   // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
      int numberOfComments = -1;
@@ -2124,20 +2173,31 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // unparsed_as_enum_type global_unparsed_as = e_unparsed_as_error;
           if (outputStatementAsTokens == true)
              {
+#if 0
+               curprint("/* In unparseStatement(): set global_unparsed_as = e_unparsed_as_token_stream */");
+#endif
                global_unparsed_as = e_unparsed_as_token_stream;
              }
             else
              {
                if (outputPartialStatementAsTokens == true)
                   {
+#if 0
+                    curprint("/* In unparseStatement(): set global_unparsed_as = e_unparsed_as_partial_token_sequence */");
+#endif
                     global_unparsed_as = e_unparsed_as_partial_token_sequence;
                   }
                  else
                   {
+#if 0
+                    curprint("/* In unparseStatement(): set global_unparsed_as = e_unparsed_as_AST */");
+#endif
                     global_unparsed_as = e_unparsed_as_AST;
                   }
              }
-
+#if 0
+          printf ("global_unparsed_as = %d \n",global_unparsed_as);
+#endif
        // At this point we could test for a gap in the mapping of the current and previous statements being unparsed.
        // Then unparse the leading white space for the current statement.
        // Ignore the trailing white space for the previous statement; anything interesting should have been:
@@ -2166,19 +2226,50 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
                     printf ("Calling unp->cur.reset_chars_on_line() (to reset the formatting for unparsing from the AST) \n");
 #endif
-                    unp->cur.reset_chars_on_line();
-                    
+
+                 // DQ (11/14/2015): If we are unparsing statements in a SgBasicBlock, then we want to
+                 // know if the SgBasicBlock is being unparsed using the partial_token_sequence so that
+                 // we can supress the formatting that adds a CR to the start of the current statement 
+                 // being unparsed.
+                    bool parentStatementListBeingUnparsedUsingPartialTokenSequence = info.parentStatementListBeingUnparsedUsingPartialTokenSequence();
+
+#if 1
+                    if (parentStatementListBeingUnparsedUsingPartialTokenSequence == true)
+                       {
 #if 0
-                    printf ("xxx yyy \n");
+                         printf ("In unparseStatement(): We need to supress the leading CR for this case (initially statements in a SgBasicBlock) \n");
 #endif
 #if 0
-                    curprint("/* xxx */");
+                         curprint("/* In unparseStatement(): suppress CR */");
+#endif
+                      // ROSE_ASSERT(false);
+                       }
+                      else
+                       {
+                      // Note that becasue of the logic below, this is the first CR for a SgBasicBlock (I don't know exactly why).
+                      // The other CR frequenty introduces is in the unparseLanguageSpecificStatement() function.
+                         unp->cur.reset_chars_on_line();
+#if 1
+                         curprint("/* In unparseStatement(): before format: FORMAT_BEFORE_STMT */");
+#endif
+                         unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
+#if 1
+                         curprint("/* In unparseStatement(): after format: FORMAT_BEFORE_STMT */");
+#endif
+                       }
+#else
+                    unp->cur.reset_chars_on_line();
+
+#error "DEAD CODE!"
+                    
+#if 0
+                    curprint("/* In unparseStatement(): before format: FORMAT_BEFORE_STMT */");
 #endif
                     unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
 #if 0
-                    curprint("/* yyy */");
+                    curprint("/* In unparseStatement(): after format: FORMAT_BEFORE_STMT */");
 #endif
-
+#endif
                  // DQ (12/12/2014): If we are transitioning to unparsing from the AST, then this should be valid.
                     if (info.unparsedPartiallyUsingTokenStream() == true)
                        {
@@ -2279,7 +2370,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                unparseStatementNumbers(stmt,info);
 #if 0
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-               curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */ \n ");
+               curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */");
 #endif
                switch (stmt->variantT())
                   {
@@ -2524,10 +2615,18 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      if (outputStatementAsTokens == false && outputPartialStatementAsTokens == false)
         {
        // DQ (comments) This is where new lines are output after the statement.
+       // I think this will only output a newline if the statement unparsed is 
+       // long enough (beyond some specific threshhold).
 #if 0
           curprint("/* FORMATTING: UnparseLanguageIndependentConstructs::unparseStatement(): calling unp->cur.format() (outputStatementAsTokens == false && outputPartialStatementAsTokens == false) */");
 #endif
+#if 0
+          curprint("/* In unparseStatement(): before format: FORMAT_AFTER_STMT */");
+#endif
           unp->cur.format(stmt, info, FORMAT_AFTER_STMT);
+#if 0
+          curprint("/* In unparseStatement(): after format: FORMAT_AFTER_STMT */");
+#endif
         }
 
   // Markus Kowarschik: This is the new code to unparse directives after the current statement
@@ -2951,7 +3050,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
   // DQ (7/19/2008): This is the new code to unparse directives before the current expression
      unparseAttachedPreprocessingInfo(expr, info, PreprocessingInfo::after);
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
   // DQ (8/21/2005): Suppress comments when unparsing to build type names
      if ( !info.SkipComments() || !info.SkipCPPDirectives() )
         {
@@ -2991,9 +3090,10 @@ UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, S
 #endif
 
   // Not much to do here except output a ";", not really required however.
-     if (!info.inConditional() && !info.SkipSemiColon())
+  // if (!info.inConditional() && !info.SkipSemiColon())
+     if (info.SkipSemiColon() == false)
         {
-          curprint ( string(";"));
+          curprint(";");
         }
        else
         {
@@ -3087,7 +3187,13 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
           std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
           if (sourceFile->get_unparse_tokens() == false)
              {
-               ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
+            // DQ (12/14/2015): Even if we don't unparse using the toek stream, we can still use the 
+            // token sequence mapping to build more accurate sourde position information in the AST.
+            // ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
+               if (sourceFile->get_use_token_stream_to_improve_source_position_info() == false)
+                  {
+                    ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
+                  }
              }
             else
              {
@@ -3179,9 +3285,9 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 #if 1
                          << currentStatement->get_file_info()->displayString()
 #else
-                         << ROSE::getLineNumber(currentStatement)
+                         << rose::getLineNumber(currentStatement)
                          << " getFileName(currentStatement) = " 
-                         << ROSE::getFileName(currentStatement)
+                         << rose::getFileName(currentStatement)
 #endif
                          << " unp->cur_index = " 
                          << unp->cur_index
@@ -3336,6 +3442,7 @@ UnparseLanguageIndependentConstructs::num_stmt_in_block(SgBasicBlock* basic_stmt
 
      return num_stmt;
    }
+
 
 bool UnparseLanguageIndependentConstructs::unparseLineReplacement(
    SgLocatedNode* stmt,
@@ -6202,6 +6309,57 @@ static std::string mapOperatorToString(SgOmpClause::omp_map_operator_enum ro)
   return result;
 }
 
+static std::string distPolicyToString(SgOmpClause::omp_map_dist_data_enum ro)
+{
+  string result;
+  switch (ro)
+  {
+    case SgOmpClause::e_omp_map_dist_data_duplicate: 
+      {
+        result = "DUPLICATE";
+        break;
+      }
+    case SgOmpClause::e_omp_map_dist_data_block: 
+      {
+        result = "BLOCK";
+        break;
+      }
+    case SgOmpClause::e_omp_map_dist_data_cyclic:   
+      {
+        result = "CYCLIC";
+        break;
+      }
+    default:
+      {
+        cerr<<"Error: unhandled dist data policy type mapDistPolicyToString():"<< ro <<endl;
+        ROSE_ASSERT(false);
+      }
+  }
+  return result;
+}
+
+// Generate dist_data(p1, p2, p3)
+void UnparseLanguageIndependentConstructs::unparseMapDistDataPoliciesToString (std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies, SgUnparse_Info& info) 
+{
+  curprint(string(" dist_data("));
+  for (size_t i =0; i< policies.size(); i++)
+  {
+    curprint(distPolicyToString (policies[i].first)); 
+    if (policies[i].second != NULL)
+    {
+      curprint(string("("));
+      unparseExpression(policies[i].second, info);
+      curprint(string(")"));
+      //      cerr<<"Error: unhandled dist_data policy with expression option in mapDistDataPoliciesToString() of unparseLanguageIndependentConstructs.C"<<endl;
+      //      ROSE_ASSERT(false);
+    }
+    if (i!= policies.size() -1)
+      curprint(string(","));
+  }
+
+  curprint(string(")"));
+}
+
 #endif
 
 //! Unparse an OpenMP clause with a variable list
@@ -6266,13 +6424,14 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
 
   // prepare array dimension info for map variables
   std::map<SgSymbol*, std::vector<std::pair<SgExpression*, SgExpression*> > > dims;
+  std::map< SgSymbol *, std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > > dist_policies; 
   if (is_map)
   {
     SgOmpMapClause * m_clause = isSgOmpMapClause (clause);
     ROSE_ASSERT (m_clause != NULL);
     dims = m_clause->get_array_dimensions();
+    dist_policies = m_clause->get_dist_data_policies();
   }  
-
 
   //unparse variable list then
   SgVarRefExpPtrList::iterator p = c->get_variables().begin();
@@ -6305,6 +6464,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
 //          curprint(upper->unparseToString());
           unparseExpression(upper, ninfo);
           curprint(string("]"));
+       
+          std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies = dist_policies[sym];
+          if (policies.size() !=0)
+            unparseMapDistDataPoliciesToString (policies, ninfo);
+            //curprint(mapDistDataPoliciesToString (policies));
+
         } // end for
       } // end if has bounds
     } // end if map 
@@ -6380,6 +6545,16 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpUntiedClause:
       {
         curprint(string(" untied"));
+        break;
+      }
+    case V_SgOmpBeginClause:
+      {
+        curprint(string(" begin"));
+        break;
+      }
+    case V_SgOmpEndClause:
+      {
+        curprint(string(" end"));
         break;
       }
     case V_SgOmpScheduleClause:
@@ -6990,7 +7165,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                       // If this is compiler generated then we have to look at the precedence of the unary operator's operand.
                       // printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 1) \n");
                       // return 1;
-                         printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 16) \n");
+                         mprintf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 16) \n");
                       // return 16;
                          precedence_value = 16; 
                        }
@@ -7125,6 +7300,11 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
        // DQ (11/10/2014): Not clear if this is the correct precedence for this C++11 expression.
           case V_SgFunctionParameterRefExp:
+                                     precedence_value = 0; break;
+
+       // DQ (4/29/2016): Not clear if this is the correct precedence for these C++11 expressions.
+          case V_SgRealPartOp:
+          case V_SgImagPartOp:
                                      precedence_value = 0; break;
 
           default:

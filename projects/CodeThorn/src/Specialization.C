@@ -78,6 +78,11 @@ int PStateConstReporter::getConstInt() {
   return varIntValue;
 }
 
+Specialization::Specialization():
+  _specializedFunctionRootNode(0),
+  _checkAllLoops(false) {
+}
+
 int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
   return specializeFunction(project, funNameToFind, param, constInt, "", 0, variableIdMapping);
 }
@@ -206,6 +211,7 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
      // buildFloatType()
      // buildDoubleType()
      // SgIntVal* buildIntVal(int)
+     //cout<<"DEBUG: substituting: "<<((*i).first)->unparseToString()<<" with "<<(*i).second<<endl;
      SgNodeHelper::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second),false);
    }
    return (int)substitutionList.size();
@@ -248,6 +254,8 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
      if(succSet.size()>1) {
        cerr<<estate->toString()<<endl;
        cerr<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
+       cerr<<"       @ node: "<<node->class_name()<<endl;
+       cerr<<"       source: "<<node->unparseToString()<<endl;
        exit(1);
      } else {
        EStatePtrSet::iterator i=succSet.begin();
@@ -518,23 +526,14 @@ void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, Variab
 
 string Specialization::iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping) {
   stringstream ss;
-  bool exists=false;
   for(IterationVariables::iterator i=iterationVars.begin();i!=iterationVars.end();++i) {
     if(i!=iterationVars.begin())
       ss<<", ";
     ss<<variableIdMapping->variableName((*i).first);
     if((*i).second) {
       ss<<"[par]";
-      exists=true;
     }
   }
-#if 0
-  if(!exists) {
-    cerr<<"Error: iterVarsAndParVarToString:: parallel iteration var is not an iteration variable."<<endl;
-    cerr<<"Variable: "<<variableIdMapping->variableName(parallelIterationVar)<<endl;
-    exit(1);
-  }
-#endif
   return ss.str();
 }
 
@@ -601,9 +600,34 @@ bool accessSetIntersect(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSe
   return false;
 }
 
+std::string arrayElementAccessDataSetToString(ArrayElementAccessDataSet& ds, VariableIdMapping* vim) {
+  std::stringstream ss;
+  for(ArrayElementAccessDataSet::iterator i=ds.begin();i!=ds.end();++i) {
+    if(i!=ds.begin())
+      ss<<", ";
+    ss<<(*i).toString(vim);
+  }
+  return ss.str();
+}
+
+std::string indexVectorToString(IndexVector iv) {
+  std::stringstream ss;
+  for(IndexVector::iterator i=iv.begin();i!=iv.end();++i) {
+    if(i!=iv.begin())
+      ss<<", ";
+    ss<<(*i);
+  }
+  return ss.str();
+}
+
+void Specialization::setCheckAllLoops(bool val) {
+  _checkAllLoops=val;
+}
+
 // returns the number of race conditions detected (0 or 1 as of now)
 int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
+  int errorCount=0;
   stringstream ss;
   cout<<"STATUS: checking race conditions."<<endl;
   cout<<"INFO: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
@@ -613,10 +637,14 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
     allIterVars.insert((*lis).iterationVarId);
   }
   for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
-    if((*lis).iterationVarType==ITERVAR_PAR) {
+    if((*lis).iterationVarType==ITERVAR_PAR || _checkAllLoops) {
       VariableId parVariable;
       parVariable=(*lis).iterationVarId;
-      cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+      if(_checkAllLoops) {
+        cout<<"INFO: checking loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+      } else {
+        cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+      }
 
       // race check
       // intersect w-set_i = empty
@@ -692,6 +720,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
 
       // to be utilized later for more detailed output
 #if 0
+      cout<<"DEBUG: indexToReadWriteDataMap size: "<<indexToReadWriteDataMap.size()<<endl;
       for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
           imap!=indexToReadWriteDataMap.end();
           ++imap) {
@@ -726,7 +755,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
 #endif
 
       // perform the check now
-      // 1) compute vector if index-vectors for each outer-var-vector
+      // 1) compute vector of index-vectors for each outer-var-vector
       // 2) check each index-vector. For each iteration of each par-loop iteration then.
       
       //typedef set<int> ParVariableValueSet;
@@ -757,37 +786,60 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
       }
       //cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
       // perform the check now
-
+      bool drdebug=false;
+      if(drdebug) cout<<"DEBUG: checkMap size: "<<checkMap.size()<<endl;
       for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
         IndexVector outerVarIndexVector=(*miter).first;
+        if(drdebug) cout<<"DEBUG: outerVarIndexVector: "<<indexVectorToString(outerVarIndexVector)<<endl;
         ThreadVector threadVectorToCheck=(*miter).second;
-        //cout<<"DEBUG: to check: "<<threadVectorToCheck.size()<<endl;
+        if(drdebug) cout<<"DEBUG: vector size to check: "<<threadVectorToCheck.size()<<endl;
         for(ThreadVector::iterator tv1=threadVectorToCheck.begin();tv1!=threadVectorToCheck.end();++tv1) {
+          if(drdebug) cout<<"DEBUG: thread-vectors: tv1:"<<"["<<indexVectorToString(*tv1)<<"]"<<endl;
           ArrayElementAccessDataSet wset=indexToReadWriteDataMap[*tv1].writeArrayAccessSet;
-          for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
+          if(drdebug) cout<<"DEBUG: tv1-wset:"<<wset.size()<<": "<<arrayElementAccessDataSetToString(wset,variableIdMapping)<<endl;
+          //for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
+          for(ThreadVector::iterator tv2=threadVectorToCheck.begin();tv2!=threadVectorToCheck.end();++tv2) {
+            if(tv2!=tv1) {
             ThreadVector::iterator tv2b=tv2;
-            ++tv2b;
+            //++tv2b;
             if(tv2b!=threadVectorToCheck.end()) {
+              if(drdebug) cout<<"thread-vectors: tv2b:"<<"["<<indexVectorToString(*tv2b)<<"]"<<endl;
               ArrayElementAccessDataSet rset2=indexToReadWriteDataMap[*tv2b].readArrayAccessSet;
               ArrayElementAccessDataSet wset2=indexToReadWriteDataMap[*tv2b].writeArrayAccessSet;
               // check intersect(rset,wset)
+              if(drdebug) cout<<"DEBUG: rset2:"<<rset2.size()<<": "<<arrayElementAccessDataSetToString(rset2,variableIdMapping)<<endl;
+              if(drdebug) cout<<"DEBUG: wset2:"<<wset2.size()<<": "<<arrayElementAccessDataSetToString(wset2,variableIdMapping)<<endl;
               if(accessSetIntersect(wset,rset2)) {
                 // verification failed
-                cout<<"INFO: race condition detected (wset1,rset2)."<<endl;
-                return 1;
+                cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
+                errorCount++;
+                if(_checkAllLoops) {
+                  goto continueCheck;
+                } else {
+                  return errorCount;
+                }
               } 
               if(accessSetIntersect(wset,wset2)) {
                 // verification failed
-                cout<<"INFO: race condition detected (wset1,wset2)."<<endl;
-                return 1;
+                cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
+                errorCount++;
+                if(_checkAllLoops) {
+                  goto continueCheck;
+                } else {
+                  return errorCount;
+                }
               }
             }
+            } // same-iter check
           }
+          if(drdebug) cout<<"DEBUG: ------------------------"<<endl;
         }
       }
     } // if parallel loop
+  continueCheck:;
   } // foreach loop
-  return 0;
+  cout<<"DATA RACE CHECK: PASS."<<endl;
+  return errorCount;
 }
 
 void Specialization::writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting) {

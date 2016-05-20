@@ -13,6 +13,20 @@
 #include <direct.h>     // getcwd
 #endif
 
+#include <time.h>
+
+// Headers required only to obtain version numbers
+#include <boost/version.hpp>
+#ifdef ROSE_HAVE_LIBREADLINE
+#   include <readline/readline.h>
+#endif
+#ifdef ROSE_HAVE_LIBMAGIC
+#   include <magic.h>
+#endif
+#ifdef ROSE_HAVE_LIBYICES
+#   include <yices_c.h>
+#endif
+
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
 // #include <copy_unparser.h>
 
@@ -42,9 +56,9 @@ const int roseTargetCacheLineSize = 32;
 #endif
 
 // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
-// bool ROSE::verbose                 = false;
+// bool rose::verbose                 = false;
 // DQ (8/11/2004): build a global state here
-// int ROSE::roseVerbose = 0;
+// int rose::roseVerbose = 0;
 
 
 #define OUTPUT_TO_FILE true
@@ -52,19 +66,24 @@ const int roseTargetCacheLineSize = 32;
 
 
 // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
-std::map<SgNode*,TokenStreamSequenceToNodeMapping*> ROSE::tokenSubsequenceMap;
+std::map<SgNode*,TokenStreamSequenceToNodeMapping*> rose::tokenSubsequenceMap;
 
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
-// std::vector<FrontierNode*> ROSE::frontierNodes;
-std::map<SgStatement*,FrontierNode*> ROSE::frontierNodes;
+// std::vector<FrontierNode*> rose::frontierNodes;
+std::map<SgStatement*,FrontierNode*> rose::frontierNodes;
 
 // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
-std::map<SgNode*,PreviousAndNextNodeData*> ROSE::previousAndNextNodeMap;
+std::map<SgNode*,PreviousAndNextNodeData*> rose::previousAndNextNodeMap;
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
-std::multimap<int,SgStatement*> ROSE::redundantlyMappedTokensToStatementMultimap;
-std::set<int> ROSE::redundantTokenEndingsSet;
+std::multimap<int,SgStatement*> rose::redundantlyMappedTokensToStatementMultimap;
+std::set<int> rose::redundantTokenEndingsSet;
 
+// DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
+std::map<SgScopeStatement*,SgStatement*> rose::representativeWhitespaceStatementMap;
+
+// DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
+std::map<SgStatement*,MacroExpansion*> rose::macroExpansionMap;
 
 
 // DQ (4/17/2010): This function must be defined if C++ support in ROSE is disabled.
@@ -98,6 +117,56 @@ std::string ofpVersionString()
      return ofp_version;
    }
 
+static std::string
+readlineVersionString() {
+#ifdef ROSE_HAVE_LIBREADLINE
+    return StringUtility::numberToString(RL_VERSION_MAJOR) + "." + StringUtility::numberToString(RL_VERSION_MINOR);
+#else
+    return "unknown (readline is disabled)";
+#endif
+}
+
+static std::string
+libmagicVersionString() {
+#ifdef ROSE_HAVE_LIBMAGIC
+#ifdef MAGIC_VERSION
+    return StringUtility::numberToString(MAGIC_VERSION);
+#else
+    return "unknown (but enabled)";
+#endif
+#else
+    return "unknown (libmagic is disabled)";
+#endif
+}
+
+static std::string
+yamlcppVersionString() {
+#ifdef ROSE_HAVE_LIBYAML
+    return "unknown (but enabled)";                     // not sure how to get a version number for this library
+#else
+    return "unknown (yaml-cpp is disabled)";
+#endif
+}
+
+static std::string
+yicesVersionString() {
+#ifdef ROSE_HAVE_LIBYICES
+    if (const char *s = yices_version())
+        return s;
+    return "unknown (but enabled)";
+#else
+    return "unknown (libyices is disabled)";
+#endif
+}
+
+// similar to rose_boost_version_id but intended for human consumption (i.e., "1.50.0" rather than 105000).
+static std::string
+boostVersionString() {
+    return (StringUtility::numberToString(BOOST_VERSION / 100000) + "." +
+            StringUtility::numberToString(BOOST_VERSION / 100 % 1000) + "." +
+            StringUtility::numberToString(BOOST_VERSION % 100));
+}
+
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
 std::string version_message()
    {
@@ -108,18 +177,32 @@ std::string version_message()
   // with -h and --version, similar to GNU compilers, as I recall.
   // outputPredefinedMacros();
 
+     // A more human-friendly time stamp (ISO 8601 format is recognized around the world, so use that)
+     time_t scm_timestamp = rose_scm_version_date();
+     std::string scm_timestamp_human;
+     if (struct tm *tm = gmtime(&scm_timestamp)) {
+         char buf[256];
+         sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d UTC",
+                 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+                 tm->tm_hour, tm->tm_min, tm->tm_sec);
+         scm_timestamp_human = buf;
+     } else {
+         scm_timestamp_human = StringUtility::numberToString(scm_timestamp) + " unix epoch";
+     }
+
      return
-          "ROSE (pre-release beta version: " + version_number() + ")" +
+       // "ROSE (pre-release beta version: " + version_number() + ")" +
+          "ROSE (version: " + version_number() + ")" +
           "\n  --- using ROSE SCM version:" +
           "\n      --- ID: " + rose_scm_version_id() +
-          "\n      --- Unix Timestamp: " +
-                      StringUtility::numberToString(rose_scm_version_date()) +
+          "\n      --- Timestamp: " + scm_timestamp_human +
           "\n  --- using EDG C/C++ front-end version: " + edgVersionString() +
           "\n  --- using OFP Fortran parser version: " + ofpVersionString() +
-          "\n  --- using Boost version: " +
-              StringUtility::numberToString(rose_boost_version_id()) +
-              " (" + rose_boost_version_path() + ")";
-
+          "\n  --- using Boost version: " + boostVersionString() + " (" + rose_boost_version_path() + ")" +
+          "\n  --- using GNU readline version: " + readlineVersionString() +
+          "\n  --- using libmagic version: " + libmagicVersionString() +
+          "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
+          "\n  --- using lib-yices version: " + yicesVersionString();
   }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
@@ -245,7 +328,7 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // make sure that there is some sort of commandline (at least a file specified)
      if (argv.size() == 1)
         {
-       // ROSE::usage(1);      // Print usage and exit with exit status == 1
+       // rose::usage(1);      // Print usage and exit with exit status == 1
           SgFile::usage(1);      // Print usage and exit with exit status == 1
         }
 
@@ -841,11 +924,11 @@ pdfPrintAbstractSyntaxTreeEDG ( SgFile *file )
   // Use the PDF file declared in the EDG/src/displayTree.C
      extern PDF* pdfGlobalFile;
 
-     printf ("ROSE::getWorkingDirectory() = %s \n",ROSE::getWorkingDirectory());
-     sprintf(filename,"%s/%s.edg.pdf",ROSE::getWorkingDirectory(),ROSE::stripPathFromFileName(ROSE::getFileName(file)));
+     printf ("rose::getWorkingDirectory() = %s \n",rose::getWorkingDirectory());
+     sprintf(filename,"%s/%s.edg.pdf",rose::getWorkingDirectory(),rose::utility_stripPathFromFileName(rose::getFileName(file)));
      printf ("filename = %s \n",filename);
 
-     ifstream sourceFile (ROSE::getFileName(file));
+     ifstream sourceFile (rose::getFileName(file));
      if (!sourceFile)
           cerr << "ERROR opening sourceFile" << endl;
      ROSE_ASSERT (sourceFile);
@@ -971,7 +1054,7 @@ generatePDFofEDG ( const SgProject & project )
 
 #if 1
 int
-ROSE::getLineNumber ( SgLocatedNode* locatedNodePointer )
+rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -991,7 +1074,7 @@ ROSE::getLineNumber ( SgLocatedNode* locatedNodePointer )
 #endif
 #if 1
 int
-ROSE::getColumnNumber ( SgLocatedNode* locatedNodePointer )
+rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1011,7 +1094,7 @@ ROSE::getColumnNumber ( SgLocatedNode* locatedNodePointer )
 #endif
 #if 1
 std::string
-ROSE::getFileName ( SgLocatedNode* locatedNodePointer )
+rose::getFileName ( SgLocatedNode* locatedNodePointer )
    {
   // Get the filename from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1021,7 +1104,7 @@ ROSE::getFileName ( SgLocatedNode* locatedNodePointer )
      if (locatedNodePointer->get_file_info() != NULL)
         {
           ROSE_ASSERT (locatedNodePointer->get_file_info() != NULL);
-       // printf ("In ROSE::getFileName(): locatedNodePointer->get_file_info() = %p \n",locatedNodePointer->get_file_info());
+       // printf ("In rose::getFileName(): locatedNodePointer->get_file_info() = %p \n",locatedNodePointer->get_file_info());
           Sg_File_Info* fileInfo = locatedNodePointer->get_file_info();
           fileName = fileInfo->get_filenameString();
         }
@@ -1030,7 +1113,7 @@ ROSE::getFileName ( SgLocatedNode* locatedNodePointer )
    }
 #endif
 #if 1
-bool ROSE:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
+bool rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
 {
   bool result = false;
   Sg_File_Info *fileInfo = locatedNodePointer->get_file_info();
@@ -1041,7 +1124,7 @@ bool ROSE:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
 #endif
 
 std::string
-ROSE::getFileNameWithoutPath ( SgStatement* statementPointer )
+rose::getFileNameWithoutPath ( SgStatement* statementPointer )
    {
   // Get the filename from the Sage III statement object
      ROSE_ASSERT (statementPointer != NULL);
@@ -1050,12 +1133,12 @@ ROSE::getFileNameWithoutPath ( SgStatement* statementPointer )
   // char* fileName = getFileName(statementPointer);
      std::string fileName = statementPointer->get_file_info()->get_filenameString();
 
-     return stripPathFromFileName(fileName);
+     return utility_stripPathFromFileName(fileName);
    }
 
 #if 1
 std::string
-ROSE::stripPathFromFileName ( const std::string& fileNameWithPath )
+rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
    {
      size_t pos = fileNameWithPath.rfind('/');
      if (pos == std::string::npos || pos == fileNameWithPath.size() - 1) {
@@ -1068,7 +1151,7 @@ ROSE::stripPathFromFileName ( const std::string& fileNameWithPath )
 
 #if 0
 std::string
-ROSE::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
+rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
    {
   // This function is not sophisticated enough to handle binaries with paths such as:
   //    ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
@@ -1094,7 +1177,7 @@ ROSE::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
 #if 1
 // DQ (3/15/2005): New, simpler and better implementation suggested function from Tom, thanks Tom!
 string
-ROSE::getPathFromFileName ( const string fileName )
+rose::getPathFromFileName ( const string fileName )
    {
      size_t pos = fileName.rfind('/');
      if (pos == std::string::npos) {
@@ -1110,14 +1193,14 @@ ROSE::getPathFromFileName ( const string fileName )
 #if 0
  //! get the source directory (requires an input string currently)
 char*
-ROSE::getSourceDirectory ( char* fileNameWithPath )
+rose::getSourceDirectory ( char* fileNameWithPath )
    {
      return getPathFromFileName (fileNameWithPath);
    }
 #else
  //! get the source directory (requires an input string currently)
 string
-ROSE::getSourceDirectory ( string fileNameWithPath )
+rose::getSourceDirectory ( string fileNameWithPath )
    {
      return getPathFromFileName (fileNameWithPath);
    }
@@ -1126,7 +1209,7 @@ ROSE::getSourceDirectory ( string fileNameWithPath )
 #if 0
  //! get the current directory
 char*
-ROSE::getWorkingDirectory ()
+rose::getWorkingDirectory ()
    {
      int i = 0;  // index variable declaration
 
@@ -1141,8 +1224,8 @@ ROSE::getWorkingDirectory ()
      ROSE_ASSERT (returnString != NULL);
 
   // The semantics of the getcwd is that these should be the same (see if they are)
-  // printf ("In ROSE::getWorkingDirectory: Current directory = %s \n",currentDirectory);
-  // printf ("In ROSE::getWorkingDirectory: Current directory = %s \n",returnString);
+  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
+  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",returnString);
 
   // live with the possible memory leak for now
   // delete currentDirectory;
@@ -1153,7 +1236,7 @@ ROSE::getWorkingDirectory ()
 #else
  //! get the current directory
 string
-ROSE::getWorkingDirectory ()
+rose::getWorkingDirectory ()
    {
   // DQ (9/5/2006): Increase the buffer size
   // const int maxPathNameLength = 1024;
@@ -1178,7 +1261,7 @@ ROSE::getWorkingDirectory ()
 #endif
 
 SgName
-ROSE::concatenate ( const SgName & X, const SgName & Y )
+rose::concatenate ( const SgName & X, const SgName & Y )
    {
      return X + Y;
    }
@@ -1186,7 +1269,7 @@ ROSE::concatenate ( const SgName & X, const SgName & Y )
 #if 0
 // DQ (9/5/2008): Try to remove this function!
 std::string
-ROSE::getFileName ( const SgFile* file )
+rose::getFileName ( const SgFile* file )
    {
   // Get the filename from the Sage II file object
      ROSE_ASSERT (file != NULL);
@@ -1202,7 +1285,7 @@ ROSE::getFileName ( const SgFile* file )
 #if 1
 // DQ (9/5/2008): Try to remove this function!
 string
-ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
+rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
    {
      string returnString;
 
@@ -1229,7 +1312,7 @@ ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
           ROSE_ASSERT (file != NULL);
           if (file != NULL)
              {
-            // returnString = ROSE::getFileName(file);
+            // returnString = rose::getFileName(file);
                returnString = file->getFileName();
              }
 
@@ -1242,20 +1325,20 @@ ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
 #endif
 
 void
-ROSE::usage (int status)
+rose::usage (int status)
    {
      SgFile::usage(status);
   // exit(status);
    }
 
 int 
-ROSE::containsString ( const std::string& masterString, const std::string& targetString )
+rose::containsString ( const std::string& masterString, const std::string& targetString )
    {
      return masterString.find(targetString) != string::npos;
    }
 
 void
-ROSE::filterInputFile ( const string inputFileName, const string outputFileName )
+rose::filterInputFile ( const string inputFileName, const string outputFileName )
    {
   // This function filters the input file to remove ^M characters and expand tabs etc.
   // Any possible processing of the input file, before being compiled, should be done
@@ -1265,14 +1348,14 @@ ROSE::filterInputFile ( const string inputFileName, const string outputFileName 
    }
 
 SgStatement*
-ROSE::getNextStatement ( SgStatement *currentStatement )
+rose::getNextStatement ( SgStatement *currentStatement )
    {
      ROSE_ASSERT (currentStatement  != NULL);
-    //CI (1/3/2007): This sued to be not implemented ,,, here is my try
-    //! get next statement will return the next statement in a function or method. if at the end or outside, it WILL return NULL
+  // CI (1/3/2007): This used to be not implemented ,,, here is my try
+  //! get next statement will return the next statement in a function or method. if at the end or outside, it WILL return NULL
      
      SgStatement      *nextStatement = NULL;
-     SgScopeStatement *scope             = currentStatement->get_scope();
+     SgScopeStatement *scope         = currentStatement->get_scope();
      ROSE_ASSERT (scope != NULL);
 
   // DQ (9/18/2010): If we try to get the next statement from SgGlobal, then return NULL.
@@ -1283,6 +1366,11 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
   // function (previous bug fixed, but tested here).
      ROSE_ASSERT (scope != currentStatement);
 
+#if 0
+     printf ("In ROSE::getNextStatement(): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+     printf ("   --- scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
+
      switch (currentStatement->variantT())
         {
           case V_SgForInitStatement:
@@ -1291,73 +1379,114 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
           case V_SgFunctionDefinition:
           case V_SgStatement:
           case V_SgFunctionParameterList:
-                                        
-                                                         ROSE_ASSERT(0);
-                                                         // not specified
-                                                         break;
+             {
+               ROSE_ASSERT(false);
+            // not specified
+               break;
+             }
+
+       // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
+          case V_SgLabelStatement:
+            {
+              SgLabelStatement* lableStatement = isSgLabelStatement(currentStatement);
+              nextStatement = lableStatement->get_statement();
+              ROSE_ASSERT(nextStatement != NULL);
+#if 1
+              printf ("In getNextStatement(): case V_SgLabelStatement: nextStatement = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
+#endif
+              break;
+            }
+
           default:
              {
             // We have to handle the cases of a SgStatementPtrList and a 
             // SgDeclarationStatementPtrList separately
-                                                         if (scope->containsOnlyDeclarations() == true)
-                                                         {
-                                                                 // Usually a global scope or class declaration scope
-                                                                 SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
-                                                                 Rose_STL_Container<SgDeclarationStatement*>::iterator i;
-                                                                 for (i = declarationList.begin();(*i)!=currentStatement;i++) {}
-                                                                 // now i == currentStatement
-                                                                 i++;
-                                                                 if (declarationList.end() == i) nextStatement=NULL;
-                                                                 else nextStatement=*i;
-                                                         }
-                                                         else
-                                                         {
-                                                                 SgStatementPtrList & statementList = scope->getStatementList();
-                                                                 Rose_STL_Container<SgStatement*>::iterator i;
-                                                                 // Liao, 11/18/2009, Handle the rare case that current statement is not found
-                                                                 // in its scope's statement list
-                                                                 //for (i = statementList.begin();(*i)!=currentStatement;i++) 
-                                                                 for (i = statementList.begin();(*i)!=currentStatement && i!= statementList.end();i++) 
-                                                                 {
-                                                                 //  SgStatement* cur_stmt = *i;
-                                                                 //  cout<<"Skipping current statement: "<<cur_stmt->class_name()<<endl;
-                                                                 //  cout<<cur_stmt->get_file_info()->displayString()<<endl;
-                                                                 }
-                                                                 // currentStatement is not found in the list
-                                                                 if (i ==  statementList.end()) 
-                                                                 {
-                                                                   cerr<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
-                                                                   cerr<<"current statement is "<<currentStatement->class_name()<<endl;
-                                                                   cerr<<currentStatement->get_file_info()->displayString()<<endl;
-                                                                   cerr<<"Its scope is "<<scope->class_name()<<endl;
-                                                                   cerr<<scope->get_file_info()->displayString()<<endl;
-                                                                   ROSE_ASSERT (false);
-                                                                  }
-                                                                 //  now i == currentStatement
-                                                                 ROSE_ASSERT (*i == currentStatement);
-                                                                 i++;
-                                                                 if (statementList.end() == i) nextStatement=NULL;
-                                                                 else nextStatement=*i;
-                                                         }
+               if (scope->containsOnlyDeclarations() == true)
+                  {
+                 // Usually a global scope or class declaration scope
+                    SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
+                    Rose_STL_Container<SgDeclarationStatement*>::iterator i;
+                 // for (i = declarationList.begin(); (*i) != currentStatement; i++) {}
+                    for (i = declarationList.begin(); (i != declarationList.end() && (*i) != currentStatement); i++) {}
+                 // now i == currentStatement
+
+                 // DQ (7/19/2015): Needed to add support for template instatiations that might not be 
+                 // located in there scope (because they would be name qualified).
+                    if (i == declarationList.end())
+                       {
+#if 0
+                         printf ("Note: statement was not found in it's scope (happens for some template instantiations) \n");
+#endif
+                         nextStatement = NULL;
+                       }
+                      else
+                       {
+                         i++;
+                         if (declarationList.end() == i) 
+                              nextStatement = NULL;
+                           else
+                              nextStatement=*i;
+                       }
+                  }
+                 else
+                  {
+                    SgStatementPtrList & statementList = scope->getStatementList();
+                    Rose_STL_Container<SgStatement*>::iterator i;
+                 // Liao, 11/18/2009, Handle the rare case that current statement is not found
+                 // in its scope's statement list
+                 // for (i = statementList.begin();(*i)!=currentStatement;i++) 
+                    for (i = statementList.begin(); (*i) != currentStatement && i != statementList.end(); i++) 
+                       {
+                      //  SgStatement* cur_stmt = *i;
+                      //  cout<<"Skipping current statement: "<<cur_stmt->class_name()<<endl;
+                      //  cout<<cur_stmt->get_file_info()->displayString()<<endl;
+                       }
+
+                 // currentStatement is not found in the list
+                    if (i ==  statementList.end()) 
+                       {
+                         cerr<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
+                         cerr<<"current statement is "<<currentStatement->class_name()<<endl;
+                         cerr<<currentStatement->get_file_info()->displayString()<<endl;
+                         cerr<<"Its scope is "<<scope->class_name()<<endl;
+                         cerr<<scope->get_file_info()->displayString()<<endl;
+                         ROSE_ASSERT (false);
+                       }
+
+                 // now i == currentStatement
+                    ROSE_ASSERT (*i == currentStatement);
+
+                 // DQ (7/19/2015): Added assertion that should be true, else i++ is not defined.
+                    ROSE_ASSERT(i != statementList.end());
+
+                    i++;
+                    if (statementList.end() == i)
+                          nextStatement = NULL;
+                       else
+                          nextStatement = *i;
+                  }
 
             // If the target statement was the last statement in a scope then 
                if (nextStatement == NULL)
-                                                         {
-                                                                 // Someone might think of a better answer than NULL
-                                                         }
+                  {
+                 // Someone might think of a better answer than NULL
+                  }
+
+               break;
              }
-                                                 break;
         }
-     //This assertion does not make sense. 
-     //Since a trailing statement within a scope can have null next statement, 
-     //and  the statement can be not global scope statement, Liao 3/12/2009
-     //ROSE_ASSERT (isSgGlobal(currentStatement) != NULL || nextStatement != NULL);
+
+  // This assertion does not make sense. 
+  // Since a trailing statement within a scope can have null next statement, 
+  // and  the statement can be not global scope statement, Liao 3/12/2009
+  // ROSE_ASSERT (isSgGlobal(currentStatement) != NULL || nextStatement != NULL);
 
      return nextStatement;
    }
+
          
 SgStatement*
-ROSE::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
+rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
    {
      ROSE_ASSERT (targetStatement  != NULL);
 
@@ -1378,10 +1507,10 @@ ROSE::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
      ROSE_ASSERT (scope != targetStatement);
 
 #if 0
-     printf ("@@@@@ In ROSE::getPreviousStatement(): targetStatement = %s \n",targetStatement->sage_class_name());
-     printf ("@@@@@ In ROSE::getPreviousStatement(): targetStatement->unparseToString() = %s \n",targetStatement->unparseToString().c_str());
-     printf ("@@@@@ In ROSE::getPreviousStatement(): scope = %s \n",scope->sage_class_name());
-     printf ("@@@@@ In ROSE::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
+     printf ("@@@@@ In rose::getPreviousStatement(): targetStatement = %s \n",targetStatement->sage_class_name());
+     printf ("@@@@@ In rose::getPreviousStatement(): targetStatement->unparseToString() = %s \n",targetStatement->unparseToString().c_str());
+     printf ("@@@@@ In rose::getPreviousStatement(): scope = %s \n",scope->sage_class_name());
+     printf ("@@@@@ In rose::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
 #endif
 
      switch (targetStatement->variantT())

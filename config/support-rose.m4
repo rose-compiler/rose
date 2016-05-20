@@ -145,8 +145,9 @@ fi
   AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
   AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
-AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.8.x)])
-AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.8.x verification check]),,[enableval=yes])
+# DQ (2/27/2016): Added version 4.9.x to supported compilers.
+AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.9.x)])
+AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.9.x verification check]),,[enableval=yes])
 if test "x$enableval" = "xyes" ; then
       AC_LANG_PUSH([C])
       # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
@@ -178,7 +179,6 @@ AC_SUBST(GCC_MINOR_VERSION)
   ROSE_SUPPORT_GMP
   ROSE_SUPPORT_ISL
   ROSE_SUPPORT_MPI
-  ROSE_SUPPORT_LIBREADLINE
 
 ##
 #########################################################################################
@@ -420,15 +420,15 @@ CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
 AC_ARG_ENABLE(assertion-behavior,
     AS_HELP_STRING([--enable-assertion-behavior[=MODE]],
         [Specifies the default behavior for failing ROSE assertions. This behavior can be changed at runtime either
-	 via ROSE command-line switches or the rose API. Most developers (the ROSE team and users that
-	 are developing transformations) will probably want "abort" since this gives the most useful post-mortem
-	 information. On the other hand, end users usually don't need or expect post-mortem capabilities and sometimes
-	 even perceive them as low code quality, in which case "exit" with non-zero status is the best behavior. Finally,
-	 the "throw" behavior can be used as a compromise for tool developers to more gracefully recover from a ROSE
-	 error that would otherwise be fatal.  When --enable-assertion-behavior is not specified then "exit" is used.
-	 Some assertions can be disabled altogether (e.g., when an optimized library is desired) by defining NDEBUG.
-	 Caveats: this switch affects the behavior of the ROSE_ASSERT macro and the Sawyer ASSERT_* macros, but not
-	 plain old "assert"; the NDEBUG define applies to Sawyer ASSERT_* macros and plain old "assert" but not
+         via ROSE command-line switches or the rose API. Most developers (the ROSE team and users that
+         are developing transformations) will probably want "abort" since this gives the most useful post-mortem
+         information. On the other hand, end users usually don't need or expect post-mortem capabilities and sometimes
+         even perceive them as low code quality, in which case "exit" with non-zero status is the best behavior. Finally,
+         the "throw" behavior can be used as a compromise for tool developers to more gracefully recover from a ROSE
+         error that would otherwise be fatal.  When --enable-assertion-behavior is not specified then "exit" is used.
+         Some assertions can be disabled altogether (e.g., when an optimized library is desired) by defining NDEBUG.
+         Caveats: this switch affects the behavior of the ROSE_ASSERT macro and the Sawyer ASSERT_* macros, but not
+         plain old "assert"; the NDEBUG define applies to Sawyer ASSERT_* macros and plain old "assert" but not
          ROSE_ASSERT.]))
 
 case "$enable_assertion_behavior" in
@@ -437,7 +437,7 @@ case "$enable_assertion_behavior" in
     throw)    assertion_behavior=ROSE_ASSERTION_THROW ;;
     *)
         AC_MSG_ERROR(["--enable-assertion-behavior should be "abort", "exit", or "throw"])
-	;;
+        ;;
 esac
 
 AC_DEFINE_UNQUOTED([ROSE_ASSERTION_BEHAVIOR], [$assertion_behavior], [Determines how failed assertions should behave.])
@@ -482,6 +482,36 @@ CHOOSE_BACKEND_COMPILER
 # TV (06/17/2013): Now always the case (EDG 4.7).
 AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
 
+# Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
+# This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
+# AC_LANG_PUSH(C)
+
+# Get frontend compiler vendor 
+AX_COMPILER_VENDOR
+FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
+unset ax_cv_cxx_compiler_vendor
+
+# Get backend compiler vendor
+  saved_compiler_name=$CXX
+  CXX=$BACKEND_CXX_COMPILER
+  echo "After resetting CXX to be the backend compiler: CXX = $CXX"
+
+  AX_COMPILER_VENDOR
+# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns 
+# the vendor for the C compiler in ax_cv_c_compiler_vendor for the C compiler.
+# CcompilerVendorName= $ax_cv_c_compiler_vendor
+# CxxcompilerVendorName= $ax_cv_cxx_compiler_vendor
+# echo "Output the names of the vendor for the C or C++ backend compilers."
+# echo "Using back-end C   compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_c_compiler_vendor   for processing of unparsed source files from ROSE preprocessors."
+  echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+  BACKEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
+
+  CXX=$saved_compiler_name
+  echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
+
+# echo "Exiting in support-rose after computing the compiler vendor name for the C and C++ compilers."
+# exit 1
+
 # End macro ROSE_SUPPORT_ROSE_PART_1.
 ]
 )
@@ -492,6 +522,9 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 [
 # Begin macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
 
+echo "In ROSE SUPPORT ROSE BUILD INCLUDE FILES: Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+
+# Note that this directory name is not spelled correctly, is this a typo?
 # JJW (12/10/2008): We don't preprocess the header files for the new interface
 rm -rf ./include-stagin
 
@@ -516,6 +549,10 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_2],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_2.
 
+# DQ (9/26/2015): Since the config/ltdl.m4 file in regenerated, we can't edit it easily.
+# So make this a requirement so that it will not be expanded there.
+m4_require([_LT_SYS_DYNAMIC_LINKER])
+
 # AC_REQUIRE([AC_PROG_CXX])
 AC_PROG_CXX
 
@@ -532,6 +569,7 @@ GET_COMPILER_SPECIFIC_DEFINES
 # SETUP_BACKEND_COMPILER_SPECIFIC_REFERENCES
 # JJW (12/10/2008): We don't preprocess the header files for the new interface,
 # but we still need to use the original C++ header directories
+ROSE_CONFIGURE_SECTION([Backend C/C++ compiler specific references])
 SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
 SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
 
@@ -629,7 +667,7 @@ ROSE_SUPPORT_MAPLE
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
 # DQ (4/10/2010): Added configure support for Backstroke project.
-ROSE_SUPPORT_BACKSTOKE
+ROSE_SUPPORT_BACKSTROKE
 
 #Call supporting macro for IDA PRO
 ROSE_SUPPORT_IDA
@@ -658,6 +696,19 @@ AM_CONDITIONAL(ROSE_USE_LIBFFI,test ! "$with_libffi" = no)
 # DQ (3/14/2013): Adding support for Aterm library use in ROSE.
 ROSE_SUPPORT_ATERM
 
+# DQ (1/22/2016): Added support for stratego (need to know the path to sglri executable for Exprermental Fortran support).
+ROSE_SUPPORT_STRATEGO
+
+if test "x$enable_experimental_fortran_frontend" = "xyes"; then
+   if test "x$ATERM_LIBRARY_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_fortran_frontend requires Aterm library support, --with-aterm=<path> must be specified!])
+   fi
+   if test "x$STRATEGO_LIBRARY_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_fortran_frontend requires Stratego library support, --with-stratego=<path> must be specified!])
+   fi
+fi
+
+
 ROSE_SUPPORT_MINT
 
 ROSE_SUPPORT_VECTORIZATION
@@ -673,7 +724,7 @@ ROSE_SUPPORT_PYTHON
 
 AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
 
-AX_PYTHON_DEVEL([0.0.0], [3.1.4])
+AX_PYTHON_DEVEL([0.0.0], [4.0.0])
 PYTHON_VERSION_MAJOR_VERSION="`echo $ac_python_version | cut -d\. -f1`"
 PYTHON_VERSION_MINOR_VERSION="`echo $ac_python_version | cut -d\. -f2`"
 PYTHON_VERSION_PATCH_VERSION="`echo $ac_python_version | cut -d\. -f3`"
@@ -760,7 +811,11 @@ AC_ARG_ENABLE([rose-openGL],
   [  --enable-rose-openGL  enable openGL],
   [  rose_openGL=${enableval}
 AC_PATH_X dnl We need to do this by hand for some reason
-MDL_HAVE_OPENGL
+
+# DQ (9/26/2015): Using more recent autoconf macro to avoid warnings.
+# MDL_HAVE_OPENGL
+AC_FIND_OPENGL
+
 echo "have_GL = '$have_GL' and have_glut = '$have_glut' and rose_openGL = '$rose_openGL'"
 #AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$openGL" = xno)
 if test ! "x$rose_openGL" = xno; then
@@ -863,6 +918,10 @@ ROSE_SUPPORT_HASKELL
 
 ROSE_SUPPORT_CUDA
 
+# Call support macro for Z3
+
+ROSE_SUPPORT_Z3
+
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
 
@@ -888,38 +947,38 @@ AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (tes
 # TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
 
 AC_ARG_WITH(
-	[ppl],
-	AS_HELP_STRING([--with-ppl@<:@=DIR@:>@], [use Parma Polyhedral Library (PPL)]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
-		exit 1
-	else
-		has_ppl_path="yes"
-		ppl_path="$withval"
-	fi
-	],
-	[has_ppl_path="no"]
+        [ppl],
+        AS_HELP_STRING([--with-ppl@<:@=DIR@:>@], [use Parma Polyhedral Library (PPL)]),
+        [
+        if test "$withval" = "no"; then
+                echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+                exit 1
+        elif test "$withval" = "yes"; then
+                echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+                exit 1
+        else
+                has_ppl_path="yes"
+                ppl_path="$withval"
+        fi
+        ],
+        [has_ppl_path="no"]
 )
 
 AC_ARG_ENABLE(
-	ppl,
-	AS_HELP_STRING(
-		[--enable-ppl],
-		[Support for Parma Polyhedral Library (PPL)]
-	)
+        ppl,
+        AS_HELP_STRING(
+                [--enable-ppl],
+                [Support for Parma Polyhedral Library (PPL)]
+        )
 )
 AM_CONDITIONAL(
-	ROSE_USE_PPL,
-	[test "x$enable_ppl" = "xyes"])
+        ROSE_USE_PPL,
+        [test "x$enable_ppl" = "xyes"])
 if test "x$enable_ppl" = "xyes"; then
-	if test "x$has_ppl_path" = "xyes"; then
-		PPL_PATH="$ppl_path"
-		AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
-	fi
+        if test "x$has_ppl_path" = "xyes"; then
+                PPL_PATH="$ppl_path"
+                AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
+        fi
 fi
 AC_SUBST(ROSE_USE_PPL)
 AC_SUBST(PPL_PATH)
@@ -929,38 +988,38 @@ AC_SUBST(PPL_PATH)
 # *********************************************************************************
 
 AC_ARG_WITH(
-	[cloog],
-	AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
-		exit 1
-	else
-		has_cloog_path="yes"
-		cloog_path="$withval"
-	fi
-	],
-	[has_cloog_path="no"]
+        [cloog],
+        AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
+        [
+        if test "$withval" = "no"; then
+                echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+                exit 1
+        elif test "$withval" = "yes"; then
+                echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+                exit 1
+        else
+                has_cloog_path="yes"
+                cloog_path="$withval"
+        fi
+        ],
+        [has_cloog_path="no"]
 )
 
 AC_ARG_ENABLE(
-	cloog,
-	AS_HELP_STRING(
-		[--enable-cloog],
-		[Support for Cloog]
-	)
+        cloog,
+        AS_HELP_STRING(
+                [--enable-cloog],
+                [Support for Cloog]
+        )
 )
 AM_CONDITIONAL(
-	ROSE_USE_CLOOG,
-	[test "x$enable_cloog" = "xyes"])
+        ROSE_USE_CLOOG,
+        [test "x$enable_cloog" = "xyes"])
 if test "x$enable_cloog" = "xyes"; then
-	if test "x$has_cloog_path" = "xyes"; then
-		CLOOG_PATH="$cloog_path"
-		AC_DEFINE([ROSE_USE_CLOOG], [], [Whether to use Cloog support or not within ROSE])
-	fi
+        if test "x$has_cloog_path" = "xyes"; then
+                CLOOG_PATH="$cloog_path"
+                AC_DEFINE([ROSE_USE_CLOOG], [], [Whether to use Cloog support or not within ROSE])
+        fi
 fi
 AC_SUBST(ROSE_USE_CLOOG)
 AC_SUBST(CLOOG_PATH)
@@ -970,38 +1029,38 @@ AC_SUBST(CLOOG_PATH)
 # **************************************************************************************
 
 AC_ARG_WITH(
-	[scoplib],
-	AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
-		exit 1
-	else
-		has_scoplib_path="yes"
-		scoplib_path="$withval"
-	fi
-	],
-	[has_scoplib_path="no"]
+        [scoplib],
+        AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
+        [
+        if test "$withval" = "no"; then
+                echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+                exit 1
+        elif test "$withval" = "yes"; then
+                echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+                exit 1
+        else
+                has_scoplib_path="yes"
+                scoplib_path="$withval"
+        fi
+        ],
+        [has_scoplib_path="no"]
 )
 
 AC_ARG_ENABLE(
-	scoplib,
-	AS_HELP_STRING(
-		[--enable-scoplib],
-		[Support for ScopLib]
-	)
+        scoplib,
+        AS_HELP_STRING(
+                [--enable-scoplib],
+                [Support for ScopLib]
+        )
 )
 AM_CONDITIONAL(
-	ROSE_USE_SCOPLIB,
-	[test "x$enable_scoplib" = "xyes"])
+        ROSE_USE_SCOPLIB,
+        [test "x$enable_scoplib" = "xyes"])
 if test "x$enable_scoplib" = "xyes"; then
-	if test "x$has_scoplib_path" = "xyes"; then
-		SCOPLIB_PATH="$scoplib_path"
-		AC_DEFINE([ROSE_USE_SCOPLIB], [], [Whether to use ScopLib support or not within ROSE])
-	fi
+        if test "x$has_scoplib_path" = "xyes"; then
+                SCOPLIB_PATH="$scoplib_path"
+                AC_DEFINE([ROSE_USE_SCOPLIB], [], [Whether to use ScopLib support or not within ROSE])
+        fi
 fi
 AC_SUBST(ROSE_USE_SCOPLIB)
 AC_SUBST(SCOPLIB_PATH)
@@ -1011,38 +1070,38 @@ AC_SUBST(SCOPLIB_PATH)
 # *************************************************************************************
 
 AC_ARG_WITH(
-	[candl],
-	AS_HELP_STRING([--with-candl@<:@=DIR@:>@], [use Candl]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
-		exit 1
-	else
-		has_candl_path="yes"
-		candl_path="$withval"
-	fi
-	],
-	[has_candl_path="no"]
+        [candl],
+        AS_HELP_STRING([--with-candl@<:@=DIR@:>@], [use Candl]),
+        [
+        if test "$withval" = "no"; then
+                echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+                exit 1
+        elif test "$withval" = "yes"; then
+                echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+                exit 1
+        else
+                has_candl_path="yes"
+                candl_path="$withval"
+        fi
+        ],
+        [has_candl_path="no"]
 )
 
 AC_ARG_ENABLE(
-	candl,
-	AS_HELP_STRING(
-		[--enable-candl],
-		[Support for Candl]
-	)
+        candl,
+        AS_HELP_STRING(
+                [--enable-candl],
+                [Support for Candl]
+        )
 )
 AM_CONDITIONAL(
-	ROSE_USE_CANDL,
-	[test "x$enable_candl" = "xyes"])
+        ROSE_USE_CANDL,
+        [test "x$enable_candl" = "xyes"])
 if test "x$enable_candl" = "xyes"; then
-	if test "x$has_candl_path" = "xyes"; then
-		CANDL_PATH="$candl_path"
-		AC_DEFINE([ROSE_USE_CANDL], [], [Whether to use Candl support or not within ROSE])
-	fi
+        if test "x$has_candl_path" = "xyes"; then
+                CANDL_PATH="$candl_path"
+                AC_DEFINE([ROSE_USE_CANDL], [], [Whether to use Candl support or not within ROSE])
+        fi
 fi
 AC_SUBST(ROSE_USE_CANDL)
 AC_SUBST(CANDL_PATH)
@@ -1230,7 +1289,7 @@ AC_MSG_RESULT($CXX_STATIC_LIB_UPDATE and $CXX_DYNAMIC_LIB_UPDATE)
 # BTNG.
 AC_MSG_CHECKING(for A++P++)
 AC_ARG_WITH(AxxPxx,
-[  --with-AxxPxx=PATH	Specify the prefix where A++P++ is installed],
+[  --with-AxxPxx=PATH   Specify the prefix where A++P++ is installed],
 ,
 if test "$AxxPxx_PREFIX" ; then 
    with_AxxPxx="$AxxPxx_PREFIX"
@@ -1512,7 +1571,7 @@ AC_ARG_WITH(QRose, [  --with-QRose=PATH     prefix of QRose installation],
        exit 1
     fi
    ],
-	[with_QRose=no])
+        [with_QRose=no])
 
 AC_SUBST(QROSE_PREFIX)
 AM_CONDITIONAL(ROSE_USE_QROSE,test "x$with_QRose" != xno)
@@ -1667,7 +1726,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 AC_CONFIG_FILES([
 stamp-h
 Makefile
-rose.docs
 config/Makefile
 src/Makefile
 src/util/Makefile
@@ -1711,6 +1769,7 @@ src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/astFromString/Makefile
 src/frontend/SageIII/includeDirectivesProcessing/Makefile
+src/frontend/MatlabFrontend/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
@@ -1724,11 +1783,7 @@ src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/frontend/DLX/Makefile
-src/frontend/DLX/include/Makefile
-src/frontend/DLX/include/DLX/Makefile
 src/frontend/DLX/include/DLX/Core/Makefile
-src/frontend/DLX/include/DLX/KLT/Makefile
-src/frontend/DLX/lib/Makefile
 src/frontend/DLX/lib/core/Makefile
 src/frontend/Partitioner2/Makefile
 src/midend/Makefile
@@ -1741,30 +1796,26 @@ src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
 src/midend/programTransformation/singleStatementToBlockNormalization/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/midend/MFB/Makefile
-src/midend/MFB/include/Makefile
 src/midend/MFB/include/MFB/Makefile
 src/midend/MFB/include/MFB/Sage/Makefile
 src/midend/MFB/include/MFB/KLT/Makefile
-src/midend/MFB/lib/Makefile
 src/midend/MFB/lib/sage/Makefile
+src/midend/MFB/lib/klt/Makefile
 src/midend/MFB/lib/utils/Makefile
 src/midend/MDCG/Makefile
-src/midend/MDCG/include/Makefile
-src/midend/MDCG/include/MDCG/Makefile
-src/midend/MDCG/include/MDCG/Core/Makefile
-src/midend/MDCG/include/MDCG/KLT/Makefile
-src/midend/MDCG/lib/Makefile
-src/midend/MDCG/lib/core/Makefile
-src/midend/MDCG/lib/klt/Makefile
+src/midend/MDCG/include/MDCG/Model/Makefile
+src/midend/MDCG/include/MDCG/Tools/Makefile
+src/midend/MDCG/lib/model/Makefile
+src/midend/MDCG/lib/tools/Makefile
+src/midend/KLT/Makefile
+src/midend/KLT/include/KLT/Core/Makefile
+src/midend/KLT/include/KLT/MDCG/Makefile
+src/midend/KLT/include/KLT/DLX/Makefile
+src/midend/KLT/include/KLT/RTL/Makefile
+src/midend/KLT/lib/core/Makefile
+src/midend/KLT/lib/mdcg/Makefile
+src/midend/KLT/lib/rtl/Makefile
 src/backend/Makefile
-src/backend/KLT/Makefile
-src/backend/KLT/include/Makefile
-src/backend/KLT/include/KLT/Makefile
-src/backend/KLT/include/KLT/Core/Makefile
-src/backend/KLT/include/KLT/RTL/Makefile
-src/backend/KLT/lib/Makefile
-src/backend/KLT/lib/core/Makefile
-src/backend/KLT/lib/rtl/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile
@@ -1823,6 +1874,8 @@ src/roseExtensions/roseHPCToolkit/docs/Makefile
 src/roseExtensions/failSafe/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
+projects/ArithmeticMeasureTool/Makefile
+projects/ArithmeticMeasureTool/src/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
@@ -1839,8 +1892,6 @@ projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
-projects/CodeThorn/Makefile
-projects/CodeThorn/src/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
@@ -1903,26 +1954,6 @@ projects/autoParallelization/tests/Makefile
 projects/autoTuning/Makefile
 projects/autoTuning/doc/Makefile
 projects/autoTuning/tests/Makefile
-projects/backstroke/Makefile
-projects/backstroke/eventDetection/Makefile
-projects/backstroke/eventDetection/ROSS/Makefile
-projects/backstroke/eventDetection/SPEEDES/Makefile
-projects/backstroke/normalizations/Makefile
-projects/backstroke/slicing/Makefile
-projects/backstroke/valueGraph/Makefile
-projects/backstroke/valueGraph/headerUnparser/Makefile
-projects/backstroke/pluggableReverser/Makefile
-projects/backstroke/testCodeGeneration/Makefile
-projects/backstroke/restrictedLanguage/Makefile
-projects/backstroke/tests/Makefile
-projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
-projects/backstroke/tests/expNormalizationTest/Makefile
-projects/backstroke/tests/pluggableReverserTest/Makefile
-projects/backstroke/tests/restrictedLanguageTest/Makefile
-projects/backstroke/tests/testCodeBuilderTest/Makefile
-projects/backstroke/tests/incrementalInversionTest/Makefile
-projects/backstroke/utilities/Makefile
-projects/backstroke/sdg/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
 projects/binCompass/graphanalyses/Makefile
@@ -1971,7 +2002,7 @@ projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/RosePolly/Makefile
-projects/simulator/Makefile
+projects/SMTPathFeasibility/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
 projects/symbolicAnalysisFramework/src/external/Makefile
@@ -1990,6 +2021,11 @@ projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/ManyCoreRuntime2/Makefile
+projects/ManyCoreRuntime2/runtime/Makefile
+projects/ManyCoreRuntime2/transformation/Makefile
+projects/ManyCoreRuntime2/tests/Makefile
+projects/ManyCoreRuntime2/docs/Makefile
 projects/MapleDSL/Makefile
 projects/StencilManyCore/Makefile
 projects/mint/Makefile
@@ -2001,6 +2037,9 @@ projects/Fortran_to_C/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
+projects/MultiLevelMemory/Makefile
+projects/MultiLevelMemory/src/Makefile
+projects/MultiLevelMemory/tests/Makefile
 projects/PolyOpt2/Makefile
 projects/PolyOpt2/polyopt/Makefile
 projects/PolyOpt2/src/Makefile
@@ -2021,6 +2060,11 @@ projects/RoseBlockLevelTracing/src/Makefile
 projects/ShiftCalculus/Makefile
 projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
+projects/ShiftCalculus4/Makefile
+projects/dsl_infrastructure/Makefile
+projects/arrayDSLcompiler/Makefile
+projects/amrShiftDSLcompiler/Makefile
+projects/amrShiftDSLcompiler/AMRShift/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
 projects/demos-dlx-mdcg/Makefile
@@ -2055,6 +2099,34 @@ projects/Viz/lib/Makefile
 projects/Viz/src/Makefile
 projects/Viz/tools/Makefile
 projects/Viz/examples/Makefile
+projects/TileK/Makefile
+projects/TileK/include/DLX/TileK/Makefile
+projects/TileK/include/RTL/Host/Makefile
+projects/TileK/include/RTL/Kernel/OpenCL/Makefile
+projects/TileK/include/RTL/Kernel/CUDA/Makefile
+projects/TileK/lib/Makefile
+projects/TileK/src/Makefile
+projects/TileK/tests/rtl/Makefile
+projects/TileK/tests/basic/Makefile
+projects/TileK/tests/threads/Makefile
+projects/TileK/tests/accelerator/Makefile
+projects/TileK/tests/accelerator/OpenCL/Makefile
+projects/TileK/tests/accelerator/CUDA/Makefile
+projects/TileK/doc/Makefile
+projects/TileK/doc/index.html
+projects/TileK/doc/dlx.doxy
+projects/TileK/doc/mfb.doxy
+projects/TileK/doc/mdcg.doxy
+projects/TileK/doc/klt.doxy
+projects/TileK/doc/klt-rtl.doxy
+projects/TileK/doc/tilek-basic.doxy
+projects/TileK/doc/tilek-rtl-basic.doxy
+projects/TileK/doc/tilek-threads.doxy
+projects/TileK/doc/tilek-rtl-threads.doxy
+projects/TileK/doc/tilek-opencl.doxy
+projects/TileK/doc/tilek-rtl-opencl.doxy
+projects/TileK/doc/tilek-cuda.doxy
+projects/TileK/doc/tilek-rtl-cuda.doxy
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2134,21 +2206,8 @@ tests/CompileTests/frontend_integration/Makefile
 tests/CompileTests/x10_tests/Makefile
 tests/CompileTests/systemc_tests/Makefile
 tests/CompileTests/mixLanguage_tests/Makefile
-tests/CompileTests/TileK/Makefile
-tests/CompileTests/TileK/include/DLX/TileK/Makefile
-tests/CompileTests/TileK/include/RTL/Makefile
-tests/CompileTests/TileK/include/RTL/Host/Makefile
-tests/CompileTests/TileK/include/RTL/Kernel/Makefile
-tests/CompileTests/TileK/include/RTL/Kernel/OpenCL/Makefile
-tests/CompileTests/TileK/include/RTL/Kernel/CUDA/Makefile
-tests/CompileTests/TileK/lib/Makefile
-tests/CompileTests/TileK/src/Makefile
-tests/CompileTests/TileK/tests/Makefile
-tests/CompileTests/TileK/tests/basic/Makefile
-tests/CompileTests/TileK/tests/threads/Makefile
-tests/CompileTests/TileK/tests/accelerator/Makefile
-tests/CompileTests/TileK/tests/accelerator/OpenCL/Makefile
-tests/CompileTests/TileK/tests/accelerator/CUDA/Makefile
+tests/CompileTests/Matlab_tests/Makefile
+tests/CompileTests/STL_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
@@ -2171,7 +2230,6 @@ tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
 tests/roseTests/binaryTests/Makefile
-tests/roseTests/binaryTests/SemanticVerification/Makefile
 tests/roseTests/binaryTests/libraryIdentification_tests/Makefile
 tests/roseTests/binaryTests/Pin_tests/Makefile
 tests/roseTests/binaryTests/Dwarf_tests/Makefile
@@ -2232,7 +2290,6 @@ exampleTranslators/defaultTranslator/Makefile
 docs/Makefile
 docs/Rose/footer.html
 docs/Rose/leftmenu.html
-docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex
@@ -2241,6 +2298,7 @@ docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
+docs/Rose/rose-install-demo.cfg
 docs/Rose/roseQtWidgets.doxygen
 docs/Rose/sage.cfg
 docs/Rose/Tutorial/Makefile
@@ -2406,13 +2464,13 @@ AC_CONFIG_COMMANDS([default],[[
 
 # Generate rose_paths.C
 AC_CONFIG_COMMANDS([rose_paths.C], [[
-	make src/util/rose_paths.C
+        make src/util/rose_paths.C
 ]])
 
 # Generate public config file from private config file. The public config file adds "ROSE_" to the beginning of
 # certain symbols. See scripts/publicConfiguration.pl for details.
 AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
-	make rosePublicConfig.h
+        make rosePublicConfig.h
 ]])
 
 # [TOO1, 2014-04-22]
@@ -2421,9 +2479,9 @@ AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
 # Rewrite the definitions for srcdir, top_srcdir, builddir, and top_builddir so they use the "abs_" versions instead.
 #AC_CONFIG_COMMANDS([absoluteNames],
 #[[
-#	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
-#	find . -name Makefile | xargs sed -i~ \
-#	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
+#       echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
+#       find . -name Makefile | xargs sed -i~ \
+#           -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
 #]])
 
 

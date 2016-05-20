@@ -13,11 +13,15 @@ void foo1() {
     int x2=x;
     y=(x2-c)*8;
     int a[1024];
-    int res;
-    res=a[y];
+    int res=1;
+    res++;
+    res=res+a[y];
   }
 }
 
 int main() {
+  int main_v;
+  main_v=1;
   foo1();
+  main_v--;
 }

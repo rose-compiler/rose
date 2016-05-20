@@ -42,7 +42,6 @@ SageDocsDependencies = \
 # What the generation of doxygen output for Rose depends upon
 RoseDocsDependencies = \
      rose.cfg \
-     $(top_builddir)/rose.docs \
      $(top_builddir)/src/frontend/SageIII/sage.docs \
      $(top_srcdir)/src/frontend/SageIII/sage.docs.in \
      $(top_srcdir)/src/extra.docs \
@@ -54,8 +53,7 @@ RoseDocsDependencies = \
      $(top_srcdir)/src/midend/astProcessing/AstProcessing.docs \
      $(top_srcdir)/src/backend/unparser/unparser.docs \
      $(top_srcdir)/src/3rdPartyLibraries/MSTL/MSTL.docs \
-     $(top_srcdir)/src/roseExtensions/roseHPCToolkit/docs/roseHPCToolkit.docs \
-     $(top_srcdir)/rose.docs.in
+     $(top_srcdir)/src/roseExtensions/roseHPCToolkit/docs/roseHPCToolkit.docs
 
 # If the generated sage source code is older than the code used to
 # generate the sage source code then regenerate the sage source code
@@ -67,24 +65,40 @@ $(SAGE_GENERATED_CODE): $(SOURCE_FOR_SAGE_GENERATED_CODE)
 # $(SAGE_DOXYGEN_TAG_FILE): sage-docs
 
 SAGE_MAINPAGE_DOCUMENTATION = $(top_builddir)/src/frontend/SageIII/sage.docs
-ROSE_MAINPAGE_DOCUMENTATION = $(top_builddir)/rose.docs
-
-# Build rule to update rose.docs in ROSE/src/frontend/SageIII directory
-$(ROSE_MAINPAGE_DOCUMENTATION): $(top_srcdir)/rose.docs.in
-	cd $(top_builddir); $(MAKE) rose.docs
 
 # DQ (1/27/2014): Add simple makefile rule to run doxygen to generate ROSE API docs.
-doxygen_docs: rose.cfg AvailableDocumentation.docs
-	doxygen rose.cfg
+.PHONY: doxygen_docs
+if ROSE_HAVE_DOXYGEN
+
+doxygen_docs: rose.cfg
+	$(DOXYGEN) rose.cfg
+	if [ "$(DOXYINDEXER)" != "" -a -e ROSE_WebPages/searchdata.xml ]; then	\
+	    $(DOXYINDEXER) ROSE_WebPages/searchdata.xml;			\
+	fi
 
 # A more complex dependence is defined that requires the sage.tag file
-$(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
+$(RoseDoxygenDocumentation): $(RoseDocsDependencies)  rose.cfg
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
-	doxygen rose.cfg
+	$(DOXYGEN) rose.cfg
+	if [ "$(DOXYINDEXER)" != "" -a -e ROSE_WebPages/searchdata.xml ]; then	\
+	    $(DOXYINDEXER) ROSE_WebPages/searchdata.xml;			\
+	fi
+
+else
+
+doxygen_docs: rose.cfg
+	@echo "Doxygen documentation not generated (configure with --with-doxygen)" >&2
+	@false
+
+$(RoseDoxygenDocumentation): $(RoseDocsDependencies) rose.cfg
+	@echo "Doxygen documentation not generated (configure with --with-doxygen)" >&2
+	@false
+endif
+
 
 # DQ (3/4/2014): This is a redundant makefile rule (mistake).
 # DQ (7/11/2009): Added rule to force generation of Doxygen documentation.
-#doxygen_docs: $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
+#doxygen_docs: $(RoseDocsDependencies) rose.cfg
 #	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
 #	doxygen rose.cfg || exit 1
 #	echo "Doxygen generated documentation terminated normally."
@@ -105,11 +119,22 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex \
 # requirements.tex
 
 roseDirectoryMap.pdf: Makefile
-	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;
+#	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;
+#	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='\.git\|acmacros\|autom4te.cache\|docs\|libltdl\|scripts' --basename -o=roseDirectoryMap.ps;
+	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='acmacros\|projects' --basename -o=roseDirectoryMap.ps;
 #	convert -geometry 5000 roseDirectoryMap.ps roseDirectoryMap.pdf
 	w=`grep '^%%BoundingBox: [0-9]' roseDirectoryMap.ps | awk '{print $$4*10;}'` ; \
 	h=`grep '^%%BoundingBox: [0-9]' roseDirectoryMap.ps | awk '{print $$5*10;}'` ; \
 	ps2pdf -g$${w}x$${h} roseDirectoryMap.ps roseDirectoryMap.pdf
+
+roseSrcDirectoryMap.png: Makefile
+#	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;
+#	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='\.git\|acmacros\|autom4te.cache\|docs\|libltdl\|scripts' --basename -o=roseDirectoryMap.ps;
+	$(top_srcdir)/scripts/lsdot $(top_srcdir)/src --format=png --exclude='3rdPartyLibraries\|ROSETTA\|EDG_4.4\|EDG_4.7\|EDG_4.8' --basename -o=roseSrcDirectoryMap.png;
+#	convert -geometry 5000 roseDirectoryMap.ps roseDirectoryMap.pdf
+#	w=`grep '^%%BoundingBox: [0-9]' roseDirectoryMap.ps | awk '{print $$4*10;}'` ; \
+#	h=`grep '^%%BoundingBox: [0-9]' roseDirectoryMap.ps | awk '{print $$5*10;}'` ; \
+#	ps2pdf -g$${w}x$${h} roseDirectoryMap.ps roseDirectoryMap.pdf
 
 if USE_ROSE_IN_BUILD_TREE_VAR
 SET_ROSE_IN_BUILD_TREE=env ROSE_IN_BUILD_TREE=$(top_builddir)
@@ -157,11 +182,11 @@ latexDependences = \
      rosePlatformConfigureOptions.txt
 
 # website contents
-html-local: AvailableDocumentation.docs $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz
+html-local: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz
 
 footer.html: footer.html.in
 leftmenu.html: leftmenu.html.in
-AvailableDocumentation.docs: AvailableDocumentation.docs.in
+
 # Liao, 6/11/2008. Added a new directory (Projects) for various ROSE projects 
 # compass_build_tooldir=$(top_builddir)/projects/compass/tools
 COMPASS_MANUAL = $(compass_build_tooldir)/compass/doc/compass.pdf
@@ -184,7 +209,7 @@ $(HASKELLPORT_APIDOCS):
 RoseQtDoc:
 if !OS_MACOSX
 	@echo "Skipping doxygen processing of roseQtWidgets.doxygen (failing in OSX)"
-#	doxygen roseQtWidgets.doxygen
+#	$(DOXYGEN) roseQtWidgets.doxygen
 endif
 # Liao, 2014/1/10, comment out $(HASKELLPORT_APIDOCS) to migrate to EDG 4.7 based rose
 make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) $(AUTOTUNING_MANUAL) RoseQtDoc
@@ -389,16 +414,17 @@ docs:
 html-docs: html
 
 EXTRA_DIST = CMakeLists.txt \
-   WEB_DOCS_README AvailableDocumentation.docs.in \
+   WEB_DOCS_README \
    sage.cfg.in rose.cfg.in roseQtWidgets.doxygen.in \
    fixme.sty  acknowledgments.tex bothlevel.c \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \
-   developersAppendix.tex designOfRose.tex  FAQ.tex glossary.tex introduction.tex lu.tex \
+   developersAppendix.tex designOfRose.tex  FAQ.tex FAQ-Binary.dox glossary.tex introduction.tex lu.tex \
    preface.tex rose-processing-phases.pdf compass_rose.gif SageIII.tex QueryLibrary.tex \
    AstRewrite.tex ProgramAnalysis.tex AstProcessing.tex testing.tex astMerge.tex installRose.tex \
    roseExecutionOutput.txt roseHelpOutput.txt asm_code_samples_gcc.pdf introduction_start.tex \
-   rose_exam_1.tex rose_exam_traversals_1.tex git_collaboration_diagram.pdf
+   rose_exam_1.tex rose_exam_traversals_1.tex git_collaboration_diagram.pdf \
+   HowToDocument.dox Attributes.dox
 
 # DQ (3/4/2009): Removed requirements.tex since it is not longer used.
 # requirements.tex
@@ -418,7 +444,7 @@ CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
 	     roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \
-	     AvailableDocumentation.docs  leftmenu.html rosePlatformPrerequisites.txt \
+	     leftmenu.html rosePlatformPrerequisites.txt \
         rosePlatformConfigureOptions.txt
 
 .PHONY :generated_files_for_manual generated_ompLowering_files_for_manual generated_autoPar_files_for_manual generated_upcCompile_files_for_manual generated_upcTrans_files_for_manual

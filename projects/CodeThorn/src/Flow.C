@@ -355,6 +355,14 @@ string Flow::toDot(Labeler* labeler) {
         ss<<SgNodeHelper::nodeToString(node);
       } else if(labeler->isFunctionCallReturnLabel(*i)) {
         ss<<"CallReturn:";
+      } else if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(node)) {
+        ss<<"case "<<caseStmt->get_key()->unparseToString();
+        if(SgExpression* expr=caseStmt->get_key_range_end()) {
+          ss<<" ... "<<expr->unparseToString();
+        }
+        ss<<":";
+      } else if(isSgDefaultOptionStmt(node)) {
+        ss<<"default:";
       } else {
         ss<<SgNodeHelper::nodeToString(node);
       }
@@ -406,7 +414,7 @@ size_t Flow::deleteEdges(Flow& edges) {
   Flow::iterator i=edges.begin();
   while(i!=end()) {
     erase(i++); // MS: it is paramount to pass a copy of the iterator, and perform a post-increment.
-      numDeleted++;
+    numDeleted++;
   }
   return numDeleted;
 }

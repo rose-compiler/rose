@@ -5,7 +5,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # if !ROSE_BUILD_OS_IS_CYGWIN
 # if ROSE_BUILD_OS_IS_CYGWIN
 
-INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir)  -I$(compass_prereqs_dir) -I$(compass_support_bdir)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(compass_support_dir)  -I$(compass_prereqs_dir) -I$(compass_support_bdir)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # If we are generating the smaller source files then Cxx_Grammar.h can't be used

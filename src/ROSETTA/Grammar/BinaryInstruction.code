@@ -51,6 +51,20 @@ HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
 #include "MemoryMap.h"
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_END
 
+HEADER_FLOAT_TYPE_PREDECLARATION_START
+#include <Sawyer/BitVector.h>
+HEADER_FLOAT_TYPE_PREDECLARATION_END
+
+HEADER_BINARY_FUNCTION_PREDECLARATION_START
+namespace rose {
+namespace BinaryAnalysis {
+namespace CallingConvention {
+class Definition;
+}
+}
+}
+HEADER_BINARY_FUNCTION_PREDECLARATION_END
+
 HEADER_BINARY_START
 
  /*  This class forms a base class for all of the types represented in the Asm Instruction grammar.
@@ -224,6 +238,7 @@ HEADER_RISC_OPERATION_START
                 // are usually implemented in terms of more basic operations like add_, invert, and equalToZero.
                 enum RiscOperator {
                         OP_NONE,
+			OP_bottom,
 			OP_undefined,
 			OP_unspecified,
                         OP_filterCallTarget,
@@ -835,12 +850,12 @@ HEADER_GENERIC_FILE_START
                 enum AddressSpace {                                     /* Bit flags for address spaces for shift_extend() */
                         ADDRSP_MEMORY = 0x0001,
                         ADDRSP_FILE   = 0x0002,
-                        ADDRSP_ALL    = 0x0003,
+                        ADDRSP_ALL    = 0x0003
                 };
                 enum Elasticity {                                       /* Elasticity argument for shift_extend() */
                         ELASTIC_NONE  = 0,                              /* Nothing is elastic; other parts of space are shifted */
                         ELASTIC_UNREF = 1,                              /* Unreferenced address space is elastic */
-                        ELASTIC_HOLE  = 2,                              /* Unreferenced and "hole" sections are elastic */
+                        ELASTIC_HOLE  = 2                               /* Unreferenced and "hole" sections are elastic */
                 };
                 void shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn)
                         {shift_extend(s, sa, sn, ADDRSP_ALL, ELASTIC_UNREF);}
@@ -919,7 +934,7 @@ HEADER_GENERIC_SYMBOL_START
                         SYM_TLS,                /* Thread-local storage */
                         SYM_REGISTER,           /* CPU register value (see Sparc) */
                         SYM_COMMON,             /* Common block */
-                        SYM_IFUNC,              /* Indirection function */
+                        SYM_IFUNC               /* Indirection function */
                 };
 
                 enum SymbolBinding {
@@ -1479,7 +1494,7 @@ HEADER_ELF_RELOC_ENTRY_START
                         R_X86_64_TLSLD    =120, /**<  32 bit signed PC relative offset to two GOT entries for LD symbol */
                         R_X86_64_DTPOFF32 =121, /**<  Offset in TLS block */
                         R_X86_64_GOTTPOFF =122, /**<  32 bit signed PC relative offset to GOT entry for IE symbol */
-                        R_X86_64_TPOFF32  =123, /**<  Offset in initial TLS block */
+                        R_X86_64_TPOFF32  =123  /**<  Offset in initial TLS block */
                 };
 
 #ifdef _MSC_VER
@@ -1652,7 +1667,7 @@ HEADER_ELF_DYNAMIC_ENTRY_START
                         DT_VERNEEDNUM=0x6fffffff, /* value   ?          ?         Sun number of needed versions */
 
                         DT_AUXILIARY= 0x7ffffffd, /* pointer ?          ?         Sun shared obj to load before self */
-                        DT_FILTER   = 0x7fffffff, /* pointer ?          ?         Shared object ot get values from */
+                        DT_FILTER   = 0x7fffffff  /* pointer ?          ?         Shared object ot get values from */
                 };
 
 #ifdef _MSC_VER
@@ -2741,7 +2756,7 @@ HEADER_PE_SECTION_TABLE_ENTRY_START
                         OF_SHARED           = 0x10000000,   /* section is shared */
                         OF_EXECUTABLE       = 0x20000000,   /* execute permission */
                         OF_READABLE         = 0x40000000,   /* read permission */
-                        OF_WRITABLE         = 0x80000000,   /* write permission */
+                        OF_WRITABLE         = 0x80000000    /* write permission */
                 };
 
                 explicit SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk);
@@ -2912,7 +2927,7 @@ HEADER_NE_FILE_HEADER_START
                HF1_MULTIPLE_DATA    = 0x0002,      /* Exe with multiple data segments; set if a windows application */
                HF1_LOADER_SEGMENT   = 0x0800,      /* First segment contains code that loads the application */
                HF1_FATAL_ERRORS     = 0x2000,      /* Errors detected at link time; module will not load */
-               HF1_LIBRARY          = 0x8000,      /* Module is a library */
+               HF1_LIBRARY          = 0x8000       /* Module is a library */
              };
 
           /* Bit flags for the NE header 'e_flags2' member. */
@@ -3098,7 +3113,7 @@ HEADER_NE_RELOC_ENTRY_START
                RF_2EXTRA           = 0x04,         /* relocation info has size with new two bytes at end */
                RF_32ADD            = 0x08,         /* addition with 32-bits rather than 16 */
                RF_16SECTION        = 0x10,         /* 16-bit object number & module name rather than 8-bit */
-               RF_8ORDINAL         = 0x20,         /* Ordinal is 8-bits rather than 16 */
+               RF_8ORDINAL         = 0x20          /* Ordinal is 8-bits rather than 16 */
              };
 
        // DQ (8/7/2008): At only (I hope) the risk of using more memory that required, break the union so that we can better support 
@@ -3316,7 +3331,7 @@ HEADER_LE_FILE_HEADER_START
               HF_MODTYPE_LIB      = 0x00008000,   /* Library module */
               HF_MODTYPE_PLIB     = 0x00018000,   /* Protected memory library module */
               HF_MODTYPE_PDEV     = 0x00020000,   /* Physical device driver module */
-              HF_MODTYPE_VDEV     = 0x00028000,   /* Virtual device driver module */
+              HF_MODTYPE_VDEV     = 0x00028000    /* Virtual device driver module */
           };
 
           SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
@@ -3552,7 +3567,7 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
                SF_1616_ALIAS       = 0x00001000,   /**< 16:16 alias required (80x86 specific) */
                SF_BIG_BIT          = 0x00002000,   /**< Big/default bit setting (80x86 specific); see note above */
                SF_CODE_CONFORM     = 0x00004000,   /**< Section is conforming for code (80x86 specific) */
-               SF_IO_PRIV          = 0x00008000,   /**< Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
+               SF_IO_PRIV          = 0x00008000    /**< Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
              };
 
           SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
@@ -3805,7 +3820,7 @@ HEADER_BINARY_BLOCK_START
                                                  *   a time. */
                 BLK_FINDDATA    = 0x00000001,   /**< Added by Partitioner::FindData, which attaches unassigned parts of the
                                                  *   disassembly address space to the preceding function. */
-                BLK_POSTFUNC    = 0x00000002,   /**< Added by Partitioner::FindPostFunctionInsns, which adds unassigned
+                BLK_POSTFUNC    = 0x00000002    /**< Added by Partitioner::FindPostFunctionInsns, which adds unassigned
                                                  *   instructions to the immediately preceding function. */
         };
 
@@ -3846,7 +3861,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 RET_UNKNOWN,                    /**< It is unknown whether this function ever returns or not. */
                 RET_NEVER,                      /**< This function is known to never return. */
                 RET_SOMETIMES,                  /**< This function may return or not, depending on how it is called. */
-                RET_ALWAYS,                     /**< This function returns each time it is called. */
+                RET_ALWAYS                      /**< This function returns each time it is called. */
         };
 
         /** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
@@ -3927,7 +3942,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                                                  *   be stored at a time.  These are not used to control which partitioning
                                                  *   heuristics to use, but rather to indicate which one (of possibly many)
                                                  *   that detected the function. */
-                FUNC_INTERPADFUNC = 0x00000001, /**< Detected by Partitioner::FindInterPadFunctions, which looks for unassigned
+                FUNC_INTERPADFUNC = 0x00000001  /**< Detected by Partitioner::FindInterPadFunctions, which looks for unassigned
                                                  *   space between two inter-function padding blocks and makes the first such
                                                  *   address the beginning of one of these functions. */
         };
@@ -3966,23 +3981,6 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                e_last
              };
 
-      //! enum declaration to specify type of calling convention used.
-          enum function_calling_convention_enum {
-       // Note that there are additional modes: syscall, optlink, pascal, register, 
-       // Microsoft fastcall, Borland fastcall, Watcom register based calling convention, 
-       // Topspeed/Clarion/JPI, safecall, etc.  More info is available at:
-       //    http://en.wikipedia.org/wiki/X86_calling_conventions
-               e_unknown_call  = 0,
-               e_std_call      = 1,
-               e_fast_call     = 2,
-               e_cdecl_call    = 3,
-               e_this_call          = 4,
-               e_last_call
-             };
-
-      //! Computes the calling convention used in this function (used to score properly formed functions).
-          function_calling_convention_enum get_functionCallingConvention() const;
-
       //! Computes the offset of the stack at the end of the call relative the the start of the call (in a perfect function this would be zero, this is used to score properly formed functions).
           int get_stackNutralityMetric() const;
 
@@ -4019,7 +4017,7 @@ HEADER_TYPE_START
         public:
                 virtual void check() const;
                 virtual std::string toString() const { abort(); return NULL; }       // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
-                virtual size_t get_nBits() const { abort(); return -1; }           // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
+                virtual size_t get_nBits() const { abort(); return (size_t)-1; }           // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
                 virtual size_t get_nBytes() const;
 
                 template<class Type>                                    // Type is a subclass of SgAsmType
@@ -4073,17 +4071,31 @@ HEADER_INTEGER_TYPE_END
 
 HEADER_FLOAT_TYPE_START
         public:
+                enum {
+                    GRADUAL_UNDERFLOW      = 0x00000001,
+                    NORMALIZED_SIGNIFICAND = 0x00000002
+                };
+
+                typedef Sawyer::Container::BitVector::BitRange BitRange;
+
                 SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
-                               size_t significandOffset, size_t significandNBits, size_t signBitOffset,
-                               size_t exponentOffset, size_t exponentNBits, uint64_t exponentBias);
+                               const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
+                               uint64_t exponentBias, unsigned flags);
+
                 virtual void check() const;
                 virtual std::string toString() const;
-                size_t get_significandOffset() const;
-                size_t get_significandNBits() const;
-                size_t get_signBitOffset() const;
-                size_t get_exponentOffset() const;
-                size_t get_exponentNBits() const;
-                uint64_t get_exponentBias() const;
+                
+                // These return the position of the significand, exponent, and sign bit fields.
+                BitRange significandBits() const;
+                BitRange exponentBits() const;
+                size_t signBit() const;
+
+		uint64_t exponentBias() const;
+
+                // Boolean properties (same names as their enum constants)
+                unsigned flags() const;
+                bool gradualUnderflow() const;
+                bool normalizedSignificand() const;
 HEADER_FLOAT_TYPE_END
 
 
@@ -4368,18 +4380,6 @@ SgAsmFunction::append_block( SgAsmBlock* operand )
      p_body.push_back(operand);
    }
 */
-
-// DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
-SgAsmFunction::function_calling_convention_enum
-SgAsmFunction::get_functionCallingConvention() const
-   {
-  // This function classifies the calling convention used and contributes to a scoring of functions as valid functions.
-
-     printf ("Error: This SgAsmFunction::get_functionCallingConvention() function is not yet implemented. \n");
-     ROSE_ASSERT(false);
-
-     return e_unknown_call;
-   }
 
 // DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
 int

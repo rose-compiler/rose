@@ -3,9 +3,7 @@ EXTRA_DIST =  tests
 bin_PROGRAMS =
 MOSTLYCLEANFILES =
 
-# if ROSE_USE_SQLITE_DATABASE
-
-INCLUDES = $(ROSE_INCLUDES) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
 EDG_VERSION = @ROSE_EDG_MAJOR_VERSION_NUMBER@
 
@@ -26,7 +24,8 @@ testLinearization_LDADD = $(ROSE_LIBS)
 #------------------------------------------------------------------------------------------------------------------------
 # Type Transformations
 bin_PROGRAMS += testTypeTransformation
-testSctestTypeTransformation_SOURCES = testTypeTransformation.C
+# testSctestTypeTransformation_SOURCES = testTypeTransformation.C
+testTypeTransformation_SOURCES = testTypeTransformation.C
 testTypeTransformation_LDADD = $(ROSE_LIBS)
 
 LIN_SPECIMENS = testLin1.c testLin2.c
@@ -1254,8 +1253,8 @@ test_binary_after_token_unparsing:
 	diff gcc_test2003_12.o rose_test2003_12.o
 
 #------------------------------------------------------------------------------------------------------------------------
-EXTRA_DIST = input_testUnparsingUsingTokenStream.c input_test_empty_file.c input_test_file_with_CR.c input_test_file_with_text.c \
-             input_test_02.c
+EXTRA_DIST += input_testUnparsingUsingTokenStream.c input_test_empty_file.c input_test_file_with_CR.c input_test_file_with_text.c \
+              input_test_02.c
 
 cxx_tests:
 	@$(MAKE) $(PASSING_TEST_Cxx_Source_passed)
@@ -1283,5 +1282,3 @@ clean-local:
 	rm -f token_leading_*.c
 	rm -f token_trailing_*.c
 
-
-# endif

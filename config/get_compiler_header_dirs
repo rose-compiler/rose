@@ -1,35 +1,48 @@
-#!/bin/sh
+#!/bin/bash
 
-if test $# -ne 1; then
-  echo "Usage: $0 <compilerName>" >&2
+# DQ (2/2/2016): This script currently takes the name of the backend 
+# compiler, but what we want to do instead is hand it the vendor name.
+
+if test $# -ne 3; then
+  echo "Usage: $0 <compilerName> <language> <compilerVendorName>" >&2
   exit 1
 fi
 
 compilerName="`basename $1`"
+language=$2
+compilerVendorName=$3
 
- case "$compilerName" in
+echo "In get_compiler_header_dirs: compiler name with path = $1" >&2
+echo "In get_compiler_header_dirs: compilerName            = $compilerName" >&2
+echo "In get_compiler_header_dirs: compilerVendorName      = $compilerVendorName" >&2
+echo "In get_compiler_header_dirs: language                = $language" >&2
+
+# case "$compilerName" in
+case "$compilerVendorName" in
   # DQ (3/21/2014): Added support for the MPI versions of the Intel compiler (as named on LC machines).
   # Support for compiling ROSE with GNU g++ compiler
-    g++*|gcc*|icpc|icc|mpiicpc|mpiicc|mpicc|mpic++|mpiCC|mpicxx|cc|c++|xt-xcc|xt-xc++)
-         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" -o "$compilerName" = "mpiicc" -o "$compilerName" = "xt-xcc"  -o "$compilerName" = "cc" ]
-         then
-            language="c"
-         else
-            language="c++"
-         fi
+  # g++*|gcc*|icpc|icc|mpiicpc|mpiicc|mpicc|mpic++|mpiCC|mpicxx|cc|c++|xt-xcc|xt-xc++|clang|clang++)
+    gnu|intel|clang)
 
          $1 -v -E -x $language /dev/null 2>&1 | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d; /[(]framework directory[)]$/d'
          ;;
 
   # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
-    roseTranslator*|testTranslator*|roseCodeGeneration*|testCodeGeneration*|roseAnalysis*|testAnalysis*|roseAstFileIO*|testAstFileIO*)
+  # roseTranslator*|testTranslator*|roseCodeGeneration*|testCodeGeneration*|roseAnalysis*|testAnalysis*|roseAstFileIO*|testAstFileIO*)
+    rose)
          tmpFile="/tmp/tmp`uname -n`$$.C"
          echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
          #$1 -v -E $tmpFile 2>&1 # | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'"
          $1 -v -E $tmpFile 2>&1 | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d; /[(]framework directory[)]$/d'
          ;;
-    *) echo "ERROR: Not able to recognize compiler $1"
+
+  # DQ (2/2/2016): Added case for unknown compiler vendor (m4 macro will return this value).
+    unknown) echo "ERROR: Not able to recognize compiler (vendor marked as unknown) $1"
        exit 1
        ;;
- esac
+
+    *) echo "ERROR: Not able to recognize compiler (error) $1"
+       exit 1
+       ;;
+esac
 

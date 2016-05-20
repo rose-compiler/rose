@@ -40,4 +40,8 @@ namespace RERS_Problem {
     exit(1);
   }
 
+  void createGlobalVarAddressMaps(CodeThorn::Analyzer* analyzer) {
+    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<endl;
+    exit(1);
+  }
 }

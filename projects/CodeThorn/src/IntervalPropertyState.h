@@ -22,6 +22,7 @@ public:
   bool variableExists(VariableId varId);
   bool removeVariable(VariableId varId);
   void topifyAllVariables();
+  void topifyVariableSet(VariableIdSet varIdSet);
 #if 0
   // adds pointer variable
   void addPointerVariable(VariableId);

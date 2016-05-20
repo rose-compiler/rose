@@ -1,7 +1,6 @@
 #ifndef Rose_NullSemantics2_H
 #define Rose_NullSemantics2_H
 
-#include "x86InstructionSemantics.h"
 #include "BaseSemantics2.h"
 
 namespace rose {
@@ -19,7 +18,7 @@ namespace NullSemantics {
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a null semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Values in the NullSemantics domain.  Values are essentially void. */
@@ -56,6 +55,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nBits) const ROSE_OVERRIDE {
+        return instance(nBits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nBits) const ROSE_OVERRIDE {
         return instance(nBits);
     }
@@ -71,6 +73,11 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
+                        SMTSolver*) const ROSE_OVERRIDE {
+        return Sawyer::Nothing();
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casting
@@ -85,8 +92,19 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Implementations of functions inherited
 public:
-    virtual bool is_number() const { return false; }
-    virtual uint64_t get_number() const { ASSERT_not_reachable("not a number"); uint64_t retval; return retval;}
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual bool is_number() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual uint64_t get_number() const ROSE_OVERRIDE {
+        ASSERT_not_reachable("not a number");
+        uint64_t retval;
+        return retval;
+    }
 
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return true;
@@ -106,6 +124,7 @@ public:
 //                                      Register state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Shared-ownership pointer to null register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
 /** Null register state.
@@ -139,11 +158,17 @@ public:
         return retval;
     }
 
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &other_, BaseSemantics::RiscOperators*) ROSE_OVERRIDE {
+        return false;
+    }
+
     virtual void clear() ROSE_OVERRIDE {}
     virtual void zero() ROSE_OVERRIDE {}
 
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
-        return get_protoval()->undefined_(reg.get_nbits());
+    virtual BaseSemantics::SValuePtr
+    readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt,
+                 BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+        return protoval()->undefined_(reg.get_nbits());
     }
 
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value,
@@ -157,6 +182,7 @@ public:
 //                                      Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Shared-ownership pointer to null register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Null memory.
@@ -194,14 +220,22 @@ public:
 
 public:
     virtual void clear() ROSE_OVERRIDE {}
+
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps,
                                                 BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
         return dflt->copy();
     }
+
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {}
+
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {}
+
+    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
+        return false;
+    }
 };
 
 
@@ -217,8 +251,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to null RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** NullSemantics operators always return a new undefined value.  They do, however, check certain preconditions. */
@@ -229,11 +262,11 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Null");
+        name("Null");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Null");
+        name("Null");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

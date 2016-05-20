@@ -1,197 +1,359 @@
-
-
 #include "sage3basic.h"
-#include "roseInternal.h"
-
 #include "AstAttributeMechanism.h"
+#include "Diagnostics.h"
 
-#include <boost/numeric/conversion/cast.hpp>
+#include "roseInternal.h"
+#include <boost/foreach.hpp>
+#include <sstream>
+#include <Sawyer/Map.h>
+#include <Sawyer/Set.h>
 
-// Moved function definitions from header file to simplify debugging
+using namespace rose;
+using namespace rose::Diagnostics;
 
-// ********************************************
-//                AstAttribute
-// ********************************************
 
-AstAttribute::AstAttribute()
-   {
-   }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      AstAttributeMechanism
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-AstAttribute::~AstAttribute()
-   {
-   }
-
-std::string
-AstAttribute::toString()
-   {
-     return StringUtility::numberToString((void*)(this));
-   }
-
-AstAttribute*
-AstAttribute::constructor()
-   {
-     return new AstAttribute();
-   }
-
-std::string
-AstAttribute::attribute_class_name()
-   {
-     return "AstAttribute";
-   }
-
-int
-AstAttribute::packed_size()
-   {
-     return 0;
-   }
-
-char*
-AstAttribute::packed_data()
-   {
-     return NULL;
-   }
-
-void
-AstAttribute::unpacked_data( int size, char* data )
-   {
-   }
-
-std::string
-AstAttribute::additionalNodeOptions()
-   {
-     return "";
-   }
-
-std::vector<AstAttribute::AttributeEdgeInfo>
-AstAttribute::additionalEdgeInfo()
-   {
-     std::vector<AttributeEdgeInfo> v;
-     return v;
-   }
-
-std::vector<AstAttribute::AttributeNodeInfo>
-AstAttribute::additionalNodeInfo()
-   {
-     std::vector<AttributeNodeInfo> v;
-     return v;
+// Types of warnings reported. This is to address concerns that there are too many warnings when running ROSE tools that use
+// old attribute subclasses that didn't properly implement the AstAttribute interface (perhaps due to lack of documentation).
+enum WarningType { HAS_MEMORY_LEAK, HAS_UNKNOWN_OWNERSHIP, HAS_NULL_COPY, HAS_SELF_COPY, HAS_NO_CLASS_NAME };
+Sawyer::Container::Map<Sawyer::Attribute::Id, Sawyer::Container::Set<WarningType> > wasEmitted_;
+static bool shouldEmit(Sawyer::Attribute::Id id, WarningType warning) {
+    return wasEmitted_.insertMaybeDefault(id).insert(warning);
 }
 
+static std::string
+attributeFullName(AstAttribute *value, Sawyer::Attribute::Id id) {
+    std::string retval;
 
-AstAttribute*
-AstAttribute::copy()
-{
-        //Implementations need to overload this to make a proper copy.
-        return NULL;
+    if (value == NULL) {
+        retval = "null attribute";
+    } else if (id == Sawyer::Attribute::INVALID_ID) {
+        retval = "invalid attribute";
+    } else {
+        retval = "attribute \"" + StringUtility::cEscape(Sawyer::Attribute::name(id)) + "\"";
+    }
+
+    if (value != NULL) {
+        std::string className = value->attribute_class_name();
+        if (className.compare("AstAttribute") != 0) {
+            retval += " of type " + StringUtility::cEscape(className);
+        } else {
+            retval += " of unknown type (AstAttribute::attribute_class_name not overridden)";
+        }
+    }
+    return retval;
+}
+
+static void
+deleteAttributeValue(AstAttribute *value, Sawyer::Attribute::Id id) {
+    if (value != NULL) {
+        switch (value->getOwnershipPolicy()) {
+            case AstAttribute::CONTAINER_OWNERSHIP:
+                delete value;
+                break;
+            case AstAttribute::NO_OWNERSHIP:
+                if (shouldEmit(id, HAS_MEMORY_LEAK))
+                    mlog[WARN] <<attributeFullName(value, id) <<" is leaked\n";
+                break;
+            case AstAttribute::CUSTOM_OWNERSHIP:
+                // assume ownership is properly implemented by the subclass
+                break;
+            case AstAttribute::UNKNOWN_OWNERSHIP: {
+                if (shouldEmit(id, HAS_UNKNOWN_OWNERSHIP)) {
+                    mlog[WARN] <<attributeFullName(value, id) <<" ownership is unknown and possibly leaked\n";
+
+                    // Show details about how to fix this only once per program.
+                    static bool detailsShown = false;
+                    if (!detailsShown) {
+                        mlog[WARN] <<"    This attribute's class should include a definition for the virtual\n"
+                                   <<"    \"getOwnershipPolicy\" based on the intention the author had for how\n"
+                                   <<"    memory is managed for this attribute type.  If the author intended\n"
+                                   <<"    attribute memory to be managed by ROSE's AstAttributeMechanism, then\n"
+                                   <<"    the following definition should be added to the attribute's class:\n"
+                                   <<"        virtual AstAttribute::OwnershipPolicy\n"
+                                   <<"        getOwnershipPolicy() const ROSE_OVERRIDE {\n"
+                                   <<"            return CONTAINER_OWNERSHIP;\n"
+                                   <<"        }\n"
+                                   <<"    and the attribute should not be explicitly deleted by the attribute\n"
+                                   <<"    creator or any users of the attribute. See documentation for\n"
+                                   <<"    AstAttribute::getOwnershipPolicy for details.\n";
+                        detailsShown = true;
+                    }
+                }
+                break;
+            }
+        }
+    }
+}
+
+AstAttributeMechanism&
+AstAttributeMechanism::operator=(const AstAttributeMechanism &other) {
+    assignFrom(other);
+    return *this;
+}
+
+AstAttributeMechanism::~AstAttributeMechanism() {
+    BOOST_FOREACH (Sawyer::Attribute::Id id, attributes_.attributeIds())
+        deleteAttributeValue(attributes_.attributeOrElse<AstAttribute*>(id, NULL), id);
 }
 
 bool
-AstAttribute::commentOutNodeInGraph()
-   {
-     return false;
-   }
-
-
-// ********************************************
-//          MetricAttribute
-// ********************************************
-
-MetricAttribute::MetricAttribute() :
-    is_derived_(false),value_(0)
-{
+AstAttributeMechanism::exists(const std::string &name) const {
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+    if (Sawyer::Attribute::INVALID_ID == id)
+        return false;
+    return attributes_.attributeExists(id);
 }
 
-MetricAttribute::MetricAttribute(double value, bool is_derived) :
-    is_derived_(is_derived),value_(value)
-{
+void
+AstAttributeMechanism::set(const std::string &name, AstAttribute *newValue) {
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+    if (Sawyer::Attribute::INVALID_ID == id)
+        id = Sawyer::Attribute::declare(name);
+    AstAttribute *oldValue = attributes_.attributeOrElse<AstAttribute*>(id, NULL);
+    if (newValue != oldValue)
+        deleteAttributeValue(oldValue, id);
+    if (NULL == newValue) {
+        attributes_.eraseAttribute(id);
+    } else {
+        attributes_.setAttribute(id, newValue);
+    }
 }
 
-MetricAttribute& MetricAttribute::operator+= (const MetricAttribute & other)
-{
+// insert if not already existing
+bool
+AstAttributeMechanism::add(const std::string &name, AstAttribute *value) {
+    if (!exists(name)) {
+        set(name, value);
+        return true;
+    } else {
+        deleteAttributeValue(value, Sawyer::Attribute::id(name));
+    }
+    return false;
+}
+
+// insert only if already existing
+bool
+AstAttributeMechanism::replace(const std::string &name, AstAttribute *value) {
+    if (exists(name)) {
+        set(name, value);
+        return true;
+    } else {
+        deleteAttributeValue(value, Sawyer::Attribute::id(name));
+    }
+    return false;
+}
+
+AstAttribute*
+AstAttributeMechanism::operator[](const std::string &name) const {
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+    if (Sawyer::Attribute::INVALID_ID == id)
+        return NULL;
+    return attributes_.attributeOrElse<AstAttribute*>(id, NULL);
+}
+
+// erase
+void
+AstAttributeMechanism::remove(const std::string &name) {
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+    if (Sawyer::Attribute::INVALID_ID != id) {
+        AstAttribute *oldValue = attributes_.attributeOrElse<AstAttribute*>(id, NULL);
+        attributes_.eraseAttribute(id);                 // do this first in case deleteAttributeValue throws
+        deleteAttributeValue(oldValue, id);
+    }
+}
+
+// get attribute names
+AstAttributeMechanism::AttributeIdentifiers
+AstAttributeMechanism::getAttributeIdentifiers() const {
+    AttributeIdentifiers retval;
+    BOOST_FOREACH (Sawyer::Attribute::Id id, attributes_.attributeIds())
+        retval.insert(Sawyer::Attribute::name(id));
+    return retval;
+}
+
+size_t
+AstAttributeMechanism::size() const {
+    return attributes_.nAttributes();
+}
+
+// Construction and assignment. Must be exception-safe.
+void
+AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
+    if (this == &other)
+        return;
+    AstAttributeMechanism tmp;                          // for exception safety
+    BOOST_FOREACH (Sawyer::Attribute::Id id, other.attributes_.attributeIds()) {
+        /*!const*/ AstAttribute *attr = other.attributes_.attributeOrElse<AstAttribute*>(id, NULL);
+        ASSERT_not_null(attr);
+
+        // Copy the attribute. This might throw, which is why we're using "tmp". If it throws, then we don't ever make it to
+        // the std::swap below, and the destination is unchanged and tmp will be cleaned up according to the ownership policy
+        // of each attribute. Also, as mentioned in the header file, be sure we invoke the non-const version of "copy" for the
+        // sake of subclasses that have not been modified to define the const version.
+        AstAttribute *copied = attr->copy();
+
+        // Check various things about the attribute.  Some of these might be important in places other than copying, but we
+        // report them here because there's a large amount of user code that doesn't follow the rules and we don't want to be
+        // completely obnoxious.
+        if (!copied && shouldEmit(id, HAS_NULL_COPY))
+            mlog[WARN] <<attributeFullName(attr, id) <<" was not copied; no virtual copy function?\n";
+        if (attr->attribute_class_name().compare("AstAttribute") == 0 && shouldEmit(id, HAS_NO_CLASS_NAME)) {
+            mlog[WARN] <<"attribute \"" <<StringUtility::cEscape(Sawyer::Attribute::name(id)) <<"\""
+                       <<" does not implement attribute_class_name\n";
+        }
+        switch (attr->getOwnershipPolicy()) {
+            case AstAttribute::CONTAINER_OWNERSHIP:
+                ASSERT_require2(copied != attr,
+                                "virtual copy function for \"" + Sawyer::Attribute::name(id) + "\" did not copy attribute");
+                break;
+            case AstAttribute::NO_OWNERSHIP:
+                // copy() is allowed to return itself; we don't care since we won't ever delete either attribute
+                // A leak will be reported instead of deleting the attribute.
+                break;
+            case AstAttribute::CUSTOM_OWNERSHIP:
+                // copy() is allowed to return itself; we don't care since we won't ever delete either attribute
+                // Assume attribute ownership is properly implemented without leaking memory.
+                break;
+            case AstAttribute::UNKNOWN_OWNERSHIP:
+                // Similar to CONTAINER_OWNERSHIP but only warn, don't assert.
+                if (copied != attr && shouldEmit(id, HAS_SELF_COPY))
+                    mlog[WARN] <<attributeFullName(attr, id) <<" virtual copy function did not copy the attribute (unknown ownership)\n";
+                break;
+        }
+
+        if (copied)
+            tmp.attributes_.setAttribute(id, copied);
+    }
+    std::swap(attributes_, tmp.attributes_);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      AstAttribute
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+AstAttribute::OwnershipPolicy
+AstAttribute::getOwnershipPolicy() const {
+    return UNKNOWN_OWNERSHIP;
+}
+
+std::string
+AstAttribute::toString() {
+    return StringUtility::numberToString((void*)(this));
+}
+
+int
+AstAttribute::packed_size() {
+    return 0;
+}
+
+char*
+AstAttribute::packed_data() {
+    return NULL;
+}
+
+void
+AstAttribute::unpacked_data(int size, char* data) {}
+
+std::string
+AstAttribute::additionalNodeOptions() {
+    return "";
+}
+
+std::vector<AstAttribute::AttributeEdgeInfo>
+AstAttribute::additionalEdgeInfo() {
+    return std::vector<AttributeEdgeInfo>();
+}
+
+std::vector<AstAttribute::AttributeNodeInfo>
+AstAttribute::additionalNodeInfo() {
+    return std::vector<AttributeNodeInfo>();
+}
+
+bool
+AstAttribute::commentOutNodeInGraph() {
+    return false;
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      MetricAttribute
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+AstAttribute*
+MetricAttribute::copy() const {
+    return new MetricAttribute(*this);
+}
+
+std::string
+MetricAttribute::attribute_class_name() const {
+    return "MetricAttribute";
+}
+
+MetricAttribute&
+MetricAttribute::operator+=(const MetricAttribute &other) {
     is_derived_ = true;
     value_ += other.value_;
     return *this;
 }
 
-MetricAttribute& MetricAttribute::operator-= (const MetricAttribute & other)
-{
+MetricAttribute&
+MetricAttribute::operator-=(const MetricAttribute &other) {
     is_derived_ = true;
     value_ -= other.value_;
     return *this;
 }
 
-MetricAttribute& MetricAttribute::operator*= (const MetricAttribute & other)
-{
+MetricAttribute&
+MetricAttribute::operator*=(const MetricAttribute &other) {
     is_derived_ = true;
     value_ *= other.value_;
     return *this;
 }
 
-MetricAttribute& MetricAttribute::operator/= (const MetricAttribute & other)
-{
+MetricAttribute&
+MetricAttribute::operator/=(const MetricAttribute &other) {
     is_derived_ = true;
     value_ /= other.value_;
     return *this;
 }
 
-AstAttribute* MetricAttribute::constructor()
-{
-    return new MetricAttribute();
-}
-
-AstAttribute* MetricAttribute::copy()
-{
-    return new MetricAttribute(*this);
-}
-
-std::string MetricAttribute::attribute_class_name()
-{
-    return "MetricAttribute";
-}
-
-bool MetricAttribute::isDerived() const
-{
-    return is_derived_;
-}
-
-double MetricAttribute::getValue() const
-{
-    return value_;
-}
-
-void MetricAttribute::setValue(double newVal)
-{
-    value_ = newVal;
-}
-
-std::string MetricAttribute::toString ()
-{
+std::string
+MetricAttribute::toString() {
     std::ostringstream ostr;
     ostr << value_;
-    std::string retval = ostr.str ();
+    std::string retval = ostr.str();
 
     if (is_derived_)
         retval += "**";
     return retval;
 }
 
-
-int MetricAttribute::packed_size()
-{
-    // +1 because of null-character
-    return toString().size()+1;
+int
+MetricAttribute::packed_size() {
+    return toString().size()+1;                         // +1 because of NUL-character
 }
 
-char* MetricAttribute::packed_data()
-{
-    std::string result;
-    //toString() will entail the value string with ** if it is derived.
-    result = toString();
-    return const_cast<char *>(result.c_str());
+char*
+MetricAttribute::packed_data() {
+    // Reimplemented because old version returned a dangling pointer. [Robb Matzke 2015-11-10]
+    std::string str = toString();
+    static char buf[256];
+    ASSERT_require(str.size() < sizeof buf);            // remember NUL terminator
+    memcpy(buf, str.c_str(), str.size()+1);
+    return buf;
 }
 
-void MetricAttribute::unpacked_data(int size, char* data)
-{
-    if (size <=0) return;
+void
+MetricAttribute::unpacked_data(int size, char* data) {
+    if (size <= 0)
+        return;
     // check tail **
     char * head = data;
     char * tail = head + strlen(head) - 1;
@@ -206,144 +368,38 @@ void MetricAttribute::unpacked_data(int size, char* data)
 
 
 
-// ********************************************
-//          AstAttributeMechanism
-// ********************************************
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      AstSgNodeListAttribute
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-AstAttributeMechanism::AstAttributeMechanism ()
-   {
-  // Nothing to do here!
-   }
-
-static
-AstAttribute* _clone_attribute(AstAttribute* attr)
-{
-  // \pp not sure if having nullptr as attributes is a bug,
-  //     but since they occur, nullptrs need to be handled.
-  return (attr ? attr->copy() : attr);
-}
-
-
-AstAttributeMechanism::AstAttributeMechanism ( const AstAttributeMechanism & X )
-   {
-  // This is the copy constructor to support deep copies of AST attribute containers.
-  // this is important for the support of the AST Copy mechanism (used all over the place,
-  // but being tested in new ways within the bug seeding project).
-
-  // Note that AstAttributeMechanism is derived from: AttributeMechanism<std::string,AstAttribute*>
-  // Which is defined as: template<class Key,class Value> class AttributeMechanism : protected std::map<Key,Value>
-#if 1
-  // Iterate over all the elements of the map in X and copy them to the current map (this)
-     for (const_iterator iter = X.begin(); iter != X.end(); iter++)
-        {
-       // Call the copy mechanism on the AstAttribute (virtual copy constructor)
-          this->insert(std::make_pair( iter->first , _clone_attribute(iter->second) ));
-        }
-#else
-  // ((const AttributeMechanism<std::string,AstAttribute*>*) this) = X;
-     *this = X;
-#endif
-   }
-
-// ********************************************
-//              AstRegExAttribute
-// ********************************************
-
-AstRegExAttribute::AstRegExAttribute()
-   : expression("")
-   {
-   }
-
-AstRegExAttribute::AstRegExAttribute(const std::string & s)
-   {
-     expression = s;
-   }
-
-AstAttribute* AstRegExAttribute::copy() {
-    return new AstRegExAttribute(expression);
-}
-
-
-
-// ********************************************
-//              AstSgNodeAttribute
-// ********************************************
-
-AstSgNodeAttribute::AstSgNodeAttribute()
-   : node(NULL)
-   {
-   }
-
-AstSgNodeAttribute::AstSgNodeAttribute(SgNode * node_) 
-   : node(node_)
-   {
-   }
-
-void AstSgNodeAttribute::setNode(SgNode *node_) { node = node_; }
-SgNode *AstSgNodeAttribute::getNode() { return node; }
-
-AstAttribute* AstSgNodeAttribute::copy() {
-    return new AstSgNodeAttribute(node);
-}
-
-
-// ********************************************
-//              AstSgNodeListAttribute
-// ********************************************
-
-AstSgNodeListAttribute::AstSgNodeListAttribute() {}
-
-AstSgNodeListAttribute::AstSgNodeListAttribute(std::vector<SgNode *> &list) {
-    nodeList = list;
-}
-
-void AstSgNodeListAttribute::addNode(SgNode *node) { nodeList.push_back(node); }
-
-void AstSgNodeListAttribute::setNode(SgNode *node, int signedIndex) {
+void
+AstSgNodeListAttribute::setNode(SgNode *node, int signedIndex) {
     size_t index = boost::numeric_cast<size_t>(signedIndex);
-    while (nodeList.size() <= index) { // make sure the element at the specified index is available
-        nodeList.push_back(NULL); 
-    }
-    nodeList[index] = node;
+    while (get().size() <= index) // make sure the element at the specified index is available
+        get().push_back(NULL); 
+    get()[index] = node;
 }
 
-SgNode *AstSgNodeListAttribute::getNode(int signedIndex) {
+SgNode*
+AstSgNodeListAttribute::getNode(int signedIndex) {
     size_t index = boost::numeric_cast<size_t>(signedIndex);
-    return (index >= 0 && index < nodeList.size() ? nodeList[index] : NULL);
-}
-
-std::vector<SgNode *> &AstSgNodeListAttribute::getNodeList() { return nodeList; }
-
-int AstSgNodeListAttribute::size() { return nodeList.size(); }
-
-AstAttribute* AstSgNodeListAttribute::copy() {
-    return new AstSgNodeListAttribute(nodeList);
+    return (index >= 0 && index < get().size() ? get()[index] : NULL);
 }
 
 
-// ********************************************
-//              AstIntAttribute
-// ********************************************
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      AstParameterizedTypeAttribute
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-AstIntAttribute::AstIntAttribute(int value_) 
-   : value(value_)
-   {
-   }
-
-int AstIntAttribute::getValue() { return value; }
-
-AstAttribute *AstIntAttribute::copy() {
-    return new AstIntAttribute(value);
+AstParameterizedTypeAttribute::AstParameterizedTypeAttribute(SgNamedType *genericType_)
+    : genericType(genericType_) {
+    isSgClassType(genericType);
 }
 
-// ********************************************
-//              AstParameterizedTypeAttribute
-// ********************************************
-
-AstParameterizedTypeAttribute::AstParameterizedTypeAttribute(SgNamedType *genericType_) : genericType(genericType_) { isSgClassType(genericType); }
-
-bool AstParameterizedTypeAttribute::argumentsMatch(SgTemplateParameterList *type_arg_list, std::vector<SgTemplateParameter *> *new_args_ptr) {
-    if (type_arg_list == NULL && new_args_ptr == NULL) { // two null argument list? ... then they compare.
+bool
+AstParameterizedTypeAttribute::argumentsMatch(SgTemplateParameterList *type_arg_list,
+                                              std::vector<SgTemplateParameter *> *new_args_ptr) {
+    if (type_arg_list == NULL && new_args_ptr == NULL) { // two null argument list? ... then they match.
         return true;
     }
     if (type_arg_list == NULL || new_args_ptr == NULL) { // Only one of the argument lists is null?
@@ -367,11 +423,14 @@ bool AstParameterizedTypeAttribute::argumentsMatch(SgTemplateParameterList *type
     return (arg_it == args.end()); // The two argument lists match?
 }
 
-SgJavaParameterizedType *AstParameterizedTypeAttribute::findOrInsertParameterizedType(std::vector<SgTemplateParameter *> *new_args_ptr) {
+SgJavaParameterizedType*
+AstParameterizedTypeAttribute::findOrInsertParameterizedType(std::vector<SgTemplateParameter *> *new_args_ptr) {
     //
     // Keep track of parameterized types in a table so as not to duplicate them.
     //
-    for (std::list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
+    for (std::list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin();
+         type_it != parameterizedTypes.end();
+         type_it++) {
         if (argumentsMatch((*type_it) -> get_type_list(), new_args_ptr)) {
             return (*type_it);
         }
@@ -391,12 +450,3 @@ SgJavaParameterizedType *AstParameterizedTypeAttribute::findOrInsertParameterize
 
     return parameterized_type;
 }
-
-AstAttribute *AstParameterizedTypeAttribute::copy() {
-    AstParameterizedTypeAttribute *attribute = new AstParameterizedTypeAttribute(genericType);
-    for (std::list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
-        attribute -> parameterizedTypes.push_back(*type_it);
-    }
-    return attribute;
-}
-

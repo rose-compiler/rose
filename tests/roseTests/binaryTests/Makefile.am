@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/binaries/samples/SpecimenSets.inc
 
-SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
+SUBDIRS = libraryIdentification_tests Dwarf_tests Pin_tests
 
 EXTRA_DIST = \
 	runExecFormatsTest testShiftResizeSection.sh \
@@ -16,7 +16,7 @@ MOSTLYCLEANFILES=
 if USE_BINARY_ANALYSIS_TESTS
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
@@ -42,6 +42,18 @@ TEST_TARGETS += testBoost.passed
 testBoost.passed: testBoost
 	./testBoost
 
+# Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
+noinst_PROGRAMS += testSymbolicExprParser
+testSymbolicExprParser_SOURCES = testSymbolicExprParser.C
+testSymbolicExprParser_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testSymbolicExprParser.passed
+testSymbolicExprParser.passed: $(TEST_WITH_ANSWER) testSymbolicExprParser
+	@$(RTH_RUN)						\
+		TITLE="parsing of symbolic expressions [$@]"	\
+		CMD="./testSymbolicExprParser"			\
+		ANS="$(srcdir)/testSymbolicExprParser.ans"	\
+		$< $@
+
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
 noinst_PROGRAMS += execFormatsTest
@@ -52,16 +64,6 @@ EXTRA_DIST += execFormatsTest.conf
 execFormatsTest.passed: execFormatsTest.conf execFormatsTest
 	@$(RTH_RUN) $< $@
 
-
-#Test the binary control flow graph that uses the semantic representation to perform an accurate analysis
-noinst_PROGRAMS += testBinCFG
-testBinCFG_SOURCES = testBinCFG.C
-testBinCFG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testBinCFG.passed
-EXTRA_DIST += testBinCFG.conf
-MOSTLYCLEANFILES += cfg_x86.dot
-testBinCFG.passed: testBinCFG.conf testBinCFG
-	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
 # Tests for the newer BinaryAnalysis::ControlFlow class.
 noinst_PROGRAMS += testControlFlow
@@ -88,16 +90,6 @@ testControlFlow-E.passed: testControlFlow.conf testControlFlow
 noinst_PROGRAMS += cfg2
 cfg2_SOURCES = cfg2.C
 cfg2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-#Test the binary call graph that uses the semantic representation to perform an accurate analysis
-noinst_PROGRAMS += testBinCG
-testBinCG_SOURCES = testBinCG.C
-testBinCG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testBinCG.C
-EXTRA_DIST += testBinCG.conf
-MOSTLYCLEANFILES += cfg_x86.dot
-testBinCG.passed: testBinCG.conf testBinCG testBinCFG.passed
-	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
 # Tests for the newer BinaryAnalysis::FunctionCall class.
 noinst_PROGRAMS += testFunctionCall
@@ -373,6 +365,27 @@ TEST_TARGETS += cory006.passed
 cory006.passed: $(TEST_EXIT_STATUS) cory006
 	@$(RTH_RUN) CMD="./cory006 $(top_srcdir)/binaries/samples/i386-cory006" $< $@
 
+# Test and demonstrate binary attributes
+noinst_PROGRAMS += cory007
+cory007_SOURCES = cory007.C
+cory007_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory007.passed
+cory007.passed: $(TEST_EXIT_STATUS) cory007
+	@$(RTH_RUN) CMD="./cory007" $< $@
+
+# Test and demonstrate binary attributes
+noinst_PROGRAMS += cory008
+cory008_SOURCES = cory008.C
+cory008_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory008.passed
+EXTRA_DIST += cory008.ans
+cory008.passed: $(TEST_WITH_ANSWER) cory008 cory008.ans
+	@$(RTH_RUN)								\
+		TITLE="base objects in SgAsmIntegerValueExpression [$@]"	\
+		CMD="./cory008 $(top_srcdir)/binaries/samples/i386-nologin"	\
+		ANS=$(srcdir)/cory008.ans					\
+		$< $@
+
 # Test symbolic semantics memory read-after-write
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C
@@ -402,17 +415,25 @@ testMap.passed: $(TEST_EXIT_STATUS) testMap
 noinst_PROGRAMS += testPointerDetection
 testPointerDetection_SOURCES = testPointerDetection.C
 testPointerDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-PointerDetectionSpecimenFunctions = \
-	simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 simple11 simple12 \
-	simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 simple21 simple22 simple23 simple24 \
+PointerDetectionSpecimen = $(BINARY_SAMPLES)/i386-pointers
+PointerDetectionSpecimenFunctions =											\
+	simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 simple11 simple12	\
+	simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 simple21 simple22 simple23 simple24	\
 	simple25 flow01 flow02 flow03 flow04 flow05 flow06 flow07
-PointerDetectionTestTargets = $(addprefix tpd_, $(addsuffix .passed, $(PointerDetectionSpecimenFunctions)))
-TEST_TARGETS += $(PointerDetectionTestTargets)
-EXTRA_DIST += testPointerDetection.conf $(addprefix tpd_, $(addsuffix .ans, $(PointerDetectionSpecimenFunctions)))
-$(PointerDetectionTestTargets): tpd_%.passed: testPointerDetection.conf testPointerDetection $(BINARY_SAMPLES)/i386-pointers
-	@$(RTH_RUN) FUNC="$$(echo "$@" |sed 's/^tpd_//;s/\.passed$$//')" INPUT=$(BINARY_SAMPLES)/i386-pointers $< $@
-.PHONY: testPointerDetection.passed
-testPointerDetection.passed: $(PointerDetectionTestTargets)
+# This is not currently working: it finds the local variable used as a pointer, but not the L-values used to assign
+# to the local variable.
+PointerDetectionSpecimenFunctionsNonWorking =	\
+	flow07
+PointerDetectionSwitches =											\
+	$(patsubst %,--function=%,										\
+	    $(filter-out $(PointerDetectionSpecimenFunctionsNonWorking),$(PointerDetectionSpecimenFunctions)))
+TEST_TARGETS += testPointerDetection.passed
+testPointerDetection.passed: testPointerDetection $(TEST_WITH_ANSWER)
+	@$(RTH_RUN)											\
+	    TITLE="testing pointer detection [$@]"							\
+	    CMD="./testPointerDetection $(PointerDetectionSwitches) $(PointerDetectionSpecimen)"	\
+	    ANS=$(srcdir)/testPointerDetection.ans							\
+	    $(TEST_WITH_ANSWER) $@
 
 # Test function call detection
 noinst_PROGRAMS += testCallDetection
@@ -494,16 +515,16 @@ verifySemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 # Disassembles executables using Partitioner2
 # Disassembly of executable files (DOS, ELF, PE) of various architectures (amd64, Arm, Mips, M68k, PowerPC, x86)
-# MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
-# PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
-# The pocketputty2.exe takes too long when extensive debugging is enabled.
+# + MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
+# + PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
+# + The pocketputty.exe pocketputty2.exe puttytel.exe are not good unit tests because they're too large; they take too
+#   long when extensive debugging is enabled on heavily loaded or slow machines.
 noinst_PROGRAMS += testPartitioner2
 testPartitioner2_SOURCES = testPartitioner2.C
 testPartitioner2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-testPartitioner2_specimens = $(filter-out			\
-	$(any_any_mips_specimens) $(any_any_ppc_specimens)	\
-	pocketputty2.exe					\
-	,$(any_exe_any_specimens))
+testPartitioner2_specimens = $(filter-out \
+	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(large_specimens), \
+	$(any_exe_any_specimens))
 testPartitioner2_directory = $(top_srcdir)/binaries/samples
 testPartitioner2_test_targets = $(addprefix testPartitioner2_, $(addsuffix .passed, $(testPartitioner2_specimens)))
 testPartitioner2_answers = $(testPartitioner2_test_targets:.passed=.ans)
@@ -530,7 +551,8 @@ check-testPartitioner2: $(testPartitioner2_test_targets)
 # Disassembly of executable files (DOS, ELF, PE) of various architectures (amd64, Arm, Mips, M68k, PowerPC, x86)
 # MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
 # PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
-disassemble1_specimens = $(filter-out $(any_any_mips_specimens) $(any_any_ppc_specimens), $(any_exe_any_specimens))
+disassemble1_specimens = \
+	$(filter-out $(any_any_mips_specimens) $(any_any_ppc_specimens) $(large_specimens), $(any_exe_any_specimens))
 disassemble1_directory = $(top_srcdir)/binaries/samples
 disassemble1_test_targets = $(addprefix disassemble1_, $(addsuffix .passed, $(disassemble1_specimens)))
 disassemble1_answers = $(disassemble1_test_targets:.passed=.ans)
@@ -548,7 +570,7 @@ $(disassemble1_test_targets): disassemble1_%.passed: $(disassemble1_directory)/%
 		$(srcdir)/disassemble.conf $@
 
 # Disassembly of raw x86 buffers (these should probably have position independent code)
-disassemble2_specimens = $(raw_insns_x86_specimens)
+disassemble2_specimens = $(filter-out $(large_specimens), $(raw_insns_x86_specimens))
 disassemble2_directory = $(top_srcdir)/binaries/samples
 disassemble2_test_targets = $(addprefix disassemble2_, $(addsuffix .passed, $(disassemble2_specimens)))
 disassemble2_answers = $(disassemble2_test_targets:.passed=.ans)
@@ -583,7 +605,7 @@ disassemble2_other_targets = $(filter-out	\
 
 $(disassemble2_other_targets): disassemble2_%.passed: $(disassemble2_directory)/% disassemble
 	@$(RTH_RUN) \
-		DISABLE="unknown map and entry address" \
+		DISABLED="unknown map and entry address" \
 		TITLE="disassemble $(notdir $<) [$@]" \
 		CMD=false \
 		$(srcdir)/disassemble.conf $@
@@ -618,112 +640,60 @@ check-semantics:											\
 # TOO1 (3/24/2015): Failing jenkins-release GCC 4.2.4; removing temporarily until fixed
 #multiSemantics2.passed
 
-# Null semantics, old API
-noinst_PROGRAMS += nullSemantics
-nullSemantics_SOURCES = semantics.C
-nullSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN -DSEMANTIC_API=OLD_API
-nullSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += nullSemantics.passed
-EXTRA_DIST += semantics.conf nullSemantics.ans
-nullSemantics.passed: semantics.conf nullSemantics
-	@$(RTH_RUN) CMD=nullSemantics INPUT=i686-test1.O3.bin $< $@
-
-# Null semantics, new API
+# Null semantics
 noinst_PROGRAMS += nullSemantics2
 nullSemantics2_SOURCES = semantics.C
-nullSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN -DSEMANTIC_API=NEW_API
+nullSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN
 nullSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += nullSemantics2.passed
 EXTRA_DIST += semantics.conf nullSemantics2.ans
 nullSemantics2.passed: semantics.conf nullSemantics2
 	@$(RTH_RUN) CMD=nullSemantics2 INPUT=i686-test1.O3.bin $< $@
 
-# Partial symbolic semantics, old API
-noinst_PROGRAMS += partialSymbolicSemantics
-partialSymbolicSemantics_SOURCES = semantics.C
-partialSymbolicSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN -DSEMANTIC_API=OLD_API
-partialSymbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += partialSymbolicSemantics.passed
-EXTRA_DIST += semantics.conf partialSymbolicSemantics.ans
-partialSymbolicSemantics.passed: semantics.conf partialSymbolicSemantics
-	@$(RTH_RUN) CMD=partialSymbolicSemantics INPUT=i686-test1.O3.bin $< $@
-
-# Partial symbolic semantics, new API
+# Partial symbolic semantics
 noinst_PROGRAMS += partialSymbolicSemantics2
 partialSymbolicSemantics2_SOURCES = semantics.C
-partialSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN -DSEMANTIC_API=NEW_API
+partialSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN
 partialSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += partialSymbolicSemantics2.passed
 EXTRA_DIST += semantics.conf partialSymbolicSemantics2.ans
 partialSymbolicSemantics2.passed: semantics.conf partialSymbolicSemantics2
 	@$(RTH_RUN) CMD=partialSymbolicSemantics2 INPUT=i686-test1.O3.bin $< $@
 
-# Interval semantics, old API
-noinst_PROGRAMS += intervalSemantics
-intervalSemantics_SOURCES = semantics.C
-intervalSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -DSEMANTIC_API=OLD_API
-intervalSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += intervalSemantics.passed
-EXTRA_DIST += semantics.conf intervalSemantics.ans
-intervalSemantics.passed: semantics.conf intervalSemantics
-	@$(RTH_RUN) CMD=intervalSemantics INPUT=i686-test1.O3.bin $< $@
-
-# Interval semantics, new API
+# Interval semantics
 noinst_PROGRAMS += intervalSemantics2
 intervalSemantics2_SOURCES = semantics.C
-intervalSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -DSEMANTIC_API=NEW_API
+intervalSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN
 intervalSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += intervalSemantics2.passed
 EXTRA_DIST += semantics.conf intervalSemantics2.ans
 intervalSemantics2.passed: semantics.conf intervalSemantics2
 	@$(RTH_RUN) CMD=intervalSemantics2 INPUT=i686-test1.O3.bin $< $@
 
-# Symbolic semantics, no SMT solver, old API
-noinst_PROGRAMS += symbolicSemantics
-symbolicSemantics_SOURCES = semantics.C
-symbolicSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=OLD_API -DSMT_SOLVER=NO_SOLVER
-symbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += symbolicSemantics.passed
-EXTRA_DIST += semantics.conf symbolicSemantics.ans
-symbolicSemantics.passed: semantics.conf symbolicSemantics
-	@$(RTH_RUN) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
-
-# Symbolic semantics, no SMT solver, new API
+# Symbolic semantics, no SMT solver
 noinst_PROGRAMS += symbolicSemantics2
 symbolicSemantics2_SOURCES = semantics.C
-symbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=NO_SOLVER
+symbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER
 symbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += symbolicSemantics2.passed
 EXTRA_DIST += semantics.conf symbolicSemantics2.ans
 symbolicSemantics2.passed: semantics.conf symbolicSemantics2
 	@$(RTH_RUN) CMD=symbolicSemantics2 INPUT=i686-test1.O3.bin $< $@
 
-# Tracing symbolic semantics, no SMT solver, new API
+# Tracing symbolic semantics, no SMT solver
 noinst_PROGRAMS += traceSymbolicSemantics2
 traceSymbolicSemantics2_SOURCES = semantics.C
-traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=NO_SOLVER
+traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER
 traceSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += traceSymbolicSemantics2.passed
 EXTRA_DIST += semantics.conf traceSymbolicSemantics2.ans
 traceSymbolicSemantics2.passed: semantics.conf traceSymbolicSemantics2
 	@$(RTH_RUN) CMD=traceSymbolicSemantics2 SWITCHES="--trace --no-usedef" INPUT=i686-test1.O3.bin $< $@
 
-# Symbolic semantics, Yices executable, old API
-noinst_PROGRAMS += yicesSemanticsExe
-yicesSemanticsExe_SOURCES = semantics.C
-yicesSemanticsExe_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=OLD_API -DSMT_SOLVER=YICES_EXE
-yicesSemanticsExe_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsExe.ans
-if ROSE_HAVE_YICES
-TEST_TARGETS += yicesSemanticsExe.passed
-yicesSemanticsExe.passed: semantics.conf yicesSemanticsExe
-	@$(RTH_RUN) CMD=yicesSemanticsExe INPUT=i686-test1.O3.bin $< $@
-endif
-
-# Symbolic semantics, Yices executable, new API
+# Symbolic semantics, Yices executable
 noinst_PROGRAMS += yicesSemanticsExe2
 yicesSemanticsExe2_SOURCES = semantics.C
-yicesSemanticsExe2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=YICES_EXE
+yicesSemanticsExe2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_EXE
 yicesSemanticsExe2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 EXTRA_DIST += semantics.conf yicesSemanticsExe2.ans
 if ROSE_HAVE_YICES
@@ -732,22 +702,10 @@ yicesSemanticsExe2.passed: semantics.conf yicesSemanticsExe2
 	@$(RTH_RUN) CMD=yicesSemanticsExe2 INPUT=i686-test1.O3.bin $< $@
 endif
 
-# Symbolic semantics, Yices library, old API
-noinst_PROGRAMS += yicesSemanticsLib
-yicesSemanticsLib_SOURCES = semantics.C
-yicesSemanticsLib_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=OLD_API -DSMT_SOLVER=YICES_LIB
-yicesSemanticsLib_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsLib.ans
-if ROSE_HAVE_LIBYICES
-TEST_TARGETS += yicesSemanticsLib.passed
-yicesSemanticsLib.passed: semantics.conf yicesSemanticsLib
-	@$(RTH_RUN) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@
-endif
-
-# Symbolic semantics, Yices library, new API
+# Symbolic semantics, Yices library
 noinst_PROGRAMS += yicesSemanticsLib2
 yicesSemanticsLib2_SOURCES = semantics.C
-yicesSemanticsLib2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=YICES_LIB
+yicesSemanticsLib2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_LIB
 yicesSemanticsLib2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 EXTRA_DIST += semantics.conf yicesSemanticsLib2.ans
 if ROSE_HAVE_LIBYICES
@@ -756,47 +714,16 @@ yicesSemanticsLib2.passed: semantics.conf yicesSemanticsLib2
 	@$(RTH_RUN) CMD=yicesSemanticsLib2 INPUT=i686-test1.O3.bin $< $@
 endif
 
-# Multi-domain semantics, old API
-noinst_PROGRAMS += multiSemantics
-multiSemantics_SOURCES = semantics.C
-multiSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=OLD_API
-multiSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += multiSemantics.passed
-EXTRA_DIST += semantics.conf multiSemantics.ans
-multiSemantics.passed: semantics.conf multiSemantics
-	@$(RTH_RUN) CMD=multiSemantics INPUT=i686-test1.O3.bin $< $@
-
 # Multi-domain semantics, new API
 # TOO1 (3/24/2015): Failing jenkins-release GCC 4.2.4; removing temporarily until fixed
 #noinst_PROGRAMS += multiSemantics2
 #multiSemantics2_SOURCES = semantics.C
-#multiSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=NEW_API
+#multiSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN
 #multiSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 #TEST_TARGETS += multiSemantics2.passed
 #EXTRA_DIST += semantics.conf multiSemantics2.ans
 #multiSemantics2.passed: semantics.conf multiSemantics2
 #	@$(RTH_RUN) CMD=multiSemantics2 INPUT=i686-test1.O3.bin $< $@
-
-# Finds constant values and propagates them across instructions
-noinst_PROGRAMS += findConstants
-findConstants_SOURCES = semantics.C
-findConstants_CPPFLAGS = -DSEMANTIC_DOMAIN=FINDCONST_DOMAIN -DSEMANTIC_API=OLD_API
-findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += findConstants.passed
-EXTRA_DIST += semantics.conf findConstants.ans
-findConstants.passed: semantics.conf findConstants
-	@$(RTH_RUN) CMD=findConstants INPUT=i686-test1.O3.bin $< $@
-
-
-# Finds constant values and propagates them across instructions using an ABI
-noinst_PROGRAMS += findConstantsABI
-findConstantsABI_SOURCES = semantics.C
-findConstantsABI_CPPFLAGS = -DSEMANTIC_DOMAIN=FINDCONSTABI_DOMAIN -DSEMANTIC_API=OLD_API
-findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += findConstantsABI.passed
-EXTRA_DIST += semantics.conf findConstantsABI.ans
-findConstantsABI.passed: semantics.conf findConstantsABI
-	@$(RTH_RUN) CMD=findConstantsABI INPUT=i686-test1.O3.bin $< $@
 
 # Demo how to subclass something from SymbolicSemantics
 noinst_PROGRAMS += semanticsSubclassing
@@ -816,48 +743,33 @@ semanticsSubclassing.passed: $(TEST_EXIT_STATUS) semanticsSubclassing
 ###############################################################################################################################
 
 # Tests speed of null instruction semantics with and without using templates
-noinst_PROGRAMS += nullSemanticsSpeed1 nullSemanticsSpeed2
-nullSemanticsSpeed1_SOURCES = semanticsSpeed.C
-nullSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN -DSEMANTIC_API=OLD_API
-nullSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+noinst_PROGRAMS += nullSemanticsSpeed2
 nullSemanticsSpeed2_SOURCES = semanticsSpeed.C
-nullSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN -DSEMANTIC_API=NEW_API
+nullSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN
 nullSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Tests speed of partial symbolic instruction semantics with and without using templates
-noinst_PROGRAMS += partialSymbolicSemanticsSpeed1 partialSymbolicSemanticsSpeed2
-partialSymbolicSemanticsSpeed1_SOURCES = semanticsSpeed.C
-partialSymbolicSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN -DSEMANTIC_API=OLD_API
-partialSymbolicSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+noinst_PROGRAMS += partialSymbolicSemanticsSpeed2
 partialSymbolicSemanticsSpeed2_SOURCES = semanticsSpeed.C
-partialSymbolicSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN -DSEMANTIC_API=NEW_API
+partialSymbolicSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN
 partialSymbolicSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Tests speed of symbolic semantics with and without using templates
-noinst_PROGRAMS += symbolicSemanticsSpeed1 symbolicSemanticsSpeed2
-symbolicSemanticsSpeed1_SOURCES = semanticsSpeed.C
-symbolicSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=OLD_API
-symbolicSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+noinst_PROGRAMS += symbolicSemanticsSpeed2
 symbolicSemanticsSpeed2_SOURCES = semanticsSpeed.C
-symbolicSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API
+symbolicSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN
 symbolicSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Tests speed of interval semantics with and without using templates
-noinst_PROGRAMS += intervalSemanticsSpeed1 intervalSemanticsSpeed2
-intervalSemanticsSpeed1_SOURCES = semanticsSpeed.C
-intervalSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -DSEMANTIC_API=OLD_API
-intervalSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+noinst_PROGRAMS += intervalSemanticsSpeed2
 intervalSemanticsSpeed2_SOURCES = semanticsSpeed.C
-intervalSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -DSEMANTIC_API=NEW_API
+intervalSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN
 intervalSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Tests speed of multi-domain semantics with and without using templates
-noinst_PROGRAMS += multiSemanticsSpeed1 multiSemanticsSpeed2
-multiSemanticsSpeed1_SOURCES = semanticsSpeed.C
-multiSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=OLD_API
-multiSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+noinst_PROGRAMS += multiSemanticsSpeed2
 multiSemanticsSpeed2_SOURCES = semanticsSpeed.C
-multiSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=NEW_API
+multiSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN
 multiSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 
@@ -871,15 +783,23 @@ llvmTranscoder_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 #-------------- basic test to make sure we can transcode each pre-compiled 32-bit x86 specimen
 
-llvmTranscoder_Specimens = $(elf_exe_x86_specimens) $(pe_exe_x86_specimens)
+# The "llvm-as" tool might not be installed, in which case $(llvmVersion) will be an empty string.
+llvmVersion = $(shell llvm-as --version 2>&1 |sed -nr '/LLVM version/ s/.*version ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
+
+# 128-bit registers are not supported, so don't try to test them (pentium-xxm)
+# Test takes too long when compiled with debugging (puttytel.exe)
+llvmTranscoder_Specimens =						\
+	$(filter-out pentium-xmm $(large_specimens),			\
+		$(elf_exe_x86_specimens) $(pe_exe_x86_specimens))
 llvmTranscoder_TestTargets = $(addprefix llvm-xcode-, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
 TEST_TARGETS += $(llvmTranscoder_TestTargets)
 EXTRA_DIST += llvmTranscoder.conf
 
 $(llvmTranscoder_TestTargets): llvm-xcode-%.passed: $(BINARY_SAMPLES)/% llvmTranscoder llvmTranscoder.conf
-	@$(RTH_RUN) \
-		TITLE="LLVM transcoder for $* [$@]" \
-		SPECIMEN="$(abspath $<)" \
+	@$(RTH_RUN)					\
+		TITLE="LLVM transcoder for $* [$@]"	\
+		SPECIMEN="$(abspath $<)"		\
+		LLVM_VERSION="$(llvmVersion)"		\
 		$(srcdir)/llvmTranscoder.conf $@
 
 .PHONY: check-llvm-xcode
@@ -904,13 +824,15 @@ llvmAnalysis_Specimens =			\
 	libcall-aa.c				\
 	loops.c					\
 	memdep.c				\
-	postdomfrontier.c			\
 	postdomtree.c				\
 	print-callgraph-sccs.c			\
 	print-cfg-sccs.c			\
 	print-dom-info.c			\
 	print-used-types.c			\
 	scalar-evolution.c
+
+# This appears to not be present for llvm-3.5.0, so don't try to test it.
+#	postdomfrontier.c
 
 llvmAnalysis_TestTargets = $(addprefix llvm-analysis-, $(addsuffix .passed, $(basename $(llvmAnalysis_Specimens))))
 EXTRA_DIST += $(addprefix $(llvmAnalysis_SpecimenDir), $(llvmAnalysis_Specimens))
@@ -928,7 +850,7 @@ $(llvmAnalysis_TestTargets): llvm-analysis-%.passed: $(llvmAnalysis_SpecimenDir)
 		SPECIMEN="$<"										\
 		OPT_PASSES="$(shell perl -ne '/OPT:\s*(.*?)\s*(\*\/\s*)?$$/ and print qq{$$1\n}' $<)"	\
 		DISASSEMBLER=$(abspath disassemble)							\
-		TRANSCODER="$(abspath llvmTranscoder)"							\
+		TRANSCODER="$(abspath llvmTranscoder) --llvm=$(llvmVersion)"				\
 		$(srcdir)/llvmAnalysis.conf $@
 
 .PHONY: check-llvm-analysis
@@ -1005,9 +927,8 @@ testStaticSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 # We lack semantics for some architectures, so don't try to test them (the result would be an std::runtime_error with the
 # message "no instruction semantics for architecture".  Also, we skip pocketputty2.exe because it takes too long with lots
 # of debugging is enabled.
-testStaticSemantics_specimens = $(filter-out						\
-	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(any_any_arm_specimens)	\
-	pocketputty2.exe								\
+testStaticSemantics_specimens = $(filter-out								\
+	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(any_any_arm_specimens) $(large_specimens)	\
 	,$(any_exe_any_specimens))
 testStaticSemantics_directory = $(top_srcdir)/binaries/samples
 testStaticSemantics_test_targets = $(addprefix testStaticSemantics_, $(addsuffix .passed, $(testStaticSemantics_specimens)))
@@ -1022,6 +943,21 @@ $(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(testStaticS
 
 .PHONY: check-testStaticSemantics
 check-testStaticSemantics: $(testStaticSemantics_test_targets)
+
+###############################################################################################################################
+# Data-flow tests
+###############################################################################################################################
+
+noinst_PROGRAMS += testLazyInitialStates
+testLazyInitialStates_SOURCES = testLazyInitialStates.C
+testLazyInitialStates_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testLazyInitialStates.passed
+testLazyInitialStates.passed: $(BINARY_SAMPLES)/i386-initialState testLazyInitialStates
+	@$(RTH_RUN)									\
+		TITLE="lazy symbolic states [$@]"					\
+		USE_SUBDIR=yes								\
+		CMD="$$(pwd)/testLazyInitialStates --isa=i386 --start=0 map:0=rx::$<"	\
+		$(top_srcdir)/scripts/test_exit_status $@
 
 ###############################################################################################################################
 # DEMOS
@@ -1100,10 +1036,7 @@ demo_testAssembler: testAssembler demo_yicesSemanticsLib
 	@echo; echo; echo "Demo for $<"; echo
 	./testAssembler $(BINARY_SAMPLES)/buffer2.bin
 
-demo_testBinCFG: testBinCFG demo_testAssembler
-	: no demo yet for testBinCFG
-
-demo_expandCoreDump: expandCoreDump demo_testBinCFG
+demo_expandCoreDump: expandCoreDump demo_testAssembler
 	: no demo yet for expandCoreDump
 
 demo_functionBoundaries: functionBoundaries demo_exapndCoreDump
@@ -1130,7 +1063,7 @@ demo_testReadPastEOF: testReadPastEOF
 # Test various things for all our sample binaries
 
 #--------------------------------------------------------------------------------
-parse_Specimens = $(any_exe_any_specimens)
+parse_Specimens = $(filter-out $(large_specimens), $(any_exe_any_specimens))
 parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
 TEST_TARGETS += $(parse_Targets)
 
@@ -1142,7 +1075,7 @@ check_parse_container: $(parse_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-disassemble_Specimens = $(filter-out $(any_any_mips_specimens), $(any_exe_any_specimens))
+disassemble_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
 disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemble_Specimens)))
 TEST_TARGETS += $(disassemble_Targets)
 
@@ -1154,7 +1087,7 @@ check_disassemble: $(disassemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-unparse_Specimens = $(filter-out $(any_any_mips_specimens), $(any_exe_any_specimens))
+unparse_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
 unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens)))
 TEST_TARGETS += $(unparse_Targets)
 
@@ -1178,7 +1111,7 @@ check_assemble: $(assemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all the ARM specimens are failing, and have been. This might be due to poor disassembly. [Robb Matzke 2013-08-30]
-astio_Specimens = $(filter-out $(any_any_arm_specimens), $(any_exe_any_specimens))
+astio_Specimens = $(filter-out $(any_any_arm_specimens) $(large_specimens), $(any_exe_any_specimens))
 astio_Targets = $(addprefix astio_, $(addsuffix .passed, $(astio_Specimens)))
 TEST_TARGETS += $(astio_Targets)
 

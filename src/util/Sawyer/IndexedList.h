@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -168,9 +168,9 @@ private:
     public:
         bool isAtEnd() const { return base_->isHead(); }
         Derived& operator++() { base_ = base_->next; return *derived(); }
-        Derived operator++(int) { Derived old=*this; base_ = base_->next; return old; }
+        Derived operator++(int) { Derived old(this->base_); base_ = base_->next; return old; }
         Derived& operator--() { base_ = base_->prev; return *derived(); }
-        Derived operator--(int) { Derived old=*this; base_ = base_->prev; return old; }
+        Derived operator--(int) { Derived old(this->base_); base_ = base_->prev; return old; }
         template<class OtherIter> bool operator==(const OtherIter &other) const { return base_ == other.base(); }
         template<class OtherIter> bool operator!=(const OtherIter &other) const { return base_ != other.base(); }
         bool operator<(const IteratorBase &other) const { return base_ < other.base_; }
@@ -321,7 +321,7 @@ public:
     IndexedList(const IndexedList<T2, Alloc2> &other, const Allocator &allocator = Allocator())
         : allocator_(Allocator()), head_(new ProtoNode) {
         typedef typename IndexedList<T2>::ConstValueIterator OtherIter;
-        for (OtherIter otherIter=other.values.begin(); otherIter!=other.values.end(); ++otherIter)
+        for (OtherIter otherIter=other.values().begin(); otherIter!=other.values().end(); ++otherIter)
             pushBack(Value(*otherIter));
     }
 
@@ -540,19 +540,19 @@ public:
     }
 
     Optional<Value> getOptional(size_t id) const {
-        return id < size() ? Optional<Value>(index_[id]) : Optional<Value>();
+        return id < size() ? Optional<Value>(indexedValue(id)) : Optional<Value>();
     }
 
     Value& getOrElse(size_t id, Value &dflt) {
-        return id < size() ? *index_[id] : dflt;
+        return id < size() ? indexedValue(id) : dflt;
     }
     const Value& getOrElse(size_t id, const Value &dflt) const {
-        return id < size() ? *index_[id] : dflt;
+        return id < size() ? indexedValue(id) : dflt;
     }
 
     const Value& getOrDefault(size_t id) const {
         static const Value dflt;
-        return id < size() ? *index_[id] : dflt;
+        return id < size() ? indexedValue(id) : dflt;
     }
     /** @} */
 
@@ -628,6 +628,9 @@ public:
         head_->next = head_->prev = head_;
     }
 
+    /**  Erase one element.
+     *
+     *   Erases the element having the specified ID. The ID number must exist in the list. */
     NodeIterator erase(size_t id) {
         ASSERT_require(id < size());
         return eraseAt(find(id));

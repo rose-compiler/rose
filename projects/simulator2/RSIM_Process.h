@@ -18,10 +18,10 @@ public:
     /** Creates an empty process containing no threads. */
     explicit RSIM_Process(RSIM_Simulator *simulator)
         : simulator(simulator), tracingFile_(NULL), tracingFlags_(0),
-          brkVa_(0), mmapNextVa_(0), mmapRecycle_(false), mmapGrowsDown_(false), disassembler(NULL), futexes(NULL),
-          interpretation(NULL), entryPointOriginalVa_(0), entryPointStartVa_(0),
-          terminated(false), termination_status(0), project(NULL), wordSize_(0), core_flags(0), btrace_file(NULL),
-          core_styles(CORE_ELF), core_base_name("x-core.rose") {
+          brkVa_(0), mmapNextVa_(0), mmapRecycle_(false), mmapGrowsDown_(false), disassembler_(NULL), futexes(NULL),
+          interpretation_(NULL), entryPointOriginalVa_(0), entryPointStartVa_(0),
+          terminated(false), termination_status(0), mainHeader_(NULL), project_(NULL), wordSize_(0), core_flags(0),
+          btrace_file(NULL), core_styles(CORE_ELF), core_base_name("x-core.rose") {
         ctor();
     }
 
@@ -437,7 +437,7 @@ private:
      *                                  Instructions and disassembly
      **************************************************************************************************************************/
 private:
-    rose::BinaryAnalysis::Disassembler *disassembler;                 /**< Disassembler to use for obtaining instructions */
+    rose::BinaryAnalysis::Disassembler *disassembler_;         /**< Disassembler to use for obtaining instructions */
     rose::BinaryAnalysis::Disassembler::InstructionMap icache;        /**< Cache of disassembled instructions */
 
 public:
@@ -468,15 +468,19 @@ public:
      *  any previous call by this thread or any other. */
     SgAsmBlock *disassemble(bool fast=false, MemoryMap *map=NULL);
 
-    /** Returns the disassembler that is being used to obtain instructions. This disassembler is chosen automatically when the
-     *  specimen is loaded.
+    /** Property: Disassembler.
+     *
+     *  The disassembler that is being used to obtain instructions. This disassembler is chosen automatically when the specimen
+     *  is loaded.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
      *  concurrently. However, the disassembler object which is returned can probably not be used concurrently by multiple
-     *  threads. See documentation for Disassembler for thread safety details. */
-    rose::BinaryAnalysis::Disassembler *get_disassembler() const {
-        return disassembler;
-    }
+     *  threads. See documentation for Disassembler for thread safety details.
+     *
+     * @{ */
+    rose::BinaryAnalysis::Disassembler *disassembler() const { return disassembler_; }
+    void disassembler(rose::BinaryAnalysis::Disassembler *d) { disassembler_ = d; }
+    /** @} */
 
     /** Returns the total number of instructions processed across all threads.
      *
@@ -691,14 +695,15 @@ public:
      *                                  Process loading, linking, exit, etc.
      ***************************************************************************************************************************/
 private:
-    SgAsmInterpretation *interpretation;        /**< Chosen by the load() method. */
+    SgAsmInterpretation *interpretation_;        /**< Chosen by the load() method. */
     std::string interpname;                     /**< Name of interpreter from ".interp" section or "--interp=" switch */
     rose_addr_t entryPointOriginalVa_;          /**< Original executable entry point (a specimen virtual address). */
     rose_addr_t entryPointStartVa_;             /**< Entry point where simulation starts (e.g., the dynamic linker). */
     bool terminated;                            /**< True when the process has finished running. */
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
     std::vector<SgAsmGenericHeader*> headers_;   /**< Headers of files loaded into the process (only those that we parse). */
-    SgProject *project;                         /**< AST project node for the main specimen (not interpreter or libraries). */
+    SgAsmGenericHeader *mainHeader_;                     // header for the main specimen
+    SgProject *project_;                         /**< AST project node for the main specimen (not interpreter or libraries). */
     size_t wordSize_;                                   // natural word size in bits (32 or 64)
 
 public:
@@ -722,7 +727,7 @@ public:
     void set_interpname(const std::string &s) {
         interpname = s;
     }
-    
+
     /** Loads a new executable image into an existing process.
      *
      *  The executable name comes from the parent simulator. If the name contains no slashes, then the corresponding file is
@@ -749,16 +754,23 @@ public:
      *
      *  A disassembler is chosen based on the interpretation. The disassembler can be obtained by calling get_disassembler().
      *
-     *  Operating system simulation data is initialized (brk, mmap, etc). */
-    SgAsmGenericHeader *load(int pid = -1);
+     *  Operating system simulation data is initialized (brk, mmap, etc)
+     *
+     *  Returns 0 on success, negative error number on failure. */
+    int load(int pid = -1);
 
-    /** Returns the list of projects loaded for this process.  The list is initialized by the load() method.  The first item in
-     *  the list is the main executable file; additional items are for dynamic libraries, etc.
+    /** Returns the list of projects loaded for this process.  The list is initialized by the load() method. Headers are in
+     *  order of their addresses.
      *
      * @{ */
     const std::vector<SgAsmGenericHeader*>& headers() const { return headers_; }
     std::vector<SgAsmGenericHeader*>& headers() { return headers_; }
     /** @} */
+
+    /** File header for the main executable. */
+    SgAsmGenericHeader *mainHeader() {
+        return mainHeader_; 
+    }
 
     /** Word size in bits. This returns null until after @ref load is called. */
     size_t wordSize() const {
@@ -767,12 +779,12 @@ public:
     
     /** Returns the project node. This returns null until after load() is called. */
     SgProject *get_project() const {
-        return project;
+        return project_;
     }
     
     /** Returns the interpretation that is being simulated.  The interpretation was chosen by the load() method. */
     SgAsmInterpretation *get_interpretation() const {
-        return interpretation;
+        return interpretation_;
     }
 
     /** Property: original entry point.

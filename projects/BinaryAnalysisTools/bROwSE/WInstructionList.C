@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WInstructionList.h>
 
 #include <bROwSE/InstructionListModel.h>

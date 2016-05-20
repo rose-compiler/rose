@@ -6,7 +6,7 @@
 0x080480a0: 68 10 00 00 00          |h....   |<sp+0 >   push   0x00000010
 0x080480a5: e8 07 00 00 00          |.....   |<sp-4 >   call   0x080480b1<thunk1>
 0x080480a5: Outgoing stack delta: -8
-0x080480a5: Successor blocks: 0x080480b1, 0x080480aa
+0x080480a5: Successor blocks: 0x080480b1<thunk1>, 0x080480aa
 
 0x080480aa: Basic block reasons: 
 0x080480aa: f4                      |.       |<sp-4 >   hlt    
@@ -14,6 +14,7 @@
 0x080480aa: Successor blocks: none
 
 0x080480b1: ================================== Function (function call, graph) <thunk1>
+0x080480b1: Function stack delta: +4
 
 0x080480b1: Basic block reasons: entry point
 0x080480b1: e9 f5 ff ff ff          |.....   |<sp+0 >   jmp    0x080480ab<thunk2>

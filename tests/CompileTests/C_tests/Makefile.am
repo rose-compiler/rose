@@ -616,6 +616,25 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_165.c \
      test2015_166.c \
      test2015_167.c \
+     test2015_168.c \
+     test2015_169.c \
+     test2015_170.c \
+     test2015_171.c \
+     test2016_01.c \
+     test2016_02.c \
+     test2016_03.c \
+     test2016_04.c \
+     test2016_05.c \
+     test2016_06.c \
+     test2016_07.c \
+     test2016_08.c \
+     test2016_09.c \
+     test2016_10.c \
+     test2016_11.c \
+     test2016_12.c \
+     test2016_13.c \
+     test2016_14.c \
+     test2016_15.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
@@ -951,6 +970,8 @@ test_common_configure_test_with_link.passed: %.passed: $(testTranslator)
 #	$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test
 	@$(RTH_RUN) CMD="$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test" $(top_srcdir)/scripts/test_exit_status $@
 
+# This is a simple demonstration of the token unparsing and how it preserves macros
+# in the generated ROSE code (for the case where the statement is not transformed).
 test_tokenMapping: 
 #	rm -f test2003_12.c.mapping.passed
 #	@$(MAKE) test2003_12.c.mapping.passed
@@ -995,21 +1016,30 @@ test_using_explicit_output_file_option:
 test_using_implicit_output_file_option:
 	$(testTranslator) -rose:verbose 0 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c
 
+# DQ (8/28/2015): Exclude tests using the GNU specific "-m32" option when using the Intel v14 compiler.
 # DQ (4/9/2015): Added test for using -m32 -mrtd options (required for Xen).
 test_rtd_use: $(testTranslator) $(srcdir)/test2015_89.h
+if !USING_INTEL_COMPILER
 	$(testTranslator) -m32 -mrtd -rose:C89 -c $(srcdir)/test2015_89.c
+endif
 
+# DQ (8/28/2015): Exclude tests using the GNU specific "-m32" option when using the Intel v14 compiler.
 # DQ (4/10/2015): Added test for using -m32 option which fouces __uint128_t to be undefined (required for Xen).
 test_m32_use: $(testTranslator)
+if !USING_INTEL_COMPILER
 	$(testTranslator) -m32 -rose:C89 -c $(srcdir)/test2015_95.c
+endif
 
 # DQ (5/12/2015): Test demonstrated by Xen build system (where test2015_133.S is a generated C source code file).
 test_file_suffix: $(testTranslator) 
 	$(testTranslator) -c $(srcdir)/test2015_133.S
 
+# DQ (8/28/2015): Exclude tests using the GNU specific "-m32" option when using the Intel v14 compiler.
 # DQ (5/24/2015): Added test for using -mregparm=3 -m32 option which fouces the regparm(0) parameter in __attribute__ (( cdecl, regparm(0) )) to be significant.
 test_mregparm_m32_use: $(testTranslator)
+if !USING_INTEL_COMPILER
 	$(testTranslator) -mregparm=3 -m32 -rose:C89 -c $(srcdir)/test2015_154.c
+endif
 
 # DQ (5/24/2015): Added test for using -mregparm=3 -m32 option which fouces the regparm(0) parameter in __attribute__ (( cdecl, regparm(0) )) to be significant.
 test_optimization_specifier_O: $(testTranslator)
@@ -1129,6 +1159,7 @@ clean-local:
 	rm -f *.err *.passed *.failed
 	rm -f token_trailing_*.c token_leading_*.c
 	rm -f test2014_83 test2014_93
+	rm -f test2015_162 test2015_86
 
 ################################################################################
 #

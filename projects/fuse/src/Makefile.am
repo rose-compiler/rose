@@ -6,7 +6,7 @@ fuse_CXXFLAGS =
 fuse_LDADD = -lrose
 fuse_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	$(ROSE_INCLUDES) \
 	-I$(srcdir)/analysis \
 	-I$(srcdir)/cfgUtils \

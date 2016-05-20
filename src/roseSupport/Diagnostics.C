@@ -4,9 +4,12 @@
 #include "Sawyer/ProgressBar.h"
 #include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
+#include "BinaryCallingConvention.h"                    // rose::BinaryAnalysis::CallingConvention
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
 #include "BinaryLoader.h"                               // BinaryLoader
 #include "BinaryNoOperation.h"                          // rose::BinaryAnalysis::NoOperation
+#include "BinaryPointerDetection.h"                     // rose::BinaryAnalysis::PointerDetection
+#include "BinaryStackDelta.h"                           // rose::BinaryAnalysis::StackDelta
 #include "BinaryString.h"                               // rose::BinaryAnalysis::String
 #include "BinaryTaintedFlow.h"                          // rose::BinaryAnalysis::TaintedFlow
 #include "Diagnostics.h"                                // rose::Diagnostics
@@ -15,14 +18,29 @@
 #include <Partitioner2/Utility.h>                       // rose::BinaryAnalysis::Partitioner2
 #include <EditDistance/EditDistance.h>                  // rose::EditDistance
 
+// DQ (3/24/2016): Adding support for EDG/ROSE frontend message logging.
+namespace EDG_ROSE_Translation
+   {
+     void initDiagnostics();
+   }
+
+// DQ (3/24/2016): Adding support for AstDiagnostics / AstConsistancy tests message logging.
+#include "AstDiagnostics.h"
+// #include "fixupCxxSymbolTablesToSupportAliasingSymbols.h"
+#include "astPostProcessing.h"
+#include "nameQualificationSupport.h"
+// #include "unparseLanguageIndependentConstructs.h"
+#include "unparser.h"
+#include "sageBuilder.h"
+
 #include <cstdarg>
 
 namespace rose {
 namespace Diagnostics {
 
-Sawyer::Message::DestinationPtr destination;
-Sawyer::Message::PrefixPtr mprefix;
-Sawyer::Message::Facility mlog;
+ROSE_DLL_API Sawyer::Message::DestinationPtr destination;
+ROSE_DLL_API Sawyer::Message::PrefixPtr mprefix;
+ROSE_DLL_API Sawyer::Message::Facility mlog;
 static bool isInitialized_ = false;
 
 void initialize() {
@@ -51,7 +69,7 @@ void initialize() {
         mfacilities.impset(DEBUG, false);
         mfacilities.impset(TRACE, false);
         mfacilities.impset(WHERE, false);
-        mfacilities.impset(MARCH, false);
+        mfacilities.impset(MARCH, true);
         mfacilities.impset(INFO,  true);
         mfacilities.impset(WARN,  true);
         mfacilities.impset(ERROR, true);
@@ -80,11 +98,25 @@ void initialize() {
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
+        BinaryAnalysis::PointerDetection::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
+        BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
         BinaryAnalysis::NoOperation::initDiagnostics();
+        BinaryAnalysis::CallingConvention::initDiagnostics();
         EditDistance::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
+
+     // DQ (3/24/2016): Added use of message logging mechanism to more locations in ROSE (to control output spew).
+#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+        EDG_ROSE_Translation::initDiagnostics();
+#endif
+        TestChildPointersInMemoryPool::initDiagnostics();
+        FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics();
+        FixupAstDeclarationScope::initDiagnostics();
+        NameQualificationTraversal::initDiagnostics();
+        UnparseLanguageIndependentConstructs::initDiagnostics();
+        SageBuilder::initDiagnostics();
     }
 }
 

@@ -5,11 +5,105 @@ include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
 noinst_PROGRAMS =
 TEST_TARGETS =
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 EXTRA_DIST = tests.conf
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
+
+# Sawyer unit tests. These are copied from the Sawyer release at https://github.com/matzke1/sawyer by
+# the script in $ROSE/src/util/Sawyer/updateFromGithub.sh
+
+SAWYER_TEST_TARGETS =
+noinst_PROGRAMS +=				\
+       sawyer-optionalUnitTests			\
+       sawyer-listUnitTests			\
+       sawyer-mapUnitTests			\
+       sawyer-setUnitTests			\
+       sawyer-distinctListUnitTests		\
+       sawyer-intervalUnitTests			\
+       sawyer-bitvecTests			\
+       sawyer-denseIntegerSetUnitTests		\
+       sawyer-addressMapUnitTests		\
+       sawyer-graphUnitTests			\
+       sawyer-indexedGraphDemo			\
+       sawyer-graphIsomorphismTests		\
+       sawyer-intervalSetMapUnitTests
+
+sawyer_optionalUnitTests_SOURCES = sawyer-optionalUnitTests.C
+sawyer_optionalUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-optionalUnitTests.passed
+
+sawyer_listUnitTests_SOURCES = sawyer-listUnitTests.C
+sawyer_listUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-listUnitTests.passed
+
+sawyer_mapUnitTests_SOURCES = sawyer-mapUnitTests.C
+sawyer_mapUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-mapUnitTests.passed
+
+sawyer_setUnitTests_SOURCES = sawyer-setUnitTests.C
+sawyer_setUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-setUnitTests.passed
+
+sawyer_distinctListUnitTests_SOURCES = sawyer-distinctListUnitTests.C
+sawyer_distinctListUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-distinctListUnitTests.passed
+
+sawyer_intervalUnitTests_SOURCES = sawyer-intervalUnitTests.C
+sawyer_intervalUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-intervalUnitTests.passed
+
+sawyer_bitvecTests_SOURCES = sawyer-bitvecTests.C
+sawyer_bitvecTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-bitvecTests.passed
+
+sawyer_denseIntegerSetUnitTests_SOURCES = sawyer-denseIntegerSetUnitTests.C
+sawyer_denseIntegerSetUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-denseIntegerSetUnitTests.passed
+
+sawyer_addressMapUnitTests_SOURCES = sawyer-addressMapUnitTests.C
+sawyer_addressMapUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-addressMapUnitTests.passed
+
+sawyer_graphUnitTests_SOURCES = sawyer-graphUnitTests.C
+sawyer_graphUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-graphUnitTests.passed
+
+sawyer_indexedGraphDemo_SOURCES = sawyer-indexedGraphDemo.C
+sawyer_indexedGraphDemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-indexedGraphDemo.passed
+
+sawyer_graphIsomorphismTests_SOURCES = sawyer-graphIsomorphismTests.C
+sawyer_graphIsomorphismTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-graphIsomorphismTests.passed
+
+sawyer_intervalSetMapUnitTests_SOURCES = sawyer-intervalSetMapUnitTests.C
+sawyer_intervalSetMapUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-intervalSetMapUnitTests.passed
+
+
+TEST_TARGETS += $(SAWYER_TEST_TARGETS)
+$(SAWYER_TEST_TARGETS): %.passed: %
+	@$(RTH_RUN)						\
+		TITLE="Sawyer unit test [$@]"			\
+		CMD="$$(pwd)/$^"				\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+.PHONY: check-sawyer
+check-sawyer: $(SAWYER_TEST_TARGETS)
+
+
+# Test that rose::FileSystem::copyFile works
+noinst_PROGRAMS += testCopyFile
+testCopyFile_SOURCES = testCopyFile.C
+testCopyFile_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += testCopyFile.passed
+testCopyFile.passed: testCopyFile
+	@$(RTH_RUN)						\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testCopyFile"			\
+		$(top_srcdir)/scripts/test_exit_status $@
 
 # Test that boost::regex works
 noinst_PROGRAMS += testBoostRegex
@@ -109,6 +203,18 @@ rangeMapTests.passed: rangeMapTests rangeMapTests.ans $(top_srcdir)/scripts/test
 		CMD="$(abspath $<)"				\
 		ANS="$(srcdir)/rangeMapTests.ans"		\
 		$(top_srcdir)/scripts/test_with_answer $@
+
+# Test AstAttributeMechanism
+noinst_PROGRAMS += attributeTests
+attributeTests_SOURCES = attributeTests.C
+attributeTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += attributeTests.passed
+attributeTests.passed: attributeTests
+	@$(RTH_RUN)						\
+		TITLE="AstAttributeMechanism tests [$@]"	\
+		CMD="$(abspath $<)"				\
+		$(top_srcdir)/scripts/test_exit_status $@
+
 
 check-local: $(TEST_TARGETS)
 

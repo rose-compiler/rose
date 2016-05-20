@@ -1,3 +1,3 @@
 
-SUBDIRS = include lib
+SUBDIRS = include/DLX/Core lib/core
 

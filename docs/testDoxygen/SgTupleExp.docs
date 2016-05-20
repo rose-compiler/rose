@@ -28,7 +28,7 @@ This class represents the concept of a tuple object in the input language. Curre
 \fn SgTupleExp::SgTupleExp ()
 \brief This is the constructor.
 
-   This constructor builds the SgTupleExp base class.
+This constructor builds the SgTupleExp base class.
 
 */
 
@@ -36,7 +36,7 @@ This class represents the concept of a tuple object in the input language. Curre
 \fn SgTupleExp::isSgTupleExp (SgNode *s)
 \brief Cast function (from derived class to SgTupleExp pointer).
 
-   This functions returns a SgTupleExp pointer for any input of a
+This functions returns a SgTupleExp pointer for any input of a
 pointer to an object derived from a SgTupleExp.
 
 \return Returns valid pointer to SgTupleExp if input is derived from a SgTupleExp.
@@ -46,7 +46,7 @@ pointer to an object derived from a SgTupleExp.
 \fn SgTupleExp::isSgTupleExp (const SgNode *s)
 \brief Cast function (from derived class to SgTupleExp pointer).
 
-   This functions returns a SgTupleExp pointer for any input of a
+This functions returns a SgTupleExp pointer for any input of a
 pointer to an object derived from a SgTupleExp.
 
 \return Returns valid pointer to SgTupleExp if input is derived from a SgTupleExp.

@@ -140,20 +140,26 @@ protected:
     AddressIntervalParser(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver)
         : Sawyer::CommandLine::ValueParser(valueSaver) {}
 public:
+    /** Shared-ownership pointer to an @ref AddressIntervalParser. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<AddressIntervalParser> Ptr;
+
     static Ptr instance() {
         return Ptr(new AddressIntervalParser);
     }
+
     static Ptr instance(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver) {
         return Ptr(new AddressIntervalParser(valueSaver));
     }
+
     static std::string docString();
+
 private:
     virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,
                                                         const Sawyer::CommandLine::Location &loc) ROSE_OVERRIDE;
 };
 
 AddressIntervalParser::Ptr addressIntervalParser(AddressInterval &storage);
+AddressIntervalParser::Ptr addressIntervalParser(std::vector<AddressInterval> &storage);
 AddressIntervalParser::Ptr addressIntervalParser();
 
 /** Trigger based on number of times called. */

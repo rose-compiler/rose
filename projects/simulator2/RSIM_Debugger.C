@@ -35,7 +35,7 @@ class Debugger {
     bool detached_;                                     // don't ask for commands
     size_t singleStep_;                                 // stop when this hits zero
     AddressIntervalSet breakPointVas_;                  // instruction addresses to stop at
-    std::set<X86InstructionKind> breakPointKinds_;      // instruction kinds to stop at
+    std::set<unsigned> breakPointKinds_;                // instruction kinds to stop at
     AddressIntervalSet breakPointSyscalls_;             // syscalls numbers (not addresses) at which to break
     AddressIntervalSet breakPointFds_;                  // file descriptors on which to stop
 
@@ -51,8 +51,7 @@ public:
                 break;
             if (breakPointVas_.exists(args.insn->get_address()))
                 break;
-            if (isSgAsmX86Instruction(args.insn) &&
-                breakPointKinds_.find(isSgAsmX86Instruction(args.insn)->get_kind()) != breakPointKinds_.end())
+            if (breakPointKinds_.find(args.insn->get_anyKind()) != breakPointKinds_.end())
                 break;
             return false;
         } while (0);
@@ -350,7 +349,7 @@ public:
                 regname=="fioff" || regname=="foseg" || regname=="fooff" || regname=="fop"   ||
                 regname=="mxcsr")
                 continue;                               // don't compare some registers
-            const RegisterDescriptor *reg = thread->get_process()->get_disassembler()->get_registers()->lookup(regname);
+            const RegisterDescriptor *reg = thread->get_process()->disassembler()->get_registers()->lookup(regname);
             if (!reg)
                 throw std::runtime_error("unknown register \"" + StringUtility::cEscape(regname) + "\"");
             rose_addr_t gdbRegValue = parseInteger(words[1]);
@@ -375,12 +374,12 @@ public:
     //   <name> <value>                 -- set (and then show) one register
     void registerCommand(RSIM_Thread *thread, std::vector<std::string> &cmd) {
         if (cmd.empty()) {
-            out_ <<*thread->operators()->get_state()->get_register_state();
+            out_ <<*thread->operators()->currentState()->registerState();
         } else if (cmd[0]=="check") {
             cmd.erase(cmd.begin());
             registerCheckGdbCommand(thread, cmd);
         } else {
-            const RegisterDescriptor *reg = thread->get_process()->get_disassembler()->get_registers()->lookup(cmd[0]);
+            const RegisterDescriptor *reg = thread->get_process()->disassembler()->get_registers()->lookup(cmd[0]);
             if (!reg) {
                 out_ <<"no such register \"" <<StringUtility::cEscape(cmd[0]) <<"\"\n";
                 return;
@@ -521,10 +520,10 @@ public:
         // Parse optional size letter
         size_t nBytes = 0;
         switch (*s) {
-            case 'b': nBytes = 1; ++s; break;
-            case 'h': nBytes = 2; ++s; break;
-            case 'w': nBytes = 4; ++s; break;
-            case 'g': nBytes = 8; ++s; break;
+            case 'b': nBytes = 1; ++s; break;           // byte
+            case 'h': nBytes = 2; ++s; break;           // x86 "word"; m68k "word"
+            case 'w': nBytes = 4; ++s; break;           // x86 "quadword"; m68k "long"
+            case 'g': nBytes = 8; ++s; break;           // x86 "doublequadword"; m68k "double"
             default: nBytes = thread->get_process()->wordSize() / 8; break;
         }
         if ('f'==fmt && nBytes != sizeof(float) && nBytes != sizeof(double))
@@ -540,7 +539,7 @@ public:
         // Display results
         for (size_t i=0; i<n; ++i) {
 
-            // Read value and convert bytes to little endian if necessary
+            // Read value and convert bytes to host order
             uint8_t bytes[16];
             memset(bytes, 0xaa, sizeof bytes);          // debugging
             size_t nRead = 0;
@@ -549,8 +548,23 @@ public:
                 nRead = thread->get_process()->get_memory().at(va).limit(nBytes).read(bytes).size();
                 if (nRead != nBytes)
                     throw std::runtime_error("short read");
-                for (size_t j=0; j<nBytes; ++j)
-                    value |= uint64_t(bytes[j]) << (j*8);
+                ByteOrder::Endianness guestOrder = thread->get_process()->disassembler()->get_sex();
+                ASSERT_require(guestOrder==ByteOrder::ORDER_LSB || guestOrder==ByteOrder::ORDER_MSB);
+                ByteOrder::Endianness hostOrder = ByteOrder::host_order();
+                if (guestOrder != hostOrder)
+                    std::reverse(bytes, bytes+nRead);
+                switch (hostOrder) {
+                    case ByteOrder::ORDER_LSB:
+                        for (size_t j=0; j<nBytes; ++j)
+                            value |= uint64_t(bytes[j]) << (j*8);
+                        break;
+                    case ByteOrder::ORDER_MSB:
+                        for (size_t j=0; j<nBytes; ++j)
+                            value = (value << 8) | bytes[j];
+                        break;
+                    default:
+                        ASSERT_not_reachable("invalid byte order");
+                }
             }
 
             out_ <<StringUtility::addrToString(va) <<": ";
@@ -563,7 +577,7 @@ public:
                     break;
                 case 'o': {
                     char buffer[64];
-                    sprintf(buffer, "0%"PRIo64, value);
+                    sprintf(buffer, "0%" PRIo64, value);
                     out_ <<buffer <<"\n";
                     va += nBytes;
                     break;
@@ -571,14 +585,14 @@ public:
                 case 'd': {
                     char buffer[64];
                     int64_t sv = IntegerOps::signExtend2(value, 8*nBytes, 8*sizeof(value));
-                    sprintf(buffer, "%"PRId64, sv);
+                    sprintf(buffer, "%" PRId64, sv);
                     out_ <<buffer <<"\n";
                     va += nBytes;
                     break;
                 }
                 case 'u': {
                     char buffer[64];
-                    sprintf(buffer, "%"PRIu64, value);
+                    sprintf(buffer, "%" PRIu64, value);
                     out_ <<buffer <<"\n";
                     va += nBytes;
                     break;
@@ -682,8 +696,10 @@ public:
             }
             if (!breakPointKinds_.empty()) {
                 out_ <<"instruction types:\n";
-                BOOST_FOREACH (X86InstructionKind kind, breakPointKinds_)
+                BOOST_FOREACH (unsigned kind, breakPointKinds_) {
+                    // FIXME[Robb P. Matzke 2015-07-31]: handle other than x86 instructions
                     out_ <<"  " <<stringifyX86InstructionKind(kind, "x86_") <<"\n";
+                }
             }
             if (!breakPointSyscalls_.isEmpty()) {
                 out_ <<"system calls:\n";

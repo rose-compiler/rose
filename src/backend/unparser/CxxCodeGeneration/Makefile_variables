@@ -14,9 +14,10 @@ unparseCxxCodeGeneration_extraDist=\
 	$(cxxCodeGenerationPath)/CMakeLists.txt
 
 
-unparseCxxCodeGeneration_cleanLocal=\
-	rm -rf \
-		$(cxxCodeGenerationPath)/ii_files \
-		$(cxxCodeGenerationPath)/ti_files \
-		$(cxxCodeGenerationPath)/core
+unparseCxxCodeGeneration_cleanLocal=
+
+#	rm -rf \
+#		$(cxxCodeGenerationPath)/ii_files \
+#		$(cxxCodeGenerationPath)/ti_files \
+#		$(cxxCodeGenerationPath)/core
 

@@ -2,12 +2,14 @@
 #include <cmath>
 
 #ifdef _MSC_VER
-#include <float.h>
-#define isnan(x) _isnan(x)
-#define INFINITY (DBL_MAX+DBL_MAX)
-#define NAN (INFINITY-INFINITY)
+    #include <float.h>
+    #define isnan(x) _isnan(x)
+    #define INFINITY (DBL_MAX+DBL_MAX)
+    #define NAN (INFINITY-INFINITY)
+#elif __cplusplus >= 201103L
+    // isnan is already defined in this scope
 #else
-using std::isnan;
+    using std::isnan;
 #endif
 
 /******************************************************************************************************************************
@@ -30,7 +32,10 @@ Range<double>::clear() {
 }
 
 template<>
-const double
+// DQ (9/3/2015): Intel v14 compiler warns that use of "const" is meaningless.
+// I think this is correct since this is being returned by value.
+// const double
+double
 Range<double>::relaxed_first() const {
     return r_first;
 }
@@ -105,7 +110,10 @@ Range<float>::clear() {
 }
 
 template<>
-const float
+// DQ (9/3/2015): Intel v14 compiler warns that use of "const" is meaningless.
+// I think this is correct since this is being returned by value.
+// const float
+float
 Range<float>::relaxed_first() const {
     return r_first;
 }

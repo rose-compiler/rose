@@ -8,7 +8,7 @@
 #include "RSIM_Adapter.h"
 #include <boost/foreach.hpp>
 
-/* Simulate RDTSC instruction by prividing values obtained from debugging. */
+/* Simulate RDTSC instruction by providing values obtained from debugging. */
 class Rdtsc: public RSIM_Callbacks::InsnCallback {
 public:
     virtual Rdtsc *clone() { return this; }
@@ -39,7 +39,7 @@ public:
             args.thread->policy.writeRegister(args.thread->policy.reg_edx, args.thread->policy.number<32>(edx));
             args.thread->policy.writeRegister(args.thread->policy.reg_eip, args.thread->policy.number<32>(newip));
             enabled = false;
-            mfprintf(args.thread->tracing(TRACE_MISC))("RDTSC adjustment; returning 0x%016"PRIx64"\n", value);
+            mfprintf(args.thread->tracing(TRACE_MISC))("RDTSC adjustment; returning 0x%016" PRIx64"\n", value);
         }
         return enabled;
     }
@@ -71,7 +71,7 @@ public:
                         const AddressInterval &range = node.key();
                         const MemoryMap::Segment &segment = node.value();
                         unsigned p = segment.accessibility();
-                        fprintf(f, "%08"PRIx64"-%08"PRIx64" %c%c%cp 00000000 00:00 0 %s\n",
+                        fprintf(f, "%08" PRIx64"-%08" PRIx64" %c%c%cp 00000000 00:00 0 %s\n",
                                 range.least(), range.greatest()+1,
                                 (p & MemoryMap::READABLE)   ? 'r' : '-',
                                 (p & MemoryMap::WRITABLE)   ? 'w' : '-',

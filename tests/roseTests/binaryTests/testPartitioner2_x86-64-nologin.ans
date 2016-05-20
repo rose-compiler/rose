@@ -2,11 +2,13 @@
 0x004004b0: ================================== Function (import, graph) <DYNAMIC_LINKER_TRAMPOLINE>
 
 0x004004b0: Basic block reasons: entry point, CFG head
-0x004004b0: ff 35 5a 05 10 00       |.5Z...  |          push   qword ds:[rip + 0x000000000010055a]
-0x004004b6: ff 25 5c 05 10 00       |.%\...  |          jmp    qword ds:[rip + 0x000000000010055c]
+0x004004b0: ff 35 5a 05 10 00       |.5Z...  |<sp+0 >   push   qword ds:[rip + 0x000000000010055a]
+0x004004b6: ff 25 5c 05 10 00       |.%\...  |<sp-8 >   jmp    qword ds:[rip + 0x000000000010055c]
+0x004004b6: Outgoing stack delta: -8
 0x004004b6: Successor blocks: unknown
 
 0x004004c0: ================================== Function (function call, graph) unknown name
+0x004004c0: Function stack delta: +8
 
 0x004004c0: Basic block reasons: entry point
 0x004004c0: ff 25 5a 05 10 00       |.%Z...  |<sp+0 >   jmp    qword ds:[rip + 0x000000000010055a]
@@ -29,23 +31,25 @@
 0x0040053e: 48 c7 c7 e0 05 40 00    |H....@. |<sp-16>   mov    rdi, 0x004005e0
 0x00400545: e8 76 ff ff ff          |.v...   |<sp-16>   call   0x00000000004004c0<<Func>>
 0x00400545: Outgoing stack delta: -24
-0x00400545: Successor blocks: 0x004004c0, 0x0040054a
+0x00400545: Successor blocks: 0x004004c0<<Func>>, 0x0040054a
 
 0x0040054a: Basic block reasons: 
-0x0040054a: f4                      |.       |<sp-16>   hlt    
-0x0040054a: Outgoing stack delta: -16
+0x0040054a: f4                      |.       |          hlt    
 0x0040054a: Successor blocks: none
 
 0x00400577: ================================== Function (pattern, graph) unknown name
+0x00400577: Function stack delta: +8
 
 0x00400577: Basic block reasons: entry point, CFG head
-0x00400577: 55                      |U       |          push   rbp
-0x00400578: 48 89 e5                |H..     |          mov    rbp, rsp
-0x0040057b: 74 10                   |t.      |          je     0x000000000040058d<<BBlock>>
+0x00400577: 55                      |U       |<sp+0 >   push   rbp
+0x00400578: 48 89 e5                |H..     |<sp-8 >   mov    rbp, rsp
+0x0040057b: 74 10                   |t.      |<sp-8 >   je     0x000000000040058d<<BBlock>>
+0x0040057b: Outgoing stack delta: -8
 0x0040057b: Successor blocks: 0x0040057d, 0x0040058d
 
 0x0040057d: Basic block reasons: 
-0x0040057d: eb 24                   |.$      |          jmp    0x00000000004005a3<<BBlock>>
+0x0040057d: eb 24                   |.$      |<sp-8 >   jmp    0x00000000004005a3<<BBlock>>
+0x0040057d: Outgoing stack delta: -8
 0x0040057d: Successor blocks: 0x004005a3
 
 0x0040057f: Basic block reasons: CFG head
@@ -71,19 +75,22 @@
 
 0x004005a3: Basic block reasons: 
 0x004005a3: c9                      |.       |          leave  
-0x004005a4: c3                      |.       |          ret    
+0x004005a4: c3                      |.       |<sp+0 >   ret    
+0x004005a4: Outgoing stack delta: +8
 0x004005a4: Successor blocks: unknown
 
 0x00400700: ================================== Function (pattern, graph) unknown name
+0x00400700: Function stack delta: +8
 
 0x00400700: Basic block reasons: entry point, CFG head
-0x00400700: 55                      |U       |          push   rbp
-0x00400701: 48 89 e5                |H..     |          mov    rbp, rsp
-0x00400704: 53                      |S       |          push   rbx
-0x00400705: 48 c7 c3 48 08 50 00    |H..H.P. |          mov    rbx, 0x00500848<.ctors>
-0x0040070c: 48 83 ec 08             |H...    |          sub    rsp, 0x08
-0x00400710: 48 8b 05 31 01 10 00    |H..1... |          mov    rax, qword ds:[rip + 0x0000000000100131]
-0x00400717: eb 10                   |..      |          jmp    0x0000000000400729<<BBlock>>
+0x00400700: 55                      |U       |<sp+0 >   push   rbp
+0x00400701: 48 89 e5                |H..     |<sp-8 >   mov    rbp, rsp
+0x00400704: 53                      |S       |<sp-8 >   push   rbx
+0x00400705: 48 c7 c3 48 08 50 00    |H..H.P. |<sp-16>   mov    rbx, 0x00500848<.ctors>
+0x0040070c: 48 83 ec 08             |H...    |<sp-16>   sub    rsp, 0x08
+0x00400710: 48 8b 05 31 01 10 00    |H..1... |<sp-24>   mov    rax, qword ds:[rip + 0x0000000000100131]
+0x00400717: eb 10                   |..      |<sp-24>   jmp    0x0000000000400729<<BBlock>>
+0x00400717: Outgoing stack delta: -24
 0x00400717: Successor blocks: 0x00400729
 
 0x00400719: Basic block reasons: CFG head
@@ -109,6 +116,7 @@
 0x0040072f: 48 83 c4 08             |H...    |          add    rsp, 0x08
 0x00400733: 5b                      |[       |          pop    rbx
 0x00400734: c9                      |.       |          leave  
-0x00400735: c3                      |.       |          ret    
+0x00400735: c3                      |.       |<sp+0 >   ret    
+0x00400735: Outgoing stack delta: +8
 0x00400735: Successor blocks: unknown
 

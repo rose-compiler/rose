@@ -1,9 +1,9 @@
 ########### build library ###############
-
+add_definitions(-DROSE_DLL_EXPORTS)
 add_library(roseSupport OBJECT
   transformationSupport.C optionDeclaration.C
   sourceLocationInheritedAttribute.C rangemap.C roseTranslators.C
-  utility_functions.C memoryUsage.C threadSupport.C IncludeDirective.C
+  utility_functions.C memoryUsage.C IncludeDirective.C
   SqlDatabase.C Diagnostics.C stringify.C)
 add_dependencies(roseSupport rosetta_generated)
 
@@ -15,7 +15,6 @@ install(FILES  transformationSupport.h
                rangemap.h
                roseTranslators.h
                utility_functions.h
-               threadSupport.h
                IncludeDirective.h
                callbacks.h
                Diagnostics.h

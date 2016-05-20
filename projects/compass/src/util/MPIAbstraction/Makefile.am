@@ -4,7 +4,7 @@ SUBDIRS = alt-mpi-headers
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../../compassSupport \
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../../compassSupport \
            $(ROSE_INCLUDES)
 
 #==========================================================================

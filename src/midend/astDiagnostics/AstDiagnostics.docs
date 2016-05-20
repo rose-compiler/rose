@@ -5,7 +5,7 @@
 //                       DESCRIPTION OF AST DIAGNOSTICS
 // **********************************************************************************
 /*!
-\page astDiagnostics Description of AST Diagnostics within ROSE
+\defgroup astDiagnostics Description of AST Diagnostics within ROSE
 
     This page specifies what mechanisms we provide to test the AST.
 More details are at \ref AstDiagnosticsClasses.
@@ -84,7 +84,7 @@ work will implement a numbe of tests useful for debugging the AST:
 
  /*!
      \defgroup AstDiagnosticsClasses AST Diagnostics
-     \ingroup ROSE_MidEndGroup
+     \ingroup rose_midend
 
      \brief This is the AST Diagnostics Tests/Warnings/Statictics Reporting Mechanism.
 

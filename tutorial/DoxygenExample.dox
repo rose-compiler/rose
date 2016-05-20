@@ -1,0 +1,27 @@
+| 1|  /** Most basic use of the partitioner.
+| 2|   *
+| 3|   *  This method does everything from parsing the command-line to generating an abstract syntax tree. If all is
+| 4|   *  successful, then an abstract syntax tree is returned. The return value is a @ref SgAsmBlock node that contains all
+| 5|   *  the detected functions. If the specimen consisted of an ELF or PE container then the parent nodes of the returned
+| 6|   *  AST will lead eventually to an @ref SgProject node.
+| 7|   *
+| 8|   *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the
+| 9|   *  latter case, the vector should not include <code>argv[0]</code> or <code>argv[argc]</code> (which is always a
+|10|   *  null pointer).
+|11|   *
+|12|   *  The command-line supoprts a "--help" or ("-h") switch to describe all other switches and arguments, essentially
+|13|   *  generating output much like a Unix man(1) page.
+|14|   *
+|15|   *  The @p purpose should be a single line string that will be shown in the title of the man page and should not start
+|16|   *  with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
+|17|   *  specify the purpose as "disassembles a binary specimen".
+|18|   *
+|19|   *  The @p description is a full, multi-line description written in the [Sawyer](https://github.com/matzke1/sawyer)
+|20|   *  markup language where "@" characters have special meaning..
+|21|   *
+|22|   *  @{ */
+|23|  SgAsmBlock* frontend(int argc, char *argv[],
+|24|                       const std::string &purpose, const std::string &description) /*final*/;
+|25|  virtual SgAsmBlock* frontend(const std::vector<std::string> &args,
+|26|                               const std::string &purpose, const std::string &description);
+|27|  /** @} */

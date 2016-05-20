@@ -1,8 +1,16 @@
 add_library(astMatching OBJECT
-  AstMatching.C MatchOperation.C RoseAst.C matcherparser.C)
+  AstMatching.C
+  matcherparser.C
+  MatchOperation.C
+  RoseAst.C
+  )
+
 add_dependencies(astMatching rosetta_generated)
 
-# DQ (6/8/2014): Added header files and source files below.
 install(FILES
-  RoseAst.h matcherparser_decls.h AstMatching.h MatchOperation.h
+  AstMatching.h
+  matcherparser_decls.h
+  matcherparser.h
+  MatchOperation.h
+  RoseAst.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

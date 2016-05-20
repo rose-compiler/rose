@@ -3,31 +3,6 @@
 // (objects within ROSETTA)
 #include "grammar.h"
 
-// There are a bunch of global objects used as tags for enhanced type checking.
-// They are all defined here.
-
-const ConstructParamEnum NO_CONSTRUCTOR_PARAMETER(TAG_NO_CONSTRUCTOR_PARAMETER);
-const ConstructParamEnum CONSTRUCTOR_PARAMETER(TAG_CONSTRUCTOR_PARAMETER);
-
-const BuildAccessEnum NO_ACCESS_FUNCTIONS(TAG_NO_ACCESS_FUNCTIONS);
-const BuildAccessEnum BUILD_ACCESS_FUNCTIONS(TAG_BUILD_ACCESS_FUNCTIONS);
-const BuildAccessEnum BUILD_FLAG_ACCESS_FUNCTIONS(TAG_BUILD_FLAG_ACCESS_FUNCTIONS);
-const BuildAccessEnum BUILD_LIST_ACCESS_FUNCTIONS(TAG_BUILD_LIST_ACCESS_FUNCTIONS);
-
-const CopyConfigEnum NO_COPY_DATA(TAG_NO_COPY_DATA);
-const CopyConfigEnum COPY_DATA(TAG_COPY_DATA);
-const CopyConfigEnum CLONE_PTR(TAG_CLONE_PTR);
-const CopyConfigEnum CLONE_TREE(TAG_CLONE_TREE);
-
-const TraversalFlag DEF_TRAVERSAL(true); // default traversal
-const TraversalFlag NO_TRAVERSAL(false); // no traversal
-
-// AJ (10/26/2004)
-const DeleteFlag NO_DELETE(false);
-// DQ (12/3/2004): Avoid calling delete
-const DeleteFlag DEF_DELETE(true);
-// DeleteFlag DEF_DELETE(false);
-
 // This program demonstrates the Meta-Program Level where the details
 // of a preprocessor are specified.  In this case this program
 // represents the MetaProgram to build a preprocessor for the A++/P++
@@ -75,7 +50,7 @@ main(int argc, char * argv[])
 
      printf ("documentedConstructorPrototypes = %s \n",documentedConstructorPrototypes.c_str());
 
-     printf ("Program Terminated Normally! \n");
+     printf ("Rosetta finished.\n");
      return 0;
 }
 

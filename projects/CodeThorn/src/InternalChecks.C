@@ -26,6 +26,7 @@
 #endif
 
 #include "Miscellaneous.h"
+#include "Miscellaneous2.h"
 #include "InternalChecks.h"
 
 using namespace CodeThorn;
@@ -145,22 +146,22 @@ void checkTypes() {
     b=false;
     check("b=false => isFalse",b.isFalse());
     check("b=false => !isTrue",!b.isTrue());
-    AType::ConstIntLattice c=a||b;
-    check("c=a||b: ",c.isTrue());
+    AType::ConstIntLattice c=a.operatorOr(b);
+    check("c=a.operatorOr(b): ",c.isTrue());
     AType::Top e;
     AType::ConstIntLattice d;
     d=e;
     check("Top e; d=e; d isTop ",d.isTop());
-    c=c||d;
-    check("c=c||d => c isTrue ",c.isTrue());
+    c=c.operatorOr(d);
+    check("c=c.operatorOr(d) => c isTrue ",c.isTrue());
     AType::ConstIntLattice f=AType::Bot();
     d=AType::Bot();
     
-    a=d&&f;
-    check("d=bot;f=bot;a=d&&f; => a isBot",a.isBot());
+    a=d.operatorAnd(f);
+    check("d=bot;f=bot;a=d.operatorAnd(f); => a isBot",a.isBot());
     f=false;
-    a=d&&f;
-    check("f=false; a=d&&f; => a isFalse",a.isFalse());
+    a=d.operatorAnd(f);
+    check("f=false; a=d.operatorAnd(f); => a isFalse",a.isFalse());
     a=5;
     check("a=5; a.isTrue()==true",a.isTrue()==true);
     check("a=5; a.isFalse()==false",a.isFalse()==false);
@@ -175,22 +176,34 @@ void checkTypes() {
     cout << "RUNNING CHECKS FOR CONSTRAINT TYPE:"<<endl;
     VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
     VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
-
+    cout << "P1"<<endl;
     Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
+    cout << "P2"<<endl;
     Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
+    cout << "P3"<<endl;
     Constraint c3=DISEQUALITYCONSTRAINT;
+    cout << "P4"<<endl;
     Constraint c4=Constraint(Constraint::EQ_VAR_CONST,var_y,2);
+    cout << "P5"<<endl;
     ConstraintSet cs;
+    cout << "P6"<<endl;
     cs.addConstraint(c1);
+    cout << "P7"<<endl;
+    cout << "CS1:"<<cs.toString()<<endl;
     cs.addConstraint(c2);
+    cout << "CS2:"<<cs.toString()<<endl;
     check("inserted 2 different constraints, size of constraint set == 3",cs.size()==2);
     check("c1:constraintExists(EQ_VAR_CONST,x,1) == true",cs.constraintExists(Constraint::EQ_VAR_CONST,var_x,1));
     check("c1:constraintExists(NEQ_VAR_CONST,x,1) == false",!cs.constraintExists(Constraint::NEQ_VAR_CONST,var_x,1));
     check("c2:constraintExists(NEQ_VAR_CONST,y,2) == true",cs.constraintExists(Constraint::NEQ_VAR_CONST,var_y,2));
     check("c3:isDisequality==false",cs.disequalityExists()==false);
+    cout << "CS3:"<<cs.toString()<<endl;
     cs.addConstraint(c4);
+    cout << "CS4:"<<cs.toString()<<endl;
+    cout << "P8"<<endl;
     //cout << "CS:"<<cs.toString()<<endl;
     check("insert y==2; => disequalityExists() == true",cs.disequalityExists());
+    cout << "P9"<<endl;
     cs.addConstraint(c3);
     check("added disequality => disequalityExists() == true",cs.disequalityExists());
     check("Disequality exists <=> size()==1",cs.size()==1);
@@ -273,18 +286,16 @@ void checkTypes() {
   }
   {  
     cout << "------------------------------------------"<<endl;
-    cout << "RUNNING CHECKS FOR CPPCAPSULECONSTINTLATTICE:"<<endl;
-    AType::CppCapsuleConstIntLattice cap1(1);
-    cout << "DEBUG: "<<cap1.toString()<<endl;
-    check("cap1 == 1",cap1.getValue().getIntValue()==1);
-    AType::CppCapsuleConstIntLattice cap2;
-    cap2.setValue(AType::Top());
-    AType::CppCapsuleConstIntLattice cap3;
-    cap3.setValue(AType::Top());
-    check("cap2 isTop",cap2.getValue().isTop());
-    check("cap3 isTop",cap3.getValue().isTop());
-    check("!(cap1 == cap3)",!(cap1==cap3));
-    check("cap2 == cap3",cap2==cap3);
+    cout << "RUNNING CHECKS FOR CONSTINTLATTICE (formerly CPPCAPSULE):"<<endl;
+    AType::ConstIntLattice cint1(1);
+    check("cint1 == 1",cint1.getIntValue()==1);
+    AType::ConstIntLattice cint2=AType::Top();
+    AType::ConstIntLattice cint3;
+    cint3=AType::Top();
+    check("cint2 isTop",cint2.isTop());
+    check("cint3 isTop",cint3.isTop());
+    check("!(cint1 == cint3)",!(cint1==cint3)); // strictly weak ordering test
+    check("cint2 == cint3",cint2==cint3); // strictly weak ordering test
   }
   {
     cout << "------------------------------------------"<<endl;
@@ -311,15 +322,15 @@ void checkTypes() {
     s5[x]=valtop;
     s5[y]=valtop;
     check("var x exists in pstate s1",s1.varExists(x)==true);
-    check("var x==500",((s1[x].getValue()==val1)).isTrue()==true);
+    check("var x==500",((s1[x].operatorEq(val1)).isTrue())==true);
     check("var y exists in pstate s2",s2.varExists(y)==true);
-    check("var y==501",((s2[y].getValue()==val2)).isTrue()==true);
+    check("var y==501",((s2[y].operatorEq(val2)).isTrue())==true);
     //check("s0 < s1",(s0<s1)==true);
     //check("s0 < s2",(s0<s2)==true);
     check("!(s1 == s2)",(s1==s2)==false);
     check("s1<s2 xor s2<s1)",(s1<s2)^(s2<s1));
     check("var x in pstate s3",s3.varExists(x)==true);
-    check("s3[x]==501",((s3[x].getValue())==val2).isTrue()==true);
+    check("s3[x]==501",((s3[x].operatorEq(val2)).isTrue())==true);
     check("!(s1==s2)",(!(s1==s2))==true);
     check("!(s1==s3)",(!(s1==s3))==true);
     check("!(s2==s3)",(!(s2==s3))==true);
@@ -353,7 +364,7 @@ void checkTypes() {
     check("constint-strictWeak-smaller-1",strictWeakOrderingIsSmaller(val1,val2)==true);
 
     s4[x]=valtop;
-    check("created s4; inserted x=top; s4[x].getValue.isTop",s4[x].getValue().isTop());    
+    check("created s4; inserted x=top; s4[x].isTop",s4[x].isTop());    
     pstateSet.processNewOrExisting(s4);
     check("inserted s4 => size of pstateSet == 4",pstateSet.size()==4);    
     const PState* pstateptr4=pstateSet.processNewOrExisting(s4); // version 1
@@ -468,11 +479,11 @@ void checkTypes() {
 
     stringstream ss2;
     ss2<<"test1";
-    check("Parse: Testing test2 on test1.",!CodeThorn::Parse::checkWord("test2",ss2));
+    check("Parse: Testing test2 on test1.",!SPRAY::Parse::checkWord("test2",ss2));
     //cout << "Remaing stream: "<<ss2.str()<<endl;
     stringstream ss3;
     ss3<<"test1";
-    check("Parse: Testing test1 on test1.",CodeThorn::Parse::checkWord("test1",ss3));
+    check("Parse: Testing test1 on test1.",SPRAY::Parse::checkWord("test1",ss3));
     //cout << "Remaing stream: "<<ss3.str()<<endl;
 
     CodeThorn::AType::ConstIntLattice x;
@@ -525,7 +536,7 @@ void checkTypes() {
       string s="aaabbb";
       ss<<s;
       string parseString="aaa";
-      CodeThorn::Parse::parseString(parseString,ss); // throws exception if it fails
+      SPRAY::Parse::parseString(parseString,ss); // throws exception if it fails
       char next;
       ss>>next;
       check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);      
@@ -601,11 +612,11 @@ void checkLargeSets() {
   VariableIdMapping variableIdMapping;
   AType::ConstIntLattice i;
   using namespace AType;
-  set<CppCapsuleConstIntLattice> cilSet;
-  cilSet.insert(CppCapsuleConstIntLattice(ConstIntLattice(Bot())));
-  cilSet.insert(CppCapsuleConstIntLattice(ConstIntLattice(Top())));
+  set<ConstIntLattice> cilSet;
+  cilSet.insert(ConstIntLattice(Bot()));
+  cilSet.insert(ConstIntLattice(Top()));
   for(int i=-10;i<10;i++) {
-    cilSet.insert(CppCapsuleConstIntLattice(ConstIntLattice(i)));
+    cilSet.insert(ConstIntLattice(i));
   }
   check("integer set: bot,-10, ... ,+10,top",cilSet.size()==22); // 1+20+1
 }

@@ -9,6 +9,7 @@
 
 using namespace CodeThorn;
 using namespace SPRAY;
+using namespace AType;
 
 ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false),_skipArrayAccesses(false){
 }
@@ -79,10 +80,69 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   }
 }
 
+AType::ConstIntLattice ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) {
+  if(isSgFloatVal(valueExp)
+     ||isSgDoubleVal(valueExp)
+     ||isSgLongDoubleVal(valueExp)
+     ||isSgComplexVal(valueExp)
+     ||isSgStringVal(valueExp)
+     ) {
+    return ConstIntLattice(AType::Top());
+  } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
+    // ROSE uses an integer for a bool
+    int val=exp->get_value();
+    if(val==0)
+      return ConstIntLattice(false);
+    else if(val==1)
+      return ConstIntLattice(true);
+    else {
+      cerr<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
+      exit(1);
+    }
+  } else if(SgShortVal* exp=isSgShortVal(valueExp)) {
+    short int val=exp->get_value();
+    return ConstIntLattice((int)val);
+  } else if(SgIntVal* exp=isSgIntVal(valueExp)) {
+    int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgLongIntVal* exp=isSgLongIntVal(valueExp)) {
+    long int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgLongLongIntVal* exp=isSgLongLongIntVal(valueExp)) {
+    long long val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgUnsignedCharVal* exp=isSgUnsignedCharVal(valueExp)) {
+    unsigned char val=exp->get_value();
+    return ConstIntLattice((int)val);
+  } else if(SgUnsignedShortVal* exp=isSgUnsignedShortVal(valueExp)) {
+    unsigned short val=exp->get_value();
+    return ConstIntLattice((int)val);
+  } else if(SgUnsignedIntVal* exp=isSgUnsignedIntVal(valueExp)) {
+    unsigned int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
+    unsigned long int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
+    unsigned long int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgWcharVal* exp=isSgWcharVal(valueExp)) {
+    long int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(isSgNullptrValExp(valueExp)) {
+    return ConstIntLattice((int)0);
+  } else if(SgEnumVal* exp=isSgEnumVal(valueExp)) {
+    int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else {
+    throw "Error: constIntLatticeFromSgValueExp::unsupported number type in SgValueExp.";
+  }
+}
+
 //////////////////////////////////////////////////////////////////////
 // EVAL CONSTINT
 //////////////////////////////////////////////////////////////////////
-list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
+list<SingleEvalResultConstInt> ExprAnalyzer::listify(SingleEvalResultConstInt res) {
   list<SingleEvalResultConstInt> resList;
   resList.push_back(res);
   return resList;
@@ -91,31 +151,12 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
   assert(estate.pstate()); // ensure state exists
   SingleEvalResultConstInt res;
-  //cout<<"DEBUG: evalConstInt: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
-  // guard: for floating-point expression: return immediately with most general result
-  // TODO: refine to walk the tree, when assignments are allowed in sub-expressions
-  // MS: 2014-06-27: this cannot run in parallel because exp->get_type() seg-faults 
-#if 0
-  if(SgExpression* exp=isSgExpression(node)) {
-    bool isFloatingPointType;
-    // ROSE workaround. get_type cannot be run in parallel
-    #pragma omp critical
-    {
-      isFloatingPointType=SgNodeHelper::isFloatingPointType(exp->get_type());
-    }
-    if(isFloatingPointType) {
-      res.estate=estate;
-      res.result=AType::ConstIntLattice(AType::Top());
-      return listify(res);
-    }
-  }
-#endif
   // initialize with default values from argument(s)
   res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
 
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
-    cout << "Error: incdec-op not supported in conditions yet."<<endl;
+    cout << "Error: incdec-op not supported in conditions."<<endl;
     exit(1);
   }
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
@@ -131,7 +172,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       SingleEvalResultConstInt singleResult1=*i;
       ++i;
       SingleEvalResultConstInt singleResult2=*i;
-      if((singleResult1.value()==singleResult2.value()).isTrue()) {
+      if((singleResult1.value().operatorEq(singleResult2.value())).isTrue()) {
         cout<<"Info: evaluating condition of conditional operator gives two equal results"<<endl;
       }
     }
@@ -148,21 +189,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       // append falseBranchResultList to trueBranchResultList (moves elements), O(1).
       trueBranchResultList.splice(trueBranchResultList.end(), falseBranchResultList); 
       return trueBranchResultList;
-    }
-    if(singleResult.result.isTrue()) {
+    } else if(singleResult.result.isTrue()) {
       SgExpression* trueBranch=condExp->get_true_exp();
       list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
       return trueBranchResultList;
-    }
-    if(singleResult.result.isFalse()) {
+    } else if(singleResult.result.isFalse()) {
       SgExpression* falseBranch=condExp->get_false_exp();
       list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
       return falseBranchResultList;
+    } else {
+      cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
+      exit(1);
     }
-    // dummy return value to avoid compiler warning
-    cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
-    exit(1);
-    return resultList;
   }
   if(dynamic_cast<SgBinaryOp*>(node)) {
     //cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
@@ -185,7 +223,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 
         switch(node->variantT()) {
         case V_SgEqualityOp: {
-          res.result=(lhsResult.result==rhsResult.result);
+          res.result=(lhsResult.result.operatorEq(rhsResult.result));
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           // record new constraint
           VariableId varId;
@@ -222,7 +260,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgNotEqualOp: {
-          res.result=(lhsResult.result!=rhsResult.result);
+          res.result=(lhsResult.result.operatorNotEq(rhsResult.result));
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           // record new constraint
           VariableId varId;
@@ -259,7 +297,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         }
         case V_SgAndOp: {
           //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
-          res.result=(lhsResult.result&&rhsResult.result);
+          res.result=(lhsResult.result.operatorAnd(rhsResult.result));
           //cout << res.result.toString()<<endl;
 #if 0
           cout << lhsResult.exprConstraints.toString();
@@ -269,7 +307,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 #endif
           if(lhsResult.result.isFalse()) {
             res.exprConstraints=lhsResult.exprConstraints;
-            // rhs is not considered due to short-circuit AND semantics
+            // rhs is not considered due to short-circuit CPP-AND-semantics
           }
           if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
@@ -279,7 +317,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           }
           
-          // in case of top we do not propagate constraints
+          // in case of top we do not propagate constraints [inprecision]
           if(lhsResult.result.isTop() && !safeConstraintPropagation) {
             res.exprConstraints+=lhsResult.exprConstraints;
           }
@@ -287,13 +325,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
             res.exprConstraints+=rhsResult.exprConstraints;
           }
           resultList.push_back(res);
-          //          cout << res.exprConstraints.toString();
-          //cout << endl;
           break;
         }
         case V_SgOrOp: {
-          res.result=(lhsResult.result||rhsResult.result);
-          // we encode short-circuit CPP-OR semantics here!
+          res.result=lhsResult.result.operatorOr(rhsResult.result);
+          // we encode short-circuit CPP-OR-semantics here!
           if(lhsResult.result.isTrue()) {
             res.result=lhsResult.result;
             res.exprConstraints=lhsResult.exprConstraints;
@@ -304,7 +340,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           }
-          // in case of top we do not propagate constraints
+          // in case of top we do not propagate constraints [imprecision]
           if(lhsResult.result.isTop() && !safeConstraintPropagation) {
             res.exprConstraints+=lhsResult.exprConstraints;
           }
@@ -345,7 +381,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgGreaterOrEqualOp: {
-          res.result=(lhsResult.result>=rhsResult.result);
+          res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
               throw "Error: Top found in relational operator (not supported yet).";
@@ -355,7 +391,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgGreaterThanOp: {
-          res.result=(lhsResult.result>rhsResult.result);
+          res.result=(lhsResult.result.operatorMore(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
               throw "Error: Top found in relational operator (not supported yet).";
@@ -365,7 +401,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgLessThanOp: {
-          res.result=(lhsResult.result<rhsResult.result);
+          res.result=(lhsResult.result.operatorLess(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
               throw "Error: Top found in relational operator (not supported yet).";
@@ -375,7 +411,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgLessOrEqualOp: {
-          res.result=(lhsResult.result<=rhsResult.result);
+          res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
               throw "Error: Top found in relational operator (not supported yet).";
@@ -388,6 +424,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           // assume top for array elements (array elements are not stored in state)
           //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
           if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
+            // set result to top when index is top [imprecision]
             res.result=AType::Top();
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
             resultList.push_back(res);
@@ -405,8 +442,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
                 // in case it is a pointer retrieve pointer value
                 //cout<<"DEBUG: pointer-array access!"<<endl;
                 if(pstate->varExists(arrayVarId)) {
-                  AValue aValuePtr=pstate2[arrayVarId].getValue();
+                  AValue aValuePtr=pstate2[arrayVarId];
                   // convert integer to VariableId
+                  // TODO (topify mode: does read this as integer)
+                  if(!aValuePtr.isConstInt()) {
+                    res.result=AType::Top();
+                    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+                    resultList.push_back(res);
+                    return resultList;
+                  }
                   int aValueInt=aValuePtr.getIntValue();
                   // change arrayVarId to refered array!
                   //cout<<"DEBUG: defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
@@ -422,8 +466,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
               }
               VariableId arrayElementId;
               AValue aValue=rhsResult.value();
+              int index=-1;
               if(aValue.isConstInt()) {
-                int index=aValue.getIntValue();
+                index=aValue.getIntValue();
                 arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
                 //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
               } else {
@@ -433,20 +478,55 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
               }
               ROSE_ASSERT(arrayElementId.isValid());
               // read value of variable var id (same as for VarRefExp - TODO: reuse)
+              // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
               if(pstate->varExists(arrayElementId)) {
-                res.result=pstate2[arrayElementId].getValue();
-                //cout<<"DEBUG: retrieved value:"<<res.result<<endl;
+                res.result=pstate2[arrayElementId];
+                //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
                 if(res.result.isTop() && useConstraints) {
                   AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
                   res.result=val;
                 }
                 return listify(res);
               } else {
-                cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
-                cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
-                cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
-                cerr<<"AST: "<<node->unparseToString()<<endl;
-                exit(1);
+                // check that array is constant array (it is therefore ok that it is not in the state)
+                if(_variableIdMapping->isConstantArray(arrayVarId)) {
+                  SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
+                  int elemIndex=0;
+                  // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
+                  for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+                    //VariableId arrayElemId=_variableIdMapping->variableIdOfArrayElement(initDeclVarId,elemIndex);
+                    SgExpression* exp=*i;
+                    SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+                    if(assignInit) {
+                      SgExpression* initExp=assignInit->get_operand_i();
+                      ROSE_ASSERT(initExp);
+                      if(SgIntVal* intValNode=isSgIntVal(initExp)) {
+                        int intVal=intValNode->get_value();
+                        //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+                        //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
+                        if(elemIndex==index) {
+                          AType::ConstIntLattice val=AType::ConstIntLattice(intVal);
+                          res.result=val;
+                          return listify(res);
+                        }
+                      } else {
+                        cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                        exit(1);
+                      }
+                    } else {
+                      cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                    }
+                    elemIndex++;
+                  }
+                  cerr<<"Error: access to element of constant array (not in state). Not supported yet."<<endl;
+                  exit(1);
+                } else {
+                  cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
+                  cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
+                  cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
+                  cerr<<"AST: "<<node->unparseToString()<<endl;
+                  exit(1);
+                }
               }
             } else {
               cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;
@@ -477,7 +557,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       SingleEvalResultConstInt operandResult=*oiter;
       switch(node->variantT()) {
       case V_SgNotOp:
-        res.result=!operandResult.result;
+        res.result=operandResult.result.operatorNot();
         // we do NOT invert the constraints, instead we negate the operand result (TODO: investigate)
         res.exprConstraints=operandResult.exprConstraints;
         resultList.push_back(res);
@@ -492,14 +572,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       }
         // unary minus
       case V_SgMinusOp: {
-        res.result=-operandResult.result; // using overloaded operator
+        res.result=operandResult.result.operatorUnaryMinus();
         res.exprConstraints=operandResult.exprConstraints;
         resultList.push_back(res);
         break;
       }
       default:
         cerr << "@NODE:"<<node->sage_class_name()<<endl;
-        throw "Error: evalConstInt::unknown unary operation.";
+        string exceptionInfo=string("Error: evalConstInt::unknown unary operation @")+string(node->sage_class_name());
+        throw exceptionInfo; 
       } // end switch
     }
     return  resultList;
@@ -509,36 +590,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   
   // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
   // EXPRESSION LEAF NODES
+  if(SgValueExp* exp=isSgValueExp(node)) {
+    res.result=constIntLatticeFromSgValueExp(exp);
+    return listify(res);
+  }
   switch(node->variantT()) {
-  case V_SgBoolValExp: {
-    SgBoolValExp* boolValExp=isSgBoolValExp(node);
-    assert(boolValExp);
-    int boolVal= boolValExp->get_value();
-    if(boolVal==0) {
-      res.result=false;
-      return listify(res);
-    }
-    if(boolVal==1) {
-      res.result=true;
-      return listify(res);
-    }
-    break;
-  }
-  case V_SgDoubleVal: {
-    //SgDoubleVal* doubleValNode=isSgDoubleVal(node);
-    // floating point values are currently not computed
-    res.result=AType::Top();
-    return listify(res);
-  }
-  case V_SgIntVal: {
-    SgIntVal* intValNode=isSgIntVal(node);
-    int intVal=intValNode->get_value();
-    res.result=intVal;
-    return listify(res);
-  }
   case V_SgVarRefExp: {
     VariableId varId;
     bool isVar=ExprAnalyzer::variable(node,varId);
+    //cout<<"DEBUG: EvalConstInt: V_SgVarRefExp: isVar:"<<isVar<<", varIdcode:"<<varId.getIdCode()<<"Source:"<<node->unparseToString()<<endl;
     assert(isVar);
     const PState* pstate=estate.pstate();
     if(pstate->varExists(varId)) {
@@ -549,7 +609,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         // for arrays (by default the address is used) return its pointer value (the var-id-code)
         res.result=AType::ConstIntLattice(varId.getIdCode());
       } else {
-        res.result=pstate2[varId].getValue(); // this include assignment of pointer values
+        res.result=pstate2[varId]; // this include assignment of pointer values
       }
       if(res.result.isTop() && useConstraints) {
         // in case of TOP we try to extract a possibly more precise value from the constraints
@@ -559,9 +619,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       }
       return listify(res);
     } else {
-      res.result=AType::Top();
-      cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
-      return listify(res);
+      if(_variableIdMapping->isConstantArray(varId) && boolOptions["rersmode"]) {
+        res.result=AType::ConstIntLattice(varId.getIdCode());
+        return listify(res);
+      } else {
+        res.result=AType::Top();
+        cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
+        return listify(res);
+      }
     }
     break;
   }
@@ -574,7 +639,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     }
 
   }
-
   default:
     cerr << "@NODE:"<<node->sage_class_name()<<endl;
     throw "Error: evalConstInt::unknown operation failed.";

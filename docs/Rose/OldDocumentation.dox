@@ -1,0 +1,8 @@
+// -*- c++ -*-
+
+/** @defgroup old_documentation Obsolete documentation
+ *
+ *  Documentation that has major problems.
+ *
+ *  This group is a placeholder for all documentation that needs to be reviewed, fixed, or deleted.  If fixed, it should be
+ *  moved to a more appropriate location. */

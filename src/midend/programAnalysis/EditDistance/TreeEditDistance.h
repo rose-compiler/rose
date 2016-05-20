@@ -1,5 +1,5 @@
 #ifndef ROSE_EditDistance_TreeEditDistance_H
-#define ROSE_EditDistnace_TreeEditDistance_H
+#define ROSE_EditDistance_TreeEditDistance_H
 
 #include "Diagnostics.h"
 

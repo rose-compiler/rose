@@ -21,6 +21,7 @@ namespace SPRAY {
 class CFAnalysis {
  public:
   CFAnalysis(SPRAY::Labeler* l);
+  CFAnalysis(SPRAY::Labeler* l, bool createLocalEdge);
   Label getLabel(SgNode* node);
   SgNode* getNode(Label label);
   Label initialLabel(SgNode* node);
@@ -67,10 +68,15 @@ class CFAnalysis {
   size_t deleteFunctionCallLocalEdges(Flow& flow);
   static SgStatement* getFirstStmtInBlock(SgBasicBlock* block);
   static SgStatement* getLastStmtInBlock(SgBasicBlock* block);
+  void setCreateLocalEdge(bool le);
+  bool getCreateLocalEdge();
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   SPRAY::Labeler* labeler;
+  bool _createLocalEdge;
+  bool isLoopConstructRootNode(SgNode* node);
+  SgNode* correspondingLoopConstruct(SgNode* node);
 };    
 
 } // end of namespace CodeThorn

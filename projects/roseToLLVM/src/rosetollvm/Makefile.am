@@ -4,7 +4,7 @@ EXTRA_DIST = include
 
 if ROSE_USE_LLVM
 
-INCLUDES = $(ROSE_INCLUDES) \
+AM_CPPFLAGS = $(ROSE_INCLUDES) \
 		   $(ROSE_LLVM_INCLUDES) \
 		   -I$(srcdir)/include
 

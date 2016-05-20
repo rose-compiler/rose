@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WPartitioner.h>
 
 #include <boost/thread.hpp>
@@ -210,6 +211,13 @@ WPartitioner::init() {
         wStackDeltaDepth_->setTickInterval(1);
         wStackDeltaDepth_->setValue(1);
         wStackDeltaDepth_->setRange(1, 10);
+
+        tip = "Calling-convention analysis aims to figure out how caller and callee communicate with each other: where "
+              "arguments are passed, how values are returned, what registers are scratch vs. callee-saved, etc.";
+        new Wt::WBreak(c);
+        wCallingConvention_ = new Wt::WCheckBox("Analyze all function calling conventions?", c);
+        wCallingConvention_->setToolTip(tip);
+        wCallingConvention_->setCheckState(Wt::Unchecked);
         
         new Wt::WBreak(c);
         wPartitionSpecimen_ = new Wt::WPushButton("Disassemble", c);
@@ -459,16 +467,17 @@ public:
             finished_->emit(true);
             ctx_->busy->popWork();
         }
+
+        info <<"; done\n";
     }
 };
 
 bool
 WPartitioner::partitionSpecimen() {
-    BinaryAnalysis::Disassembler *disassembler = NULL;
     try {
         ctx_.engine.disassembler(NULL);
         ctx_.engine.isaName(isaName());
-        disassembler = ctx_.engine.obtainDisassembler();
+        ctx_.engine.obtainDisassembler();
     } catch (const std::runtime_error&) {
         wIsaError_->setText("ISA must be specified when there is no ELF/PE container.");
         wIsaError_->show();
@@ -480,7 +489,7 @@ WPartitioner::partitionSpecimen() {
     ctx_.engine.findingIntraFunctionCode(followGhostEdges()==FOLLOW_LATER);
     ctx_.engine.usingSemantics(useSemantics());
     ctx_.engine.functionReturnAnalysis(assumeFunctionsReturn() ?
-                                       P2::Engine::MAYRETURN_DEFAULT_YES : P2::Engine::MAYRETURN_DEFAULT_NO);
+                                       P2::MAYRETURN_DEFAULT_YES : P2::MAYRETURN_DEFAULT_NO);
     ctx_.engine.followingGhostEdges(followGhostEdges());
     ctx_.engine.discontiguousBlocks(allowDiscontiguousBlocks());
     ctx_.engine.findingThunks(findingThunks());
@@ -488,6 +497,7 @@ WPartitioner::partitionSpecimen() {
     if (defeatPeScrambler())
         ctx_.engine.peScramblerDispatcherVa(peScramblerDispatcherVa());
     ctx_.engine.doingPostAnalysis(false);               // we'll do it explicitly to get progress reports
+    ctx_.engine.doingPostCallingConvention(analyzingCalls());
     
     // Obtain the memory map which might have been edited by now.
     if (wMemoryMap_)
@@ -605,5 +615,11 @@ WPartitioner::interruptVectorVa() const {
     rose_addr_t va = rose_strtoull(str.c_str(), NULL, 16);
     return va;
 }
+
+bool
+WPartitioner::analyzingCalls() const {
+    return wCallingConvention_->checkState() == Wt::Checked;
+}
+
 
 } // namespace

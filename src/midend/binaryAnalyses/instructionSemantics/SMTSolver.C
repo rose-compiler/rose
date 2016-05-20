@@ -3,6 +3,8 @@
 #include "rose_getline.h"
 #include "SMTSolver.h"
 
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 #include <fcntl.h> /*for O_RDWR, etc.*/
 #include <Sawyer/Stopwatch.h>
 
@@ -17,7 +19,7 @@ operator<<(std::ostream &o, const SMTSolver::Exception &e)
 }
 
 SMTSolver::Stats SMTSolver::class_stats;
-RTS_mutex_t SMTSolver::class_stats_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_ROSE_SMT_SOLVERS);
+boost::mutex SMTSolver::class_stats_mutex;
 
 void
 SMTSolver::init()
@@ -27,36 +29,32 @@ SMTSolver::init()
 SMTSolver::Stats
 SMTSolver::get_class_stats() 
 {
-    Stats retval;
-    RTS_MUTEX(class_stats_mutex) {
-        retval = class_stats;
-    } RTS_MUTEX_END;
-    return retval;
+    boost::lock_guard<boost::mutex> lock(class_stats_mutex);
+    return class_stats;
 }
 
 // class method
 void
 SMTSolver::reset_class_stats()
 {
-    RTS_MUTEX(class_stats_mutex) {
-        class_stats = Stats();
-    } RTS_MUTEX_END;
+    boost::lock_guard<boost::mutex> lock(class_stats_mutex);
+    class_stats = Stats();
 }
 
-InsnSemanticsExpr::TreeNodePtr
+SymbolicExpr::Ptr
 SMTSolver::evidence_for_address(uint64_t addr)
 {
     return evidence_for_name(StringUtility::addrToString(addr));
 }
 
 SMTSolver::Satisfiable
-SMTSolver::trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs_)
+SMTSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs_)
 {
-    std::vector<InsnSemanticsExpr::TreeNodePtr> exprs(exprs_.begin(), exprs_.end());
+    std::vector<SymbolicExpr::Ptr> exprs(exprs_.begin(), exprs_.end());
     for (size_t i=0; i<exprs.size(); ++i) {
-        if (exprs[i]->is_known()) {
-            ASSERT_require(1==exprs[i]->get_nbits());
-            if (0==exprs[i]->get_value())
+        if (exprs[i]->isNumber()) {
+            ASSERT_require(1==exprs[i]->nBits());
+            if (0==exprs[i]->toInt())
                 return SAT_NO;
             std::swap(exprs[i], exprs.back()); // order of exprs is not important
             exprs.resize(exprs.size()-1);
@@ -66,7 +64,7 @@ SMTSolver::trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePt
 }
 
 SMTSolver::Satisfiable
-SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
+SMTSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 {
     bool got_satunsat_line = false;
 
@@ -85,9 +83,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 
     // Keep track of how often we call the SMT solver.
     ++stats.ncalls;
-    RTS_MUTEX(class_stats_mutex) {
+    {
+        boost::lock_guard<boost::mutex> lock(class_stats_mutex);
         ++class_stats.ncalls;
-    } RTS_MUTEX_END;
+    }
     output_text = "";
 
     /* Generate the input file for the solver. */
@@ -122,9 +121,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     int status __attribute__((unused)) = stat(tmpfile.name, &sb);
     ASSERT_require(status>=0);
     stats.input_size += sb.st_size;
-    RTS_MUTEX(class_stats_mutex) {
+    {
+        boost::lock_guard<boost::mutex> lock(class_stats_mutex);
         class_stats.input_size += sb.st_size;
-    } RTS_MUTEX_END;
+    }
 
     /* Show solver input */
     if (debug) {
@@ -149,9 +149,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
         ssize_t nread;
         while ((nread=rose_getline(&line, &line_alloc, output))>0) {
             stats.output_size += nread;
-            RTS_MUTEX(class_stats_mutex) {
+            {
+                boost::lock_guard<boost::mutex> lock(class_stats_mutex);
                 class_stats.output_size += nread;
-            } RTS_MUTEX_END;
+            }
             if (!got_satunsat_line) {
                 if (0==strncmp(line, "sat", 3) && isspace(line[3])) {
                     retval = SAT_YES;
@@ -186,15 +187,15 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     
 
 SMTSolver::Satisfiable
-SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNodePtr &tn)
+SMTSolver::satisfiable(const SymbolicExpr::Ptr &tn)
 {
-    std::vector<InsnSemanticsExpr::TreeNodePtr> exprs;
+    std::vector<SymbolicExpr::Ptr> exprs;
     exprs.push_back(tn);
     return satisfiable(exprs);
 }
 
 SMTSolver::Satisfiable
-SMTSolver::satisfiable(std::vector<InsnSemanticsExpr::TreeNodePtr> exprs, const InsnSemanticsExpr::TreeNodePtr &expr)
+SMTSolver::satisfiable(std::vector<SymbolicExpr::Ptr> exprs, const SymbolicExpr::Ptr &expr)
 {
     if (expr!=NULL)
         exprs.push_back(expr);

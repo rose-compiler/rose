@@ -5,7 +5,7 @@
 #include "grammar.h"
 
 #include "ROSETTA_macros.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 //#include "OmpAttribute.h"
 
 // What should be the behavior of the default constructor for Grammar
@@ -28,8 +28,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (SymbolTable, "SymbolTable", "SymbolTableTag" );
 
      NEW_TERMINAL_MACRO (Pragma, "Pragma", "PragmaTag" );
-  // Grammar::Terminal  Attribute( "Attribute", sageGrammar, "Attribute" );
-  // Grammar::Terminal  BitAttribute( "BitAttribute", sageGrammar, "BitAttribute" );
+  // Grammar::AstNodeClass  Attribute( "Attribute", sageGrammar, "Attribute" );
+  // Grammar::AstNodeClass  BitAttribute( "BitAttribute", sageGrammar, "BitAttribute" );
 
 #if 0
   // const_volatile specifiers (const, volatile)
@@ -130,8 +130,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (TemplateArgumentList, "TemplateArgumentList", "TemplateArgumentListTag" );
 
   // We don't use these yet, though we might in the future!
-  // Grammar::Terminal  ApplyFunction( "ApplyFunction", sageGrammar, "ApplyFunction" );
-  // Grammar::Terminal  printFunction( "printFunction", sageGrammar, "printFunction" );
+  // Grammar::AstNodeClass  ApplyFunction( "ApplyFunction", sageGrammar, "ApplyFunction" );
+  // Grammar::AstNodeClass  printFunction( "printFunction", sageGrammar, "printFunction" );
 
      NEW_NONTERMINAL_MACRO (BitAttribute, FuncDecl_attr | ClassDecl_attr /* | TemplateInstDecl_attr */,"BitAttribute","BitAttributeTag", false);
 
@@ -379,7 +379,7 @@ Grammar::setUpSupport ()
 
      File_Info.setFunctionPrototype           ( "HEADER_FILE_INFORMATION", "../Grammar/Support.code");
 
-  // Skip building a parse function for this terminal/nonterminal of the Grammar
+  // Skip building a parse function for this AstNodeClass/nonterminal of the Grammar
      if (isRootGrammar() == false)
         {
           Attribute.excludeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code" );
@@ -625,10 +625,13 @@ Grammar::setUpSupport ()
      Pragma.setDataPrototype ( "short" , "printed", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
+  // Pragma.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Pragma.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Pragma.setFunctionPrototype( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Pragma.setFunctionSource   ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
@@ -645,10 +648,13 @@ Grammar::setUpSupport ()
      Directory.setDataPrototype ( "SgDirectoryList*", "directoryList", "= NULL",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
+  // Directory.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Directory.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Directory.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Directory.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
@@ -672,11 +678,14 @@ Grammar::setUpSupport ()
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/23/2010): Not clear if we should put attributes here, but for now it is OK.
   // This is presently need to avoid an error in the roseHPCToolkitTests, but there may be 
   // a better way to avoid that error.
+  // FileList.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      FileList.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      FileList.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      FileList.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
@@ -887,6 +896,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "F95_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "F2003_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/25/2016): Added initial command line support for Fortran 2008 files.
+     File.setDataPrototype         ( "bool", "F2008_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/23/2009): Co-Array Fortran (CAF) support
@@ -1113,10 +1126,13 @@ Grammar::setUpSupport ()
   // File.setDataPrototype("int","fileNameIndex", "= 0",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
+  // File.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      File.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      File.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      File.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
@@ -1207,6 +1223,11 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesFortran2003FileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/25/2016): Added initial support in command line handling for Fortran 2008 files.
+     File.setDataPrototype         ( "bool", "sourceFileUsesFortran2008FileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      File.setDataPrototype         ( "bool", "sourceFileUsesCoArrayFortranFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesPHPFileExtension", "= false",
@@ -1225,7 +1246,7 @@ Grammar::setUpSupport ()
   // DQ (9/26/2011): Added support to detect dangling pointers in ROSE translators.
   // This is not an expensive test, but it fails for isolated parts of ROSE currently 
   // so it should be made optional at this early stage (before it is made a default 
-  // test in the AST consistancy tests).
+  // test in the AST consistency tests).
      File.setDataPrototype         ( "int", "detect_dangling_pointers", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1233,8 +1254,12 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // To be consistant with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
+  // To be consistent with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
   // SgAsmFile pointers called "binaryFile".
      BinaryComposite.setDataPrototype("SgAsmGenericFileList*", "genericFileList", "= NULL",
@@ -1364,6 +1389,23 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "optimization", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (12/11/2015): Use the token stream to improve source position information.
+  // Some source position information is unavailable in EDG, e.g. the end of most 
+  // secondary declarations, for loop initialization statements, etc.  This is part
+  // of a currently experimental mechanism to improve the source positon information 
+  // in the AST using local searches of the token stream as a part of the token stream 
+  // mapping to the AST (as used in the token-based unparsing).
+     File.setDataPrototype ("bool", "use_token_stream_to_improve_source_position_info", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (12/23/2015): Adding optional support for variables to be in the same variable declaration 
+  // (optionally eding a long standing ROSE specific normalization that we would like to move away 
+  // from longer term). Note that this is already addressed in Fortran (not an option to have 
+  // variable declarations normalized), but not it has not be even an option in C/C++ until now.
+  // File.setDataPrototype ("bool", "allow_multiple_names_in_variable_declarations", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype ("bool", "suppress_variable_declaration_normalization", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // ******************************************************************************
@@ -1412,9 +1454,12 @@ Grammar::setUpSupport ()
      GraphNode.setDataPrototype("static int","index_counter","",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // This could be defined using a map of node attributes in the SgGraph class.
+  // GraphNode.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      GraphNode.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      GraphNode.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      GraphNode.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
@@ -1448,9 +1493,12 @@ Grammar::setUpSupport ()
      GraphEdge.setDataPrototype("static int","index_counter","",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // This could be defined using a map of edge attributes in the SgGraph class.
+  // GraphEdge.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      GraphEdge.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      GraphEdge.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      GraphEdge.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
@@ -1537,10 +1585,12 @@ Grammar::setUpSupport ()
      Graph.setDataPrototype("SgBoostEdgeWeightList","boost_edge_weights","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // Attribute support for SgGraph
+  // Graph.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Graph.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
 #if 0
   // DQ (5/1/2009): Use this in the future instead of the AstAttributeMechanism* on the nodes and edge classes.
@@ -1666,8 +1716,11 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("int","midendErrorCode", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
+  // Project.setDataPrototype("int","backendErrorCode", "= 0",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("int","backendErrorCode", "= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      File.setDataPrototype("int","frontendErrorCode", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1677,8 +1730,13 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype("int","unparserErrorCode", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
+  // File.setDataPrototype("int","backendCompilerErrorCode", "= 0",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype("int","backendCompilerErrorCode", "= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      File.setDataPrototype("bool","unparsedFileFailedCompilation", "= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1775,10 +1833,13 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1
+  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
+  // Project.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Project.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Project.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Project.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
@@ -1885,9 +1946,9 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ("std::list<std::string>", "Java_sourcepath", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Project.setDataPrototype("std::string", "Java_destdir", "= ROSE::getWorkingDirectory()",
+     Project.setDataPrototype("std::string", "Java_destdir", "= rose::getWorkingDirectory()",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Project.setDataPrototype("std::string", "Java_source_destdir", "= ROSE::getWorkingDirectory()",
+     Project.setDataPrototype("std::string", "Java_source_destdir", "= rose::getWorkingDirectory()",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ("std::string", "Java_s", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2596,7 +2657,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // TypedefSeq.setAutomaticGenerationOfDestructor (true);
      TypedefSeq.setDataPrototype("SgTypePtrList","typedefs","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionParameterTypeList.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_TYPE_LIST", "../Grammar/Support.code" );
      FunctionParameterTypeList.setFunctionSource    ( "SOURCE_FUNCTION_PARAMETER_TYPE_LIST", "../Grammar/Support.code" );
@@ -2604,7 +2665,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // FunctionParameterTypeList.setAutomaticGenerationOfDestructor (true);
      FunctionParameterTypeList.setDataPrototype("SgTypePtrList","arguments","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 0
   // DQ (12/21/2005): Global qualification and qualified name handling are now represented explicitly

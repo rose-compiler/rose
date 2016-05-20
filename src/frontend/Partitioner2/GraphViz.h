@@ -13,7 +13,7 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Support for generating GraphViz output. */
+/** Support for generating and reading GraphViz output. */
 namespace GraphViz {
 
 /** GraphViz attributes.
@@ -22,18 +22,18 @@ namespace GraphViz {
 typedef Sawyer::Container::Map<std::string, std::string> Attributes;
 
 /** Convert attributes to GraphViz language string. */
-std::string toString(const Attributes&);
+ROSE_DLL_API std::string toString(const Attributes&);
 
 /** Escape characters that need to be escaped within GraphViz double quoted literals. */
-std::string quotedEscape(const std::string&);
+ROSE_DLL_API std::string quotedEscape(const std::string&);
 
 /** Escape characters that need to be escaped within GraphViz HTML literals. */
-std::string htmlEscape(const std::string&);
+ROSE_DLL_API std::string htmlEscape(const std::string&);
 
 /** Escape some value for GraphViz.
  *
  *  The returned string will include double quote or angle-brackets as necessary depending on the input string. */
-std::string escape(const std::string&);
+ROSE_DLL_API std::string escape(const std::string&);
 
 /** Append a value to an existing string.
  *
@@ -41,15 +41,15 @@ std::string escape(const std::string&);
  *  newStuff should not be quoted or escaped.  This is useful for appending additional information to a label. The @p separator
  *  is escaped and inserted between the @p oldStuff and @p newStuff if @p oldStuff is not empty. Returns a new string that is
  *  also quoted and escaped. */
-std::string concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator="");
+ROSE_DLL_API std::string concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator="");
 
 /** Determins if a string is a valid GraphViz ID.
  *
  *  True if s forms a valid GraphViz ID.  ID strings do not need special quoting in the GraphViz language. */
-bool isId(const std::string &s);
+ROSE_DLL_API bool isId(const std::string &s);
 
 /** An invalid identification number. */
-extern const size_t NO_ID;
+ROSE_DLL_API extern const size_t NO_ID;
 
 
 /** Organizational information.
@@ -57,10 +57,11 @@ extern const size_t NO_ID;
  *  The organization determines which vertices, edges, and subgraphs are selected for output and also gives them labels and
  *  attributes.  Generally speaking, the GraphViz object will update labels and attributes automatically only when
  *  transitioning from an unselected to selected state. */
-class Organization {
+class ROSE_DLL_API Organization {
 private:
     bool isSelected_;
-    std::string label_;                             // includes delimiters, "" or <>
+    std::string name_;                                  // name used by GraphViz to identify this object
+    std::string label_;                                 // label shown in rendered graph, includes delimiters, "" or <>
     Attributes attributes_;
     std::string subgraph_;
 public:
@@ -80,6 +81,15 @@ public:
      *  both incident vertices are also selected, and a selected subgraph will appear only if it has at least one selected
      *  vertex. */
     bool isSelected() const { return isSelected_; }
+
+    /** Name for object.
+     *
+     *  This is the name used by GraphViz to denote this object.  If the name is empty, then an ID number is used instead.
+     *
+     * @{ */
+    const std::string &name() const { return name_; }
+    void name(const std::string &s) { name_ = s; }
+    /** @} */
 
     /** Label for object.
      *
@@ -419,7 +429,7 @@ protected:
  *  gv.selectFunctionGraph(f1);
  *  gv.emit(std::cout);
  * @endcode */
-class CfgEmitter: public BaseEmitter<ControlFlowGraph> {
+class ROSE_DLL_API CfgEmitter: public BaseEmitter<ControlFlowGraph> {
     const Partitioner &partitioner_;
     bool useFunctionSubgraphs_;                         // should called functions be shown as subgraphs?
     bool showReturnEdges_;                              // show E_FUNCTION_RETURN edges?
@@ -611,6 +621,9 @@ public:
      *  Any edge of type @ref E_FUNCTION_RETURN is deselected. */
     void deselectReturnEdges();
 
+    /** Deselect a vertex if it has no selected incident edges. */
+    void deselectUnusedVertex(ControlFlowGraph::ConstVertexIterator);
+
     /** Select neighboring vertices.
      *
      *  Selects vertices that are neighbors of selected vertices, and the edges that connect them. */
@@ -683,18 +696,32 @@ public:
     static bool isInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator &e) { return isInterFunctionEdge(*e); }
     /** @} */
 
-    /** Function that owns a vertex.
+    /** First function that owns a vertex.
      *
-     *  Returns a pointer to the function that owns the specified vertex, or null if there is no owner.
+     *  Returns the first of possibly many functions that own a vertex. "First" is defined as the function listed first in the
+     *  set returned by @ref CfgVertex::owningFunctions.  Returns null if there are no owning functions.
+     *
+     * @{ */
+    static Function::Ptr firstOwningFunction(const ControlFlowGraph::Vertex&);
+    static Function::Ptr firstOwningFunction(const ControlFlowGraph::ConstVertexIterator &v) {
+        return firstOwningFunction(*v);
+    }
+    /** @} */
+
+    /** Functions that own a vertex.
+     *
+     *  Returns a set of pointers to the functions that own the specified vertex. Usually a vertex is owned by either zero or
+     *  one function.
      *
      *  @{ */
-    static Function::Ptr owningFunction(const ControlFlowGraph::Vertex&);
-    static Function::Ptr owningFunction(const ControlFlowGraph::ConstVertexIterator &v) { return owningFunction(*v); }
+    static FunctionSet owningFunctions(const ControlFlowGraph::Vertex&);
+    static FunctionSet owningFunctions(const ControlFlowGraph::ConstVertexIterator &v) { return owningFunctions(*v); }
     /** @} */
 
     /** Assign vertices and edges to subgraphs.
      *
-     *  Each vertex is assigned to a subgraph, one subgraph per function. */
+     *  Each vertex is assigned to a subgraph, one subgraph per function. If a vertex is owned by more than one function then
+     *  the "first" function is used, where the definition of "first" is quite arbitrary. */
     void assignFunctionSubgraphs();
 
 
@@ -761,6 +788,11 @@ public:
 
 private:
     void init();
+
+    // Give GraphViz identifying names to some vertices. The names assigned by this method are used internally by GraphViz, but
+    // encoding some information into thse names (instead of using integers) is useful mainly if we try to parse the GraphViz
+    // output later --  it gives us a way to relate GraphViz's vertex identifiers back to the original ROSE CFG vertices.
+    void nameVertices();
 };
 
 
@@ -769,7 +801,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Emits a function call graph. */
-class CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
+class ROSE_DLL_API CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
     const Partitioner &partitioner_;
     FunctionCallGraph cg_;
     Color::HSV functionHighlightColor_;                 // highlight certain functions
@@ -777,12 +809,17 @@ class CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
 public:
     explicit CgEmitter(const Partitioner &partitioner);
     CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg);
-    virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
-    virtual Attributes functionAttributes(const Function::Ptr&) const ROSE_OVERRIDE;
-    virtual void emitCallGraph(std::ostream &out) const ROSE_OVERRIDE;
+    virtual std::string functionLabel(const Function::Ptr&) const;
+    virtual Attributes functionAttributes(const Function::Ptr&) const;
+    virtual void emitCallGraph(std::ostream &out) const;
     virtual const FunctionCallGraph& callGraph() const { return cg_; }
     virtual void callGraph(const FunctionCallGraph &cg);
     virtual void highlight(const boost::regex&);
+private:
+    // Give GraphViz identifying names to some vertices. The names assigned by this method are used internally by GraphViz, but
+    // encoding some information into thse names (instead of using integers) is useful mainly if we try to parse the GraphViz
+    // output later --  it gives us a way to relate GraphViz's vertex identifiers back to the original ROSE CFG vertices.
+    void nameVertices();
 };
 
 
@@ -795,7 +832,7 @@ public:
  *  The function call graph is modified by removing all vertices whose function names match a user-specified pattern and
  *  compensating by listing the names of removed functions in the vertices of the callers.  This is a little bit like inlining,
  *  thus the name of the class. */
-class CgInlinedEmitter: public CgEmitter {
+class ROSE_DLL_API CgInlinedEmitter: public CgEmitter {
     boost::regex nameMatcher_;
     typedef std::vector<Function::Ptr> InlinedFunctions;
     typedef Sawyer::Container::Map<Function::Ptr, InlinedFunctions> Inlines;
@@ -809,6 +846,48 @@ public:
     virtual bool shouldInline(const Function::Ptr&) const;
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Reading layout position information from "dot"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Two dimensional display plane coordinate. */
+struct Coordinate {
+    double x;                                           /**< Distance from left. */
+    double y;                                           /**< Distance from up. */ 
+};
+
+/** Position of a vertex. */
+struct VertexPosition {
+    std::string name;                                   /**< Name of vertex as known to GraphViz. */
+    Coordinate center;                                  /**< Center of vertex in display plane units. */
+    double width;                                       /**< Horizontal size of vertex. */
+    double height;                                      /**< Vertical size of vertex. */
+};
+
+/** Position of an edge.
+ *
+ *  GraphViz represents edge positions as B-splines. These are apparently a sequence quadratic Bezier curve segments, which can
+ *  be drawn with a sliding window of length four coordinates and delta of one coordinate. The spline will therefore always
+ *  have at least four coorindates.
+ *
+ *  Since GraphViz identifies edges by their endpoints, there is no support for being able to resolve GraphViz edges back to
+ *  their corresponding Sawyer edges when edges are parallel. */
+struct EdgePosition {
+    std::vector<Coordinate> spline;                     /**< Control points for the edge B-spline. See @ref EdgePosition. */
+};
+
+/** A graph with positioned vertices and edges. */
+typedef Sawyer::Container::Graph<VertexPosition, EdgePosition> PositionGraph;
+
+/** Constructs graph positions from a file.
+ *
+ *  The input must have the same syntax as the output from the GraphViz "dot -Tplain" command. */
+PositionGraph readPositions(std::istream&);
+
+
+    
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Class template method implementations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -820,7 +899,10 @@ BaseEmitter<G>::emitVertex(std::ostream &out, const typename G::ConstVertexItera
     size_t id = NO_ID;
     if (org.isSelected() && !vmap.getOptional(vertex->id()).assignTo(id)) {
         id = vmap.size();
-        out <<id <<" [ label=" <<org.label() <<" ";
+        std::string name = org.name();
+        if (name.empty())
+            name = StringUtility::numberToString(id);
+        out <<name <<" [ label=" <<org.label() <<" ";
         out <<toString(org.attributes()) <<" ];\n";
     }
     return id;
@@ -833,9 +915,17 @@ BaseEmitter<G>::emitEdge(std::ostream &out, const typename G::ConstEdgeIterator 
     ASSERT_require2(vmap.exists(edge->source()->id()), "edge source vertex has not yet been emitted");
     ASSERT_require2(vmap.exists(edge->target()->id()), "edge target vertex has not yet been emitted");
 
-    out <<vmap[edge->source()->id()] <<" -> " <<vmap[edge->target()->id()]
-        <<" [ label=" <<org.label() <<" "
-        <<toString(org.attributes()) <<" ];\n";
+    size_t sourceId = edge->source()->id();
+    std::string sourceName = vertexOrganization(sourceId).name();
+    if (sourceName.empty())
+        sourceName = StringUtility::numberToString(vmap[sourceId]);
+
+    size_t targetId = edge->target()->id();
+    std::string targetName = vertexOrganization(targetId).name();
+    if (targetName.empty())
+        targetName = StringUtility::numberToString(vmap[targetId]);
+
+    out <<sourceName <<" -> " <<targetName <<" [ label=" <<org.label() <<" " <<toString(org.attributes()) <<" ];\n";
 }
 
 template<class G>
@@ -873,13 +963,11 @@ BaseEmitter<G>::emit(std::ostream &out) const {
         }
     }
 
-    // Emit subgraphs to output
+    // Emit named subgraphs to output
     BOOST_FOREACH (const Subgraphs::value_type &node, subgraphs) {
         const std::string &subgraphName = node.first;
         const std::string &subgraphContent = node.second;
-        if (subgraphName.empty()) {
-            out <<subgraphContent;
-        } else {
+        if (!subgraphName.empty()) {
             out <<"\nsubgraph cluster_" <<subgraphName <<" {"
                 <<" label=" <<subgraphOrganization(subgraphName).label() <<" "
                 <<toString(subgraphOrganization(subgraphName).attributes()) <<"\n"
@@ -888,10 +976,19 @@ BaseEmitter<G>::emit(std::ostream &out) const {
         }
     }
 
+    // Emit unnamed subgraph content without a surrounding subgraph construct (i.e., global graph)
+    Subgraphs::iterator unnamedSubgraph = subgraphs.find("");
+    if (unnamedSubgraph != subgraphs.end())
+        out <<unnamedSubgraph->second;
+
     // Emit pseudo edges
     BOOST_FOREACH (const PseudoEdge &edge, pseudoEdges_) {
         if (vertexOrganization(edge.src).isSelected() && vertexOrganization(edge.dst).isSelected()) {
-            out <<vmap[edge.src->id()] <<" -> " <<vmap[edge.dst->id()]
+            std::string sourceName = vertexOrganization(edge.src).name();
+            std::string targetName = vertexOrganization(edge.dst).name();
+            out <<(sourceName.empty() ? StringUtility::numberToString(vmap[edge.src->id()]) : sourceName)
+                <<" -> "
+                <<(targetName.empty() ? StringUtility::numberToString(vmap[edge.dst->id()]) : targetName)
                 <<" [ label=" <<escape(edge.label) <<" ];\n";
         }
     }

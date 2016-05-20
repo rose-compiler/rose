@@ -11,7 +11,7 @@ endif
 
 # This lists a large number of directories.  If "make install"
 # is run then we only need a single directory
-INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) 
+AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) 
 
 
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
@@ -36,10 +36,11 @@ else
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
-#   libroseExperimentalOpenFortranParserlibraries =
-#   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
-#   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
+#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
+   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/libexperimentalOFP.la
+#  libroseExperimentalOpenFortranParserlibraries =
+#  ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
+#  ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
 else
    libroseExperimentalOpenFortranParserlibraries =
 endif
@@ -139,13 +140,13 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
    $(top_builddir)/src/midend/programTransformation/singleStatementToBlockNormalization/libSingleStatementToBlockNormalization.la \
-   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/libmidend.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(top_builddir)/src/util/libroseSawyer.la \
+   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
@@ -154,6 +155,7 @@ endif
 # DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
 # used $(libroseOpenFortranParserlibraries) to replace $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
 # used $(librosePHPlibraries) to replace $(top_builddir)/src/frontend/PHPFrontend/librosePHPFrontend.la
+
 
 EXTRA_DIST = CMakeLists.txt extra.docs
 
@@ -178,10 +180,21 @@ pkginclude_HEADERS = \
 # DQ (9/8/2006): The ROSE/docs/Rose/Makefile references the testSharedRoseLib program, so maybe is should be installed?
 # bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
 noinst_PROGRAMS = testSharedRoseLib 
-all-local: testSharedRoseLib$(EXEEXT) 
+all-local: testSharedRoseLib$(EXEEXT) $(srcdir)/inputForTestRoseLib.c
 	@$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+#	DQ (1/26/2016): Test using an input program where we have configured ROSE for C/C++ source code support.
+#	However, we can't compile a code with this since the -m32 flag will cause EDG to have an error: "Expected HOST_ALIGNMENT_REQUIRED is 4"
+#	So we just want to run using the --version option to make sure it runs.
+#	@echo "[INFO] Testing whether a simple program linked with ROSE can be run: ./testSharedRoseLib$(EXEEXT) $(srcdir)/inputForTestRoseLib.c" >&2
+#	@./testSharedRoseLib$(EXEEXT) $(srcdir)/inputForTestRoseLib.c || (echo "[ERROR] You cannot run a program linked with ROSE. Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
+	@echo "[INFO] Testing executable ROSE program after linking: ./testSharedRoseLib$(EXEEXT) --version" >&2
+	@./testSharedRoseLib$(EXEEXT) --version || (echo "[ERROR] You cannot run a program linked with ROSE. Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
+else
+#	DQ (1/26/2016): Test using no input file since we have NOT configured ROSE for C/C++ source code support (this is the same are before).
 	@echo "[INFO] Testing whether a simple program linked with ROSE can be run (a warning will be issued because the translator is being run without an input file):" >&2
 	@./testSharedRoseLib$(EXEEXT) || (echo "[ERROR] You cannot run a program linked with ROSE. Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
+endif
 	@echo "[INFO] Success!"
 
 # PC (9/15/2006): force the use of the C++ linker
@@ -206,14 +219,14 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
           $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-          $(BOOST_WAVE_LIB)
+          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)
 else
 librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
           $(BOOST_DATE_TIME_LIB) \
           $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
           $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-          $(BOOST_WAVE_LIB) \
+          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)\
           -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
           $(OPT_SQLITE3_LDFLAGS) \
           $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS)
@@ -226,6 +239,11 @@ endif
 
 if ROSE_USE_GCC_OMP
    librose_la_LIBADD += lgomp
+endif
+
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+if USING_CLANG_COMPILER
+librose_la_LIBADD += -lstdc++
 endif
 
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
@@ -263,6 +281,13 @@ testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # testSharedRoseLib_LDFLAGS  = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
 # testSharedRoseLib_LDFLAGS  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # testSharedRoseLib_LDFLAGS  = $(ROSE_DWARF_LIBS_WITH_PATH)
+
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+if USING_CLANG_COMPILER
+testSharedRoseLib_LDADD += -lstdc++ 
+endif
 
 # AM_LDFLAGS = $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
 # AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
@@ -329,7 +354,12 @@ rose_config_CPPFLAGS =									\
 	-DINSTALLED_LDFLAGS='"$(subst ",\",$(rose_config_installed_ldflags))"'		\
 	-DBUILD_LDFLAGS='"$(subst ",\",$(rose_config_build_ldflags))"'
 
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+if USING_CLANG_COMPILER
+rose_config_LDADD += -lstdc++
+endif
 
 print:
 	@echo "libroseLibraries = $(libroseLibraries)"
@@ -370,10 +400,6 @@ endif
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)
-
-
-
-
 
 
 

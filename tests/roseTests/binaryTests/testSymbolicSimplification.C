@@ -1,11 +1,12 @@
 #include <rose.h>
-#include <InsnSemanticsExpr.h>
+#include <BinarySymbolicExpr.h>
 #include <SymbolicSemantics2.h>
 #include <YicesSolver.h>
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
 
+#if 0 // [Robb P. Matzke 2015-06-25]: cannot be tested automatically since Jenkins might not have Yices
 static void
 test_yices_linkage() {
     if (unsigned avail = YicesSolver::available_linkage()) {
@@ -52,24 +53,23 @@ test_yices_linkage() {
         }
     }
 }
+#endif
 
 static void
 test_add_simplifications() {
-    using namespace InsnSemanticsExpr;
-
-    TreeNodePtr reg = LeafNode::create_variable(32, "esp_0");
-    TreeNodePtr nreg = InternalNode::create(32, OP_NEGATE, reg);
-    TreeNodePtr number = LeafNode::create_integer(32, 0xfffffffc);
-    TreeNodePtr t1 = InternalNode::create(32, OP_ADD, reg, nreg, number);
+    SymbolicExpr::Ptr reg = SymbolicExpr::Leaf::createVariable(32, "esp_0");
+    SymbolicExpr::Ptr nreg = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, reg);
+    SymbolicExpr::Ptr number = SymbolicExpr::Leaf::createInteger(32, 0xfffffffc);
+    SymbolicExpr::Ptr t1 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, reg, nreg, number);
     std::cout <<"(add esp_0 (negate esp_0) 0xfffffffc) = " <<*t1 <<"\n";
 
-    TreeNodePtr n1 = LeafNode::create_variable(32, "esp_0");
-    TreeNodePtr n2 = LeafNode::create_integer(32, 4);
-    TreeNodePtr n3 = LeafNode::create_integer(32, 8);
-    TreeNodePtr n4 = InternalNode::create(32, OP_ADD, n1, n2);
-    TreeNodePtr n5 = InternalNode::create(32, OP_ADD, n4, n3);
-    TreeNodePtr n6 = InternalNode::create(32, OP_NEGATE, n1);
-    TreeNodePtr n7 = InternalNode::create(32, OP_ADD, n5, n6);
+    SymbolicExpr::Ptr n1 = SymbolicExpr::Leaf::createVariable(32, "esp_0");
+    SymbolicExpr::Ptr n2 = SymbolicExpr::Leaf::createInteger(32, 4);
+    SymbolicExpr::Ptr n3 = SymbolicExpr::Leaf::createInteger(32, 8);
+    SymbolicExpr::Ptr n4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, n1, n2);
+    SymbolicExpr::Ptr n5 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, n4, n3);
+    SymbolicExpr::Ptr n6 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, n1);
+    SymbolicExpr::Ptr n7 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, n5, n6);
     std::cout <<"(add esp_0 4 8 (negate esp_0)) = " <<*n7 <<"\n";
 }
 

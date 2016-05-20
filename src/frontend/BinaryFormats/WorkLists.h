@@ -1,9 +1,6 @@
 #ifndef ROSE_WorkLists_H
 #define ROSE_WorkLists_H
 
-/* Needed for __attribute__ definition on Visual Studio */
-#include "threadSupport.h"
-
 #include <boost/logic/tribool.hpp>
 #include <cassert>
 #include <list>
@@ -118,7 +115,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /** An alias for empty(). This is deprecated; use empty() instead, which is the naming convention used by the STL. */
-    bool isEmpty() const __attribute__((deprecated));
+    bool isEmpty() const ROSE_DEPRECATED("use empty instead");
 
     /** Adds an item(s) to the end of the queue.  The item is not added if the list was constructed to check for duplicates and
      * the item being inserted is already in the list.
@@ -132,7 +129,7 @@ public:
     T take() { return shift(); }
 
     /** Alias for front(). */
-    const T& examine() const __attribute__((deprecated));
+    const T& examine() const ROSE_DEPRECATED("use front instead");
 
 private:
     void removed(const T&);

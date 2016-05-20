@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -140,7 +140,11 @@ public:
  *  iterators over the user-defined values or the intervals when dereferenced.
  *
  *  This class uses CamelCase for all its methods and inner types in conformance with the naming convention for the rest of the
- *  library. This includes iterator names (we don't use <code>iterator</code>, <code>const_iterator</code>, etc). */
+ *  library. This includes iterator names (we don't use <code>iterator</code>, <code>const_iterator</code>, etc).
+ *
+ * @sa
+ *
+ *  See @ref IntervalSetMap for a similar container that stores sets of values per interval. */
 template<typename I, typename T, class Policy = MergePolicy<I, T> >
 class IntervalMap {
 public:
@@ -558,25 +562,16 @@ public:
      *  If the @p scalar is not part of this map's domain then an <code>std:domain_error</code> is thrown.
      *
      *  @{ */
-    Value& operator[](const typename Interval::Value &scalar) {
-        return getImpl(*this, scalar);
-    }
     const Value& operator[](const typename Interval::Value &scalar) const {
-        return getImpl(*this, scalar);
+        ConstNodeIterator found = find(scalar);
+        if (found==nodes().end())
+            throw std::domain_error("key lookup failure; key is not in map domain");
+        return found->value();
     }
 
-    Value& get(const typename Interval::Value &scalar) {
-        return getImpl(*this, scalar);
-    }
     const Value& get(const typename Interval::Value &scalar) const {
-        return getImpl(*this, scalar);
-    }
-
-    template<class IMap>
-    static typename IntervalMapTraits<IMap>::ValueReference
-    getImpl(IMap &imap, const typename Interval::Value &scalar) {
-        typename IntervalMapTraits<IMap>::NodeIterator found = imap.find(scalar);
-        if (found==imap.nodes().end())
+        ConstNodeIterator found = find(scalar);
+        if (found==nodes().end())
             throw std::domain_error("key lookup failure; key is not in map domain");
         return found->value();
     }
@@ -905,10 +900,15 @@ public:
         }
     }
 
-//
-//    template<T2, Policy2>
-//    bool contains(const IntervalMap<Interval, T2, Policy2> &other) const;
-//
+    template<typename T2, class Policy2>
+    bool contains(const IntervalMap<Interval, T2, Policy2> &other) const {
+        for (ConstNodeIterator iter=other.nodes().begin(); iter!=other.nodes().end(); ++iter) {
+            if (!contains(iter->key()))
+                return false;
+        }
+        return true;
+    }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private support methods

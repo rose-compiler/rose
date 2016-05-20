@@ -27,7 +27,7 @@ typedef int EStateId;
 #include "HashFun.h"
 #include "HSetMaintainer.h"
 
-using CodeThorn::CppCapsuleAValue;
+using CodeThorn::AValue;
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
 using SPRAY::Edge;
@@ -36,11 +36,13 @@ using namespace SPRAY;
 
 namespace CodeThorn {
 
+  class VariableValueMonitor;
+  class Analyzer;
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
-class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
+class PState : public map<VariableId,CodeThorn::AValue> {
  public:
     PState() {
     }
@@ -58,10 +60,17 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   string toString() const;
   string toString(VariableIdMapping* variableIdMapping) const;
   void setAllVariablesToTop();
-  void setAllVariablesToValue(CodeThorn::CppCapsuleAValue val);
+  void setAllVariablesToValue(CodeThorn::AValue val);
   void setVariableToTop(VariableId varId);
-  void setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val);
+  void setVariableToValue(VariableId varId, CodeThorn::AValue val);
+  void topifyState();
+  bool isTopifiedState() const;
   VariableIdSet getVariableIds() const;
+  static void setActiveGlobalTopify(bool val);
+  static void setVariableValueMonitor(VariableValueMonitor* vvm);
+  static bool _activeGlobalTopify;
+  static VariableValueMonitor* _variableValueMonitor;
+  static Analyzer* _analyzer;
 };
 
   ostream& operator<<(ostream& os, const PState& value);
@@ -76,7 +85,7 @@ class PStateHashFun {
     long operator()(PState s) const {
       unsigned int hash=1;
       for(PState::iterator i=s.begin();i!=s.end();++i) {
-        hash=((hash<<8)+((long)(*i).second.getValue().hash()))^hash;
+        hash=((hash<<8)+((long)(*i).second.hash()))^hash;
       }
       return long(hash) % tabSize;
     }
@@ -91,7 +100,7 @@ class PStateHashFun {
     long operator()(PState* s) const {
       unsigned int hash=1;
       for(PState::iterator i=s->begin();i!=s->end();++i) {
-        hash=((hash<<8)+((long)(*i).second.getValue().hash()))^hash;
+        hash=((hash<<8)+((long)(*i).second.hash()))^hash;
       }
       return long(hash);
     }
@@ -138,7 +147,7 @@ class PStateEqualToPred {
 class InputOutput {
  public:
  InputOutput():op(NONE),var(VariableId()){ val=CodeThorn::AType::Bot();}
-  enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT};
+  enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT,VERIFICATION_ERROR};
   OpType op;
   VariableId var;
   CodeThorn::AType::ConstIntLattice val;
@@ -148,10 +157,12 @@ class InputOutput {
   void recordConst(OpType op, CodeThorn::AType::ConstIntLattice val);
   void recordConst(OpType op, int val);
   void recordFailedAssert();
+  void recordVerificationError();
   bool isStdInIO() const { return op==STDIN_VAR; }
   bool isStdOutIO() const { return op==STDOUT_VAR || op==STDOUT_CONST; }
   bool isStdErrIO() const { return op==STDERR_VAR || op==STDERR_CONST; }
   bool isFailedAssertIO() const { return op==FAILED_ASSERT; }
+  bool isVerificationError() const { return op==VERIFICATION_ERROR; }
   bool isNonIO() const { return op==NONE; }
 };
 
@@ -276,128 +287,9 @@ class EStateEqualToPred {
   ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-class Transition {
- public:
-  Transition() {}
- Transition(const EState* source,Edge edge, const EState* target):source(source),edge(edge),target(target){}
-public:
-  const EState* source; // source node
-  Edge edge;
-  const EState* target; // target node
-  string toString() const;
-
-};
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-#ifdef USE_CUSTOM_HSET
-class TransitionHashFun {
-   public:
-    TransitionHashFun(long prime=99991) : tabSize(prime) {}
-    long operator()(Transition s) const {
-      unsigned int hash=1;
-      hash=((((long)s.source)+1)<<8)+(long)s.target*(long)s.edge.hash();
-      return long(hash) % tabSize;
-    }
-      long tableSize() const { return tabSize;}
-      private:
-    long tabSize;
-};
-#else
-class TransitionHashFun {
-   public:
-    TransitionHashFun() {}
-    long operator()(Transition* s) const {
-      unsigned int hash=1;
-      hash=((((long)s->source)+1)<<8)+(long)s->target*(long)s->edge.hash();
-      return long(hash);
-    }
-      private:
-};
-#endif
-
-class TransitionEqualToPred {
-   public:
-    TransitionEqualToPred() {}
-    bool operator()(Transition* t1, Transition* t2) const {
-      return t1->source==t2->source && t1->target==t2->target && t1->edge==t2->edge;
-    }
-   private:
-};
-
-bool operator==(const Transition& t1, const Transition& t2);
-bool operator!=(const Transition& t1, const Transition& t2);
-bool operator<(const Transition& t1, const Transition& t2);
-
 class EStateList : public list<EState> {
  public:
   string toString();
-};
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
- 
- typedef set<const EState*> EStatePtrSet;
- typedef set<const Transition*> TransitionPtrSet;
-
- class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred> {
- public:
-   typedef set<const Transition*> TransitionPtrSet;
- TransitionGraph():_startLabel(Label()),_numberOfNodes(0){}
-  EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
-  EStatePtrSet estateSetOfLabel(Label lab);
-  EStatePtrSet estateSet();
-  long numberOfObservableStates(bool inlcudeIn=true, bool includeOut=true, bool includeErr=true);
-  void add(Transition trans);
-  string toString() const;
-  LabelSet labelSetOfIoOperations(InputOutput::OpType op);
-  // eliminates all duplicates of edges
-  //long removeDuplicates();
-  Label getStartLabel() { assert(_startLabel!=Label()); return _startLabel; }
-  void setStartLabel(Label lab) { _startLabel=lab; }
-  // this allows to deal with multiple start transitions (must share same start state)
-  const EState* getStartEState();
-  Transition getStartTransition();
-#if 1
-  void erase(TransitionGraph::iterator transiter);
-  void erase(const Transition trans);
-#endif
-
-  //! deprecated
-  void reduceEStates(set<const EState*> toReduce);
-  void reduceEState(const EState* estate);
-  //! reduces estates. Adds edge-annotation PATH. Structure preserving by remapping existing edges.
-  void reduceEStates2(set<const EState*> toReduce);
-  void reduceEState2(const EState* estate); // used for semantic folding
-  TransitionPtrSet inEdges(const EState* estate);
-  TransitionPtrSet outEdges(const EState* estate);
-  EStatePtrSet pred(const EState* estate);
-  EStatePtrSet succ(const EState* estate);
-  bool checkConsistency();
-  const Transition* hasSelfEdge(const EState* estate);
-  // deletes EState and *deletes* all ingoing and outgoing transitions
-  void eliminateEState(const EState* estate);
-  int eliminateBackEdges();
-  void determineBackEdges(const EState* state, set<const EState*>& visited, TransitionPtrSet& tpSet);
-  void setIsPrecise(bool v);
-  void setIsComplete(bool v);
-  bool isPrecise();
-  bool isComplete();
- private:
-  Label _startLabel;
-  int _numberOfNodes; // not used yet
-  map<const EState*,TransitionPtrSet > _inEdges;
-  map<const EState*,TransitionPtrSet > _outEdges;
-  set<const EState*> _recomputedestateSet;
-  bool _preciseSTG;
-  bool _completeSTG;
 };
 
 } // namespace CodeThorn

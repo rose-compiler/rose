@@ -28,7 +28,7 @@ This class represents a lambda expression in the input language. Currently, this
 \fn SgLambdaRefExp::SgLambdaRefExp ()
 \brief This is the constructor.
 
-   This constructor builds the SgLambdaRefExp base class.
+This constructor builds the SgLambdaRefExp base class.
 
 */
 
@@ -36,7 +36,7 @@ This class represents a lambda expression in the input language. Currently, this
 \fn SgLambdaRefExp::isSgLambdaRefExp (SgNode *s)
 \brief Cast function (from derived class to SgLambdaRefExp pointer).
 
-   This functions returns a SgLambdaRefExp pointer for any input of a 
+This functions returns a SgLambdaRefExp pointer for any input of a 
 pointer to an object derived from a SgLambdaRefExp.
 
 \return Returns valid pointer to SgLambdaRefExp if input is derived from a SgLambdaRefExp.
@@ -46,7 +46,7 @@ pointer to an object derived from a SgLambdaRefExp.
 \fn SgLambdaRefExp::isSgLambdaRefExp (const SgNode *s)
 \brief Cast function (from derived class to SgLambdaRefExp pointer).
 
-   This functions returns a SgLambdaRefExp pointer for any input of a 
+This functions returns a SgLambdaRefExp pointer for any input of a 
 pointer to an object derived from a SgLambdaRefExp.
 
 \return Returns valid pointer to SgLambdaRefExp if input is derived from a SgLambdaRefExp.

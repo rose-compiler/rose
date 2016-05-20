@@ -1,5 +1,4 @@
 #include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
 #include <string>
 #include <iostream>
 
@@ -10,6 +9,7 @@
 #include "GenericDepAttrib.h"
 #include "Utils.h"
 #include "annotatePragmas.h"
+#define foreach BOOST_FOREACH
 
 using namespace std;
 using namespace Outliner;
@@ -35,7 +35,7 @@ SgStatement * getPreviousStatementForOutline( SgStatement * targetStmt );
 class FilletAttribute : public AstAttribute {
   public:
     FilletAttribute() {}
-    FilletAttribute *copy() {
+    FilletAttribute *copy() const {
       return new FilletAttribute(*this);
     }
     std::string attribute_class_name() { return "FilletAttribute"; }

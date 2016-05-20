@@ -13,6 +13,8 @@
 #include "Partitioner.h"
 #include "stringify.h"
 
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 #include <stdarg.h>
 
 namespace rose {
@@ -25,7 +27,7 @@ using namespace StringUtility;
 
 
 /* Mutex for class-wide operations (such as adjusting Disassembler::disassemblers) */
-RTS_mutex_t Disassembler::class_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_DISASSEMBLER_CLASS);
+static boost::mutex class_mutex;
 
 /* List of disassembler subclasses (protect with class_mutex) */
 std::vector<Disassembler*> Disassembler::disassemblers;
@@ -152,28 +154,31 @@ Disassembler::parse_switches(const std::string &s, unsigned flags)
 
 /* Initialize the class. Thread safe. */
 void
-Disassembler::initclass()
+Disassembler::initclass_helper()
 {
-    RTS_INIT_RECURSIVE(class_mutex) {
-        register_subclass(new DisassemblerArm());
-        register_subclass(new DisassemblerPowerpc());
-        register_subclass(new DisassemblerM68k(m68k_freescale_isab));
-        register_subclass(new DisassemblerMips());
-        register_subclass(new DisassemblerX86(2)); /*16-bit*/
-        register_subclass(new DisassemblerX86(4)); /*32-bit*/
-        register_subclass(new DisassemblerX86(8)); /*64-bit*/
-    } RTS_INIT_END;
+    register_subclass(new DisassemblerArm());
+    register_subclass(new DisassemblerPowerpc());
+    register_subclass(new DisassemblerM68k(m68k_freescale_isab));
+    register_subclass(new DisassemblerMips());
+    register_subclass(new DisassemblerX86(2)); /*16-bit*/
+    register_subclass(new DisassemblerX86(4)); /*32-bit*/
+    register_subclass(new DisassemblerX86(8)); /*64-bit*/
+}
+
+static boost::once_flag initFlag = BOOST_ONCE_INIT;
+
+void
+Disassembler::initclass() {
+    boost::call_once(&initclass_helper, initFlag);
 }
 
 /* Class method to register a new disassembler subclass. Thread safe. */
 void
 Disassembler::register_subclass(Disassembler *factory)
 {
-    initclass();
-    RTS_MUTEX(class_mutex) {
-        ASSERT_not_null(factory);
-        disassemblers.push_back(factory);
-    } RTS_MUTEX_END;
+    boost::lock_guard<boost::mutex> lock(class_mutex);
+    ASSERT_not_null(factory);
+    disassemblers.push_back(factory);
 }
 
 /* Class method. Thread safe by virtue of lookup(SgAsmGenericHeader*). */
@@ -198,12 +203,11 @@ Disassembler::lookup(SgAsmGenericHeader *header)
     initclass();
     Disassembler *retval = NULL;
 
-    RTS_MUTEX(class_mutex) {
-        for (size_t i=disassemblers.size(); i>0 && !retval; --i) {
-            if (disassemblers[i-1]->can_disassemble(header))
-                retval = disassemblers[i-1];
-        }
-    } RTS_MUTEX_END;
+    boost::lock_guard<boost::mutex> lock(class_mutex);
+    for (size_t i=disassemblers.size(); i>0 && !retval; --i) {
+        if (disassemblers[i-1]->can_disassemble(header))
+            retval = disassemblers[i-1];
+    }
     
     if (retval)
         return retval;
@@ -219,7 +223,8 @@ Disassembler::isaNames() {
     v.push_back("coldfire");
     v.push_back("i386");
     v.push_back("m68040");
-    v.push_back("mips");
+    v.push_back("mips-be");
+    v.push_back("mips-le");
     v.push_back("ppc");
     return v;
 }
@@ -237,8 +242,10 @@ Disassembler::lookup(const std::string &name)
         return new DisassemblerArm();
     } else if (0==name.compare("ppc")) {
         return new DisassemblerPowerpc();
-    } else if (0==name.compare("mips")) {
-        return new DisassemblerMips();
+    } else if (0==name.compare("mips-be")) {
+        return new DisassemblerMips(ByteOrder::ORDER_MSB);
+    } else if (0==name.compare("mips-le")) {
+        return new DisassemblerMips(ByteOrder::ORDER_LSB);
     } else if (0==name.compare("i386")) {
         return new DisassemblerX86(4);
     } else if (0==name.compare("amd64")) {
@@ -324,30 +331,28 @@ Disassembler::set_alignment(size_t n)
 void
 Disassembler::set_progress_reporting(double min_interval)
 {
-    RTS_MUTEX(class_mutex) {
-        progress_interval = min_interval;
-    } RTS_MUTEX_END;
+    boost::lock_guard<boost::mutex> lock(class_mutex);
+    progress_interval = min_interval;
 }
 
 /* Update progress, keeping track of the number of instructions disassembled. */
 void
 Disassembler::update_progress(SgAsmInstruction *insn)
 {
-    RTS_MUTEX(class_mutex) {
-        if (insn) {
-            ++p_ndisassembled;
-            if (progress_interval>=0 && mlog[INFO]) {
-                double curtime = Sawyer::Message::now();
-                if (curtime - progress_time >= progress_interval) {
-                    if (p_ndisassembled > 1) { // skip first message per disassembler object, but count the time
-                        mlog[INFO] <<"at va " <<addrToString(insn->get_address())
-                                   <<", disassembled " <<plural(p_ndisassembled, "instructions") <<"\n";
-                    }
-                    progress_time = curtime;
+    boost::lock_guard<boost::mutex> lock(class_mutex);
+    if (insn) {
+        ++p_ndisassembled;
+        if (progress_interval>=0 && mlog[INFO]) {
+            double curtime = Sawyer::Message::now();
+            if (curtime - progress_time >= progress_interval) {
+                if (p_ndisassembled > 1) { // skip first message per disassembler object, but count the time
+                    mlog[INFO] <<"at va " <<addrToString(insn->get_address())
+                               <<", disassembled " <<plural(p_ndisassembled, "instructions") <<"\n";
                 }
+                progress_time = curtime;
             }
         }
-    } RTS_MUTEX_END;
+    }
 }
 
 /* Disassemble one instruction. */

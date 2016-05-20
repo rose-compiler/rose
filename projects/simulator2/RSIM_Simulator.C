@@ -396,6 +396,21 @@ RSIM_Simulator::commandLineSwitches(Settings &settings) {
     return sg;
 }
 
+// Construct the AST for the main executable without further linking, mapping
+SgAsmInterpretation *
+RSIM_Simulator::parseMainExecutable(RSIM_Process *process) {
+    char *frontend_args[4];
+    frontend_args[0] = strdup("-");
+    frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
+    frontend_args[2] = strdup(exeArgs()[0].c_str());
+    frontend_args[3] = NULL;
+    SgProject *project = frontend(3, frontend_args);
+
+    // Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
+    // (we'll use the PE interpretation).
+    return SageInterface::querySubTree<SgAsmInterpretation>(project).back();
+}
+
 int
 RSIM_Simulator::loadSpecimen(pid_t existingPid) {
     char cmd[8192];
@@ -419,10 +434,10 @@ RSIM_Simulator::loadSpecimen(const std::vector<std::string> &args, int existingP
 
     create_process();
 
-    SgAsmGenericHeader *fhdr = process->load(existingPid);
-    if (!fhdr)
-        return -ENOEXEC;
-    entry_va = fhdr->get_base_va() + fhdr->get_entry_rva();
+    if (int error = process->load(existingPid))
+        return error;
+    SgAsmGenericHeader *fhdr = process->mainHeader();
+    entry_va = process->entryPointOriginalVa();
 
     RSIM_Thread *mainThread = process->get_main_thread();
     initializeStackArch(mainThread, fhdr);
@@ -435,7 +450,7 @@ RSIM_Simulator::loadSpecimen(const std::vector<std::string> &args, int existingP
     }
 
     mainThread->tracing(TRACE_STATE) <<"Initial state:\n"
-                                     <<*mainThread->operators()->get_state()->get_register_state();
+                                     <<*mainThread->operators()->currentState()->registerState();
 
     return 0;
 }

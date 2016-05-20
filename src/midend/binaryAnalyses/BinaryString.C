@@ -194,7 +194,7 @@ Utf16CharacterEncodingForm::decode(CodeValue cv) {
                 cp_ = (cv - 0xd800) << 10;              // high/leasing surrogate
                 return state_ = State(1);
             }
-        case 1:                                         // second of two 16-bit code values
+        case USER_DEFINED_1:                            // second of two 16-bit code values
             if (cv >= 0xdc00 && cv <= 0xdfff) {
                 cp_ |= cv - 0xdc00;
                 return state_ = FINAL_STATE;
@@ -474,7 +474,7 @@ LengthEncodedString::decode(Octet octet) {
         case COMPLETED_STATE:
             return state_ = ERROR_STATE;
         case INITIAL_STATE:
-        case 1: {                                       // 1 means we're decodig the length
+        case USER_DEFINED_1: {                          // 1 means we're decodig the length
             State st = les_->decode(octet);
             if (isDone(st)) {
                 declaredLength_ = les_->consume();
@@ -485,7 +485,7 @@ LengthEncodedString::decode(Octet octet) {
                 return state_ = State(1);
             }
         }
-        case 2: {                                       // 2 means we're decoding the characters
+        case USER_DEFINED_2: {                          // 2 means we're decoding the characters
             State st = les_->decode(octet);
             if (isDone(st)) {
                 CodeValue cv = les_->consume();
@@ -585,7 +585,7 @@ TerminatedString::decode(Octet octet) {
             return state_ = ERROR_STATE;
         case INITIAL_STATE:
         case COMPLETED_STATE:
-        case 1: {                                       // 1 means we're decoding characters
+        case USER_DEFINED_1: {                                       // 1 means we're decoding characters
             State st = ces_->decode(octet);
             if (isDone(st)) {
                 CodeValue cv = ces_->consume();
@@ -806,7 +806,7 @@ public:
     const std::vector<Finding>& results() const { return results_; }
 
     // search for strings
-    bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) ROSE_OVERRIDE {
+    bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) {
         if (interval.least() > bufferVa_) {
             // We skipped across some unmapped memory, so reap all decoders, saving strings for those decoders that are in a
             // COMPLETED_STATE.

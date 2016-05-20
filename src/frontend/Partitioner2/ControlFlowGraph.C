@@ -6,6 +6,47 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+AddressIntervalSet
+CfgVertex::addresses() const {
+    AddressIntervalSet retval;
+    switch (type()) {
+        case V_BASIC_BLOCK:
+            retval.insert(address());
+            BOOST_FOREACH (SgAsmInstruction *insn, bblock()->instructions())
+                retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
+            break;
+            retval.insert(address());
+            break;
+        case V_INDETERMINATE:
+        case V_USER_DEFINED:
+        case V_UNDISCOVERED:
+        case V_NONEXISTING:
+            break;
+    }
+    return retval;
+}
+
+Function::Ptr
+CfgVertex::isEntryBlock() const {
+    Function::Ptr retval;
+    switch (type()) {
+        case V_BASIC_BLOCK:
+        case V_USER_DEFINED:
+            BOOST_FOREACH (const Function::Ptr &function, owningFunctions_.values()) {
+                if (function->address() == address()) {
+                    retval = function;
+                    break;
+                }
+            }
+            break;
+        case V_INDETERMINATE:
+        case V_UNDISCOVERED:
+        case V_NONEXISTING:
+            break;
+    }
+    return retval;
+}
+
 void
 insertCfg(ControlFlowGraph &dst, const ControlFlowGraph &src, CfgVertexMap &vmap /*out*/) {
     BOOST_FOREACH (ControlFlowGraph::Vertex vertex, src.vertices())

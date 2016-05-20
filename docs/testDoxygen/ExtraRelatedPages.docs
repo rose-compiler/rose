@@ -1,38 +1,12 @@
-// This was moved from the sage.docs.in file in the ROSE/src/frontend/SageIII directory.
+// -*- c++ -*-
 
-// **********************************************************************************
-//      Documentation Page for get_parent() Member function (DEPRICATED PAGE)
-// **********************************************************************************
-/* \page memberFunction_getParent_DocumentationPage Member Function getParent() Documentation
-    The member function <b>get_parent()</b> is implemented on all objects subclassed from SgNode (and
-    SgLocatedNode) and return the subclassed type. Within the subclassed nodes they are
-    implemented only once and used uniformally within the leaves of the class hierarchy.
-*/
+/** @defgroup ast_node_constructors Sage IR node default constructors
+ *  @ingroup old_documentation
+ *
+ *  Sage IR node default constructors are not useful.
+ *
+ *  Default constructors and destructors for the SageIII IR nodes (classes whose names begin with "Sg") such as those that
+ *  compose the abstract syntax tree (AST) are generally not documented in their respective classes because it is not that
+ *  useful to construct them this way.  A better way to construct IR nodes is with the @ref SageBuilder API. */
 
-// **********************************************************************************
-//     Documentation Page for Default Constructors and Destructors (DEPRICATED PAGE)
-// **********************************************************************************
-/* \page defaultConstructorDestructorDocumentationPage Default Constructor Destructor Documentation Page
-    Default constructors and destructors are not documented in the user documentation
-    because they are not useful to instantiate as objects.  They are defined only so
-    that leaf classes can be constructed within the construction of the Sage AST from the
-    EDG AST.  So they are not useful to users.
-*/
-
-// **********************************************************************************
-//                    Documentation Page for AST Attributes
-// **********************************************************************************
-/*! \page RoseAttributeMechanismPage Rose Attribute Mechanism Page
-
-    User-defined attributes (AST Attributes) may be attached 
-    directly to the AST.  This mechanism permits
-    the addition and removal of attribute on any node of the AST.  The existence of the
-    attributes may thus be queried from any node.  The mechanism provide a way to make
-    multiple passes over the AST and save state information into the AST for subsequent
-    traversals.  The mechanism is different from creation of inherited and synthisized 
-    attributes within the AST processing mechanism \ref ASTProcessing, since attributes
-    there allocated and deallocated automatically on the stack.  AST Attributes are
-    allocated on the heap and must be allocated, attached, detached, and deallocated 
-    explicitly by the used.
-*/
 

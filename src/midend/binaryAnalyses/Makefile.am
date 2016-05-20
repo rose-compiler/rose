@@ -1,6 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification 
+# AUTOMAKE_OPTIONS = subdir-objects
+
+AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification 
 
 noinst_LTLIBRARIES = libbinaryMidend.la
 libbinaryMidend_la_DEPENDENCIES =
@@ -8,7 +10,6 @@ libbinaryMidend_la_DEPENDENCIES =
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libbinaryMidend_la_SOURCES =					\
     AbstractLocation.C						\
-    binary_analysis.C						\
     RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp	\
     RoseBin_printInstructions.cpp RoseBin_DataFlowAnalysis.cpp	\
     RoseBin_CallGraphAnalysis.cpp RoseBin_FlowAnalysis.cpp	\
@@ -23,22 +24,26 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
-    instructionSemantics/NullSemantics2.C			\
-    instructionSemantics/MultiSemantics2.C			\
-    instructionSemantics/PartialSymbolicSemantics2.C		\
-    instructionSemantics/findConstants.C			\
     instructionSemantics/FindRegisterDefs.C			\
-    instructionSemantics/InsnSemanticsExpr.C			\
     instructionSemantics/IntervalSemantics.C			\
     instructionSemantics/IntervalSemantics2.C			\
     instructionSemantics/LlvmSemantics2.C			\
+    instructionSemantics/MemoryCell.C				\
+    instructionSemantics/MemoryCellList.C			\
+    instructionSemantics/MemoryCellMap.C			\
+    instructionSemantics/MemoryCellState.C			\
+    instructionSemantics/MultiSemantics2.C			\
+    instructionSemantics/NullSemantics2.C			\
     instructionSemantics/PartialSymbolicSemantics.C		\
-    instructionSemantics/TraceSemantics2.C			\
+    instructionSemantics/PartialSymbolicSemantics2.C		\
+    instructionSemantics/RegisterStateGeneric.C			\
     instructionSemantics/SMTSolver.C				\
+    instructionSemantics/SourceAstSemantics2.C			\
     instructionSemantics/StaticSemantics2.C			\
     instructionSemantics/SymbolicMemory2.C			\
     instructionSemantics/SymbolicSemantics.C			\
     instructionSemantics/SymbolicSemantics2.C			\
+    instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/YicesSolver.C				\
     GraphAlgorithms.C						\
     BinaryControlFlow.C						\
@@ -48,9 +53,14 @@ libbinaryMidend_la_SOURCES =					\
     BinaryCallingConvention.C					\
     BinaryMagic.C						\
     BinaryNoOperation.C						\
+    BinaryPointerDetection.C					\
     BinaryReturnValueUsed.C					\
+    BinaryStackDelta.C						\
     BinaryString.C						\
+    BinarySymbolicExpr.C					\
+    BinarySymbolicExprParser.C					\
     BinaryTaintedFlow.C						\
+    BinaryToSource.C						\
     DwarfLineMapper.C
 else
 libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
@@ -65,7 +75,6 @@ endif
 
 pkginclude_HEADERS =					\
     AbstractLocation.h					\
-    binary_analysis.h					\
     GraphAlgorithms.h					\
     RoseBin_CallGraphAnalysis.h				\
     RoseBin_CompareAnalysis.h				\
@@ -78,10 +87,6 @@ pkginclude_HEADERS =					\
     dataflowanalyses/RoseBin_DefUseAnalysis.h		\
     dataflowanalyses/RoseBin_Emulate.h			\
     dataflowanalyses/RoseBin_VariableAnalysis.h		\
-    instructionSemantics/ReadWriteRegisterFragment.h	\
-    instructionSemantics/findConstants.h		\
-    instructionSemantics/FindRegisterDefs.h		\
-    instructionSemantics/InsnSemanticsExpr.h		\
     instructionSemantics/BaseSemantics.h		\
     instructionSemantics/BaseSemantics2.h		\
     instructionSemantics/ConcreteSemantics2.h		\
@@ -89,16 +94,25 @@ pkginclude_HEADERS =					\
     instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
     instructionSemantics/DispatcherX86.h		\
+    instructionSemantics/FindRegisterDefs.h		\
+    instructionSemantics/InsnSemanticsExpr.h		\
     instructionSemantics/IntervalSemantics.h		\
     instructionSemantics/IntervalSemantics2.h		\
     instructionSemantics/LlvmSemantics2.h		\
-    instructionSemantics/NullSemantics.h		\
-    instructionSemantics/NullSemantics2.h		\
+    instructionSemantics/MemoryCell.h			\
+    instructionSemantics/MemoryCellList.h		\
+    instructionSemantics/MemoryCellMap.h		\
+    instructionSemantics/MemoryCellState.h		\
     instructionSemantics/MultiSemantics.h		\
     instructionSemantics/MultiSemantics2.h		\
+    instructionSemantics/NullSemantics.h		\
+    instructionSemantics/NullSemantics2.h		\
     instructionSemantics/PartialSymbolicSemantics.h	\
     instructionSemantics/PartialSymbolicSemantics2.h	\
+    instructionSemantics/ReadWriteRegisterFragment.h	\
+    instructionSemantics/RegisterStateGeneric.h		\
     instructionSemantics/SMTSolver.h			\
+    instructionSemantics/SourceAstSemantics2.h		\
     instructionSemantics/StaticSemantics2.h		\
     instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics.h		\
@@ -121,8 +135,13 @@ pkginclude_HEADERS =					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\
+    BinaryStackDelta.h					\
+    BinaryStackVariable.h				\
     BinaryString.h					\
+    BinarySymbolicExpr.h				\
+    BinarySymbolicExprParser.h				\
     BinaryTaintedFlow.h					\
+    BinaryToSource.h					\
     DwarfLineMapper.h
 
 

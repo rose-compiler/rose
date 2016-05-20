@@ -3,7 +3,7 @@ noinst_PROGRAMS =
 TEST_TARGETS =
 EXTRA_DIST =
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 test_input_sources = mangleTest.C mangleTwo.C mangleThree.C

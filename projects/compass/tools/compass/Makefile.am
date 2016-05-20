@@ -59,11 +59,11 @@ CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_makefile.inc compass_paramete
 
 # Test Compass using a small test file
 testRose: compassMain compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(INCLUDES) $(srcdir)/tests/exampleTest_2.C
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(AM_CPPFLAGS) $(srcdir)/tests/exampleTest_2.C
 
 # Test Compass using a large file within ROSE
 testCxx_Grammar: compassMain compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(INCLUDES) $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(AM_CPPFLAGS) $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 
 testAllInputsTogether: compassMain compass_parameters
 	env COMPASS_PARAMETERS=./compass_parameters ./compassMain $(COMPASS_CHECKER_TESTS)
