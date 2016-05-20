@@ -12,7 +12,7 @@ translator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 ########################################################################################################################
 
 # Input file names with lower-case extensions
-specimen_names_lc =				\
+specimen_lc_extensions =			\
     suffix_01.c					\
     suffix_02.c++				\
     suffix_05.cc				\
@@ -21,13 +21,24 @@ specimen_names_lc =				\
     suffix_11.cxx
 
 # Input file names with upper-case extensions
-specimen_names_uc =				\
+specimen_uc_extensions =			\
     suffix_03.C
 
-specimen_names = $(specimen_names_lc) $(specimen_names_uc)
+# Strange names. Rather than play escaping tricks with make and the shell, we replace the special characters with
+# non-special characters and then insert the special characters at the very last second in the translator.
+specimen_special_chars =			\
+	quote+SQUOTE+.C				\
+	quote+DQUOTE+.C				\
+	dollar+DOLLAR+.C			\
+	star+STAR+.C				\
+	hash+HASH+.C				\
+	space+SPACE+.C
 
-# These names have been removed from the list because some compiler doesn't recognize them. The commented compiler
-# and error message is not intended to be exhaustive, they're just the ones where we noticed the problem.
+specimen_names = $(specimen_lc_extensions) $(specimen_uc_extensions) $(specimen_special_chars)
+
+# These names have been removed from the list for various reasons given here. The reasons are not meant
+# to be exhaustive, they're just where we first noticed the problem now that the tests have been rewritten
+# so they actually test something (previously the test ran but we never considered the result). [Matzke 2016-05-19]
 #   suffix_04.C++		gcc-4.8: file format not recognized; treating as linker script
 #   suffix_06.CC		gcc-4.8: file format not recognized; treating as linker script
 #   suffix_08.CP		gcc-4.8: file format not recognized; treating as linker script
@@ -41,18 +52,18 @@ specimen_names = $(specimen_names_lc) $(specimen_names_uc)
 #   suffix_18.H			ROSE: terminate called after throwing an instance of 'SgAsmExecutableFileFormat::FormatError'
 #   suffix_19.hh		ROSE: terminate called after throwing an instance of 'SgAsmExecutableFileFormat::FormatError'
 #   suffix_20.HH		gcc-4.8: file format not recognized; treating as linker script
-
-# Build each specimen
-$(specimen_names):
-	@echo "  GEN    $@"; echo "int main() {}" >$@
+#   dot.			gcc-4.8: file format not recognized; treating as linker script
+#   no_suffix			gcc-4.8: file format not recognized; treating as linker script
+#   test_empty_cplusplus_file.C disabled: this is not testing file names but rather content, so doesn't belong here
+#   test_empty_c_file.c         disabled: this is not testing file names but rather content, so doesn't belong here
 
 test_targets = $(addsuffix .passed, $(specimen_names))
 
 test_script = $(srcdir)/runTest.conf
 EXTRA_DIST += runTest.conf
 
-$(test_targets): %.passed: % $(test_script)
-	@$(RTH_RUN) CC="$(CC)" CXX="$(CXX)" SPECIMEN="$<" $(test_script) $@
+$(test_targets): %.passed: translator
+	@$(RTH_RUN) CC="$(CC)" CXX="$(CXX)" SPECIMEN="$*" $(test_script) "$@"
 
 
 ########################################################################################################################
@@ -61,6 +72,7 @@ $(test_targets): %.passed: % $(test_script)
 
 check-local: $(test_targets)
 
+# Watch out for strange characters in these names.
 clean-local:
 	rm -f $(specimen_names)
 	rm -f $(test_targets) $(test_targets:.passed=.failed)
