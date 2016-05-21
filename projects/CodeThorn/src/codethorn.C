@@ -497,6 +497,32 @@ int main( int argc, char * argv[] ) {
     string outputFilename = "stgParallelProgram.dot";
     write_file(outputFilename, dotStg);
     cout << "generated " << outputFilename <<"."<<endl;
+
+    if (args.count("check-ltl")) {
+      string ltl_filename = args["check-ltl"].as<string>();
+      bool withCounterexample = false;
+      if(boolOptions["with-counterexamples"] || boolOptions["with-ltl-counterexamples"]) {  //output a counter-example input sequence for falsified formulae
+	withCounterexample = true;
+      }
+      timer.start();
+      PropertyValueTable* ltlResults;
+      SpotConnection spotConnection(ltl_filename);
+      cout << "STATUS: generating LTL results"<<endl;
+      bool spuriousNoAnswers = false;
+      spotConnection.checkLtlPropertiesParPro( *transitionGraph, withCounterexample, spuriousNoAnswers);
+      ltlResults = spotConnection.getLtlResults();
+      ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
+      cout << "=============================================================="<<endl;
+      ltlResults->printResultsStatistics();
+      cout << "=============================================================="<<endl;
+      if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
+	std::string csv_filename = args["csv-spot-ltl"].as<string>();
+	cout << "STATUS: writing ltl results to file: " << csv_filename << endl;
+	ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
+      }
+      delete ltlResults;
+      ltlResults = NULL;
+    }
     cout << "DEBUG: parseDotCfg test complete." << endl;
     exit(0);
   }

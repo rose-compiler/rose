@@ -148,6 +148,12 @@ codethorn_SOURCES = \
   SpotState.h \
   SpotSuccIter.C \
   SpotSuccIter.h \
+  ParProSpotTgba.C \
+  ParProSpotTgba.h \
+  ParProSpotState.C \
+  ParProSpotState.h \
+  ParProSpotSuccIter.C \
+  ParProSpotSuccIter.h \
   StateRepresentations.C           \
   StateRepresentations.h           \
   Timer.cpp                        \

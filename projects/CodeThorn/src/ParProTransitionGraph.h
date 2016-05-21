@@ -47,7 +47,7 @@ namespace SPRAY {
     void add(ParProTransition transition);
     void setStartState(const ParProEState* state) { _startState = state; } 
     const ParProEState* getStartState() { return _startState; } 
-    ParProTransitions succ(ParProEState* source);
+    ParProTransitions succ(const ParProEState* source);
     EStateTransitionMap* getOutEdgesMap() { return &_outEdges; }
     size_t size();
     bool isPrecise() { return _preciseStg; }

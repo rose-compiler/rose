@@ -38,7 +38,7 @@ void ParProTransitionGraph::add(ParProTransition transition) {
   }
 }
 
-ParProTransitions ParProTransitionGraph::succ(ParProEState* source) {
+ParProTransitions ParProTransitionGraph::succ(const ParProEState* source) {
   return _outEdges[source];
 }
 
