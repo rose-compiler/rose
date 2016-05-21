@@ -1497,7 +1497,7 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
   }
 
   // NEW CONSTRUCTOR
-  string constructorAllDataMembers;
+  string constructorAllDataMembers="/* ALIEN2 */";
   // generate new constructor only for Untyped nodes.
   if(node.baseName.substr(0,7)=="Untyped") {
     cout<<"Generating constructor implementation for "<<node.baseName<<endl;
@@ -1506,6 +1506,7 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
     constructorAllDataMembers+=" */";
   }
   constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ALL_DATA_MEMBERS",constructorAllDataMembers);
+
   returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
 }
 
@@ -1912,6 +1913,7 @@ Grammar::editSubstitution ( AstNodeClass & node, const StringUtility::FileWithLi
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterListString);
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_BODY",constructorBodyString);
      editString = GrammarString::copyEdit (editString,"$CLASSTAG",node.getTagName());
+     editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_ALL_DATA_MEMBERS","/* ALIEN1 */");
 
   // edit the suffix of the $CLASSNAME (separate from the $GRAMMAR_PREFIX_)
   // printf ("node.getToken().getName() = %s \n",node.getToken().getBaseName());
@@ -2132,6 +2134,7 @@ Grammar::buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // (which is why we could not have build it with the access functions)
 
      StringUtility::FileWithLineNumbers editStringMiddleNodeDataMemberFunctions = buildConstructor (node);
+     cout<<"EDIT:"<<endl<<toString(editStringMiddleNodeDataMemberFunctions)<<"----------------------"<<endl;
 
   // printf ("editStringMiddleNodeDataMemberFunctions = %s \n",editStringMiddleNodeDataMemberFunctions);
 

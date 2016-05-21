@@ -40,3 +40,10 @@ buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outp
 ->buildConstructor (node);
   ->constructorLoopBody(...,node,...)
     ->node.buildConstructorBodyForAllDataMembers();
+
+---
+
+In function Grammar::editSubstitution all $variables in grammarConstructorDefinitionMacros.macro must be set as well (including $CONSTRUCTOR_ALL_DATA_MEMBERS).
+
+buildConstructorWithoutSourcePositionInformation.C: (copy&paste from grammar.C)
+one more case of CONSTRUCTOR_ALL_DATA_MEMBERS
