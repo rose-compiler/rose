@@ -37,6 +37,7 @@
 #include "Evaluator.h"
 #include "DotGraphCfgFrontend.h"
 #include "ParProAnalyzer.h"
+#include "PromelaCodeGenerator.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -468,6 +469,13 @@ int main( int argc, char * argv[] ) {
     DotGraphCfgFrontend dotGraphCfgFrontend;
     string filename = args["cfg-dot-input"].as<string>();
     CfgsAndAnnotationMap cfgsAndMap = dotGraphCfgFrontend.parseDotCfgs(filename);
+    cout << "DEBUG: generating PROMELA code..." << endl;
+    PromelaCodeGenerator codeGenerator;
+    string promelaCode = codeGenerator.generateCode(cfgsAndMap);
+    cout << "DEBUG: done." << endl;
+    string promelaOutputFilename = "promelaCode.pml";
+    write_file(promelaOutputFilename, promelaCode);
+    cout << "generated " << promelaOutputFilename <<"."<<endl;
     list<Flow> cfgs = cfgsAndMap.first;
     EdgeAnnotationMap edgeAnnotationMap = cfgsAndMap.second;
     int counter = 0;

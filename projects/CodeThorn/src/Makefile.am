@@ -42,6 +42,7 @@ libspray_la_SOURCES=\
  NumberIntervalLattice.h \
  PASolver1.h \
  PointerAnalysisInterface.h \
+ PromelaCodeGenerator;h \
  RDAnalysis.h \
  RDAstAttribute.h \
  RDTransferFunctions.h \
@@ -73,6 +74,7 @@ libspray_la_SOURCES=\
  NumberIntervalLattice.C \
  PASolver1.C \
  PointerAnalysisInterface.C \
+ PromelaCodeGenerator.C \
  PropertyState.C \
  RDAnalysis.C \
  RDAstAttribute.C \
