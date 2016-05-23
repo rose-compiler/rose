@@ -1255,7 +1255,8 @@ Grammar::buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & n
     GrammarString& dataMember = **gIt;
     string dataMemberParameter=dataMember.getConstructorPrototypeParameterString();
     string filter="static";
-    if(dataMemberParameter.substr(0,filter.size())!=filter) {
+    bool dataMemberIsStatic=dataMemberParameter.substr(0,filter.size())!=filter;
+    if(!isFilteredMemberVariable(dataMember.variableNameString)&&!dataMemberIsStatic) {
       if(generatedParam>0)
         result+=",";
       result+=dataMemberParameter;
@@ -1407,7 +1408,9 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
                string typeNameOfInterest="SgUntyped";
                if(className.substr(0,typeNameOfInterest.size())==typeNameOfInterest) {
                  string constructorParameterString_3 = buildConstructorParameterListStringForAllDataMembers(node);
-                 constructorPrototype = constructorPrototype + "/* NEW CONSTRUCTOR:TODO      " + string(className) + "(" + constructorParameterString_3 + ");*/ \n";
+                 if(constructorParameterString_3!="") {
+                   constructorPrototype = constructorPrototype + string(className) + "(" + constructorParameterString_3 + ");\n";
+                 }
                }
                
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
@@ -1496,14 +1499,21 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
   }
 
-  // NEW CONSTRUCTOR
+  // NEW CONSTRUCTOR: generate IMPLEMENTATION
   string constructorAllDataMembers="/* ALIEN2 */";
   // generate new constructor only for Untyped nodes.
   if(node.baseName.substr(0,7)=="Untyped") {
     cout<<"Generating constructor implementation for "<<node.baseName<<endl;
-    constructorAllDataMembers+="/* NEW CONSTRUCTOR: IMPLEMENTATION TODO:\n";
-    constructorAllDataMembers+=node.buildConstructorBodyForAllDataMembers();
-    constructorAllDataMembers+=" */";
+    string className=node.getName();
+    string constructorClassName=className+"::"+className;
+    string constructorParameters
+      =buildConstructorParameterListStringForAllDataMembers(node);
+    if(constructorParameters!="") {
+      string constructorImpl="/* CONSTRUCTOR-IMPLEMENTATION:\n";
+      constructorImpl+=node.buildConstructorBodyForAllDataMembers();
+      constructorImpl+=" */";
+      constructorAllDataMembers=constructorClassName+constructorParameters+"{\n"+constructorImpl+"}\n";
+    }
   }
   constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ALL_DATA_MEMBERS",constructorAllDataMembers);
 
@@ -2134,7 +2144,6 @@ Grammar::buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // (which is why we could not have build it with the access functions)
 
      StringUtility::FileWithLineNumbers editStringMiddleNodeDataMemberFunctions = buildConstructor (node);
-     cout<<"EDIT:"<<endl<<toString(editStringMiddleNodeDataMemberFunctions)<<"----------------------"<<endl;
 
   // printf ("editStringMiddleNodeDataMemberFunctions = %s \n",editStringMiddleNodeDataMemberFunctions);
 
@@ -3524,12 +3533,6 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
       stringListIterator++) {
     if ( (*stringListIterator)->getToBeTraversed() == DEF_TRAVERSAL) {
       string stype=typeStringOfGrammarString(*stringListIterator);
-   // GB (8/16/2007): Fixed this condition. It did not count SgProject::p_fileList, which is a pointer to a container, and
-   // possibly other pointers to containers.
-   // if( (stype.find("*") == string::npos) // not found, not a pointer
-   // && (stype.find("List") == stype.size()-4) ) // postfix
-   // MS 2013: fixed: Pointers to containers are not containers but singleDataMembers instead)
-   //   if (isSTLContainerPtr(stype.c_str()) || isSTLContainer(stype.c_str())) {
       if (isSTLContainer(stype.c_str())) {
         info.numContainerMembers++;
       } else {
