@@ -503,7 +503,7 @@ Grammar::setUpStatements ()
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement        |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine       | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement |
-          StaticAssertionDeclaration              | MicrosoftAttributeDeclaration, 
+          StaticAssertionDeclaration              | MicrosoftAttributeDeclaration /*| ClassPropertyList |*/, 
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -521,7 +521,8 @@ Grammar::setUpStatements ()
              OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
-             JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt /* | JavaPackageDeclaration */,
+             JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt                |
+             AtomicStmt                | WhenStmt /* | JavaPackageDeclaration */,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
