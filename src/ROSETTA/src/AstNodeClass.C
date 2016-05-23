@@ -260,7 +260,9 @@ AstNodeClass::buildConstructorBodyForAllDataMembers() {
        stringListIterator != localList.end();
        stringListIterator++ ) {
     string variableNameString = (*stringListIterator)->getVariableNameString();
-    returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
+    if(!associatedGrammar->isFilteredMemberVariable(variableNameString)) {
+      returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
+    }
   }
   return returnString;
 }
