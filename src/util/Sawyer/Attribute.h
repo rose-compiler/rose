@@ -205,7 +205,7 @@ typedef boost::bad_any_cast WrongQueryType;
  *  at a higher level. The default is to synchronize access if %Sawyer is configured with multi-thread support.  The @p SyncTag
  *  template argument should be either @ref MultiThreadedTag or @ref SingleThreadedTag. */
 template<class SyncTag = SAWYER_THREAD_TAG>
-class SAWYER_EXPORT Storage {
+class Storage {
 public:
     typedef SynchronizationTraits<SyncTag> Sync;
 
@@ -219,6 +219,7 @@ public:
      *
      *  Thread safety: This method is thread safe when synchronization is enabled. */
     Storage() {}
+    ~Storage() {}                                       // possibly required for MSVC linking
 
     /** Copy constructor.
      *
