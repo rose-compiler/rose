@@ -54,7 +54,7 @@ specimen_cxx_uc_extensions =			\
     suffix_03.C
 
 # Input file names with upper-case extensions suitable for compilation with a C (or C++) compiler.
-specimen_cxx_uc_extensions =
+specimen_c_uc_extensions =
 
 
 # Strange names suitable for compilation with a C (or C++) compiler. See comment above about escapes.
