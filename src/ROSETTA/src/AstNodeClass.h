@@ -224,7 +224,7 @@ class AstNodeClass
   std::string buildConstructorBody( bool withInitializers, ConstructParamEnum config );
 
   // builds a constructor body for passing all data members as parameters
-  std::string buildConstructorBodyForAllDataMembers();
+  std::string buildConstructorBodyForEssentialDataMembers();
 
   // AJ ( 10/26/2004)
   // Builds the destructor body
@@ -387,8 +387,16 @@ class AstNodeClass
   
   // MS (5/27/2015)
   std::string outputFields();
-  bool generateAllDataMembersConstructor;
-  bool generateEnforcedDefaultConstructor;
+
+ public:
+  // MS (5/25/2016)
+  void setGenerateEssentialDataMembersConstructorImplementation(bool);
+  void setGenerateEnforcedDefaultConstructorImplementation(bool);
+  bool getGenerateEssentialDataMembersConstructorImplementation();
+  bool getGenerateEnforcedDefaultConstructorImplementation();
+ private:
+  bool generateEssentialDataMembersConstructorImplementation;
+  bool generateEnforcedDefaultConstructorImplementation;
 };
 
 #endif
