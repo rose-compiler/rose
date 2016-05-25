@@ -365,7 +365,7 @@ class Grammar
                                                std::vector<GrammarString *> & constructorParameterList,
                                                ConstructParamEnum config );
           std::string buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool *complete = 0 );
-          std::string buildConstructorParameterListStringForAllDataMembers(AstNodeClass& node);
+          std::string buildConstructorParameterListStringForAllDataMembers(AstNodeClass& node, bool withInitializers);
 
        // DQ 11/6/2006): Support for building newer from of constructors (withouth source position information).
           void markNodeForConstructorWithoutSourcePositionInformation ( AstNodeClass & node );
@@ -656,6 +656,9 @@ class Grammar
 
        // DQ (5/18/2007): support for documentation to handle mapping to KDM
           std::string outputClassesAndFields ( AstNodeClass & node );
+   private:
+          bool nameHasPrefix(std::string name, std::string prefix);
+
    };
 
 #endif // endif for ROSETTA_GRAMMAR_H

@@ -387,6 +387,8 @@ class AstNodeClass
   
   // MS (5/27/2015)
   std::string outputFields();
+  bool generateAllDataMembersConstructor;
+  bool generateEnforcedDefaultConstructor;
 };
 
 #endif
