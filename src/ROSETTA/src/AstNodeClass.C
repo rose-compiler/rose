@@ -54,7 +54,9 @@ AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const st
      automaticGenerationOfConstructor(true),
      automaticGenerationOfDataAccessFunctions(true),
      automaticGenerationOfCopyFunction(true),
-     associatedGrammar(&X)
+     associatedGrammar(&X),
+     generateAllDataMembersConstructor(false),
+     generateEnforcedDefaultConstructor(false)
    {
      for (size_t i = 0; i < subclasses.size(); ++i) {
        // If the next assertion fails, it's probably because you have an IR type that appears in more than one
@@ -255,9 +257,16 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
 string
 AstNodeClass::buildConstructorBodyForAllDataMembers() {
   string returnString;
-  vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
-  for( vector<GrammarString *>::iterator stringListIterator = localList.begin();
-       stringListIterator != localList.end();
+  //vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+
+  vector<GrammarString *> includeList;
+  vector<GrammarString *> excludeList;
+  // now generate the additions to the lists from the parent node subtree lists
+  associatedGrammar->generateStringListsFromLocalLists ( *this, includeList, excludeList, &AstNodeClass::getMemberDataPrototypeList );
+
+  //  for( vector<GrammarString *>::iterator stringListIterator = localList.begin();
+  for( vector<GrammarString *>::iterator stringListIterator = includeList.begin();
+       stringListIterator != includeList.end();
        stringListIterator++ ) {
     string variableNameString = (*stringListIterator)->getVariableNameString();
     if(!associatedGrammar->isFilteredMemberVariable(variableNameString)) {

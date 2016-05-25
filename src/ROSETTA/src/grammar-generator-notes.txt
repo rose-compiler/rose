@@ -47,3 +47,7 @@ In function Grammar::editSubstitution all $variables in grammarConstructorDefini
 
 buildConstructorWithoutSourcePositionInformation.C: (copy&paste from grammar.C)
 one more case of CONSTRUCTOR_ALL_DATA_MEMBERS
+
+---
+
+isFilteredMemberVariable: function is shared in grammar generation and constructor generation. This enforces the matching of parameters.
