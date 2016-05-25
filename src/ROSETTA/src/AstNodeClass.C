@@ -55,8 +55,8 @@ AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const st
      automaticGenerationOfDataAccessFunctions(true),
      automaticGenerationOfCopyFunction(true),
      associatedGrammar(&X),
-     generateAllDataMembersConstructor(false),
-     generateEnforcedDefaultConstructor(false)
+     generateEssentialDataMembersConstructorImplementation(false),
+     generateEnforcedDefaultConstructorImplementation(false)
    {
      for (size_t i = 0; i < subclasses.size(); ++i) {
        // If the next assertion fails, it's probably because you have an IR type that appears in more than one
@@ -255,7 +255,7 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
    }
 
 string
-AstNodeClass::buildConstructorBodyForAllDataMembers() {
+AstNodeClass::buildConstructorBodyForEssentialDataMembers() {
   string returnString;
   //vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
 
@@ -2284,3 +2284,18 @@ AstNodeClass::typeEvaluationName ( TypeEvaluation x )
      return s;
    }
 
+void AstNodeClass::setGenerateEssentialDataMembersConstructorImplementation(bool flag) {
+  generateEssentialDataMembersConstructorImplementation=flag;
+}
+
+void AstNodeClass::setGenerateEnforcedDefaultConstructorImplementation(bool flag) {
+  generateEnforcedDefaultConstructorImplementation=flag;
+}
+
+bool AstNodeClass::getGenerateEssentialDataMembersConstructorImplementation() {
+  return generateEssentialDataMembersConstructorImplementation;
+}
+
+bool AstNodeClass::getGenerateEnforcedDefaultConstructorImplementation() {
+  return generateEnforcedDefaultConstructorImplementation;
+}

@@ -29,4 +29,4 @@ $CONSTRUCTOR_BODY
    }
 
 // Generated constructor (all data members)
-$CONSTRUCTOR_ALL_DATA_MEMBERS
+$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS

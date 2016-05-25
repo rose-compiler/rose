@@ -1241,7 +1241,7 @@ Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarStri
 // this function is used when creating the prototype for the all-data-members constructor.
 // it creates the string that is inserted into classname::classname(<string-goes-here>)
 string
-Grammar::buildConstructorParameterListStringForAllDataMembers(AstNodeClass& node, bool withInitializers) {
+Grammar::buildConstructorParameterListStringForEssentialDataMembers(AstNodeClass& node, bool withInitializers) {
   string result;
   vector<GrammarString *> includeList;
   vector<GrammarString *> excludeList;
@@ -1412,21 +1412,21 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
                string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
-               /* generate constructor prototype only for all data members constructor */ 
+               /* ESSENTIAL DATA MEMBERS CONSTRUCTOR: generate prototype for all data members constructor */ 
                if(nameHasPrefix(className,"SgUntyped")) {
-                 string constructorParameterString_3 = buildConstructorParameterListStringForAllDataMembers(node,false);
+                 string constructorParameterString_3 = buildConstructorParameterListStringForEssentialDataMembers(node,false);
                  // ensure that the already generated constructor is not generated again
                  if(constructorParameterString_2!="") {
-                   constructorPrototype+=string(className) + "() {}\n";
-                   node.generateEnforcedDefaultConstructor=true;
+                   constructorPrototype+=string(className) + "();\n";
+                   node.setGenerateEnforcedDefaultConstructorImplementation(true);
                  } else {
-                   node.generateEnforcedDefaultConstructor=false;
+                   node.setGenerateEnforcedDefaultConstructorImplementation(false);
                  }
                  if(constructorParameterString_3!=constructorParameterString_2) {
                    constructorPrototype += string(className) + "(" + constructorParameterString_3 + ");\n";
-                   node.generateAllDataMembersConstructor=true;
+                   node.setGenerateEssentialDataMembersConstructorImplementation(true);
                  } else {
-                   node.generateAllDataMembersConstructor=false;
+                   node.setGenerateEssentialDataMembersConstructorImplementation(false);
                  }
                }
                
@@ -1517,27 +1517,30 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
   }
 
   // NEW CONSTRUCTOR: generate IMPLEMENTATION
-  string constructorAllDataMembers;
+  string constructorEssentialDataMembers;
   // generate new constructor only for Untyped nodes.
-  if(node.generateAllDataMembersConstructor) {
-     if(node.baseName.substr(0,7)=="Untyped") {
-       //cout<<"Generating constructor implementation for "<<node.baseName<<endl;
-       string className=node.getName();
-       string constructorClassName=className+"::"+className;
-       string constructorParameters
-         =buildConstructorParameterListStringForAllDataMembers(node,false);
-       // check whether constructor already exists
-       if(constructorParameters!="") {
-         string constructorImpl=node.buildConstructorBodyForAllDataMembers();
-         constructorAllDataMembers=
+  if(node.baseName.substr(0,7)=="Untyped") {
+    string className=node.getName();
+    string constructorClassName=className+"::"+className;
+    if(node.getGenerateEnforcedDefaultConstructorImplementation()) {
+      constructorEssentialDataMembers+=constructorClassName+" () /* ESSENTIAL DATA MEMBERS ENFORCED DEFAULT CONSTRUCTOR */ {}\n";
+    }
+    if(node.getGenerateEssentialDataMembersConstructorImplementation()) {
+      //cout<<"Generating constructor implementation for "<<node.baseName<<endl;
+      string constructorParameters
+        =buildConstructorParameterListStringForEssentialDataMembers(node,false);
+      // check whether constructor already exists
+      if(constructorParameters!="") {
+        string constructorImpl=node.buildConstructorBodyForEssentialDataMembers();
+        constructorEssentialDataMembers+=
            constructorClassName
            +"("+constructorParameters+")"
-           +" /* ALL DATA MEMBERS CONSTRUCTOR */ "
+           +" /* ESSENTIAL DATA MEMBERS CONSTRUCTOR */ "
            +"{\n"+constructorImpl+"}\n";
-       }
-     }
+      }
+    }
   }
-  constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ALL_DATA_MEMBERS",constructorAllDataMembers);
+  constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS",constructorEssentialDataMembers);
   
   returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
 }
@@ -1945,7 +1948,7 @@ Grammar::editSubstitution ( AstNodeClass & node, const StringUtility::FileWithLi
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterListString);
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_BODY",constructorBodyString);
      editString = GrammarString::copyEdit (editString,"$CLASSTAG",node.getTagName());
-     editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_ALL_DATA_MEMBERS","");
+     editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS","");
 
   // edit the suffix of the $CLASSNAME (separate from the $GRAMMAR_PREFIX_)
   // printf ("node.getToken().getName() = %s \n",node.getToken().getBaseName());
