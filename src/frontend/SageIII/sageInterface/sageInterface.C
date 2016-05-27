@@ -21114,7 +21114,10 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                                                   printf ("In SageInterface::isEquivalentType(): loop: Process default case: X_element_type = %p = %s Y_element_type = %p = %s \n",
                                                        X_element_type,X_element_type->class_name().c_str(),Y_element_type,Y_element_type->class_name().c_str());
 #endif
-                                                  isSame = true;
+                                               // DQ (5/26/2016): It is not good enough that the variants match.
+                                               // isSame = true;
+                                               // isSame = isEquivalentType(X_element_type,Y_element_type);
+                                                  isSame = (X_element_type == Y_element_type);
                                                 }
                                                else
                                                 {

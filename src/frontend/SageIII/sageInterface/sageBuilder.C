@@ -2766,7 +2766,8 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
         }
 
 #if 0
-     printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s templateArgumentsList = %p templateParameterList = %p \n",scope,scope != NULL ? scope->class_name().c_str() : "NULL",templateArgumentsList,templateParameterList);
+     printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s templateArgumentsList = %p templateParameterList = %p \n",
+          scope,scope != NULL ? scope->class_name().c_str() : "NULL",templateArgumentsList,templateParameterList);
 #endif
 
   // ROSE_ASSERT(XXX_name.is_null() == false);
@@ -3829,6 +3830,9 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* r
         }
        else
         {
+#if 0
+          printf ("In SageBuilder::buildNondefiningFunctionDeclaration(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+#endif
        // DQ (11/27/2011): Added support to generate template declarations in the AST (this is part of a common API to make the build functions support more uniform).
           if (buildTemplateInstantiation == true)
              {
