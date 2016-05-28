@@ -383,7 +383,12 @@ NEW_TESTCODES = \
    test2016_21.C \
    test2016_25.C \
    test2016_26.C \
-   test2016_27.C 
+   test2016_27.C \
+   test2016_28.C \
+   test2016_29.C \
+   test2016_30.C \
+   test2016_31.C \
+   test2016_32.C 
 
 # DQ (5/8/2016): Example of large cpp preprocessed file that is failing to unparse correctly.
 # Previously these were failing in the frontend (now fixed).
