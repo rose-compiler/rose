@@ -4000,17 +4000,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_Cxx_only(false);
         }
 
-
-#ifdef BACKEND_CXX_IS_CLANG_COMPILER
-   #if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
-     // OK, we are supporting Clang using EDG 4.9 and greater.
-   #else
-        printf ("\nERROR: Clang compiler as backend to ROSE is not supported unless using EDG 4.9 version \n");
-        printf ("       or greater (use --enable-edg_version=4.9 or greater to configure ROSE). \n\n");
-        exit(1);
-   #endif
-#endif
-
 #if 0
   // DQ (2/4/2015): Note that the use of "++" is a problem for the CommandlineProcessing::isOption() function's regex engin (I think).
   // The larger point is that these options with "++" are not being recognized, so we will have to search for "-std=c++11" directly 

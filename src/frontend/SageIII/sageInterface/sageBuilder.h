@@ -1267,7 +1267,21 @@ ROSE_DLL_API SgFinishStmt* buildFinishStmt(SgBasicBlock *body);
 //! MH (6/11/2014): Added at support
 ROSE_DLL_API SgAtStmt* buildAtStmt(SgExpression *expression, SgBasicBlock *body);
 
+// MH (11/12/2014): Added atomic support
+ROSE_DLL_API SgAtomicStmt* buildAtomicStmt(SgBasicBlock *body);
+
+ROSE_DLL_API SgWhenStmt* buildWhenStmt(SgExpression *expression, SgBasicBlock *body);
+
+// MH (9/16/2014): Added at support
+ROSE_DLL_API SgAtExp* buildAtExp(SgExpression *expression, SgBasicBlock *body);
+
+// MH (11/7/2014): Added finish expression support
+ROSE_DLL_API SgFinishExp* buildFinishExp(SgExpression *expression, SgBasicBlock *body);
+
 ROSE_DLL_API SgHereExp* buildHereExpression();
+
+ROSE_DLL_API SgDotDotExp* buildDotDotExp();
+
 
 // driscoll6 (6/9/2011): Adding support for try stmts.
 //! Build a try statement.

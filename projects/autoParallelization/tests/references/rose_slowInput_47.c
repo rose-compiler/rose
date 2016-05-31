@@ -28,17 +28,17 @@ void StressZero(real8 *newSxx,real8 *newSyy,real8 *newSzz,real8 *newTxy,real8 *n
     }
 #if 1
     if (newSxx[i] < stress2 && newSxx[i] > nstres2) 
-      newSxx[i] = 0.;
+      newSxx[i] = 0.0;
     if (newSyy[i] < stress2 && newSyy[i] > nstres2) 
-      newSyy[i] = 0.;
+      newSyy[i] = 0.0;
     if (newSzz[i] < stress2 && newSzz[i] > nstres2) 
-      newSzz[i] = 0.;
+      newSzz[i] = 0.0;
     if (newTxy[i] < stress2 && newTxy[i] > nstres2) 
-      newTxy[i] = 0.;
+      newTxy[i] = 0.0;
     if (newTxz[i] < stress2 && newTxz[i] > nstres2) 
-      newTxz[i] = 0.;
+      newTxz[i] = 0.0;
     if (newTyz[i] < stress2 && newTyz[i] > nstres2) 
-      newTyz[i] = 0.;
+      newTyz[i] = 0.0;
 #endif
   }
 }
