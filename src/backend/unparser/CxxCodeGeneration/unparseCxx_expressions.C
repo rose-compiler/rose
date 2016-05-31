@@ -2839,9 +2839,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      ROSE_ASSERT(decl != NULL);
      if (decl->get_parent() == NULL)
         {
-          printf ("Error: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) \n",decl,decl->class_name().c_str(),decl->get_name().str(),mfd->get_name().str());
+          printf ("Note: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) (OK for index expresion in array type) \n",
+               decl,decl->class_name().c_str(),decl->get_name().str(),mfd->get_name().str());
         }
-     ROSE_ASSERT(decl->get_parent() != NULL);
+  // DQ (5/30/2016): This need not have a parent if it is an expression in index for an array type (see test2016_33.C).
+  // ROSE_ASSERT(decl->get_parent() != NULL);
 
      bool print_colons = false;
 
