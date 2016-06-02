@@ -2624,25 +2624,29 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
 #if 0
                     printf ("quotedFilename = %s \n",quotedFilename.c_str());
 #endif
-                    ROSE_ASSERT(quotedFilename[0] == '\"');
-                    ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
-                    std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+                 // DQ (6/1/2016): Fix for case of trailing spaces after the line number (no quoted file name).  See test2016_17.c.
+                 // ROSE_ASSERT(quotedFilename[0] == '\"');
+                    if (quotedFilename[0] == '\"')
+                       {
+                         ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+                         std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
 #if 0
-                    printf ("filename = %s \n",filename.c_str());
+                         printf ("filename = %s \n",filename.c_str());
 #endif
-                 // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
-                    Sg_File_Info::addFilenameToMap(filename);
+                      // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
+                         Sg_File_Info::addFilenameToMap(filename);
 
-                    int fileId = Sg_File_Info::getIDFromFilename(filename);
+                         int fileId = Sg_File_Info::getIDFromFilename(filename);
 
-                    if (SgProject::get_verbose() > 1)
-                       {
-                         printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
-                       }
+                         if (SgProject::get_verbose() > 1)
+                            {
+                              printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
+                            }
 
-                    if (filenameIdSet.find(fileId) == filenameIdSet.end())
-                       {
-                         filenameIdSet.insert(fileId);
+                         if (filenameIdSet.find(fileId) == filenameIdSet.end())
+                            {
+                              filenameIdSet.insert(fileId);
+                            }
                        }
                   }
                  else
