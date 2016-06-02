@@ -204,6 +204,8 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( AstNodeClass & node 
                constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
              }
 
+          constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS","");
+
           returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
         }
 
