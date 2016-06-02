@@ -645,6 +645,8 @@ selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Se
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
+    ROSE_INITIALIZE;                                    // see rose::initialize
+
     // Use a partitioning engine since this makes this tool much easier to write.
     P2::Engine engine;
 

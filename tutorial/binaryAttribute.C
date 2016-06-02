@@ -603,6 +603,9 @@ method_3() {
 
 int
 main() {
+    // Initialize and check compatibility. See rose::initialize
+    ROSE_INITIALIZE;
+
     example_usage();
     method_1();
     method_2();

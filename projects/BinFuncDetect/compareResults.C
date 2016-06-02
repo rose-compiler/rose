@@ -220,7 +220,7 @@ listInstructions(const InstructionProvider::Ptr &insns, const MemoryMap &map,
 }
 
 int main(int argc, char *argv[]) {
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 
