@@ -629,6 +629,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
               local_commandLineArgumentList);
   }
 
+  // Add "-D_REENTRANT" if "-pthread" is present before we save the command-line or do any other processing.
+  vector<string>::iterator pthread =
+      find(local_commandLineArgumentList.begin(), local_commandLineArgumentList.end(), "-pthread");
+  if (pthread != local_commandLineArgumentList.end())
+      local_commandLineArgumentList.insert(++pthread, "-D_REENTRANT");
+
   // Save a deep copy fo the original command line input the the translator
   // pass in out copies of the argc and argv to make clear that we don't modify argc and argv
      set_originalCommandLineArgumentList( local_commandLineArgumentList );
