@@ -102,6 +102,7 @@ AC_DEFINE_UNQUOTED(ROSE_CONFIG_TOKEN, ["$ROSE_CONFIG_TOKEN"],
     [Encapsulates some important configuration details for rose::initialize])
 
 dnl Fail gracefully for blacklisted dependencies and other situations
+ROSE_CONFIGURE_SECTION([Checking blacklisted configurations])
 ROSE_SUPPORT_BLACKLIST
 
 dnl Now generate all the output files (specified above)
