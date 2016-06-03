@@ -81,7 +81,7 @@ initialize(const char *configToken) {
 #if SAWYER_MULTI_THREADED
     boost::call_once(initFlag, init);
 #else
-    if (!isInitialized())
+    if (!::rose::isInitialized())                       // qualified for sake of Microsoft
         init();
 #endif
 }
