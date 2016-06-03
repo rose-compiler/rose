@@ -58,16 +58,19 @@ public:
         if (configToken && *configToken && !checkConfigToken(configToken)) {
             Sawyer::Message::Stream fatal(mlog[FATAL]);
             fatal <<"mismatched headers and libraries\n"
-                  <<"    headers report  \"" <<StringUtility::cEscape(configToken) <<"\"\n"
-                  <<"    library reports \"" <<StringUtility::cEscape(ROSE_CONFIG_TOKEN) <<"\"\n"
-                  <<"This error is usually caused by compiling a program that uses ROSE and\n"
-                  <<"specifying inconsistent locations for the ROSE header file and ROSE\n"
-                  <<"library, or the headers and libraries for ROSE dependencies.  Please\n"
-                  <<"check your compiler version, especially its \"-I\" and \"-L\" switches,\n"
-                  <<"to ensure it's compatible with how the ROSE library was built. The rose-config\n"
-                  <<"command-line tool can give you this information if it has been installed.\n";
-            throw std::runtime_error("ROSE configuration mismatch: given \"" +
-                                     StringUtility::cEscape(configToken) + "\" but have \"" +
+                  <<"    application reports  \"" <<StringUtility::cEscape(configToken) <<"\"\n"
+                  <<"    library reports      \"" <<StringUtility::cEscape(ROSE_CONFIG_TOKEN) <<"\"\n"
+                  <<"This error is usually caused by specifying inconsistent locations\n"
+                  <<"for the ROSE header files and ROSE library (or the headers and\n"
+                  <<"libraries that are ROSE dependencies) when compiling a program that\n"
+                  <<"uses ROSE.  Please check your compiler version, especially its \"-I\"\n"
+                  <<"and \"-L\" switches, to ensure it's compatible with how the ROSE\n"
+                  <<"library was built.  The rose-config command-line tool can give you\n"
+                  <<"this information if it has been installed.  If you are a ROSE\n"
+                  <<"developer, this error can happen if you updated your source tree\n"
+                  <<"but did not do a clean build.\n";
+            throw std::runtime_error("ROSE configuration mismatch: caller said \"" +
+                                     StringUtility::cEscape(configToken) + "\" but library has \"" +
                                      StringUtility::cEscape(ROSE_CONFIG_TOKEN) + "\"");
         }
 
@@ -86,14 +89,12 @@ initialize(const char *configToken) {
 #endif
 }
 
-// FIXME[Robb Matzke 2016-05-31]: This is a no-op version
 bool
 isInitialized() {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return isInitialized_;
 }
 
-// FIXME[Robb Matzke 2016-05-31]: This is a no-op version
 bool
 checkConfigToken(const char *configToken) {
     return 0 == strcmp(configToken, ROSE_CONFIG_TOKEN);
