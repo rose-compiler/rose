@@ -78,14 +78,6 @@ dnl +--------------------------------------------------------------------------+
 dnl | ROSE Support
 dnl +--------------------------------------------------------------------------+
 
-dnl The ROSE_CONFIG_TOKEN is a C string (char const*) that is constructed during
-dnl configuration and inserted into the rosePublicConfig.h file. Users pass this
-dnl string to the rose::initialize function which checks it against the ROSE_CONFIG_TOKEN
-dnl that has been compiled into the library.  Any part of the configuration process
-dnl can add more data to the ROSE_CONFIG_TOKEN shell variable, which will become
-dnl the eventual value of the ROSE_CONFIG_TOKEN C-preprocessor macro.
-ROSE_CONFIG_TOKEN="AC_PACKAGE_NAME-AC_PACKAGE_VERSION"
-
 dnl This macro calls all of the other macros that used to be in the body of
 dnl this configure.in file.  This permits other projects to call this same
 dnl macro and setup the variables and macros that an external project may
@@ -109,6 +101,8 @@ fi
 AC_DEFINE_UNQUOTED(ROSE_CONFIG_TOKEN, ["$ROSE_CONFIG_TOKEN"],
     [Encapsulates some important configuration details for rose::initialize])
 
+dnl Fail gracefully for blacklisted dependencies and other situations
+ROSE_SUPPORT_BLACKLIST
 
 dnl Now generate all the output files (specified above)
 ROSE_CONFIGURE_SECTION([Generating files])
