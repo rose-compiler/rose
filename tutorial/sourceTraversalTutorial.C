@@ -46,6 +46,9 @@ void visitorTraversal::analyzePath(vector<VertexID>& pth) {
 
 
 int main(int argc, char *argv[]) {
+  // Initialize and check compatibility. See rose::initialize
+  ROSE_INITIALIZE;
+
   /* First you need to produce the project file*/
   SgProject* proj = frontend(argc,argv);
   ROSE_ASSERT (proj != NULL); 

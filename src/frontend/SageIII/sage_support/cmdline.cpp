@@ -3497,7 +3497,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // code in sla++.C is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API,
   // specifically the part about being able to return an array of values.
   //
-     Diagnostics::initialize();                         // this maybe should go somewhere else?
+     rose::initialize(NULL);
      static const std::string removalString = "(--REMOVE_ME--)";
      for (size_t i=0; i<argv.size(); ++i) {
          if ((0==strcmp(argv[i].c_str(), "-rose:log")) && i+1 < argv.size()) {

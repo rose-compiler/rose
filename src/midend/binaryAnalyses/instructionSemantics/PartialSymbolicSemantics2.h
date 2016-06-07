@@ -790,16 +790,7 @@ protected:
             Policy<State, SValue>::SHA1(unsigned char digest[20]) const
             {
 #ifdef ROSE_HAVE_GCRYPT_H
-                /* libgcrypt requires gcry_check_version() to be called "before any other function in the library", but doesn't
-                 * include an API function for determining if this has already been performed. It also doesn't indicate what
-                 * happens when it's called more than once, or how expensive the call is.  Therefore, instead of calling it
-                 * every time through this function, we'll just call it the first time. */
-                static bool initialized = false;
-                if (!initialized) {
-                    gcry_check_version(NULL);
-                    initialized = true;
-                }
-
+                // libgcrypt should have been initialized by rose::initialize already.
                 std::stringstream s;
                 RenameMap rmap;
                 print_diff(s, &rmap);
