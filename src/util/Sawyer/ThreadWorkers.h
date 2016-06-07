@@ -5,9 +5,8 @@
 
 
 
+#include <Sawyer/Exception.h>
 #include <Sawyer/Graph.h>
-#include <Sawyer/GraphAlgorithm.h>
-#include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/Stack.h>
 
@@ -22,8 +21,9 @@ namespace Sawyer {
 
 /** Work list with dependencies.
  *
- *  This class takes a lattice of work items. The vertices are the items that need to be worked on, and an edge from vertex @em
- *  a to vertex @em b means work on @em a depends on @em b having been completed.
+ *  This class takes a graph of tasks. The vertices are the tasks that need to be worked on, and an edge from vertex @em
+ *  a to vertex @em b means work on @em a depends on @em b having been completed.  Vertices that participate in a cycle cannot
+ *  be worked on since there is no way to resolve their dependencies; in this case, as much work as possible is performed.
  *
  *  See also, the @ref workInParallel function which is less typing since template parameters are inferred. */
 template<class DependencyGraph, class Functor>
@@ -53,26 +53,32 @@ public:
     /** Constructor that synchronously runs the work.
      *
      *  This constructor creates up to the specified number of worker threads to run the work described in the @p dependencies
-     *  (at least one thread, but not more than the number of items on which to work). If @p nWorkers is zero then the system's
-     *  hadware concurrency is used. The dependencies must be a forest of lattices or else an <code>std::runtime_error</code>
-     *  is thrown and no work is performed.
+     *  (at least one thread, but not more than the number of vertices in the graph). If @p nWorkers is zero then the system's
+     *  hadware concurrency is used. If the dependency graph contains a cycle then as much work as possible is performed
+     *  and then a @ref ContainsCycle exception is thrown.
      *
-     *  The lattice is copied into this class so that the class can modify it as work items are completed.  The @p functor can
-     *  be a class with @c operator(), a function pointer, or a lambda expression.  If a class is used, it must be copyable and
-     *  each worker thread will be given its own copy.  The functor is invoked with two arguments: the ID number of the work
-     *  item being processed, and a reference to a copy of the work item in the dependency graph.  The ID number is the vertex
-     *  ID number in the @p dependencies graph.
+     *  The dependency graph is copied into this class so that the class can modify it as tasks are completed.  The @p functor
+     *  can be a class with @c operator(), a function pointer, or a lambda expression.  If a class is used, it must be copyable
+     *  and each worker thread will be given its own copy.  The functor is invoked with two arguments: the ID number of the
+     *  task being processed, and a reference to a copy of the task (vertex value) in the dependency graph.  The ID number is
+     *  the vertex ID number in the @p dependencies graph.
      *
-     *  The constructor does not return until all work has been completed. This object can only perform work a single time. */
+     *  The constructor does not return until all possible non-cyclic work has been completed. This object can only perform
+     *  work a single time. */
     ThreadWorkers(const DependencyGraph &dependencies, size_t nWorkers, Functor functor)
         : hasStarted_(false), hasWaited_(false), nWorkers_(0), workers_(NULL), nItemsStarted_(0), nItemsFinished_(0),
           nWorkersRunning_(0), nWorkersFinished_(0) {
-        run(dependencies, nWorkers, functor);
+        try {
+            run(dependencies, nWorkers, functor);
+        } catch (const Exception::ContainsCycle&) {
+            delete[] workers_;
+            throw;                                      // destructor won't be called
+        }
     }
 
     /** Destructor.
      *
-     *  The destructor waits for work to complete before returning. */
+     *  The destructor waits for all possible non-cyclic work to complete before returning. */
     ~ThreadWorkers() {
         wait();
         delete[] workers_;
@@ -80,21 +86,18 @@ public:
 
     /** Start workers and return.
      *
-     *  This method verifies that the @p dependencies is a forest of lattices, the vertices of which are the items on which to
-     *  work, and the edges of which represent dependencies.  An edge from vertex @em a to vertex @em b means that work item
-     *  @em a cannot start until work on item @em b has finished.  If @p dependencies has cycles then an
-     *  <code>std::runtime_error</code> is thrown before any work begins.
+     *  This method saves a copy of the dependencies, initializes a work list, and starts worker threads.  The vertices of the
+     *  dependency graph are the tasks to be performed by the workers and the edges represent dependencies between the
+     *  tasks. An edge from vertex @em a to vertex @em b means that task @em a cannot start until work on task @em b has
+     *  finished.
      *
-     *  The work items in @p dependencies are processed by up to @p nWorkers threads created by this method and destroyed when
+     *  The tasks in @p dependencies are processed by up to @p nWorkers threads created by this method and destroyed when
      *  work is complete. This method creates at least one thread (if there's any work), but never more threads than the total
      *  amount of work. If @p nWorkers is zero then the system's hardware concurrency is used. It returns as soon as those
      *  workers are created.
      *
      *  Each object can perform work only a single time. */
     void start(const DependencyGraph &dependencies, size_t nWorkers, Functor functor) {
-        if (Container::Algorithm::graphContainsCycle(dependencies))
-            throw std::runtime_error("work dependency graph has cycles");
-
         boost::lock_guard<boost::mutex> lock(mutex_);
         if (hasStarted_)
             throw std::runtime_error("work can start only once per object");
@@ -110,7 +113,8 @@ public:
 
     /** Wait for work to complete.
      *
-     *  This call blocks until all work is completed. If no work has started yet then it returns immediately. */
+     *  This call blocks until all possible non-cyclic work is completed. If no work has started yet then it returns
+     *  immediately. */
     void wait() {
         boost::unique_lock<boost::mutex> lock(mutex_);
         if (!hasStarted_ || hasWaited_)
@@ -125,32 +129,35 @@ public:
         dependencies_.clear();
     }
 
-    /** Synchronously processes work items.
+    /** Synchronously processes tasks.
      *
-     *  This is simply a wrapper around @ref start and @ref wait.  It performs work synchronously, returning only after the
-     *  work has completed. */
+     *  This is simply a wrapper around @ref start and @ref wait.  It performs work synchronously, returning only after all
+     *  possible work has completed. If the dependency graph contained cycles then a @ref ContainsCycle exception is thrown
+     *  after all possible non-cyclic work is finished. */
     void run(const DependencyGraph &dependencies, size_t nWorkers, Functor functor) {
         start(dependencies, nWorkers, functor);
         wait();
+        if (dependencies_.nEdges() != 0)
+            throw Exception::ContainsCycle("task dependency graph contains cycle(s)");
     }
 
-    /** Test whether all work is finished.
+    /** Test whether all possible work is finished.
      *
-     *  Returns false if work is ongoing, true if work is finished or was never started. */
+     *  Returns false if work is ongoing, true if all possible non-cyclic work is finished or no work was ever started. */
     bool isFinished() {
         boost::lock_guard<boost::mutex> lock(mutex_);
         return !hasStarted_ || nWorkersFinished_ == nWorkers_;
     }
 
-    /** Number of work items remaining to run.
+    /** Number of tasks that have started.
      *
-     *  This is the number of work items that have been started or completed. */
+     *  This is the number of tasks that have been started, some of which may have completed already. */
     size_t nStarted() {
         boost::lock_guard<boost::mutex> lock(mutex_);
         return nItemsStarted_;
     }
 
-    /** Number of work items that have completed. */
+    /** Number of tasks that have completed. */
     size_t nFinished() {
         boost::lock_guard<boost::mutex> lock(mutex_);
         return nItemsFinished_;
@@ -191,14 +198,16 @@ private:
         while (1) {
             // Get the next item of work
             boost::unique_lock<boost::mutex> lock(mutex_);
-            while (nItemsStarted_ < dependencies_.nVertices() && workQueue_.isEmpty())
+            while (nItemsFinished_ < nItemsStarted_ && workQueue_.isEmpty())
                 workInserted_.wait(lock);
-            if (nItemsStarted_ >= dependencies_.nVertices()) {
+            if (nItemsFinished_ == nItemsStarted_ && workQueue_.isEmpty()) {
                 ++nWorkersFinished_;
                 return;
             }
+            ASSERT_forbid(workQueue_.isEmpty());
             size_t workItemId = workQueue_.pop();
-            typename DependencyGraph::VertexValue workItem = dependencies_.findVertex(workItemId)->value();
+            typename DependencyGraph::ConstVertexIterator workVertex = dependencies_.findVertex(workItemId);
+            typename DependencyGraph::VertexValue workItem = workVertex->value();
             ++nItemsStarted_;
 
             // Do the work
@@ -209,28 +218,26 @@ private:
             ++nItemsFinished_;
             --nWorkersRunning_;
 
-            // Adjust remove dependency edges from the dependency lattice
-            typename DependencyGraph::VertexIterator vertex = dependencies_.findVertex(workItemId);
-            std::set<typename DependencyGraph::ConstVertexIterator> candidateWorkItems;
-            BOOST_FOREACH (const typename DependencyGraph::Edge &edge, vertex->inEdges())
-                candidateWorkItems.insert(edge.source());
-            dependencies_.clearInEdges(vertex);
-
-            // For vertices that newly have no dependencies, add them to the work queue
+            // Look for more work as we remove some dependency edges.
             size_t newWorkInserted = 0;
-            BOOST_FOREACH (const typename DependencyGraph::ConstVertexIterator &candidate, candidateWorkItems) {
-                if (candidate->nOutEdges() == 0) {
-                    workQueue_.push(candidate->id());
+            BOOST_FOREACH (const typename DependencyGraph::Edge &edge, workVertex->inEdges()) {
+                typename DependencyGraph::ConstVertexIterator parent = edge.source();
+                if (1 == parent->nOutEdges()) {
+                    workQueue_.push(parent->id());
                     ++newWorkInserted;
                 }
             }
+            dependencies_.clearInEdges(workVertex);
             
             // Notify other workers
-            if (0 == newWorkInserted && workQueue_.isEmpty()) {
-                workInserted_.notify_all();
+            if (0 == newWorkInserted) {
+                if (workQueue_.isEmpty())
+                    workInserted_.notify_all();
             } else if (1 == newWorkInserted) {
+                // we'll do the new work ourself
+            } else if (2 == newWorkInserted) {
                 workInserted_.notify_one();
-            } else if (newWorkInserted > 1) {
+            } else {
                 workInserted_.notify_all();
             }
         }
@@ -239,14 +246,16 @@ private:
 
 /** Performs work in parallel.
  *
- *  Creates up to the specified number of worker threads to run the work described in the @p dependencies
- *  (at least one thread, but not more than the number of items on which to work). The dependencies must be a forest of
- *  lattices or else an <code>std::runtime_error</code> is thrown and no work is performed.
+ *  Creates up to the specified number of worker threads to run the tasks described in the @p dependencies graph
+ *  (at least one thread, but not more than the number of items on which to work).  The dependencies is a graph whose vertices
+ *  represent individual tasks to be performed by worker threads, and whose edges represent dependencies between the task. An
+ *  edge from task @em a to task @em b means that task @em b must complete before task @em a can begin.  If the dependencies
+ *  graph contains cycles then as much work as possible is performed and then a @ref ContainsCycle exception is thrown.
  *
  *  The @p functor can be a class with @c operator(), a function pointer, or a lambda expression.  If a class is used, it must
  *  be copyable and each worker thread will be given its own copy.  The functor is invoked with two arguments: the ID number of
- *  the work item being processed, and a reference to a copy of the work item in the dependency graph.  The ID number is the
- *  vertex ID number in the @p dependencies graph.
+ *  the task being processed, and a reference to a copy of the task (vertex value) in the dependency graph.  The ID number is
+ *  the vertex ID number in the @p dependencies graph.
  *
  *  The call does not return until all work has been completed. */
 template<class DependencyGraph, class Functor>
