@@ -1907,7 +1907,8 @@ SgType::stripType(unsigned char bit_array) const
                               if ( (bit_array & STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
                                  {
 #if 0
-                                   printf ("In loop of SgType::stripType(): found SgTypedefType \n");
+                                   printf ("In loop of SgType::stripType(): found SgTypedefType: currentType = %p = %s typedefType->get_base_type() = %p = %s \n",
+                                        currentType,currentType->class_name().c_str(),typedefType->get_base_type(),typedefType->get_base_type()->class_name().c_str());
 #endif
                                 // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
                                    currentType = typedefType->get_base_type();
