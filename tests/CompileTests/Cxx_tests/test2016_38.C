@@ -83,6 +83,8 @@ class foo
      public:
           void doSomething()
              {
+            // This was unparsed as:
+            // std::_Rb_tree< std::map< int ,int ,class std::MY_less< int  > ,class std::MY_allocator< class std::MY_pair< const int  , int  >  > > ::key_type ,std::map< int ,int ,class std::MY_less< int  > ,class std::MY_allocator< class std::MY_pair< const int  , int  >  > > ::value_type ,class std::MY_pair< int  , int  > ,std::map< int ,int ,class std::MY_less< int  > ,class std::MY_allocator< class std::MY_pair< const int  , int  >  > > ::key_compare ,std::map< int ,int ,class std::MY_less< int  > ,class std::MY_allocator< class std::MY_pair< const int  , int  >  > > ::_Pair_alloc_type > ::iterator it;
                std::map<int, int>::iterator it;
              }
    };
