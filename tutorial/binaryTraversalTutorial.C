@@ -47,7 +47,9 @@ void visitorTraversal::analyzePath(vector<Vertex>& pth) {
 
 
 int main(int argc, char *argv[]) {
-    
+    // Initialize and check compatibility. See rose::initialize
+    ROSE_INITIALIZE;
+
     /* Parse the binary file */
     SgProject *project = frontend(argc, argv);
     std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);

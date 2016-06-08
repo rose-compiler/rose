@@ -200,7 +200,7 @@ class Node
     : public Sawyer::SharedObject,
       public Sawyer::SharedFromThis<Node>,
       public Sawyer::SmallObject,
-      public Sawyer::Attribute::Storage { // Attributes are not significant for hashing or arithmetic
+      public Sawyer::Attribute::Storage<> { // Attributes are not significant for hashing or arithmetic
 protected:
     size_t nBits_;                    /**< Number of significant bits. Constant over the life of the node. */
     size_t domainWidth_;              /**< Width of domain for unary functions. E.g., memory. */
@@ -459,10 +459,10 @@ public:
 
     /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
      *  is computed and cached. */
-    Hash hash() ROSE_DEPRECATED("TESTING");
+    Hash hash();
 
     // used internally to set the hash value
-    void hash(Hash) ROSE_DEPRECATED("TESTING");
+    void hash(Hash);
 
     /** A node with formatter. See the with_format() method. */
     class WithFormatter {

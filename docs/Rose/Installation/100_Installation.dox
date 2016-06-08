@@ -19,7 +19,8 @@
  *  @li Once per week the development release goes through a more extensive testing process and a release is pushed to the
  *      "master" branch of https://github.com/rose-compiler/rose if all tests pass.
  *
- *  ROSE can be downloaded with standard Git commands (preferred) or as a Zip archive from the URLs mentioned above.
+ *  ROSE can be downloaded with standard Git commands. <em>Do not use Github's "Download ZIP" button since this strips necessary
+ *  version information from the ZIP archive.</em>
  *
  *  @code
  *  git clone https://github.com/rose-compiler/rose
@@ -146,8 +147,8 @@
  *    <tr>
  *      <td><a href="http://www.boost.org">Boost</a></td>
  *      <td>Required</td>
- *      <td>1.47 through 1.53</td>
- *      <td>1.47 through 1.53</td>
+ *      <td>1.47 through 1.60, except 1.48 and 1.54</td>
+ *      <td>1.47 through 1.60</td>
  *      <td>C++ portable runtime features. ROSE and/or software used by ROSE requires the following Boost libraries: chrono,
  *      date_time, filesystem, iostreams, program_options, random, regex, signals, system, thread, and wave. See @ref
  *      installing_boost. More info [here](http://theboostcpplibraries.com/).</td>
@@ -237,8 +238,8 @@
  *    <tr>
  *      <td><a href="https://github.com/jbeder/yaml-cpp">yaml-cpp</a></td>
  *      <td>Optional</td>
- *      <td>0.5.1</td>
- *      <td>0.5.1</td>
+ *      <td>0.5.1 through 0.5.3</td>
+ *      <td>0.5.1 through 0.5.3</td>
  *      <td>For reading YAML or JSON configuration files and storing results. Yaml-cpp must be compiled against the same
  *      version of boost used by ROSE. See @ref installing_yamlcpp.</td>
  *    </td>
@@ -246,16 +247,16 @@
  *    <tr>
  *      <td><a href="http://dlib.net">Dlib</a></td>
  *      <td>Optional</td>
+ *      <td>18.11 - 18.17</td>
  *      <td>18.10 - 18.17</td>
- *      <td>18.17</td>
  *      <td>For certain binary analysis algorithms. See @ref installing_dlib.</td>
  *    </tr>
  *
  *    <tr>
  *      <td><a href="http://www.webtoolkit.eu/wt">Wt</a></td>
  *      <td>Optional</td>
- *      <td>3.3.3 or 3.3.4</td>
- *      <td>3.3.3</td>
+ *      <td>3.3.3 through 3.3.5</td>
+ *      <td>3.3.3 through 3.3.5</td>
  *      <td>For binary analysis tools that present results through a web server. Wt must be compiled against the same version
  *      of Boost used by ROSE. See @ref installing_wt.</td>
  *    </tr>
@@ -313,47 +314,69 @@
  *  and projects can only be built with autotools at this time (Sep 2015).  Both methods boil down to running some configuration
  *  step that detects (or is told) what optional software is available, and this produces a set of makefiles for building ROSE.
  *
- *  In the instructions that follow, "$ROSE_SRC" is the top-level directory holding the ROSE source code.
+ *  In the instructions that follow, "$ROSE_SRC" is the top-level directory holding the ROSE source code, and "$ROSE_BLD" is a
+ *  build directory that these instructions have you create to hold files generated during the build.
  *
  *  @subsection installation_autotools Configuring with GNU autotools
  *
  *  If you desire to configure ROSE with GNU autotools instead of CMake, follow these steps:
  *
- *  @li Run "./build" in the $ROSE_SRC directory. This script takes no arguments and generates the "configure" script used in
- *      the third step. The "build" script must be run when $ROSE_SRC is the current working directory.
+ *  @li Run "./build" in the $ROSE_SRC directory. This script takes no arguments and modifies the ROSE source tree to prepare
+ *      it for using the GNU autoconf tool. This includes building the "configure" script used in the third step below.  The
+ *      "build" script must be run when $ROSE_SRC is the current working directory.
  *
  *  @li Create a new directory that will serve as the build area.  The following steps use "$ROSE_BLD" to indicate this
- *      directory.  The $ROSE_BLD directory may be a subdirectory of $ROSE_SRC.
+ *      directory. The build directory can be anywhere in your filesystem, usually outside the source tree.  ROSE will take
+ *      substantially less time to build if the build tree is a local disk instead of NFS.
  *
- *  @li Within the $ROSE_BLD directory, run "$ROSE_SRC/configure --help" to get information about what settings are available,
- *      then run "configure" with your chosen switches.  When running "configure" use an absolute path--a name that starts with
- *      "/" rather than "." or ".." (using a relative name can cause some of the tests to fail when they're run in a different
- *      directory). You may also need to add directories to your LD_LIBRARY_PATH on Linux in order for configure to find shared
- *      libraries that you've installed in non-standard places.
+ *  @li With the current directory set to the top of the build tree ("cd $ROSE_BLD") run the "$ROSE_SRC/configure", giving it
+ *      "--prefix=DIR", "--enable-languages=LIST", and "--with-boost=DIR" switches. The $ROSE_SRC directory should be an
+ *      absolute path name (beginning with "/").  The "--help" switch will list all available configure switches, some of which
+ *      are not routinely tested by the ROSE team. In short, "--prefix=DIR" specifies where ROSE will ultimately be installed,
+ *      "--enable-languages=LIST" takes a list of languages that ROSE should support, and "--with-boost=DIR" specifies the
+ *      location of the Boost headers and libraries (or you can omit this to use system-installed versions).  If you specify
+ *      non-system locations for Boost or other libraries you may need to also set the LD_LIBRARY_PATH environment variable.
+ *
+ *  @code
+ *  ROSE_SRC=/absolute/path/to/the/rose/source/tree
+ *  BOOST_ROOT=/path/to/my/boost/installation/directory
+ *  export LD_LIBRARY_PATH="$BOOST_ROOT/lib:$LD_LIBRARY_PATH"
+ *  cd $ROSE_BLD
+ *  $ROSE_SRC/configure --prefix=$HOME/my-rose-installation --enable-languages=c,c++ --with-boost=$BOOST_ROOT
+ *  @endcode
+ *      
  *
  *  @subsection installation_cmake Configuring with CMake
  *
  *  If you desire to configure ROSE with CMake instead of GNU autotools, Follow these steps:
  *
  *  @li Create a new directory that will serve as the build area.  The following steps use "$ROSE_BLD" to indicate this
- *      directory. The $ROSE_BLD directory may be a subdirectory of $ROSE_SRC.
+ *      directory. The build directory can be anywhere in your filesystem, usually outside the source tree.  ROSE will take
+ *      substantially less time to build if the build tree is a local disk instead of NFS.
  *
- *  @li Within the $ROSE_BLD directory, run "cmake" and give it the relative name (starting with "..", not "/") of the
- *      $ROSE_SRC directory. The "cmake" command also takes additional switches to specify the final ROSE installation
- *      directory, the locations of software dependencies, and other configuration options. You may also need to add
- *      directories to your LD_LIBRARY_PATH on Linux in order for cmake to find shared libraries that you've installed in
- *      non-standard places.
+ *  @li With the current directory set to the top of the build tree (cd $ROSE_BLD), run "cmake" and give it the relative name
+ *      (starting with "..", not "/") of the $ROSE_SRC directory. The "cmake" command also takes additional switches to specify
+ *      the final ROSE installation directory, the locations of software dependencies, and other configuration options. You may
+ *      also need to add directories to your LD_LIBRARY_PATH on Linux in order for cmake to find shared libraries that you've
+ *      installed in non-standard places.
  *
- *  @todo Document how to get the list of variables that can be set with the "-D" switch for the "cmake" command.
+ *  @code
+ *  cd $ROSE_BLD
+ *  ROSE_SRC=../relative/path/to/the/rose/source/tree
+ *  BOOST_ROOT=/path/to/my/boost/installation/directory
+ *  export LD_LIBRARY_PATH="$BOOST_ROOT/lib:$LD_LIBRARY_PATH"
+ *  cmake $ROSE_SRC -DCMAKE_INSTALL_PREFIX=$HOME/my-rose-installation -DBOOST_ROOT=$BOOST_ROOT
+ *  @endcode
  *
  *
  *
  *  @section installation_build Building the library
  *
- *  To build and install the ROSE library, run "make -C $ROSE_BLD install-rose-library". If you run "make" without specifying
- *  the "install-rose-library" target then additional tests, projects, and tutorials are also built. You may specify an amount
- *  of parallelism with make's "-j" switch.  Ensure that your machine meets the minimum hardware requirements before
- *  starting. A parallel build will require more than the minimum.
+ *  To build and install the ROSE library, run "cd $ROSE_BLD" and then "make install-rose-library" (equivalently, "make -C
+ *  $ROSE_BLD install-rose-library"). If you run "make" without specifying the "install-rose-library" target then additional
+ *  tests, projects, and tutorials are also built. Projects are typically not tested to the same degree as the core
+ *  library. You may specify an amount of parallelism with make's "-j N" switch.  Ensure that your machine meets the minimum
+ *  hardware requirements before starting. A parallel build will require more than the minimum.
  *
  *  If you encounter errors about downloading EDG binary tarballs, see @ref installing_edg.
  *

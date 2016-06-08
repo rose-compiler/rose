@@ -673,7 +673,7 @@ main(int argc, char *argv[])
      * Initialize ROSE and our own logging.  Our logging facility, "log", is tied into the librose logging facility so it
      * can be controlled by the same command-line switches that control ROSE.
      *------------------------------------------------------------------------------------------------------------------------*/
-    rose::Diagnostics::initialize();                    // rose has to be initialize for the next line to work
+    ROSE_INITIALIZE;
     mlog = Sawyer::Message::Facility("tool", rose::Diagnostics::destination);
     rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
 
