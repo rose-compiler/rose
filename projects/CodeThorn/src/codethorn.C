@@ -252,7 +252,7 @@ int main( int argc, char * argv[] ) {
       ("max-transitions-forced-top4",po::value< int >(),"Performs approximation after <arg> transitions (exact for all but inc-vars) (default: no limit).")
       ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)) (default: no limit).")
       ("normalize",po::value< string >(),"normalize AST before analysis.")
-      ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3).")
+      ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3,...).")
       ;
 
     cegpraOptions.add_options()
@@ -274,6 +274,7 @@ int main( int argc, char * argv[] ) {
       ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
       ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
       ("tg2-estate-predicate", po::value< string >(), "transition graph 2: show estate as predicate [=yes|no]")
+      ("visualize-read-write-sets",po::value< string >(), "generate one graph for each parallel loop that illustrates the read and write accesses of the involved threads.")
       ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
       ;
 
@@ -423,6 +424,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("eliminate-arrays",false);
 
   boolOptions.registerOption("viz",false);
+  boolOptions.registerOption("visualize-read-write-sets",false);
   boolOptions.registerOption("run-rose-tests",false);
   boolOptions.registerOption("reduce-cfg",false);
   boolOptions.registerOption("print-all-options",false);
@@ -1394,6 +1396,9 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     Specialization speci;
+    if (boolOptions["visualize-read-write-sets"]) {
+      speci.setVisualizeReadWriteAccesses(true);
+    }
     ArrayUpdatesSequence arrayUpdates;
     cout<<"STATUS: performing array analysis on STG."<<endl;
     cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;

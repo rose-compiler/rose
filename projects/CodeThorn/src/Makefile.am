@@ -156,6 +156,7 @@ codethorn_SOURCES = \
   ParProSpotState.h \
   ParProSpotSuccIter.C \
   ParProSpotSuccIter.h \
+  ReadWriteData.h \
   StateRepresentations.C           \
   StateRepresentations.h           \
   Timer.cpp                        \
