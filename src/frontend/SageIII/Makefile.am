@@ -285,12 +285,23 @@ roseh:
 
 else
 # DQ (2/11/2009): This is part of the support for Precompiled Headers (PCH) using GNU g++
+roseh_v_at_0 = @
+roseh_v_at_1 =
+roseh_v_at_  = $(roseh_v_at_0)
+roseh_v_at   = $(roseh_v_at_$(V))
+
+roseh_v_echo_0 = @echo " COMPILE sage3basic.h.gch"
+roseh_v_echo_1 =
+roseh_v_echo_  = $(roseh_v_echo_0)
+roseh_v_echo   = $(roseh_v_echo_$(V))
+
 roseh:
 #	DQ (2/10/2009): Rush for the off switch on precompiled header files, comment out to skip use of PCH.
 #       TPS (23 Feb 2009): Hardcoded -fpic and -DPIC for now because 
 #       for some reason it is used by most files although not specified on configure
-	@echo "  COMPILE sage3basic.h.gch"
-	@$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o sage3basic.h.gch $(top_srcdir)/src/frontend/SageIII/sage3basic.h -I$(top_builddir) $(ROSE_INCLUDES) 
+	$(roseh_v_echo)
+	$(roseh_v_at)$(CXX) -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o sage3basic.h.gch \
+		$(top_srcdir)/src/frontend/SageIII/sage3basic.h -I$(top_builddir) $(ROSE_INCLUDES) 
 endif
 else
 # default, do nothing.

@@ -2766,7 +2766,8 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
         }
 
 #if 0
-     printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s templateArgumentsList = %p templateParameterList = %p \n",scope,scope != NULL ? scope->class_name().c_str() : "NULL",templateArgumentsList,templateParameterList);
+     printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s templateArgumentsList = %p templateParameterList = %p \n",
+          scope,scope != NULL ? scope->class_name().c_str() : "NULL",templateArgumentsList,templateParameterList);
 #endif
 
   // ROSE_ASSERT(XXX_name.is_null() == false);
@@ -2919,6 +2920,20 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                templateParameterList != NULL ? templateParameterList->size() : 999,
                templateArgumentsList != NULL ? templateArgumentsList->size() : 999);
 #endif
+#if 0
+       // Debugging output.
+          if (templateArgumentsList != NULL)
+             {
+               printf ("Output of type chains for template arguments: \n");
+               for (size_t i = 0; i < templateArgumentsList->size(); i++)
+                  {
+                    string s = "template argument: " + StringUtility::numberToString(i) + " ";
+                 // templateArgumentsList->get_args()[i]->display(s);
+                 // templateArgumentsList->[i]->display(s);
+                    templateArgumentsList->operator[](i)->display(s);
+                  }
+             }
+#endif
 
        // DQ (8/7/2013): We need to use the template arguments in the symbol table lookup for template functions to permit template function overloading on template perameters.
        // func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
@@ -3030,7 +3045,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
              && !scope->symbol_exists(nameWithTemplateArguments, func_symbol) )
              {
 #if 0
-               printf ("In buildNondefiningFunctionDeclaration_T(): Calling scope->insert_symbol(): using nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
+               printf ("In buildNondefiningFunctionDeclaration_T(): Calling scope->insert_symbol(): for global scope: using nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
 #endif
                scope->insert_symbol(nameWithTemplateArguments, func_symbol);
              }
@@ -3066,7 +3081,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           ROSE_ASSERT(func->get_file_info() == NULL);
 
 #if 0
-          printf ("In buildNondefiningFunctionDeclaration_T(): constructor called to build func = %p = %s \n",func,func->class_name().c_str());
+          printf ("In buildNondefiningFunctionDeclaration_T(): case of func_symbol == NULL: constructor called to build func = %p = %s \n",func,func->class_name().c_str());
 #endif
 #if 0
           if (isSgMemberFunctionDeclaration(func) != NULL)
@@ -3157,6 +3172,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                        }
 #endif
                   }
+
                ROSE_ASSERT(func_symbol != NULL);
                ROSE_ASSERT(func_symbol->get_symbol_basis() != NULL);
 #if 0
@@ -3333,7 +3349,8 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           SgFunctionDeclaration*         functionDeclaration         = isSgFunctionDeclaration(associatedDeclaration);
           SgTemplateFunctionDeclaration* templateFunctionDeclaration = isSgTemplateFunctionDeclaration(associatedDeclaration);
 #if 0
-          printf ("In buildNondefiningFunctionDeclaration_T(): associatedDeclaration = %p functionDeclaration = %p templateFunctionDeclaration = %p \n",associatedDeclaration,functionDeclaration,templateFunctionDeclaration);
+          printf ("In buildNondefiningFunctionDeclaration_T(): associatedDeclaration = %p functionDeclaration = %p templateFunctionDeclaration = %p \n",
+               associatedDeclaration,functionDeclaration,templateFunctionDeclaration);
 #endif
           if (functionDeclaration != NULL)
              {
@@ -3813,6 +3830,9 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* r
         }
        else
         {
+#if 0
+          printf ("In SageBuilder::buildNondefiningFunctionDeclaration(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+#endif
        // DQ (11/27/2011): Added support to generate template declarations in the AST (this is part of a common API to make the build functions support more uniform).
           if (buildTemplateInstantiation == true)
              {
@@ -4072,6 +4092,10 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgT
        // DQ (1/4/2009): This needs to be set, checked in AstConsistencyTests.C!
           result->set_associatedClassDeclaration(associatedClassDeclaration);
         }
+
+#if 0
+     printf ("In buildNondefiningMemberFunctionDeclaration(): result = %p result->get_firstNondefiningDeclaration() = %p \n",result,result->get_firstNondefiningDeclaration());
+#endif
 
      return result;
    }
@@ -4621,13 +4645,14 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
           printf ("templateArgumentsList = %p templateArgumentsList->size() = %zu \n",templateArgumentsList,templateArgumentsList->size());
           printf ("templateArgumentsList_from_first_nondefining_declaration.size()      = %zu \n",templateArgumentsList_from_first_nondefining_declaration.size());
 #endif
-#if 0
+#if 1
           bool templateArgumentListsAreEquivalent = SageInterface::templateArgumentListEquivalence(*templateArgumentsList, templateArgumentsList_from_first_nondefining_declaration);
           if (templateArgumentListsAreEquivalent == false)
              {
-               printf ("after test: nameWithoutTemplateArguments = %s \n",nameWithoutTemplateArguments.str());
-               printf ("after test: nameWithTemplateArguments    = %s \n",nameWithTemplateArguments.str());
-               printf ("after test: templateArgumentsList        = %p \n",templateArgumentsList);
+               printf ("after test: nameWithoutTemplateArguments  = %s \n",nameWithoutTemplateArguments.str());
+               printf ("after test: nameWithTemplateArguments     = %s \n",nameWithTemplateArguments.str());
+               printf ("after test: templateArgumentsList         = %p \n",templateArgumentsList);
+               printf ("after test: templateArgumentsList->size() = %zu \n",templateArgumentsList != NULL ? templateArgumentsList->size() : (size_t)0L);
                printf ("after test: templateArgumentsList_from_first_nondefining_declaration.size() = %zu \n",templateArgumentsList_from_first_nondefining_declaration.size());
                if (first_nondefining_declaration != NULL)
                   {
