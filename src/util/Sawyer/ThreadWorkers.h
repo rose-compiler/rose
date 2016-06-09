@@ -207,6 +207,7 @@ private:
             ASSERT_forbid(workQueue_.isEmpty());
             size_t workItemId = workQueue_.pop();
             typename DependencyGraph::ConstVertexIterator workVertex = dependencies_.findVertex(workItemId);
+            ASSERT_require(workVertex->nOutEdges() == 0);
             typename DependencyGraph::VertexValue workItem = workVertex->value();
             ++nItemsStarted_;
 
@@ -218,17 +219,19 @@ private:
             ++nItemsFinished_;
             --nWorkersRunning_;
 
-            // Look for more work as we remove some dependency edges.
+            // Look for more work as we remove some dependency edges. Watch out for parallel edges (self edges not possible).
+            std::set<typename DependencyGraph::ConstVertexIterator> candidateWorkItems;
+            BOOST_FOREACH (const typename DependencyGraph::Edge &edge, workVertex->inEdges())
+                candidateWorkItems.insert(edge.source());
+            dependencies_.clearInEdges(workVertex);
             size_t newWorkInserted = 0;
-            BOOST_FOREACH (const typename DependencyGraph::Edge &edge, workVertex->inEdges()) {
-                typename DependencyGraph::ConstVertexIterator parent = edge.source();
-                if (1 == parent->nOutEdges()) {
-                    workQueue_.push(parent->id());
+            BOOST_FOREACH (const typename DependencyGraph::ConstVertexIterator &candidate, candidateWorkItems) {
+                if (candidate->nOutEdges() == 0) {
+                    workQueue_.push(candidate->id());
                     ++newWorkInserted;
                 }
             }
-            dependencies_.clearInEdges(workVertex);
-            
+
             // Notify other workers
             if (0 == newWorkInserted) {
                 if (workQueue_.isEmpty())
