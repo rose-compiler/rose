@@ -5035,6 +5035,10 @@ std::string
 SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMangledName)
    {
 #if 0
+     printf ("In SageInterface::addMangledNameToCache(): TOP: astNode = %p = %s oldMangledName = %s \n",astNode,astNode->class_name().c_str(),oldMangledName.c_str());
+#endif
+
+#if 0
      SgGlobal* globalScope = isSgGlobal(astNode);
 
      if (globalScope == NULL && isSgFile(astNode) != NULL)

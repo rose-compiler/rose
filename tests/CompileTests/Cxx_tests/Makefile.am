@@ -389,7 +389,16 @@ NEW_TESTCODES = \
    test2016_30.C \
    test2016_31.C \
    test2016_32.C \
-   test2016_33.C 
+   test2016_33.C \
+   test2016_34.C \
+   test2016_36.C \
+   test2016_38.C \
+   test2016_40.C 
+
+# DQ (6/6/2016): This is a cpp generated file and too specific to later version gnu 
+# compilers (gnu 4.8.x and later and or later versions of RedHat (RH 7 and later)).
+#  test2016_35.C 
+#  test2016_39.C 
 
 # DQ (5/8/2016): Example of large cpp preprocessed file that is failing to unparse correctly.
 # Previously these were failing in the frontend (now fixed).

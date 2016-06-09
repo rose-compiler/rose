@@ -1125,6 +1125,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #if 0
      unp->u_exprStmt->curprint(string("/* templateArgument is explicitlySpecified = ") + ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
      SgUnparse_Info newInfo(info);
 
@@ -1553,7 +1557,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
 #if 0
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
-  // curprint("\n/* Bottom of unparseTemplateArgument */ \n");
+     curprint("\n/* Bottom of unparseTemplateArgument */ \n");
 #endif
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
