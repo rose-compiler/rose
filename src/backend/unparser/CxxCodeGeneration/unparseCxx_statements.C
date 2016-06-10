@@ -1179,7 +1179,15 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
      if (templateFunctionDeclaration != NULL)
         {
        // curprint(templateFunctionDeclaration->get_templateName().str());
+#if 0
+          printf ("Calling unparseTemplateFunctionName() \n");
+          curprint(" /* In unparse_helper(): Calling unparseTemplateFunctionName() */ \n");
+#endif
           unp->u_exprStmt->unparseTemplateFunctionName(templateFunctionDeclaration,info);
+#if 0
+          printf ("Done: unparseTemplateFunctionName() \n");
+          curprint(" /* In unparse_helper(): Done: unparseTemplateFunctionName() */ \n");
+#endif
         }
        else
         {
@@ -6552,7 +6560,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #else
                     if (ninfo_for_type.SkipBaseType() == false)
                        {
+#if 0
+                         printf ("In unparseVarDeclStmt(): calling unparseType() \n");
+#endif
                          unp->u_type->unparseType(tmp_type, ninfo_for_type);
+#if 0
+                         printf ("In unparseVarDeclStmt(): DONE: calling unparseType() \n");
+#endif
                        }
                       else
                        {
@@ -6632,7 +6646,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // unp->u_type->unparseType(tmp_type, ninfo_for_type);
                     if (ninfo_for_type.SkipBaseType() == false)
                        {
+#if 0
+                         printf ("In unparseVarDeclStmt(): calling unparseType(): tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+#endif
                          unp->u_type->unparseType(tmp_type, ninfo_for_type);
+#if 0
+                         printf ("In unparseVarDeclStmt(): DONE: calling unparseType() \n");
+#endif
                        }
                       else
                        {
@@ -6779,7 +6799,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // ROSE_ASSERT(decl_item->get_register_name() == 0);
                     if (decl_item->get_register_name_code() != SgInitializedName::e_invalid_register)
                        {
-#if 1
+#if 0
                          printf ("In unparseVarDeclStmt(): Output asm register name code \n");
 #endif
                       // an asm ("<register name>") is in use
@@ -6794,7 +6814,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // support the use of either Assembly Register codes or raw strings.
                     if (decl_item->get_register_name_string().empty() == false)
                        {
-#if 1
+#if 0
                          printf ("In unparseVarDeclStmt(): Output asm register name \n");
 #endif
                       // an asm ("<register name>") is in use

@@ -1,3 +1,5 @@
+#include <rose.h>
+
 #include "GraphUtility.h"
 #include "StringUtility.h"
 #include "Diagnostics.h"
@@ -155,7 +157,7 @@ int main(int argc, char *argv[]) {
     typedef Graph::VertexIterator Vertex;
     typedef Graph::EdgeIterator Edge;
 
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
 
     size_t nverts = 10000;
     size_t nedges = 10000000;

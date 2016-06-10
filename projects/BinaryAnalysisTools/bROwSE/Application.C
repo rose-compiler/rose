@@ -130,7 +130,7 @@ Application::main(int argc, char *argv[]) {
     // own message sinks to the list later.
     Diagnostics::destination = Sawyer::Message::Multiplexer::instance()
                                ->to(Sawyer::Message::FileSink::instance(stderr));
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     mlog = Sawyer::Message::Facility("bROwSE", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 
