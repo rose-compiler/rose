@@ -11,9 +11,15 @@
 // DQ (11/30/2013): Added more support for token handling.
 #include "previousAndNextNode.h"
 
-
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/24/2016): Adding Message logging mechanism.
+Sawyer::Message::Facility UnparseLanguageIndependentConstructs::mlog;
+
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_HIDDEN_LIST_DATA 0
@@ -26,6 +32,19 @@ using namespace std;
 SgStatement* global_lastStatementUnparsed = NULL;
 
 UnparseLanguageIndependentConstructs::unparsed_as_enum_type global_unparsed_as = UnparseLanguageIndependentConstructs::e_unparsed_as_error;
+
+void 
+UnparseLanguageIndependentConstructs::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("UnparseLanguageIndependentConstructs", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
+
 
 std::string
 UnparseLanguageIndependentConstructs::unparsed_as_kind(unparsed_as_enum_type x)
@@ -7146,7 +7165,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                       // If this is compiler generated then we have to look at the precedence of the unary operator's operand.
                       // printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 1) \n");
                       // return 1;
-                         printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 16) \n");
+                         mprintf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 16) \n");
                       // return 16;
                          precedence_value = 16; 
                        }
@@ -7281,6 +7300,11 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
        // DQ (11/10/2014): Not clear if this is the correct precedence for this C++11 expression.
           case V_SgFunctionParameterRefExp:
+                                     precedence_value = 0; break;
+
+       // DQ (4/29/2016): Not clear if this is the correct precedence for these C++11 expressions.
+          case V_SgRealPartOp:
+          case V_SgImagPartOp:
                                      precedence_value = 0; break;
 
           default:

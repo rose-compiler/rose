@@ -121,7 +121,7 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
     }
 
     /* Offset */
-    fprintf(f, "%s%-*s = 0x%08"PRIx64, p, w, "", p_r_offset);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64, p, w, "", p_r_offset);
 
     /* Type */
     SgAsmGenericHeader* header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(this);
@@ -133,7 +133,7 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
 
     /* Addend */
     if (p_r_addend) {
-        fprintf(f, " 0x%08"PRIx64, p_r_addend);
+        fprintf(f, " 0x%08" PRIx64, p_r_addend);
     } else {
         fprintf(f, " %10s", "");
     }
@@ -148,12 +148,12 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
         fprintf(f, " %10s <out of range>", "");
     } else {
         SgAsmGenericSymbol *sym = symtab->get_symbols()->get_symbols()[p_sym];
-        fprintf(f, " 0x%08"PRIx64" %s", sym->get_value(), sym->get_name()->get_string(true).c_str());
+        fprintf(f, " 0x%08" PRIx64 " %s", sym->get_value(), sym->get_name()->get_string(true).c_str());
     }
 
     /* Addend in decimal */
     if (p_r_addend)
-        fprintf(f, " + %"PRIu64, p_r_addend);
+        fprintf(f, " + %" PRIu64, p_r_addend);
     fputc('\n', f);
 
     /* Auxiliary data */

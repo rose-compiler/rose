@@ -8,6 +8,25 @@
 #include "rosedll.h"
 #include <Sawyer/Assert.h>
 
+#if 0
+// I think that this may already be used.
+// DQ (4/23/2016): Added to inlcude ROSE_ASSERTION_EXIT and related macro definitions.
+#include "Diagnostics.h"
+
+// Check that ROSE_ASSERTION_BEHAVIOR is defined.
+#ifndef ROSE_ASSERTION_BEHAVIOR
+
+#ifndef ROSE_ASSERTION_EXIT
+// #warning "We want to have ROSE_ASSERTION_EXIT be defined"
+#endif
+
+// This determines how failed assertions should behave, we want it to be defined as: 
+#define ROSE_ASSERTION_BEHAVIOR ROSE_ASSERTION_EXIT
+
+// #error "We want to have ROSE_ASSERTION_BEHAVIOR be defined"
+#endif
+#endif
+
 ROSE_UTIL_API int systemFromVector(const std::vector<std::string>& argv);
 FILE* popenReadFromVector(const std::vector<std::string>& argv);
 // Assumes there is only one child process
@@ -109,15 +128,15 @@ ROSE_UTIL_API void ROSE_ABORT(const char *message);
 namespace rose {
 
 /** Aborts for a failed assertion. */
-void abortOnFailedAssertion(const char*, const char*, const std::string&, const char*, unsigned, const char*);
+ROSE_UTIL_API void abortOnFailedAssertion(const char*, const char*, const std::string&, const char*, unsigned, const char*);
 
 /** Exits with non-zero status for a failed assertion. */
-void exitOnFailedAssertion(const char*, const char*, const std::string&, const char*, unsigned, const char*);
+ROSE_UTIL_API void exitOnFailedAssertion(const char*, const char*, const std::string&, const char*, unsigned, const char*);
 
 /** Throws an exception for a failed assertion.
  *
  *  Throws @ref FailedAssertion exception. */
-void throwOnFailedAssertion(const char*, const char*, const std::string&, const char*, unsigned, const char*);
+ROSE_UTIL_API void throwOnFailedAssertion(const char*, const char*, const std::string&, const char*, unsigned, const char*);
 
 /** Property: behavior of failed assertions.
  *
@@ -128,7 +147,7 @@ void throwOnFailedAssertion(const char*, const char*, const std::string&, const 
  *  been initialized; in this case, Sawyer::Assert macros abort for failed assertions.
  *
  * @{ */
-void failedAssertionBehavior(Sawyer::Assert::AssertFailureHandler handler);
+ROSE_UTIL_API void failedAssertionBehavior(Sawyer::Assert::AssertFailureHandler handler);
 Sawyer::Assert::AssertFailureHandler failedAssertionBehavior();
 /** @} */
 

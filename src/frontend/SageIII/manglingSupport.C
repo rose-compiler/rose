@@ -443,11 +443,15 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                  // Compute a local scope name
                  //! \todo Compute local scope names correctly (consistently).
                     ostringstream scope_name;
+
                     scope_name << scope->class_name ();
-AstRegExAttribute *attribute = (AstRegExAttribute *) scope -> getAttribute("name");
-if (attribute) {
-scope_name << "_" << attribute -> expression;
-}
+
+                 // DQ (3/15/2016): Only reformatted this code below.
+                    AstRegExAttribute *attribute = (AstRegExAttribute *) scope -> getAttribute("name");
+                    if (attribute != NULL)
+                       {
+                         scope_name << "_" << attribute -> expression;
+                       }
 
                  // Build full name
                     mangled_name = joinMangledQualifiersToString (par_scope_name,scope_name.str ());
@@ -520,12 +524,32 @@ mangleTypesToString (const SgTypePtrList::const_iterator b,
    {
      string mangled_name;
      bool is_first = true;
+
+#if 0
+     printf ("In mangleTypesToString(): TOP \n");
+#endif
+
      for (SgTypePtrList::const_iterator p = b; p != e; ++p)
         {
           const SgType* type_p = *p;
           ROSE_ASSERT (type_p != NULL);
+#if 0
+          printf ("In mangleTypesToString(): in loop: is_first = %s type_p = %p = %s \n",is_first ? "true" : "false",type_p,type_p->class_name().c_str());
+#endif
 
-       // if (is_first)
+#if 0
+       // DQ (2/14/2016): Adding support for VLA types (it is better to add this support directly to the SgArrayType::get_mangled() function).
+          SgArrayType* arrayType = isSgArrayType(*p);
+          bool is_variable_length_array = false;
+          if (arrayType != NULL)
+             {
+#if 0
+               printf ("   --- arrayType->get_is_variable_length_array() = %s \n",arrayType->get_is_variable_length_array() ? "true" : "false");
+#endif
+            // is_variable_length_array = arrayType->get_is_variable_length_array();
+             }
+#endif
+
           if (is_first == true)
              {
                is_first = false;
@@ -540,14 +564,45 @@ mangleTypesToString (const SgTypePtrList::const_iterator b,
 
           ROSE_ASSERT(type_p != NULL);
           ROSE_ASSERT(const_cast<SgType *>(type_p) != NULL);
+#if 0
+          printf ("In mangleTypesToString(): calling (const_cast<SgType *>(type_p))->get_mangled() \n");
+#endif
+
+       // DQ (2/14/2016): Adding support for VLA types.
+       //    1) All vla types are equivalent, so no further name mangling is useful.
+       //    2) If we proceed then we will cause endless recursion in the evaluation 
+       //       of the scope of the array index variable reference expressions.
+#if 1
           SgName mangled_p = (const_cast<SgType *>(type_p))->get_mangled();
-
+#else
+          SgName mangled_p;
+          if (is_variable_length_array == true)
+             {
+#if 0
+               printf ("WARNING: We need to compute the mangled name of the base type \n");
+#endif
+               mangled_p = "_vla_array_type";
+             }
+            else
+             {
+               mangled_p = (const_cast<SgType *>(type_p))->get_mangled();
+             }
+#endif
+#if 0
+          printf ("In mangleTypesToString(): mangled_p = %s \n",mangled_p.str());
+#endif
           mangled_name += string (mangled_p.str());
-
+#if 0
+          printf ("In mangleTypesToString(): accumulated mangled_name = %s \n",mangled_name.c_str());
+#endif
         }
 
   // DQ (5/11/2012): Make the mangled names a little more clear.
      mangled_name += "_";
+
+#if 0
+     printf ("In mangleTypesToString(): returning mangled_name = %s \n",mangled_name.c_str());
+#endif
 
      return mangled_name;
    }
@@ -692,11 +747,11 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
 SgName
 mangleFunctionName (const SgName& n, const SgName& ret_type_name )
   {
-    string s_mangled = mangleFunctionNameToString (n.getString (),
-                                                   ret_type_name.str ());
+    string s_mangled = mangleFunctionNameToString (n.getString (), ret_type_name.str ());
     SgName n_mangled (s_mangled.c_str ());
     return n_mangled;
   }
+
 
 string
 mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b, const SgTemplateArgumentPtrList::const_iterator e)
@@ -1112,13 +1167,14 @@ mangleExpression (const SgExpression* expr)
     ostringstream mangled_name;
     if (expr)
       {
-        // Handle value types and simple casts as a special case:
+     // Handle value types and simple casts as a special case:
         const SgValueExp* val = isSgValueExp (expr);
         if (val)
           mangled_name << mangleValueExp (val);
         else // Punt on the rest.
           mangled_name << "EXPR";
       }
+
     return mangled_name.str ();
   }
 

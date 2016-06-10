@@ -3,8 +3,17 @@
 
 #----- put platform independent settings in this section-----------------
 cmake_minimum_required(VERSION 2.8)
+if(POLICY CMP0054)
+  cmake_policy(SET CMP0054 NEW)
+endif()
 project (ROSE CXX C)
 
+OPTION(BUILD_SHARED_LIBS "Build all libraries shared" FALSE)
+if(WIN32)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
+add_definitions(-DBOOST_ALL_NO_LIB=1)
 # Why do we have to have a copy of some standard built-in modules inside rose?
 set( CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/modules"  ${CMAKE_MODULE_PATH})
 #message ("CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
@@ -193,11 +202,27 @@ message(STATUS "The ROSE SCM version identifier is ${ROSE_SCM_VERSION_ID}")
 message(STATUS "The ROSE SCM version Unix timestamp is ${ROSE_SCM_VERSION_UNIX_DATE}")
 
 #-------------------------------------------------------------------------------
+# Configuration synopsis used by rose::initialize.  The ROSE_CONFIG_TOKEN is
+# #define'd as a string in rose_config.h and ultimately rosePublicConfig.h and
+# the string is a synopsis of some important configuration details. This string
+# is passed by user code to the rose::initialize function which compares it
+# against the same macro compiled into the ROSE library. If their contents differ
+# it means that the ROSE header files being used by the user are not the same
+# as the ROSE header files that were used to compile librose being linked by the
+# user and bad things will probably happen.
+#
+# The CMake ROSE_CONFIG_TOKEN variable is the string that becomes the eventual
+# value of the ROSE_CONFIG_TOKEN C preprocessor macro.  We initialize it here,
+# but other parts of the CMake file might augment its value with additional
+# information (e.g., adding the boost version number).
+#-------------------------------------------------------------------------------
+set(ROSE_CONFIG_TOKEN "rose-${ROSE_SCM_VERSION_ID}")
+
+#-------------------------------------------------------------------------------
 # Boost C++ Libraries
 #-------------------------------------------------------------------------------
 set(Boost_USE_STATIC_LIBS FALSE)        
 set(Boost_DEBUG TRUE)
-
 # Honor BOOST_HOME environment variable
 if (DEFINED ENV{BOOST_HOME})
   set (BOOST_ROOT "$ENV{BOOST_HOME}")
@@ -224,13 +249,12 @@ MESSAGE("  Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
 MESSAGE("  BOOST_LIBRARYDIR : ${BOOST_LIBRARYDIR}") 
 MESSAGE("  BOOST_INCLUDEDIR : ${BOOST_INCLUDEDIR}") 
 
-
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 endif (WIN32)
 
 # Ensure that Boost is found. Environment variable BOOST_ROOT can help to find a user-specified path to Boost.
-SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
+SET(Boost_ADDITIONAL_VERSIONS "1.59.0" "1.55.0" "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
 find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
 
 if(NOT Boost_FOUND)
@@ -238,12 +262,15 @@ if(NOT Boost_FOUND)
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
 
+set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} boost-${Boost_VERSION}")
+
 # If the boost is compiled with multi-thread support then we must add "-pthread" to all compile and link commands, or whatever
 # is appropriate for the system.  With GCC it is not sufficient to just add "-lpthread" to the link commands--the "-pthread"
 # switch MUST be added to the compile commands as well.
 find_package(Threads)
-if(CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_USE_PTHREADS_INIT})
+if(CMAKE_COMPILER_IS_GNUCXX AND "${CMAKE_USE_PTHREADS_INIT}")
   add_definitions(-pthread)
+  set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} pthread")
 endif()
 
 
@@ -280,32 +307,33 @@ endif ( enable-smaller-generated-files )
 
 #/CLR  /MDd /TP 
 if (WIN32)
-# /TP to indicate files are C++
-# / CLR common intermediate language
-# /GL whole program optimization
-# /O1 optimization for small files
-# /Ob0 disable inline expansion
-# /MP multiple processors compilation
-# /0s small files
-set( CMAKE_BUILD_TYPE Release )
-set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR /EHsc /wd4541 " )
-set( CMAKE_C_FLAGS "   /wd4541 " )
-set( CMAKE_SHARED_LINKER_FLAGS_DEBUG " ${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
-set( CMAKE_SHARED_LINKER_FLAGS_RELEASE " ${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
-set( CMAKE_MODULE_LINKER_FLAGS_DEBUG " ${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
-set( CMAKE_MODULE_LINKER_FLAGS_RELEASE " ${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
-set( CMAKE_LINKER_FLAGS " ${CMAKE_LINKER_FLAGS} /INCREMENTAL:NO" )
-set( CMAKE_SHARED_LINKER_FLAGS " ${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL:NO" )
-set( CMAKE_MODULE_LINKER_FLAGS " ${CMAKE_MODULE_LINKER_FLAGS} /INCREMENTAL:NO" )
-set( CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} /INCREMENTAL:NO")
-set( CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} /INCREMENTAL:NO")
+  # /TP to indicate files are C++
+  # / CLR common intermediate language
+  # /GL whole program optimization
+  # /O1 optimization for small files
+  # /Ob0 disable inline expansion
+  # /MP multiple processors compilation
+  # /0s small files
+  # /wd4716 to turn no return to a warning and not an error
+  set( CMAKE_BUILD_TYPE Release )
+  set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716" )
+  set( CMAKE_C_FLAGS "   /wd4541 " )
+  set( CMAKE_SHARED_LINKER_FLAGS_DEBUG " ${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
+  set( CMAKE_SHARED_LINKER_FLAGS_RELEASE " ${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
+  set( CMAKE_MODULE_LINKER_FLAGS_DEBUG " ${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
+  set( CMAKE_MODULE_LINKER_FLAGS_RELEASE " ${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
+  set( CMAKE_LINKER_FLAGS " ${CMAKE_LINKER_FLAGS} /INCREMENTAL:NO" )
+  set( CMAKE_SHARED_LINKER_FLAGS " ${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL:NO" )
+  set( CMAKE_MODULE_LINKER_FLAGS " ${CMAKE_MODULE_LINKER_FLAGS} /INCREMENTAL:NO" )
+  set( CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} /INCREMENTAL:NO")
+  set( CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} /INCREMENTAL:NO")
 else (WIN32)
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
-#set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
-#set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
-#set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
-#set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+  set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
+  set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
+  #set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+  #set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+  #set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+  #set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 endif (WIN32)
 
 
@@ -868,14 +896,14 @@ endif (NOT WIN32)
 message(Status "Looking for flex ...")
 find_package(FLEX)
 if(NOT FLEX_FOUND)
-    message(FATAL_ERROR "Could not find flex command")
+  message(FATAL_ERROR "Could not find flex command")
 endif(NOT FLEX_FOUND)
 
 message(Status "Looking for BISON ...")
 include(FindBison)
 FIND_BISON()
 if(NOT BISON_FOUND)
-    message(FATAL_ERROR "Could not find BISON command")
+  message(FATAL_ERROR "Could not find BISON command")
 endif(NOT BISON_FOUND)
 
 # include(ConvenienceLibs) # Not in use

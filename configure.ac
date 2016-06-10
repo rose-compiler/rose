@@ -1,7 +1,10 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-AC_INIT([ROSE], [0.9.6a])
+dnl The version number in the AC_INIT expression has been placed there automatically by the "build" script. We cannot
+dnl do the replacement here in the configure file because AC_INIT's second argument must be a literal string, not a
+dnl shell variable.
+AC_INIT([ROSE], [0.9.7.27])
 AC_PREREQ([2.59])
 
 dnl +--------------------------------------------------------------------------+
@@ -75,6 +78,14 @@ dnl +--------------------------------------------------------------------------+
 dnl | ROSE Support
 dnl +--------------------------------------------------------------------------+
 
+dnl The ROSE_CONFIG_TOKEN is a C string (char const*) that is constructed during
+dnl configuration and inserted into the rosePublicConfig.h file. Users pass this
+dnl string to the rose::initialize function which checks it against the ROSE_CONFIG_TOKEN
+dnl that has been compiled into the library.  Any part of the configuration process
+dnl can add more data to the ROSE_CONFIG_TOKEN shell variable, which will become
+dnl the eventual value of the ROSE_CONFIG_TOKEN C-preprocessor macro.
+ROSE_CONFIG_TOKEN="AC_PACKAGE_NAME-AC_PACKAGE_VERSION"
+
 dnl This macro calls all of the other macros that used to be in the body of
 dnl this configure.in file.  This permits other projects to call this same
 dnl macro and setup the variables and macros that an external project may
@@ -89,6 +100,15 @@ ROSE_SUPPORT_ROSE_PART_5
 ROSE_OPTIONAL_PROJECTS
 ROSE_SUPPORT_ROSE_PART_6
 ROSE_SUPPORT_ROSE_PART_7
+
+# Last minute changes to the ROSE_CONFIG_TOKEN shell variable, and then make sure it's
+# output as a C preprocessor macro.
+if echo "$BOOST_CPPFLAGS" |grep -- -pthread >/dev/null; then
+   ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN pthread"
+fi
+AC_DEFINE_UNQUOTED(ROSE_CONFIG_TOKEN, ["$ROSE_CONFIG_TOKEN"],
+    [Encapsulates some important configuration details for rose::initialize])
+
 
 dnl Now generate all the output files (specified above)
 ROSE_CONFIGURE_SECTION([Generating files])

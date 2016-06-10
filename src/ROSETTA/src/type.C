@@ -1,7 +1,7 @@
 
 #include "grammar.h"
 #include "ROSETTA_macros.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 
 // What should be the behavior of the default constructor for Grammar
 
@@ -71,7 +71,7 @@ Grammar::setUpTypes ()
   // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
      NEW_TERMINAL_MACRO ( TypeLabel           , "TypeLabel",            "T_LABEL" );
 
-  // DQ (5/7/2004): Made this a terminal, was previously a nonterminal 
+  // DQ (5/7/2004): Made this a AstNodeClass, was previously a nonterminal 
   // with a TemplateInstantiationType derived from it.
   //   NEW_TERMINAL_MACRO ( ClassType           , "ClassType",            "T_CLASS" );
 
@@ -118,12 +118,12 @@ Grammar::setUpTypes ()
 #endif
 
   // It seems that ROSETTA has a bug in the copy constructor that forces us 
-  // to specify product rules with more than one Terminal or nonTerminal object 
+  // to specify product rules with more than one AstNodeClass or nonTerminal object 
   // (under some circomstances at least).
 #define ROSETTA_BUG false
 #if !ROSE_MICROSOFT_OS
 #if ROSETTA_BUG
-  // Dummy Terminal so that we can add avoid the NonTerminal copy constructor (this may be a bug)
+  // Dummy AstNodeClass so that we can add avoid the NonTerminal copy constructor (this may be a bug)
   // I think that this is not a problem now (Terminals can be reused in multiple BNF statements) though
   // except as a work around this makes little sense.
      NEW_TERMINAL_MACRO ( UnknownMemberFunctionType , "UnknownMemberFunctionType", "UnknownMemberFunctionTag" );
@@ -754,7 +754,7 @@ Grammar::setUpTypes ()
      TemplateType.setDataPrototype     ("SgName","name","= \"\"",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Skip building a parse function for this terminal/nonterminal of the Grammar
+  // Skip building a parse function for this AstNodeClass/nonterminal of the Grammar
      if (isRootGrammar() == false)
         {
           NamedType.excludeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code" );
@@ -902,6 +902,10 @@ Grammar::setUpTypes ()
      ArrayType.setDataPrototype ("SgExprListExp*", "dim_info" , "= NULL",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
      ArrayType.setDataPrototype ("int", "rank" , "= 0",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/12/2016): Adding support for Variable Length Arrays.
+     ArrayType.setDataPrototype ("bool", "is_variable_length_array" , "= false",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeComplex.setFunctionPrototype ("HEADER_TYPE_COMPLEX_TYPE", "../Grammar/Type.code" );

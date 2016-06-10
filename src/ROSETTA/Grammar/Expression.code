@@ -768,8 +768,13 @@ HEADER_GREATER_OR_EQUAL_OPERATOR_END
 HEADER_ADD_OPERATOR_START
 HEADER_ADD_OPERATOR_END
 
-//HEADER_DOTDOT_EXPRESSION_START
-//HEADER_DOTDOT_EXPRESSION_END
+HEADER_DOTDOT_EXPRESSION_START
+   SgType* get_type() const;
+
+   // get lvalue
+//   virtual bool isLValue() const;
+//   virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+HEADER_DOTDOT_EXPRESSION_END
 
 HEADER_SUBTRACT_OPERATOR_START
 HEADER_SUBTRACT_OPERATOR_END
@@ -1093,6 +1098,13 @@ HEADER_IMAG_PART_OPERATOR_END
 
 HEADER_CONJUGATE_OPERATOR_START
 HEADER_CONJUGATE_OPERATOR_END
+
+
+HEADER_ATEXP_EXPRESSION_START
+HEADER_ATEXP_EXPRESSION_END
+
+HEADER_FINISHEXP_EXPRESSION_START
+HEADER_FINISHEXP_EXPRESSION_END
 
 
 HEADER_CONDITIONAL_EXPRESSION_START
@@ -4661,8 +4673,20 @@ SOURCE_NOT_OPERATOR_EXPRESSION_END
 SOURCE_ADD_OPERATOR_EXPRESSION_START
 SOURCE_ADD_OPERATOR_EXPRESSION_END
 
-//SOURCE_DOTDOT_EXPRESSION_START
-//SOURCE_DOTDOT_EXPRESSION_END
+SOURCE_DOTDOT_EXPRESSION_START
+SgType*
+$CLASSNAME::get_type() const
+   {
+     ROSE_ASSERT(get_lhs_operand() != NULL);
+     ROSE_ASSERT(get_rhs_operand() != NULL);
+
+     SgType* returnType = get_rhs_operand()->get_type();
+
+     ROSE_ASSERT(returnType != NULL);
+
+     return returnType;
+   }
+SOURCE_DOTDOT_EXPRESSION_END
 
 SOURCE_SUBTRACT_OPERATOR_EXPRESSION_START
 SOURCE_SUBTRACT_OPERATOR_EXPRESSION_END
@@ -5412,6 +5436,15 @@ SgPointerDerefExp::get_type() const
                goto keepStripping;
              }
 
+       // DQ (5/10/2016): Added this for the case of the C++11 support.
+          case V_SgRvalueReferenceType:
+             {
+               SgRvalueReferenceType* rvalueReferenceType = isSgRvalueReferenceType(someType);
+            // returnType = rvalueReferenceType;
+               someType = rvalueReferenceType->get_base_type();
+               goto keepStripping;
+             }
+
 // #ifndef ROSE_USE_EDG_VERSION_4
 #ifndef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (12/31/2008): This is the old behavior from EDG version 3.x (which I don't want to change since it is stable)
@@ -5502,6 +5535,7 @@ SgPointerDerefExp::get_type() const
                returnType = voidType;
                break;
              }
+
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
        // expression (not required to be an lvalue)!
@@ -5743,6 +5777,37 @@ SOURCE_IMAG_PART_OPERATOR_EXPRESSION_END
 
 SOURCE_CONJUGATE_OPERATOR_EXPRESSION_START
 SOURCE_CONJUGATE_OPERATOR_EXPRESSION_END
+
+
+SOURCE_ATEXP_EXPRESSION_START
+void
+$CLASSNAME::post_construction_initialization()
+   {
+   }
+
+SgType*
+SgAtExp::get_type() const
+   {
+     SgType* returnType = SgTypeDefault::createType();
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+SOURCE_ATEXP_EXPRESSION_END
+
+SOURCE_FINISHEXP_EXPRESSION_START
+void
+$CLASSNAME::post_construction_initialization()
+   {
+   }
+
+SgType*
+SgFinishExp::get_type() const
+   {
+     SgType* returnType = SgTypeDefault::createType();
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+SOURCE_FINISHEXP_EXPRESSION_END
 
 
 SOURCE_CONDITIONAL_EXPRESSION_START

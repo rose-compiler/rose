@@ -22,8 +22,8 @@ Visitor::visit(SgNode* n)
                  symbol->get_name()->get_string(true).c_str());
           printf ("symbol->get_name()      = %s \n",symbol->get_name()->get_string(true).c_str());
           printf ("symbol->get_bound()     = %p \n",symbol->get_bound());
-          printf ("symbol->get_size()      = %"PRIu64" \n",symbol->get_size());
-          printf ("symbol->get_value()     = %"PRIu64" \n",symbol->get_value());
+          printf ("symbol->get_size()      = %" PRIu64 " \n",symbol->get_size());
+          printf ("symbol->get_value()     = %" PRIu64 " \n",symbol->get_value());
 
           printf ("symbol->get_type()      = %u = %s \n",symbol->get_type(),symbol->stringifyType().c_str());
           printf ("symbol->get_binding()   = %u = %s \n",symbol->get_binding(),symbol->stringifyBinding().c_str());
@@ -50,7 +50,7 @@ Visitor::visit(SgNode* n)
           if (coffSymbol != NULL)
              {
                printf ("   coffSymbol->get_st_name()            = %s \n",coffSymbol->get_st_name().c_str());
-               printf ("   coffSymbol->get_st_name_offset()     = %"PRIu64" \n",coffSymbol->get_st_name_offset());
+               printf ("   coffSymbol->get_st_name_offset()     = %" PRIu64 " \n",coffSymbol->get_st_name_offset());
                printf ("   coffSymbol->get_st_section_num()     = %d  \n",coffSymbol->get_st_section_num());
                printf ("   coffSymbol->get_st_type()            = %u  \n",coffSymbol->get_st_type());
                printf ("   coffSymbol->get_st_storage_class()   = %u  \n",coffSymbol->get_st_storage_class());
@@ -67,6 +67,9 @@ Visitor::visit(SgNode* n)
 int
 main( int argc, char * argv[] )
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
      SgProject* project = frontend(argc,argv);
 
   // Run available internal tests (not required)

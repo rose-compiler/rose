@@ -11,6 +11,7 @@ using namespace rose::BinaryAnalysis;
 int
 main(int argc, char *argv[]) {
     //! [commandline]
+    ROSE_INITIALIZE;                                    // see rose::initialize
     std::string purpose = "finds static strings in a binary specimen";
     std::string description =
         "This tool disassembles a binary specimen and then scans the "

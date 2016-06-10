@@ -31,7 +31,7 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 
 void
 Grammar::setUpBinaryInstructions()
@@ -180,7 +180,7 @@ Grammar::setUpBinaryInstructions()
 
 
     // Direct register references, like x86 EAX (as opposed to, say, ST(0)).  The only purpose of this class is because SageIII
-    // doesn't allow traversals on non-terminal classes.
+    // doesn't allow traversals on non-AstNodeClass classes.
     NEW_TERMINAL_MACRO(AsmDirectRegisterExpression,
                        "AsmDirectRegisterExpression", "AsmDirectRegisterExpressionTag");
     AsmDirectRegisterExpression.setDataPrototype("unsigned", "psr_mask", "=0", // for ARM
@@ -429,6 +429,11 @@ Grammar::setUpBinaryInstructions()
 
     // Instruction basic block. One entry point (first instruction) and one exit point (last instruction).  However,
     // SgAsmBlock is also used for other things, such as collections of functions.
+    //
+    // statementList and successors should have been pointers to nodes that contain the list rather than being the lists
+    // themselves because ROSETTA doesn't allow traversals on multiple list data members--we can traverse either one list or
+    // the other, but not both.  It's too late to change how this part of the AST is structured because so much user code
+    // already depends on it, therefore we can only traverse statementList and not successors. [Robb Matzke 2016-02-25]
     NEW_TERMINAL_MACRO(AsmBlock, "AsmBlock", "AsmBlockTag");
     AsmBlock.setFunctionPrototype("HEADER_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
     AsmBlock.setFunctionSource("SOURCE_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");

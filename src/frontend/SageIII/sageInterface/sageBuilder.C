@@ -47,8 +47,25 @@
 using namespace std;
 using namespace SageInterface;
 
+
 // MS 2015: utility functions used in the implementation of SageBuilder functions, but are not exposed in the SageBuilder-Interface.
 namespace SageBuilder {
+
+// DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+Sawyer::Message::Facility mlog;
+void 
+initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("SageBuilder", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
+
+
 
 template <class actualFunction>
 actualFunction*
@@ -247,7 +264,7 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
                  // to the lookup_template_function_symbol() function.
                     ROSE_ASSERT(templateArgumentsList == NULL);
 
-                 // DQ (8/11/2013): I think this sould always be non-null.
+                 // DQ (8/11/2013): I think this should always be non-null.
                     ROSE_ASSERT(templateParameterList != NULL);
 
                  // DQ (8/7/2013): Adding support to permit template function overloading on template parameters.
@@ -2749,14 +2766,15 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
         }
 
 #if 0
-     printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s templateArgumentsList = %p templateParameterList = %p \n",scope,scope != NULL ? scope->class_name().c_str() : "NULL",templateArgumentsList,templateParameterList);
+     printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s templateArgumentsList = %p templateParameterList = %p \n",
+          scope,scope != NULL ? scope->class_name().c_str() : "NULL",templateArgumentsList,templateParameterList);
 #endif
 
   // ROSE_ASSERT(XXX_name.is_null() == false);
      if (XXX_name.is_null() == true)
         {
        // DQ (4/2/2013): This case is generated for test2013_86.C.
-          printf ("NOTE: In buildNondefiningFunctionDeclaration_T(): XXX_name.is_null() == true: This is a function with an empty name (allowed as compiler generated initializing constructors to un-named classes, structs, and unions in C++ \n");
+          mprintf ("NOTE: In buildNondefiningFunctionDeclaration_T(): XXX_name.is_null() == true: This is a function with an empty name (allowed as compiler generated initializing constructors to un-named classes, structs, and unions in C++ \n");
         }
 
      SgName nameWithoutTemplateArguments = XXX_name;
@@ -2902,6 +2920,20 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                templateParameterList != NULL ? templateParameterList->size() : 999,
                templateArgumentsList != NULL ? templateArgumentsList->size() : 999);
 #endif
+#if 0
+       // Debugging output.
+          if (templateArgumentsList != NULL)
+             {
+               printf ("Output of type chains for template arguments: \n");
+               for (size_t i = 0; i < templateArgumentsList->size(); i++)
+                  {
+                    string s = "template argument: " + StringUtility::numberToString(i) + " ";
+                 // templateArgumentsList->get_args()[i]->display(s);
+                 // templateArgumentsList->[i]->display(s);
+                    templateArgumentsList->operator[](i)->display(s);
+                  }
+             }
+#endif
 
        // DQ (8/7/2013): We need to use the template arguments in the symbol table lookup for template functions to permit template function overloading on template perameters.
        // func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
@@ -3004,14 +3036,17 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                   }
              }
 
-          // TV (2/5/14): Found symbol might come from another file, in this case we need to insert it in the current scope. 
-          //              Can only happen when scope is a global scope
-             ROSE_ASSERT(scope != NULL);
-             if (  isSgGlobal(scope) != NULL
-                && scope != func_symbol->get_scope()
-                && !SageInterface::isAncestor(scope, func_symbol->get_scope())
-                && !scope->symbol_exists(nameWithTemplateArguments, func_symbol)
-             ) {
+       // TV (2/5/14): Found symbol might come from another file, in this case we need to insert it in the current scope. 
+       //              Can only happen when scope is a global scope
+          ROSE_ASSERT(scope != NULL);
+          if (  isSgGlobal(scope) != NULL
+             && scope != func_symbol->get_scope()
+             && !SageInterface::isAncestor(scope, func_symbol->get_scope())
+             && !scope->symbol_exists(nameWithTemplateArguments, func_symbol) )
+             {
+#if 0
+               printf ("In buildNondefiningFunctionDeclaration_T(): Calling scope->insert_symbol(): for global scope: using nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
+#endif
                scope->insert_symbol(nameWithTemplateArguments, func_symbol);
              }
         }
@@ -3029,11 +3064,24 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #endif
           ROSE_ASSERT(func != NULL);
 
+#if 0
+       // DQ (2/10/2016): Adding support for C99 function parameters used as variable references in the function parameter list.
+          ROSE_ASSERT(func->get_functionParameterScope() == NULL);
+          SgFunctionParameterScope* functionParameterScope = new SgFunctionParameterScope();
+          ROSE_ASSERT(functionParameterScope != NULL);
+#if 0
+          printf ("NOTE: In buildNondefiningFunctionDeclaration_T(): building new functionParameterScope for nondefining function declaration: name = %s functionParameterScope = %p = %s \n",
+               nameWithTemplateArguments.str(),functionParameterScope,functionParameterScope->class_name().c_str());
+#endif
+          func->set_functionParameterScope(functionParameterScope);
+          ROSE_ASSERT(func->get_functionParameterScope() != NULL);
+#endif
+
        // DQ (5/1/2012): This should always be true.
           ROSE_ASSERT(func->get_file_info() == NULL);
 
 #if 0
-          printf ("In buildNondefiningFunctionDeclaration_T(): constructor called to build func = %p = %s \n",func,func->class_name().c_str());
+          printf ("In buildNondefiningFunctionDeclaration_T(): case of func_symbol == NULL: constructor called to build func = %p = %s \n",func,func->class_name().c_str());
 #endif
 #if 0
           if (isSgMemberFunctionDeclaration(func) != NULL)
@@ -3124,6 +3172,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                        }
 #endif
                   }
+
                ROSE_ASSERT(func_symbol != NULL);
                ROSE_ASSERT(func_symbol->get_symbol_basis() != NULL);
 #if 0
@@ -3213,7 +3262,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
              {
             // If this is a SgTemplateDeclaration, then we shuld be able to find the name in the associated scope.
 #if 0
-               printf ("In buildNondefiningFunctionDeclaration_T(): Looking up name = %s in scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
+               printf ("In buildNondefiningFunctionDeclaration_T(): Looking up nameWithTemplateArguments = %s in scope = %p = %s \n",nameWithTemplateArguments.str(),scope,scope->class_name().c_str());
 #endif
             // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
             // In this case these are unavailable from this point.
@@ -3230,7 +3279,26 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           func->set_firstNondefiningDeclaration(func);
           func->set_definingDeclaration(NULL);
 
+       // DQ (5/8/2016): We need to test the first defining declaration that we used.
+          ROSE_ASSERT(func->get_firstNondefiningDeclaration() == func);
+
           ROSE_ASSERT(func->get_definingDeclaration() == NULL);
+
+#if 0
+       // DQ (5/8/2016): We need to test the first defining declaration that we used.
+          SgTemplateFunctionDeclaration* first_nondefiningTemplateFunctionDeclaration = isSgTemplateFunctionDeclaration(func->get_firstNondefiningDeclaration());
+          ROSE_ASSERT(first_nondefiningTemplateFunctionDeclaration != NULL);
+
+       // DQ (9/24/2015): Adding test of template parameter lists.
+          if (templateParameterList->size() != first_nondefiningTemplateFunctionDeclaration->get_templateParameters().size())
+             {
+               printf ("Error: size mismatch: case first_nondefining_declaration == NULL: templateParameterList->size() = %zu \n",templateParameterList->size());
+               printf ("Error: size mismatch: case first_nondefining_declaration == NULL: first_nondefiningTemplateFunctionDeclaration->get_templateParameters().size() = %zu \n",
+                    first_nondefiningTemplateFunctionDeclaration->get_templateParameters().size());
+             }
+       // This may be OK at this point in the construction.
+       // ROSE_ASSERT(templateParameterList->size() == first_nondefiningTemplateFunctionDeclaration->get_templateParameters().size());
+#endif
 
        // DQ (12/14/2011): Error checking
           SgTemplateInstantiationMemberFunctionDecl* testMemberDecl = isSgTemplateInstantiationMemberFunctionDecl(func);
@@ -3281,17 +3349,34 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           SgFunctionDeclaration*         functionDeclaration         = isSgFunctionDeclaration(associatedDeclaration);
           SgTemplateFunctionDeclaration* templateFunctionDeclaration = isSgTemplateFunctionDeclaration(associatedDeclaration);
 #if 0
-          printf ("In buildNondefiningFunctionDeclaration_T(): associatedDeclaration = %p functionDeclaration = %p templateFunctionDeclaration = %p \n",associatedDeclaration,functionDeclaration,templateFunctionDeclaration);
+          printf ("In buildNondefiningFunctionDeclaration_T(): associatedDeclaration = %p functionDeclaration = %p templateFunctionDeclaration = %p \n",
+               associatedDeclaration,functionDeclaration,templateFunctionDeclaration);
 #endif
           if (functionDeclaration != NULL)
              {
                func_type = functionDeclaration->get_type();
+#if 0
+            // DQ (5/8/2016): Error checking!
+               if (templateFunctionDeclaration != NULL)
+                  {
+                    printf ("In buildNondefiningFunctionDeclaration_T(): templateFunctionDeclaration->get_templateParameters().size() = %zu \n",templateFunctionDeclaration->get_templateParameters().size());
+                  }
+#endif
              }
             else
              {
                if (templateFunctionDeclaration != NULL)
                   {
+                 // DQ (5/8/2016): I think this code is never executed (because a templateFunctionDeclaration 
+                 // is derived from a SgFunctionDeclaration, in the newer design (a few years ago)).
+
+                    printf ("This code should not be reachable! \n");
+                    ROSE_ASSERT(false);
+
                     func_type = templateFunctionDeclaration->get_type();
+#if 0
+                    printf ("In buildNondefiningFunctionDeclaration_T(): templateFunctionDeclaration->get_templateParameters().size() = %zu \n",templateFunctionDeclaration->get_templateParameters().size());
+#endif
                   }
                  else
                   {
@@ -3304,6 +3389,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // func = new actualFunction(name,func_type,NULL);
           func = new actualFunction(nameWithTemplateArguments,func_type,NULL);
           ROSE_ASSERT(func != NULL);
+
 #if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): func->get_name() = %s func = %p = %s \n",func->get_name().str(),func,func->class_name().c_str());
 #endif
@@ -3511,7 +3597,14 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
        // DQ (8/13/2013): Adding test of template parameter lists.
           SgTemplateFunctionDeclaration* templateFunctionDeclaration = isSgTemplateFunctionDeclaration(func);
+#if 0
+          if (templateFunctionDeclaration != NULL)
+             {
+               printf ("templateFunctionDeclaration->get_templateParameters().size() = %zu \n",templateFunctionDeclaration->get_templateParameters().size());
+             }
+#endif
           ROSE_ASSERT(templateFunctionDeclaration == NULL || (templateParameterList != NULL && templateParameterList->size() == templateFunctionDeclaration->get_templateParameters().size()));
+
           SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(func);
           ROSE_ASSERT(templateMemberFunctionDeclaration == NULL || (templateParameterList != NULL && templateParameterList->size() == templateMemberFunctionDeclaration->get_templateParameters().size()));
         }
@@ -3737,6 +3830,9 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* r
         }
        else
         {
+#if 0
+          printf ("In SageBuilder::buildNondefiningFunctionDeclaration(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+#endif
        // DQ (11/27/2011): Added support to generate template declarations in the AST (this is part of a common API to make the build functions support more uniform).
           if (buildTemplateInstantiation == true)
              {
@@ -3996,6 +4092,10 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgT
        // DQ (1/4/2009): This needs to be set, checked in AstConsistencyTests.C!
           result->set_associatedClassDeclaration(associatedClassDeclaration);
         }
+
+#if 0
+     printf ("In buildNondefiningMemberFunctionDeclaration(): result = %p result->get_firstNondefiningDeclaration() = %p \n",result,result->get_firstNondefiningDeclaration());
+#endif
 
      return result;
    }
@@ -4539,7 +4639,33 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
                isSgTemplateInstantiationFunctionDecl(first_nondefining_declaration)->get_templateArguments() :
                isSgTemplateInstantiationMemberFunctionDecl(first_nondefining_declaration)->get_templateArguments();
 
+          ROSE_ASSERT(templateArgumentsList != NULL);
+#if 0
+       // printf ("templateArgumentsList                                           = %p \n",templateArgumentsList);
+          printf ("templateArgumentsList = %p templateArgumentsList->size() = %zu \n",templateArgumentsList,templateArgumentsList->size());
+          printf ("templateArgumentsList_from_first_nondefining_declaration.size()      = %zu \n",templateArgumentsList_from_first_nondefining_declaration.size());
+#endif
+#if 1
+          bool templateArgumentListsAreEquivalent = SageInterface::templateArgumentListEquivalence(*templateArgumentsList, templateArgumentsList_from_first_nondefining_declaration);
+          if (templateArgumentListsAreEquivalent == false)
+             {
+               printf ("after test: nameWithoutTemplateArguments  = %s \n",nameWithoutTemplateArguments.str());
+               printf ("after test: nameWithTemplateArguments     = %s \n",nameWithTemplateArguments.str());
+               printf ("after test: templateArgumentsList         = %p \n",templateArgumentsList);
+               printf ("after test: templateArgumentsList->size() = %zu \n",templateArgumentsList != NULL ? templateArgumentsList->size() : (size_t)0L);
+               printf ("after test: templateArgumentsList_from_first_nondefining_declaration.size() = %zu \n",templateArgumentsList_from_first_nondefining_declaration.size());
+               if (first_nondefining_declaration != NULL)
+                  {
+                    printf ("first_nondefining_declaration = %p = %s = %s \n",first_nondefining_declaration,
+                         first_nondefining_declaration->class_name().c_str(),first_nondefining_declaration->get_name().str());
+                    ROSE_ASSERT(first_nondefining_declaration->get_file_info() != NULL);
+                    first_nondefining_declaration->get_file_info()->display("first_nondefining_declaration: debug");
+                  }
+             }
+          ROSE_ASSERT(templateArgumentListsAreEquivalent == true);
+#else
           ROSE_ASSERT(SageInterface::templateArgumentListEquivalence(*templateArgumentsList, templateArgumentsList_from_first_nondefining_declaration));
+#endif
         }
 
      SgTemplateParameterPtrList* templateParameterList = NULL;
@@ -4967,7 +5093,80 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
         {
         // std::cout<<"patching defining function argument's scope and symbol.... "<<std::endl;
           (*argi)->set_scope(func_def);
-          func_def->insert_symbol((*argi)->get_name(), new SgVariableSymbol(*argi) );
+
+       // func_def->insert_symbol((*argi)->get_name(), new SgVariableSymbol(*argi) );
+          SgVariableSymbol* variableSymbol = new SgVariableSymbol(*argi);
+          ROSE_ASSERT(variableSymbol != NULL);
+          func_def->insert_symbol((*argi)->get_name(), variableSymbol );
+
+       // DQ (2/13/2016): Adding support for variable length array types in the function parameter list.
+          SgArrayType* arrayType = isSgArrayType((*argi)->get_type());
+          if (arrayType != NULL)
+             {
+            // Check if this is a VLA array type, if so look for the index expressions and check
+            // if we need to add asociated symbols to the current function definition scope.
+               SgExpression* indexExpression = arrayType->get_index();
+
+            // DQ (2/15/2016): This fails for X10 support.
+            // ROSE_ASSERT(indexExpression != NULL);
+               if (indexExpression != NULL)
+                  {
+                 // DQ (2/14/2016): Handle the case of an expression tree with any number of variable references.
+                 // Get the list of SgVarRef IR nodes and process each one as above.
+                 // void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
+                    vector<SgVarRefExp* > varRefList;
+                    collectVarRefs(indexExpression,varRefList);
+#if 0
+                    printf ("For array variable: name = %s \n",(*argi)->get_name().str());
+                    printf ("varRefList.size() = %zu \n",varRefList.size());
+#endif
+                    for (size_t i = 0; i < varRefList.size(); i++)
+                       {
+                      // Process each index subtree's SgVarRefExp.
+#if 0
+                         printf ("   --- index expression SgVarRefExp: name = %s \n",varRefList[i]->get_symbol()->get_name().str());
+#endif
+                         SgVariableSymbol* dimension_variableSymbol = varRefList[i]->get_symbol();
+                         ROSE_ASSERT(dimension_variableSymbol != NULL);
+#if 0
+                         printf ("dimension_variableSymbol = %p \n",dimension_variableSymbol);
+#endif
+                         ROSE_ASSERT(dimension_variableSymbol != variableSymbol);
+
+                      // The symbol from the referenced variable for the array dimension expression shuld already by in the function definition's symbol table.
+                         SgSymbol* symbolFromLookup = func_def->lookup_symbol(dimension_variableSymbol->get_name());
+                         if (symbolFromLookup != NULL)
+                            {
+                              SgVariableSymbol* variableSymbolFromLookup = isSgVariableSymbol(symbolFromLookup);
+                              ROSE_ASSERT(variableSymbolFromLookup != NULL);
+
+                           // varRefExp->set_symbol(symbolFromLookup);
+                              varRefList[i]->set_symbol(variableSymbolFromLookup);
+#if 0
+                              printf ("Ignoring previously built dimension_variableSymbol: dimension_variableSymbol->get_name() = %s \n",dimension_variableSymbol->get_name().str());
+#endif
+                           // I think we have a problem if this is not true.
+                              ROSE_ASSERT(dimension_variableSymbol != variableSymbol);
+                            }
+                           else
+                            {
+                           // This is not a reference to a variable from the current function's paramter lists, so we can ignore processing it within the VLA handling.
+                            }
+#if 0
+                         printf ("Detected an array type in the function parameter list with nontrivial index expression tree \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+                 else
+                  {
+                 // In X10 the array index can be more general (fixed to avoid failing X10 tests).
+                  }
+#if 0
+               printf ("Detected an array type in the function parameter list \n");
+               ROSE_ASSERT(false);
+#endif
+             }
         }
 
      defining_func->set_parent(scope);
@@ -8847,10 +9046,68 @@ SgAtStmt* SageBuilder::buildAtStmt(SgExpression *expression, SgBasicBlock *body)
        return at_stmt;
 }
 
+// MH (11/12/2014): Added atomic support
+SgAtomicStmt* SageBuilder::buildAtomicStmt(SgBasicBlock *body)
+{
+       ROSE_ASSERT(body != NULL);
+       SgAtomicStmt *atomic_stmt = new SgAtomicStmt(body);
+       ROSE_ASSERT(atomic_stmt);
+       body->set_parent(atomic_stmt);
+       setOneSourcePositionForTransformation(atomic_stmt);
+
+       return atomic_stmt;
+}
+
+
+SgWhenStmt* SageBuilder::buildWhenStmt(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgWhenStmt *when_stmt = new SgWhenStmt(expression, body);
+       SageInterface::setSourcePosition(when_stmt);
+       expression->set_parent(when_stmt);
+       body->set_parent(when_stmt);
+
+       return when_stmt;
+}
+
+// MH (9/14/2014): Added atexpr support
+SgAtExp* SageBuilder::buildAtExp(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgAtExp *at_exp = new SgAtExp(expression, body);
+       SageInterface::setSourcePosition(at_exp);
+       expression->set_parent(at_exp);
+       body->set_parent(at_exp);
+
+       return at_exp;
+}
+
+// MH (11/7/2014): Added finish expression support
+SgFinishExp* SageBuilder::buildFinishExp(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgFinishExp *finish_exp = new SgFinishExp(expression, body);
+       SageInterface::setSourcePosition(finish_exp);
+       expression->set_parent(finish_exp);
+       body->set_parent(finish_exp);
+
+       return finish_exp;
+}
+
+
 SgHereExp* SageBuilder::buildHereExpression()
 {
        SgHereExp *here = new SgHereExp(NULL);
        return here;
+}
+
+SgDotDotExp* SageBuilder::buildDotDotExp()
+{
+       SgDotDotExp *dotdot = new SgDotDotExp(NULL);
+       return dotdot;
 }
 
 
@@ -13660,8 +13917,10 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // Not sure why a warning shows up from astPostProcessing.C
   // SgNode::get_globalMangledNameMap().size() != 0 size = %" PRIuPTR " (clearing mangled name cache)
-     if (result->get_globalMangledNameMap().size() != 0) 
+     if (result->get_globalMangledNameMap().size() != 0)
+        {
           result->clearGlobalMangledNameMap();
+        }
 
      return result;
 #else

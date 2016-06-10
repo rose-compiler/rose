@@ -1,34 +1,15 @@
 #ifndef __GRAMMARSTRING_H__
 #define __GRAMMARSTRING_H__
 
-#include <string>
-#include "ROSETTA_macros.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string>
+#include "grammar.h"
 #include "string_functions.h"
-
-// BP : 11/30/01
-// #ifndef STL_LIST_IS_BROKEN
-// #include STL_LIST_HEADER_FILE
-// #endif
-
-// BP : 11/30/01
-// #ifndef NAMESPACE_IS_BROKEN
-// using namespace std;
-// #endif
-
-// BP : 11/30/01
-// #ifndef IOSTREAM_IS_BROKEN
-// #include IOSTREAM_HEADER_FILE
-// #endif
 
 #include <iostream>
 
-// using namespace std;
-
-// class GrammarTreeNode;   // forward declaration
-class Terminal;
+class AstNodeClass;
 
 class GrammarString
 {
@@ -80,7 +61,7 @@ class GrammarString
   GrammarString & operator= ( const GrammarString & X );
 
   void setVirtual ( const bool & X );
-  virtual std::string getFunctionNameString ( Terminal & node );
+  virtual std::string getFunctionNameString ( AstNodeClass & node );
 
   std::string getConstructorPrototypeParameterString();
   std::string getConstructorSourceParameterString();
@@ -103,7 +84,7 @@ class GrammarString
   friend bool operator== ( const GrammarString & X, const GrammarString & Y );
   // char* getFunctionNameStringTestAgainstExclusions ( GrammarTreeNode & node );
   std::string getFunctionNameStringTestAgainstExclusions 
-    ( Terminal & node,
+    ( AstNodeClass & node,
       std::vector<GrammarString *> &,
       std::vector<GrammarString *> & excludeList );
 
@@ -114,11 +95,11 @@ class GrammarString
   // MS 2014: 
   std::string infoFieldsToString() const;
 
-// DQ (10/8/2014): This returns the name of the type where this data member is a container.
-// The container type is required as part of ATerm support in reading the ATerms and generating
-// the ROSE IR.
-  std::string containerElementTypeString(Terminal & node) const;
-  std::string containerAppendFunctionNameString(Terminal & node) const;
+  // DQ (10/8/2014): This returns the name of the type where this data member is a container.
+  // The container type is required as part of ATerm support in reading the ATerms and generating
+  // the ROSE IR.
+  std::string containerElementTypeString(AstNodeClass & node) const;
+  std::string containerAppendFunctionNameString(AstNodeClass & node) const;
 
   void setIsInConstructorParameterList(ConstructParamEnum X);
   ConstructParamEnum getIsInConstructorParameterList() const;
@@ -155,7 +136,7 @@ class GrammarString
   static bool isContainedIn ( const std::string& longString, const std::string& shortString );
   // A smarter string concatination function (corrects for space in the target automatically)
   static std::string stringConcatenate ( const std::string& target, const std::string& endingString );
-
+  
 };
 
 #endif

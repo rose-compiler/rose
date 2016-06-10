@@ -8,8 +8,8 @@ bool CheckIsModifiedFlagSupport( SgNode *node);
 #endif
 
 // DQ (4/16/2015): This functions have clearer sematics and a better implementation.
-void reportNodesMarkedAsModified(SgNode *node);
-void unsetNodesMarkedAsModified(SgNode *node);
+ROSE_DLL_API void reportNodesMarkedAsModified(SgNode *node);
+ROSE_DLL_API void unsetNodesMarkedAsModified(SgNode *node);
 
 // DQ (4/16/2015): This function is required because it is presently used in the binary analysis.
 // Note that the semantics of this function is that it also resets the isModified flags.
