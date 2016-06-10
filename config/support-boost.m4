@@ -57,6 +57,7 @@ AC_SUBST(ac_boost_path)
 rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
 
 AC_MSG_NOTICE([rose_boost_version = '$rose_boost_version'])
+ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN boost-$rose_boost_version"
 
 if test "x$rose_boost_version" = "x"; then
   ROSE_MSG_ERROR([Unable to compute the version of your Boost C++ libraries: '$ac_boost_path'])

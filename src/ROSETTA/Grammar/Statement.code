@@ -2383,6 +2383,13 @@ HEADER_FINISH_STATEMENT_END
 HEADER_AT_STATEMENT_START
 HEADER_AT_STATEMENT_END
 
+HEADER_ATOMIC_STATEMENT_START
+HEADER_ATOMIC_STATEMENT_END
+
+HEADER_WHEN_STATEMENT_START
+HEADER_WHEN_STATEMENT_END
+
+
 HEADER_TRY_STATEMENT_START
 
           SgStatementPtrList & get_catch_statement_seq(); 
@@ -10928,7 +10935,9 @@ SgFunctionDeclaration::get_mangled_name() const
        //    typedef struct Domain_s { } Domain_t;
        //    int foo ( Domain_s *domain);
        //    int foo ( Domain_t *domain);
-       // printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#if 0
+          printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
 #if 1
        // printf ("TEMP: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);
@@ -11580,9 +11589,9 @@ SgFunctionParameterList::get_mangled_name(void) const
        // SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(get_parent());
        // ROSE_ASSERT(functionDeclaration != NULL);
        // SgName mangledName = functionDeclaration->get_mangled_name() + SgName("_function_parameter_list_") + variableNames;
-
-       // printf ("Inside of SgFunctionParameterList::get_mangled_name(void): mangledName = %s \n",mangledName.str());
-
+#if 0
+          printf ("Inside of SgFunctionParameterList::get_mangled_name(void): mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionParameterList*>(this),mangledName);
        // printf ("RETURN: Inside of SgFunctionParameterList::get_mangled_name(void): mangledName = %s \n",mangledName.str());
@@ -14061,7 +14070,9 @@ SgTemplateInstantiationFunctionDecl::get_mangled_name (void) const
           ROSE_ASSERT(get_templateName().is_null() == false);
 
           SgName mangledName = mangleTemplateFunction (get_templateName().getString(),get_templateArguments(),get_type(),get_scope());
-
+#if 0
+          printf ("In SgTemplateInstantiationFunctionDecl::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateInstantiationFunctionDecl*>(this),mangledName);
 
@@ -14195,7 +14206,9 @@ SgTemplateInstantiationMemberFunctionDecl::get_mangled_name (void) const
        else
         {
           SgName mangledName = mangleTemplateFunction (get_templateName().getString(),get_templateArguments(),get_type(),get_scope());
-
+#if 0
+          printf ("In SgTemplateInstantiationMemberFunctionDecl::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateInstantiationMemberFunctionDecl*>(this),mangledName);
 
@@ -14756,6 +14769,9 @@ SgEnumDeclaration::get_mangled_name (void) const
        // SgName mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()),get_name());
           SgName mangledName = joinMangledQualifiers (mangleQualifiersString,get_name());
 
+#if 0
+          printf ("In SgEnumDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
        // DQ (4/23/2013): If the scope is not available, then don't put this into the MangleNameToCache.
        // It can be added later when the scope is available and at a point where the name will be more meanningful.
        // p_globalMangledNameMap[declaration] = mangledName;
@@ -15240,6 +15256,7 @@ SgFinishStmt::post_construction_initialization()
 
 SOURCE_FINISH_STATEMENT_END
 
+
 SOURCE_AT_STATEMENT_START
 
 void
@@ -15248,6 +15265,27 @@ SgAtStmt::post_construction_initialization()
        }
 
 SOURCE_AT_STATEMENT_END
+
+
+SOURCE_ATOMIC_STATEMENT_START
+
+void
+SgAtomicStmt::post_construction_initialization()
+   {
+   }
+
+SOURCE_ATOMIC_STATEMENT_END
+
+
+SOURCE_WHEN_STATEMENT_START
+
+void
+SgWhenStmt::post_construction_initialization()
+       {
+       }
+
+SOURCE_WHEN_STATEMENT_END
+
 
 SOURCE_TRY_STATEMENT_START
 
@@ -15672,6 +15710,9 @@ SgAsmStmt::get_mangled_name(void) const
                mangledName += (*i)->get_type()->get_mangled();
                i++;
              }
+#if 0
+          printf ("In SgAsmStmt::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgAsmStmt*>(this),mangledName);
@@ -15914,7 +15955,7 @@ SgTypedefDeclaration::get_mangled_name (void) const
 #endif
 
   // printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
-    
+
      ROSE_ASSERT (mangledName.get_length () > 0);
      return mangledName;
 #else
@@ -15936,8 +15977,13 @@ SgTypedefDeclaration::get_mangled_name (void) const
        else
         {
           SgName mangledName;
-
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): before calling get_base_type() \n");
+#endif
           SgType* baseType = get_base_type();
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): after calling get_base_type() \n");
+#endif
 
        // DQ (6/3/2006): I think this is a better implementation of name mangling for a typedef 
        // (need to include the name and the type) but I'm not clear if we want the scope.
@@ -15978,9 +16024,9 @@ SgTypedefDeclaration::get_mangled_name (void) const
 
        // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
           mangledName += "__typedef_declaration";
-
-       // printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
-
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
           ROSE_ASSERT (mangledName.get_length() > 0);
 
        // p_globalMangledNameMap[declaration] = mangledName;
@@ -16857,7 +16903,9 @@ SgNamespaceDeclarationStatement::get_mangled_name (void) const
        else
         {
           SgName mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()), get_name());
-
+#if 0
+          printf ("In SgNamespaceDeclarationStatement::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgNamespaceDeclarationStatement*>(this),mangledName);
           return mangledName;
