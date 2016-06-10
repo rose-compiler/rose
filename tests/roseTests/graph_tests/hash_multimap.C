@@ -1,11 +1,18 @@
 #include <iostream>
-#include  <ext/hash_map>
+// #include  <ext/hash_map>
 
 // DQ (9/12/2009): Required for GNU g++ 4.3.3 to use strcmp
 #include <string.h>
 
 // DQ (9/12/2009): Required for GNU g++ 4.4.1 to use strcmp
 #include <stdio.h>
+
+// DQ (2/12/2016): Fix for error specific to C++11 mode being used to compile this.
+#if (__cplusplus >= 201103L)
+   #include <unordered_map>
+#else
+   #include  <ext/hash_map>
+#endif
 
 using namespace __gnu_cxx;
 using namespace std;
@@ -18,7 +25,16 @@ struct eqstr
   }
 };
 
+// DQ (2/12/2016): Fix for error specific to C++11 mode being used to compile this.
+// Should be using: unordered_multimap when compiling with C++11 mode.
+// typedef hash_multimap<const char*, int, hash<const char*>, eqstr> map_type;
+#if (__cplusplus >= 201103L) 
+// C++11 mode
+typedef unordered_multimap<const char*, int, hash<const char*>, eqstr> map_type;
+#else
+// Not C++11 mode (C++03 mode and older)
 typedef hash_multimap<const char*, int, hash<const char*>, eqstr> map_type;
+#endif
 
 void lookup(const map_type& Map, const char* str)
 {

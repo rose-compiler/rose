@@ -278,7 +278,7 @@ function_label_attr(SgAsmFunction *func)
     std::string retval;
     if (func) {
         char buf[64];
-        sprintf(buf, "F%08"PRIx64, func->get_entry_va());
+        sprintf(buf, "F%08" PRIx64, func->get_entry_va());
         retval += std::string("label = \"") + buf;
         if (func->get_name().size()>0)
             retval += std::string(" <") + func->get_name() + ">";
@@ -298,7 +298,7 @@ static std::string
 function_url_attr(SgAsmFunction *func)
 {
     char buf[64];
-    sprintf(buf, "F%08"PRIx64, func->get_entry_va());
+    sprintf(buf, "F%08" PRIx64, func->get_entry_va());
     return std::string("URL=\"") + buf + ".html\"";
 }
 
@@ -490,7 +490,7 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunction *func,
     using namespace StringUtility;
 
     char func_node_name[64];
-    sprintf(func_node_name, "F%08"PRIx64, func->get_entry_va());
+    sprintf(func_node_name, "F%08" PRIx64, func->get_entry_va());
     mlog[TRACE] <<"dumping graphviz file for function " <<func_node_name <<"\n";
     FILE *out = fopen((fileprefix+"-"+func_node_name+".dot").c_str(), "w");
     ASSERT_not_null2(out, "cannot open file: " + fileprefix+"-"+func_node_name+".dot");
@@ -673,7 +673,7 @@ main(int argc, char *argv[])
      * Initialize ROSE and our own logging.  Our logging facility, "log", is tied into the librose logging facility so it
      * can be controlled by the same command-line switches that control ROSE.
      *------------------------------------------------------------------------------------------------------------------------*/
-    rose::Diagnostics::initialize();                    // rose has to be initialize for the next line to work
+    ROSE_INITIALIZE;
     mlog = Sawyer::Message::Facility("tool", rose::Diagnostics::destination);
     rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
 

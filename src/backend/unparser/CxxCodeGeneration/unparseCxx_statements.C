@@ -671,6 +671,13 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
   // DQ (9/7/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
+#if 0
+     printf ("In unparseFunctionParameterDeclaration(): TOP \n");
+     printf ("   --- funcdecl_stmt                                 = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
+     printf ("   --- funcdecl_stmt->get_type_syntax_is_available() = %s \n",funcdecl_stmt->get_type_syntax_is_available() ? "true" : "false");
+     printf ("   --- initializedName->get_name()                   = %s \n",initializedName->get_name().str());
+#endif
+
 #if 1
   // DQ (9/14/2015): Test disabling this for C++11 mode.
 
@@ -1172,7 +1179,15 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
      if (templateFunctionDeclaration != NULL)
         {
        // curprint(templateFunctionDeclaration->get_templateName().str());
+#if 0
+          printf ("Calling unparseTemplateFunctionName() \n");
+          curprint(" /* In unparse_helper(): Calling unparseTemplateFunctionName() */ \n");
+#endif
           unp->u_exprStmt->unparseTemplateFunctionName(templateFunctionDeclaration,info);
+#if 0
+          printf ("Done: unparseTemplateFunctionName() \n");
+          curprint(" /* In unparse_helper(): Done: unparseTemplateFunctionName() */ \n");
+#endif
         }
        else
         {
@@ -6545,7 +6560,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #else
                     if (ninfo_for_type.SkipBaseType() == false)
                        {
+#if 0
+                         printf ("In unparseVarDeclStmt(): calling unparseType() \n");
+#endif
                          unp->u_type->unparseType(tmp_type, ninfo_for_type);
+#if 0
+                         printf ("In unparseVarDeclStmt(): DONE: calling unparseType() \n");
+#endif
                        }
                       else
                        {
@@ -6625,7 +6646,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // unp->u_type->unparseType(tmp_type, ninfo_for_type);
                     if (ninfo_for_type.SkipBaseType() == false)
                        {
+#if 0
+                         printf ("In unparseVarDeclStmt(): calling unparseType(): tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+#endif
                          unp->u_type->unparseType(tmp_type, ninfo_for_type);
+#if 0
+                         printf ("In unparseVarDeclStmt(): DONE: calling unparseType() \n");
+#endif
                        }
                       else
                        {
@@ -6772,7 +6799,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // ROSE_ASSERT(decl_item->get_register_name() == 0);
                     if (decl_item->get_register_name_code() != SgInitializedName::e_invalid_register)
                        {
-#if 1
+#if 0
                          printf ("In unparseVarDeclStmt(): Output asm register name code \n");
 #endif
                       // an asm ("<register name>") is in use
@@ -6787,7 +6814,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // support the use of either Assembly Register codes or raw strings.
                     if (decl_item->get_register_name_string().empty() == false)
                        {
-#if 1
+#if 0
                          printf ("In unparseVarDeclStmt(): Output asm register name \n");
 #endif
                       // an asm ("<register name>") is in use
@@ -7646,12 +7673,29 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string("{"));
           unp->cur.format(classdefn_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
 
+       // DQ (2/25/2016): Adding support for specification of AstUnparseAttribute for placement inside of a SgClassDefinition.
+       // Note that this does not replace any existing declarations in the class definition.
+          AstUnparseAttribute* unparseAttribute = dynamic_cast<AstUnparseAttribute*>(classdefn_stmt->getAttribute(AstUnparseAttribute::markerName));
+          if (unparseAttribute != NULL)
+             {
+            // Note that in most cases unparseLanguageSpecificStatement() will be called, some formatting 
+            // via "unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);" may be done.  This can cause extra 
+            // CRs to be inserted (which only looks bad).  Not clear now to best clean this up.
+               string code = unparseAttribute->toString(AstUnparseAttribute::e_inside);
+               curprint (code);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
           SgDeclarationStatementPtrList::iterator pp = classdefn_stmt->get_members().begin();
 
           while ( pp != classdefn_stmt->get_members().end() )
              {
 #if 0
-               printf ("In unparseClassDefnStmt(): (*pp)->get_declarationModifier().get_accessModifier().isProtected() = %s \n",(*pp)->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
+               printf ("In unparseClassDefnStmt(): (*pp)->get_declarationModifier().get_accessModifier().isProtected() = %s \n",
+                    (*pp)->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
 #endif
                unparseStatement((*pp), ninfo);
                pp++;
@@ -9982,7 +10026,9 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
   // ROSE_ASSERT(sourcefile != NULL);
      if (sourcefile == NULL)
         {
+#if 0
           printf ("NOTE: source file not available in SgUnparse_Info in unparseTemplateDeclarationStatment_support(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
         }
 
   // We only do this denormalization if we are not using C++11 or later version of C++.

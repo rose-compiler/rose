@@ -42,7 +42,7 @@ copyRoseFiles(const FileSystem::Path &root) {
 int
 main(int argc, char *argv[]) {
     // Initialize libraries
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     mlog = Diagnostics::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 

@@ -12,7 +12,11 @@
 // Supporting code for recognition of types by name and variables in variable declarations, etc.
 #include "dslSupport.h"
 
-#include "generated_dsl_attributes.h"
+// #include "generated_dsl_attributes.h"
+#include "dsl_attribute_support.h"
+
+// #include "array.h"
+// #include "nongenerated_dsl_attributes.h"
 
 #include "dsl_detection.h"
 
@@ -88,7 +92,17 @@ DetectionTraversal::evaluateInheritedAttribute (SgNode* astNode, Detection_Inher
      printf ("In DetectionTraversal::evaluateInheritedAttribute(): astNode = %p = %s: foundTargetDslAbstraction = %s \n",astNode,astNode->class_name().c_str(),foundTargetDslAbstraction ? "true" : "false");
 #endif
 
+     if (foundTargetDslAbstraction == true)
+        {
+       // Lookup the associated attribute class in the dsl_attribute_map and call the copy constructor to build 
+       // the attribute and attach it to the correct IR node.  It turns out that we need the info in the function
+       // that evaluated if this was an attribute, so we don't have enough information at this point.
+        }
+
+
 #if 0
+  // OLD CODE (represented by DSL_Support::isDslAbstraction() function).
+
   // Detection of stencil declaration and stencil operator.
   // Where the stencil specification is using std::vectors as parameters to the constructor, we have to first
   // find the stencil declaration and read the associated SgVarRefExp to get the variable names used.  
@@ -231,6 +245,15 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
 #endif
                   }
              }
+            else
+             {
+            // The element will be a NULL pointer when there was no SynthesizedAttribute passed from the subtree to the parent, this is OK.
+#if 0
+               printf ("In evaluateSynthesizedAttribute(): in loop childNode == NULL: astNode = %p = %s synthesizedAttributeList.size() = %zu dslChildren.size() = %zu \n",
+                    astNode,astNode->class_name().c_str(),synthesizedAttributeList.size(),return_synthesizedAttribute.dslChildren.size());
+            // printf ("In evaluateSynthesizedAttribute(): childNode == NULL \n");
+#endif
+             }
         }
 
 
@@ -242,6 +265,9 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
      AstAttributeMechanism* astAttributeContainer = astNode->get_attributeMechanism();
      if (astAttributeContainer != NULL)
         {
+#if 1
+          printf ("In evaluateSynthesizedAttribute(): found a attribute on astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#endif
        // I think there should only be one DSL attribute, in the future we can support more on a single IR node.
           if (astAttributeContainer->size() != 1)
              {
@@ -252,16 +278,17 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
           ROSE_ASSERT(astAttributeContainer->size() == 1);
 #endif
        // Loop over all the attributes at this IR node
-       //  Pei-Hung (12/22/15): THe ASTAttributeMechanmsim is changed and has to use new API
-       //   for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+       // Pei-Hung (12/22/15): THe ASTAttributeMechanmsim is changed and has to use new API
+       // for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
           BOOST_FOREACH (const std::string &attributeName, astAttributeContainer->getAttributeIdentifiers()) 
              {
                AstAttribute* attribute = astNode->getAttribute(attributeName);
                ROSE_ASSERT(attribute != NULL);
-#if 0
-               DSL_Attribute* dslAstAttribute = dynamic_cast<DSL_Attribute*>(attribute);
+#if 1
+            // DSL_Attribute* dslAstAttribute = dynamic_cast<DSL_Attribute*>(attribute);
+               dsl_attribute* dslAstAttribute = dynamic_cast<dsl_attribute*>(attribute);
                ROSE_ASSERT(dslAstAttribute != NULL);
-#if 0
+#if 1
                printf ("Identified dslAstAttribute in evaluateSynthesizedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
                printf ("   --- return_synthesizedAttribute.dslChildren.size() = %zu \n",return_synthesizedAttribute.dslChildren.size());
 #endif
@@ -280,6 +307,12 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("no attributes: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
         }
 

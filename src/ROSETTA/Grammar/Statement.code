@@ -1438,6 +1438,10 @@ HEADER_STATIC_ASSERTION_DECLARATION_START
 HEADER_STATIC_ASSERTION_DECLARATION_END
 
 
+HEADER_FUNCTION_PARAMETER_SCOPE_START
+HEADER_FUNCTION_PARAMETER_SCOPE_END
+
+
 HEADER_FUNCTION_DECLARATION_STATEMENT_START
 
       //! Support for C++ covariant return types (used in virtual function overloading).
@@ -2379,6 +2383,13 @@ HEADER_FINISH_STATEMENT_END
 HEADER_AT_STATEMENT_START
 HEADER_AT_STATEMENT_END
 
+HEADER_ATOMIC_STATEMENT_START
+HEADER_ATOMIC_STATEMENT_END
+
+HEADER_WHEN_STATEMENT_START
+HEADER_WHEN_STATEMENT_END
+
+
 HEADER_TRY_STATEMENT_START
 
           SgStatementPtrList & get_catch_statement_seq(); 
@@ -2996,10 +3007,24 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 // DQ (10/5/2014): This is now wrong because we now include rose_config.h before processing the
 // files generated from this file.  This change was required to support the ATerm libraries.
 // #ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-#ifdef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+// BH (11/13/2015) on windows this caused incosistent defines of this
+// so that it was not defined in the .h but used in the cxx file
+// #ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
+//#endif
+
+// DQ (2/17/2016): Checking that the correct values are set.
+#ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+   #error "ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
+#endif
+
+#if 0
+// DQ (2/17/2016): Checking that the correct values are set.
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+   #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
+#endif
 #endif
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
@@ -3009,12 +3034,13 @@ HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
 
        // DQ (12/28/2011): We need a constructor similar to the base class.
        // $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
-
-#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+// BH (11/13/2015) on windows this caused incosistent defines of this
+// so that it was not defined in the .h but used in the cxx file
+//#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-#endif
+//#endif
 
 HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
 
@@ -4299,6 +4325,10 @@ SgStatement::get_scope(void) const
                          get_file_info()->display("Error max nesting depth exceeded");
                          printf ("         stmt is %p = %s \n",stmt,stmt->sage_class_name());
                          stmt->get_file_info()->display("Error max nesting depth exceeded");
+
+                      // DQ (3/19/2016): Klocworks reports ths as an issue, since the value of stmt->get_parent() is dereferenced below. Adding an assertion.
+                         ROSE_ASSERT(stmt->get_parent() != NULL);
+
                          printf ("    has a parent %p = %s \n",stmt->get_parent(),stmt->get_parent()->sage_class_name());
                          ROSE_ASSERT(false);
                        }
@@ -9018,6 +9048,10 @@ SgDeclarationStatement::generate_alternative_name_for_unnamed_declaration_in_sco
           case V_SgNamespaceDefinitionStatement:
              {
                SgNamespaceDefinitionStatement* definition = isSgNamespaceDefinitionStatement(scope);
+
+            // DQ (3/19/2016): Klocworks reports an issue because "definition" might be NULL.
+               ROSE_ASSERT(definition != NULL);
+
             // It might be overkill to us the mangled name here
                name = string("unnamed_declaration_in_namespace_definition_") + definition->get_mangled_name();
 #if 0
@@ -9126,6 +9160,10 @@ SgDeclarationStatement::generate_alternative_name_for_unnamed_declaration ( SgNo
             // SgVariableDeclaration::p_variableDeclarationContainsBaseTypeDefiningDeclaration should also be true, I think.
                SgVariableDeclaration* declaration = isSgVariableDeclaration(parent);
             // It might be overkill to us the mangled name here
+
+            // DQ (3/19/2016): Klocworks reports an issue because "declaration" might be NULL.
+               ROSE_ASSERT(declaration != NULL);
+
                name = string("unnamed_declaration_in_variable_declaration_") + declaration->get_mangled_name();
                break;
              }
@@ -9135,6 +9173,10 @@ SgDeclarationStatement::generate_alternative_name_for_unnamed_declaration ( SgNo
             // SgTypedefDeclaration::p_typedefBaseTypeContainsDefiningDeclaration should also be true, I think.
                SgTypedefDeclaration* declaration = isSgTypedefDeclaration(parent);
             // It might be overkill to us the mangled name here
+
+            // DQ (3/19/2016): Klocworks reports an issue because "declaration" might be NULL.
+               ROSE_ASSERT(declaration != NULL);
+
                name = string("unnamed_declaration_in_typedef_declaration_") + declaration->get_mangled_name();
                break;
              }
@@ -10436,6 +10478,17 @@ SgStaticAssertionDeclaration::hasExplicitScope() const
 SOURCE_STATIC_ASSERTION_DECLARATION_END
 
 
+SOURCE_FUNCTION_PARAMETER_SCOPE_START
+
+void
+SgFunctionParameterScope::post_construction_initialization()
+   {
+  // Nothing to do here, but we need this function to be defined.
+   }
+
+SOURCE_FUNCTION_PARAMETER_SCOPE_END
+
+
 SOURCE_FUNCTION_DECLARATION_STATEMENT_START
 
 void
@@ -10642,7 +10695,17 @@ SgFunctionDeclaration::isTemplateFunction() const
                     returnValue = false;
 
                  // Error checking
-                    ROSE_ASSERT(templateMemberFunction->get_templateDeclaration() != NULL);
+                 // DQ (4/17/2016): We have to allow this in some more complex template instantiations (I think).
+                 // It might be work some discussion and at some point.  The case where this happens is in the 
+                 // instatiation of nexted template inside of outer templates and we only have a record of the
+                 // outer template from the instantiation (in EDG).
+                    if (templateMemberFunction->get_templateDeclaration() == NULL)
+                       {
+#if 0
+                         printf ("Note that templateMemberFunction->get_templateDeclaration() == NULL: We have to allow this in some cases of nested templates \n");
+#endif
+                       }
+                 // ROSE_ASSERT(templateMemberFunction->get_templateDeclaration() != NULL);
 #if 0
                  // DQ (12/23/2011): With the new design we no long have this data member.
 
@@ -10726,6 +10789,9 @@ SgFunctionDeclaration::get_mangled_name() const
      SgName type_name;
      SgName ret_type_name;
      const SgFunctionType* func_type = get_type();
+
+#error "DEAD CODE!"
+
      if (func_type != NULL)
         {
           type_name = func_type->get_mangled();
@@ -10753,6 +10819,8 @@ SgFunctionDeclaration::get_mangled_name() const
   // std::map<SgNode*,std::string>::iterator i = mangledNameCache.find(this);
 
      SgName mangledName;
+
+#error "DEAD CODE!"
 
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgFunctionDeclaration*>(this));
      if (mangledNameString.empty() == false)
@@ -10806,10 +10874,17 @@ SgFunctionDeclaration::get_mangled_name() const
   // std::map<SgNode*,std::string>::iterator i = p_globalMangledNameMap.find(function);
   // if (i != p_globalMangledNameMap.end())
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgFunctionDeclaration*>(this));
+
+#if 0
+     printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledNameString.empty() = %s \n",mangledNameString.empty() ? "true" : "false");
+#endif
+
      if (mangledNameString.empty() == false)
         {
        // return i->second.c_str();
-       // printf ("RETURN FROM CACHE: Inside of SgFunctionDeclaration::get_mangled_name(): mangledNameString = %s \n",mangledNameString.c_str());
+#if 0
+          printf ("RETURN FROM CACHE: Inside of SgFunctionDeclaration::get_mangled_name(): mangledNameString = %s \n",mangledNameString.c_str());
+#endif
           return mangledNameString;
         }
        else
@@ -10860,7 +10935,9 @@ SgFunctionDeclaration::get_mangled_name() const
        //    typedef struct Domain_s { } Domain_t;
        //    int foo ( Domain_s *domain);
        //    int foo ( Domain_t *domain);
-       // printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#if 0
+          printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
 #if 1
        // printf ("TEMP: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);
@@ -11512,9 +11589,9 @@ SgFunctionParameterList::get_mangled_name(void) const
        // SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(get_parent());
        // ROSE_ASSERT(functionDeclaration != NULL);
        // SgName mangledName = functionDeclaration->get_mangled_name() + SgName("_function_parameter_list_") + variableNames;
-
-       // printf ("Inside of SgFunctionParameterList::get_mangled_name(void): mangledName = %s \n",mangledName.str());
-
+#if 0
+          printf ("Inside of SgFunctionParameterList::get_mangled_name(void): mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionParameterList*>(this),mangledName);
        // printf ("RETURN: Inside of SgFunctionParameterList::get_mangled_name(void): mangledName = %s \n",mangledName.str());
@@ -12149,7 +12226,12 @@ SgMemberFunctionDeclaration::get_class_scope(void) const
 
                ROSE_ASSERT(get_name().is_null() == false);
                printf ("Error in $CLASSNAME::get_class_scope() member function name = %s (can be incorrect due to rewrite system) \n",get_name().str());
-               printf ("     get_parent() = %p = %s \n",get_parent(),(get_parent() != NULL) ? get_parent()->sage_class_name() : "NULL");
+
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by calling get_parent only once).
+            // printf ("     get_parent() = %p = %s \n",get_parent(),(get_parent() != NULL) ? get_parent()->sage_class_name() : "NULL");
+               SgNode* parent = get_parent();
+               printf ("     get_parent() = %p = %s \n",parent,(parent != NULL) ? parent->sage_class_name() : "NULL");
+
                printf ("     p_scope      = %p = %s \n",p_scope,p_scope->sage_class_name());
              }
        // ROSE_ASSERT(parentScope != NULL);
@@ -13988,7 +14070,9 @@ SgTemplateInstantiationFunctionDecl::get_mangled_name (void) const
           ROSE_ASSERT(get_templateName().is_null() == false);
 
           SgName mangledName = mangleTemplateFunction (get_templateName().getString(),get_templateArguments(),get_type(),get_scope());
-
+#if 0
+          printf ("In SgTemplateInstantiationFunctionDecl::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateInstantiationFunctionDecl*>(this),mangledName);
 
@@ -14122,7 +14206,9 @@ SgTemplateInstantiationMemberFunctionDecl::get_mangled_name (void) const
        else
         {
           SgName mangledName = mangleTemplateFunction (get_templateName().getString(),get_templateArguments(),get_type(),get_scope());
-
+#if 0
+          printf ("In SgTemplateInstantiationMemberFunctionDecl::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateInstantiationMemberFunctionDecl*>(this),mangledName);
 
@@ -14259,7 +14345,11 @@ SgTemplateInstantiationDefn::get_mangled_name(void) const
      printf ("PASSED: In SgTemplateInstantiationDefn::get_mangled_name(): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
-     SgName mangledName = get_declaration()->get_mangled_name(); 
+  // DQ (3/19/2016): Klocworks reports this as an issue, since get_declaration() might be NULL.
+  // SgName mangledName = get_declaration()->get_mangled_name();
+     SgClassDeclaration* classDeclaration = get_declaration();
+     ROSE_ASSERT(classDeclaration != NULL);
+     SgName mangledName = classDeclaration->get_mangled_name();
 
 #if 0
      printf ("In SgTemplateInstantiationDefn::get_mangled_name(): mangleName = %s \n",mangledName.str());
@@ -14390,21 +14480,35 @@ SgName
 SgClassDefinition::get_qualified_name() const
    {
   // printf ("In $CLASSNAME::get_qualified_name() \n");
-     return get_declaration()->get_qualified_name();
+
+  // DQ (3/19/2016): Klocworks reports this as an issue, since get_declaration() might be NULL.
+  // return get_declaration()->get_qualified_name();
+     SgClassDeclaration* classDeclaration = get_declaration();
+     ROSE_ASSERT(classDeclaration != NULL);
+     return classDeclaration->get_qualified_name();
    }
 
 // DQ (2/7/2006): code added by Rich Vuduc
 SgName
 SgClassDefinition::get_mangled_name (void) const
    {
-     return get_declaration()->get_mangled_name ();
+  // DQ (3/19/2016): Klocworks reports this as an issue, since get_declaration() might be NULL.
+  // return get_declaration()->get_mangled_name();
+     SgClassDeclaration* classDeclaration = get_declaration();
+     ROSE_ASSERT(classDeclaration != NULL);
+     return classDeclaration->get_mangled_name();
    }
 
 SgName
 SgClassDefinition::get_mangled_qualified_name (int& i) 
    {
   // printf ("In $CLASSNAME::get_mangled_qualified_name(%d): Calling get_declaration()->get_mangled_qualified_name(%d) \n",i,i);
-     return get_declaration()->get_mangled_qualified_name(i);
+
+  // DQ (3/19/2016): Klocworks reports this as an issue, since get_declaration() might be NULL.
+  // return get_declaration()->get_mangled_qualified_name(i);
+     SgClassDeclaration* classDeclaration = get_declaration();
+     ROSE_ASSERT(classDeclaration != NULL);
+     return classDeclaration->get_mangled_qualified_name(i);
    }
 
 bool
@@ -14665,6 +14769,9 @@ SgEnumDeclaration::get_mangled_name (void) const
        // SgName mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()),get_name());
           SgName mangledName = joinMangledQualifiers (mangleQualifiersString,get_name());
 
+#if 0
+          printf ("In SgEnumDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
        // DQ (4/23/2013): If the scope is not available, then don't put this into the MangleNameToCache.
        // It can be added later when the scope is available and at a point where the name will be more meanningful.
        // p_globalMangledNameMap[declaration] = mangledName;
@@ -15149,6 +15256,7 @@ SgFinishStmt::post_construction_initialization()
 
 SOURCE_FINISH_STATEMENT_END
 
+
 SOURCE_AT_STATEMENT_START
 
 void
@@ -15157,6 +15265,27 @@ SgAtStmt::post_construction_initialization()
        }
 
 SOURCE_AT_STATEMENT_END
+
+
+SOURCE_ATOMIC_STATEMENT_START
+
+void
+SgAtomicStmt::post_construction_initialization()
+   {
+   }
+
+SOURCE_ATOMIC_STATEMENT_END
+
+
+SOURCE_WHEN_STATEMENT_START
+
+void
+SgWhenStmt::post_construction_initialization()
+       {
+       }
+
+SOURCE_WHEN_STATEMENT_END
+
 
 SOURCE_TRY_STATEMENT_START
 
@@ -15581,6 +15710,9 @@ SgAsmStmt::get_mangled_name(void) const
                mangledName += (*i)->get_type()->get_mangled();
                i++;
              }
+#if 0
+          printf ("In SgAsmStmt::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgAsmStmt*>(this),mangledName);
@@ -15823,7 +15955,7 @@ SgTypedefDeclaration::get_mangled_name (void) const
 #endif
 
   // printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
-    
+
      ROSE_ASSERT (mangledName.get_length () > 0);
      return mangledName;
 #else
@@ -15845,8 +15977,13 @@ SgTypedefDeclaration::get_mangled_name (void) const
        else
         {
           SgName mangledName;
-
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): before calling get_base_type() \n");
+#endif
           SgType* baseType = get_base_type();
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): after calling get_base_type() \n");
+#endif
 
        // DQ (6/3/2006): I think this is a better implementation of name mangling for a typedef 
        // (need to include the name and the type) but I'm not clear if we want the scope.
@@ -15887,9 +16024,9 @@ SgTypedefDeclaration::get_mangled_name (void) const
 
        // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
           mangledName += "__typedef_declaration";
-
-       // printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
-
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
           ROSE_ASSERT (mangledName.get_length() > 0);
 
        // p_globalMangledNameMap[declaration] = mangledName;
@@ -16551,14 +16688,23 @@ SgName
 SgTemplateClassDefinition::get_qualified_name() const
    {
   // printf ("In SgClassDefinition::get_qualified_name() \n");
-     return get_declaration()->get_qualified_name();
+
+  // DQ (3/19/2016): Klocworks reports this as an issue, since get_declaration() might be NULL.
+  // return get_declaration()->get_qualified_name();
+     SgTemplateClassDeclaration* templateClassDeclaration = get_declaration();
+     ROSE_ASSERT(templateClassDeclaration != NULL);
+     return templateClassDeclaration->get_qualified_name();
    }
 
 // DQ (2/7/2006): code added by Rich Vuduc
 SgName
 SgTemplateClassDefinition::get_mangled_name (void) const
    {
-     return get_declaration()->get_mangled_name ();
+  // DQ (3/19/2016): Klocworks reports this as an issue, since get_declaration() might be NULL.
+  // return get_declaration()->get_mangled_name ();
+     SgTemplateClassDeclaration* templateClassDeclaration = get_declaration();
+     ROSE_ASSERT(templateClassDeclaration != NULL);
+     return templateClassDeclaration->get_mangled_name ();
    }
 
 SgName
@@ -16566,12 +16712,10 @@ SgTemplateClassDefinition::get_mangled_qualified_name (int& i)
    {
   // printf ("In SgClassDefinition::get_mangled_qualified_name(%d): Calling get_declaration()->get_mangled_qualified_name(%d) \n",i,i);
 
-      printf ("Sorry, SgTemplateClassDefinition::get_mangled_qualified_name(int) not implemented! \n");
-      ROSE_ASSERT(false);
+     printf ("Sorry, SgTemplateClassDefinition::get_mangled_qualified_name(int) not implemented! \n");
+     ROSE_ASSERT(false);
 
-      return "error_no_name";
-
-  // return get_declaration()->get_mangled_qualified_name(i);
+     return "error_no_name";
    }
 
 SgTemplateClassDefinition::SgTemplateClassDefinition( SgTemplateClassDeclaration *decl)
@@ -16632,7 +16776,11 @@ SgTemplateFunctionDefinition::set_declaration(SgTemplateFunctionDeclaration* new
 SgName
 SgTemplateFunctionDefinition::get_mangled_name (void) const
    {
-     return get_declaration()->get_mangled_name ();
+  // DQ (3/19/2016): Klocworks reports this as an issue, since get_declaration() might be NULL.
+  // return get_declaration()->get_mangled_name();
+     SgTemplateFunctionDeclaration* templateFunctionDeclaration = get_declaration();
+     ROSE_ASSERT(templateFunctionDeclaration != NULL);
+     return templateFunctionDeclaration->get_mangled_name();
    }
 
 SOURCE_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_END
@@ -16755,7 +16903,9 @@ SgNamespaceDeclarationStatement::get_mangled_name (void) const
        else
         {
           SgName mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()), get_name());
-
+#if 0
+          printf ("In SgNamespaceDeclarationStatement::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgNamespaceDeclarationStatement*>(this),mangledName);
           return mangledName;

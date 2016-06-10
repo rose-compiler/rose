@@ -39,7 +39,9 @@
 #include "rosedll.h"
 //tps (05/04/2010): Added compatibility
 #ifdef _MSC_VER
+# if _MSC_VER < 1900
   #define snprintf _snprintf
+# endif
 #endif
 
 // George Vulov (Aug. 23, 2010): This macro is not available in OS X by default
@@ -450,6 +452,8 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 
 // endif for ifndef ROSE_USE_SWIG_SUPPORT
 // #endif
+
+#include <initialize.h>                                 // defines rose::initialize
 
 #endif
 

@@ -24,6 +24,9 @@ elseif (MSVC_VERSION STREQUAL "1700")
 elseif (MSVC_VERSION STREQUAL "1800")
   set(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER 12)
   set(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER 0)
+elseif (MSVC_VERSION STREQUAL "1900")
+  set(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER 14)
+  set(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER 0)
 else()
   message(FATAL_ERROR "Unable to extract major & minor version from MSVC_VERSION ${MSVC_VERSION}")
 endif()
@@ -84,11 +87,11 @@ if (NOT EXISTS "${rose_system_headers_dir}/Windows.h")
   message(STATUS "done copying system headers")
 
   # ROSE wants <string>, but Windows provides <string.h>
-  configure_file(
-    ${rose_system_headers_dir}/string.h
-    ${rose_system_headers_dir}/string
-    COPYONLY
-  )
+#  configure_file(
+#    ${rose_system_headers_dir}/string.h
+#    ${rose_system_headers_dir}/string
+#    COPYONLY
+#  )
 endif()
 
 configure_file(

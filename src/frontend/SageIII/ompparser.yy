@@ -21,6 +21,7 @@
 #ifdef _MSC_VER
   #undef IN
   #undef OUT
+  #undef DUPLICATE
 #endif
 
 using namespace OmpSupport;

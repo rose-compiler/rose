@@ -24,6 +24,10 @@
 class AttributeGenerator_InheritedAttribute
    {
      public:
+       // Save the pragma so that we can evaluate which of different possible DSL pragmas were used.
+          std::string pragma_string;
+
+     public:
           AttributeGenerator_InheritedAttribute();
           AttributeGenerator_InheritedAttribute(const AttributeGenerator_InheritedAttribute & X);
    };
@@ -46,6 +50,9 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
        // Keep a map of DLS nodes identified via pragmas (as the statement after the pragma).
           std::set<SgStatement*> DSLnodes;
 
+       // Make a seperate list of DSL nodes where we will not try to support value tracking in the data flow transfer equations.
+          std::set<SgStatement*> DSLnodes_novalue;
+
           SgSourceFile* generatedHeaderFile;
           SgSourceFile* generatedSourceFile;
 
@@ -57,15 +64,74 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
 
           SgGlobal* global_scope_requiredSourceCode;
 
-          AttributeGeneratorTraversal();
+       // Variables that we will initialize with types, functions, etc.
+          SgInitializedName* dsl_type_names_variable;
+          SgInitializedName* dsl_function_names_variable;
+          SgInitializedName* dsl_member_function_names_variable;
+          SgInitializedName* dsl_attribute_map_variable;
+
+#if 0
+       // This is the code generation, we are passing the inforamtion to
+       // the DSL compiler for types and functions in terms of names.
+          std::vector<std::string> dsl_type_name_list;
+          std::vector<std::string> dsl_function_name_list;
+          std::vector<std::string> dsl_member_function_name_list;
+
+       // Here we have to generate constructor calls in the generated code that will be used
+       // in the DSL compiler, so we need to generate references to constructor initializers.
+          std::vector<SgConstructorInitializer*> dsl_attribute_map_list;
+#endif
+       // I think it is better to save the pointer to the DSL abstraction type instead of a string representing the name.
+       // All types are then used to generate attributes as a last step in the traversal (in the syntheziedAttribute evaluation.
+          std::vector<SgType*> dsl_type_list;
+
+       // a record of the types used for tracked DSL variables (which require tracking the variable references).
+          std::set<SgType*> dsl_type_varRef_list;
+
+       // a record of the functions used in the DSL.
+          std::vector<SgFunctionDeclaration*> dsl_function_list;
+
+       // I now think that this will simplify the handling of the generated code since we support a 
+       // dsl_member_function_names_variable to know the class associated with each member function.
+       // I don't think we need this since member functions and nonmember functions can be combined in the dsl_function_list.
+          std::vector<SgMemberFunctionDeclaration*> dsl_member_function_list;
+
+       // I am not yet clar how to generate the initializers for this DSL variable.
+          std::vector<SgConstructorInitializer*> dsl_attribute_map_list;
+
+       // DQ (3/16/2016): Name collision testing.
+          std::map<std::string,int> dsl_attribute_name_collision_map;
+
+       // DQ (3/4/2016): Turning on internal debugging.
+          bool internal_debugging;
+
+       // AttributeGeneratorTraversal();
+          AttributeGeneratorTraversal( SgProject* project );
 
        // Functions required to overload the pure virtual functions in the abstract base class.
           AttributeGenerator_InheritedAttribute   evaluateInheritedAttribute   (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute );
           AttributeGenerator_SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList );
 
-          SgNode* buildAttribute(SgType* type);
+#if 1
+       // SgNode* buildAttribute(SgType* type);
+          SgNode* buildAttribute(SgType* type, bool isDSLnode_valueTracking);
+          SgNode* buildAttribute(SgFunctionDeclaration* functionDeclaration);
+#endif
 
           void unparseGeneratedCode();
+
+       // Process the variables used to communicate DSL abstractions to the DSL compiler.
+          void processvariable(SgInitializedName* initializedName);
+
+          void modify_dsl_variable_initializers();
+
+       // Generate unique name for use as a class name for the generated attribute classes.
+       // std::string generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration );
+          std::string generateUniqueName ( SgDeclarationStatement* declaration );
+
+       // Refactored code to build the attribute (used for variables, varRef expressions, and function call expressions).
+          void buildClassDeclaration(std::string attribute_name, SgClassDeclaration* & generatedClass, SgClassDefinition* & generatedClassDefinition);
+
    };
 
 

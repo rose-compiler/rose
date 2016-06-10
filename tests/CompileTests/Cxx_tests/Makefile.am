@@ -210,7 +210,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_184.C \
    test2014_185.C \
    test2014_186.C \
-   test2014_188.C \
    test2014_189.C \
    test2014_190.C \
    test2014_191.C \
@@ -332,7 +331,6 @@ NEW_TESTCODES = \
    test2015_117.C \
    test2015_118.C \
    test2015_119.C \
-   test2015_120.C \
    test2015_121.C \
    test2015_122.C \
    test2015_123.C \
@@ -368,7 +366,88 @@ NEW_TESTCODES = \
    test2016_04.C \
    test2016_05.C \
    test2016_06.C \
-   test2016_07.C 
+   test2016_07.C \
+   test2016_08.C \
+   test2016_09.C \
+   test2016_10.C \
+   test2016_11.C \
+   test2016_12.C \
+   test2016_13.C \
+   test2016_14.C \
+   test2016_15.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
+   test2016_19.C \
+   test2016_20.C \
+   test2016_21.C \
+   test2016_25.C \
+   test2016_26.C \
+   test2016_27.C \
+   test2016_28.C \
+   test2016_29.C \
+   test2016_30.C \
+   test2016_31.C \
+   test2016_32.C \
+   test2016_33.C \
+   test2016_34.C \
+   test2016_36.C \
+   test2016_38.C \
+   test2016_40.C 
+
+# DQ (6/6/2016): This is a cpp generated file and too specific to later version gnu 
+# compilers (gnu 4.8.x and later and or later versions of RedHat (RH 7 and later)).
+#  test2016_35.C 
+#  test2016_39.C 
+
+# DQ (5/8/2016): Example of large cpp preprocessed file that is failing to unparse correctly.
+# Previously these were failing in the frontend (now fixed).
+#  test2016_22.C 
+#  test2016_23.C 
+#  test2016_24.C 
+
+
+if !USING_CLANG_COMPILER
+# DQ (4/16/2016): Removed this test from the tests/input_codes/cxx/Makefile_Variables file
+# and put it into the Cxx_tests directory since it is a specific problem for Clang testing only.
+# test2005_50.C:  This was removed from being tested in the directory:
+#                 tests/roseTests/programTransformationTests/extractFunctionArgumentsTest/normalizationTranslator
+#                 because this translator does not handle constness for char pointers that are
+#                 assigned from constant string literals (and constness is enforced in the generated 
+#                 code by the Clang compiler). 
+# test2007_141.C: This is a case of a private type output in a template argument that should not be output.
+#                 Note that the supressing the output of template paramters that are not represented 
+#                 in the source code is an outstanding issue in ROSE that will be worked on once we
+#                 have some specific application testing in place (so we don't break functionality 
+#                 for specific customers.
+# test2012_188.C: This is the same iusse as for test2007_141.C.
+# test2013_243.C: This is the case of outputting both throw and nothrow (one a a keyword and the 
+#                 second as an attribute).  GNU ignores the second conflicting attributue and Clang
+#                 considers it to be an error.
+NEW_TESTCODES += \
+   test2005_50.C \
+   test2007_141.C \
+   test2012_188.C \
+   test2013_243.C 
+endif
+
+# These is a single bug represented in two test codes and from the guys working on SystemC.
+FAILING_TESTS_SYSTEMC = \
+   test2014_60.C \
+   test2014_61.C 
+
+
+if !ROSE_USE_EDG_VERSION_4_7
+if !ROSE_USING_BOOST_VERSION_1_57
+# These boost 1.57 specific tests fail in EDG 4.7 and pass in EDG 4.9, so
+# avoid testing them in this combination.  The issue is fixed in EDG 4.9.
+NEW_TESTCODES += \
+   test2014_187.C \
+   test2014_187_work_around.C \
+   test2014_188.C \
+   test2015_120.C 
+endif
+endif
 
 # Failing test codes:
 #   test2015_147.C 
@@ -422,11 +501,14 @@ if !USING_INTEL_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_304.C \
    test2014_159.C \
-   test2014_187.C \
-   test2014_187_work_around.C \
    test2014_211.C \
    test2015_55.C
 endif
+
+# These should not be tested with the EDG 4.7 frontend (pass only in ROSE with the EDG 4.9 frontend).
+# I thnk this has much less to do with Intel compiler being used.
+# test2014_187.C 
+# test2014_187_work_around.C 
 
 # DQ (12/19/2015): I think these test codes use language builtin functions not present with the same signature in
 # older GNU versions (e.g. "__builtin_isgreater()") and types not present in older GNU versions (e.g. "__int128")
@@ -482,7 +564,7 @@ endif
 
 # DQ (8/24/2014): This passes outside of Jenkins (boost foreach test codes) but 
 # fails for Jenkins since the location of boost is not specified for the test codes.
-#  test2014_103.C
+#  test2014_103.C 
 #  test2014_104.C 
 #  test2014_105.C 
 #  test2014_106.C 
@@ -1137,6 +1219,15 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENT
 # TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
 TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+
+# DQ (4/13/2016): Why is this suddenly required.  How did the A++ include directory go missing?
+# The reason it appears to be required is because clang is defining __GNUC__ to be the value 3
+# and some of the test code use this to trigger that we are using version 3.x version of GNU
+# (since clang tries to pretend that it is GNU but borrows the version number to communicate that
+# it is 3.7.0 in it's emulation of GNU 4.2.1 (this is screwed up within Clang so it requires 
+# extra logic to sort it out and get the emulation correct).  Input codes using __GNUC__ are
+# thus not we setup to be used with clang or ROSE trying ti emulate clang.
+# TESTCODE_INCLUDES += $(APP_INCLUDES) 
 
 # TESTS_THAT_FAIL =
 

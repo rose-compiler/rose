@@ -101,7 +101,9 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Callbacks.h			\
 	Sawyer/CommandLine.h			\
 	Sawyer/DefaultAllocator.h		\
+	Sawyer/DenseIntegerSet.h		\
 	Sawyer/DistinctList.h			\
+	Sawyer/Exception.h			\
 	Sawyer/Graph.h				\
 	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
@@ -131,7 +133,11 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/ThreadWorkers.h			\
 	Sawyer/WarningsOff.h			\
 	Sawyer/WarningsRestore.h
+
 EXTRA_DIST += Sawyer/CMakeLists.txt
+
+# These are used in the doxygen documentation examples
+EXTRA_DIST += Sawyer/docs/examples/commandLineEx1.C Sawyer/docs/examples/graphIso.C
 
 ########################################################################################################################
 # automake boilerplate

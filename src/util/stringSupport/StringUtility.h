@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdint.h>
 #include <limits.h>
+#include <sstream>
 
 #if ROSE_MICROSOFT_OS
 // This is the boost solution for lack of support for stdint.h (e.g. types such as "uint64_t")
@@ -22,6 +23,143 @@
  *  boost::filesystem for better implementations), and functions for performing file I/O. These unrelated functions should
  *  eventually move to other name spaces. */
 namespace StringUtility {
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Character-escaping functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Escapes HTML special characters.
+ *
+ *  Replaces "<", ">", and "&" with HTML character names and returns the result. */
+ROSE_UTIL_API std::string htmlEscape(const std::string&);
+
+/** Escapes characters that are special to C/C++.
+ *
+ *  Replaces special characters in the input so that it is suitable for the contents of a C string literal. That is, things
+ *  like double quotes, line-feeds, tabs, non-printables, etc. are replace by their C backslash escaped versions. Returns the
+ *  resulting string. */
+ROSE_UTIL_API std::string cEscape(const std::string&);
+
+
+// [Robb Matzke 2016-05-06]: I am deprecating escapeNewLineCharaters because:
+//   1. Its name is spelled wrong: "Charater"
+//   2. "newline" in this context is a single word and should be capitalized as "Newline" not "NewLine"
+//   3. Its name is misleading because it also escapes double quotes.
+//   4. It escapes newlines using "l" rather than the more customary "n".
+// I would just remove it, but it seems to be used in some projects and the tutorial.
+
+/** Escapes line feeds and double quotes.
+ *
+ *  Scans the input string character by character and replaces line-feed characters with a backslash followed by the letter "l"
+ *  and replaces double quotes by a backslash followed by a double qoute. */
+ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&)
+    SAWYER_DEPRECATED("tell us if you use this");       // ROSE_DEPRECATED is not defined here; lack of sage3basic.h
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Container versus scalar functions
+//
+// Functions that convert containers of things to a string and vice versa.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Join individual items to form a single string.
+ *
+ *  Given a container containing printable objects (such as <code>std::list<std::string></code>, join the objects together
+ *  separated from one another by the specified @p separator. The separator does not appear before the first object or after
+ *  the final object.  If the container is empty then an empty string is returned.
+ *
+ * @{ */
+template<class Iterator>
+std::string join_range(const std::string &separator, Iterator begin, Iterator end) {
+    std::ostringstream retval;
+    for (Iterator i=begin; i!=end; ++i)
+        retval <<(i==begin ? std::string() : separator) <<*i;
+    return retval.str();
+}
+
+template<class Container>
+std::string join(const std::string &separator, const Container &container) {
+    return join_range(separator, container.begin(), container.end());
+}
+
+ROSE_UTIL_API std::string join(const std::string &separator, char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(const std::string &separator, const char *strings[], size_t nstrings);
+/** @} */
+
+/** Generate a string from a list of integers.
+ *
+ *  The return value is the concatenation of substrings. Each substring is formed by converting the corresponding integer from
+ *  the list into a string via @ref numberToString and then adding a single space character and an optional line feed. The line
+ *  feeds are added only if @p separateStrings is true. */
+ROSE_UTIL_API std::string listToString(const std::list<int>&, bool separateStrings = false);
+
+/** Generate a string from a container of strings.
+ *
+ *  The return value is the concatenation of substrings. Each substring is formed by adding a single space to the corresponding
+ *  list element and an optional line feed. The line feeds are added only if @p separateStrings is true.
+ *
+ *  @{ */
+ROSE_UTIL_API std::string listToString(const std::list<std::string>&, bool separateStrings = false);
+ROSE_UTIL_API std::string listToString(const std::vector<std::string>&, bool separateStrings = false);
+/** @} */
+
+/** Splits strings into parts.
+ *
+ *  Find all non-overlapping occurrences the specified @p separator string by greedily scanning from left to right in the input
+ *  string, @p str.  The input string is then logically chopped into parts at each separator position and the parts are
+ *  assembled into the return value. Only up to @p maxparts-1 occurrences of the @p separator string are found, and any
+ *  remaining occurrences are not treated specially.  For instance, if @p maxparts is two then at most one separator is found
+ *  and at most two substrings are returned. Separators at positions that would result in empty substrings being returned are
+ *  not treated specially--empty substrings can be returned. This occurs when a separator is found at the beginning or end of a
+ *  string or two separators are adjacent. The C++ library already has other functions for removing empty strings from a list.
+ *  If @p trim_white_space is true then white space is removed from the beginning and end of each returned substring and
+ *  resulting empty substrings are not removed from the return value. The first few arguments are in the same order as for
+ *  Perl's "split" operator.
+ *
+ * @{ */
+ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
+                                             bool trim_white_space=false);
+ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
+                                             bool trim_white_space=false);
+/** @} */
+
+/** Split a string into substrings at line feeds.
+ *
+ *  Splits the input string into substrings at the linefeed characters to construct a list, then removes empty strings from the
+ *  list.
+ *
+ *  The original implementation (pre-2016) had a bug (ROSE-304) that caused the last substring to not be returned if it was not
+ *  followed by a linefeed.  That implementation was also slow for large inputs (ROSE-305). Both of these are now fixed since
+ *  stringToList is now implemented in terms of @ref split. */
+ROSE_UTIL_API std::list<std::string> stringToList(const std::string&);
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Functions for converting numbers to strings
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/** Convert an integer to a string.
+ *
+ *  These functions are wrappers around <code>boost::lexical_cast<std::string></code>.
+ *
+ *  @{ */
+ROSE_UTIL_API std::string numberToString(long long);
+ROSE_UTIL_API std::string numberToString(unsigned long long);
+ROSE_UTIL_API std::string numberToString(long);
+ROSE_UTIL_API std::string numberToString(unsigned long);
+ROSE_UTIL_API std::string numberToString(int);
+ROSE_UTIL_API std::string numberToString(unsigned int);
+/** @} */
+
+
+
+
+
+
 
 /** String with source location information.
  *
@@ -125,19 +263,6 @@ ROSE_UTIL_API FileWithLineNumbers copyEdit(const FileWithLineNumbers& inputStrin
                                            const FileWithLineNumbers& newToken);
 /** @} */
 
-/** Convert an integer to a string.
- *
- *  These functions are wrappers around <code>boost::lexical_cast<std::string></code>.
- *
- *  @{ */
-ROSE_UTIL_API std::string numberToString(long long);
-ROSE_UTIL_API std::string numberToString(unsigned long long);
-ROSE_UTIL_API std::string numberToString(long);
-ROSE_UTIL_API std::string numberToString(unsigned long);
-ROSE_UTIL_API std::string numberToString(int);
-ROSE_UTIL_API std::string numberToString(unsigned int);
-/** @} */
-
 /** Convert an integer to a hexadecimal string. */
 ROSE_UTIL_API std::string intToHex(uint64_t);
 
@@ -169,36 +294,10 @@ ROSE_UTIL_API std::string numberToString(double);
  *  Converts a virtual address to a hexadecimal string with a leading "0x". The string is zero-padded so that it explicitly
  *  represents at least @p nbits bits (four bits per hexadecimal digits). If @p nbits is zero then the function uses 32 bits
  *  for values that fit in 32 bits, otherwise 64 bits. */
-std::string addrToString(uint64_t value, size_t nbits = 0);
+ROSE_UTIL_API std::string addrToString(uint64_t value, size_t nbits = 0);
 
 /** Formatting support for generated code strings. */
 ROSE_UTIL_API std::string indentMultilineString(const std::string& inputString, int statementColumnNumber);
-
-/** Generate a string from a list of integers.
- *
- *  The return value is the concatenation of substrings. Each substring is formed by converting the corresponding integer from
- *  the list into a string via @ref numberToString and then adding a single space character and an optional line feed. The line
- *  feeds are added only if @p separateStrings is true. */
-ROSE_UTIL_API std::string listToString(const std::list<int>&, bool separateStrings = false);
-
-/** Generate a string from a container of strings.
- *
- *  The return value is the concatenation of substrings. Each substring is formed by adding a single space to the corresponding
- *  list element and an optional line feed. The line feeds are added only if @p separateStrings is true.
- *
- *  @{ */
-ROSE_UTIL_API std::string listToString(const std::list<std::string>&, bool separateStrings = false);
-ROSE_UTIL_API std::string listToString(const std::vector<std::string>&, bool separateStrings = false);
-/** @} */
-
-/** Split a string into substrings at line feeds.
- *
- *  Splits the input string into a list of substrings at the line-feed characters (the line feeds are at the end of the
- *  substrings). Substrings that are empty or consist of a single line-feed character are removed from the return value,
- *  although substrings that contain other sequences of only white space are not removed.
- *
- *  Warning: This function is slow when invoked on a very large input string because it makes excessive copies of the input. */
-ROSE_UTIL_API std::list<std::string> stringToList(const std::string&);
 
 /** Split a string into a list based on a separator character.
  *
@@ -210,7 +309,7 @@ ROSE_UTIL_API std::list<std::string> tokenize(std::string X, char delim);
  *
  *  Empty strings are removed from the result, which is returned in the @p stringList argument. The return argument is cleared
  *  before the splitting begins. */
-void splitStringIntoStrings( const std::string& inputString, char separator, std::vector<std::string>& stringList );
+ROSE_UTIL_API void splitStringIntoStrings( const std::string& inputString, char separator, std::vector<std::string>& stringList );
 
 /** Remove redundant and blank lines.
  *
@@ -253,24 +352,6 @@ ROSE_UTIL_API unsigned long generate_checksum(std::string s);
  *
  *  Returns a new string by converting each of the input characters to lower case with @c tolower. */
 ROSE_UTIL_API std::string convertToLowerCase(const std::string &inputString);
-
-/** Escapes line feeds and double quotes.
- *
- *  Scans the input string character by character and replaces line-feed characters with a backslash followed by the letter "l"
- *  and replaces double quotes by a backslash followed by a double qoute. */
-ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&);
-
-/** Escapes HTML special characters.
- *
- *  Replaces "<", ">", and "&" with HTML character names and returns the result. */
-ROSE_UTIL_API std::string htmlEscape(const std::string&);
-
-/** Escapes characters that are special to C/C++.
- *
- *  Replaces special characters in the input so that it is suitable for the contents of a C string literal. That is, things
- *  like double quotes, line-feeds, tabs, non-printables, etc. are replace by their C backslash escaped versions. Returns the
- *  resulting string. */
-ROSE_UTIL_API std::string cEscape(const std::string&);
 
 /** Convert an ASCII hexadecimal character to an integer.
  *
@@ -354,54 +435,12 @@ ROSE_UTIL_API std::string makeOneLine(const std::string &s, std::string replacem
  *  linefeeds.  If @p do_pad is true then '=' characters may appear at the end to make the total length a multiple of four.
  *
  * @{ */
-std::string encode_base64(const std::vector<uint8_t> &data, bool do_pad=true);
-std::string encode_base64(const uint8_t *data, size_t nbytes, bool do_padd=true);
+ROSE_UTIL_API std::string encode_base64(const std::vector<uint8_t> &data, bool do_pad=true);
+ROSE_UTIL_API std::string encode_base64(const uint8_t *data, size_t nbytes, bool do_padd=true);
 /** @} */
 
 /** Convert base-64 to binary. */
-std::vector<uint8_t> decode_base64(const std::string &encoded);
-
-/** Join individual strings to form a single string.
- *
- *  Unlike @ref listToString, this function allows the caller to indicate how the strings should be separated from one another:
- *  the @p separator (default SPC) is inserted between each pair of strings, but not at the beginning or end, even if strings
- *  are empty.
- *
- * @{ */
-template<class Container>
-std::string join(const std::string &separator, const Container &strings) {
-    std::string retval;
-    for (typename Container::const_iterator i=strings.begin(); i!=strings.end(); ++i)
-        retval += (i==strings.begin() ? std::string() : separator) + *i;
-    return retval;
-}
-template<class Iterator>
-std::string join_range(const std::string &separator, Iterator begin, Iterator end) {
-    std::string retval;
-    for (Iterator i=begin; i!=end; ++i)
-        retval += (i==begin ? std::string() : separator) + *i;
-    return retval;
-}
-std::string join(const std::string &separator, char *strings[], size_t nstrings);
-std::string join(const std::string &separator, const char *strings[], size_t nstrings);
-/** @} */
-
-/** Splits strings into parts.
- *
- *  Unlink @ref stringToList, this function allows the caller to indicate where to split the string.  The parts are the
- *  portions of the string on either side of the separator: if the separator appears at the beginning of the string, then the
- *  first part is empty; likewise if the separator appears at the end of the string then the last part is empty. At most @p
- *  maxparts are returned, the last of which may contain occurrences of the separator.  If @p trim_white_space is true then
- *  white space is removed from the beginning and end of each part. Empty parts are never removed from the returned vector
- *  since the C++ library already has functions for that. The first few arguments are in the same order as for Perl's "split"
- *  operator.
- *
- * @{ */
-ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
-                                             bool trim_white_space=false);
-ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
-                                             bool trim_white_space=false);
-/** @} */
+ROSE_UTIL_API std::vector<uint8_t> decode_base64(const std::string &encoded);
 
 /** Trims white space from the beginning and end of a string.
  *
@@ -619,6 +658,13 @@ ROSE_UTIL_API std::string getAbsolutePathFromRelativePath(const std::string &rel
  *  in the last component of the file name.  Consider using boost::filesystem instead. */
 ROSE_UTIL_API std::string fileNameSuffix(const std::string &fileName);
 
+
+// [Robb Matzke 2016-05-06]: I am deprecating "findfile" because:
+//   1. It appears to not be used anywhere in ROSE, projects, tests, or documentation.
+//   2. The name is spelled wrong (should be "findFile")
+//   3. File operations should not be in StringUtility since they have nothing to do with string manipulation
+//   4. rose::FileSystem::findNames does something similar.
+
 /** Find file names non-recursively.
  *
  *  Scans the directory named @p pathString and returns a list of files in that directory which have @p patternString as a
@@ -627,7 +673,8 @@ ROSE_UTIL_API std::string fileNameSuffix(const std::string &fileName);
  *
  *  This function does not work for non-POSIX systems. Consider using boost::filesystem instead, which has a directory iterator
  *  that works for non-POSIX systems also. */
-ROSE_UTIL_API std::list<std::string> findfile(std::string patternString, std::string pathString);
+ROSE_UTIL_API std::list<std::string> findfile(std::string patternString, std::string pathString)
+    SAWYER_DEPRECATED("use rose::FileSystem functions instead"); // ROSE_DEPRECATED is not defined here
 
 /* File name location.
  *

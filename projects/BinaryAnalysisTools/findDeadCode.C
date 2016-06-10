@@ -522,7 +522,7 @@ int main(int argc, char *argv[]) {
     //---------------------------------------------
     // Initialization, parsing, disassembly, etc.
     //---------------------------------------------
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     ::mlog = Sawyer::Message::Facility("tool");
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
     Diagnostics::Stream info(::mlog[INFO]);

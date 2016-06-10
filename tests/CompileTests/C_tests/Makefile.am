@@ -620,6 +620,21 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_169.c \
      test2015_170.c \
      test2015_171.c \
+     test2016_01.c \
+     test2016_02.c \
+     test2016_03.c \
+     test2016_04.c \
+     test2016_05.c \
+     test2016_06.c \
+     test2016_07.c \
+     test2016_08.c \
+     test2016_09.c \
+     test2016_10.c \
+     test2016_11.c \
+     test2016_12.c \
+     test2016_13.c \
+     test2016_14.c \
+     test2016_15.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
@@ -1105,7 +1120,14 @@ copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
 	cp $(srcdir)/*.c $(top_srcdir)/tests/CompileTests/C_tests
 
-check-local:
+check-pthread.passed: needs_reentrant.c $(testTranslator)
+	@$(RTH_RUN)								\
+		TITLE="-pthread should define -D_REENTRANT [$@]"		\
+		CMD="$(testTranslator) -pthread -c $(srcdir)/needs_reentrant.c"	\
+		USE_SUBDIR=no							\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+check-local: check-pthread.passed
 	@echo "Tests for C."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -1144,6 +1166,7 @@ clean-local:
 	rm -f *.err *.passed *.failed
 	rm -f token_trailing_*.c token_leading_*.c
 	rm -f test2014_83 test2014_93
+	rm -f test2015_162 test2015_86
 
 ################################################################################
 #

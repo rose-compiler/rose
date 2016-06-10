@@ -6325,6 +6325,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (11/15/2015): Token-based unparsing support for partial token sequence unparsing of lists of statements (controls fromatting).
                b_parentStatementListBeingUnparsedUsingPartialTokenSequence = 50, /*!< Controls output formatting (CR's) in mixing unparsing from token stream with unparsing from the AST. */
 
+            // DQ (2/8/2016): Adding support for C++11 specific initialization lists.
+               b_cxx11_initialization_list = 51, /*!< Indicate when we are in a C++11 specific initialization list. */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6632,6 +6635,11 @@ HEADER_UNPARSE_INFO_START
           void set_parentStatementListBeingUnparsedUsingPartialTokenSequence();
           void unset_parentStatementListBeingUnparsedUsingPartialTokenSequence();
 
+       // DQ (2/8/2016): Adding support for C++11 specific initialization lists.
+          bool get_cxx11_initialization_list() const;
+          void set_cxx11_initialization_list();
+          void unset_cxx11_initialization_list();
+
 #if 0
    // MK: These access functions are now automatically generated!
           SgNamedType *get_current_context();
@@ -6816,6 +6824,9 @@ HEADER_TEMPLATE_ARGUMENT_START
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required_for_type() const;
           void set_global_qualification_required_for_type(bool global_qualification_required_for_type);
+
+       // DQ (5/22/2016): Adding display function for debugging.
+          void display( const std::string & label) const;
 
 HEADER_TEMPLATE_ARGUMENT_END
 
@@ -7232,6 +7243,12 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgFunctionType:
              {
                const SgFunctionType* functionType = isSgFunctionType(node);
+
+            // DQ (3/19/2016): Klocworks reports this as an issue, since functionType could be NULL.
+            // So I am adding an assertion to see if this is a reasonalbe solution.  I am not clear 
+            // why all of the other cases in this function are not flagged as issues by Klocworks.
+               ROSE_ASSERT(functionType != NULL);
+
                name = functionType->get_mangled();
                break;
              }
@@ -7695,7 +7712,11 @@ SgSymbolTable::find( const SgFunctionType* functionType)
   // while (p_iterator != p_table->end() && (*p_iterator).first == name)
      while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
-          if (isSgSymbol((*p_iterator).second)->variantT() == functionType->variantT())
+       // DQ (3/19/2016): This is an issue for Klocworks.
+       // if (isSgSymbol((*p_iterator).second)->variantT() == functionType->variantT())
+          SgSymbol* symbol = isSgSymbol((*p_iterator).second);
+          ROSE_ASSERT(symbol != NULL);
+          if (symbol->variantT() == functionType->variantT())
              {
                returnSymbol = p_iterator->second;
                if (returnSymbol->get_symbol_basis() == functionType)
@@ -8128,12 +8149,20 @@ SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArgum
   // DQ (8/8/2013): I don't think that we need to handle the case of where there is both a valid SgTemplateParameterPtrList and SgTemplateArgumentPtrList.
      bool returnValue = false;
 
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+     printf ("In TOP SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments(): templateParameterList = %p templateArgumentsList = %p \n",templateParameterList,templateArgumentsList);
+#endif
+
      if (templateParameterList != NULL)
         {
        // Note that this should be a template case if template parameters were specified.
 
        // DQ (8/19/2013): template classes need to use both the template parameter list and the template argument list.
           returnValue = hasMatchingTemplateParametersOrNoTemplateParameters(templateParameterList,symbol);
+
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+          printf ("In SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments(): after evaluation of templateParameterList: templateParameterList = %p templateArgumentsList = %p returnValue = %s \n",templateParameterList,templateArgumentsList,returnValue ? "true" : "false");
+#endif
 
           if (returnValue == true && templateArgumentsList != NULL)
              {
@@ -8148,13 +8177,17 @@ SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArgum
                   }
                  else
                   {
+                 // DQ (5/22/2016): Isn't this an error to not also test the template arguments for non-class templates.
+#if 0
+                    printf ("WARNING: Isn't this an error to not also test the template arguments for non-class templates. \n");
+#endif
                  // return "returnValue == true" for all other cases.
                   }
              }
         }
        else
         {
-       // This is not a template and is either an instantiation of a templae or non-instantiation (normal class, function, etc.).
+       // This is not a template and is either an instantiation of a template or non-instantiation (normal class, function, etc.).
           returnValue = hasMatchingTemplateArgumentsOrNoTemplateArguments(templateArgumentsList,symbol);
         }
 
@@ -8557,6 +8590,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                            //    template_template_argument  = 3  /*!< template template parameter */
 
                            // DQ (8/10/2013): Test for if the template parameter or arguments type matches (type, nontype, template_template).
+                           // Note that this predicate function does not test if the types are equivalent.
                            // if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
                               if (T::is_matching_type(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == true)
                                  {
@@ -8566,6 +8600,21 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                    printf ("-----    --- templateParameterOrArgumentFromSymbol->get_type() = %p = %s \n",templateParameterOrArgumentFromSymbol->get_type(),templateParameterOrArgumentFromSymbol->get_type()->class_name().c_str());
 #endif
 
+#if 1
+                                // DQ (5/22/2016): Use newer type equivelence test instead of using stripType below
+                                // (which is a bug demonstrated in compiling testRoseHeaders_01.C with Boost 1.59 in C++11 mode).
+                                   SgType*   typeLocal        = isSgType(templateParameterOrArgumentLocal->get_type());
+                                   SgType*   typeFromSymbol   = isSgType(templateParameterOrArgumentFromSymbol->get_type());
+
+                                   ROSE_ASSERT(typeLocal != NULL);
+                                   ROSE_ASSERT(typeFromSymbol != NULL);
+
+                                   isTemplateType = SageInterface::isEquivalentType(typeLocal,typeFromSymbol);
+
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                   printf ("----- Template parameters or arguments match in parameter or argument type: isTemplateType = %s \n",isTemplateType ? "true" : "false");
+#endif
+#else
                                    SgTypedefType*   typedefTypeLocal        = isSgTypedefType(templateParameterOrArgumentLocal->get_type());
                                    SgTypedefType*   typedefTypeFromSymbol   = isSgTypedefType(templateParameterOrArgumentFromSymbol->get_type());
                                    SgPointerType*   pointerTypeLocal        = isSgPointerType(templateParameterOrArgumentLocal->get_type());
@@ -8715,6 +8764,8 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 #endif
                                            }
                                       }
+// DQ (5/22/2016): endif for use of new type equivalence test.
+#endif
                                  }
                                 else
                                  {
@@ -8967,16 +9018,39 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
             else
              {
             // DQ (8/22/2012): Consider if this make sense...yes, if it is not a template instantiation then matching is based on name in a specific scope only.
+            // DQ (5/8/2016): Actually it is based on the name and the template parameters (I think the number of template parameters only, but I am not certain).
+#if 1
+            // DQ (5/8/2016): If the list is not empty then it had a different number of arguments and so it can't be the same (return false)
+               if (templateParametersOrArgumentsListFromSymbol.empty() == false)
+                  {
+                 // && (templateParametersOrArgumentsList->size() == templateParametersOrArgumentsListFromSymbol.size())
+                 // Check if they are the same size...
+                 // DQ (5/8/2016): If the list is not empty then it had a different number of arguments and so it can't be the same (return false)
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                    printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateParametersOrArgumentsListFromSymbol.empty() == false: different size list: (return false) \n");
+#endif
+                    returnValue = false;
+                  }
+                 else
+                  {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                    printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateParametersOrArgumentsListFromSymbol.empty() == true (return true) \n");
+#endif
+                    returnValue = true;
+                  }
+#else
+
+#error "DEAD CODE!"
 
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateClassInstantiation == NULL (return true) \n");
 #endif
                returnValue = true;
+#endif
              }
         }
        else
         {
-
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
           printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateParametersOrArgumentsList == NULL (return true) \n");
 #endif
@@ -9099,6 +9173,10 @@ SgSymbolTable::find_template_function(const SgName& nm, const SgType* t, SgTempl
    {
   // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
   // ROSE_ASSERT(t != NULL);
+
+#if 0
+     printf ("In SgSymbolTable::find_template_function(): nm = %s t = %p templateParameterList = %p size = %zu \n",nm.str(),t,templateParameterList,templateParameterList->size());
+#endif
 
      SgTemplateFunctionSymbol *s = find_symbol_with_type_support<SgTemplateFunctionSymbol>(nm,t,templateParameterList,NULL);
 
@@ -13183,6 +13261,7 @@ Sg_File_Info::display_static_data( const std::string label )
 
 Sg_File_Info::Sg_File_Info()
    {
+  // DQ (3/19/2016): Note that this asserion does not generate an issue in Klocworks since there is no pre-initialization list.
      assert(this != NULL);
 
 #if 0
@@ -13221,7 +13300,11 @@ Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
      p_physical_line(0),
      p_source_sequence_number(0)
    {
-     assert(this != NULL);
+  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
+  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
+  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
+  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
+  // assert(this != NULL);
 
 #if 0
      printf ("In Sg_File_Info::Sg_File_Info(filename = %s, line = %d, col = %d) \n",filename.c_str(),line,col);
@@ -13275,7 +13358,11 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
      p_source_sequence_number(X.p_source_sequence_number),
      p_fileIDsToUnparse(X.p_fileIDsToUnparse)
    {
-     assert(this != NULL);
+  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
+  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
+  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
+  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
+  // assert(this != NULL);
 
      assert (p_col >= 0);
 
@@ -13329,7 +13416,11 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
      p_physical_line(0),
      p_source_sequence_number(0)
    {
-     assert(this != NULL);
+  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
+  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
+  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
+  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
+  // assert(this != NULL);
 
 #if 0
      printf ("In Sg_File_Info::Sg_File_Info(file_id = %d, line = %d, column = %d) this = %p \n",file_id,line,column,this);
@@ -18233,11 +18324,24 @@ void SgUnparse_Info::set_parentStatementListBeingUnparsedUsingPartialTokenSequen
 void SgUnparse_Info::unset_parentStatementListBeingUnparsedUsingPartialTokenSequence()
    { unsetBit(b_parentStatementListBeingUnparsedUsingPartialTokenSequence); }
 
+// DQ (2/8/2016): Adding support for C++11 specific initialization lists.
+bool
+SgUnparse_Info::get_cxx11_initialization_list() const
+   { return checkBit(b_cxx11_initialization_list); }
+
+void
+SgUnparse_Info::set_cxx11_initialization_list()
+   { setBit(b_cxx11_initialization_list); }
+
+void
+SgUnparse_Info::unset_cxx11_initialization_list()
+   { unsetBit(b_cxx11_initialization_list); }
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
    {
-     printf ("Inside of SgUnparse_Info::display(%s) \n",label.c_str());
+     printf ("\nInside of SgUnparse_Info::display(%s) \n",label.c_str());
 
 #if 0
 #define PRINT_INFO_MEMBER_DATA_OUTPUT_MACRO(XX) printf (#XX" = %s \n",(XX() == true) ? "true" : "false");
@@ -18361,7 +18465,15 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("p_nested_expression                    = %d \n",p_nested_expression);
      printf ("p_operator_name                        = %s \n", p_operator_name.c_str());
      printf ("p_var_name                             = %s \n",(p_var_name.is_null() == false) ? p_var_name.str() : "EmPtY sTrInG");
-     printf ("p_declstatement_ptr                    = %p \n",p_declstatement_ptr);
+
+  // printf ("p_declstatement_ptr                    = %p \n",p_declstatement_ptr);
+     printf ("p_declstatement_ptr                    = %p = %s \n",p_declstatement_ptr,p_declstatement_ptr != NULL ? p_declstatement_ptr->class_name().c_str() : "null");
+     if (p_declstatement_ptr != NULL)
+        {
+          printf ("   --- firstNondefiningDeclaration = %p \n",p_declstatement_ptr->get_firstNondefiningDeclaration());
+          printf ("   --- definingDeclaration         = %p \n",p_declstatement_ptr->get_definingDeclaration());
+        }
+
      printf ("p_current_context                      = %p \n",p_current_context);
      printf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
      printf ("p_current_namespace                    = %p \n",p_current_namespace);
@@ -19381,6 +19493,93 @@ SgTemplateArgument::set_global_qualification_required_for_type(bool global_quali
      p_global_qualification_required_for_type = global_qualification_required_for_type;
    }
 
+void
+SgTemplateArgument::display( const std::string & label) const
+   {
+  // DQ (5/22/2016): Adding display function for debugging.
+
+     ROSE_ASSERT(this != NULL);
+
+     switch (get_argumentType())
+        {
+          case SgTemplateArgument::type_argument:
+             {
+               const SgType* type = get_type();
+               assert (type != NULL);
+#if 1
+               printf ("In SgTemplateArgument::display(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+#endif
+               Rose_STL_Container<SgType*> typeChain = type->getInternalTypes();
+
+            // Debugging output.
+               printf (" --- Output of type chain for template argument \n");
+               for (size_t i = 0; i < typeChain.size(); i++)
+                  {
+                    SgType* element_type = typeChain[i];
+                    printf ("   --- element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+                    SgModifierType* modifierType = isSgModifierType(element_type);
+                    if (modifierType != NULL)
+                       {
+                      // modifierType->get_typeModifier().display("X type chain");
+                         string s = modifierType->get_typeModifier().displayString();
+                         printf ("   ------ type chain modifier: %s \n",s.c_str());
+                       }
+                  }
+               break;
+             }
+
+          case SgTemplateArgument::nontype_argument:
+             {
+               const SgExpression* expr = get_expression();
+
+               printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+#if 0
+               if (expr != NULL)
+                  {
+                    printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(get_initializedName() != NULL);
+                    ROSE_ASSERT(get_initializedName()->get_scope() != NULL);
+                    printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+                  }
+#endif
+               break;
+             }
+
+          case SgTemplateArgument::template_template_argument:
+             {
+               const SgDeclarationStatement* templateDeclaration = get_templateDeclaration();
+               ROSE_ASSERT(templateDeclaration != NULL);
+#if 1
+               printf ("In SgTemplateArgument::display(): case SgTemplateArgument::template_template_argument: = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
+#endif
+               SgName mangled_templateDeclaration = templateDeclaration->get_mangled_name();
+               printf ("case SgTemplateArgument::template_template_argument: mangled_templateDeclaration = %s \n",mangled_templateDeclaration.str());
+               break;
+             }
+
+          case SgTemplateArgument::start_of_pack_expansion_argument:
+             {
+               const SgExpression* expr = get_expression();
+               assert(expr != NULL);
+#if 1
+               printf ("WARNING: In SgTemplateArgument::display(): handling of display for varadic template argument is incomplete! \n");
+#endif
+               printf ("In SgTemplateArgument::display(): case SgTemplateArgument::start_of_pack_expansion_argument: varadic_template_argument \n");
+               break;
+             }
+
+          default:
+             {
+               printf ("ERROR: In SgTemplateArgument::display(): default reached in switch: get_argumentType() = %d \n",get_argumentType());
+               ROSE_ASSERT(false);
+               break;
+             }
+        }
+   }
+
 
 SOURCE_TEMPLATE_ARGUMENT_END
 
@@ -19686,7 +19885,7 @@ SgIncidenceDirectedGraph::getSuccessors(const SgGraphNode* node, std::vector <Sg
   assert(node);
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
-    //    cerr << "            are : " << edge->get_index() << endl;
+ // cerr << "            are : " << edge->get_index() << endl;
     assert(edge);
     if (edge) {
       SgGraphNode* target = isSgGraphNode(edge->get_to());
@@ -19745,6 +19944,10 @@ SgIncidenceDirectedGraph::getDirectedEdge(SgGraphNode* src, SgGraphNode* trg) {
   for (;it1!=it2; ++it1) {
     //    SgGraphNode* source = it1->first;
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+
+ // DQ (3/19/2016): Klocworks reports this as an issue, since "edge" could be NULL.  Fix by adding an addertion.
+    ROSE_ASSERT(edge != NULL);
+
     SgGraphNode* target = isSgGraphNode(edge->get_to());
     if (target==trg)
       medges.insert(edge);
@@ -19769,6 +19972,10 @@ SgIncidenceDirectedGraph::checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGra
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+
+ // DQ (3/19/2016): Klocworks reports this as an issue, since "edge" could be NULL.  Fix by adding an addertion.
+    ROSE_ASSERT(edge != NULL);
+
     SgGraphNode* target = edge->get_to();
     if (target==trg)
       return true;

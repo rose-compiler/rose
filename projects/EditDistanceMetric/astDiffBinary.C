@@ -67,7 +67,7 @@ static Sawyer::Message::Facility mlog;
 int
 main(int argc, char *argv[]) {
     // Initialize
-    rose::Diagnostics::initialize();                    // because librose doesn't initialize itself until frontend();
+    ROSE_INITIALIZE;
     mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 

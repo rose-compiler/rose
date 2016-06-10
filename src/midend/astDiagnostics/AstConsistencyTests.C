@@ -35,10 +35,19 @@
 // DQ (3/19/2012): We need this for a function in calss: TestForParentsMatchingASTStructure
 #include "stringify.h"
 
+// DQ (3/24/2016): Adding message logging.
+#include "Diagnostics.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace rose;
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/24/2016): Adding Message logging mechanism.
+Sawyer::Message::Facility TestChildPointersInMemoryPool::mlog;
+
 
 /*! \file
 
@@ -5000,6 +5009,17 @@ TestChildPointersInMemoryPool::test()
      t.traverseMemoryPool();
    }
 
+void TestChildPointersInMemoryPool::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("TestChildPointersInMemoryPool", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
+
 
 // DQ (9/13/2006): Implemented by Ghassan to verify that for 
 // each node, it appears in its parent's list of children.
@@ -5190,7 +5210,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             {
                               if (SgProject::get_verbose() > 0)
                                  {
-                                   printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                                   mprintf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
                                         node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
                                  }
                             }
@@ -5215,7 +5235,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                                  }
                                 else
                                  {
-                                   printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                                   mprintf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
                                         node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
                                  }
                             }
@@ -6371,6 +6391,9 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
                   }
              }
         }
+
+  // DQ (3/4/2016): Klocworks reports a problem with "node->get_parent() != NULL".
+     ROSE_ASSERT(node != NULL);
 
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
         {

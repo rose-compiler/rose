@@ -17,10 +17,20 @@ int main( int argc, char * argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
   // AstTests::runAllTests(project);
 
+#if 0
   // DQ (11/20/2013): Test using support for multiple files for Java testing.
   // Output an optional graph of the AST (just the tree, when active)
   // generateDOT ( *project );
      generateDOTforMultipleFile(*project);
+#else
+     AstDOTGeneration astdotgen;
+  // SgProject & nonconstProject = (SgProject &) project;
+     std::string filenamePostfix;
+  // astdotgen.generateInputFiles(project,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+     SgFile* file = project->get_files()[0];
+     ROSE_ASSERT(file != NULL);
+     astdotgen.generateWithinFile(file,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+#endif
 
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;

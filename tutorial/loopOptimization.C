@@ -15,6 +15,9 @@ using namespace std;
 int
 main ( int argc,  char * argv[] )
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
      vector<string> argvList(argv, argv + argc);
      CmdOptions::GetInstance()->SetOptions(argvList);
      AssumeNoAlias aliasInfo;

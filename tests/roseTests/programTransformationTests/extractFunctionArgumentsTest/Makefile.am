@@ -20,6 +20,14 @@ broken_tests = test2013_242.C
 # tested within this directory.
 broken_tests += test2013_241.C
 
+# DQ (4/17/2016): This test fails when Clang is used for the backend compiler because 
+# string constants are assgined to non-const char* and so the normalization will have 
+# to address this detail.  This is likely only caught by later version compilers that
+# enforce this aspect of the C++ standard.
+if !USING_CLANG_COMPILER
+ROSE__CXX_TESTS += \
+   test2005_50.C 
+endif
 
 normalizationTranslator_SPECIMENS_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
 normalizationTranslator_SPECIMENS = $(filter-out $(broken_tests), $(ROSE__CXX_TESTS))
