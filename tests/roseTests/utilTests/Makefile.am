@@ -16,19 +16,24 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 SAWYER_TEST_TARGETS =
 noinst_PROGRAMS +=				\
-       sawyer-optionalUnitTests			\
-       sawyer-listUnitTests			\
-       sawyer-mapUnitTests			\
-       sawyer-setUnitTests			\
-       sawyer-distinctListUnitTests		\
-       sawyer-intervalUnitTests			\
-       sawyer-bitvecTests			\
-       sawyer-denseIntegerSetUnitTests		\
-       sawyer-addressMapUnitTests		\
-       sawyer-graphUnitTests			\
-       sawyer-indexedGraphDemo			\
-       sawyer-graphIsomorphismTests		\
-       sawyer-intervalSetMapUnitTests
+        sawyer-attributeUnitTests		\
+        sawyer-optionalUnitTests		\
+        sawyer-listUnitTests			\
+        sawyer-mapUnitTests			\
+        sawyer-setUnitTests			\
+        sawyer-distinctListUnitTests		\
+        sawyer-intervalUnitTests		\
+        sawyer-bitvecTests			\
+        sawyer-denseIntegerSetUnitTests		\
+        sawyer-addressMapUnitTests		\
+        sawyer-graphUnitTests			\
+        sawyer-indexedGraphDemo			\
+        sawyer-graphIsomorphismTests		\
+        sawyer-intervalSetMapUnitTests
+
+sawyer_attributeUnitTests_SOURCES = sawyer-attributeUnitTests.C
+sawyer_attributeUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-attributeUnitTests.passed
 
 sawyer_optionalUnitTests_SOURCES = sawyer-optionalUnitTests.C
 sawyer_optionalUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

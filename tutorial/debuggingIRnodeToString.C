@@ -10,6 +10,9 @@ main ( int argc, char* argv[] )
    {
      ios::sync_with_stdio();     // Syncs C++ and C I/O subsystems!
 
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
      if (SgProject::get_verbose() > 0)
           printf ("In preprocessor.C: main() \n");
 

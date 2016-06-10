@@ -10,6 +10,7 @@
 int
 main(int argc, char *argv[]) {
     //! [commandline]
+    ROSE_INITIALIZE;                                    // see rose::initialize
     std::string purpose = "disassembles a binary specimen";
     std::string description =
         "This tool disassembles the specified file and presents the results "

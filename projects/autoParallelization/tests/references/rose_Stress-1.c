@@ -57,16 +57,16 @@ void StressStrainHeat(const real8 *deltz,real8 *deltzh,real8 *deltrh,const real8
     shearr = 0.5 * shearRatio[i];
     if (shearMod[zoneset[i]] > 0.) {
       sheari = 0.5 / shearMod[zoneset[i]];
-      deltrh[zoneset[i]] = 0.25 * (vnewc[i] + vc[i]) * ((newSxx[i] * sheari - sxx[zoneset[i]] * shearr) * (sxx[zoneset[i]] + newSxx[i]) + (newSyy[i] * sheari - syy[zoneset[i]] * shearr) * (syy[zoneset[i]] + newSyy[i]) + (newSzz[i] * sheari + (syy[zoneset[i]] + sxx[zoneset[i]]) * shearr) * (newSzz[i] - sxx[zoneset[i]] - syy[zoneset[i]]) + 2. * (newTxy[i] * sheari - txy[zoneset[i]] * shearr) * (txy[zoneset[i]] + newTxy[i]) + 2. * (newTxz[i] * sheari - txz[zoneset[i]] * shearr) * (txz[zoneset[i]] + newTxz[i]) + 2. * (newTyz[i] * sheari - tyz[zoneset[i]] * shearr) * (tyz[zoneset[i]] + newTyz[i]));
+      deltrh[zoneset[i]] = .25 * (vnewc[i] + vc[i]) * ((newSxx[i] * sheari - sxx[zoneset[i]] * shearr) * (sxx[zoneset[i]] + newSxx[i]) + (newSyy[i] * sheari - syy[zoneset[i]] * shearr) * (syy[zoneset[i]] + newSyy[i]) + (newSzz[i] * sheari + (syy[zoneset[i]] + sxx[zoneset[i]]) * shearr) * (newSzz[i] - sxx[zoneset[i]] - syy[zoneset[i]]) + 2. * (newTxy[i] * sheari - txy[zoneset[i]] * shearr) * (txy[zoneset[i]] + newTxy[i]) + 2. * (newTxz[i] * sheari - txz[zoneset[i]] * shearr) * (txz[zoneset[i]] + newTxz[i]) + 2. * (newTyz[i] * sheari - tyz[zoneset[i]] * shearr) * (tyz[zoneset[i]] + newTyz[i]));
     }
      else {
-      deltrh[zoneset[i]] = - 0.25 * (vnewc[i] + vc[i]) * (sxx[zoneset[i]] * (sxx[zoneset[i]] + newSxx[i]) + syy[zoneset[i]] * (syy[zoneset[i]] + newSyy[i]) - (syy[zoneset[i]] + sxx[zoneset[i]]) * (newSzz[i] - sxx[zoneset[i]] - syy[zoneset[i]]) + 2. * txy[zoneset[i]] * (txy[zoneset[i]] + newTxy[i]) + 2. * txz[zoneset[i]] * (txz[zoneset[i]] + newTxz[i]) + 2. * tyz[zoneset[i]] * (tyz[zoneset[i]] + newTyz[i])) * shearr;
+      deltrh[zoneset[i]] = - .25 * (vnewc[i] + vc[i]) * (sxx[zoneset[i]] * (sxx[zoneset[i]] + newSxx[i]) + syy[zoneset[i]] * (syy[zoneset[i]] + newSyy[i]) - (syy[zoneset[i]] + sxx[zoneset[i]]) * (newSzz[i] - sxx[zoneset[i]] - syy[zoneset[i]]) + 2. * txy[zoneset[i]] * (txy[zoneset[i]] + newTxy[i]) + 2. * txz[zoneset[i]] * (txz[zoneset[i]] + newTxz[i]) + 2. * tyz[zoneset[i]] * (tyz[zoneset[i]] + newTyz[i])) * shearr;
     }
     deltzh[zoneset[i]] = deltz[zoneset[i]] - deltrh[zoneset[i]];
     avgMod = 0.5 * shearMod[zoneset[i]];
-    if (shearRatio[i] > 0.) 
+    if (shearRatio[i] > 0.0) 
       avgMod = avgMod + 0.5 / shearRatio[i];
-    if (avgMod > 0.) 
+    if (avgMod > 0.0) 
       deltrh[zoneset[i]] = shearDer[i] * deltrh[zoneset[i]] / avgMod;
      else 
       deltrh[zoneset[i]] = 0.0;

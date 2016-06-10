@@ -167,6 +167,9 @@ MyTraversal::evaluateRewriteSynthesizedAttribute (
 
 int main ( int argc, char** argv )
 {
+        // Initialize and check compatibility. See rose::initialize
+        ROSE_INITIALIZE;
+
 	SgProject* project = frontend(argc,argv);
 	MyTraversal treeTraversal;
 	MyInheritedAttribute inheritedAttribute;

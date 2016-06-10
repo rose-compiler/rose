@@ -34,7 +34,7 @@ namespace Partitioner2 {
 
 void
 Engine::init() {
-    Diagnostics::initialize();
+    rose::initialize(NULL);
 }
 
 void

@@ -56,6 +56,9 @@ void visitorTraversal::visit(SgNode* n)
 // must have argc and argv here!!
 int main(int argc, char * argv[])
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
      SgProject *project = frontend (argc, argv);
 
      visitorTraversal myvisitor;

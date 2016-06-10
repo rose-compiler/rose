@@ -563,6 +563,7 @@ echo "In configure.in ... CXX = $CXX"
 # specific and system specific header files as for the backend compiler.  These depend
 # upon the selection of the back-end compiler.
 GET_COMPILER_SPECIFIC_DEFINES
+ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN $FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR"
 
 # This must go after the setup of the headers options
 # Setup the CXX_INCLUDE_STRING to be used by EDG to find the correct headers
@@ -2143,10 +2144,6 @@ tests/CompilerOptionsTests/testHeaderFileOutput/Makefile
 tests/CompilerOptionsTests/testOutputFileOption/Makefile
 tests/CompilerOptionsTests/testGnuOptions/Makefile
 tests/CompilerOptionsTests/testFileNamesAndExtensions/Makefile
-tests/CompilerOptionsTests/testFileNamesAndExtensions/fileNames/Makefile
-tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/Makefile
-tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/caseInsensitive/Makefile
-tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/caseSensitive/Makefile
 tests/CompilerOptionsTests/testGenerateSourceFileNames/Makefile
 tests/CompilerOptionsTests/testIncludeOptions/Makefile
 tests/CompileTests/Makefile

@@ -23,7 +23,7 @@ typedef std::string FileName;
 
 
 //! [providing]
-struct MyClass: public Sawyer::Attribute::Storage {
+struct MyClass: public Sawyer::Attribute::Storage<> {
     // additional members...
 };
 //! [providing]
@@ -126,7 +126,7 @@ struct AnalysisTime {
 
 //! [comparison preparing storage]
 // Method 1: Sawyer::Attribute
-class ObjectWithAttributes_1: public Sawyer::Attribute::Storage {
+class ObjectWithAttributes_1: public Sawyer::Attribute::Storage<> {
     // other members here...
 };
 
@@ -603,6 +603,9 @@ method_3() {
 
 int
 main() {
+    // Initialize and check compatibility. See rose::initialize
+    ROSE_INITIALIZE;
+
     example_usage();
     method_1();
     method_2();
