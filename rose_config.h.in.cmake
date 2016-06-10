@@ -801,3 +801,6 @@
 #cmakedefine CMAKE_COMPILER_IS_GNUCC
 #cmakedefine CMAKE_COMPILER_IS_GNUCXX
 #cmakedefine CMAKE_COMPILER_IS_GNUG77
+
+/* Create the configuration synopsis token for use by rose::initialize */
+#define ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN}"
