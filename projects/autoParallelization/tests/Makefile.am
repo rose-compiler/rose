@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # This list is now copied to C_TESTCODES_REQUIRED_TO_VERIFY, Liao 3/9/2016
 # the code which can be parallelized or confirmed as not parallelizable now
+#null_for_test.c  TODO Liao 6/9/2016
 C_TESTCODES_REQUIRED_TO_PASS = \
 accumulateForce.c \
 anti_dep.c \
