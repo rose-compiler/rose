@@ -51,10 +51,20 @@ my $status = 0;                 # exit status
 #     |D -> volatile                                                                 |
 #     +------------------------------------------------------------------------------+
 #
+# More details:
+#   1. The _Complex ("X") is part of the following type, as in "_Complex double"
+#   2. CFString, as far as I can tell, means "Core Foundation String" and is part of Mac OS X and IOS. Apple's
+#      documentation for __builtin__CFStringMakeConstantString says it returns "const void*". However, using it
+#      in a clang++ input gives an error message saying the return type is "const NSConstantString*", as in:
+#        xx.C:2:8: error: cannot initialize a variable of type 'int' with an rvalue of type 'const NSConstantString *'
+#        int x = __builtin___CFStringMakeConstantString("");
+#      Adding "-fconstant-string-class=NSConstantString" to the clang++ command-line doesn't help. Neither does
+#      CFConstantString or CFString work.
+
 sub parseTypes {
     local($_) = @_;             # a string containing the return type and argument type specifications
     my(%translation) = (v => 'void', b => 'boolean', c => 'char', s => 'short', i => 'int', f => 'float',
-                        d => 'double', z => 'size_t', F => 'FString',
+                        d => 'double', z => 'size_t', F => 'NSConstantString',
                         a => '__builtin_va_list', A => '__builtin_va_list&', X => '_Complex',
                         P => 'FILE', J => 'jmp_buf', '.' => '...',
                         L => 'long', S => 'signed', U => 'unsigned', I => '',
@@ -68,7 +78,7 @@ sub parseTypes {
     $_ = join " ", map { exists $translation{$_} ? $translation{$_} : "ERROR('$_')" } split //;
     s/long long long int/__int128_t/g;
     s/signed jmp_buf/sigjmp_buf/g;
-    s/(_Complex)\s*,\s*([^,]*)/$1<$2>/g;
+    s/(_Complex)\s*,\s*([^,]*)/$1 $2/g;
     return grep {$_} split /,/;
 }
 
