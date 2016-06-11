@@ -44,6 +44,9 @@ static void printFlopRate (const SgNode* n)
 
 int main (int argc, char* argv[])
 {
+  // Initialize and check compatibility. See rose::initialize
+  ROSE_INITIALIZE;
+
   vector<string> argvList(argv, argv+argc);
   cerr << "[Loading HPCToolkit or Gprof profiling data...]" << endl;
   RoseHPCT::ProgramTreeList_t profiles

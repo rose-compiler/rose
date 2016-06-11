@@ -246,38 +246,45 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
 #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)
                          printf ("Ignoring the error for a SgFunctionParameterList and SgTemplateInstantiationDecl \n");
 #else
-                         printf ("Ignoring the error for a SgFunctionParameterList \n");
+                         printf ("In SageInterface::DeclarationSets::addDeclaration(): Ignoring the error for a SgFunctionParameterList \n");
 #endif
 #endif
                        }
                       else
                        {
+#if 0
                          printf ("declarationMap[firstNondefiningDeclaration]->size() = %" PRIuPTR " \n",declarationMap[firstNondefiningDeclaration]->size());
 
                          printf ("decl                             = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
                          printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
                          printf ("decl->get_parent()->get_parent() = %p = %s = %s \n",decl->get_parent()->get_parent(),decl->get_parent()->get_parent()->class_name().c_str(),get_name(decl->get_parent()->get_parent()).c_str());
-
+#endif
                          SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(decl->get_parent()->get_parent());
                          if (namespaceDefinitionStatement != NULL)
                             {
                               namespaceDefinitionStatement->get_file_info()->display("namespaceDefinitionStatement: debug");
                             }
-
+#if 0
                          if (isSgCtorInitializerList(decl) != NULL)
                             {
                               firstNondefiningDeclaration->get_parent()->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration->get_parent(): debug");
                               decl->get_parent()->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl->get_parent(): debug");
                             }
-
+#endif
+#if 0
                          firstNondefiningDeclaration->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration: debug");
                          decl->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl: debug");
-
+#endif
                       // DQ (2/5/2015): This is a problem for EDG 4.9 code using the GNU 4.8.1 compiler 
                       // and maybe related to C++11 support (commented out assertion as a test).
-#if 1
-                         printf ("Can not ignore this error \n");
+#if 0
+                         printf ("In SageInterface::DeclarationSets::addDeclaration(): Can not ignore this error \n");
                          ROSE_ASSERT(false);
+#else
+                      // DQ (5/22/2016): Comment out this assertion as a test (test of using new typeEquivalent test in the symbol handling and C++11 mode on testRoseHeaders_01.C with Boost 1.59.
+#if 0
+                         printf ("In SageInterface::DeclarationSets::addDeclaration(): I would like to ignore this for debugging! decl = %p = %s \n",decl,decl->class_name().c_str());
+#endif
 #endif
                        }
                   }
@@ -5028,6 +5035,10 @@ std::string
 SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMangledName)
    {
 #if 0
+     printf ("In SageInterface::addMangledNameToCache(): TOP: astNode = %p = %s oldMangledName = %s \n",astNode,astNode->class_name().c_str(),oldMangledName.c_str());
+#endif
+
+#if 0
      SgGlobal* globalScope = isSgGlobal(astNode);
 
      if (globalScope == NULL && isSgFile(astNode) != NULL)
@@ -6867,50 +6878,157 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
 #endif
    }
 
-bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTemplateArgument * arg2) {
-  if (arg1 == arg2) return true;
+#define DEBUG_TEMPLATE_ARG_EQUIVALENCE 0
 
-  if (arg1->get_argumentType() != arg2->get_argumentType()) return false;
+bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTemplateArgument * arg2) 
+   {
+     if (arg1 == arg2)
+        {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+          printf ("In templateArgumentEquivalence(): same pointer to template argument: returning true \n");
+#endif
+          return true;
+        }
 
-  switch (arg1->get_argumentType()) {
-    case SgTemplateArgument::type_argument:
-      return arg1->get_type() == arg2->get_type();
-    case SgTemplateArgument::nontype_argument:
-      if (arg1->get_expression() == arg2->get_expression()) return true;
-      else {
-        ROSE_ASSERT(!"NIY: non-type template argument comparaison."); /// \todo
-      }
-    case SgTemplateArgument::template_template_argument:
-      if (arg1->get_templateDeclaration() == arg2->get_templateDeclaration()) return true;
-      else {
-        ROSE_ASSERT(!"NIY: template template argument comparaison."); /// \todo
-      }
-    case SgTemplateArgument::argument_undefined: ROSE_ASSERT(!"Try to compare template arguments of unknown type...");
+     if (arg1->get_argumentType() != arg2->get_argumentType())
+        {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+          printf ("In templateArgumentEquivalence(): different argumentType(): returning false \n");
+#endif
+          return false;
+        }
 
- // DQ (7/19/2015): Added missing case:
-    case SgTemplateArgument::start_of_pack_expansion_argument: ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
+     switch (arg1->get_argumentType()) 
+        {
+          case SgTemplateArgument::type_argument:
+             {
+               ROSE_ASSERT(arg1->get_type() != NULL);
+               ROSE_ASSERT(arg2->get_type() != NULL);
 
- // DQ (7/19/2015): Added missing default case: we always want to ahve a default case to catch errors and missing cases.
-    default:
-       {
-         printf ("Error: default case not handled! \n");
-         ROSE_ASSERT(false);
-       }
-  }
-  ROSE_ASSERT(false); // unreachable code
-}
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+               printf ("In templateArgumentEquivalence(): case SgTemplateArgument::type_argument: checking for the same type: arg1->get_type() = %p = %s arg2->get_type() = %p = %s \n",
+                    arg1->get_type(),arg1->get_type()->class_name().c_str(),
+                    arg2->get_type(),arg2->get_type()->class_name().c_str());
+#endif
+            // DQ (5/19/2016): Rewrote to support debugging.
+            // return arg1->get_type() == arg2->get_type();
+               if (arg1->get_type() == arg2->get_type()) 
+                  {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::type_argument: checking for the same type: returning true \n");
+#endif
+                    return true;
+                  }
+                 else
+                  {
+                 // ROSE_ASSERT(!"NIY: non-type template argument comparaison."); /// \todo
 
-bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2) {
-  if (list1.size() != list2.size()) return false;
+                 // DQ (5/19/2016): Use type equivalence mechanism to handle the case where
+                 // these are different pointers to what might still be the same type.
+                 // return false;
+                    bool typesAreEqual = isEquivalentType(arg1->get_type(),arg2->get_type());
 
-  if (list1 == list2) return true;
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::type_argument: checking for the same type: pointers are different: returning typesAreEqual = %s \n",typesAreEqual ? "true" : "false");
+#endif
+                    return typesAreEqual;
+                  }
+             }
 
-  for (unsigned i = 0; i < list1.size(); i++)
-    if (!templateArgumentEquivalence(list1[i], list2[i]))
-      return false;
+          case SgTemplateArgument::nontype_argument:
+             {
+               if (arg1->get_expression() == arg2->get_expression()) 
+                  {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: checking for the same expression: returning true \n");
+#endif
+                    return true;
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(!"NIY: non-type template argument comparaison."); /// \todo
+                  }
+             }
 
-  return true;
-}
+          case SgTemplateArgument::template_template_argument:
+             {
+               if (arg1->get_templateDeclaration() == arg2->get_templateDeclaration()) 
+                  {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::template_template_argument: checking for the same templateDeclaration: returning true \n");
+#endif
+                    return true;
+                  }
+                 else 
+                  {
+                    ROSE_ASSERT(!"NIY: template template argument comparaison."); /// \todo
+                  }
+             }
+
+          case SgTemplateArgument::argument_undefined: 
+             {
+               ROSE_ASSERT(!"Try to compare template arguments of unknown type...");
+             }
+
+       // DQ (7/19/2015): Added missing case:
+          case SgTemplateArgument::start_of_pack_expansion_argument:
+             {
+               ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
+             }
+
+       // DQ (7/19/2015): Added missing default case: we always want to ahve a default case to catch errors and missing cases.
+          default:
+             {
+               printf ("Error: default case not handled! \n");
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(false); // unreachable code
+   }
+
+#define DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE 0
+
+bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2) 
+   {
+     if (list1.size() != list2.size()) 
+        {
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+          printf ("In templateArgumentListEquivalence(): different list sizes: returning false \n");
+#endif
+          return false;
+        }
+
+     if (list1 == list2)
+        {
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+          printf ("In templateArgumentListEquivalence(): same list using STL equality operator: returning true \n");
+#endif
+          return true;
+        }
+
+  // for (unsigned i = 0; i < list1.size(); i++)
+     for (size_t i = 0; i < list1.size(); i++)
+        {
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+          printf ("In templateArgumentListEquivalence(): calling templateArgumentEquivalence() for i = %zu \n",i);
+#endif
+       // if (!templateArgumentEquivalence(list1[i], list2[i]))
+          if (templateArgumentEquivalence(list1[i], list2[i]) == false)
+             {
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+               printf ("In templateArgumentListEquivalence(): calling templateArgumentEquivalence() for i = %zu --- returned false: returning false \n",i);
+#endif
+               return false;
+             }
+        }
+
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+     printf ("In templateArgumentListEquivalence(): reached base of function: returning true \n");
+#endif
+
+     return true;
+   }
 
 // Add a step statement to the end of a loop body
 // Add a new label to the end of the loop, with the step statement after
@@ -20482,6 +20600,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
      counter++;
 
   // DQ (11/28/2015): exit with debug output instead of infinte recursion.
+  // if (counter >= 280) 
+  // if (counter >= 500)
      if (counter >= 280) 
         {
           printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
@@ -20489,9 +20609,12 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
   // DQ (12/23/2015): ASC application code requires this to be increased to over 122 (selected 300 for extra margin of safety).
   // DQ (11/28/2015): exit in stead of infinte recursion.
-     if (counter > 300) 
+  // if (counter > 300)
+  // if (counter > 600)
+  // if (counter > 5000)
+     if (counter > 300)
         {
-       // DQ (11/28/2015): I htink this is a reasonable limit.
+       // DQ (11/28/2015): I think this is a reasonable limit.
           printf ("ERROR: In SageInterface::isEquivalentType(): recursive limit exceeded for : counter = %d \n",counter);
           ROSE_ASSERT(false);
 
@@ -20500,7 +20623,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
   // bool exit = false;
 
-  // Strip off ant typedefs since they are equivalent by definition.
+  // Strip off any typedefs since they are equivalent by definition.
      SgType* X_element_type = X.stripType( SgType::STRIP_TYPEDEF_TYPE );
      SgType* Y_element_type = Y.stripType( SgType::STRIP_TYPEDEF_TYPE );
 
@@ -20644,6 +20767,9 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 #if DEBUG_TYPE_EQUIVALENCE
                     printf ("In SageInterface::isEquivalentType(): loop: these are not equivalent modifier types: check for default settings: isSame = %s \n",isSame ? "true" : "false");
 #endif
+                 // DQ (5/22/2016): fixing bug which cansed infinite recursion (case there the SgModifiers were different).
+                    bool skippingOverIdentityModifier = false;
+
                  // if (X_modifierType->get_typeModifier().isDefault() == true)
                     if (X_modifierType->get_typeModifier().isIdentity() == true)
                        {
@@ -20651,6 +20777,9 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          printf ("In SageInterface::isEquivalentType(): loop: found self-similar setting for lhs: isSame = %s \n",isSame ? "true" : "false");
 #endif
                          X_element_type = X_modifierType->get_base_type();
+
+                      // DQ (5/22/2016): Record that progress was made in uncovering the relevant base type, and trigger reevaluation.
+                         skippingOverIdentityModifier = true;
                        }
 
                  // if (Y_modifierType->get_typeModifier().isDefault() == true)
@@ -20660,15 +20789,35 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          printf ("In SageInterface::isEquivalentType(): loop: found self-similar setting for rhs: isSame = %s \n",isSame ? "true" : "false");
 #endif
                          Y_element_type = Y_modifierType->get_base_type();
+
+                      // DQ (5/22/2016): Record that progress was made in uncovering the relevant base type, and trigger reevaluation.
+                         skippingOverIdentityModifier = true;
                        }
 
                  // NOTE: If either of these are a SgTypedefType then the typedefs will be stripped away at the top of the recursive call.
 #if DEBUG_TYPE_EQUIVALENCE
-                    printf ("In SageInterface::isEquivalentType(): loop: recursive call on different adjusted modifier types: before recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
+                    printf ("In SageInterface::isEquivalentType(): loop: skippingOverIdentityModifier = %s \n",skippingOverIdentityModifier ? "true" : "false");
 #endif
                  // Recursive call on non-default modifier base types.
                  // isSame = (*X_element_type) == (*Y_element_type);
-                    isSame = isEquivalentType(X_element_type,Y_element_type);
+                 // isSame = isEquivalentType(X_element_type,Y_element_type);
+                    if (skippingOverIdentityModifier == true)
+                       {
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): loop: recursive call on different adjusted modifier types: before recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                      // If we have made progress in skipping over an identity modifier then we need to reevaluate if these are the equivalent types.
+                         isSame = isEquivalentType(X_element_type,Y_element_type);
+                       }
+                      else
+                       {
+                      // If we have not skipped over an identity modifier then noting will change in the recursive call and these types are not equivalent (return false).
+                         isSame = false;
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): loop: no progress was made in resolving the base type, so returning isSame set to false: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                       }
+
 #if DEBUG_TYPE_EQUIVALENCE
                     printf ("In SageInterface::isEquivalentType(): loop: these are different modifier types: after recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
 #endif
@@ -20978,7 +21127,10 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                                                   printf ("In SageInterface::isEquivalentType(): loop: Process default case: X_element_type = %p = %s Y_element_type = %p = %s \n",
                                                        X_element_type,X_element_type->class_name().c_str(),Y_element_type,Y_element_type->class_name().c_str());
 #endif
-                                                  isSame = true;
+                                               // DQ (5/26/2016): It is not good enough that the variants match.
+                                               // isSame = true;
+                                               // isSame = isEquivalentType(X_element_type,Y_element_type);
+                                                  isSame = (X_element_type == Y_element_type);
                                                 }
                                                else
                                                 {

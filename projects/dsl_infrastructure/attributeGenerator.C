@@ -239,6 +239,25 @@ AttributeGeneratorTraversal::processvariable(SgInitializedName* initializedName)
    }
 
 
+// DQ (5/18/2016): Refactoring code to support evaluation of DSL types.
+bool isDSLClassDeclaration (SgClassDeclaration* classDeclaration)
+   {
+     bool result = false;
+#if 0
+     if (classDeclaration != NULL && DSLnodes.find(classDeclaration) != DSLnodes.end())
+        {
+#if 1
+          printf ("isDSLClassDeclaration(): class = %p = %s = %s function = %p = %s = %s \n",
+               classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+          result = true;
+        }
+#endif
+
+     return result;
+   }
+
+
 AttributeGenerator_InheritedAttribute
 AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute )
    {
@@ -680,6 +699,38 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                             }
 #endif
                        }
+
+#define ENABLE_FUNCTION_ATTRIBUTES 1
+
+#if 1
+#if 0
+                    bool isDSLClassDeclaration = isDSLNode(classDeclaration);
+                    if (isDSLClassDeclaration == true)
+                       {
+#if ENABLE_FUNCTION_ATTRIBUTES
+                         SgNode* ast_fragment = buildAttribute(functionDeclaration);
+                         ROSE_ASSERT(ast_fragment == NULL);
+#endif
+                       }
+#endif
+#else
+                 // if (DSLnodes.find(functionDeclaration) != DSLnodes.end())
+                    if (classDeclaration != NULL && DSLnodes.find(classDeclaration) != DSLnodes.end())
+                       {
+#if 0
+                         printf ("Build DSL attribute for member function: class = %p = %s = %s function = %p = %s = %s \n",
+                              classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str(),
+                              functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+                      // dsl_function_list.push_back(functionDeclaration);
+
+#if ENABLE_FUNCTION_ATTRIBUTES
+                         SgNode* ast_fragment = buildAttribute(functionDeclaration);
+                         ROSE_ASSERT(ast_fragment == NULL);
+                      // ROSE_ASSERT(ast_fragment != NULL);
+#endif
+                       }
+#endif
                   }
                  else
                   {
@@ -693,6 +744,12 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                     SgType* returnType = functionType->get_return_type();
                     ROSE_ASSERT(returnType != NULL);
 
+#if 0
+                    std::set dslCanidateTypeList;
+                    dslCanidateTypeList.insert(returnType);
+
+                    dslCanidateTypeList.insert();
+
                     string type_name;
 
                  // We can't call this function because it's use requires the code that we generation from the executable 
@@ -701,6 +758,20 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                  // bool returntypeIsDslType = DSL_Support::isDslType(returnType,type_name);
                     bool returntypeIsDslType = false;
 
+                 // Save a list of types used in this function and if any of them are a DSL type (associatd with a DSL class) 
+                 // then make the function as a DSL function.
+                    while (i != dslCanidateTypeList.end())
+                       {
+                         bool isDSLClassDeclaration = isDSLNode(classDeclaration);
+                         if (isDSLClassDeclaration == true)
+                            {
+#if ENABLE_FUNCTION_ATTRIBUTES
+                              SgNode* ast_fragment = buildAttribute(functionDeclaration);
+                              ROSE_ASSERT(ast_fragment == NULL);
+#endif
+                            }
+                       }
+
                     printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
 
                     if (returntypeIsDslType == true)
@@ -708,8 +779,11 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                          printf ("Found a non-member function returning a DSL type: type_name = %s \n",type_name.c_str());
                          ROSE_ASSERT(false);
                        }
+#endif
                   }
 
+#if 0
+            // code refactored above.
             // if (DSLnodes.find(functionDeclaration) != DSLnodes.end())
                if (classDeclaration != NULL && DSLnodes.find(classDeclaration) != DSLnodes.end())
                   {
@@ -720,7 +794,7 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
 #endif
                  // dsl_function_list.push_back(functionDeclaration);
 
-#define ENABLE_FUNCTION_ATTRIBUTES 1
+// #define ENABLE_FUNCTION_ATTRIBUTES 1
 
 #if ENABLE_FUNCTION_ATTRIBUTES
                     SgNode* ast_fragment = buildAttribute(functionDeclaration);
@@ -728,7 +802,7 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
                  // ROSE_ASSERT(ast_fragment != NULL);
 #endif
                   }
-
+#endif
                break;
              }
 

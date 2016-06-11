@@ -1125,6 +1125,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #if 0
      unp->u_exprStmt->curprint(string("/* templateArgument is explicitlySpecified = ") + ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
      SgUnparse_Info newInfo(info);
 
@@ -1553,7 +1557,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
 #if 0
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
-  // curprint("\n/* Bottom of unparseTemplateArgument */ \n");
+     curprint("\n/* Bottom of unparseTemplateArgument */ \n");
 #endif
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
@@ -2839,9 +2843,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      ROSE_ASSERT(decl != NULL);
      if (decl->get_parent() == NULL)
         {
-          printf ("Error: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) \n",decl,decl->class_name().c_str(),decl->get_name().str(),mfd->get_name().str());
+          printf ("Note: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) (OK for index expresion in array type) \n",
+               decl,decl->class_name().c_str(),decl->get_name().str(),mfd->get_name().str());
         }
-     ROSE_ASSERT(decl->get_parent() != NULL);
+  // DQ (5/30/2016): This need not have a parent if it is an expression in index for an array type (see test2016_33.C).
+  // ROSE_ASSERT(decl->get_parent() != NULL);
 
      bool print_colons = false;
 

@@ -88,6 +88,11 @@ public:
     }
 };
 
+template<>
+class LockGuard2<NullMutex> {
+public:
+    LockGuard2(NullMutex&, NullMutex&) {}
+};
 
 /** Traits for thread synchronization. */
 template<typename SyncTag>
@@ -114,6 +119,7 @@ struct SynchronizationTraits<MultiThreadedTag> {
     //typedef ... ConditionVariable; -- does not make sense to use this in a single-threaded program
     typedef NullBarrier Barrier;
 #endif
+    typedef Sawyer::LockGuard2<Mutex> LockGuard2;
 };
 
 
@@ -127,6 +133,7 @@ struct SynchronizationTraits<SingleThreadedTag> {
     typedef NullLockGuard RecursiveLockGuard;
     //typedef ... ConditionVariable; -- does not make sense to use this in a single-threaded program
     typedef NullBarrier Barrier;
+    typedef Sawyer::LockGuard2<Mutex> LockGuard2;
 };
 
 // Used internally.

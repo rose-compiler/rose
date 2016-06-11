@@ -629,6 +629,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
               local_commandLineArgumentList);
   }
 
+  // Add "-D_REENTRANT" if "-pthread" is present before we save the command-line or do any other processing.
+  vector<string>::iterator pthread =
+      find(local_commandLineArgumentList.begin(), local_commandLineArgumentList.end(), "-pthread");
+  if (pthread != local_commandLineArgumentList.end())
+      local_commandLineArgumentList.insert(++pthread, "-D_REENTRANT");
+
   // Save a deep copy fo the original command line input the the translator
   // pass in out copies of the argc and argv to make clear that we don't modify argc and argv
      set_originalCommandLineArgumentList( local_commandLineArgumentList );
@@ -3491,7 +3497,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // code in sla++.C is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API,
   // specifically the part about being able to return an array of values.
   //
-     Diagnostics::initialize();                         // this maybe should go somewhere else?
+     rose::initialize(NULL);
      static const std::string removalString = "(--REMOVE_ME--)";
      for (size_t i=0; i<argv.size(); ++i) {
          if ((0==strcmp(argv[i].c_str(), "-rose:log")) && i+1 < argv.size()) {

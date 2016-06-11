@@ -6,6 +6,9 @@ using namespace std;
 
 int main( int argc, char * argv[] )
 {
+  // Initialize and check compatibility. See rose::initialize
+  ROSE_INITIALIZE;
+
   vector<string> argvList(argv, argv + argc);
   SgProject* project = frontend(argvList);
   if (project->get_fileList().size() ==0)

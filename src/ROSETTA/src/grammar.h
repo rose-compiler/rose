@@ -365,7 +365,7 @@ class Grammar
                                                std::vector<GrammarString *> & constructorParameterList,
                                                ConstructParamEnum config );
           std::string buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool *complete = 0 );
-          std::string buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & node ); // NEW
+          std::string buildConstructorParameterListStringForEssentialDataMembers(AstNodeClass& node, bool withInitializers);
 
        // DQ 11/6/2006): Support for building newer from of constructors (withouth source position information).
           void markNodeForConstructorWithoutSourcePositionInformation ( AstNodeClass & node );
@@ -386,7 +386,7 @@ class Grammar
           StringUtility::FileWithLineNumbers buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node );
 
           StringUtility::FileWithLineNumbers buildConstructor ( AstNodeClass & node );
-          StringUtility::FileWithLineNumbers buildConstructorForAllDataMembers ( AstNodeClass & node); // NEW
+          StringUtility::FileWithLineNumbers buildConstructorForEssentialDataMembers ( AstNodeClass & node);
 
           StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ( AstNodeClass & node );
 
@@ -481,6 +481,9 @@ class Grammar
           std::string naiveTraverseGrammar(AstNodeClass&, evaluateStringAttributeFunctionType);
           typedef GrammarSynthesizedAttribute (Grammar::*evaluateGAttributeFunctionType)(AstNodeClass*, 
                                                                                          std::vector<GrammarSynthesizedAttribute>);
+          // filtered member variables are all those that are not required to create a vailid AST (or can computed by other means)
+          // this function is used by the ATerm grammar generation and when generating constructors for all data members (excluding filtered vars)
+          bool isFilteredMemberVariable(std::string varName);
           // MS: type hierarchy traversal
           GrammarSynthesizedAttribute BottomUpProcessing(AstNodeClass* node, evaluateGAttributeFunctionType evaluateGAttributeFunction);
           // MS: build a Latex output that shows the abstract Cpp grammar
@@ -653,6 +656,9 @@ class Grammar
 
        // DQ (5/18/2007): support for documentation to handle mapping to KDM
           std::string outputClassesAndFields ( AstNodeClass & node );
+   private:
+          bool nameHasPrefix(std::string name, std::string prefix);
+
    };
 
 #endif // endif for ROSETTA_GRAMMAR_H
