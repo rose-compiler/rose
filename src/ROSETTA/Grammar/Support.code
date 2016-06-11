@@ -6825,6 +6825,9 @@ HEADER_TEMPLATE_ARGUMENT_START
           bool get_global_qualification_required_for_type() const;
           void set_global_qualification_required_for_type(bool global_qualification_required_for_type);
 
+       // DQ (5/22/2016): Adding display function for debugging.
+          void display( const std::string & label) const;
+
 HEADER_TEMPLATE_ARGUMENT_END
 
 
@@ -8174,6 +8177,10 @@ SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArgum
                   }
                  else
                   {
+                 // DQ (5/22/2016): Isn't this an error to not also test the template arguments for non-class templates.
+#if 0
+                    printf ("WARNING: Isn't this an error to not also test the template arguments for non-class templates. \n");
+#endif
                  // return "returnValue == true" for all other cases.
                   }
              }
@@ -8583,6 +8590,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                            //    template_template_argument  = 3  /*!< template template parameter */
 
                            // DQ (8/10/2013): Test for if the template parameter or arguments type matches (type, nontype, template_template).
+                           // Note that this predicate function does not test if the types are equivalent.
                            // if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
                               if (T::is_matching_type(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == true)
                                  {
@@ -8592,6 +8600,21 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                    printf ("-----    --- templateParameterOrArgumentFromSymbol->get_type() = %p = %s \n",templateParameterOrArgumentFromSymbol->get_type(),templateParameterOrArgumentFromSymbol->get_type()->class_name().c_str());
 #endif
 
+#if 1
+                                // DQ (5/22/2016): Use newer type equivelence test instead of using stripType below
+                                // (which is a bug demonstrated in compiling testRoseHeaders_01.C with Boost 1.59 in C++11 mode).
+                                   SgType*   typeLocal        = isSgType(templateParameterOrArgumentLocal->get_type());
+                                   SgType*   typeFromSymbol   = isSgType(templateParameterOrArgumentFromSymbol->get_type());
+
+                                   ROSE_ASSERT(typeLocal != NULL);
+                                   ROSE_ASSERT(typeFromSymbol != NULL);
+
+                                   isTemplateType = SageInterface::isEquivalentType(typeLocal,typeFromSymbol);
+
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                   printf ("----- Template parameters or arguments match in parameter or argument type: isTemplateType = %s \n",isTemplateType ? "true" : "false");
+#endif
+#else
                                    SgTypedefType*   typedefTypeLocal        = isSgTypedefType(templateParameterOrArgumentLocal->get_type());
                                    SgTypedefType*   typedefTypeFromSymbol   = isSgTypedefType(templateParameterOrArgumentFromSymbol->get_type());
                                    SgPointerType*   pointerTypeLocal        = isSgPointerType(templateParameterOrArgumentLocal->get_type());
@@ -8741,6 +8764,8 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 #endif
                                            }
                                       }
+// DQ (5/22/2016): endif for use of new type equivalence test.
+#endif
                                  }
                                 else
                                  {
@@ -8994,7 +9019,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
              {
             // DQ (8/22/2012): Consider if this make sense...yes, if it is not a template instantiation then matching is based on name in a specific scope only.
             // DQ (5/8/2016): Actually it is based on the name and the template parameters (I think the number of template parameters only, but I am not certain).
-
 #if 1
             // DQ (5/8/2016): If the list is not empty then it had a different number of arguments and so it can't be the same (return false)
                if (templateParametersOrArgumentsListFromSymbol.empty() == false)
@@ -9015,6 +9039,9 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                     returnValue = true;
                   }
 #else
+
+#error "DEAD CODE!"
+
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateClassInstantiation == NULL (return true) \n");
 #endif
@@ -9024,7 +9051,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
         }
        else
         {
-
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
           printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateParametersOrArgumentsList == NULL (return true) \n");
 #endif
@@ -19465,6 +19491,93 @@ SgTemplateArgument::set_global_qualification_required_for_type(bool global_quali
   // set_isModified(true);
      
      p_global_qualification_required_for_type = global_qualification_required_for_type;
+   }
+
+void
+SgTemplateArgument::display( const std::string & label) const
+   {
+  // DQ (5/22/2016): Adding display function for debugging.
+
+     ROSE_ASSERT(this != NULL);
+
+     switch (get_argumentType())
+        {
+          case SgTemplateArgument::type_argument:
+             {
+               const SgType* type = get_type();
+               assert (type != NULL);
+#if 1
+               printf ("In SgTemplateArgument::display(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+#endif
+               Rose_STL_Container<SgType*> typeChain = type->getInternalTypes();
+
+            // Debugging output.
+               printf (" --- Output of type chain for template argument \n");
+               for (size_t i = 0; i < typeChain.size(); i++)
+                  {
+                    SgType* element_type = typeChain[i];
+                    printf ("   --- element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+                    SgModifierType* modifierType = isSgModifierType(element_type);
+                    if (modifierType != NULL)
+                       {
+                      // modifierType->get_typeModifier().display("X type chain");
+                         string s = modifierType->get_typeModifier().displayString();
+                         printf ("   ------ type chain modifier: %s \n",s.c_str());
+                       }
+                  }
+               break;
+             }
+
+          case SgTemplateArgument::nontype_argument:
+             {
+               const SgExpression* expr = get_expression();
+
+               printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+#if 0
+               if (expr != NULL)
+                  {
+                    printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(get_initializedName() != NULL);
+                    ROSE_ASSERT(get_initializedName()->get_scope() != NULL);
+                    printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+                  }
+#endif
+               break;
+             }
+
+          case SgTemplateArgument::template_template_argument:
+             {
+               const SgDeclarationStatement* templateDeclaration = get_templateDeclaration();
+               ROSE_ASSERT(templateDeclaration != NULL);
+#if 1
+               printf ("In SgTemplateArgument::display(): case SgTemplateArgument::template_template_argument: = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
+#endif
+               SgName mangled_templateDeclaration = templateDeclaration->get_mangled_name();
+               printf ("case SgTemplateArgument::template_template_argument: mangled_templateDeclaration = %s \n",mangled_templateDeclaration.str());
+               break;
+             }
+
+          case SgTemplateArgument::start_of_pack_expansion_argument:
+             {
+               const SgExpression* expr = get_expression();
+               assert(expr != NULL);
+#if 1
+               printf ("WARNING: In SgTemplateArgument::display(): handling of display for varadic template argument is incomplete! \n");
+#endif
+               printf ("In SgTemplateArgument::display(): case SgTemplateArgument::start_of_pack_expansion_argument: varadic_template_argument \n");
+               break;
+             }
+
+          default:
+             {
+               printf ("ERROR: In SgTemplateArgument::display(): default reached in switch: get_argumentType() = %d \n",get_argumentType());
+               ROSE_ASSERT(false);
+               break;
+             }
+        }
    }
 
 

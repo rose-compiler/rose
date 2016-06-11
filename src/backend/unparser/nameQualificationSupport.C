@@ -6792,8 +6792,33 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
         }
        else
         {
+#if 0
+       // DQ (5/23/2016): Output some date to use in debugging this case.
+          printf ("usingDeclaration = %p \n",usingDeclaration);
+          usingDeclaration->get_file_info()->display("NameQualificationTraversal::setNameQualification(SgUsingDeclarationStatement, SgDeclarationStatement,int): debug");
+#endif
+       // If it already exists then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(usingDeclaration);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+#if 1
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
    }
 
@@ -7052,7 +7077,7 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
         }
        else
         {
-       // If it already existes then overwrite the existing information.
+       // If it already exists then overwrite the existing information.
           std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(initializedName);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
@@ -7528,7 +7553,7 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
         }
        else
         {
-       // If it already existes then overwrite the existing information.
+       // If it already exists then overwrite the existing information.
           std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(classDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
