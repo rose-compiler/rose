@@ -9157,6 +9157,15 @@ bool SageInterface::normalizeForLoopTest(SgForStatement* loop)
 
   // Normalized the test expressions
   // -------------------------------------
+#if 0  // this is undecided
+  // skip for (;;) case
+  SgStatement* test_stmt = loop->get_test();
+  if (test_stmt!=NULL)
+  {
+    if (isSgNullStatement(test_stmt))
+      return false;
+  }
+#endif  
   SgExpression* test = loop->get_test_expr();
   SgExpression* testlhs=NULL, * testrhs=NULL;
   if (isSgBinaryOp(test))
@@ -9845,7 +9854,7 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   SgExpression* ivarast=NULL;
 
   // DQ (3/20/2016): Note that GNU compiler reports these variables are set but not used.
-  bool isCase1=false, isCase2=false;
+  //bool isCase1=false, isCase2=false;
 
   //consider C99 style: for (int i=0;...)
   if (isSgVariableDeclaration(init1))
@@ -9854,8 +9863,8 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
     ivarname = decl->get_variables().front();
     ROSE_ASSERT(ivarname != NULL);
     SgInitializer * initor = ivarname->get_initializer();
-    if (isSgAssignInitializer(initor))
-      isCase1 = true;
+   // if (isSgAssignInitializer(initor))
+   //   isCase1 = true;
   }// other regular case: for (i=0;..)
   else if (isAssignmentStatement(init1, &ivarast))
   {
@@ -9863,7 +9872,7 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
     if (var)
     {
       ivarname = var->get_symbol()->get_declaration();
-      isCase2 = true;
+      //isCase2 = true;
     }
   }
   else if (SgExprStatement* exp_stmt = isSgExprStatement(init1))
