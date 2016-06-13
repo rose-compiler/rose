@@ -1688,5 +1688,22 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     } // end for (stmt)
 
   } //end diffUserDefinedAndCompilerGeneratedOpenMP()
+  bool insideSystemHeader (SgLocatedNode* node)
+  {
+    bool rtval = false; 
+    ROSE_ASSERT (node != NULL);
+    Sg_File_Info* finfo = node->get_file_info();
+    if (finfo!=NULL)
+    {
+      string fname = finfo->get_filenameString();
+      string buildtree_str = string("include/edg/g++_HEADERS/hdrs"); 
+      string sourcetree_str = string("include-staging/g++_HEADERS/hdrs"); 
+      // if the file name has a sys header path of either source or build tree
+      if ( (fname.find (buildtree_str,0) != string::npos) ||
+          (fname.find (sourcetree_str,0) != string::npos))
+        rtval = true;
+    }
+    return rtval; 
+  }
 
 } // end namespace
