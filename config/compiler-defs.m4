@@ -96,7 +96,7 @@ AC_DEFUN([GET_CXX_VERSION_MACROS],[
     fi
 
     CXX_VERSION_MACROS=
-    for symbol in __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__; do
+    for symbol in __GNUG__ __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__; do
         value="$(sed -ne "s/#define $symbol //p" <$tmp_output)"
         if test "$value" != ""; then
             if test "$CXX_VERSION_MACROS" = ""; then
@@ -195,9 +195,9 @@ dnl     None
 dnl Input:
 dnl     BACKEND_CXX_* variables saved by previous call to SAVE_VERSION_INFO
 dnl Output:
-dnl     The result is conveyed to the caller as a shell variable, macroString which is a string of comma-separated, quoted
+dnl     The result is conveyed to the caller as a shell variable, macroString, which is a string of comma-separated, quoted
 dnl     compiler arguments with the whole string enclosed in curly braces. It is done this way so it can be interpolated
-dnl     directly in to C++ code that initializes a "char const *[]".
+dnl     directly into C++ code that initializes a "char const *[]".
 dnl ========================================================================================================================
 AC_DEFUN([GET_BACKEND_COMPILER_MACROS],[
     if test "$BACKEND_CXX_COMPILER_COMMAND" = ""; then
@@ -214,7 +214,7 @@ AC_DEFUN([GET_BACKEND_COMPILER_MACROS],[
         if test "$macroString" = ""; then
             macroString="\"$macro\""
         else
-            macroString="$macroString \"$macro\""
+            macroString="$macroString, \"$macro\""
         fi
     done
     macroString="{$macroString}"
