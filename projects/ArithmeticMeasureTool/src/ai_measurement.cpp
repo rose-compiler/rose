@@ -73,6 +73,17 @@ namespace ArithemeticIntensityMeasurement
    ss<<"\tfp_divide:"<< divide_count<<endl;
    ss<<"\tfp_total:"<< getTotalCount()<<endl;
 
+   ss<<"----------Memory Operation Counts---------------------"<<endl;
+   ss<<comment<<endl;
+   if (load_bytes== NULL)
+     ss<<"\tLoads: NULL "<<endl;
+   else
+     ss<<"\tLoads:"<< load_bytes->unparseToString()<<endl;
+   if (store_bytes== NULL)
+     ss<<"\tStores: NULL "<<endl;
+   else
+     ss<<"\tStores:"<< store_bytes->unparseToString()<<endl;
+
    return ss.str();
  }
  void FPCounters::printInfo(std::string comment/* ="" */)
@@ -351,7 +362,7 @@ namespace ArithemeticIntensityMeasurement
 
 
  // obtain read or write variables processed by all nested loops, if any
- void getVariablesProcessedByInnerLoops (SgScopeStatement* current_loop_body, bool isRead, std::set<SgInitializedName*>& var_set)
+ void getVariablesProcessedByInnerLoops (SgStatement* current_loop_body, bool isRead, std::set<SgInitializedName*>& var_set)
  {
    // AST query to find all loops
    // add all read/write variables into the var_set
@@ -386,17 +397,17 @@ namespace ArithemeticIntensityMeasurement
   //   Iterate on each variable in the set
   //     group them into buckets based on types, using a map<SgType*, int> to store this
   //   Iterate the list of buckets to generate count*sizeof(type) + .. expression 
-  SgExpression* calculateBytes (std::set<SgInitializedName*>& name_set, SgScopeStatement* scope, bool isRead)
+  SgExpression* calculateBytes (std::set<SgInitializedName*>& name_set, SgStatement* lbody, bool isRead)
   {
     SgExpression* result = NULL; 
     if (name_set.size()==0) return result;
 
    // the input is essentially the loop body, a scope statement
-   ROSE_ASSERT (scope != NULL);
+   ROSE_ASSERT (lbody!= NULL);
     // We need to record the associated loop info.
     SgStatement* loop= NULL;
-    SgForStatement* forloop = isSgForStatement(scope->get_scope());
-    SgFortranDo* doloop = isSgFortranDo(scope->get_scope());
+    SgForStatement* forloop = isSgForStatement(lbody->get_scope());
+    SgFortranDo* doloop = isSgFortranDo(lbody->get_scope());
 
     if (forloop)
       loop = forloop;
@@ -404,7 +415,7 @@ namespace ArithemeticIntensityMeasurement
       loop = doloop;
     else
     {
-      cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< scope->class_name()<<endl;
+      cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< lbody->class_name()<<endl;
       assert(false);
     }   
 
@@ -412,7 +423,7 @@ namespace ArithemeticIntensityMeasurement
 
    // get all processed variables by inner loops
     std::set<SgInitializedName*> processed_var_set; 
-    getVariablesProcessedByInnerLoops (scope, isRead, processed_var_set);
+    getVariablesProcessedByInnerLoops (lbody, isRead, processed_var_set);
     
     // fill in the type-based counters
     std::set<SgInitializedName*>::iterator set_iter; 
@@ -551,13 +562,13 @@ namespace ArithemeticIntensityMeasurement
   {
     std::pair <SgExpression*, SgExpression*> result; 
     assert (input != NULL);
-   // the input is essentially the loop body, a scope statement
-    SgScopeStatement* scope = isSgScopeStatement(input);
+   // the input is essentially the loop body, a statement
+    SgStatement* lbody = isSgStatement(input);
 
     // We need to record the associated loop info.
     //SgStatement* loop= NULL;
-    SgForStatement* forloop = isSgForStatement(scope->get_scope());
-    SgFortranDo* doloop = isSgFortranDo(scope->get_scope());
+    SgForStatement* forloop = isSgForStatement(lbody->get_scope());
+    SgFortranDo* doloop = isSgFortranDo(lbody->get_scope());
 
     if (forloop)
     {
@@ -605,11 +616,21 @@ namespace ArithemeticIntensityMeasurement
     }
     if (!includeScalars )
       writeVars =  filterVariables (writeVars);
-    result.first =  calculateBytes (readVars, scope, true);
-    result.second =  calculateBytes (writeVars, scope, false);
+    result.first =  calculateBytes (readVars, lbody, true);
+    result.second =  calculateBytes (writeVars, lbody, false);
     return result;
   }
 
+  // count memory load/store operations, store into attribute FPCounters
+  void CountMemOperations(SgLocatedNode* input, bool includeScalars /*= true*/, bool includeIntType /*= true*/)
+  {
+    ROSE_ASSERT (input != NULL);
+    std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (input, includeScalars, includeIntType);
+    FPCounters* mycounters = getFPCounters (input); 
+    mycounters->setLoadBytes (load_store_count_pair.first);
+    mycounters->setStoreBytes (load_store_count_pair.second);
+ }
+  
   //! Count floating point operations seen in a subtree
   void CountFPOperations(SgLocatedNode* input)
   {
@@ -661,6 +682,7 @@ namespace ArithemeticIntensityMeasurement
     //Must update the total counter here
     FPCounters* fp_counters = getFPCounters (input); 
     fp_counters->updateTotal ();
+#if 0
     // write results to a report file
     if (running_mode == e_static_counting)
     {
@@ -668,6 +690,7 @@ namespace ArithemeticIntensityMeasurement
       cout<<"Writing counter results to "<< report_filename <<endl;
       reportFile<< fp_counters->toString();
     }
+#endif
     // debugging info
     if (debug)
       printFPCount (input);
