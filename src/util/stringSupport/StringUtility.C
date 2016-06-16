@@ -255,13 +255,12 @@ StringUtility::stringToList(const std::string &input) {
 }
 
 std::list<std::string>
-StringUtility:: tokenize ( std::string X, char delim ) {
+StringUtility:: tokenize(const std::string &s, char delim) {
     std::list<std::string> l;
     std::string token;
-    std::istringstream iss(X);
-    while (getline(iss, token, delim)) {
+    std::istringstream iss(s);
+    while (getline(iss, token, delim))
         l.push_back(token);
-    }
     return l;
 }
 
@@ -498,35 +497,14 @@ std::string
 StringUtility::removePseudoRedundantSubstrings(const std::string &s) {
     // Convert the string into a list of strings and separate out the redundant entries
      std::list<std::string> XStringList = StringUtility::stringToList(s);
-
-#if 0
-     printf ("XStringList.size() = %" PRIuPTR " \n",XStringList.size());
-#endif
-
      XStringList.sort();
-
-#if 0
-     printf ("After sort(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
-#endif
-
      XStringList.unique();
-
-#if 0
-     printf ("After unique(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
-#endif
 
   // Build a list of the strings that will be modified
      std::list<std::string> modifiedStringList;
      std::list<std::string> listOfStringsToRemove;
 
      std::list<std::string>::iterator i;
-
-#if 0
-     for (i = XStringList.begin(); i != XStringList.end(); i++)
-        {
-          printf ("AT TOP: (*i = %s) (size: %d) \n",(*i).c_str(),(*i).length());
-        }
-#endif
 
   // Two loops over the list of strings represents a quadratic complexity!
      for (i = XStringList.begin(); i != XStringList.end(); i++)
@@ -547,10 +525,6 @@ StringUtility::removePseudoRedundantSubstrings(const std::string &s) {
 
             // build information about *j
                std::string::const_iterator j_diffpos        = find_if ( (*j).begin(), (*j).end(), isNumber );
-#if 0
-               printf ("Testing (*i = %s) == (*j = %s) ) (sizes are: %d and %d) \n",
-                               (*i).c_str(),(*j).c_str(),(*i).length(),(*j).length());
-#endif
 
                unsigned int i_subStringLength  = i_diffpos - (*i).begin();
                unsigned int j_subStringLength  = j_diffpos - (*j).begin();
@@ -568,10 +542,6 @@ StringUtility::removePseudoRedundantSubstrings(const std::string &s) {
 
                     i_modifiedString = *i; i_modifiedString[i_subStringLength] = '$';
                     std::string j_modifiedString = *j; j_modifiedString[j_subStringLength] = '$';
-#if 0
-                    printf ("Testing (i_modifiedString = %s) == (j_modifiedString = %s) \n",
-                                    i_modifiedString.c_str(),j_modifiedString.c_str());
-#endif
 
                  // After modifying the strings (uniformly) see if we have a match
                     if ( i_modifiedString == j_modifiedString )
@@ -586,23 +556,11 @@ StringUtility::removePseudoRedundantSubstrings(const std::string &s) {
                       // Build a string from the number that differentiates the two strings
                          std::string i_numberString(1, *i_diffpos);
                          std::string j_numberString(1, *j_diffpos);
-#if 0
-                         printf ("Found a pseudo match between two strings: diff = %s and %s between %s and %s \n",
-                                         i_numberString.c_str(),j_numberString.c_str(),(*i).c_str(),(*j).c_str());
-#endif
                       // Save the differences between the pseudo matching strings
                          listOfDifferences.push_back(i_numberString);
                          listOfDifferences.push_back(j_numberString);
                        }
                   }
-#if 0
-               else
-                  {
-                    printf ("No similar substrings found! \n");
-                  }
-
-               printf ("bottom of loop through string: compare *i and *j and check for pseudo-redundence \n");
-#endif
              }
 
        // printf ("listOfDifferences.size() = %" PRIuPTR " \n",listOfDifferences.size());
@@ -610,123 +568,44 @@ StringUtility::removePseudoRedundantSubstrings(const std::string &s) {
        // If there are any elements then we can proceed
           if (!listOfDifferences.empty())
              {
-#if 0
-               printf ("Base of test of *i and *j (before sort): listOfDifferences = \n%s \n",listToString(listOfDifferences).c_str());
-#endif
                listOfDifferences.sort();
-#if 0
-               printf ("Base of test of *i and *j (after sort): listOfDifferences = \n%s \n",listToString(listOfDifferences).c_str());
-#endif
                listOfDifferences.unique();
-#if 0
-               printf ("Base of test of *i and *j (after unique): listOfDifferences = \n%s \n",listToString(listOfDifferences).c_str());
-#endif
 
                std::string maxvalue = listOfDifferences.back();
                ROSE_ASSERT (!maxvalue.empty());
 
-#if 0
-               printf ("Max value = %s \n",maxvalue.c_str());
-#endif
 
             // char* diffpos = find_if ( modifiedString.c_str(), modifiedString.c_str()+modifiedString.length(), isMarker );
                std::string::iterator diffpos = find_if (i_modifiedString.begin(), i_modifiedString.end(), isMarker );
 
-#if 0
-               printf ("Before copyEdit: diffpos = %c final string = %s \n",*diffpos,modifiedString.c_str());
-#endif
-
                *diffpos = maxvalue[0];
             // modifiedString = copyEdit(modifiedString,string("$Y"),maxvalue);
 
-#if 0
-               printf ("Final string = %s \n",modifiedString.c_str());
-#endif
-
                modifiedStringList.push_back(i_modifiedString);
              }
-#if 0
-          else
-             {
-               printf ("No differences to process \n");
-             }
-
-          printf ("At base of loop over XStringList \n");
-#endif
         }
-
-#if 0
-     printf ("Now sort and remove non-unique elements \n");
-#endif
 
   // Remove strings we identified for removal
      listOfStringsToRemove.sort();
      listOfStringsToRemove.unique();
 
-#if 0
-     printf ("After loop: listOfStringsToRemove.size() = %" PRIuPTR " \n",listOfStringsToRemove.size());
-#endif
-
      for (i = listOfStringsToRemove.begin(); i != listOfStringsToRemove.end(); i++)
         {
           XStringList.remove(*i);
         }
-#if 0
-     printf ("After loop: XStringList.size() = %" PRIuPTR " \n",XStringList.size());
-     printf ("After loop: XStringList = %s \n",listToString(XStringList).c_str());
-#endif
 
   // Add the strings the we saved (the resort)
      XStringList.insert(XStringList.end(), modifiedStringList.begin(), modifiedStringList.end());
-#if 0
-     printf ("Before remove(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
-     printf ("Before remove(): XStringList = %s \n",listToString(XStringList).c_str());
-#endif
 
      XStringList.remove(std::string("\n"));
-#if 0
-     printf ("Before sort(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
-     printf ("Before sort(): XStringList = %s \n",listToString(XStringList).c_str());
-#endif
 
      XStringList.sort();
-#if 0
-     printf ("After sort(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
-     printf ("After sort(): XStringList = %s \n",listToString(XStringList).c_str());
-#endif
 
      XStringList.unique();
-#if 0
-     printf ("After unique(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
-     printf ("After unique(): XStringList = %s \n",listToString(XStringList).c_str());
-#endif
-
-#if 0
-     for (i = XStringList.begin(); i != XStringList.end(); i++)
-        {
-          printf ("AT BOTTOM: (*i = %s) (size: %d) \n",(*i).c_str(),(*i).length());
-        }
-
-     printf ("Returning from StringUtility::removePseudoRedundentSubstrings() (calling listToString member function) \n");
-#endif
 
      return StringUtility::listToString(XStringList);
    }
 
-#if 0
-int
-StringUtility::isSameName ( const std::string& s1, const std::string& s2 )
-   {
-     int returnValue = false;
-  // return strcmp(fname, fileName) == 0;
-  // The strings are the same only if ZERO is the return value from strcmp()
-     if (s1 == s2)
-        {
-          returnValue = true;
-        }
-     return returnValue;
-   }
-#endif
 
 // Macro used only in the copyEdit function
 #define DEBUG_COPY_EDIT false
@@ -734,31 +613,26 @@ StringUtility::isSameName ( const std::string& s1, const std::string& s2 )
 // BP : 10/25/2001, a non recursive version that
 // allocs memory only once
 std::string
-StringUtility::copyEdit (
-                const std::string& inputString, 
-                const std::string& oldToken, 
-                const std::string& newToken )
-                  {
-     // std::cerr << "StringUtility::copyEdit '" << inputString << "' '" << oldToken << "' '" << newToken << "'" << std::endl;
-     std::string returnString;
-     std::string::size_type oldTokenSize = oldToken.size();
+StringUtility::copyEdit(const std::string& inputString, const std::string& oldToken, const std::string& newToken) {
+    std::string returnString;
+    std::string::size_type oldTokenSize = oldToken.size();
 
-     std::string::size_type position = 0;
-     std::string::size_type lastPosition = 0;
-     while (true) {
-       position = inputString.find(oldToken, position);
-       if (position == std::string::npos) {
-         returnString += inputString.substr(lastPosition);
-         break;
-       } else {
-         returnString += inputString.substr(lastPosition, position - lastPosition);
-         returnString += newToken;
-         position = lastPosition = position + oldTokenSize;
-             }
+    std::string::size_type position = 0;
+    std::string::size_type lastPosition = 0;
+    while (true) {
+        position = inputString.find(oldToken, position);
+        if (position == std::string::npos) {
+            returnString += inputString.substr(lastPosition);
+            break;
+        } else {
+            returnString += inputString.substr(lastPosition, position - lastPosition);
+            returnString += newToken;
+            position = lastPosition = position + oldTokenSize;
         }
+    }
 
-     return returnString;
-   }
+    return returnString;
+}
 
 void
 StringUtility::writeFile (
@@ -766,17 +640,6 @@ StringUtility::writeFile (
                 const std::string& fileNameString,
                 const std::string& directoryName)
    {
-  // char* directoryName = strdup(directoryName);
-
-#if 0
-  // char* filenamePrefix = "generatedCode.headers/";
-     char* filenamePrefix = new char [strlen(directoryName)+2];
-     strcpy(filenamePrefix,directoryName);
-     strcat(filenamePrefix,"/");
-#else
-  // char* filenamePrefix = "";
-#endif
-
      std::string outputFileName = directoryName + fileNameString;
 
      std::ofstream outputFile(outputFileName.c_str());
@@ -818,8 +681,10 @@ StringUtility::copyEdit (
     if (pos != std::string::npos) {
       // Split the line into the before-substitution and after-substitution regions
       result[i].str = str.substr(0, pos);
-      result.insert(result.begin() + i + 1, StringUtility::StringWithLineNumber(str.substr(pos + oldToken.size()), result[i].filename + " after subst for " + oldToken, result[i].line));
-   // result[i].filename += " before subst for " + oldToken;
+      result.insert(result.begin() + i + 1,
+                    StringUtility::StringWithLineNumber(str.substr(pos + oldToken.size()),
+                                                        result[i].filename + " after subst for " + oldToken,
+                                                        result[i].line));
       // Do the insertion
       result.insert(result.begin() + i + 1, newToken.begin(), newToken.end());
       i += newToken.size(); // Rescan the after-substitution part of the old line, but not any of the new text
@@ -1387,6 +1252,7 @@ StringUtility::getPathFromFileName ( const std::string & fileNameWithPath )
    }
 
 
+// [Robb P Matzke 2016-06-15]: deprecated
 std::string
 StringUtility::escapeNewLineCharaters ( const std::string & X )
    {
