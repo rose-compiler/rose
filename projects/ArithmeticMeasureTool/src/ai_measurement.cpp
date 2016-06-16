@@ -1,6 +1,7 @@
 #include "ai_measurement.h"
 
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace AstFromString;
@@ -744,7 +745,7 @@ namespace ArithemeticIntensityMeasurement
     const char* old_char = c_char;
     SgNode* old_node = c_sgnode;
 
-    c_sgnode = getNextStatement(pragmaDecl);
+    c_sgnode = SageInterface::getNextStatement(pragmaDecl);
     assert (c_sgnode != NULL);
 
     c_char = pragmaString.c_str();
@@ -834,11 +835,11 @@ namespace ArithemeticIntensityMeasurement
     // Only for a do-loop which immediately follows  chiterations =  ..
     SgVariableSymbol * chiterations_sym = lookupVariableSymbolInParentScopes(SgName("chiterations"), isSgScopeStatement(loop));
     if (chiterations_sym==NULL) return NULL;
-    SgStatement* prev_stmt = getPreviousStatement(loop,false);
+    SgStatement* prev_stmt = SageInterface::getPreviousStatement(loop,false);
 
     // backwards search, skipping pragma declaration etc.
     while (prev_stmt!=NULL && !isAssignmentStmtOf (prev_stmt, chiterations_sym->get_declaration()))
-      prev_stmt = getPreviousStatement(prev_stmt,false);
+      prev_stmt = SageInterface::getPreviousStatement(prev_stmt,false);
     if (prev_stmt == NULL) return NULL;
 
     // To support nested loops, we need to use unique chiterations variable for each loop
