@@ -2,6 +2,8 @@
 
 #include "sage3basic.h"
 
+using namespace rose;
+
 std::string
 SgAsmGenericString::get_string(bool escape) const
 {

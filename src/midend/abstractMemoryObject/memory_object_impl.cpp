@@ -4,6 +4,7 @@
 #include "sageInterface.h"
 
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 
 namespace AbstractMemoryObject {

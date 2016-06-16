@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include "markLhsValues.h"
 #include "fixupNames.h"
+#include "FileUtility.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -109,6 +110,7 @@ typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 using namespace SageBuilder;
 
 

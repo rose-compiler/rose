@@ -3,6 +3,7 @@
 #include "intermediateRepresentationNodeGraphs.h"
 
 using namespace std;
+using namespace rose;
 
 void
 intermediateRepresentationNodeGraph( SgProject* project, const std::vector<VariantT> & nodeKindList )

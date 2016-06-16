@@ -19,7 +19,7 @@
 #include <map>
 #include <set>
 #include "ROSETTA_macros.h"
-#include "string_functions.h"
+#include "FileUtility.h"
 #include "GrammarFile.h"
 
 
@@ -234,7 +234,7 @@ class Grammar
           std::string getFilenameForGlobalDeclarations ();
           void  setFilenameForGlobalDeclarations ( const std::string& filename );
 
-          StringUtility::FileWithLineNumbers buildMiscSupportDeclarations ();
+          rose::StringUtility::FileWithLineNumbers buildMiscSupportDeclarations ();
 
           std::string grammarName;
           std::string grammarPrefixName;
@@ -247,7 +247,7 @@ class Grammar
           std::string getGrammarTagName();
 
        // Build main class declaration for this grammar
-          void buildGrammarClassDeclaration ( StringUtility::FileWithLineNumbers & outputFile );
+          void buildGrammarClassDeclaration ( rose::StringUtility::FileWithLineNumbers & outputFile );
 
           void addGrammarElement    ( AstNodeClass    & X );
 
@@ -286,20 +286,20 @@ class Grammar
 
           std::string getDerivedClassDeclaration ( AstNodeClass & node );
 
-          StringUtility::FileWithLineNumbers buildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
-          StringUtility::FileWithLineNumbers buildHeaderStringBeforeMarker ( const std::string& marker, const std::string& fileName );
+          rose::StringUtility::FileWithLineNumbers buildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
+          rose::StringUtility::FileWithLineNumbers buildHeaderStringBeforeMarker ( const std::string& marker, const std::string& fileName );
 
           std::string sourceCodeDirectoryName();
 
-          static StringUtility::FileWithLineNumbers readFileWithPos ( const std::string& inputFileName );
+          static rose::StringUtility::FileWithLineNumbers readFileWithPos ( const std::string& inputFileName );
 
        // DQ (12/28/2009): I don't think we want this to be static, since I want to call sourceCodeDirectoryName().
        // static void writeFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
        //                         const std::string& className, const std::string& fileExtension );
-          void writeFile  ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
+          void writeFile  ( const rose::StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
                             const std::string& className, const std::string& fileExtension );
        // DQ (12/31/2009): Added mechanism to append generated text to files.
-          void appendFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
+          void appendFile ( const rose::StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
                             const std::string& className, const std::string& fileExtension );
 
           std::string generateTraverseSuccessorForLoopSource(std::string typeString, 
@@ -317,49 +317,49 @@ class Grammar
           std::string generateTraverseSuccessorNames(GrammarString* gs, std::string successorContainerName);
 
           std::string generateRTICode(GrammarString* gs, std::string successorContainerName, std::string className, size_t index);
-          void buildRTIFile(AstNodeClass* rootNode, StringUtility::FileWithLineNumbers& rttiFile);
-          StringUtility::FileWithLineNumbers buildVariants ();
-          StringUtility::FileWithLineNumbers buildForwardDeclarations ();
+          void buildRTIFile(AstNodeClass* rootNode, rose::StringUtility::FileWithLineNumbers& rttiFile);
+          rose::StringUtility::FileWithLineNumbers buildVariants ();
+          rose::StringUtility::FileWithLineNumbers buildForwardDeclarations ();
 
        // DQ (12/28/2009): Added to support optionally smaller (but more numerous header files for ROSE).
        // StringUtility::FileWithLineNumbers buildIncludesForSeparateHeaderFiles();
-          void buildIncludesForSeparateHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildIncludesForSeparateHeaderFiles( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (10/26/2007): Add the protytype for the Cxx_GrammarTerminalNames
-          void buildVariantsStringPrototype ( StringUtility::FileWithLineNumbers & outputFile );
-          void buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outputFile );
+          void buildVariantsStringPrototype ( rose::StringUtility::FileWithLineNumbers & outputFile );
+          void buildVariantsStringDataBase ( rose::StringUtility::FileWithLineNumbers & outputFile );
 
-          void buildHeaderFiles ( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildHeaderFiles ( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
           std::string buildStringForPrototypes( AstNodeClass & node );
-          StringUtility::FileWithLineNumbers buildStringForDataDeclaration                     ( AstNodeClass & node );
-          StringUtility::FileWithLineNumbers buildStringForDataAccessFunctionDeclaration      ( AstNodeClass & node );
-          StringUtility::FileWithLineNumbers buildStringForSource                              ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForDataDeclaration                     ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForDataAccessFunctionDeclaration      ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForSource                              ( AstNodeClass & node );
 
        // Builds the "CLASSNAME::variant()" member function
-          StringUtility::FileWithLineNumbers buildStringForVariantFunctionSource               ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForVariantFunctionSource               ( AstNodeClass & node );
 
        // Builds the "CLASSNAME::isCLASSNAME()" friend function
-          StringUtility::FileWithLineNumbers supportForBuildStringForIsClassNameFunctionSource ( AstNodeClass & node, const StringUtility::FileWithLineNumbers& accumulationString );
-          StringUtility::FileWithLineNumbers buildStringForIsClassNameFunctionSource           ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers supportForBuildStringForIsClassNameFunctionSource ( AstNodeClass & node, const rose::StringUtility::FileWithLineNumbers& accumulationString );
+          rose::StringUtility::FileWithLineNumbers buildStringForIsClassNameFunctionSource           ( AstNodeClass & node );
 
        // DQ (9/21/2005): Added support for memory pools
-          StringUtility::FileWithLineNumbers buildStringForNewAndDeleteOperatorSource          ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForNewAndDeleteOperatorSource          ( AstNodeClass & node );
 
        // DQ (12/24/2005): Support for memory pool traversal
-          StringUtility::FileWithLineNumbers buildStringForTraverseMemoryPoolSource            ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForTraverseMemoryPoolSource            ( AstNodeClass & node );
 
        // DQ & JH (1/17/2006): Added support for building code to check pointers to IR nodes
-          StringUtility::FileWithLineNumbers buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( AstNodeClass & node );
-          StringUtility::FileWithLineNumbers buildStringToTestPointerForContainmentInMemoryPoolSource ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringToTestPointerForContainmentInMemoryPoolSource ( AstNodeClass & node );
 
        // AS (2/14/06): Added support for building code to return data member pointers to IR nodes
-          StringUtility::FileWithLineNumbers buildStringForReturnDataMemberPointersSource ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForReturnDataMemberPointersSource ( AstNodeClass & node );
 
-          StringUtility::FileWithLineNumbers buildStringForProcessDataMemberReferenceToPointersSource ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForProcessDataMemberReferenceToPointersSource ( AstNodeClass & node );
 
        // DQ (3/7/2007): support for getChildIndex member function
-          StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( AstNodeClass & node );
 
           bool buildConstructorParameterList ( AstNodeClass & node, 
                                                std::vector<GrammarString *> & constructorParameterList,
@@ -370,9 +370,9 @@ class Grammar
        // DQ 11/6/2006): Support for building newer from of constructors (withouth source position information).
           void markNodeForConstructorWithoutSourcePositionInformation ( AstNodeClass & node );
           void markNodeForConstructorWithoutSourcePositionInformationSupport( AstNodeClass & node );
-          StringUtility::FileWithLineNumbers buildConstructorWithoutSourcePositionInformation ( AstNodeClass & node );
-          void buildConstructorWithoutSourcePositionInformationSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
-          void constructorLoopBody(const ConstructParamEnum& config, bool& complete, const StringUtility::FileWithLineNumbers& constructorSourceCodeTemplate, AstNodeClass& node, StringUtility::FileWithLineNumbers& returnString);
+          rose::StringUtility::FileWithLineNumbers buildConstructorWithoutSourcePositionInformation ( AstNodeClass & node );
+          void buildConstructorWithoutSourcePositionInformationSupport( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
+          void constructorLoopBody(const ConstructParamEnum& config, bool& complete, const rose::StringUtility::FileWithLineNumbers& constructorSourceCodeTemplate, AstNodeClass& node, rose::StringUtility::FileWithLineNumbers& returnString);
 
        // DQ (11/7/2006): Get a specific node from the tree.
           AstNodeClass* getNamedNode ( AstNodeClass & node, const std::string & name );
@@ -382,46 +382,46 @@ class Grammar
        // variable declaration at the base of the class and the generated access functions at 
        // the top.  This permist us to present the documentation better using Doxygen.
        // string buildDataPrototypesAndAccessFunctionPrototypesAndConstuctorPrototype ( GrammarTreeNode & node );
-          StringUtility::FileWithLineNumbers buildDataMemberVariableDeclarations ( AstNodeClass & node );
-          StringUtility::FileWithLineNumbers buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildDataMemberVariableDeclarations ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node );
 
-          StringUtility::FileWithLineNumbers buildConstructor ( AstNodeClass & node );
-          StringUtility::FileWithLineNumbers buildConstructorForEssentialDataMembers ( AstNodeClass & node);
+          rose::StringUtility::FileWithLineNumbers buildConstructor ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildConstructorForEssentialDataMembers ( AstNodeClass & node);
 
-          StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ( AstNodeClass & node );
+          rose::StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ( AstNodeClass & node );
 
-          void buildSourceFiles ( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildSourceFiles ( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (12/23/2005): Added to support moving the new and elete operators to a 
        // different file (mostly for clarity to support users who read the source code).
-          void buildNewAndDeleteOperators( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildNewAndDeleteOperators( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (12/24/2005): Support for memory pool traversal
-          void buildTraverseMemoryPoolSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildTraverseMemoryPoolSupport( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ & JH (1/17/2006): Added support for building code to check pointers to IR nodes
-          void buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // AS(2/14/2006): Added support for building code to return pointers to IR nodes
-          void buildStringForReturnDataMemberPointersSupport ( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStringForReturnDataMemberPointersSupport ( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (4/30/2006): Support for buildStringForReturnDataMemberReferenceToPointersSource
        // JJW (11/1/2008): Changed to process rather than return the references
-          void buildStringForProcessDataMemberReferenceToPointersSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStringForProcessDataMemberReferenceToPointersSupport( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (12/23/2005): Relocated copy function to a separate file to imrove readability of source code
-          void buildCopyMemberFunctions( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildCopyMemberFunctions( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (3/7/2007): support for getChildIndex member function
-          void buildStringForGetChildIndexSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStringForGetChildIndexSupport( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // Uses list of targets and sources stored within each node to drive substitutions
-          StringUtility::FileWithLineNumbers editSubstitution ( AstNodeClass & node, const StringUtility::FileWithLineNumbers& editString );
+          rose::StringUtility::FileWithLineNumbers editSubstitution ( AstNodeClass & node, const rose::StringUtility::FileWithLineNumbers& editString );
 
        // This calls the functions to build the parsers (one for each child of the root node)
-          void buildGrammarClassSourceCode ( StringUtility::FileWithLineNumbers & outputFile );
+          void buildGrammarClassSourceCode ( rose::StringUtility::FileWithLineNumbers & outputFile );
 
-          static StringUtility::FileWithLineNumbers extractStringFromFile ( const std::string& startMarker, const std::string& endMarker,
+          static rose::StringUtility::FileWithLineNumbers extractStringFromFile ( const std::string& startMarker, const std::string& endMarker,
                                                      const std::string& filename, const std::string& directory );
 
           void printTreeNodeNames ( const AstNodeClass & node ) const;
@@ -500,8 +500,8 @@ class Grammar
                                                                  std::vector<GrammarSynthesizedAttribute> v);
 
           // JJW (10/16/2008): Factor this code into a separate header file
-          void buildStringForMemoryPoolSupport(AstNodeClass* rootNode, StringUtility::FileWithLineNumbers& file);
-          void buildStringForMemoryPoolSupportSource(AstNodeClass* rootNode, StringUtility::FileWithLineNumbers& file);
+          void buildStringForMemoryPoolSupport(AstNodeClass* rootNode, rose::StringUtility::FileWithLineNumbers& file);
+          void buildStringForMemoryPoolSupportSource(AstNodeClass* rootNode, rose::StringUtility::FileWithLineNumbers& file);
           GrammarSynthesizedAttribute generateMemoryPoolSupportImplementation(AstNodeClass* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
           GrammarSynthesizedAttribute generateMemoryPoolSupportImplementationSource(AstNodeClass* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
 
@@ -522,18 +522,18 @@ class Grammar
           GrammarNodeInfo getGrammarNodeInfo(AstNodeClass* grammarnode);
 
        // MS: generates the code to implement the creation of the treeTraversalSuccessorContainer in Sage
-          void buildTreeTraversalFunctions(AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile);
+          void buildTreeTraversalFunctions(AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile);
 
        // DQ (10/4/2014): Adding ATerm support to be automatically generated via ROSETTA.
-          void buildAtermSupportFunctions(AstNodeClass& node, StringUtility::FileWithLineNumbers& outputFile);
-          void buildAtermGenerationSupportFunctions(AstNodeClass& node, StringUtility::FileWithLineNumbers& outputFile);
-          void buildAtermConsumerSupportFunctions(AstNodeClass& node, StringUtility::FileWithLineNumbers& outputFile);
+          void buildAtermSupportFunctions(AstNodeClass& node, rose::StringUtility::FileWithLineNumbers& outputFile);
+          void buildAtermGenerationSupportFunctions(AstNodeClass& node, rose::StringUtility::FileWithLineNumbers& outputFile);
+          void buildAtermConsumerSupportFunctions(AstNodeClass& node, rose::StringUtility::FileWithLineNumbers& outputFile);
           void buildDataMember(AstNodeClass & node, GrammarString* grammarString, bool & firstAterm, bool & firstConstructorParameter, 
                                bool & lastDataMemberWasConstructorParameter, bool & isInConstructorParameterList, 
                                std::string & constructorArgumentsString, std::string & atermArgumentsSubstring, std::string & atermPatternSubstring, 
                                std::string & dataMemberString, std::string & dataMemberString_post, int integer_counter );
-          StringUtility::FileWithLineNumbers buildAtermConstructor ( AstNodeClass & node );
-          void buildAtermBuildFunctionsSourceFile( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          rose::StringUtility::FileWithLineNumbers buildAtermConstructor ( AstNodeClass & node );
+          void buildAtermBuildFunctionsSourceFile( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
           bool isIntegerKind(const std::string & typenameString);
        // void generateAtermSupport(GrammarString* gs, StringUtility::FileWithLineNumbers & outputFile);
 
@@ -621,9 +621,9 @@ class Grammar
        // StorageClasses, after generation of the code located in SageIII/astFileIO/StorageClasses.C
           std::string myBuildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
 
-          void buildStorageClassSourceFiles ( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
-          void buildStorageClassHeaderFiles ( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
-          void buildIRNodeConstructorOfStorageClassSource ( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStorageClassSourceFiles ( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
+          void buildStorageClassHeaderFiles ( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
+          void buildIRNodeConstructorOfStorageClassSource ( AstNodeClass & node, rose::StringUtility::FileWithLineNumbers & outputFile );
           std::string buildStringForStorageClassSource ( AstNodeClass & node );
           std::string buildStorageClassDeclarations ( );
 

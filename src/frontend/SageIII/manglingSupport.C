@@ -5,7 +5,7 @@
 #include "sage3basic.h"
 
 using namespace std;
-
+using namespace rose;
 
 // DQ (10/31/2015): Need to define this in a single location instead of in the header file included by multiple source files.
 MangledNameSupport::setType MangledNameSupport::visitedTemplateDefinitions;

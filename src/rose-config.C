@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 // The following symbols should be defined on our compile command line:

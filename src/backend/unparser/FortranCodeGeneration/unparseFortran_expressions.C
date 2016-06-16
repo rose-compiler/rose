@@ -8,6 +8,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_HIDDEN_LIST_DATA 0

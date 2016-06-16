@@ -45,6 +45,7 @@
 #define BUILDER_MAKE_REDUNDANT_CALLS_TO_SYMBOL_TABLE_LOOKUP 0
 
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 
 

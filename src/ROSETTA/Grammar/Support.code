@@ -2856,7 +2856,7 @@ $CLASSNAME::displayString() const
 
   // DQ (6/13/2008): Added support for layout and shared use with "strict" or "relaxed"
      s += std::string("get_isShared() = ")  + std::string(get_isShared() ? "true " : "false ");
-     s += std::string("get_layout() = ")  + StringUtility::numberToString(get_layout());
+     s += std::string("get_layout() = ")  + rose::StringUtility::numberToString(get_layout());
 
      s += ")";
      return s;
@@ -3531,11 +3531,11 @@ $CLASSNAME::displayString() const
      s += std::string("isUnknown() = ")                + std::string(isUnknown()  ? "true " : "false ");
      s += std::string("isDefault() = ")                + std::string(isDefault()  ? "true " : "false ");
      s += std::string("isRestrict() = ")               + std::string(isRestrict() ? "true " : "false ");
-     s += std::string("gnu_extension_machine_mode = ") + StringUtility::numberToString((int)p_gnu_extension_machine_mode) + " ";
-     s += std::string("gnu_attribute_alignment = ")    + StringUtility::numberToString((int)p_gnu_attribute_alignment)    + " ";
-     s += std::string("gnu_attribute_sentinel = ")     + StringUtility::numberToString((int)p_gnu_attribute_sentinel)     + " ";
-     s += std::string("address_space_value = ")        + StringUtility::numberToString((int)p_address_space_value)        + " ";
-     s += std::string("vector_size = ")                + StringUtility::numberToString((int)p_vector_size)                + " ";
+     s += std::string("gnu_extension_machine_mode = ") + rose::StringUtility::numberToString((int)p_gnu_extension_machine_mode) + " ";
+     s += std::string("gnu_attribute_alignment = ")    + rose::StringUtility::numberToString((int)p_gnu_attribute_alignment)    + " ";
+     s += std::string("gnu_attribute_sentinel = ")     + rose::StringUtility::numberToString((int)p_gnu_attribute_sentinel)     + " ";
+     s += std::string("address_space_value = ")        + rose::StringUtility::numberToString((int)p_address_space_value)        + " ";
+     s += std::string("vector_size = ")                + rose::StringUtility::numberToString((int)p_vector_size)                + " ";
 #if 0
      s += std::string("\n     ")                       + get_constVolatileModifier().displayString()                      + " ";
      s += std::string("\n     ")                       + get_upcModifier().displayString()                                + " ";
@@ -7067,7 +7067,7 @@ SgSymbolTable::get_name( const SgNode* node) const
                   }
                  else
                   {
-                 // name = StringUtility::numberToString(labelStatement->get_numeric_label()->get_name());
+                 // name = rose::StringUtility::numberToString(labelStatement->get_numeric_label()->get_name());
                     assert(labelStatement->get_numeric_label() != NULL);
                     name = labelStatement->get_numeric_label()->get_name();
                   }
@@ -10949,7 +10949,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                          if (labelStatement == NULL)
                             {
                               assert(symbol->get_numeric_label_value() >= 0);
-                              mangledName = StringUtility::numberToString(symbol->get_numeric_label_value());
+                              mangledName = rose::StringUtility::numberToString(symbol->get_numeric_label_value());
                             }
                            else
                             {
@@ -13222,8 +13222,8 @@ Sg_File_Info::displayString(const std::string & label ) const
      s += std::string("isCompilerGenerated = ") + std::string(isCompilerGenerated() ? "true " : "false ") + std::string(" ");
      if (!isTransformation() && !isCompilerGenerated())
         {
-          s += std::string("line number = ")   + StringUtility::numberToString(get_line()) + std::string(" ");
-          s += std::string("column number = ") + StringUtility::numberToString(get_col())  + std::string(" ");
+          s += std::string("line number = ")   + rose::StringUtility::numberToString(get_line()) + std::string(" ");
+          s += std::string("column number = ") + rose::StringUtility::numberToString(get_col())  + std::string(" ");
           s += std::string("filename = ")      + std::string(get_filename()) + std::string(" ");
         }
 
@@ -15372,7 +15372,7 @@ SgFile::getSourceDirectory ()
 
      string sourceFile = get_sourceFileNameWithPath();
      assert(sourceFile.empty() == false);
-     return StringUtility::getPathFromFileName(sourceFile);
+     return rose::StringUtility::getPathFromFileName(sourceFile);
    }
 
 
@@ -15385,9 +15385,9 @@ SgFile::generateOutputFileName() const
      std::string sourceFileName = get_sourceFileNameWithPath();
 
   // std::string baseFileName    = rose::utility_stripPathFromFileName(sourceFileName.c_str());
-     std::string baseFileName    = StringUtility::stripPathFromFileName(sourceFileName);
+     std::string baseFileName    = rose::StringUtility::stripPathFromFileName(sourceFileName);
 
-     std::string baseFileNameWithoutSuffix = StringUtility::stripFileSuffixFromFileName(baseFileName);
+     std::string baseFileNameWithoutSuffix = rose::StringUtility::stripFileSuffixFromFileName(baseFileName);
 
   // printf ("sourceFileName = %s oldFileName = %s\n",sourceFileName.c_str(),baseFileName.c_str());
 
@@ -17127,22 +17127,22 @@ SgProject::display ( const std::string & label ) const
      printf ("   p_outputFileName                          = %s \n",p_outputFileName.c_str());
 
      printf ("   p_sourceFileNameList.size()               = %" PRIuPTR " \n", p_sourceFileNameList.size());
-     printf ("   p_sourceFileNameList                      = \n      %s \n",StringUtility::listToString(p_sourceFileNameList).c_str());
+     printf ("   p_sourceFileNameList                      = \n      %s \n",rose::StringUtility::listToString(p_sourceFileNameList).c_str());
 
      printf ("   p_objectFileNameList.size()               = %" PRIuPTR " \n", p_objectFileNameList.size());
-     printf ("   p_objectFileNameList                      = \n      %s \n",StringUtility::listToString(p_objectFileNameList).c_str());
+     printf ("   p_objectFileNameList                      = \n      %s \n",rose::StringUtility::listToString(p_objectFileNameList).c_str());
 
      printf ("   p_libraryFileList.size()                  = %" PRIuPTR " \n", p_libraryFileList.size());
-     printf ("   p_libraryFileList                         = \n      %s \n",StringUtility::listToString(p_libraryFileList).c_str());
+     printf ("   p_libraryFileList                         = \n      %s \n",rose::StringUtility::listToString(p_libraryFileList).c_str());
 
      printf ("   p_librarySpecifierList.size()             = %" PRIuPTR " \n", p_librarySpecifierList.size());
-     printf ("   p_librarySpecifierList                    = \n      %s \n",StringUtility::listToString(p_librarySpecifierList).c_str());
+     printf ("   p_librarySpecifierList                    = \n      %s \n",rose::StringUtility::listToString(p_librarySpecifierList).c_str());
 
      printf ("   p_libraryDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_libraryDirectorySpecifierList.size());
-     printf ("   p_libraryDirectorySpecifierList           = \n      %s \n",StringUtility::listToString(p_libraryDirectorySpecifierList).c_str());
+     printf ("   p_libraryDirectorySpecifierList           = \n      %s \n",rose::StringUtility::listToString(p_libraryDirectorySpecifierList).c_str());
 
      printf ("   p_includeDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_includeDirectorySpecifierList.size());
-     printf ("   p_includeDirectorySpecifierList           = \n      %s \n",StringUtility::listToString(p_includeDirectorySpecifierList).c_str());
+     printf ("   p_includeDirectorySpecifierList           = \n      %s \n",rose::StringUtility::listToString(p_includeDirectorySpecifierList).c_str());
 
      printf ("   p_compileOnly                             = %s \n",(p_compileOnly == true) ? "true" : "false");
      printf ("   p_prelink                                 = %s \n",(p_prelink     == true) ? "true" : "false");
@@ -17161,22 +17161,22 @@ SgProject::display ( const std::string & label ) const
   // printf ("   p_lookForExcludePaths                     = %s \n",(p_lookForExcludePaths == true) ? "true" : "false");
 
      printf ("   p_includePathList.size()                  = %" PRIuPTR " \n", p_includePathList.size());
-     printf ("   p_includePathList                         = \n      %s \n",StringUtility::listToString(p_includePathList).c_str());
+     printf ("   p_includePathList                         = \n      %s \n",rose::StringUtility::listToString(p_includePathList).c_str());
 
      printf ("   p_excludePathList.size()                  = %" PRIuPTR " \n", p_excludePathList.size());
-     printf ("   p_excludePathList                         = \n      %s \n",StringUtility::listToString(p_excludePathList).c_str());
+     printf ("   p_excludePathList                         = \n      %s \n",rose::StringUtility::listToString(p_excludePathList).c_str());
 
      printf ("   p_includeFileList.size()                  = %" PRIuPTR " \n", p_includeFileList.size());
-     printf ("   p_includeFileList                         = \n      %s \n",StringUtility::listToString(p_includeFileList).c_str());
+     printf ("   p_includeFileList                         = \n      %s \n",rose::StringUtility::listToString(p_includeFileList).c_str());
 
      printf ("   p_excludeFileList.size()                  = %" PRIuPTR " \n", p_excludeFileList.size());
-     printf ("   p_excludeFileList                         = \n      %s \n",StringUtility::listToString(p_excludeFileList).c_str());
+     printf ("   p_excludeFileList                         = \n      %s \n",rose::StringUtility::listToString(p_excludeFileList).c_str());
 
      printf ("   p_preincludeFileList.size()               = %" PRIuPTR " \n", p_preincludeFileList.size());
-     printf ("   p_preincludeFileList                      = \n      %s \n",StringUtility::listToString(p_preincludeFileList).c_str());
+     printf ("   p_preincludeFileList                      = \n      %s \n",rose::StringUtility::listToString(p_preincludeFileList).c_str());
 
      printf ("   p_preincludeDirectoryList.size()          = %" PRIuPTR " \n", p_preincludeDirectoryList.size());
-     printf ("   p_preincludeDirectoryList                 = \n      %s \n",StringUtility::listToString(p_preincludeDirectoryList).c_str());
+     printf ("   p_preincludeDirectoryList                 = \n      %s \n",rose::StringUtility::listToString(p_preincludeDirectoryList).c_str());
 
   // DQ (2/4/2009): Moved from SgFile to SgProject.
      printf ("   p_binary_only()                           = %s \n",(p_binary_only == true) ? "true" : "false");
@@ -18554,13 +18554,13 @@ SgUnparse_Info::displayString ( const std::string & label ) const
         }
 
      returnString += std::string("p_structureTagProcessingList.size() = ") + 
-                     StringUtility::numberToString(p_structureTagProcessingList.size()) + std::string("\n");
+                     rose::StringUtility::numberToString(p_structureTagProcessingList.size()) + std::string("\n");
      SgTypePtrList::iterator i;
      for (i = p_structureTagProcessingList.begin(); i != p_structureTagProcessingList.end(); i++)
         {
        // print out the pointer values
           returnString += std::string("--- structure tag pointer = ") + 
-                          StringUtility::numberToString((void*)(*i)) + 
+                          rose::StringUtility::numberToString((void*)(*i)) + 
                           std::string("= class name = ") + std::string((*i)->sage_class_name()) + std::string("\n");
           SgClassType* classType = isSgClassType(*i);
           if (classType != NULL)
@@ -18994,7 +18994,7 @@ SgTemplateArgument::get_mangled_name (void) const
 #if 0
                     printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: templateClassInstantiationDeclaration = %p name = %s \n",templateClassInstantiationDeclaration,templateClassInstantiationDeclaration->get_name().str());
 #endif
-                    mangled_type += StringUtility::numberToString(templateClassInstantiationDeclaration);
+                    mangled_type += rose::StringUtility::numberToString(templateClassInstantiationDeclaration);
 
                  // DQ (12/26/2012): This assert fails for copyAST_tests/copytest2007_40.C, but I think it is unreasonable 
                  // to expect it to always be true.  So I have made it a warning for now.

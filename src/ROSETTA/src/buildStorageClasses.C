@@ -9,6 +9,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace rose;
 
 // JJW helper macros
 #define DO_ON_CHILDREN(NODE, FUNCTION) \

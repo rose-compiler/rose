@@ -1187,7 +1187,7 @@ SgTypeString::get_mangled (void) const
 #if 0
      if (this->p_definedUsingScalarLength == true)
         {
-          mangled_length_name = StringUtility::numberToString(this->p_lengthScalar);
+            mangled_length_name = rose::StringUtility::numberToString(this->p_lengthScalar);
         }
        else
         {
@@ -3240,7 +3240,7 @@ SgTypeOfType::get_mangled (void) const
 
        // base_name += base_expression->get_mangled();
        // base_name += SageInterface::get_name(base_expression);
-          base_name += string("_base_expr_") + StringUtility::numberToString(this);
+          base_name += string("_base_expr_") + rose::StringUtility::numberToString(this);
 
 #if 0
           printf ("DONE: In $CLASSNAME::get_mangled(): base_expression = %p = %s accumulated base_name = %s \n",base_expression,base_expression->class_name().c_str(),base_name.str());
@@ -3793,7 +3793,7 @@ SgTemplateType::get_mangled(void) const
   // We need to asspciate template template arguments with their associated declarations and not just there name.
   // See test2012_217.C (return types of functions should be different, have different mangled names, for each function).
   // mangled_name += StringUtility::numberToString(this->get_declaration());
-     mangled_name += StringUtility::numberToString(this);
+     mangled_name += rose::StringUtility::numberToString(this);
 
 #if 0
     printf ("In SgTemplateType::get_mangled(): this = %p mangled_name = %s \n",this,mangled_name.str());
@@ -6231,7 +6231,7 @@ SgFunctionType::createType(SgPartialFunctionType* ft, SgExpression* optional_for
   // be rebuilt after the AST is build (in a post-processing phase).
      static int functionCounter = 0;
      string baseName = "function_";
-     string mangleName = baseName + StringUtility::numberToString(functionCounter++);
+     string mangleName = baseName + rose::StringUtility::numberToString(functionCounter++);
      SgName nname = mangleName;
 
 #if 0
@@ -6309,7 +6309,7 @@ SgMemberFunctionType::createType(SgPartialFunctionType* ft, SgExpression* option
   // be rebuilt after the AST is build (in a post-processing phase).
      static int functionCounter = 0;
      string baseName = "memberfunction_";
-     string mangleName = baseName + StringUtility::numberToString(functionCounter++);
+     string mangleName = baseName + rose::StringUtility::numberToString(functionCounter++);
      SgName nname = mangleName;
 
 #if 0

@@ -11,6 +11,7 @@
 #define foreach BOOST_FOREACH
 
 using namespace std;
+using namespace rose;
 using namespace ssa_unfiltered_cfg;
 
 SgExpression* SSA_UnfilteredCfg::buildVariableReference(const VarName& var, SgScopeStatement* scope)
