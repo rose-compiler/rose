@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+using namespace rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {

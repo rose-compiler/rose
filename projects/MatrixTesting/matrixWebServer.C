@@ -54,6 +54,8 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
+using namespace rose;
+
 static const char* WILD_CARD_STR = "*";
 enum ChartType { BAR_CHART, LINE_CHART };
 enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, CVT_DURATION_AVE };
