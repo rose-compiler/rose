@@ -17,6 +17,7 @@
 #include <vector>
 
 using namespace std;
+using namespace rose;
 
 #define DEBUG  0
 
