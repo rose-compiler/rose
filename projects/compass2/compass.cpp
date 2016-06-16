@@ -25,6 +25,8 @@
  **--------------------------------------------------------------------------*/
 #include "compass2/compass.h"
 
+using namespace rose;
+
 std::ifstream*
 Compass::openFile (const std::string &a_filename)
 {
