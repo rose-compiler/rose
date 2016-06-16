@@ -1,7 +1,7 @@
 // Test code for string utility library
 #include <rose.h>
 
-#include "string_functions.h"
+#include "StringUtility.h"
 #include "Combinatorics.h"
 #include <EditDistance/Levenshtein.h>
 #include <EditDistance/DamerauLevenshtein.h>
@@ -12,7 +12,7 @@
 #define check2(X, MESG) ASSERT_always_require2((X), (MESG))
 
 using namespace rose;
-using namespace StringUtility;
+using namespace rose::StringUtility;
 
 static std::string
 got(const std::string &s) {
