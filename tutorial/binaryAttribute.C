@@ -4,6 +4,7 @@
 
 //! [setup]
 #include <Sawyer/Attribute.h>
+using namespace rose;
 //! [setup]
 
 
