@@ -12,6 +12,8 @@ using namespace std;
 #include <math.h>
 #include "helper.h"
 
+using namespace rose;
+
 
 #define DELTA 5
 int x = 0;
