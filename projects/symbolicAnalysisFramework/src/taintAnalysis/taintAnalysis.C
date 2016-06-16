@@ -1,5 +1,7 @@
 #include "taintAnalysis.h"
 
+using namespace rose;
+
 int taintanalysis_debug_level = 2;
 
 void TaintLattice::initialize()
