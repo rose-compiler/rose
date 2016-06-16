@@ -6,6 +6,7 @@
 #include "Diagnostics.h"
 #include <cassert>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 const int RSIM_SignalHandling::SIG_WAKEUP = 49; /* arbitrarily SIGRT_17 */

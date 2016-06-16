@@ -14,8 +14,9 @@
 #include <linux/version.h>
 #endif
 
+using namespace rose;
 using namespace rose::Diagnostics;
-using namespace StringUtility;
+using namespace rose::StringUtility;
 
 unsigned
 tracingFacilityBit(TracingFacility tf)

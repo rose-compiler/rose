@@ -41,7 +41,7 @@ public:
         if (enabled && args.reason==FORK) {
             std::cerr <<"ForkPauser: pid=" <<getpid();
             if (pause_on_fork) {
-                std::string filename("/tmp/paused_"); filename += StringUtility::numberToString(getpid());
+                std::string filename("/tmp/paused_"); filename += rose::StringUtility::numberToString(getpid());
                 int status __attribute__((unused)) = mkfifo(filename.c_str(), 0666);
                 assert(status>=0);
                 std::cerr <<"; paused -- say \"echo >" <<filename <<"\" to resume...";
@@ -242,7 +242,7 @@ public:
                             }
                         }
                         if (defn->get_entry_va()!=func_start)
-                            name += " (" + StringUtility::addrToString(defn->get_entry_va()) + ")";
+                            name += " (" + rose::StringUtility::addrToString(defn->get_entry_va()) + ")";
 
                         /* Print the whole line at once */
                         mfprintf(m)("    %3zu 0x%08" PRIx64" 0x%08" PRIx64" %5zu/%-6zu %s %s\n",
@@ -596,8 +596,8 @@ public:
         using namespace rose::Diagnostics;
         if (enabled && args.insn->get_address()==when) {
             Sawyer::Message::Stream m(args.thread->tracing(TRACE_MISC));
-            m <<"MemoryDumper triggered: dumping " <<StringUtility::plural(nbytes, "bytse")
-              <<" at " <<StringUtility::addrToString(va) <<"\n";
+            m <<"MemoryDumper triggered: dumping " <<rose::StringUtility::plural(nbytes, "bytse")
+              <<" at " <<rose::StringUtility::addrToString(va) <<"\n";
             if (do_binary) {
                 /* Raw output to a file */
                 assert(!filename.empty());
@@ -739,8 +739,8 @@ public:
                 close(fd);
             }
             Sawyer::Message::Stream m(args.thread->tracing(TRACE_MISC));
-            m <<"MemoryInitializer triggered: wrote " <<StringUtility::plural(total_written, "bytes")
-              <<" at " <<StringUtility::addrToString(memaddr) <<"\n";
+            m <<"MemoryInitializer triggered: wrote " <<rose::StringUtility::plural(total_written, "bytes")
+              <<" at " <<rose::StringUtility::addrToString(memaddr) <<"\n";
         }
         return enabled;
     }

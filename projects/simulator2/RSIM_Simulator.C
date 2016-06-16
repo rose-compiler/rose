@@ -8,6 +8,7 @@
 
 #include <sys/wait.h>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 SAWYER_THREAD_TRAITS::RecursiveMutex RSIM_Simulator::class_rwlock;
