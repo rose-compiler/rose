@@ -9,6 +9,7 @@
 #include "dslSupport.h"
 
 using namespace std;
+using namespace rose;
 
 using namespace DSL_Support;
 
