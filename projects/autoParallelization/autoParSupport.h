@@ -96,8 +96,6 @@ namespace AutoParallelization
   //! Output the difference between user-defined OpenMP and compiler-generated OpenMP
   void diffUserDefinedAndCompilerGeneratedOpenMP(SgSourceFile* sfile);
 
-  //! Check if a node is from a system header
-  bool insideSystemHeader (SgLocatedNode* node);
 } //end namespace
 
 #endif //auto_par_support_INCLUDED

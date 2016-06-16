@@ -537,6 +537,7 @@ namespace ArithemeticIntensityMeasurement
    for (it=input.begin(); it!=input.end(); it++)
    {
      SgInitializedName* iname = (*it);
+     if (iname ==NULL) continue; // this pointer of a class has NO SgInitializedName associated !!
      if (isSgArrayType (iname->get_type()))
        result.insert(iname);
  //    cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;

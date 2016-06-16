@@ -23,6 +23,9 @@ bool processStatements(SgNode* n)
       return false;
   }
 
+  if (insideSystemHeader(isSgLocatedNode(n)))
+    return false;
+
   // For C/C++ loops 
   if (isSgForStatement(n)!=NULL){
     SgForStatement* loop = isSgForStatement(n);

@@ -799,6 +799,9 @@ void setSourcePositionPointersToNull(SgNode *node);
 //! Set source position info(Sg_File_Info) as transformation generated for all SgNodes in memory pool
   ROSE_DLL_API void setSourcePositionForTransformation_memoryPool();
 
+//! Check if a node is from a system header file
+  ROSE_DLL_API bool insideSystemHeader (SgLocatedNode* node);
+
 //! Set the source position of SgLocatedNode to Sg_File_Info::generateDefaultFileInfo(). These nodes WILL be unparsed. Not for transformation usage.
 // ROSE_DLL_API void setSourcePosition (SgLocatedNode * locatedNode);
 // ************************************************************************
