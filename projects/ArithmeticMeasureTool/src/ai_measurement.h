@@ -54,8 +54,8 @@ namespace ArithemeticIntensityMeasurement
       bool consistentWithReference(FPCounters* refCounters);
 
       // access load/store counters;
-      void setLoadBytes(SgExpression* n) { assert (n!=NULL); load_bytes = n; }
-      void setStoreBytes(SgExpression* n) {assert (n!=NULL); store_bytes = n; }
+      void setLoadBytes(SgExpression* n) { load_bytes = n; }
+      void setStoreBytes(SgExpression* n) { store_bytes = n; }
 
       SgExpression* getLoadBytes() {return load_bytes; }
       SgExpression* getStoreBytes() {return store_bytes; }
@@ -101,6 +101,9 @@ namespace ArithemeticIntensityMeasurement
  // interface functions to manipulate FPCounters
   void CountFPOperations(SgLocatedNode* input);
   void printFPCount (SgLocatedNode* n);
+
+  // count memory load/store operations, store into attribute FPCounters
+  void CountMemOperations(SgLocatedNode* input, bool includeScalars = true, bool includeIntType = true);
 
   FPCounters * getFPCounters (SgLocatedNode* n);
   int getFPCount (SgLocatedNode* n, fp_operation_kind_enum c_type);

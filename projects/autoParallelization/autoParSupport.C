@@ -1689,4 +1689,27 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
 
   } //end diffUserDefinedAndCompilerGeneratedOpenMP()
 
+  bool insideSystemHeader (SgLocatedNode* node)
+  {
+    bool rtval = false; 
+    ROSE_ASSERT (node != NULL);
+    Sg_File_Info* finfo = node->get_file_info();
+    if (finfo!=NULL)
+    {
+      string fname = finfo->get_filenameString();
+      string buildtree_str1 = string("include-staging/gcc_HEADERS"); 
+      string buildtree_str2 = string("include-staging/g++_HEADERS"); 
+      string installtree_str1 = string("include/edg/gcc_HEADERS"); 
+      string installtree_str2 = string("include/edg/g++_HEADERS"); 
+      // if the file name has a sys header path of either source or build tree
+      if ((fname.find (buildtree_str1, 0) != string::npos) ||
+          (fname.find (buildtree_str2, 0) != string::npos) ||
+          (fname.find (installtree_str1, 0) != string::npos) ||
+          (fname.find (installtree_str2, 0) != string::npos)
+          )
+        rtval = true;
+    }
+    return rtval; 
+  }
+
 } // end namespace

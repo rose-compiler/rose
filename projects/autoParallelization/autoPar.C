@@ -48,6 +48,15 @@ main (int argc, char *argv[])
          {
            SgForStatement* cur_loop = isSgForStatement(*iter);
            ROSE_ASSERT(cur_loop);
+           // skip for (;;) , SgForStatement::get_test_expr() has a buggy assertion.
+           SgStatement* test_stmt = cur_loop->get_test();
+           if (test_stmt!=NULL && 
+               isSgNullStatement(test_stmt))
+               continue;
+
+           // skip system header
+           if (insideSystemHeader (cur_loop) )
+             continue; 
            // SageInterface::normalizeForLoopInitDeclaration(cur_loop);
            if (keep_c99_loop_init) 
            {
