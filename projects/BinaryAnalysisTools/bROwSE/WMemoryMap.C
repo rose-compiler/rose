@@ -20,6 +20,8 @@
 #include <Wt/WTable>
 #include <Wt/WText>
 
+using namespace rose;
+
 namespace bROwSE {
 
 void
