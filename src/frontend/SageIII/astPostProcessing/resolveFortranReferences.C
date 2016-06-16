@@ -2,6 +2,9 @@
 #include "sage3basic.h"
 #include "transformationSupport.h"
 #include "resolveFortranReferences.h"
+
+using namespace rose;
+
 void fixupFortranReferences (SgNode* node)
    {
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.

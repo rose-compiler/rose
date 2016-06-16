@@ -4,6 +4,8 @@
 #include <boost/format.hpp>
 #include <sstream>
 
+using namespace rose;
+
 SynthesizedAttribute MatlabUnparserBottomUpTraversal::evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList childAttributes)
   {
     switch(node->variantT())

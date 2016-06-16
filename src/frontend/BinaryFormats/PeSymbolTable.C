@@ -3,6 +3,8 @@
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
+
+using namespace rose;
 using namespace rose::Diagnostics;
 
 /* Constructor reads symbol table entries beginning at entry 'i'. We can't pass an array of COFFSymbolEntry_disk structs

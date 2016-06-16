@@ -11,6 +11,8 @@
 
 using namespace std;
 using namespace boost;
+using namespace rose;
+
 int FORLOOPS;
 bool inconsistent;
 yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx);

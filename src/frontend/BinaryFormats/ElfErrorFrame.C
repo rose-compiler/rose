@@ -7,6 +7,7 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 static const size_t WARNING_LIMIT=10;

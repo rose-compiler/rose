@@ -37,6 +37,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 // global variable for turning on and off internal debugging
 int ROSE_DEBUG = 0;

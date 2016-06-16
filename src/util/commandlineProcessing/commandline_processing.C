@@ -4,7 +4,7 @@
 #include <rose_config.h>
 // #endif
 
-#include "string_functions.h"
+#include "StringUtility.h"
 #include <string.h>
 #include <iostream>
 #include "commandline_processing.h"

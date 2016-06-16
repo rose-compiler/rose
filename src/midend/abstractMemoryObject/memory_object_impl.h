@@ -118,7 +118,7 @@ namespace AbstractMemoryObject
       bool mayEqual (const IndexSet & other) const; 
       bool mustEqual (const IndexSet & other) const; 
       bool operator != (const IndexSet & other) const; 
-      std::string toString() {return "["+StringUtility::numberToString(value) + "]" ;};
+      std::string toString() {return "["+rose::StringUtility::numberToString(value) + "]" ;};
     private:
       size_t value;
       ConstIndexSet(size_t i):IndexSet(Integer_type), value(i) {}

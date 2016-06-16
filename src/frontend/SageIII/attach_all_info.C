@@ -2,6 +2,7 @@
 #include "sage3.h"
 
 using namespace std;
+using namespace rose;
 
 // extern ROSEAttributesList *getPreprocessorDirectives(const char *fileName);
 

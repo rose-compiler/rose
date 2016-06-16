@@ -13,6 +13,7 @@
 // unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md);
 
 using namespace std;
+using namespace rose;
 
 #if 0
 // Example of now to use the SQL DataBase

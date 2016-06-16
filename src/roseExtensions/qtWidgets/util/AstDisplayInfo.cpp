@@ -3,6 +3,9 @@
 
 #include "AstDisplayInfo.h"
 #include <string>
+
+using namespace rose;
+
 namespace AstDisplayInfo
 {
     NodeType getType(SgNode* node)

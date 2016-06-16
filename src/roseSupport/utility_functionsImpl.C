@@ -1,6 +1,6 @@
 #ifdef TEMPLATE_IMPLEMENTATIONS
 
-#include "sage3basic.h"
+#include "rose.h"
 
 #ifndef UTILITY_FUNCTION_TEMPLATES_C
 #define UTILITY_FUNCTION_TEMPLATES_C

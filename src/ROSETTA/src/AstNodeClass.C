@@ -8,6 +8,7 @@
 #include "grammarString.h"
 
 using namespace std;
+using namespace rose;
 
 #define BOOL2STR(b) ((b) ? "true" : "false")
 

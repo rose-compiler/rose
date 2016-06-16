@@ -43,6 +43,7 @@ operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bo
 
 
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;

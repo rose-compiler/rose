@@ -23,7 +23,7 @@
 // **********************************************************
 
 using namespace std;
-
+using namespace rose;
 
 // DQ (4/8/2011): Moved this from the header file...
 CustomAstDOTGenerationEdgeType::CustomAstDOTGenerationEdgeType (SgNode* n1, SgNode* n2, std::string label, std::string options)

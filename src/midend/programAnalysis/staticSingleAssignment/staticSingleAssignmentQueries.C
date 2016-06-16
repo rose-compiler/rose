@@ -13,6 +13,7 @@
 #define foreach BOOST_FOREACH
 
 using namespace std;
+using namespace rose;
 using namespace ssa_private;
 
 SgExpression* StaticSingleAssignment::buildVariableReference(const VarName& var, SgScopeStatement* scope)

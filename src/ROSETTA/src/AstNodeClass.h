@@ -4,7 +4,7 @@
 #include "ROSETTA_macros.h"
 
 #include <string>
-#include "string_functions.h"
+#include "FileUtility.h"
 
 class Grammar;
 class GrammarString;
@@ -270,8 +270,8 @@ class AstNodeClass
   bool generateCopyFunction() const;
 
 // char* buildCopyMemberFunctionSource ();
-  StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ();
-  StringUtility::FileWithLineNumbers buildCopyMemberFunctionHeader ();
+  rose::StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ();
+  rose::StringUtility::FileWithLineNumbers buildCopyMemberFunctionHeader ();
 
 // DQ & JH (1/17/2006): Added support for building code to check pointers to IR nodes
   std::string buildPointerInMemoryPoolCheck ();
