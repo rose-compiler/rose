@@ -22,6 +22,7 @@ class SgProject;
 #include "commandline_processing.h"
 
 using namespace std;
+using namespace rose;
 
 typedef pair<string, unsigned int> TableMapKey;
 
