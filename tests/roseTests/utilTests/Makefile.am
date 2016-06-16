@@ -138,12 +138,12 @@ testFileNameClassifier.passed: tests.conf testFileNameClassifier
 	@$(RTH_RUN) CMD=./testFileNameClassifier $< $@
 
 # Tests the StringUtility functions
-noinst_PROGRAMS += testStrings
-testStrings_SOURCES = testStrings.C
-testStrings_LDADD   = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-TEST_TARGETS += testStrings.passed
-testStrings.passed: tests.conf testStrings
-	@$(RTH_RUN) CMD=./testStrings $< $@
+noinst_PROGRAMS += testStringUtility
+testStringUtility_SOURCES = testStringUtility.C
+testStringUtility_LDADD   = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += testStringUtility.passed
+testStringUtility.passed: tests.conf testStringUtility
+	@$(RTH_RUN) CMD=./testStringUtility $< $@
 
 # Tests that diagnostics are working
 noinst_PROGRAMS += testDiagnostics
