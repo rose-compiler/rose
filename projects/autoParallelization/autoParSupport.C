@@ -8,6 +8,7 @@
 #include <map>
 
 using namespace std;
+using namespace rose;
 using namespace OmpSupport;
 // Everything should go into the name space here!!
 namespace AutoParallelization
