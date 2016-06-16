@@ -6,6 +6,7 @@
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 /*
    The purpose of this code is to generate the file "testlibGrammar.C" which
