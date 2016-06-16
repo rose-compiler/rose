@@ -2,6 +2,7 @@
 #include "memoryAccessModel.h"
 
 using namespace std;
+using namespace rose;
 
 MemoryAccessAttributeAttachmentInheritedAttribute::
 MemoryAccessAttributeAttachmentInheritedAttribute () 
