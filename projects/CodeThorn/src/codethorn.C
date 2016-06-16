@@ -38,6 +38,8 @@
 #include "DotGraphCfgFrontend.h"
 #include "ParProAnalyzer.h"
 #include "PromelaCodeGenerator.h"
+#include "ParProLtlMiner.h"
+#include "ParProExplorer.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -213,6 +215,7 @@ int main( int argc, char * argv[] ) {
     po::options_description rersOptions("RERS options");
     po::options_description patternSearchOptions("RERS options");
     po::options_description equivalenceCheckingOptions("Equivalence checking options");
+    po::options_description parallelProgramOptions("Analysis options for parallel programs");
     po::options_description experimentalOptions("Experimental options");
     po::options_description visualizationOptions("Visualization options");
     
@@ -278,10 +281,23 @@ int main( int argc, char * argv[] ) {
       ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
       ;
 
+    parallelProgramOptions.add_options()
+      ("automata-dot-input",po::value< string >(),"reads in parallel automata with synchronized transitions from a given .dot file.")
+      ("use-components",po::value< string >(),"Selects which parallel components are chosen for analyzing the (approximated) state space ([all] | subset-fixed | subset-random).")
+      ("fixed-components",po::value< string >(),"A list of IDs of parallel components used for analysis (e.g. \"1,2,4,7\"). Use only with \"--use-components=subset-fixed\".")
+      ("num-random-components",po::value< int >(),"Number of different random components used for the analysis. Use only with \"--use-components=subset-random\". Default: min(3, <num-parallel-components>)")
+      ("different-component-subsets",po::value< int >(),"Number of random component subsets. The solver will be run for each of the random subsets. Use only with \"--use-components=subset-random\" (default: no termination).")
+      ("ltl-mode",po::value< string >(),"\"check\" checks the properties passed to option \"--check-ltl=<filename>\". \"mine\" searches for automatically generated properties that adhere to certain criteria. \"none\" means no LTL analysis (default).")
+      ("mine-num-verifiable",po::value< int >(),"Number of verifiable properties satisfying given requirements that should be collected (default: 10).")
+      ("mine-num-falsifiable",po::value< int >(),"Number of falsifiable properties satisfying given requirements that should be collected (default: 10).")
+      ("minings-per-subsets",po::value< int >(),"Number of randomly generated properties that are evaluated based on one subset of parallel components (default: 50).")
+      ("ltl-properties-output",po::value< string >(),"Writes the analyzed LTL properties to file <arg>.")
+      ("promela-output",po::value< string >(),"Writes a promela program reflecting the synchronized automata of option \"--automata-dot-input\" to file <arg>. Includes LTL properties if analyzed.")
+      ;
+
     experimentalOptions.add_options()
       ("annotate-terms",po::value< string >(),"annotate term representation of expressions in unparsed program.")
       ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
-      ("cfg-dot-input",po::value< string >(),"reads a CFG from a given .dot file.")
       ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
       ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
       ("precision-exact-constraints",po::value< string >(),"(experimental) use precise constraint extraction [=yes|no]")
@@ -347,6 +363,7 @@ int main( int argc, char * argv[] ) {
       ("help-svcomp", "show options for SV-Comp specific features")
       ("help-rers", "show options for RERS specific features")
       ("help-ltl", "show options for LTL verification")
+      ("help-par", "show options for analyzing parallel programs")
       ("help-vis", "show options for visualization output files")
       ("internal-checks", "run internal consistency checks (without input program)")
       ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
@@ -370,6 +387,7 @@ int main( int argc, char * argv[] ) {
       .add(hiddenOptions)
       .add(cegpraOptions)
       .add(equivalenceCheckingOptions)
+      .add(parallelProgramOptions)
       .add(experimentalOptions)
       .add(ltlOptions)
       .add(patternSearchOptions)
@@ -390,6 +408,8 @@ int main( int argc, char * argv[] ) {
       cout << experimentalOptions << "\n";return 0;
     } else if(args.count("help-ltl")) {
       cout << ltlOptions << "\n";return 0;
+    } else if(args.count("help-par")) {
+      cout << parallelProgramOptions << "\n";return 0;
     } else if(args.count("help-pat")) {
       cout << patternSearchOptions << "\n";return 0;
     } else if(args.count("help-rers")) {
@@ -466,42 +486,218 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.processOptions();
 
-  //TODO: remove this temporary test
-  if (args.count("cfg-dot-input")) {
+  if (args.count("automata-dot-input")) {
     DotGraphCfgFrontend dotGraphCfgFrontend;
-    string filename = args["cfg-dot-input"].as<string>();
+    string filename = args["automata-dot-input"].as<string>();
     CfgsAndAnnotationMap cfgsAndMap = dotGraphCfgFrontend.parseDotCfgs(filename);
-    cout << "DEBUG: generating PROMELA code..." << endl;
-    PromelaCodeGenerator codeGenerator;
-    string promelaCode = codeGenerator.generateCode(cfgsAndMap);
+    list<Flow> cfgs = cfgsAndMap.first;
+    EdgeAnnotationMap edgeAnnotationMap = cfgsAndMap.second;
+
+    string promelaCode;
+    if (args.count("promela-output")) {
+      cout << "STATUS: generating PROMELA code (parallel processes based on CFG automata)..." << endl;
+      PromelaCodeGenerator codeGenerator;
+      promelaCode = codeGenerator.generateCode(cfgsAndMap);
+      cout << "STATUS: done (LTLs not added yet)." << endl;
+    }
+    
+    if (boolOptions["viz"]) {
+      int counter = 0;
+      for(list<Flow>::iterator i=cfgs.begin(); i!=cfgs.end(); i++) {
+	Flow cfg = *i;
+	//cout << "DEBUG: current cfg's start state id is: " << cfg.getStartLabel().getId() << endl;
+	cfg.setDotOptionDisplayLabel(false);
+	cfg.setDotOptionDisplayStmt(false);
+	cfg.setDotOptionEdgeAnnotationsOnly(true);
+	string outputFilename = "parallelComponentCfg_" + boost::lexical_cast<string>(counter) + ".dot";
+	write_file(outputFilename, cfg.toDot(NULL));
+	cout << "generated " << outputFilename <<"."<<endl;
+	counter++;
+      }
+    }
+
+    vector<Flow> cfgsAsVector;
+    cfgsAsVector.reserve(cfgs.size());
+    copy(begin(cfgs), end(cfgs), back_inserter(cfgsAsVector));
+
+    ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
+    if (args.count("use-components")) {
+      string componentSelection = args["use-components"].as<string>();
+      if (componentSelection == "all") {
+	explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
+      } else if (componentSelection == "subset-fixed") {
+	explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_FIXED);
+      	if (args.count("fixed-components")) {
+          string setstring=args["fixed-components"].as<string>();
+          set<int> intSet=Parse::integerSet(setstring);
+	  explorer.setFixedComponentIds(intSet);
+	} else {
+	  cerr << "ERROR: selected a fixed set of components but no were selected. Please use option \"--fixed-components=<csv-id-list>\".";
+	  ROSE_ASSERT(0);
+	}
+      } else if (componentSelection == "subset-random") {
+	explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_RANDOM);
+	if (args.count("num-random-components")) {
+	  explorer.setNumberRandomComponents(args["use-components"].as<int>());
+	} else {
+	  explorer.setNumberRandomComponents(std::min(3, (int) cfgsAsVector.size()));
+	}
+	if (args.count("different-component-subsets")) {
+       	  explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_FINITE);
+       	  explorer.setNumberDifferentComponentSubsets(args["use-components"].as<int>());
+	} else {
+       	  explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
+	}
+      }
+    } else {
+      explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
+    }
+
+    if ( args.count("check-ltl") ) {
+      explorer.setLtlMode(PAR_PRO_LTL_MODE_CHECK);
+      explorer.setLtlInputFilename(args["check-ltl"].as<string>());
+    } else { 
+      if ( args.count("ltl-mode") ) {
+	string ltlMode= args["ltl-mode"].as<string>();
+	if (ltlMode == "check") {
+	  cerr << "ERROR: ltl mode \"check\" selected but option \"--check-ltl=<filename>\" not used. Please provide LTL property file." << endl;
+	  ROSE_ASSERT(0);
+	} else if (ltlMode == "mine") {
+	  explorer.setLtlMode(PAR_PRO_LTL_MODE_MINE);
+	  if (args.count("mine-num-verifiable")) {
+	    explorer.setNumRequiredVerifiable(args["mine-num-verifiable"].as<int>());
+	  } else {
+	    explorer.setNumRequiredVerifiable(10);
+	  }
+	  if (args.count("mine-num-falsifiable")) {
+	    explorer.setNumRequiredVerifiable(args["mine-num-falsifiable"].as<int>());
+	  } else {
+	    explorer.setNumRequiredVerifiable(10);
+	  }
+	  if (args.count("minings-per-subsets")) {
+	    explorer.setNumMiningsPerSubset(args["minings-per-subsets"].as<int>());
+	  } else {
+	    explorer.setNumMiningsPerSubset(50);
+	  }
+	} else if (ltlMode == "none") {
+	  explorer.setLtlMode(PAR_PRO_LTL_MODE_NONE);
+	}
+      } else {
+	explorer.setLtlMode(PAR_PRO_LTL_MODE_NONE);
+      }
+    }
+
+    if (boolOptions["viz"]) {
+      explorer.setVisualize(true);
+    }
+    
+    explorer.explore();
+    
+    if (args.count("promela-output")) {
+      string promelaLtlFormulae = explorer.getLtlsAsPromelaCode();
+      promelaCode += "\n" + promelaLtlFormulae;
+      string filename = args["promela-output"].as<string>();
+      write_file(filename, promelaCode);
+      cout << "generated " << filename  <<"."<<endl;
+    }
+    
+    if (args.count("ltl-properties-output")) {
+      string ltlFormulae = explorer.getLtlsAsString();
+      string filename = args["ltl-properties-output"].as<string>();
+      write_file(filename, ltlFormulae);
+    }
+
+    cout << "STATUS: done." << endl;
+    exit(0);
+
+  // previous tests, will be removed soon
+#if 0
+    ParProLtlMiner ltlMiner2(cfgsAsVector, edgeAnnotationMap);
+    ltlMiner2.setNumberOfMiningsPerSubsystem(50);
+    list<pair<string, PropertyValue> > minedProperties = ltlMiner2.mineLtlProperties(5,5,3);
+    SpotConnection spotConnectionForSpinOutput;
+    stringstream propertiesSpinSyntax;
+    int propertyId = 0;
+    for (list<pair<string, PropertyValue> >::iterator i=minedProperties.begin(); i!=minedProperties.end(); i++) {
+      propertiesSpinSyntax << "ltl p"<<propertyId<<"\t { "<<spotConnectionForSpinOutput.spinSyntax(i->first)<<" }";
+      if (i->second == PROPERTY_VALUE_YES) {
+	propertiesSpinSyntax << "\t /* true */" << endl;
+      } else if (i->second == PROPERTY_VALUE_NO) {
+	propertiesSpinSyntax << "\t /* false */" << endl;
+      } else {
+	cerr << "ERROR: reporting a mined property for which it is unknown whether or not it is valid." << endl;
+	ROSE_ASSERT(0);
+      }
+      propertyId++;
+    }
+
+    promelaCode += "\n" + propertiesSpinSyntax.str();
     cout << "DEBUG: done." << endl;
     string promelaOutputFilename = "promelaCode.pml";
     write_file(promelaOutputFilename, promelaCode);
     cout << "generated " << promelaOutputFilename <<"."<<endl;
-    list<Flow> cfgs = cfgsAndMap.first;
-    EdgeAnnotationMap edgeAnnotationMap = cfgsAndMap.second;
-    int counter = 0;
-    for(list<Flow>::iterator i=cfgs.begin(); i!=cfgs.end(); i++) {
-      Flow cfg = *i;
-      cout << "DEBUG: current cfg's start state id is: " << cfg.getStartLabel().getId() << endl;
-      cfg.setDotOptionDisplayLabel(false);
-      cfg.setDotOptionDisplayStmt(false);
-      cfg.setDotOptionEdgeAnnotationsOnly(true);
-      string outputFilename = "cfg" + boost::lexical_cast<string>(counter) + ".dot";
-      write_file(outputFilename, cfg.toDot(NULL));
-      cout << "generated " << outputFilename <<"."<<endl;
-      counter++;
+
+    cout << "DEBUG: LTL Miner test complete." << endl;
+    exit(0);
+ 
+    //TODO: replace this by a random selection of (a variable number of) parallel CFGs
+    int numberOfCfgs = 2;
+    vector<Flow> selectedCfgs(numberOfCfgs);
+    boost::unordered_map<int, int> cfgIdToStateIndex;
+    set<string> annotationsSelectedCfgs;
+    srand(time(NULL));
+    for (int i = 0; i < numberOfCfgs; i++) {
+      int cfgId = rand() % cfgsAsVector.size();
+      cout << "DEBUG: picked random number: " << cfgId << endl;
+      //draw a new cfgId in case the randomly selected one has been drawn already
+      while (cfgIdToStateIndex.find(cfgId) != cfgIdToStateIndex.end()) {
+	cfgId = rand() % cfgsAsVector.size();
+        cout << "DEBUG: had to draw again! picked random number: " << cfgId << endl;
+      }
+      selectedCfgs[i] = cfgsAsVector[cfgId];
+      cfgIdToStateIndex[cfgId] = i;
+      set<string> annotations = cfgsAsVector[cfgId].getAllAnnotations();
+      annotationsSelectedCfgs.insert(annotations.begin(), annotations.end());
     }
-    
-    vector<Flow> cfgsAsVector;
-    cfgsAsVector.reserve(cfgs.size());
-    copy(begin(cfgs), end(cfgs), back_inserter(cfgsAsVector));
-    ParProAnalyzer parProAnalyzer(cfgsAsVector);
+    // do not consider the annotation to start one of the parallel components
+    set<string>::iterator iter = annotationsSelectedCfgs.find("");
+    if (iter != annotationsSelectedCfgs.end()) {
+      annotationsSelectedCfgs.erase(iter);
+    }
+    //TODO: remove this debug output
+    cout << "DEBUG: cfgIdToStateIndex: " << endl;
+    for (boost::unordered_map<int, int>::iterator i=cfgIdToStateIndex.begin(); i!=cfgIdToStateIndex.end(); i++){
+      cout << i->first << " : " << i->second << endl;
+    }
+    cout << "DEBUG: annotationsSelectedCfgs: " << endl;
+    for (set<string>::iterator i=annotationsSelectedCfgs.begin(); i!=annotationsSelectedCfgs.end(); i++) {
+      if (i !=annotationsSelectedCfgs.begin()) {
+	cout << ",";
+      }
+      cout << *i;
+    }
+    cout << endl;
+
+    ParProAnalyzer parProAnalyzer(selectedCfgs, cfgIdToStateIndex);
     parProAnalyzer.setAnnotationMap(edgeAnnotationMap);
+    parProAnalyzer.setComponentApproximation(COMPONENTS_OVER_APPROX);
     parProAnalyzer.initializeSolver();
     parProAnalyzer.runSolver();
     ParProTransitionGraph* transitionGraph = parProAnalyzer.getTransitionGraph();
     cout << "DEBUG: transitionGraph->size() = " << transitionGraph->size() << endl;
+
+    vector<string> atomicPropositions;
+    atomicPropositions.reserve(annotationsSelectedCfgs.size());
+    copy(begin(annotationsSelectedCfgs), end(annotationsSelectedCfgs), back_inserter(atomicPropositions));
+
+    list<string> ltlFormulae;
+    ParProLtlMiner ltlMiner;
+    cout << "DEBUG: testing randomly generated LTL formulae." << endl;
+    for (int i = 0; i < 10; i++) {
+      string ltlString =  ltlMiner.randomLtlFormula(atomicPropositions, 2);
+      ltlFormulae.push_back(ltlString);
+    }
+
     Visualizer visualizer;
     string dotStg = visualizer.parProTransitionGraphToDot(transitionGraph);
     string outputFilename = "stgParallelProgram.dot";
@@ -516,7 +712,7 @@ int main( int argc, char * argv[] ) {
       }
       timer.start();
       PropertyValueTable* ltlResults;
-      SpotConnection spotConnection(ltl_filename);
+      SpotConnection spotConnection(ltlFormulae);
       cout << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
       spotConnection.checkLtlPropertiesParPro( *transitionGraph, withCounterexample, spuriousNoAnswers);
@@ -535,6 +731,7 @@ int main( int argc, char * argv[] ) {
     }
     cout << "DEBUG: parseDotCfg test complete." << endl;
     exit(0);
+#endif
   }
 
   Analyzer analyzer;
@@ -836,9 +1033,10 @@ int main( int argc, char * argv[] ) {
       exit(1);
     }
   }
+
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
-    if (string(argv[i]).find("--cfg-dot-input")==0
+    if (string(argv[i]).find("--automata-dot-input")==0
         || string(argv[i]).find("--csv-assert")==0
         || string(argv[i]).find("--csv-stats")==0
         || string(argv[i]).find("--csv-stats-cegpra")==0
@@ -857,10 +1055,16 @@ int main( int argc, char * argv[] ) {
         || string(argv[i]).find("--ltl-in-alphabet")==0
         || string(argv[i]).find("--ltl-out-alphabet")==0
         || string(argv[i]).find("--ltl-driven")==0
+        || string(argv[i]).find("--ltl-mode")==0
+        || string(argv[i]).find("--ltl-properties-output")==0
         || string(argv[i]).find("--reconstruct-assert-paths")==0
         || string(argv[i]).find("--pattern-search-asserts")==0
         || string(argv[i]).find("--pattern-search-exploration")==0
+        || string(argv[i]).find("--promela-output")==0
         || string(argv[i]).find("--specialize-fun-name")==0
+        || string(argv[i]).find("--specialize-fun-param")==0
+        || string(argv[i]).find("--use-components")==0
+        || string(argv[i]).find("--fixed-components")==0
         || string(argv[i]).find("--specialize-fun-param")==0
         ) {
       // do not confuse ROSE frontend

@@ -34,6 +34,7 @@ namespace SPRAY {
     std::string generateCode(Flow& automaton, int id, EdgeAnnotationMap edgeAnnotationMap);
     std::string communicationDetails(std::string edgeAnnotation, int currentAutomaton, EdgeAnnotationMap edgeAnnotationMap);
     std::string generateActionListener();
+    std::string ltlAtomicPropositions(EdgeAnnotationMap& annotationMap);
   };
 
 } // end of namespace SPRAY

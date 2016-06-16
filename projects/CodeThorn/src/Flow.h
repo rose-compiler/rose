@@ -74,6 +74,7 @@ namespace SPRAY {
     LabelSet pred(Label label);
     LabelSet succ(Label label);
     LabelSet reachableNodes(Label start);
+    std::set<std::string> getAllAnnotations();
 
     //LabelSet reachableNodesOnPath(Label start, Label target);
     /* computes all nodes which are reachable in the graph from the start node. A path is terminated by either the target node 

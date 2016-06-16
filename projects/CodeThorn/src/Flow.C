@@ -541,3 +541,10 @@ LabelSet Flow::succ(Label label) {
   return flow.targetLabels();
 }
 
+set<string> Flow::getAllAnnotations() {
+  set<string> result;
+  for(Flow::iterator i=begin();i!=end();++i) {
+    result.insert(i->getAnnotation());
+  }
+  return result;
+}

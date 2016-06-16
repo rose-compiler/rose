@@ -99,6 +99,8 @@ codethorn_SOURCES = \
   Analyzer.h                       \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
+  ParProExplorer.C                 \
+  ParProExplorer.h                 \
   ArrayElementAccessData.h \
   ArrayElementAccessData.C \
   CollectionOperators.h            \
@@ -156,6 +158,8 @@ codethorn_SOURCES = \
   ParProSpotState.h \
   ParProSpotSuccIter.C \
   ParProSpotSuccIter.h \
+  ParProLtlMiner.C                 \
+  ParProLtlMiner.h                 \
   ReadWriteData.h \
   StateRepresentations.C           \
   StateRepresentations.h           \

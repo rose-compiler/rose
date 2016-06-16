@@ -50,6 +50,7 @@ namespace SPRAY {
     ParProTransitions succ(const ParProEState* source);
     EStateTransitionMap* getOutEdgesMap() { return &_outEdges; }
     size_t size();
+    std::set<std::string> getAllAnnotations();
     bool isPrecise() { return _preciseStg; }
     void setIsPrecise(bool p) { _preciseStg = p; }
     bool isComplete() { return _completeStg; }
