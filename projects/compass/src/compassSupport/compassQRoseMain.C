@@ -3,6 +3,7 @@
 #include "qrose.h"
 
 using namespace std;
+using namespace rose;
 
 void computeResultTable();
 

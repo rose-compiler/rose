@@ -16,7 +16,9 @@
 //#include <rose.h>
 #include <sstream>
 #include <fstream>
-#include <iostream> 
+#include <iostream>
+
+using namespace rose;
 
 
 // Default setting for verbosity level (-1 is silent, and values greater then zero indicate different levels of verbosity)
