@@ -13,28 +13,3 @@
                don't think Rose is in serious need of refactoring to pull together 
                common parts.
   */
-
- /*! \class StringUtility string_functions.h
-     \ingroup utilityClasses
-     \brief This class consolidates utility code used within ROSETTA, SAGE, 
-            AST Rewrite Mechanism, and AST Processing parts of the ROSE project.
-     \authors Quinlan, Schordan, Yi
-     \version 0.5
-     \date Dec 16th 2002
-     \bug Not finished yet.
-     \warning Don't use this until it is ready.
-     \todo Finish documentation!
-     \note Large parts of documentation contained in <b>ROSE/util/utilDocumentation.docs</b>.
-
-     This class simplifies the use of strings in the rest of the ROSE project.
-
-     \internal This class has several member functions that could be simplified now that
-     we use the C++ std::string class uniformally (except for places where we still use
-     char*).  We used to use the Sun C++ 4.2 compiler (the only compiler that SAGE II
-     used to work with) and there we didn't have access to C++ strings.  Later we moved to
-     the use of a string class similar to the C++ string class and in 2002 we moved to the
-     use of the C++ string class.  We don't pretend that ROSE works with any C++ compiler
-     that does not have the C++ string class available (fortunately all of them do now).
-
-  */
-

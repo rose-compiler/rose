@@ -1,69 +1,36 @@
-// This avoids requiring the user to use rose_config.h and follows 
-// the automake manual request that we use <> instead of ""
-#include <rose_config.h>
-
 #define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
-// DQ (3/22/2009): Added MSVS support for ROSE.
-#include "rose_msvc.h"
+// ROSE includes
+#include <StringUtility.h>
+#include <FileUtility.h>
+
+#include <rose_config.h>
+#include <integerOps.h>
+#include "rose_msvc.h"                                  // DQ (3/22/2009): Added MSVS support for ROSE.
+
+// Other includes
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <cstring>
+#include <inttypes.h>
+#include <iostream>
+#include <sstream>
 
 // DQ (1/21/2010): Use this to turn off the use of #line in ROSETTA generated code.
 #define SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
 
+namespace rose {
+namespace StringUtility {
 
-#if !ROSE_MICROSOFT_OS
-// AS added to support the function getAbsolutePathFromRelativePath
-#include <sys/param.h>
-#else
-#include <windows.h>
-#include "Shlwapi.h"
-#ifndef snprintf
-//#define snprintf _snprintf
-#endif
 
-#endif
-#include <algorithm>
-// AS added to support the function findfile
-#include <stdlib.h>
-#include <stdio.h>              /* standard input/output routines.    */
 
-#if !ROSE_MICROSOFT_OS
-#include <dirent.h>             /* readdir(), etc.                    */
-#include <sys/stat.h>           /* stat(), etc.                       */
-#include <libgen.h>             /* basename(), dirame()               */
-#include <unistd.h>             /* getcwd(), etc.                     */
-#endif
 
-#include <string.h>             /* strstr(), etc.                     */
-
-#include <iostream>              /* std::cerr */
-#include <sstream>              /* std::ostringstream */
-#include <fstream>
-
-#include "string_functions.h"
-
-#include <boost/foreach.hpp>
-// DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
-// #ifndef USE_ROSE
-#include <boost/lexical_cast.hpp>
-// #endif
-
-// DQ (9/29/2006): This is required for 64-bit g++ 3.4.4 compiler.
-#include <errno.h>
-
-// Needed for base64 functions
-#include "integerOps.h"
-
-// tps (11/10/2009): This include is needed in windows to find the realpath
-#if ROSE_MICROSOFT_OS
-#include <unistd.h>
-// DQ (11/27/2009): this is required for use of GetFullPathName() (below).
-#include <windows.h>
-#endif
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Character-escaping functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string 
-StringUtility::htmlEscape(const std::string& s) {
+htmlEscape(const std::string& s) {
     std::string s2;
     for (size_t i = 0; i < s.size(); ++i) {
         switch (s[i]) {
@@ -76,267 +43,8 @@ StringUtility::htmlEscape(const std::string& s) {
     return s2;
 }
 
-// [Robb Matzke 2016-05-06] deprecated
-std::list<std::string> 
-StringUtility::findfile(std::string patternString, std::string pathString)
-   {
-     std::list<std::string> patternMatches;
-
-#if ROSE_MICROSOFT_OS
-         printf ("Error: MSVS implementation of StringUtility::findfile required (not implemented) \n");
-#define __builtin_constant_p(exp) (0)
-         // tps: todo Windows: have not hit this assert yet.
-         ROSE_ASSERT(false);
-#else
-     DIR* dir;                        /* pointer to the scanned directory. */
-     struct dirent* entry;      /* pointer to one directory entry.   */
-  // struct stat dir_stat; /* used by stat().                   */
-    
-  /* open the directory for reading */
-     dir = opendir(pathString.c_str());
-     if (!dir) {
-          std::cerr << "Cannot read directory:" << pathString << std::endl;
-          perror("");
-          return patternMatches;
-     }
-
-  /* scan the directory, traversing each sub-directory, and */
-  /* matching the pattern for each file name.               */
-     while ((entry = readdir(dir))) {
-       /* check if the pattern matchs. */
-       /* MS: 11/22/2015: note that d_name is an array of char
-        * and testing it as pointer always gives true;
-        * removed this kind of testing code 
-        */
-          std::string entryName = entry->d_name; 
-          if (entryName.find(patternString) != std::string::npos) {
-               patternMatches.push_back(pathString+"/"+entryName);
-
-          }
-
-     }
-#endif
-     return patternMatches;
-   }
-
-
-std::vector<std::string> 
-StringUtility::readWordsInFile( std::string filename)
-   {
-     std::vector<std::string> variantsToUse;
-     std::fstream file_op(filename.c_str());
-     if (file_op.fail()) {
-          std::cout << "error: could not find file \"" << filename 
-                   << "\" which is meant to include the styles to enforce with " 
-                   << "the name checker." << std::endl;
-                                  exit(1);    // abort program
-     }
-
-     std::string current_word;
-
-     while(file_op >> current_word){
-       // First word denotes what the regular expression should operate
-       // upon. Second word denotes the regular expression
-       variantsToUse.push_back(current_word);
-     }
-
-     return variantsToUse;
-   }
-
-//
-//Rama: 12/06/06
-//We need a function getAbsolutePathFromRelativePath that takes any filename and returns the absolute file name  (with path)
-//AS suggested we use realpath that comes with stdlib. However, for a translator like ours,
-//we need to have two versions of the file: silent and non-silent ones, depending on whether 
-//we need to check and print an error or not.
-//That is done by the boolean parameter printErrorIfAny that is set to true by the caller
-//The dafault version -- enforced by setting printErrorIfAny to false -- is the silent one.
-//
-//Also, look at the code added in function 
-//void SgFile::setupSourceFilename in file .../src/ROSETTA/Grammar/Support.code
-//
-
 std::string
-StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny) //! get the absolute path from the relative path
-   {
-     std::string returnString;
-     char resolved_path[MAXPATHLEN];
-     resolved_path[0] = '\0';
-
-#if ROSE_MICROSOFT_OS
-         // tps (08/19/2010): added this function
-         PathCanonicalize(resolved_path,relativePath.c_str());
-         std::string resultingPath=std::string(resolved_path);
-#else
-  // DQ (9/3/2006): Note that "realpath()" 
-  // can return an error if it processes a file or directory that does not exist.  This is 
-  // a problem for include paths that are specified on the commandline and which don't exist; 
-  // most compilers silently ignore these and we have to at least ignore them.
-         //      string resultingPath="";
-         // tps (01/08/2010) : This implementation was incorrect as it mixed char* and string. Fixed it.
-         char* rp = realpath( relativePath.c_str(), resolved_path);
-         std::string resultingPath = "";
-         if (rp!=NULL)
-           resultingPath = std::string(rp);
-#endif
-
-         //printf("resultingPath == %s    printErrorIfAny == %d \n",resultingPath.c_str(),printErrorIfAny);
-  // If there was an error then resultingPath is NULL, else it points to resolved_path.
-     if ( resultingPath.empty() == true ) //== NULL )
-        {
-       // DQ (9/4/2006): SgProject is not available within this code since it is used to compile 
-       // ROSETTA before the IR nodes are defined!  So we should just comment it out.
-       // DQ (9/4/2006): Only output such warnings if verbose is set to some value greater than zero.
-            if(printErrorIfAny == true)
-            {
-          //if (SgProject::get_verbose() > 0)
-             //{
-            // Output the kind of error that occured ...
-            //Ask DAN and add checks for 64 bit machines here
-            //extern int errno; 
-            // Output the kind of error that occured ...  
-               printf ("relativePath = %s errno = %d resolved_path is undefined \n",relativePath.c_str(),errno);
-               printf ("     error = %s \n",strerror(errno));
-
-            // In case of error return the original relativePath
-               printf ("Error: StringUtility::getAbsolutePathFromRelativePath incured an error in use of realpath() and is returning the input relativePath. \n");
-             //}
-            }
-        // printf("returnString0 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
-                returnString = relativePath;
-        }
-       else
-        {
-       // "realpath()" worked so return the corrected absolute path.
-        // printf("returnString1 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
-          returnString = resolved_path;
-        }
-
-     //printf("returnString3 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
-
-         ROSE_ASSERT(returnString.empty() == false);
-
-     return returnString;
-   }
-
-std::string
-StringUtility::listToString(const std::list<std::string> &container, bool separateStrings) {
-    std::string separator = separateStrings ? " \n" : " ";
-    std::string retval = join_range(separator, container.begin(), container.end());
-    if (!container.empty())
-        retval += separator;
-    return retval;
-}
-
-std::string
-StringUtility::listToString(const std::vector<std::string> &container, bool separateStrings) {
-    std::string separator = separateStrings ? " \n" : " ";
-    std::string retval = join_range(separator, container.begin(), container.end());
-    if (!container.empty())
-        retval += separator;
-    return retval;
-}
-
-std::string
-StringUtility::listToString(const std::list<int> &container, bool separateStrings) {
-    std::string separator = separateStrings ? " \n" : " ";
-    std::string retval = join_range(separator, container.begin(), container.end());
-    if (!container.empty())
-        retval += separator;
-    return retval;
-}
-
-std::list<std::string>
-StringUtility::stringToList(const std::string &input) {
-    std::vector<std::string> substrings = split('\n', input);
-    std::list<std::string> retval(substrings.begin(), substrings.end());
-    retval.remove("");
-    return retval;
-}
-
-std::list<std::string>
-StringUtility:: tokenize(const std::string &s, char delim) {
-    std::list<std::string> l;
-    std::string token;
-    std::istringstream iss(s);
-    while (getline(iss, token, delim))
-        l.push_back(token);
-    return l;
-}
-
-std::string
-StringUtility::numberToString(long long x) {
-    return boost::lexical_cast<std::string>(x);
-}
-
-std::string
-StringUtility::numberToString(unsigned long long x) {
-    return boost::lexical_cast<std::string>(x);
-}
-
-std::string
-StringUtility::numberToString(long x) {
-    return boost::lexical_cast<std::string>(x);
-}
-
-std::string
-StringUtility::numberToString(unsigned long x) {
-    return boost::lexical_cast<std::string>(x);
-}
-
-std::string
-StringUtility::numberToString(int x) {
-    return boost::lexical_cast<std::string>(x);
-}
-
-std::string
-StringUtility::numberToString(unsigned int x) {
-    return boost::lexical_cast<std::string>(x);
-}
-
-std::string
-StringUtility::numberToString(const void* x) {
-    char numberString[128];
-    sprintf(numberString, "%p", x);
-    return std::string(numberString);
-}
-
-std::string
-StringUtility::numberToString(double x) {
-    char numberString[128];
-    sprintf(numberString, "%2.2f", x);
-    return std::string(numberString);
-}
-
-#ifndef _MSC_VER
-// #if !defined(__STRICT_ANSI__) && defined(_GLIBCXX_USE_INT128)
-// #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
-   #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
-// DQ (2/22/2014): Required code for GNU versions greater than 4.6.
-   // #if (UINTMAX_MAX == ULONG_MAX)
-      #if (__WORDSIZE == 64)
-        // PHLin (10/12/2015): check if 64-bit support is enabled
-std::string
-StringUtility::numberToString ( __int128 x )
-   {
-  // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
-     long long temp_x = (long long) x;
-     return boost::lexical_cast<std::string>(temp_x);
-   }
-
-std::string
-StringUtility::numberToString ( unsigned __int128 x )
-   {
-  // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
-     unsigned long long temp_x = (unsigned long long) x;
-     return boost::lexical_cast<std::string>(temp_x);
-   }
-      #endif
-   #endif
-#endif
-
-std::string
-StringUtility::cEscape(const std::string &s) {
+cEscape(const std::string &s) {
     std::string result;
     BOOST_FOREACH (char ch, s) {
         switch (ch) {
@@ -381,24 +89,247 @@ StringUtility::cEscape(const std::string &s) {
     return result;
 }
 
-unsigned
-StringUtility::hexadecimalToInt(char ch) {
-    if (isxdigit(ch)) {
-        if (isdigit(ch))
-            return ch-'0';
-        if (isupper(ch))
-            return ch-'A'+10;
-        return ch-'a'+10;
-    }
-    return 0;
+// [Robb P Matzke 2016-06-15]: deprecated
+std::string
+escapeNewLineCharaters ( const std::string & X )
+   {
+     std::string returnString;
+     int stringLength = X.length();
+
+     for (int i=0; i < stringLength; i++)
+        {
+          if ( X[i] == '\n' )
+             {
+               returnString += "\\l";
+             }
+          else
+             {
+               if ( X[i] == '\"' )
+                  {
+                    returnString += "\\\"";
+                  }
+               else
+                  {
+                    returnString += X[i];
+                  }
+             }
+        }
+
+     return returnString;
+   }
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Splitting and joining strings
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<std::string>
+split(char separator, const std::string &str, size_t maxparts, bool trim_white_space) {
+    return split(std::string(1, separator), str, maxparts, trim_white_space);
 }
 
-// DQ (2/23/2014): Fixed conflict in commit for 128 bit integer support.
-// string StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)
+std::vector<std::string>
+split(const std::string &separator, const std::string &str, size_t maxparts, bool trim_white_space) {
+    std::vector<std::string> retval;
+    if (0==maxparts || str.empty())
+        return retval;
+    if (separator.empty()) {
+        for (size_t i=0; i<str.size() && i<maxparts-1; ++i)
+            retval.push_back(str.substr(i, 1));
+        retval.push_back(str.substr(retval.size()));
+    } else {
+        size_t at = 0;
+        while (at<=str.size() && retval.size()+1<maxparts) {
+            if (at==str.size()) {
+                retval.push_back("");                   // string ends with separator
+                break;
+            }
+            size_t sep_at = str.find(separator, at);
+            if (sep_at==std::string::npos) {
+                retval.push_back(str.substr(at));
+                at = str.size() + 1;                    // "+1" means string doesn't end with separator
+                break;
+            } else {
+                retval.push_back(str.substr(at, sep_at-at));
+                at = sep_at + separator.size();
+            }
+        }
+        if (at<str.size() && retval.size()<maxparts)
+            retval.push_back(str.substr(at));
+    }
+
+    if (trim_white_space) {
+        for (size_t i=0; i<retval.size(); ++i)
+            retval[i] = trim(retval[i]);
+    }
+    return retval;
+}
+
+std::list<std::string>
+tokenize(const std::string &s, char delim) {
+    std::list<std::string> l;
+    std::string token;
+    std::istringstream iss(s);
+    while (getline(iss, token, delim))
+        l.push_back(token);
+    return l;
+}
+
 std::string
-StringUtility::toHex2(uint64_t value, size_t nbits, bool show_unsigned_decimal, bool show_signed_decimal,
-                      uint64_t decimal_threshold)
-{
+join(const std::string &separator, char *strings[], size_t nstrings) {
+    return join_range(separator, strings, strings+nstrings);
+}
+
+std::string
+join(const std::string &separator, const char *strings[], size_t nstrings) {
+    return join_range(separator, strings, strings+nstrings);
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Container versus scalar functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+listToString(const std::list<std::string> &container, bool separateStrings) {
+    std::string separator = separateStrings ? " \n" : " ";
+    std::string retval = join_range(separator, container.begin(), container.end());
+    if (!container.empty())
+        retval += separator;
+    return retval;
+}
+
+std::string
+listToString(const std::vector<std::string> &container, bool separateStrings) {
+    std::string separator = separateStrings ? " \n" : " ";
+    std::string retval = join_range(separator, container.begin(), container.end());
+    if (!container.empty())
+        retval += separator;
+    return retval;
+}
+
+std::string
+listToString(const std::list<int> &container, bool separateStrings) {
+    std::string separator = separateStrings ? " \n" : " ";
+    std::string retval = join_range(separator, container.begin(), container.end());
+    if (!container.empty())
+        retval += separator;
+    return retval;
+}
+
+std::list<std::string>
+stringToList(const std::string &input) {
+    std::vector<std::string> substrings = split('\n', input);
+    std::list<std::string> retval(substrings.begin(), substrings.end());
+    retval.remove("");
+    return retval;
+}
+
+// This function was written by Bobby Philip in support of the newer approach toward handling a broader number of back-end C++
+// compilers.
+void
+splitStringIntoStrings(const std::string& inputString, char separator, std::vector<std::string>& stringList) {
+    stringList.clear();
+
+    std::string::size_type pos = 0, lastPos = 0;
+    while (true) {
+        pos = inputString.find(separator, pos);
+        if (pos == std::string::npos) {
+            stringList.push_back(inputString.substr(lastPos));
+            return;
+        } else {
+            if (pos != lastPos) {
+                stringList.push_back(inputString.substr(lastPos, pos - lastPos));
+            }
+            lastPos = pos = pos + 1;
+        }
+    }
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Functions for converting numbers to strings
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+numberToString(long long x) {
+    return boost::lexical_cast<std::string>(x);
+}
+
+std::string
+numberToString(unsigned long long x) {
+    return boost::lexical_cast<std::string>(x);
+}
+
+std::string
+numberToString(long x) {
+    return boost::lexical_cast<std::string>(x);
+}
+
+std::string
+numberToString(unsigned long x) {
+    return boost::lexical_cast<std::string>(x);
+}
+
+std::string
+numberToString(int x) {
+    return boost::lexical_cast<std::string>(x);
+}
+
+std::string
+numberToString(unsigned int x) {
+    return boost::lexical_cast<std::string>(x);
+}
+
+std::string
+numberToString(const void* x) {
+    char numberString[128];
+    sprintf(numberString, "%p", x);
+    return std::string(numberString);
+}
+
+std::string
+numberToString(double x) {
+    char numberString[128];
+    sprintf(numberString, "%2.2f", x);
+    return std::string(numberString);
+}
+
+#if !defined(_MSC_VER) &&                                                                                                      \
+    defined(BACKEND_CXX_IS_GNU_COMPILER) &&                                                                                    \
+    ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6) ||                      \
+     BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4) &&                                                                         \
+    __WORDSIZE == 64
+std::string
+numberToString( __int128 x) {
+    // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
+    long long temp_x = (long long) x;
+    return boost::lexical_cast<std::string>(temp_x);
+}
+
+std::string
+numberToString(unsigned __int128 x) {
+    // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
+    unsigned long long temp_x = (unsigned long long) x;
+    return boost::lexical_cast<std::string>(temp_x);
+}
+#endif
+
+std::string
+intToHex(uint64_t i) {
+    std::ostringstream os;
+    os << "0x" << std::hex << i;
+    return os.str();
+}
+
+std::string
+toHex2(uint64_t value, size_t nbits, bool show_unsigned_decimal, bool show_signed_decimal, uint64_t decimal_threshold) {
     assert(nbits>0 && nbits<=8*sizeof value);
     uint64_t sign_bit = ((uint64_t)1 << (nbits-1));
 
@@ -433,70 +364,200 @@ StringUtility::toHex2(uint64_t value, size_t nbits, bool show_unsigned_decimal, 
 }
 
 std::string
-StringUtility::signedToHex2(uint64_t value, size_t nbits)
-{
+signedToHex2(uint64_t value, size_t nbits) {
     return toHex2(value, nbits, false, true);
 }
 
 std::string
-StringUtility::unsignedToHex2(uint64_t value, size_t nbits)
-{
+unsignedToHex2(uint64_t value, size_t nbits) {
     return toHex2(value, nbits, true, false);
 }
 
 std::string
-StringUtility::addrToString(uint64_t value, size_t nbits)
-{
+addrToString(uint64_t value, size_t nbits) {
     if (0 == nbits)
         nbits = value > 0xffffffff ? 64 : 32;
     return toHex2(value, nbits, false, false);
 }
 
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Number parsing
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned
+hexadecimalToInt(char ch) {
+    if (isxdigit(ch)) {
+        if (isdigit(ch))
+            return ch-'0';
+        if (isupper(ch))
+            return ch-'A'+10;
+        return ch-'a'+10;
+    }
+    return 0;
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      String conversion functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::string
-StringUtility::removeRedundantSubstrings(const std::string &s) {
+convertToLowerCase(const std::string &inputString) {
+    std::string returnString = inputString;
+    for (size_t i=0; i < returnString.length(); i++)
+        returnString[i] = tolower(returnString[i]);
+     return returnString;
+}
+
+std::string
+fixLineTermination(const std::string &input) {
+    std::string output;
+    size_t nchars = input.size();
+    for (size_t i=0; i<nchars; ++i) {
+        if ('\r'==input[i] && i+1<nchars && '\n'==input[i+1]) {
+            // CR+LF: Microsoft Windows, DEC TOPS-10, RT-11 and most other early non-Unix and non-IBM OSes, CP/M, MP/M, DOS
+            // (MS-DOS, PC-DOS, etc.), Atari TOS, OS/2, Symbian OS, Palm OS.
+            output += '\n';
+            ++i;
+        } else if ('\n'==input[i] && i+1<nchars && '\r'==input[i+1]) {
+            // LF+CR: Acorn BBC and RISC OS spooled text output.
+            output += '\n';
+            ++i;
+        } else if ('\r'==input[i]) {
+            // CR (only): Commodore 8-bit machines, Acorn BBC, TRS-80, Apple II family, Mac OS up to version 9 and OS-9
+            output += '\n';
+        } else {
+            output += input[i];
+        }
+    }
+    return output;
+}
+
+std::string
+prefixLines(const std::string &lines, const std::string &prefix, bool prefixAtFront, bool prefixAtBack) {
+    if (lines.empty())
+        return "";
+
+    std::string retval = prefixAtFront ? prefix : "";
+    size_t at=0;
+    while (at<lines.size()) {
+        size_t lfpos = lines.find_first_of("\r\n", at);
+        lfpos = lines.find_first_not_of("\r\n", lfpos);
+        retval += lines.substr(at, lfpos-at);
+        if (lfpos<lines.size())
+            retval += prefix;
+        at = lfpos;
+    }
+
+    if (prefixAtBack && isLineTerminated(lines))
+        retval += prefix;
+    return retval;
+}
+
+std::string
+makeOneLine(const std::string &s, std::string replacement) {
+    std::string result, spaces;
+    bool eat_spaces = false;
+    for (size_t i=0; i<s.size(); ++i) {
+        if ('\n'==s[i] || '\r'==s[i]) {
+            spaces = result.empty() ? "" : replacement;
+            eat_spaces = true;
+        } else if (isspace(s[i])) {
+            if (!eat_spaces)
+                spaces += s[i];
+        } else {
+            result += spaces + s[i];
+            spaces = "";
+            eat_spaces = false;
+        }
+    }
+    if (!eat_spaces)
+        result += spaces;
+    return result;
+}
+
+std::string
+trim(const std::string &str, const std::string &strip, bool at_beginning, bool at_end) {
+    if (str.empty())
+        return str;
+    size_t first=0, last=str.size()-1;
+    if (at_beginning)
+        first = str.find_first_not_of(strip);
+    if (at_end && first!=std::string::npos)
+        last = str.find_last_not_of(strip);
+    if (first==std::string::npos || last==std::string::npos)
+        return "";
+    assert(last>=first);
+    return str.substr(first, last+1-first);
+}
+
+std::string
+untab(const std::string &str, size_t tabstops, size_t colnum) {
+    tabstops = std::max(tabstops, (size_t)1);
+    std::string retval;
+    for (size_t i=0; i<str.size(); ++i) {
+        switch (str[i]) {
+            case '\t': {
+                size_t nspc = tabstops - colnum % tabstops;
+                retval += std::string(nspc, ' ');
+                colnum += nspc;
+                break;
+            }
+            case '\n':
+            case '\r':
+                retval += str[i];
+                colnum = 0;
+                break;
+            default:
+                retval += str[i];
+                ++colnum;
+                break;
+        }
+    }
+    return retval;
+}
+
+std::string
+removeRedundantSubstrings(const std::string &s) {
     // Convert the string into a list of strings and separate out the redundant entries
-    std::list<std::string> XStringList = StringUtility::stringToList(s);
+    std::list<std::string> XStringList = stringToList(s);
     XStringList.sort();
     XStringList.unique();
-    return StringUtility::listToString(XStringList);
+    return listToString(XStringList);
 }
 
 // [Robb Matzke 2016-01-06]: deprecated (misspelled)
 std::string
-StringUtility::removeRedundentSubstrings(std::string X) {
+removeRedundentSubstrings(std::string X) {
     return removeRedundantSubstrings(X);
 }
 
-//Rama: 12/06/06:
-//Donot know where this function is used, but we should be using the stdlib function isdigit
-bool
-isNumber ( char c )
-   {
-     return (isdigit(c));
-   }
-
-bool
-isxNumber ( char c )
-   {
-     return (isxdigit(c));
-   }
-
-bool
-isMarker ( char c )
-   {
-     return (c == '$');
-   }
-
 // [Robb Matzke 2016-01-06]: deprecated (misspelled)
 std::string
-StringUtility::removePseudoRedundentSubstrings ( std::string X ) {
+removePseudoRedundentSubstrings ( std::string X ) {
     return removePseudoRedundantSubstrings(X);
 }
 
+// Used by removePseudoRedundantSubstrings
+static bool
+isNumber(char c) {
+    return isdigit(c);
+}
+
+// Used by removePseudoRedundantSubstrings
+static bool
+isMarker(char c) {
+    return c == '$';
+}
+
 std::string
-StringUtility::removePseudoRedundantSubstrings(const std::string &s) {
+removePseudoRedundantSubstrings(const std::string &s) {
     // Convert the string into a list of strings and separate out the redundant entries
-     std::list<std::string> XStringList = StringUtility::stringToList(s);
+     std::list<std::string> XStringList = stringToList(s);
      XStringList.sort();
      XStringList.unique();
 
@@ -603,809 +664,24 @@ StringUtility::removePseudoRedundantSubstrings(const std::string &s) {
 
      XStringList.unique();
 
-     return StringUtility::listToString(XStringList);
-   }
-
-
-// Macro used only in the copyEdit function
-#define DEBUG_COPY_EDIT false
-
-// BP : 10/25/2001, a non recursive version that
-// allocs memory only once
-std::string
-StringUtility::copyEdit(const std::string& inputString, const std::string& oldToken, const std::string& newToken) {
-    std::string returnString;
-    std::string::size_type oldTokenSize = oldToken.size();
-
-    std::string::size_type position = 0;
-    std::string::size_type lastPosition = 0;
-    while (true) {
-        position = inputString.find(oldToken, position);
-        if (position == std::string::npos) {
-            returnString += inputString.substr(lastPosition);
-            break;
-        } else {
-            returnString += inputString.substr(lastPosition, position - lastPosition);
-            returnString += newToken;
-            position = lastPosition = position + oldTokenSize;
-        }
-    }
-
-    return returnString;
-}
-
-void
-StringUtility::writeFile (
-                const std::string& outputString,
-                const std::string& fileNameString,
-                const std::string& directoryName)
-   {
-     std::string outputFileName = directoryName + fileNameString;
-
-     std::ofstream outputFile(outputFileName.c_str());
-     ROSE_ASSERT (outputFile.good() == true);
-
-  // Select an output stream for the program tree display (cout or <filename>.C.roseShow)
-  // Macro OUTPUT_SHOWFILE_TO_FILE is defined in the transformation_1.h header file
-  // ostream & outputStream = (OUTPUT_TO_FILE ? ((ostream&) outputFile) : ((ostream&) cout));
-     ROSE_ASSERT (outputFile.good() == true);
-
-     outputFile << outputString;
-     ROSE_ASSERT (outputFile.good() == true);
-
-     outputFile.close();
-   }
-
-
-StringUtility::FileWithLineNumbers
-StringUtility::copyEdit (
-                const StringUtility::FileWithLineNumbers& inputString, 
-                const std::string& oldToken, 
-                const std::string& newToken ) {
-  StringUtility::FileWithLineNumbers result = inputString;
-  for (unsigned int i = 0; i < result.size(); ++i) {
-    result[i].str = copyEdit(result[i].str, oldToken, newToken);
-  }
-  return result;
-}
-
-StringUtility::FileWithLineNumbers
-StringUtility::copyEdit (
-                const StringUtility::FileWithLineNumbers& inputString, 
-                const std::string& oldToken, 
-                const StringUtility::FileWithLineNumbers& newToken ) {
-  StringUtility::FileWithLineNumbers result = inputString;
-  for (unsigned int i = 0; i < result.size(); ++i) {
-    std::string str = result[i].str;
-    std::string::size_type pos = str.find(oldToken);
-    if (pos != std::string::npos) {
-      // Split the line into the before-substitution and after-substitution regions
-      result[i].str = str.substr(0, pos);
-      result.insert(result.begin() + i + 1,
-                    StringUtility::StringWithLineNumber(str.substr(pos + oldToken.size()),
-                                                        result[i].filename + " after subst for " + oldToken,
-                                                        result[i].line));
-      // Do the insertion
-      result.insert(result.begin() + i + 1, newToken.begin(), newToken.end());
-      i += newToken.size(); // Rescan the after-substitution part of the old line, but not any of the new text
-    }
-  }
-  return result;
-}
-
-        std::string 
-StringUtility::readFile ( const std::string& fileName )
-   {
-  // Reads entire text file and places contents into a single string
-
-  // BP : 10/23/2001, rather than allocate fixed large blocks of memory (350K * sizeof(char) !!)
-  // allocate what is required.
-  // the code below is a slightly modified version of what I found at:
-  // http://www.cplusplus.com/ref/iostream/istream/read.html
-
-     char* buffer = NULL;
-
-     std::ifstream inputFile;
-     inputFile.open( fileName.c_str(), std::ios::binary );
-     if (inputFile.good() != true)
-        {
-          printf ("ERROR: File not found -- %s \n",fileName.c_str());
-          //ROSE_ABORT();
-            std::string s( "ERROR: File not found -- " );
-            s += fileName;
-            throw s;
-        }
-
-     ROSE_ASSERT (inputFile.good() == true);
-
-  // get length of file:
-     inputFile.seekg (0, std::ios::end);
-     std::streamoff length = inputFile.tellg();
-     inputFile.seekg (0, std::ios::beg);       
-
-  // allocate memory:
-     buffer = new char [length+1];
-     ROSE_ASSERT(buffer != NULL);
-
-  // read data as a block:
-     inputFile.read(buffer,(int)length);
-     buffer[length] = '\0';
-     inputFile.close();
-
-  // DQ: (10/21/02) Sunjeev reported the following assertion as failing on
-  // his machine at UCSD (works for us, but i have made it more general)
-  // ROSE_ASSERT(strlen(buffer) <= length);
-  // MS: (12/11/02) added the strict test again
-     ROSE_ASSERT(strlen(buffer) == (unsigned) length);
-
-     std::string returnString = buffer;
-
-     return returnString;
-   }
-
-StringUtility::FileWithLineNumbers
-StringUtility::readFileWithPos ( const std::string& fileName )
-   {
-  // Reads entire text file and places contents into a single string
-
-  // BP : 10/23/2001, rather than allocate fixed large blocks of memory (350K * sizeof(char) !!)
-  // allocate what is required.
-  // the code below is a slightly modified version of what I found at:
-  // http://www.cplusplus.com/ref/iostream/istream/read.html
-
-     unsigned int line = 1;
-     char* buffer = NULL;
-
-     std::string fullFileName = StringUtility::getAbsolutePathFromRelativePath(fileName);
-
-  // printf("Opening file : %s\n",fullFileName.c_str());
-
-     std::ifstream inputFile;
-
-
-     inputFile.open( fileName.c_str(), std::ios::binary );
-
-
-     if (inputFile.good() != true)
-        {
-             printf ("ERROR: File not found -- %s \n",fileName.c_str());
-            // ROSE_ABORT();
-          std::string s( "ERROR: File not found -- " );
-          s += fileName;
-          throw s;
-        }
-
-     ROSE_ASSERT (inputFile.good() == true);
-
-  // get length of file:
-     inputFile.seekg (0, std::ios::end);
-     std::streamoff length = inputFile.tellg();
-     inputFile.seekg (0, std::ios::beg);       
-
-  // allocate memory:
-     buffer = new char [length+1];
-     ROSE_ASSERT(buffer != NULL);
-
-  // read data as a block:
-     inputFile.read(buffer,(int)length);
-     buffer[length] = '\0';
-     inputFile.close();
-
-  // DQ: (10/21/02) Sunjeev reported the following assertion as failing on
-  // his machine at UCSD (works for us, but i have made it more general)
-  // ROSE_ASSERT(strlen(buffer) <= length);
-  // MS: (12/11/02) added the strict test again
-     ROSE_ASSERT(strlen(buffer) == (unsigned) length);
-
-     std::string returnString = buffer;
-     delete[] buffer;
-
-     StringUtility::FileWithLineNumbers result;
-     for (std::string::size_type pos = 0; pos != std::string::npos; )
-        {
-          std::string::size_type lastPos = pos;
-          pos = returnString.find('\n', lastPos);
-          result.push_back(StringUtility::StringWithLineNumber(returnString.substr(lastPos, pos - lastPos), fullFileName, line));
-       // cerr << "Added line '" << returnString.substr(lastPos, pos - lastPos) << "' at line " << line << endl;
-          ++line;
-          ++pos; // Skip newline
-          if (pos == returnString.size()) break;
-        }
-
-     result.push_back(StringUtility::StringWithLineNumber("", "", 1));
-     return result;
-   }
-
-std::string
-StringUtility::StringWithLineNumber::toString() const
-   {
-     std::ostringstream os;
-
-  // DQ (1/21/2010): Added support for skipping these when in makes it easer to debug ROSETTA generated files.
-#ifdef SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
-  // os << str << std::endl;
-     os << "/* #line " << line << " \"" << (filename.empty() ? "" : getAbsolutePathFromRelativePath(filename)) << "\" */\n" << str << std::endl;
-#else
-     os << "#line " << line << " \"" << (filename.empty() ? "" : getAbsolutePathFromRelativePath(filename)) << "\"\n" << str << std::endl;
-#endif
-
-     return os.str();
-   }
-
-std::string
-StringUtility::toString(const StringUtility::FileWithLineNumbers& strings,
-                        const std::string& filename,
-                        int physicalLine /* Line number in output file */) {
-  std::string result;
-  unsigned int lastLineNumber = 1;
-  std::string lastFile = "";
-  bool inPhysicalFile = true; // Not in a specifically named file
-  bool needLineDirective = false;
-  for (unsigned int i = 0; i < strings.size(); ++i) {
-    // Determine if a #line directive is needed, if the last iteration did not
-    // force one to be added
-    bool newInPhysicalFile = (strings[i].filename == "");
-    if (inPhysicalFile != newInPhysicalFile)
-      needLineDirective = true;
-    if (!inPhysicalFile &&
-        (strings[i].filename != lastFile ||
-         strings[i].line != lastLineNumber))
-      needLineDirective = true;
-
-    if (strings[i].str == "" && i + 1 == strings.size()) { // Special case
-      needLineDirective = false;
-    }
-
-    // Print out the #line directive (if needed) and the actual line
-    if (needLineDirective) {
-#ifdef SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
-           /* Nothing to do here! */
-      if (strings[i].filename == "") { // Reset to actual input file
-        result += "/* #line " + numberToString(physicalLine + 1 /* Increment because number is the line number of the NEXT line after the #line directive */) + " \"" + filename + "\" */\n";
-      } else {
-        result += "/* #line " + numberToString(strings[i].line) + " \"" + strings[i].filename + "\" */\n";
-      }
-#else
-      if (strings[i].filename == "") { // Reset to actual input file
-        result += "#line " + numberToString(physicalLine + 1 /* Increment because number is the line number of the NEXT line after the #line directive */) + " \"" + filename + "\"\n";
-      } else {
-        result += "#line " + numberToString(strings[i].line) + " \"" + strings[i].filename + "\"\n";
-      }
-#endif
-      // These are only updated when a #line directive is actually printed,
-      // largely because of the blank line exception above (so if a blank line
-      // starts a new file, the #line directive needs to be emitted on the
-      // first non-blank line)
-      lastLineNumber = strings[i].line + 1;
-      lastFile = strings[i].filename;
-    } else {
-      ++lastLineNumber;
-    }
-    result += strings[i].str + "\n";
-
-    bool printedLineDirective = needLineDirective;
-
-    // Determine if a #line directive is needed for the next iteration
-    needLineDirective = false;
-    inPhysicalFile = newInPhysicalFile;
-    if (strings[i].str.find('\n') != std::string::npos && !inPhysicalFile) {
-      needLineDirective = true; // Ensure that the next line has a #line directive
-    }
-
-    // Update the physical line counter based on the number of lines output
-    if (printedLineDirective) ++physicalLine; // For #line directive
-    for (size_t pos = strings[i].str.find('\n');
-         pos != std::string::npos; pos = strings[i].str.find('\n', pos + 1)) {
-      ++physicalLine; // Increment for \n in string
-    }
-    ++physicalLine; // Increment for \n added at end of line
-  }
-  return result;
+     return listToString(XStringList);
 }
 
 
-std::string
-StringUtility::indentMultilineString ( const std::string& inputString, int statementColumnNumber )
-   {
-  // Indent the transformation to match the statement that it is transforming
-
-     std::string returnString;
-
-  // Put in linefeeds to avoid endless recursion in the copyEdit (I think)
-     ROSE_ASSERT (statementColumnNumber > 0);
-     std::string cr_and_added_space = std::string(statementColumnNumber, ' ');
-     cr_and_added_space[0] = '\t';
-
-  // returnString = copyEdit (inputString,"\n",cr_and_added_space);
-     returnString = copyEdit (inputString,"\n",cr_and_added_space);
-
-  // Now exchange the line feeds for carriage returns
-  // returnString = copyEdit (returnString,"\t","\n");
-     returnString = copyEdit (returnString,"\t","\n");
-
-  // Now indent the first line (since there was no CR) there
-     returnString = cr_and_added_space.substr(1) + returnString;
-
-  // printf ("In StringUtility::indentMultilineString(): returnString = %s \n",returnString);
-     return returnString;
-   }
 
 
-
-void
-StringUtility::splitStringIntoStrings(
-                const std::string& inputString, 
-                char separator, 
-                std::vector<std::string>& stringList )
-   {
-  // This function was written by Bobby Philip in support of the newer approach toward
-  // handling a broader number of back-end C++ compilers.
-
-     stringList.clear();
-
-     std::string::size_type pos = 0, lastPos = 0;
-     while (true) {
-       pos = inputString.find(separator, pos);
-       if (pos == std::string::npos) {
-         stringList.push_back(inputString.substr(lastPos));
-         return;
-       } else {
-         if (pos != lastPos) {
-           stringList.push_back(inputString.substr(lastPos, pos - lastPos));
-             }
-         lastPos = pos = pos + 1;
-        }
-        }
-   }
-
-#if 0
-// DQ (2/18/2006): Added simple checksum (good enough for short strings)
-        unsigned short int 
-StringUtility::chksum(char *buffer, int len)
-   {
-  // This is a simple checksum function (obtained off the web):
-  // This is a very inefficient routine that does the checksumming. The
-  // linux checksum is very much more powerful and quicker. However this
-  // gives you the general idea. Note that if you are going to checksum
-  // a checksummed packet that includes the checksum, you have to compliment
-  // the output. Also note that this works ONLY for an even number of bytes.
-
-     ROSE_ASSERT(len % 2 == 0);
-
-     unsigned short int *word;
-     unsigned long accum;
-     unsigned long chksm;
-     int i;
-
-     accum = 0;
-     word = (unsigned short *) buffer;
-     len >>= 1; /* Words only */
-     for (i=0; i< len; i++)
-          accum += (unsigned long) *word++;
-
-     chksm = (accum & 0xffff); /* Mask all but low word */
-     chksm += (accum >> 16); /* Sum all the carries */
-
-     if (chksm > 0xffff) /* If this also carried */
-          chksm++; /* Sum this too */
-     return (unsigned short) (chksm & 0xffff);
-   }
-#endif
-
-
-// DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-// JJW (10/15/2007): Does this compute a ones-complement checksum like used for TCP?
-        unsigned long
-StringUtility::generate_checksum( std::string s )
-   {
-     std::string uniqueName = s;
-
-  // The checksum function requires a even length string (so we have to fix it up)
-     if (uniqueName.size() % 2 != 0)
-        {
-       // printf ("Adding another character to make string an even valued length \n");
-       // Use a character that does not appear in mangled 
-       // names so that no other mangled name could include it.
-          uniqueName += "#";
-        }
-     ROSE_ASSERT(uniqueName.size() % 2 == 0);
-
-  // Call a simple checksum function
-  // unsigned short int checksum = StringUtility::chksum(buffer,uniqueName.size());
-
-     unsigned long accum = 0;
-     unsigned long chksm;
-
-     accum = 0;
-     unsigned int len  = uniqueName.size() / 2; /* Words only */
-     for (unsigned int i=0; i< len; i++)
-          accum += (unsigned long) (((unsigned short*)uniqueName.data())[i]);
-
-     chksm = (accum & 0xffff); /* Mask all but low word */
-     chksm += (accum >> 16); /* Sum all the carries */
-
-     if (chksm > 0xffff) /* If this also carried */
-          chksm++; /* Sum this too */
-     unsigned short checksum = (unsigned short) (chksm & 0xffff);
-
-  // printf ("Checksum = %d \n",checksum);
-     return (unsigned long) checksum;
-   }
-
-//Rama: 12/06/06
-//Replaced the functionality by a call to basename
-std::string
-StringUtility::stripPathFromFileName ( const std::string & fileNameWithPath )
-   {
-  // printf ("StringUtility::stripPathFromFileName(fileNameWithPath = %s) \n",fileNameWithPath.c_str());
-
-#if 1
-  // DQ (9/6/2008): It seems that the problem might have been the stripFileSuffixFromFileName(), so this is put back!
-
-  // DQ (9/6/2008): This version does not work on paths that have "." in them (basename() function does not work well).
-  //    Example of input that fails: ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
-  // returns: svn-LINUX-64bit-4.2
-
-     std::string returnString;
-     char c_version[PATH_MAX]; 
-     ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
-     strcpy(c_version, fileNameWithPath.c_str());
-
-#if ROSE_MICROSOFT_OS
-//       printf ("Error: basename() not available in MSVS (work around not implemented) \n");
-//       ROSE_ASSERT(false);
-   char drive[_MAX_DRIVE];
-   char dir[_MAX_DIR];
-   char fname[_MAX_FNAME];
-   char ext[_MAX_EXT];
-
-   _splitpath(c_version,drive,dir,fname,ext);
-         // tps (08/17/2010) - Made this work under Windows. 
-         std::string fnamestr(fname);
-         std::string extstr(ext);
-         returnString = fnamestr+extstr;
-#else
-     returnString = basename(c_version);
-#endif
-
-         return returnString;
-#endif
-
-#if 0
-  // DQ (9/6/2008): Use this version of the code which handles more complex patha names.
-  // Make it safe to input a filename without a path name (return the filename)
-     string::size_type positionOfLastSlash  = fileNameWithPath.rfind('/');
-     string::size_type positionOfFirstSlash = fileNameWithPath.find('/');
-
-     printf ("positionOfLastSlash = %" PRIuPTR " \n",positionOfLastSlash);
-     printf ("positionOfFirstSlash = %" PRIuPTR " \n",positionOfFirstSlash);
-
-     string returnString;
-     if (positionOfLastSlash != string::npos)
-        {
-          returnString = fileNameWithPath.substr(positionOfLastSlash+1);
-        }
-       else
-        {
-          returnString = fileNameWithPath;
-        }
-
-     printf ("StringUtility::stripPathFromFileName() (after substr) returnString = %s \n",returnString.c_str());
-
-     if (positionOfFirstSlash < positionOfLastSlash)
-        {
-          printf (" Look for leading \'/\' from the front \n");
-          while (returnString[0] == '/')
-             {
-               returnString.erase(0,1);
-             }
-
-          printf ("StringUtility::stripPathFromFileName() (after erase) returnString = %s \n",returnString.c_str());
-        }
-
-     printf ("StringUtility::stripPathFromFileName() returnString = %s \n",returnString.c_str());
-
-     return returnString;
-#endif
-
-#if 0
-  // This is a older version using C style strings
-     const size_t len = fileNameWithPath.size();
-     const char *startOfString = &(fileNameWithPath[0]);
-     const char *search = &(fileNameWithPath[len]);
-     while ((search >= startOfString) && ('/' != *search))
-        {
-          --search;
-        }
-     ++search;
-
-     char *returnString = new char[1 + len - (search - startOfString)];
-     ROSE_ASSERT(returnString != NULL);
-     return strcpy(returnString, search);
-#endif
-   }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Functions for encoding/decoding/hashing
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string
-StringUtility::stripFileSuffixFromFileName ( const std::string & fileNameWithSuffix )
-   {
-  // Make it safe to input a filename without a suffix (return the filename)
-
-     std::string returnString;
-
-#if 0
-  // This function is not sophisticated enough to handle binaries with paths such as:
-  //    ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
-
-     string::size_type positionOfDot = fileNameWithSuffix.rfind('.');
-     if (positionOfDot != string::npos)
-          returnString = fileNameWithSuffix.substr(0,positionOfDot);
-     else
-          returnString = fileNameWithSuffix;
-#else
-  // Handle the case of files where the filename does not have a suffix
-     size_t lastSlashPos = fileNameWithSuffix.rfind('/');
-     size_t lastDotPos   = fileNameWithSuffix.rfind('.');
-
-  // printf ("lastSlashPos = %" PRIuPTR " \n",lastSlashPos);
-  // printf ("lastDotPos   = %" PRIuPTR " \n",lastDotPos);
-
-     if (lastSlashPos != std::string::npos && lastDotPos < lastSlashPos)
-          returnString = fileNameWithSuffix;
-       else
-          returnString = fileNameWithSuffix.substr(0, lastDotPos);
-#endif
-
-  // printf ("fileNameWithSuffix = %s returnString = %s \n",fileNameWithSuffix.c_str(),returnString.c_str());
-
-     return returnString;
-
-// Extra code not used but which was a part of StringUtility::stripFileSuffixFromFileName()
-#if 0
-     const char *startOfString = &(fileNameWithPath[0]);
-     const char *lastDot = strrchr(startOfString, '.');
-     const size_t lengthOfFileWithoutSuffix = ((lastDot == NULL) ? fileNameWithPath.size() : (lastDot - fileNameWithSuffix));
-     string returnString = fileNameWithSuffix.substr(
-                     char *returnString = new char[lengthOfFileWithoutSuffix + 1];
-                     ROSE_ASSERT(NULL != returnString);
-                     returnString[lengthOfFileWithoutSuffix] = '\0';
-                     return (char *)memcpy(returnString, fileNameWithSuffix, 
-                             lengthOfFileWithoutSuffix);
-#endif
-   }
-
-//
-//Rama: I am not sure if this mechanism can deal with files ending with .
-//Like "test."
-//I am not clear about the purpose of the function too. So, not modifying it.
-std::string
-StringUtility::fileNameSuffix ( const std::string & fileNameWithSuffix )
-   {
-  // Make it safe to input a filename without a suffix (return the filename)
-     std::string::size_type positionOfDot = fileNameWithSuffix.rfind('.');
-     std::string returnString = fileNameWithSuffix;
-
-  // allow input to not have an extension
-     if (positionOfDot != std::string::npos)
-        {
-       // Advance past the "."
-          positionOfDot++;
-
-          returnString = fileNameWithSuffix.substr(positionOfDot);
-        }
-
-     return returnString;
-   }
-
-
-// DQ (3/15/2005): New, simpler and better implementation suggested function from Tom, thanks Tom!
-std::string
-StringUtility::getPathFromFileName ( const std::string & fileNameWithPath )
-   {
-     char c_version[PATH_MAX]; 
-     ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
-     strcpy(c_version, fileNameWithPath.c_str());
-
-#if ROSE_MICROSOFT_OS
-   char drive[_MAX_DRIVE];
-   char dir[_MAX_DIR];
-   char fname[_MAX_FNAME];
-   char ext[_MAX_EXT];
-
-         _splitpath(c_version,drive,dir,fname,ext);
-//       printf ("Error: dirname() not supported in MSVS 9work around not implemented) \n");
-//       printf ("dirname = %s \n",dir);
-         // tps (08/17/2010) - Made this work under Windows.
-         std::string drivestr(drive);
-         std::string dirstr(dir);
-         std::string returnString = drivestr+dirstr;
-//       ROSE_ASSERT(false);
-#else
-     std::string returnString = dirname(c_version);
-#endif
-     //dirname returns a "." if fileNameWithPath does not contain "/"'s
-     //I am not sure why this function was written and so, preserve the functionality using empty return string in such cases.
-
-     if(returnString == ".")
-          returnString = "";
-     return returnString;
-
-#if 0
-     string::size_type positionOfSlash = fileNameWithPath.rfind('/');
-
-     string returnString;
-     if (positionOfSlash != string::npos)
-          returnString = fileNameWithPath.substr(0,positionOfSlash+1);
-       else
-          returnString = "";
-
-     return returnString;
-#endif
-
-#if 0
-     const char *lastSlash = strrchr(fileNameWithPath, '/');
-     const ptrdiff_t len = (lastSlash == NULL) ? 0 : (1 + lastSlash - fileNameWithPath);
-     char *result = new char[len + 1];
-     ROSE_ASSERT(NULL != result);
-     result[len] = '\0';
-     return (char *)memcpy(result, fileNameWithPath, len);
-#endif
-   }
-
-
-// [Robb P Matzke 2016-06-15]: deprecated
-std::string
-StringUtility::escapeNewLineCharaters ( const std::string & X )
-   {
-     std::string returnString;
-     int stringLength = X.length();
-
-     for (int i=0; i < stringLength; i++)
-        {
-          if ( X[i] == '\n' )
-             {
-               returnString += "\\l";
-             }
-          else
-             {
-               if ( X[i] == '\"' )
-                  {
-                    returnString += "\\\"";
-                  }
-               else
-                  {
-                    returnString += X[i];
-                  }
-             }
-        }
-
-     return returnString;
-   }
-
-std::string StringUtility::intToHex(uint64_t i) {
-  std::ostringstream os;
-  os << "0x" << std::hex << i;
-  return os.str();
-}
-
-
-std::string
-StringUtility::convertToLowerCase( const std::string & inputString )
-   {
-  // DQ (11/12/2008): Used to convert module names to lower case.
-
-  // printf ("Before conversion to lower case: inputString = %s \n",inputString.c_str());
-     std::string returnString = inputString;
-     for (size_t i=0; i < returnString.length(); i++)
-        {
-          returnString[i] = tolower(returnString[i]);
-        }
-  // printf ("After conversion to lower case: returnString = %s \n",returnString.c_str());
-
-     return returnString;
-   }
-
-std::string
-StringUtility::prefixLines(const std::string &lines, const std::string &prefix, bool prefixAtFront, bool prefixAtBack)
-{
-    if (lines.empty())
-        return "";
-
-    std::string retval = prefixAtFront ? prefix : "";
-    size_t at=0;
-    while (at<lines.size()) {
-        size_t lfpos = lines.find_first_of("\r\n", at);
-        lfpos = lines.find_first_not_of("\r\n", lfpos);
-        retval += lines.substr(at, lfpos-at);
-        if (lfpos<lines.size())
-            retval += prefix;
-        at = lfpos;
-    }
-
-    if (prefixAtBack && isLineTerminated(lines))
-        retval += prefix;
-    return retval;
-}
-
-bool
-StringUtility::isLineTerminated(const std::string &s)
-{
-    return !s.empty() && ('\n'==s[s.size()-1] || '\r'==s[s.size()-1]);
-}
-
-std::string
-StringUtility::fixLineTermination(const std::string &input) 
-{
-    std::string output;
-    size_t nchars = input.size();
-    for (size_t i=0; i<nchars; ++i) {
-        if ('\r'==input[i] && i+1<nchars && '\n'==input[i+1]) {
-            // CR+LF: Microsoft Windows, DEC TOPS-10, RT-11 and most other early non-Unix and non-IBM OSes, CP/M, MP/M, DOS
-            // (MS-DOS, PC-DOS, etc.), Atari TOS, OS/2, Symbian OS, Palm OS.
-            output += '\n';
-            ++i;
-        } else if ('\n'==input[i] && i+1<nchars && '\r'==input[i+1]) {
-            // LF+CR: Acorn BBC and RISC OS spooled text output.
-            output += '\n';
-            ++i;
-        } else if ('\r'==input[i]) {
-            // CR (only): Commodore 8-bit machines, Acorn BBC, TRS-80, Apple II family, Mac OS up to version 9 and OS-9
-            output += '\n';
-        } else {
-            output += input[i];
-        }
-    }
-    return output;
-}
-
-std::string
-StringUtility::makeOneLine(const std::string &s, std::string replacement)
-{
-    std::string result, spaces;
-    bool eat_spaces = false;
-    for (size_t i=0; i<s.size(); ++i) {
-        if ('\n'==s[i] || '\r'==s[i]) {
-            spaces = result.empty() ? "" : replacement;
-            eat_spaces = true;
-        } else if (isspace(s[i])) {
-            if (!eat_spaces)
-                spaces += s[i];
-        } else {
-            result += spaces + s[i];
-            spaces = "";
-            eat_spaces = false;
-        }
-    }
-    if (!eat_spaces)
-        result += spaces;
-    return result;
-}
-
-void
-StringUtility::add_to_reason_string(std::string &result, bool isset, bool do_pad,
-                                    const std::string &abbr, const std::string &full)
-{
-    if (isset) {
-        if (do_pad) {
-            result += abbr;
-        } else {
-            if (result.size()>0) result += ", ";
-            result += full;
-        }
-    } else if (do_pad) {
-        for (size_t i=0; i<abbr.size(); ++i)
-            result += ".";
-    }
-}
-
-std::string
-StringUtility::encode_base64(const std::vector<uint8_t> &data, bool do_pad)
+encode_base64(const std::vector<uint8_t> &data, bool do_pad)
 {
     return encode_base64(&data[0], data.size(), do_pad);
 }
 
 std::string
-StringUtility::encode_base64(const uint8_t *data, size_t nbytes, bool do_pad)
-{
+encode_base64(const uint8_t *data, size_t nbytes, bool do_pad) {
     static const char *digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     std::string s;
     unsigned val = 0; // only low-order 24 bits used
@@ -1447,8 +723,7 @@ StringUtility::encode_base64(const uint8_t *data, size_t nbytes, bool do_pad)
 }
 
 std::vector<uint8_t>
-StringUtility::decode_base64(const std::string &s)
-{
+decode_base64(const std::string &s) {
     std::vector<uint8_t> retval;
     retval.reserve((s.size()*3)/4+3);
     unsigned val=0, ndigits=0;
@@ -1487,108 +762,105 @@ StringUtility::decode_base64(const std::string &s)
     return retval;
 }
 
-std::string
-StringUtility::join(const std::string &separator, char *strings[], size_t nstrings)
-{
-    return join_range(separator, strings, strings+nstrings);
-}
+// DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+// JJW (10/15/2007): Does this compute a ones-complement checksum like used for TCP?
+unsigned long
+generate_checksum(std::string s) {
+     std::string uniqueName = s;
 
-std::string
-StringUtility::join(const std::string &separator, const char *strings[], size_t nstrings)
-{
-    return join_range(separator, strings, strings+nstrings);
-}
-
-std::vector<std::string>
-StringUtility::split(char separator, const std::string &str, size_t maxparts, bool trim_white_space)
-{
-    return split(std::string(1, separator), str, maxparts, trim_white_space);
-}
-
-std::vector<std::string>
-StringUtility::split(const std::string &separator, const std::string &str, size_t maxparts, bool trim_white_space)
-{
-    std::vector<std::string> retval;
-    if (0==maxparts || str.empty())
-        return retval;
-    if (separator.empty()) {
-        for (size_t i=0; i<str.size() && i<maxparts-1; ++i)
-            retval.push_back(str.substr(i, 1));
-        retval.push_back(str.substr(retval.size()));
-    } else {
-        size_t at = 0;
-        while (at<=str.size() && retval.size()+1<maxparts) {
-            if (at==str.size()) {
-                retval.push_back(""); // string ends with separator
-                break;
-            }
-            size_t sep_at = str.find(separator, at);
-            if (sep_at==std::string::npos) {
-                retval.push_back(str.substr(at));
-                at = str.size() + 1; // "+1" means string doesn't end with separator
-                break;
-            } else {
-                retval.push_back(str.substr(at, sep_at-at));
-                at = sep_at + separator.size();
-            }
+  // The checksum function requires a even length string (so we have to fix it up)
+     if (uniqueName.size() % 2 != 0)
+        {
+       // printf ("Adding another character to make string an even valued length \n");
+       // Use a character that does not appear in mangled 
+       // names so that no other mangled name could include it.
+          uniqueName += "#";
         }
-        if (at<str.size() && retval.size()<maxparts)
-            retval.push_back(str.substr(at));
-    }
+     ROSE_ASSERT(uniqueName.size() % 2 == 0);
 
-    if (trim_white_space) {
-        for (size_t i=0; i<retval.size(); ++i)
-            retval[i] = trim(retval[i]);
-    }
-    return retval;
+  // Call a simple checksum function
+  // unsigned short int checksum = StringUtility::chksum(buffer,uniqueName.size());
+
+     unsigned long accum = 0;
+     unsigned long chksm;
+
+     accum = 0;
+     unsigned int len  = uniqueName.size() / 2; /* Words only */
+     for (unsigned int i=0; i< len; i++)
+          accum += (unsigned long) (((unsigned short*)uniqueName.data())[i]);
+
+     chksm = (accum & 0xffff); /* Mask all but low word */
+     chksm += (accum >> 16); /* Sum all the carries */
+
+     if (chksm > 0xffff) /* If this also carried */
+          chksm++; /* Sum this too */
+     unsigned short checksum = (unsigned short) (chksm & 0xffff);
+
+  // printf ("Checksum = %d \n",checksum);
+     return (unsigned long) checksum;
 }
 
-std::string
-StringUtility::trim(const std::string &str, const std::string &strip, bool at_beginning, bool at_end)
-{
-    if (str.empty())
-        return str;
-    size_t first=0, last=str.size()-1;
-    if (at_beginning)
-        first = str.find_first_not_of(strip);
-    if (at_end && first!=std::string::npos)
-        last = str.find_last_not_of(strip);
-    if (first==std::string::npos || last==std::string::npos)
-        return "";
-    assert(last>=first);
-    return str.substr(first, last+1-first);
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Predicates
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool
+isLineTerminated(const std::string &s) {
+    return !s.empty() && ('\n'==s[s.size()-1] || '\r'==s[s.size()-1]);
 }
 
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Functions related to diagnostic messages
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::string
-StringUtility::untab(const std::string &str, size_t tabstops, size_t colnum)
-{
-    tabstops = std::max(tabstops, (size_t)1);
-    std::string retval;
-    for (size_t i=0; i<str.size(); ++i) {
-        switch (str[i]) {
-            case '\t': {
-                size_t nspc = tabstops - colnum % tabstops;
-                retval += std::string(nspc, ' ');
-                colnum += nspc;
-                break;
-            }
-            case '\n':
-            case '\r':
-                retval += str[i];
-                colnum = 0;
-                break;
-            default:
-                retval += str[i];
-                ++colnum;
-                break;
+indentMultilineString(const std::string& inputString, int statementColumnNumber) {
+  // Indent the transformation to match the statement that it is transforming
+
+     std::string returnString;
+
+  // Put in linefeeds to avoid endless recursion in the copyEdit (I think)
+     ROSE_ASSERT (statementColumnNumber > 0);
+     std::string cr_and_added_space = std::string(statementColumnNumber, ' ');
+     cr_and_added_space[0] = '\t';
+
+  // returnString = copyEdit (inputString,"\n",cr_and_added_space);
+     returnString = copyEdit (inputString,"\n",cr_and_added_space);
+
+  // Now exchange the line feeds for carriage returns
+  // returnString = copyEdit (returnString,"\t","\n");
+     returnString = copyEdit (returnString,"\t","\n");
+
+  // Now indent the first line (since there was no CR) there
+     returnString = cr_and_added_space.substr(1) + returnString;
+
+  // printf ("In StringUtility::indentMultilineString(): returnString = %s \n",returnString);
+     return returnString;
+}
+
+void
+add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::string &abbr, const std::string &full) {
+    if (isset) {
+        if (do_pad) {
+            result += abbr;
+        } else {
+            if (result.size()>0) result += ", ";
+            result += full;
         }
+    } else if (do_pad) {
+        for (size_t i=0; i<abbr.size(); ++i)
+            result += ".";
     }
-    return retval;
 }
 
 std::string
-StringUtility::appendAsmComment(const std::string &s, const std::string &comment)
-{
+appendAsmComment(const std::string &s, const std::string &comment) {
     if (comment.empty())
         return s;
     if (s.empty())
@@ -1597,3 +869,153 @@ StringUtility::appendAsmComment(const std::string &s, const std::string &comment
         return s.substr(0, s.size()-1) + "," + comment + ">";
     return s + "<" + comment + ">";
 }
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Strings parsed from text files
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+StringWithLineNumber::toString() const {
+     std::ostringstream os;
+
+  // DQ (1/21/2010): Added support for skipping these when in makes it easer to debug ROSETTA generated files.
+#ifdef SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
+  // os << str << std::endl;
+     os << "/* #line " << line << " \""
+        << (filename.empty() ? "" : getAbsolutePathFromRelativePath(filename)) << "\" */\n" << str << std::endl;
+#else
+     os << "#line " << line << " \""
+        << (filename.empty() ? "" : getAbsolutePathFromRelativePath(filename)) << "\"\n" << str << std::endl;
+#endif
+
+     return os.str();
+}
+
+std::string
+toString(const FileWithLineNumbers& strings, const std::string& filename, int physicalLine /* Line number in output file */) {
+  std::string result;
+  unsigned int lastLineNumber = 1;
+  std::string lastFile = "";
+  bool inPhysicalFile = true; // Not in a specifically named file
+  bool needLineDirective = false;
+  for (unsigned int i = 0; i < strings.size(); ++i) {
+    // Determine if a #line directive is needed, if the last iteration did not
+    // force one to be added
+    bool newInPhysicalFile = (strings[i].filename == "");
+    if (inPhysicalFile != newInPhysicalFile)
+      needLineDirective = true;
+    if (!inPhysicalFile &&
+        (strings[i].filename != lastFile ||
+         strings[i].line != lastLineNumber))
+      needLineDirective = true;
+
+    if (strings[i].str == "" && i + 1 == strings.size()) { // Special case
+      needLineDirective = false;
+    }
+
+    // Print out the #line directive (if needed) and the actual line
+    if (needLineDirective) {
+#ifdef SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
+           /* Nothing to do here! */
+      if (strings[i].filename == "") { // Reset to actual input file
+          // The "1" is the increment because number is the line number of the NEXT line after the #line directive
+          result += "/* #line " + numberToString(physicalLine + 1) + " \"" + filename + "\" */\n";
+      } else {
+          result += "/* #line " + numberToString(strings[i].line) + " \"" + strings[i].filename + "\" */\n";
+      }
+#else
+      if (strings[i].filename == "") { // Reset to actual input file
+          // The "1" is the increment because number is the line number of the NEXT line after the #line directive
+          result += "#line " + numberToString(physicalLine + 1) + " \"" + filename + "\"\n";
+      } else {
+          result += "#line " + numberToString(strings[i].line) + " \"" + strings[i].filename + "\"\n";
+      }
+#endif
+      // These are only updated when a #line directive is actually printed,
+      // largely because of the blank line exception above (so if a blank line
+      // starts a new file, the #line directive needs to be emitted on the
+      // first non-blank line)
+      lastLineNumber = strings[i].line + 1;
+      lastFile = strings[i].filename;
+    } else {
+      ++lastLineNumber;
+    }
+    result += strings[i].str + "\n";
+
+    bool printedLineDirective = needLineDirective;
+
+    // Determine if a #line directive is needed for the next iteration
+    needLineDirective = false;
+    inPhysicalFile = newInPhysicalFile;
+    if (strings[i].str.find('\n') != std::string::npos && !inPhysicalFile) {
+      needLineDirective = true; // Ensure that the next line has a #line directive
+    }
+
+    // Update the physical line counter based on the number of lines output
+    if (printedLineDirective) ++physicalLine; // For #line directive
+    for (size_t pos = strings[i].str.find('\n');
+         pos != std::string::npos; pos = strings[i].str.find('\n', pos + 1)) {
+      ++physicalLine; // Increment for \n in string
+    }
+    ++physicalLine; // Increment for \n added at end of line
+  }
+  return result;
+}
+
+// BP : 10/25/2001, a non recursive version that allocs memory only once
+std::string
+copyEdit(const std::string& inputString, const std::string& oldToken, const std::string& newToken) {
+    std::string returnString;
+    std::string::size_type oldTokenSize = oldToken.size();
+
+    std::string::size_type position = 0;
+    std::string::size_type lastPosition = 0;
+    while (true) {
+        position = inputString.find(oldToken, position);
+        if (position == std::string::npos) {
+            returnString += inputString.substr(lastPosition);
+            break;
+        } else {
+            returnString += inputString.substr(lastPosition, position - lastPosition);
+            returnString += newToken;
+            position = lastPosition = position + oldTokenSize;
+        }
+    }
+
+    return returnString;
+}
+
+FileWithLineNumbers
+copyEdit(const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken) {
+    FileWithLineNumbers result = inputString;
+    for (unsigned int i = 0; i < result.size(); ++i)
+        result[i].str = copyEdit(result[i].str, oldToken, newToken);
+    return result;
+}
+
+FileWithLineNumbers
+copyEdit(const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken ) {
+  FileWithLineNumbers result = inputString;
+  for (unsigned int i = 0; i < result.size(); ++i) {
+    std::string str = result[i].str;
+    std::string::size_type pos = str.find(oldToken);
+    if (pos != std::string::npos) {
+      // Split the line into the before-substitution and after-substitution regions
+      result[i].str = str.substr(0, pos);
+      result.insert(result.begin() + i + 1,
+                    StringWithLineNumber(str.substr(pos + oldToken.size()),
+                                         result[i].filename + " after subst for " + oldToken,
+                                         result[i].line));
+      // Do the insertion
+      result.insert(result.begin() + i + 1, newToken.begin(), newToken.end());
+      i += newToken.size(); // Rescan the after-substitution part of the old line, but not any of the new text
+    }
+  }
+  return result;
+}
+
+} // namespace
+} // namespace
