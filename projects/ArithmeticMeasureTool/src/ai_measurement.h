@@ -98,6 +98,20 @@ namespace ArithemeticIntensityMeasurement
       void addDivideCount(int i = 1)   {assert (i>=1); divide_count += i;}
   }; // end class FPCounters
 
+ // Version 2 counting using a recursive algorithm 
+ /*
+  *
+    SgBasicBlock: sum of  count(stmt)
+    straight line expression statement, atomic case, scan expression for operations, store into attribute, count (exp)
+         function call expression: summarize the counter using some function annotation or lookup table!!
+        travese expression tree, recursively, accumulate the counter, where to store the results : attributes vs. lookup table (this is easier)
+    loops:  loop iteration * count[loop_body]
+    branches: using branch prediction ratios, if no available, pick the max or minimum branch, based on a flag. upper bound and lower bound FLOPS
+    really need constant folding or symbolic evaluation to simplify things here!!
+  *
+  */
+ //void recursiveCounting(SgLocatedNode* input);
+
  // interface functions to manipulate FPCounters
   void CountFPOperations(SgLocatedNode* input);
   void printFPCount (SgLocatedNode* n);

@@ -165,6 +165,7 @@ int main (int argc, char** argv)
       // Preorder is not friendly for transformation
       //exampleTraversal.traverseWithinFile(s_file, postorder);
       Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(s_file,V_SgStatement);
+#if 1      
       if (running_mode == e_analysis_and_instrument) // reverse of pre-order for transformation mode
       {
         for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)
@@ -186,6 +187,17 @@ int main (int argc, char** argv)
         cerr<<"Error. unrecognized execution mode:"<< running_mode<<endl;
         ROSE_ASSERT (false);
       }
+#else
+      // For either execution mode, we want to have reverse of pre-order to avoid double counting nested inner loop body
+      // Not really. For analysis only model, we estimate things at the outer level loops, accumulate iteration counts
+      // Liao 6/16/2016
+      for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)
+      {
+        SgStatement *stmt= isSgStatement(*i);
+        processStatements (stmt);
+      }
+#endif 
+
     } // endif 
   } // end for
 

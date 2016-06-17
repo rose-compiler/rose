@@ -423,7 +423,12 @@ namespace ArithemeticIntensityMeasurement
 
    // get all processed variables by inner loops
     std::set<SgInitializedName*> processed_var_set; 
-    getVariablesProcessedByInnerLoops (lbody, isRead, processed_var_set);
+    // We only exclude inner loop's variables in analysis&instrumentation mode
+    // The problem of redundant accumulation during execution happens only in this mode.
+    // The static analysis only mode does not have this concern.
+    // We want to be able to statically estimate
+   // if (running_mode == e_analysis_and_instrument)
+      getVariablesProcessedByInnerLoops (lbody, isRead, processed_var_set);
     
     // fill in the type-based counters
     std::set<SgInitializedName*>::iterator set_iter; 
@@ -670,9 +675,12 @@ namespace ArithemeticIntensityMeasurement
       // Check if the operation is on float point data type
       if (bop->get_type()->isFloatType())
       {
+        // For instrumentation mode, we need to avoid double count FLOPs in inner loops
         // we assume the traverse is inside out, the inner loop will be processed first!
         // An operation is counted once when its innermost enclosing loop is processed. 
         // Using a map to avoid double counting an operation when it is enclosed in multiple loops
+        //
+        // For static counting only mode, this is a less concern.
         if (!FPVisitMAP[bop]) 
         {
 	  addFPCount (input, op_kind);
