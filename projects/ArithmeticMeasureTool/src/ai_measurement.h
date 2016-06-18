@@ -54,8 +54,8 @@ namespace ArithemeticIntensityMeasurement
       bool consistentWithReference(FPCounters* refCounters);
 
       // access load/store counters;
-      void setLoadBytes(SgExpression* n) { assert (n!=NULL); load_bytes = n; }
-      void setStoreBytes(SgExpression* n) {assert (n!=NULL); store_bytes = n; }
+      void setLoadBytes(SgExpression* n) { load_bytes = n; }
+      void setStoreBytes(SgExpression* n) { store_bytes = n; }
 
       SgExpression* getLoadBytes() {return load_bytes; }
       SgExpression* getStoreBytes() {return store_bytes; }
@@ -98,9 +98,26 @@ namespace ArithemeticIntensityMeasurement
       void addDivideCount(int i = 1)   {assert (i>=1); divide_count += i;}
   }; // end class FPCounters
 
+ // Version 2 counting using a recursive algorithm 
+ /*
+  *
+    SgBasicBlock: sum of  count(stmt)
+    straight line expression statement, atomic case, scan expression for operations, store into attribute, count (exp)
+         function call expression: summarize the counter using some function annotation or lookup table!!
+        travese expression tree, recursively, accumulate the counter, where to store the results : attributes vs. lookup table (this is easier)
+    loops:  loop iteration * count[loop_body]
+    branches: using branch prediction ratios, if no available, pick the max or minimum branch, based on a flag. upper bound and lower bound FLOPS
+    really need constant folding or symbolic evaluation to simplify things here!!
+  *
+  */
+ //void recursiveCounting(SgLocatedNode* input);
+
  // interface functions to manipulate FPCounters
   void CountFPOperations(SgLocatedNode* input);
   void printFPCount (SgLocatedNode* n);
+
+  // count memory load/store operations, store into attribute FPCounters
+  void CountMemOperations(SgLocatedNode* input, bool includeScalars = true, bool includeIntType = true);
 
   FPCounters * getFPCounters (SgLocatedNode* n);
   int getFPCount (SgLocatedNode* n, fp_operation_kind_enum c_type);

@@ -78,7 +78,9 @@ class LockGuard2 {
     Mutex &m1_, &m2_;
 public:
     LockGuard2(Mutex &m1, Mutex &m2): m1_(m1), m2_(m2) {
+#if SAWYER_MULTI_THREADED
         boost::lock(m1, m2);
+#endif
     }
     ~LockGuard2() {
         m1_.unlock();
