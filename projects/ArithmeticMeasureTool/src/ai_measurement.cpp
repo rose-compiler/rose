@@ -65,8 +65,13 @@ namespace ArithemeticIntensityMeasurement
    ss<<"----------Floating Point Operation Counts---------------------"<<endl;
    ss<<comment<<endl;
    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
-   ss<<node->class_name() <<"@" <<endl;
-   ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
+   if (node != NULL)
+   {
+     ss<<node->class_name() <<"@" <<endl;
+     ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
+   }
+   else
+     ss<< "NULL node"<<endl;
    ss<<"\tfp_plus:"<< plus_count<<endl;
    ss<<"\tfp_minus:"<< minus_count<<endl;
    ss<<"\tfp_multiply:"<< multiply_count<<endl;
@@ -149,7 +154,13 @@ namespace ArithemeticIntensityMeasurement
        addDivideCount(i);
        break;
      default:
-       assert (false);  
+       {
+         //TODO : we should ignore some unrecognized op kind
+         //Another case list to ignore them one by one
+        cerr<< ArithemeticIntensityMeasurement::toString(c_type) <<endl; 
+        assert (false);  
+        break;
+       }
    }
  }
 
@@ -943,5 +954,110 @@ namespace ArithemeticIntensityMeasurement
     return prev_stmt; 
   } // end instrumentLoopForCounting()
 
+  // Obtain the kind of FP operation from a binary operation
+  fp_operation_kind_enum getFPOpKind (SgBinaryOp* bop)
+  {
+    fp_operation_kind_enum op_kind = e_unknown; 
+    ROSE_ASSERT (bop != NULL);
+    switch (bop->variantT())
+    {
+      case V_SgAddOp:
+      case V_SgPlusAssignOp:
+        op_kind = e_plus; 
+        break;
+      case V_SgSubtractOp:
+      case V_SgMinusAssignOp:  
+        op_kind = e_minus;
+        break;      
+      case V_SgMultiplyOp:
+      case V_SgMultAssignOp:  
+        op_kind = e_multiply;
+        break;      
+      case V_SgDivideOp:
+      case V_SgDivAssignOp:  
+        op_kind = e_divide;
+        break;      
+      //skip a set of binary ops which do not involve FP operation at all  
+      case V_SgAssignOp:
+      case V_SgPntrArrRefExp: // this is integer operation for array address calculation
+      case V_SgLessThanOp: //TODO how to convert this if compare two FP operands ??
+        break;
+      default:
+      {
+        cerr<<"getFPOpKind () unrecognized binary op kind: "<< bop->class_name() <<endl;
+        ROSE_ASSERT (false);
+      }
+    } //end switch    
+
+    return op_kind;
+  }
+  // Bottomup evaluate attribute
+  FPCounters OperationCountingTraversal::evaluateSynthesizedAttribute (SgNode* n, SubTreeSynthesizedAttributes synthesizedAttributeList )
+  {
+    FPCounters returnAttribute; 
+
+    if (SgExpression* expr = isSgExpression (n))
+    {
+      if (SgBinaryOp* bop = isSgBinaryOp(expr))
+      {
+        // sum up lhs and rhs operation counts
+        FPCounters lhs_counters = synthesizedAttributeList[SgBinaryOp_lhs_operand_i];
+        FPCounters rhs_counters = synthesizedAttributeList[SgBinaryOp_rhs_operand_i];
+        returnAttribute = lhs_counters + rhs_counters;
+
+        // only consider FP operation for now TODO: make this configurable
+        if (bop->get_type()->isFloatType())
+        {
+          // based on current bop kind, increment an additional counter 
+          fp_operation_kind_enum op_kind = getFPOpKind (bop);    
+          if (op_kind !=e_unknown )
+          {
+            returnAttribute.addCount (op_kind, 1);
+            returnAttribute.updateTotal();
+          }
+        }
+      }
+    }
+    else if (SgStatement* stmt = isSgStatement(n))
+    {
+      if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
+      {
+        // Ditch this synthesizedAttributeList thing, hard to use
+        // I just directly grab child node's attribute I saved previously.
+        // Directly synthesize from child expression
+        FPCounters* child_counters = getFPCounters (exp_stmt->get_expression());
+        returnAttribute = *child_counters;
+      }
+    }
+
+    //TODO: default case: upward propagate counters if only a single child or multiple children??
+
+    // My extra step: copy values to the attribute of the node
+    // Patch up the node information here.  operater+ used before may corrupt the node info.
+    returnAttribute.setNode (isSgLocatedNode(n));
+    if (SgLocatedNode* lnode = isSgLocatedNode (n))
+    {
+      FPCounters* fpcounters = getFPCounters (lnode); // create attribute on fly if not existing
+      *fpcounters = returnAttribute;
+      //debugging here
+      fpcounters->printInfo (n->class_name()); 
+    }
+
+    return returnAttribute;
+  }
+
+  FPCounters FPCounters::operator+ (const FPCounters & right) const
+  {
+    FPCounters retVal;
+
+    retVal.plus_count = plus_count + right.plus_count;
+    retVal.minus_count = minus_count + right.minus_count;
+    retVal.multiply_count = multiply_count + right.multiply_count;
+    retVal.divide_count = divide_count + right.divide_count;
+    retVal.total_count = total_count + right.total_count;
+
+    //TODO: add load/store expressions
+    return retVal; 
+  }
 
 } // end of namespace

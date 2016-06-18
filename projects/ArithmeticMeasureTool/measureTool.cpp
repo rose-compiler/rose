@@ -6,6 +6,7 @@
 #include <ArrayAnnot.h>
 #include <ArrayRewrite.h>
 
+#define USE_Algorithm_V2 1 // testing algorithm 2 for static counting
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -153,6 +154,8 @@ int main (int argc, char** argv)
 
   SgProject* project = frontend(argvList);
 
+ 
+
   // Insert your own manipulations of the AST here...
   SgFilePtrList file_ptr_list = project->get_fileList();
   //visitorTraversal exampleTraversal;
@@ -162,6 +165,14 @@ int main (int argc, char** argv)
     SgSourceFile* s_file = isSgSourceFile(cur_file);
     if (s_file != NULL)
     {
+
+      if ((running_mode ==  e_static_counting) && USE_Algorithm_V2)
+      {
+        OperationCountingTraversal oct;
+        FPCounters returnAttribute = oct.traverseWithinFile(s_file);
+        continue; // skip the rest loop iteration
+      }
+
       // Preorder is not friendly for transformation
       //exampleTraversal.traverseWithinFile(s_file, postorder);
       Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(s_file,V_SgStatement);
