@@ -6824,7 +6824,8 @@ SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scop
   for (size_t i = 0; i<stmt_list.size(); i++)
   {
     SgStatement* cur_stmt = stmt_list[i];
-    if (isSgDeclarationStatement(cur_stmt))
+    // We should exclude pragma decl. We don't want to insert things after pragmas.
+    if (isSgDeclarationStatement(cur_stmt) && !isSgPragmaDeclaration (cur_stmt))
       rt = cur_stmt;
     //if (isSgImplicitStatement(cur_stmt)) || isSgFortranIncludeLine(cur_stmt) || isSgDeclarationStatement
   }
