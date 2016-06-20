@@ -25,6 +25,7 @@ libspray_la_SOURCES=\
  CFAnalysis.h \
  DFAnalysisBase.h \
  DFTransferFunctions.h \
+ DotGraphCfgFrontend.h \
  IntervalAnalysis.h \
  IntervalAstAttribute.h \
  IntervalAstAttributeInterface.h \
@@ -41,6 +42,7 @@ libspray_la_SOURCES=\
  NumberIntervalLattice.h \
  PASolver1.h \
  PointerAnalysisInterface.h \
+ PromelaCodeGenerator;h \
  RDAnalysis.h \
  RDAstAttribute.h \
  RDTransferFunctions.h \
@@ -53,6 +55,7 @@ libspray_la_SOURCES=\
  CppExprEvaluator.C \
  DFAnalysisBase.C \
  DFTransferFunctions.C \
+ DotGraphCfgFrontend.C \
  Flow.C \
  IntervalAnalysis.C \
  IntervalAstAttribute.C \
@@ -71,6 +74,7 @@ libspray_la_SOURCES=\
  NumberIntervalLattice.C \
  PASolver1.C \
  PointerAnalysisInterface.C \
+ PromelaCodeGenerator.C \
  PropertyState.C \
  RDAnalysis.C \
  RDAstAttribute.C \
@@ -93,6 +97,8 @@ codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
+  ParProAnalyzer.C                 \
+  ParProAnalyzer.h                 \
   ArrayElementAccessData.h \
   ArrayElementAccessData.C \
   CollectionOperators.h            \
@@ -144,12 +150,21 @@ codethorn_SOURCES = \
   SpotState.h \
   SpotSuccIter.C \
   SpotSuccIter.h \
+  ParProSpotTgba.C \
+  ParProSpotTgba.h \
+  ParProSpotState.C \
+  ParProSpotState.h \
+  ParProSpotSuccIter.C \
+  ParProSpotSuccIter.h \
+  ReadWriteData.h \
   StateRepresentations.C           \
   StateRepresentations.h           \
   Timer.cpp                        \
   Timer.h                          \
   TransitionGraph.h                \
   TransitionGraph.C                \
+  ParProTransitionGraph.h          \
+  ParProTransitionGraph.C          \
   VariableValueMonitor.h \
   VariableValueMonitor.C \
   Visualizer.C                     \

@@ -32,6 +32,7 @@ namespace SPRAY {
     std::string toStringNoType() const;
     std::string toDotColored() const;
     std::string toDotFixedColor(std::string) const;
+    std::string toDotAnnotationOnly() const; 
     std::string typesToString() const;
     static std::string typeToString(EdgeType et);
     Label source;
@@ -46,8 +47,11 @@ namespace SPRAY {
     std::string dotEdgeStyle() const;
     long hash() const;
     EdgeTypeSet getTypes() const { return _types; }
+    std::string getAnnotation() const { return _annotation; }
+    void setAnnotation(std::string annotation) { _annotation = annotation;}
   private:
     EdgeTypeSet _types;
+    std::string _annotation;
   };
   
   bool operator==(const Edge& e1, const Edge& e2);
@@ -82,8 +86,11 @@ namespace SPRAY {
     Flow outEdges(Label label);
     Flow edgesOfType(EdgeType edgeType);
     Flow outEdgesOfType(Label label, EdgeType edgeType);
+    Label getStartLabel() { return _startLabel; }
+    void setStartLabel(Label label) { _startLabel = label; }
     void setDotOptionDisplayLabel(bool opt);
     void setDotOptionDisplayStmt(bool opt);
+    void setDotOptionEdgeAnnotationsOnly(bool opt);
     void setDotOptionFixedColor(bool opt);
     void setDotFixedColor(std::string color);
     void setDotOptionHeaderFooter(bool opt);
@@ -109,6 +116,7 @@ namespace SPRAY {
   private:
     bool _dotOptionDisplayLabel;
     bool _dotOptionDisplayStmt;
+    bool _dotOptionEdgeAnnotationsOnly;
     bool _stringNoType;
     bool _dotOptionFixedColor;
     std::string _fixedColor;
@@ -117,6 +125,7 @@ namespace SPRAY {
     //http://rosecompiler.org/ROSE_HTML_Reference/classSawyer_1_1Container_1_1Graph.html
     Sawyer::Container::Graph< Label, EdgeType, Label>  _sawyerflowGraph;
     FlowGraph _flowGraph;
+    Label _startLabel;
   };
   
   class InterEdge {

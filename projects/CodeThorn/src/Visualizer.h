@@ -10,12 +10,17 @@
 #include "Labeler.h"
 #include "CFAnalysis.h"
 #include "StateRepresentations.h"
+#include "ParProTransitionGraph.h"
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
+#include "ReadWriteData.h"
 
 using CodeThorn::Analyzer;
 using CodeThorn::PStateSet;
 using CodeThorn::EStateSet;
+using namespace std;
+using namespace SPRAY;
+using namespace CodeThorn;
 
 class AssertionExtractor {
  public:
@@ -55,12 +60,16 @@ class Visualizer {
   std::string transitionGraphDotHtmlNode(SPRAY::Label lab);
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
+  std::string parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph);
   // used for displaying abstract ("topified") transition graphs.
   std::string transitionGraphWithIOToDot(CodeThorn::EStatePtrSet displayedEStates, 
                                     bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);
   std::string abstractTransitionGraphToDot(); // groups abstract states into a cluster (currently specific to Rers).
   std::string foldedTransitionGraphToDot();
   std::string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
+  std::string visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
+					 ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
+					 bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings);
  private:
   SPRAY::IOLabeler* labeler;
   SPRAY::VariableIdMapping* variableIdMapping;

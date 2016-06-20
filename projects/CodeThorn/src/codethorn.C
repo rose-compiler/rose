@@ -35,6 +35,12 @@
 #include "EquivalenceChecking.h"
 // test
 #include "Evaluator.h"
+#include "DotGraphCfgFrontend.h"
+#include "ParProAnalyzer.h"
+#include "PromelaCodeGenerator.h"
+
+//BOOST includes
+#include "boost/lexical_cast.hpp"
 
 using namespace std;
 
@@ -246,7 +252,7 @@ int main( int argc, char * argv[] ) {
       ("max-transitions-forced-top4",po::value< int >(),"Performs approximation after <arg> transitions (exact for all but inc-vars) (default: no limit).")
       ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)) (default: no limit).")
       ("normalize",po::value< string >(),"normalize AST before analysis.")
-      ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3).")
+      ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3,...).")
       ;
 
     cegpraOptions.add_options()
@@ -268,12 +274,14 @@ int main( int argc, char * argv[] ) {
       ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
       ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
       ("tg2-estate-predicate", po::value< string >(), "transition graph 2: show estate as predicate [=yes|no]")
+      ("visualize-read-write-sets",po::value< string >(), "generate one graph for each parallel loop that illustrates the read and write accesses of the involved threads.")
       ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
       ;
 
     experimentalOptions.add_options()
       ("annotate-terms",po::value< string >(),"annotate term representation of expressions in unparsed program.")
       ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
+      ("cfg-dot-input",po::value< string >(),"reads a CFG from a given .dot file.")
       ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
       ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
       ("precision-exact-constraints",po::value< string >(),"(experimental) use precise constraint extraction [=yes|no]")
@@ -416,6 +424,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("eliminate-arrays",false);
 
   boolOptions.registerOption("viz",false);
+  boolOptions.registerOption("visualize-read-write-sets",false);
   boolOptions.registerOption("run-rose-tests",false);
   boolOptions.registerOption("reduce-cfg",false);
   boolOptions.registerOption("print-all-options",false);
@@ -456,6 +465,77 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("normalize",true);
 
   boolOptions.processOptions();
+
+  //TODO: remove this temporary test
+  if (args.count("cfg-dot-input")) {
+    DotGraphCfgFrontend dotGraphCfgFrontend;
+    string filename = args["cfg-dot-input"].as<string>();
+    CfgsAndAnnotationMap cfgsAndMap = dotGraphCfgFrontend.parseDotCfgs(filename);
+    cout << "DEBUG: generating PROMELA code..." << endl;
+    PromelaCodeGenerator codeGenerator;
+    string promelaCode = codeGenerator.generateCode(cfgsAndMap);
+    cout << "DEBUG: done." << endl;
+    string promelaOutputFilename = "promelaCode.pml";
+    write_file(promelaOutputFilename, promelaCode);
+    cout << "generated " << promelaOutputFilename <<"."<<endl;
+    list<Flow> cfgs = cfgsAndMap.first;
+    EdgeAnnotationMap edgeAnnotationMap = cfgsAndMap.second;
+    int counter = 0;
+    for(list<Flow>::iterator i=cfgs.begin(); i!=cfgs.end(); i++) {
+      Flow cfg = *i;
+      cout << "DEBUG: current cfg's start state id is: " << cfg.getStartLabel().getId() << endl;
+      cfg.setDotOptionDisplayLabel(false);
+      cfg.setDotOptionDisplayStmt(false);
+      cfg.setDotOptionEdgeAnnotationsOnly(true);
+      string outputFilename = "cfg" + boost::lexical_cast<string>(counter) + ".dot";
+      write_file(outputFilename, cfg.toDot(NULL));
+      cout << "generated " << outputFilename <<"."<<endl;
+      counter++;
+    }
+    
+    vector<Flow> cfgsAsVector;
+    cfgsAsVector.reserve(cfgs.size());
+    copy(begin(cfgs), end(cfgs), back_inserter(cfgsAsVector));
+    ParProAnalyzer parProAnalyzer(cfgsAsVector);
+    parProAnalyzer.setAnnotationMap(edgeAnnotationMap);
+    parProAnalyzer.initializeSolver();
+    parProAnalyzer.runSolver();
+    ParProTransitionGraph* transitionGraph = parProAnalyzer.getTransitionGraph();
+    cout << "DEBUG: transitionGraph->size() = " << transitionGraph->size() << endl;
+    Visualizer visualizer;
+    string dotStg = visualizer.parProTransitionGraphToDot(transitionGraph);
+    string outputFilename = "stgParallelProgram.dot";
+    write_file(outputFilename, dotStg);
+    cout << "generated " << outputFilename <<"."<<endl;
+
+    if (args.count("check-ltl")) {
+      string ltl_filename = args["check-ltl"].as<string>();
+      bool withCounterexample = false;
+      if(boolOptions["with-counterexamples"] || boolOptions["with-ltl-counterexamples"]) {  //output a counter-example input sequence for falsified formulae
+	withCounterexample = true;
+      }
+      timer.start();
+      PropertyValueTable* ltlResults;
+      SpotConnection spotConnection(ltl_filename);
+      cout << "STATUS: generating LTL results"<<endl;
+      bool spuriousNoAnswers = false;
+      spotConnection.checkLtlPropertiesParPro( *transitionGraph, withCounterexample, spuriousNoAnswers);
+      ltlResults = spotConnection.getLtlResults();
+      ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
+      cout << "=============================================================="<<endl;
+      ltlResults->printResultsStatistics();
+      cout << "=============================================================="<<endl;
+      if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
+	std::string csv_filename = args["csv-spot-ltl"].as<string>();
+	cout << "STATUS: writing ltl results to file: " << csv_filename << endl;
+	ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
+      }
+      delete ltlResults;
+      ltlResults = NULL;
+    }
+    cout << "DEBUG: parseDotCfg test complete." << endl;
+    exit(0);
+  }
 
   Analyzer analyzer;
   global_analyzer=&analyzer;
@@ -758,7 +838,8 @@ int main( int argc, char * argv[] ) {
   }
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
-    if (string(argv[i]).find("--csv-assert")==0
+    if (string(argv[i]).find("--cfg-dot-input")==0
+        || string(argv[i]).find("--csv-assert")==0
         || string(argv[i]).find("--csv-stats")==0
         || string(argv[i]).find("--csv-stats-cegpra")==0
         || string(argv[i]).find("--csv-stats-size-and-ltl")==0
@@ -1315,6 +1396,9 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     Specialization speci;
+    if (boolOptions["visualize-read-write-sets"]) {
+      speci.setVisualizeReadWriteAccesses(true);
+    }
     ArrayUpdatesSequence arrayUpdates;
     cout<<"STATUS: performing array analysis on STG."<<endl;
     cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;

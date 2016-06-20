@@ -174,6 +174,58 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
   } //end of implicit condition (stg.isPrecise() || stg.isComplete())
 }
 
+void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers) {
+  if (stg.size() == 0 && !modeLTLDriven) {
+    cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
+    return;
+  }
+  if (!stg.isPrecise() && !stg.isComplete()) {
+    return;  //neither falsification nor verification works
+  } else { 
+    // retrieve all atomic propositions found in the given LTL propeties 
+    spot::ltl::atomic_prop_set* sap = getAtomicProps();
+    //instantiate a new dictionary for atomic propositions 
+    // (will be used by the model tgba as well as by the ltl formula tgbas)
+    spot::bdd_dict dict;
+    //create a tgba from CodeThorn's STG model
+    ParProSpotTgba* ct_tgba = new ParProSpotTgba(stg, *sap, dict);
+    std::string* pCounterExample; 
+    std::list<LtlProperty>* yetToEvaluate = getUnknownFormulae();
+    for (std::list<LtlProperty>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
+      if (checkFormula(ct_tgba, i->ltlString , ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
+        if (stg.isComplete()) {
+          ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_YES);
+        } else {
+          //not all possible execution paths are covered in this stg model, ignore SPOT's result
+        }
+      } else {  //SPOT returns that there exists a counterexample that falsifies the formula
+        if (stg.isPrecise()) {
+          ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_NO);
+          if (withCounterexample) {
+            ltlResults->strictUpdateCounterexample(i->propertyNumber, *pCounterExample);
+          }
+          delete pCounterExample;
+        } else {
+          // old: the stg is over-approximated, falsification cannot work. Ignore SPOT's answer.
+          if (spuriousNoAnswers) {
+            // new: register counterexample and check it later
+            ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_NO);
+            if (withCounterexample) {
+              ltlResults->strictUpdateCounterexample(i->propertyNumber, *pCounterExample);
+            }
+            delete pCounterExample;
+          }
+        }
+      }
+    } //end of "for each unknown property" loop
+    pCounterExample = NULL;
+    delete yetToEvaluate;
+    yetToEvaluate = NULL;
+    delete ct_tgba;
+    ct_tgba = NULL;
+  } //end of implicit condition (stg.isPrecise() || stg.isComplete())
+}
+
 void SpotConnection::compareResults(TransitionGraph& stg, std::string ltl_fsPlusRes_file,
 					std::set<int> inVals, std::set<int> outVals) {
   //determine largest input Value, then merge input and output alphabet
@@ -205,7 +257,6 @@ void SpotConnection::compareResults(TransitionGraph& stg, std::string ltl_fsPlus
   delete ct_tgba;
   ct_tgba = NULL;
 }
-
 
 ///deprecated. uses text format for the tgba. Newer version is implemented that could also make use of on the fly computation
 void SpotConnection::compareResults(std::string tgba_file, std::string ltl_fsPlusRes_file) {
@@ -292,6 +343,25 @@ bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, s
   return result;
 }
 
+spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps() {
+  spot::ltl::atomic_prop_set* result = new spot::ltl::atomic_prop_set();
+  for (std::list<LtlProperty>::iterator i=behaviorProperties.begin(); i!=behaviorProperties.end(); i++) {
+    std::string formulaString = i->ltlString;
+    spot::ltl::parse_error_list pel;
+    const spot::ltl::formula* formula = spot::ltl::parse(formulaString, pel);
+    if (spot::ltl::format_parse_errors(std::cerr, formulaString, pel)) {
+      formula->destroy();						
+      cerr<<"Error: ltl format error."<<endl;
+      ROSE_ASSERT(0);
+    }
+    spot::ltl::atomic_prop_set* sap = spot::ltl::atomic_prop_collect(formula);
+    result->insert(sap->begin(), sap->end());
+    delete sap;
+    sap = NULL;
+  }
+  return result;
+}
+
 spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(std::set<int> ioVals, int maxInputVal) {
   std::string ltl_props = "";
   bool firstEntry = true;
@@ -335,7 +405,7 @@ std::string SpotConnection::comparison(bool spotRes, bool expectedRes, std::stri
 std::list<std::string>* SpotConnection::loadFormulae(istream& input) {
   std::list<std::string>* result = new std::list<std::string>(); //DEBUG: FIXE ME (REMOVE)
   std::string line;
-  int defaultPropertyNumber=0; //for RERS 2012 where no numbers were assigned in the properties.txt files
+  int defaultPropertyNumber=0; //for RERS 2012 because no numbers were assigned in the properties.txt files
   bool explicitPropertyNumber = false;  //indicates whether or not an ID for the property could be extraced from the file
   LtlProperty* nextFormula = new LtlProperty();
   while (std::getline(input, line)){
@@ -505,15 +575,16 @@ std::string SpotConnection::filterCounterexample(std::string spotRun, bool inclu
     result += (*i);
   }
   result += "]";
-  assert(returnedCycle.size() > 0); // empty cycle part in counterexample currently not supported
-  result += "([";
-  for (std::list<std::string>::iterator i = returnedCycle.begin(); i != returnedCycle.end() ; ++i) {
-    if (i != returnedCycle.begin()) {
-      result += ";";
+  if (returnedCycle.size() > 0) {
+    result += "([";
+    for (std::list<std::string>::iterator i = returnedCycle.begin(); i != returnedCycle.end() ; ++i) {
+      if (i != returnedCycle.begin()) {
+	result += ";";
+      }
+      result += (*i);
     }
-    result += (*i);
+    result += "])*";
   }
-  result += "])*";
   return result;
   //cout << "DEBUG: result in function: " << result  << endl;
 }
