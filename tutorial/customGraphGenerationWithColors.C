@@ -336,6 +336,9 @@ ConstantFoldingColoringTraversal::evaluateSynthesizedAttribute (
 int
 main ( int argc, char* argv[] )
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
   // Main Function for default example ROSE Preprocessor
   // This is an example of a preprocessor that can be built with ROSE
   // This example can be used to test the ROSE infrastructure

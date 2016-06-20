@@ -58,6 +58,7 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
+	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif

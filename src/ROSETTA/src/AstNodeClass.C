@@ -54,7 +54,9 @@ AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const st
      automaticGenerationOfConstructor(true),
      automaticGenerationOfDataAccessFunctions(true),
      automaticGenerationOfCopyFunction(true),
-     associatedGrammar(&X)
+     associatedGrammar(&X),
+     generateEssentialDataMembersConstructorImplementation(false),
+     generateEnforcedDefaultConstructorImplementation(false)
    {
      for (size_t i = 0; i < subclasses.size(); ++i) {
        // If the next assertion fails, it's probably because you have an IR type that appears in more than one
@@ -253,14 +255,23 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
    }
 
 string
-AstNodeClass::buildConstructorBodyForAllDataMembers() {
+AstNodeClass::buildConstructorBodyForEssentialDataMembers() {
   string returnString;
-  vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
-  for( vector<GrammarString *>::iterator stringListIterator = localList.begin();
-       stringListIterator != localList.end();
+  //vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+
+  vector<GrammarString *> includeList;
+  vector<GrammarString *> excludeList;
+  // now generate the additions to the lists from the parent node subtree lists
+  associatedGrammar->generateStringListsFromLocalLists ( *this, includeList, excludeList, &AstNodeClass::getMemberDataPrototypeList );
+
+  //  for( vector<GrammarString *>::iterator stringListIterator = localList.begin();
+  for( vector<GrammarString *>::iterator stringListIterator = includeList.begin();
+       stringListIterator != includeList.end();
        stringListIterator++ ) {
     string variableNameString = (*stringListIterator)->getVariableNameString();
-    returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
+    if(!associatedGrammar->isFilteredMemberVariable(variableNameString)) {
+      returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
+    }
   }
   return returnString;
 }
@@ -2273,3 +2284,18 @@ AstNodeClass::typeEvaluationName ( TypeEvaluation x )
      return s;
    }
 
+void AstNodeClass::setGenerateEssentialDataMembersConstructorImplementation(bool flag) {
+  generateEssentialDataMembersConstructorImplementation=flag;
+}
+
+void AstNodeClass::setGenerateEnforcedDefaultConstructorImplementation(bool flag) {
+  generateEnforcedDefaultConstructorImplementation=flag;
+}
+
+bool AstNodeClass::getGenerateEssentialDataMembersConstructorImplementation() {
+  return generateEssentialDataMembersConstructorImplementation;
+}
+
+bool AstNodeClass::getGenerateEnforcedDefaultConstructorImplementation() {
+  return generateEnforcedDefaultConstructorImplementation;
+}

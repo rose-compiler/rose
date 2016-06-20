@@ -70,7 +70,7 @@ buildAst(int argc, char *argv[], Settings &settings) {
 int
 main(int argc, char *argv[])
 {
-    rose::Diagnostics::initialize();
+    ROSE_INITIALIZE;
     ::mlog = Sawyer::Message::Facility("tool");
     rose::Diagnostics::mfacilities.insertAndAdjust(::mlog);
 

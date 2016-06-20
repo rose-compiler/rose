@@ -837,7 +837,7 @@ void
 CgEmitter::nameVertices() {
     BOOST_FOREACH (const FunctionCallGraph::Graph::Vertex &vertex, graph_.vertices()) {
         const Function::Ptr &function = vertex.value();
-        vertexOrganization(vertex.id()).name(StringUtility::addrToString(function->address()));
+        vertexOrganization(vertex.id()).name("V_" + StringUtility::addrToString(function->address()));
     }
 }
 

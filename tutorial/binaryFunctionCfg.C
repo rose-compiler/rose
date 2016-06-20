@@ -19,6 +19,7 @@ using namespace rose::BinaryAnalysis;
 int
 main(int argc, char *argv[]) {
     //! [setup]
+    ROSE_INITIALIZE;                                    // see rose::initialize
     Partitioner2::Engine engine;
     std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     if (specimen.empty()) {

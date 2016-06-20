@@ -33,14 +33,22 @@ bool processStatements(SgNode* n)
      instrumentLoopForCounting (loop);
    else if (running_mode == e_static_counting)
    {  
-     CountFPOperations (loop->get_loop_body());
+     SgStatement* lbody = loop->get_loop_body();
+     CountFPOperations (lbody);
+     CountMemOperations (lbody , false, true); // bool includeScalars /*= true*/, bool includeIntType /*= true*/
+
+     FPCounters* fp_counters = getFPCounters (lbody);
+     ofstream reportFile(report_filename.c_str(), ios::app);
+//     cout<<"Writing counter results to "<< report_filename <<endl;
+     reportFile<< fp_counters->toString();
+
      // verify the counting results are consistent with reference results from pragmas	 
      if (SgStatement* prev_stmt = getPreviousStatement(loop))
      {
        if (isSgPragmaDeclaration(prev_stmt))
        {
          FPCounters* ref_result = getFPCounters (prev_stmt);
-         FPCounters* current_result = getFPCounters (loop->get_loop_body());
+         FPCounters* current_result = getFPCounters (lbody);
          if (ref_result != NULL)
          {
            if (!current_result->consistentWithReference (ref_result))

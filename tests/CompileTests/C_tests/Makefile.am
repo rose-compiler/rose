@@ -1120,7 +1120,14 @@ copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
 	cp $(srcdir)/*.c $(top_srcdir)/tests/CompileTests/C_tests
 
-check-local:
+check-pthread.passed: needs_reentrant.c $(testTranslator)
+	@$(RTH_RUN)								\
+		TITLE="-pthread should define -D_REENTRANT [$@]"		\
+		CMD="$(testTranslator) -pthread -c $(srcdir)/needs_reentrant.c"	\
+		USE_SUBDIR=no							\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+check-local: check-pthread.passed
 	@echo "Tests for C."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable

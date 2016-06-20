@@ -185,7 +185,7 @@ RSIM_Simulator::ctor()
 {
     static bool classInitialized = false;
     if (!classInitialized) {
-        rose::Diagnostics::initialize();
+        ROSE_INITIALIZE;
         mlog = Sawyer::Message::Facility("RSIM", rose::Diagnostics::destination);
         rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
         classInitialized = true;

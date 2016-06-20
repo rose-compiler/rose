@@ -29,7 +29,7 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *
  *  A basic block is a read-only object once it reaches the BB_COMPLETE state, and can thus be shared between partitioners and
  *  threads.  The memory for these objects is shared and managed by a shared pointer implementation. */
-class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
+class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
     /** Shared pointer to a basic block. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;

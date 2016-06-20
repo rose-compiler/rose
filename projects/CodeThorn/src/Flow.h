@@ -123,7 +123,8 @@ namespace SPRAY {
     std::string _fixedColor;
     bool _dotOptionHeaderFooter;
     bool _boostified;
-    Sawyer::Container::Graph< Label, EdgeType>  _SawyerflowGraph;
+    //http://rosecompiler.org/ROSE_HTML_Reference/classSawyer_1_1Container_1_1Graph.html
+    Sawyer::Container::Graph< Label, EdgeType, Label>  _sawyerflowGraph;
     FlowGraph _flowGraph;
     Label _startLabel;
   };

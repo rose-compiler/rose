@@ -198,6 +198,8 @@ namespace ELF{
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 #define COMPILE_DEBUG_STATEMENTS 1
 
+#include "initialize.h" // Defines rose::initialize
+
 /******************************************************************************************************************************
  *                            THIS CHECK SHOULD BE THE LAST THING IN THIS FILE!
  ******************************************************************************************************************************

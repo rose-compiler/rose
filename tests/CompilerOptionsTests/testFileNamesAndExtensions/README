@@ -1,80 +1,54 @@
-#################################################################################
-There were a couple of problems with ROSE handling filenames. The aim of this work
-is to resolve some of them and highlight some of the rest.
-#################################################################################
-The files/directories in this directory highlight some of the problems that 
-ROSE-frontend has in handling input files.
+#######################################################
+SOME NOTES ON FILENAMES and EXTENSIONS
+------------------------------------------------------
+The general rules seem to be the following:
 
-The directory has two perl scripts
+1. A c file can have only .c as extension.
+2. A C PLUS PLUS file can have any of
+   .C .cc .cp .cpp .cxx .c++ as extensions.
 
-   test_filenames.pl : for relatively simple cases, like 
-      what if the input file is inexistent? 
-      what if one of the input file(s) is inexistent?
-      what if the input is a directory?
-      given in each of the absolute and relative files
+3. On case sensitive systems, the accepted suffixes for C PLUS PLUS
+   files seem to be the following:
+   .cc (==.CC) .cp (==.CP) .cpp (==.CPP) .cxx (==.CXX) .c++(==.C++)
 
-   test_filenames_looong_torture.pl: this file has more wierd cases, ones that try 
-      to break the system, if we are dependedent on the UNIX variable PATH_MAX or 
-      not.
+4. On case insensitive systems, the accepted suffixes for C PLUS PLUS
+   files seem to be the following:
+    .C .cc .cp .cpp .cxx .c++
+       .CC .CP .CPP .CXX .C++
+#######################################################
+GNU
+------------------------------------------------------
+In GNU, the code that checks and enforces these is in the 
+file cppspec.c in data structure known_suffixes
+ ".c",  ".C", ".cc", ".cxx", ".cpp", ".cp",  ".c++",
+#######################################################
+EDG 
+------------------------------------------------------
+file host_environ.h
+c:C:cpp:CPP:cxx:CXX:cc
+#######################################################
+EXAMPLES OF CASE (IN)SENSITIVE systems:
+------------------------------------------------------
+Some systems are case sensitive (like UNIX/LINUX),
+some are not (like MAC/DOS/WINDOWZ)
 
-and two directories
-    SUFFIX_TESTS: that tests ROSE identity translator, gcc, g++ for file name extensions.
-    The directory has its own readme
-    These are handled reasonably done now
+#######################################################
+MY changes to DAN's cpp file name checker
+------------------------------------------------------
+I have defined a macro that checks (in some magical way)
+about the sensitivity of the system and then enforces it.
+#######################################################
+TEST DIRECTORY CASE_SENSITIVE_SYSTEMS
+------------------------------------------------------
+The test codes are in the three directories.
 
-    META_CHARS: that tests ROSE identity translator with files. 
-****NOTE**** These  are still not properly done now.
-
-#################################################################################
-Open questions or known extensions:
-(Dan and I had some discussions on these. Could not come to a proper conclusion.)
-
-  1. Should we enforce rules on the names of output files?  
-     Should it have the same extension? Why? Why not?
-
-  2. We are not doing a good job of handling filenames with UNIX meta 
-     characters.  #, $, ', ` space, so on and so forth.  They should be handled
-     more carefully.
-    
-  3. Related to 2, we should carefully list if we are making any system calls
-     and fix if they violate any security issues. 
-     Example: we should replace all "system" calls by proper "exec"s
-#################################################################################
-Some references:
-http://developer.apple.com/documentation/DeveloperTools/gcc-4.0.1/gcc/Invoking-G_002b_002b.html
-
-
-DQ (8/19/2008): Removed files from SVN that tested strange filenames, these need to
-be automatically generated from a script instead of checked into the SVN repository.
-the reasoning is that Windows can't handle the filenames and so we can't support
-Cygwin testing.  
-
-Removed files which need to be generated via a script:
-  ./fileNames/test_simple_file.C
-  ./fileNames/test simple file with spaces in name .C
-  ./fileNames/test_empty_cplusplus_file.C
-  ./fileNames/test_simple_file"'.C
-  ./fileNames/test_simple_'file.C
-  ./fileNames/test_simple_file_dollar$.C
-  ./fileNames/test_filenames_unix_meta_chars.pl
-  ./fileNames/test_simple_file_ending_with_dot.
-  ./fileNames/rose_test_simple_file_dollar$.C
-  ./fileNames/test_simple_file_no_suffix
-  ./fileNames/test_empty_c_file.c
-
-The content of the files is uniformly just:
-int main()
-{
-}
-
-
-Note that all the testing of filenames in ROSE apparently have been 
-turned off for a while.  Also the PERL scripts to test the files appear
-to be in place but are not called.  Also the PERL scripts don't build
-the files before the testing, so I expect that all the filenames referenced
-used to be checked into the CVS repository and that only a subset of them
-were checked into the SVN repository.  Instead we would like to avoid
-haivng them exist in the repository and have them be generated by the PERL 
-scripts instead.  This would simplify testing on different OS's that have 
-different rules for permitted filenames with strange embedded characters.
-
+CASE_SENSITIVE_SYSTEMS: compiles and tests each of the files 
+with gcc, g++ , EDG and identityTranslator
+------------------------------------------------------
+CASE_INSENSITIVE_SYSTEMS: compiles and tests each of the files 
+with gcc, g++ , EDG and identityTranslator. Note that "redundant"
+suffixes have been removed.
+------------------------------------------------------
+WIERD: compiles and tests each of the files  with wierd suffixes
+with gcc, g++ , EDG and identityTranslator. For now, they probably 
+donot serve much purpose except for a future reference.

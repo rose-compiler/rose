@@ -223,7 +223,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
 int main(int argc, char *argv[])
 {
     // Configure diagnostic output
-    rose::Diagnostics::initialize();
+    ROSE_INITIALIZE;
     ::mlog = Sawyer::Message::Facility("taintedFlow", rose::Diagnostics::destination);
     rose::Diagnostics::mfacilities.insertAndAdjust(::mlog);
     rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
