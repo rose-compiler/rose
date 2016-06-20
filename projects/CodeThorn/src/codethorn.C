@@ -293,6 +293,7 @@ int main( int argc, char * argv[] ) {
       ("minings-per-subsets",po::value< int >(),"Number of randomly generated properties that are evaluated based on one subset of parallel components (default: 50).")
       ("ltl-properties-output",po::value< string >(),"Writes the analyzed LTL properties to file <arg>.")
       ("promela-output",po::value< string >(),"Writes a promela program reflecting the synchronized automata of option \"--automata-dot-input\" to file <arg>. Includes LTL properties if analyzed.")
+      ("promela-output-with-results",po::value< string >(),"include results for the LTL properties in the generated promela code (yes|[no]).")
       ;
 
     experimentalOptions.add_options()
@@ -479,6 +480,8 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("set-stg-incomplete",false);
 
+  boolOptions.registerOption("promela-output-with-results",false);
+
   boolOptions.registerOption("print-update-infos",false);
   boolOptions.registerOption("verify-update-sequence-race-conditions",true);
 
@@ -520,6 +523,7 @@ int main( int argc, char * argv[] ) {
     cfgsAsVector.reserve(cfgs.size());
     copy(begin(cfgs), end(cfgs), back_inserter(cfgsAsVector));
 
+    srand(time(NULL));
     ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
     if (args.count("use-components")) {
       string componentSelection = args["use-components"].as<string>();
@@ -592,9 +596,18 @@ int main( int argc, char * argv[] ) {
     }
     
     explorer.explore();
+
+    if (true) { //(args.count("check-ltl")) {
+      PropertyValueTable* ltlResults = explorer.propertyValueTable();
+      bool withCounterexamples = false;
+      ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexamples);
+      cout << "=============================================================="<<endl;
+      ltlResults->printResultsStatistics();
+      cout << "=============================================================="<<endl;
+    }
     
     if (args.count("promela-output")) {
-      string promelaLtlFormulae = explorer.getLtlsAsPromelaCode();
+      string promelaLtlFormulae = explorer.propertyValueTable()->getLtlsAsPromelaCode(boolOptions["promela-output-with-results"]);
       promelaCode += "\n" + promelaLtlFormulae;
       string filename = args["promela-output"].as<string>();
       write_file(filename, promelaCode);

@@ -7,12 +7,30 @@ using namespace SPRAY;
 using namespace CodeThorn;
 using namespace std;
 
-ParProAnalyzer::ParProAnalyzer(std::vector<Flow>& cfgs):
-_cfgs(cfgs),
+ParProAnalyzer::ParProAnalyzer():
 _startTransitionAnnotation(""),
-_transitionGraph(ParProTransitionGraph()),
+_transitionGraph(new ParProTransitionGraph()),
+_numberOfThreadsToUse(1),
+_approximation(COMPONENTS_NO_APPROX) {}
+
+ParProAnalyzer::ParProAnalyzer(std::vector<Flow>& cfgs):
+_startTransitionAnnotation(""),
+_transitionGraph(new ParProTransitionGraph()),
 _numberOfThreadsToUse(1),
 _approximation(COMPONENTS_NO_APPROX) {
+  init(cfgs);
+}
+
+ParProAnalyzer::ParProAnalyzer(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex): 
+_startTransitionAnnotation(""),
+_transitionGraph(new ParProTransitionGraph()),
+_numberOfThreadsToUse(1),
+_approximation(COMPONENTS_NO_APPROX) {
+  init(cfgs, cfgIdToStateIndex);
+}
+
+void ParProAnalyzer::init(std::vector<Flow>& cfgs) {
+  _cfgs = cfgs;
   for (unsigned int i=0; i<_cfgs.size(); i++) {
     _cfgIdToStateIndex.insert(pair<int, int>(i,i));
   }
@@ -24,19 +42,9 @@ _approximation(COMPONENTS_NO_APPROX) {
   }
 }
 
-ParProAnalyzer::ParProAnalyzer(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex): 
-_cfgs(cfgs),
-_cfgIdToStateIndex(cfgIdToStateIndex),
-_startTransitionAnnotation(""),
-_transitionGraph(ParProTransitionGraph()),
-_numberOfThreadsToUse(1),
-_approximation(COMPONENTS_NO_APPROX) {
-  _artificalTerminationLabels = vector<Label>(cfgs.size());
-  //TODO : select a label ID that is guaranteed to not exist yet (instead of the maximum of size_t)
-  size_t max_size = (size_t)-1; // hope that not all of the parallel CFGs contain the maximum node id
-  for (unsigned int i=0; i<_cfgs.size(); i++) {
-    _artificalTerminationLabels[i] = Label(max_size);
-  }
+void ParProAnalyzer::init(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex) {
+  init(cfgs);
+  _cfgIdToStateIndex = cfgIdToStateIndex;
 }
 
 ParProEState ParProAnalyzer::getTerminationState() {
@@ -58,7 +66,7 @@ void ParProAnalyzer::initializeSolver() {
   const ParProEState* startStatePtr= _eStateSet.processNewOrExisting(startState);
   // add the start state to the worklist
   worklist.push_back(startStatePtr);
-  _transitionGraph.setStartState(startStatePtr);
+  _transitionGraph->setStartState(startStatePtr);
 }
 
 void ParProAnalyzer::runSolver() {
@@ -104,19 +112,19 @@ void ParProAnalyzer::runSolver() {
 	  if (pres.first == true) {
 	    addToWorkList(newEStatePtr);
 	  }
-	  _transitionGraph.add(ParProTransition(currentEStatePtr, i->first, newEStatePtr));
+	  _transitionGraph->add(ParProTransition(currentEStatePtr, i->first, newEStatePtr));
 	}
       } // conditional: test if work is available
     } // while
   } // omp parallel
   if(isIncompleteStgReady()) {
     //cout << "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
-    _transitionGraph.setIsComplete(false);
+    _transitionGraph->setIsComplete(false);
   } else {
-    _transitionGraph.setIsComplete(true);
+    _transitionGraph->setIsComplete(true);
     //cout << "analysis finished (worklist is empty)."<<endl;
   }
-  _transitionGraph.setIsPrecise(isPrecise());
+  _transitionGraph->setIsPrecise(isPrecise());
 
   // TODO: remove this temporary test
   //cout << "DEBUG: _eStateSet size: " << _eStateSet.size() << endl;

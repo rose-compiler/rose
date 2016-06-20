@@ -35,7 +35,7 @@ namespace CodeThorn {
       _cfgs(cfgs),
       _annotations(annotations) {}
 
-    list<pair<string, PropertyValue> > mineLtlProperties(int minNumVerifiable, int minNumFalsifiable, int minNumComponents);
+    PropertyValueTable* mineLtlProperties(int minNumVerifiable, int minNumFalsifiable, int minNumComponents);
     bool isExpectedResult(std::string ltlProperty, SelectedCfgsAndIdMap cfgsAndIdMap, EdgeAnnotationMap annotations, PropertyValue expectedResult);
     bool isVerifiable(std::string ltlProperty, SelectedCfgsAndIdMap selectedCfgsAndIdMap, EdgeAnnotationMap annotations);
     bool isFalsifiable(std::string ltlProperty, SelectedCfgsAndIdMap selectedCfgsAndIdMap, EdgeAnnotationMap annotations);

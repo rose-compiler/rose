@@ -34,8 +34,11 @@ namespace CodeThorn {
   // Analyzes the state space of a parallel program. 
   class ParProAnalyzer {
   public:
+    ParProAnalyzer();
     ParProAnalyzer(std::vector<Flow>& cfgs);
     ParProAnalyzer(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex);
+    void init(std::vector<Flow>& cfgs);
+    void init(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex);
     void initializeSolver();
     // run the state space exploration
     void runSolver();
@@ -44,7 +47,7 @@ namespace CodeThorn {
     void setAnnotationMap(EdgeAnnotationMap& emap) { _annotationToEdges = emap; }
     void setComponentApproximation(ComponentApproximation approxMode) { _approximation = approxMode; }
     std::vector<Flow>* getCfgs() { return &_cfgs; }
-    ParProTransitionGraph* getTransitionGraph() { return &_transitionGraph; }
+    ParProTransitionGraph* getTransitionGraph() { return _transitionGraph; }
     bool isPrecise();
 
   private:
@@ -63,7 +66,7 @@ namespace CodeThorn {
     std::vector<Flow> _cfgs;
     boost::unordered_map<int, int> _cfgIdToStateIndex;
     std::string _startTransitionAnnotation;
-    ParProTransitionGraph _transitionGraph;
+    ParProTransitionGraph* _transitionGraph;
     ParProEStateSet _eStateSet;
     ParProWorklist worklist;
     int _numberOfThreadsToUse;

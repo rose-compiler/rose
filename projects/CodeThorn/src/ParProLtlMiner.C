@@ -117,9 +117,8 @@ bool ParProLtlMiner::expectedResultWithComponentSubset(std::string ltlProperty, 
   return false;
 }
 
-list<pair<string, PropertyValue> > ParProLtlMiner::mineLtlProperties(int minNumVerifiable, int minNumFalsifiable, int minNumComponents) {
-  srand(time(NULL));
-  list<pair<string, PropertyValue> > ltlProperties;
+PropertyValueTable* ParProLtlMiner::mineLtlProperties(int minNumVerifiable, int minNumFalsifiable, int minNumComponents) {
+  PropertyValueTable* result = new PropertyValueTable();
   int verifiableCount = 0;
   int falsifiableCount = 0;
   while (verifiableCount < minNumVerifiable || falsifiableCount < minNumFalsifiable) {
@@ -149,15 +148,15 @@ list<pair<string, PropertyValue> > ParProLtlMiner::mineLtlProperties(int minNumV
       string ltlProperty = randomLtlFormula(atomicPropositions, 2);
       if (isVerifiable(ltlProperty, SelectedCfgsAndIdMap(selectedCfgs, cfgIdMap), _annotations) ) {
 	  //&& !(verifiableWithComponentSubset(ltlProperty, SelectedCfgsAndIdMap(selectedCfgs, cfgIdMap), _annotations)) ) {
-	ltlProperties.push_back(pair<string, PropertyValue>(ltlProperty, PROPERTY_VALUE_YES));
+        result->addProperty(ltlProperty, PROPERTY_VALUE_YES);
 	verifiableCount++;
       } else if (isFalsifiable(ltlProperty, SelectedCfgsAndIdMap(selectedCfgs, cfgIdMap), _annotations) ) {
 		 //&& !(falsifiableWithComponentSubset(ltlProperty, SelectedCfgsAndIdMap(selectedCfgs, cfgIdMap), _annotations))) {
-      	ltlProperties.push_back(pair<string, PropertyValue>(ltlProperty, PROPERTY_VALUE_NO));
+        result->addProperty(ltlProperty, PROPERTY_VALUE_NO);
       	falsifiableCount++;
       }
     }
   }
   cout << "DEBUG: LTL mining complete. Verifiable properties: " << verifiableCount << "  falsifiable properties: " << falsifiableCount << endl;
-  return ltlProperties;
+  return result;
 }

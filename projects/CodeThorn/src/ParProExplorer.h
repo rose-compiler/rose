@@ -39,9 +39,10 @@ namespace CodeThorn {
     ParProExplorer(std::vector<Flow>& cfgs, EdgeAnnotationMap& annotationMap);
     // analyzes the behavior of the parallel program according to the selected options
     void explore();
-    ParProTransitionGraph* getLatestTransitionGraph();
+    std::pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*>  exploreOnce();
     std::string getLtlsAsPromelaCode();
     std::string getLtlsAsString();
+    PropertyValueTable* propertyValueTable();
 
     void setComponentSelection(ComponentSelection componentSelection) { _componentSelection = componentSelection; }
     void setFixedComponentIds(std::set<int> fixedComponents) { _fixedComponentIds = fixedComponents; }
@@ -58,10 +59,17 @@ namespace CodeThorn {
     void setVisualize(bool viz) { _visualize = viz; }
 
   private:
+    PropertyValueTable* ltlAnalysis(
+                    std::pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*> stgAndSelectedComponents);
+    std::set<int> randomSetNonNegativeInts(int size, int maxInt);
+    SelectedCfgsAndIdMap componentSubset(std::set<int> componentIds);
+
     std::vector<Flow> _cfgs;
     EdgeAnnotationMap _annotationMap;
     boost::unordered_map<int, int> _cfgIdToStateIndex;
-    std::list<std::pair<std::string, PropertyValue> > _properties;
+    PropertyValueTable* _properties;
+    int _numVerified;
+    int _numFalsified;
 
     ComponentSelection _componentSelection;
     std::set<int> _fixedComponentIds;
