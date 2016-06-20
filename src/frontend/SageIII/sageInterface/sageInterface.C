@@ -6824,7 +6824,8 @@ SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scop
   for (size_t i = 0; i<stmt_list.size(); i++)
   {
     SgStatement* cur_stmt = stmt_list[i];
-    if (isSgDeclarationStatement(cur_stmt))
+    // We should exclude pragma decl. We don't want to insert things after pragmas.
+    if (isSgDeclarationStatement(cur_stmt) && !isSgPragmaDeclaration (cur_stmt))
       rt = cur_stmt;
     //if (isSgImplicitStatement(cur_stmt)) || isSgFortranIncludeLine(cur_stmt) || isSgDeclarationStatement
   }
@@ -18051,6 +18052,11 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
      // has to resolve this recursively
     return convertRefToInitializedName(lhs);
   } // The following expression types are usually introduced by left hand operands of DotExp, ArrowExp
+  else if (isSgThisExp(current))
+  {
+    SgThisExp* texp = isSgThisExp(current);
+    name = NULL; // inside a class, there is no initialized name at all!! what to do??
+  }
   else if (isSgPointerDerefExp(current))
   {
     return convertRefToInitializedName(isSgPointerDerefExp(current)->get_operand());
@@ -18059,12 +18065,24 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
   {
     return convertRefToInitializedName(isSgCastExp(current)->get_operand());
   }
+  // Scientific applications often use *(address + offset) to access array elements
+  // If a pointer dereferencing  is applied to AddOp, we assume the left operand is the variable of our interests
+  else if (isSgAddOp(current))
+  {
+    SgExpression* lhs = isSgAddOp(current)->get_lhs_operand();
+    return convertRefToInitializedName(lhs);
+  }
+  else if (isSgSubtractOp(current))
+  {
+    SgExpression* lhs = isSgSubtractOp(current)->get_lhs_operand();
+    return convertRefToInitializedName(lhs);
+  }
  else
   {
     cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
     ROSE_ASSERT(false);
   }
-  ROSE_ASSERT(name != NULL);
+  //ROSE_ASSERT(name != NULL);
   return name;
 }
 
@@ -20522,6 +20540,28 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
    }
 
 
+bool SageInterface::insideSystemHeader (SgLocatedNode* node)
+{
+  bool rtval = false; 
+  ROSE_ASSERT (node != NULL);
+  Sg_File_Info* finfo = node->get_file_info();
+  if (finfo!=NULL)
+  {
+    string fname = finfo->get_filenameString();
+    string buildtree_str1 = string("include-staging/gcc_HEADERS");
+    string buildtree_str2 = string("include-staging/g++_HEADERS");
+    string installtree_str1 = string("include/edg/gcc_HEADERS"); 
+    string installtree_str2 = string("include/edg/g++_HEADERS"); 
+    // if the file name has a sys header path of either source or build tree
+    if ((fname.find (buildtree_str1, 0) != string::npos) ||
+        (fname.find (buildtree_str2, 0) != string::npos) ||
+        (fname.find (installtree_str1, 0) != string::npos) ||
+        (fname.find (installtree_str2, 0) != string::npos)
+       )
+      rtval = true;
+  }
+  return rtval;  
+}
 
 
 bool
