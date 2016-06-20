@@ -20,14 +20,14 @@ emit_cpp_warning() {
 SAWYER_ROOT="sawyer-$(date +%Y%m%d)"
 if [ -d "$SAWYER_ROOT" ]; then
     (
-	cd "$SAWYER_ROOT"
-	git fetch "$SAWYER_REPO" master
-	git merge FETCH_HEAD
+        cd "$SAWYER_ROOT"
+        git fetch "$SAWYER_REPO" master
+        git merge FETCH_HEAD
     )
 else
     git clone "$SAWYER_REPO" "$SAWYER_ROOT"
 fi
-	
+        
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
 for f in \
@@ -52,20 +52,21 @@ done
 
 # Copy some of Sawyer's unit tests into the ROSE source tree.  The destination location should be changed to be the same
 # as the rest of the unit testing, but that location has not been decided yet.
-for f in                                       \
-    Container/addressMapUnitTests.C            \
-    Container/bitvecTests.C                    \
-    Container/denseIntegerSetUnitTests.C       \
-    Container/distinctListUnitTests.C          \
-    Container/graphIsomorphismTests.C          \
-    Container/graphUnitTests.C                 \
-    Container/indexedGraphDemo.C               \
-    Container/intervalSetMapUnitTests.C                \
-    Container/intervalUnitTests.C              \
-    Container/lineVectorUnitTests.C            \
-    Container/listUnitTests.C                  \
-    Container/mapUnitTests.C                   \
-    Container/optionalUnitTests.C              \
+for f in                                        \
+    Container/addressMapUnitTests.C             \
+    Container/attributeUnitTests.C              \
+    Container/bitvecTests.C                     \
+    Container/denseIntegerSetUnitTests.C        \
+    Container/distinctListUnitTests.C           \
+    Container/graphIsomorphismTests.C           \
+    Container/graphUnitTests.C                  \
+    Container/indexedGraphDemo.C                \
+    Container/intervalSetMapUnitTests.C         \
+    Container/intervalUnitTests.C               \
+    Container/lineVectorUnitTests.C             \
+    Container/listUnitTests.C                   \
+    Container/mapUnitTests.C                    \
+    Container/optionalUnitTests.C               \
     Container/setUnitTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";

@@ -212,6 +212,18 @@ Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, AstNodeClass* gr
    
 */
 
+bool Grammar::isFilteredMemberVariable(string varName) {
+  // c++11: set<string> filteredMemberVariablesSet={...};
+  string nonAtermMemberVariables[]={"parent","freepointer","isModified","containsTransformation","startOfConstruct","endOfConstruct",
+                                    "attachedPreprocessingInfoPtr","containsTransformationToSurroundingWhitespace","attributeMechanism",
+                                    "source_sequence_value","need_paren","lvalue","operatorPosition","originalExpressionTree","uses_operator_syntax",
+                                    "globalQualifiedNameMapForNames","globalQualifiedNameMapForTypes","globalQualifiedNameMapForTemplateHeaders",
+                                    "globalTypeNameMap","globalMangledNameMap","globalTypeTable","shortMangledNameCache","globalFunctionTypeTable"
+  };
+  set<string> filteredMemberVariablesSet(nonAtermMemberVariables, nonAtermMemberVariables + sizeof(nonAtermMemberVariables)/sizeof(nonAtermMemberVariables[0]) );
+  return filteredMemberVariablesSet.find(varName)!=filteredMemberVariablesSet.end();
+}
+
 // MS: 2002, 2003, 2014
 Grammar::GrammarSynthesizedAttribute 
 Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
@@ -229,12 +241,7 @@ Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
   string grammarSymListOpPrefix="";
   string grammarSymListOpPostfix="*";
   
-  // c++11: set<string> filteredMemberVariablesSet={...};
-  string nonAtermMemberVariables[]={"parent","freepointer","isModified","containsTransformation","startOfConstruct","endOfConstruct",
-                                    "attachedPreprocessingInfoPtr","containsTransformationToSurroundingWhitespace","attributeMechanism",
-                                    "source_sequence_value","need_paren","lvalue","operatorPosition","originalExpressionTree"};
-  set<string> filteredMemberVariablesSet(nonAtermMemberVariables, nonAtermMemberVariables + sizeof(nonAtermMemberVariables)/sizeof(nonAtermMemberVariables[0]) );
-
+ 
   string rhsTerminalSuccessors;
   vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
   for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
@@ -250,7 +257,7 @@ Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
     if(type=="unsigned int") type="<int>";
     
     string varName=(*stringListIterator)->getVariableNameString();
-    if(filteredMemberVariablesSet.find(varName)!=filteredMemberVariablesSet.end()) {
+    if(isFilteredMemberVariable(varName)) {
       continue;
     }
     if(rhsTerminalSuccessors!="") {

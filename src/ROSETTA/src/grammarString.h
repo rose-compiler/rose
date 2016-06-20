@@ -136,7 +136,7 @@ class GrammarString
   static bool isContainedIn ( const std::string& longString, const std::string& shortString );
   // A smarter string concatination function (corrects for space in the target automatically)
   static std::string stringConcatenate ( const std::string& target, const std::string& endingString );
-
+  
 };
 
 #endif

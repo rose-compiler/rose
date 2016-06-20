@@ -453,6 +453,8 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // endif for ifndef ROSE_USE_SWIG_SUPPORT
 // #endif
 
+#include <initialize.h>                                 // defines rose::initialize
+
 #endif
 
 

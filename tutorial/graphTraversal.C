@@ -113,6 +113,9 @@ struct testPredEdges : public unary_function<EdgeImpl*,void>{
 int
 main( int argc, char * argv[] )
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
   // SgProject* project = new SgProject(argc, argv); //test.getSgProject();
 
      GraphBears graph;

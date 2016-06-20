@@ -548,19 +548,19 @@ my %config = load_config $config_file, \%variables;
 # is disabled.
 my $test_title = $config{title} || $target;
 if ($config{disabled} && $config{disabled} ne 'no') {
-  print "  TEST   $test_title (disabled: $config{disabled})\n";
+  print "  TEST     $test_title (disabled: $config{disabled})\n";
   open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
   print TARGET "test is disabled: $config{disabled}\n";
   close TARGET;
   exit 0;
 } elsif ($config{require_memory} && $config{require_memory} > installed_memory) {
-  print "  TEST   $test_title (disabled: this machine does not have enough memory)\n";
+  print "  TEST     $test_title (disabled: this machine does not have enough memory)\n";
   open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
   print TARGET "test is skipped: not enough memory installed\n";
   close TARGET;
   exit 0;
 }
-print "  TEST   $test_title\n";
+print "  TEST     $test_title\n";
 
 # Should everything run in a subdirectory?
 my $subdir;

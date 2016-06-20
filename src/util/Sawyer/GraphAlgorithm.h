@@ -270,6 +270,13 @@ public:
             const std::vector<typename Graph::ConstEdgeIterator> &edges2) const {
         return true;
     }
+
+    /** Called at each step during the algorithm.
+     *
+     *  This method is called each time the algorithm tests a potential solution. It can be used to report progress or
+     *  terminate the search after some number of iterations.  The argument is the number of vertices in the potential
+     *  solution. */
+    void progress(size_t size) {}
 };
 
 /** Functor called for each common subgraph isomorphism solution.
@@ -706,6 +713,7 @@ private:
     void recurse(const Vam &vam, size_t level = 0) {
         if (debug)
             showState(vam, "entering state", level);        // debugging
+        equivalenceP_.progress(level);
         if (isSolutionPossible(vam)) {
             size_t i = pickVertex(vam);
             SAWYER_MESG(debug) <<"  picked i = " <<i <<"\n";
