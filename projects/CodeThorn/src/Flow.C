@@ -305,6 +305,30 @@ string Flow::toString() {
   return ss.str();
 }
 
+pair<set<Edge>::iterator, bool> Flow::insert(Edge e) {
+  return _edgeSet.insert(e);
+}
+
+void Flow::erase(Flow::iterator iter) {
+  _edgeSet.erase(iter);
+}
+
+size_t Flow::erase(Edge e) {
+  return _edgeSet.erase(e);
+}
+
+size_t Flow::size() {
+  return _edgeSet.size();
+}
+
+Flow::iterator Flow::begin() {
+  return _edgeSet.begin();
+}
+
+Flow::iterator Flow::end() {
+  return _edgeSet.end();
+}
+
 Flow Flow::operator+(Flow& s2) {
   Flow result;
   result=*this;
