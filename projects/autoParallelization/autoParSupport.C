@@ -1486,8 +1486,11 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     {
       //= OmpSupport::buildOmpAttribute(OmpSupport::e_parallel_for,sg_node);
       omp_attribute->setOmpDirectiveType(OmpSupport::e_parallel_for);
-      //cout<<"debug autoParSupport.C attaching att to sg_node "<<sg_node<<endl;
-      //cout<<"at line "<<isSgLocatedNode(sg_node)->get_file_info()->get_line()<<endl;
+      if (enable_debug)
+      {
+        cout<<"debug patch generation: attaching OMP att to sg_node "<<sg_node->class_name();
+        cout<<" at line "<<isSgLocatedNode(sg_node)->get_file_info()->get_line()<<endl;
+      }
       OmpSupport::addOmpAttribute(omp_attribute,sg_node);
       // 6. Generate and insert #pragma omp parallel for 
       // Liao, 2/12/2010
@@ -1519,6 +1522,10 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     // this output file name can be any file name, we just choose rose_file.c
     string ofilename= "rose_"+StringUtility::stripPathFromFileName(filename); 
     diff_header += " "+ ofilename+"\n";
+    if (enable_debug)
+    {
+      cout<<"generating patch file ... "<< endl;
+    }
 
     //debug only
     //cout<<"diff_header\n"<<diff_header<<endl;
@@ -1530,7 +1537,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(sfile, V_SgStatement);
     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
     {
-      patchContent += OmpSupport::generateDiffTextFromOmpAttribute (*i);
+     patchContent += OmpSupport::generateDiffTextFromOmpAttribute (*i);
     }
 
     //cout<<"patch content is\n"<<patchContent<<endl;

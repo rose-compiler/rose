@@ -2005,7 +2005,7 @@ ROSE_DLL_API void ReductionRecognition(SgForStatement* loop, std::set< std::pair
 /*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression. */
 ROSE_DLL_API void constantFolding(SgNode* r);
 
-//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted.
+//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements (with duplicated statement s) and return expressions with side effects. Return the number of statements inserted.
 /*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement.
  */
 ROSE_DLL_API int instrumentEndOfFunction(SgFunctionDeclaration * func, SgStatement* s);

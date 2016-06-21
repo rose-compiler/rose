@@ -74,7 +74,9 @@ main (int argc, char *argv[])
 
 #endif
   //Prepare liveness analysis etc.
-  initialize_analysis (project,enable_debug);   
+  //TOO much output for analysis debugging info.
+  //initialize_analysis (project,enable_debug);   
+  initialize_analysis (project, false);   
   // For each source file in the project
     SgFilePtrList & ptr_list = project->get_fileList();
     for (SgFilePtrList::iterator iter = ptr_list.begin(); iter!=ptr_list.end();
@@ -151,13 +153,16 @@ main (int argc, char *argv[])
           SgInitializedName* invarname = getLoopInvariant(current_loop);
           if (invarname != NULL)
           {
-            hasOpenMP = ParallelizeOutermostLoop(current_loop, &array_interface, annot);
+            bool ret = ParallelizeOutermostLoop(current_loop, &array_interface, annot);
+            if (ret) // if at least one loop is parallelized, we set hasOpenMP to be true for the entire file.
+              hasOpenMP = true;  
           }
           else // cannot grab loop index from a non-conforming loop, skip parallelization
           {
             if (enable_debug)
               cout<<"Skipping a non-canonical loop at line:"<<current_loop->get_file_info()->get_line()<<"..."<<endl;
-            hasOpenMP = false;
+            // We should not reset it to false. The last loop may not be parallelizable. But a previous one may be.  
+            //hasOpenMP = false;
           }
         }// end for loops
       } // end for-loop for declarations
