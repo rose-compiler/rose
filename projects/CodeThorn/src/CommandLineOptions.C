@@ -36,13 +36,8 @@ void BoolOptions::registerOption(string name, bool defaultval) {
   mapping[name]=defaultval;
 }
 
-string BoolOptions::toString() {
-  stringstream options;
-  options<<"Options:"<<endl;
-  for(map<string,bool>::iterator i=mapping.begin();i!=mapping.end();++i) {
-    options<<(*i).first<<":"<<(*i).second<<endl;
-  }
-  return options.str();
+void BoolOptions::processZeroArgumentsOption(string name) {
+  registerOption(name,args.count(name)>0);
 }
 
 void BoolOptions::processOptions() {
@@ -71,3 +66,13 @@ void BoolOptions::processOptions() {
     }
   }
 }
+
+string BoolOptions::toString() {
+  stringstream options;
+  options<<"Options:"<<endl;
+  for(map<string,bool>::iterator i=mapping.begin();i!=mapping.end();++i) {
+    options<<(*i).first<<":"<<(*i).second<<endl;
+  }
+  return options.str();
+}
+

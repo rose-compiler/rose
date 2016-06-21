@@ -303,13 +303,15 @@ int main( int argc, char * argv[] ) {
       ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
       ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
       ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
-      ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
+      ("rersmode", po::value< string >(), "deprecated. Use rers-mode instead.")
+      ("rers-mode", "sets several options such that RERS-specifics are utilized and observed.")
       ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
       ;
 
     svcompOptions.add_options()
+      ("svcomp-mode", "sets default options for all following SVCOMP-specific options.")
+      ("enable-external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error, __VERIFIER_nondet_int, exit functions.")
       ("error-function", po::value< string >(), "detect a verifier error function with name [arg] (terminates verification)")
-      ("enable-external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error,__VERIFIER_nondet_int,exit functions.")
       ;
 
     equivalenceCheckingOptions.add_options()
@@ -438,6 +440,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("relop-constraints",false); // not accessible on command line
   boolOptions.registerOption("stderr-like-failed-assert",false);
   boolOptions.registerOption("rersmode",false);
+  boolOptions.registerOption("rers-mode",false);
   boolOptions.registerOption("rers-numeric",false);
   boolOptions.registerOption("eliminate-stg-back-edges",false);
   boolOptions.registerOption("rule-const-subst",true);
@@ -465,6 +468,13 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("normalize",true);
 
   boolOptions.processOptions();
+
+  /* set booloptions for zero-argument options (does not require
+     yes/no on command-line, but resolves it by checking for its
+     existence on the command line to true or false)
+  */
+  boolOptions.processZeroArgumentsOption("svcomp-mode");
+  boolOptions.processZeroArgumentsOption("enable-external-function-semantics");
 
   //TODO: remove this temporary test
   if (args.count("cfg-dot-input")) {
@@ -887,14 +897,21 @@ int main( int argc, char * argv[] ) {
   //analyzer.setSkipArrayAccesses(true);
 
   // handle RERS mode: reconfigure options
-  if(boolOptions["rersmode"]) {
+  if(boolOptions["rersmode"]||boolOptions["rers-mode"]) {
     cout<<"INFO: RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
     boolOptions.registerOption("stderr-like-failed-assert",true);
+  }
+
+  if(args.count("svcomp-mode")) {
+    analyzer.enableExternalFunctionSemantics();
+    string errorFunctionName="__VERIFIER_error";
+    analyzer.setExternalErrorFunctionName(errorFunctionName);
   }
 
   if(args.count("enable-external-function-semantics")) {
     analyzer.enableExternalFunctionSemantics();
   }
+
   if(args.count("error-function")) {
     string errorFunctionName=args["error-function"].as<string>();
     analyzer.setExternalErrorFunctionName(errorFunctionName);

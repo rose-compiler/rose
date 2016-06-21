@@ -15,6 +15,7 @@ public:
   BoolOptions(int argc, char* argv[]);
   void init(int argc0, char* argv0[]);
   void registerOption(std::string name, bool defaultval);
+  void processZeroArgumentsOption(std::string name);
   void processOptions();
   bool operator[](std::string option);
   std::string toString();
