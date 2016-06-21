@@ -38,6 +38,9 @@
 #include "ltlast/formula.hh"
 #include "tgbaalgos/replayrun.hh"
 #include "tgbaalgos/projrun.hh"
+#include "ltlvisit/simplify.hh"
+#include "ltlvisit/relabel.hh"
+//#include "ltlast/atomic_prop.hh"
 
 //BOOST includes
 #include "boost/algorithm/string.hpp"
@@ -55,7 +58,6 @@ namespace CodeThorn {
     bool expectedRes;
   };
 
-  // define LtlProperty std::pair<int, std::string>
   struct LtlProperty {
     int propertyNumber;
     std::string ltlString;
@@ -67,11 +69,14 @@ namespace CodeThorn {
   class SpotConnection {
     public:
       SpotConnection() {};
-      //constructor with automatic initialization
-      SpotConnection(std::string ltl_formulae_file) {init(ltl_formulae_file);};
+      //constructors with automatic initialization
+      SpotConnection(std::string ltl_formulae_file) { init(ltl_formulae_file); }
+      SpotConnection(std::list<std::string> ltl_formulae) { init(ltl_formulae); }
       //an initilaization that reads in a text file with ltl formulae (RERS 2014 format). Extracts the behaviorProperties
       // and creates an ltlResults table of the respective size (all results initialized to be "unknown").
       void init(std::string ltl_formulae_file);
+      // initializes the SpotConnection to check the ltl formulae that are passed in as a list of strings.
+      void init(std::list<std::string> ltl_formulae);
       //Takes a CodeThorn STG as a model and checks for all ltl formulae loaded into this SpotConnection object wether or not the model
       // satisfies them. Writes results into the "ltlResults" member of this object, only checks properties for which no results exist yet.
       // "inVals" and "outVals" refer to the input and output alphabet of the ltl formulae to be checked.
@@ -104,6 +109,9 @@ namespace CodeThorn {
       // and 'o' for "maxIntVal" to 26 (RERS format)
       std::string int2PropName(int ioVal, int maxInVal);
       void setModeLTLDriven(bool ltlDriven);
+      // read in an LTL formula string and return a formula with the same semantics in SPIN's syntax
+      std::string spinSyntax(std::string ltlFormula);
+
     private:
       //Removes every "WU" in a string with 'W". Necessary because only accepts this syntax.
       string& parseWeakUntil(std::string& ltl_string);

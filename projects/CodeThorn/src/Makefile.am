@@ -99,6 +99,8 @@ codethorn_SOURCES = \
   Analyzer.h                       \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
+  ParProExplorer.C                 \
+  ParProExplorer.h                 \
   ArrayElementAccessData.h \
   ArrayElementAccessData.C \
   CollectionOperators.h            \
@@ -144,6 +146,8 @@ codethorn_SOURCES = \
   Specialization.C \
   SpotConnection.C \
   SpotConnection.h \
+  SpotMiscellaneous.C \
+  SpotMiscellaneous.h \
   SpotTgba.C \
   SpotTgba.h \
   SpotState.C \
@@ -156,6 +160,8 @@ codethorn_SOURCES = \
   ParProSpotState.h \
   ParProSpotSuccIter.C \
   ParProSpotSuccIter.h \
+  ParProLtlMiner.C                 \
+  ParProLtlMiner.h                 \
   ReadWriteData.h \
   StateRepresentations.C           \
   StateRepresentations.h           \
@@ -387,7 +393,7 @@ varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
   rdmain.C 
 
 woodpecker_DEPENDENCIES=libspray.la
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize
 woodpecker_LDFLAGS = -L$(SPOT_PREFIX)/lib
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
@@ -398,6 +404,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   UDAstAttribute.C                 \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
+  SpotMiscellaneous.C 		   \
+  SpotMiscellaneous.h 		   \
   ProgramStats.h                 \
   ProgramStats.C                 \
   FIConstAnalysis.h FIConstAnalysis.C \
@@ -424,7 +432,7 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
 #  DFAnalysisBase.h
 
 analyterix_DEPENDENCIES=libspray.la
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
 analyterix_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
@@ -439,6 +447,8 @@ analyterix_SOURCES = \
   LanguageRestrictorCollection.h \
   Miscellaneous.C \
   Miscellaneous.h \
+  SpotMiscellaneous.C \
+  SpotMiscellaneous.h \
   ProgramStats.C \
   ProgramStats.h \
   PropertyValueTable.C \

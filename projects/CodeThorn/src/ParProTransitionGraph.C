@@ -50,3 +50,14 @@ size_t ParProTransitionGraph::size() {
   }
   return size;
 }
+
+
+set<string> ParProTransitionGraph::getAllAnnotations() {
+  set<string> result;
+  for (EStateTransitionMap::iterator i=_outEdges.begin(); i!=_outEdges.end(); i++) {
+    for (ParProTransitions::iterator k=i->second.begin(); k!=i->second.end(); k++) {
+      result.insert(k->edge.getAnnotation());
+    }
+  }
+  return result;
+}

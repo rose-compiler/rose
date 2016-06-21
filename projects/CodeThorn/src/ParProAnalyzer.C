@@ -7,6 +7,54 @@ using namespace SPRAY;
 using namespace CodeThorn;
 using namespace std;
 
+ParProAnalyzer::ParProAnalyzer():
+_startTransitionAnnotation(""),
+_transitionGraph(new ParProTransitionGraph()),
+_numberOfThreadsToUse(1),
+_approximation(COMPONENTS_NO_APPROX) {}
+
+ParProAnalyzer::ParProAnalyzer(std::vector<Flow>& cfgs):
+_startTransitionAnnotation(""),
+_transitionGraph(new ParProTransitionGraph()),
+_numberOfThreadsToUse(1),
+_approximation(COMPONENTS_NO_APPROX) {
+  init(cfgs);
+}
+
+ParProAnalyzer::ParProAnalyzer(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex): 
+_startTransitionAnnotation(""),
+_transitionGraph(new ParProTransitionGraph()),
+_numberOfThreadsToUse(1),
+_approximation(COMPONENTS_NO_APPROX) {
+  init(cfgs, cfgIdToStateIndex);
+}
+
+void ParProAnalyzer::init(std::vector<Flow>& cfgs) {
+  _cfgs = cfgs;
+  for (unsigned int i=0; i<_cfgs.size(); i++) {
+    _cfgIdToStateIndex.insert(pair<int, int>(i,i));
+  }
+  _artificalTerminationLabels = vector<Label>(cfgs.size());
+  //TODO : select a label ID that is guaranteed to not exist yet (instead of the maximum of size_t)
+  size_t max_size = (size_t)-1; // hope that not all of the parallel CFGs contain the maximum node id
+  for (unsigned int i=0; i<_cfgs.size(); i++) {
+    _artificalTerminationLabels[i] = Label(max_size);
+  }
+}
+
+void ParProAnalyzer::init(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex) {
+  init(cfgs);
+  _cfgIdToStateIndex = cfgIdToStateIndex;
+}
+
+ParProEState ParProAnalyzer::getTerminationState() {
+  ParProLabel label = ParProLabel(_cfgs.size());
+  for (unsigned int i=0; i<_cfgs.size(); i++) {
+    label[i] = _artificalTerminationLabels[i]; 
+  }
+  return ParProEState(label);
+}
+
 void ParProAnalyzer::initializeSolver() {
   // generate the initial global EState of the parallel program
   ParProLabel startLabel = ParProLabel(_cfgs.size());
@@ -18,7 +66,7 @@ void ParProAnalyzer::initializeSolver() {
   const ParProEState* startStatePtr= _eStateSet.processNewOrExisting(startState);
   // add the start state to the worklist
   worklist.push_back(startStatePtr);
-  _transitionGraph.setStartState(startStatePtr);
+  _transitionGraph->setStartState(startStatePtr);
 }
 
 void ParProAnalyzer::runSolver() {
@@ -29,7 +77,7 @@ void ParProAnalyzer::runSolver() {
   bool terminateEarly=false;
   omp_set_num_threads(workers);
 
-  cout <<"STATUS: Running solver p1 for parallel programs with "<<workers<<" threads."<<endl;
+  //cout <<"STATUS: Running solver p1 for parallel programs with "<<workers<<" threads."<<endl;
 # pragma omp parallel shared(workVector) private(threadNum)
   {
     threadNum=omp_get_thread_num();
@@ -64,22 +112,22 @@ void ParProAnalyzer::runSolver() {
 	  if (pres.first == true) {
 	    addToWorkList(newEStatePtr);
 	  }
-	  _transitionGraph.add(ParProTransition(currentEStatePtr, i->first, newEStatePtr));
+	  _transitionGraph->add(ParProTransition(currentEStatePtr, i->first, newEStatePtr));
 	}
       } // conditional: test if work is available
     } // while
   } // omp parallel
   if(isIncompleteStgReady()) {
-    cout << "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
-    _transitionGraph.setIsComplete(false);
+    //cout << "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
+    _transitionGraph->setIsComplete(false);
   } else {
-    _transitionGraph.setIsComplete(true);
-    cout << "analysis finished (worklist is empty)."<<endl;
+    _transitionGraph->setIsComplete(true);
+    //cout << "analysis finished (worklist is empty)."<<endl;
   }
-  _transitionGraph.setIsPrecise(isPrecise());
+  _transitionGraph->setIsPrecise(isPrecise());
 
   // TODO: remove this temporary test
-  cout << "DEBUG: _eStateSet size: " << _eStateSet.size() << endl;
+  //cout << "DEBUG: _eStateSet size: " << _eStateSet.size() << endl;
   //  cout << "DEBUG: _eStateSet elements: " << endl;
   //  for (ParProEStateSet::iterator i=_eStateSet.begin(); i!=_eStateSet.end(); i++) {
   //    cout << "DEBUG: " << (*i)->toString() << endl;
@@ -97,16 +145,53 @@ list<pair<Edge, ParProEState> > ParProAnalyzer::parProTransferFunction(const Par
     for(Flow::iterator k=outEdges.begin(); k!=outEdges.end(); k++) { 
       Edge e=*k;
       // TODO: combine "feasibleAccordingToGlobalState(...)" and "transfer(...)" to avoid 2nd lookup and iteration
-      if (feasibleAccordingToGlobalState(e, source)) {
-	ParProEState target = transfer(source, e, i);
-	result.push_back(pair<Edge, ParProEState>(e, target));
+      if (isPreciseTransition(e, source)) {
+        if (feasibleAccordingToGlobalState(e, source)) {
+   	  ParProEState target = transfer(source, e);
+	  result.push_back(pair<Edge, ParProEState>(e, target));
+        }
+      } else {
+	// we do not know whether or not the transition can be triggered
+	if (_approximation==COMPONENTS_OVER_APPROX) {
+	  // we over-approximate the global system's behavior, therefore we generate the path where the tranistion is triggered...
+	  ParProEState target = transfer(source, e);
+	  result.push_back(pair<Edge, ParProEState>(e, target));
+	  // ...but also include the case where the execution stops (none of these two cases is guaranteed to be part of the actual global behavior).
+	  Edge terminationEdge = Edge(source->getLabel()[i], _artificalTerminationLabels[i]);
+	  terminationEdge.setAnnotation("terminate (due to approximation)");
+	  result.push_back(pair<Edge, ParProEState>(terminationEdge, getTerminationState()));
+	} else if (_approximation==COMPONENTS_UNDER_APPROX) {
+	  // under-approximation here means to simply not include transitions that may or may not be feasible
+	} else {
+	  cerr << "ERROR: some parallel CFGs are ignored and a synchronization tries to communicate with one of them, however no abstraction is selected." << endl;
+	  ROSE_ASSERT(0);
+	}
       }
     } // for each outgoing CFG edge of a particular parallel component's current label
   } // for each parallel component of the analyzed system
   return result;
 }
 
+bool ParProAnalyzer::isPreciseTransition(Edge e, const ParProEState* eState) {
+  if (e.getAnnotation() == _startTransitionAnnotation) {
+    return true; // unsynchronized transitions within the current STG computation are always precise
+  }
+  ParProLabel sourceLabel = eState->getLabel();
+  EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
+  ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
+  boost::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
+  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); i++) {
+    if (_cfgIdToStateIndex.find(i->first) == _cfgIdToStateIndex.end()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool ParProAnalyzer::feasibleAccordingToGlobalState(Edge e, const ParProEState* eState) {
+  if (e.getAnnotation() == _startTransitionAnnotation) {
+    return true; // unsynchronized transitions within the current STG computation are always precise
+  }
   ParProLabel sourceLabel = eState->getLabel();
   EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
   ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
@@ -114,7 +199,7 @@ bool ParProAnalyzer::feasibleAccordingToGlobalState(Edge e, const ParProEState* 
   for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); i++) {
     bool foundAnEdgeInCfg = false;
     for (list<Edge>::iterator k=i->second.begin(); k!=i->second.end(); k++) {
-      if (sourceLabel[i->first] == k->source) {
+      if (sourceLabel[_cfgIdToStateIndex[i->first]] == k->source) {
 	foundAnEdgeInCfg = true;
 	break;
       }
@@ -126,16 +211,20 @@ bool ParProAnalyzer::feasibleAccordingToGlobalState(Edge e, const ParProEState* 
   return true;
 }
 
-ParProEState ParProAnalyzer::transfer(const ParProEState* eState, Edge e, unsigned int cfgId) {
+ParProEState ParProAnalyzer::transfer(const ParProEState* eState, Edge e) {
   ParProLabel targetLabel = eState->getLabel();
   EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
   ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
   boost::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
   for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); i++) {
-    for (list<Edge>::iterator k=i->second.begin(); k!=i->second.end(); k++) {
-      if (targetLabel[i->first] == k->source) {
-        targetLabel[i->first] = k->target;
-	break;
+    // only follow transitions in those automata for which the state is actually stored (and therefore not abstracted)
+    // (a synchronized transition might involve several automata, some of which may be ignored (abstraction))
+    if (_cfgIdToStateIndex.find(i->first) != _cfgIdToStateIndex.end()) {
+      for (list<Edge>::iterator k=i->second.begin(); k!=i->second.end(); k++) {
+	if (targetLabel[_cfgIdToStateIndex[i->first]] == k->source) {
+	  targetLabel[_cfgIdToStateIndex[i->first]] = k->target;
+	  break;
+	}
       }
     }
   }

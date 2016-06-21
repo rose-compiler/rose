@@ -89,8 +89,20 @@ string PromelaCodeGenerator::generateCode(CfgsAndAnnotationMap& parallelComponen
     cfgId++;
   }
 
+  result += ltlAtomicPropositions(annotationMap) + "\n";
+
   return result;
 };
+
+string PromelaCodeGenerator::ltlAtomicPropositions(EdgeAnnotationMap& annotationMap) {
+  stringstream ltlAtomicPropositions;
+  for (EdgeAnnotationMap::iterator i=annotationMap.begin(); i!=annotationMap.end(); i++) {
+    if (i->first != "") { //special treatment of the implicit no-operation (nop) 
+      ltlAtomicPropositions << "#define p_"<<i->first<<"\t (lastAction == "<<i->first<<")" << endl;
+    }
+  }
+  return ltlAtomicPropositions.str();
+}
 
 string PromelaCodeGenerator::generateActionListener() {
   stringstream actionChannelAndListener;

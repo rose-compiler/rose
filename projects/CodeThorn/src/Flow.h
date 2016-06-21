@@ -63,17 +63,29 @@ namespace SPRAY {
    * \date 2012.
    */
 
-  class Flow : public std::set<Edge> {
-  public:  
+  class Flow
+#if 0    //#ifndef USE_SAWYER_GRAPHS
+  : public std::set<Edge>
+#endif
+  {
+  public: 
+    typedef std::set<Edge>::iterator iterator;
     Flow();
+    iterator begin();
+    iterator end();
     Flow operator+(Flow& s2);
     Flow& operator+=(Flow& s2);
+    std::pair<std::set<Edge>::iterator, bool> insert(Edge e);
+    void erase(Flow::iterator iter);
+    size_t erase(Edge e);
+    size_t size();
     LabelSet nodeLabels();
     LabelSet sourceLabels();
     LabelSet targetLabels();
     LabelSet pred(Label label);
     LabelSet succ(Label label);
     LabelSet reachableNodes(Label start);
+    std::set<std::string> getAllAnnotations();
 
     //LabelSet reachableNodesOnPath(Label start, Label target);
     /* computes all nodes which are reachable in the graph from the start node. A path is terminated by either the target node 
@@ -126,6 +138,7 @@ namespace SPRAY {
     Sawyer::Container::Graph< Label, EdgeType, Label>  _sawyerflowGraph;
     FlowGraph _flowGraph;
     Label _startLabel;
+    std::set<Edge> _edgeSet;
   };
   
   class InterEdge {

@@ -94,7 +94,9 @@ SPRAY::PASolver1::runSolver() {
         }
         
         Flow outEdges=_flow.outEdges(lab1);
-        _workList.add(outEdges);
+	for (Flow::iterator i=outEdges.begin(); i!=outEdges.end(); i++) {
+	  _workList.add(*i);
+	}
         if(_trace)
           cout<<"TRACE: adding to worklist: "<<outEdges.toString()<<endl;
       } else {

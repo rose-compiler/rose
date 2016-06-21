@@ -2,6 +2,7 @@
 #include "SpotConnection.h"
 
 using namespace CodeThorn;
+using namespace std;
 
 void SpotConnection::init(std::string ltl_formulae_file) {
   //open text file that contains the properties
@@ -12,6 +13,19 @@ void SpotConnection::init(std::string ltl_formulae_file) {
     //initialize the results table with the right size for the properties that will be evaluated
     ltlResults = new PropertyValueTable(behaviorProperties.size());
   }
+}
+
+void SpotConnection::init(std::list<std::string> ltl_formulae) {
+  int propertyId = 0;
+  for (list<string>::iterator i=ltl_formulae.begin(); i!=ltl_formulae.end(); i++) {
+    LtlProperty property;
+    property.propertyNumber = propertyId;
+    property.ltlString = *i;
+    behaviorProperties.push_back(property);
+    propertyId++;
+  }
+  //initialize the results table with the right size for the properties that will be evaluated
+  ltlResults = new PropertyValueTable(behaviorProperties.size());
 }
 
 std::list<LtlProperty>* SpotConnection::getUnknownFormulae() {
@@ -658,5 +672,30 @@ std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
   }
   char atomicProp = (char) (ioVal + ((int) 'A') - 1);
   result += boost::lexical_cast<string>(atomicProp);
+  return result;
+}
+
+std::string SpotConnection::spinSyntax(std::string ltlFormula) {
+  spot::ltl::parse_error_list pel;
+  const spot::ltl::formula* formula = spot::ltl::parse(ltlFormula, pel);
+  if (spot::ltl::format_parse_errors(std::cerr, ltlFormula, pel)) {
+    formula->destroy();						
+    cerr<<"Error: ltl format error."<<endl;
+    ROSE_ASSERT(0);
+  }
+  bool prefixAtomicPropositions = true;
+  if (prefixAtomicPropositions) {
+    spot::ltl::relabeling_map relabeling;
+    spot::ltl::atomic_prop_set* sap = spot::ltl::atomic_prop_collect(formula);
+    for (spot::ltl::atomic_prop_set::iterator i=sap->begin(); i!=sap->end(); i++) {
+      string newName = "p_" + (*i)->name();
+      const spot::ltl::atomic_prop* relabeledProp = spot::ltl::atomic_prop::instance(newName, (*i)->env());
+      relabeling[*i] = relabeledProp;
+    }
+    formula = spot::ltl::relabel(formula, spot::ltl::Pnn, &relabeling);
+  }
+
+  string result = spot::ltl::to_spin_string(formula);
+  formula->destroy();
   return result;
 }
