@@ -140,12 +140,12 @@ string PromelaCodeGenerator::generateCode(Flow& automaton, int id, EdgeAnnotatio
     worklist.pop_front();
     ss << "  :: state == "<<label.getId()<<" -> if" << endl;
     Flow outEdges = automaton.outEdges(label);
-    for (Flow::iterator i=outEdges.begin(); i!= outEdges.end(); i++) {
-      ss << "    :: "<<communicationDetails(i->getAnnotation(), id, edgeAnnotationMap) << endl;
-      ss << "      state = "<<i->target.getId()<<";" << endl;
-      if (visited.find(i->target) == visited.end()) {
-	worklist.push_back(i->target);
-        visited.insert(i->target);
+    for (Flow::iterator i=outEdges.begin(); i!= outEdges.end(); ++i) {
+      ss << "    :: "<<communicationDetails((*i).getAnnotation(), id, edgeAnnotationMap) << endl;
+      ss << "      state = "<<(*i).target().getId()<<";" << endl;
+      if (visited.find((*i).target()) == visited.end()) {
+	worklist.push_back((*i).target());
+        visited.insert((*i).target());
       }
     }
     ss << "    fi" << endl;

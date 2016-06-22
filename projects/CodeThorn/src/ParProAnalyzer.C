@@ -142,7 +142,7 @@ list<pair<Edge, ParProEState> > ParProAnalyzer::parProTransferFunction(const Par
   ROSE_ASSERT(_cfgs.size() == sourceLabel.size());
   for (unsigned int i=0; i<_cfgs.size(); i++) {
     Flow outEdges = _cfgs[i].outEdges(sourceLabel[i]);
-    for(Flow::iterator k=outEdges.begin(); k!=outEdges.end(); k++) { 
+    for(Flow::iterator k=outEdges.begin(); k!=outEdges.end(); ++k) { 
       Edge e=*k;
       // TODO: combine "feasibleAccordingToGlobalState(...)" and "transfer(...)" to avoid 2nd lookup and iteration
       if (isPreciseTransition(e, source)) {
@@ -196,10 +196,10 @@ bool ParProAnalyzer::feasibleAccordingToGlobalState(Edge e, const ParProEState* 
   EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
   ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
   boost::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
-  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); i++) {
+  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); ++i) {
     bool foundAnEdgeInCfg = false;
     for (list<Edge>::iterator k=i->second.begin(); k!=i->second.end(); k++) {
-      if (sourceLabel[_cfgIdToStateIndex[i->first]] == k->source) {
+      if (sourceLabel[_cfgIdToStateIndex[i->first]] == k->source()) {
 	foundAnEdgeInCfg = true;
 	break;
       }
@@ -216,13 +216,13 @@ ParProEState ParProAnalyzer::transfer(const ParProEState* eState, Edge e) {
   EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
   ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
   boost::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
-  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); i++) {
+  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); ++i) {
     // only follow transitions in those automata for which the state is actually stored (and therefore not abstracted)
     // (a synchronized transition might involve several automata, some of which may be ignored (abstraction))
     if (_cfgIdToStateIndex.find(i->first) != _cfgIdToStateIndex.end()) {
       for (list<Edge>::iterator k=i->second.begin(); k!=i->second.end(); k++) {
-	if (targetLabel[_cfgIdToStateIndex[i->first]] == k->source) {
-	  targetLabel[_cfgIdToStateIndex[i->first]] = k->target;
+	if (targetLabel[_cfgIdToStateIndex[i->first]] == k->source()) {
+	  targetLabel[_cfgIdToStateIndex[i->first]] = k->target();
 	  break;
 	}
       }

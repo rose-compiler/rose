@@ -515,7 +515,7 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
         Edge e1=*initer;
         Edge e2=*outiter;
         // preserve edge annotations of ingoing and outgoing edges
-        Edge newEdge=Edge(e1.source,unionEdgeTypeSets,e2.target);
+        Edge newEdge=Edge(e1.source(),unionEdgeTypeSets,e2.target());
         flow.erase(e1);
         flow.erase(e2);
         flow.insert(newEdge);

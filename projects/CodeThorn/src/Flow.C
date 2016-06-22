@@ -8,15 +8,15 @@
 using namespace SPRAY;
 using namespace std;
 
-Edge::Edge():source(0),target(0),_annotation(""){
+Edge::Edge():_source(0),_target(0),_annotation(""){
 }
-Edge::Edge(Label source0,Label target0):source(source0),target(target0),_annotation(""){
+Edge::Edge(Label source0,Label target0):_source(source0),_target(target0),_annotation(""){
   // _types is an empty set by default (we may want to use EDGE_UNKNOWN instead)
 }
-Edge::Edge(Label source0,EdgeType et,Label target0):source(source0),target(target0),_annotation(""){
+Edge::Edge(Label source0,EdgeType et,Label target0):_source(source0),_target(target0),_annotation(""){
   _types.insert(et);
 }
-Edge::Edge(Label source0,set<EdgeType> tset,Label target0):source(source0),target(target0),_annotation(""){
+Edge::Edge(Label source0,set<EdgeType> tset,Label target0):_source(source0),_target(target0),_annotation(""){
   _types=tset;
 }
 
@@ -82,12 +82,12 @@ void Edge::removeType(EdgeType et) {
 
 string Edge::toString() const {
   stringstream ss;
-  ss << "Edge"<<"("<<source<<","<<typesToString()<<","<<target<<")";
+  ss << "Edge"<<"("<<source()<<","<<typesToString()<<","<<target()<<")";
   return ss.str();
 }
 string Edge::toStringNoType() const {
   stringstream ss;
-  ss << "("<<source<<","<<target<<")";
+  ss << "("<<source()<<","<<target()<<")";
   return ss.str();
 }
 
@@ -142,7 +142,7 @@ string Edge::color() const {
 // color: true/false has higher priority than forward/backward.
 string Edge::toDotFixedColor(string color) const {
   stringstream ss;
-  ss<<source<<"->"<<target;
+  ss<<source()<<"->"<<target();
   ss<<" [label=\""<<typesToString()<<"\"";
   ss<<" color="<<color<<" ";
   ss<<"]";
@@ -150,7 +150,7 @@ string Edge::toDotFixedColor(string color) const {
 }
 string Edge::toDotColored() const {
   stringstream ss;
-  ss<<source<<"->"<<target;
+  ss<<source()<<"->"<<target();
   ss<<" [label=\""<<typesToString()<<"\"";
   ss<<" color="<<color()<<" ";
   ss<<"]";
@@ -159,7 +159,7 @@ string Edge::toDotColored() const {
 
 string Edge::toDotAnnotationOnly() const {
   stringstream ss;
-  ss<<source<<"->"<<target;
+  ss<<source()<<"->"<<target();
   ss<<" [label=\""<<getAnnotation()<<"\"";
   ss<<" color="<<color()<<" ";
   ss<<"]";
@@ -222,7 +222,7 @@ bool SPRAY::operator!=(const InterEdge& e1, const InterEdge& e2) {
 bool SPRAY::operator==(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
-  return e1.source==e2.source && e1.typesCode()==e2.typesCode() && e1.target==e2.target && e1.getAnnotation() == e2.getAnnotation();
+  return e1.source()==e2.source() && e1.typesCode()==e2.typesCode() && e1.target()==e2.target() && e1.getAnnotation() == e2.getAnnotation();
 }
 bool SPRAY::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
@@ -230,10 +230,10 @@ bool SPRAY::operator!=(const Edge& e1, const Edge& e2) {
 bool SPRAY::operator<(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
-  if(e1.source!=e2.source)
-    return e1.source<e2.source;
-  if(e1.target!=e2.target)
-    return e1.target<e2.target;
+  if(e1.source()!=e2.source())
+    return e1.source()<e2.source();
+  if(e1.target()!=e2.target())
+    return e1.target()<e2.target();
   if(e1.typesCode()!=e2.typesCode())
     return e1.typesCode()<e2.typesCode();
   return e1.getAnnotation()<e2.getAnnotation();
@@ -266,7 +266,7 @@ void Flow::boostify() {
   edge_t e; bool b;
   ROSE_ASSERT(!_boostified);
   for(Flow::iterator i=begin();i!=end();++i) {
-    tie(e,b)=add_edge((*i).source.getId(),(*i).target.getId(),_flowGraph);
+    tie(e,b)=add_edge((*i).source().getId(),(*i).target().getId(),_flowGraph);
     _flowGraph[e]=(*i).getTypes();
   }
   _boostified=true;
@@ -276,7 +276,7 @@ void Flow::boostify() {
 SPRAY::Flow Flow::reverseFlow() {
   Flow reverseFlow;
   for(Flow::iterator i=begin();i!=end();++i) {
-    reverseFlow.insert(Edge((*i).target,(*i).getTypes(),(*i).source));
+    reverseFlow.insert(Edge((*i).target(),(*i).getTypes(),(*i).source()));
   }
   return reverseFlow;
 }
@@ -305,28 +305,56 @@ string Flow::toString() {
   return ss.str();
 }
 
-pair<set<Edge>::iterator, bool> Flow::insert(Edge e) {
+pair<Flow::iterator, bool> Flow::insert(Edge e) {
+#ifndef USE_SAWYER_GRAPH
   return _edgeSet.insert(e);
+#else
+  EdgeData edgeData = EdgeData(e.types(), e.getAnnotation());
+  Flow::iterator iter = Flow::iterator(_sawyerFlowGraph.insertEdgeWithVertices(e.source(), e.target(), edgeData));
+  return pair<Flow::iterator, bool>(iter, true);
+#endif
 }
 
 void Flow::erase(Flow::iterator iter) {
+#ifndef USE_SAWYER_GRAPH
   _edgeSet.erase(iter);
+#else
+  _sawyerFlowGraph.eraseEdgeWithVertices(static_cast<SawyerCfg::EdgeIterator>(iter));
+#endif
 }
 
 size_t Flow::erase(Edge e) {
+#ifndef USE_SAWYER_GRAPH
   return _edgeSet.erase(e);
+#else
+  SawyerCfg::EdgeIterator iter = _sawyerFlowGraph.findEdgeValue(EdgeData(e.types(), e.getAnnotation()));
+  _sawyerFlowGraph.eraseEdgeWithVertices(iter);
+  return 1;
+#endif
 }
 
 size_t Flow::size() {
+#ifndef USE_SAWYER_GRAPH
   return _edgeSet.size();
+#else
+  return _sawyerFlowGraph.nEdges();
+#endif
 }
 
 Flow::iterator Flow::begin() {
+#ifndef USE_SAWYER_GRAPH
   return _edgeSet.begin();
+#else
+  return Flow::iterator(_sawyerFlowGraph.edges().begin());
+#endif
 }
 
 Flow::iterator Flow::end() {
+#ifndef USE_SAWYER_GRAPH
   return _edgeSet.end();
+#else
+  return Flow::iterator(_sawyerFlowGraph.edges().end());
+#endif
 }
 
 Flow Flow::operator+(Flow& s2) {
@@ -444,7 +472,11 @@ size_t Flow::deleteEdges(EdgeType edgeType) {
   size_t numDeleted=0;
   while(i!=end()) {
     if((*i).isType(edgeType)) {
+#ifndef USE_SAWYER_GRAPH
       erase(i++);
+#else
+      _sawyerFlowGraph.eraseEdgeWithVertices(i);
+#endif
       numDeleted++;
     } else {
       ++i;
@@ -463,7 +495,12 @@ size_t Flow::deleteEdges(Flow& edges) {
   size_t numDeleted=0;
   Flow::iterator i=edges.begin();
   while(i!=end()) {
+#ifndef USE_SAWYER_GRAPH
     erase(i++); // MS: it is paramount to pass a copy of the iterator, and perform a post-increment.
+#else
+    SawyerCfg::EdgeIterator iter = _sawyerFlowGraph.findEdgeValue(EdgeData((*i).types(), (*i).getAnnotation()));
+    _sawyerFlowGraph.eraseEdgeWithVertices(iter);
+#endif
     numDeleted++;
   }
   return numDeleted;
@@ -472,7 +509,7 @@ size_t Flow::deleteEdges(Flow& edges) {
 Flow Flow::inEdges(Label label) {
   Flow flow;
   for(Flow::iterator i=begin();i!=end();++i) {
-    if((*i).target==label)
+    if((*i).target()==label)
       flow.insert(*i);
   }
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
@@ -484,7 +521,7 @@ Flow Flow::outEdges(Label label) {
   Flow flow;
   if(!_boostified) {
     for(Flow::iterator i=begin();i!=end();++i) {
-      if((*i).source==label)
+      if((*i).source()==label)
         flow.insert(*i);
     }
   } else {
@@ -508,7 +545,7 @@ Flow Flow::outEdges(Label label) {
 Flow Flow::outEdgesOfType(Label label, EdgeType edgeType) {
   Flow flow;
   for(Flow::iterator i=begin();i!=end();++i) {
-    if((*i).source==label && (*i).isType(edgeType))
+    if((*i).source()==label && (*i).isType(edgeType))
       flow.insert(*i);
   }
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
@@ -531,8 +568,8 @@ LabelSet Flow::nodeLabels() {
   LabelSet s;
   for(Flow::iterator i=begin();i!=end();++i) {
     Edge e=*i;
-    s.insert(e.source);
-    s.insert(e.target);
+    s.insert(e.source());
+    s.insert(e.target());
   }
   return s;
 }
@@ -541,7 +578,7 @@ LabelSet Flow::sourceLabels() {
   LabelSet s;
   for(Flow::iterator i=begin();i!=end();++i) {
     Edge e=*i;
-    s.insert(e.source);
+    s.insert(e.source());
   }
   return s;
 }
@@ -550,7 +587,7 @@ LabelSet Flow::targetLabels() {
   LabelSet s;
   for(Flow::iterator i=begin();i!=end();++i) {
     Edge e=*i;
-    s.insert(e.target);
+    s.insert(e.target());
   }
   return s;
 }
@@ -568,7 +605,36 @@ LabelSet Flow::succ(Label label) {
 set<string> Flow::getAllAnnotations() {
   set<string> result;
   for(Flow::iterator i=begin();i!=end();++i) {
-    result.insert(i->getAnnotation());
+    result.insert((*i).getAnnotation());
   }
   return result;
 }
+
+#ifdef USE_SAWYER_GRAPH
+EdgeTypeSet Flow::iterator::getTypes() {
+  EdgeTypeSet result = ((*this).SawyerCfg::EdgeIterator::operator->())->value().edgeTypes;
+  return result;
+}
+
+string Flow::iterator::getAnnotation() {
+  string result = ((*this).SawyerCfg::EdgeIterator::operator->())->value().annotation;
+  return result;
+}
+
+Label Flow::iterator::source() {
+  Label result = ((*this).SawyerCfg::EdgeIterator::operator->())->source()->value();
+  return result;
+}
+
+Label Flow::iterator::target() {
+  Label result = ((*this).SawyerCfg::EdgeIterator::operator->())->target()->value();
+  return result;
+}
+
+Edge Flow::iterator::operator*() {
+  Edge result = Edge(source(), getTypes(), target());
+  result.setAnnotation(getAnnotation());
+  return result;
+}
+#endif
+
