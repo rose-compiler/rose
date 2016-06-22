@@ -236,9 +236,9 @@ SgAsmPEExportSection::parse()
          * /WINDOWS/system32/msacm32.dll's Export Table's first symbol has the name "XRegThunkEntry" with an Ordinal of zero
          * and the ord_base is one. The index according to spec would be -1 rather than the correct value of zero.) */
         rose_rva_t expaddr = 0;
-        if (ordinal >= (p_export_dir->get_ord_base()-1)) {
-            unsigned expaddr_idx = ordinal - (p_export_dir->get_ord_base()-1);
-            ROSE_ASSERT(expaddr_idx < p_export_dir->get_expaddr_n());
+        unsigned expaddr_idx = 0;
+        if (ordinal >= (p_export_dir->get_ord_base()-1) &&
+            (expaddr_idx = ordinal - (p_export_dir->get_ord_base()-1)) < p_export_dir->get_expaddr_n()) {
             ExportAddress_disk expaddr_disk = 0;
             rose_addr_t expaddr_va = p_export_dir->get_expaddr_rva().get_va() + expaddr_idx*sizeof(expaddr_disk);
             try {
