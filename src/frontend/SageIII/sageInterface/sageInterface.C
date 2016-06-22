@@ -107,6 +107,11 @@ std::map<SgNode*,std::string> SageInterface::local_node_to_name_map;
 
 typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 
+namespace SageInterface
+{
+    Transformation_Record trans_records;
+}
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace SageBuilder;
@@ -9079,76 +9084,141 @@ static SgExpression* SkipCasting (SgExpression* exp)
 }
 
 //! Promote the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable
-bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
+bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) 
+{
   ROSE_ASSERT(loop!=NULL);
 
   SgStatementPtrList &init = loop ->get_init_stmt();
   if (init.size() !=1) // We only handle one statement case
     return false;
-  else
+
+  SgStatement* init1 = init.front();
+  SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
+  if (decl == NULL) // we only handle for (int i=0; ...) 
+    return true;    // the return value is ambiguous: if not int i=0; it is already normalized
+
+  SgVariableSymbol* osymbol = getFirstVarSym(decl);
+  SgInitializedName* ivarname = decl->get_variables().front();
+  SgExpression* lbast = NULL; // the lower bound, initial state
+  ROSE_ASSERT(ivarname != NULL);
+  SgInitializer * initor = ivarname->get_initializer();
+  if (isSgAssignInitializer(initor))
   {
-    SgStatement* init1 = init.front();
-    SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
-    if (decl)
-    {
-      SgVariableSymbol* osymbol = getFirstVarSym(decl);
-      SgInitializedName* ivarname = decl->get_variables().front();
-      SgExpression* lbast = NULL; // the lower bound, initial state
-      ROSE_ASSERT(ivarname != NULL);
-      SgInitializer * initor = ivarname->get_initializer();
-      if (isSgAssignInitializer(initor))
-      {
-        lbast = isSgAssignInitializer(initor)->get_operand();
-      } else
-      { //SgConstructorInitializer etc.
-        // other complex declaration statements, such as Decomposition::Iterator ditr(&decomp) should be skipped
-        // they cause a loop to be non-canonical.
-        return false;
-      }
-
-      // add a new statement like int i; and insert it to the enclosing function
-      // There are multiple choices about where to insert this statement:
-      //  global scope: max name pollution,
-      //  right before the loop: mess up perfectly nested loops
-      //  So we prepend the statement to the enclosing function's body
-      SgFunctionDefinition* funcDef =  getEnclosingFunctionDefinition(loop);
-      ROSE_ASSERT(funcDef!=NULL);
-      SgBasicBlock* funcBody = funcDef->get_body();
-      ROSE_ASSERT(funcBody!=NULL);
-      //TODO a better name
-      std::ostringstream os;
-      os<<ivarname->get_name().getString();
-      
-      // keep the original variable name if possible
-      SgSymbol * visibleSym = NULL; 
-      visibleSym = lookupVariableSymbolInParentScopes(ivarname->get_name(), funcBody);
-      if (visibleSym != NULL) // if there is a name collision, add suffix to the variable name
-      {
-        os<<"_nom_";
-        os<<++gensym_counter;
-      }
-
-      SgVariableDeclaration* ndecl = buildVariableDeclaration(os.str(),ivarname->get_type(), NULL, funcBody);
-      prependStatement(ndecl, funcBody);
-      SgVariableSymbol* nsymbol = getFirstVarSym(ndecl);
-
-      // replace variable ref to the new symbol
-      Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
-      for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
-      {
-        SgVarRefExp *vRef = isSgVarRefExp((*i));
-        if (vRef->get_symbol()==osymbol)
-          vRef->set_symbol(nsymbol);
-      }
-      // replace for (int i=0;) with for (i=0;)
-      SgExprStatement* ninit = buildAssignStatement(buildVarRefExp(nsymbol),deepCopy(lbast));
-      removeStatement(decl); //any side effect to the symbol? put after symbol replacement anyway
-      init.push_back(ninit);
-      ROSE_ASSERT (loop->get_for_init_stmt () != NULL);
-      // ninit->set_parent(loop);
-       ninit->set_parent(loop->get_for_init_stmt ());
-    }
+    lbast = isSgAssignInitializer(initor)->get_operand();
+  } 
+  else
+  { //SgConstructorInitializer etc.
+    // other complex declaration statements, such as Decomposition::Iterator ditr(&decomp) should be skipped
+    // they cause a loop to be non-canonical.
+    return false;
   }
+
+  // add a new statement like int i; and insert it to the enclosing function
+  // There are multiple choices about where to insert this statement:
+  //  global scope: max name pollution,
+  //  right before the loop: mess up perfectly nested loops
+  //  So we prepend the statement to the enclosing function's body
+  SgFunctionDefinition* funcDef =  getEnclosingFunctionDefinition(loop);
+  ROSE_ASSERT(funcDef!=NULL);
+  SgBasicBlock* funcBody = funcDef->get_body();
+  ROSE_ASSERT(funcBody!=NULL);
+  //TODO a better name
+  std::ostringstream os;
+  os<<ivarname->get_name().getString();
+
+  // keep the original variable name if possible
+  SgSymbol * visibleSym = NULL; 
+  visibleSym = lookupVariableSymbolInParentScopes(ivarname->get_name(), funcBody);
+  if (visibleSym != NULL) // if there is a name collision, add suffix to the variable name
+  {
+    os<<"_nom_";
+    os<<++gensym_counter;
+  }
+
+  SgVariableDeclaration* ndecl = buildVariableDeclaration(os.str(),ivarname->get_type(), NULL, funcBody);
+  prependStatement(ndecl, funcBody);
+  SgVariableSymbol* nsymbol = getFirstVarSym(ndecl);
+
+  // replace variable ref to the new symbol
+  Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp((*i));
+    if (vRef->get_symbol()==osymbol)
+      vRef->set_symbol(nsymbol);
+  }
+  // replace for (int i=0;) with for (i=0;)
+  SgExprStatement* ninit = buildAssignStatement(buildVarRefExp(nsymbol),deepCopy(lbast));
+  removeStatement(decl); //any side effect to the symbol? put after symbol replacement anyway
+  init.push_back(ninit);
+  ROSE_ASSERT (loop->get_for_init_stmt () != NULL);
+  // ninit->set_parent(loop);
+  ninit->set_parent(loop->get_for_init_stmt ());
+
+  // keep record of this normalization
+  // We may undo it later on.
+  trans_records.forLoopInitNormalizationTable[loop] = true;
+  trans_records.forLoopInitNormalizationRecord[loop] = make_pair (decl, ndecl) ;
+
+  return true;
+}
+
+/*
+  int i_norm_1;
+  for (i_norm_1=0; i_norm_1<upper; i_norm_1 ++ ); 
+Becomes: 
+  for (int i=0; i< upper; i++) ;
+ * */
+bool SageInterface::unnormalizeForLoopInitDeclaration(SgForStatement* loop)
+{
+  ROSE_ASSERT (loop != NULL);
+  //If not previously normalized, nothing to do and return false.
+  if (!trans_records.forLoopInitNormalizationTable[loop])
+    return false;
+  // retrieve original and new declaration of the previous normalization   
+  SgVariableDeclaration* decl = trans_records.forLoopInitNormalizationRecord[loop].first;   
+  SgVariableDeclaration* ndecl = trans_records.forLoopInitNormalizationRecord[loop].second;   
+  ROSE_ASSERT (decl!= NULL);
+  ROSE_ASSERT (ndecl!= NULL);
+   
+  
+  // Sanity check
+  SgStatementPtrList &init = loop ->get_init_stmt();
+  ROSE_ASSERT(init.size() ==1); // We only handle one statement case
+
+  // remove the current init_stmt
+  SgStatement* init1 = init.front();
+  SgExprStatement* exp_stmt = isSgExprStatement(init1);
+  ROSE_ASSERT (exp_stmt != NULL);
+  SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
+  ROSE_ASSERT (assign_op != NULL);
+
+  // remove the new declaration and the current i_norm=1; 
+  removeStatement(ndecl);
+  removeStatement (exp_stmt);
+ 
+  // restore the original declaration
+  init.push_back(decl);                                                                                                          
+  ROSE_ASSERT (loop->get_for_init_stmt () != NULL);                                                                               
+  // ninit->set_parent(loop);                                                                                                     
+  decl->set_parent(loop->get_for_init_stmt ());     
+ 
+  // replace variable references
+  // current symbol in the AST
+  SgVariableSymbol* osymbol = getFirstVarSym(ndecl);
+  // new symbol  we want to have: the original decl
+  SgVariableSymbol* nsymbol = getFirstVarSym(decl);
+  // replace variable ref to the new symbol
+  Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp((*i));
+    if (vRef->get_symbol()==osymbol)
+      vRef->set_symbol(nsymbol);
+  }
+
+  // clear record: now the loop is not normalized any more
+  trans_records.forLoopInitNormalizationTable[loop] = false; 
   return true;
 }
 
