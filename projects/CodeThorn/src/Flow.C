@@ -643,8 +643,7 @@ LabelSet Flow::nodeLabels() {
 LabelSet Flow::sourceLabels() {
   LabelSet s;
   for(Flow::iterator i=begin();i!=end();++i) {
-    Edge e=*i;
-    s.insert(e.source());
+    s.insert((*i).source());
   }
   return s;
 }
