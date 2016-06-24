@@ -686,11 +686,12 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
             // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
                i++;
-
+             // When to output , ?  the argument must not be the last one.
                if (i != templateArgListPtr.end())
                   {
                  // unp->u_exprStmt->curprint(" , ");
-
+                 // Now the argument is in the middle. It's next argument must not be start_of_pack_expansion_argument
+                 // Since the next argument will be unparsed to be NULL
                  // DQ (2/7/2015): See C++11 test2015_01.C for where we have to handle this special case.
                     if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
                        {
@@ -701,7 +702,12 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                        }
                       else
                        {
-                         unp->u_exprStmt->curprint(" , ");
+                         // Liao, 6/24/2015, See C++11 test2015_01.C for an added test case
+                         // Add another condition: if the current argument is not start_of_pack_expansion_argument
+                         //  * (i-1) will obtain the current argument since i++ happens before
+                         //  the current argument will be unparsed to be NULL string, no , is needed. 
+                         if( (* (i-1) ) ->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument)
+                             unp->u_exprStmt->curprint(" , ");
                        }
 
                   }
@@ -712,7 +718,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
        else
         {
        // DQ (5/26/2014): In the case of a template instantiation with empty template argument list, output
-       // a " " to be consistant with the behavior when there is a non-empty template argument list.
+       // a " " to be consistent with the behavior when there is a non-empty template argument list.
        // This is a better fix for the template issue that Robb pointed out and that was fixed last week.
           unp->u_exprStmt->curprint(" ");
         }
