@@ -254,7 +254,7 @@ public:
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
 

@@ -58,6 +58,21 @@ public:
     }
 };
 
+/** Error when a cycle is detected.
+ *
+ *  This error is thrown by algorithms that operate only on acyclic data structures if the data structure on which they're
+ *  invoked contains a cycle. */
+class SAWYER_EXPORT ContainsCycle: public DomainError {
+public:
+    ~ContainsCycle() throw () {
+    }
+
+    /** Constructor taking a description of the error. */
+    ContainsCycle(const std::string &mesg)
+        : DomainError(mesg) {
+    }
+};
+
 } // namespace
 } // namespace
 

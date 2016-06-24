@@ -11,7 +11,8 @@
 #include "MultigridStencils.H"
 
 /// Multigrid: solve a FV discretization of Poisson's equation on a union of rectangles.
-#pragma DSL keyword
+// #pragma DSL keyword
+#pragma DSL keyword novalue
 class Multigrid
 {
 public:

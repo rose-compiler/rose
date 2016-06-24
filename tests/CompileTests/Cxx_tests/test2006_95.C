@@ -12,7 +12,8 @@ an object of type D, typeid(*cp) and typeid(cr) return objects that represent cl
 */
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// #if ( __GNUC__ == 3 )
+#if ( defined(__clang__) == 0 && __GNUC__ == 3 )
 
 #include <iostream>
 #include <typeinfo>

@@ -548,7 +548,7 @@ struct IP_cmovcc: P {
             BaseSemantics::SValuePtr arg1 = d->read(args[1]);
             d->write(args[0], ops->ite(d->flagsCombo(kind), arg1, arg0));
         }
-    }                                                                                                                          \
+    }
 };
         
 // Compare two values
@@ -584,7 +584,7 @@ struct IP_cmpstrings: P {
     void p(D d, Ops ops, I insn, A args) {
         if (insn->get_kind()==x86_cmpsd && args.size() == 2) {
             // This is a floating point instruction: compare scalar double-precision floating-point values
-            throw BaseSemantics::Exception("no dispatch ability for instruction", insn);
+            throw BaseSemantics::Exception("no dispatch ability for \"" + insn->get_mnemonic() + "\" instruction", insn);
         }
 
         assert_args(insn, args, 0);
@@ -2081,7 +2081,11 @@ struct IP_pextr: P {
                     index &= 0x0f;
                     break;
                 case 16:
-                    index &= 0x07;
+                    if (64==src->get_width()) {
+                        index &= 0x03;
+                    } else {
+                        index &= 0x07;
+                    }
                     break;
                 case 32:
                     index &= 0x03;

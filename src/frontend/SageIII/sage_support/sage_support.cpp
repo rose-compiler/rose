@@ -2480,6 +2480,16 @@ SgFile::callFrontEnd()
   // Build the commandline for EDG
      if (get_C_only() || get_Cxx_only() || get_Cuda_only() || get_OpenCL_only() )
         {
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+   #if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+     // OK, we are supporting Clang using EDG 4.9 and greater.
+   #else
+        printf ("\nERROR: Clang compiler as backend to ROSE is not supported unless using EDG 4.9 version \n");
+        printf ("       or greater (use --enable-edg_version=4.9 or greater to configure ROSE). \n\n");
+        exit(1);
+   #endif
+#endif
+
 #ifndef ROSE_USE_CLANG_FRONTEND
        // printf ("Calling build_EDG_CommandLine() \n");
           build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );

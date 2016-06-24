@@ -51,7 +51,8 @@ class BoolAttribute
 // to tell EDG we are an EDG 4.2 compiler to avoid bug in Boost (see test2013_246.C).
 // DQ (9/12/2009): std::__uninitialized_copy_aux is not present in GNU g++ version 4.3.
 // #if ( (__GNUC__ == 3) || (__GNUC__ == 4) && (__GNUC_MINOR__ < 3) )
-#if ( (__GNUC__ == 3) || (__GNUC__ == 4) && (__GNUC_MINOR__ < 3) ) && !defined(LIE_ABOUT_GNU_VERSION_TO_EDG)
+// #if ( (__GNUC__ == 3) || (__GNUC__ == 4) && (__GNUC_MINOR__ < 3) ) && !defined(LIE_ABOUT_GNU_VERSION_TO_EDG)
+#if ( defined(__clang__) == 0 && ((__GNUC__ == 3) || (__GNUC__ == 4) && (__GNUC_MINOR__ < 3) ) && !defined(LIE_ABOUT_GNU_VERSION_TO_EDG) )
 // DQ (8/14/2006): Fixing this by adding "std::" is completely appropriate since it is
 // what was required to permit the Intel compiler to handle ROSE and it is really an 
 // EDG issue anyway.  So this is the fix we have selected.

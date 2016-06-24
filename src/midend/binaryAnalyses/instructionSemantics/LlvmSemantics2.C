@@ -227,7 +227,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         std::ostream &o;
         const RegisterDescriptors &regs;
         const RegisterDictionary *dictionary;
-        std::set<uint64_t> seen;
+        std::set<SymbolicExpr::Hash> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
         virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) ROSE_OVERRIDE {

@@ -265,7 +265,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2005_47.C \
 	test2005_48.C \
 	test2005_49.C \
-	test2005_50.C \
 	test2005_51.C \
 	test2005_52.C \
 	test2005_53.C \
@@ -613,7 +612,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2007_135.C \
 	test2007_137.C \
 	test2007_140.C \
-	test2007_141.C \
 	test2007_142.C \
 	test2007_147.C \
 	test2007_150.C \
@@ -1012,7 +1010,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2012_185.C \
 	test2012_186.C \
 	test2012_187.C \
-	test2012_188.C \
 	test2012_190.C \
 	test2012_191.C \
 	test2012_192.C \
@@ -1310,7 +1307,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2013_237.C \
 	test2013_238.C \
 	test2013_239.C \
-	test2013_243.C \
 	test2013_244.C \
 	test2013_250.C \
 	test2013_251.C \
@@ -1350,6 +1346,14 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2012_57.C \
 	test2012_59.C \
         test2013_milind_01.C 
+
+# DQ (4/16/2016): Removed this test and put it into the Cxx_tests directory since it is 
+# a specific problem for Clang testing only.
+# test2005_50.C 
+# test2007_141.C 
+# test2012_188.C 
+# test2013_243.C 
+
 
 # ROSE__CXX_TESTS_WITHOUT_2013_241 = $(ROSE__CXX_TESTS)
 

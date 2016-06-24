@@ -7302,6 +7302,11 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgFunctionParameterRefExp:
                                      precedence_value = 0; break;
 
+       // DQ (4/29/2016): Not clear if this is the correct precedence for these C++11 expressions.
+          case V_SgRealPartOp:
+          case V_SgImagPartOp:
+                                     precedence_value = 0; break;
+
           default:
              {
             // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.

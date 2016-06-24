@@ -95,6 +95,7 @@ namespace AutoParallelization
 
   //! Output the difference between user-defined OpenMP and compiler-generated OpenMP
   void diffUserDefinedAndCompilerGeneratedOpenMP(SgSourceFile* sfile);
+
 } //end namespace
 
 #endif //auto_par_support_INCLUDED

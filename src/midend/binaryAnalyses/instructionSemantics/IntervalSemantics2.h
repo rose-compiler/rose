@@ -9,7 +9,6 @@
 
 #include "BaseSemantics2.h"
 #include "integerOps.h"
-#include "rangemap.h"
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
 
@@ -18,41 +17,14 @@ namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
 
-/** An interval analysis semantic domain.
- *
- *  Each value in this domain is a set of intervals in the 32-bit unsigned integer space.  The intervals are represented by
- *  ROSE's Range type and the set of ranges is represented by ROSE's RangeMap class. In other words, a semantic value is
- *  actually a discontiguous set of intervals rather than the single interval that's usually used in these kinds of analyses. */
+/** An interval analysis semantic domain. */
 namespace IntervalSemantics {
 
-/** Range of possible values.  We only define this so the range-printing methods are a bit more intuitive for semantic
- *  analysis.  Otherwise we'll end up using the Extent::print() method which is more suitable for things like section
- *  addresses. */
-class Interval: public Range<uint64_t> {
-public:
-    Interval(): Range<uint64_t>() {}
-    explicit Interval(uint64_t first): Range<uint64_t>(first) {}
-    Interval(uint64_t first, uint64_t size): Range<uint64_t>(first, size) {}
-    Interval(const Range<uint64_t> &other): Range<uint64_t>(other) {} /*implicit*/
-
-    static Interval inin(const uint64_t &first, const uint64_t &last) {
-        ASSERT_require(first<=last);
-        Interval retval;
-        retval.first(first);
-        retval.last(last);
-        return retval;
-    }
-
-    /** Convert a bit mask to a string. */
-    static std::string to_string(uint64_t n);
-
-    void print(std::ostream &o) const;
-};
-
-std::ostream& operator<<(std::ostream &o, const Interval &x);
+/* Single contiguous interval. */
+typedef Sawyer::Container::Interval<uint64_t> Interval;
 
 /** Set of intervals. */
-typedef RangeMap<Interval> Intervals;
+typedef Sawyer::Container::IntervalSet<Interval> Intervals;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Semantic values
@@ -64,27 +36,27 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 /** Type of values manipulated by the IntervalSemantics domain. */
 class SValue: public BaseSemantics::SValue {
 protected:
-    Intervals p_intervals;
+    Intervals intervals_;
 
 protected:
     // Protected constructors. See base class and public members for documentation
     explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
-        p_intervals.insert(Interval::inin(0, IntegerOps::genMask<uint64_t>(nbits)));
+        intervals_.insert(Interval::hull(0, IntegerOps::genMask<uint64_t>(nbits)));
     }
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         number &= IntegerOps::genMask<uint64_t>(nbits);
-        p_intervals.insert(Interval(number));
+        intervals_.insert(number);
     }
     SValue(size_t nbits, uint64_t v1, uint64_t v2): BaseSemantics::SValue(nbits) {
         v1 &= IntegerOps::genMask<uint64_t>(nbits);
         v2 &= IntegerOps::genMask<uint64_t>(nbits);
         ASSERT_require(v1<=v2);
-        p_intervals.insert(Interval::inin(v1, v2));
+        intervals_.insert(Interval::hull(v1, v2));
     }
     SValue(size_t nbits, const Intervals &intervals): BaseSemantics::SValue(nbits) {
-        ASSERT_require(!intervals.empty());
-        ASSERT_require((intervals.max() <= IntegerOps::genMask<uint64_t>(nbits)));
-        p_intervals = intervals;
+        ASSERT_require(!intervals.isEmpty());
+        ASSERT_require((intervals.greatest() <= IntegerOps::genMask<uint64_t>(nbits)));
+        intervals_ = intervals;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -189,29 +161,27 @@ public:
     }
 
     virtual bool is_number() const ROSE_OVERRIDE {
-        return 1==p_intervals.size();
+        return 1==intervals_.size();
     }
     
     virtual uint64_t get_number() const {
-        ASSERT_require(1==p_intervals.size());
-        return p_intervals.min();
+        ASSERT_require(1==intervals_.size());
+        return intervals_.least();
     }
 
-    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const ROSE_OVERRIDE {
-        output <<p_intervals <<"[" <<get_width() <<"]";
-    }
+    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods introduced at this level of the class hierarchy
 public:
     /** Returns the rangemap stored in this value. */
     const Intervals& get_intervals() const {
-        return p_intervals;
+        return intervals_;
     }
 
     /** Changes the rangemap stored in the value. */
     void set_intervals(const Intervals &intervals) {
-        p_intervals = intervals;
+        intervals_ = intervals;
     }
 
     /** Returns all possible bits that could be set. */

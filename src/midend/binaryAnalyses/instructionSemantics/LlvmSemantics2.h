@@ -37,7 +37,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public SymbolicSemantics::RiscOperators {
 private:
-    typedef Map<uint64_t /*hash*/, LeafPtr /*term*/> Rewrites;
+    typedef Map<SymbolicExpr::Hash, LeafPtr> Rewrites;
     typedef Map<uint64_t, std::string> Variables;
 
     Rewrites rewrites;                                  // maps expressions to LLVM variables

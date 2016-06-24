@@ -109,6 +109,9 @@ typedef Sawyer::SharedPointer<Leaf> LeafPtr;
 typedef std::vector<Ptr> Nodes;
 typedef Map<uint64_t, uint64_t> RenameMap;
 
+/** Hash of symbolic expression. */
+typedef uint64_t Hash;
+
 /** Controls formatting of expression trees when printing. */
 struct Formatter {
     enum ShowComments {
@@ -197,14 +200,14 @@ class Node
     : public Sawyer::SharedObject,
       public Sawyer::SharedFromThis<Node>,
       public Sawyer::SmallObject,
-      public Sawyer::Attribute::Storage { // Attributes are not significant for hashing or arithmetic
+      public Sawyer::Attribute::Storage<> { // Attributes are not significant for hashing or arithmetic
 protected:
     size_t nBits_;                    /**< Number of significant bits. Constant over the life of the node. */
     size_t domainWidth_;              /**< Width of domain for unary functions. E.g., memory. */
     unsigned flags_;                  /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
     std::string comment_;             /**< Optional comment. Only for debugging; not significant for any calculation. */
-    uint64_t hashval_;                /**< Optional hash used as a quick way to indicate that two expressions are different. */
-    mutable boost::any userData_;     /**< Additional user-specified data. This is not part of the hash. */
+    Hash hashval_;                    /**< Optional hash used as a quick way to indicate that two expressions are different. */
+    boost::any userData_;             /**< Additional user-specified data. This is not part of the hash. */
 
 public:
     // Bit flags
@@ -456,10 +459,10 @@ public:
 
     /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
      *  is computed and cached. */
-    uint64_t hash();
+    Hash hash();
 
     // used internally to set the hash value
-    void hash(uint64_t);
+    void hash(Hash);
 
     /** A node with formatter. See the with_format() method. */
     class WithFormatter {

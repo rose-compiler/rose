@@ -104,4 +104,21 @@ using the EDG front end. The tests will be extended to other compilers
 and clang in future. The compilers and the front end are restricted in
 Makefile.am.
 
+*****************
+     NOTES
+*****************
+
+Notes on how to run the STL tests for debugging:
+
+1) To see generated files either uncomment the "cleanup" in the script 
+(a better solution using a command line option will come later).
+
+2) C++98 files are generated first and then C++11 files are copied over 
+the same named files from the C++98 testing.
+
+3) To run the C++98 tests (example):
+../../testTranslator -c test_functional.pp.C
+
+4) To run the C++1 tests (example):
+../../testTranslator -std=c++11 -c test_functional.pp.C
 

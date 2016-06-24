@@ -50,7 +50,7 @@ int
 main(int argc, char** argv)
    {
      ios::sync_with_stdio();                            // Syncs C++ and C I/O subsystems!
-     rose::Diagnostics::initialize();                   // because librose doesn't initialize itself until frontend()
+     ROSE_INITIALIZE;
 
      Settings settings;
      std::vector<std::string> roseArgs = parseCommandLine(argc, argv, settings).unreachedArgs();

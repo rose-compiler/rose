@@ -410,7 +410,7 @@ struct AddressRenderer: SqlDatabase::Renderer<rose_addr_t> {
 int
 main(int argc, char *argv[]) {
     // Initialization
-    rose::Diagnostics::initialize();
+    ROSE_INITIALIZE;
     mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(mlog);
     Stream info(mlog[INFO]);

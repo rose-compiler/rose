@@ -116,7 +116,7 @@ public:
                     // Function arguments
                     BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findFunctionArguments(ops, stackPtr)) {
                         char name[64];
-                        sprintf(name, "arg_%"PRIx64, var.location.offset);
+                        sprintf(name, "arg_%" PRIx64, var.location.offset);
                         SValuePtr value = ops->undefined_(8*var.location.nBytes);
                         value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
@@ -127,7 +127,7 @@ public:
                     // Function local variables
                     BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findLocalVariables(ops, stackPtr)) {
                         char name[64];
-                        sprintf(name, "var_%"PRIx64, -var.location.offset);
+                        sprintf(name, "var_%" PRIx64, -var.location.offset);
                         SValuePtr value = ops->undefined_(8*var.location.nBytes);
                         value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
                         std::string valueStr = toString(value);

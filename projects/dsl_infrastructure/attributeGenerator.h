@@ -24,6 +24,10 @@
 class AttributeGenerator_InheritedAttribute
    {
      public:
+       // Save the pragma so that we can evaluate which of different possible DSL pragmas were used.
+          std::string pragma_string;
+
+     public:
           AttributeGenerator_InheritedAttribute();
           AttributeGenerator_InheritedAttribute(const AttributeGenerator_InheritedAttribute & X);
    };
@@ -45,6 +49,9 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
      public:
        // Keep a map of DLS nodes identified via pragmas (as the statement after the pragma).
           std::set<SgStatement*> DSLnodes;
+
+       // Make a seperate list of DSL nodes where we will not try to support value tracking in the data flow transfer equations.
+          std::set<SgStatement*> DSLnodes_novalue;
 
           SgSourceFile* generatedHeaderFile;
           SgSourceFile* generatedSourceFile;
@@ -77,6 +84,11 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
        // I think it is better to save the pointer to the DSL abstraction type instead of a string representing the name.
        // All types are then used to generate attributes as a last step in the traversal (in the syntheziedAttribute evaluation.
           std::vector<SgType*> dsl_type_list;
+
+       // a record of the types used for tracked DSL variables (which require tracking the variable references).
+          std::set<SgType*> dsl_type_varRef_list;
+
+       // a record of the functions used in the DSL.
           std::vector<SgFunctionDeclaration*> dsl_function_list;
 
        // I now think that this will simplify the handling of the generated code since we support a 
@@ -101,7 +113,8 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           AttributeGenerator_SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList );
 
 #if 1
-          SgNode* buildAttribute(SgType* type);
+       // SgNode* buildAttribute(SgType* type);
+          SgNode* buildAttribute(SgType* type, bool isDSLnode_valueTracking);
           SgNode* buildAttribute(SgFunctionDeclaration* functionDeclaration);
 #endif
 
@@ -115,6 +128,10 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
        // Generate unique name for use as a class name for the generated attribute classes.
        // std::string generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration );
           std::string generateUniqueName ( SgDeclarationStatement* declaration );
+
+       // Refactored code to build the attribute (used for variables, varRef expressions, and function call expressions).
+          void buildClassDeclaration(std::string attribute_name, SgClassDeclaration* & generatedClass, SgClassDefinition* & generatedClassDefinition);
+
    };
 
 

@@ -11,6 +11,94 @@ EXTRA_DIST = tests.conf
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
+# Sawyer unit tests. These are copied from the Sawyer release at https://github.com/matzke1/sawyer by
+# the script in $ROSE/src/util/Sawyer/updateFromGithub.sh
+
+SAWYER_TEST_TARGETS =
+noinst_PROGRAMS +=				\
+        sawyer-attributeUnitTests		\
+        sawyer-optionalUnitTests		\
+        sawyer-listUnitTests			\
+        sawyer-mapUnitTests			\
+        sawyer-setUnitTests			\
+        sawyer-distinctListUnitTests		\
+        sawyer-intervalUnitTests		\
+        sawyer-bitvecTests			\
+        sawyer-denseIntegerSetUnitTests		\
+        sawyer-addressMapUnitTests		\
+        sawyer-graphUnitTests			\
+        sawyer-indexedGraphDemo			\
+        sawyer-graphIsomorphismTests		\
+        sawyer-intervalSetMapUnitTests
+
+sawyer_attributeUnitTests_SOURCES = sawyer-attributeUnitTests.C
+sawyer_attributeUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-attributeUnitTests.passed
+
+sawyer_optionalUnitTests_SOURCES = sawyer-optionalUnitTests.C
+sawyer_optionalUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-optionalUnitTests.passed
+
+sawyer_listUnitTests_SOURCES = sawyer-listUnitTests.C
+sawyer_listUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-listUnitTests.passed
+
+sawyer_mapUnitTests_SOURCES = sawyer-mapUnitTests.C
+sawyer_mapUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-mapUnitTests.passed
+
+sawyer_setUnitTests_SOURCES = sawyer-setUnitTests.C
+sawyer_setUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-setUnitTests.passed
+
+sawyer_distinctListUnitTests_SOURCES = sawyer-distinctListUnitTests.C
+sawyer_distinctListUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-distinctListUnitTests.passed
+
+sawyer_intervalUnitTests_SOURCES = sawyer-intervalUnitTests.C
+sawyer_intervalUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-intervalUnitTests.passed
+
+sawyer_bitvecTests_SOURCES = sawyer-bitvecTests.C
+sawyer_bitvecTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-bitvecTests.passed
+
+sawyer_denseIntegerSetUnitTests_SOURCES = sawyer-denseIntegerSetUnitTests.C
+sawyer_denseIntegerSetUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-denseIntegerSetUnitTests.passed
+
+sawyer_addressMapUnitTests_SOURCES = sawyer-addressMapUnitTests.C
+sawyer_addressMapUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-addressMapUnitTests.passed
+
+sawyer_graphUnitTests_SOURCES = sawyer-graphUnitTests.C
+sawyer_graphUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-graphUnitTests.passed
+
+sawyer_indexedGraphDemo_SOURCES = sawyer-indexedGraphDemo.C
+sawyer_indexedGraphDemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-indexedGraphDemo.passed
+
+sawyer_graphIsomorphismTests_SOURCES = sawyer-graphIsomorphismTests.C
+sawyer_graphIsomorphismTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-graphIsomorphismTests.passed
+
+sawyer_intervalSetMapUnitTests_SOURCES = sawyer-intervalSetMapUnitTests.C
+sawyer_intervalSetMapUnitTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+SAWYER_TEST_TARGETS += sawyer-intervalSetMapUnitTests.passed
+
+
+TEST_TARGETS += $(SAWYER_TEST_TARGETS)
+$(SAWYER_TEST_TARGETS): %.passed: %
+	@$(RTH_RUN)						\
+		TITLE="Sawyer unit test [$@]"			\
+		CMD="$$(pwd)/$^"				\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+.PHONY: check-sawyer
+check-sawyer: $(SAWYER_TEST_TARGETS)
+
+
 # Test that rose::FileSystem::copyFile works
 noinst_PROGRAMS += testCopyFile
 testCopyFile_SOURCES = testCopyFile.C

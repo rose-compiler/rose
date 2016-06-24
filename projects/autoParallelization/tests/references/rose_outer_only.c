@@ -1,5 +1,6 @@
 /* Only the outmost loop can be parallelized
  */
+#include "omp.h" 
 
 void foo()
 {

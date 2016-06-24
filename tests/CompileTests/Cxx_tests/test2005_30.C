@@ -7,7 +7,8 @@
 //    getline(in_stream,line,10);
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// #if ( __GNUC__ == 3 )
+#if ( defined(__clang__) == 0 && __GNUC__ == 3 )
 
 // DQ (4/12/2005):
 // Note that in the compilation of the generated code by the g++ 3.4.3 and 3.3.2 

@@ -36,36 +36,49 @@ main (int argc, char *argv[])
   SgProject *project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
 
-#if 1 // This has to happen before analyses are called.
-       // For each loop 
-       VariantVector vv (V_SgForStatement); 
-        Rose_STL_Container<SgNode*> loops = NodeQuery::queryMemoryPool(vv); 
+ // This has to happen before analyses are called.
+  // For each loop 
+  VariantVector vv (V_SgForStatement); 
+  Rose_STL_Container<SgNode*> loops = NodeQuery::queryMemoryPool(vv); 
 
-      // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
-       // Liao, 10/22/2009. Thank Jeff Keasler for spotting this bug
-         for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin();
-                     iter!= loops.end(); iter++ )
-         {
-           SgForStatement* cur_loop = isSgForStatement(*iter);
-           ROSE_ASSERT(cur_loop);
-           // SageInterface::normalizeForLoopInitDeclaration(cur_loop);
-           if (keep_c99_loop_init) 
-           {
-             // 2/29/2016, disable for loop init declaration normalization
-             // This is not used . No longer used.
-             normalizeForLoopTest(cur_loop);
-             normalizeForLoopIncrement(cur_loop);
-             ensureBasicBlockAsBodyOfFor(cur_loop);
-             constantFolding(cur_loop->get_test());
-             constantFolding(cur_loop->get_increment());
-           }
-           else
-             SageInterface::forLoopNormalization(cur_loop);
-         }
+  // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
+  // Liao, 10/22/2009. Thank Jeff Keasler for spotting this bug
+  for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin();
+      iter!= loops.end(); iter++ )
+  {
+    SgForStatement* cur_loop = isSgForStatement(*iter);
+    ROSE_ASSERT(cur_loop);
+    // skip for (;;) , SgForStatement::get_test_expr() has a buggy assertion.
+    SgStatement* test_stmt = cur_loop->get_test();
+    if (test_stmt!=NULL && 
+        isSgNullStatement(test_stmt))
+      continue;
 
+    // skip system header
+    if (insideSystemHeader (cur_loop) )
+      continue; 
+#if 0 // we now always normalize loops, then later undo some normalization 6/22/2016
+    // SageInterface::normalizeForLoopInitDeclaration(cur_loop);
+    if (keep_c99_loop_init) 
+    {
+      // 2/29/2016, disable for loop init declaration normalization
+      // This is not used . No longer used.
+      normalizeForLoopTest(cur_loop);
+      normalizeForLoopIncrement(cur_loop);
+      ensureBasicBlockAsBodyOfFor(cur_loop);
+      constantFolding(cur_loop->get_test());
+      constantFolding(cur_loop->get_increment());
+    }
+    else
 #endif
+      SageInterface::forLoopNormalization(cur_loop);
+  }
+
   //Prepare liveness analysis etc.
-  initialize_analysis (project,enable_debug);   
+  //TOO much output for analysis debugging info.
+  //initialize_analysis (project,enable_debug);   
+  initialize_analysis (project, false);   
+
   // For each source file in the project
     SgFilePtrList & ptr_list = project->get_fileList();
     for (SgFilePtrList::iterator iter = ptr_list.begin(); iter!=ptr_list.end();
@@ -142,13 +155,16 @@ main (int argc, char *argv[])
           SgInitializedName* invarname = getLoopInvariant(current_loop);
           if (invarname != NULL)
           {
-            hasOpenMP = ParallelizeOutermostLoop(current_loop, &array_interface, annot);
+            bool ret = ParallelizeOutermostLoop(current_loop, &array_interface, annot);
+            if (ret) // if at least one loop is parallelized, we set hasOpenMP to be true for the entire file.
+              hasOpenMP = true;  
           }
           else // cannot grab loop index from a non-conforming loop, skip parallelization
           {
             if (enable_debug)
               cout<<"Skipping a non-canonical loop at line:"<<current_loop->get_file_info()->get_line()<<"..."<<endl;
-            hasOpenMP = false;
+            // We should not reset it to false. The last loop may not be parallelizable. But a previous one may be.  
+            //hasOpenMP = false;
           }
         }// end for loops
       } // end for-loop for declarations
@@ -164,6 +180,15 @@ main (int argc, char *argv[])
        diffUserDefinedAndCompilerGeneratedOpenMP(sfile); 
    } //end for-loop of files
 
+#if 1
+  // undo loop normalization
+  std::map <SgForStatement* , bool >::iterator iter = trans_records.forLoopInitNormalizationTable.begin();
+  for (; iter!= trans_records.forLoopInitNormalizationTable.end(); iter ++) 
+  {
+    SgForStatement* for_loop = (*iter).first; 
+    unnormalizeForLoopInitDeclaration (for_loop);
+  }
+#endif
   // Qing's loop normalization is not robust enough to pass all tests
   //AstTests::runAllTests(project);
   

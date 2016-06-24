@@ -200,7 +200,7 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
         // report them here because there's a large amount of user code that doesn't follow the rules and we don't want to be
         // completely obnoxious.
         if (!copied && shouldEmit(id, HAS_NULL_COPY))
-            mlog[WARN] <<attributeFullName(attr, id) <<" was not copied; no virtual copy constructor?\n";
+            mlog[WARN] <<attributeFullName(attr, id) <<" was not copied; no virtual copy function?\n";
         if (attr->attribute_class_name().compare("AstAttribute") == 0 && shouldEmit(id, HAS_NO_CLASS_NAME)) {
             mlog[WARN] <<"attribute \"" <<StringUtility::cEscape(Sawyer::Attribute::name(id)) <<"\""
                        <<" does not implement attribute_class_name\n";
@@ -208,7 +208,7 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
         switch (attr->getOwnershipPolicy()) {
             case AstAttribute::CONTAINER_OWNERSHIP:
                 ASSERT_require2(copied != attr,
-                                "virtual copy constructor for \"" + Sawyer::Attribute::name(id) + "\" did not copy attribute");
+                                "virtual copy function for \"" + Sawyer::Attribute::name(id) + "\" did not copy attribute");
                 break;
             case AstAttribute::NO_OWNERSHIP:
                 // copy() is allowed to return itself; we don't care since we won't ever delete either attribute
@@ -221,7 +221,7 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
             case AstAttribute::UNKNOWN_OWNERSHIP:
                 // Similar to CONTAINER_OWNERSHIP but only warn, don't assert.
                 if (copied != attr && shouldEmit(id, HAS_SELF_COPY))
-                    mlog[WARN] <<attributeFullName(attr, id) <<" virtual copy constructor did not copy the attribute\n";
+                    mlog[WARN] <<attributeFullName(attr, id) <<" virtual copy function did not copy the attribute (unknown ownership)\n";
                 break;
         }
 

@@ -82,7 +82,7 @@ leadingBytes(const uint8_t *buf, size_t bufsize) {
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
 
     BinaryAnalysis::Partitioner2::Engine engine;
     Settings settings;

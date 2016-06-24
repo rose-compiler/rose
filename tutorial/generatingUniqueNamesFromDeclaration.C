@@ -53,6 +53,9 @@ static void printFunctionDeclaration (const SgNode* node)
 
 int main (int argc, char** argv)
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
      SgProject* proj = frontend (argc, argv);
 
      cout << endl << "***** BEGIN initialized names *****" << endl;

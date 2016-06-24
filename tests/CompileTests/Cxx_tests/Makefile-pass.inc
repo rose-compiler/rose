@@ -427,7 +427,6 @@ test2005_203.C \
 test2005_208.C \
 test2005_209.C \
 test2006_01.C \
-test2006_02.C \
 test2006_03.C \
 test2006_04.C \
 test2006_05.C \
@@ -819,6 +818,13 @@ test2005_104.C \
 test2010_24.C \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION) \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS)
+
+# DQ (4/17/2016): This test code is a problem for Clang.
+if !USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+   test2006_02.C 
+endif
+
 
 
 # DQ (9/17/2011): Failing name qualification...fix after fixing original expression tree AST consistancy.

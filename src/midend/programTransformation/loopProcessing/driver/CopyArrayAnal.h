@@ -9,7 +9,11 @@ class CopyArrayOperator : public DepCompCopyArrayToBuffer
  /*QY: modify the collected array copy specifications in (collect)  */
   virtual void ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, 
                 DepCompAstRefGraphCreate& g) {}
-  DepCompCopyArrayToBuffer::ApplyXform;
+
+  // DQ (4/12/2016): Clang c++11 mode error: "C++11 does not allow access declarations; use using declarations instead"
+  // DepCompCopyArrayToBuffer::ApplyXform;
+  using DepCompCopyArrayToBuffer::ApplyXform;
+
 public:
   virtual ~CopyArrayOperator() {}
   virtual LoopTransformOptions::OptType GetOptimizationType()  = 0;

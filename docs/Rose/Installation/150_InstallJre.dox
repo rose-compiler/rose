@@ -34,6 +34,10 @@
  *  Make sure the "apt" command doesn't point to a symbolic link in /etc/alternatives (e.g., run <code>ls -l $(which
  *  apt)</code>). Once you've completed these steps, make sure that <code>javac -version</code> reports 1.7.0_51.
  *
+ *  Ensure that the @c LD_LIBRARY_PATH contains both the java-7-sun/lib directory and the java-7-sun/jre/lib/amd64/server
+ *  directory when building ROSE and when running ROSE java analysis or you may experience segmentation faults during the
+ *  analysis.
+ *
  *  @section installing_jre_ubuntu1404 "Trusty Tahr"
  *
  *  Follow the instructions for Debian 8. */
@@ -43,4 +47,3 @@
 //      \item Add JAVA environment variables if you platform is a Linux box. \\
 //            For example:\\
 //            {\tt export JAVA\_HOME=/usr/apps/java/jdk1.5.0\_11} \\
-//            {\tt export LD\_LIBRARY\_PATH=\$JAVA\_HOME/jre/lib/i386/server:\$LD\_LIBRARY\_PATH}

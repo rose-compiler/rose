@@ -10,7 +10,8 @@
 /**
   Contains a BoxLayout which defines the valid patches of the domain. Each patch is represented by a RectMDArray which holds the actual data. 
 */
-#pragma DSL keyword
+// #pragma DSL keyword
+#pragma DSL keyword novalue
 template  <class T=double, unsigned int C=1, unsigned char D=1, unsigned char E=1>
 class LevelData 
 {

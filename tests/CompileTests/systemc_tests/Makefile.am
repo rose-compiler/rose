@@ -4,6 +4,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are ROSE translators and test the compilation ROSE applications using ROSE #
 ####################################################################################
 
+# Test translator contributed by Tim.
+noinst_PROGRAMS = member_function
+
+member_function_SOURCES = member_function.cpp
+
+AM_CPPFLAGS = $(ROSE_INCLUDES)
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 # Build variable to SystemC include directory.
 SYSTEM_C_INCLUDES = -I$(srcdir)/include
 
@@ -57,11 +65,17 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 #     Test codes or selected ROSE code that can compile using ROSE or is the subject of current work 
 # ****************************************************************************************************
 
-EXTRA_DIST = $(TESTCODES)
+# DQ (4/10/2016): Added test code from project working on systemc (but this was not really specific to systemc support).
+test_member_function: member_function
+	./member_function -c -I$(srcdir) $(srcdir)/input_member_function.cpp
+#	./member_function -DSKIP_ROSE_BUILTIN_DECLARATIONS -c -I$(srcdir) $(srcdir)/input_member_function.cpp
+
+EXTRA_DIST = $(TESTCODES) input_member_function.cpp input_member_function.h
 
 check-local:
 	@echo "Tests of System C examples."
 	@$(MAKE) $(PASSING_TEST_Sources)
+	@$(MAKE) test_member_function
 	@echo "**************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/sytemc_tests: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************"
