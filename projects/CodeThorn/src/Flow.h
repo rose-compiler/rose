@@ -1,7 +1,7 @@
 #ifndef FLOW_H
 #define FLOW_H
 
-//#define USE_SAWYER_GRAPH
+#define USE_SAWYER_GRAPH
 
 #include <boost/graph/adjacency_list.hpp> 
 #include <boost/graph/graphviz.hpp>
@@ -20,6 +20,7 @@ namespace SPRAY {
   typedef std::set<Edge> EdgeSet;
   typedef std::set<EdgeType> EdgeTypeSet;
   
+#ifdef USE_SAWYER_GRAPH
   struct EdgeData {
     EdgeData(EdgeTypeSet t, std::string a) : edgeTypes(t), annotation(a) {} 
     EdgeTypeSet edgeTypes;
@@ -27,6 +28,7 @@ namespace SPRAY {
   };
 
   typedef Sawyer::Container::Graph<Label, EdgeData, Label> SawyerCfg;  
+#endif
 
   /*! 
    * \author Markus Schordan
@@ -75,15 +77,9 @@ namespace SPRAY {
    * \date 2012.
    */
 
-  class Flow
-#ifndef USE_SAWYER_GRAPH
-  : public std::set<Edge>
-#endif
-  {
+  class Flow {
   public:  
-#ifndef USE_SAWYER_GRAPH
-    typedef std::set<Edge>::iterator iterator;
-#else
+#ifdef USE_SAWYER_GRAPH
     class iterator : public SawyerCfg::EdgeIterator {
     public: 
     iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
@@ -95,6 +91,8 @@ namespace SPRAY {
     private:
       Edge* operator->();
     };
+#else
+    typedef std::set<Edge>::iterator iterator;
 #endif
     Flow();
     iterator begin();
@@ -102,6 +100,8 @@ namespace SPRAY {
     Flow operator+(Flow& s2);
     Flow& operator+=(Flow& s2);
     std::pair<Flow::iterator, bool> insert(Edge e);
+    Flow::iterator find(Edge e);
+    bool contains(Edge e);
     void erase(Flow::iterator iter);
     size_t erase(Edge e);
     size_t size();
@@ -122,6 +122,10 @@ namespace SPRAY {
     
     Flow inEdges(Label label);
     Flow outEdges(Label label);
+#ifdef USE_SAWYER_GRAPH
+    boost::iterator_range<Flow::iterator> inEdgesIterator(Label label);
+    boost::iterator_range<Flow::iterator> outEdgesIterator(Label label);
+#endif
     Flow edgesOfType(EdgeType edgeType);
     Flow outEdgesOfType(Label label, EdgeType edgeType);
     Label getStartLabel() { return _startLabel; }
@@ -160,10 +164,13 @@ namespace SPRAY {
     std::string _fixedColor;
     bool _dotOptionHeaderFooter;
     bool _boostified;
-    SawyerCfg  _sawyerFlowGraph;
     FlowGraph _flowGraph;
     Label _startLabel;
+#ifdef USE_SAWYER_GRAPH
+    SawyerCfg  _sawyerFlowGraph;
+#else
     std::set<Edge> _edgeSet;
+#endif
   };
   
   class InterEdge {

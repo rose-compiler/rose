@@ -258,7 +258,7 @@ long Edge::hash() const {
 }
 
 Flow::Flow():_boostified(false) {
-  resetDotOptions();
+  resetDotOptions(); 
 }
 
 void Flow::boostify() {
@@ -305,55 +305,88 @@ string Flow::toString() {
   return ss.str();
 }
 
+bool Flow::contains(Edge e) {
+  return (find(e) != end());
+}
+
+Flow::iterator Flow::find(Edge e) {
+#ifdef USE_SAWYER_GRAPH
+  SawyerCfg::VertexIterator source = _sawyerFlowGraph.findVertexKey(e.source());
+  if (source != _sawyerFlowGraph.vertices().end()) {
+    boost::iterator_range<SawyerCfg::EdgeIterator> outEdges = (*source).outEdges();
+    for (SawyerCfg::EdgeIterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
+      EdgeData eData = (*i).value();
+      if (eData.edgeTypes == e.types() && eData.annotation == e.getAnnotation()) {
+	if ((*((*i).target())).value() == e.target()) {
+	  return Flow::iterator(i);
+	}
+      }
+    }
+  }
+  return Flow::iterator(_sawyerFlowGraph.edges().end());
+#else 
+  return _edgeSet.find(e);
+#endif
+}
+
 pair<Flow::iterator, bool> Flow::insert(Edge e) {
-#ifndef USE_SAWYER_GRAPH
-  return _edgeSet.insert(e);
-#else
+#ifdef USE_SAWYER_GRAPH
   EdgeData edgeData = EdgeData(e.types(), e.getAnnotation());
-  Flow::iterator iter = Flow::iterator(_sawyerFlowGraph.insertEdgeWithVertices(e.source(), e.target(), edgeData));
-  return pair<Flow::iterator, bool>(iter, true);
+  Flow::iterator previousEdge = find(e);
+  if (previousEdge != end()) {
+    return pair<Flow::iterator, bool>(previousEdge, false);
+  } else {
+    Flow::iterator iter = Flow::iterator(_sawyerFlowGraph.insertEdgeWithVertices(e.source(), e.target(), edgeData));
+    return pair<Flow::iterator, bool>(iter, true);
+  }
+#else
+  return _edgeSet.insert(e);
 #endif
 }
 
 void Flow::erase(Flow::iterator iter) {
-#ifndef USE_SAWYER_GRAPH
-  _edgeSet.erase(iter);
+#ifdef USE_SAWYER_GRAPH
+  _sawyerFlowGraph.eraseEdgeWithVertices(iter);
 #else
-  _sawyerFlowGraph.eraseEdgeWithVertices(static_cast<SawyerCfg::EdgeIterator>(iter));
+  _edgeSet.erase(iter);
 #endif
 }
 
 size_t Flow::erase(Edge e) {
-#ifndef USE_SAWYER_GRAPH
-  return _edgeSet.erase(e);
+#ifdef USE_SAWYER_GRAPH
+  Flow::iterator existingEdge = find(e);
+  if (existingEdge != end()) {
+    erase(existingEdge);
+    return 1;
+  } else {
+    return 0;
+  }
 #else
-  SawyerCfg::EdgeIterator iter = _sawyerFlowGraph.findEdgeValue(EdgeData(e.types(), e.getAnnotation()));
-  _sawyerFlowGraph.eraseEdgeWithVertices(iter);
-  return 1;
+  return _edgeSet.erase(e);
 #endif
 }
 
 size_t Flow::size() {
-#ifndef USE_SAWYER_GRAPH
-  return _edgeSet.size();
-#else
+#ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.nEdges();
+#else
+  return _edgeSet.size();
 #endif
 }
 
 Flow::iterator Flow::begin() {
-#ifndef USE_SAWYER_GRAPH
-  return _edgeSet.begin();
-#else
+#ifdef USE_SAWYER_GRAPH
   return Flow::iterator(_sawyerFlowGraph.edges().begin());
+#else
+  return _edgeSet.begin();
 #endif
 }
 
 Flow::iterator Flow::end() {
-#ifndef USE_SAWYER_GRAPH
-  return _edgeSet.end();
-#else
+#ifdef USE_SAWYER_GRAPH
   return Flow::iterator(_sawyerFlowGraph.edges().end());
+#else
+  return _edgeSet.end();
 #endif
 }
 
@@ -472,10 +505,11 @@ size_t Flow::deleteEdges(EdgeType edgeType) {
   size_t numDeleted=0;
   while(i!=end()) {
     if((*i).isType(edgeType)) {
-#ifndef USE_SAWYER_GRAPH
-      erase(i++);
+#ifdef USE_SAWYER_GRAPH
+      erase(i);
+      ++i;
 #else
-      _sawyerFlowGraph.eraseEdgeWithVertices(i);
+      erase(i++);
 #endif
       numDeleted++;
     } else {
@@ -495,11 +529,11 @@ size_t Flow::deleteEdges(Flow& edges) {
   size_t numDeleted=0;
   Flow::iterator i=edges.begin();
   while(i!=end()) {
-#ifndef USE_SAWYER_GRAPH
-    erase(i++); // MS: it is paramount to pass a copy of the iterator, and perform a post-increment.
+#ifdef USE_SAWYER_GRAPH
+    erase(*i);
+    ++i;
 #else
-    SawyerCfg::EdgeIterator iter = _sawyerFlowGraph.findEdgeValue(EdgeData((*i).types(), (*i).getAnnotation()));
-    _sawyerFlowGraph.eraseEdgeWithVertices(iter);
+    erase(i++); // MS: it is paramount to pass a copy of the iterator, and perform a post-increment.
 #endif
     numDeleted++;
   }
@@ -508,10 +542,20 @@ size_t Flow::deleteEdges(Flow& edges) {
 
 Flow Flow::inEdges(Label label) {
   Flow flow;
+#ifdef USE_SAWYER_GRAPH
+  SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  Flow::iterator begin = Flow::iterator((*vertexIter).inEdges().begin());
+  Flow::iterator end = Flow::iterator((*vertexIter).inEdges().end());
+  for (Flow::iterator i=begin; i!=end; ++i) {
+      Edge inEdge = *i;
+      flow.insert(inEdge);
+  }
+#else
   for(Flow::iterator i=begin();i!=end();++i) {
     if((*i).target()==label)
       flow.insert(*i);
   }
+#endif
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
   flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
   return flow;
@@ -520,10 +564,20 @@ Flow Flow::inEdges(Label label) {
 Flow Flow::outEdges(Label label) {
   Flow flow;
   if(!_boostified) {
+#ifdef USE_SAWYER_GRAPH
+    SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+    Flow::iterator begin = Flow::iterator((*vertexIter).outEdges().begin());
+    Flow::iterator end = Flow::iterator((*vertexIter).outEdges().end());
+    for (Flow::iterator i=begin; i!=end; ++i) {
+        Edge outEdge = *i;
+        flow.insert(outEdge);
+    }
+#else
     for(Flow::iterator i=begin();i!=end();++i) {
       if((*i).source()==label)
         flow.insert(*i);
     }
+#endif
   } else {
     typedef graph_traits<FlowGraph> GraphTraits;
     //    typename property_map<FlowGraph, vertex_index_t>::type 
@@ -541,6 +595,18 @@ Flow Flow::outEdges(Label label) {
   flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
   return flow;
 }
+
+#ifdef USE_SAWYER_GRAPH
+boost::iterator_range<Flow::iterator> Flow::inEdgesIterator(Label label) {
+  boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*(_sawyerFlowGraph.findVertexKey(label))).inEdges();
+  return boost::iterator_range<Flow::iterator>(Flow::iterator(edges.begin()), Flow::iterator(edges.end()));
+}
+
+boost::iterator_range<Flow::iterator> Flow::outEdgesIterator(Label label) {
+  boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*(_sawyerFlowGraph.findVertexKey(label))).outEdges();
+  return boost::iterator_range<Flow::iterator>(Flow::iterator(edges.begin()), Flow::iterator(edges.end()));
+}
+#endif
 
 Flow Flow::outEdgesOfType(Label label, EdgeType edgeType) {
   Flow flow;
