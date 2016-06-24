@@ -309,11 +309,12 @@
 // proliferation of conditional compilation directives in the main body of source code.
 #ifdef _REENTRANT
     #define SAWYER_MULTI_THREADED 1
-    #define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::MultiThreadedTag>
+    #define SAWYER_THREAD_TAG Sawyer::MultiThreadedTag
 #else
     #define SAWYER_MULTI_THREADED 0
-    #define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::SingleThreadedTag>
+    #define SAWYER_THREAD_TAG Sawyer::SingleThreadedTag
 #endif
+#define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<SAWYER_THREAD_TAG>
 
 #ifdef _REENTRANT
     #if __cplusplus >= 201103L
@@ -391,6 +392,9 @@ SAWYER_EXPORT int pclose(FILE*);
  *
  *  A new string is generated each time this is called. */
 SAWYER_EXPORT std::string generateSequentialName(size_t length=3);
+
+/** Check for valid boost version or abort. */
+SAWYER_EXPORT void checkBoost();
 
 } // namespace
 

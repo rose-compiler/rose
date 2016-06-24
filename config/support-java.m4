@@ -262,6 +262,17 @@ AC_DEFINE_UNQUOTED(
   [Release version number of the Java JDK])
 
 
+dnl Summary of Java information
+AC_MSG_NOTICE([Summary of Java information:])
+AC_MSG_NOTICE([    The --with-java switch specified:       $javasetting])
+AC_MSG_NOTICE([    Installation path (JAVA_PATH):          $JAVA_PATH])
+AC_MSG_NOTICE([    C++ header switches (JAVA_JVM_INCLUDE): $JAVA_JVM_INCLUDE])
+AC_MSG_NOTICE([    C++ link switches (JAVA_JVM_LINK):      $JAVA_JVM_LINK])
+AC_MSG_NOTICE([    Runtime command (JAVA):                 $JAVA])
+AC_MSG_NOTICE([    Compiler command (JAVAC):               $JAVAC])
+AC_MSG_NOTICE([    Header generator (JAVAH):               $JAVAH])
+AC_MSG_NOTICE([    Archive tool (JAR):                     $JAR])
+
 # End macro ROSE_SUPPORT_JAVA.
 ]
 )

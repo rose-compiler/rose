@@ -9,6 +9,9 @@ void FixSgProject(SgProject& proj);
 
 int main (int argc, char* argv[])
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
   // Build the project object (AST) which we will fill up with multiple files and use as a
   // handle for all processing of the AST(s) associated with one or more source files.
      SgProject* project = new SgProject(argc,argv);

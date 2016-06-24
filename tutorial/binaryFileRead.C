@@ -2,6 +2,9 @@
 
 int main(int argc, char **argv)
 {
+    // Initialize and check compatibility. See rose::initialize
+    ROSE_INITIALIZE;
+
     if (argc != 2)
     {
         std::cerr << "must be called with exactly one binary AST file argument"

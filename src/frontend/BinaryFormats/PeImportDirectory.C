@@ -136,8 +136,8 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
                 mlog[WARN] <<"SgAsmPEImportDirectory::parse: short read of dll name at rva "
                            << p_dll_name_rva <<" for import directory at va " <<StringUtility::addrToString(idir_va) <<"\n";
                 if (e.map) {
-                    mlog[ERROR] <<"    Memory map in effect at time of error is:\n";
-                    e.map->dump(mlog[ERROR], "        ");
+                    mlog[WARN] <<"    Memory map in effect at time of error is:\n";
+                    e.map->dump(mlog[WARN], "        ");
                 }
             }
         }
@@ -193,8 +193,8 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                            <<" at va " <<StringUtility::addrToString(entry_va)
                            <<": table entry is outside mapped memory\n";
                 if (e.map) {
-                    mlog[ERROR] <<"    Memory map in effect at time of error:\n";
-                    e.map->dump(mlog[ERROR], "        ");
+                    mlog[WARN] <<"    Memory map in effect at time of error:\n";
+                    e.map->dump(mlog[WARN], "        ");
                 }
             }
         }
@@ -314,8 +314,8 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                                    <<": points to unmapped Hint/Name pair at va "
                                    <<StringUtility::addrToString(entry_word_va) <<"\n";
                         if (e.map) {
-                            mlog[ERROR] <<"    Memory map in effect at time of error:\n";
-                            e.map->dump(mlog[ERROR], "        ");
+                            mlog[WARN] <<"    Memory map in effect at time of error:\n";
+                            e.map->dump(mlog[WARN], "        ");
                         }
                     }
                     continue; // to next ILT/IAT entry
@@ -334,8 +334,8 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                                    <<": points to an unmapped Hint/Name pair at va "
                                    <<StringUtility::addrToString(entry_word_va) <<"\n";
                         if (e.map) {
-                            mlog[ERROR] <<"    Memory map in effect at time of error:\n";
-                            e.map->dump(mlog[ERROR], "        ");
+                            mlog[WARN] <<"    Memory map in effect at time of error:\n";
+                            e.map->dump(mlog[WARN], "        ");
                         }
                     }
                     continue; // to next ILT/IAT entry
@@ -354,8 +354,8 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                                        <<StringUtility::addrToString(entry_word_va)
                                        <<" (when reading pad byte)\n";
                             if (e.map) {
-                                mlog[ERROR] <<"    Memory map in effect at time of error:\n";
-                                e.map->dump(mlog[ERROR], "        ");
+                                mlog[WARN] <<"    Memory map in effect at time of error:\n";
+                                e.map->dump(mlog[WARN], "        ");
                             }
                         }
                         continue; // to next ILT/IAT entry

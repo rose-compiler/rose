@@ -28,4 +28,5 @@ $CONSTRUCTOR_BODY
      assert(is$CLASSNAME(this) != NULL);
    }
 
-
+// Generated constructor (all data members)
+$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS

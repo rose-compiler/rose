@@ -336,7 +336,7 @@ namespace SgNodeHelper {
     //! tests pattern SgFunctionCall(...) where the name of the function is printf with 2 params
     SgVarRefExp* matchSingleVarPrintf(SgNode* node);
     //! tests pattern SgFunctionCall(...) where the name of the function is fprintf with 3 params
-    SgVarRefExp* matchSingleVarFPrintf(SgNode* node);
+    SgVarRefExp* matchSingleVarFPrintf(SgNode* node,bool showWarnings=false);
 
     struct OutputTarget {
       bool isKnown();

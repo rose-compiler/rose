@@ -154,6 +154,42 @@ namespace BinaryAnalysis {
  * 
  *
  *
+ *  @section bintut_fcfg Generating a function control flow graph.
+ *
+ *  This example shows how to load a specimen into analysis space and generate a control flow graph for each function. First we
+ *  include @c rose.h and then any additional binary analysis header files:
+ *
+ *  @snippet binaryFunctionCfg.C prologue
+ *
+ *  Then, in the @c main program, we create a disassembling and partitioning engine and use it to parse the command-line. This
+ *  allows our tool to easily support the multitude of partitioner settings and container formats:
+ *
+ *  @snippet binaryFunctionCfg.C setup
+ *
+ *  Next, now that the engine is configured and we know the name(s) or resources for the specimen, we can parse the specimen
+ *  container, load the specimen into memory, disassemble, and discover functions. The results are stored in a @ref
+ *  Partitioner2::Partitioner "Partitioner" object:
+ *
+ *  @snippet binaryFunctionCfg.C partition
+ *
+ *  Finally, we'll iterate over those functions to create function control flow graphs and print each graph.  The @ref
+ *  Partitioner2::Partitioner::cfg "cfg" method returns a const reference to a global control flow graph, which normally serves
+ *  as the starting point for many analyses. But in this case, we want only the subgraph that represents an individual
+ *  function, so we copy the global CFG and then remove those vertices and edges that are uninteresting. This operation takes
+ *  time that is linear with respect to the number of vertices and edges:
+ *
+ *  @snippet binaryFunctionCfg.C function cfg
+ *
+ *  The @ref Partitioner2::DataFlow namespace has a @ref Partitioner2::DataFlow::buildDfCfg "buldDfCfg" function that creates a
+ *  slightly different kind of control flow graph--one that's more useful for data-flow--which also permits intra- and
+ *  inter-procedural analysis based on user criteria.
+ *
+ *  Here's the entire program:
+ *
+ *  @includelineno binaryFunctionCfg.C
+ *
+ *
+ *
  *  @section bintut_cg Generating a binary function call graph in GraphViz format.
  *
  *  This example is similar to the @ref bintut_helloworld example, but demonstrates how to analyze function call information to

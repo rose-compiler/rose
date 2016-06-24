@@ -72,8 +72,12 @@ class HoldAncesLoopObserver : protected HoldLoopAlignObserver
 
   LoopTreeNode* GetAncesLoop() const { return GetTreeNode(); }
   LoopTreeNode* GetDescNode() const  { return desc; }
-  HoldLoopAlignObserver::GetLoopAlign;
-  HoldLoopAlignObserver::SetLoopAlign;
+
+  // DQ (4/12/2016): Clang c++11 mode error: "C++11 does not allow access declarations; use using declarations instead"
+  // HoldLoopAlignObserver::GetLoopAlign;
+  // HoldLoopAlignObserver::SetLoopAlign;
+  using HoldLoopAlignObserver::GetLoopAlign;
+  using HoldLoopAlignObserver::SetLoopAlign;
 };
 
 #endif

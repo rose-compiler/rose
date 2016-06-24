@@ -9,6 +9,7 @@
 #include <sstream>
 #include <fstream>
 #include <map>
+#include <iostream>
 
 using namespace std;
 
@@ -1236,6 +1237,43 @@ Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarStri
      return complete;
    }
 
+// NEW CONSTRUCTORS
+// this function is used when creating the prototype for the all-data-members constructor.
+// it creates the string that is inserted into classname::classname(<string-goes-here>)
+string
+Grammar::buildConstructorParameterListStringForEssentialDataMembers(AstNodeClass& node, bool withInitializers) {
+  string result;
+  vector<GrammarString *> includeList;
+  vector<GrammarString *> excludeList;
+  // now generate the additions to the lists from the parent node subtree lists
+  generateStringListsFromLocalLists ( node, includeList, excludeList, &AstNodeClass::getMemberDataPrototypeList );
+  
+  int generatedParam=0;
+  //cout<<"DEBUG: includeList.size()="<<includeList.size()<<" :: ";
+  for(vector<GrammarString *>::iterator gIt = includeList.begin(); gIt != includeList.end(); gIt++) {
+    GrammarString *memberFunctionCopy= *gIt;
+    ROSE_ASSERT (memberFunctionCopy != NULL);
+    GrammarString& dataMember = **gIt;
+
+    string dataMemberParameter;
+    if(withInitializers)
+      dataMemberParameter=dataMember.getConstructorPrototypeParameterString();
+    else
+      dataMemberParameter=dataMember.getConstructorSourceParameterString();
+
+    //string filter="static";
+    //bool dataMemberIsStatic=dataMemberParameter.substr(0,filter.size())!=filter;
+    if(!isFilteredMemberVariable(dataMember.variableNameString)/*&&!dataMemberIsStatic*/) {
+      if(generatedParam>0)
+        result+=", ";
+      result+=dataMemberParameter;
+      generatedParam++;
+    }
+  }
+  //cout<<"RESULT:"<<result<<endl;
+  return result;
+}
+
 string
 Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool* complete )
    {
@@ -1319,10 +1357,10 @@ Grammar::buildDataMemberVariableDeclarations ( AstNodeClass & node )
 StringUtility::FileWithLineNumbers
 Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node )
    {
+
   // This function builds a single string containing:
   //    1) Data Access function prototypes (e.g. "void set_data( int data ); int get_data(void); ..." )
   //    2) Constructor prototype (e.g. "$CLASSNAME ( data = 0, $Data* someSageData = NULL );" )
-
      StringUtility::FileWithLineNumbers dataAccessFunctionPrototypeString = buildStringForDataAccessFunctionDeclaration(node);
 
   // printf ("dataAccessFunctionPrototypeString = \n%s\n",dataAccessFunctionPrototypeString.c_str());
@@ -1374,6 +1412,24 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
                string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
+               /* ESSENTIAL DATA MEMBERS CONSTRUCTOR: generate prototype for all data members constructor */ 
+               if(nameHasPrefix(className,"SgUntyped")) {
+                 string constructorParameterString_3 = buildConstructorParameterListStringForEssentialDataMembers(node,false);
+                 // ensure that the already generated constructor is not generated again
+                 if(constructorParameterString_2!="") {
+                   constructorPrototype+=string(className) + "();\n";
+                   node.setGenerateEnforcedDefaultConstructorImplementation(true);
+                 } else {
+                   node.setGenerateEnforcedDefaultConstructorImplementation(false);
+                 }
+                 if(constructorParameterString_3!=constructorParameterString_2) {
+                   constructorPrototype += string(className) + "(" + constructorParameterString_3 + ");\n";
+                   node.setGenerateEssentialDataMembersConstructorImplementation(true);
+                 } else {
+                   node.setGenerateEssentialDataMembersConstructorImplementation(false);
+                 }
+               }
+               
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
                returnValue->setIsInConstructorParameterList(CONSTRUCTOR_PARAMETER);
                returnValue->defaultInitializerString = defaultInitializer;
@@ -1401,6 +1457,12 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
              }
 
           dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "" /* "<constructor>" */, 1));
+        } else {
+       // no constructor (only generate default constructor)
+          if(nameHasPrefix(className,"SgUntyped")) {
+            string constructorPrototype=className+"::"+className+"() {}\n";
+            //dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "", 1));
+          }
         }
 
   // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (we want it generated independe of if (node.generateConstructor() == true)).
@@ -1424,8 +1486,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
 
 void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& complete, const StringUtility::FileWithLineNumbers& constructorSourceCodeTemplate, AstNodeClass& node, StringUtility::FileWithLineNumbers& returnString) {
   StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
-  if (node.getBaseClass() != NULL)
-  {
+  if (node.getBaseClass() != NULL) {
     string parentClassName = node.getBaseClass()->getName();
     // printf ("In Grammar::buildConstructor(): parentClassName = %s \n",parentClassName);
     // printf ("Calling base class default constructor (should call paramtererized version) \n");
@@ -1438,9 +1499,7 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
     preInitializationString = ": " + preInitializationString;
     preInitializationString = GrammarString::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
     constructorSource = GrammarString::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST",preInitializationString);
-  }
-  else
-  {
+  } else {
     constructorSource = GrammarString::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST","");
   }
 
@@ -1450,16 +1509,39 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
   constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
   constructorSource = GrammarString::copyEdit (constructorSource,"$CLASSNAME",node.getName());
 
-  if (config == NO_CONSTRUCTOR_PARAMETER)
-  {
+  if (config == NO_CONSTRUCTOR_PARAMETER) {
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY","");
-  }
-  else
-  {
+  } else {
     string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
   }
 
+  // NEW CONSTRUCTOR: generate IMPLEMENTATION
+  string constructorEssentialDataMembers;
+  // generate new constructor only for Untyped nodes.
+  if(node.baseName.substr(0,7)=="Untyped") {
+    string className=node.getName();
+    string constructorClassName=className+"::"+className;
+    if(node.getGenerateEnforcedDefaultConstructorImplementation()) {
+      constructorEssentialDataMembers+=constructorClassName+" () /* ESSENTIAL DATA MEMBERS ENFORCED DEFAULT CONSTRUCTOR */ {}\n";
+    }
+    if(node.getGenerateEssentialDataMembersConstructorImplementation()) {
+      //cout<<"Generating constructor implementation for "<<node.baseName<<endl;
+      string constructorParameters
+        =buildConstructorParameterListStringForEssentialDataMembers(node,false);
+      // check whether constructor already exists
+      if(constructorParameters!="") {
+        string constructorImpl=node.buildConstructorBodyForEssentialDataMembers();
+        constructorEssentialDataMembers+=
+           constructorClassName
+           +"("+constructorParameters+")"
+           +" /* ESSENTIAL DATA MEMBERS CONSTRUCTOR */ "
+           +"{\n"+constructorImpl+"}\n";
+      }
+    }
+  }
+  constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS",constructorEssentialDataMembers);
+  
   returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
 }
 
@@ -1866,6 +1948,7 @@ Grammar::editSubstitution ( AstNodeClass & node, const StringUtility::FileWithLi
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterListString);
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_BODY",constructorBodyString);
      editString = GrammarString::copyEdit (editString,"$CLASSTAG",node.getTagName());
+     editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS","");
 
   // edit the suffix of the $CLASSNAME (separate from the $GRAMMAR_PREFIX_)
   // printf ("node.getToken().getName() = %s \n",node.getToken().getBaseName());
@@ -3475,12 +3558,6 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
       stringListIterator++) {
     if ( (*stringListIterator)->getToBeTraversed() == DEF_TRAVERSAL) {
       string stype=typeStringOfGrammarString(*stringListIterator);
-   // GB (8/16/2007): Fixed this condition. It did not count SgProject::p_fileList, which is a pointer to a container, and
-   // possibly other pointers to containers.
-   // if( (stype.find("*") == string::npos) // not found, not a pointer
-   // && (stype.find("List") == stype.size()-4) ) // postfix
-   // MS 2013: fixed: Pointers to containers are not containers but singleDataMembers instead)
-   //   if (isSTLContainerPtr(stype.c_str()) || isSTLContainer(stype.c_str())) {
       if (isSTLContainer(stype.c_str())) {
         info.numContainerMembers++;
       } else {
@@ -3533,8 +3610,6 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
   }
   return info;
 }
-
-//#include "grammarGenerator.C"
 
 /////////////////////////
 // RTI CODE GENERATION //
@@ -4460,4 +4535,8 @@ AstNodeClass* lookupTerminal(const vector<AstNodeClass*>& tl, const std::string&
 
 // DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
   return NULL;
+}
+
+bool Grammar::nameHasPrefix(string name, string prefix) {
+  return name.substr(0,prefix.size())==prefix;
 }
