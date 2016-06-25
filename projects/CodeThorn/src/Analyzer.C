@@ -1553,10 +1553,10 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   cout << "STATUS: Building CFGs finished."<<endl;
   if(boolOptions["reduce-cfg"]) {
     int cnt;
-#if 0
+#if 1
     // TODO: not working yet because elimination of empty if branches can cause true and false branches to co-exist.
     cnt=cfanalyzer->optimizeFlow(flow);
-    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block begin, block end nodes, empty cond nodes.)"<<endl;
+    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block begin (not block end nodes, not empty cond nodes.))"<<endl;
 #else
     cout << "INIT: CFG reduction is currently limited to block end nodes."<<endl;
     cnt=cfanalyzer->reduceBlockEndNodes(flow);
@@ -1576,10 +1576,13 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
     cout << "INIT: IntraInter-CFG OK. (size: " << flow.size() << " edges)"<<endl;
   }
 
+#if 0
   if(boolOptions["reduce-cfg"]) {
     int cnt=cfanalyzer->inlineTrivialFunctions(flow);
     cout << "INIT: CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
   }
+#endif
+
   // create empty state
   PState emptyPState;
   // TODO1: add formal paramters of solo-function

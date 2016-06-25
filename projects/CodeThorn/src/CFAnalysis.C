@@ -510,18 +510,30 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
   if(inFlow.size()==0 && outFlow.size()==0) {
     return 0;
   } else if(inFlow.size()>0 && outFlow.size()>0) {
+    set<Edge> toErase;
+    set<Edge> toInsert;
     for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
       for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
         Edge e1=*initer;
         Edge e2=*outiter;
         // preserve edge annotations of ingoing and outgoing edges
         Edge newEdge=Edge(e1.source(),unionEdgeTypeSets,e2.target());
-        flow.erase(e1);
-        flow.erase(e2);
-        flow.insert(newEdge);
+        toErase.insert(e1);
+        toErase.insert(e2);
+        toInsert.insert(newEdge);
       }
-      return 1;
     }
+ #if 0
+    for(set<Edge>::iterator i=toErase.begin();i!=toErase.end();++i) {
+      flow.erase(*i);
+    }
+    for(set<Edge>::iterator i=toInsert.begin();i!=toErase.end();++i) {
+      flow.insert(*i);
+    }
+    return 1;
+#endif
+    cout<<"skipped: ToErase:"<<toErase.size()<<" toInsert:"<<toInsert.size()<<endl;
+    return 0;
   } else if(inFlow.size()>0) {
     for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
       Edge e1=*initer;
@@ -541,8 +553,8 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
 int CFAnalysis::optimizeFlow(Flow& flow) {
   int n=0;
   // TODO: reduce: SgBreakStmt, SgContinueStmt, SgLabelStatement, SgGotoStatement
-  n+=reduceBlockBeginEndNodes(flow);
-  n+=reduceEmptyConditionNodes(flow);
+  n+=reduceBlockBeginNodes(flow);
+  //n+=reduceEmptyConditionNodes(flow);
   return n;
 }
 
@@ -557,12 +569,13 @@ int CFAnalysis::reduceBlockBeginNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
-    if(labeler->isBlockBeginLabel(*i)||labeler->isBlockEndLabel(*i)) {
+    if(labeler->isBlockBeginLabel(*i)) {
       cnt+=reduceNode(flow,*i);
     }
   }
   return cnt;
 }
+
 int CFAnalysis::reduceBlockEndNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
