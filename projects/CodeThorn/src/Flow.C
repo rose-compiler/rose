@@ -701,5 +701,11 @@ Edge Flow::iterator::operator*() {
   result.setAnnotation(getAnnotation());
   return result;
 }
+
+Flow::iterator Flow::iterator::operator++(int) {
+  Flow::iterator result = *this;
+  ++*this;
+  return result;
+}
 #endif
 
