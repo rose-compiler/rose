@@ -776,7 +776,7 @@ public:                                                 // public only for the s
             return *derived();
         }
         Derived operator++(int) {
-            Derived old = *this;
+            Derived old = *derived();
             ++*this;
             return old;
         }
@@ -797,7 +797,7 @@ public:                                                 // public only for the s
             return *derived();
         }
         Derived operator--(int) {
-            Derived old = *this;
+            Derived old = *derived();
             --*this;
             return old;
         }

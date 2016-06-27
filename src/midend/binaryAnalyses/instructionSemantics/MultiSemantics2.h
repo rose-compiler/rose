@@ -10,7 +10,7 @@ namespace InstructionSemantics2 {               // documented elsewhere
 /** Semantic domain composed of subdomains.
  *
  * The MultiSemantics semantic domain is a pseudo domain composed of one or more subdomains.  Each of the RISC operations
- * implemented in this policy invoke the operation in each of the enabled subdomains.  The type of values manipulated by the
+ * implemented in this policy invokes the operation in each of the enabled subdomains.  The type of values manipulated by the
  * MultiSemantics domain are the union of the values from each of the subdomains. One could accomplish the same thing by
  * instantiating multiple instruction semantics objects and calling each one for each instruction.  However, using this
  * MultiSemantics domain is cleaner and easier to specialize.
