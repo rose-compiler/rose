@@ -523,17 +523,13 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
         toInsert.insert(newEdge);
       }
     }
- #if 0
     for(set<Edge>::iterator i=toErase.begin();i!=toErase.end();++i) {
       flow.erase(*i);
     }
-    for(set<Edge>::iterator i=toInsert.begin();i!=toErase.end();++i) {
+    for(set<Edge>::iterator i=toInsert.begin();i!=toInsert.end();++i) {
       flow.insert(*i);
     }
     return 1;
-#endif
-    cout<<"skipped: ToErase:"<<toErase.size()<<" toInsert:"<<toInsert.size()<<endl;
-    return 0;
   } else if(inFlow.size()>0) {
     for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
       Edge e1=*initer;
