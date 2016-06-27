@@ -15308,10 +15308,6 @@ void c_action_label(Token_t * lbl)
                 {
                     inquireStatement->set_access(expression);
                 }
-                else if ( strncasecmp(name->text,"form",4) == 0 )
-                {
-                    inquireStatement->set_form(expression);
-                }
                 else if ( strncasecmp(name->text,"recl",4) == 0 )
                 {
                     inquireStatement->set_recl(expression);
@@ -15356,6 +15352,11 @@ void c_action_label(Token_t * lbl)
                 {
                     inquireStatement->set_unformatted(expression);
                 }
+                // NOTE: this is true also for "formatted"
+                else if ( strncasecmp(name->text,"form",4) == 0 )
+                {
+                    inquireStatement->set_form(expression);
+                }
                 else if ( strncasecmp(name->text,"nextrec",7) == 0 )
                 {
                     inquireStatement->set_nextrec(expression);
@@ -15368,6 +15369,11 @@ void c_action_label(Token_t * lbl)
                 {
                     inquireStatement->set_action(expression);
                 }
+                else if ( strncasecmp(name->text,"readwrite",9) == 0 )
+                {
+                    inquireStatement->set_readwrite(expression);
+                }
+                // NOTE: this is true also for "readwrite"
                 else if ( strncasecmp(name->text,"read",4) == 0 )
                 {
                     inquireStatement->set_read(expression);
@@ -15375,10 +15381,6 @@ void c_action_label(Token_t * lbl)
                 else if ( strncasecmp(name->text,"write",5) == 0 )
                 {
                     inquireStatement->set_write(expression);
-                }
-                else if ( strncasecmp(name->text,"readwrite",9) == 0 )
-                {
-                    inquireStatement->set_readwrite(expression);
                 }
                 else if ( strncasecmp(name->text,"delim",5) == 0 )
                 {
