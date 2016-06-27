@@ -6979,6 +6979,9 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
        // DQ (7/19/2015): Added missing case:
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
+               // Liao 6/24/2016. Handle the simplest case: both arguments are parameter pack.
+               if (arg2->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument) 
+                 return true; 
                ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
              }
 
