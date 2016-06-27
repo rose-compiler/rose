@@ -214,15 +214,20 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      ROSE_ASSERT(lambdaExp != NULL);
 
      curprint(" [");
+     // if '=' or '&' exists
+     bool hasCaptureCharacter = false;
+     int commaCounter = 0;
 
      if (lambdaExp->get_capture_default() == true)
         {
           curprint("=");
+          hasCaptureCharacter = true; 
         }
 
      if (lambdaExp->get_default_is_by_reference() == true)
         {
           curprint("&");
+          hasCaptureCharacter = true;
         }
 
      ROSE_ASSERT(lambdaExp->get_lambda_capture_list() != NULL);
@@ -232,12 +237,22 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
           SgLambdaCapture* lambdaCapture = lambdaExp->get_lambda_capture_list()->get_capture_list()[i];
           ROSE_ASSERT(lambdaCapture != NULL);
 
-         // Liao 6/24/2016, we output ",item"
-         if (i!=0)
-          curprint(",");
 
           if (lambdaCapture->get_capture_variable() != NULL)
              {
+
+              // Liao 6/24/2016, we output ",item" when 
+              // When not output , : first comma and there is no previous = or & character
+              if (commaCounter == 0) // look backwards one identifier
+              {
+                if (hasCaptureCharacter)
+                  curprint(",");
+                commaCounter ++; 
+              }
+              else
+                curprint(",");
+
+
                if (lambdaCapture->get_capture_by_reference() == true)
                   {
                     curprint("&");
