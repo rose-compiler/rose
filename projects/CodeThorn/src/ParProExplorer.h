@@ -40,7 +40,6 @@ namespace CodeThorn {
     // analyzes the behavior of the parallel program according to the selected options
     void explore();
     std::pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*>  exploreOnce();
-    std::string getLtlsAsPromelaCode();
     std::string getLtlsAsString();
     PropertyValueTable* propertyValueTable();
 

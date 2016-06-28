@@ -608,7 +608,7 @@ int main( int argc, char * argv[] ) {
     
     explorer.explore();
 
-    if (true) { //(args.count("check-ltl")) {
+    if (args.count("check-ltl")) {
       PropertyValueTable* ltlResults = explorer.propertyValueTable();
       bool withCounterexamples = false;
       ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexamples);

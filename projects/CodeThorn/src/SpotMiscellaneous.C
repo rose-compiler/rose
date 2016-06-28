@@ -13,14 +13,14 @@ std::string SpotMiscellaneous::spinSyntax(std::string ltlFormula) {
   }
   bool prefixAtomicPropositions = true;
   if (prefixAtomicPropositions) {
-    spot::ltl::relabeling_map relabeling;
+    boost::unordered_map<std::string, std::string> newNames;
     spot::ltl::atomic_prop_set* sap = spot::ltl::atomic_prop_collect(formula);
     for (spot::ltl::atomic_prop_set::iterator i=sap->begin(); i!=sap->end(); i++) {
       string newName = "p_" + (*i)->name();
-      const spot::ltl::atomic_prop* relabeledProp = spot::ltl::atomic_prop::instance(newName, (*i)->env());
-      relabeling[*i] = relabeledProp;
+      newNames[(*i)->name()] = newName;
     }
-    formula = spot::ltl::relabel(formula, spot::ltl::Pnn, &relabeling);
+    SpotRenameVisitor visitor(newNames);
+    formula = visitor.recurse(formula);
   }
 
   string result = spot::ltl::to_spin_string(formula);
