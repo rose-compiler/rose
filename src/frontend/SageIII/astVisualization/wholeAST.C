@@ -1960,6 +1960,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                               typeString = "template_template_argument";
                               break;
 
+                         case SgTemplateArgument::start_of_pack_expansion_argument:
+                              typeString = "start_of_pack_expansion_argument";
+                              break;
+
                          default:
                             {
                               printf ("Error: default reached in case V_SgTemplateArgument: templateArgument->get_argumentType() \n");

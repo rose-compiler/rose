@@ -218,12 +218,12 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
 
      if (lambdaExp->get_capture_default() == true)
         {
-          curprint("=,");
+          curprint("=");
         }
 
      if (lambdaExp->get_default_is_by_reference() == true)
         {
-          curprint("&,");
+          curprint("&");
         }
 
      ROSE_ASSERT(lambdaExp->get_lambda_capture_list() != NULL);
@@ -232,6 +232,10 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
         {
           SgLambdaCapture* lambdaCapture = lambdaExp->get_lambda_capture_list()->get_capture_list()[i];
           ROSE_ASSERT(lambdaCapture != NULL);
+
+         // Liao 6/24/2016, we output ",item"
+         if (i!=0)
+          curprint(",");
 
           if (lambdaCapture->get_capture_variable() != NULL)
              {
@@ -243,10 +247,12 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
                unp->u_exprStmt->unparseExpression(lambdaCapture->get_capture_variable(),info);
              }
 
+#if 0
           if (i < bound-1)
              {
                curprint(",");
              }
+#endif             
         }
      curprint("] ");
 
@@ -678,20 +684,58 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
           SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
           while (i != templateArgListPtr.end())
              {
+               // skip pack expansion argument, it will be NULL anyway
+               if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+               {
+                 i++;
+                 continue; 
+               }
+
 #if 0
                printf ("In unparseTemplateArgumentList(): templateArgList element *i = %s explicitlySpecified = %s \n",(*i)->class_name().c_str(),((*i)->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 #if 0
                unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
-            // unparseTemplateArgument(*i,info);
+           // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
                i++;
 
+
+               // When to output , ?  the argument must not be the last one.
                if (i != templateArgListPtr.end())
                   {
-                 // unp->u_exprStmt->curprint(" , ");
+                    // check if if is a class type for C++ 11 lambda function
+                    bool hasLambdaFollowed = false;
+                    SgTemplateArgument* arg = *i; 
+                    if (arg != NULL) 
+                    {
+                      if (SgClassType * ctype = isSgClassType (arg->get_type()))
+                      {
+                        if (SgNode* pnode = ctype->get_declaration()->get_parent())
+                        {
+                          if (isSgLambdaExp(pnode))
+                          {
+                            hasLambdaFollowed = true; 
+                          }
+                        }
+                      }
+                    }
+               // When to skip , ?
+               // condition 1: next item is a lambda function
+              //  Or condition 2:  next item is an ending parameter pack argument (parameter pack argument in the middle should have , )
+              //
+              //  Negate this , we get when to output ,
+              //
+              if (!(hasLambdaFollowed  || 
+                  ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument 
+                    && ((i+1)== templateArgListPtr.end())  )) )
+                 unp->u_exprStmt->curprint(" , ");
 
+#if 0
+                 // unp->u_exprStmt->curprint(" , ");
+                 // Now the argument is in the middle. It's next argument must not be start_of_pack_expansion_argument
+                 // Since the next argument will be unparsed to be NULL
                  // DQ (2/7/2015): See C++11 test2015_01.C for where we have to handle this special case.
                     if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
                        {
@@ -702,8 +746,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                        }
                       else
                        {
-                         unp->u_exprStmt->curprint(" , ");
+                             unp->u_exprStmt->curprint(" , ");
                        }
+#endif
 
                   }
              }
@@ -713,7 +758,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
        else
         {
        // DQ (5/26/2014): In the case of a template instantiation with empty template argument list, output
-       // a " " to be consistant with the behavior when there is a non-empty template argument list.
+       // a " " to be consistent with the behavior when there is a non-empty template argument list.
        // This is a better fix for the template issue that Robb pointed out and that was fixed last week.
           unp->u_exprStmt->curprint(" ");
         }
