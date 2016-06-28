@@ -502,8 +502,13 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
         EdgeTypeSet edgeTypeSet1=(*initer).types();
         unionEdgeTypeSet.insert(edgeTypeSet1.begin(),edgeTypeSet1.end());
         EdgeTypeSet edgeTypeSet2=(*outiter).types();
-        unionEdgeTypeSet.insert(edgeTypeSet2.begin(),edgeTypeSet2.end());
-
+        // only copy an edge annotation in the outgoing edge if it is
+        // not a true-annotation or a false-annotation
+        for(EdgeTypeSet::iterator i=edgeTypeSet2.begin();i!=edgeTypeSet2.end();++i) {
+          if(*i!=EDGE_TRUE && *i!=EDGE_FALSE) {
+            unionEdgeTypeSet.insert(*i);
+          }
+        }
         if(unionEdgeTypeSet.find(EDGE_TRUE)!=unionEdgeTypeSet.end()
            && unionEdgeTypeSet.find(EDGE_FALSE)!=unionEdgeTypeSet.end()) {
           unionEdgeTypeSet.erase(EDGE_TRUE);

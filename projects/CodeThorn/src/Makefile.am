@@ -513,11 +513,12 @@ check-local:
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
-	rm -f *.consistent
-	$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) . #test the analysis of RERS Problem1403 (which features arrays)
-	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
-	$(srcdir)/scripts/runBuechiTransformTests $(srcdir) . #confirm that option --keep-error-states=yes does not lead to erroneous results
-	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
+
+	@rm -f *.consistent
+	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
+	@$(srcdir)/scripts/runLtlRegressionTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS examples in several versions and compare to previous results
+	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results
+	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat

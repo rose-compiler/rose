@@ -53,12 +53,12 @@ void BoolOptions::setOption(string name, bool val) {
 
 void BoolOptions::processZeroArgumentsOption(string name) {
   if(args.count(name)>0) {
-    registerOption(name,true);
+    setOption(name,true);
   }
   // check for "no-" name
   string no_name="no-"+name;
   if(args.count(no_name)>0) {
-    registerOption(name,false);
+    setOption(name,false);
   }
 }
 

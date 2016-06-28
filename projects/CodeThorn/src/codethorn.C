@@ -490,6 +490,8 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.registerOption("normalize",true);
 
+  boolOptions.registerOption("svcomp-mode",false);
+
   boolOptions.processOptions();
 
   /* set booloptions for zero-argument options (does not require
@@ -497,7 +499,6 @@ int main( int argc, char * argv[] ) {
      existence on the command line to true or false)
   */
   boolOptions.processZeroArgumentsOption("svcomp-mode");
-  boolOptions.processZeroArgumentsOption("enable-external-function-semantics");
   boolOptions.processZeroArgumentsOption("reduce-cfg"); // this handles 'no-reduce-cfg'
 
   if (args.count("automata-dot-input")) {
