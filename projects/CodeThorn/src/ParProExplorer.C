@@ -134,28 +134,6 @@ SelectedCfgsAndIdMap ParProExplorer::componentSubset(set<int> componentIds) {
   return SelectedCfgsAndIdMap(componentSubset, cfgIdToStateIndex);
 }
 
-string ParProExplorer::getLtlsAsPromelaCode() {
-  return "";
-#if 0
-  SpotConnection spotConnectionForSpinOutput;
-  stringstream propertiesSpinSyntax;
-  int propertyId = 0;
-  for (list<pair<string, PropertyValue> >::iterator i=_properties.begin(); i!=_properties.end(); i++) {
-    propertiesSpinSyntax << "ltl p"<<propertyId<<"\t { "<<spotConnectionForSpinOutput.spinSyntax(i->first)<<" }";
-    if (i->second == PROPERTY_VALUE_YES) {
-      propertiesSpinSyntax << "\t /* true */" << endl;
-    } else if (i->second == PROPERTY_VALUE_NO) {
-      propertiesSpinSyntax << "\t /* false */" << endl;
-    } else {
-      cerr << "ERROR: reporting a mined property for which it is unknown whether or not it is valid." << endl;
-      ROSE_ASSERT(0);
-    }
-    propertyId++;
-  }
-  return propertiesSpinSyntax.str();
-#endif
-}
-
 string ParProExplorer::getLtlsAsString() {
   return "";
 }

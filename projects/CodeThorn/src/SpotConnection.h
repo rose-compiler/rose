@@ -146,13 +146,9 @@ namespace CodeThorn {
       std::string* filter_run_IO_only(string& spotRun, bool inputOnly = false);
       //small helper function for filter_run_IO_only
       std::string formatIOChar(std::string prop, bool firstEntry, bool cycleStart);
-
-      //returns a list of all those properties that still have an unknown value as of now. The returned
-      // list has to be deleted by the calling function.
-      std::list<LtlProperty>* getUnknownFormulae();
       
       //a list of all properties 
-      std::list<LtlProperty> behaviorProperties; 
+      //      std::list<LtlProperty> behaviorProperties; 
       //a container for the results of the LTL property evaluation
       PropertyValueTable* ltlResults;
       bool modeLTLDriven;

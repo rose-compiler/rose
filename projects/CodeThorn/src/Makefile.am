@@ -146,6 +146,8 @@ codethorn_SOURCES = \
   Specialization.C \
   SpotConnection.C \
   SpotConnection.h \
+  SpotRenameVisitor.C \
+  SpotRenameVisitor.h \
   SpotMiscellaneous.C \
   SpotMiscellaneous.h \
   SpotTgba.C \
@@ -406,6 +408,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   Miscellaneous.h                  \
   SpotMiscellaneous.C 		   \
   SpotMiscellaneous.h 		   \
+  SpotRenameVisitor.C 		   \
+  SpotRenameVisitor.h 		   \
   ProgramStats.h                 \
   ProgramStats.C                 \
   FIConstAnalysis.h FIConstAnalysis.C \
@@ -449,6 +453,8 @@ analyterix_SOURCES = \
   Miscellaneous.h \
   SpotMiscellaneous.C \
   SpotMiscellaneous.h \
+  SpotRenameVisitor.C \
+  SpotRenameVisitor.h \
   ProgramStats.C \
   ProgramStats.h \
   PropertyValueTable.C \

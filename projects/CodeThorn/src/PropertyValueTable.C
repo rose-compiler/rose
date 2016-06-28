@@ -325,11 +325,11 @@ string PropertyValueTable::getLtlsAsPromelaCode(bool withResults) {
     if (withResults) {
       PropertyValue val = _propertyValueTable[i->first];
       if (val == PROPERTY_VALUE_YES) {
-	propertiesSpinSyntax << "\t /* true */" << endl;
+	propertiesSpinSyntax << "\t /* true */";
       } else if (val == PROPERTY_VALUE_NO) {
-	propertiesSpinSyntax << "\t /* false */" << endl;
+	propertiesSpinSyntax << "\t /* false */";
       } else if (val == PROPERTY_VALUE_UNKNOWN) {
-	propertiesSpinSyntax << "\t /* unknown */" << endl;
+	propertiesSpinSyntax << "\t /* unknown */";
       } else {
 	cerr << "ERROR: Unknown PropertyValue detected." << endl;
 	ROSE_ASSERT(0);

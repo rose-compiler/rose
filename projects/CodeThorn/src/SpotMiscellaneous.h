@@ -36,6 +36,9 @@
 #include "ltlvisit/relabel.hh"
 //#include "ltlast/atomic_prop.hh"
 
+// custom SPOT extensions
+#include "SpotRenameVisitor.h"
+
 //BOOST includes
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"

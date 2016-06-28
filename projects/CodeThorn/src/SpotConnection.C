@@ -8,39 +8,19 @@ void SpotConnection::init(std::string ltl_formulae_file) {
   //open text file that contains the properties
   ifstream ltl_input(ltl_formulae_file.c_str());
   if (ltl_input.is_open()) {
+    ltlResults = new PropertyValueTable();
     //load the containing formulae
-    loadFormulae(ltl_input);  //load the formulae into class member "behaviorProperties"
-    //initialize the results table with the right size for the properties that will be evaluated
-    ltlResults = new PropertyValueTable(behaviorProperties.size());
+    loadFormulae(ltl_input);  //load the formulae into class member "ltlResults"
   }
 }
 
 void SpotConnection::init(std::list<std::string> ltl_formulae) {
+  ltlResults = new PropertyValueTable();
   int propertyId = 0;
   for (list<string>::iterator i=ltl_formulae.begin(); i!=ltl_formulae.end(); i++) {
-    LtlProperty property;
-    property.propertyNumber = propertyId;
-    property.ltlString = *i;
-    behaviorProperties.push_back(property);
+    ltlResults->addProperty(*i, propertyId);
     propertyId++;
   }
-  //initialize the results table with the right size for the properties that will be evaluated
-  ltlResults = new PropertyValueTable(behaviorProperties.size());
-}
-
-std::list<LtlProperty>* SpotConnection::getUnknownFormulae() {
-  std::list<LtlProperty>* result = new std::list<LtlProperty>();
-  std::list<int>* unknownPropertyNumbers = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
-  
-  for (std::list<int>::iterator i = unknownPropertyNumbers->begin(); i != unknownPropertyNumbers->end(); ++i) {
-    //possible improvement: reduce to one loop only by sorting the behaviorProperty list according to the propertyNumbers
-    for (std::list<LtlProperty>::iterator k = behaviorProperties.begin(); k != behaviorProperties.end(); ++k) {
-      if ((*i) == k->propertyNumber) {
-        result->push_back(*k);
-      }
-    }
-  }
-  return result;
 }
 
 PropertyValueTable* SpotConnection::getLtlResults() {
@@ -86,13 +66,8 @@ void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg,
   //create a tgba from CodeThorn's STG model
   SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
   LtlProperty ltlProperty; 
-  //TODO: improve on this iteration over list elements
-  for (std::list<LtlProperty>::iterator i = behaviorProperties.begin(); i != behaviorProperties.end(); i++) {
-    if (i->propertyNumber == propertyNum) {
-      ltlProperty = *i;
-      break;
-    }
-  }
+  ltlProperty.ltlString = ltlResults->getFormula(propertyNum);
+  ltlProperty.propertyNumber = propertyNum;
   checkAndUpdateResults(ltlProperty, ct_tgba, stg, withCounterexample, spuriousNoAnswers);
   delete ct_tgba;
   ct_tgba = NULL;
@@ -150,30 +125,28 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
     //create a tgba from CodeThorn's STG model
     SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
     std::string* pCounterExample; 
-    std::list<LtlProperty>* yetToEvaluate = getUnknownFormulae();
-    for (std::list<LtlProperty>::iterator i=yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
-    }
-    for (std::list<LtlProperty>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
-      if (checkFormula(ct_tgba, i->ltlString , ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
+    std::list<int>* yetToEvaluate = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
+    for (std::list<int>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
+      if (checkFormula(ct_tgba, ltlResults->getFormula(*i), ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
         if (stg.isComplete()) {
-          ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_YES);
+          ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_YES);
         } else {
           //not all possible execution paths are covered in this stg model, ignore SPOT's result
         }
       } else {  //SPOT returns that there exists a counterexample that falsifies the formula
         if (stg.isPrecise()) {
-          ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_NO);
+          ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_NO);
           if (withCounterexample) {
-            ltlResults->strictUpdateCounterexample(i->propertyNumber, *pCounterExample);
+            ltlResults->strictUpdateCounterexample(*i, *pCounterExample);
           }
           delete pCounterExample;
         } else {
           // old: the stg is over-approximated, falsification cannot work. Ignore SPOT's answer.
           if (spuriousNoAnswers) {
             // new: register counterexample and check it later
-            ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_NO);
+            ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_NO);
             if (withCounterexample) {
-              ltlResults->strictUpdateCounterexample(i->propertyNumber, *pCounterExample);
+              ltlResults->strictUpdateCounterexample(*i, *pCounterExample);
             }
             delete pCounterExample;
           }
@@ -204,28 +177,28 @@ void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool w
     //create a tgba from CodeThorn's STG model
     ParProSpotTgba* ct_tgba = new ParProSpotTgba(stg, *sap, dict);
     std::string* pCounterExample; 
-    std::list<LtlProperty>* yetToEvaluate = getUnknownFormulae();
-    for (std::list<LtlProperty>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
-      if (checkFormula(ct_tgba, i->ltlString , ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
+    std::list<int>* yetToEvaluate = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
+    for (std::list<int>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
+      if (checkFormula(ct_tgba, ltlResults->getFormula(*i), ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
         if (stg.isComplete()) {
-          ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_YES);
+          ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_YES);
         } else {
           //not all possible execution paths are covered in this stg model, ignore SPOT's result
         }
       } else {  //SPOT returns that there exists a counterexample that falsifies the formula
         if (stg.isPrecise()) {
-          ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_NO);
+          ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_NO);
           if (withCounterexample) {
-            ltlResults->strictUpdateCounterexample(i->propertyNumber, *pCounterExample);
+            ltlResults->strictUpdateCounterexample(*i, *pCounterExample);
           }
           delete pCounterExample;
         } else {
           // old: the stg is over-approximated, falsification cannot work. Ignore SPOT's answer.
           if (spuriousNoAnswers) {
             // new: register counterexample and check it later
-            ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_NO);
+            ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_NO);
             if (withCounterexample) {
-              ltlResults->strictUpdateCounterexample(i->propertyNumber, *pCounterExample);
+              ltlResults->strictUpdateCounterexample(*i, *pCounterExample);
             }
             delete pCounterExample;
           }
@@ -359,8 +332,9 @@ bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, s
 
 spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps() {
   spot::ltl::atomic_prop_set* result = new spot::ltl::atomic_prop_set();
-  for (std::list<LtlProperty>::iterator i=behaviorProperties.begin(); i!=behaviorProperties.end(); i++) {
-    std::string formulaString = i->ltlString;
+  std::list<int>* propertyNumbers = ltlResults->getPropertyNumbers();
+  for (std::list<int>::iterator i=propertyNumbers->begin(); i!=propertyNumbers->end(); ++i) {
+    std::string formulaString = ltlResults->getFormula(*i);
     spot::ltl::parse_error_list pel;
     const spot::ltl::formula* formula = spot::ltl::parse(formulaString, pel);
     if (spot::ltl::format_parse_errors(std::cerr, formulaString, pel)) {
@@ -372,7 +346,9 @@ spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps() {
     result->insert(sap->begin(), sap->end());
     delete sap;
     sap = NULL;
-  }
+  } 
+  delete propertyNumbers;
+  propertyNumbers = NULL;
   return result;
 }
 
@@ -435,7 +411,7 @@ std::list<std::string>* SpotConnection::loadFormulae(istream& input) {
         defaultPropertyNumber++;
       }
       nextFormula->ltlString = parseWeakUntil(line);
-      behaviorProperties.push_back(*nextFormula);
+      ltlResults->addProperty(nextFormula->ltlString, nextFormula->propertyNumber);
       explicitPropertyNumber = false;
       nextFormula = new LtlProperty();
     }
