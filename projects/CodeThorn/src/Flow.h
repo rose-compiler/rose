@@ -1,6 +1,8 @@
 #ifndef FLOW_H
 #define FLOW_H
 
+#define USE_SAWYER_GRAPH
+
 #include <boost/graph/adjacency_list.hpp> 
 #include <boost/graph/graphviz.hpp>
 using namespace boost; 
@@ -17,6 +19,16 @@ namespace SPRAY {
   class Edge;
   typedef std::set<Edge> EdgeSet;
   typedef std::set<EdgeType> EdgeTypeSet;
+  
+#ifdef USE_SAWYER_GRAPH
+  struct EdgeData {
+    EdgeData(EdgeTypeSet t, std::string a) : edgeTypes(t), annotation(a) {} 
+    EdgeTypeSet edgeTypes;
+    std::string annotation;
+  };
+
+  typedef Sawyer::Container::Graph<Label, EdgeData, Label> SawyerCfg;  
+#endif
 
   /*! 
    * \author Markus Schordan
@@ -35,8 +47,6 @@ namespace SPRAY {
     std::string toDotAnnotationOnly() const; 
     std::string typesToString() const;
     static std::string typeToString(EdgeType et);
-    Label source;
-    Label target;
     bool isType(EdgeType et) const;
     void addType(EdgeType et);
     void addTypes(std::set<EdgeType> ets);
@@ -46,10 +56,14 @@ namespace SPRAY {
     std::string color() const;
     std::string dotEdgeStyle() const;
     long hash() const;
+    Label source() const { return _source; }
+    Label target() const { return _target; }
     EdgeTypeSet getTypes() const { return _types; }
     std::string getAnnotation() const { return _annotation; }
     void setAnnotation(std::string annotation) { _annotation = annotation;}
   private:
+    Label _source;
+    Label _target;
     EdgeTypeSet _types;
     std::string _annotation;
   };
@@ -63,19 +77,33 @@ namespace SPRAY {
    * \date 2012.
    */
 
-  class Flow
-#if 0    //#ifndef USE_SAWYER_GRAPHS
-  : public std::set<Edge>
-#endif
-  {
-  public: 
+  class Flow {
+  public:  
+#ifdef USE_SAWYER_GRAPH
+    class iterator : public SawyerCfg::EdgeIterator {
+    public: 
+      iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
+      Edge operator*();
+      iterator& operator++() { SawyerCfg::EdgeIterator::operator++(); return *this; }
+      iterator operator++(int);
+      EdgeTypeSet getTypes();
+      std::string getAnnotation();
+      Label source();
+      Label target();
+    private:
+      Edge* operator->();
+    };
+#else
     typedef std::set<Edge>::iterator iterator;
+#endif
     Flow();
     iterator begin();
     iterator end();
     Flow operator+(Flow& s2);
     Flow& operator+=(Flow& s2);
-    std::pair<std::set<Edge>::iterator, bool> insert(Edge e);
+    std::pair<Flow::iterator, bool> insert(Edge e);
+    Flow::iterator find(Edge e);
+    bool contains(Edge e);
     void erase(Flow::iterator iter);
     size_t erase(Edge e);
     size_t size();
@@ -96,6 +124,10 @@ namespace SPRAY {
     
     Flow inEdges(Label label);
     Flow outEdges(Label label);
+#ifdef USE_SAWYER_GRAPH
+    boost::iterator_range<Flow::iterator> inEdgesIterator(Label label);
+    boost::iterator_range<Flow::iterator> outEdgesIterator(Label label);
+#endif
     Flow edgesOfType(EdgeType edgeType);
     Flow outEdgesOfType(Label label, EdgeType edgeType);
     Label getStartLabel() { return _startLabel; }
@@ -134,11 +166,13 @@ namespace SPRAY {
     std::string _fixedColor;
     bool _dotOptionHeaderFooter;
     bool _boostified;
-    //http://rosecompiler.org/ROSE_HTML_Reference/classSawyer_1_1Container_1_1Graph.html
-    Sawyer::Container::Graph< Label, EdgeType, Label>  _sawyerflowGraph;
     FlowGraph _flowGraph;
     Label _startLabel;
+#ifdef USE_SAWYER_GRAPH
+    SawyerCfg  _sawyerFlowGraph;
+#else
     std::set<Edge> _edgeSet;
+#endif
   };
   
   class InterEdge {

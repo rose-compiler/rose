@@ -869,12 +869,12 @@ list<EState> elistify(EState res) {
 }
 
 list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
-  assert(edge.source==estate->label());
+  assert(edge.source()==estate->label());
   // we do not pass information on the local edge
   if(edge.isType(EDGE_LOCAL)) {
     if(boolOptions["rers-binary"]) {
       //cout<<"DEBUG: ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
-      SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source);
+      SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
         assert(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
@@ -908,7 +908,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  //newPstate[globalVarIdByName("output")]=CodeThorn::AType::ConstIntLattice(rers_result);
 	  newPstate.setVariableToValue(globalVarIdByName("output"),
 	    CodeThorn::AType::ConstIntLattice(rers_result));
-	  EState _eState=createEState(edge.target,newPstate,_cset,_io);
+	  EState _eState=createEState(edge.target(),newPstate,_cset,_io);
 	  return elistify(_eState);
 	}
 	  RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
@@ -924,11 +924,11 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  _pstate.setVariableToValue(lhsVarId,AType::ConstIntLattice(rers_result));
 	  ConstraintSet _cset=*estate->constraints();
 	  _cset.removeAllConstraintsOfVar(lhsVarId);
-	  EState _eState=createEState(edge.target,_pstate,_cset);
+	  EState _eState=createEState(edge.target(),_pstate,_cset);
 	  return elistify(_eState);
 	} else {
 	  ConstraintSet _cset=*estate->constraints();
-	  EState _eState=createEState(edge.target,_pstate,_cset);
+	  EState _eState=createEState(edge.target(),_pstate,_cset);
 	  return elistify(_eState);
 	}
 	  cout <<"PState:"<< _pstate<<endl;
@@ -945,11 +945,11 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
   // 1. we handle the edge as outgoing edge
-  SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source);
+  SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source());
   assert(nextNodeToAnalyze1);
   // handle assert(0)
   if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze1)) {
-    return elistify(createFailedAssertEState(currentEState,edge.target));
+    return elistify(createFailedAssertEState(currentEState,edge.target()));
   }
 
   if(edge.isType(EDGE_CALL)) {
@@ -959,7 +959,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     // 4) create new estate
 
     // ad 1)
-    SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source));
+    SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
     assert(funCall);
     string funName=SgNodeHelper::getFunctionName(funCall);
     // handling of error function (TODO: generate dedicated state (not failedAssert))
@@ -975,7 +975,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 
     SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
     // ad 2)
-    SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target));
+    SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
     SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
     assert(funDef);
     // ad 3)
@@ -1017,7 +1017,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     // assert must hold if #formal-params==#actual-params (TODO: default values)
     assert(i==formalParameters.end() && j==actualParameters.end()); 
     // ad 4
-    return elistify(createEState(edge.target,newPState,cset));
+    return elistify(createEState(edge.target(),newPState,cset));
   }
   // "return x;": add $return=eval() [but not for "return f();"]
   if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
@@ -1026,7 +1026,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     ConstraintSet cset=*currentEState.constraints();
     if(isSgNullExpression(expr)) {
       // return without expr
-      return elistify(createEState(edge.target,*(currentEState.pstate()),cset));
+      return elistify(createEState(edge.target(),*(currentEState.pstate()),cset));
     } else {
       VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING) 
@@ -1037,13 +1037,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
                                         returnVarId,
                                         expr,
                                         cset);
-      return elistify(createEState(edge.target,newPState,cset));
+      return elistify(createEState(edge.target(),newPState,cset));
     }
   }
 
   // function exit node:
-  if(getLabeler()->isFunctionExitLabel(edge.source)) {
-    if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.source))) {
+  if(getLabeler()->isFunctionExitLabel(edge.source())) {
+    if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.source()))) {
       // 1) determine all local variables (including formal parameters) of function
       // 2) delete all local variables from state
       // 2a) remove variable from state
@@ -1067,17 +1067,17 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         cset.removeAllConstraintsOfVar(varId);
       }
       // ad 3)
-      return elistify(createEState(edge.target,newPState,cset));
+      return elistify(createEState(edge.target(),newPState,cset));
     } else {
       cerr << "FATAL ERROR: no function definition associated with function exit label."<<endl;
       exit(1);
     }
   }
-  if(getLabeler()->isFunctionCallReturnLabel(edge.source)) {
+  if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
     // case 1: return f(); pass estate trough
     if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
       EState newEState=currentEState;
-      newEState.setLabel(edge.target);
+      newEState.setLabel(edge.target());
       return elistify(newEState);
     }
     // case 2: x=f(); bind variable x to value of $return
@@ -1087,7 +1087,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           string funName=SgNodeHelper::getFunctionName(funCall);
           if(funName=="calculate_output") {
             EState newEState=currentEState;
-            newEState.setLabel(edge.target);
+            newEState.setLabel(edge.target());
             return elistify(newEState);
           }
         }
@@ -1114,13 +1114,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	newPState.deleteVar(returnVarId); // remove $return from state
 	cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
 
-	return elistify(createEState(edge.target,newPState,cset));
+	return elistify(createEState(edge.target(),newPState,cset));
       } else {
 	// no $return variable found in state. This can be the case for an extern function.
 	// alternatively a $return variable could be added in the external function call to
 	// make this handling here uniform
 	// for external functions no constraints are generated in the call-return node
-	return elistify(createEState(edge.target,newPState,cset));
+	return elistify(createEState(edge.target(),newPState,cset));
       }
     }
     // case 3: f(); remove $return from state (discard value)
@@ -1135,7 +1135,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       newPState.deleteVar(returnVarId);
       cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
       //ConstraintSet cset=*currentEState.constraints; ???
-      return elistify(createEState(edge.target,newPState,cset));
+      return elistify(createEState(edge.target(),newPState,cset));
     }
   }
 
@@ -1182,7 +1182,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           newPState.setVariableToValue(varId,AType::ConstIntLattice(newValue));
         }
         newio.recordVariable(InputOutput::STDIN_VAR,varId);
-        EState estate=createEState(edge.target,newPState,newCSet,newio);
+        EState estate=createEState(edge.target(),newPState,newCSet,newio);
         resList.push_back(estate);
         //cout << "DEBUG: created "<<_inputVarValues.size()<<" input states."<<endl;
         return resList;
@@ -1208,7 +1208,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               newPState.setVariableToValue(varId,AType::ConstIntLattice(*i));
             }
             newio.recordVariable(InputOutput::STDIN_VAR,varId);
-            EState estate=createEState(edge.target,newPState,newCSet,newio);
+            EState estate=createEState(edge.target(),newPState,newCSet,newio);
             resList.push_back(estate);
           }
           //cout << "DEBUG: created "<<_inputVarValues.size()<<" input states."<<endl;
@@ -1222,7 +1222,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  newCSet.removeAllConstraintsOfVar(varId);
 	  newPState.setVariableToTop(varId);
           newio.recordVariable(InputOutput::STDIN_VAR,varId);
-          return elistify(createEState(edge.target,newPState,newCSet,newio));
+          return elistify(createEState(edge.target(),newPState,newCSet,newio));
         }
       }
     }
@@ -1251,7 +1251,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         if(isUsingExternalFunctionSemantics()) {
           if(funName==_externalErrorFunctionName) {
             //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
-            return elistify(createVerificationErrorEState(currentEState,edge.target));
+            return elistify(createVerificationErrorEState(currentEState,edge.target()));
           } else if(funName==_externalExitFunctionName) {
             /* the exit function is modeled to terminate the program
                (therefore no successor state is generated)
@@ -1265,7 +1265,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     // for all other external functions we use identity as transfer function
     EState newEState=currentEState;
     newEState.io=newio;
-    newEState.setLabel(edge.target);
+    newEState.setLabel(edge.target());
     return elistify(newEState);
   }
 
@@ -1274,13 +1274,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
      ||edge.isType(EDGE_EXTERNAL)
      ||edge.isType(EDGE_CALLRETURN)) {
     EState newEState=currentEState;
-    newEState.setLabel(edge.target);
+    newEState.setLabel(edge.target());
     return elistify(newEState);
   }
   
   //cout << "INFO1: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze1)<<endl;
   if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
-    return elistify(analyzeVariableDeclaration(decl,currentEState, edge.target));
+    return elistify(analyzeVariableDeclaration(decl,currentEState, edge.target()));
   }
 
   if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
@@ -1304,7 +1304,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         SingleEvalResultConstInt evalResult=*i;
         if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
           // pass on EState
-          newLabel=edge.target;
+          newLabel=edge.target();
           newPState=*evalResult.estate.pstate();
           // merge with collected constraints of expr (exprConstraints)
           if(edge.isType(EDGE_TRUE)) {
@@ -1336,7 +1336,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       // we currently only handle ConditionalExpressions as used in asserts (handled above)
       ConstraintSet cset=*currentEState.constraints();
       PState newPState=*currentEState.pstate();
-      return elistify(createEState(edge.target,newPState,cset));
+      return elistify(createEState(edge.target(),newPState,cset));
     }
 
     if(SgNodeHelper::isPrefixIncDecOp(nextNodeToAnalyze2) || SgNodeHelper::isPostfixIncDecOp(nextNodeToAnalyze2)) {
@@ -1373,7 +1373,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         if(!(*i).result.isTop())
           cset.removeAllConstraintsOfVar(var);
         list<EState> estateList;
-        estateList.push_back(createEState(edge.target,newPState,cset));
+        estateList.push_back(createEState(edge.target(),newPState,cset));
         return estateList;
       } else {
         throw "Error: currently inc/dec operators are only supported for variables.";
@@ -1415,7 +1415,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           }
           if(!(*i).result.isTop())
             cset.removeAllConstraintsOfVar(lhsVar);
-          estateList.push_back(createEState(edge.target,newPState,cset));
+          estateList.push_back(createEState(edge.target(),newPState,cset));
         } else if(isSgPntrArrRefExp(lhs)) {
           // for now we ignore array refs on lhs
           // TODO: assignments in index computations of ignored array ref
@@ -1427,7 +1427,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           ConstraintSet oldcset=*estate.constraints();            
           if(getSkipArrayAccesses()) {
             // TODO: remove constraints on array-element(s) [currently no constraints are computed for arrays]
-            estateList.push_back(createEState(edge.target,oldPState,oldcset));            
+            estateList.push_back(createEState(edge.target(),oldPState,oldcset));            
           } else {
             cerr<<"Error: lhs array-access not supported yet."<<endl;
             exit(1);
@@ -1514,7 +1514,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   // nothing to analyze, just create new estate (from same State) with target label of edge
   // can be same state if edge is a backedge to same cfg node
   EState newEState=currentEState;
-  newEState.setLabel(edge.target);
+  newEState.setLabel(edge.target());
   return elistify(newEState);
 }
 
@@ -1553,10 +1553,10 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   cout << "STATUS: Building CFGs finished."<<endl;
   if(boolOptions["reduce-cfg"]) {
     int cnt;
-#if 0
+#if 1
     // TODO: not working yet because elimination of empty if branches can cause true and false branches to co-exist.
     cnt=cfanalyzer->optimizeFlow(flow);
-    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block begin, block end nodes, empty cond nodes.)"<<endl;
+    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block begin (not block end nodes, not empty cond nodes.))"<<endl;
 #else
     cout << "INIT: CFG reduction is currently limited to block end nodes."<<endl;
     cnt=cfanalyzer->reduceBlockEndNodes(flow);
@@ -1576,10 +1576,13 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
     cout << "INIT: IntraInter-CFG OK. (size: " << flow.size() << " edges)"<<endl;
   }
 
+#if 0
   if(boolOptions["reduce-cfg"]) {
     int cnt=cfanalyzer->inlineTrivialFunctions(flow);
     cout << "INIT: CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
   }
+#endif
+
   // create empty state
   PState emptyPState;
   // TODO1: add formal paramters of solo-function
@@ -2201,7 +2204,7 @@ void Analyzer::runSolver4() {
           Edge e=*i;
           list<EState> newEStateList;
           newEStateList=transferFunction(e,currentEStatePtr);
-          if(isTerminationRelevantLabel(e.source)) {
+          if(isTerminationRelevantLabel(e.source())) {
             #pragma omp atomic
             analyzedSemanticFoldingNode++;
           }
@@ -2504,7 +2507,7 @@ void Analyzer::runSolver8() {
       // solver 8: keep track of the input state where the input sequence ran out of elements (where solver8 stops)
       if (newEStateList.size()== 0) {
         if(e.isType(EDGE_EXTERNAL)) {
-          SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(e.source);
+          SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(e.source());
           InputOutput newio;
           Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
           VariableId varId;

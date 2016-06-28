@@ -272,7 +272,7 @@ string Visualizer::transitionGraphToDot() {
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
     ss <<"\""<<estateToString((*j)->source)<<"\""<< "->" <<"\""<<estateToString((*j)->target)<<"\"";
-    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source));
+    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source()));
     ss <<"["<<(*j)->edge.typesToString()<<"]";
     ss <<"\" ";
     ss <<" color="<<(*j)->edge.color()<<" ";

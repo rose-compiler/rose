@@ -46,8 +46,8 @@ SPRAY::PASolver1::runSolver() {
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {
     Edge edge=_workList.take();
-    Label lab0=edge.source;
-    Label lab1=edge.target;
+    Label lab0=edge.source();
+    Label lab1=edge.target();
     //if(_trace)
     //  cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
@@ -94,7 +94,7 @@ SPRAY::PASolver1::runSolver() {
         }
         
         Flow outEdges=_flow.outEdges(lab1);
-	for (Flow::iterator i=outEdges.begin(); i!=outEdges.end(); i++) {
+	for (Flow::iterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
 	  _workList.add(*i);
 	}
         if(_trace)
