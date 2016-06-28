@@ -6497,7 +6497,49 @@ void c_action_label(Token_t * lbl)
             variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,getTopOfScopeStack());
             ROSE_ASSERT(variableSymbol != NULL);
 #endif
+
+#if 1
+            /*
+              This offers experimental support of implicit arrays in a COMMON block.
+             */
+            if (hasShapeSpecList == true) {
+              ROSE_ASSERT(astExpressionStack.size() > 1 );
+              SgIntVal* arrayDimExp = isSgIntVal(astExpressionStack.front());
+              ROSE_ASSERT(arrayDimExp != NULL);
+              setSourcePosition(arrayDimExp);
+              astExpressionStack.pop_front();
+              int dim = arrayDimExp->get_value();
+              delete arrayDimExp;
+
+              SgExprListExp*    lst = new SgExprListExp();
+
+              SgArrayType* atype = new SgArrayType(variableSymbol->get_type());
+              atype->set_rank(dim);
+              lst->set_parent(atype);
+              setSourcePosition(lst);
+              atype->set_dim_info(lst);
+              for(int i(0);i<dim;i++){
+                SgExpression* exp = astExpressionStack.front();
+                if(exp) {
+                  //setSourcePosition(exp); // don't set this
+                  lst->append_expression(exp);
+                  exp->set_parent(lst);
+                }
+                astExpressionStack.pop_front();
+              }
+              variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(variableName);
+              variableSymbol->get_declaration()->set_typeptr(atype);
+              SgVarRefExp* varRef = new SgVarRefExp(variableSymbol);
+              setSourcePosition(varRef);
+              /* expression_type is NULL to avoid warning messages */
+              constructedReference = new SgPntrArrRefExp(varRef,lst,NULL);
+            }
+            else {
+              constructedReference = new SgVarRefExp(variableSymbol);
+            }
+#else
             constructedReference = new SgVarRefExp(variableSymbol);
+#endif
             setSourcePosition(constructedReference, id);
 
             // printf ("The variable has not previously been declared (case not implemented)\n");
