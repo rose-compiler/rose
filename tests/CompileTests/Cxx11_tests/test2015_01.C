@@ -13,3 +13,10 @@ class Tensor // : public std::function<T&(unsigned int,decltype(RestD)...)>
 void consToPrimF(Tensor<double,5> & a_Q)
    {
    }
+
+// Liao 6/24/2016
+// ... argument  shows as the first one
+template<typename ... PLIST>
+struct ExecList{};
+typedef ExecList <int, int> test1;
+   

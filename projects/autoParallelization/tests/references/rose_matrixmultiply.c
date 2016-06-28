@@ -5,6 +5,7 @@ By C. Liao
 #define N 1000
 #define M 1000
 #define K 1000
+#include "omp.h" 
 int i;
 int j;
 int k;
