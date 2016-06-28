@@ -302,7 +302,6 @@ int main( int argc, char * argv[] ) {
       ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
       ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
       ("precision-exact-constraints",po::value< string >(),"(experimental) use precise constraint extraction [=yes|no]")
-      ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
       ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
       ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
       ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
@@ -368,6 +367,7 @@ int main( int argc, char * argv[] ) {
       ("help-ltl", "show options for LTL verification")
       ("help-par", "show options for analyzing parallel programs")
       ("help-vis", "show options for visualization output files")
+      ("no-reduce-cfg","Do not reduce CFG nodes that are irrelevant for the analysis.")
       ("internal-checks", "run internal consistency checks (without input program)")
       ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
       ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
@@ -449,7 +449,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("visualize-read-write-sets",false);
   boolOptions.registerOption("run-rose-tests",false);
-  boolOptions.registerOption("reduce-cfg",false);
+  boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled reduce-cfg by default
   boolOptions.registerOption("print-all-options",false);
   boolOptions.registerOption("annotate-terms",false);
   boolOptions.registerOption("generate-assertions",false);
@@ -498,6 +498,7 @@ int main( int argc, char * argv[] ) {
   */
   boolOptions.processZeroArgumentsOption("svcomp-mode");
   boolOptions.processZeroArgumentsOption("enable-external-function-semantics");
+  boolOptions.processZeroArgumentsOption("reduce-cfg"); // this handles 'no-reduce-cfg'
 
   if (args.count("automata-dot-input")) {
     DotGraphCfgFrontend dotGraphCfgFrontend;
@@ -767,21 +768,21 @@ int main( int argc, char * argv[] ) {
 
   if (args.count("cegpra-ltl") || boolOptions["cegpra-ltl-all"]) {
     analyzer.setMaxTransitionsForcedTop(1); //initial over-approximated model
-    boolOptions.registerOption("no-input-input",true);
-    boolOptions.registerOption("with-ltl-counterexamples",true);
-    boolOptions.registerOption("counterexamples-with-output",true);
+    boolOptions.setOption("no-input-input",true);
+    boolOptions.setOption("with-ltl-counterexamples",true);
+    boolOptions.setOption("counterexamples-with-output",true);
     cout << "STATUS: CEGPRA activated (with it LTL counterexamples that include output states)." << endl;
     cout << "STATUS: CEGPRA mode: will remove input state --> input state transitions in the approximated STG. " << endl;
   }
 
   if (boolOptions["counterexamples-with-output"]) {
-    boolOptions.registerOption("with-ltl-counterexamples",true);
+    boolOptions.setOption("with-ltl-counterexamples",true);
   }
 
   if (boolOptions["check-ltl-counterexamples"]) {
-    boolOptions.registerOption("no-input-input",true);
-    boolOptions.registerOption("with-ltl-counterexamples",true);
-    boolOptions.registerOption("counterexamples-with-output",true);
+    boolOptions.setOption("no-input-input",true);
+    boolOptions.setOption("with-ltl-counterexamples",true);
+    boolOptions.setOption("counterexamples-with-output",true);
     cout << "STATUS: option check-ltl-counterexamples activated (analyzing counterexamples, returning those that are not spurious.)" << endl;
     cout << "STATUS: option check-ltl-counterexamples: activates LTL counterexamples with output. Removes input state --> input state transitions in the approximated STG. " << endl;
   }
@@ -1116,7 +1117,7 @@ int main( int argc, char * argv[] ) {
   // handle RERS mode: reconfigure options
   if(boolOptions["rersmode"]||boolOptions["rers-mode"]) {
     cout<<"INFO: RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
-    boolOptions.registerOption("stderr-like-failed-assert",true);
+    boolOptions.setOption("stderr-like-failed-assert",true);
   }
 
   if(args.count("svcomp-mode")) {
@@ -1178,7 +1179,7 @@ int main( int argc, char * argv[] ) {
     pragmaHandler.handlePragmas(sageProject,&analyzer);
     // TODO: requires more refactoring
     option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
-    boolOptions.registerOption("verify-update-sequence-race-conditions",true);
+    boolOptions.setOption("verify-update-sequence-race-conditions",true);
     // unparse specialized code
     //sageProject->unparse(0,0);
     cout <<"STATUS: handling pragmas finished."<<endl;
@@ -1186,7 +1187,7 @@ int main( int argc, char * argv[] ) {
     // do specialization and setup data structures
     analyzer.setSkipSelectedFunctionCalls(true);
     analyzer.setSkipArrayAccesses(true);
-    boolOptions.registerOption("verify-update-sequence-race-conditions",true);
+    boolOptions.setOption("verify-update-sequence-race-conditions",true);
 
     //TODO1: refactor into separate function
     int numSubst=0;

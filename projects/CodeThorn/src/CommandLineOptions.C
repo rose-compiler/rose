@@ -33,11 +33,33 @@ bool BoolOptions::operator[](string option) {
 }
 
 void BoolOptions::registerOption(string name, bool defaultval) {
-  mapping[name]=defaultval;
+  if(mapping.find(name) == mapping.end()) {
+    mapping[name]=defaultval;
+  } else {
+    cerr<<"Error: command line option '"<<name<<"' already registered with value: "<<mapping[name]
+        <<". Value "<<defaultval<<" not registered."<<endl;
+    exit(1);
+  }
+}
+
+void BoolOptions::setOption(string name, bool val) {
+  if(mapping.find(name) != mapping.end()) {
+    mapping[name]=val;
+  } else {
+    cerr<<"Error: attempted to set unregistered command line option '"<<name<<"' to value '"<<val<<"'."<<endl;
+    exit(1);
+  }
 }
 
 void BoolOptions::processZeroArgumentsOption(string name) {
-  registerOption(name,args.count(name)>0);
+  if(args.count(name)>0) {
+    registerOption(name,true);
+  }
+  // check for "no-" name
+  string no_name="no-"+name;
+  if(args.count(no_name)>0) {
+    registerOption(name,false);
+  }
 }
 
 void BoolOptions::processOptions() {

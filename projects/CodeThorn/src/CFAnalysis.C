@@ -477,28 +477,9 @@ int CFAnalysis::reduceEmptyConditionNodes(Flow& flow) {
 int CFAnalysis::reduceNode(Flow& flow, Label lab) {
   Flow inFlow=flow.inEdges(lab);
   Flow outFlow=flow.outEdges(lab);
-  EdgeTypeSet unionEdgeTypeSets;
-  for(Flow::iterator i=inFlow.begin();i!=inFlow.end();++i) {
-    EdgeTypeSet edgeTypeSet=(*i).types();
-    unionEdgeTypeSets.insert(edgeTypeSet.begin(),edgeTypeSet.end());
-  }
-  for(Flow::iterator i=outFlow.begin();i!=outFlow.end();++i) {
-    EdgeTypeSet edgeTypeSet=(*i).types();
-    unionEdgeTypeSets.insert(edgeTypeSet.begin(),edgeTypeSet.end());
-  }
   // edge type cleanup
   // if true and false edge exist, remove both (merging true and false branches to a single branch)
-  // if forward and backward exist, remove backward (we are removing a cycle)
-  if(unionEdgeTypeSets.find(EDGE_TRUE)!=unionEdgeTypeSets.end()
-     && unionEdgeTypeSets.find(EDGE_FALSE)!=unionEdgeTypeSets.end()) {
-    unionEdgeTypeSets.erase(EDGE_TRUE);
-    unionEdgeTypeSets.erase(EDGE_FALSE);
-  }
-  if(unionEdgeTypeSets.find(EDGE_FORWARD)!=unionEdgeTypeSets.end()
-     && unionEdgeTypeSets.find(EDGE_BACKWARD)!=unionEdgeTypeSets.end()) {
-    unionEdgeTypeSets.erase(EDGE_FORWARD);
-    unionEdgeTypeSets.erase(EDGE_BACKWARD);
-  }
+  // if forward and backward exist, remove forward (we are not removing the cycle)
   
   /* description of essential operations:
    *   inedges: (n_i,b)
@@ -517,10 +498,29 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
         Edge e1=*initer;
         Edge e2=*outiter;
         // preserve edge annotations of ingoing and outgoing edges
-        Edge newEdge=Edge(e1.source(),unionEdgeTypeSets,e2.target());
+        EdgeTypeSet unionEdgeTypeSet;
+        EdgeTypeSet edgeTypeSet1=(*initer).types();
+        unionEdgeTypeSet.insert(edgeTypeSet1.begin(),edgeTypeSet1.end());
+        EdgeTypeSet edgeTypeSet2=(*outiter).types();
+        unionEdgeTypeSet.insert(edgeTypeSet2.begin(),edgeTypeSet2.end());
+
+        if(unionEdgeTypeSet.find(EDGE_TRUE)!=unionEdgeTypeSet.end()
+           && unionEdgeTypeSet.find(EDGE_FALSE)!=unionEdgeTypeSet.end()) {
+          unionEdgeTypeSet.erase(EDGE_TRUE);
+          unionEdgeTypeSet.erase(EDGE_FALSE);
+        }
+        if(unionEdgeTypeSet.find(EDGE_FORWARD)!=unionEdgeTypeSet.end()
+           && unionEdgeTypeSet.find(EDGE_BACKWARD)!=unionEdgeTypeSet.end()) {
+          unionEdgeTypeSet.erase(EDGE_FORWARD);
+          // keep backward edge annotation
+        }
+        
+        Edge newEdge=Edge(e1.source(),unionEdgeTypeSet,e2.target());
         toErase.insert(e1);
         toErase.insert(e2);
-        toInsert.insert(newEdge);
+        if(e1.source()!=e2.target()) {
+          toInsert.insert(newEdge);
+        }
       }
     }
     for(set<Edge>::iterator i=toErase.begin();i!=toErase.end();++i) {
