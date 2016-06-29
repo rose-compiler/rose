@@ -74,7 +74,7 @@ check_PROGRAM = ${C_TESTCODE_RESULTS:.c=.out}
 #	gcc -O3 rose_nestedloops.c -o nestedloops.out -lm
 
 $(C_Analysis_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
-	./measureTool -c -static-counting-only -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
+	./measureTool -c -static-counting-only -use-algorithm-v2 -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
 
 # test the translator
 $(C_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 

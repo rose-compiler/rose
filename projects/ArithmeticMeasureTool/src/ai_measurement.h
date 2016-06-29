@@ -8,6 +8,7 @@
 namespace ArithemeticIntensityMeasurement
 {
   extern bool debug;
+  extern int algorithm_version;
   extern std::string report_option;
   extern std::string report_filename;
   extern int loop_id; // roughly assign a unique id for each loop, at least within the context of a single function

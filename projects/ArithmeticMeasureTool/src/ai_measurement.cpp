@@ -31,6 +31,7 @@ namespace ArithemeticIntensityMeasurement
     return string(FPOpKindNameList[op_kind]);
   } 
   bool debug;
+  int algorithm_version = 1;
   // default file name to store the report
   string report_filename = "ai_tool_report.txt";
   string report_option ="-report-file";
@@ -68,7 +69,7 @@ namespace ArithemeticIntensityMeasurement
    if (node != NULL)
    {
      ss<<node->class_name() <<"@" <<endl;
-     ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
+     ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line()<<":"<<node->get_file_info()->get_col() <<endl;
    }
    else
      ss<< "NULL node"<<endl;
@@ -995,8 +996,15 @@ namespace ArithemeticIntensityMeasurement
   FPCounters OperationCountingTraversal::evaluateSynthesizedAttribute (SgNode* n, SubTreeSynthesizedAttributes synthesizedAttributeList )
   {
     FPCounters returnAttribute; 
-
-    if (SgExpression* expr = isSgExpression (n))
+    bool hasHandled = false; 
+    // Skip compiler generated code
+    if (isSgLocatedNode(n) && isSgLocatedNode(n)->get_file_info()->isCompilerGenerated() 
+        && !isSgAssignInitializer(n)  // SgAssignInitializer misses file info. right now, workaround it.
+        && !isSgCastExp(n))  // compiler generated cast expressions
+    {
+      hasHandled = true;  
+    }
+    else  if (SgExpression* expr = isSgExpression (n))
     {
       if (SgBinaryOp* bop = isSgBinaryOp(expr))
       {
@@ -1016,6 +1024,38 @@ namespace ArithemeticIntensityMeasurement
             returnAttribute.updateTotal();
           }
         }
+        hasHandled = true; 
+      }// unary operations
+      // Other expressions
+      else if (SgFunctionCallExp* func_call = isSgFunctionCallExp (n))
+      {
+        // Function call handling:   foo(a,b, c+d)
+        // The FPLOPs should come from parameter list and function body(synthesized separately )
+        SgExpression* func_ref = func_call->get_function();
+        SgExprListExp* args = func_call->get_args();
+        FPCounters* child_counter1 = getFPCounters (func_ref);
+        FPCounters* child_counter2 = getFPCounters (args);
+        returnAttribute = *child_counter1 + *child_counter2;
+        hasHandled = true; 
+      }
+      else if (SgFunctionRefExp* func_ref = isSgFunctionRefExp (n))
+      {
+        // TODO: interprocedural synthesize analysis, until reaching a fixed point 
+        cout<<"Warning: encountering a function call "<< func_ref->get_symbol()->get_name()<<"(), assuming 0 FLOPS for now."  <<endl;
+        hasHandled = true; 
+      }
+      else if (isSgValueExp(n))
+      {
+
+        // accessing a value does not involving FLOP operations.
+        hasHandled = true; 
+      }
+ 
+      else if (isSgVarRefExp(n))
+      {
+
+        // accessing a variable does not involving FLOP operations.
+        hasHandled = true; 
       }
     }
     else if (SgStatement* stmt = isSgStatement(n))
@@ -1027,22 +1067,164 @@ namespace ArithemeticIntensityMeasurement
         // Directly synthesize from child expression
         FPCounters* child_counters = getFPCounters (exp_stmt->get_expression());
         returnAttribute = *child_counters;
+        hasHandled = true; 
       }
+      else if (SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(n))
+      {
+        SgFunctionParameterList * plist = func_decl->get_parameterList();
+        SgFunctionDefinition* def = func_decl->get_definition();
+        if (def != NULL)
+        {
+          FPCounters* child_counter1 = getFPCounters (plist);
+          FPCounters* child_counter2 = getFPCounters (def);
+          returnAttribute = *child_counter1 + *child_counter2;
+        }
+        hasHandled = true; 
+      }
+      else if (SgVariableDeclaration* decl = isSgVariableDeclaration(n))
+      {
+        //e.g. float a = b+c;   the initialization may involve some operations
+        SgInitializedNamePtrList name_list = decl->get_variables();
+        for (size_t i =0; i< name_list.size(); i++)
+        {
+          SgInitializedName* name = name_list[i];
+          FPCounters* child_counters = getFPCounters (name);
+          returnAttribute = returnAttribute + *child_counters;
+        }
+        hasHandled = true; 
+      }
+      else if (isSgFunctionParameterList(n))
+      {
+       // only a set of arguments declared, no FP operations are involved. 
+        hasHandled = true; 
+      }
+      else if (SgIfStmt * if_stmt = isSgIfStmt(n))
+      {
+        SgStatement* cond_stmt = if_stmt->get_conditional();
+        SgStatement* true_stmt = if_stmt->get_true_body();
+        SgStatement* false_stmt = if_stmt->get_false_body();
+        
+        FPCounters* cond_counters = new FPCounters();
+        FPCounters* true_counters = new FPCounters();
+        FPCounters* false_counters= new FPCounters();
+        FPCounters* larger_counters=new FPCounters();
+
+        if (cond_stmt)
+          *cond_counters = *(getFPCounters (cond_stmt));
+        if (true_stmt)
+          *true_counters = *(getFPCounters (true_stmt));
+        if (false_stmt)
+          *false_counters = *(getFPCounters (false_stmt));
+        
+        // We estimate the upper bound of FLOPS for now
+        // TODO: using runtime profiling information to pick the right branch
+        if (true_counters->getTotalCount() > false_counters->getTotalCount())
+          larger_counters = true_counters; 
+        else
+          larger_counters = false_counters; 
+
+        returnAttribute = *cond_counters + *larger_counters;
+        hasHandled = true; 
+      }
+      else if (SgBasicBlock* block = isSgBasicBlock(n))
+      {
+        SgStatementPtrList stmt_list = block->get_statements();
+        for (size_t i =0; i< stmt_list.size(); i++)
+        {
+          SgStatement* stmt_in_block = stmt_list[i];
+          ROSE_ASSERT (stmt_in_block != NULL);
+          FPCounters* fpcounters = getFPCounters (stmt_in_block);
+          returnAttribute = returnAttribute + *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+      else if (SgForStatement* for_stmt = isSgForStatement(n))
+      {
+        SgStatement* body = for_stmt->get_loop_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+        // TODO: no multiplication of loop iteration count for now
+      }
+      else if (SgWhileStmt * w_stmt = isSgWhileStmt(n))
+      {
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+        // TODO: no multiplication of loop iteration count for now
+      }
+ 
+    } // end if statement
+
+//    if (isSgAssignInitializer(n))
+//      printf ("find assign initializer %p \n", n);
+    //default case: upward propagate counters if only a single child or error messages for multiple children
+    if (!hasHandled)
+    {
+      // only one child, directly synthesize/copy it 
+      if (synthesizedAttributeList.size()==1)
+      {
+        returnAttribute = synthesizedAttributeList[0];
+      }
+      else
+      {
+        // ignore some known types of nodes
+        if (!isSgPragma(n) && !isSgGlobal(n) && !isSgSourceFile(n))
+        {
+          cerr<<"Error in OperationCountingTraversal::evaluateSynthesizedAttribute(): unhandled node with multiple children for "<< n->class_name()<<endl;
+          if (SgLocatedNode* lnode = isSgLocatedNode(n))
+          {
+            lnode->get_file_info()->display();
+          }
+          ROSE_ASSERT (false);
+        }
+      }  
     }
 
-    //TODO: default case: upward propagate counters if only a single child or multiple children??
-
-    // My extra step: copy values to the attribute of the node
-    // Patch up the node information here.  operater+ used before may corrupt the node info.
+    // Extra step: copy values to the attribute of the node
+    // Patch up the node information here.  operator+ used before may corrupt the node info.
     returnAttribute.setNode (isSgLocatedNode(n));
-    if (SgLocatedNode* lnode = isSgLocatedNode (n))
+    SgLocatedNode* lnode = isSgLocatedNode (n);
+    if (lnode != NULL )
     {
       FPCounters* fpcounters = getFPCounters (lnode); // create attribute on fly if not existing
       *fpcounters = returnAttribute;
       //debugging here
-      fpcounters->printInfo (n->class_name()); 
+      if (debug) 
+        fpcounters->printInfo (n->class_name()); 
     }
 
+
+    // Verify the correctness using optionally pragmas 
+    // verify the counting results are consistent with reference results from pragmas   
+    if (SgStatement* stmt = isSgStatement(n))
+    {
+      if (SgStatement* prev_stmt = getPreviousStatement(stmt))
+      {
+        if (SgPragmaDeclaration* p_decl = isSgPragmaDeclaration(prev_stmt))
+        {
+          FPCounters* ref_result = parse_aitool_pragma(p_decl);                                                          
+          FPCounters* current_result = getFPCounters (lnode);
+          if (ref_result != NULL)
+          {
+            if (!current_result->consistentWithReference (ref_result))
+            {
+              cerr<<"Error. Calculated FP operation counts differ from reference counts parsed from pragma!"<<endl;
+              ref_result->printInfo("Reference counts are ....");
+              current_result->printInfo("Calculated counts are ....");
+              assert (false);
+            }
+          }
+        } // end if pragma
+      } // end if prev stmt
+    } // end if stmt
     return returnAttribute;
   }
 
