@@ -7,6 +7,7 @@
 // Binary Analysis and Transformation interfaces in the nes ROSE API.
 
 using namespace std;
+using namespace rose;
 
 // DQ (4/26/2010): Added functions to support ASM specific details in the ROSE interface.
 void
