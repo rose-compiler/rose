@@ -487,6 +487,15 @@ analyterix_SOURCES = \
 
 
 check-local:
+	@echo ================================================================
+	@echo RUNNING LTL VERIFICATION TESTS
+	@echo ================================================================
+	@rm -f *.consistent
+#	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
+#	@$(srcdir)/scripts/runLtlRegressionTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS examples in several versions and compare to previous results
+#	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results
+	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
+
 	./codethorn --internal-checks	
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@echo ================================================================
@@ -509,16 +518,6 @@ check-local:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm tmp.nsdump
-
-	@echo ================================================================
-	@echo RUNNING LTL VERIFICATION TESTS
-	@echo ================================================================
-
-	@rm -f *.consistent
-	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
-	@$(srcdir)/scripts/runLtlRegressionTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS examples in several versions and compare to previous results
-	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results
-	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat

@@ -320,7 +320,7 @@ bool Analyzer::isActiveGlobalTopify() {
         || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop) ) {
       _topifyModeActive=true;
       eventGlobalTopifyTurnedOn();
-      boolOptions.registerOption("rers-binary",false);
+      boolOptions.setOption("rers-binary",false);
       return true;
     }
   }
