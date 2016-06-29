@@ -14,7 +14,7 @@
 
 #include "compass2/compass.h"
 
-using namespace StringUtility;
+using namespace rose::StringUtility;
 using std::string;
 
 extern const Compass::Checker* const floatingPointExactComparisonChecker;

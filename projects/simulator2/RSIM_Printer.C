@@ -5,6 +5,7 @@
 
 #include "Diagnostics.h"
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 Printer::~Printer() {

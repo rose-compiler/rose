@@ -7,6 +7,8 @@
 
 #include "arrayPreprocessor.h"
 
+using namespace rose;
+
 // Not certain this is still required
 extern SgProject* globalProject;
 

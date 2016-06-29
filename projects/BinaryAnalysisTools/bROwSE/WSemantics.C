@@ -12,6 +12,7 @@
 #include <Wt/WTableView>
 #include <Wt/WText>
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
 

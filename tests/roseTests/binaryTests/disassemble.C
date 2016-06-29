@@ -35,6 +35,7 @@
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_I_ROSE_ANALYSIS
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;

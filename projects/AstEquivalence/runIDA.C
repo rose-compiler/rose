@@ -8,6 +8,7 @@
 using namespace std;
 using namespace boost::filesystem;
 //using namespace boost;
+using namespace rose;
 
 char *curl_easy_escape(const char *string, int inlength)
 {

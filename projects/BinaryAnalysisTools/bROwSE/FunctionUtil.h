@@ -121,7 +121,7 @@ public:
         return Wt::WLength(6, Wt::WLength::FontEm);
     }
     boost::any data(P2::Partitioner&, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
-        return Wt::WString(StringUtility::addrToString(f->address()));
+        return Wt::WString(rose::StringUtility::addrToString(f->address()));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         return a->address() < b->address();
@@ -148,9 +148,9 @@ public:
         if (!name.empty() && (!isgraph(name[0]) || !isgraph(name[name.size()-1]))) {
             // Add double quotes to the string after we escape it, otherwise the user can't tell that the name
             // has leading or trailing non-printable characters.
-            name = "\"" + StringUtility::cEscape(name) + "\"";
+            name = "\"" + rose::StringUtility::cEscape(name) + "\"";
         } else {
-            name = StringUtility::cEscape(name);
+            name = rose::StringUtility::cEscape(name);
         }
         return Wt::WString(name);
     }

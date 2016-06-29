@@ -5,6 +5,7 @@
 #include <Partitioner2/Engine.h>
 #include <BinaryString.h>
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 //! [headers]
 

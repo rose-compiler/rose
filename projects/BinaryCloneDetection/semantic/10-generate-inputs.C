@@ -6,6 +6,7 @@
 #include "Combinatorics.h"
 #include <cerrno>
 
+using namespace rose;
 using namespace CloneDetection;
 std::string argv0;
 
@@ -492,7 +493,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strncmp(argv[argno], "--ngroups=", 10)) {
             opt.ngroups = strtoul(argv[argno]+10, NULL, 0);
             opt.ngroups_set = true;

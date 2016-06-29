@@ -4,6 +4,7 @@
 #include <PathFinder/semantics.h>
 #include <SymbolicMemory2.h>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
