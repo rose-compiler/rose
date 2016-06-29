@@ -229,6 +229,7 @@ struct PartitionerSettings {
     rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
     bool findingIntraFunctionCode;                  /**< Suck up unused addresses as intra-function code. */
     bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
+    bool findingInterFunctionCalls;                 /**< Look for function calls between functions. */
     AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
     bool doingPostAnalysis;                         /**< Perform enabled post-partitioning analyses? */
     bool doingPostFunctionMayReturn;                /**< Run function-may-return analysis if doingPostAnalysis is set? */
@@ -246,10 +247,10 @@ struct PartitionerSettings {
     PartitionerSettings()
         : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
           findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
-          doingPostAnalysis(true), doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true),
-          doingPostCallingConvention(false), doingPostFunctionNoop(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
-          findingDataFunctionPointers(false), findingThunks(true), splittingThunks(false),
-          semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true) {}
+          findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
+          doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
+          functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingThunks(true),
+          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true) {}
 };
 
 /** Settings for controling the engine behavior.
