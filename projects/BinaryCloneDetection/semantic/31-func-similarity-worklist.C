@@ -4,6 +4,8 @@
 #include "CloneDetectionLib.h"
 #include <cerrno>
 
+using namespace rose;
+
 std::string argv0;
 
 static void
@@ -66,7 +68,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strcmp(argv[argno], "--delete")) {
             opt.delete_old_data = true;
         } else if (!strncmp(argv[argno], "--exclude-functions=", 20)) {
@@ -82,7 +84,7 @@ main(int argc, char *argv[])
         }
     };
     if (argno+1!=argc)
-        usage(1);
+        ::usage(1);
     time_t start_time = time(NULL);
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     SqlDatabase::TransactionPtr tx = conn->transaction();

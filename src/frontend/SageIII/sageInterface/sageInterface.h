@@ -62,7 +62,18 @@ ROSE_DLL_API std::string getVariantName (VariantT v);
  *  numerous types of operations that are common to general analysis and transformation of the AST. */
 namespace SageInterface
    {
-  // DQ (4/3/2014): Added general AST support seperate from the AST.
+  // Liao 6/22/2016: keep records of loop init-stmt normalization, later help undo it to support autoPar.
+  struct Transformation_Record
+  {
+    // a lookup table to check if a for loop has been normalized for its c99-style init-stmt
+    std::map <SgForStatement* , bool > forLoopInitNormalizationTable; 
+    // Detailed record about the original declaration (1st in the pair) and the normalization generated new declaration (2nd in the pair)
+    std::map <SgForStatement* , std::pair<SgVariableDeclaration*, SgVariableDeclaration*>  >  forLoopInitNormalizationRecord;
+  } ;
+
+  ROSE_DLL_API extern Transformation_Record trans_records;
+
+  // DQ (4/3/2014): Added general AST support separate from the AST.
 
   // Container and API for analysis information that is outside of the AST and as a result
   // prevents frequent modification of the IR.
@@ -1100,6 +1111,9 @@ ROSE_DLL_API void setLoopStride(SgNode* loop, SgExpression* stride);
 //! Normalize loop init stmt by promoting the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable, if necessary
 ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 
+//! Undo the normalization of for loop's C99 init declaration. Previous record of normalization is used to ease the reverse transformation.
+ROSE_DLL_API bool unnormalizeForLoopInitDeclaration(SgForStatement* loop);
+
 //! Normalize a for loop, return true if successful. Generated constants will be fold by default.
 //!
 //! Translations are :
@@ -2005,7 +2019,7 @@ ROSE_DLL_API void ReductionRecognition(SgForStatement* loop, std::set< std::pair
 /*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression. */
 ROSE_DLL_API void constantFolding(SgNode* r);
 
-//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted.
+//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements (with duplicated statement s) and return expressions with side effects. Return the number of statements inserted.
 /*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement.
  */
 ROSE_DLL_API int instrumentEndOfFunction(SgFunctionDeclaration * func, SgStatement* s);

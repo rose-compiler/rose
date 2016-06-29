@@ -1,6 +1,11 @@
 #ifdef TEMPLATE_IMPLEMENTATIONS
 
-#include "sage3basic.h"
+// This is a header file (even though it has a ".C" extension) which is #included in rose.h in order to define
+// templates. Therefore it should include neither rose.h nor sage3basic.h. Instead, use the normal ROSE policy for header
+// files: include <rose.h> or <sage3basic.h> before including <utility_functionsImpl.C>. If you don't believe this is really
+// a header file, just look through the various makefiles and you'll find it lumped into lists of header files, but never
+// in lists of source files.
+//#include "rose.h"
 
 #ifndef UTILITY_FUNCTION_TEMPLATES_C
 #define UTILITY_FUNCTION_TEMPLATES_C

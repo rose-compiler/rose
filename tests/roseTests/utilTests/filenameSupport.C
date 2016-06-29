@@ -1,8 +1,10 @@
 #include <rose_config.h>
 
-#include "string_functions.h"
+#include "FileUtility.h"
+#include "StringUtility.h"
 
 using namespace std;
+using namespace rose;
 
 
 void stringTest ( string s )

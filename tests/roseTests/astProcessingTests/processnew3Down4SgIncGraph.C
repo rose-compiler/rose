@@ -14,6 +14,7 @@ typedef bool SynthesizedAttribute;
 
 using namespace std;
 using namespace boost;
+using namespace rose;
 /*
 class Int128
 {

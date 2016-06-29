@@ -7,6 +7,8 @@
 #include "CloneDetectionLib.h"
 #include <cerrno>
 
+using namespace rose;
+
 std::string argv0;
 
 static void
@@ -86,7 +88,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strncmp(argv[argno], "--entry=", 8)) {
             opt.entry_vas.insert(strtoull(argv[argno]+8, NULL, 0));
         } else if (!strcmp(argv[argno], "--file=list") || !strcmp(argv[argno], "--files=list")) {
@@ -159,7 +161,7 @@ main(int argc, char *argv[])
         }
     }
     if (argno+1!=argc)
-        usage(1);
+        ::usage(1);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
 
     // List the ID numbers and names for all specimen files

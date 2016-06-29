@@ -23,7 +23,7 @@
 // **********************************************************
 
 using namespace std;
-
+using namespace rose;
 
 // DQ (4/8/2011): Moved this from the header file...
 CustomAstDOTGenerationEdgeType::CustomAstDOTGenerationEdgeType (SgNode* n1, SgNode* n2, std::string label, std::string options)
@@ -1958,6 +1958,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
                          case SgTemplateArgument::template_template_argument:
                               typeString = "template_template_argument";
+                              break;
+
+                         case SgTemplateArgument::start_of_pack_expansion_argument:
+                              typeString = "start_of_pack_expansion_argument";
                               break;
 
                          default:

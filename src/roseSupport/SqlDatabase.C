@@ -2,7 +2,7 @@
 
 #include "rosePublicConfig.h"
 #include "SqlDatabase.h"
-#include "string_functions.h" // i.e., namespace StringUtility
+#include "StringUtility.h"
 
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
@@ -26,6 +26,8 @@
 #endif
 
 #include <cassert>
+
+using namespace rose;
 
 namespace SqlDatabase {
 

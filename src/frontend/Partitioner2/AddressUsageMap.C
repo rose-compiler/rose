@@ -394,6 +394,21 @@ AddressUsageMap::eraseDataBlock(const DataBlock::Ptr &dblock) {
     }
 }
 
+bool
+AddressUsageMap::anyExists(const AddressInterval &where) const {
+    return map_.findFirstOverlap(where) != map_.nodes().end();
+}
+
+bool
+AddressUsageMap::anyExists(const AddressIntervalSet &where) const {
+    // FIXME[Robb P Matzke 2016-06-28]: this could be even faster by using iterators and lowerBound.
+    BOOST_FOREACH (const AddressInterval &interval, where.intervals()) {
+        if (anyExists(interval))
+            return true;
+    }
+    return false;
+}
+
 BasicBlock::Ptr
 AddressUsageMap::instructionExists(SgAsmInstruction *insn) const {
     const AddressUsers noUsers;
