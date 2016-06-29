@@ -1207,7 +1207,7 @@ namespace ArithemeticIntensityMeasurement
     // verify the counting results are consistent with reference results from pragmas   
     if (SgStatement* stmt = isSgStatement(n))
     {
-      if (SgStatement* prev_stmt = getPreviousStatement(stmt))
+      if (SgStatement* prev_stmt = SageInterface::getPreviousStatement(stmt))
       {
         if (SgPragmaDeclaration* p_decl = isSgPragmaDeclaration(prev_stmt))
         {
