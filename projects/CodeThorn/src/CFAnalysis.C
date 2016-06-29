@@ -214,6 +214,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgContinueStmt:
   case V_SgReturnStmt:
   case V_SgVariableDeclaration:
+  case V_SgCaseOptionStmt:
+  case V_SgDefaultOptionStmt:
       return labeler->getLabel(node);
   case V_SgExprStatement: {
     return labeler->getLabel(node);
