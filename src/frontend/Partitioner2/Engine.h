@@ -666,6 +666,27 @@ public:
      *  vector. */
     virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
 
+    /** Make functions from inter-function calls.
+     *
+     *  This method scans the unused executable areas between existing functions to look for additional function calls and
+     *  creates new functions for those calls.  It starts the scan at @p startVa which is updated upon return to be the next
+     *  address that needs to be scanned. The @p startVa is never incremented past the end of the address space (i.e., it never
+     *  wraps back around to zero), so care should be taken to not call this in an infinite loop when the end of the address
+     *  space is reached.
+     *
+     *  The scanner tries to discover new basic blocks in the unused portion of the address space. These basic blocks are not
+     *  allowed to overlap with existing, attached basic blocks, data blocks, or functions since that is an indication that we
+     *  accidentally disassembled non-code.  If the basic block looks like a function call and the target address(es) is not
+     *  pointing into the middle of an existing basic block, data-block, or function then a new function is created at the
+     *  target address. The basic blocks which were scanned are not explicitly attached to the partitioner's CFG since we
+     *  cannot be sure we found their starting address, but they might be later attached by following the control flow from the
+     *  functions we did discover.
+     *
+     *  Returns the new function(s) for the first basic block that satisfied the requirements outlined above, and updates @p
+     *  startVa to be a greater address which is not part of the basic block that was scanned. */
+    virtual std::vector<Function::Ptr>
+    makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t &startVa /*in,out*/);
+
     /** Discover as many functions as possible.
      *
      *  Discover as many functions as possible by discovering as many basic blocks as possible (@ref discoverBasicBlocks), Each
