@@ -12,6 +12,7 @@
 #define foreach BOOST_FOREACH
 using namespace std;
 using namespace boost;
+using namespace rose;
 using namespace ssa_unfiltered_cfg;
 
 /** Return all the reaching definitions from a VariableRenaming rename table. */

@@ -10,6 +10,7 @@
 #include "sage3basic.h"
 #include "cmdline.h"
 #include "keep_going.h"
+#include "FileUtility.h"
 #include "Diagnostics.h"                                // rose::Diagnostics
 
 #include <boost/foreach.hpp>

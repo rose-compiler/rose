@@ -8,6 +8,7 @@
 //! [headers]
 
 //! [namespaces]
+using namespace rose;
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 //! [namespaces]

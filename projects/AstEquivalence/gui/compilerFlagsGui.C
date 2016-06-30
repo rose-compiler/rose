@@ -26,6 +26,7 @@ using namespace std;
 using namespace boost;
 using namespace sqlite3x;
 using namespace __gnu_cxx;
+using namespace rose;
 
 static string htmlEscape(const string& s) {
   string s2;

@@ -8,6 +8,7 @@
 #include <Sawyer/Set.h>
 #include <SqlDatabase.h>
 
+using namespace rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {

@@ -4,6 +4,7 @@
 #include <functional>
 #include <ostream>
 using namespace std;
+using namespace rose;
 
 bool do_db_optimization = true;
 

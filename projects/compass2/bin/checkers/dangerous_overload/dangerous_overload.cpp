@@ -11,7 +11,7 @@
 #include "AstMatching.h"
 
 using std::string;
-using namespace StringUtility;
+using namespace rose::StringUtility;
 
 extern const Compass::Checker* const dangerousOverloadChecker;
 

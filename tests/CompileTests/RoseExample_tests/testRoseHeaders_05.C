@@ -204,7 +204,7 @@
 #include "rose_attributes_list.h"
 
 // Include ROSE common utility function library
-#include "string_functions.h"
+#include "StringUtility.h"
 #include "escape.h"
 
 // Include support for Brian Gunney's command line parser tool (nice work)

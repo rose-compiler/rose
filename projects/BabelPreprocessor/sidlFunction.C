@@ -6,6 +6,7 @@
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 // We need this header file so that we can use the global tree traversal mechanism
 // #include "Cxx_GrammarTreeTraversalClass.h"

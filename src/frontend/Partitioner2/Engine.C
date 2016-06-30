@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "rosePublicConfig.h"
 
+#include "AsmUnparser_compat.h"
 #include "BinaryDebugger.h"
 #include "BinaryLoader.h"
 #include "Diagnostics.h"
@@ -74,7 +75,7 @@ hasAnyCalleeReturn(const Partitioner &partitioner, const ControlFlowGraph::Const
         return boost::logic::indeterminate;
     return false;
 }
-    
+
 // Increment the address as far as possible while avoiding overflow.
 static rose_addr_t
 incrementAddress(rose_addr_t va, rose_addr_t amount, rose_addr_t maxaddr) {
@@ -332,6 +333,19 @@ Engine::partitionerSwitches() {
     sg.insert(Switch("no-intra-function-data")
               .key("intra-function-data")
               .intrinsicValue(false, settings_.partitioner.findingIntraFunctionData)
+              .hidden(true));
+
+    sg.insert(Switch("inter-function-calls")
+              .intrinsicValue(true, settings_.partitioner.findingInterFunctionCalls)
+              .doc("Near the end of processing look for function calls that occur in the executable regions between "
+                   "existing functions, and turn the call targets into functions. The analysis uses instruction semantics "
+                   "to find the call sites rather than looking for architecture-specific call instructions, and attempts "
+                   "to prune away things that are not legitimate calls. The @s{no-inter-function-calls} switch turns this "
+                   "feature off. The default is to " +
+                   std::string(settings_.partitioner.findingInterFunctionCalls?"":"not ") + " perform this analysis."));
+    sg.insert(Switch("no-inter-function-calls")
+              .key("inter-function-calls")
+              .intrinsicValue(false, settings_.partitioner.findingInterFunctionCalls)
               .hidden(true));
 
     sg.insert(Switch("data-functions")
@@ -770,7 +784,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             } else {
                 resource = fileName;
             }
-            
+
             // Parse and load the S-Record file
             if (resource.size()!=strlen(resource.c_str())) {
                 throw std::runtime_error("file name contains internal NUL characters: \"" +
@@ -905,7 +919,7 @@ Engine::createBarePartitioner() {
 
     // Should the partitioner favor list-based or map-based containers for semantic memory states?
     p.semanticMemoryParadigm(settings_.partitioner.semanticMemoryParadigm);
-            
+
     // Miscellaneous settings
     p.enableSymbolicSemantics(settings_.partitioner.usingSemantics);
     if (settings_.partitioner.followingGhostEdges)
@@ -920,9 +934,9 @@ Engine::createBarePartitioner() {
         p.basicBlockCallbacks().append(cb);
         p.attachFunction(Function::instance(settings_.partitioner.peScramblerDispatcherVa,
                                             p.addressName(settings_.partitioner.peScramblerDispatcherVa),
-                                            SgAsmFunction::FUNC_USERDEF)); 
+                                            SgAsmFunction::FUNC_USERDEF));
     }
-    
+
     return p;
 }
 
@@ -955,7 +969,7 @@ Engine::createTunedPartitioner() {
         p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
         return p;
     }
-    
+
     if (dynamic_cast<DisassemblerX86*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
@@ -1188,7 +1202,7 @@ Engine::makeImportFunctions(Partitioner &partitioner, SgAsmInterpretation *inter
         ModulesPe::rebaseImportAddressTables(partitioner, ModulesPe::getImportIndex(partitioner, interp));
         BOOST_FOREACH (const Function::Ptr &function, ModulesPe::findImportFunctions(partitioner, interp))
             insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
-    
+
         // ELF imports
         BOOST_FOREACH (const Function::Ptr &function, ModulesElf::findPltFunctions(partitioner, interp))
             insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
@@ -1330,7 +1344,7 @@ Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr
             readVa = incrementAddress(readVa, wordSize, maxaddr);
             continue;                                   // would overlap with existing instruction
         }
-        
+
         // All seems okay, so make a function there
         // FIXME[Robb P. Matzke 2014-12-08]: USERDEF is not the best, most descriptive reason, but it's what we have for now
         mlog[INFO] <<"possible code address " <<StringUtility::addrToString(targetVa)
@@ -1358,9 +1372,119 @@ Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) 
     return functions;
 }
 
+std::vector<Function::Ptr>
+Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t &startVa /*in,out*/) {
+    static const rose_addr_t MAX_ADDR(-1);
+    static const std::vector<Function::Ptr> NO_FUNCTIONS;
+    static const char *me = "makeFunctionFromInterFunctionCalls: ";
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<me <<"(startVa = " <<StringUtility::addrToString(startVa) <<")\n";
+
+    while (AddressInterval unusedVas = partitioner.aum().nextUnused(startVa)) {
+
+        // The unused interval must have executable addresses, otherwise skip to the next unused interval.
+        AddressInterval unusedExecutableVas = map_.within(unusedVas).require(MemoryMap::EXECUTABLE).available();
+        if (unusedExecutableVas.isEmpty()) {
+            if (unusedVas.greatest() == MAX_ADDR) {
+                startVa = MAX_ADDR;
+                return NO_FUNCTIONS;
+            } else {
+                startVa = unusedVas.greatest() + 1;
+                continue;
+            }
+        }
+        startVa = unusedExecutableVas.least();
+        SAWYER_MESG(debug) <<me <<"examining interval " <<StringUtility::addrToString(unusedExecutableVas.least())
+                           <<".." <<StringUtility::addrToString(unusedExecutableVas.greatest()) <<"\n";
+
+        while (startVa <= unusedExecutableVas.greatest()) {
+            ASSERT_forbid(partitioner.placeholderExists(startVa)); // I don't think this can happen, but I could be wrong
+            BasicBlock::Ptr bb = partitioner.discoverBasicBlock(startVa);
+
+            // Increment the startVa to be the next unused address. We can't just use the fall-through address of the basic
+            // block we just discovered because it might not be contiguous in memory.  Watch out for overflow since it's
+            // possible that startVa is already the last address in the address space (in which case we leave startVa as is and
+            // return).
+            if (bb == NULL || bb->nInstructions() == 0) {
+                if (startVa == MAX_ADDR)
+                    return NO_FUNCTIONS;
+                ++startVa;
+                continue;
+            }
+            if (debug) {
+                debug <<me <<bb->printableName() <<"\n";
+                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                    debug <<me <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+            }
+            AddressIntervalSet bbVas = bb->insnAddresses();
+            if (!bbVas.leastNonExistent(bb->address()).assignTo(startVa)) // address of first hole, or following address
+                startVa = MAX_ADDR;                                       // bb ends at max address
+
+            // Basic block sanity checks because we're not sure that we're actually disassembling real code. The basic block
+            // should not overlap with anything (basic block, data block, function) already attached to the CFG.
+            if (partitioner.aum().anyExists(bbVas)) {
+                SAWYER_MESG(debug) <<me <<"candidate basic block overlaps with another; skipping\n";
+                continue;
+            }
+            if (!partitioner.basicBlockIsFunctionCall(bb)) {
+                SAWYER_MESG(debug) <<me <<"candidate basic block is not a function call; skipping\n";
+                continue;
+            }
+
+            // Look at the basic block successors to find those which appear to be function calls. Note that the edge types are
+            // probably all E_NORMAL at this point rather than E_FUNCTION_CALL, and the call-return edges are not yet present.
+            std::set<rose_addr_t> candidateFunctionVas; // entry addresses for potential new functions
+            BOOST_FOREACH (const BasicBlock::Successor &succ, partitioner.basicBlockSuccessors(bb)) {
+                if (succ.expr()->is_number() && succ.expr()->get_width() <= 64) {
+                    rose_addr_t targetVa = succ.expr()->get_number();
+                    if (targetVa == bb->fallthroughVa()) {
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" is fall-through\n";
+                    } else if (partitioner.functionExists(targetVa)) {
+                        // We already know about this function, so move on -- nothing to see here.
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" already exists\n";
+                    } else if (partitioner.aum().exists(targetVa)) {
+                        // Target is inside some basic block, data block, or function but not a function entry. The basic block
+                        // we just discovered is probably bogus, therefore ignore everything about it.
+                        candidateFunctionVas.clear();
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" has a conflict\n";
+                        break;
+                    } else if (!map_.at(targetVa).require(MemoryMap::EXECUTABLE).exists()) {
+                        // Target is in an unmapped area or is not executable. The basic block we just discovered is probably
+                        // bogus, therefore ignore everything about it.
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" not executable\n";
+                        candidateFunctionVas.clear();
+                        break;
+                    } else {
+                        // Looks good.
+                        candidateFunctionVas.insert(targetVa);
+                    }
+                }
+            }
+
+            // Create new functions containing only the entry blocks. We'll discover the rest of their blocks later by
+            // recursively following their control flow.
+            if (!candidateFunctionVas.empty()) {
+                std::vector<Function::Ptr> newFunctions;
+                BOOST_FOREACH (rose_addr_t functionVa, candidateFunctionVas) {
+                    Function::Ptr newFunction = Function::instance(functionVa, SgAsmFunction::FUNC_CALL_INSN);
+                    newFunctions.push_back(partitioner.attachOrMergeFunction(newFunction));
+                    SAWYER_MESG(debug) <<me <<"created " <<newFunction->printableName() <<" from " <<bb->printableName() <<"\n";
+                }
+                return newFunctions;
+            }
+
+            // Avoid overflow or infinite loop
+            if (startVa == MAX_ADDR)
+                return NO_FUNCTIONS;
+        }
+    }
+    return NO_FUNCTIONS;
+}
+
 void
 Engine::discoverFunctions(Partitioner &partitioner) {
     rose_addr_t nextPrologueVa = 0;                     // where to search for function prologues
+    rose_addr_t nextInterFunctionCallVa = 0;            // where to search for inter-function call instructions
     rose_addr_t nextReadAddr = 0;                       // where to look for read-only function addresses
 
     while (1) {
@@ -1375,6 +1499,14 @@ Engine::discoverFunctions(Partitioner &partitioner) {
             continue;
         }
 
+        // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics
+        // to find calls to functions that we don't know about yet.
+        if (settings_.partitioner.findingInterFunctionCalls) {
+            newFunctions = makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);
+            if (!newFunctions.empty())
+                continue;
+        }
+
         // Try looking for a function address mentioned in read-only memory
         if (settings_.partitioner.findingDataFunctionPointers) {
             if (Function::Ptr function = makeNextDataReferencedFunction(partitioner, nextReadAddr /*in,out*/)) {
@@ -1382,7 +1514,7 @@ Engine::discoverFunctions(Partitioner &partitioner) {
                 continue;
             }
         }
-        
+
         // Nothing more to do
         break;
     }
@@ -1412,7 +1544,7 @@ Engine::attachDeadCodeToFunction(Partitioner &partitioner, const Function::Ptr &
                 retval.insert(ghost);
             }
         }
-        
+
         // If we're about to do more iterations then we should recursively discover instructions for pending basic blocks. Once
         // we've done that we should traverse the function's CFG to see if some of those new basic blocks are reachable and
         // should also be attached to the function.
@@ -1723,7 +1855,7 @@ Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner &partitioner
         pending.insert(va);
     finalCallReturn_.clear();
     processedCallReturn_.clear();
-    
+
     std::vector<bool> seen(partitioner.cfg().nVertices(), false);
     while (!pending.empty()) {
         rose_addr_t startVa = *pending.begin();

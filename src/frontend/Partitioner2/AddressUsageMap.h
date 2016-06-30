@@ -307,6 +307,24 @@ public:
      *  Returns the set of addresses that are represented. */
     AddressIntervalSet extent() const;
 
+    /** Predicate to determine whether an address is used.
+     *
+     *  Returns true if the specified address belongs to any instruction, basic block, or data block. This is a O(log N)
+     *  operation where N is the number of contiguous intervals in this address usage map.  It may be slightly faster than some
+     *  of the other methods since it doesn't need to construct a non-POD return value. */
+    bool exists(rose_addr_t va) const { return map_.exists(va); }
+
+    /** Predicate to determine whether any of the specified addresses are used.
+     *
+     *  Returns true if any address in the specified set or interval belongs to any instruction, basic block, or data
+     *  block. This may be slightly faster than some of the other predicates because it doesn't need to construct a non-POD
+     *  return value.
+     *
+     *  @{ */
+    bool anyExists(const AddressInterval&) const;
+    bool anyExists(const AddressIntervalSet&) const;
+    /** @} */
+
     /** Addresses not represented.
      *
      *  Returns the set of addresses that are not represented.  The nBits argument is the number of bits in the virtual address

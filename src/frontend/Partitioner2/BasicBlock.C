@@ -204,6 +204,22 @@ BasicBlock::pop() {
     clearCache();
 }
 
+AddressIntervalSet
+BasicBlock::insnAddresses() const {
+    AddressIntervalSet retval;
+    BOOST_FOREACH (SgAsmInstruction *insn, insns_)
+        retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
+    return retval;
+}
+
+AddressIntervalSet
+BasicBlock::dataAddresses() const {
+    AddressIntervalSet retval;
+    BOOST_FOREACH (const DataBlock::Ptr &db, dblocks_)
+        retval.insert(db->extent());
+    return retval;
+}
+
 rose_addr_t
 BasicBlock::fallthroughVa() const {
     ASSERT_require(!insns_.empty());

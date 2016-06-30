@@ -53,6 +53,7 @@
 #include <algorithm> // for set operations
 #include <numeric>   // for std::accumulate
 
+
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 #   include "jni.h"
 
@@ -100,6 +101,7 @@ typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 using namespace SageBuilder;
 
 

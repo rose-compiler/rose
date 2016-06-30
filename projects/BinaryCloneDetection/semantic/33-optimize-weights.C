@@ -8,6 +8,8 @@
 
 #undef DEBUGGING
 
+using namespace rose;
+
 static std::string argv0;
 
 static void usage(int exit_status) {
@@ -354,7 +356,7 @@ int main(int argc, char *argv[]) {
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strncmp(argv[argno], "--file=", 7)) {
             opt.samplesFileName = argv[argno]+7;
         } else if (!strncmp(argv[argno], "--population=", 13)) {
