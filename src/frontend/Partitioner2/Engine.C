@@ -1398,8 +1398,48 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
                            <<".." <<StringUtility::addrToString(unusedExecutableVas.greatest()) <<"\n";
 
         while (startVa <= unusedExecutableVas.greatest()) {
-            ASSERT_forbid(partitioner.placeholderExists(startVa)); // I don't think this can happen, but I could be wrong
-            BasicBlock::Ptr bb = partitioner.discoverBasicBlock(startVa);
+            // Discover the basic block. It's possible that the partitioner already knows about this block location but just
+            // hasn't tried looking for it's instructions yet.  I don't think this happens within the stock engine because it
+            // tries to recursively discover all basic blocks before it starts scanning things that might be data. But users
+            // might call this before they've processed all the outstanding placeholders.  Consider the following hypothetical
+            // user's partitioner state 
+            //          B1: push ebp            ; this block's insns are discovered
+            //              mov ebp, esp
+            //              test eax, eax
+            //              je B3
+            //          B2: inc eax             ; this block's insns are discovered
+            //          B3: ???                 ; this block is known, but no instructions discovered yet
+            //              ???                 ; arbitrary number of blocks
+            //          Bn: push ebp            ; this block's insns are discovered
+            //              mov ebp, esp
+            // To this analysis, the region (B3+1)..Bn is ambiguous. It could be code or data or some of both. Ideally, we
+            // should have used the recursive disassembly to process this area already. We'll just pretend it's all unknown and
+            // process it with a linear sweep like normal. This is probably fine for normal code since linear and recursive are
+            // mostly the same and we'll eventually discover the correct blocks anyway when we finally do the recursive (this
+            // analysis doesn't actually create blocks in this region -- it only looks for call sites).
+            BasicBlock::Ptr bb;
+            if (partitioner.placeholderExists(startVa)) {
+#if 0 // DEBUGGING [Robb P Matzke 2016-06-30]
+                if (mlog[WARN]) {
+                    mlog[WARN] <<me <<"va " <<StringUtility::addrToString(startVa) <<" has ambiguous disposition:\n";
+                    static bool emitted = false;
+                    if (!emitted) {
+                        mlog[WARN] <<"  it is a basic block (with undiscovered instructions),\n"
+                                   <<"  and it is absent from the address usage map\n"
+                                   <<"  this analysis should be called after all pending instructions are discovered\n";
+                        mlog[WARN] <<"  interval " <<StringUtility::addrToString(startVa)
+                                   <<".." <<StringUtility::addrToString(unusedExecutableVas.greatest())
+                                   <<" treated as unknown\n";
+                        mlog[WARN] <<"  the CFG contains "
+                                   <<StringUtility::plural(partitioner.undiscoveredVertex()->nInEdges(), "blocks")
+                                   <<" lacking instructions\n";
+                        emitted = true;
+                    }
+                }
+#endif
+            } else {
+                bb = partitioner.discoverBasicBlock(startVa);
+            }
 
             // Increment the startVa to be the next unused address. We can't just use the fall-through address of the basic
             // block we just discovered because it might not be contiguous in memory.  Watch out for overflow since it's
