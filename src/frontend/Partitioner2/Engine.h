@@ -1122,6 +1122,16 @@ public:
     virtual void functionReturnAnalysis(FunctionReturnAnalysis x) { settings_.partitioner.functionReturnAnalysis = x; }
     /** @} */
 
+    /** Property: Whether to search for function calls between exiting functions.
+     *
+     *  If set, then @ref Engine::makeFunctionFromInterFunctionCalls is invoked, which looks for call-like code between
+     *  existing functions in order to create new functions at the call target addresses.
+     *
+     * @{ */
+    bool findingInterFunctionCalls() const /*final*/ { return settings_.partitioner.findingInterFunctionCalls; }
+    virtual void findingInterFunctionCalls(bool b) { settings_.partitioner.findingInterFunctionCalls = b; }
+    /** @} */
+
     /** Property: Whether to search static data for function pointers.
      *
      *  If this property is set, then the partitioner will scan static data to look for things that might be pointers to
