@@ -428,11 +428,11 @@ SgNodeHelper::getSymbolOfVariableDeclaration(SgVariableDeclaration* decl) {
   }
 }
 
-SgSymbol* SgNodeHelper::getSymbolOfFunctionDeclaration(SgFunctionDeclaration* decl) {
+SgFunctionSymbol* SgNodeHelper::getSymbolOfFunctionDeclaration(SgFunctionDeclaration* decl) {
   SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
   ROSE_ASSERT(symbol);
   ROSE_ASSERT(isSgFunctionSymbol(symbol));
-  return symbol;
+  return isSgFunctionSymbol(symbol);
 }
 
 /*! 
