@@ -79,8 +79,48 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn
   if(debuglevel > 0) debugPrint(sgn);
   VariableId id = cati.vidm.variableId(sgn);
   ROSE_ASSERT(id.isValid());
+  // schroder3 (Jun 2016): Check for bitfield:
+  if(SgVariableDeclaration* varDecl = cati.vidm.getVariableDeclaration(id)) {
+    if(varDecl->get_bitfield ()) {
+      // This variable is a bitfield. An address can not be taken from a bitfield.
+      //  ==> This should be unreachable code (nothing to do):
+      ROSE_ASSERT(false);
+      return;
+    }
+  }
   // insert the id into VariableIdSet
   cati.variableAddressTakenInfo.second.insert(id);
+
+  if(debuglevel > 0) {
+    std::cout << "INFO: Added id " << id.getIdCode() << " (Symbol "
+        << cati.vidm.getSymbol(id)->unparseToString()
+        << " (" << SgNodeHelper::symbolToString(cati.vidm.getSymbol(id)) << "))"
+        << std::endl;
+  }
+}
+
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclaration* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+  // Check if this is a declaration of a reference:
+  SgInitializedName* varDeclInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(sgn);
+  ROSE_ASSERT(varDeclInitName);
+  SgType* varDeclType = varDeclInitName->get_type();
+  ROSE_ASSERT(varDeclType);
+  if(SgReferenceType* varDeclReferenceType = isSgReferenceType(varDeclType)) {
+    // schroder3 (Jun 2016):
+    //  Declaration of a reference: A reference creates an alias of the variable that is referenced by the reference.
+    //  Currently we treat every variable in the init expression of the reference as if it's address was taken, because
+    //  we currently have no mapping between the reference and the variables in the init expression. It is therefore
+    //  currently not possible to add the variable to the address taken set only if the address of the reference is taken.
+    SgExpression* varDeclInitExpr = SgNodeHelper::getInitializerExpressionOfVariableDeclaration(sgn);
+    if(debuglevel > 0) {
+      std::cout << "INFO: Reference declaration of type " << varDeclReferenceType->unparseToString() << std::endl;
+      std::cout << "INFO: Type of init expression: " << varDeclInitExpr->get_type()->unparseToString() << std::endl;
+    }
+    varDeclInitExpr->accept(*this);
+  }
 }
 
 // only the rhs_op of SgDotExp is modified
@@ -199,6 +239,15 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
   operand->accept(*this);
 }
 
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertFunctionId(FunctionId id) {
+  ROSE_ASSERT(id.isValid());
+  if(debuglevel > 0) {
+    std::cout << "function symbol " << id.toString(cati.fidm) << std::endl;
+    std::cout << "count" << cati.functionAddressTakenInfo.second.count(id) << std::endl;
+  }
+  cati.functionAddressTakenInfo.second.insert(id);
+}
+
 // void f() { }
 // void (*f_ptr)() = &f;
 // & on SgFunctionRefExp is redundant as the functions
@@ -207,6 +256,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
+  insertFunctionId(cati.fidm.getFunctionIdFromFunctionRef(sgn));
   // raise the flag
   cati.variableAddressTakenInfo.first = true;
 }
@@ -214,6 +264,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunctionRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
+  insertFunctionId(cati.fidm.getFunctionIdFromFunctionRef(sgn));
   // raise the flag
   // functions can potentially modify anything
   cati.variableAddressTakenInfo.first = true;
@@ -222,6 +273,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunction
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateFunctionRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
+  insertFunctionId(cati.fidm.getFunctionIdFromFunctionRef(sgn));
   // raise the flag
   // functions can potentially modify anything
   cati.variableAddressTakenInfo.first = true;
@@ -229,6 +281,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateFuncti
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateMemberFunctionRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
+  insertFunctionId(cati.fidm.getFunctionIdFromFunctionRef(sgn));
   // raise the flag
   // functions can potentially modify anything
   cati.variableAddressTakenInfo.first = true;
@@ -240,10 +293,198 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateMember
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (Jun 2016):
+  // Summary: Get the type of every parameter. If the type is a reference type, then add all
+  //  variables used in the corresponding argument expression to the set of address taken variables.
+  //  Example:
+  //   int* getAddress(int& var) { return &var; }
+  //   int main() {
+  //     int i = 3;
+  //     int* ip = getAddress(i);
+  //   }
+  // In addition, if a member function is called, add the object on which it is called to the set
+  //  of address taken variables because the object's address is accessible inside the member
+  //  function via "this".
+
+  // Callee function type:
+  const SgFunctionType* calleeType = SgNodeHelper::getCalleeFunctionType(sgn);
+  if(debuglevel > 0) {
+    std::cout << "Callee type: " << calleeType->unparseToString() << std::endl;
+  }
+
+  // What kind of call do we have?
+  // (Static member functions are considered as normal functions.)
+  enum CalleeKind {
+    CK_Function = 1,
+    CK_FunctionPointer= 2,
+    CK_FunctionOrFunctionPointer = 3,
+    CK_MemberFunction = 4, // ., ->
+    CK_MemberFunctionPointer = 8, // .*, ->*
+    CK_MemberFunctionOrMemberFunctionPointer = 12
+  } calleeKind;
+
+  enum BaseExprKind {
+    BEK_None,
+    BEK_Pointer,
+    BEK_Object
+  } baseExprKind;
+
+  const SgNode* firstChildOfCallExp = sgn->get_traversalSuccessorByIndex(0);
+  if(isSgDotExp(firstChildOfCallExp)) {
+    // a.b
+    calleeKind = CK_MemberFunction;
+    baseExprKind = BEK_Object;
+  }
+  else if(isSgArrowExp(firstChildOfCallExp)) {
+    // a->b
+    calleeKind = CK_MemberFunction;
+    baseExprKind = BEK_Pointer;
+  }
+  else if(isSgArrowStarOp(firstChildOfCallExp)) {
+    // a->*b
+    calleeKind = CK_MemberFunctionPointer;
+    baseExprKind = BEK_Pointer;
+  }
+  else if(isSgDotStarOp(firstChildOfCallExp)) {
+    // a.*b
+    calleeKind = CK_MemberFunctionPointer;
+    baseExprKind = BEK_Object;
+  }
+  else {
+    // In the Rose AST every call of a member function should have an explicit object on which the member function is called and
+    // there therefore should be a dot, arrow, dot-star or arrow-star operator for each member function call.
+    ROSE_ASSERT(!isSgMemberFunctionType(calleeType));
+
+    calleeKind = CK_FunctionOrFunctionPointer;
+    baseExprKind = BEK_None;
+  }
+
+  // If this is a call of a member function, then add the object, on which the member function
+  //  is called, to the address taken set. This is necessary because inside a member function
+  //  the address of the object is accessible via "this".
+  if(calleeKind & CK_MemberFunctionOrMemberFunctionPointer) {
+    if(debuglevel > 0) {
+      std::cout << "Member function type: " << isSgExpression(firstChildOfCallExp)->get_type()->unparseToString() << std::endl;
+    }
+    // Get the object/ expression on which the member-function is called:
+    //  Only consider dot (a.b) and dot-star (a.*b) expressions. We can ignore arrow (a->b)
+    //  and arrow-star (a->*b) because they expect a pointer on the left hand side and they
+    //  dereference this pointer to get the real object on which the member function is called.
+    //  Therefore only variables from which the address was already taken in an other way (e.g. via
+    //  address-of operator) are affected.
+    if(baseExprKind == BEK_Object) {
+      SgExpression* memFuncCallBaseExpr = static_cast<const SgBinaryOp*>(firstChildOfCallExp)->get_lhs_operand();
+      // Add all variables that are used in the base expression to the address taken set:
+      memFuncCallBaseExpr->accept(*this);
+    }
+    else if(baseExprKind == BEK_Pointer) {
+      // Nothing to do as described above.
+    }
+    else {
+      std::cout << "ERROR: Invalid internal state. firstChildOfCallExp:" << firstChildOfCallExp->unparseToString() << std::endl;
+      exit(1);
+    }
+  }
+
+  // defines and typedefs used:
+  //  #define ROSE_STL_Container std::vector
+  //  typedef Rose_STL_Container<SgExpression*> SgExpressionPtrList;
+  //  typedef Rose_STL_Container<SgType*> SgTypePtrList;
+
+  // Vector of argument expressions of the current function call:
+  const SgExpressionPtrList& arguments = SgNodeHelper::getFunctionCallActualParameterList(sgn);
+
+  // Vector of pointers to the parameter types that are declared for this function:
+  SgTypePtrList parameterTypes;
+  // schroder3 (2016-06-28): TODO: SgFunctionCallExp::getAssociatedFunctionSymbol does not return correct symbol
+  //  in case of call of result of call ("get_func()()"). Therefore determineFunctionDefinition does not return
+  //  the correct definition. We will use the parameter types of the callee function type instead
+//  if(SgFunctionDefinition* functionDefinition = SgNodeHelper::determineFunctionDefinition(sgn)) {
+//    SgInitializedNamePtrList& parameterInitNames = SgNodeHelper::getFunctionDefinitionFormalParameterList(functionDefinition);
+//    for(SgInitializedNamePtrList::const_iterator paramInitNamesIter = parameterInitNames.begin();
+//        paramInitNamesIter != parameterInitNames.end();
+//      ++paramInitNamesIter
+//    ) {
+//      parameterTypes.push_back((*paramInitNamesIter)->get_type());
+//    }
+//  }
+//  else {
+//    std::cout << "INFO: no function definition found for call " << sgn->unparseToString()
+//            << ". Will use parameter types of callee type instead." << std::endl;
+    parameterTypes = calleeType->get_arguments();
+//  }
+
+  // Iterators:
+  SgExpressionPtrList::const_iterator argIter = arguments.begin();
+  SgTypePtrList::const_iterator paramTypeIter = parameterTypes.begin();
+  // Look at each argument:
+  while(argIter != arguments.end()) {
+    // Get the current argument;
+    /*const*/ SgExpression* argument = *argIter;
+    if(debuglevel > 0) {
+      std::cout << "argument: " << argument->unparseToString() << std::endl;
+    }
+    // Get the corresponding parameter type if existing:
+    SgType* parameterType = 0;
+    if(paramTypeIter != parameterTypes.end()) {
+      parameterType = *paramTypeIter;
+    }
+    else{
+      // More arguments than parameters: all following arguments are variadic
+
+      // We should not get here because we should have seen an ellipse type in the
+      //  previous iteration (which yields a break).
+      ROSE_ASSERT(false);
+
+      break;
+    }
+
+    if(!parameterType) {
+      std::cout << "ERROR: No type of parameter!" << std::endl;
+      exit(1);
+    }
+
+    // Output the type as string if in debug mode:
+    if(debuglevel > 0) {
+      std::cout << "type: " << parameterType->unparseToString() << std::endl;
+    }
+
+    // Check whether the type is an ellipse type
+    if(isSgTypeEllipse(parameterType)){
+      // The function is variadic. I think that passing by reference through variadic arguments
+      //  is not possible ==> nothing to do for this and following arguments ==> break
+
+      // Ellipsis should be the last "parameter":
+      ROSE_ASSERT(++paramTypeIter == parameterTypes.end());
+
+      break;
+    }
+
+    // Check whether the type is a reference type:
+    if(isSgReferenceType(parameterType)) {
+      // Add all variables that are used in the argument expression to the address taken set:
+      argument->accept(*this);
+    }
+
+    ++argIter;
+    ++paramTypeIter;
+  }
+
   // we can look at its defintion and process the return expression ?
   // function calls can modify anything
   // raise the flag more analysis required
   cati.variableAddressTakenInfo.first = true;
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+  // schroder3 (Jun 2016):
+  //  If we have a "this" expression then we are inside an object context. If this "this" is used for a call of
+  //  a member function then we should already have the object, to which "this" points, in our address taken
+  //  variables set, because a call of a member function from a non object context is not possible without
+  //  specifying an object.
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
@@ -271,14 +512,26 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
   // skipping all template declaration specific nodes as they dont have any symbols
   // we still traverse SgTemplateInstatiation*
   matchquery = \
-    "#SgTemplateClassDeclaration|"\
-    "#SgTemplateFunctionDeclaration|"\
-    "#SgTemplateMemberFunctionDeclaration|"\
-    "#SgTemplateVariableDeclaration|" \
-    "#SgTemplateClassDefinition|"\
-    "#SgTemplateFunctionDefinition|"\
-    "$HEAD=SgAddressOfOp($OP)";
-    
+    "#SgTemplateClassDeclaration|"
+    "#SgTemplateFunctionDeclaration|"
+    "#SgTemplateMemberFunctionDeclaration|"
+    "#SgTemplateVariableDeclaration|"
+    "#SgTemplateClassDefinition|"
+    "#SgTemplateFunctionDefinition|"
+    "$HEAD=SgAddressOfOp($OP)|"
+    // schroder3 (Jun 2016): Call by reference creates an alias of the argument
+    "$OP=SgFunctionCallExp|"
+    // schroder3 (Jun 2016): Creating a reference creates an alias of a variable
+    "$OP=SgVariableDeclaration";
+
+  // schroder3: TODO: There is also implicit address taking of functions (==> normalization)
+  //  (e.g. "void func() {} int main() { void (*fp)() = func; /*fp contains address of func without using address of operator */}")
+
+//  std::cout << std::endl << "Variable Id Mapping:" << std::endl;
+//  this->vidm.toStream(std::cout);
+//  std::cout << std::endl << "Function Id Mapping:" << std::endl;
+//  this->fidm.toStream(std::cout);
+
   MatchResult& matches = collectSgAddressOfOp(matchquery, root);
   for(MatchResult::iterator it = matches.begin(); it != matches.end(); ++it) {
     SgNode* matchedOperand = (*it)["$OP"];

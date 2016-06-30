@@ -71,6 +71,7 @@ class ComputeAddressTakenInfo
   public:
   OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati), debuglevel(0) { }
     void visit(SgVarRefExp*);
+    void visit(SgVariableDeclaration*);
     void visit(SgDotExp*);
     void visit(SgArrowExp*);
     void visit(SgPointerDerefExp*);
@@ -81,12 +82,16 @@ class ComputeAddressTakenInfo
     void visit(SgCommaOpExp* sgn);
     void visit(SgConditionalExp* sgn);
     void visit(SgCastExp* sgn);
+    // The following SgXXXFunctionRefExp types only have the
+    //  base class SgExpression in common
     void visit(SgFunctionRefExp* sgn);
     void visit(SgMemberFunctionRefExp* sgn);
     void visit(SgTemplateFunctionRefExp* sgn);
     void visit(SgTemplateMemberFunctionRefExp* sgn);
     void visit(SgFunctionCallExp* sgn);
+    void visit(SgThisExp* sgn);
     void visit(SgNode* sgn);
+    void insertFunctionId(FunctionId);
     void debugPrint(SgNode* sgn);
   };
 public:
