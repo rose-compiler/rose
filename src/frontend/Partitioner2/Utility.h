@@ -68,11 +68,11 @@ template<class Container, class Value, class Comparator>
 bool
 insertUnique(Container &container, const Value &item, Comparator cmp) {
     ASSERT_not_null(item);
-    ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
+    //ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
     typename Container::iterator lb = lowerBound(container, item, cmp);
     if (lb==container.end() || !equalUnique(*lb, item, cmp)) {
         container.insert(lb, item);
-        ASSERT_require(isSorted(container, cmp, true));
+        //ASSERT_require(isSorted(container, cmp, true));
         return true;
     }
     return false;
@@ -83,7 +83,7 @@ template<class Container, class Value, class Comparator>
 bool
 eraseUnique(Container &container, const Value &item, Comparator cmp) {
     ASSERT_not_null(item);
-    ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
+    //ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
     typename Container::iterator lb = lowerBound(container, item, cmp);
     if (lb!=container.end() && equalUnique(*lb, item, cmp)) {
         container.erase(lb);
@@ -98,7 +98,7 @@ bool
 existsUnique(const Container &container, const Value &item, Comparator cmp) {
     if (item==NULL)
         return false;
-    ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
+    //ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
     typename Container::const_iterator lb = lowerBound(container, item, cmp);
     if (lb==container.end() || cmp(*lb, item) || cmp(item, *lb))
         return false;
@@ -111,7 +111,7 @@ Sawyer::Optional<Value>
 getUnique(const Container &container, const Value &item, Comparator cmp) {
     if (item==NULL)
         return Sawyer::Nothing();
-    ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
+    //ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
     typename Container::const_iterator lb = lowerBound(container, item, cmp);
     if (lb==container.end() || cmp(*lb, item) || cmp(item, *lb))
         return Sawyer::Nothing();
