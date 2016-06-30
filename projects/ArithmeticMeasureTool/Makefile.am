@@ -38,7 +38,9 @@ TESTS = rose_jacobi-v3.out \
 C_Analysis_Only_TESTCODE = \
    jacobi.c \
    test-1d-1.c \
-   test1.c
+   test1.c \
+   bzip2.c \
+   switch.c
 
 # loop001.cpp hello.cpp
 # compilation error for some f files

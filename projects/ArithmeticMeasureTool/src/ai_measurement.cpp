@@ -1001,6 +1001,7 @@ namespace ArithemeticIntensityMeasurement
     // Skip compiler generated code
     if (isSgLocatedNode(n) && isSgLocatedNode(n)->get_file_info()->isCompilerGenerated() 
         && !isSgAssignInitializer(n)  // SgAssignInitializer misses file info. right now, workaround it.
+        && !isSgBasicBlock(n)  // switch-case statement: basic blocks are generated for case or default option statements
         && !isSgCastExp(n))  // compiler generated cast expressions
     {
       hasHandled = true;  
@@ -1045,13 +1046,40 @@ namespace ArithemeticIntensityMeasurement
         cout<<"Warning: encountering a function call "<< func_ref->get_symbol()->get_name()<<"(), assuming 0 FLOPS for now."  <<endl;
         hasHandled = true; 
       }
+      else if (SgConditionalExp * conditional_exp = isSgConditionalExp(n))
+      {
+        SgExpression*  cond_exp = conditional_exp->get_conditional_exp();
+        SgExpression*  true_exp = conditional_exp->get_true_exp();
+        SgExpression* false_exp = conditional_exp->get_false_exp();
+        
+        FPCounters* cond_counters = new FPCounters();
+        FPCounters* true_counters = new FPCounters();
+        FPCounters* false_counters= new FPCounters();
+        FPCounters* larger_counters=new FPCounters();
+
+        if (cond_exp)
+          *cond_counters = *(getFPCounters (cond_exp));
+        if (true_exp)
+          *true_counters = *(getFPCounters (true_exp));
+        if (false_exp)
+          *false_counters = *(getFPCounters (false_exp));
+        
+        // We estimate the upper bound of FLOPS for now
+        // TODO: using runtime profiling information to pick the right branch
+        if (true_counters->getTotalCount() > false_counters->getTotalCount())
+          larger_counters = true_counters; 
+        else
+          larger_counters = false_counters; 
+
+        returnAttribute = *cond_counters + *larger_counters;
+        hasHandled = true; 
+      }
       else if (isSgValueExp(n))
       {
 
         // accessing a value does not involving FLOP operations.
         hasHandled = true; 
       }
- 
       else if (isSgVarRefExp(n))
       {
 
@@ -1127,6 +1155,7 @@ namespace ArithemeticIntensityMeasurement
         returnAttribute = *cond_counters + *larger_counters;
         hasHandled = true; 
       }
+
       else if (SgBasicBlock* block = isSgBasicBlock(n))
       {
         SgStatementPtrList stmt_list = block->get_statements();
@@ -1134,8 +1163,43 @@ namespace ArithemeticIntensityMeasurement
         {
           SgStatement* stmt_in_block = stmt_list[i];
           ROSE_ASSERT (stmt_in_block != NULL);
+          SgCaseOptionStmt* case_option = isSgCaseOptionStmt (stmt_in_block);
+          SgDefaultOptionStmt * default_option = isSgDefaultOptionStmt (stmt_in_block);
+          FPCounters* fpcounters = getFPCounters (stmt_in_block);
+
+          // regular sequence of statement
+          if (case_option == NULL && default_option == NULL)
+          {
+            returnAttribute = returnAttribute + *fpcounters; 
+          }
+          else // either case option or default option statement, we only keep the max value so far for upper bound estimation
+            //TODO using profiling results to improve accuracy
+          {
+            if (fpcounters->getTotalCount() > returnAttribute.getTotalCount())
+              returnAttribute =  *fpcounters;
+          }  
+        }
+        hasHandled = true; 
+      }
+      else if (SgClassDefinition* block= isSgClassDefinition(n))
+      {
+        SgDeclarationStatementPtrList stmt_list = block->get_members();
+        for (size_t i =0; i< stmt_list.size(); i++)
+        {
+          SgStatement* stmt_in_block = stmt_list[i];
+          ROSE_ASSERT (stmt_in_block != NULL);
           FPCounters* fpcounters = getFPCounters (stmt_in_block);
           returnAttribute = returnAttribute + *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+      else if (SgClassDeclaration* decl_stmt = isSgClassDeclaration(n))
+      {
+        SgClassDefinition* body = decl_stmt->get_definition();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
         }
         hasHandled = true; 
       }
@@ -1161,6 +1225,66 @@ namespace ArithemeticIntensityMeasurement
         hasHandled = true; 
         // TODO: no multiplication of loop iteration count for now
       }
+      else if (SgDoWhileStmt * w_stmt = isSgDoWhileStmt(n))
+      {
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+        // TODO: no multiplication of loop iteration count for now
+      }
+      // go through all statements following until reaching break;
+       else if (SgCaseOptionStmt * w_stmt = isSgCaseOptionStmt(n))
+      {
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+       else if (SgDefaultOptionStmt * w_stmt = isSgDefaultOptionStmt(n))
+      {
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+ 
+       else if (SgSwitchStatement* w_stmt = isSgSwitchStatement(n))
+      {
+        // the body block should be in charge of select the max of case branch
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        SgStatement* selector = w_stmt->get_item_selector();
+        if (selector)
+        {
+          FPCounters* fpcounters = getFPCounters (selector);
+          returnAttribute = returnAttribute + *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+ 
+      else if ( isSgContinueStmt(n) // no OPs for continue;
+               ||isSgBreakStmt(n)
+               ||isSgLabelStatement(n)
+               ||isSgGotoStatement(n)
+               ||isSgNullStatement(n)
+               )
+      {
+        hasHandled = true; 
+      }
  
     } // end if statement
 
@@ -1177,7 +1301,9 @@ namespace ArithemeticIntensityMeasurement
       else
       {
         // ignore some known types of nodes
-        if (!isSgPragma(n) && !isSgGlobal(n) && !isSgSourceFile(n))
+        if (!isSgPragma(n) && 
+            !isSgGlobal(n) && 
+            !isSgSourceFile(n))
         {
           cerr<<"Error in OperationCountingTraversal::evaluateSynthesizedAttribute(): unhandled node with multiple children for "<< n->class_name()<<endl;
           if (SgLocatedNode* lnode = isSgLocatedNode(n))
