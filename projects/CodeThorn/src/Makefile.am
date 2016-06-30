@@ -39,6 +39,7 @@ libspray_la_SOURCES=\
  LVTransferFunctions.h \
  LanguageRestrictor.h \
  Miscellaneous2.h \
+ Normalization.h \
  NumberIntervalLattice.h \
  PASolver1.h \
  PointerAnalysisInterface.h \
@@ -71,6 +72,7 @@ libspray_la_SOURCES=\
  LVLattice.C \
  LVTransferFunctions.C \
  Miscellaneous2.C \
+ Normalization.C \
  NumberIntervalLattice.C \
  PASolver1.C \
  PointerAnalysisInterface.C \
