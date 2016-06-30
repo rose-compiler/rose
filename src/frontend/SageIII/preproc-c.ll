@@ -1423,7 +1423,7 @@ BEGIN NORMAL;
                 }
 
 <MACRO>\n       {   // End of macro
-                    macroString = StringUtility::fixLineTermination(macroString + yytext);
+                    macroString = rose::StringUtility::fixLineTermination(macroString + yytext);
                     preproc_line_num++; 
                     preproc_column_num=1; 
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
@@ -1436,7 +1436,7 @@ BEGIN NORMAL;
                 }
 
 <MACRO><<EOF>>  {   // End of macro
-                    macroString = StringUtility::fixLineTermination(macroString + yytext);
+                    macroString = rose::StringUtility::fixLineTermination(macroString + yytext);
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
                                                 preproc_start_line_num, preproc_start_column_num,
                                                 preproc_line_num-preproc_start_line_num);

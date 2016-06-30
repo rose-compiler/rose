@@ -37,6 +37,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
 
