@@ -149,7 +149,7 @@ namespace SgNodeHelper {
   SgSymbol* getSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
 
   //! returns the SgSymbol* of the variable in a function declaration
-  SgSymbol* getSymbolOfFunctionDeclaration(SgFunctionDeclaration* decl);
+  SgFunctionSymbol* getSymbolOfFunctionDeclaration(SgFunctionDeclaration* decl);
 
   //! returns the SgSymbol* of the variable in a SgVarRefExp
   SgSymbol* getSymbolOfVariable(SgVarRefExp* varRefExp);

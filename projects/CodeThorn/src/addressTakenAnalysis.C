@@ -53,9 +53,14 @@ MatchResult& SPRAY::ProcessQuery::operator()(std::string query, SgNode* root)
  ************* ComputeAddressTakenInfo  **********
  *************************************************/
 
-SPRAY::ComputeAddressTakenInfo::AddressTakenInfo SPRAY::ComputeAddressTakenInfo::getAddressTakenInfo()
+SPRAY::ComputeAddressTakenInfo::VariableAddressTakenInfo SPRAY::ComputeAddressTakenInfo::getVariableAddressTakenInfo()
 {
-  return addressTakenInfo;
+  return variableAddressTakenInfo;
+}
+
+SPRAY::ComputeAddressTakenInfo::FunctionAddressTakenInfo SPRAY::ComputeAddressTakenInfo::getFunctionAddressTakenInfo()
+{
+  return functionAddressTakenInfo;
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn)
@@ -75,7 +80,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn
   VariableId id = cati.vidm.variableId(sgn);
   ROSE_ASSERT(id.isValid());
   // insert the id into VariableIdSet
-  cati.addressTakenInfo.second.insert(id);
+  cati.variableAddressTakenInfo.second.insert(id);
 }
 
 // only the rhs_op of SgDotExp is modified
@@ -109,7 +114,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefEx
 {
  if(debuglevel > 0) debugPrint(sgn);
   // we raise a flag
-  cati.addressTakenInfo.first = true;
+  cati.variableAddressTakenInfo.first = true;
 }
 
 // For example &(A[B[C[..]]]) or &(A[x][x][x])
@@ -128,7 +133,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp*
     }
   else {
     // raise the flag as we dont know whose address is taken
-    cati.addressTakenInfo.first = true;
+    cati.variableAddressTakenInfo.first = true;
   }
 }
 
@@ -203,7 +208,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp
 {
   if(debuglevel > 0) debugPrint(sgn);
   // raise the flag
-  cati.addressTakenInfo.first = true;
+  cati.variableAddressTakenInfo.first = true;
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunctionRefExp* sgn)
@@ -211,7 +216,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunction
   if(debuglevel > 0) debugPrint(sgn);
   // raise the flag
   // functions can potentially modify anything
-  cati.addressTakenInfo.first = true;
+  cati.variableAddressTakenInfo.first = true;
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateFunctionRefExp* sgn)
@@ -219,14 +224,14 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateFuncti
   if(debuglevel > 0) debugPrint(sgn);
   // raise the flag
   // functions can potentially modify anything
-  cati.addressTakenInfo.first = true;
+  cati.variableAddressTakenInfo.first = true;
 }
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateMemberFunctionRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   // raise the flag
   // functions can potentially modify anything
-  cati.addressTakenInfo.first = true;
+  cati.variableAddressTakenInfo.first = true;
 }
 
 // A& foo() { return A(); }
@@ -238,7 +243,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
   // we can look at its defintion and process the return expression ?
   // function calls can modify anything
   // raise the flag more analysis required
-  cati.addressTakenInfo.first = true;
+  cati.variableAddressTakenInfo.first = true;
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
@@ -287,8 +292,10 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
 // pretty print
 void SPRAY::ComputeAddressTakenInfo::printAddressTakenInfo()
 {
-  std::cout << "addressTakenSet: [" << (addressTakenInfo.first? "true, " : "false, ")
-            << VariableIdSetPrettyPrint::str(addressTakenInfo.second, vidm) << "]\n";
+  std::cout << "addressTakenSet: [" << (variableAddressTakenInfo.first? "true, " : "false, ")
+            << VariableIdSetPrettyPrint::str(variableAddressTakenInfo.second, vidm) << "]\n";
+  std::cout << "functionAddressTakenSet: ["
+            << fidm.getFunctionIdSetAsString(functionAddressTakenInfo.second) << "]\n";
 }
 
 /*************************************************
@@ -392,7 +399,7 @@ VariableIdMapping& SPRAY::FlowInsensitivePointerInfo::getVariableIdMapping()
 VariableIdSet SPRAY::FlowInsensitivePointerInfo::getMemModByPointer()
 {
   VariableIdSet unionSet;
-  VariableIdSet addrTakenSet = (compAddrTakenInfo.getAddressTakenInfo()).second;
+  VariableIdSet addrTakenSet = (compAddrTakenInfo.getVariableAddressTakenInfo()).second;
   VariableIdSet arrayTypeSet = collTypeInfo.getArrayTypeSet();
   
   // std::set_union(addrTakenSet.begin(), addrTakenSet.end(),

@@ -46,6 +46,7 @@
 #include <cmath>
 #include "assert.h"
 
+#include "FunctionIdMapping.h"
 // ROSE analyses
 #include "VariableRenaming.h"
 
@@ -185,12 +186,25 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
   if(option_at_analysis) {
     cout<<"STATUS: running address taken analysis."<<endl;
+    cout<<"STATUS: creating ICFG."<<endl;
+    // TODO: compute ICFG without creating an analysis!
+    SPRAY::IntervalAnalysis* analyzer=new SPRAY::IntervalAnalysis();
+    analyzer->initialize(root);
+    cout << "STATUS: computing variable and function mappings."<<endl;
     // compute variableId mappings
     VariableIdMapping variableIdMapping;
     variableIdMapping.computeVariableSymbolMapping(root);
-    SPRAY::FIPointerAnalysis fipa(&variableIdMapping,root);
+    // Compute function id mappings:
+    FunctionIdMapping functionIdMapping;
+    //functionIdMapping.computeFunctionSymbolMapping(root);
+    functionIdMapping.computeFunctionSymbolMapping(*(analyzer->getFlow()), *(analyzer->getCFAnalyzer()->getLabeler()));
+
+    cout << "STATUS: computing address taken sets."<<endl;
+    SPRAY::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
     fipa.initialize();
     fipa.run();
+    cout << "STATUS: computed address taken sets:"<<endl;
+    fipa.getFIPointerInfo()->printInfoSets();
 #if 0
     VariableIdSet vidset=fipa.getModByPointer();
     cout<<"mod-set: "<<SPRAY::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
@@ -204,7 +218,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     intervalAnalyzer->initialize(root);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
-    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(),root);
+    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
     fipa->initialize();
     fipa->run();
     intervalAnalyzer->setPointerAnalysis(fipa);

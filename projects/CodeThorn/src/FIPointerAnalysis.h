@@ -4,19 +4,22 @@
 #include "sage3basic.h"
 #include "VariableIdMapping.h"
 #include "addressTakenAnalysis.h"
+#include "FunctionIdMapping.h"
 #include "PointerAnalysisInterface.h"
 
 namespace SPRAY {
 
   class FIPointerAnalysis : public PointerAnalysisInterface {
  public:
-  FIPointerAnalysis(VariableIdMapping*, SgProject*);
+  FIPointerAnalysis(VariableIdMapping*, FunctionIdMapping*, SgProject*);
   ~FIPointerAnalysis();
   void initialize();
   void run();
   VariableIdSet getModByPointer();
+  SPRAY::FlowInsensitivePointerInfo* getFIPointerInfo();
  private:
   VariableIdMapping* _variableIdMapping;
+  FunctionIdMapping* _functionIdMapping;
   SgProject* _astRoot;
   SPRAY::FlowInsensitivePointerInfo* _fipi;
   VariableIdSet _modVariableIds;
