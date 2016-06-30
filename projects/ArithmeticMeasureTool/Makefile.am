@@ -40,7 +40,9 @@ C_Analysis_Only_TESTCODE = \
    test-1d-1.c \
    test1.c \
    bzip2.c \
-   switch.c
+   switch.c \
+   gzip.c \
+   oggenc.c
 
 # loop001.cpp hello.cpp
 # compilation error for some f files
