@@ -6460,22 +6460,19 @@ void c_action_label(Token_t * lbl)
         // printf ("In c_action_common_block_object(): variableSymbol = %p \n",variableSymbol);
         if (variableSymbol != NULL)
         {
-            SgVarRefExp* variableReference = new SgVarRefExp(variableSymbol);
-            setSourcePosition(variableReference, id);
-
             if (hasShapeSpecList == true)
             {
                 // I think we need to build the array reference for this case.
                 // printf ("hasShapeSpecList == true, case not implemented \n");
 
-                printf("Sorry, hasShapeSpecList == true, case not implemented \n");
-                ROSE_ASSERT(false);
+                //printf("Sorry, hasShapeSpecList == true, case not implemented \n");
+                //ROSE_ASSERT(false);
 
                 constructedReference = NULL;
             }
             else
             {
-                constructedReference = variableReference;
+                constructedReference = new SgVarRefExp(variableSymbol);
             }
         }
         else
@@ -6498,55 +6495,57 @@ void c_action_label(Token_t * lbl)
             ROSE_ASSERT(variableSymbol != NULL);
 #endif
 
-#if 1
-            /*
-              This offers experimental support of implicit arrays in a COMMON block.
-             */
+
             if (hasShapeSpecList == true) {
-              ROSE_ASSERT(astExpressionStack.size() > 1 );
-              SgIntVal* arrayDimExp = isSgIntVal(astExpressionStack.front());
-              ROSE_ASSERT(arrayDimExp != NULL);
-              setSourcePosition(arrayDimExp);
-              astExpressionStack.pop_front();
-              int dim = arrayDimExp->get_value();
-              delete arrayDimExp;
+              //An array reference will be created below.
 
-              SgExprListExp*    lst = new SgExprListExp();
-
-              SgArrayType* atype = new SgArrayType(variableSymbol->get_type());
-              atype->set_rank(dim);
-              lst->set_parent(atype);
-              setSourcePosition(lst);
-              atype->set_dim_info(lst);
-              for(int i(0);i<dim;i++){
-                SgExpression* exp = astExpressionStack.front();
-                if(exp) {
-                  //setSourcePosition(exp); // don't set this
-                  lst->append_expression(exp);
-                  exp->set_parent(lst);
-                }
-                astExpressionStack.pop_front();
-              }
-              variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(variableName);
-              variableSymbol->get_declaration()->set_typeptr(atype);
-              SgVarRefExp* varRef = new SgVarRefExp(variableSymbol);
-              setSourcePosition(varRef);
-              /* expression_type is NULL to avoid warning messages */
-              constructedReference = new SgPntrArrRefExp(varRef,lst,NULL);
+              constructedReference = NULL;
             }
             else {
               constructedReference = new SgVarRefExp(variableSymbol);
             }
-#else
-            constructedReference = new SgVarRefExp(variableSymbol);
-#endif
-            setSourcePosition(constructedReference, id);
-
             // printf ("The variable has not previously been declared (case not implemented)\n");
             // ROSE_ASSERT(false);
         }
 
+        if (hasShapeSpecList == true) {
+          ROSE_ASSERT(constructedReference==NULL);
+          ROSE_ASSERT(astExpressionStack.size() > 1 );
+          SgIntVal* arrayDimExp = isSgIntVal(astExpressionStack.front());
+          ROSE_ASSERT(arrayDimExp != NULL);
+          setSourcePosition(arrayDimExp);
+          astExpressionStack.pop_front();
+          int dim = arrayDimExp->get_value();
+          delete arrayDimExp;
+
+          SgExprListExp*    lst = new SgExprListExp();
+
+          SgArrayType* atype = new SgArrayType(variableSymbol->get_type());
+          atype->set_rank(dim);
+          lst->set_parent(atype);
+          setSourcePosition(lst);
+          atype->set_dim_info(lst);
+          for(int i(0);i<dim;i++){
+            SgExpression* exp = astExpressionStack.front();
+            if(exp) {
+              //setSourcePosition(exp); // don't set this
+              lst->append_expression(exp);
+              exp->set_parent(lst);
+            }
+            astExpressionStack.pop_front();
+          }
+          variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(variableName);
+          variableSymbol->get_declaration()->set_typeptr(atype);
+          SgVarRefExp* varRef = new SgVarRefExp(variableSymbol);
+          setSourcePosition(varRef);
+          /* expression_type is NULL to avoid warning messages */
+          constructedReference = new SgPntrArrRefExp(varRef,lst,NULL);
+
+          setSourcePosition(constructedReference, id);
+        }
+
         ROSE_ASSERT(constructedReference != NULL);
+        setSourcePosition(constructedReference, id);
         astExpressionStack.push_front(constructedReference);
 
 #if 1
@@ -17171,9 +17170,9 @@ void c_action_label(Token_t * lbl)
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_block_data_stmt(): label = %p id = %p \n", label,
                 id);
-
-        ROSE_ASSERT(id != NULL);
-        ROSE_ASSERT(id->text != NULL);
+        // block data name could be empty
+        //ROSE_ASSERT(id != NULL);
+        //ROSE_ASSERT(id->text != NULL);
         // printf ("In c_action_block_data_stmt(): label = %p id->text = %s \n",label,id->text);
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
@@ -17181,7 +17180,10 @@ void c_action_label(Token_t * lbl)
         initialize_global_scope_if_required();
         // build_implicit_program_statement_if_required();
 
-        SgName name = id->text;
+        //SgName name = id->text;
+        SgName name;
+        if(id!=NULL) name = id->text;
+
         SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),
                 false);
 
