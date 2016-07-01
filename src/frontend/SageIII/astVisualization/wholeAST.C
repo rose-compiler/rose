@@ -1748,6 +1748,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
             // DQ (5/4/2013): This makes the graph nodes too large so use it only as required.
                labelWithSourceCode += string("\\n  settings = ") + modifierType->get_typeModifier().displayString() + "  ";
 #endif
+               SgTypeModifier tm = modifierType->get_typeModifier(); 
+               if (tm.isRestrict())
+                 labelWithSourceCode += string("\\n restrict  ") ;
 #if 0
                if (modifierType->get_frontend_type_reference() != NULL)
                   {
