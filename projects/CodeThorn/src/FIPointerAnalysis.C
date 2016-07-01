@@ -9,7 +9,8 @@ SPRAY::FIPointerAnalysis::~FIPointerAnalysis() {
 }
 void SPRAY::FIPointerAnalysis::run() {
   _fipi->collectInfo();
-  _modVariableIds=_fipi->getMemModByPointer();
+  _modVariableIds=_fipi->getAddressTakenVariables();
+  _modFunctionIds=_fipi->getAddressTakenFunctions();
 }
 
 void SPRAY::FIPointerAnalysis::initialize() {
@@ -19,7 +20,15 @@ void SPRAY::FIPointerAnalysis::initialize() {
 }
 
 SPRAY::VariableIdSet SPRAY::FIPointerAnalysis::getModByPointer() {
+  return getAddressTakenVariables();
+}
+
+SPRAY::VariableIdSet SPRAY::FIPointerAnalysis::getAddressTakenVariables() {
   return _modVariableIds;
+}
+
+SPRAY::FunctionIdSet SPRAY::FIPointerAnalysis::getAddressTakenFunctions() {
+  return _modFunctionIds;
 }
 
 SPRAY::FlowInsensitivePointerInfo* SPRAY::FIPointerAnalysis::getFIPointerInfo() {

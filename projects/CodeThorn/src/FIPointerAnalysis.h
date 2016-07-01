@@ -15,7 +15,11 @@ namespace SPRAY {
   ~FIPointerAnalysis();
   void initialize();
   void run();
+  // schroder3: TODO: replace calls of getModByPointer by calls
+  //  of getAddressTakenVariables
   VariableIdSet getModByPointer();
+  VariableIdSet getAddressTakenVariables();
+  FunctionIdSet getAddressTakenFunctions();
   SPRAY::FlowInsensitivePointerInfo* getFIPointerInfo();
  private:
   VariableIdMapping* _variableIdMapping;
@@ -23,6 +27,7 @@ namespace SPRAY {
   SgProject* _astRoot;
   SPRAY::FlowInsensitivePointerInfo* _fipi;
   VariableIdSet _modVariableIds;
+  FunctionIdSet _modFunctionIds;
 };
 
 } // end of namespace SPRAY

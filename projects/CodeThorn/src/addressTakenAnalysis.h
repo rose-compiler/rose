@@ -168,7 +168,11 @@ public:
     }
   void collectInfo();
   void printInfoSets();
+  // schroder3: TODO: replace calls of getMemModByPointer by calls
+  //  of getAddressTakenVariables
   VariableIdSet getMemModByPointer();
+  VariableIdSet getAddressTakenVariables();
+  FunctionIdSet getAddressTakenFunctions();
   VariableIdMapping& getVariableIdMapping();
 };
 

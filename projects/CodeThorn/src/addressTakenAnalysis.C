@@ -651,6 +651,10 @@ VariableIdMapping& SPRAY::FlowInsensitivePointerInfo::getVariableIdMapping()
 
 VariableIdSet SPRAY::FlowInsensitivePointerInfo::getMemModByPointer()
 {
+  return getAddressTakenVariables();
+}
+
+VariableIdSet SPRAY::FlowInsensitivePointerInfo::getAddressTakenVariables() {
   VariableIdSet unionSet;
   VariableIdSet addrTakenSet = (compAddrTakenInfo.getVariableAddressTakenInfo()).second;
   VariableIdSet arrayTypeSet = collTypeInfo.getArrayTypeSet();
@@ -664,4 +668,8 @@ VariableIdSet SPRAY::FlowInsensitivePointerInfo::getMemModByPointer()
   SPRAY::set_union(addrTakenSet, arrayTypeSet, unionSet);
 
   return unionSet;
+}
+
+FunctionIdSet SPRAY::FlowInsensitivePointerInfo::getAddressTakenFunctions() {
+  return compAddrTakenInfo.getFunctionAddressTakenInfo().second;
 }
