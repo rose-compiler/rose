@@ -17478,6 +17478,8 @@ void c_action_label(Token_t * lbl)
 
         // DQ (10/2/2008): Pop the interface stack
         ROSE_ASSERT(astInterfaceStack.empty() == false);
+        SgInterfaceStatement* iface = astInterfaceStack.front();
+        resetEndingSourcePosition(iface,kw1);
         astInterfaceStack.pop_front();
 
 #if 0

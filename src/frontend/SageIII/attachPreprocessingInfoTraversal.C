@@ -996,7 +996,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
 
      ROSE_ASSERT(n != NULL);
-  // printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+#if DEBUG_ATTACH_PREPROCESSING_INFO
+     printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
   // SgTemplateFunctionDeclaration* templateDeclaration = isSgTemplateFunctionDeclaration(n);
      SgDeclarationStatement* templateDeclaration              = isSgTemplateFunctionDeclaration(n);
      SgDeclarationStatement* templateInstantiationDeclaration = isSgTemplateInstantiationFunctionDecl(n);
@@ -1270,6 +1272,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
              } // end if current list of attribute is not empty
         } // end if statement or init name
 
+       SgInterfaceBody * i_body = isSgInterfaceBody (n);
+       if(i_body){
+         traverse(i_body->get_functionDeclaration(), inheritedAttribute);
+       }
      return inheritedAttribute;
    }
 
@@ -1302,7 +1308,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
   // DQ (8/6/2012): Allow those associated with the declaration and not inside of the template declaration.
      ROSE_ASSERT(n != NULL);
-  // printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+#if DEBUG_ATTACH_PREPROCESSING_INFO
+     printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
      SgDeclarationStatement* templateDeclaration = isSgTemplateFunctionDeclaration(n);
 
      if (templateDeclaration == NULL) templateDeclaration = isSgTemplateMemberFunctionDeclaration(n);
@@ -1908,6 +1916,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          // DQ (3/11/2012): Added break statement to prevent fall through, I think this fixes a bug.
                             break;
                           }
+
+                 // HT (7/2/2016): Added case.
+                    case V_SgInterfaceStatement:
+                    case V_SgInterfaceBody:
+                    case V_SgModuleStatement:
+                    case V_SgFunctionParameterList:
 
                  // DQ (5/13/2012): Added case.
                     case V_SgTemplateClassDefinition:

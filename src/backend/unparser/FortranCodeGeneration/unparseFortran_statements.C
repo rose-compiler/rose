@@ -1907,6 +1907,8 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
              }
         }
 #endif
+     // output comments an directives inside an Interface block
+     unparseAttachedPreprocessingInfo(interfaceStatement, info, PreprocessingInfo::inside);
 
      unparseStatementNumbersSupport(interfaceStatement->get_end_numeric_label(),info);
 
