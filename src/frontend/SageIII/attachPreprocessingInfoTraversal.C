@@ -251,6 +251,15 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // int currentFileId = locatedNode->get_startOfConstruct()->get_file_id();
      Sg_File_Info* locatedFileInfo = locatedNode->get_file_info();
 
+     // SgInitializedName may have the Sg_File_Info of its variable declaration.
+     // So we need to check if comments should be added to this SgInializedName object.
+     if(isSgInitializedName(locatedNode) != NULL && locatedNode->get_parent() != NULL){
+       Sg_File_Info* parentEoC = locatedNode->get_parent()->get_endOfConstruct();
+       if(parentEoC !=NULL && lineNumber >= parentEoC->get_physical_line())
+         // don't add any comments this time. may be checked again later.
+         return ;
+     }
+
 #if 0
      printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): locatedNode = %p = %s locatedFileInfo = %p \n",locatedNode,locatedNode->class_name().c_str(),locatedFileInfo);
      printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): sourceFile->get_requires_C_preprocessor() = %s \n",sourceFile->get_requires_C_preprocessor() ? "true" : "false");
