@@ -5604,7 +5604,7 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
      ROSE_ASSERT(astScopeStack.front()->get_parent() != NULL);
      SgWhereStatement* whereStatement = isSgWhereStatement(astScopeStack.front()->get_parent());
      SgIfStmt* ifStatement = isSgIfStmt(astScopeStack.front()->get_parent());
-     if (whereStatement != NULL || ifStatement != NULL)
+     if (whereStatement != NULL || ifStatement != NULL || isSgForAllStatement(astScopeStack.front()->get_parent()))
         {
        // If in a where statement produced with R 619:section-subscript-list__begin then the 
        // condition is on the stack, else if it was produced with R744:where-construct-stmt 

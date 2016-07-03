@@ -10598,6 +10598,14 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(forAllHeader != NULL);
         astNodeStack.pop_front();
 
+        // HT (6/7/2016): Check if a mask condition exists
+        if(astExpressionStack.empty() == false){
+          // mask condition exists.
+          forAllHeader->append_expression(astExpressionStack.front());
+          astExpressionStack.pop_front();
+          ROSE_ASSERT(astExpressionStack.empty() == true);
+        }
+
         // DQ (10/10/2010): Test ending position
         ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
 
