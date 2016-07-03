@@ -7333,7 +7333,8 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #endif
 
   // DQ (1/26/2013): Moved to be located after the debugging information.
-     if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
+  // HT (6/7/2016): Add isSgComplexVal because unparseComplexVal() prints parentheses.
+     if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) || isSgComplexVal(expr))
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
           printf ("In requiresParentheses(): Case 1: Output false \n");
