@@ -11386,6 +11386,7 @@ void c_action_label(Token_t * lbl)
             // SgExpression* keyExpression = getTopOfExpressionStack();
             // astExpressionStack.pop_front();
             // caseOrDefaultStatement = new SgCaseOptionStmt(keyExpression,body);
+#if 0
             SgExprListExp* exprListExp = new SgExprListExp();
             ROSE_ASSERT(exprListExp != NULL);
             setSourcePosition(exprListExp);
@@ -11394,7 +11395,11 @@ void c_action_label(Token_t * lbl)
                 exprListExp->prepend_expression(astExpressionStack.front());
                 astExpressionStack.pop_front();
             }
-
+#else
+            SgExprListExp* exprListExp = isSgExprListExp(astExpressionStack.front());
+            ROSE_ASSERT(exprListExp != NULL);
+            astExpressionStack.pop_front();
+#endif
             caseOrDefaultStatement = new SgCaseOptionStmt(exprListExp, body);
 
             // A valid id will be a "case construct name"
@@ -11515,6 +11520,29 @@ void c_action_label(Token_t * lbl)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_case_value_range() \n");
+
+        ROSE_ASSERT(astExpressionStack.empty() == false);
+        SgExpression* rhs = astExpressionStack.front();
+        /*
+          in the case of CASE(:N),  N is stacked.
+        */
+        if(isSgExprListExp(rhs)==NULL){
+          astExpressionStack.pop_front();
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExprListExp* elst = isSgExprListExp(astExpressionStack.front());
+          ROSE_ASSERT(elst != NULL);
+
+          SgExpression* lhs  = new SgNullExpression();
+          SgIntVal* step = new SgIntVal(1,"1");
+          setSourcePosition(lhs);
+          setSourcePosition(step);
+          SgSubscriptExpression* op = new SgSubscriptExpression(lhs,rhs,step);
+          setSourcePosition(op);
+          lhs->set_parent(op);
+          rhs->set_parent(op);
+          step->set_parent(op);
+          elst->append_expression(op);
+        }
     }
 
     /** R814 list
@@ -11527,11 +11555,20 @@ void c_action_label(Token_t * lbl)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_case_value_range_list__begin() \n");
+
+        ROSE_ASSERT(astExpressionStack.empty() == true);
+        SgExprListExp* exprListExp = new SgExprListExp();
+        ROSE_ASSERT(exprListExp != NULL);
+        setSourcePosition(exprListExp);
+        astExpressionStack.push_front(exprListExp);
     }
     void c_action_case_value_range_list(int count)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_case_value_range_list(): count = %d \n", count);
+
+        ROSE_ASSERT(astExpressionStack.empty() == false);
+        ROSE_ASSERT(isSgExprListExp(astExpressionStack.front())!=NULL);
     }
 
     /**
@@ -11543,6 +11580,38 @@ void c_action_label(Token_t * lbl)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_case_value_range_suffix() \n");
+
+        SgExpression* exp = astExpressionStack.front();
+        vector<SgExpression*> lst;
+        while(isSgExprListExp(exp) == NULL){
+          lst.push_back(exp);
+          astExpressionStack.pop_front();
+          exp = astExpressionStack.front();
+        }
+        SgExprListExp* elst = isSgExprListExp(exp);
+        ROSE_ASSERT(elst != NULL);
+
+        SgExpression* newitem = NULL;
+        switch(lst.size()){
+        case 1: /* scalar: CASE(N) */
+          newitem = lst[0];
+          break;
+        case 2: /* range: CASE(N:M) */
+          {
+            SgIntVal* step = new SgIntVal(1,"1");
+            SgSubscriptExpression* op = new SgSubscriptExpression(lst[1],lst[0],step);
+            lst[0]->set_parent(op);
+            lst[1]->set_parent(op);
+            step->set_parent(op);
+            setSourcePosition(op);
+            setSourcePosition(step);
+            newitem = op;
+          }
+          break;
+        default:
+          ROSE_ASSERT(false);
+        }
+        elst->append_expression(newitem);
     }
 
     /**
