@@ -888,6 +888,15 @@ void c_action_label(Token_t * lbl)
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_signed_int_literal_constant(): sign = %p = %s \n",
                 sign, (sign != NULL) ? sign->text : "NULL");
+
+        SgIntVal* intv = isSgIntVal(astExpressionStack.front());
+        ROSE_ASSERT(intv!=NULL);
+        if(sign != NULL){
+          if(intv->get_value() >= 0 && sign->text[0] == '-'){
+            intv->set_value(-intv->get_value());
+            intv->set_valueString("-"+intv->get_valueString());
+          }
+        }
     }
 
     /** R406
@@ -994,7 +1003,7 @@ void c_action_label(Token_t * lbl)
         outputState("At TOP of R416 c_action_signed_real_literal_constant()");
 #endif
 
-        if (sign == NULL)
+        if (sign != NULL)
         {
             // This is a bug in OFP (I think) See test2007_144.f90.
             // There should be a valid token for the "-" if it was present.
@@ -1008,19 +1017,20 @@ void c_action_label(Token_t * lbl)
                 case V_SgFloatVal:
                 {
                     SgFloatVal* floatValue = isSgFloatVal(valueExpression);
-
+                    if(floatValue->get_value() >= 0 && sign->text[0] == '-'){
                     // DQ (1/20/2008): This bug in OFP is now fixed, I think, nope not yet!
                     // Flip the sign on the value stored internally.
-                    // floatValue->set_value( - floatValue->get_value() );
-                    floatValue->set_value(floatValue->get_value());
+                    floatValue->set_value( - floatValue->get_value() );
+                    //floatValue->set_value(floatValue->get_value());
 
                     // Change the sign on the original string as well.
                     string valueString = floatValue->get_valueString();
 
                     // DQ (1/20/2008): This bug in OFP is now fixed, I think
-                    // if (valueString.empty() == false)
-                    //      floatValue->set_valueString( "-" + valueString );
+                    if (valueString.empty() == false)
+                      floatValue->set_valueString( "-" + valueString );
                     ROSE_ASSERT(valueString.empty() == false);
+                    }
                     break;
                 }
 
