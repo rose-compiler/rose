@@ -40,7 +40,7 @@ class GenericIntervalLattice {
     t._high=right;
     return t;
   }
-  bool isTop() {
+  bool isTop() const {
     return isLowInf() && isHighInf();
   }
   void setTop() {
@@ -49,30 +49,30 @@ class GenericIntervalLattice {
     _low=-1;
     _high=+1;
   }
-  bool includesZero() {
+  bool includesZero() const {
     GenericIntervalLattice zero(0);
     return isSubIntervalOf(zero,*this);
   }
   // definitely represents a value equal to 0
-  bool isFalse() {
+  bool isFalse() const {
     GenericIntervalLattice zero(0);
     BoolLatticeType bool3=isEqual(zero,*this);
     return bool3.isTrue();
   }
   // definitely represents a value not equal to 0
-  bool isTrue() {
+  bool isTrue() const {
     GenericIntervalLattice zero(0);
     BoolLatticeType bool3=isEqual(zero,*this);
     return bool3.isFalse();
   }
 
-  bool isBot() {
+  bool isBot() const {
     return isEmpty();
   }
   void setBot() {
     setEmpty();
   }
-  bool isEmpty() {
+  bool isEmpty() const {
     bool empty=!isLowInf()&&!isHighInf()&&_low>_high;
     if(empty) {
       assert(_low==+1 && _high==-1);
@@ -86,7 +86,7 @@ class GenericIntervalLattice {
     _low=+1;
     _high=-1;
   }
-  bool isInfLength() {
+  bool isInfLength() const {
     return isLowInf()||isHighInf();
   }
   Type length() {
@@ -94,17 +94,17 @@ class GenericIntervalLattice {
     return _high-_low;
   }
 
-  bool isConst() {
+  bool isConst() const {
     return !isLowInf()&&!isHighInf()&&_low==_high;
   }
   Type getConst() {
     assert(isConst());
     return _low;
   }
-  bool isLowInf() {
+  bool isLowInf() const {
     return _isLowInf;
   }
-  bool isHighInf() {
+  bool isHighInf() const {
     return _isHighInf;
   }
   void setLow(Type val) {
@@ -206,6 +206,32 @@ class GenericIntervalLattice {
     return l3;
   }
 
+  // schroder3 (2016-07-05): Checks for division by zero and adjusts the divisor
+  static bool checkForDivisionByZero(const GenericIntervalLattice& dividend, GenericIntervalLattice& divisor) {
+    if(isSubIntervalOf(GenericIntervalLattice(static_cast<Type>(0))/*[0, 0]*/, divisor)) {
+      // Other interval contains 0 and this is therefore a possible division by zero.
+      std::cout << "WARNING: division by interval that is containing zero (dividend: " << dividend.toString() << ", divisor: " << divisor.toString() << ")." << std::endl;
+      // Adjust interval limits if they are zero to avoid division-by-zero error while
+      //  computing the new interval limits:
+      if(divisor._low == 0 && divisor._high == 0) {
+        // We know that the variable always has the value zero and we divide by it. This will
+        // always yield an error and the following code is never executed.
+        std::cout << "WARNING: found unreachable code behind division by zero." << std::endl;
+        divisor.setBot();
+      }
+      else if(divisor._low == 0) {
+        // Zero is no longer a valid interval value after the division:
+        divisor._low += 1;
+      }
+      else if(divisor._high == 0) {
+        // Zero is no longer a valid interval value after the division:
+        divisor._high -= 1;
+      }
+      return true;
+    }
+    return false;
+  }
+
   void meet(GenericIntervalLattice other) {
     // 1. handle lower bounds
     if(isLowInf() && other.isLowInf()) {
@@ -273,7 +299,7 @@ class GenericIntervalLattice {
     }
   }
 
-  std::string toString() {
+  std::string toString() const {
     std::stringstream ss;
     if(isTop()) {
       ss<<"top";
@@ -285,12 +311,12 @@ class GenericIntervalLattice {
     if(isLowInf())
       ss<<"inf";
     else
-      ss<<_low;
+      ss<<_low.toString();
     ss<<",";
     if(isHighInf())
       ss<<"inf";
     else
-      ss<<_high;
+      ss<<_high.toString();
     return "["+ss.str()+"]";
   }
 
@@ -431,6 +457,9 @@ class GenericIntervalLattice {
   // TODO: not finished for top/bot
   // [a,b]/[c,d]=[min(a/c,a/d,b/c,b/d),max(a/c,a/d,b/c,b/d)]
   void arithDiv(GenericIntervalLattice other) {
+    // schroder3 (2016-07-05): TODO: make "other" a reference.
+    checkForDivisionByZero(*this, other);
+
     if(binaryOperationOnBot(other)) {
       return;
     } else if(!isLowInf() 
@@ -442,14 +471,18 @@ class GenericIntervalLattice {
       Type n3=other._low;
       Type n4=other._high;
       if(n3==0) {
+        // schroder3 (2016-07-05): should be unreachable because of checkForDivisionByZero(...):
+        ROSE_ASSERT(false && &_low /* to make ROSE_ASSERT dependent of template parameter (necessary in case of Sawyer assert) */);
         if(n4!=0) {
           std::cout<<"INFO: division by zero interval adjustment."<<std::endl;
           n3+=1;
         } else {
-          other.setBot();
+          other.setBot(); // schroder3 (2016-07-05): TODO: this does not have any effect because
+                          //  "other" is a local variable that is not used behind this point.
           std::cout<<"INFO: division by zero interval (lengh=1). Continue with bot."<<std::endl;
         }
       }
+
       Type nmin=std::min(n1/n3,std::min(n1/n4,std::min(n2/n3,n2/n4)));
       Type nmax=std::max(n1/n3,std::max(n1/n4,std::max(n2/n3,n2/n4)));
       setLow(nmin);
@@ -464,6 +497,9 @@ class GenericIntervalLattice {
   // TODO: not finished for top/bot
   // [a,b]%[c,d]=[min(a%c,a%d,b%c,b%d),max(a%c,a%d,b%c,b%d)]
   void arithMod(GenericIntervalLattice other) {
+    // schroder3 (2016-07-05): TODO: make "other" a reference.
+    checkForDivisionByZero(*this, other);
+
     if(binaryOperationOnBot(other)) {
       return;
     } else if(!isLowInf() 
