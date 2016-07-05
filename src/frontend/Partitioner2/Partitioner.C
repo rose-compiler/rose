@@ -1118,11 +1118,11 @@ Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
         }
     }
 
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
     cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::AttachedBasicBlock(this, startVa, bblock));
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
 }
@@ -1144,11 +1144,11 @@ Partitioner::bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &bblock) 
         }
     }
 
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
     cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::DetachedBasicBlock(this, startVa, bblock));
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
 }

@@ -15,6 +15,8 @@ namespace Partitioner2 {
 
 bool
 AddressUser::operator<(const AddressUser &other) const {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || other.isConsistent());
     if (insn_!=NULL && other.insn_!=NULL) {
         ASSERT_require((insn_!=other.insn_) ^ (insn_->get_address()==other.insn_->get_address()));
         ASSERT_require(insn_!=other.insn_ || bblock_==NULL || other.bblock_==NULL || bblock_==other.bblock_);
@@ -45,33 +47,54 @@ AddressUser::print(std::ostream &out) const {
     }
 }
 
+bool
+AddressUser::isConsistent() const {
+    const char *error = NULL;
+    if (insn_) {
+        if (bblocks_.empty()) {
+            error = "insn owner must have at least one bblock owner";
+        } else if (!isSorted(bblocks_, sortBasicBlocksByAddress, true)) {
+            error = "bblock are not sorted by address or do not have unique addresses";
+        } else if (odblock_.isValid()) {
+            error = "address user cannot be a instruction and data block at the same time";
+        }
+    } else if (odblock_.isValid()) {
+        if (!bblocks_.empty())
+            error = "bblocks should not  be present for data block users";
+    } else {
+        error = "user must be either an instruction or a data block";
+    }
+    ASSERT_require2(!error, error);
+    return !error;
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      AddressUsers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if 0 // [Robb P Matzke 2016-06-30]
 BasicBlock::Ptr
 AddressUsers::instructionExists(SgAsmInstruction *insn) const {
     if (!insn)
         return BasicBlock::Ptr();
     AddressUser needle(insn, BasicBlock::Ptr());      // basic block is not used for binary search
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
     if (lb==users_.end() || lb->insn()!=insn)
         return BasicBlock::Ptr();
     ASSERT_not_null(lb->basicBlock());
     return lb->basicBlock();
 }
+#endif
 
 Sawyer::Optional<OwnedDataBlock>
 AddressUsers::dataBlockExists(const DataBlock::Ptr &dblock) const {
     if (dblock==NULL)
         return Sawyer::Nothing();
     AddressUser needle = AddressUser(OwnedDataBlock(dblock));
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
     if (lb==users_.end() || lb->dataBlock()!=dblock)
         return Sawyer::Nothing();
@@ -105,25 +128,18 @@ void
 AddressUsers::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(insn);
     ASSERT_not_null(bblock);
-    ASSERT_forbid(instructionExists(insn));
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     AddressUser user(insn, bblock);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
     ASSERT_require2(lb==users_.end() || lb->insn()!=user.insn(), "instruction already exists in the list");
     users_.insert(lb, user);
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
 }
 
 void
 AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
     ASSERT_require(odb.isValid());
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     AddressUser user(odb);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
     if (lb==users_.end() || lb->dataBlock()!=odb.dataBlock()) {
@@ -136,40 +152,30 @@ AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
         BOOST_FOREACH (const BasicBlock::Ptr &bblock, odb.owningBasicBlocks())
             lb->dataBlockOwnership().insertOwner(bblock);
     }
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
 }
 
 void
 AddressUsers::eraseInstruction(SgAsmInstruction *insn) {
     if (insn!=NULL) {
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-        ASSERT_require(isConsistent());
-#endif
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
         AddressUser needle(insn, BasicBlock::Ptr());
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
         if (lb!=users_.end() && lb->insn()==insn)
             users_.erase(lb);
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-        ASSERT_require(isConsistent());
-#endif
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     }
 }
 
 void
 AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
     if (dblock!=NULL) {
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-        ASSERT_require(isConsistent());
-#endif
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
         AddressUser needle = AddressUser(OwnedDataBlock(dblock));
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
         if (lb!=users_.end() && lb->dataBlock()==dblock)
             users_.erase(lb);
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-        ASSERT_require(isConsistent());
-#endif
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     }
 }
 
@@ -209,6 +215,8 @@ AddressUsers::dataBlocks() const {
 
 AddressUsers
 AddressUsers::intersection(const AddressUsers &other) const {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || other.isConsistent());
     AddressUsers retval;
     size_t i=0, j=0;
     while (i<size() && j<other.size()) {
@@ -224,14 +232,14 @@ AddressUsers::intersection(const AddressUsers &other) const {
             ++j;
         }
     }
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(retval.isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || retval.isConsistent());
     return retval;
 }
 
 AddressUsers
 AddressUsers::union_(const AddressUsers &other) const {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || other.isConsistent());
     AddressUsers retval;
     size_t i=0, j=0;
     while (i<size() && j<other.size()) {
@@ -249,9 +257,7 @@ AddressUsers::union_(const AddressUsers &other) const {
         retval.users_.push_back(users_[i++]);
     while (j<other.size())
         retval.users_.push_back(other.users_[j++]);
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(retval.isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || retval.isConsistent());
     return retval;
 }
 
@@ -266,9 +272,7 @@ AddressUsers::insert(const AddressUsers &other) {
                 users_.insert(lb, user);
         }
     }
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
 }
 
 bool

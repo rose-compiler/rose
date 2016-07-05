@@ -36,6 +36,13 @@ namespace Partitioner2 {
 void
 Engine::init() {
     rose::initialize(NULL);
+#if ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
+    static bool emitted = false;
+    if (!emitted) {
+        emitted = true;
+        mlog[WARN] <<"ROSE_PARTITIONER_EXPENSIVE_CHECKS is enabled\n";
+    }
+#endif
 }
 
 void
