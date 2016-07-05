@@ -77,7 +77,17 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         //variableIdMapping->toStream(cout);
         VariableId varId=variableIdMapping->variableId(lhsVar);
         NumberIntervalLattice rhsResult=evaluate(rhs);
-        ips->setVariable(varId,rhsResult);
+        if(variableIdMapping->hasReferenceType(varId)) {
+          // schroder3 (2016-07-05):
+          //  We change a reference and we do not know which variable the reference refers to.
+          //  ==> Set all variables from which the address was taken (this includes variables from which
+          //  an alias/reference was created) to top:
+          VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
+          ips->topifyVariableSet(varIdSet);
+        }
+        else {
+          ips->setVariable(varId,rhsResult);
+        }
         return rhsResult;
       } else {
         //        if(_showWarnings)
@@ -113,24 +123,31 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(node));
       if(varRefExp) {
         VariableId varId=variableIdMapping->variableId(varRefExp);
-        if(SgNodeHelper::isPrefixIncDecOp(node)) {
-          IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
-          NumberIntervalLattice res=domain->arithAdd(NumberIntervalLattice(Number(1)),evaluate(SgNodeHelper::getFirstChild(node)));
-          ips->setVariable(varId,res);
-          return res;
+        IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
+        NumberIntervalLattice res=domain->arithAdd(NumberIntervalLattice(Number(1)),evaluate(SgNodeHelper::getFirstChild(node)));
+        if(variableIdMapping->hasReferenceType(varId)) {
+          // schroder3 (2016-07-05):
+          //  We change a reference and we do not know which variable the reference refers to.
+          //  ==> Set all variables from which the address was taken (this includes variables from which
+          //  an alias/reference was created) to top:
+          VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
+          ips->topifyVariableSet(varIdSet);
         }
-        if(SgNodeHelper::isPostfixIncDecOp(node)) {
-          IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
-          NumberIntervalLattice res=domain->arithAdd(NumberIntervalLattice(Number(1)),evaluate(SgNodeHelper::getFirstChild(node)));
-          if(isExprRootNode(node)) {
+        else {
+          if(SgNodeHelper::isPrefixIncDecOp(node)) {
             ips->setVariable(varId,res);
-            return res;
-          } else {
-            SgNode* exprRootNode=findExprRootNode(node);
-            cerr<<"Error: CppExprEvaluator: post-fix operator ++ not supported in sub-expressions yet: expression: "<<"\""<<(exprRootNode?exprRootNode->unparseToString():0)<<"\""<<endl;
-            exit(1);
+          }
+          if(SgNodeHelper::isPostfixIncDecOp(node)) {
+            if(isExprRootNode(node)) {
+              ips->setVariable(varId,res);
+            } else {
+              SgNode* exprRootNode=findExprRootNode(node);
+              cerr<<"Error: CppExprEvaluator: post-fix operator ++ not supported in sub-expressions yet: expression: "<<"\""<<(exprRootNode?exprRootNode->unparseToString():0)<<"\""<<endl;
+              exit(1);
+            }
           }
         }
+        return res;
       } else {
         cerr<<"Error: CppExprEvaluator: ++/-- operation on lhs-expression not supported yet."<<endl;
         exit(1);
