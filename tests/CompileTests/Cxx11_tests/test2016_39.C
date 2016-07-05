@@ -14,5 +14,11 @@ int main()
   forallN<seq_exec>(is, [=] (int i) {
       a[i] = i + 0.1;
       });
+
+  double sum =0.0; 
+  forallN<seq_exec>(is, [=,&sum] (int i) {
+      sum = a[i] + i + 0.1;
+      });
+
   return 0;
 }
