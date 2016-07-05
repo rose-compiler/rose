@@ -214,6 +214,16 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
      ROSE_ASSERT(lambdaExp != NULL);
 
+     // Liao, 7/1/2016
+     // To workaround some wrong AST generated from RAJA LULESH code
+     // we clear skip base type flag of unparse_info
+     if (info.SkipBaseType())
+     {
+       cout<<"Warning in Unparse_ExprStmt::unparseLambdaExpression().  Unparse_Info has skipBaseType() set. Unset it now."<<endl;
+       //ROSE_ASSERT(false);
+       info.unset_SkipBaseType ();
+     }
+
      curprint(" [");
      // if '=' or '&' exists
      bool hasCaptureCharacter = false;
