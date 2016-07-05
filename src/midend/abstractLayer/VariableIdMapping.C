@@ -72,6 +72,11 @@ SgType* VariableIdMapping::getType(VariableId varId) {
   return varSym->get_type();
 }
 
+bool VariableIdMapping::hasReferenceType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgReferenceType(type);
+}
+
 bool VariableIdMapping::hasIntegerType(VariableId varId) {
   SgType* type=getType(varId);
   return SageInterface::isStrictIntegerType(type);
@@ -502,6 +507,10 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
  */
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
   return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId))!=0;
+}
+
+bool VariableIdMapping::isVariableIdValid(VariableId varId) {
+  return varId.isValid() && ((size_t)varId._id) < mappingVarIdToSym.size() && varId._id >= 0;
 }
 
 /*! 

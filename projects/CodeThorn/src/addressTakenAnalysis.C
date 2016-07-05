@@ -580,8 +580,6 @@ void SPRAY::CollectTypeInfo::collectTypes()
 
   for(VariableIdSet::iterator it = varsUsed.begin(); it != varsUsed.end(); ++it)
   {
-    SgSymbol* v_symbol = vidm.getSymbol(*it);
-    SgType* v_type = v_symbol->get_type();
     // Note on function pointer types
     // function pointer can modify any variable
     // not just the variables in the addressTakenSet
@@ -589,9 +587,9 @@ void SPRAY::CollectTypeInfo::collectTypes()
     // effect analysis to determine the list of variables
     // can modify. Currenty we ignore function pointers as
     // the goal of this analysis is supposed to be simple.
-    if(isSgPointerType(v_type))
+    if(vidm.hasPointerType(*it))
     {
-      SgType* baseType = v_type->findBaseType();
+      SgType* baseType = vidm.getType(*it)->findBaseType();
       // perhaps its worthwile to keep them in
       // a separte set and not support any dereferencing
       // queries rather than not adding them
@@ -600,11 +598,11 @@ void SPRAY::CollectTypeInfo::collectTypes()
         pointerTypeSet.insert(*it);
       }
     }
-    else if(isSgArrayType(v_type))
+    else if(vidm.hasArrayType(*it))
     {
       arrayTypeSet.insert(*it);
     }
-    else if(isSgReferenceType(v_type))
+    else if(vidm.hasReferenceType(*it))
     {
       referenceTypeSet.insert(*it);
     }
