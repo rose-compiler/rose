@@ -292,9 +292,12 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateMember
 // if foo() returns a reference then foo() returns a lvalue
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallExp* sgn)
 {
-  if(debuglevel > 0) debugPrint(sgn);
+  if(debuglevel > 0) {
+    std::cout << std::endl << std::endl;
+    debugPrint(sgn);
+  }
 
-  // schroder3 (Jun 2016):
+  // schroder3 (Jul 2016):
   // Summary: Get the type of every parameter. If the type is a reference type, then add all
   //  variables used in the corresponding argument expression to the set of address taken variables.
   //  Example:
@@ -303,9 +306,9 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
   //     int i = 3;
   //     int* ip = getAddress(i);
   //   }
-  // In addition, if a member function is called, add the object on which it is called to the set
-  //  of address taken variables because the object's address is accessible inside the member
-  //  function via "this".
+  // In addition, if a non-static member function is called, add the object on which it is called
+  //  to the set of address taken variables because the object's address is accessible inside the
+  //  member function via "this".
 
   // Callee function type:
   const SgFunctionType* calleeType = SgNodeHelper::getCalleeFunctionType(sgn);
@@ -314,56 +317,120 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
   }
 
   // What kind of call do we have?
-  // (Static member functions are considered as normal functions.)
   enum CalleeKind {
+    CK_Unknown = 0,
     CK_Function = 1,
     CK_FunctionPointer= 2,
     CK_FunctionOrFunctionPointer = 3,
     CK_MemberFunction = 4, // ., ->
     CK_MemberFunctionPointer = 8, // .*, ->*
     CK_MemberFunctionOrMemberFunctionPointer = 12
-  } calleeKind;
+  } calleeKind = CK_Unknown;
+
+  enum MemberFunctionKind {
+    MFK_Unknown = 0,
+    MFK_None = 1,
+    MFK_NonStatic= 2,
+    MFK_Static= 4
+  } memberFunctionKind = MFK_Unknown;
 
   enum BaseExprKind {
-    BEK_None,
-    BEK_Pointer,
-    BEK_Object
-  } baseExprKind;
+    BEK_Unknown = 0,
+    BEK_None = 1,
+    BEK_Pointer = 2,
+    BEK_Object = 4,
+    BEK_PointerOrObject = 6,
+  } baseExprKind = BEK_Unknown;
 
   const SgNode* firstChildOfCallExp = sgn->get_traversalSuccessorByIndex(0);
+
   if(isSgDotExp(firstChildOfCallExp)) {
-    // a.b
+    // a.b (a is an object, b is a member function):
     calleeKind = CK_MemberFunction;
     baseExprKind = BEK_Object;
+    // static/non-static will be determined later.
   }
   else if(isSgArrowExp(firstChildOfCallExp)) {
-    // a->b
+    // a->b (a is a pointer to an object, b is a member function):
     calleeKind = CK_MemberFunction;
     baseExprKind = BEK_Pointer;
+    // static/non-static will be determined later.
   }
   else if(isSgArrowStarOp(firstChildOfCallExp)) {
-    // a->*b
+    // a->*b (a is a pointer to an object, b is a member function pointer):
     calleeKind = CK_MemberFunctionPointer;
     baseExprKind = BEK_Pointer;
+    // There are no member function pointers to static member functions:
+    memberFunctionKind = MFK_NonStatic;
   }
   else if(isSgDotStarOp(firstChildOfCallExp)) {
-    // a.*b
+    // a.*b (a is an object, b is a member function pointer):
     calleeKind = CK_MemberFunctionPointer;
     baseExprKind = BEK_Object;
+    // There are no member function pointers to static member functions:
+    memberFunctionKind = MFK_NonStatic;
   }
   else {
-    // In the Rose AST every call of a member function should have an explicit object on which the member function is called and
-    // there therefore should be a dot, arrow, dot-star or arrow-star operator for each member function call.
-    ROSE_ASSERT(!isSgMemberFunctionType(calleeType));
-
-    calleeKind = CK_FunctionOrFunctionPointer;
+    // No base expression:
     baseExprKind = BEK_None;
+    // The callee is a (static member-)function or a function pointer (== "static member-function pointer").
+    //  but a distinction between these kinds gives not advantage here:
+    calleeKind = CK_Unknown;
+    memberFunctionKind = MFK_Unknown;
+
   }
 
-  // If this is a call of a member function, then add the object, on which the member function
-  //  is called, to the address taken set. This is necessary because inside a member function
+  if(calleeKind == CK_MemberFunction) {
+    // Check whether the called member function is static or not:
+
+    // We should always have a member function ref expr because something like a.( b ? c : d) is not allowed:
+    SgMemberFunctionRefExp* memberFunctionRefExpr = isSgMemberFunctionRefExp(static_cast<const SgBinaryOp*>(firstChildOfCallExp)->get_rhs_operand());
+    ROSE_ASSERT(memberFunctionRefExpr);
+    // There should be at least a forward declaration:
+    SgMemberFunctionDeclaration* memberFunctionDecl = memberFunctionRefExpr->getAssociatedMemberFunctionDeclaration();
+    ROSE_ASSERT(memberFunctionDecl);
+    if(debuglevel > 0) {
+      std::cout << "Mem func decl: " << memberFunctionDecl->unparseToString() << std::endl;
+    }
+    // The static modifier is attached to the (implicit) forward declaration or to the defining declaration
+    //  depending on how the declaration/definition is written in the source code. We therefore have to check
+    //  both declarations for the presence of a static modifier.
+    // First check whether the forward declaration is static:
+    if(memberFunctionDecl->get_declarationModifier().get_storageModifier().isStatic()) {
+      memberFunctionKind = MFK_Static;
+    }
+    else {
+      // The forward declaration is not static. Check whether the defining declaration is static (if it exists):
+      SgMemberFunctionDeclaration* memberFuncDefiningDecl = isSgMemberFunctionDeclaration(memberFunctionDecl->get_definingDeclaration());
+      if(debuglevel > 0) {
+        std::cout << "Mem func def decl: " << (memberFuncDefiningDecl ? memberFuncDefiningDecl->unparseToString() : std::string("none")) << std::endl;
+      }
+      if(memberFuncDefiningDecl && memberFuncDefiningDecl->get_declarationModifier().get_storageModifier().isStatic()) {
+        memberFunctionKind = MFK_Static;
+      }
+      else {
+        memberFunctionKind = MFK_NonStatic;
+      }
+    }
+  }
+
+  if(debuglevel > 0) {
+    std::cout << "Call kinds: Callee: " << calleeKind << ", Base expr: " << baseExprKind << ", Mem func: " << memberFunctionKind << std::endl;
+  }
+
+  // In the Rose AST every call of a non-static member function should have an explicit object on which the member function is called and
+  //  there therefore should be a dot, arrow, dot-star or arrow-star operator for each non-static member function call.
+  if(calleeKind == CK_MemberFunction && memberFunctionKind == MFK_NonStatic) {
+    ROSE_ASSERT((baseExprKind & BEK_PointerOrObject) > 0);
+    ROSE_ASSERT(isSgMemberFunctionType(calleeType));
+  }
+
+  // If this is a call of a non-static member function, then add the object, on which the member function
+  //  is called, to the address taken set. This is necessary because inside a non-static member function
   //  the address of the object is accessible via "this".
-  if(calleeKind & CK_MemberFunctionOrMemberFunctionPointer) {
+  if((calleeKind & CK_MemberFunctionOrMemberFunctionPointer)
+      && (memberFunctionKind == MFK_NonStatic || memberFunctionKind == MFK_Unknown)
+  ) {
     if(debuglevel > 0) {
       std::cout << "Member function type: " << isSgExpression(firstChildOfCallExp)->get_type()->unparseToString() << std::endl;
     }
