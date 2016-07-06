@@ -8,6 +8,7 @@
 #include <boost/tokenizer.hpp>
 
 using namespace std;
+using namespace boost;
 using namespace SPRAY;
 
 size_t PragmaHandler::handlePragmas(SgProject* sageProject, CodeThorn::Analyzer* analyzer) {

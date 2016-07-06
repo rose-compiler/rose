@@ -257,20 +257,8 @@ long Edge::hash() const {
   return typesCode();
 }
 
-Flow::Flow():_boostified(false) {
+Flow::Flow() {
   resetDotOptions(); 
-}
-
-void Flow::boostify() {
-  cout<<"STATUS: converting ICFG to boost graph representation ... "<<endl;
-  edge_t e; bool b;
-  ROSE_ASSERT(!_boostified);
-  for(Flow::iterator i=begin();i!=end();++i) {
-    tie(e,b)=add_edge((*i).source().getId(),(*i).target().getId(),_flowGraph);
-    _flowGraph[e]=(*i).getTypes();
-  }
-  _boostified=true;
-  cout<<"STATUS: converting ICFG to boost graph representation: DONE."<<endl;
 }
 
 SPRAY::Flow Flow::reverseFlow() {
@@ -563,34 +551,20 @@ Flow Flow::inEdges(Label label) {
 
 Flow Flow::outEdges(Label label) {
   Flow flow;
-  if(!_boostified) {
 #ifdef USE_SAWYER_GRAPH
-    SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
-    Flow::iterator begin = Flow::iterator((*vertexIter).outEdges().begin());
-    Flow::iterator end = Flow::iterator((*vertexIter).outEdges().end());
-    for (Flow::iterator i=begin; i!=end; ++i) {
-        Edge outEdge = *i;
-        flow.insert(outEdge);
-    }
-#else
-    for(Flow::iterator i=begin();i!=end();++i) {
-      if((*i).source()==label)
-        flow.insert(*i);
-    }
-#endif
-  } else {
-    typedef graph_traits<FlowGraph> GraphTraits;
-    //    typename property_map<FlowGraph, vertex_index_t>::type 
-    // index = get(vertex_index, _flowGraph);
-    GraphTraits::out_edge_iterator out_i, out_end;
-    GraphTraits::edge_descriptor e;
-    for (tie(out_i, out_end) = out_edges(label.getId(), _flowGraph); 
-         out_i != out_end; ++out_i) {
-      e = *out_i;
-      Label src = source(e, _flowGraph), targ = target(e, _flowGraph);
-      flow.insert(Edge(src,_flowGraph[e],targ));
-    }
+  SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  Flow::iterator begin = Flow::iterator((*vertexIter).outEdges().begin());
+  Flow::iterator end = Flow::iterator((*vertexIter).outEdges().end());
+  for (Flow::iterator i=begin; i!=end; ++i) {
+    Edge outEdge = *i;
+    flow.insert(outEdge);
   }
+#else
+  for(Flow::iterator i=begin();i!=end();++i) {
+    if((*i).source()==label)
+      flow.insert(*i);
+  }
+#endif
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
   flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
   return flow;

@@ -49,6 +49,7 @@ using namespace std;
 namespace po = boost::program_options;
 using namespace CodeThorn;
 using namespace SPRAY;
+using namespace boost;
 
 // experimental
 #include "IOSequenceGenerator.C"

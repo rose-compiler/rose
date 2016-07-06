@@ -3,6 +3,7 @@
 #include "ParProLtlMiner.h"
 
 using namespace SPRAY;
+using namespace boost;
 using namespace std;
 
 

@@ -2155,7 +2155,6 @@ bool all_false(vector<bool>& v) {
 // algorithm 4 also records reachability for incomplete STGs (analyzer::reachabilityResults)
 // this solver support semantic folding (solver 5 does not)
 void Analyzer::runSolver4() {
-  //flow.boostify();
   reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
   size_t prevStateSetSize=0; // force immediate report at start
   int analyzedSemanticFoldingNode=0;
@@ -2551,7 +2550,6 @@ void Analyzer::runSolver9() {
     cout << "ERROR: solver 9 is only compatible with the hybrid analyzer." << endl;
     exit(1);
   }
-  flow.boostify();
   reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
   cout<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
   int maxInputVal = *( std::max_element(_inputVarValues.begin(), _inputVarValues.end()) ); //required for parsing to characters
@@ -2628,7 +2626,6 @@ void Analyzer::runSolver10() {
   }
   // display initial information
   int maxInputVal = *( std::max_element(_inputVarValues.begin(), _inputVarValues.end()) ); //required for parsing to characters
-  flow.boostify();
   reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
   int assertionsToFind = 0;
   for (unsigned int c = 0; c < _patternSearchAssertTable->size(); c++) {
