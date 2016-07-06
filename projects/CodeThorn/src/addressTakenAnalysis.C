@@ -109,8 +109,18 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclar
   SgType* varDeclType = varDeclInitName->get_type();
   ROSE_ASSERT(varDeclType);
   if(SgReferenceType* varDeclReferenceType = isSgReferenceType(varDeclType)) {
-    // schroder3 (Jun 2016):
+    // schroder3 (Jul 2016):
     //  Declaration of a reference: A reference creates an alias of the variable that is referenced by the reference.
+    //  This alias works in both directions. For example if we have the code "int b = 0; int& c = b;" then we can
+    //  change the value of b by using c ("c = 1;") and we can change the "value" of c by using b ("b = 2;"). We
+    //  therefore have to add the reference variable as well as the variables in the init expression to the address
+    //  taken set.
+
+    //  Reference variable:
+    VariableId refVarid = cati.vidm.variableId(sgn);
+    cati.variableAddressTakenInfo.second.insert(refVarid);
+
+    //  Init expression:
     //  Currently we treat every variable in the init expression of the reference as if it's address was taken, because
     //  we currently have no mapping between the reference and the variables in the init expression. It is therefore
     //  currently not possible to add the variable to the address taken set only if the address of the reference is taken.
