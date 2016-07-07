@@ -545,6 +545,7 @@ Flow Flow::inEdges(Label label) {
   Flow flow;
 #ifdef USE_SAWYER_GRAPH
   SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
   Flow::iterator begin = Flow::iterator((*vertexIter).inEdges().begin());
   Flow::iterator end = Flow::iterator((*vertexIter).inEdges().end());
   for (Flow::iterator i=begin; i!=end; ++i) {
@@ -566,6 +567,7 @@ Flow Flow::outEdges(Label label) {
   Flow flow;
 #ifdef USE_SAWYER_GRAPH
   SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
   Flow::iterator begin = Flow::iterator((*vertexIter).outEdges().begin());
   Flow::iterator end = Flow::iterator((*vertexIter).outEdges().end());
   for (Flow::iterator i=begin; i!=end; ++i) {
@@ -585,12 +587,16 @@ Flow Flow::outEdges(Label label) {
 
 #ifdef USE_SAWYER_GRAPH
 boost::iterator_range<Flow::iterator> Flow::inEdgesIterator(Label label) {
-  boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*(_sawyerFlowGraph.findVertexKey(label))).inEdges();
+  SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
+  boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*vertexIter).inEdges();
   return boost::iterator_range<Flow::iterator>(Flow::iterator(edges.begin()), Flow::iterator(edges.end()));
 }
 
 boost::iterator_range<Flow::iterator> Flow::outEdgesIterator(Label label) {
-  boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*(_sawyerFlowGraph.findVertexKey(label))).outEdges();
+  SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
+  boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*vertexIter).outEdges();
   return boost::iterator_range<Flow::iterator>(Flow::iterator(edges.begin()), Flow::iterator(edges.end()));
 }
 #endif
