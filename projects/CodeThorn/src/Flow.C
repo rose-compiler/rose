@@ -317,6 +317,19 @@ Flow::iterator Flow::find(Edge e) {
 #endif
 }
 
+bool Flow::contains(Label l) {
+#ifdef USE_SAWYER_GRAPH
+  return (_sawyerFlowGraph.findVertexKey(l) != _sawyerFlowGraph.vertices().end());
+#else
+  for (Flow::iterator i=begin(); i!=end(); ++i) {
+    if ((*i).source() == l || (*i).target() == l) {
+      return true;
+    }
+  }
+  return false;
+#endif
+}
+
 pair<Flow::iterator, bool> Flow::insert(Edge e) {
 #ifdef USE_SAWYER_GRAPH
   EdgeData edgeData = EdgeData(e.types(), e.getAnnotation());

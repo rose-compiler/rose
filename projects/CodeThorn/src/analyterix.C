@@ -46,6 +46,7 @@
 #include <cmath>
 #include "assert.h"
 
+#include "FunctionIdMapping.h"
 // ROSE analyses
 #include "VariableRenaming.h"
 
@@ -167,6 +168,21 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
   }
 }
 
+// schroder3 (2016-07-05): Attaches the given comment to the preprocessing info of the given node. The comment
+//  is inserted without appending comment characters ("//", "/*", "*/") and should therefore contain these
+//  characters. The argument for the second parameter specifies whether the comment should be attached before or
+//  after the given node.
+void insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgLocatedNode* node) {
+  ROSE_ASSERT(posSpecifier==PreprocessingInfo::before || posSpecifier==PreprocessingInfo::after);
+  PreprocessingInfo* commentInfo =
+    new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment,
+                          comment,
+                          "user-generated",0, 0, 0,
+                          posSpecifier // e.g. PreprocessingInfo::before
+                          );
+  node->addToAttachedPreprocessingInfo(commentInfo);
+}
+
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
 
   SPRAY::DFAnalysisBase::normalizeProgram(root);
@@ -188,12 +204,91 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
   if(option_at_analysis) {
     cout<<"STATUS: running address taken analysis."<<endl;
+    cout<<"STATUS: creating ICFG."<<endl;
+    // TODO: compute ICFG without creating an analysis!
+    SPRAY::IntervalAnalysis* analyzer=new SPRAY::IntervalAnalysis();
+    analyzer->initialize(root);
+    cout << "STATUS: computing variable and function mappings."<<endl;
     // compute variableId mappings
     VariableIdMapping variableIdMapping;
     variableIdMapping.computeVariableSymbolMapping(root);
-    SPRAY::FIPointerAnalysis fipa(&variableIdMapping,root);
+    // Compute function id mappings:
+    FunctionIdMapping functionIdMapping;
+    //functionIdMapping.computeFunctionSymbolMapping(root);
+    functionIdMapping.computeFunctionSymbolMapping(*(analyzer->getFlow()), *(analyzer->getCFAnalyzer()->getLabeler()));
+
+    cout << "STATUS: computing address taken sets."<<endl;
+    SPRAY::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
     fipa.initialize();
     fipa.run();
+
+    //cout << "STATUS: computed address taken sets:"<<endl;
+    //fipa.getFIPointerInfo()->printInfoSets();
+
+    // Annotate declarations/definitions of variables from which the address was taken:
+    VariableIdSet addressTakenVariableIds = fipa.getAddressTakenVariables();
+    for(VariableIdSet::const_iterator idIter = addressTakenVariableIds.begin(); idIter != addressTakenVariableIds.end(); ++idIter) {
+      // Determine the variable declaration/definition:
+      SgLocatedNode* decl = variableIdMapping.getVariableDeclaration(*idIter);
+      if(!decl) {
+        // The current variable is presumably a function parameter: Try to get the initialized name:
+        SgVariableSymbol* varSymbol = isSgVariableSymbol(variableIdMapping.getSymbol(*idIter));
+        ROSE_ASSERT(varSymbol);
+        SgInitializedName* paramDecl = isSgInitializedName(varSymbol->get_declaration());
+        // We should not have a real variable declaration for the parameter:
+        ROSE_ASSERT(isSgFunctionParameterList(paramDecl->get_declaration()));
+
+        // Use the InitializedName:
+        decl = paramDecl;
+      }
+
+      if(decl) {
+        // Create the comment:
+        ostringstream commentStream;
+        commentStream << "/* Address of \"" << variableIdMapping.variableName(*idIter) << "\" is "
+                      << "presumably taken.*/";
+
+        // Annotate first declaration:
+        insertComment(commentStream.str(), PreprocessingInfo::before, decl);
+        // TODO: Annotate other declarations too!
+
+        // Annotate definition if available (e.g. not available in case of parameter):
+        if(SgDeclarationStatement* variableDeclaration = isSgDeclarationStatement(decl)) {
+          if(SgDeclarationStatement* definingDeclaration = variableDeclaration->get_definingDeclaration()) {
+            insertComment(commentStream.str(), PreprocessingInfo::before, definingDeclaration);
+          }
+        }
+      }
+      else {
+        cout << "ERROR: No declaration for " << variableIdMapping.uniqueShortVariableName(*idIter) << " available." << endl;
+        ROSE_ASSERT(false);
+      }
+    }
+
+    // Annotate declarations and definitions of functions from which the address was taken:
+    FunctionIdSet addressTakenFunctionIds = fipa.getAddressTakenFunctions();
+    for(FunctionIdSet::const_iterator idIter = addressTakenFunctionIds.begin(); idIter != addressTakenFunctionIds.end(); ++idIter) {
+      if(SgFunctionDeclaration* decl = functionIdMapping.getFunctionDeclaration(*idIter)) {
+        // Create the comment:
+        ostringstream commentStream;
+        commentStream << "/* Address of \"" << functionIdMapping.getSymbolNameFromFunctionId(*idIter) << "(...)\" is "
+                      << "presumably taken.*/";
+
+        // Annotate first declaration:
+        insertComment(commentStream.str(), PreprocessingInfo::before, decl);
+        // TODO: Annotate other declarations too!
+
+        // Annotate definition if available:
+        if(SgDeclarationStatement* definingDeclaration = decl->get_definingDeclaration()) {
+          insertComment(commentStream.str(), PreprocessingInfo::before, definingDeclaration);
+        }
+      }
+      else {
+        cout << "ERROR: No declaration for " << functionIdMapping.getUniqueShortNameFromFunctionId(*idIter) << " available." << endl;
+        ROSE_ASSERT(false);
+      }
+    }
+
 #if 0
     VariableIdSet vidset=fipa.getModByPointer();
     cout<<"mod-set: "<<SPRAY::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
@@ -207,7 +302,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     intervalAnalyzer->initialize(root);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
-    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(),root);
+    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
     fipa->initialize();
     fipa->run();
     intervalAnalyzer->setPointerAnalysis(fipa);

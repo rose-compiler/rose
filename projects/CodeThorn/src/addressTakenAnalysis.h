@@ -12,6 +12,8 @@
 #include "VariableIdMapping.h"
 #include "Miscellaneous.h"
 #include <set>
+
+#include "FunctionIdMapping.h"
 #include "VariableIdUtils.h"
 
 // AST Query Processor
@@ -42,13 +44,16 @@ public:
  *************************************************/
 class ComputeAddressTakenInfo
 {
-  typedef std::pair<bool, VariableIdSet> AddressTakenInfo;
+  typedef std::pair<bool, VariableIdSet> VariableAddressTakenInfo;
+  typedef std::pair<bool, FunctionIdSet> FunctionAddressTakenInfo;
   VariableIdMapping& vidm;
+  FunctionIdMapping& fidm;
   // result to be computed by this analysis
   // bool is set to true when operand of SgAddressOfExp is a complicated
   // expression for which VariableId cannot be determined
   // example: &(*p)
-  AddressTakenInfo addressTakenInfo;
+  VariableAddressTakenInfo variableAddressTakenInfo; // variables of which the address was taken
+  FunctionAddressTakenInfo functionAddressTakenInfo; // functions of which the address was taken
 
   // address can be taken for any expression that is lvalue
   // The purpose of this class is to traverse arbitrary
@@ -66,6 +71,7 @@ class ComputeAddressTakenInfo
   public:
   OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati), debuglevel(0) { }
     void visit(SgVarRefExp*);
+    void visit(SgVariableDeclaration*);
     void visit(SgDotExp*);
     void visit(SgArrowExp*);
     void visit(SgPointerDerefExp*);
@@ -76,22 +82,28 @@ class ComputeAddressTakenInfo
     void visit(SgCommaOpExp* sgn);
     void visit(SgConditionalExp* sgn);
     void visit(SgCastExp* sgn);
+    // The following SgXXXFunctionRefExp types only have the
+    //  base class SgExpression in common
     void visit(SgFunctionRefExp* sgn);
     void visit(SgMemberFunctionRefExp* sgn);
     void visit(SgTemplateFunctionRefExp* sgn);
     void visit(SgTemplateMemberFunctionRefExp* sgn);
     void visit(SgFunctionCallExp* sgn);
+    void visit(SgThisExp* sgn);
     void visit(SgNode* sgn);
+    void insertFunctionId(FunctionId);
     void debugPrint(SgNode* sgn);
   };
 public:
-  ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm)
+  ComputeAddressTakenInfo(VariableIdMapping& _vidm, FunctionIdMapping& _fidm) : vidm(_vidm), fidm(_fidm)
   {
-    addressTakenInfo.first = false;
+    variableAddressTakenInfo.first = false;
+    functionAddressTakenInfo.first = false;
   }
   void computeAddressTakenInfo(SgNode* root);
   void printAddressTakenInfo();
-  AddressTakenInfo getAddressTakenInfo();  
+  VariableAddressTakenInfo getVariableAddressTakenInfo();
+  FunctionAddressTakenInfo getFunctionAddressTakenInfo();
 };
 
 /*************************************************
@@ -131,28 +143,36 @@ class FlowInsensitivePointerInfo
 {
   SgNode* root;
   VariableIdMapping& vidm;
+  FunctionIdMapping& fidm;
   ComputeAddressTakenInfo compAddrTakenInfo;
   CollectTypeInfo collTypeInfo;
 
 public:
-  FlowInsensitivePointerInfo(SgProject* project, VariableIdMapping& _vidm) : root(project), 
+  FlowInsensitivePointerInfo(SgProject* project, VariableIdMapping& _vidm, FunctionIdMapping& _fidm) : root(project),
     vidm(_vidm),
-    compAddrTakenInfo(_vidm),
+    fidm(_fidm),
+    compAddrTakenInfo(_vidm, _fidm),
     collTypeInfo(_vidm)
   { 
   }
 
   FlowInsensitivePointerInfo(SgProject* project, 
                              VariableIdMapping& _vidm, 
+                             FunctionIdMapping& _fidm,
                              VariableIdSet usedVarsInProgram) : root(project),
     vidm(_vidm),
-    compAddrTakenInfo(_vidm),
+    fidm(_fidm),
+    compAddrTakenInfo(_vidm, _fidm),
     collTypeInfo(_vidm, usedVarsInProgram)
     {
     }
   void collectInfo();
   void printInfoSets();
+  // schroder3: TODO: replace calls of getMemModByPointer by calls
+  //  of getAddressTakenVariables
   VariableIdSet getMemModByPointer();
+  VariableIdSet getAddressTakenVariables();
+  FunctionIdSet getAddressTakenFunctions();
   VariableIdMapping& getVariableIdMapping();
 };
 

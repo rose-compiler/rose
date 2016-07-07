@@ -72,6 +72,11 @@ SgType* VariableIdMapping::getType(VariableId varId) {
   return varSym->get_type();
 }
 
+bool VariableIdMapping::hasReferenceType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgReferenceType(type);
+}
+
 bool VariableIdMapping::hasIntegerType(VariableId varId) {
   SgType* type=getType(varId);
   return SageInterface::isStrictIntegerType(type);
@@ -504,6 +509,10 @@ bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
   return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId))!=0;
 }
 
+bool VariableIdMapping::isVariableIdValid(VariableId varId) {
+  return varId.isValid() && ((size_t)varId._id) < mappingVarIdToSym.size() && varId._id >= 0;
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -552,9 +561,25 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
 }
 
 void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
+  ROSE_ASSERT(sym);
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
-    mappingSymToVarId[sym]=mappingVarIdToSym.size();
+    // Due to arrays there can be multiple ids for one symbol (one id
+    //  for each array element but only one symbol for the whole array)
+    //  but there can not be multiple symbols for one id. The symbol count
+    //  therefore must be less than or equal to the id count:
+    ROSE_ASSERT(mappingSymToVarId.size() <= mappingVarIdToSym.size());
+    // If one of the sizes is zero, the other size have to be zero too:
+    ROSE_ASSERT(mappingSymToVarId.size() == 0 ? mappingVarIdToSym.size() == 0 : true);
+    ROSE_ASSERT(mappingVarIdToSym.size() == 0 ? mappingSymToVarId.size() == 0 : true);
+
+    // Create new mapping entry:
+    size_t newIdCode = mappingVarIdToSym.size();
+    mappingSymToVarId[sym] = newIdCode;
     mappingVarIdToSym.push_back(sym);
+
+    // Mapping in both directions must be possible:
+    ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[newIdCode]) == newIdCode);
+    ROSE_ASSERT(mappingVarIdToSym[mappingSymToVarId.at(sym)] == sym);
   } else {
     cerr<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
     exit(1);

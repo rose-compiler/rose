@@ -100,6 +100,7 @@ namespace SPRAY {
     std::pair<Flow::iterator, bool> insert(Edge e);
     Flow::iterator find(Edge e);
     bool contains(Edge e);
+    bool contains(Label l);
     void erase(Flow::iterator iter);
     size_t erase(Edge e);
     size_t size();
