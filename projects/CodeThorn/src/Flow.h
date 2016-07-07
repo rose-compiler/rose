@@ -3,10 +3,6 @@
 
 #define USE_SAWYER_GRAPH
 
-#include <boost/graph/adjacency_list.hpp> 
-#include <boost/graph/graphviz.hpp>
-using namespace boost; 
-
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 
@@ -148,12 +144,6 @@ namespace SPRAY {
     std::size_t deleteEdges(Flow& flow);
     void establishBoostGraph();
     
-    //Define the graph using those classes
-    typedef adjacency_list<listS, vecS, directedS, Label, std::set<EdgeType> > FlowGraph;
-    //Some typedefs for simplicity
-    typedef graph_traits<FlowGraph>::vertex_descriptor vertex_t;
-    typedef graph_traits<FlowGraph>::edge_descriptor edge_t;
-    void boostify();
     //! inverts all edges in the graph. The root node is updated. This operation is only successful if
     //! the original graph had exactly one final node (which becomes the start node of the new graph).
     SPRAY::Flow reverseFlow();
@@ -166,8 +156,6 @@ namespace SPRAY {
     bool _dotOptionFixedColor;
     std::string _fixedColor;
     bool _dotOptionHeaderFooter;
-    bool _boostified;
-    FlowGraph _flowGraph;
     Label _startLabel;
 #ifdef USE_SAWYER_GRAPH
     SawyerCfg  _sawyerFlowGraph;

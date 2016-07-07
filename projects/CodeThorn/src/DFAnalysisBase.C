@@ -9,6 +9,7 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
+#include "Normalization.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -144,15 +145,8 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
 
 void
 DFAnalysisBase::normalizeProgram(SgProject* root) {
-    cout<<"STATUS: Normalizing program."<<endl;
-  ExtractFunctionArguments efa;
-  if(!efa.IsNormalized(root)) {
-    cout<<"STATUS: Normalizing function call arguments."<<endl;
-    efa.NormalizeTree(root,true);
-  }
-  FunctionCallNormalization fn;
-  cout<<"STATUS: Normalizing function calls in expressions."<<endl;
-  fn.visit(root);
+  cout<<"STATUS: Normalizing program."<<endl;
+  SPRAY::Normalization::normalizeAst(root);
 }
 
 

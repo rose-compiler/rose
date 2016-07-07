@@ -214,6 +214,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgContinueStmt:
   case V_SgReturnStmt:
   case V_SgVariableDeclaration:
+  case V_SgCaseOptionStmt:
+  case V_SgDefaultOptionStmt:
       return labeler->getLabel(node);
   case V_SgExprStatement: {
     return labeler->getLabel(node);
@@ -1021,29 +1023,30 @@ Flow CFAnalysis::flow(SgNode* node) {
     Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
     edge.addType(EDGE_FORWARD);
     Flow flowB=flow(bodyNode);
-    LabelSet finalSetB=finalLabels(bodyNode);
     edgeSet+=flowB;
     edgeSet.insert(edge);
-    // back edges
+
+    // Increment Expression:
+    SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
+    if(!incExp)
+     throw "Error: for-loop: empty incExpr not supported yet.";
+    ROSE_ASSERT(incExp);
+    Label incExpLabel=getLabel(incExp);
+    ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);
+
+    // Edges from final labels of for body to the increment expression:
+    LabelSet finalSetB=finalLabels(bodyNode);
     for(LabelSet::iterator i=finalSetB.begin();i!=finalSetB.end();++i) {
-      SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
-      if(!incExp)
-        throw "Error: for-loop: empty incExpr not supported yet.";
-      ROSE_ASSERT(incExp);
-      Label incExpLabel=getLabel(incExp);
-      ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);
-      Edge e1,e2;
+      Edge edgeToIncExpr=Edge(*i,EDGE_FORWARD,incExpLabel);
       if(SgNodeHelper::isCond(labeler->getNode(*i))) {
-        e1=Edge(*i,EDGE_FALSE,incExpLabel);
-        e1.addType(EDGE_FORWARD);
-        e2=Edge(incExpLabel,EDGE_BACKWARD,condLabel);
-      } else {
-        e1=Edge(*i,EDGE_FORWARD,incExpLabel);
-        e2=Edge(incExpLabel,EDGE_BACKWARD,condLabel);
+        edgeToIncExpr.addType(EDGE_FALSE);
       }
-      edgeSet.insert(e1);
-      edgeSet.insert(e2);
+      edgeSet.insert(edgeToIncExpr);
     }
+
+    // Edge from increment expression back to condition:
+    Edge backwardEdge = Edge(incExpLabel,EDGE_BACKWARD,condLabel);
+    edgeSet.insert(backwardEdge);
     return edgeSet;
   }
 
