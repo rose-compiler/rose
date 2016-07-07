@@ -32,6 +32,7 @@ libspray_la_SOURCES=\
  IntervalPropertyState.h \
  IntervalPropertyStateFactory.h \
  IntervalTransferFunctions.h \
+ FunctionIdMapping.h \
  LVAnalysis.h \
  LVAstAttribute.h \
  LVAstAttributeInterface.h \
@@ -64,6 +65,7 @@ libspray_la_SOURCES=\
  IntervalPropertyState.C \
  IntervalTransferFunctions.C \
  IntervalAstAttributeInterface.C \
+ FunctionIdMapping.C \
  LanguageRestrictor.C \
  Lattice.C \
  LVAnalysis.C \
