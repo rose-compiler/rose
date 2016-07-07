@@ -257,7 +257,7 @@ Partitioner::detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
         placeholder->value().nullify();
         adjustPlaceholderEdges(placeholder);
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
-            aum_.eraseInstruction(insn);
+            aum_.eraseInstruction(insn, bblock);
         BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks()) {
             if (0==dblock->decrementOwnerCount())
                 detachDataBlock(dblock);
@@ -315,12 +315,12 @@ Partitioner::discoverBasicBlock(rose_addr_t startVa) const {
 
 BasicBlock::Ptr
 Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
-    // If the first instruction of this basic block already exists (in the middle of) some other basic block then the other
-    // basic block is called a "conflicting block".  This only applies for the first instruction of this block, but is used in
+    // If the first instruction of this basic block already exists (in the middle of) some other basic blocks then the other
+    // basic blocks are called "conflicting blocks".  This only applies for the first instruction of this block, but is used in
     // the termination conditions below.
-    AddressUser conflict;
-    if (instructionExists(startVa).assignTo(conflict))
-        ASSERT_forbid(conflict.insn()->get_address() == conflict.basicBlock()->address());// handled in discoverBasicBlock
+    AddressUser startVaOwners;
+    if (instructionExists(startVa).assignTo(startVaOwners))
+        ASSERT_forbid(startVaOwners.isBlockEntry());                    // handled in discoverBasicBlock
 
     // Keep adding instructions until we reach a termination condition.  The termination conditions are enumerated in detail in
     // the doxygen documentation for this function. READ IT AND KEEP IT UP TO DATE!!!
@@ -373,10 +373,12 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
         if (findPlaceholder(successorVa)!=cfg_.vertices().end())        // case: successor is an existing block
             goto done;
 
-        AddressUser addressUser;
-        if (instructionExists(successorVa).assignTo(addressUser)) {     // case: successor is inside an existing block
-            if (addressUser.basicBlock() != conflict.basicBlock())
-                goto done;
+        AddressUser succVaOwners;
+        if (instructionExists(successorVa).assignTo(succVaOwners) &&    // case: successor is inside an existing block that
+            !isSupersetUnique(startVaOwners.basicBlocks(),              //       doesn't own startVa
+                              succVaOwners.basicBlocks(),
+                              sortBasicBlocksByAddress)) {
+            goto done;
         }
 
         va = successorVa;
@@ -432,9 +434,12 @@ Partitioner::insertPlaceholder(rose_addr_t startVa) {
     if (placeholder == cfg_.vertices().end()) {
         AddressUser addressUser;
         if (instructionExists(startVa).assignTo(addressUser)) {
-            ControlFlowGraph::VertexIterator conflictBlock = findPlaceholder(addressUser.basicBlock()->address());
-            placeholder = truncateBasicBlock(conflictBlock, addressUser.insn());
-            ASSERT_require(placeholder->value().address() == startVa);
+            // This placeholder is in the middle of some other basic block(s), so we must truncate them.
+            BOOST_FOREACH (const BasicBlock::Ptr &existingBlock, addressUser.basicBlocks()) {
+                ControlFlowGraph::VertexIterator conflictBlock = findPlaceholder(existingBlock->address());
+                placeholder = truncateBasicBlock(conflictBlock, addressUser.insn());
+                ASSERT_require(placeholder->value().address() == startVa);
+            }
         } else {
             placeholder = cfg_.insertVertex(CfgVertex(startVa));
             vertexIndex_.insert(startVa, placeholder);
@@ -834,7 +839,7 @@ Partitioner::basicBlocks() const {
 
 std::vector<BasicBlock::Ptr>
 Partitioner::basicBlocksOverlapping(const AddressInterval &interval) const {
-    return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).basicBlocks();
+    return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).instructionOwners();
 }
 
 BasicBlock::Ptr
@@ -1054,12 +1059,14 @@ Partitioner::functionsOverlapping(const AddressInterval &interval) const {
 
     AddressUsers overlapping = aum_.overlapping(interval);
     BOOST_FOREACH (const AddressUser &user, overlapping.addressUsers()) {
-        if (BasicBlock::Ptr bb = user.basicBlock()) {
-            ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bb->address());
-            ASSERT_require(placeholder != cfg_.vertices().end());
-            ASSERT_require(placeholder->value().bblock()==bb);
-            BOOST_FOREACH (const Function::Ptr &function, placeholder->value().owningFunctions().values())
-                insertUnique(functions, function, sortFunctionsByAddress);
+        if (user.insn()) {
+            BOOST_FOREACH (const BasicBlock::Ptr &bb, user.basicBlocks()) {
+                ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bb->address());
+                ASSERT_require(placeholder != cfg_.vertices().end());
+                ASSERT_require(placeholder->value().bblock() == bb);
+                BOOST_FOREACH (const Function::Ptr &function, placeholder->value().owningFunctions().values())
+                    insertUnique(functions, function, sortFunctionsByAddress);
+            }
         } else {
             ASSERT_not_null(user.dataBlock());
             BOOST_FOREACH (const Function::Ptr &function, user.dataBlockOwnership().owningFunctions())
@@ -1118,11 +1125,11 @@ Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
         }
     }
 
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
     cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::AttachedBasicBlock(this, startVa, bblock));
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
 }
@@ -1144,11 +1151,11 @@ Partitioner::bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &bblock) 
         }
     }
 
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
     cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::DetachedBasicBlock(this, startVa, bblock));
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
 }
@@ -1203,16 +1210,22 @@ Partitioner::checkConsistency() const {
                 } else {
                     // Existing basic block
                     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-                        BasicBlock::Ptr bb2 = aum_.instructionExists(insn);
-                        ASSERT_not_null2(bb2,
-                                         "instruction " + addrToString(insn->get_address()) + " in block " +
-                                         addrToString(bb->address()) + " must be present in the AUM");
-                        ASSERT_require2(bb2 == bb,
+                        static const AddressUser NO_USER;
+                        AddressUser insnAddrUser = aum_.instructionExists(insn->get_address()).orElse(NO_USER);
+                        ASSERT_require2(insnAddrUser.insn() == insn,
                                         "instruction " + addrToString(insn->get_address()) + " in block " +
-                                        addrToString(bb->address()) + " must belong to correct basic block");
+                                         addrToString(bb->address()) + " must be present in the AUM");
+                        bool foundBlock = false;
+                        BOOST_FOREACH (const BasicBlock::Ptr &bb2, insnAddrUser.basicBlocks()) {
+                            if ((foundBlock = bb2 == bb))
+                                break;
+                        }
+                        ASSERT_require2(foundBlock,
+                                        "instruction " + addrToString(insn->get_address()) + " in " +
+                                        bb->printableName() + " does not have correct ownership in AUM\n");
                         AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
                         AddressUsers addressUsers = aum_.spanning(insnInterval);
-                        ASSERT_require2(addressUsers.instructionExists(insn),
+                        ASSERT_require2(addressUsers.instructionExists(insn->get_address()),
                                         "instruction " + addrToString(insn->get_address()) + " in block " +
                                         addrToString(bb->address()) + " must span its own address interval in the AUM");
                     }

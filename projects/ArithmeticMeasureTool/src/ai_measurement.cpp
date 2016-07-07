@@ -983,6 +983,9 @@ namespace ArithemeticIntensityMeasurement
       case V_SgAssignOp:
       case V_SgPntrArrRefExp: // this is integer operation for array address calculation
       case V_SgLessThanOp: //TODO how to convert this if compare two FP operands ??
+      case V_SgDotExp:
+      case V_SgArrowExp:
+      case V_SgCommaOpExp:
         break;
       default:
       {
@@ -1086,6 +1089,12 @@ namespace ArithemeticIntensityMeasurement
         // accessing a variable does not involving FLOP operations.
         hasHandled = true; 
       }
+      else if ( isSgVarArgStartOp(n) // other expressions without FLOPs 
+               )
+      {
+        hasHandled = true; 
+      }
+ 
     }
     else if (SgStatement* stmt = isSgStatement(n))
     {
@@ -1281,6 +1290,7 @@ namespace ArithemeticIntensityMeasurement
                ||isSgLabelStatement(n)
                ||isSgGotoStatement(n)
                ||isSgNullStatement(n)
+               ||isSgEnumDeclaration(n)  
                )
       {
         hasHandled = true; 

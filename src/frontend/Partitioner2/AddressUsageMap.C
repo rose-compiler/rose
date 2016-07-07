@@ -13,11 +13,47 @@ namespace Partitioner2 {
 //                                      AddressUser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+AddressUser::insertBasicBlock(const BasicBlock::Ptr &bblock) {
+    ASSERT_not_null(insn_);
+    ASSERT_not_null(bblock);
+    insertUnique(bblocks_, bblock, sortBasicBlocksByAddress);
+}
+
+void
+AddressUser::eraseBasicBlock(const BasicBlock::Ptr &bblock) {
+    ASSERT_not_null(bblock);
+    eraseUnique(bblocks_, bblock, sortBasicBlocksByAddress);
+}
+
+BasicBlock::Ptr
+AddressUser::isBlockEntry() const {
+    if (insn_) {
+        BOOST_FOREACH (const BasicBlock::Ptr &bb, bblocks_) {
+            if (insn_->get_address() == bb->address())
+                return bb;
+        }
+    }
+    return BasicBlock::Ptr();
+}
+
+bool
+AddressUser::operator==(const AddressUser &other) const {
+    if (insn_ != other.insn_)
+        return false;
+    if (bblocks_.size() != other.bblocks_.size() || !std::equal(bblocks_.begin(), bblocks_.end(), other.bblocks_.begin()))
+        return false;
+    if (odblock_.dataBlock() != other.odblock_.dataBlock())
+        return false;
+    return true;
+}
+
 bool
 AddressUser::operator<(const AddressUser &other) const {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || other.isConsistent());
     if (insn_!=NULL && other.insn_!=NULL) {
         ASSERT_require((insn_!=other.insn_) ^ (insn_->get_address()==other.insn_->get_address()));
-        ASSERT_require(insn_!=other.insn_ || bblock_==NULL || other.bblock_==NULL || bblock_==other.bblock_);
         return insn_->get_address() < other.insn_->get_address();
     } else if (insn_!=NULL || other.insn_!=NULL) {
         return insn_==NULL;                         // instructions come before data blocks
@@ -31,10 +67,12 @@ AddressUser::operator<(const AddressUser &other) const {
 void
 AddressUser::print(std::ostream &out) const {
     if (insn_!=NULL) {
-        if (bblock_ != NULL) {
-            out <<"{B-" <<StringUtility::addrToString(bblock_->address()) <<" ";
+        out <<"{";
+        if (bblocks_.empty()) {
+            out <<"{B-none ";
         } else {
-            out <<"{B-none       ";
+            BOOST_FOREACH (const BasicBlock::Ptr &bb, bblocks_)
+                out <<"B-" <<StringUtility::addrToString(bb->address()) <<" ";
         }
         out <<unparseInstructionWithAddress(insn_) <<"}";
     } else {
@@ -45,33 +83,54 @@ AddressUser::print(std::ostream &out) const {
     }
 }
 
+bool
+AddressUser::isConsistent() const {
+    const char *error = NULL;
+    if (insn_) {
+        if (bblocks_.empty()) {
+            error = "insn owner must have at least one bblock owner";
+        } else if (!isSorted(bblocks_, sortBasicBlocksByAddress, true)) {
+            error = "bblock are not sorted by address or do not have unique addresses";
+        } else if (odblock_.isValid()) {
+            error = "address user cannot be a instruction and data block at the same time";
+        }
+    } else if (odblock_.isValid()) {
+        if (!bblocks_.empty())
+            error = "bblocks should not  be present for data block users";
+    } else {
+        error = "user must be either an instruction or a data block";
+    }
+    ASSERT_require2(!error, error);
+    return !error;
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      AddressUsers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if 0 // [Robb P Matzke 2016-06-30]
 BasicBlock::Ptr
 AddressUsers::instructionExists(SgAsmInstruction *insn) const {
     if (!insn)
         return BasicBlock::Ptr();
     AddressUser needle(insn, BasicBlock::Ptr());      // basic block is not used for binary search
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
     if (lb==users_.end() || lb->insn()!=insn)
         return BasicBlock::Ptr();
     ASSERT_not_null(lb->basicBlock());
     return lb->basicBlock();
 }
+#endif
 
 Sawyer::Optional<OwnedDataBlock>
 AddressUsers::dataBlockExists(const DataBlock::Ptr &dblock) const {
     if (dblock==NULL)
         return Sawyer::Nothing();
     AddressUser needle = AddressUser(OwnedDataBlock(dblock));
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
     if (lb==users_.end() || lb->dataBlock()!=dblock)
         return Sawyer::Nothing();
@@ -105,25 +164,21 @@ void
 AddressUsers::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(insn);
     ASSERT_not_null(bblock);
-    ASSERT_forbid(instructionExists(insn));
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     AddressUser user(insn, bblock);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
-    ASSERT_require2(lb==users_.end() || lb->insn()!=user.insn(), "instruction already exists in the list");
-    users_.insert(lb, user);
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    if (lb == users_.end() || lb->insn() != insn) {
+        users_.insert(lb, user);
+    } else {
+        lb->insertBasicBlock(bblock);
+    }
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
 }
 
 void
 AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
     ASSERT_require(odb.isValid());
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     AddressUser user(odb);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
     if (lb==users_.end() || lb->dataBlock()!=odb.dataBlock()) {
@@ -136,40 +191,48 @@ AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
         BOOST_FOREACH (const BasicBlock::Ptr &bblock, odb.owningBasicBlocks())
             lb->dataBlockOwnership().insertOwner(bblock);
     }
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
 }
 
+#if 0 // [Robb P Matzke 2016-06-30]
 void
 AddressUsers::eraseInstruction(SgAsmInstruction *insn) {
     if (insn!=NULL) {
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-        ASSERT_require(isConsistent());
-#endif
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
         AddressUser needle(insn, BasicBlock::Ptr());
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
         if (lb!=users_.end() && lb->insn()==insn)
             users_.erase(lb);
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-        ASSERT_require(isConsistent());
-#endif
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     }
 }
+#else
+void
+AddressUsers::eraseInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &bb) {
+    if (insn != NULL) {
+        ASSERT_not_null(bb);
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+        AddressUser needle(insn, bb);
+        std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
+        if (lb != users_.end() && lb->insn() == insn) {
+            lb->eraseBasicBlock(bb);
+            if (lb->basicBlocks().empty())
+                users_.erase(lb);
+        }
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+    }
+}
+#endif
 
 void
 AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
     if (dblock!=NULL) {
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-        ASSERT_require(isConsistent());
-#endif
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
         AddressUser needle = AddressUser(OwnedDataBlock(dblock));
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
         if (lb!=users_.end() && lb->dataBlock()==dblock)
             users_.erase(lb);
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-        ASSERT_require(isConsistent());
-#endif
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     }
 }
 
@@ -180,21 +243,35 @@ AddressUsers::instructions() const {
         if (SgAsmInstruction *insn = user.insn())
             insns.push_back(insn);
     }
-    ASSERT_require(isSorted(insns, sortInstructionsByAddress, true));
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(insns, sortInstructionsByAddress, true));
     return insns;
 }
 
 std::vector<BasicBlock::Ptr>
-AddressUsers::basicBlocks() const {
+AddressUsers::instructionOwners() const {
     std::vector<BasicBlock::Ptr> bblocks;
     BOOST_FOREACH (const AddressUser &user, users_) {
         if (user.insn()) {
-            BasicBlock::Ptr bblock = user.basicBlock();
-            ASSERT_not_null(bblock);
-            insertUnique(bblocks, bblock, sortBasicBlocksByAddress);
+            BOOST_FOREACH (const BasicBlock::Ptr &bb, user.basicBlocks()) {
+                ASSERT_not_null(bb);
+                insertUnique(bblocks, bb, sortBasicBlocksByAddress);
+            }
         }
     }
     return bblocks;
+}
+
+BasicBlock::Ptr
+AddressUsers::findBasicBlock(rose_addr_t bbVa) const {
+    BOOST_FOREACH (const AddressUser &user, users_) {
+        if (user.insn()) {
+            BOOST_FOREACH (const BasicBlock::Ptr &bb, user.basicBlocks()) {
+                if (bb->address() == bbVa)
+                    return bb;
+            }
+        }
+    }
+    return BasicBlock::Ptr();
 }
 
 std::vector<DataBlock::Ptr>
@@ -209,6 +286,8 @@ AddressUsers::dataBlocks() const {
 
 AddressUsers
 AddressUsers::intersection(const AddressUsers &other) const {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || other.isConsistent());
     AddressUsers retval;
     size_t i=0, j=0;
     while (i<size() && j<other.size()) {
@@ -224,14 +303,14 @@ AddressUsers::intersection(const AddressUsers &other) const {
             ++j;
         }
     }
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(retval.isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || retval.isConsistent());
     return retval;
 }
 
 AddressUsers
 AddressUsers::union_(const AddressUsers &other) const {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || other.isConsistent());
     AddressUsers retval;
     size_t i=0, j=0;
     while (i<size() && j<other.size()) {
@@ -249,9 +328,7 @@ AddressUsers::union_(const AddressUsers &other) const {
         retval.users_.push_back(users_[i++]);
     while (j<other.size())
         retval.users_.push_back(other.users_[j++]);
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(retval.isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || retval.isConsistent());
     return retval;
 }
 
@@ -266,9 +343,12 @@ AddressUsers::insert(const AddressUsers &other) {
                 users_.insert(lb, user);
         }
     }
-#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-    ASSERT_require(isConsistent());
-#endif
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+}
+
+bool
+AddressUsers::operator==(const AddressUsers &other) const {
+    return users_.size()==other.users_.size() && std::equal(users_.begin(), users_.end(), other.users_.begin());
 }
 
 bool
@@ -277,41 +357,23 @@ AddressUsers::isConsistent() const {
         std::vector<AddressUser>::const_iterator current = users_.begin();
         std::vector<AddressUser>::const_iterator next = current;
         while (current != users_.end()) {
-            if (current->insn()!=NULL) {
-                // instruction user
-                if (current->dataBlock()!=NULL) {
-                    ASSERT_require2(current->dataBlock()==NULL, "user cannot have both instruction and data block");
-                    return false;
-                }
-                if (current->basicBlock()==NULL) {
-                    ASSERT_not_null2(current->basicBlock(), "instruction user must belong to a basic block");
-                    return false;
-                }
-                if (++next != users_.end()) {
-                    if (!(*current < *next)) {
-                        ASSERT_forbid2(*next < *current, "list is not sorted");
-                        ASSERT_require2(*current < *next, "list contains a duplicate");
-                        return false;
-                    }
-                }
+            ASSERT_require2(current->isConsistent(), boost::lexical_cast<std::string>(*this));
+            if (++next == users_.end()) {
+                break;
+            } else if (*current < *next) {
+                ASSERT_forbid2(*next < *current, boost::lexical_cast<std::string>(*this));
+                ASSERT_forbid2(*current == *next, boost::lexical_cast<std::string>(*this));
+            } else if (*next < *current) {
+                ASSERT_forbid2(*current == *next, boost::lexical_cast<std::string>(*this));
+                ASSERT_not_reachable("list is not sorted");
             } else {
-                // data block user
-                if (current->insn()!=NULL) {
-                    ASSERT_require2(current->insn()==NULL, "user cannot have both instruction and data block");
-                    return false;
-                }
-                if (current->basicBlock()!=NULL) {
-                    ASSERT_require2(current->basicBlock()==NULL, "user cannot have both basic block and data block");
-                    return false;
-                }
-                if (++next != users_.end()) {
-                    if (*next < *current) {
-                        ASSERT_forbid2(*next < *current, "list is not sorted");
-                        // Multiple data blocks can can exist at the same address and have the same size, but we can't
-                        // allow the exact same data block (by pointers) to appear multiple times in the list.
-                        ASSERT_forbid2(current->dataBlock()==next->dataBlock(), "list contains a duplicate");
-                        return false;
-                    }
+                ASSERT_require2(*current == *next, boost::lexical_cast<std::string>(*this));
+                if (current->insn()) {
+                    ASSERT_not_reachable("list is not sorted");
+                } else {
+                    // Multiple data blocks can can exist at the same address and have the same size, but we can't
+                    // allow the exact same data block (by pointers) to appear multiple times in the list.
+                    ASSERT_forbid2(current->dataBlock()==next->dataBlock(), "list contains a duplicate");
                 }
             }
             ++current;
@@ -335,7 +397,7 @@ void
 AddressUsageMap::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(insn);
     ASSERT_not_null(bblock);
-    ASSERT_forbid(instructionExists(insn));
+
     AddressInterval interval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
     Map adjustment;
     adjustment.insert(interval, AddressUsers(insn, bblock));
@@ -363,13 +425,14 @@ AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
 }
 
 void
-AddressUsageMap::eraseInstruction(SgAsmInstruction *insn) {
+AddressUsageMap::eraseInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock) {
     if (insn) {
+        ASSERT_not_null(bblock);
         AddressInterval interval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
         Map adjustment;
         BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
             AddressUsers newUsers = node.value();
-            newUsers.eraseInstruction(insn);
+            newUsers.eraseInstruction(insn, bblock);
             if (!newUsers.isEmpty())
                 adjustment.insert(interval.intersection(node.key()), newUsers);
         }
@@ -409,10 +472,10 @@ AddressUsageMap::anyExists(const AddressIntervalSet &where) const {
     return false;
 }
 
-BasicBlock::Ptr
+bool
 AddressUsageMap::instructionExists(SgAsmInstruction *insn) const {
     const AddressUsers noUsers;
-    return insn ? map_.getOptional(insn->get_address()).orElse(noUsers).instructionExists(insn) : BasicBlock::Ptr();
+    return insn && map_.getOptional(insn->get_address()).orElse(noUsers).instructionExists(insn->get_address());
 }
 
 Sawyer::Optional<AddressUser>
@@ -427,11 +490,8 @@ AddressUsageMap::instructionExists(rose_addr_t startVa) const {
 
 BasicBlock::Ptr
 AddressUsageMap::basicBlockExists(rose_addr_t startVa) const {
-    if (Sawyer::Optional<AddressUser> found = instructionExists(startVa)) {
-        if (found->basicBlock()->address() == startVa)
-            return found->basicBlock();
-    }
-    return BasicBlock::Ptr();
+    const AddressUsers noUsers;
+    return map_.getOptional(startVa).orElse(noUsers).findBasicBlock(startVa);
 }
 
 OwnedDataBlock
