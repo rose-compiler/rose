@@ -4,6 +4,7 @@
 #include <list>
 #include <algorithm>
 #include "WorkListSeq.h"
+#include "SprayException.h"
 
 using namespace std;
 
@@ -36,7 +37,7 @@ void SPRAY::WorkListSeq<Element>::add(std::set<Element>& elemSet) {
 template<typename Element>
 Element SPRAY::WorkListSeq<Element>::take() {
   if(workList.size()==0) {
-    throw "Error: attempted to take element from empty work list.";
+    throw SPRAY::Exception("Error: attempted to take element from empty work list.");
   }  else {
     Element co;
     co=*workList.begin();
@@ -48,10 +49,9 @@ Element SPRAY::WorkListSeq<Element>::take() {
 template<typename Element>
 Element SPRAY::WorkListSeq<Element>::examine() {
   if(workList.size()==0)
-    throw "Error: attempted to examine next element in empty work list.";
+    throw SPRAY::Exception("Error: attempted to examine next element in empty work list.");
   Element elem;
   if(workList.size()>0)
     elem=*workList.begin();
   return elem;
 }
-

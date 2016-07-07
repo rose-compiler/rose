@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <iostream>
 #include "CollectionOperators.h"
-
+#include "CodeThornException.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -49,7 +49,7 @@ VariableId Constraint::rhsVar() const {
   if(isVarVarOp())
     return _rhsVar;
   else
-    throw "Error: Constraint::rhsVar failed.";
+    throw CodeThorn::Exception( "Error: Constraint::rhsVar failed.");
 }
 
 /*! 
@@ -60,7 +60,7 @@ AValue Constraint::rhsVal() const {
   if(isVarValOp())
     return _intVal; 
   else
-    throw "Error: Constraint::rhsVal failed.";
+    throw CodeThorn::Exception( "Error: Constraint::rhsVal failed.");
 }
 
 /*! 
@@ -119,12 +119,12 @@ bool CodeThorn::operator<(const Constraint& c1, const Constraint& c2) {
     case Constraint::NEQ_VAR_VAR:
       return (c1.rhsVar()<c2.rhsVar());
     default:
-      throw "Error: Constraint::operator< unknown operator in constraint.";
+      throw CodeThorn::Exception( "Error: Constraint::operator< unknown operator in constraint.");
     }
   } else {
     return false;
   }
-  throw "Error: Constraint::operator< failed.";
+  throw CodeThorn::Exception( "Error: Constraint::operator< failed.");
 }
 
 /*! 
@@ -203,7 +203,7 @@ string Constraint::toString() const {
     if(isVarValOp())
       ss<<lhsVar().toString()<<(*this).opToString()<<rhsVal().toString();
     else
-      throw "Error: Constraint::toString: unknown operator.";
+      throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
   }
   return ss.str();
 }
@@ -222,7 +222,7 @@ string Constraint::toString(VariableIdMapping* variableIdMapping) const {
     if(isVarValOp())
       ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<rhsVal().toString();
     else
-      throw "Error: Constraint::toString: unknown operator.";
+      throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
   }
   return ss.str();
 }
@@ -241,7 +241,7 @@ string Constraint::toAssertionString(VariableIdMapping* variableIdMapping) const
     if(isVarValOp())
       ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<rhsVal().toString();
     else
-      throw "Error: Constraint::toString: unknown operator.";
+      throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
   }
   return ss.str();
 }
@@ -269,7 +269,7 @@ void Constraint::toStreamAsTuple(ostream& os) {
     os<<(_intVal.getIntValue());
     break;
   default:
-    throw "Constraint::toStream: unknown operator.";
+    throw CodeThorn::Exception( "Constraint::toStream: unknown operator.");
   }
   os<<")";
 }
@@ -298,7 +298,7 @@ string Constraint::operatorStringFromStream(istream& is) {
   if(op=="!="||op=="=="||op=="##")
     return op;
   else {
-    throw "Error: unknown operator in parsing constraint.";
+    throw CodeThorn::Exception( "Error: unknown operator in parsing constraint.");
   }
 }
 
@@ -325,7 +325,7 @@ void Constraint::fromStream(istream& is) {
   VariableId __varId; 
   AValue __varAValue; 
   is>>c;
-  if(c!='V') throw "Error: Syntax error Constraint. Expected VariableId.";
+  if(c!='V') throw CodeThorn::Exception( "Error: Syntax error Constraint. Expected VariableId.");
   is>>__varIdCode;
   assert(__varIdCode>=0);
   __varId.setIdCode(__varIdCode);
@@ -373,7 +373,7 @@ string Constraint::opToString() const {
  */
 void Constraint::swapVars() {
   if(!isVarVarOp()) {
-    throw "Error: Constraint::swapVars on non var-var constraint.";
+    throw CodeThorn::Exception( "Error: Constraint::swapVars on non var-var constraint.");
   }
   VariableId tmp=_lhsVar;
   _lhsVar=_rhsVar;
@@ -439,7 +439,7 @@ ConstraintSet ConstraintSet::invertedConstraints() {
       result.addDisequality();
       break;
     default:
-      throw "Error: ConstraintSet::invertedConstraints: unknown or unsupported operator.";
+      throw CodeThorn::Exception( "Error: ConstraintSet::invertedConstraints: unknown or unsupported operator.");
     }
   }
   return result;
@@ -469,7 +469,7 @@ void ConstraintSet::invertConstraints() {
       // remains unchanged
       break;
     default:
-      throw "Error: ConstraintSet::invertedConstraints: unknown or unsupported operator.";
+      throw CodeThorn::Exception( "Error: ConstraintSet::invertedConstraints: unknown or unsupported operator.");
     }
   }
 }
@@ -671,10 +671,10 @@ void ConstraintSet::addConstraint(Constraint c) {
     return;
   }
   default:
-    throw "Internal error: ConstraintSet::insert: unknown operator.";
+    throw CodeThorn::Exception( "Internal error: ConstraintSet::insert: unknown operator.");
   }
   // all other cases (no constraint already in the set is effected)
-  throw "Internal error: ConstraintSet::insert: unknown combination of constraints.";
+  throw CodeThorn::Exception( "Internal error: ConstraintSet::insert: unknown combination of constraints.");
   //set<Constraint>::insert(c);
 }
 
