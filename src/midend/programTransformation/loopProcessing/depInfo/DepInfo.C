@@ -99,12 +99,14 @@ std::string DepInfo :: toString() const
   int num1, num2;
   CarryLevels(num1,num2);
   std::stringstream out;
-  out << rows() << "*" << cols()<<" ";
+  out <<"Distance Matrix size:"<< rows() << "*" << cols()<<" ";
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
   out << "CarryLevel = ("<<num1 << "," << num2 << ") ";
   if (is_precise()) 
       out << " Is precise ";
-  out << AstToString(SrcRef())<<getAstLocation(SrcRef())<<"->" << AstToString(SnkRef())<<getAstLocation(SnkRef())<<" ";
+  else
+      out<<  " Not precise";
+  out <<"\n\t"<< AstToString(SrcRef())<<getAstLocation(SrcRef())<<"->" <<"\n\t"<< AstToString(SnkRef())<<getAstLocation(SnkRef())<<"\n";
   for (int i = 0; i < rows(); i++) {
     for (int j = 0; j < cols(); j++) {
        out << Entry( i, j).toString() << ";";
