@@ -282,7 +282,7 @@ SgSymbol::get_mangled_name() const
                if (labelStatement == NULL)
                   {
                     assert(symbol->get_numeric_label_value() >= 0);
-                    mangledName = StringUtility::numberToString(symbol->get_numeric_label_value());
+                    mangledName = rose::StringUtility::numberToString(symbol->get_numeric_label_value());
                   }
                  else
                   {
@@ -592,12 +592,12 @@ SgLabelSymbol::get_name() const
           int numericLabel = get_numeric_label_value();
        // printf ("SgLabelSymbol::get_name(): numericLabel = %d \n",numericLabel);
 
-          name = StringUtility::numberToString(numericLabel);
+          name = rose::StringUtility::numberToString(numericLabel);
 #else
           if (fortranStatement != NULL)
              {
                int numericLabel = get_numeric_label_value();
-               name = StringUtility::numberToString(numericLabel);
+               name = rose::StringUtility::numberToString(numericLabel);
              }
             else
              {

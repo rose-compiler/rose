@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include "markLhsValues.h"
 #include "fixupNames.h"
+#include "FileUtility.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -114,6 +115,7 @@ namespace SageInterface
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 using namespace SageBuilder;
 
 
@@ -6979,6 +6981,9 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
        // DQ (7/19/2015): Added missing case:
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
+               // Liao 6/24/2016. Handle the simplest case: both arguments are parameter pack.
+               if (arg2->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument) 
+                 return true; 
                ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
              }
 

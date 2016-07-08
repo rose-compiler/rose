@@ -4,6 +4,7 @@
 #include "rose.h"
 
 using namespace std;
+using namespace rose;
 
 int
 main ( int argc, char* argv[] )
