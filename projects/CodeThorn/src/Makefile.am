@@ -48,6 +48,7 @@ libspray_la_SOURCES=\
  RDAnalysis.h \
  RDAstAttribute.h \
  RDTransferFunctions.h \
+ SprayException.h \
  WorkListSeq.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
@@ -101,6 +102,7 @@ codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
+  CodeThornException.h \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
   ParProExplorer.C                 \
@@ -445,6 +447,7 @@ analyterix_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
+  CodeThornException.h \
   DataDependenceVisualizer.C \
   DataDependenceVisualizer.h \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \

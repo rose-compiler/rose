@@ -13,6 +13,7 @@
 #include "Miscellaneous2.h"
 #include "AnalysisAbstractionLayer.h"
 #include "SpotConnection.h"
+#include "CodeThornException.h"
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -853,7 +854,7 @@ EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, Constr
     }
     return estateSet.process(newEState);
   }
-  throw "Error: Analyzer::processNewOrExisting: programmatic error.";
+  throw CodeThorn::Exception("Error: Analyzer::processNewOrExisting: programmatic error.");
 }
 
 list<EState> elistify() {
@@ -1376,7 +1377,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         estateList.push_back(createEState(edge.target(),newPState,cset));
         return estateList;
       } else {
-        throw "Error: currently inc/dec operators are only supported for variables.";
+        throw CodeThorn::Exception("Error: currently inc/dec operators are only supported for variables.");
       }
     }
 

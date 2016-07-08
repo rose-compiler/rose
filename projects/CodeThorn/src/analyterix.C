@@ -53,6 +53,9 @@
 // temporary
 #include "IntervalTransferFunctions.h"
 
+#include "SprayException.h"
+#include "CodeThornException.h"
+
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
@@ -640,6 +643,15 @@ int main(int argc, char* argv[]) {
   cout<< "STATUS: finished."<<endl;
 
   // main function try-catch
+  } catch(CodeThorn::Exception& e) {
+    cerr << "CodeThorn::Exception raised: " << e.what() << endl;
+    return 1;
+  } catch(SPRAY::Exception& e) {
+    cerr << "Spray::Exception raised: " << e.what() << endl;
+    return 1;
+  } catch(std::exception& e) {
+    cerr << "std::exception raised: " << e.what() << endl;
+    return 1;
   } catch(char* str) {
     cerr << "*Exception raised: " << str << endl;
     return 1;

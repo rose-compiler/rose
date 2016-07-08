@@ -1,18 +1,21 @@
 #ifndef CODETHORN_EXCEPTION
 #define CODETHORN_EXCEPTION
 
-  class CodeThornException : public std::exception {
+#include <exception>
+
+namespace CodeThorn {
+  class Exception : public std::exception {
   public:
-    CodeThornException(std::string text) {
+    Exception(std::string text) {
       this->text=text;
     }
     const char* what() const throw() {
       return text.c_str();
     }
-    ~CodeThornException() throw() {
+    ~Exception() throw() {
     }
   private:
     std::string text;
   };
-
+} // end of namespace CodeThorn
 #endif

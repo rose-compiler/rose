@@ -1,18 +1,21 @@
 #ifndef SPRAY_EXCEPTION
 #define SPRAY_EXCEPTION
 
-  class SprayException : public std::exception {
+#include <exception>
+
+namespace SPRAY {
+  class Exception : public std::exception {
   public:
-    SprayException(std::string text) {
+    Exception(std::string text) {
       this->text=text;
     }
     const char* what() const throw() {
       return text.c_str();
     }
-    ~SprayException() throw() {
+    ~Exception() throw() {
     }
   private:
     std::string text;
   };
-
+} // end of namespace SPRAY
 #endif

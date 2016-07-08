@@ -1,4 +1,5 @@
 #include "PropertyValueTable.h"
+#include "CodeThornException.h"
 
 // basic file operations
 #include <iostream>
@@ -84,11 +85,11 @@ void PropertyValueTable::updatePropertyValue(size_t num, PropertyValue value) {
     setPropertyValue(num,value);
   case PROPERTY_VALUE_YES:
     if(value!=PROPERTY_VALUE_YES)
-      throw "Error: property value table: reset of YES.";
+      throw CodeThorn::Exception("Error: property value table: reset of YES.");
     break;
   case PROPERTY_VALUE_NO:
     if(value!=PROPERTY_VALUE_NO)
-      throw "Error: property value table: reset of NO.";
+      throw CodeThorn::Exception("Error: property value table: reset of NO.");
     break;
   default:assert(0);
   }
@@ -99,7 +100,7 @@ void PropertyValueTable::strictUpdatePropertyValue(size_t num, PropertyValue val
   if(getPropertyValue(num)==PROPERTY_VALUE_UNKNOWN) {
     setPropertyValue(num,value);
   } else {
-    throw "Error: property value table: reset of value.";
+    throw CodeThorn::Exception("Error: property value table: reset of value.");
   }
 }
 
@@ -108,7 +109,7 @@ void PropertyValueTable::strictUpdateCounterexample(size_t num, string ce) {
   if(_counterexamples[num]=="") {
     _counterexamples[num] = ce;
   } else {
-    throw "Error: property value table: counterexample already exists.";
+    throw CodeThorn::Exception("Error: property value table: counterexample already exists.");
   }
 }
 
