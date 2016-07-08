@@ -2,6 +2,8 @@
 #include <fstream>
 
 using namespace std;
+using namespace rose;
+
 void
 print_out_all_macros(std::ostream& outStream, SgProject* project){
      typedef std::map<std::string, std::vector<PreprocessingInfo*>* > attached_attr_type;

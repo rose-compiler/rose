@@ -11,6 +11,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+using namespace rose;
+
 /** Non-parsing constructor. If you're creating an executable from scratch then call this function and you're done. But if
  *  you're parsing an existing file then call parse() in order to map the file's contents into memory for parsing. */
 void

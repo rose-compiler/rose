@@ -17,6 +17,7 @@
 #define GENERATE_AST_COMMENTS 0
 
 using namespace std;
+using namespace rose;
 
 void
 Grammar::buildAtermGenerationSupportFunctions(AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile)

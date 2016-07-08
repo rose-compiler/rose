@@ -46,6 +46,7 @@
 // #include "rose.h"
 #include "sage3basic.h"
 
+#include "FileUtility.h"
 #include "general_token_defs.h"
 
 
@@ -66,6 +67,7 @@
 #define ERROR_CHECKING 0
 
 using namespace std;
+using namespace rose;
 
 // namespace for token ID values.
 using namespace ROSE_token_ids;

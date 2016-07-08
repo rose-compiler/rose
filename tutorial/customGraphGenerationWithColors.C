@@ -1,6 +1,7 @@
 #include "rose.h"
 
 using namespace std;
+using namespace rose;
 
 class EdgeType
    {

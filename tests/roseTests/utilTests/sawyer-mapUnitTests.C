@@ -306,6 +306,28 @@ void insert_multiple() {
     ASSERT_always_require(m1["ccc"] == 4);
 }
 
+void stdMapIterators() {
+    typedef std::map<std::string, int> Map;
+    Map map;
+
+    map.insert(std::make_pair("eye", 1));
+    map.insert(std::make_pair("nose", 2));
+    map.insert(std::make_pair("mouth", 3));
+    map.insert(std::make_pair("neck", 4));
+    map.insert(std::make_pair("", 5));
+
+    Map::iterator ni = map.find("mouth");
+    Map::const_iterator cni = ni;
+
+    ASSERT_always_require(ni != map.end());
+    ASSERT_always_require(ni->first == "mouth");
+    ASSERT_always_require(ni->second == 3);
+
+    ni->second = 33;
+    ASSERT_always_require(ni->second == 33);
+    ASSERT_always_require(map["mouth"] == 33);
+}
+
 template<class Map>
 void iterators() {
     std::cout <<"iterator functionality:\n";
@@ -602,6 +624,7 @@ int main() {
     erase_one<Map>();
     erase_other<Map>();
     insert_multiple<Map>();
+    stdMapIterators();
     iterators<Map>();
     erase_iterator<Map>();
     lowerBound();

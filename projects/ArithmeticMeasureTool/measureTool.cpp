@@ -6,6 +6,7 @@
 #include <ArrayAnnot.h>
 #include <ArrayRewrite.h>
 
+//#define USE_Algorithm_V2 1 // testing algorithm 2 for static counting
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -70,7 +71,8 @@ bool processStatements(SgNode* n)
        }
      } // end verification
    } 
-  } 
+  }
+  //TODO: merge this into the previous branch: parsing and verifying the same time.
   // Get reference FP operation counting values from pragma, if available.
   // This is no longer useful since we use bottomup traversal!!
   // We should split this into another phase!!
@@ -109,12 +111,18 @@ int main (int argc, char** argv)
     cout<<endl;
     cout<<"The optional "<<report_option<<" option is provided for users to specify where to save the results"<<endl;
     cout<<"By default, the results will be saved into a file named report.txt"<<endl;
+    cout<<"Detailed instructions: https://en.wikibooks.org/wiki/ROSE_Compiler_Framework/Arithmetic_intensity_measuring_tool "<<endl;
     cout<<"----------------------Generic Help for ROSE tools--------------------------"<<endl;
   }
 
   if (CommandlineProcessing::isOption(argvList,"-static-counting-only","", true))
   {
     running_mode = e_static_counting; 
+  }
+
+  if (CommandlineProcessing::isOption(argvList,"-use-algorithm-v2","", true))
+  {
+    algorithm_version = 2;
   }
 
 
@@ -162,6 +170,14 @@ int main (int argc, char** argv)
     SgSourceFile* s_file = isSgSourceFile(cur_file);
     if (s_file != NULL)
     {
+
+      if ((running_mode ==  e_static_counting) && algorithm_version == 2)
+      {
+        OperationCountingTraversal oct;
+        FPCounters returnAttribute = oct.traverseWithinFile(s_file);
+        continue; // skip the rest loop iteration
+      }
+
       // Preorder is not friendly for transformation
       //exampleTraversal.traverseWithinFile(s_file, postorder);
       Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(s_file,V_SgStatement);

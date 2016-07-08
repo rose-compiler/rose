@@ -17,7 +17,7 @@
 
 #include "dslSupport.h"
 
-using namespace SPRAY; 
+using namespace SPRAY;
 
 extern VariableIdMapping variableIdMapping;
 
@@ -33,6 +33,7 @@ extern VariableIdMapping variableIdMapping;
 
 
 using namespace std;
+using namespace rose;
 
 using namespace DSL_Support;
 

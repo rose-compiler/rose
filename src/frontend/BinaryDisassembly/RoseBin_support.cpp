@@ -3,6 +3,7 @@
 #include "RoseBin_support.h"
 
 using namespace std;
+using namespace rose;
 using namespace RoseBin_Def;
 
 bool RoseBin_support::DEBUG_M=false;
