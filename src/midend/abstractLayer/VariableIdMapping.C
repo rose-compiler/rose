@@ -623,6 +623,8 @@ VariableId::VariableId():_id(-1){
 //VariableId::VariableId(int id):_id(id){
 //}
 
+const char * const VariableId::idKindIndicator = "V";
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -630,7 +632,7 @@ VariableId::VariableId():_id(-1){
 string
 VariableId::toString() const {
   stringstream ss;
-  ss<<"V"<<_id;
+  ss<<idKindIndicator<<_id;
   return ss.str();
 }
 
