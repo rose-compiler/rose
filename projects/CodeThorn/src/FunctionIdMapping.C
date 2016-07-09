@@ -247,8 +247,7 @@ std::string FunctionIdMapping::getStringFromFunctionId(FunctionId id) const {
 FunctionId::FunctionId():_id(-1){
 }
 
-
-
+const char * const FunctionId::idKindIndicator = "F";
 
 string FunctionId::toString(const char* prefix) const {
   ostringstream ss;

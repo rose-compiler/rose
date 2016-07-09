@@ -70,6 +70,7 @@ bool option_generalanalysis=false;
 bool option_rose_rd_analysis=false;
 bool option_fi_constanalysis=false;
 const char* csvConstResultFileName=0;
+const char* csvAddressTakenResultFileName=0;
 bool option_rd_analysis=false;
 bool option_ud_analysis=false;
 bool option_lv_analysis=false;
@@ -225,9 +226,23 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     //cout << "STATUS: computed address taken sets:"<<endl;
     //fipa.getFIPointerInfo()->printInfoSets();
 
+    bool createCsv = false;
+    ofstream addressTakenCsvFile;
+    if(csvAddressTakenResultFileName) {
+      std::string addressTakenCsvFileName = option_prefix;
+      addressTakenCsvFileName += csvAddressTakenResultFileName;
+      addressTakenCsvFile.open(addressTakenCsvFileName.c_str());
+      createCsv = true;
+    }
+
+    cout << "INFO: annotating declarations of address taken variables and functions."<<endl;
+
     // Annotate declarations/definitions of variables from which the address was taken:
     VariableIdSet addressTakenVariableIds = fipa.getAddressTakenVariables();
     for(VariableIdSet::const_iterator idIter = addressTakenVariableIds.begin(); idIter != addressTakenVariableIds.end(); ++idIter) {
+      if(createCsv) {
+        addressTakenCsvFile << VariableId::idKindIndicator << "," << variableIdMapping.uniqueShortVariableName(*idIter) << ",1" << endl;
+      }
       // Determine the variable declaration/definition:
       SgLocatedNode* decl = variableIdMapping.getVariableDeclaration(*idIter);
       if(!decl) {
@@ -268,6 +283,9 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     // Annotate declarations and definitions of functions from which the address was taken:
     FunctionIdSet addressTakenFunctionIds = fipa.getAddressTakenFunctions();
     for(FunctionIdSet::const_iterator idIter = addressTakenFunctionIds.begin(); idIter != addressTakenFunctionIds.end(); ++idIter) {
+      if(createCsv) {
+        addressTakenCsvFile << FunctionId::idKindIndicator << "," << functionIdMapping.getUniqueShortNameFromFunctionId(*idIter) << ",1" << endl;
+      }
       if(SgFunctionDeclaration* decl = functionIdMapping.getFunctionDeclaration(*idIter)) {
         // Create the comment:
         ostringstream commentStream;
@@ -287,6 +305,10 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         cout << "ERROR: No declaration for " << functionIdMapping.getUniqueShortNameFromFunctionId(*idIter) << " available." << endl;
         ROSE_ASSERT(false);
       }
+    }
+
+    if(createCsv) {
+      addressTakenCsvFile.close();
     }
 
 #if 0
@@ -494,6 +516,7 @@ int main(int argc, char* argv[]) {
       ("lv-analysis", "perform live variables analysis.")
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
+      ("csv-at-analysis",po::value< string >(), "generate csv-file [arg] with address-taken analysis data.")
       ("icfg-dot", "generates the ICFG as dot file.")
       ("optimize-icfg", "prunes conditions with empty blocks, block begin, and block end icfg nodes.")
       ("no-optmize-icfg", "does not optimize icfg.")
@@ -569,11 +592,16 @@ int main(int argc, char* argv[]) {
     if(args.count("at-analysis")) {
       option_at_analysis=true;
     }
+    if (args.count("csv-at-analysis")) {
+      csvAddressTakenResultFileName=args["csv-at-analysis"].as<string>().c_str();
+      option_at_analysis=true;
+    }
     // clean up string-options in argv
     for (int i=1; i<argc; ++i) {
       if (string(argv[i]) == "--prefix" 
-          || string(argv[i]) == "--csv-const-result"
-          ) {
+       || string(argv[i]) == "--csv-fi-constanalysis"
+       || string(argv[i]) == "--csv-at-analysis"
+      ) {
         // do not confuse ROSE frontend
         argv[i] = strdup("");
         assert(i+1<argc);
