@@ -30,4 +30,3 @@ class foo
                map<int>::iterator it;
              }
    };
-

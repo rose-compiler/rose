@@ -22,21 +22,25 @@ namespace Partitioner2 {
 
 /** Address usage item.
  *
- *  This struct represents one user for an address interval.  The user can be either an instruction with a valid basic block
- *  (since every instruction in the CFG belongs to exactly one basic block in the CFG), or a data block.  Address usage items
- *  are usually ordered by their starting address. */
+ *  This struct represents one user for an address interval.  The user can be either an instruction with at least one valid
+ *  basic block (since every instruction in the CFG belongs to at least one basic block in the CFG), or a data block.  Address
+ *  usage items are usually ordered by their starting address. */
 class AddressUser {
     SgAsmInstruction *insn_;
-    BasicBlock::Ptr bblock_;
+    std::vector<BasicBlock::Ptr> bblocks_;
     OwnedDataBlock odblock_;
 public:
     AddressUser(): insn_(NULL) {}                       // needed by std::vector<AddressUser>, but otherwise unused
 
-    /** Constructs new user which is an instruction and its basic block. The instruction must not be the null pointer, but the
-     *  basic block may. A null basic block is generally only useful when searching for a particular instruction in an
-     *  AddressUsers object. */
-    AddressUser(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock): insn_(insn), bblock_(bblock) {
+    /** Constructs new user which is an instruction and its basic block.
+     *
+     *  The instruction must not be the null pointer, but the basic block may as long as a null block user is not inserted into
+     *  the AUM. A null basic block is generally only useful when searching for a particular instruction in an AddressUsers
+     *  object. */
+    AddressUser(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock): insn_(insn) {
         ASSERT_not_null(insn_);
+        if (bblock)
+            bblocks_.push_back(bblock);
     }
 
     /** Constructs a new user which is a data block. The data block must not be the null pointer. */
@@ -55,15 +59,30 @@ public:
         return insn_;
     }
 
-    /** Returns the basic block.
+    /** Returns an arbitrary basic block.
      *
      *  Returns a non-null basic block if this is an instruction owner, otherwise returns the null pointer.  All instructions
-     *  in the AUM belong to a basic block and therefore have a non-null basic block pointer; non-instruction address owners
-     *  don't have basic blocks. */
-    BasicBlock::Ptr basicBlock() const {
-        return bblock_;
+     *  in the AUM belong to at least one basic block and therefore have a non-null basic block pointer; non-instruction
+     *  address owners don't have basic blocks. */
+    BasicBlock::Ptr firstBasicBlock() const {
+        return bblocks_.empty() ? BasicBlock::Ptr() : bblocks_[0];
     }
 
+    /** Returns all basic blocks to which this instruction belongs.
+     *
+     *  Returns a non-empty vector if this is an instruction owner, otherwise returns an empty vector. All instructions in the
+     *  AUM belong to at least one basic block and therefore return a non-empty vector; non-instruction owners don't have basic
+     *  blocks. */
+    const std::vector<BasicBlock::Ptr>& basicBlocks() const {
+        return bblocks_;
+    }
+
+    /** Add another basic block to the set of basic blocks. */
+    void insertBasicBlock(const BasicBlock::Ptr &bblock);
+
+    /** Remove a basic block from the set of basic blocks. */
+    void eraseBasicBlock(const BasicBlock::Ptr &bblock);
+    
     /** Returns the data block.
      *
      *  Returns a non-null data block if this is a data block address owner, otherwise returns the null pointer. */
@@ -85,37 +104,48 @@ public:
     }
     /** @} */
 
-    /** Determines if this user is a first instruction of a basic block. */
-    bool isBlockEntry() const {
-        return insn_ && bblock_ && insn_->get_address() == bblock_->address();
-    }
+    /** Determines if this user is a first instruction of a basic block.
+     *
+     *  If this user is the first instruction of some basic block then a pointer to that block is returned. An instruction can
+     *  only be the first instruction of a single basic block, although that instruction may appear internally in other basic
+     *  blocks as well. */
+    BasicBlock::Ptr isBlockEntry() const;
 
-    /** Compare two users for equality.  Two pairs are equal if and only if they point to the same instruction and the same
-     *  basic block, or they point to the same data block. */
-    bool operator==(const AddressUser &other) const {
-        return insn_==other.insn_ && bblock_==other.bblock_ && odblock_.dataBlock()==other.odblock_.dataBlock();
-    }
+    /** Compare two users for equality.
+     *
+     *  Two users are equal if and only if they point to the same instruction (or both null) having the same basic block owners
+     *  and they point to the same data block (or both null). This is used by the @ref Sawyer::Container::IntervalMap to decide
+     *  whether it's possible to join adjacent values. */
+    bool operator==(const AddressUser &other) const;
 
-    /** Compare two users for sorting.  Two users are compared according to their starting addresses.  If two instruction users
-     *  have the same starting address then they are necessarily the same instruction (i.e., instruction pointers are equal),
-     *  and they necessarily belong to the same basic block (basic block pointers are equal).  However, one or both of the
-     *  basic block pointers may be null, which happens when performing a binary search for an instruction when its basic block
-     *  is unknown. Data block ownership records compare only their data blocks and not ownership lists. */
+    /** Compare two users for sorting.
+     *
+     *  Two users are compared according to their starting addresses.  If two instruction users have the same starting address
+     *  then they are necessarily the same instruction (i.e., instruction pointers are equal) and thus belong to the same basic
+     *  block(s). The basic blocks are not considered in the comparison. Data block ownership records compare only their data
+     *  blocks and not ownership lists. */
     bool operator<(const AddressUser&) const;
 
     /** Print the pair on one line. */
     void print(std::ostream&) const;
+
+    /** Perform logic consistency checks.
+     *
+     *  Ensures that this object is logically consistent. If assertions are enabled this asserts, otherwise it returns false. */
+    bool isConsistent() const;
 };
 
 
 
 /** List of virtual address users.
  *
- *  This is a list of users of virtual addresses.  A user is either an instruction (and basic block owner) or a data block (and
- *  function and basic block owners). The list is maintained in a sorted order.  The class ensures that all users in the list
- *  have valid pointers and that the list contains no duplicates. */
+ *  This is a list of users of virtual addresses.  A user is either an instruction (and basic block owners) or a data block
+ *  (and function and basic block owners). The list is maintained in a sorted order according to instruction or data block
+ *  starting address.  The class ensures that all users in the list have valid pointers and that the list contains no
+ *  duplicates. */
 class AddressUsers {
     std::vector<AddressUser> users_;                    // sorted
+
 public:
     /** Constructs an empty list. */
     AddressUsers() {}
@@ -126,11 +156,12 @@ public:
     /** Constructs a list having one data block user. */
     explicit AddressUsers(const OwnedDataBlock &odb) { insertDataBlock(odb); }
 
-
+#if 0 // [Robb P Matzke 2016-06-30]: insn can be owned by multiple blocks now; use instructionExists(rose_addr_t) instead.
     /** Determines if an instruction exists in the list.
      *
      *  If the instruciton exists then its basic block pointer is returned, otherwise null. */
     BasicBlock::Ptr instructionExists(SgAsmInstruction*) const;
+#endif
 
     /** Determines if an instruction exists in the list.
      *
@@ -150,9 +181,17 @@ public:
      *  case an arbitrary one is returned. */
     Sawyer::Optional<OwnedDataBlock> dataBlockExists(rose_addr_t dbStart) const;
 
+    /** Find the basic block that starts at this address.
+     *
+     *  If this user is an instruction, then scan through its basic block owners (usually just one) and return a pointer to any
+     *  basic block that starts at this address.  Basic blocks in the AUM have unique starting addresses, thus this function
+     *  returns either the pointer to such a block or the null pointer. */
+    BasicBlock::Ptr findBasicBlock(rose_addr_t bbVa) const;
+
     /** Insert an instruction/basic block pair.
      *
-     *  Neither the instruction nor the basic block may be null.  The instruction must not already exist in the list. */
+     *  Neither the instruction nor the basic block may be null.  If this list already contains the specified instruction, then
+     *  the specified basic block is merged into its owner list. */
     void insertInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
 
     /** Insert a data block.
@@ -168,11 +207,11 @@ public:
      *  the specified record is not inserted. */
     void insert(const AddressUsers&);
 
-    /** Erase an instruction.
+    /** Erase an instruction/basic block pair from the list.
      *
-     *  Erases the specified instruction from the list.  If the instruction is null or the list does not contain the
-     *  instruction then this is a no-op. */
-    void eraseInstruction(SgAsmInstruction*);
+     *  Finds the specified instruction in the list and removes the specified basic block owner. If this results in the
+     *  instruction not being owned by any blocks then the instruction is removed. */
+    void eraseInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
 
     /** Erase a data block user.
      *
@@ -237,7 +276,7 @@ public:
      *  Returns a list of pointers to distinct basic blocks sorted by starting address.  The return value is not an
      *  AddressUsers because it is more useful to have a list of distinct basic blocks, and because the @ref instructionUsers
      *  method returns the other information already. */
-    std::vector<BasicBlock::Ptr> basicBlocks() const;
+    std::vector<BasicBlock::Ptr> instructionOwners() const;
 
     /** Returns all data blocks.
      *
@@ -259,16 +298,18 @@ public:
     AddressUsers union_(const AddressUsers&) const;
 
     /** True if two lists are equal. */
-    bool operator==(const AddressUsers &other) const {
-        return users_.size()==other.users_.size() && std::equal(users_.begin(), users_.end(), other.users_.begin());
-    }
+    bool operator==(const AddressUsers &other) const;
 
     /** Prints pairs space separated on a single line. */
     void print(std::ostream&) const;
 
-protected:
-    /** Checks whether the list satisfies all invariants.  This is used in pre- and post-conditions. */
+    /** Check logical consistency.
+     *
+     *  Ensures that this object is logically consistent. If assertions are enabled this asserts, otherwise it returns false. */
     bool isConsistent() const;
+
+protected:
+    std::vector<AddressUser>::iterator findInstruction(SgAsmInstruction*);
 };
 
 
@@ -346,9 +387,8 @@ public:
 
     /** Determines whether an instruction exists in the map.
      *
-     *  If the instruction exists in the map then a pointer to its basic block is returned, otherwise a null pointer is
-     *  returned. */
-    BasicBlock::Ptr instructionExists(SgAsmInstruction*) const;
+     *  If the instruction exists in the map then returns true, otherwise false. */
+    bool instructionExists(SgAsmInstruction*) const;
 
     /** Determines if an address is the start of an instruction.
      *
@@ -457,16 +497,17 @@ public:
 private:
     friend class Partitioner;
 
-    // Insert an instruction/block pair into the map.  The instruction must not already be present in the map.
+    // Insert an instruction/block pair into the map.
     void insertInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
 
     // Insert a data block into the map.  The data block must not be a null pointer and must not already exist in the map. A
     // data pointer is always inserted along with ownership information--which functions and basic blocks own this data block.
     void insertDataBlock(const OwnedDataBlock&);
 
-    // Remove an instruction from the map. The specified instruction is removed from the map.  If the pointer is null or the
-    // instruction does not exist in the map, then this is a no-op.
-    void eraseInstruction(SgAsmInstruction*);
+    // Remove an instruction/block pair from the map.  If the instruction exists in the map then the specified block is removed
+    // from the instruction's owner list. If this results in an empty owner list then the instruction is also removed.
+    // If the pointer is null or the instruction/block pair does not exist in the map, then this is a no-op.
+    void eraseInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
 
     // Remove a data block from the map.  The specified data block is removed from the map.  If the pointer is null or the data
     // block does not exist in the map, then this is a no-op.

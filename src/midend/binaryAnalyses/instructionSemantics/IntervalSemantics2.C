@@ -27,7 +27,6 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
     if (other->isBottom())
         return bottom_(get_width());
 
-    bool changed = true;
     Intervals newIntervals = intervals_;
     BOOST_FOREACH (const Interval &interval, other->intervals_.intervals())
         newIntervals.insert(interval);

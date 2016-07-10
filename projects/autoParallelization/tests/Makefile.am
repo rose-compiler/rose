@@ -41,6 +41,7 @@ scalar_output.c \
 scalar_privatization.c \
 scalar_true.c \
 shared.c \
+struct.c \
 plusPlusOp.c \
 true_dep.c \
 true_dep_2.c \
@@ -73,7 +74,8 @@ class_member.C \
 ifstmt.C \
 iterator2.C \
 iteratorloop.C \
-test20100223.C 
+test20100223.C \
+Hydro_applyVelocityBC.C
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet

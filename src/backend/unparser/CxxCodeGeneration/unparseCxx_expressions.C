@@ -214,16 +214,31 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
      ROSE_ASSERT(lambdaExp != NULL);
 
+     // Liao, 7/1/2016
+     // To workaround some wrong AST generated from RAJA LULESH code
+     // we clear skip base type flag of unparse_info
+     if (info.SkipBaseType())
+     {
+       cout<<"Warning in Unparse_ExprStmt::unparseLambdaExpression().  Unparse_Info has skipBaseType() set. Unset it now."<<endl;
+       //ROSE_ASSERT(false);
+       info.unset_SkipBaseType ();
+     }
+
      curprint(" [");
+     // if '=' or '&' exists
+     bool hasCaptureCharacter = false;
+     int commaCounter = 0;
 
      if (lambdaExp->get_capture_default() == true)
         {
           curprint("=");
+          hasCaptureCharacter = true; 
         }
 
      if (lambdaExp->get_default_is_by_reference() == true)
         {
           curprint("&");
+          hasCaptureCharacter = true;
         }
 
      ROSE_ASSERT(lambdaExp->get_lambda_capture_list() != NULL);
@@ -233,12 +248,22 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
           SgLambdaCapture* lambdaCapture = lambdaExp->get_lambda_capture_list()->get_capture_list()[i];
           ROSE_ASSERT(lambdaCapture != NULL);
 
-         // Liao 6/24/2016, we output ",item"
-         if (i!=0)
-          curprint(",");
 
           if (lambdaCapture->get_capture_variable() != NULL)
              {
+
+              // Liao 6/24/2016, we output ",item" when 
+              // When not output , : first comma and there is no previous = or & character
+              if (commaCounter == 0) // look backwards one identifier
+              {
+                if (hasCaptureCharacter)
+                  curprint(",");
+                commaCounter ++; 
+              }
+              else
+                curprint(",");
+
+
                if (lambdaCapture->get_capture_by_reference() == true)
                   {
                     curprint("&");

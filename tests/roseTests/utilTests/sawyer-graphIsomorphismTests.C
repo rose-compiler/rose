@@ -117,17 +117,18 @@ public:
         return false;
     }
 
-    void operator()(const Graph &g1, const VertexIds &x, const Graph &g2, const VertexIds &y) {
+    CsiNextAction operator()(const Graph &g1, const VertexIds &x, const Graph &g2, const VertexIds &y) {
         check(x.size() == y.size(), details() <<x.size() <<", " <<y.size());
         if (!allowDisconnectedSubgraphs_) {
             Graph g1sub = graphCopySubgraph(g1, x);
             if (!graphIsConnected(g1sub))
-                return;
+                return CSI_CONTINUE;
             Graph g2sub = graphCopySubgraph(g2, y);
             if (!graphIsConnected(g2sub))
-                return;
+                return CSI_CONTINUE;
         }
         check(isSolutionExpected(x, y), details() <<"x = " <<x <<", y = " <<y);
+        return CSI_CONTINUE;
     }
 
     void checkMissing() {
@@ -650,6 +651,12 @@ testLarger() {
     check(maxSubgraphs[0].first[2] == 2 && maxSubgraphs[0].second[2] == 3, "wrong solution");
     check(maxSubgraphs[0].first[3] == 3 && maxSubgraphs[0].second[3] == 2, "wrong solution");
     check(maxSubgraphs[0].first[4] == 4 && maxSubgraphs[0].second[4] == 4, "wrong solution");
+
+    // Verify that findFirstCommonIsomorphicSubgraph works
+    heading("slightly larget test (findFirstCommonIsomorphicSubgraph)");
+    std::pair<std::vector<size_t>, std::vector<size_t> > firstSoln =
+        findFirstCommonIsomorphicSubgraph(g1, g2, 3);
+    ASSERT_always_require2(firstSoln.first.size() == 3, boost::lexical_cast<std::string>(firstSoln.first.size()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -661,10 +668,11 @@ struct SolutionCounter {
 
     SolutionCounter(): nSolutions(0), largestSolution(0) {}
 
-    void operator()(const Graph &g1, const std::vector<size_t> &g1VertIds,
+    CsiNextAction operator()(const Graph &g1, const std::vector<size_t> &g1VertIds,
                     const Graph &g2, const std::vector<size_t> &g2VertIds) {
         ++nSolutions;
         largestSolution = std::max(largestSolution, g1VertIds.size());
+        return CSI_CONTINUE;
     }
 };
 
