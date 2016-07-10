@@ -7006,6 +7006,8 @@ bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrL
         {
 #if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
           printf ("In templateArgumentListEquivalence(): different list sizes: returning false \n");
+          printf ("   --- list1.size() = %zu \n",list1.size());
+          printf ("   --- list2.size() = %zu \n",list2.size());
 #endif
           return false;
         }
@@ -20687,12 +20689,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = X_typeChain[i];
           printf ("X_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- X_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("X type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }
         }
 
@@ -20701,12 +20705,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = Y_typeChain[i];
           printf ("Y_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- Y_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("Y type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }          
         }
 #endif
