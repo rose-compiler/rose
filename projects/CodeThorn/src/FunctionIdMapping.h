@@ -66,7 +66,7 @@ public:
   SgFunctionType* getTypeFromFunctionId(FunctionId) const;
 
   bool isTemporaryFunctionId(FunctionId id) const;
-  std::string getSymbolNameFromFunctionId(FunctionId id) const;
+  std::string getFunctionNameFromFunctionId(FunctionId id) const;
   std::string getUniqueShortNameFromFunctionId(FunctionId id) const;
 
   // Adds the given symbol to the mapping

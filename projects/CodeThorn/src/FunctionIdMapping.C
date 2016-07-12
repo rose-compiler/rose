@@ -34,7 +34,7 @@ std::string FunctionIdMapping::getFunctionIdSetAsString(const FunctionIdSet& set
   std::ostringstream ostr;
   ostr << "[";
   for(FunctionIdSet::const_iterator it = set.begin(); it != set.end(); ) {
-    ostr << "<" << (*it).toString() << ", " << getSymbolNameFromFunctionId(*it)  << ">";
+    ostr << "<" << (*it).toString() << ", " << getFunctionNameFromFunctionId(*it)  << ">";
     it++;
     if(it != set.end()) {
       ostr << ", ";
@@ -141,7 +141,7 @@ SgSymbol* FunctionIdMapping::getSymbolFromFunctionId(FunctionId id) const {
 }
 
 
-string FunctionIdMapping::getSymbolNameFromFunctionId(FunctionId id) const {
+string FunctionIdMapping::getFunctionNameFromFunctionId(FunctionId id) const {
   SgSymbol* sym=getSymbolFromFunctionId(id);
   return SgNodeHelper::symbolToString(sym);
 }
@@ -152,7 +152,7 @@ string FunctionIdMapping::getUniqueShortNameFromFunctionId(FunctionId id) const 
     if(!id.isValid())
       return "$invalidFunctionId";
     else
-      return getSymbolNameFromFunctionId(id)+"_"+id.toString("");
+      return getFunctionNameFromFunctionId(id)+"_"+id.toString("");
   } else {
     return string("tmp")+"_"+id.toString("");
   }

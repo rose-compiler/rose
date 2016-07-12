@@ -289,7 +289,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       if(SgFunctionDeclaration* decl = functionIdMapping.getFunctionDeclaration(*idIter)) {
         // Create the comment:
         ostringstream commentStream;
-        commentStream << "/* Address of \"" << functionIdMapping.getSymbolNameFromFunctionId(*idIter) << "(...)\" is "
+        commentStream << "/* Address of \"" << functionIdMapping.getFunctionNameFromFunctionId(*idIter) << "(...)\" is "
                       << "presumably taken.*/";
 
         // Annotate first declaration:
