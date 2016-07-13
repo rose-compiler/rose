@@ -3,6 +3,8 @@
 #include "FunctionIdMapping.h"
 #include "RoseAst.h"
 
+#include "SprayException.h"
+
 using namespace std;
 using namespace SPRAY;
 
@@ -212,7 +214,7 @@ void FunctionIdMapping::deleteUniqueTemporaryFunctionId(FunctionId varFunctionId
     delete getSymbolFromFunctionId(varFunctionId);
   }
   else
-    throw "FunctionIdMapping::deleteUniqueTemporarySymbol: improper id operation.";
+    throw SPRAY::Exception("FunctionIdMapping::deleteUniqueTemporarySymbol: improper id operation.");
 }
 
 
