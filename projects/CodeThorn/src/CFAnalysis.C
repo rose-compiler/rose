@@ -753,7 +753,20 @@ Flow CFAnalysis::flow(SgNode* node) {
     // search for all functions and union flow for all functions
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       if(isSgFunctionDefinition(*i)) {
-        i.skipChildrenOnForward();
+        // schroder3 (2016-07-12): We can not skip the children of a function definition
+        //  because there might be a member function definition inside the function definition.
+        //  Example:
+        //   int main() {
+        //     class A {
+        //      public:
+        //       void mf() {
+        //         int i = 2;
+        //       }
+        //     };
+        //   }
+        //
+        // i.skipChildrenOnForward();
+
         //cout << "STATUS: Generating flow for function "<<SgNodeHelper::getFunctionName(*i)<<endl;
         tmpEdgeSet=flow(*i);
         edgeSet+=tmpEdgeSet;
