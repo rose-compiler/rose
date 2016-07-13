@@ -1215,7 +1215,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              {
                iter++;
                tempHeaderFile = *iter;
-#if 1
+#if 0
                printf ("In processCommandLine(): Adding tempHeaderFile = %s to p_preincludeFileList \n",tempHeaderFile.c_str());
 #endif
                p_preincludeFileList.push_back(tempHeaderFile);
