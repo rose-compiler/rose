@@ -1,6 +1,7 @@
 # Non-recursive Makefile
 
 mAbstractLayer_includeHeaders=\
+	$(mAbstractLayerPath)/SprayException.h \
 	$(mAbstractLayerPath)/AstAnnotator.h \
 	$(mAbstractLayerPath)/DFAstAttribute.h \
 	$(mAbstractLayerPath)/CPAstAttributeInterface.h \
