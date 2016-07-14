@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <Sawyer/IntervalMap.h>
 
-using namespace StringUtility;
+using namespace rose::StringUtility;
 
 int
 main(int argc, char *argv[], char *envp[]) {

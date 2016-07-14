@@ -5,6 +5,7 @@
 #include <Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
+using namespace rose;
 using namespace Sawyer::Message::Common;
 using namespace StringUtility;
 using namespace SageInterface;

@@ -131,6 +131,25 @@ void dumpDfCfg(std::ostream&, const DfCfg&);
  *  functions own the target block of a function call edge then we need to choose the "best" function to use. */
 Function::Ptr bestSummaryFunction(const FunctionSet &functions);
 
+/** Find the return vertex.
+ *
+ *  Finds the FUNCRET vertex. Function returns all flow into this special vertex, but if there are no function return blocks
+ *  then this vertex also doesn't exist (in which case the end iterator is returned).  Do not call this if there's a chance
+ *  that the data-flow CFG has more than one FUNCRET vertex. */
+template<class DfCfg>
+typename Sawyer::Container::GraphTraits<DfCfg>::VertexIterator
+findReturnVertex(DfCfg &dfCfg) {
+    using namespace Sawyer::Container;
+    typename GraphTraits<DfCfg>::VertexIterator retval = dfCfg.vertices().end();
+    for (typename GraphTraits<DfCfg>::VertexIterator vi = dfCfg.vertices().begin(); vi != dfCfg.vertices().end(); ++vi) {
+        if (vi->value().type() == DfCfgVertex::FUNCRET) {
+            ASSERT_require(retval == dfCfg.vertices().end());
+            retval = vi;
+        }
+    }
+    return retval;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Transfer function
 //

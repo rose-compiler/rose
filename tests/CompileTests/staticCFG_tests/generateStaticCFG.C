@@ -10,6 +10,7 @@
 #include "rose.h"
 //#include <algorithm>
 using namespace std;
+using namespace rose;
 
 int main(int argc, char *argv[]) 
 {

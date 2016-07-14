@@ -14,6 +14,8 @@
 
 #include "sageCommonSourceHeader.h"
 
+using namespace rose;
+
 extern an_il_header il_header;
 
 int

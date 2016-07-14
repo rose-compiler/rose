@@ -8,6 +8,7 @@ static const char *description = "Parses the specimen given on the command line 
 #include <AsmUnparser_compat.h>
 #include <Partitioner2/Engine.h>
 
+using namespace rose;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
 struct Counter: AstSimpleProcessing {

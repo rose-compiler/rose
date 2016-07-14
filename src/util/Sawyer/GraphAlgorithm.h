@@ -279,14 +279,23 @@ public:
     void progress(size_t size) {}
 };
 
+/** How the CSI algorith should proceed. */
+enum CsiNextAction {
+    CSI_CONTINUE,                                       /**< Continue searching for more solutions. */
+    CSI_ABORT                                           /**< Return to caller without further searching. */
+};
+
 /** Functor called for each common subgraph isomorphism solution.
  *
- *  This functor is called whenever a solution is found for the common subgraph isomorphism problem. It takes two graph
- *  arguments and two vectors of vertex IDs, one for each graph.  The vectors are parallel: @p x[i] in @p g1 is isomorphic to
- *  @p y[i] in @p g2 for all @p i.
+ *  This functor is called whenever a solution is found for the common subgraph isomorphism problem. Users routinely write
+ *  their own solution handler. This one serves only as an example and prints the solution vectors to standard output.
  *
- *  Users routinely write their own solution handler. This one serves only as an example and prints the solution vectors to
- *  standard output. */
+ *  A solution processor takes two graph arguments and two vectors of vertex IDs, one for each graph.  The vectors are
+ *  parallel: @p x[i] in @p g1 is isomorphic to @p y[i] in @p g2 for all @p i.
+ *
+ *  A solution processor returns a code that indicates whether the algorithm should search for additional solutions or return
+ *  to its caller. Throwing an exception from the solution processor is another valid way to return from the algorithm,
+ *  although it may be slower than returning the abort code. */
 template<class Graph>
 class CsiShowSolution {
     size_t n;
@@ -296,8 +305,9 @@ public:
     /** Functor.
      *
      *  The vector @p x contains vertex IDs from graph @p g1, and @p y contains IDs from @p g2. Both vectors will always be the
-     *  same length.  This implementation prints the vectors @p w and @p y to standard output. */
-    void operator()(const Graph &g1, const std::vector<size_t> &x, const Graph &g2, const std::vector<size_t> &y) {
+     *  same length.  This implementation prints the vectors @p w and @p y to standard output. See the class definition for
+     *  more information. */
+    CsiNextAction operator()(const Graph &g1, const std::vector<size_t> &x, const Graph &g2, const std::vector<size_t> &y) {
         ASSERT_require(x.size() == y.size());
         std::cout <<"Common subgraph isomorphism solution #" <<n <<" found:\n"
                   <<"  x = [";
@@ -309,23 +319,33 @@ public:
             std::cout <<" " <<j;
         std::cout <<" ]\n";
         ++n;
+        return CSI_CONTINUE;
     }
 };
 
 /** Common subgraph isomorphism solver.
  *
- *  Finds subgraphs of two given graphs where the subgraphs are isomorphic to one another. Each time a solution is found, the
- *  @p SolutionProcessor is invoked. Users will typically provide their own solution process since the default processor, @ref
- *  CsiShowSolution, only prints the solutions to standard output.  The solver assumes that any vertex in the first graph can
- *  be isomorphic to any vertex of the second graph unless the user provides his own equivalence predicate. The default
- *  predicate, @ref CsiEquivalence, allows any vertex to be isomorphic to any other vertex (the solver additionally requires
- *  that the two subgraphs of any solution have the same number of edges). Providing an equivalence predicate can substantially
- *  reduce the search space, as can limiting the minimum size of solutions.
+ *  Finds subgraphs of two given graphs where the subgraphs are isomorphic to one another.
+ *
+ *  The solver assumes that any vertex in the first graph can be isomorphic to any vertex of the second graph unless the user
+ *  provides his own equivalence predicate. The default predicate, @ref CsiEquivalence, allows any vertex to be isomorphic to
+ *  any other vertex (the solver additionally requires that the two subgraphs of any solution have the same number of
+ *  edges). Providing an equivalence predicate can substantially reduce the search space, as can limiting the minimum size of
+ *  solutions.
+ *
+ *  Each time a solution is found, the @p SolutionProcessor is invoked. Users will typically provide their own solution
+ *  processor since the default processor, @ref CsiShowSolution, only prints the solutions to standard output. The solution
+ *  processor is only called for complete solutions when the end of a search path is reached; it is not called for intermediate
+ *  solutions.  The processor can return a code that indicates how the algorithm should proceed. See @ref CsiShowSolution for
+ *  more information.
  *
  *  To use this class, instantiate an instance and specify the two graphs to be compared (they can both be the same graph if
  *  desired), the solution handler callback, and the vertex equivalence predicate. Then, if necessary, make adjustements to the
  *  callback and/or predicate. Finally, invoke the @ref run method. The graphs must not be modified between the time this
- *  solver is created and the @ref run method returns.*/
+ *  solver is created and the @ref run method returns.
+ *
+ *  The following functions are convenient wrappers around this class: @ref findCommonIsomorphicSubgraphs, @ref
+ *  findFirstCommonIsomorphicSubgraph, @ref findIsomorphicSubgraphs, @ref findMaximumCommonIsomorphicSubgraphs. */
 template<class Graph,
          class SolutionProcessor = CsiShowSolution<Graph>,
          class EquivalenceP = CsiEquivalence<Graph> >
@@ -339,6 +359,7 @@ class CommonSubgraphIsomorphism {
     SolutionProcessor solutionProcessor_;               // functor to call for each solution
     EquivalenceP equivalenceP_;                         // predicates to determine if two vertices can be equivalent
     size_t minimumSolutionSize_;                        // size of smallest permitted solutions
+    size_t maximumSolutionSize_;                        // size of largest permitted solutions
     bool monotonicallyIncreasing_;                      // size of solutions increases
     bool findingCommonSubgraphs_;                       // solutions are subgraphs of both graphs or only second graph?
 
@@ -399,7 +420,7 @@ public:
      *  Constructs a solver that will find subgraphs of @p g1 and @p g2 that are isomorpic to one another. The graphs must not
      *  be modified between the call to this constructor and the return of its @ref run method.
      *
-     *  The solution processor and equivalence predicated are copied into this solver. If the size of these objects is an
+     *  The solution processor and equivalence predicate are copied into this solver. If the size of these objects is an
      *  issue, then they can be created with default constructors when the solver is created, and then modified afterward by
      *  obtaining a reference to the copies that are part of the solver.
      *
@@ -417,7 +438,7 @@ public:
                               EquivalenceP equivalenceP = EquivalenceP())
         : g1(g1), g2(g2), v(g1.nVertices()), w(g2.nVertices()), debug(debug), vNotX(g1.nVertices()),
           solutionProcessor_(solutionProcessor), equivalenceP_(equivalenceP), minimumSolutionSize_(1),
-          monotonicallyIncreasing_(false), findingCommonSubgraphs_(true) {}
+          maximumSolutionSize_(-1), monotonicallyIncreasing_(false), findingCommonSubgraphs_(true) {}
 
 private:
     CommonSubgraphIsomorphism(const CommonSubgraphIsomorphism&) {
@@ -442,9 +463,29 @@ public:
      *  The default minimum is one, which means that the trivial solution of two empty subgraphs is not reported to the
      *  callback.
      *
+     *  See also, @ref maximumSolutionSize.
+     *
      * @{ */
     size_t minimumSolutionSize() const { return minimumSolutionSize_; }
     void minimumSolutionSize(size_t n) { minimumSolutionSize_ = n; }
+    /** @} */
+
+    /** Property: maximum allowed solution size.
+     *
+     *  Determines the maximum size of solutions for which the solution processor callback is invoked. The maximum can be
+     *  changed any time before or during the analysis. Once a maximum solution is found along some search path, the remainder
+     *  of the search path is discarded.
+     *
+     *  Increasing the maximum solution size during a run will not cause solutions that were larger than its previous value to
+     *  be found if those solutions have already been skipped.
+     *
+     *  The default maximum is larger than both graphs, which means all solutions will be found.
+     *
+     *  See also, @ref minimumSolutionSize.
+     *
+     *  @{ */
+    size_t maximumSolutionSize() const { return maximumSolutionSize_; }
+    void maximumSolutionSize(size_t n) { maximumSolutionSize_ = n; }
     /** @} */
 
     /** Property: monotonically increasing solution size.
@@ -578,9 +619,12 @@ private:
     // Can the solution (stored in X and Y) be extended by adding another (i,j) pair of vertices where i is an element of the
     // set of available vertices of graph1 (vNotX) and j is a vertex of graph2 that is equivalent to i according to the
     // user-provided equivalence predicate. Furthermore, is it even possible to find a solution along this branch of discovery
-    // which is large enough for the user? By eliminating entire branch of the search space we can drastically decrease the
-    // time it takes to search, and the larger the required solution the more branches we can eliminate.
+    // which is falls between the minimum and maximum sizes specified by the user?  By eliminating entire branch of the search
+    // space we can drastically decrease the time it takes to search, and the larger the required solution the more branches we
+    // can eliminate.
     bool isSolutionPossible(const Vam &vam) const {
+        if (findingCommonSubgraphs_ && x.size() >= maximumSolutionSize_)
+            return false;                               // any further soln on this path would be too large
         size_t largestPossibleSolution = x.size();
         BOOST_FOREACH (size_t i, vNotX.values()) {
             if (vam.size(i) > 0) {
@@ -705,12 +749,21 @@ private:
         vam.print(debug, "  vam");
     }
 
+    // The Goldilocks predicate. Returns true if the solution is a valid size, false if it's too small or too big.
+    bool isSolutionValidSize() const {
+        if (findingCommonSubgraphs_) {
+            return x.size() >= minimumSolutionSize_ && x.size() <= maximumSolutionSize_;
+        } else {
+            return x.size() == g1.nVertices();
+        }
+    }
+
     // The main recursive function. It works by extending the current solution by one pair for all combinations of such pairs
     // that are permissible according to the vertex equivalence predicate and not already part of the solution and then
     // recursively searching the remaining space.  This analysis class acts as a state machine whose data structures are
     // advanced and retracted as the space is searched. The VAM is the only part of the state that needs to be stored on a
     // stack since changes to it could not be easily undone during the retract phase.
-    void recurse(const Vam &vam, size_t level = 0) {
+    CsiNextAction recurse(const Vam &vam, size_t level = 0) {
         if (debug)
             showState(vam, "entering state", level);        // debugging
         equivalenceP_.progress(level);
@@ -721,7 +774,8 @@ private:
             BOOST_FOREACH (size_t j, jCandidates) {
                 extendSolution(i, j);
                 Vam refined = refine(vam);
-                recurse(refined, level+1);
+                if (recurse(refined, level+1) == CSI_ABORT)
+                    return CSI_ABORT;
                 retractSolution();
                 if (debug)
                     showState(vam, "back to state", level);
@@ -733,14 +787,14 @@ private:
                 v.erase(i);
                 ASSERT_require(vNotX.exists(i));
                 vNotX.erase(i);
-                recurse(vam, level+1);
+                if (recurse(vam, level+1) == CSI_ABORT)
+                    return CSI_ABORT;
                 v.insert(i);
                 vNotX.insert(i);
                 if (debug)
                     showState(vam, "restored i=" + boost::lexical_cast<std::string>(i) + " back to state", level);
             }
-        } else if ((findingCommonSubgraphs_ && x.size() >= minimumSolutionSize_) ||
-                   (!findingCommonSubgraphs_ && x.size() == g1.nVertices())) {
+        } else if (isSolutionValidSize()) {
             ASSERT_require(x.size() == y.size());
             if (debug) {
                 printContainer(debug, "  found soln x = ", x.begin(), x.end());
@@ -748,8 +802,10 @@ private:
             }
             if (monotonicallyIncreasing_)
                 minimumSolutionSize_ = x.size();
-            solutionProcessor_(g1, x, g2, y);
+            if (solutionProcessor_(g1, x, g2, y) == CSI_ABORT)
+                return CSI_ABORT;
         }
+        return CSI_CONTINUE;
     }
 };
 
@@ -785,6 +841,53 @@ void findCommonIsomorphicSubgraphs(const Graph &g1, const Graph &g2, const Messa
     CommonSubgraphIsomorphism<Graph, SolutionProcessor, EquivalenceP> csi(g1, g2, debug, solutionProcessor, equivalenceP);
     csi.run();
 }
+/** @} */
+
+// Used by findFirstCommonIsomorphicSubgraph
+template<class Graph>
+class FirstIsomorphicSubgraph {
+    std::pair<std::vector<size_t>, std::vector<size_t> > solution_;
+public:
+    CsiNextAction operator()(const Graph &g1, const std::vector<size_t> &x, const Graph &g2, const std::vector<size_t> &y) {
+        solution_ = std::make_pair(x, y);
+        return CSI_ABORT;
+    }
+
+    const std::pair<std::vector<size_t>, std::vector<size_t> >& solution() const {
+        return solution_;
+    }
+};
+
+/** Determine whether a common subgraph exists.
+ *
+ *  Given two graphs, try to find any common isomorphic subgraph which is at least the specified size and return as soon as one
+ *  is found. The return value is a pair of parallel vectors of vertex id numbers that relate the two subgraphs.  The return
+ *  value is empty if no common isomorphic subgraph could be found.
+ *
+ * @{ */
+template<class Graph>
+std::pair<std::vector<size_t>, std::vector<size_t> >
+findFirstCommonIsomorphicSubgraph(const Graph &g1, const Graph &g2, size_t minimumSize) {
+    CommonSubgraphIsomorphism<Graph, FirstIsomorphicSubgraph<Graph> > csi(g1, g2, Message::mlog[Message::DEBUG]);
+    csi.minimumSolutionSize(minimumSize);
+    csi.maximumSolutionSize(minimumSize);               // to avoid going further than necessary
+    csi.run();
+    return csi.solutionProcessor().solution();
+}
+
+
+template<class Graph, class EquivalenceP>
+std::pair<std::vector<size_t>, std::vector<size_t> >
+findFirstCommonIsomorphicSubgraph(const Graph &g1, const Graph &g2, const Message::Stream &debug,
+                                  size_t minimumSize, EquivalenceP equivalenceP) {
+    CommonSubgraphIsomorphism<Graph, FirstIsomorphicSubgraph<Graph>, EquivalenceP>
+        csi(g1, g2, debug, FirstIsomorphicSubgraph<Graph>(), equivalenceP);
+    csi.minimumSolutionSize(minimumSize);
+    csi.maximumSolutionSize(minimumSize);               // to avoid going further than necessary
+    csi.run();
+    return csi.solutionProcessor().solution();
+}
+
 /** @} */
 
 /** Find an isomorphic subgraph.
@@ -824,10 +927,11 @@ template<class Graph>
 class MaximumIsomorphicSubgraphs {
     std::vector<std::pair<std::vector<size_t>, std::vector<size_t> > > solutions_;
 public:
-    void operator()(const Graph &g1, const std::vector<size_t> &x, const Graph &g2, const std::vector<size_t> &y) {
+    CsiNextAction operator()(const Graph &g1, const std::vector<size_t> &x, const Graph &g2, const std::vector<size_t> &y) {
         if (!solutions_.empty() && x.size() > solutions_.front().first.size())
             solutions_.clear();
         solutions_.push_back(std::make_pair(x, y));
+        return CSI_CONTINUE;
     }
 
     const std::vector<std::pair<std::vector<size_t>, std::vector<size_t> > > &solutions() const {

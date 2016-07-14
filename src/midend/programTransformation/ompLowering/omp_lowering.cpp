@@ -6,6 +6,7 @@
 #include "omp_lowering.h"
 
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 
@@ -4183,7 +4184,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     }
 
     // 6/8/2010, handling #if attached to #pragma omp threadprivate
-    SgStatement* n_stmt = getNextStatement(target);
+    SgStatement* n_stmt = SageInterface::getNextStatement(target);
     if (n_stmt == NULL) 
     {
       cerr<<"Warning: found an omp threadprivate directive without a following statement."<<endl;

@@ -4,6 +4,7 @@
 #include "CloneDetectionLib.h"
 #include <cerrno>
 
+using namespace rose;
 using namespace CloneDetection;
 std::string argv0;
 
@@ -84,7 +85,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else {
             std::cerr <<argv0 <<": unrecognized switch: " <<argv[argno] <<"\n"
                       <<"see \"" <<argv0 <<" --help\" for usage info.\n";
@@ -92,7 +93,7 @@ main(int argc, char *argv[])
         }
     }
     if (argno>=argc)
-        usage(1);
+        ::usage(1);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
     int64_t cmd_id = start_command(tx, argc, argv, "deleteting data");
 

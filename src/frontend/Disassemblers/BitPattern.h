@@ -168,10 +168,10 @@ public:
     void check_insertion(T msk, T pat, size_t wordnum) const {
         if (0!=msk && wordnum<mask_.size()) {
             if (T differ = conflict(msk, pat, wordnum)) {
-                std::cerr <<"BitPattern::insert(msk=" <<StringUtility::addrToString(msk, 8*sizeof(T))
-                          <<", pat=" <<StringUtility::addrToString(pat, 8*sizeof(T))
+                std::cerr <<"BitPattern::insert(msk=" <<rose::StringUtility::addrToString(msk, 8*sizeof(T))
+                          <<", pat=" <<rose::StringUtility::addrToString(pat, 8*sizeof(T))
                           <<", wordnum=" <<wordnum <<") conflicts with existing pattern " <<*this
-                          <<" at bits " <<StringUtility::addrToString(differ, 8*sizeof(T)) <<"\n";
+                          <<" at bits " <<rose::StringUtility::addrToString(differ, 8*sizeof(T)) <<"\n";
                 assert(!"new bit pattern conflicts with existing pattern");
                 abort();
             }
@@ -428,9 +428,9 @@ public:
         assert(altnum<nalternatives());
         o <<(1==nwords()?"":"{");
         for (size_t wordnum=0; wordnum<nwords(); ++wordnum) {
-            o <<(0==wordnum?"":",") <<StringUtility::addrToString(patterns_[altnum][wordnum], 8*sizeof(T));
+            o <<(0==wordnum?"":",") <<rose::StringUtility::addrToString(patterns_[altnum][wordnum], 8*sizeof(T));
             if (with_mask)
-                o <<"/" <<StringUtility::addrToString(mask_[wordnum], 8*sizeof(T));
+                o <<"/" <<rose::StringUtility::addrToString(mask_[wordnum], 8*sizeof(T));
         }
         o <<(1==nwords()?"":"}");
     }
@@ -448,7 +448,7 @@ public:
             o <<(1==nalternatives()?"":")");
             o <<"/" <<(1==nwords()?"":"{");
             for (size_t wordnum=0; wordnum<nwords(); ++wordnum)
-                o <<(wordnum>0?",":"") <<StringUtility::addrToString(mask_[wordnum], 8*sizeof(T));
+                o <<(wordnum>0?",":"") <<rose::StringUtility::addrToString(mask_[wordnum], 8*sizeof(T));
             o <<(1==nwords()?"":"}");
         }
     }

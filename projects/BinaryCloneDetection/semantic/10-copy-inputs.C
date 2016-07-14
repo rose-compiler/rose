@@ -1,9 +1,11 @@
 // Copy inputs from one database to another
 
-#include "sage3basic.h"
+#include "rose.h"
 #include "CloneDetectionLib.h"
 
+using namespace rose;
 using namespace CloneDetection;
+
 std::string argv0;
 
 static void
@@ -32,7 +34,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else {
             std::cerr <<argv0 <<": unrecognized switch: " <<argv[argno] <<"\n"
                   <<"see \"" <<argv0 <<" --help\" for usage info.\n";
@@ -40,7 +42,7 @@ main(int argc, char *argv[])
         }
     }
     if (argno+2 != argc)
-        usage(1);
+        ::usage(1);
     std::string srcDatabaseUrl = argv[argno++];
     std::string dstDatabaseUrl = argv[argno++];
 

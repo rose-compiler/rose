@@ -5,6 +5,7 @@
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 #include "testNewRewrite.h"
 // #include "AstPreorderTraversal.h"

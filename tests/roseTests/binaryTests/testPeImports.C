@@ -1,5 +1,7 @@
 #include "rose.h"
 
+using namespace rose;
+
 /* Show the list of import items */
 struct list_import_items: public AstSimpleProcessing {
     SgAsmPEImportDirectory *directory;

@@ -1291,7 +1291,7 @@ public:
             if (verbosity>=EFFUSIVE) {
                 std::cerr <<"output for ax = " <<ValueType<32>(v2);
                 if (v1!=v2)
-                    std::cerr <<" (hash of string at " <<StringUtility::addrToString(v1) <<")";
+                    std::cerr <<" (hash of string at " <<rose::StringUtility::addrToString(v1) <<")";
                 std::cerr <<"\n";
             }
             outputs.insert_retval(v2);
@@ -1315,9 +1315,9 @@ public:
                     int nbytes = v1==v2 ? (int)mval.first_of_n : 4;
                     char buf[32];
                     snprintf(buf, sizeof buf, "%0*"PRIx64, 2*nbytes, (uint64_t)v2);
-                    std::cerr <<"output for mem[" <<StringUtility::addrToString(addr) <<"] = " <<buf;
+                    std::cerr <<"output for mem[" <<rose::StringUtility::addrToString(addr) <<"] = " <<buf;
                     if (v1!=v2)
-                        std::cerr <<" (hash of string at " <<StringUtility::addrToString(v1) <<")";
+                        std::cerr <<" (hash of string at " <<rose::StringUtility::addrToString(v1) <<")";
                     std::cerr <<"\n";
                 }
                 outputs.insert_value(v2, addr);
@@ -1344,7 +1344,7 @@ public:
                 o <<"    skipping " <<memory.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
                 break;
             }
-            o <<"    mem[" <<StringUtility::addrToString(addr) <<"] = " <<StringUtility::addrToString(mval.val, 8);
+            o <<"    mem[" <<rose::StringUtility::addrToString(addr) <<"] = " <<rose::StringUtility::addrToString(mval.val, 8);
             if (mval.first_of_n) {
                 o <<" 1/" <<mval.first_of_n;
             } else {
@@ -1493,7 +1493,7 @@ public:
             retval = ValueType<nBits>(address_hasher(addr));
             if (params.verbosity>=EFFUSIVE) {
                 std::cerr <<"CloneDetection: using " <<InputGroup::queue_name(qn)
-                          <<" addr " <<StringUtility::addrToString(addr) <<": " <<retval <<"\n";
+                          <<" addr " <<rose::StringUtility::addrToString(addr) <<": " <<retval <<"\n";
             }
         } else {
             retval = ValueType<nBits>(inputs->queue(qn).next());
@@ -1620,7 +1620,7 @@ public:
                 stack_frame.stdcall_args_va = state.registers.gpr[x86_gpr_sp].known_value();
                 if (params.verbosity>=EFFUSIVE)
                     std::cerr <<"CloneDetection: stdcall args start at "
-                              <<StringUtility::addrToString(stack_frame.stdcall_args_va) <<"\n";
+                              <<rose::StringUtility::addrToString(stack_frame.stdcall_args_va) <<"\n";
             }
         }
     }
@@ -1749,11 +1749,11 @@ public:
             if (!funcname.empty())
                 funcname = " <" + funcname + ">";
             std::cerr <<"CloneDetection: " <<std::string(80, '-') <<"\n"
-                      <<"CloneDetection: in function " <<StringUtility::addrToString(func->get_entry_va()) <<funcname
+                      <<"CloneDetection: in function " <<rose::StringUtility::addrToString(func->get_entry_va()) <<funcname
                       <<" at level " <<stack_frames.size() <<"\n"
-                      <<"CloneDetection: stack ptr: " <<StringUtility::addrToString(stack_frame.entry_esp)
-                      <<" - " <<StringUtility::signedToHex2(stack_frame.entry_esp-esp, 32)
-                      <<" = " <<StringUtility::addrToString(esp) <<"\n";
+                      <<"CloneDetection: stack ptr: " <<rose::StringUtility::addrToString(stack_frame.entry_esp)
+                      <<" - " <<rose::StringUtility::signedToHex2(stack_frame.entry_esp-esp, 32)
+                      <<" = " <<rose::StringUtility::addrToString(esp) <<"\n";
         }
 
         // Decide whether this function is allowed to call (via CALL, JMP, fall-through, etc) other functions.
@@ -1794,8 +1794,8 @@ public:
                 state.register_rw_state.gpr[x86_gpr_bx].state |= HAS_BEEN_INITIALIZED;
                 if (params.verbosity>=EFFUSIVE) {
                     std::cerr <<"CloneDetection: special handling for thunk"
-                              <<" at " <<StringUtility::addrToString(insn->get_address())
-                              <<": set EBX = " <<StringUtility::addrToString(gotplt->get_mapped_actual_va()) <<"\n";
+                              <<" at " <<rose::StringUtility::addrToString(insn->get_address())
+                              <<": set EBX = " <<rose::StringUtility::addrToString(gotplt->get_mapped_actual_va()) <<"\n";
                 }
             }
         }
@@ -1884,8 +1884,8 @@ public:
                         sf.stdcall_args_va = esp;
                         if (params.verbosity>=EFFUSIVE) {
                             std::cerr <<"CloneDetection: adjusted function "
-                                      <<StringUtility::addrToString(sf.func->get_entry_va()) <<" stdcall args start to "
-                                      <<StringUtility::addrToString(sf.stdcall_args_va) <<"\n";
+                                      <<rose::StringUtility::addrToString(sf.func->get_entry_va()) <<" stdcall args start to "
+                                      <<rose::StringUtility::addrToString(sf.stdcall_args_va) <<"\n";
                         }
                     }
                 }
@@ -2097,7 +2097,7 @@ public:
                 std::cerr <<"CloneDetection: potential output value mem[" <<a0 <<"]=" <<data <<"\n";
                 rose_addr_t v2 = state.hash_if_string(data.known_value(), interp->get_map());
                 if (v2!=data.known_value())
-                    std::cerr <<"CloneDetection: output value is a string pointer; hash="<<StringUtility::addrToString(v2)<<"\n";
+                    std::cerr <<"CloneDetection: output value is a string pointer; hash="<<rose::StringUtility::addrToString(v2)<<"\n";
             }
             tracer.emit(this->get_insn()->get_address(), EV_MEM_WRITE, a0.known_value(), data.known_value());
         }
@@ -2121,7 +2121,7 @@ public:
                     ++funcinfo[found->second].nretused;
                     if (params.verbosity>=EFFUSIVE) {
                         std::cerr <<"CloneDetection: function #" <<found->second
-                                  <<" " <<StringUtility::addrToString(last_call->get_entry_va())
+                                  <<" " <<rose::StringUtility::addrToString(last_call->get_entry_va())
                                   <<" <" <<last_call->get_name() <<"> returns a value\n";
                     }
                 }

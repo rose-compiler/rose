@@ -2,7 +2,7 @@
 #include "stringify.h"
 #include "sideEffect.h"
 #include "SqliteDatabaseGraph.h"
-#include "string_functions.h"
+#include "StringUtility.h"
 
 #include <iostream>
 #include <cstring>

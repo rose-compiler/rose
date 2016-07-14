@@ -5,6 +5,7 @@
 #include "Diagnostics.h"
 #include "Disassembler.h"
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 
 /* FIXME: this should be a SgAsmInstruction class method. */

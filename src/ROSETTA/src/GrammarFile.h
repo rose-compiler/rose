@@ -21,22 +21,22 @@
 #include <dirent.h>
 #include <unistd.h>
 #endif
-#include "string_functions.h"
+#include "FileUtility.h"
 
 // This class is used to cache files read in as part of the processing of a grammar
 class GrammarFile {
      public:
-       GrammarFile( std::string, const StringUtility::FileWithLineNumbers inputBuffer);
+       GrammarFile( std::string, const rose::StringUtility::FileWithLineNumbers inputBuffer);
        GrammarFile( const GrammarFile & X );
        ~GrammarFile();
        GrammarFile& operator=( const GrammarFile & X );
        void setFilename( const std::string& inputFilename );
        std::string getFilename() const;
-       void setBuffer ( const StringUtility::FileWithLineNumbers& inputBuffer );
-       const StringUtility::FileWithLineNumbers& getBuffer() const;
+       void setBuffer ( const rose::StringUtility::FileWithLineNumbers& inputBuffer );
+       const rose::StringUtility::FileWithLineNumbers& getBuffer() const;
      private:
        std::string filename;
-       StringUtility::FileWithLineNumbers buffer;
+       rose::StringUtility::FileWithLineNumbers buffer;
 
     };
 #endif

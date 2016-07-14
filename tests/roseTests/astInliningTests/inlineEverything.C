@@ -1,6 +1,8 @@
 // This test attempts to inline function calls until I cannot inline anything else or some limit is reached.
 #include "rose.h"
 
+using namespace rose;
+
 // Finds needle in haystack and returns true if found.  Needle is a single node (possibly an invalid pointer and will not be
 // dereferenced) and haystack is the root of an abstract syntax (sub)tree.
 static bool

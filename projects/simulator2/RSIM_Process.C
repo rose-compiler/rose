@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/user.h>
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace rose::Diagnostics;
 

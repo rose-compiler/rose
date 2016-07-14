@@ -9,6 +9,7 @@
  *     SgPntrArrRefExp:(a[i])[j]
  *     SgPntrArrRefExp:((a[i])[j - 1])  == 0;* 0;||* 0;== -1;||::
  */
+#include "omp.h" 
 int i;
 int j;
 int a[100][100];

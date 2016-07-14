@@ -486,7 +486,7 @@ std::string in(const Container &values)
 template<class Container, class Stringifier>
 std::string in_numbers(const Container &values, Stringifier &stringifier)
 {
-    return "in (" + StringUtility::join(", ", StringUtility::toStrings(values, stringifier)) + ")";
+    return "in (" + rose::StringUtility::join(", ", rose::StringUtility::toStrings(values, stringifier)) + ")";
 }
 
 /** Converts a container of strings to an SQL "in" clause of strings. The @p driver is necessary in order to properly
@@ -550,7 +550,7 @@ struct AddrRenderer: Renderer<uint64_t> {
     size_t nbits; // number of bits in addresses; higher addresses will result in more digits
     explicit AddrRenderer(size_t nbits=32): nbits(nbits) {}
     virtual std::string operator()(const uint64_t &value, size_t width) const ROSE_OVERRIDE {
-        return StringUtility::addrToString(value, nbits);
+        return rose::StringUtility::addrToString(value, nbits);
     }
 };
 extern AddrRenderer addr8Renderer;              /**< Renders 8-bit addresses in hexadecimal. */

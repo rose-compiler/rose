@@ -8,6 +8,7 @@
 namespace ArithemeticIntensityMeasurement
 {
   extern bool debug;
+  extern int algorithm_version;
   extern std::string report_option;
   extern std::string report_filename;
   extern int loop_id; // roughly assign a unique id for each loop, at least within the context of a single function
@@ -43,12 +44,14 @@ namespace ArithemeticIntensityMeasurement
       void  addCount(fp_operation_kind_enum c_type, int i =1);
       // Directly set counters. Use this carefully. Designed to support storing info. parsed from pragmas
       void  setCount(fp_operation_kind_enum c_type, int i =1);
-      void updateTotal() {  if (total_count == 0 ) total_count = plus_count + minus_count + multiply_count + divide_count ; }
+      void updateTotal() { // if (total_count == 0 ) 
+                          total_count = plus_count + minus_count + multiply_count + divide_count ; }
       void printInfo(std::string comment="");
       // convert the counter information to a string
       std::string toString(std::string comment="");
 
       SgLocatedNode* getNode () {return node; }
+      void  setNode (SgLocatedNode* n) {node=n; }
       // compare the values of this object with a reference FPCounters object(often obtained from Pragma)
       // Consistent is defined as if a non-zero value is provided by the reference object, this object's corresponding value must be the same.
       bool consistentWithReference(FPCounters* refCounters);
@@ -60,7 +63,8 @@ namespace ArithemeticIntensityMeasurement
       SgExpression* getLoadBytes() {return load_bytes; }
       SgExpression* getStoreBytes() {return store_bytes; }
 
-      FPCounters(SgLocatedNode *n): node(n)
+      // default constructor required
+      FPCounters(SgLocatedNode *n=NULL): node(n)
     {
       plus_count = 0;
       minus_count = 0;
@@ -71,6 +75,23 @@ namespace ArithemeticIntensityMeasurement
       load_bytes = NULL;
       store_bytes = NULL;
     }
+
+    // copy constructor is required for synthesized attributes
+    FPCounters (const FPCounters &x)
+    {
+      node = x.node; 
+      plus_count = x.plus_count;
+      minus_count = x.minus_count;
+      multiply_count = x.multiply_count;
+      divide_count = x.divide_count;
+      total_count = x.total_count;
+
+      load_bytes = x.load_bytes;
+      store_bytes = x.store_bytes;
+    }
+
+    // used to synthesize counters from children nodes
+    FPCounters operator+( const FPCounters & right) const; 
 
     private:
       SgLocatedNode* node ; //associated AST node
@@ -98,10 +119,31 @@ namespace ArithemeticIntensityMeasurement
       void addDivideCount(int i = 1)   {assert (i>=1); divide_count += i;}
   }; // end class FPCounters
 
+ // Version 2 counting using a bottomup traversal and synthesized attributes
+ /*
+  *
+    SgBasicBlock: sum of  count(stmt)
+    straight line expression statement, atomic case, scan expression for operations, store into attribute, count (exp)
+         function call expression: summarize the counter using some function annotation or lookup table!!
+        travese expression tree, recursively, accumulate the counter, where to store the results : attributes vs. lookup table (this is easier)
+    loops:  loop iteration * count[loop_body]
+    branches: using branch prediction ratios, if no available, pick the max or minimum branch, based on a flag. upper bound and lower bound FLOPS
+    really need constant folding or symbolic evaluation to simplify things here!!
+  *
+  */
+  //class OperationCountingTraversal: public AstBottomUpProcessing <FPCounters> 
+  class OperationCountingTraversal: public SgBottomUpProcessing <FPCounters> 
+  {
+    public: 
+      FPCounters evaluateSynthesizedAttribute (SgNode* n, SubTreeSynthesizedAttributes synthesizedAttributeList );
+  }; 
+
  // interface functions to manipulate FPCounters
   void CountFPOperations(SgLocatedNode* input);
   void printFPCount (SgLocatedNode* n);
 
+  // Obtain the kind of FP operation from a binary operation
+  fp_operation_kind_enum getFPOpKind (SgBinaryOp* bop);
   // count memory load/store operations, store into attribute FPCounters
   void CountMemOperations(SgLocatedNode* input, bool includeScalars = true, bool includeIntType = true);
 

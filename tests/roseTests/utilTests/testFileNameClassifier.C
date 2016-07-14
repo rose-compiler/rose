@@ -1,10 +1,10 @@
 #include "rose.h"
-#include "string_functions.h"
+#include "StringUtility.h"
 
 #include <vector>
 
 using namespace std;
-using namespace StringUtility;
+using namespace rose::StringUtility;
 
 int
 main(int argc, char** argv)

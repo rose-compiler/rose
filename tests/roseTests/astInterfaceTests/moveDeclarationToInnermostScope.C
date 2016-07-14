@@ -101,6 +101,7 @@
 #define ENABLE_TRANS_TRACKING 1
 
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 bool debug = false;
 

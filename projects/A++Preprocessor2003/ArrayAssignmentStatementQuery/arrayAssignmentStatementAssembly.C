@@ -7,6 +7,8 @@
 
 #include "arrayPreprocessor.h"
 
+using namespace rose;
+
 // ********************************************************************************************
 // Support for Query to build string representing the transformation of an expression statement
 // ********************************************************************************************

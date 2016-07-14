@@ -3,6 +3,8 @@
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 
+using namespace rose;
+
 std::string argv0;
 
 static void
@@ -36,7 +38,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else {
             std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
                       <<argv0 <<": see --help for more info\n";
@@ -45,7 +47,7 @@ main(int argc, char *argv[])
     }
 
     if (argno+1!=argc)
-        usage(0);
+        ::usage(0);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
     int64_t cmd_id = CloneDetection::start_command(tx, argc, argv, "running tests");
 

@@ -2,6 +2,7 @@
 #include "rose.h"
 #include "BinaryControlFlow.h"
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 
 #include <boost/graph/graphviz.hpp>

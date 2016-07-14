@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 using namespace std;
+using namespace rose;
 
 int main( int argc, char * argv[] )
 {

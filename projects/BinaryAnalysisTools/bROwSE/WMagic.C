@@ -9,6 +9,8 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
+using namespace rose;
+
 namespace bROwSE {
 
 enum ColumnNumber {
