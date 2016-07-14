@@ -73,6 +73,44 @@ void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg,
   ct_tgba = NULL;
 }
 
+PropertyValue SpotConnection::checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<string> annotationsOfModeledTransitions) {
+  if (!stg.isPrecise() && !stg.isComplete()) {
+    return PROPERTY_VALUE_UNKNOWN;  //neither falsification nor verification works
+  } 
+  PropertyValue result;
+  spot::ltl::atomic_prop_set* sap = getAtomicProps(ltlProperty);
+  // for an over-approximation, all atomic propositions need to be modeled in the stg in order to analyze if the property holds
+  if (stg.isComplete() && !stg.isPrecise()) {
+    for (spot::ltl::atomic_prop_set::iterator i=sap->begin(); i!=sap->end(); ++i) {
+      if (annotationsOfModeledTransitions.find((*i)->name()) == annotationsOfModeledTransitions.end()) {
+	return PROPERTY_VALUE_UNKNOWN;
+      }
+    }
+  }
+  //instantiate a new dictionary for atomic propositions 
+  // (will be used by the model tgba as well as by the ltl formula tgbas)
+  spot::bdd_dict dict;
+  //create a tgba from CodeThorn's STG model
+  ParProSpotTgba* ct_tgba = new ParProSpotTgba(stg, *sap, dict);
+  bool formulaHolds = checkFormula(ct_tgba, ltlProperty, ct_tgba->get_dict());
+  delete ct_tgba;
+  ct_tgba = NULL;
+  if (formulaHolds) {
+    if (stg.isComplete()) {
+      result = PROPERTY_VALUE_YES;
+    } else {
+      result = PROPERTY_VALUE_UNKNOWN;
+    }
+  } else {
+    if (stg.isPrecise()) {
+      result = PROPERTY_VALUE_NO;
+    } else {
+      result = PROPERTY_VALUE_UNKNOWN;
+    }
+  }
+  return result;
+}
+
 void SpotConnection::checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tgba, TransitionGraph& stg, 
 						bool withCounterexample, bool spuriousNoAnswers) {
   std::string* pCounterExample;
@@ -161,7 +199,17 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
   } //end of implicit condition (stg.isPrecise() || stg.isComplete())
 }
 
-void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers) {
+ParProSpotTgba* SpotConnection::toTgba(ParProTransitionGraph& stg) {
+  // retrieve all atomic propositions found in the given LTL propeties 
+  spot::ltl::atomic_prop_set* sap = getAtomicProps();
+  //instantiate a new dictionary for atomic propositions 
+  spot::bdd_dict* dict = new spot::bdd_dict();
+  //create a tgba from CodeThorn's STG model
+  ParProSpotTgba* ct_tgba = new ParProSpotTgba(stg, *sap, *dict);
+  return ct_tgba;
+}
+
+void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<string> annotationsOfModeledTransitions) {
   if (stg.size() == 0 && !modeLTLDriven) {
     cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
     return;
@@ -181,7 +229,22 @@ void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool w
     for (std::list<int>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
       if (checkFormula(ct_tgba, ltlResults->getFormula(*i), ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
         if (stg.isComplete()) {
-          ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_YES);
+	  bool resultCanBeTrusted = true;
+	  if (!stg.isPrecise()) {
+	    // for an over-approximation, all atomic propositions need to be modeled in the stg in order to analyze if the property holds
+	    spot::ltl::atomic_prop_set* sapFormula = getAtomicProps(ltlResults->getFormula(*i));
+	    for (spot::ltl::atomic_prop_set::iterator k=sapFormula->begin(); k!=sapFormula->end(); ++k) {
+	      if (annotationsOfModeledTransitions.find((*k)->name()) == annotationsOfModeledTransitions.end()) {
+		resultCanBeTrusted = false;
+		break;
+	      }
+	    }
+	  }
+	  if (resultCanBeTrusted) {
+	    ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_YES);
+	  } else {
+	    ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_UNKNOWN);
+	  }
         } else {
           //not all possible execution paths are covered in this stg model, ignore SPOT's result
         }
@@ -335,20 +398,29 @@ spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps() {
   std::list<int>* propertyNumbers = ltlResults->getPropertyNumbers();
   for (std::list<int>::iterator i=propertyNumbers->begin(); i!=propertyNumbers->end(); ++i) {
     std::string formulaString = ltlResults->getFormula(*i);
-    spot::ltl::parse_error_list pel;
-    const spot::ltl::formula* formula = spot::ltl::parse(formulaString, pel);
-    if (spot::ltl::format_parse_errors(std::cerr, formulaString, pel)) {
-      formula->destroy();						
-      cerr<<"Error: ltl format error."<<endl;
-      ROSE_ASSERT(0);
-    }
-    spot::ltl::atomic_prop_set* sap = spot::ltl::atomic_prop_collect(formula);
+    spot::ltl::atomic_prop_set* sap = getAtomicProps(formulaString);
     result->insert(sap->begin(), sap->end());
     delete sap;
     sap = NULL;
   } 
   delete propertyNumbers;
   propertyNumbers = NULL;
+  return result;
+}
+
+spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(string ltlFormula) {
+  spot::ltl::atomic_prop_set* result = new spot::ltl::atomic_prop_set();
+  spot::ltl::parse_error_list pel;
+  const spot::ltl::formula* formula = spot::ltl::parse(ltlFormula, pel);
+  if (spot::ltl::format_parse_errors(std::cerr, ltlFormula, pel)) {
+    formula->destroy();						
+    cerr<<"Error: ltl format error."<<endl;
+    ROSE_ASSERT(0);
+  }
+  spot::ltl::atomic_prop_set* sap = spot::ltl::atomic_prop_collect(formula);
+  result->insert(sap->begin(), sap->end());
+  delete sap;
+  sap = NULL;
   return result;
 }
 

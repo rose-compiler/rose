@@ -41,6 +41,12 @@ std::string ParProSpotTgba::format_state(const spot::state* state) const {
   return toBeFormatted->toString();
 }
 
+std::string ParProSpotTgba::transition_annotation(const spot::tgba_succ_iterator* iter) const {
+  const ParProSpotSuccIter* toBeFormatted = dynamic_cast<const ParProSpotSuccIter*>(iter);
+  assert(toBeFormatted);
+  return toBeFormatted->format_current_condition();
+}
+
 bdd ParProSpotTgba::all_acceptance_conditions() const {
   return bddfalse;
 } 

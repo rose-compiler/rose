@@ -29,6 +29,8 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
+  typedef std::pair<std::vector<Flow*>, boost::unordered_map<int, int> > SelectedCfgsAndIdMap;
+
   enum ComponentSelection { PAR_PRO_COMPONENTS_ALL, PAR_PRO_COMPONENTS_SUBSET_FIXED, PAR_PRO_COMPONENTS_SUBSET_RANDOM };
   enum RandomSubsetMode { PAR_PRO_NUM_SUBSETS_NONE, PAR_PRO_NUM_SUBSETS_FINITE, PAR_PRO_NUM_SUBSETS_INFINITE };
   enum LtlMode { PAR_PRO_LTL_MODE_NONE, PAR_PRO_LTL_MODE_CHECK, PAR_PRO_LTL_MODE_MINE };
@@ -36,11 +38,10 @@ namespace CodeThorn {
   class ParProExplorer {
   public:
     
-    ParProExplorer(std::vector<Flow>& cfgs, EdgeAnnotationMap& annotationMap);
+    ParProExplorer(std::vector<Flow*>& cfas, EdgeAnnotationMap& annotationMap);
     // analyzes the behavior of the parallel program according to the selected options
     void explore();
-    std::pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*>  exploreOnce();
-    std::string getLtlsAsString();
+    void computeStgApprox(ParallelSystem& system, ComponentApproximation approxMode);
     PropertyValueTable* propertyValueTable();
 
     void setComponentSelection(ComponentSelection componentSelection) { _componentSelection = componentSelection; }
@@ -51,21 +52,23 @@ namespace CodeThorn {
     void setLtlMode(LtlMode ltlMode) { _ltlMode = ltlMode; }
     void setIncludeLtlResults(bool withResults) { _includeLtlResults = withResults; }
     void setLtlInputFilename(std::string ltlInputFilename) { _ltlInputFilename = ltlInputFilename; }
-    void setNumMiningsPerSubset(int numMinings) { _miningsPerSubsystem = numMinings; }
+    void setNumMiningsPerSubset(int numMinings) { _parProLtlMiner.setNumberOfMiningsPerSubsystem(numMinings); }
+    void setMinNumComponents(int minNumComponents) { _minNumComponents = minNumComponents; }
     void setNumRequiredVerifiable(int numVerifiable) { _numRequiredVerifiable = numVerifiable; }
     void setNumRequiredFalsifiable(int numFalsifiable) { _numRequiredFalsifiable = numFalsifiable; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     void setVisualize(bool viz) { _visualize = viz; }
 
   private:
-    PropertyValueTable* ltlAnalysis(
-                    std::pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*> stgAndSelectedComponents);
+    ParallelSystem exploreOnce();
+    PropertyValueTable* ltlAnalysis(ParallelSystem system);
     std::set<int> randomSetNonNegativeInts(int size, int maxInt);
-    SelectedCfgsAndIdMap componentSubset(std::set<int> componentIds);
+    void recalculateNumVerifiedFalsified();
 
-    std::vector<Flow> _cfgs;
+    ParProLtlMiner _parProLtlMiner;
+
+    std::vector<Flow*> _cfas;
     EdgeAnnotationMap _annotationMap;
-    boost::unordered_map<int, int> _cfgIdToStateIndex;
     PropertyValueTable* _properties;
     int _numVerified;
     int _numFalsified;
@@ -79,6 +82,7 @@ namespace CodeThorn {
     bool _includeLtlResults;
     std::string _ltlInputFilename;
     int _miningsPerSubsystem;
+    int _minNumComponents;
     int _numRequiredVerifiable;
     int _numRequiredFalsifiable;
     int _numberOfThreadsToUse;

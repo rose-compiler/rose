@@ -39,7 +39,11 @@ void ParProTransitionGraph::add(ParProTransition transition) {
 }
 
 ParProTransitions ParProTransitionGraph::succ(const ParProEState* source) {
-  return _outEdges[source];
+  if (_outEdges.find(source) != _outEdges.end()) {
+    return _outEdges[source];
+  } else {
+    return ParProTransitions();  // return an empy set in case no outgoing edges exist
+  }
 }
 
 // TODO: store result and a maintain a flag during "add(...)"
@@ -50,7 +54,6 @@ size_t ParProTransitionGraph::size() {
   }
   return size;
 }
-
 
 set<string> ParProTransitionGraph::getAllAnnotations() {
   set<string> result;

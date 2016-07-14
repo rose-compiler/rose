@@ -35,10 +35,10 @@ namespace CodeThorn {
   class ParProAnalyzer {
   public:
     ParProAnalyzer();
-    ParProAnalyzer(std::vector<Flow>& cfgs);
-    ParProAnalyzer(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex);
-    void init(std::vector<Flow>& cfgs);
-    void init(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex);
+    ParProAnalyzer(std::vector<Flow*> cfas);
+    ParProAnalyzer(std::vector<Flow*> cfas, boost::unordered_map<int, int>& cfgIdToStateIndex);
+    void init(std::vector<Flow*> cfas);
+    void init(std::vector<Flow*> cfas, boost::unordered_map<int, int>& cfgIdToStateIndex);
     void initializeSolver();
     // run the state space exploration
     void runSolver();
@@ -46,7 +46,7 @@ namespace CodeThorn {
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void setAnnotationMap(EdgeAnnotationMap& emap) { _annotationToEdges = emap; }
     void setComponentApproximation(ComponentApproximation approxMode) { _approximation = approxMode; }
-    std::vector<Flow>* getCfgs() { return &_cfgs; }
+    std::vector<Flow*> getCfas() { return _cfas; }
     ParProTransitionGraph* getTransitionGraph() { return _transitionGraph; }
     bool isPrecise();
 
@@ -63,7 +63,7 @@ namespace CodeThorn {
     void set_finished(vector<bool>& v, bool val);
     bool all_false(vector<bool>& v);
 
-    std::vector<Flow> _cfgs;
+    std::vector<Flow*> _cfas;
     boost::unordered_map<int, int> _cfgIdToStateIndex;
     std::string _startTransitionAnnotation;
     ParProTransitionGraph* _transitionGraph;

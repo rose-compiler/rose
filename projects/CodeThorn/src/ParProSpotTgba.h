@@ -18,8 +18,6 @@
 #include "tgba/bdddict.hh"
 #include "bdd.h"
 #include "tgba/state.hh"
-#include "tgba/succiter.hh"
-#include "tgba/state.hh"
 #include "ltlast/atomic_prop.hh"
 
 using namespace std;
@@ -40,6 +38,8 @@ namespace CodeThorn {
     spot::bdd_dict* get_dict() const;
     //return a string representation of the given state
     std::string format_state(const spot::state* state) const;
+    // returns a string representing the condition of the transition that "iter" is currently pointing at
+    std::string transition_annotation(const spot::tgba_succ_iterator* iter) const;
     //returns bdd::false, no particular accepting states exist. All (partial) paths through
     // the automaton define valid runs
     bdd all_acceptance_conditions() const;

@@ -12,6 +12,8 @@
 #include "AstAnnotator.h"
 #include "AType.h"
 #include "Miscellaneous2.h"
+#include "tgba/succiter.hh"
+#include "tgba/state.hh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
@@ -658,6 +660,46 @@ string Visualizer::foldedTransitionGraphToDot() {
   }
   ss<<"}\n";
   tg2=false;
+  return ss.str();
+}
+
+struct spot_state_compare {
+  bool operator() (spot::state* const& lhs, spot::state* const& rhs) const {
+    if (lhs->compare(rhs) < 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+};
+
+string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
+  stringstream ss;
+  ss << "digraph G {" << endl;
+  spot::state* initState = tgba.get_init_state();
+  list<spot::state*> worklist;
+  set<spot::state*, spot_state_compare> added;
+  worklist.push_back(initState);
+  added.insert(initState);
+  while (!worklist.empty()) {
+    spot::state* next = worklist.front();
+    ss <<"  "<< "\""<<tgba.format_state(next)<<"\" [ label=\"\" ]" << endl;
+    worklist.pop_front();
+    spot::tgba_succ_iterator* outEdgesIter = tgba.succ_iter(next, NULL, NULL);
+    outEdgesIter->first();
+    while(!outEdgesIter->done()) {
+      spot::state* successor = outEdgesIter->current_state();
+      ss <<"  "<< "\""<<tgba.format_state(next)<<"\""<<" -> "<<"\""<<tgba.format_state(successor)<<"\"";
+      ss <<" [ label=\""<<tgba.transition_annotation(outEdgesIter)<<"\" ]" << endl;
+      if (added.find(successor) == added.end()) {
+	worklist.push_back(successor);
+	added.insert(successor);
+      }
+      outEdgesIter->next();
+    }
+    delete outEdgesIter;
+  }
+  ss << "}" << endl;
   return ss.str();
 }
 

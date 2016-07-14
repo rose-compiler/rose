@@ -566,6 +566,7 @@ Flow Flow::outEdges(Label label) {
   Flow flow;
 #ifdef USE_SAWYER_GRAPH
   SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
   Flow::iterator begin = Flow::iterator((*vertexIter).outEdges().begin());
   Flow::iterator end = Flow::iterator((*vertexIter).outEdges().end());
   for (Flow::iterator i=begin; i!=end; ++i) {
