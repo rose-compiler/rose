@@ -2,7 +2,8 @@
 #include <CallGraph.h>
 #include <iostream>
 using namespace std;
-using namespace StringUtility;
+using namespace rose;
+using namespace rose::StringUtility;
 
 // A Function object used as a predicate that determines which functions are 
 // to be represented in the call graph.

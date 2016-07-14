@@ -17,6 +17,7 @@
 
 
 using namespace std;
+using namespace rose;
 
 // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
 // Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 

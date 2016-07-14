@@ -12,6 +12,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace rose;
 
 // MS: temporary (TODO: move to processing class)
 static string RTIContainerName = "rtiContainer";  // put this into the respective processing class as private member
