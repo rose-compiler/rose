@@ -1,11 +1,82 @@
 // Author: Marc Jasper, 2016.
 
 #include "ParProLtlMiner.h"
+#include "ParProExplorer.h"
+#include "PropertyValueTable.h"
+#include "SpotConnection.h"
 
 using namespace SPRAY;
 using namespace boost;
 using namespace std;
 
+ParallelSystem::ParallelSystem() :
+_stg(NULL),
+_stgOverApprox(NULL), 
+_stgUnderApprox(NULL) {
+}
+
+set<string> ParallelSystem::getAnnotations() const {
+  set<string> result;
+  for (map<int, Flow*>::const_iterator i=_components.begin(); i!=_components.end(); ++i) {
+    set<string> annotations = (*i).second->getAllAnnotations();
+    result.insert(annotations.begin(), annotations.end());
+  }
+  // TODO: improve representation so that the empty string does not need to be treated special
+  set<string>::iterator iter = result.find("");
+  if (iter != result.end()) {
+    result.erase(iter);
+  }
+  return result;
+}
+
+void ParallelSystem::addComponent(int id, Flow* cfa) {
+  _components.insert(pair<int, Flow*>(id, cfa));
+}
+
+string ParallelSystem::toString() const {
+  stringstream ss;
+  ss << "ids: ";
+  for (map<int, Flow*>::const_iterator i=_components.begin(); i!=_components.end(); ++i) {
+    if (i != _components.begin()) {
+      ss << ",";
+    }
+    ss << (*i).first;
+  }
+  return ss.str();
+}
+
+// define order for ParallelSystems
+bool CodeThorn::operator<(const ParallelSystem& p1, const ParallelSystem& p2) { 
+  if (p1.size()!= p2.size()) {
+    return p1.size() < p2.size();
+  }
+  for (map<int, Flow*>::iterator i1=p1.components().begin(), i2=p2.components().begin(); 
+       i1!=p1.components().end(); 
+       (++i1, ++i2)) {
+    if ((*i1).first != (*i2).first) {
+      return (*i1).first < (*i2).first;
+    }
+  }
+return false;
+}
+
+bool CodeThorn::operator==(const ParallelSystem& p1, const ParallelSystem& p2) {
+  if (p1.size()!= p2.size()) {
+    return false;
+  }
+  for (map<int, Flow*>::iterator i1=p1.components().begin(), i2=p2.components().begin(); 
+       i1!=p1.components().end(); 
+       (++i1, ++i2)) {
+    if ((*i1).first != (*i2).first) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CodeThorn::operator!=(const ParallelSystem& p1, const ParallelSystem& p2) {
+  return !(p1==p2);
+}
 
 string ParProLtlMiner::randomLtlFormula(vector<string> atomicPropositions, int maxProductions) {
   int numberOfRules = 10; // Note: this has to reflect the number of different case statements in the swtich-case block below.
@@ -52,112 +123,140 @@ string ParProLtlMiner::randomLtlFormula(vector<string> atomicPropositions, int m
   return "This string should never be returned but omits compiler warnings.";
 }
 
-bool ParProLtlMiner::isVerifiable(std::string ltlProperty, SelectedCfgsAndIdMap cfgsAndIdMap, EdgeAnnotationMap annotations) {
-  return isExpectedResult(ltlProperty, cfgsAndIdMap, annotations, PROPERTY_VALUE_YES);
-}
-
-bool ParProLtlMiner::isFalsifiable(std::string ltlProperty, SelectedCfgsAndIdMap cfgsAndIdMap, EdgeAnnotationMap annotations) {
-  return isExpectedResult(ltlProperty, cfgsAndIdMap, annotations, PROPERTY_VALUE_NO);
-}
-
-bool ParProLtlMiner::isExpectedResult(std::string ltlProperty, SelectedCfgsAndIdMap cfgsAndIdMap, EdgeAnnotationMap annotations, PropertyValue expectedResult) {
-  ROSE_ASSERT(expectedResult != PROPERTY_VALUE_UNKNOWN);
-
-  ParProAnalyzer parProAnalyzer(cfgsAndIdMap.first, cfgsAndIdMap.second);
-  parProAnalyzer.setAnnotationMap(annotations);
-  if (expectedResult == PROPERTY_VALUE_YES) {
-    parProAnalyzer.setComponentApproximation(COMPONENTS_OVER_APPROX);
-  } else {
-    parProAnalyzer.setComponentApproximation(COMPONENTS_UNDER_APPROX);
-  }
-  parProAnalyzer.initializeSolver();
-  parProAnalyzer.runSolver();
-
-  list<string> ltlProperties;
-  ltlProperties.push_back(ltlProperty);
-  SpotConnection spotConnection(ltlProperties);
-  ParProTransitionGraph* transitionGraph = parProAnalyzer.getTransitionGraph();
-  spotConnection.checkLtlPropertiesParPro( *transitionGraph, false, false);
-  PropertyValueTable* ltlResults = spotConnection.getLtlResults();
-
-  if (expectedResult == PROPERTY_VALUE_YES) {
-    return (ltlResults->getPropertyValue(0) == PROPERTY_VALUE_YES);
-  } else {
-    return (ltlResults->getPropertyValue(0) == PROPERTY_VALUE_NO);
-  }
-}
-
-bool ParProLtlMiner::verifiableWithComponentSubset(std::string ltlProperty, SelectedCfgsAndIdMap cfgsAndIdMap, EdgeAnnotationMap annotations) {
-  return expectedResultWithComponentSubset(ltlProperty, cfgsAndIdMap, annotations, PROPERTY_VALUE_YES);
-}
-
-bool ParProLtlMiner::falsifiableWithComponentSubset(std::string ltlProperty, SelectedCfgsAndIdMap cfgsAndIdMap, EdgeAnnotationMap annotations) {
-  return expectedResultWithComponentSubset(ltlProperty, cfgsAndIdMap, annotations, PROPERTY_VALUE_NO);
-}
-
-bool ParProLtlMiner::expectedResultWithComponentSubset(std::string ltlProperty, SelectedCfgsAndIdMap cfgsAndIdMap, EdgeAnnotationMap annotations, PropertyValue expectedResult) {
-  vector<Flow> cfgs = cfgsAndIdMap.first;
-  boost::unordered_map<int, int> idMap = cfgsAndIdMap.second;
-  for (unsigned int i = 0; i < cfgs.size(); i++) {
-    // check if the ltl property is verifiable using all but the i'th CFG
-    boost::unordered_map<int, int> cfgIdMapMinusOne;
-    vector<Flow> cfgsMinusOne(cfgs.size() - 1);
-    int n = 0;
-    for (boost::unordered_map<int, int>::iterator k=idMap.begin(); k!=idMap.end(); k++) {
-      if ((int) i != k->second) {
-	cfgsMinusOne[n] = cfgs[k->second];
-	cfgIdMapMinusOne[k->first] = n;
-	n++;
+PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int minNumComponents) {
+  ROSE_ASSERT(system.hasStgOverApprox() && system.hasStgUnderApprox());
+  PropertyValueTable* result = new PropertyValueTable();
+  set<string> annotations = system.getAnnotations();
+  vector<string> annotationVec;
+  annotationVec.reserve(annotations.size());
+  copy(begin(annotations), end(annotations), back_inserter(annotationVec));
+  for (unsigned int i = 0; i < _numberOfMiningsPerSubsystem; ++i) {
+    string ltlProperty = randomLtlFormula(annotationVec, 2);
+    if (_spotConnection.checkPropertyParPro(ltlProperty, *system.stgOverApprox(), system.getAnnotations()) == PROPERTY_VALUE_YES) {
+      const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
+      bool passedFilter = passesFilter(ltlProperty, PROPERTY_VALUE_YES, systemPtr, minNumComponents);
+      if (passedFilter) {
+	result->addProperty(ltlProperty, PROPERTY_VALUE_YES);
+	result->setAnnotation(result->getPropertyNumber(ltlProperty), system.toString());
+      }
+    } else if (_spotConnection.checkPropertyParPro(ltlProperty, *system.stgUnderApprox(), system.getAnnotations()) == PROPERTY_VALUE_NO) {
+      const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
+      bool passedFilter = passesFilter(ltlProperty, PROPERTY_VALUE_NO, systemPtr, minNumComponents);
+      if (passedFilter) {
+	result->addProperty(ltlProperty, PROPERTY_VALUE_NO);
+	result->setAnnotation(result->getPropertyNumber(ltlProperty), system.toString());
       }
     }
-    SelectedCfgsAndIdMap subsetCfgsAndIdMap(cfgsMinusOne, cfgIdMapMinusOne);
-    if (isExpectedResult(ltlProperty, subsetCfgsAndIdMap, annotations, expectedResult)) {
-      return true;
-    }
   }
-  return false;
+  return result;
 }
 
-PropertyValueTable* ParProLtlMiner::mineLtlProperties(int minNumVerifiable, int minNumFalsifiable, int minNumComponents) {
+PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable) {
+  ROSE_ASSERT(system.hasStgOverApprox() && system.hasStgUnderApprox());
   PropertyValueTable* result = new PropertyValueTable();
   int verifiableCount = 0;
   int falsifiableCount = 0;
-  while (verifiableCount < minNumVerifiable || falsifiableCount < minNumFalsifiable) {
-    vector<Flow> selectedCfgs(minNumComponents);
-    boost::unordered_map<int, int> cfgIdMap;
-    set<string> annotationsSelectedCfgs;
-    for (int i = 0; i < minNumComponents; i++) {
-      int cfgId = rand() % _cfgs.size();
-      //draw a new cfgId in case the randomly selected one has been drawn already
-      while (cfgIdMap.find(cfgId) != cfgIdMap.end()) {
-	cfgId = rand() % _cfgs.size();
-      }
-      selectedCfgs[i] = _cfgs[cfgId];
-      cfgIdMap[cfgId] = i;
-      set<string> annotations = _cfgs[cfgId].getAllAnnotations();
-      annotationsSelectedCfgs.insert(annotations.begin(), annotations.end());
-    }
-    // do not consider the annotation to start one of the parallel components
-    set<string>::iterator iter = annotationsSelectedCfgs.find("");
-    if (iter != annotationsSelectedCfgs.end()) {
-      annotationsSelectedCfgs.erase(iter);
-    }
-    vector<string> atomicPropositions;
-    atomicPropositions.reserve(annotationsSelectedCfgs.size());
-    copy(begin(annotationsSelectedCfgs), end(annotationsSelectedCfgs), back_inserter(atomicPropositions));
-    for (unsigned int k = 0; k <= _numberOfMiningsPerSubsystem; k++) {
-      string ltlProperty = randomLtlFormula(atomicPropositions, 2);
-      if (isVerifiable(ltlProperty, SelectedCfgsAndIdMap(selectedCfgs, cfgIdMap), _annotations) ) {
-	  //&& !(verifiableWithComponentSubset(ltlProperty, SelectedCfgsAndIdMap(selectedCfgs, cfgIdMap), _annotations)) ) {
-        result->addProperty(ltlProperty, PROPERTY_VALUE_YES);
+  set<string> annotations = system.getAnnotations();
+  vector<string> annotationVec;
+  annotationVec.reserve(annotations.size());
+  copy(begin(annotations), end(annotations), back_inserter(annotationVec));
+  for (unsigned int i = 0; i < _numberOfMiningsPerSubsystem; ++i) {
+    string ltlProperty = randomLtlFormula(annotationVec, 2);
+    if (verifiableCount < minNumVerifiable
+	&& _spotConnection.checkPropertyParPro(ltlProperty, *system.stgOverApprox(), system.getAnnotations()) == PROPERTY_VALUE_YES) {
+      const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
+      bool passedFilter = passesFilter(ltlProperty, PROPERTY_VALUE_YES, systemPtr, minNumComponents);
+      if (passedFilter) {
+	result->addProperty(ltlProperty, PROPERTY_VALUE_YES);
+	result->setAnnotation(result->getPropertyNumber(ltlProperty), system.toString());
 	verifiableCount++;
-      } else if (isFalsifiable(ltlProperty, SelectedCfgsAndIdMap(selectedCfgs, cfgIdMap), _annotations) ) {
-		 //&& !(falsifiableWithComponentSubset(ltlProperty, SelectedCfgsAndIdMap(selectedCfgs, cfgIdMap), _annotations))) {
-        result->addProperty(ltlProperty, PROPERTY_VALUE_NO);
-      	falsifiableCount++;
+      }
+    } else if (falsifiableCount < minNumFalsifiable
+	       && _spotConnection.checkPropertyParPro(ltlProperty, *system.stgUnderApprox(), system.getAnnotations()) == PROPERTY_VALUE_NO) {
+      const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
+      bool passedFilter = passesFilter(ltlProperty, PROPERTY_VALUE_NO, systemPtr, minNumComponents);
+      if (passedFilter) {
+	result->addProperty(ltlProperty, PROPERTY_VALUE_NO);
+	result->setAnnotation(result->getPropertyNumber(ltlProperty), system.toString());
+	falsifiableCount++;
       }
     }
   }
-  cout << "DEBUG: LTL mining complete. Verifiable properties: " << verifiableCount << "  falsifiable properties: " << falsifiableCount << endl;
   return result;
 }
+
+bool ParProLtlMiner::passesFilter(string ltlProperty, PropertyValue correctValue, const ParallelSystem* system, int minNumComponents) {
+  ROSE_ASSERT(correctValue != PROPERTY_VALUE_UNKNOWN);
+  ComponentApproximation approxMode;
+  if (correctValue == PROPERTY_VALUE_YES) {
+    approxMode = COMPONENTS_OVER_APPROX;
+  } else {
+    approxMode = COMPONENTS_UNDER_APPROX;
+  }
+  list<const ParallelSystem*> worklist;
+  exploreSubsystemsAndAddToWorklist(system, approxMode, worklist);
+  while (!worklist.empty()) {
+    const ParallelSystem* subsystem = worklist.front();
+    worklist.pop_front();
+    ParProTransitionGraph* stgApprox;
+    if (approxMode == COMPONENTS_OVER_APPROX) {
+      stgApprox = (const_cast<ParallelSystem*>(subsystem))->stgOverApprox();
+    } else {
+      stgApprox = (const_cast<ParallelSystem*>(subsystem))->stgUnderApprox();
+    }
+    PropertyValue resultSubsystemApprox = _spotConnection.checkPropertyParPro(ltlProperty, *stgApprox, subsystem->getAnnotations());
+    if (resultSubsystemApprox == correctValue) {
+      if ((int) subsystem->size() < minNumComponents) {
+	// this property can be correctly assessed with less components than required. Discard the property
+	return false;
+      }
+      exploreSubsystemsAndAddToWorklist(subsystem, approxMode, worklist);
+    }
+  }
+  return true;
+}
+
+void ParProLtlMiner::exploreSubsystemsAndAddToWorklist(const ParallelSystem* system, 
+						       ComponentApproximation approxMode, list<const ParallelSystem*>& worklist) {
+  if (_subsystemsOf.find(system) == _subsystemsOf.end()) {
+    initiateSubsystemsOf(system); // compute the successors if they do not exist in the DAG yet
+  }
+  ParallelSystemDag::iterator iter = _subsystemsOf.find(system);
+  ROSE_ASSERT(iter != _subsystemsOf.end());
+  list<const ParallelSystem*> subsystemsPtrs = (*iter).second;
+  // compute the required approximated STGs if they do not exist yet
+  for (list<const ParallelSystem*>::iterator i=subsystemsPtrs.begin(); i!=subsystemsPtrs.end(); ++i) {
+    if (approxMode == COMPONENTS_OVER_APPROX) {
+      if (!((*i)->hasStgOverApprox())) {
+	_parProExplorer->computeStgApprox(*const_cast<ParallelSystem*>(*i), approxMode);
+      }
+    } else {
+      if (!((*i)->hasStgUnderApprox())) {
+	_parProExplorer->computeStgApprox(*const_cast<ParallelSystem*>(*i), approxMode);
+      }
+    }
+  }
+  for (list<const ParallelSystem*>::iterator i=subsystemsPtrs.begin(); i!=subsystemsPtrs.end(); ++i) {
+    worklist.push_back(*i);
+  }
+}
+
+void ParProLtlMiner::initiateSubsystemsOf(const ParallelSystem* system) {
+  ROSE_ASSERT(_subsystemsOf.find(system) == _subsystemsOf.end());
+  list<const ParallelSystem*> subsystems;
+  map<int, Flow*> components = system->components();
+  list<map<int, Flow*> > subsystemComponentsList;
+  for (map<int, Flow*>::iterator i=components.begin(); i!=components.end(); ++i) {
+    map<int, Flow*> subsystemComponents = components;
+    subsystemComponents.erase((*i).first);
+    subsystemComponentsList.push_back(subsystemComponents);
+  }
+  for (list<map<int, Flow*> >::iterator i=subsystemComponentsList.begin(); i!=subsystemComponentsList.end(); ++i) {
+    ParallelSystem stub;
+    stub.setComponents(*i);
+    const ParallelSystem* subsystem = _subsystems.processNewOrExisting(stub);
+    subsystems.push_back(subsystem);
+  }
+  _subsystemsOf[system] = subsystems;
+}
+

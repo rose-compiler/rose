@@ -13,43 +13,43 @@ _transitionGraph(new ParProTransitionGraph()),
 _numberOfThreadsToUse(1),
 _approximation(COMPONENTS_NO_APPROX) {}
 
-ParProAnalyzer::ParProAnalyzer(std::vector<Flow>& cfgs):
+ParProAnalyzer::ParProAnalyzer(std::vector<Flow*> cfas):
 _startTransitionAnnotation(""),
 _transitionGraph(new ParProTransitionGraph()),
 _numberOfThreadsToUse(1),
 _approximation(COMPONENTS_NO_APPROX) {
-  init(cfgs);
+  init(cfas);
 }
 
-ParProAnalyzer::ParProAnalyzer(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex): 
+ParProAnalyzer::ParProAnalyzer(std::vector<Flow*> cfas, boost::unordered_map<int, int>& cfgIdToStateIndex): 
 _startTransitionAnnotation(""),
 _transitionGraph(new ParProTransitionGraph()),
 _numberOfThreadsToUse(1),
 _approximation(COMPONENTS_NO_APPROX) {
-  init(cfgs, cfgIdToStateIndex);
+  init(cfas, cfgIdToStateIndex);
 }
 
-void ParProAnalyzer::init(std::vector<Flow>& cfgs) {
-  _cfgs = cfgs;
-  for (unsigned int i=0; i<_cfgs.size(); i++) {
+void ParProAnalyzer::init(std::vector<Flow*> cfas) {
+  _cfas = cfas;
+  for (unsigned int i=0; i<_cfas.size(); i++) {
     _cfgIdToStateIndex.insert(pair<int, int>(i,i));
   }
-  _artificalTerminationLabels = vector<Label>(cfgs.size());
+  _artificalTerminationLabels = vector<Label>(cfas.size());
   //TODO : select a label ID that is guaranteed to not exist yet (instead of the maximum of size_t)
   size_t max_size = (size_t)-1; // hope that not all of the parallel CFGs contain the maximum node id
-  for (unsigned int i=0; i<_cfgs.size(); i++) {
+  for (unsigned int i=0; i<_cfas.size(); i++) {
     _artificalTerminationLabels[i] = Label(max_size);
   }
 }
 
-void ParProAnalyzer::init(std::vector<Flow>& cfgs, boost::unordered_map<int, int>& cfgIdToStateIndex) {
-  init(cfgs);
+void ParProAnalyzer::init(std::vector<Flow*> cfas, boost::unordered_map<int, int>& cfgIdToStateIndex) {
+  init(cfas);
   _cfgIdToStateIndex = cfgIdToStateIndex;
 }
 
 ParProEState ParProAnalyzer::getTerminationState() {
-  ParProLabel label = ParProLabel(_cfgs.size());
-  for (unsigned int i=0; i<_cfgs.size(); i++) {
+  ParProLabel label = ParProLabel(_cfas.size());
+  for (unsigned int i=0; i<_cfas.size(); i++) {
     label[i] = _artificalTerminationLabels[i]; 
   }
   return ParProEState(label);
@@ -57,9 +57,9 @@ ParProEState ParProAnalyzer::getTerminationState() {
 
 void ParProAnalyzer::initializeSolver() {
   // generate the initial global EState of the parallel program
-  ParProLabel startLabel = ParProLabel(_cfgs.size());
-  for (unsigned int i=0; i<_cfgs.size(); i++) {
-    startLabel[i] = _cfgs[i].getStartLabel();
+  ParProLabel startLabel = ParProLabel(_cfas.size());
+  for (unsigned int i=0; i<_cfas.size(); i++) {
+    startLabel[i] = _cfas[i]->getStartLabel();
   }
   ParProEState startState(startLabel);
   // add the start state to the set of known states
@@ -139,32 +139,34 @@ list<pair<Edge, ParProEState> > ParProAnalyzer::parProTransferFunction(const Par
   ParProLabel sourceLabel = source->getLabel();
   // compute successor EStates based on the out edges of every CFG (one per parallel component)
   //  for (ParProLabel::iterator i=sourceLabel.begin(); i!=sourceLabel.end(); i++) {
-  ROSE_ASSERT(_cfgs.size() == sourceLabel.size());
-  for (unsigned int i=0; i<_cfgs.size(); i++) {
-    Flow outEdges = _cfgs[i].outEdges(sourceLabel[i]);
-    for(Flow::iterator k=outEdges.begin(); k!=outEdges.end(); ++k) { 
-      Edge e=*k;
-      // TODO: combine "feasibleAccordingToGlobalState(...)" and "transfer(...)" to avoid 2nd lookup and iteration
-      if (isPreciseTransition(e, source)) {
-        if (feasibleAccordingToGlobalState(e, source)) {
-   	  ParProEState target = transfer(source, e);
-	  result.push_back(pair<Edge, ParProEState>(e, target));
-        }
-      } else {
-	// we do not know whether or not the transition can be triggered
-	if (_approximation==COMPONENTS_OVER_APPROX) {
-	  // we over-approximate the global system's behavior, therefore we generate the path where the tranistion is triggered...
-	  ParProEState target = transfer(source, e);
-	  result.push_back(pair<Edge, ParProEState>(e, target));
-	  // ...but also include the case where the execution stops (none of these two cases is guaranteed to be part of the actual global behavior).
-	  Edge terminationEdge = Edge(source->getLabel()[i], _artificalTerminationLabels[i]);
-	  terminationEdge.setAnnotation("terminate (due to approximation)");
-	  result.push_back(pair<Edge, ParProEState>(terminationEdge, getTerminationState()));
-	} else if (_approximation==COMPONENTS_UNDER_APPROX) {
-	  // under-approximation here means to simply not include transitions that may or may not be feasible
+  ROSE_ASSERT(_cfas.size() == sourceLabel.size());
+  for (unsigned int i=0; i<_cfas.size(); i++) {
+    if (_cfas[i]->contains(sourceLabel[i])) { // the artifical termination label will not be in the cfa, but has no outEdges anyways
+      Flow outEdges = _cfas[i]->outEdges(sourceLabel[i]);
+      for(Flow::iterator k=outEdges.begin(); k!=outEdges.end(); ++k) { 
+	Edge e=*k;
+	// TODO: combine "feasibleAccordingToGlobalState(...)" and "transfer(...)" to avoid 2nd lookup and iteration
+	if (isPreciseTransition(e, source)) {
+	  if (feasibleAccordingToGlobalState(e, source)) {
+	    ParProEState target = transfer(source, e);
+	    result.push_back(pair<Edge, ParProEState>(e, target));
+	  }
 	} else {
-	  cerr << "ERROR: some parallel CFGs are ignored and a synchronization tries to communicate with one of them, however no abstraction is selected." << endl;
-	  ROSE_ASSERT(0);
+	  // we do not know whether or not the transition can be triggered
+	  if (_approximation==COMPONENTS_OVER_APPROX) {
+	    // we over-approximate the global system's behavior, therefore we generate the path where the tranistion is triggered...
+	    ParProEState target = transfer(source, e);
+	    result.push_back(pair<Edge, ParProEState>(e, target));
+	    // ...but also include the case where the execution stops (none of these two cases is guaranteed to be part of the actual global behavior).
+	    Edge terminationEdge = Edge(source->getLabel()[i], _artificalTerminationLabels[i]);
+	    terminationEdge.setAnnotation("terminate (due to approximation)");
+	    result.push_back(pair<Edge, ParProEState>(terminationEdge, getTerminationState()));
+	  } else if (_approximation==COMPONENTS_UNDER_APPROX) {
+	    // under-approximation here means to simply not include transitions that may or may not be feasible
+	  } else {
+	    cerr << "ERROR: some parallel CFGs are ignored and a synchronization tries to communicate with one of them, however no abstraction is selected." << endl;
+	    ROSE_ASSERT(0);
+	  }
 	}
       }
     } // for each outgoing CFG edge of a particular parallel component's current label

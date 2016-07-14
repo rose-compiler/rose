@@ -14,6 +14,7 @@
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
 #include "ReadWriteData.h"
+#include "tgba/tgba.hh"
 
 using CodeThorn::Analyzer;
 using CodeThorn::PStateSet;
@@ -61,6 +62,7 @@ class Visualizer {
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
   std::string parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph);
+  std::string spotTgbaToDot(spot::tgba& tgba);
   // used for displaying abstract ("topified") transition graphs.
   std::string transitionGraphWithIOToDot(CodeThorn::EStatePtrSet displayedEStates, 
                                     bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);

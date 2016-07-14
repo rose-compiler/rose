@@ -6,8 +6,9 @@ using namespace SPRAY;
 using namespace CodeThorn;
 using namespace std;
 
-ParProExplorer::ParProExplorer(vector<Flow>& cfgs, EdgeAnnotationMap& annotationMap):
-_cfgs(cfgs),
+ParProExplorer::ParProExplorer(vector<Flow*>& cfas, EdgeAnnotationMap& annotationMap):
+_parProLtlMiner(ParProLtlMiner(this)),
+_cfas(cfas),
 _annotationMap(annotationMap),
 _properties(new PropertyValueTable()),
 _numVerified(0),
@@ -19,38 +20,65 @@ _numRandomComponents(3),
 _ltlMode(PAR_PRO_LTL_MODE_NONE),
 _includeLtlResults(false),
 _miningsPerSubsystem(50),
+_minNumComponents(3),
 _numRequiredVerifiable(10),
 _numRequiredFalsifiable(10),
 _numberOfThreadsToUse(1), 
 _visualize(false) {
-  for (unsigned int i=0; i<_cfgs.size(); i++) {
-    _cfgIdToStateIndex.insert(pair<int, int>(i,i));
-  }
 }
 
-PropertyValueTable* ParProExplorer::ltlAnalysis(pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*> stgAndSelectedComponents) {
+PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
   PropertyValueTable* result = NULL;
   if (_ltlMode == PAR_PRO_LTL_MODE_NONE) {
     return new PropertyValueTable();  // return an empty table because no LTL analysis was selected
-  } else if (_ltlMode == PAR_PRO_LTL_MODE_CHECK) {
+  }  
+  if (_ltlMode == PAR_PRO_LTL_MODE_CHECK) {
     SpotConnection spotConnection(_ltlInputFilename);
     bool withCounterexample = false;
     bool spuriousNoAnswers = false;
-    spotConnection.checkLtlPropertiesParPro( *(stgAndSelectedComponents.first), withCounterexample, spuriousNoAnswers);
-    result = spotConnection.getLtlResults();
-  } else if (_ltlMode == PAR_PRO_LTL_MODE_MINE) { //TODO: allow for a different number of minimally required components than the number of components used to generate the STG
-    if (stgAndSelectedComponents.second) {
-      ParProLtlMiner miner((stgAndSelectedComponents.second)->first, _annotationMap);  //(stgAndSelectedComponents.second)->second);
-      miner.setNumberOfMiningsPerSubsystem(_miningsPerSubsystem);
-      result = miner.mineLtlProperties(_numRequiredVerifiable, _numRequiredFalsifiable, (stgAndSelectedComponents.second)->first.size());
+    if (system.hasStg()) {
+      spotConnection.checkLtlPropertiesParPro(*(system.stg()), withCounterexample, spuriousNoAnswers, system.getAnnotations());
+      result = spotConnection.getLtlResults();
     } else {
-      boost::unordered_map<int, int> cfgIdToStateIndex;
-      for (unsigned int i=0; i<_cfgs.size(); i++) {
-	cfgIdToStateIndex[i] = i;
+      if (system.hasStgOverApprox()) {
+	if (_visualize) {
+	  ParProSpotTgba* spotTgba = spotConnection.toTgba(*(system.stgOverApprox()));
+	  Visualizer visualizer;
+	  string dotTgba = visualizer.spotTgbaToDot(*spotTgba);
+	  delete spotTgba;
+	  spotTgba = NULL;
+	  string outputFilename = "spotTgba_over_approx.dot";
+	  write_file(outputFilename, dotTgba);
+	  cout << "generated " << outputFilename <<"."<<endl;
+        }  
+	spotConnection.checkLtlPropertiesParPro(*(system.stgOverApprox()), withCounterexample, spuriousNoAnswers, system.getAnnotations());
       }
-      ParProLtlMiner miner(_cfgs, _annotationMap);  //cfgIdToStateIndex);
-      miner.setNumberOfMiningsPerSubsystem(_miningsPerSubsystem);
-      result = miner.mineLtlProperties(_numRequiredVerifiable, _numRequiredFalsifiable, _cfgs.size());
+      if (system.hasStgUnderApprox()) {
+	if (_visualize) {
+	  ParProSpotTgba* spotTgba = spotConnection.toTgba(*(system.stgUnderApprox()));
+	  Visualizer visualizer;
+	  string dotTgba = visualizer.spotTgbaToDot(*spotTgba);
+	  delete spotTgba;
+	  spotTgba = NULL;
+	  string outputFilename = "spotTgba_under_approx.dot";
+	  write_file(outputFilename, dotTgba);
+	  cout << "generated " << outputFilename <<"."<<endl;
+	}
+	spotConnection.checkLtlPropertiesParPro(*(system.stgUnderApprox()), withCounterexample, spuriousNoAnswers, system.getAnnotations());
+      }
+    }
+    result = spotConnection.getLtlResults();
+  } else if (_ltlMode == PAR_PRO_LTL_MODE_MINE) {
+    if (_randomSubsetMode == PAR_PRO_NUM_SUBSETS_NONE) {
+      cerr << "ERROR: ltl mining on the entire parallel system is currently not supported yet." << endl;
+      ROSE_ASSERT(0);
+    } else if (_randomSubsetMode == PAR_PRO_NUM_SUBSETS_FINITE) {
+      result = _parProLtlMiner.mineProperties(system, _minNumComponents);
+    } else if (_randomSubsetMode == PAR_PRO_NUM_SUBSETS_INFINITE) {
+      int yetToVerify = _numRequiredVerifiable - _numVerified;
+      int yetToFalsify = _numRequiredFalsifiable - _numFalsified;
+      ROSE_ASSERT(yetToFalsify >= 0 && yetToVerify >= 0);
+      result = _parProLtlMiner.mineProperties(system, _minNumComponents, yetToVerify, yetToFalsify);
     }
   }
   return result;
@@ -63,23 +91,32 @@ void ParProExplorer::explore() {
       ROSE_ASSERT(0);
     }
     while(_numVerified < _numRequiredVerifiable || _numFalsified < _numRequiredFalsifiable) {
-      pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*> stgAndSelectedComponents = exploreOnce();
-      _properties->append( *(ltlAnalysis(stgAndSelectedComponents)) );
+      ParallelSystem system = exploreOnce();
+      _properties->append( *(ltlAnalysis(system)) );
+      recalculateNumVerifiedFalsified();
+      cout << "STATUS: verifiable: "<<_numVerified<<"   falsified: "<<_numFalsified << endl;
     }
   } else if (_randomSubsetMode == PAR_PRO_NUM_SUBSETS_FINITE) {
-    for (int i = 0; i < _numDifferentSubsets; i++) {
-      pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*> stgAndSelectedComponents = exploreOnce();
-      _properties->append( *(ltlAnalysis(stgAndSelectedComponents)) );
-      if ( _ltlMode == PAR_PRO_LTL_MODE_MINE
-	   && (_numVerified >= _numRequiredVerifiable && _numFalsified >= _numRequiredFalsifiable) ) {
-	break;
+    if (_componentSelection == PAR_PRO_COMPONENTS_SUBSET_FIXED) {
+      ParallelSystem system = exploreOnce();
+      _properties->append( *(ltlAnalysis(system)) );
+    } else {
+      for (int i = 0; i < _numDifferentSubsets; i++) {
+	ParallelSystem system = exploreOnce();
+	_properties->append( *(ltlAnalysis(system)) );
+	recalculateNumVerifiedFalsified();
+	if ( _ltlMode == PAR_PRO_LTL_MODE_MINE) {
+	  cout << "STATUS: verifiable: "<<_numVerified<<"   falsified: "<<_numFalsified << endl;
+	}
+	if ( _ltlMode == PAR_PRO_LTL_MODE_MINE
+	     && (_numVerified >= _numRequiredVerifiable && _numFalsified >= _numRequiredFalsifiable) ) {
+	  break;
+	}
       }
     }
   } else if (_randomSubsetMode == PAR_PRO_NUM_SUBSETS_NONE) {
-    pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*> stgAndSelectedComponents = exploreOnce();
-    ParProTransitionGraph* stgPointer = stgAndSelectedComponents.first;
-    ROSE_ASSERT(stgPointer);
-    _properties->append( *(ltlAnalysis(stgAndSelectedComponents)) );
+    ParallelSystem system = exploreOnce();
+    _properties->append( *(ltlAnalysis(system)) );
   }
 }
 
@@ -87,26 +124,57 @@ PropertyValueTable* ParProExplorer::propertyValueTable() {
   return _properties;
 }
 
-pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*> ParProExplorer::exploreOnce() {
-  ParProTransitionGraph* transitionGraph = new ParProTransitionGraph();
-  SelectedCfgsAndIdMap* components = NULL;
-  ParProAnalyzer parProAnalyzer;
+ParallelSystem ParProExplorer::exploreOnce() {
+  ParallelSystem system;
   if (_componentSelection == PAR_PRO_COMPONENTS_ALL) {
-    parProAnalyzer.init(_cfgs);
+    int currentId = 0;
+    for (vector<Flow*>::iterator i=_cfas.begin(); i!=_cfas.end(); ++i) {
+      system.addComponent(currentId, *i);
+      currentId++;
+    }
+    ParProAnalyzer parProAnalyzer(_cfas);
+    parProAnalyzer.setAnnotationMap(_annotationMap);
+    parProAnalyzer.initializeSolver();
+    parProAnalyzer.runSolver();
+    ParProTransitionGraph* stg = new ParProTransitionGraph();
+    stg = parProAnalyzer.getTransitionGraph();
+    system.setStg(stg);
   } else if (_componentSelection == PAR_PRO_COMPONENTS_SUBSET_FIXED) {
-    boost::unordered_map<int, int> cfgIdToStateIndex;
-    components = new SelectedCfgsAndIdMap(componentSubset(_fixedComponentIds));
-    parProAnalyzer.init(components->first, components->second);
+    for (set<int>::iterator i=_fixedComponentIds.begin(); i!=_fixedComponentIds.end(); i++) {
+      system.addComponent(*i, _cfas[*i]);
+    }
+    computeStgApprox(system, COMPONENTS_OVER_APPROX);
+    computeStgApprox(system, COMPONENTS_UNDER_APPROX);
   } else if (_componentSelection == PAR_PRO_COMPONENTS_SUBSET_RANDOM) {
-    set<int> randomIds = randomSetNonNegativeInts(_numRandomComponents, (((int)_cfgs.size()) - 1)); 
-    components = new SelectedCfgsAndIdMap(componentSubset(randomIds));
-    parProAnalyzer.init(components->first, components->second);
+    set<int> randomIds = randomSetNonNegativeInts(_numRandomComponents, (((int)_cfas.size()) - 1)); 
+    for (set<int>::iterator i=randomIds.begin(); i!=randomIds.end(); i++) {
+      system.addComponent(*i, _cfas[*i]);
+    }
+    computeStgApprox(system, COMPONENTS_OVER_APPROX);
+    computeStgApprox(system, COMPONENTS_UNDER_APPROX);
   }
-  parProAnalyzer.setAnnotationMap(_annotationMap);
-  parProAnalyzer.initializeSolver();
-  parProAnalyzer.runSolver();
-  transitionGraph = parProAnalyzer.getTransitionGraph();
-  return pair<ParProTransitionGraph*, SelectedCfgsAndIdMap*>(transitionGraph, components);
+  if (_visualize) {
+    Visualizer visualizer;
+    if (system.hasStg()) {
+      string dotStg = visualizer.parProTransitionGraphToDot(system.stg());
+      string outputFilename = "stgParallelProgram_no_approx.dot";
+      write_file(outputFilename, dotStg);
+      cout << "generated " << outputFilename <<"."<<endl;
+    }
+    if (system.hasStgOverApprox()) {
+      string dotStg = visualizer.parProTransitionGraphToDot(system.stgOverApprox());
+      string outputFilename = "stgParallelProgram_over_approx.dot";
+      write_file(outputFilename, dotStg);
+      cout << "generated " << outputFilename <<"."<<endl;
+    }
+    if (system.hasStgUnderApprox()) {
+      string dotStg = visualizer.parProTransitionGraphToDot(system.stgUnderApprox());
+      string outputFilename = "stgParallelProgram_under_approx.dot";
+      write_file(outputFilename, dotStg);
+      cout << "generated " << outputFilename <<"."<<endl;
+    }
+  }
+  return system;
 }
 
 set<int> ParProExplorer::randomSetNonNegativeInts(int size, int maxInt) {
@@ -122,18 +190,43 @@ set<int> ParProExplorer::randomSetNonNegativeInts(int size, int maxInt) {
   return result;
 }
 
-SelectedCfgsAndIdMap ParProExplorer::componentSubset(set<int> componentIds) {
-  boost::unordered_map<int, int> cfgIdToStateIndex;
-  int stateIndex = 0;
-  vector<Flow> componentSubset(_fixedComponentIds.size());
-  for (set<int>::iterator i=componentIds.begin(); i!=componentIds.end(); i++) {
-    componentSubset[stateIndex] = _cfgs[*i];
-    cfgIdToStateIndex[*i] = stateIndex;
-    stateIndex++;
+void ParProExplorer::computeStgApprox(ParallelSystem& system, ComponentApproximation approxMode) {
+  ROSE_ASSERT(approxMode != COMPONENTS_NO_APPROX);
+  if (approxMode == COMPONENTS_OVER_APPROX) {
+    ROSE_ASSERT(!system.hasStgOverApprox());
+  } else {
+    ROSE_ASSERT(!system.hasStgUnderApprox());
   }
-  return SelectedCfgsAndIdMap(componentSubset, cfgIdToStateIndex);
+  vector<Flow*> cfas(system.size());
+  boost::unordered_map<int, int> cfaIdMap;
+  int index = 0;
+  map<int, Flow*> components = system.components();
+  for (map<int, Flow*>::iterator i=components.begin(); i!=components.end(); ++i) {
+    cfas[index] = (*i).second;
+    cfaIdMap[(*i).first] = index;
+    ++index;
+  }
+  ParProAnalyzer parProAnalyzer(cfas, cfaIdMap);
+  parProAnalyzer.setAnnotationMap(_annotationMap);
+  parProAnalyzer.setComponentApproximation(approxMode);
+  parProAnalyzer.initializeSolver();
+  parProAnalyzer.runSolver();
+ if (approxMode == COMPONENTS_OVER_APPROX) {
+   ParProTransitionGraph* stg = new ParProTransitionGraph();
+   stg = parProAnalyzer.getTransitionGraph();
+   stg->setIsPrecise(false);
+   stg->setIsComplete(true);
+   system.setStgOverApprox(stg);
+ } else {
+   ParProTransitionGraph* stg = new ParProTransitionGraph();
+   stg = parProAnalyzer.getTransitionGraph();
+   stg->setIsPrecise(true);
+   stg->setIsComplete(false);
+   system.setStgUnderApprox(stg);
+ }
 }
 
-string ParProExplorer::getLtlsAsString() {
-  return "";
+void ParProExplorer::recalculateNumVerifiedFalsified() {
+  _numVerified = _properties->entriesWithValue(PROPERTY_VALUE_YES);
+  _numFalsified = _properties->entriesWithValue(PROPERTY_VALUE_NO);
 }

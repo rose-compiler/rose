@@ -23,11 +23,13 @@ class PropertyValueTable {
   void addProperty(string formula, size_t id, PropertyValue value);
   void addProperty(string formula, size_t id, PropertyValue value, string counterexample);
   void append(PropertyValueTable& toBeAppended);
+  void addResults(PropertyValueTable& other);
   void reachable(size_t num);
   void nonReachable(size_t num);
   void setPropertyValue(size_t num, PropertyValue value);
   void setFormula(size_t num, string formula);
   void setCounterexample(size_t num, string ce);
+  void setAnnotation(size_t num, string annotation);
   void updatePropertyValue(size_t num, PropertyValue value);
   void strictUpdatePropertyValue(size_t num, PropertyValue value);
   void strictUpdateCounterexample(size_t num, string ce);
@@ -35,9 +37,11 @@ class PropertyValueTable {
   //to be deleted by the calling function.
   std::list<int>* getPropertyNumbers();
   std::list<int>* getPropertyNumbers(PropertyValue value);
+  int getPropertyNumber(string formula);
   PropertyValue getPropertyValue(size_t num);
   std::string getFormula(size_t num);
   std::string getCounterexample(size_t num);
+  std::string getAnnotation(size_t num);
   void finished();
   void finishedReachability(bool isPrecise, bool isComplete);
   void convertValue(PropertyValue from, PropertyValue to);
@@ -49,7 +53,8 @@ class PropertyValueTable {
   void printLtlResults();
   void printResults(string yesAnswer, string noAnswer, string propertyName = "property", bool withCounterExample = false);
   void printResultsStatistics();
-  string getLtlsAsPromelaCode(bool withResults=false);
+  string getLtlsRersFormat(bool withResults=false, bool withAnnotations=false);
+  string getLtlsAsPromelaCode(bool withResults=false, bool withAnnotations=false);
   void init();
   void init(size_t size);
   int entriesWithValue(PropertyValue v);
@@ -60,6 +65,7 @@ class PropertyValueTable {
   map<size_t, PropertyValue> _propertyValueTable;
   map<size_t, string> _formulas;
   map<size_t, string> _counterexamples;
+  map<size_t, string> _annotations;
   size_t _maximumId;
 };
 

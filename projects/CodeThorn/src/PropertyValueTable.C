@@ -66,6 +66,26 @@ void PropertyValueTable::append(PropertyValueTable& toBeAppended) {
   list<int>* idsOfSecondTable = toBeAppended.getPropertyNumbers();
   for (list<int>::iterator i=idsOfSecondTable->begin(); i!=idsOfSecondTable->end(); i++) {
     addProperty(toBeAppended.getFormula(*i), toBeAppended.getPropertyValue(*i), toBeAppended.getCounterexample(*i));
+    if (toBeAppended.getAnnotation(*i) != "") {
+      setAnnotation(getPropertyNumber(toBeAppended.getFormula(*i)), toBeAppended.getAnnotation(*i));
+    }
+  }
+  delete idsOfSecondTable;
+  idsOfSecondTable = NULL;
+}
+
+// TODO: check that every property with known result in "other" also exists in "*this" 
+void PropertyValueTable::addResults(PropertyValueTable& other) {
+  list<int>* idsOfSecondTable = other.getPropertyNumbers();
+  for (list<int>::iterator i=idsOfSecondTable->begin(); i!=idsOfSecondTable->end(); i++) {
+    if (other.getPropertyValue(*i) != PROPERTY_VALUE_UNKNOWN) {
+      ROSE_ASSERT(getFormula(*i) == other.getFormula(*i));
+      strictUpdatePropertyValue(*i, other.getPropertyValue(*i));
+      setCounterexample(*i, other.getCounterexample(*i));
+      if (other.getAnnotation(*i) != "") {
+	setAnnotation(*i, other.getAnnotation(*i));
+      }
+    }
   }
   delete idsOfSecondTable;
   idsOfSecondTable = NULL;
@@ -129,6 +149,11 @@ void PropertyValueTable::setCounterexample(size_t num, string ce) {
   _counterexamples[num] = ce;
 }
 
+void PropertyValueTable::setAnnotation(size_t num, string annotation) {
+  ROSE_ASSERT(_propertyValueTable.find(num) != _propertyValueTable.end());
+  _annotations[num] = annotation;
+}
+
 PropertyValue PropertyValueTable::getPropertyValue(size_t num) {
   ROSE_ASSERT(_propertyValueTable.find(num) != _propertyValueTable.end());
   return _propertyValueTable[num];
@@ -142,6 +167,15 @@ std::string PropertyValueTable::getFormula(size_t num) {
 std::string PropertyValueTable::getCounterexample(size_t num) {
   ROSE_ASSERT(_propertyValueTable.find(num) != _propertyValueTable.end());
   return _counterexamples[num];
+}
+
+std::string PropertyValueTable::getAnnotation(size_t num) {
+  ROSE_ASSERT(_propertyValueTable.find(num) != _propertyValueTable.end());
+  if (_annotations.find(num) != _annotations.end()) {
+    return _annotations[num];
+  } else {
+    return "";
+  }
 }
 
 std::list<int>* PropertyValueTable::getPropertyNumbers() {
@@ -163,6 +197,12 @@ std::list<int>* PropertyValueTable::getPropertyNumbers(PropertyValue value) {
     }
   }
   return result;
+}
+
+int PropertyValueTable::getPropertyNumber(string formula) {
+  map<string, size_t>::iterator iter = _idByFormula.find(formula);
+  ROSE_ASSERT(iter != _idByFormula.end());
+  return iter->second;
 }
 
 string PropertyValueTable::reachToString(PropertyValue num) {
@@ -319,7 +359,7 @@ void PropertyValueTable::printResultsStatistics() {
       <<endl;
 }
 
-string PropertyValueTable::getLtlsAsPromelaCode(bool withResults) {
+string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnotations) {
   stringstream propertiesSpinSyntax;
   for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
     propertiesSpinSyntax << "ltl p"<<i->first<<"\t { "<<SpotMiscellaneous::spinSyntax(i->second)<<" }";
@@ -336,7 +376,36 @@ string PropertyValueTable::getLtlsAsPromelaCode(bool withResults) {
 	ROSE_ASSERT(0);
       }
     }
+    if (withAnnotations) {
+      propertiesSpinSyntax << "\t /* annotation: "<<_annotations[i->first]<<" */"; 
+    }
     propertiesSpinSyntax << endl;
   }
   return propertiesSpinSyntax.str();
+}
+string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotations) {
+  stringstream propertiesRersFormat;
+  for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
+    propertiesRersFormat << "#"<<i->first<<": ";
+    if (withResults) {
+      PropertyValue val = _propertyValueTable[i->first];
+      if (val == PROPERTY_VALUE_YES) {
+	propertiesRersFormat << "\t true";
+      } else if (val == PROPERTY_VALUE_NO) {
+	propertiesRersFormat << "\t false";
+      } else if (val == PROPERTY_VALUE_UNKNOWN) {
+	propertiesRersFormat << "\t unknown";
+      } else {
+	cerr << "ERROR: Unknown PropertyValue detected." << endl;
+	ROSE_ASSERT(0);
+      }
+    }
+    if (withAnnotations) {
+      propertiesRersFormat << "\t ("<<_annotations[i->first]<<")";
+    }
+    propertiesRersFormat << endl;
+    propertiesRersFormat << "( "<<i->second<<" )" << endl;
+    propertiesRersFormat << endl;
+  }
+  return propertiesRersFormat.str();
 }
