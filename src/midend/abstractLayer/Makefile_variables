@@ -3,21 +3,21 @@
 mAbstractLayer_includeHeaders=\
 	$(mAbstractLayerPath)/SprayException.h \
 	$(mAbstractLayerPath)/AstAnnotator.h \
-	$(mAbstractLayerPath)/DFAstAttribute.h \
 	$(mAbstractLayerPath)/CPAstAttributeInterface.h \
-	$(mAbstractLayerPath)/RDAstAttributeInterface.h \
+	$(mAbstractLayerPath)/DFAstAttribute.h \
 	$(mAbstractLayerPath)/Labeler.h \
-	$(mAbstractLayerPath)/VariableIdMapping.h \
-	$(mAbstractLayerPath)/SgNodeHelper.h
+	$(mAbstractLayerPath)/RDAstAttributeInterface.h \
+	$(mAbstractLayerPath)/SgNodeHelper.h \
+	$(mAbstractLayerPath)/VariableIdMapping.h
 
 mAbstractLayer_la_sources=\
 	$(mAbstractLayerPath)/AstAnnotator.C \
-	$(mAbstractLayerPath)/DFAstAttribute.C \
 	$(mAbstractLayerPath)/CPAstAttributeInterface.C \
-	$(mAbstractLayerPath)/RDAstAttributeInterface.C \
+	$(mAbstractLayerPath)/DFAstAttribute.C \
 	$(mAbstractLayerPath)/Labeler.C \
-	$(mAbstractLayerPath)/VariableIdMapping.C \
-	$(mAbstractLayerPath)/SgNodeHelper.C
+	$(mAbstractLayerPath)/RDAstAttributeInterface.C \
+	$(mAbstractLayerPath)/SgNodeHelper.C \
+	$(mAbstractLayerPath)/VariableIdMapping.C
 
 mAbstractLayer_extraDist=\
 	$(mAbstractLayerPath)/CMakeLists.txt \
