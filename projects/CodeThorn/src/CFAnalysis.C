@@ -10,6 +10,7 @@
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
+#include "SprayException.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -118,7 +119,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
-      throw "Error: interFlow: unknown call exp (not a SgFunctionCallExp).";
+      throw SPRAY::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
     SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall);
     Label callLabel,entryLabel,exitLabel,callReturnLabel;
     if(funDef==0) {
@@ -236,7 +237,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
     if(stmtPtrList.size()==0) {
       // empty initializer list (hence, an initialization stmt cannot be initial stmt of for)
-      throw "Error: for-stmt: initializer-list is empty. Not supported.";
+      throw SPRAY::Exception("Error: for-stmt: initializer-list is empty. Not supported.");
     }
     assert(stmtPtrList.size()>0);
     node=*stmtPtrList.begin();
@@ -682,7 +683,7 @@ Flow CFAnalysis::WhileAndDoWhileLoopFlow(SgNode* node,
                                          EdgeType edgeTypeParam1,
                                          EdgeType edgeTypeParam2) {
   if(!(isSgWhileStmt(node) || isSgDoWhileStmt(node))) {
-    throw "Error: WhileAndDoWhileLoopFlow: unsupported loop construct.";
+    throw SPRAY::Exception("Error: WhileAndDoWhileLoopFlow: unsupported loop construct.");
   }
   SgNode* condNode=SgNodeHelper::getCond(node);
   Label condLabel=getLabel(condNode);
@@ -752,7 +753,20 @@ Flow CFAnalysis::flow(SgNode* node) {
     // search for all functions and union flow for all functions
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       if(isSgFunctionDefinition(*i)) {
-        i.skipChildrenOnForward();
+        // schroder3 (2016-07-12): We can not skip the children of a function definition
+        //  because there might be a member function definition inside the function definition.
+        //  Example:
+        //   int main() {
+        //     class A {
+        //      public:
+        //       void mf() {
+        //         int i = 2;
+        //       }
+        //     };
+        //   }
+        //
+        // i.skipChildrenOnForward();
+
         //cout << "STATUS: Generating flow for function "<<SgNodeHelper::getFunctionName(*i)<<endl;
         tmpEdgeSet=flow(*i);
         edgeSet+=tmpEdgeSet;
@@ -853,13 +867,13 @@ Flow CFAnalysis::flow(SgNode* node) {
       // target is increment expr
       SgExpression* incExp=SgNodeHelper::getForIncExpr(loopStmt);
       if(!incExp)
-        throw "Error: for-loop: empty incExpr not supported.";
+        throw SPRAY::Exception("CFAnalysis: for-loop: empty incExpr not supported.");
       SgNode* targetNode=incExp;
       ROSE_ASSERT(targetNode);
       Edge edge=Edge(getLabel(node),EDGE_FORWARD,getLabel(targetNode));
       edgeSet.insert(edge);
     } else {
-      throw "Error: CFAnalysis: continue in unknown loop construct (not while,do-while, or for).";
+      throw SPRAY::Exception("CFAnalysis: continue in unknown loop construct (not while,do-while, or for).");
     }
     return edgeSet;
   }
@@ -1014,7 +1028,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     SgNode* condNode=SgNodeHelper::getCond(node);
     if(!condNode)
-      throw "Error: for-loop: empty condition not supported yet.";
+      throw SPRAY::Exception("Error: for-loop: empty condition not supported yet.");
     Flow flowInitToCond=flow(lastNode,condNode);
     edgeSet+=flowInitToCond;
     Label condLabel=getLabel(condNode);
@@ -1029,7 +1043,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     // Increment Expression:
     SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
     if(!incExp)
-     throw "Error: for-loop: empty incExpr not supported yet.";
+      throw SPRAY::Exception("Error: for-loop: empty incExpr not supported yet.");
     ROSE_ASSERT(incExp);
     Label incExpLabel=getLabel(incExp);
     ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);

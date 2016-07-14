@@ -8,6 +8,7 @@
 #include "CommandLineOptions.h"
 #include <cctype>
 #include <iomanip>
+#include "CodeThornException.h"
 
 using namespace std;
 
@@ -84,7 +85,7 @@ string CodeThorn::color(string name) {
       return c+"3"+int_to_string(i)+"m";
   }
   else
-    throw "Error: unknown color code.";
+    throw CodeThorn::Exception("Error: unknown color code.");
 }
 
 string CodeThorn::readableruntime(double timeInMilliSeconds) {

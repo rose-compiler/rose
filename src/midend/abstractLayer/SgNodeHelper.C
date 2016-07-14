@@ -62,6 +62,17 @@ SgDeclarationStatement* SgNodeHelper::findVariableDeclarationWithVariableSymbol(
   return 0; // non-reachable
 }
 
+SgFunctionDeclaration* SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(SgNode* node) {
+  if(SgFunctionSymbol* funcsym = isSgFunctionSymbol(node)) {
+    SgFunctionDeclaration* decl = funcsym->get_declaration();
+    ROSE_ASSERT(decl);
+    return decl;
+  } else {
+    throw "Error: SgNodeHelper::getSgFunctionDeclarationOfSgFunctionSymbol : parameter not a SgFunctionSymbol";
+  }
+}
+
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -304,7 +315,6 @@ SgInitializedName* SgNodeHelper::getInitializedNameOfVariableDeclaration(SgVaria
   }
 }
 
-
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -418,6 +428,12 @@ SgNodeHelper::getSymbolOfVariableDeclaration(SgVariableDeclaration* decl) {
   }
 }
 
+SgFunctionSymbol* SgNodeHelper::getSymbolOfFunctionDeclaration(SgFunctionDeclaration* decl) {
+  SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
+  ROSE_ASSERT(symbol);
+  ROSE_ASSERT(isSgFunctionSymbol(symbol));
+  return isSgFunctionSymbol(symbol);
+}
 
 /*! 
   * \author Markus Schordan
@@ -430,7 +446,7 @@ SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
   SgVariableSymbol* varSym=varRefExp->get_symbol();
   if(varSym==0) {
     cerr << "WARNING: SymbolofVariable: 0 (fallback)"<<endl;
-    SgInitializedName* varInitName=varSym->get_declaration();
+    SgInitializedName* varInitName=varSym->get_declaration(); // schroder3: varSym is 0 here!
     if(varInitName==0) {
       //cout << "DEBUG: *only* varSym available."<<endl;
       return varSym;
@@ -452,6 +468,13 @@ SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
     }
   }
   return varSym;
+}
+
+// Returns a unique symbol for a function (can be used as ID)
+SgFunctionSymbol* SgNodeHelper::getSymbolOfFunction(SgFunctionRefExp* funcRefExp) {
+  SgFunctionSymbol* funcSymbol = funcRefExp->get_symbol();
+  ROSE_ASSERT(funcSymbol);
+  return funcSymbol;
 }
 
 /*! 
@@ -726,6 +749,32 @@ SgExpressionPtrList& SgNodeHelper::getFunctionCallActualParameterList(SgNode* no
   return isSgExprListExp(node->get_traversalSuccessorByIndex(1))->get_expressions();
 }
 
+SgType* SgNodeHelper::getCalleeType(SgFunctionCallExp* call) {
+  const SgNode* firstChildOfCallExp = call->get_traversalSuccessorByIndex(0);
+  if(const SgExpression* calleeExpression = isSgExpression(firstChildOfCallExp)) {
+    return calleeExpression->get_type();
+  }
+  else {
+    ROSE_ASSERT(false);
+    return 0;
+  }
+}
+
+SgFunctionType* SgNodeHelper::getCalleeFunctionType(SgFunctionCallExp* call) {
+  SgType* calleeType = getCalleeType(call);
+  // It is possible to call a reference to a pointer to a function. Return the underlying
+  // function type:
+  if(const SgReferenceType* calleeReferenceType =isSgReferenceType(calleeType)) {
+    calleeType = calleeReferenceType->get_base_type();
+  }
+  if(const SgPointerType* calleePointerType = isSgPointerType(calleeType)) {
+    calleeType = calleePointerType->get_base_type();
+  }
+  // We should have a function type now:
+  SgFunctionType* calleeFunctionType = isSgFunctionType(calleeType);
+  ROSE_ASSERT((calleeFunctionType || cout << "non-function-type: " << calleeType->unparseToString() << " (" << calleeType->class_name() << ")" << endl, calleeFunctionType));
+  return calleeFunctionType;
+}
 
 /*! 
   * \author Markus Schordan

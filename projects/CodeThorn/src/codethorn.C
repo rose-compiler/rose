@@ -33,6 +33,9 @@
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
 #include "EquivalenceChecking.h"
+#include "SprayException.h"
+#include "CodeThornException.h"
+
 // test
 #include "Evaluator.h"
 #include "DotGraphCfgFrontend.h"
@@ -2004,6 +2007,16 @@ int main( int argc, char * argv[] ) {
   // reset terminal
   cout<<color("normal")<<"done."<<endl;
   
+  // main function try-catch
+  } catch(CodeThorn::Exception& e) {
+    cerr << "CodeThorn::Exception raised: " << e.what() << endl;
+    return 1;
+  } catch(SPRAY::Exception& e) {
+    cerr << "Spray::Exception raised: " << e.what() << endl;
+    return 1;
+  } catch(std::exception& e) {
+    cerr << "std::exception raised: " << e.what() << endl;
+    return 1;
   } catch(char const* str) {
     cerr << "*Exception raised: " << str << endl;
     return 1;

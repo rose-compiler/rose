@@ -155,7 +155,8 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
   cout << "INIT: establishing program abstraction layer." << endl;
   _programAbstractionLayer=new ProgramAbstractionLayer();
   _programAbstractionLayer->setModeArrayElementVariableId(variableIdForEachArrayElement);
-  _programAbstractionLayer->initialize(root);
+  // We will compute the function id mapping based on the ICFG later
+  _programAbstractionLayer->initialize(root, /*computeFunctionIdMapping=*/false);
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
   _pointerAnalysisEmptyImplementation->initialize();
   _pointerAnalysisEmptyImplementation->run();
@@ -177,6 +178,9 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
     int numReducedNodes=0; //_cfanalyzer->reduceBlockBeginNodes(_flow);
     cout << "INIT: Optimization finished (reduced nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
+  // Compute function id mapping based on the ICFG:
+  getFunctionIdMapping()->computeFunctionSymbolMapping(_flow, *getLabeler());
+
 
   ROSE_ASSERT(_initialElementFactory);
   for(long l=0;l<getLabeler()->numberOfLabels();++l) {
@@ -317,6 +321,10 @@ Labeler* DFAnalysisBase::getLabeler() {
 
 VariableIdMapping* DFAnalysisBase::getVariableIdMapping() {
   return _programAbstractionLayer->getVariableIdMapping();
+}
+
+FunctionIdMapping* DFAnalysisBase::getFunctionIdMapping() {
+  return _programAbstractionLayer->getFunctionIdMapping();
 }
 
 #if 0
