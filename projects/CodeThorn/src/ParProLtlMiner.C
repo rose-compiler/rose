@@ -129,7 +129,7 @@ PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int m
   set<string> annotations = system.getAnnotations();
   vector<string> annotationVec;
   annotationVec.reserve(annotations.size());
-  copy(begin(annotations), end(annotations), back_inserter(annotationVec));
+  copy(annotations.begin(), annotations.end(), back_inserter(annotationVec));
   for (unsigned int i = 0; i < _numberOfMiningsPerSubsystem; ++i) {
     string ltlProperty = randomLtlFormula(annotationVec, 2);
     if (_spotConnection.checkPropertyParPro(ltlProperty, *system.stgOverApprox(), system.getAnnotations()) == PROPERTY_VALUE_YES) {
@@ -159,7 +159,7 @@ PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int m
   set<string> annotations = system.getAnnotations();
   vector<string> annotationVec;
   annotationVec.reserve(annotations.size());
-  copy(begin(annotations), end(annotations), back_inserter(annotationVec));
+  copy(annotations.begin(), annotations.end(), back_inserter(annotationVec));
   for (unsigned int i = 0; i < _numberOfMiningsPerSubsystem; ++i) {
     string ltlProperty = randomLtlFormula(annotationVec, 2);
     if (verifiableCount < minNumVerifiable
