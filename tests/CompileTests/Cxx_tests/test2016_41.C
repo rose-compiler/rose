@@ -1,5 +1,5 @@
 
-#if 0
+#if 1
 template <typename T>
 inline void Release(T **ptr)
 {
