@@ -7,6 +7,7 @@
 #include <cstring>
 #include <iostream>
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 
 int

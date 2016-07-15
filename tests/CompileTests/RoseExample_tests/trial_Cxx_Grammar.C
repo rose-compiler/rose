@@ -12,6 +12,7 @@ using namespace std;
 
 // Simplify code by using std namespace (never put into header files since it effects users) 
 using namespace std;
+using namespace rose;
 
 static struct 
    { 

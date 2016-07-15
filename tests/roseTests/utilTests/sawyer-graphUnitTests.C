@@ -117,6 +117,22 @@ void iterate_vertices() {
     for (size_t i=0; i<vertexValues.size(); ++i)
         graph.insertVertex(vertexValues[i]);
 
+    std::cout <<"  iterator copy constructor\n";
+    typename Graph::VertexIterator vi = graph.vertices().begin();
+    ASSERT_always_require(vi != graph.vertices().end());
+    ASSERT_always_require(vi->value() == vertexValues[0]);
+
+    std::cout <<"  iterator assignment\n";
+    typename Graph::VertexIterator v2 = vi;
+    v2 = graph.vertices().begin();
+    ASSERT_always_require(v2 != graph.vertices().end());
+    ASSERT_always_require(v2->value() == vertexValues[0]);
+    ++vi;
+    ASSERT_always_require(v2 == graph.vertices().begin());
+    typename Graph::VertexIterator v3 = v2;
+    v2++;
+    ASSERT_always_require(v3 == graph.vertices().begin());
+
     std::cout <<"  using BOOST_FOREACH:";
     size_t idx = 0;
     BOOST_FOREACH (const typename Graph::Vertex &vertex, graph.vertices()) {
@@ -126,11 +142,76 @@ void iterate_vertices() {
     }
     std::cout <<"\n";
 
-    std::cout <<"  using begin/end:    ";
+    std::cout <<"  using begin/end pre-increment: ";
     idx = 0;
     for (typename Graph::VertexIterator iter=graph.vertices().begin(); iter!=graph.vertices().end(); ++iter) {
         std::cout <<" " <<iter->value();
         ASSERT_always_require(iter->value() == vertexValues[idx]);
+        ++idx;
+    }
+    std::cout <<"\n";
+
+    std::cout <<"  using begin/end post-increment: ";
+    idx = 0;
+    for (typename Graph::VertexIterator iter = graph.vertices().begin(); iter != graph.vertices().end(); ++idx) {
+        typename Graph::VertexIterator tmp = iter++;
+        std::cout <<" " <<tmp->value();
+        ASSERT_always_require2(tmp->value() == vertexValues[idx],
+                               "vertexValues[" + boost::lexical_cast<std::string>(idx) + "]=" + vertexValues[idx] +
+                               " tmp->value()=" + tmp->value());
+        ASSERT_always_require(iter == graph.vertices().end() || iter->value() == vertexValues[idx+1]);
+    }
+    std::cout <<"\n";
+}
+
+static void iterate_edges() {
+    std::cout <<"edge iteration:\n";
+
+    typedef std::pair<size_t, size_t> EdgeValue;
+    typedef Sawyer::Container::Graph<std::string, EdgeValue> Graph;
+    Graph graph;
+    std::vector<std::string> vertexValues;
+    vertexValues.push_back("gold");                     // 0
+    vertexValues.push_back("glitter");                  // 1
+    vertexValues.push_back("goose");                    // 2
+    vertexValues.push_back("grinch");                   // 3
+    for (size_t i=0; i<vertexValues.size(); ++i)
+        graph.insertVertex(vertexValues[i]);
+
+    std::vector<EdgeValue> edgeValues;
+    edgeValues.push_back(std::make_pair(0, 1));
+    edgeValues.push_back(std::make_pair(1, 2));
+    edgeValues.push_back(std::make_pair(2, 1));
+    edgeValues.push_back(std::make_pair(3, 1));
+    edgeValues.push_back(std::make_pair(3, 1));
+    edgeValues.push_back(std::make_pair(3, 3));
+    for (size_t i=0; i<edgeValues.size(); ++i) {
+        graph.insertEdge(graph.findVertex(edgeValues[i].first),
+                         graph.findVertex(edgeValues[i].second),
+                         edgeValues[i]);
+    }
+
+    std::cout <<"  iterator copy constructor\n";
+    Graph::EdgeIterator e1 = graph.edges().begin();
+    ASSERT_always_require(e1 != graph.edges().end());
+    ASSERT_always_require(e1 == graph.edges().begin());
+
+    std::cout <<"  iterator assignment\n";
+    Graph::EdgeIterator e2 = e1;
+    e2 = graph.edges().begin();
+    ASSERT_always_require(e2 != graph.edges().end());
+    ASSERT_always_require(e2->value() == edgeValues[0]);
+    ++e1;
+    ASSERT_always_require(e2 == graph.edges().begin());
+    Graph::EdgeIterator e3 = e2;
+    e2++;
+    ASSERT_always_require(e3 == graph.edges().begin());
+
+    std::cout <<"  using BOOST_FOREACH:";
+    size_t idx = 0;
+    BOOST_FOREACH (const Graph::Edge &edge, graph.edges()) {
+        std::cout <<" " <<edge.value().first <<"->" <<edge.value().second;
+        ASSERT_always_require(edge.value() == edgeValues[idx]);
         ++idx;
     }
     std::cout <<"\n";
@@ -1016,6 +1097,7 @@ int main() {
     default_ctor<G1>();
     insert_vertex<G1>();
     iterate_vertices<G1>();
+    iterate_edges();
     find_vertex<G1>();
     erase_empty_vertex<G1>();
     insert_edge<G1>();

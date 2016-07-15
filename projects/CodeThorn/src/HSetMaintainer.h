@@ -214,7 +214,7 @@ public:
         ++i) {
       mem+=(*i)->memorySize();
     }
-    return mem+sizeof(*this);
+    return mem+sizeof(*this); //TODO: check if sizeof is correct here
   }
 
  private:

@@ -1,0 +1,10 @@
+rose/config/rose_edg_required_macros_and_functions.h.in: 
+
+All (or a subset of) builtins in missing-builtin-functions.txt must be
+made available as constexpr functions. This requires to provide two
+versions, one for c++98 and one for C++11.
+In order to allow for two different versions, the check for built-ins must
+be disabled for these functions in EDG. 
+
+EDG:
+The list of built-ins is defined in rose/src/frontend/CxxFrontend/EDG/EDG_4.9/srcil_def.h.

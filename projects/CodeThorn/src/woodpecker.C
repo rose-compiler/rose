@@ -18,11 +18,15 @@
 #include "TrivialInlining.h"
 #include "Threadification.h"
 #include "RewriteSystem.h"
+#include "Normalization.h"
 
 #include <vector>
 #include <set>
 #include <list>
 #include <string>
+
+#include "SprayException.h"
+#include "CodeThornException.h"
 
 #include "limits.h"
 #include <cmath>
@@ -141,6 +145,7 @@ int main(int argc, char* argv[]) {
     ("version,v", "display the version.")
     ("stats", "display code statistics.")
     ("normalize", po::value< string >(), "normalize code (eliminate compound assignment operators).")
+    ("normalize2", po::value< string >(), "normalize code (normalize for-statements).")
     ("inline",po::value< string >(), "perform inlining ([yes]|no).")
     ("eliminate-empty-if",po::value< string >(), "eliminate if-statements with empty branches in main function ([yes]/no).")
     ("eliminate-dead-code",po::value< string >(), "eliminate dead code (variables and expressions) ([yes]|no).")
@@ -187,6 +192,7 @@ int main(int argc, char* argv[]) {
   boolOptions.registerOption("post-semantic-fold",false); // temporary
   // regular options
   boolOptions.registerOption("normalize",false);
+  boolOptions.registerOption("normalize2",false);
   boolOptions.registerOption("inline",true);
   boolOptions.registerOption("eliminate-empty-if",true);
   boolOptions.registerOption("eliminate-dead-code",true);
@@ -276,9 +282,14 @@ int main(int argc, char* argv[]) {
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
     cout <<"STATUS: Normalization finished."<<endl;
-
   }
  
+  if(boolOptions["normalize2"]) {
+    cout <<"STATUS: Normalization started."<<endl;
+    SPRAY::Normalization::normalizeAst(root);
+    cout <<"STATUS: Normalization finished."<<endl;
+  }
+
   cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
   VarConstSetMap varConstSetMap;
   VariableIdSet variablesOfInterest;
@@ -365,13 +376,18 @@ int main(int argc, char* argv[]) {
     root->unparse(0,0);
   }
 
-  std::list<int> fakelist;
-  fakelist.push_back(1);
-  std::list<int>::iterator myit=fakelist.begin();
-  fakelist.erase(myit);
   cout<< "STATUS: finished."<<endl;
 
   // main function try-catch
+  } catch(CodeThorn::Exception& e) {
+    cerr << "CodeThorn::Exception raised: " << e.what() << endl;
+    return 1;
+  } catch(SPRAY::Exception& e) {
+    cerr << "Spray::Exception raised: " << e.what() << endl;
+    return 1;
+  } catch(std::exception& e) {
+    cerr << "std::exception raised: " << e.what() << endl;
+    return 1;
   } catch(char* str) {
     cerr << "*Exception raised: " << str << endl;
     return 1;

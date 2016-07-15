@@ -1,5 +1,5 @@
-module forcing
+module test_forcing
 
    use test_constants
 
-end module forcing
+end module test_forcing

@@ -33,16 +33,33 @@ bool BoolOptions::operator[](string option) {
 }
 
 void BoolOptions::registerOption(string name, bool defaultval) {
-  mapping[name]=defaultval;
+  if(mapping.find(name) == mapping.end()) {
+    mapping[name]=defaultval;
+  } else {
+    cerr<<"Error: command line option '"<<name<<"' already registered with value: "<<mapping[name]
+        <<". Value "<<defaultval<<" not registered."<<endl;
+    exit(1);
+  }
 }
 
-string BoolOptions::toString() {
-  stringstream options;
-  options<<"Options:"<<endl;
-  for(map<string,bool>::iterator i=mapping.begin();i!=mapping.end();++i) {
-    options<<(*i).first<<":"<<(*i).second<<endl;
+void BoolOptions::setOption(string name, bool val) {
+  if(mapping.find(name) != mapping.end()) {
+    mapping[name]=val;
+  } else {
+    cerr<<"Error: attempted to set unregistered command line option '"<<name<<"' to value '"<<val<<"'."<<endl;
+    exit(1);
   }
-  return options.str();
+}
+
+void BoolOptions::processZeroArgumentsOption(string name) {
+  if(args.count(name)>0) {
+    setOption(name,true);
+  }
+  // check for "no-" name
+  string no_name="no-"+name;
+  if(args.count(no_name)>0) {
+    setOption(name,false);
+  }
 }
 
 void BoolOptions::processOptions() {
@@ -71,3 +88,13 @@ void BoolOptions::processOptions() {
     }
   }
 }
+
+string BoolOptions::toString() {
+  stringstream options;
+  options<<"Options:"<<endl;
+  for(map<string,bool>::iterator i=mapping.begin();i!=mapping.end();++i) {
+    options<<(*i).first<<":"<<(*i).second<<endl;
+  }
+  return options.str();
+}
+

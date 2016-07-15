@@ -22,7 +22,8 @@
 #include "boost/filesystem.hpp"
 
 using namespace std;
-using namespace StringUtility;
+using namespace rose;
+using namespace rose::StringUtility;
 
 bool
 isLink( const string & name )

@@ -164,6 +164,12 @@ public:
      *  block. */
     rose_addr_t address() const { return startVa_; }
 
+    /** Get all instruction addresses.
+     *
+     *  The return value is the set of all virtual addresses for both instruction starting addresses and the internal addresses
+     *  of instructions. */
+    AddressIntervalSet insnAddresses() const;
+
     /** Get the address after the end of the final instruction.
      *
      *  This is the address that immediately follows the final byte of the instruction that is executed last by the basic
@@ -228,6 +234,11 @@ public:
 public:
     /** Get the number of data blocks owned. */
     size_t nDataBlocks() const { return dblocks_.size(); }
+
+    /** Addresses that are part of static data.
+     *
+     *  Returns all addresses that are part of static data. */
+    AddressIntervalSet dataAddresses() const;
 
     /** Determine if this basic block contains the specified data block.
      *

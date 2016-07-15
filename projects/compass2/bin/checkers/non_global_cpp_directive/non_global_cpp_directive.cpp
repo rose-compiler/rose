@@ -11,7 +11,7 @@
 #include "compass2/compass.h"
 
 using std::string;
-using namespace StringUtility;
+using namespace rose::StringUtility;
 
 extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
 

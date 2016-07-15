@@ -4,6 +4,8 @@
 
 #include <boost/graph/graphviz.hpp>
 
+using namespace rose;
+
 /* Label the graphviz vertices with function entry addresses rather than vertex numbers. */
 template<class FunctionCallGraph>
 struct GraphvizVertexWriter {

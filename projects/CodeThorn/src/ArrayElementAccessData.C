@@ -32,6 +32,19 @@ string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) co
   }
 }
 
+string ArrayElementAccessData::toStringNoSsaSubscript(VariableIdMapping* variableIdMapping) const {
+  if(isValid()) {
+    stringstream ss;
+    ss<< variableIdMapping->variableName(varId);
+    for(vector<int>::const_iterator i=subscripts.begin();i!=subscripts.end();++i) {
+      ss<<"["<<*i<<"]";
+    }
+    return ss.str();
+  } else {
+    return "$non-valid-array-access$";
+  }
+}
+
 bool ArrayElementAccessData::isValid() const {
   return varId.isValid() && subscripts.size()>0;
 }

@@ -33,6 +33,6 @@ case $1 in
 esac
 
 echo "Analyzing RERS benchmark Problem$1.c with $NUMTHREADS thread$NUMS."
-./codethorn_rers$1 tests/rers/Problem$1.c --csv-assert CodeThorn_Problem$1_bin_assert.csv --edg:no_warnings --csv-stats CodeThorn_Problem$1_bin_stats.csv --threads=$NUMTHREADS --display-diff=10000 --input-values=$VALUES --input-values-as-constraints=no --rers-binary=yes --reduce-cfg=no
+./codethorn_rers$1 tests/rers/Problem$1.c --csv-assert CodeThorn_Problem$1_bin_assert.csv --edg:no_warnings --csv-stats CodeThorn_Problem$1_bin_stats.csv --threads=$NUMTHREADS --display-diff=10000 --input-values=$VALUES --input-values-as-constraints=no --rers-binary=yes
 echo "Generated CodeThorn_Problem$1_bin_assert.csv"
 echo "Generated CodeThorn_Problem$1_bin_stats.csv"

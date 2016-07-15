@@ -16,11 +16,15 @@ bool SPRAY::ProgramAbstractionLayer::getModeArrayElementVariableId() {
   return _modeArrayElementVariableId;; 
 }
 
-void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
+void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root, bool computeFunctionIdMapping) {
   _variableIdMapping=new VariableIdMapping();
   getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
   getVariableIdMapping()->computeVariableSymbolMapping(root);
   _labeler=new Labeler(root);
+  _functionIdMapping=new FunctionIdMapping();
+  if(computeFunctionIdMapping) {
+    getFunctionIdMapping()->computeFunctionSymbolMapping(root);
+  }
 }
 
 SPRAY::Labeler* SPRAY::ProgramAbstractionLayer::getLabeler(){
@@ -31,4 +35,9 @@ SPRAY::Labeler* SPRAY::ProgramAbstractionLayer::getLabeler(){
 SPRAY::VariableIdMapping* SPRAY::ProgramAbstractionLayer::getVariableIdMapping(){
   ROSE_ASSERT(_variableIdMapping!=0);
   return _variableIdMapping;
+}
+
+SPRAY::FunctionIdMapping* SPRAY::ProgramAbstractionLayer::getFunctionIdMapping(){
+  ROSE_ASSERT(_functionIdMapping!=0);
+  return _functionIdMapping;
 }

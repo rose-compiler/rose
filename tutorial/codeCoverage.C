@@ -5,6 +5,7 @@
 #include "rose.h"
 
 using namespace std;
+using namespace rose;
 
 /*
    Design of this code.

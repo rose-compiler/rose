@@ -6,6 +6,7 @@
 #include "NameGenerator.hh"     //unique function name generator for outlining  
 
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;

@@ -69,6 +69,8 @@ class VariableIdMapping {
   VariableId variableIdOfArrayElement(VariableId arrayVar, int elemIndex);
   SgSymbol* getSymbol(VariableId varId);
   SgType* getType(VariableId varId);
+  // schroder3 (2016-07-05): Returns whether the given variable is a reference variable
+  bool hasReferenceType(VariableId varId);
   // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
   bool hasIntegerType(VariableId varId);
   // returns true if this variable has any floating-point type (float,double,longdouble)
@@ -78,6 +80,8 @@ class VariableIdMapping {
   bool isConstantArray(VariableId varId);
   SgVariableDeclaration* getVariableDeclaration(VariableId varId);
   bool isTemporaryVariableId(VariableId varId);
+  // schroder3 (2016-07-05): Returns whether the given variable is valid in this mapping
+  bool isVariableIdValid(VariableId varId);
   std::string variableName(VariableId varId);
   std::string uniqueLongVariableName(VariableId varId);
   std::string uniqueShortVariableName(VariableId varId);

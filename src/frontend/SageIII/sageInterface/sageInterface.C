@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include "markLhsValues.h"
 #include "fixupNames.h"
+#include "FileUtility.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -114,6 +115,7 @@ namespace SageInterface
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 using namespace SageBuilder;
 
 
@@ -6987,6 +6989,9 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
        // DQ (7/19/2015): Added missing case:
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
+               // Liao 6/24/2016. Handle the simplest case: both arguments are parameter pack.
+               if (arg2->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument) 
+                 return true; 
                ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
              }
 
@@ -7009,6 +7014,8 @@ bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrL
         {
 #if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
           printf ("In templateArgumentListEquivalence(): different list sizes: returning false \n");
+          printf ("   --- list1.size() = %zu \n",list1.size());
+          printf ("   --- list2.size() = %zu \n",list2.size());
 #endif
           return false;
         }
@@ -20690,12 +20697,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = X_typeChain[i];
           printf ("X_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- X_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("X type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }
         }
 
@@ -20704,12 +20713,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = Y_typeChain[i];
           printf ("Y_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- Y_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("Y type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }          
         }
 #endif
