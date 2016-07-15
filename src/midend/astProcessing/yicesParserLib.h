@@ -2555,7 +2555,7 @@ for (int q = 0; q < paths.size(); q++) {
     StaticCFG::CFG* cfg = new StaticCFG::CFG(mainDef);
     vis->pathnumber = 0;
     stringstream ss;
-    string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
+    string fileName= rose::StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
     string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
 
     SgIncidenceDirectedGraph* g = new SgIncidenceDirectedGraph();

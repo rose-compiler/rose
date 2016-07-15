@@ -18,6 +18,7 @@
 #endif
 
 using namespace std;
+using namespace rose;
 
 inline bool
 namesMatch ( const string &x, const string &y )

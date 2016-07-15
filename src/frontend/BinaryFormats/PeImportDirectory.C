@@ -3,6 +3,7 @@
 #include "MemoryMap.h"
 #include "Diagnostics.h"
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 /** @class SgAsmPEImportDirectory
