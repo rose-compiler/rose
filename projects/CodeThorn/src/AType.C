@@ -12,6 +12,7 @@
 #include <climits>
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
+#include "CodeThornException.h"
 
 using namespace std;
 
@@ -65,7 +66,7 @@ AType::BoolLattice AType::BoolLattice::operator!() {
   case TOP: tmp.value=TOP;break;
   case BOT: tmp.value=BOT;break;
   default:
-    throw "Error: BoolLattice operation '!' failed.";
+    throw CodeThorn::Exception("Error: BoolLattice operation '!' failed.");
   }
   return tmp;
 }
@@ -97,7 +98,7 @@ bool AType::BoolLattice::operator<(BoolLattice other) const {
   if (isTop()) {
     return false;
   }
-  throw "Error: BoolLattice operation< failed.";
+  throw CodeThorn::Exception("Error: BoolLattice operation< failed.");
 }
 
 AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
@@ -116,7 +117,7 @@ AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
   if(isTrue()  && other.isFalse()) return true;
   if(isFalse() && other.isTrue())  return true;
   if(isFalse() && other.isFalse()) return false;
-  throw "Error: BoolLattice operation|| failed.";
+  throw CodeThorn::Exception("Error: BoolLattice operation|| failed.");
 }
 
 AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
@@ -134,7 +135,7 @@ AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
   if(isTrue()  && other.isFalse()) return false;
   if(isFalse() && other.isTrue())  return false;
   if(isFalse() && other.isFalse()) return false;
-  throw "Error: BoolLattice operation&& failed.";
+  throw CodeThorn::Exception("Error: BoolLattice operation&& failed.");
 }
 
 AType::BoolLattice AType::BoolLattice::lub(AType::BoolLattice other) {
@@ -148,7 +149,7 @@ AType::BoolLattice AType::BoolLattice::lub(AType::BoolLattice other) {
   if(isTrue()  && other.isFalse()) return Top();
   if(isFalse() && other.isTrue())  return Top();
   if(isFalse() && other.isFalse()) return false;
-  throw "Error: BoolLattice lub failed.";
+  throw CodeThorn::Exception("Error: BoolLattice lub failed.");
 }
 
 AType::BoolLattice AType::BoolLattice::glb(AType::BoolLattice other) {
@@ -162,7 +163,7 @@ AType::BoolLattice AType::BoolLattice::glb(AType::BoolLattice other) {
   if(isTrue()  && other.isFalse()) return Bot();
   if(isFalse() && other.isTrue())  return Bot();
   if(isFalse() && other.isFalse()) return false;
-  throw "Error: BoolLattice glb failed.";
+  throw CodeThorn::Exception("Error: BoolLattice glb failed.");
 }
 
 // operator= : C++ default used
@@ -175,7 +176,7 @@ string AType::BoolLattice::toString() const {
   case FALSE: return "false";
   default:
     cerr<<"VALUE = "<<value<<endl;
-    throw "Error: BoolLattice::toString operation failed.";
+    throw CodeThorn::Exception("Error: BoolLattice::toString operation failed.");
   }
 }
 
@@ -203,27 +204,27 @@ AType::ConstIntLattice::ConstIntLattice(signed char x) {valueType=AType::ConstIn
 AType::ConstIntLattice::ConstIntLattice(short x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;}
 AType::ConstIntLattice::ConstIntLattice(int x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=x;}
 AType::ConstIntLattice::ConstIntLattice(long int x) {
-  if((x<INT_MIN || x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
   valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
 }
 AType::ConstIntLattice::ConstIntLattice(long long int x) {
-  if((x<INT_MIN || x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
   valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
 }
 AType::ConstIntLattice::ConstIntLattice(unsigned short int x) {
-  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
   valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
 }
 AType::ConstIntLattice::ConstIntLattice(unsigned int x) {
-  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
   valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
 }
 AType::ConstIntLattice::ConstIntLattice(unsigned long int x) {
-  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
   valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
 }
 AType::ConstIntLattice::ConstIntLattice(unsigned long long int x) {
-  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
   valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
 }
 int AType::ConstIntLattice::intLength() { return sizeof(int); }
@@ -238,7 +239,7 @@ long AType::ConstIntLattice::hash() const {
   if(isTop()) return LONG_MAX;
   if(isBot()) return LONG_MIN;
   if(isConstInt()) return getIntValue();
-  throw "Error: ConstIntLattice hash: unknown value.";
+  throw CodeThorn::Exception("Error: ConstIntLattice hash: unknown value.");
 }
 
 AType::ConstIntLattice AType::ConstIntLattice::operatorNot() {
@@ -255,7 +256,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorNot() {
   case AType::ConstIntLattice::TOP: tmp=Top();break;
   case AType::ConstIntLattice::BOT: tmp=Bot();break;
   default:
-    throw "Error: ConstIntLattice operation '!' failed.";
+    throw CodeThorn::Exception("Error: ConstIntLattice operation '!' failed.");
   }
   return tmp;
 }
@@ -285,7 +286,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorOr(ConstIntLattice other)
   if(isTrue()  && other.isFalse()) return true;
   if(isFalse() && other.isTrue())  return true;
   if(isFalse() && other.isFalse()) return false;
-  throw "Error: ConstIntLattice operation|| failed.";
+  throw CodeThorn::Exception("Error: ConstIntLattice operation|| failed.");
 }
 
 AType::ConstIntLattice AType::ConstIntLattice::operatorAnd(ConstIntLattice other) {
@@ -313,7 +314,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorAnd(ConstIntLattice other
   if(isTrue() && other.isFalse())  return false;
   if(isFalse() && other.isTrue())  return false;
   if(isFalse() && other.isFalse()) return false;
-  throw "Error: ConstIntLattice operation&& failed.";
+  throw CodeThorn::Exception("Error: ConstIntLattice operation&& failed.");
 }
 
 bool AType::strictWeakOrderingIsSmaller(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) {
@@ -413,7 +414,7 @@ string AType::ConstIntLattice::toString() const {
     return ss.str();
   }
   default:
-    throw "Error: ConstIntLattice::toString operation failed.";
+    throw CodeThorn::Exception("Error: ConstIntLattice::toString operation failed.");
   }
 }
 
@@ -427,7 +428,7 @@ void AType::ConstIntLattice::fromStream(istream& is) {
   } else if(SPRAY::Parse::integer(is,intValue)) {
     valueType=CONSTINT;
   } else {
-    throw "Error: ConstIntLattic::fromStream failed.";
+    throw CodeThorn::Exception("Error: ConstIntLattic::fromStream failed.");
   }
 }
 
@@ -438,7 +439,7 @@ AType::ConstIntLattice::ValueType AType::ConstIntLattice::getValueType() const {
 int AType::ConstIntLattice::getIntValue() const { 
   if(valueType!=CONSTINT) {
     cerr << "ConstIntLattice: valueType="<<valueType<<endl;
-    throw "Error: ConstIntLattice::getIntValue operation failed.";
+    throw CodeThorn::Exception("Error: ConstIntLattice::getIntValue operation failed.");
   }
   else 
     return intValue;
@@ -455,7 +456,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorUnaryMinus() {
   case AType::ConstIntLattice::TOP: tmp=Top();break;
   case AType::ConstIntLattice::BOT: tmp=Bot();break;
   default:
-    throw "Error: ConstIntLattice operation unaryMinus failed.";
+    throw CodeThorn::Exception("Error: ConstIntLattice operation unaryMinus failed.");
   }
   return tmp;
 }

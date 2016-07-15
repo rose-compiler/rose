@@ -8,15 +8,15 @@
 using namespace SPRAY;
 using namespace std;
 
-Edge::Edge():source(0),target(0){
+Edge::Edge():_source(0),_target(0),_annotation(""){
 }
-Edge::Edge(Label source0,Label target0):source(source0),target(target0){
+Edge::Edge(Label source0,Label target0):_source(source0),_target(target0),_annotation(""){
   // _types is an empty set by default (we may want to use EDGE_UNKNOWN instead)
 }
-Edge::Edge(Label source0,EdgeType et,Label target0):source(source0),target(target0){
+Edge::Edge(Label source0,EdgeType et,Label target0):_source(source0),_target(target0),_annotation(""){
   _types.insert(et);
 }
-Edge::Edge(Label source0,set<EdgeType> tset,Label target0):source(source0),target(target0){
+Edge::Edge(Label source0,set<EdgeType> tset,Label target0):_source(source0),_target(target0),_annotation(""){
   _types=tset;
 }
 
@@ -82,12 +82,12 @@ void Edge::removeType(EdgeType et) {
 
 string Edge::toString() const {
   stringstream ss;
-  ss << "Edge"<<"("<<source<<","<<typesToString()<<","<<target<<")";
+  ss << "Edge"<<"("<<source()<<","<<typesToString()<<","<<target()<<")";
   return ss.str();
 }
 string Edge::toStringNoType() const {
   stringstream ss;
-  ss << "("<<source<<","<<target<<")";
+  ss << "("<<source()<<","<<target()<<")";
   return ss.str();
 }
 
@@ -142,7 +142,7 @@ string Edge::color() const {
 // color: true/false has higher priority than forward/backward.
 string Edge::toDotFixedColor(string color) const {
   stringstream ss;
-  ss<<source<<"->"<<target;
+  ss<<source()<<"->"<<target();
   ss<<" [label=\""<<typesToString()<<"\"";
   ss<<" color="<<color<<" ";
   ss<<"]";
@@ -150,8 +150,17 @@ string Edge::toDotFixedColor(string color) const {
 }
 string Edge::toDotColored() const {
   stringstream ss;
-  ss<<source<<"->"<<target;
+  ss<<source()<<"->"<<target();
   ss<<" [label=\""<<typesToString()<<"\"";
+  ss<<" color="<<color()<<" ";
+  ss<<"]";
+  return ss.str();
+}
+
+string Edge::toDotAnnotationOnly() const {
+  stringstream ss;
+  ss<<source()<<"->"<<target();
+  ss<<" [label=\""<<getAnnotation()<<"\"";
   ss<<" color="<<color()<<" ";
   ss<<"]";
   return ss.str();
@@ -213,7 +222,7 @@ bool SPRAY::operator!=(const InterEdge& e1, const InterEdge& e2) {
 bool SPRAY::operator==(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
-  return e1.source==e2.source && e1.typesCode()==e2.typesCode() && e1.target==e2.target;
+  return e1.source()==e2.source() && e1.typesCode()==e2.typesCode() && e1.target()==e2.target() && e1.getAnnotation() == e2.getAnnotation();
 }
 bool SPRAY::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
@@ -221,17 +230,25 @@ bool SPRAY::operator!=(const Edge& e1, const Edge& e2) {
 bool SPRAY::operator<(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
-  if(e1.source!=e2.source)
-    return e1.source<e2.source;
-  if(e1.target!=e2.target)
-    return e1.target<e2.target;
-  return e1.typesCode()<e2.typesCode();
+  if(e1.source()!=e2.source())
+    return e1.source()<e2.source();
+  if(e1.target()!=e2.target())
+    return e1.target()<e2.target();
+  if(e1.typesCode()!=e2.typesCode())
+    return e1.typesCode()<e2.typesCode();
+  return e1.getAnnotation()<e2.getAnnotation();
 }
 
 long Edge::typesCode() const {
   long h=1;
   for(set<EdgeType>::iterator i=_types.begin();i!=_types.end();++i) {
     h+=(1<<*i);
+  }
+  int m = _types.size();
+  int k = 0;
+  for (string::iterator i=getAnnotation().begin(); i!=getAnnotation().end(); ++i) {
+    h+=(static_cast<unsigned char>(*i)<<(k*8 + m));
+    k++;
   }
   return h;
 }
@@ -240,26 +257,14 @@ long Edge::hash() const {
   return typesCode();
 }
 
-Flow::Flow():_boostified(false) {
-  resetDotOptions();
-}
-
-void Flow::boostify() {
-  cout<<"STATUS: converting ICFG to boost graph representation ... "<<endl;
-  edge_t e; bool b;
-  ROSE_ASSERT(!_boostified);
-  for(Flow::iterator i=begin();i!=end();++i) {
-    tie(e,b)=add_edge((*i).source.getId(),(*i).target.getId(),_flowGraph);
-    _flowGraph[e]=(*i).getTypes();
-  }
-  _boostified=true;
-  cout<<"STATUS: converting ICFG to boost graph representation: DONE."<<endl;
+Flow::Flow() {
+  resetDotOptions(); 
 }
 
 SPRAY::Flow Flow::reverseFlow() {
   Flow reverseFlow;
   for(Flow::iterator i=begin();i!=end();++i) {
-    reverseFlow.insert(Edge((*i).target,(*i).getTypes(),(*i).source));
+    reverseFlow.insert(Edge((*i).target(),(*i).getTypes(),(*i).source()));
   }
   return reverseFlow;
 }
@@ -267,6 +272,7 @@ SPRAY::Flow Flow::reverseFlow() {
 void Flow::resetDotOptions() {
   _dotOptionDisplayLabel=true;
   _dotOptionDisplayStmt=true;
+  _dotOptionEdgeAnnotationsOnly=false;
   _dotOptionFixedColor=false;
   _fixedColor="black";
   _dotOptionHeaderFooter=true;
@@ -285,6 +291,104 @@ string Flow::toString() {
   }
   ss<<"}";
   return ss.str();
+}
+
+bool Flow::contains(Edge e) {
+  return (find(e) != end());
+}
+
+Flow::iterator Flow::find(Edge e) {
+#ifdef USE_SAWYER_GRAPH
+  SawyerCfg::VertexIterator source = _sawyerFlowGraph.findVertexKey(e.source());
+  if (source != _sawyerFlowGraph.vertices().end()) {
+    boost::iterator_range<SawyerCfg::EdgeIterator> outEdges = (*source).outEdges();
+    for (SawyerCfg::EdgeIterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
+      EdgeData eData = (*i).value();
+      if (eData.edgeTypes == e.types() && eData.annotation == e.getAnnotation()) {
+	if ((*((*i).target())).value() == e.target()) {
+	  return Flow::iterator(i);
+	}
+      }
+    }
+  }
+  return Flow::iterator(_sawyerFlowGraph.edges().end());
+#else 
+  return _edgeSet.find(e);
+#endif
+}
+
+bool Flow::contains(Label l) {
+#ifdef USE_SAWYER_GRAPH
+  return (_sawyerFlowGraph.findVertexKey(l) != _sawyerFlowGraph.vertices().end());
+#else
+  for (Flow::iterator i=begin(); i!=end(); ++i) {
+    if ((*i).source() == l || (*i).target() == l) {
+      return true;
+    }
+  }
+  return false;
+#endif
+}
+
+pair<Flow::iterator, bool> Flow::insert(Edge e) {
+#ifdef USE_SAWYER_GRAPH
+  EdgeData edgeData = EdgeData(e.types(), e.getAnnotation());
+  Flow::iterator previousEdge = find(e);
+  if (previousEdge != end()) {
+    return pair<Flow::iterator, bool>(previousEdge, false);
+  } else {
+    Flow::iterator iter = Flow::iterator(_sawyerFlowGraph.insertEdgeWithVertices(e.source(), e.target(), edgeData));
+    return pair<Flow::iterator, bool>(iter, true);
+  }
+#else
+  return _edgeSet.insert(e);
+#endif
+}
+
+void Flow::erase(Flow::iterator iter) {
+#ifdef USE_SAWYER_GRAPH
+  _sawyerFlowGraph.eraseEdgeWithVertices(iter);
+#else
+  _edgeSet.erase(iter);
+#endif
+}
+
+size_t Flow::erase(Edge e) {
+#ifdef USE_SAWYER_GRAPH
+  Flow::iterator existingEdge = find(e);
+  if (existingEdge != end()) {
+    erase(existingEdge);
+    return 1;
+  } else {
+    return 0;
+  }
+#else
+  return _edgeSet.erase(e);
+#endif
+}
+
+size_t Flow::size() {
+#ifdef USE_SAWYER_GRAPH
+  return _sawyerFlowGraph.nEdges();
+#else
+  return _edgeSet.size();
+#endif
+}
+
+Flow::iterator Flow::begin() {
+#ifdef USE_SAWYER_GRAPH
+  return Flow::iterator(_sawyerFlowGraph.edges().begin());
+#else
+  return _edgeSet.begin();
+#endif
+}
+
+Flow::iterator Flow::end() {
+#ifdef USE_SAWYER_GRAPH
+  return Flow::iterator(_sawyerFlowGraph.edges().end());
+#else
+  return _edgeSet.end();
+#endif
 }
 
 Flow Flow::operator+(Flow& s2) {
@@ -306,6 +410,10 @@ void Flow::setDotOptionDisplayLabel(bool opt) {
 }
 void Flow::setDotOptionDisplayStmt(bool opt) {
   _dotOptionDisplayStmt=opt;
+}
+
+void Flow::setDotOptionEdgeAnnotationsOnly(bool opt) {
+  _dotOptionEdgeAnnotationsOnly=opt;
 }
 
 void Flow::setDotOptionFixedColor(bool opt) {
@@ -382,7 +490,11 @@ string Flow::toDot(Labeler* labeler) {
   }
   for(Flow::iterator i=begin();i!=end();++i) {
     Edge e=*i;
-    ss<<(_dotOptionFixedColor?e.toDotFixedColor(_fixedColor):e.toDotColored())<<";\n";
+    if (_dotOptionEdgeAnnotationsOnly) {
+      ss<<e.toDotAnnotationOnly()<<";\n";
+    } else {
+      ss<<(_dotOptionFixedColor?e.toDotFixedColor(_fixedColor):e.toDotColored())<<";\n";
+    }
   }
   if(_dotOptionHeaderFooter)
     ss<<"}";
@@ -394,7 +506,12 @@ size_t Flow::deleteEdges(EdgeType edgeType) {
   size_t numDeleted=0;
   while(i!=end()) {
     if((*i).isType(edgeType)) {
+#ifdef USE_SAWYER_GRAPH
+      erase(i);
+      ++i;
+#else
       erase(i++);
+#endif
       numDeleted++;
     } else {
       ++i;
@@ -413,7 +530,12 @@ size_t Flow::deleteEdges(Flow& edges) {
   size_t numDeleted=0;
   Flow::iterator i=edges.begin();
   while(i!=end()) {
+#ifdef USE_SAWYER_GRAPH
+    erase(*i);
+    ++i;
+#else
     erase(i++); // MS: it is paramount to pass a copy of the iterator, and perform a post-increment.
+#endif
     numDeleted++;
   }
   return numDeleted;
@@ -421,10 +543,21 @@ size_t Flow::deleteEdges(Flow& edges) {
 
 Flow Flow::inEdges(Label label) {
   Flow flow;
+#ifdef USE_SAWYER_GRAPH
+  SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
+  Flow::iterator begin = Flow::iterator((*vertexIter).inEdges().begin());
+  Flow::iterator end = Flow::iterator((*vertexIter).inEdges().end());
+  for (Flow::iterator i=begin; i!=end; ++i) {
+      Edge inEdge = *i;
+      flow.insert(inEdge);
+  }
+#else
   for(Flow::iterator i=begin();i!=end();++i) {
-    if((*i).target==label)
+    if((*i).target()==label)
       flow.insert(*i);
   }
+#endif
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
   flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
   return flow;
@@ -432,33 +565,46 @@ Flow Flow::inEdges(Label label) {
 
 Flow Flow::outEdges(Label label) {
   Flow flow;
-  if(!_boostified) {
-    for(Flow::iterator i=begin();i!=end();++i) {
-      if((*i).source==label)
-        flow.insert(*i);
-    }
-  } else {
-    typedef graph_traits<FlowGraph> GraphTraits;
-    //    typename property_map<FlowGraph, vertex_index_t>::type 
-    // index = get(vertex_index, _flowGraph);
-    GraphTraits::out_edge_iterator out_i, out_end;
-    GraphTraits::edge_descriptor e;
-    for (tie(out_i, out_end) = out_edges(label.getId(), _flowGraph); 
-         out_i != out_end; ++out_i) {
-      e = *out_i;
-      Label src = source(e, _flowGraph), targ = target(e, _flowGraph);
-      flow.insert(Edge(src,_flowGraph[e],targ));
-    }
+#ifdef USE_SAWYER_GRAPH
+  SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
+  Flow::iterator begin = Flow::iterator((*vertexIter).outEdges().begin());
+  Flow::iterator end = Flow::iterator((*vertexIter).outEdges().end());
+  for (Flow::iterator i=begin; i!=end; ++i) {
+    Edge outEdge = *i;
+    flow.insert(outEdge);
   }
+#else
+  for(Flow::iterator i=begin();i!=end();++i) {
+    if((*i).source()==label)
+      flow.insert(*i);
+  }
+#endif
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
   flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
   return flow;
 }
 
+#ifdef USE_SAWYER_GRAPH
+boost::iterator_range<Flow::iterator> Flow::inEdgesIterator(Label label) {
+  SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
+  boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*vertexIter).inEdges();
+  return boost::iterator_range<Flow::iterator>(Flow::iterator(edges.begin()), Flow::iterator(edges.end()));
+}
+
+boost::iterator_range<Flow::iterator> Flow::outEdgesIterator(Label label) {
+  SawyerCfg::VertexIterator vertexIter = _sawyerFlowGraph.findVertexKey(label);
+  ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
+  boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*vertexIter).outEdges();
+  return boost::iterator_range<Flow::iterator>(Flow::iterator(edges.begin()), Flow::iterator(edges.end()));
+}
+#endif
+
 Flow Flow::outEdgesOfType(Label label, EdgeType edgeType) {
   Flow flow;
   for(Flow::iterator i=begin();i!=end();++i) {
-    if((*i).source==label && (*i).isType(edgeType))
+    if((*i).source()==label && (*i).isType(edgeType))
       flow.insert(*i);
   }
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
@@ -481,8 +627,8 @@ LabelSet Flow::nodeLabels() {
   LabelSet s;
   for(Flow::iterator i=begin();i!=end();++i) {
     Edge e=*i;
-    s.insert(e.source);
-    s.insert(e.target);
+    s.insert(e.source());
+    s.insert(e.target());
   }
   return s;
 }
@@ -490,8 +636,7 @@ LabelSet Flow::nodeLabels() {
 LabelSet Flow::sourceLabels() {
   LabelSet s;
   for(Flow::iterator i=begin();i!=end();++i) {
-    Edge e=*i;
-    s.insert(e.source);
+    s.insert((*i).source());
   }
   return s;
 }
@@ -500,7 +645,7 @@ LabelSet Flow::targetLabels() {
   LabelSet s;
   for(Flow::iterator i=begin();i!=end();++i) {
     Edge e=*i;
-    s.insert(e.target);
+    s.insert(e.target());
   }
   return s;
 }
@@ -514,4 +659,46 @@ LabelSet Flow::succ(Label label) {
   Flow flow=outEdges(label);
   return flow.targetLabels();
 }
+
+set<string> Flow::getAllAnnotations() {
+  set<string> result;
+  for(Flow::iterator i=begin();i!=end();++i) {
+    result.insert((*i).getAnnotation());
+  }
+  return result;
+}
+
+#ifdef USE_SAWYER_GRAPH
+EdgeTypeSet Flow::iterator::getTypes() {
+  EdgeTypeSet result = ((*this).SawyerCfg::EdgeIterator::operator->())->value().edgeTypes;
+  return result;
+}
+
+string Flow::iterator::getAnnotation() {
+  string result = ((*this).SawyerCfg::EdgeIterator::operator->())->value().annotation;
+  return result;
+}
+
+Label Flow::iterator::source() {
+  Label result = ((*this).SawyerCfg::EdgeIterator::operator->())->source()->value();
+  return result;
+}
+
+Label Flow::iterator::target() {
+  Label result = ((*this).SawyerCfg::EdgeIterator::operator->())->target()->value();
+  return result;
+}
+
+Edge Flow::iterator::operator*() {
+  Edge result = Edge(source(), getTypes(), target());
+  result.setAnnotation(getAnnotation());
+  return result;
+}
+
+Flow::iterator Flow::iterator::operator++(int) {
+  Flow::iterator result = *this;
+  ++*this;
+  return result;
+}
+#endif
 

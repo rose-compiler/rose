@@ -6821,7 +6821,7 @@ SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
 // This is useful to find a safe place to insert a declaration statement with special requirements about where it can be inserted.
 // e.g. a variable declaration statement should not be inserted before IMPLICIT none in Fortran
 // If it returns NULL, a declaration statement should be able to be prepended to the scope
-SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope)
+SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope, bool includePragma/* = false */ )
 {
   SgStatement* rt = NULL;
   ROSE_ASSERT (scope != NULL);
@@ -6832,8 +6832,16 @@ SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scop
   {
     SgStatement* cur_stmt = stmt_list[i];
     // We should exclude pragma decl. We don't want to insert things after pragmas.
-    if (isSgDeclarationStatement(cur_stmt) && !isSgPragmaDeclaration (cur_stmt))
-      rt = cur_stmt;
+    if (isSgDeclarationStatement(cur_stmt)) 
+    {
+      if (isSgPragmaDeclaration (cur_stmt))
+      {
+        if (includePragma)
+          rt = cur_stmt;
+      }
+      else  
+        rt = cur_stmt;
+    }  
     //if (isSgImplicitStatement(cur_stmt)) || isSgFortranIncludeLine(cur_stmt) || isSgDeclarationStatement
   }
 

@@ -88,8 +88,8 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
  */
 void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pstate) {
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
-  Label lab0=edge.source;
-  //Label lab1=edge.target;
+  Label lab0=edge.source();
+  //Label lab1=edge.target();
   SgNode* node=getLabeler()->getNode(lab0);
   if(isSgExprStatement(node)) {
     node=SgNodeHelper::getExprStmtChild(node);

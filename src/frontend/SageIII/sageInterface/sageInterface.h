@@ -920,10 +920,10 @@ ROSE_DLL_API size_t getArrayElementCount(SgArrayType* t);
 //! Get the number of dimensions of an array type
 ROSE_DLL_API int getDimensionCount(SgType* t);
 
-//! Get the element type of an array
+//! Get the element type of an array. It recursively find the base type for multi-dimension array types
 ROSE_DLL_API SgType* getArrayElementType(SgType* t);
 
-//! Get the element type of an array, pointer or string, or NULL if not applicable
+//! Get the element type of an array, pointer or string, or NULL if not applicable. This function only check one level base type. No recursion.
 ROSE_DLL_API SgType* getElementType(SgType* t);
 
 
@@ -1225,8 +1225,8 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
 */
 ROSE_DLL_API SgFunctionDeclaration* findMain(SgNode* currentNode);
 
-//! Find the last declaration statement within a scope (if any). This is often useful to decide where to insert another declaration statement
-SgStatement* findLastDeclarationStatement(SgScopeStatement * scope);
+//! Find the last declaration statement within a scope (if any). This is often useful to decide where to insert another variable declaration statement. Pragma declarations are not treated as a declaration by default in this context. 
+SgStatement* findLastDeclarationStatement(SgScopeStatement * scope, bool includePragma = false);
 
           //midend/programTransformation/partialRedundancyElimination/pre.h
 //! Find referenced symbols within an expression

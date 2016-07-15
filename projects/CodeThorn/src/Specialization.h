@@ -1,5 +1,5 @@
 #ifndef SPECIALIZATION_H
-#define SPECIALIZATOIN_H
+#define SPECIALIZATION_H
 
 #include "VariableIdMapping.h"
 #include "StateRepresentations.h"
@@ -7,6 +7,12 @@
 #include "Analyzer.h"
 #include "ExprAnalyzer.h"
 #include "RewriteSystem.h"
+#include "ReadWriteData.h"
+#include "Visualizer.h"
+
+// BOOST includes
+#include "boost/lexical_cast.hpp"
+
 #include <iostream>
 
 using namespace std;
@@ -43,16 +49,6 @@ EStateExprInfo(const EState* estate,SgExpression* originalExpr, SgExpression* tr
 };
 
 typedef vector<EStateExprInfo> ArrayUpdatesSequence;
-
-struct ReadWriteData {
-  ArrayElementAccessDataSet writeArrayAccessSet;
-  VariableIdSet writeVarIdSet;
-  ArrayElementAccessDataSet readArrayAccessSet;
-  VariableIdSet readVarIdSet;
-};
-
-typedef vector<int> IndexVector;
-typedef map<IndexVector,ReadWriteData> IndexToReadWriteDataMap;
 
 enum SAR_MODE { SAR_SUBSTITUTE, SAR_SSA };
 
@@ -128,6 +124,8 @@ class Specialization {
   SgFunctionDefinition* getSpecializedFunctionRootNode() { return _specializedFunctionRootNode; }
   static int numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping);
   void setCheckAllLoops(bool val);
+  void setCheckAllDataRaces(bool val);
+  void setVisualizeReadWriteAccesses(bool val);
  private:
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
   int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root);
@@ -156,6 +154,8 @@ class Specialization {
 
   // for data race check of all loops independent on whether they are marked as parallel loops
   bool _checkAllLoops;
+  bool _checkAllDataRaces;
+  bool _visualizeReadWriteAccesses;
 };
 
 #endif
