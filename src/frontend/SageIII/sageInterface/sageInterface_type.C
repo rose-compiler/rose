@@ -342,6 +342,11 @@ bool isPointerToNonConstType(SgType* type)
       current_type = isSgArrayType(current_type)->get_base_type()->stripTypedefsAndModifiers();
     if (current_type->variantT() == V_SgTypeString)
       return SgTypeChar::createType();
+    if (isSgArrayType(current_type))
+    {
+      cerr<<"Error in getArrayElementType(): returning an array type for input type:"<<t->class_name()<<endl;
+      ROSE_ASSERT (false);
+    }
     return current_type;  
   }
 
