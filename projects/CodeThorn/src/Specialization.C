@@ -3,6 +3,7 @@
 #include "SgNodeHelper.h"
 
 #include <map>
+#include <sstream>
 
 using namespace std;
 using namespace SPRAY;
@@ -80,7 +81,8 @@ int PStateConstReporter::getConstInt() {
 
 Specialization::Specialization():
   _specializedFunctionRootNode(0),
-  _checkAllLoops(false) {
+  _checkAllLoops(false),
+  _visualizeReadWriteAccesses(false) {
 }
 
 int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
@@ -591,13 +593,13 @@ bool LoopInfo::isInAssociatedLoop(const EState* estate) {
   return loopLabelSet.find(lab)!=loopLabelSet.end();
 }
 
-// will use std algo instead
-bool accessSetIntersect(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSet& set2) {
+ArrayElementAccessDataSet intersection(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSet& set2) {
+  ArrayElementAccessDataSet result;
   for(ArrayElementAccessDataSet::iterator i=set1.begin();i!=set1.end();++i) {
     if(set2.find(*i)!=set2.end())
-      return true;
+      result.insert(*i);
   }
-  return false;
+  return result;
 }
 
 std::string arrayElementAccessDataSetToString(ArrayElementAccessDataSet& ds, VariableIdMapping* vim) {
@@ -623,6 +625,13 @@ std::string indexVectorToString(IndexVector iv) {
 void Specialization::setCheckAllLoops(bool val) {
   _checkAllLoops=val;
 }
+void Specialization::setCheckAllDataRaces(bool val) {
+  _checkAllDataRaces=val;
+}
+
+void Specialization::setVisualizeReadWriteAccesses(bool val) {
+  _visualizeReadWriteAccesses=val;
+}
 
 // returns the number of race conditions detected (0 or 1 as of now)
 int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
@@ -631,7 +640,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
   stringstream ss;
   cout<<"STATUS: checking race conditions."<<endl;
   cout<<"INFO: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
-
+  
   VariableIdSet allIterVars;
   for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
     allIterVars.insert((*lis).iterationVarId);
@@ -786,8 +795,11 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
       }
       //cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
       // perform the check now
+      ArrayElementAccessDataSet readWriteRaces;
+      ArrayElementAccessDataSet writeWriteRaces;
       bool drdebug=false;
       if(drdebug) cout<<"DEBUG: checkMap size: "<<checkMap.size()<<endl;
+      int parallelLoopIdx = 0;
       for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
         IndexVector outerVarIndexVector=(*miter).first;
         if(drdebug) cout<<"DEBUG: outerVarIndexVector: "<<indexVectorToString(outerVarIndexVector)<<endl;
@@ -809,25 +821,33 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
               // check intersect(rset,wset)
               if(drdebug) cout<<"DEBUG: rset2:"<<rset2.size()<<": "<<arrayElementAccessDataSetToString(rset2,variableIdMapping)<<endl;
               if(drdebug) cout<<"DEBUG: wset2:"<<wset2.size()<<": "<<arrayElementAccessDataSetToString(wset2,variableIdMapping)<<endl;
-              if(accessSetIntersect(wset,rset2)) {
+	      ArrayElementAccessDataSet intersect = intersection(wset, rset2);
+              if(!intersect.empty()) {
                 // verification failed
+		readWriteRaces.insert(intersect.begin(), intersect.end());
                 cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
                 errorCount++;
-                if(_checkAllLoops) {
-                  goto continueCheck;
-                } else {
-                  return errorCount;
-                }
-              } 
-              if(accessSetIntersect(wset,wset2)) {
+		if (!_checkAllDataRaces) {
+		  if(_checkAllLoops) {
+		    goto continueCheck;
+		  } else {
+		    return errorCount;
+		  }
+		}
+              }
+	      intersect = intersection(wset, wset2); 
+              if(!intersect.empty()) {
                 // verification failed
+		writeWriteRaces.insert(intersect.begin(), intersect.end());
                 cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
                 errorCount++;
-                if(_checkAllLoops) {
-                  goto continueCheck;
-                } else {
-                  return errorCount;
-                }
+		if (!_checkAllDataRaces) {
+		  if(_checkAllLoops) {
+                    goto continueCheck;
+                  } else {
+                    return errorCount;
+                  }
+	        }
               }
             }
             } // same-iter check
@@ -835,10 +855,22 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
           if(drdebug) cout<<"DEBUG: ------------------------"<<endl;
         }
       }
+      // a dot graph for visualizing reads and writes (including data races)
+      if (_visualizeReadWriteAccesses) {
+	string filename = "readWriteSetGraph" + boost::lexical_cast<string>(parallelLoopIdx) + ".dot";
+	Visualizer visualizer;
+	string dotGraph = visualizer.visualizeReadWriteAccesses(indexToReadWriteDataMap, variableIdMapping, 
+								readWriteRaces, writeWriteRaces, true, false, false);
+	write_file(filename, dotGraph);
+	cout << "STATUS: written graph that illustrates read and write accesses to file: " << filename << endl;
+      }
+      parallelLoopIdx++;
     } // if parallel loop
   continueCheck:;
   } // foreach loop
-  cout<<"DATA RACE CHECK: PASS."<<endl;
+  if (errorCount == 0) {
+    cout<<"DATA RACE CHECK: PASS."<<endl;
+  }
   return errorCount;
 }
 

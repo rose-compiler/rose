@@ -195,8 +195,12 @@ namespace AutoParallelization
     // Retrieve dependence graph here!
     if (enable_debug) 
     {
-      cout<<"Debug: Dump the dependence graph for the loop in question:"<<endl; 
+      SgStatement* stmt = isSgStatement(loop);
+      ROSE_ASSERT (stmt != NULL);
+      cout<<"--------------------------------------------------------"<<endl;
+      cout<<"Debug: ComputeDependenceGraph() dumps the dependence graph for the loop at line :"<< stmt->get_file_info()->get_line()<<endl; 
       comp->DumpDep();
+      cout<<"--------------------------------------------------------"<<endl;
     }
 
     // The following code was used when an entire function body with several loops
@@ -1043,7 +1047,9 @@ namespace AutoParallelization
   // Algorithm, eliminate the following dependencies
   // *  caused by locally declared variables: already private to each iteration
   // *  commonlevel ==0, no common enclosing loops
-  // *  carry level !=0, loop independent,
+  // *  carry level !=0, loop independent. This is valid since we run dep analysis on each level of loop.
+  //    For a current loop to be considered, only the dependences carried by the current loop matters.
+  //    The current loop is always the outermost level loop , carry level id is 0. 
   // *  either source or sink variable is thread local variable 
   // *  dependencies caused by autoscoped variables (private, firstprivate, lastprivate, reduction)
   // *  two array references, but SCALAR_DEP or SCALAR_BACK_DEP dependencies
@@ -1054,6 +1060,11 @@ namespace AutoParallelization
   {
     //LoopTreeDepGraph * depgraph =  comp.GetDepGraph(); 
     LoopTreeDepGraph::NodeIterator nodes = depgraph->GetNodeIterator();
+    if (enable_debug)
+    {  
+      cout<<"Entering DependenceElimination ()"<<endl;
+      cout<<"----------------------------------"<<endl;
+    }  
     // For each node
     for (; !nodes.ReachEnd(); ++ nodes) 
     {
@@ -1069,7 +1080,7 @@ namespace AutoParallelization
           // cout<<"Debug: dependence edge: "<<e->toString()<<endl;
           DepInfo info =e->GetInfo();
 
-         SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
+          SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
           SgScopeStatement* varscope =NULL;
           SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
           SgInitializedName* src_name=NULL;
@@ -1082,7 +1093,14 @@ namespace AutoParallelization
               varscope= var_ref->get_symbol()->get_scope();
               src_name = var_ref->get_symbol()->get_declaration();
               if (SageInterface::isAncestor(currentscope,varscope))
+              {
+                if (enable_debug)
+                {
+                   cout<<"Eliminating a dep relation due to locally declared src variable"<<endl; 
+                   info.Dump();
+                }
                 continue;
+              }
             } //end if(var_ref)
           } // end if (src_node)
 
@@ -1102,7 +1120,14 @@ namespace AutoParallelization
               varscope= var_ref->get_symbol()->get_scope();
               snk_name = var_ref->get_symbol()->get_declaration();
               if (SageInterface::isAncestor(currentscope,varscope))
+              {
+                if (enable_debug)
+                {
+                  cout<<"Eliminating a dep relation due to locally declared sink variable"<<endl; 
+                  info.Dump();
+                }
                 continue;
+              }
             } //end if(var_ref)
           } // end if (snk_node)
 #endif
@@ -1110,7 +1135,14 @@ namespace AutoParallelization
           // -----------------------------------------------
           // Ignore possible empty depInfo entry
           if (src_node==NULL||snk_node==NULL)
+          {
+            if (enable_debug)
+            {
+              cout<<"Eliminating a dep relation due to empty entry for either src or sink variables or both"<<endl; 
+              info.Dump();
+            }
             continue;
+          }
 
           //x. Eliminate a dependence if scalar type dependence involving array references.
           // -----------------------------------------------
@@ -1148,8 +1180,16 @@ namespace AutoParallelization
           if (isArray1 || isArray2)
           {
             if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
+            {
+              if (enable_debug)
+              {
+                cout<<"Eliminating a dep relation due to scalar dep type for at least one array variable"<<endl; 
+                info.Dump();
+              }
               continue;
+            }
           }
+
           //x. Eliminate dependencies caused by autoscoped variables
           // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
@@ -1165,7 +1205,14 @@ namespace AutoParallelization
             if (snk_name)
               hit2=find(scoped_vars.begin(),scoped_vars.end(),snk_name);
             if (hit1!=scoped_vars.end() || (hit2!=scoped_vars.end()))
+            {
+              if (enable_debug)
+              {
+                cout<<"Eliminating a dep relation due to at least one autoscoped variables"<<endl; 
+                info.Dump();
+              }
               continue;
+            }
           }
 
           //x. Eliminate dependencies caused by a pair of indirect indexed array reference,
@@ -1178,23 +1225,78 @@ namespace AutoParallelization
            if (b_unique_indirect_index ) 
            { 
              if (indirect_table[src_node] && indirect_table[snk_node])
+             {
+               if (enable_debug)
+               {
+                 cout<<"Eliminating a dep relation due to unique indirect indexed array references"<<endl; 
+                 info.Dump();
+               }
                continue;
+             }
            }
+#if 1 
+           // This is useful for since two data member accesses will point to the same variable symbol
+           // even when they are from different objects of the same class. 
+           // The current dependence analysis will treat them as the same memory access
+           //
+           // We check objects are the same or not
+           // this can be useful for some input code
+           //
+           // Liao, 7/6/2016
+          // x. Eliminate dependencies between two different memory locations
+          // -----------------------------------------------
+
+          SgExpression* src_exp = isSgExpression(src_node);
+          SgExpression* snk_exp = isSgExpression(snk_node);
+          if (src_exp && snk_exp)
+          {
+            if (differentMemoryLocation (src_exp, snk_exp))
+            {
+              if (enable_debug)
+              {
+                cout<<"Eliminating a dep relation between two different memory locations"<<endl; 
+                info.Dump();
+              }
+              continue;
+            }
+          }
+#endif
           // x. Eliminate dependencies  without common enclosing loop nests
           // -----------------------------------------------
           if (info.CommonLevel()==0) 
+          {
+            if (enable_debug)
+            {
+              cout<<"Eliminating a dep relation due to lack of common enclosing loop nests: common level ==0"<<endl; 
+              info.Dump();
+            }
             continue;
+          }
            
           // x. Eliminate loop-independent dependencies: 
           // -----------------------------------------------
           // loop independent dependencies: privatization can eliminate most of them
           if (info.CarryLevel()!=0) 
+          {
+            if (enable_debug)
+            {
+              cout<<"Eliminating a dep relation due to carryLevel != 0 (not carried by current loop level in question)"<<endl; 
+              info.Dump();
+            }
             continue;
+          }
           // Save the rest dependences which can not be ruled out 
           remainings.push_back(info); 
         } //end iterator edges for a node
       } // end if has edge
     } // end of iterate dependence graph 
+
+    if (enable_debug)
+    {  
+      cout<<"Exiting DependenceElimination ()"<<endl;
+      cout<<"----------------------------------"<<endl;
+    }  
+ 
   }// end DependenceElimination()
 
 /*
@@ -1737,5 +1839,169 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     } // end for (stmt)
 
   } //end diffUserDefinedAndCompilerGeneratedOpenMP()
+
+  // Not in use since we care about top level variables now
+  //TODO: move to SageInterface later
+  // strip off arrow, dot expressions and get down to smallest data member access expression
+  SgExpression* getBottomVariableAccess(SgExpression* e)
+  {
+    SgExpression* ret = NULL;
+    ROSE_ASSERT (e!= NULL);
+    if (isSgVarRefExp(e))
+      ret = e; 
+    else if (SgDotExp* dot_exp = isSgDotExp(e))
+    {
+      ret = getBottomVariableAccess (dot_exp->get_rhs_operand());
+    }
+    else if (SgArrowExp* a_exp = isSgArrowExp(e))
+    {
+      ret = getBottomVariableAccess (a_exp->get_rhs_operand());
+    } 
+    else if (SgPntrArrRefExp* arr_exp = isSgPntrArrRefExp(e))
+    {
+      ret=getBottomVariableAccess (arr_exp->get_lhs_operand_i());
+    }
+
+    if (ret == NULL)
+    {
+      cerr<<"getBottomVariableAccess() reached unhandled expression type:"<<e->class_name() <<endl;
+      e->get_file_info()->display();
+      ROSE_ASSERT (false);
+    }
+
+    return ret ; 
+  }
+
+  //For an expression, check if it is a data member of an aggregate data object (except array element access?)
+  // If so, return the parent aggregate data object's reference.
+  // This is done recursively when possible.
+  // TODO: move to SageInterface when ready
+  //
+  // if already DotExp, return getTVA(lhs)
+  // if rhs, return getTVA()
+  /*
+  Nested structures
+  
+  mygun.mag.capacity
+  
+     SgDotExp
+      /      \
+   SgDotExp  capacity     
+     /   \ 
+  mygun  mag
+    * */
+ SgExpression* getTopVariableAccess(SgExpression* e)
+  {
+    // default: self is the top already.
+    SgExpression* ret = e;
+    ROSE_ASSERT (e!= NULL);
+
+    // check if it is a SgDotExp or ArrowExp first,
+    // if So, walk to its left child
+    if (SgDotExp* de= isSgDotExp(e) )
+    {
+       ret = getTopVariableAccess (de->get_lhs_operand());  // recursive call to handle multiple levels 
+    }
+    else if (SgArrowExp* ae= isSgArrowExp(e) )
+    {
+       ret = getTopVariableAccess (ae->get_lhs_operand());  // recursive call to handle multiple levels 
+    }
+    // otherwise, it could be either lhs or rhs of Dot or Arrow Exp   
+    else if ( SgExpression* parent = isSgExpression(e->get_parent()))
+    {
+      if (SgDotExp* dot_exp = isSgDotExp(parent))
+      {
+        // a.b ?  call on DotExp
+        if (dot_exp->get_rhs_operand() == e)
+          ret = getTopVariableAccess(dot_exp); // recursive call to handle multiple levels of aggregate data types
+      }
+      else if (SgArrowExp* a_exp = isSgArrowExp(parent))
+      {
+        // a-> b?  call on ArrowExp
+        if (a_exp->get_rhs_operand() == e)
+          ret = getTopVariableAccess(a_exp);
+      }
+    }
+    return ret; 
+  }
+
+  // Obtain the underneath symbol from an expression, such as SgVarRefExp, SgThisExp, etc...
+  // This function is used to find top level symbol
+  // So when encountering dot or arrow expression, return the lhs symbol
+  // TODO: move to SageInterface when ready
+  SgSymbol* getSymbol (SgExpression* exp)
+  {
+    SgSymbol* s = NULL;
+
+    ROSE_ASSERT (exp !=NULL);
+
+    if (SgVarRefExp* e = isSgVarRefExp(exp))    
+    {
+      s= e->get_symbol();
+    }
+    else if (SgThisExp* e = isSgThisExp(exp))
+      s = e->get_class_symbol();
+    else if (SgPntrArrRefExp* e = isSgPntrArrRefExp(exp))
+    { // a[i]
+      s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+    else if (SgDotExp* e = isSgDotExp(exp))
+    { // a[i]
+      s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+     else if (SgArrowExp* e = isSgArrowExp(exp))
+    { // a[i]
+      s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+    else if (SgFunctionCallExp* e = isSgFunctionCallExp(exp))
+      s = e->getAssociatedFunctionSymbol();
+    else if (SgFunctionRefExp* e = isSgFunctionRefExp(exp))
+      s = e->get_symbol_i();
+    else if (SgMemberFunctionRefExp* e = isSgMemberFunctionRefExp(exp))
+      s = e->get_symbol_i();
+    else if (SgLabelRefExp* e = isSgLabelRefExp(exp))
+      s = e->get_symbol();
+    else
+    {
+      cerr<<"Error. getSymbol(SgExpression* exp) encounters unhandled exp:"<< exp->class_name()<<endl;
+      ROSE_ASSERT (false);
+    }  
+
+    ROSE_ASSERT (s!=NULL);
+
+    return s; 
+  }
+  
+  //! Check if two expressions access different memory locations. If in double, return false (not certain).
+  //This is helpful to exclude some dependence relations involving two obvious different memory location accesses
+  //TODO: move to SageInterface when ready
+  bool differentMemoryLocation(SgExpression* e1, SgExpression* e2)
+  {
+    bool retval = false; 
+    // if same expressions, not different then
+    if (e1 == e2)
+      return false;
+    if( (e1 == NULL)|| (e2==NULL))
+    {
+      return false;
+    }
+
+   // now get down to the lowest level   
+    SgExpression* var1 = getTopVariableAccess(e1);
+    SgExpression* var2 = getTopVariableAccess(e2);
+    
+    // at this stage, dot or arrow expressions should be stripped off.
+    ROSE_ASSERT (isSgDotExp(var1)== NULL);
+    ROSE_ASSERT (isSgArrowExp(var1)== NULL);
+    ROSE_ASSERT (isSgDotExp(var2)== NULL);
+    ROSE_ASSERT (isSgArrowExp(var2)== NULL);
+
+    if (var1 != NULL && var2 !=NULL)
+    {
+      if (getSymbol(var1)!= getSymbol(var2))
+        retval = true; // pointing to two different symbols? must be different!
+    }
+    return retval;
+  }
 
 } // end namespace

@@ -23,7 +23,7 @@ bool SpotSuccIter::done() const {
 }
 
 spot::state* SpotSuccIter::current_state() const {
-  assert(!done());
+  ROSE_ASSERT(!done());
   SpotState* nextState = new SpotState( *((*iter)->target) );  //dereferencing three times: 1.) iterator 2.) pointer to Transition 3.) EState* to reference
   return nextState;
 }

@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
-SUBDIRS = outliner intelPin binaryAnalysis
+SUBDIRS = outliner intelPin
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
@@ -38,12 +38,16 @@ endif
    #traverseSourceCFG 
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 noinst_PROGRAMS += 				\
    binaryCallGraph				\
    binaryFunctionCfg				\
    binaryHelloWorld				\
    binaryStrings				\
    binaryAttribute
+
+SUBDIRS += binaryAnalysis
+
 endif
 
 #varSubstCopy , disabled this one Liao, and sorted the list

@@ -31,13 +31,15 @@ noinst_PROGRAMS = \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
-    buildJavaPackage createAbstractHandles moveDeclarationToInnermostScope buildStatementFromString
+    buildJavaPackage createAbstractHandles moveDeclarationToInnermostScope buildStatementFromString \
+    getArrayElementType
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
 VALGRIND =
 
 # list of test SAGE AST builders 
+getArrayElementType_SOURCES = getArrayElementType.C 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
 deepDelete_SOURCES                       = deepDelete.C 

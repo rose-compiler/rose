@@ -79,10 +79,10 @@ set<RConstraint> RefinementConstraints::getAtomicPropositionsFromConditions(Labe
         // follow the {forward, false} edge leading to the current condition that would be traversed the earliest
         // (during a forward traversal starting from the cfg start node)
         Label pred = *currentLabel;
-        for (Flow::iterator i = edgeSet.begin(); i!=edgeSet.end(); i++) {
+        for (Flow::iterator i = edgeSet.begin(); i!=edgeSet.end(); ++i) {
           Edge inEdge = *i;
-          if( inEdge.isType(EDGE_FALSE) && (inEdge.source.getId() < pred.getId()) ) {
-            pred = inEdge.source;
+          if( inEdge.isType(EDGE_FALSE) && (inEdge.source().getId() < pred.getId()) ) {
+            pred = inEdge.source();
             bool isCond = SgNodeHelper::isCond(_labeler->getNode(pred));
             assert(isCond);
           }
@@ -98,8 +98,8 @@ set<RConstraint> RefinementConstraints::getAtomicPropositionsFromConditions(Labe
       // should have exactly one predeccesor.
       assert(edgeSet.size()==1);
       Flow::iterator predecessor = edgeSet.begin();
-      Edge pred = *predecessor;
-      currentLabel = &pred.source;
+      Label predLabel = (*predecessor).source();
+      currentLabel = &predLabel;
     }
   }
   return result;

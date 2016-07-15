@@ -33,6 +33,9 @@ namespace SgNodeHelper {
   //! returns the declaration statement found for a given variable symbol.
   SgDeclarationStatement* findVariableDeclarationWithVariableSymbol(SgNode* node);
 
+  //! returns the function declaration statement found for a given function symbol.
+  SgFunctionDeclaration* findFunctionDeclarationWithFunctionSymbol(SgNode* node);
+
   //! returns filename+line+column information of AST fragment in format "filename:line:column". Used for generating readable output
   std::string sourceFilenameLineColumnToString(SgNode* node);
 
@@ -145,8 +148,14 @@ namespace SgNodeHelper {
   //! returns the SgSymbol* of the variable in a variable declaration
   SgSymbol* getSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
 
+  //! returns the SgSymbol* of the variable in a function declaration
+  SgFunctionSymbol* getSymbolOfFunctionDeclaration(SgFunctionDeclaration* decl);
+
   //! returns the SgSymbol* of the variable in a SgVarRefExp
   SgSymbol* getSymbolOfVariable(SgVarRefExp* varRefExp);
+
+  //! returns the SgSymbol* of the function in a SgFunctionRefExp
+  SgFunctionSymbol* getSymbolOfFunction(SgFunctionRefExp* funcRefExp);
 
   //! returns the SgSymbol* of a SgInitializedName
   SgSymbol* getSymbolOfInitializedName(SgInitializedName* initName);
@@ -185,6 +194,12 @@ namespace SgNodeHelper {
 
   //! return a function-call's argument list
   SgExpressionPtrList& getFunctionCallActualParameterList(SgNode* node);
+
+  // Returns the type of the callee of the given call expression
+  SgType* getCalleeType(SgFunctionCallExp* call);
+
+  // Returns the function type of the callee of the given call expression
+  SgFunctionType* getCalleeFunctionType(SgFunctionCallExp* call);
 
   //! return a function-definition's list of formal paramters
   SgInitializedNamePtrList& getFunctionDefinitionFormalParameterList(SgNode* node);

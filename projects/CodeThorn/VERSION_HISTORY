@@ -78,14 +78,11 @@ V1.6 2015-09-14 Markus Schordan, Adrian Prantl, Marc Jasper
   * normalization of internal program representation (Markus Schordan)
 
 -----------------------------------------------------------
-V1.7 2015-12-xx in preparation
+V1.7 2016-05-09 Markus Schordan, Adrian Prantl, Marc Jasper
 -----------------------------------------------------------
   * added verification error feature command line option (as required
     for SV-COMP) [in preparation]
-  * added support for the following language features:
-    [in preparation]
   * command line option changes:
-    [in preparation]
     - removed command line options and all code associated with it:
       --ltl-verifier
       --verify
@@ -115,5 +112,5 @@ V1.7 2015-12-xx in preparation
     int Analyzer::semanticEliminationOfSelfInInTransitions();
     int Analyzer::semanticEliminationOfDeadStates();
     int Analyzer::semanticFusionOfInInTransitions();
-  * bugfixes:
-    [in preparation]
+  * improved openmp support for parallel solvers
+  * added support for LTL-driven verification mode

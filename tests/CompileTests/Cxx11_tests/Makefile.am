@@ -125,9 +125,13 @@ test2016_34.C \
 test2016_35.C \
 test2016_36.C \
 test2016_37.C \
-test2016_39.C \
 test2016_40.C \
+test2016_42.C \
 last.C
+
+# DQ (7/9/2016): This test is inconsistatn with what I understand to be the most recent fixes.
+# test2016_39.C 
+# test2016_41.C (expression templates example)
 
 # DQ (5/8/2016): Demonstration of bug in GNU 4.9.2 header files (test2016_31.C)
 # test2016_26.C
