@@ -10896,7 +10896,7 @@ SgFunctionDeclaration::get_mangled_name() const
              {
             // Append the pointer to the name to make this unique to avoid multiple function "main()" from being merged.
                mangledName = "main_";
-               mangledName += StringUtility::numberToString(const_cast<SgFunctionDeclaration*>(this));
+               mangledName += rose::StringUtility::numberToString(const_cast<SgFunctionDeclaration*>(this));
             // printf ("RETURN FROM DETECTED MAIN: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
                return mangledName;
              }
@@ -16347,8 +16347,8 @@ SgTemplateClassDeclaration::get_mangled_name(void) const
 
 #if 0
   // DQ (2/13/2015): This is the older version of the code that was a problem for test2015_09.C.
-  // SgName mangled_name = SgClassDeclaration::get_mangled_name() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
-     SgName mangled_name = this->get_templateName() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
+  // SgName mangled_name = SgClassDeclaration::get_mangled_name() + "__num_template_parameters_" + rose::StringUtility::numberToString(get_templateParameters().size());
+     SgName mangled_name = this->get_templateName() + "__num_template_parameters_" + rose::StringUtility::numberToString(get_templateParameters().size());
 
   // DQ (9/12/2012): Added support for partial specialization.
      if (this->get_templateSpecializationArguments().empty() == false)

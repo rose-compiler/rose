@@ -17,6 +17,8 @@
 
 
 using namespace std;
+using namespace rose;
+
   //------------ function level dot graph output ----------------
   // this is purposely put outside of the namespace scope for simplicity 
   class analysisStatesToDOT : virtual public UnstructuredPassIntraAnalysis

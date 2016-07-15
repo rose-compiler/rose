@@ -21,7 +21,8 @@ my $warning = " (warning)";	# non-empty means issue warnings rather than errors,
 # Each value is an array of header filenames that map to this key.
 my %index;
 for my $file (FileLister->new(@ARGV)->all_files()) {
-    next unless $file =~ /\.(h|hh|hpp)$/;
+    # utility_functionsImpl.C is misnamed -- it's actually a header file.
+    next unless $file =~ /\.(h|hh|hpp)$/ || $file =~ /\/utility_functionsImpl.C$/;
     next if $file =~ /\b(tests|projects)\//;
     my($basename) = $file =~ /([^\/]+)$/;
     my($key) = lc $basename;
