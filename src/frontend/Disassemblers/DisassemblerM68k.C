@@ -1965,10 +1965,11 @@ struct M68k_dbcc: M68k {
             case 15: kind = m68k_dble; break;
         }
         std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_");
+        SgAsmExpression *src = d->makeDataRegister(extract<0, 2>(w0), m68k_fmt_i32);
         rose_addr_t target_va = d->get_insn_va() + 2 + signExtend<16, 32>((rose_addr_t)d->instructionWord(1));
         target_va &= GenMask<rose_addr_t, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(m68k_fmt_i32, target_va);
-        return d->makeInstruction(kind, mnemonic+".w", target);
+        return d->makeInstruction(kind, mnemonic+".w", src, target);
     }
 };
 
