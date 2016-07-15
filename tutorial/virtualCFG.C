@@ -2,6 +2,7 @@
 #include "rose.h"
 #include <string>
 using namespace std;
+using namespace rose;
 
 int main(int argc, char *argv[]) 
 {

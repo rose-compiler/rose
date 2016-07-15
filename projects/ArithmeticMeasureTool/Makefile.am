@@ -22,20 +22,27 @@ $(builddir)/src/libarithemeticMeasurement.a:
 #LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 measureTool_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(builddir)/src/libarithemeticMeasurement.a 
 
-## Input testcode for your translator
+## Test input testcode with manual instrumentation already
 C_TESTCODE= \
     jacobi-v3.c \
-    nestedloops.c
+    nestedloops.c \
+    test1-annot.c \
+    test2-nested-annot.c
 
+TESTS = rose_jacobi-v3.out \
+        rose_nestedloops.out \
+	rose_test1-annot.out \
+	rose_test2-nested-annot.out
+
+# test files for static counting mode. No changes to the input file at all
 C_Analysis_Only_TESTCODE = \
-   jacobi.c
-
-TESTS = jacobi-v3.out nestedloops.out
-jacobi-v3.out:rose_jacobi-v3.c
-	gcc -O3 rose_jacobi-v3.c -o jacobi-v3.out -lm
-
-nestedloops.out:rose_nestedloops.c
-	gcc -O3 rose_nestedloops.c -o nestedloops.out -lm
+   jacobi.c \
+   test-1d-1.c \
+   test1.c \
+   bzip2.c \
+   switch.c \
+   gzip.c \
+   oggenc.c
 
 # loop001.cpp hello.cpp
 # compilation error for some f files
@@ -52,13 +59,26 @@ Fortran_Tests = \
    InterpF_002.f \
    AverageCodimF.f90
 
+# rose_test.c will be the target
 C_Analysis_TESTCODE_RESULTS = $(addprefix rose_, ${C_Analysis_Only_TESTCODE})
 
 C_TESTCODE_RESULTS = $(addprefix rose_, ${C_TESTCODE})
 F_TESTCODE_RESULTS = $(addprefix rose_, ${Fortran_Tests})
 
+check_PROGRAM = ${C_TESTCODE_RESULTS:.c=.out}
+
+# this does not work somehow ??
+#TESTS = ${check_PROGRAM}
+%.out: %.c
+	gcc $^ -o $@ -lm
+#jacobi-v3.out:rose_jacobi-v3.c
+#	gcc -O3 rose_jacobi-v3.c -o jacobi-v3.out -lm
+#
+#nestedloops.out:rose_nestedloops.c
+#	gcc -O3 rose_nestedloops.c -o nestedloops.out -lm
+
 $(C_Analysis_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
-	./measureTool -c -static-counting-only -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
+	./measureTool -c -static-counting-only -use-algorithm-v2 -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
 
 # test the translator
 $(C_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 

@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include "markLhsValues.h"
 #include "fixupNames.h"
+#include "FileUtility.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -107,8 +108,14 @@ std::map<SgNode*,std::string> SageInterface::local_node_to_name_map;
 
 typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 
+namespace SageInterface
+{
+    Transformation_Record trans_records;
+}
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 using namespace SageBuilder;
 
 
@@ -6814,7 +6821,7 @@ SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
 // This is useful to find a safe place to insert a declaration statement with special requirements about where it can be inserted.
 // e.g. a variable declaration statement should not be inserted before IMPLICIT none in Fortran
 // If it returns NULL, a declaration statement should be able to be prepended to the scope
-SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope)
+SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope, bool includePragma/* = false */ )
 {
   SgStatement* rt = NULL;
   ROSE_ASSERT (scope != NULL);
@@ -6824,8 +6831,17 @@ SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scop
   for (size_t i = 0; i<stmt_list.size(); i++)
   {
     SgStatement* cur_stmt = stmt_list[i];
-    if (isSgDeclarationStatement(cur_stmt))
-      rt = cur_stmt;
+    // We should exclude pragma decl. We don't want to insert things after pragmas.
+    if (isSgDeclarationStatement(cur_stmt)) 
+    {
+      if (isSgPragmaDeclaration (cur_stmt))
+      {
+        if (includePragma)
+          rt = cur_stmt;
+      }
+      else  
+        rt = cur_stmt;
+    }  
     //if (isSgImplicitStatement(cur_stmt)) || isSgFortranIncludeLine(cur_stmt) || isSgDeclarationStatement
   }
 
@@ -6973,6 +6989,9 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
        // DQ (7/19/2015): Added missing case:
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
+               // Liao 6/24/2016. Handle the simplest case: both arguments are parameter pack.
+               if (arg2->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument) 
+                 return true; 
                ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
              }
 
@@ -6995,6 +7014,8 @@ bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrL
         {
 #if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
           printf ("In templateArgumentListEquivalence(): different list sizes: returning false \n");
+          printf ("   --- list1.size() = %zu \n",list1.size());
+          printf ("   --- list2.size() = %zu \n",list2.size());
 #endif
           return false;
         }
@@ -9078,76 +9099,141 @@ static SgExpression* SkipCasting (SgExpression* exp)
 }
 
 //! Promote the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable
-bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
+bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) 
+{
   ROSE_ASSERT(loop!=NULL);
 
   SgStatementPtrList &init = loop ->get_init_stmt();
   if (init.size() !=1) // We only handle one statement case
     return false;
-  else
+
+  SgStatement* init1 = init.front();
+  SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
+  if (decl == NULL) // we only handle for (int i=0; ...) 
+    return true;    // the return value is ambiguous: if not int i=0; it is already normalized
+
+  SgVariableSymbol* osymbol = getFirstVarSym(decl);
+  SgInitializedName* ivarname = decl->get_variables().front();
+  SgExpression* lbast = NULL; // the lower bound, initial state
+  ROSE_ASSERT(ivarname != NULL);
+  SgInitializer * initor = ivarname->get_initializer();
+  if (isSgAssignInitializer(initor))
   {
-    SgStatement* init1 = init.front();
-    SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
-    if (decl)
-    {
-      SgVariableSymbol* osymbol = getFirstVarSym(decl);
-      SgInitializedName* ivarname = decl->get_variables().front();
-      SgExpression* lbast = NULL; // the lower bound, initial state
-      ROSE_ASSERT(ivarname != NULL);
-      SgInitializer * initor = ivarname->get_initializer();
-      if (isSgAssignInitializer(initor))
-      {
-        lbast = isSgAssignInitializer(initor)->get_operand();
-      } else
-      { //SgConstructorInitializer etc.
-        // other complex declaration statements, such as Decomposition::Iterator ditr(&decomp) should be skipped
-        // they cause a loop to be non-canonical.
-        return false;
-      }
-
-      // add a new statement like int i; and insert it to the enclosing function
-      // There are multiple choices about where to insert this statement:
-      //  global scope: max name pollution,
-      //  right before the loop: mess up perfectly nested loops
-      //  So we prepend the statement to the enclosing function's body
-      SgFunctionDefinition* funcDef =  getEnclosingFunctionDefinition(loop);
-      ROSE_ASSERT(funcDef!=NULL);
-      SgBasicBlock* funcBody = funcDef->get_body();
-      ROSE_ASSERT(funcBody!=NULL);
-      //TODO a better name
-      std::ostringstream os;
-      os<<ivarname->get_name().getString();
-      
-      // keep the original variable name if possible
-      SgSymbol * visibleSym = NULL; 
-      visibleSym = lookupVariableSymbolInParentScopes(ivarname->get_name(), funcBody);
-      if (visibleSym != NULL) // if there is a name collision, add suffix to the variable name
-      {
-        os<<"_nom_";
-        os<<++gensym_counter;
-      }
-
-      SgVariableDeclaration* ndecl = buildVariableDeclaration(os.str(),ivarname->get_type(), NULL, funcBody);
-      prependStatement(ndecl, funcBody);
-      SgVariableSymbol* nsymbol = getFirstVarSym(ndecl);
-
-      // replace variable ref to the new symbol
-      Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
-      for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
-      {
-        SgVarRefExp *vRef = isSgVarRefExp((*i));
-        if (vRef->get_symbol()==osymbol)
-          vRef->set_symbol(nsymbol);
-      }
-      // replace for (int i=0;) with for (i=0;)
-      SgExprStatement* ninit = buildAssignStatement(buildVarRefExp(nsymbol),deepCopy(lbast));
-      removeStatement(decl); //any side effect to the symbol? put after symbol replacement anyway
-      init.push_back(ninit);
-      ROSE_ASSERT (loop->get_for_init_stmt () != NULL);
-      // ninit->set_parent(loop);
-       ninit->set_parent(loop->get_for_init_stmt ());
-    }
+    lbast = isSgAssignInitializer(initor)->get_operand();
+  } 
+  else
+  { //SgConstructorInitializer etc.
+    // other complex declaration statements, such as Decomposition::Iterator ditr(&decomp) should be skipped
+    // they cause a loop to be non-canonical.
+    return false;
   }
+
+  // add a new statement like int i; and insert it to the enclosing function
+  // There are multiple choices about where to insert this statement:
+  //  global scope: max name pollution,
+  //  right before the loop: mess up perfectly nested loops
+  //  So we prepend the statement to the enclosing function's body
+  SgFunctionDefinition* funcDef =  getEnclosingFunctionDefinition(loop);
+  ROSE_ASSERT(funcDef!=NULL);
+  SgBasicBlock* funcBody = funcDef->get_body();
+  ROSE_ASSERT(funcBody!=NULL);
+  //TODO a better name
+  std::ostringstream os;
+  os<<ivarname->get_name().getString();
+
+  // keep the original variable name if possible
+  SgSymbol * visibleSym = NULL; 
+  visibleSym = lookupVariableSymbolInParentScopes(ivarname->get_name(), funcBody);
+  if (visibleSym != NULL) // if there is a name collision, add suffix to the variable name
+  {
+    os<<"_nom_";
+    os<<++gensym_counter;
+  }
+
+  SgVariableDeclaration* ndecl = buildVariableDeclaration(os.str(),ivarname->get_type(), NULL, funcBody);
+  prependStatement(ndecl, funcBody);
+  SgVariableSymbol* nsymbol = getFirstVarSym(ndecl);
+
+  // replace variable ref to the new symbol
+  Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp((*i));
+    if (vRef->get_symbol()==osymbol)
+      vRef->set_symbol(nsymbol);
+  }
+  // replace for (int i=0;) with for (i=0;)
+  SgExprStatement* ninit = buildAssignStatement(buildVarRefExp(nsymbol),deepCopy(lbast));
+  removeStatement(decl); //any side effect to the symbol? put after symbol replacement anyway
+  init.push_back(ninit);
+  ROSE_ASSERT (loop->get_for_init_stmt () != NULL);
+  // ninit->set_parent(loop);
+  ninit->set_parent(loop->get_for_init_stmt ());
+
+  // keep record of this normalization
+  // We may undo it later on.
+  trans_records.forLoopInitNormalizationTable[loop] = true;
+  trans_records.forLoopInitNormalizationRecord[loop] = make_pair (decl, ndecl) ;
+
+  return true;
+}
+
+/*
+  int i_norm_1;
+  for (i_norm_1=0; i_norm_1<upper; i_norm_1 ++ ); 
+Becomes: 
+  for (int i=0; i< upper; i++) ;
+ * */
+bool SageInterface::unnormalizeForLoopInitDeclaration(SgForStatement* loop)
+{
+  ROSE_ASSERT (loop != NULL);
+  //If not previously normalized, nothing to do and return false.
+  if (!trans_records.forLoopInitNormalizationTable[loop])
+    return false;
+  // retrieve original and new declaration of the previous normalization   
+  SgVariableDeclaration* decl = trans_records.forLoopInitNormalizationRecord[loop].first;   
+  SgVariableDeclaration* ndecl = trans_records.forLoopInitNormalizationRecord[loop].second;   
+  ROSE_ASSERT (decl!= NULL);
+  ROSE_ASSERT (ndecl!= NULL);
+   
+  
+  // Sanity check
+  SgStatementPtrList &init = loop ->get_init_stmt();
+  ROSE_ASSERT(init.size() ==1); // We only handle one statement case
+
+  // remove the current init_stmt
+  SgStatement* init1 = init.front();
+  SgExprStatement* exp_stmt = isSgExprStatement(init1);
+  ROSE_ASSERT (exp_stmt != NULL);
+  SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
+  ROSE_ASSERT (assign_op != NULL);
+
+  // remove the new declaration and the current i_norm=1; 
+  removeStatement(ndecl);
+  removeStatement (exp_stmt);
+ 
+  // restore the original declaration
+  init.push_back(decl);                                                                                                          
+  ROSE_ASSERT (loop->get_for_init_stmt () != NULL);                                                                               
+  // ninit->set_parent(loop);                                                                                                     
+  decl->set_parent(loop->get_for_init_stmt ());     
+ 
+  // replace variable references
+  // current symbol in the AST
+  SgVariableSymbol* osymbol = getFirstVarSym(ndecl);
+  // new symbol  we want to have: the original decl
+  SgVariableSymbol* nsymbol = getFirstVarSym(decl);
+  // replace variable ref to the new symbol
+  Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp((*i));
+    if (vRef->get_symbol()==osymbol)
+      vRef->set_symbol(nsymbol);
+  }
+
+  // clear record: now the loop is not normalized any more
+  trans_records.forLoopInitNormalizationTable[loop] = false; 
   return true;
 }
 
@@ -18051,6 +18137,11 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
      // has to resolve this recursively
     return convertRefToInitializedName(lhs);
   } // The following expression types are usually introduced by left hand operands of DotExp, ArrowExp
+  else if (isSgThisExp(current))
+  {
+    SgThisExp* texp = isSgThisExp(current);
+    name = NULL; // inside a class, there is no initialized name at all!! what to do??
+  }
   else if (isSgPointerDerefExp(current))
   {
     return convertRefToInitializedName(isSgPointerDerefExp(current)->get_operand());
@@ -18059,12 +18150,24 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
   {
     return convertRefToInitializedName(isSgCastExp(current)->get_operand());
   }
+  // Scientific applications often use *(address + offset) to access array elements
+  // If a pointer dereferencing  is applied to AddOp, we assume the left operand is the variable of our interests
+  else if (isSgAddOp(current))
+  {
+    SgExpression* lhs = isSgAddOp(current)->get_lhs_operand();
+    return convertRefToInitializedName(lhs);
+  }
+  else if (isSgSubtractOp(current))
+  {
+    SgExpression* lhs = isSgSubtractOp(current)->get_lhs_operand();
+    return convertRefToInitializedName(lhs);
+  }
  else
   {
     cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
     ROSE_ASSERT(false);
   }
-  ROSE_ASSERT(name != NULL);
+  //ROSE_ASSERT(name != NULL);
   return name;
 }
 
@@ -20522,6 +20625,28 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
    }
 
 
+bool SageInterface::insideSystemHeader (SgLocatedNode* node)
+{
+  bool rtval = false; 
+  ROSE_ASSERT (node != NULL);
+  Sg_File_Info* finfo = node->get_file_info();
+  if (finfo!=NULL)
+  {
+    string fname = finfo->get_filenameString();
+    string buildtree_str1 = string("include-staging/gcc_HEADERS");
+    string buildtree_str2 = string("include-staging/g++_HEADERS");
+    string installtree_str1 = string("include/edg/gcc_HEADERS"); 
+    string installtree_str2 = string("include/edg/g++_HEADERS"); 
+    // if the file name has a sys header path of either source or build tree
+    if ((fname.find (buildtree_str1, 0) != string::npos) ||
+        (fname.find (buildtree_str2, 0) != string::npos) ||
+        (fname.find (installtree_str1, 0) != string::npos) ||
+        (fname.find (installtree_str2, 0) != string::npos)
+       )
+      rtval = true;
+  }
+  return rtval;  
+}
 
 
 bool
@@ -20572,12 +20697,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = X_typeChain[i];
           printf ("X_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- X_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("X type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }
         }
 
@@ -20586,12 +20713,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = Y_typeChain[i];
           printf ("Y_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- Y_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("Y type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }          
         }
 #endif

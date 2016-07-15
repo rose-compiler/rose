@@ -9,6 +9,7 @@
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 namespace bROwSE {

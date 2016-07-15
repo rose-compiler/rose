@@ -5,6 +5,7 @@
 
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
+#include "SprayException.h"
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
 #include <set>
@@ -555,8 +556,9 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
     // size needs to be set *after* mappingVarIdToSym has been updated
     setSize(tmpVarId,arraySize);
   } else {
-    cerr<< "Error: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
-    exit(1);
+    stringstream ss;
+    ss<< "VariableIdMapping: registerNewArraySymbol: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
+    throw SPRAY::Exception(ss.str());
   }
 }
 
@@ -581,8 +583,9 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[newIdCode]) == newIdCode);
     ROSE_ASSERT(mappingVarIdToSym[mappingSymToVarId.at(sym)] == sym);
   } else {
-    cerr<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
-    exit(1);
+    stringstream ss;
+    ss<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
+    throw SPRAY::Exception(ss.str());
   }
 }
 
@@ -595,7 +598,7 @@ void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
   if(isTemporaryVariableId(varId))
     delete getSymbol(varId);
   else
-    throw "VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.";
+    throw SPRAY::Exception("VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.");
 }
 
 /*! 

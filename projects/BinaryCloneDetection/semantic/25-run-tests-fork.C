@@ -21,6 +21,7 @@
 #include <csignal>
 #include <sys/wait.h>
 
+using namespace rose;
 using namespace CloneDetection;
 using namespace CloneDetection::RunTests;
 using namespace rose::BinaryAnalysis;
@@ -397,7 +398,7 @@ main(int argc, char *argv[])
     opt.nprocs = nProcessors();
     int argno = parse_commandline(argc, argv);
     if (argno+1!=argc)
-        usage(1);
+        CloneDetection::RunTests::usage(1);
     std::string databaseUrl = argv[argno++];
 
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(databaseUrl)->transaction();

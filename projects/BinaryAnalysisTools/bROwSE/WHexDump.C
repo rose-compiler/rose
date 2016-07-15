@@ -15,6 +15,7 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 namespace bROwSE {

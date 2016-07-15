@@ -23,7 +23,7 @@
 // **********************************************************
 
 using namespace std;
-
+using namespace rose;
 
 // DQ (4/8/2011): Moved this from the header file...
 CustomAstDOTGenerationEdgeType::CustomAstDOTGenerationEdgeType (SgNode* n1, SgNode* n2, std::string label, std::string options)
@@ -1748,6 +1748,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
             // DQ (5/4/2013): This makes the graph nodes too large so use it only as required.
                labelWithSourceCode += string("\\n  settings = ") + modifierType->get_typeModifier().displayString() + "  ";
 #endif
+               SgTypeModifier tm = modifierType->get_typeModifier(); 
+               if (tm.isRestrict())
+                 labelWithSourceCode += string("\\n restrict  ") ;
 #if 0
                if (modifierType->get_frontend_type_reference() != NULL)
                   {
@@ -1958,6 +1961,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
                          case SgTemplateArgument::template_template_argument:
                               typeString = "template_template_argument";
+                              break;
+
+                         case SgTemplateArgument::start_of_pack_expansion_argument:
+                              typeString = "start_of_pack_expansion_argument";
                               break;
 
                          default:

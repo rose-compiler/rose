@@ -4227,8 +4227,12 @@ SgAsmNode::SgAsmNode ( const SgAsmNode & X )
   // this way (else it would have been a problem before now), but we should fix 
   // this better.
      p_attachedPreprocessingInfoPtr = X.p_attachedPreprocessingInfoPtr;
-     p_asmAttributeMechanism        = X.p_asmAttributeMechanism;
-     p_attributeMechanism           = X.p_attributeMechanism;
+
+     if (X.p_attributeMechanism != NULL) {
+         p_attributeMechanism           = new AstAttributeMechanism(*X.p_attributeMechanism);
+     } else {
+         p_attributeMechanism = NULL;
+     }
    }
 
 SOURCE_BINARY_END

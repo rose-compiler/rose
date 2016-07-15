@@ -1,6 +1,8 @@
 #include "rose.h"
 #include "RoseAst.h"
 
+using namespace rose;
+
 int main(int argc, char *argv[])
 {
     RoseAst ast(frontend(argc, argv));

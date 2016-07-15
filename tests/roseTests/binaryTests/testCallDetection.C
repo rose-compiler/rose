@@ -1,5 +1,7 @@
 #include "rose.h"
 
+using namespace rose;
+
 struct AnalyzeBlocks: AstSimpleProcessing {
     void visit(SgNode *node) {
         using namespace StringUtility;

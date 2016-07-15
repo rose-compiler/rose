@@ -25,33 +25,100 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
-  typedef std::pair<std::vector<Flow>, boost::unordered_map<int, int> > SelectedCfgsAndIdMap;
+  class ParProExplorer;
+
+  struct ParallelSystem {
+  public:
+    ParallelSystem();
+
+    std::set<string> getAnnotations() const;
+    size_t size() const { return _components.size(); }
+    void addComponent(int id, Flow* cfa);
+    std::string toString() const;
+
+    std::map<int, Flow*> components() const { return _components; }  // TODO: remove const and add other functions to query the component ids
+    void setComponents(std::map<int, Flow*> components) { _components=components; } 
+    bool hasStg() const { return (_stg != NULL); }
+    ParProTransitionGraph* stg() { return _stg; }
+    void setStg(ParProTransitionGraph* stg) { _stg=stg; }
+    bool hasStgOverApprox() const { return (_stgOverApprox != NULL); }
+    ParProTransitionGraph* stgOverApprox() { return _stgOverApprox; }
+    void setStgOverApprox(ParProTransitionGraph* stgOverApprox) { _stgOverApprox=stgOverApprox; }
+    bool hasStgUnderApprox() const { return (_stgUnderApprox != NULL); }
+    ParProTransitionGraph* stgUnderApprox() { return _stgUnderApprox; }
+    void setStgUnderApprox(ParProTransitionGraph* stgUnderApprox) { _stgUnderApprox=stgUnderApprox; }
+
+  private:
+    std::map<int, Flow*> _components;
+    ParProTransitionGraph* _stg;
+    ParProTransitionGraph* _stgOverApprox;
+    ParProTransitionGraph* _stgUnderApprox;
+  };
+
+  bool operator<(const ParallelSystem& p1, const ParallelSystem& p2);
+  bool operator==(const ParallelSystem& p1, const ParallelSystem& p2);
+  bool operator!=(const ParallelSystem& p1, const ParallelSystem& p2);
+
+  class ParallelSystemHashFun {
+  public:
+    ParallelSystemHashFun() {}
+    long operator()(ParallelSystem* p) const {
+      unsigned int hash=1;
+      map<int, Flow*> components = p->components();
+      for(map<int, Flow*>::iterator i=components.begin();i!=components.end();++i) {
+	hash=((hash<<8)+((long)((*i).first)))^hash;
+      }
+      return long(hash);
+    }
+  };
+  
+  class ParallelSystemEqualToPred {
+  public:
+    ParallelSystemEqualToPred() {}
+    bool operator()(ParallelSystem* s1, ParallelSystem* s2) const {
+      if(s1->components().size()!=s2->components().size()) {
+	return false;
+      } else {
+	map<int, Flow*> s1Components = s1->components();
+	for(map<int, Flow*>::iterator i1=s1Components.begin(), i2=s2->components().begin();i1!=s1Components.end();(++i1,++i2)) {
+	  if((*i1).first!=(*i2).first)
+	    return false;
+	}
+      }
+      return true;
+    }
+  };
+
+  class ParallelSystemSet : public HSetMaintainer<ParallelSystem,ParallelSystemHashFun,ParallelSystemEqualToPred> {
+  public:
+    typedef HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>::ProcessingResult PSProcessingResult;
+  };
+
+  typedef boost::unordered_map<const ParallelSystem*, std::list<const ParallelSystem*> > ParallelSystemDag;
 
   class ParProLtlMiner {
   public:
-  ParProLtlMiner() : _numberOfMiningsPerSubsystem(10) {}
-    ParProLtlMiner(std::vector<Flow>& cfgs, EdgeAnnotationMap& annotations) : 
-      _numberOfMiningsPerSubsystem(10),
-      _cfgs(cfgs),
-      _annotations(annotations) {}
+  ParProLtlMiner(ParProExplorer* explorer) : _numberOfMiningsPerSubsystem(10), _parProExplorer(explorer) {}
 
-    PropertyValueTable* mineLtlProperties(int minNumVerifiable, int minNumFalsifiable, int minNumComponents);
-    bool isExpectedResult(std::string ltlProperty, SelectedCfgsAndIdMap cfgsAndIdMap, EdgeAnnotationMap annotations, PropertyValue expectedResult);
-    bool isVerifiable(std::string ltlProperty, SelectedCfgsAndIdMap selectedCfgsAndIdMap, EdgeAnnotationMap annotations);
-    bool isFalsifiable(std::string ltlProperty, SelectedCfgsAndIdMap selectedCfgsAndIdMap, EdgeAnnotationMap annotations);
-    bool expectedResultWithComponentSubset(std::string ltlProperty, SelectedCfgsAndIdMap cfgsAndIdMap, 
-					   EdgeAnnotationMap annotations, PropertyValue expectedResult);
-    bool falsifiableWithComponentSubset(std::string ltlProperty, SelectedCfgsAndIdMap selectedCfgsAndIdMap, EdgeAnnotationMap annotations);
-    bool verifiableWithComponentSubset(std::string ltlProperty, SelectedCfgsAndIdMap selectedCfgsAndIdMap, EdgeAnnotationMap annotations);
-    void setNumberOfMiningsPerSubsystem(unsigned int minings) { _numberOfMiningsPerSubsystem = minings; }
-    std::string randomLtlFormula(std::vector<std::string> atomicPropositions, int maxProductions); //TODO: move to private functions
+    PropertyValueTable* mineProperties(ParallelSystem& system, int minNumComponents);
+    PropertyValueTable* mineProperties(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable);
+    void setNumberOfMiningsPerSubsystem(int numMinings) { _numberOfMiningsPerSubsystem = numMinings; }
 
   private:
-    // std::string randomLtlFormula(std::vector<std::string> atomicPropositions, int maxProductions);
+    std::string randomLtlFormula(std::vector<std::string> atomicPropositions, int maxProductions);
+    bool passesFilter(std::string ltlProperty, PropertyValue correctValue, 
+		      const ParallelSystem* system, int minNumComponents);
+    void exploreSubsystemsAndAddToWorklist(const ParallelSystem* system, 
+					   ComponentApproximation approxMode, 
+					   std::list<const ParallelSystem*>& worklist);
+    void initiateSubsystemsOf(const ParallelSystem* system);
     
     unsigned int _numberOfMiningsPerSubsystem;
-    std::vector<Flow> _cfgs; 
-    EdgeAnnotationMap _annotations;
+    ParProExplorer* _parProExplorer;
+
+    ParallelSystemSet _subsystems;
+    ParallelSystemDag _subsystemsOf;
+    SpotConnection _spotConnection;
   };
 
 } // end of namespace CodeThorn

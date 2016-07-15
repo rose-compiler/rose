@@ -86,10 +86,13 @@ namespace CodeThorn {
       void checkLtlProperties(TransitionGraph& stg,
 					std::set<int> inVals, std::set<int> outVals, bool withCounterExample, bool spuriousNoAnswers);
       // variant for model checking the state space of parallel automata
-      void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers);
+      void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<std::string> annotationsOfModeledTransitions);
       // similar to "checkLtlProperties" above, but only checks a single property (property id specified as a parameter)
       void checkSingleProperty(int propertyNum, TransitionGraph& stg,
 						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers);
+      // model checking of "ltlProperty" on "stg"
+      PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<std::string> annotationsOfModeledTransitions);
+      ParProSpotTgba* toTgba(ParProTransitionGraph& stg);
       //takes a SPOT TGBA text file and a file containing LTL formulae plus expected solutions (see RERS solutions examples).
       // utilizes the SPOT library to check whether the expected solutions are correct on the given model tgba.
       // deprecated, the interfaced version below is now used.
@@ -119,6 +122,8 @@ namespace CodeThorn {
       void negateFormula(std::string& ltl_string);
       // returns the set of atomic propositions (boolean variables in the LTL formulae) in the list of LTL properties
       spot::ltl::atomic_prop_set* getAtomicProps();
+      // returns the set of atomic propositions (boolean variables in the LTL formulae) in "ltlFormula"
+      spot::ltl::atomic_prop_set* getAtomicProps(std::string ltlFormula);
       // returns a set of atomic propositions (variables in the LTL formulae) representing the given "ioVals" I/O values.
       // "maxInputVal" determines the greatest value to be prepended with an 'i' for input. Every integer greater than that
       // will be prepended with 'o'

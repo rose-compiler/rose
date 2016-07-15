@@ -5892,6 +5892,7 @@ DisassemblerX86::decodeGroup15()
             if (modeField == 3) {
                 return makeInstruction(x86_sfence, "sfence");
             } else {
+                fillInModRM(rmReturnNull, BYTET);
                 return makeInstruction(x86_clflush, "clflush", modrm);
             }
         default:

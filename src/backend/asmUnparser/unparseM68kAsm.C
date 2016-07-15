@@ -3,6 +3,7 @@
 #include "AsmUnparser.h"
 #include <boost/foreach.hpp>
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 
 /** Returns a string containing everything before the first operand in a typical m68k statement. */

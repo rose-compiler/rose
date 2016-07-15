@@ -4,6 +4,8 @@
 #define TARGET_FILE_NAME "copyFile-target"
 #define FILE_CONTENT "Contents of the file"             // No line feed
 
+using namespace rose;
+
 static void
 createSourceFile() {
     std::ofstream out(SOURCE_FILE_NAME);

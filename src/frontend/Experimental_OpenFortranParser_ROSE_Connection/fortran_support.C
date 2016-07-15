@@ -20,6 +20,7 @@
 // SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
+using namespace rose;
 
 // ATbool ofp_traverse_init();
 

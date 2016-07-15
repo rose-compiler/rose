@@ -521,14 +521,15 @@ string ParProEState::toString() const {
   ParProLabel label = getLabel();
   bool firstEntry = true;
   stringstream ss;
-  ss << "Label:";
+  ss << "Label_";
   for (ParProLabel::iterator i=label.begin(); i!=label.end(); i++) {
     if (!firstEntry) {
-      ss << ",";
+      ss << "_";
     }
     firstEntry = false;
     ss << *i;
   }
+  ss << "";
   return ss.str();
 }
 

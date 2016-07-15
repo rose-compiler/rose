@@ -1063,10 +1063,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     edgeSet.insert(backwardEdge);
     return edgeSet;
   }
-
   default:
-    cerr << "Error: Unknown node in CFAnalysis::flow: "<<node->sage_class_name()<<endl; 
-    cerr << "Problemnode: "<<node->unparseToString()<<endl;
-    exit(1);
+    throw SPRAY::Exception("Unknown node in CFAnalysis::flow: "+node->class_name()+" Problemnode: "+node->unparseToString());
   }
 }

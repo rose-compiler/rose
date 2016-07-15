@@ -538,11 +538,11 @@ TEST_TARGETS += $(testPartitioner2_test_targets)
 #END TEMPORARY [RPM 2015-02-19]
 
 $(testPartitioner2_test_targets): testPartitioner2_%.passed: $(testPartitioner2_directory)/% testPartitioner2 testPartitioner2_%.ans
-	@$(RTH_RUN)						\
-		TITLE="testPartitioner2 $(notdir $<) [$@]"	\
-		USE_SUBDIR=yes					\
-		CMD="$$(pwd)/testPartitioner2 $<"		\
-		ANS="$(srcdir)/testPartitioner2_$*.ans"		\
+	@$(RTH_RUN)												\
+		TITLE="testPartitioner2 $(notdir $<) [$@]"							\
+		USE_SUBDIR=yes											\
+		CMD="$$(pwd)/testPartitioner2 $(if $(findstring exefmt,$<), --no-inter-function-calls) $<"	\
+		ANS="$(srcdir)/testPartitioner2_$*.ans"							\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 .PHONY: check-testPartitioner2

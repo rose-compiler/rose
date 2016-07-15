@@ -4,6 +4,7 @@
 //    loop-carried output-dependence: x=... : accept values based on loop variable; or not. 
 //Solution: Can be parallelized using lastprivate(x)
 #include <stdio.h> 
+#include "omp.h" 
 
 void foo()
 {
