@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Trap handler to make ctrl-c work in almost all cases:
-trap "echo Aborting...; exit;" SIGINT SIGTERM
+# "kill 0" to kill even background processes:
+trap 'echo Aborting...; kill -s SIGKILL 0; exit;' SIGINT SIGTERM
 
 #$1: CodeThorn's src directory
 SRCDIR=$(cd $1; pwd) # store the absolute path
@@ -39,9 +40,55 @@ WARNING_MSG_PREFIX="${WARNING_COLOR_BEGIN}Warning${COLOR_END}: "
 ERROR_MSG_PREFIX="${ERROR_COLOR_BEGIN}Error${COLOR_END}: "
 
 echoAndRunCommand(){
-  echo "$2"
+  echo "$3"
   echo ""
-  timeout --foreground "$1s" $2
+  # "timeout" does not kill the command sometimes. Both the command and timeout are
+  #  sleeping then and nothing happens.  
+  #timeout --foreground "$1s" $3
+  
+  # Own timeout implementation:
+  # Execute command in background and stop it immediately to get PID:
+  $3 &
+  COMMAND_PID=$!
+  kill -STOP ${COMMAND_PID}
+  # If a timeout is requested:
+  WATCHDOG_PID="-1"
+  if [ "$1" -gt "0" ]; then
+    # Start timeout watchdog in background subshell:
+    (
+      ((TIMEOUT=$1))
+      while ((TIMEOUT > 0)); do
+        # Check status every second:
+        sleep 1s
+        # Stop waiting if the command already finished:
+        #  ("kill -0 ..." tests whether the process could be killed)
+        kill -0 ${COMMAND_PID} || exit 0
+        ((TIMEOUT -= 1))
+      done
+    
+      # The command timed out: end it:
+      echo -e "$2${ERROR_COLOR_BEGIN}Timed out${COLOR_END}: Killing process now..."
+      # Try SIGTERM first:
+      kill -s SIGTERM ${COMMAND_PID} && kill -0 ${COMMAND_PID} || exit 0
+      sleep "1s"
+      # Use SIGKILL if the command is still running:
+      kill -0 ${COMMAND_PID} && kill -s SIGKILL ${COMMAND_PID}
+    ) 2> /dev/null &
+    WATCHDOG_PID=$!
+  fi
+  # Continue command and wait for it to finish:
+  kill -CONT ${COMMAND_PID}
+  wait ${COMMAND_PID}
+  # exit code of "wait" is the exit code of the command:
+  COMMAND_EXIT_CODE=$?
+  # kill the timeout watchdog if there is one:
+  if [ ! "${WATCHDOG_PID}" -eq "-1" ]; then
+    kill -s SIGKILL ${WATCHDOG_PID}
+    # suppress the shell's message that a background process was killed:
+    wait ${WATCHDOG_PID} 2> /dev/null
+    echo -e "$2Killed timeout watchdog."
+  fi
+  return ${COMMAND_EXIT_CODE}
 }
 
 cleanUp() {
@@ -125,16 +172,17 @@ for currTestDir in "${TEST_ROOT_DIR}"*; do
     if [ -f ${currTestDir}/${TIMEOUT_FILE} ]; then # if an timeout file exists
       # Read timeout into TIMEOUT:
       TIMEOUT=$(<${currTestDir}/${TIMEOUT_FILE})
-      TIMEOUT_MSG=" with a timeout of ${TIMEOUT} second(s)"
+      TIMEOUT_MSG=" with a timeout of ${TIMEOUT} second(s) and"
     fi
     
     # Run analyterix with the given arguments and echo the command before:
     echo -e "${TEST_MSG_PREFIX}Executing analyterix${TIMEOUT_MSG} by using the following command:"
-    echoAndRunCommand "${TIMEOUT}" "$BUILDDIR/analyterix ${INPUT_FILE} -rose:output ${ANNOTATED_OUTPUT_FILE} ${ARGUMENTS}"
+    echoAndRunCommand "${TIMEOUT}" "${TEST_MSG_PREFIX}" "$BUILDDIR/analyterix ${INPUT_FILE} -rose:output ${ANNOTATED_OUTPUT_FILE} ${ARGUMENTS}"
     # Check whether the execution was not successful:
     ANALYTERIX_EXIT_CODE=$?
     if [ ! "${ANALYTERIX_EXIT_CODE}" -eq "0" ]; then
       if [ "${ANALYTERIX_EXIT_CODE}" -eq "124" ] && [ "${TIMEOUT}" -gt "0" ] ; then
+        # Currently not used because of own timeout implemenation:
         echo -e "${TEST_ERROR_MSG_PREFIX}Analyterix timed out."
       else
         echo -e "${TEST_ERROR_MSG_PREFIX}Analyterix' exit code is ${ANALYTERIX_EXIT_CODE} (and not 0)."
