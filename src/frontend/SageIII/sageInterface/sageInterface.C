@@ -6827,7 +6827,7 @@ SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
 // This is useful to find a safe place to insert a declaration statement with special requirements about where it can be inserted.
 // e.g. a variable declaration statement should not be inserted before IMPLICIT none in Fortran
 // If it returns NULL, a declaration statement should be able to be prepended to the scope
-SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope)
+SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope, bool includePragma/* = false */ )
 {
   SgStatement* rt = NULL;
   ROSE_ASSERT (scope != NULL);
@@ -6838,8 +6838,16 @@ SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scop
   {
     SgStatement* cur_stmt = stmt_list[i];
     // We should exclude pragma decl. We don't want to insert things after pragmas.
-    if (isSgDeclarationStatement(cur_stmt) && !isSgPragmaDeclaration (cur_stmt))
-      rt = cur_stmt;
+    if (isSgDeclarationStatement(cur_stmt)) 
+    {
+      if (isSgPragmaDeclaration (cur_stmt))
+      {
+        if (includePragma)
+          rt = cur_stmt;
+      }
+      else  
+        rt = cur_stmt;
+    }  
     //if (isSgImplicitStatement(cur_stmt)) || isSgFortranIncludeLine(cur_stmt) || isSgDeclarationStatement
   }
 
@@ -7012,6 +7020,8 @@ bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrL
         {
 #if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
           printf ("In templateArgumentListEquivalence(): different list sizes: returning false \n");
+          printf ("   --- list1.size() = %zu \n",list1.size());
+          printf ("   --- list2.size() = %zu \n",list2.size());
 #endif
           return false;
         }
@@ -20700,12 +20710,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = X_typeChain[i];
           printf ("X_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- X_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("X type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }
         }
 
@@ -20714,12 +20726,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = Y_typeChain[i];
           printf ("Y_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- Y_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("Y type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }          
         }
 #endif
