@@ -55,7 +55,7 @@ namespace CodeThorn {
     ParProEState transfer(const ParProEState* eState, Edge e);
     bool feasibleAccordingToGlobalState(Edge e, const ParProEState*);
     bool isPreciseTransition(Edge e, const ParProEState* eState);
-    ParProEState getTerminationState();
+    ParProEState setComponentToTerminationState(unsigned int i, const ParProEState* state);
     bool isIncompleteStgReady();
     void addToWorkList(const ParProEState* estate);
     bool isEmptyWorkList();
