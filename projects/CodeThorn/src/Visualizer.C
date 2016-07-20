@@ -147,6 +147,47 @@ void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
 void Visualizer::setEStateSet(EStateSet* x) { estateSet=x; }
 void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 
+string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
+  // define a color scheme
+  int numColors = 16;
+  vector<string> colors(numColors);
+  colors[0] = "#6699FF";
+  colors[1] = "#7F66FF";
+  colors[2] = "#CC66FF";
+  colors[3] = "#FF66E6";
+
+  colors[4] = "#66E6FF";
+  colors[5] = "#2970FF";
+  colors[6] = "#004EEB";
+  colors[7] = "#FF6699";
+
+  colors[8] = "#66FFCC";
+  colors[9] = "#EB9C00";
+  colors[10] = "#FFB829";
+  colors[11] = "#FF7F66";
+
+  colors[12] = "#66FF7F";
+  colors[13] = "#99FF66";
+  colors[14] = "#E6FF66";
+  colors[15] = "#FFCC66";
+
+  stringstream ss;
+  ss << "digraph G {" << endl;
+  for (unsigned int i = 0; i < cfas.size(); ++i) {
+    Flow* cfa = cfas[i];
+    cfa->setDotOptionHeaderFooter(false);
+    cfa->setDotOptionDisplayLabel(true);
+    cfa->setDotOptionDisplayStmt(false);
+    cfa->setDotOptionEdgeAnnotationsOnly(true);
+    cfa->setDotFixedNodeColor(colors[(i % numColors)]);
+    ss << "  subgraph component" << i << " {" << endl;
+    ss << cfa->toDot(NULL);
+    ss << "  }" << endl;
+  }
+  ss << "}" << endl;
+  return ss.str();
+}
+
 string Visualizer::pstateToString(const PState* pstate) {
   stringstream ss;
   bool pstateAddressSeparator=false;

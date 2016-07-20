@@ -275,6 +275,7 @@ void Flow::resetDotOptions() {
   _dotOptionEdgeAnnotationsOnly=false;
   _dotOptionFixedColor=false;
   _fixedColor="black";
+  _fixedNodeColor="white";
   _dotOptionHeaderFooter=true;
 }
 
@@ -425,6 +426,10 @@ void Flow::setDotFixedColor(string color) {
   _fixedColor=color;
 }
 
+void Flow::setDotFixedNodeColor(string color) {
+  _fixedNodeColor=color;
+}
+
 void Flow::setDotOptionHeaderFooter(bool opt) {
   _dotOptionHeaderFooter=opt;
 }
@@ -475,15 +480,20 @@ string Flow::toDot(Labeler* labeler) {
         ss<<SgNodeHelper::nodeToString(node);
       }
     }
-    if(_dotOptionDisplayLabel||_dotOptionDisplayStmt)
-      ss << "\"";
     if(_dotOptionDisplayLabel||_dotOptionDisplayStmt) {
-      SgNode* node=labeler->getNode(*i);
-      if(SgNodeHelper::isCond(node)) {
-        ss << " shape=oval style=filled ";
-        ss<<"color=yellow "; 
+      ss << "\"";
+      if (labeler) {
+	SgNode* node=labeler->getNode(*i);
+	if(SgNodeHelper::isCond(node)) {
+	  ss << " shape=oval style=filled ";
+	  ss<<"color=yellow "; 
+	} else {
+	  ss << " shape=box ";
+	}
       } else {
-        ss << " shape=box ";
+	if (_fixedNodeColor != "white") {
+	  ss << " fillcolor=\""<<_fixedNodeColor<<"\" style=filled";
+	}
       }
       ss << "];\n";
     }

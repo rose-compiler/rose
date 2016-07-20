@@ -106,7 +106,7 @@ string ParProSpotSuccIter::generateFormattedSpotTransition(const ParProTransitio
   ss << "\\n";
   bool firstEntry = true;
   for (String2Int::const_iterator i=propName2DictNum.begin(); i!=propName2DictNum.end(); i++) {
-    if (!firstEntry) {
+    if (!firstEntry && annotation != i->first) {
       ss << ",";
     }
     if (annotation != i->first) {

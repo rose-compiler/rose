@@ -42,9 +42,10 @@ libspray_la_SOURCES=\
  Miscellaneous2.h \
  Normalization.h \
  NumberIntervalLattice.h \
+ ParallelAutomataGenerator.h \
  PASolver1.h \
  PointerAnalysisInterface.h \
- PromelaCodeGenerator;h \
+ PromelaCodeGenerator.h \
  RDAnalysis.h \
  RDAstAttribute.h \
  RDTransferFunctions.h \
@@ -77,6 +78,7 @@ libspray_la_SOURCES=\
  Miscellaneous2.C \
  Normalization.C \
  NumberIntervalLattice.C \
+ ParallelAutomataGenerator.C \
  PASolver1.C \
  PointerAnalysisInterface.C \
  PromelaCodeGenerator.C \

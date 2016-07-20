@@ -43,6 +43,7 @@
 #include "PromelaCodeGenerator.h"
 #include "ParProLtlMiner.h"
 #include "ParProExplorer.h"
+#include "ParallelAutomataGenerator.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -286,6 +287,12 @@ int main( int argc, char * argv[] ) {
       ;
 
     parallelProgramOptions.add_options()
+      ("generate-automata",po::value< string >(),"generate random control flow automata that can be interpreted and analyzed as a parallel program.")
+      ("num-automata",po::value< int >(),"select the number of parallel automata to generate.")
+      ("num-syncs-range",po::value< string >(),"select a range for the number of random synchronizations between the generated automata (csv pair of integers).")
+      ("num-circles-range",po::value< string >(),"select a range for the number of circles that a randomly generated automaton consists of (csv pair of integers).")
+      ("circle-length-range",po::value< string >(),"select a range for the length of circles that are used to construct an automaton (csv pair of integers).")
+      ("num-intersections-range",po::value< string >(),"select a range for the number of intersections of a newly added circle with existing circles in the automaton (csv pair of integers).")
       ("automata-dot-input",po::value< string >(),"reads in parallel automata with synchronized transitions from a given .dot file.")
       ("use-components",po::value< string >(),"Selects which parallel components are chosen for analyzing the (approximated) state space ([all] | subset-fixed | subset-random).")
       ("fixed-components",po::value< string >(),"A list of IDs of parallel components used for analysis (e.g. \"1,2,4,7\"). Use only with \"--use-components=subset-fixed\".")
@@ -508,7 +515,45 @@ int main( int argc, char * argv[] ) {
   boolOptions.processZeroArgumentsOption("svcomp-mode");
   boolOptions.processZeroArgumentsOption("reduce-cfg"); // this handles 'no-reduce-cfg'
 
+  if (args.count("generate-automata")) {
+    srand(time(NULL));
+    ParallelAutomataGenerator automataGenerator;
+    int numberOfAutomata = 10;
+    if (args.count("num-automata")) {
+      numberOfAutomata = args["num-automata"].as<int>();
+    }
+    pair<int, int> numberOfSyncsRange = pair<int, int>(9, 18);
+    if (args.count("num-syncs-range")) {
+      numberOfSyncsRange = parseCsvIntPair(args["num-syncs-range"].as<string>());
+    }
+    pair<int, int> numberOfCirclesPerAutomatonRange = pair<int, int>(2, 4);
+    if (args.count("num-circles-range")) {
+      numberOfCirclesPerAutomatonRange = parseCsvIntPair(args["num-circles-range"].as<string>());
+    }
+    pair<int, int> circleLengthRange = pair<int, int>(5, 8);
+    if (args.count("circle-length-range")) {
+      circleLengthRange = parseCsvIntPair(args["circle-length-range"].as<string>());
+    }
+    pair<int, int> numIntersectionsOtherCirclesRange = pair<int, int>(1, 2);
+    if (args.count("num-intersections-range")) {
+      numIntersectionsOtherCirclesRange = parseCsvIntPair(args["num-intersections-range"].as<string>());
+    }
+    vector<Flow*> automata = automataGenerator.randomlySyncedCircleAutomata(numberOfAutomata, 
+									    numberOfSyncsRange, 
+									    numberOfCirclesPerAutomatonRange,
+									    circleLengthRange,
+									    numIntersectionsOtherCirclesRange);
+    Visualizer visualizer;
+    string dotCfas = visualizer.cfasToDotSubgraphs(automata);
+    string outputFilename = args["generate-automata"].as<string>();
+    write_file(outputFilename, dotCfas);
+    cout << "generated " << outputFilename <<"."<<endl;
+    exit(0);
+  }
+
+
   if (args.count("automata-dot-input")) {
+    srand(time(NULL));
     DotGraphCfgFrontend dotGraphCfgFrontend;
     string filename = args["automata-dot-input"].as<string>();
     CfgsAndAnnotationMap cfgsAndMap = dotGraphCfgFrontend.parseDotCfgs(filename);
@@ -544,7 +589,6 @@ int main( int argc, char * argv[] ) {
       ++index;
     }
 
-    srand(time(NULL));
     ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
     if (args.count("use-components")) {
       string componentSelection = args["use-components"].as<string>();
@@ -954,6 +998,11 @@ int main( int argc, char * argv[] ) {
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
     if (string(argv[i]).find("--automata-dot-input")==0
+        || string(argv[i]).find("--generate-automata")==0
+        || string(argv[i]).find("--num-syncs-range")==0
+        || string(argv[i]).find("--num-circles-range")==0
+        || string(argv[i]).find("--circle-length-range")==0
+        || string(argv[i]).find("--num-intersections-range")==0
         || string(argv[i]).find("--csv-assert")==0
         || string(argv[i]).find("--csv-stats")==0
         || string(argv[i]).find("--csv-stats-cegpra")==0
