@@ -116,6 +116,7 @@ AstNodePtr AstInterface::GetFunctionDefinition( const AstNodePtr &n, std::string
 
 std::string get_type_name( SgType* t);
 using namespace std;
+using namespace rose;
 
 // Removing the leading "::" from a qualified name
 string StripGlobalQualifier(string name)
@@ -4260,8 +4261,13 @@ template class PerformPreTransformationTraversal<bool (*)(AstInterface &, AstNod
 template class PerformPostTransformationTraversal<bool (*)(AstInterface &, AstNodePtr const &, AstNodePtr &)>;
 template class PerformPreTransformationTraversal<TransformAstTree>;
 template class PerformPostTransformationTraversal<TransformAstTree>;
-template class list<SgExpression *, allocator<SgExpression *> >;
-template class vector<AstNodePtr, allocator<AstNodePtr> >;
+
+// DQ (4/12/2016): Clang c++11 mode error: "explicit instantiation of 'std::pair' must occur in namespace 'std'"
+// template class list<SgExpression *, allocator<SgExpression *> >;
+// template class vector<AstNodePtr, allocator<AstNodePtr> >;
+template class std::list<SgExpression *, allocator<SgExpression *> >;
+template class std::vector<AstNodePtr, allocator<AstNodePtr> >;
+
 template class AstTopDownBottomUpProcessing<_DummyAttribute, AstNodePtr>;
 template class AstBottomUpProcessing<AstNodePtr>;
 template class SgTreeTraversal<_DummyAttribute, AstNodePtr>;

@@ -30,6 +30,10 @@ class FixupAstSymbolTablesToSupportAliasedSymbols : public AstSimpleProcessing
        // This inserts an alias for each of the symbols in referencedScope into the symbol table of currentScope
        // static void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel);
           static void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, SgAccessModifier::access_modifier_enum accessLevel);
+
+       // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+          static Sawyer::Message::Facility mlog;
+          static void initDiagnostics();
    };
 
 // endif for FIXUP_CXX_TO_USE_ALIASING_SYMBOLS_H

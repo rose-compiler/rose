@@ -238,7 +238,7 @@ public:
  *  For additional information, including examples, see @ref attributes. */
 class ROSE_DLL_API AstAttributeMechanism {
     // Use containment because we want to keep the original API.
-    Sawyer::Attribute::Storage attributes_;
+    Sawyer::Attribute::Storage<> attributes_;
 
 public:
     /** Default constructor.

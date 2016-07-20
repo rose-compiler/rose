@@ -184,6 +184,11 @@ when they pass, and if absent prevents their promotion.
 Note: The file, when present, should be empty.  We reserve the possibility of adding additional instructions to the file itself
 in order to control promotability in more detail.
 
+=item require_memory = AMOUNT
+
+Skip the test if the machine has less than AMOUNT memory installed. The AMOUNT is a number suffixed with a unit like
+"16 GB". The units are "B", "kB", "MB", and "GB". If no unit, then bytes are assumed.
+
 =item set VARIABLE = VALUE
 
 Assign a new value to a variable.  The VARIABLE must be a variable name without enclosing curly braces or the leading dollar
@@ -350,7 +355,7 @@ sub help {
 sub load_config {
   my($file,$vars) = @_;
   my(%conf) = (answer=>'no', cmd=>[], cleanup=>[], diff=>'diff -u', disabled=>'no', filter=>[], lockdir=>undef,
-               may_fail=>'no', promote=>'yes', subdir=>undef, timeout=>15*60, title=>undef);
+               may_fail=>'no', promote=>'yes', require_memory=>undef, subdir=>undef, timeout=>15*60, title=>undef);
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
     while (/(.*)\\\n$/s) {
@@ -386,6 +391,13 @@ sub load_config {
     } else {
       die "$0: invalid timeout specification: $conf{timeout}\n";
     }
+  }
+
+  # Convert memory size to MB
+  if (my($n,$units) = $conf{require_memory} =~ /^(\d+)\s*(\S+)?\s*$/) {
+      $conf{require_memory} = megabytes($n, $units);
+  } elsif ($conf{require_memory}) {
+      die "$0: invalid memory limit: $conf{require_memory}\n";
   }
 
   return %conf;
@@ -467,6 +479,32 @@ sub should_promote {
   return 0;
 }
 
+# Convert to MB according to unit.
+sub megabytes {
+    my($n, $units) = @_;
+    $units eq "" || $units eq 'b' || $units eq 'B' and return $n / (1024.0 * 1024);
+    $units =~ /^(k|kb|kB|K|KB)$/ and return $n / 1024.0;
+    $units =~ /^(m|mb|M|MB)$/ and return $n;
+    $units =~ /^(g|bg|G|GB)$/ and return $n * 1024;
+    die "unknown memory unit: $units"
+}
+
+# Amount of installed memory in megabytes (2^20 bytes)
+sub installed_memory {
+    my $mb;
+    local($_);
+    open MEMINFO, "<", "/proc/meminfo" or die "$!: /proc/meminfo";
+    while (<MEMINFO>) {
+	if (my($amount,$units) = /^MemTotal:\s*(\d+)\s*(\S+)/) {
+	    $mb = megabytes $amount, $units;
+	    last;
+	}
+    }
+    close MEMINFO;
+    die "cannot determine amount of installed memory" unless $mb != 0;
+    return $mb;
+}
+
 # Variables, augmented from the command-line
 my %variables;
 $variables{"TEMP_FILE_$_"} = tempname for 0 .. 9;
@@ -510,13 +548,19 @@ my %config = load_config $config_file, \%variables;
 # is disabled.
 my $test_title = $config{title} || $target;
 if ($config{disabled} && $config{disabled} ne 'no') {
-  print "  TEST   $test_title (disabled: $config{disabled})\n";
+  print "  TEST     $test_title (disabled: $config{disabled})\n";
   open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
   print TARGET "test is disabled: $config{disabled}\n";
   close TARGET;
   exit 0;
+} elsif ($config{require_memory} && $config{require_memory} > installed_memory) {
+  print "  TEST     $test_title (disabled: this machine does not have enough memory)\n";
+  open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
+  print TARGET "test is skipped: not enough memory installed\n";
+  close TARGET;
+  exit 0;
 }
-print "  TEST   $test_title\n";
+print "  TEST     $test_title\n";
 
 # Should everything run in a subdirectory?
 my $subdir;

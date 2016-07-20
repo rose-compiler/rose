@@ -10,9 +10,10 @@ AC_ARG_ENABLE(edg-version,
 
 echo "enable_edg_version = $enable_edg_version"
 if test "x$enable_edg_version" = "x"; then
-   echo "Default version of EDG used (4.7)"
+# DQ (5/22/2016): Changed the default version of EDG to 4.9.
+   echo "Default version of EDG used (4.9)"
    edg_major_version_number=4
-   edg_minor_version_number=7
+   edg_minor_version_number=9
 else
    echo "Specifying EDG version is not recommended"
    edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`

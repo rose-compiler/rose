@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 // The following symbols should be defined on our compile command line:
@@ -141,7 +142,7 @@ makefileEscape(const std::string &s) {
 
 int
 main(int argc, char *argv[]) {
-    rose::Diagnostics::initialize();
+    ROSE_INITIALIZE;
     try {
         Settings settings;
         std::vector<std::string> commands = parseCommandLine(argc, argv, settings);

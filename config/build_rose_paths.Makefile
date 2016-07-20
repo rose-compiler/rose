@@ -35,7 +35,10 @@ src/util/rose_paths.C: Makefile
 #	@@echo "/* Define the location of the Compass tool within ROSE */" >> src/util/rose_paths.C
 #	@@echo "const char COMPASS_SOURCE_DIRECTORY = \"@absolute_path_srcdir@/projects/compass\";" >> src/util/rose_paths.C
 #	@@echo "" >> src/util/rose_paths.C
-	@@echo "/* Numeric form of ROSE version -- assuming ROSE version x.y.zL (where */" >> src/util/rose_paths.C
-	@@echo "/* x, y, and z are numbers, and L is a single lowercase letter from a to j), */" >> src/util/rose_paths.C
-	@@echo "/* the numeric value is x * 1000000 + y * 10000 + z * 100 + (L - 'a'). */" >> src/util/rose_paths.C
-	@@echo "@PACKAGE_VERSION@" | sed 's/\([0-9]\)\([a-z]\)/\1_\2/g' | tr .a-j _0-9 | awk -F_ '{printf "%02d%02d%02d%02d\n", $$1, $$2, $$3, $$4}' | sed 's/^0*//' | sed 's/.*/const int ROSE_NUMERIC_VERSION = \0;/' >> src/util/rose_paths.C
+
+#       Numeric form of ROSE version as documented in rose_paths.h. See that documentation before changing this command!
+	@@echo "@PACKAGE_VERSION@" |\
+	    tr -c 0-9 . |\
+	    tr -s . |\
+	    awk -F. '{printf "const unsigned long ROSE_NUMERIC_VERSION = %03d%03d%03dul;\n", $$1, $$2, $$3}' |\
+	    sed 's/= 0*/= /' >> src/util/rose_paths.C

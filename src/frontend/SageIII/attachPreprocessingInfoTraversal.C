@@ -1326,9 +1326,17 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
           return returnSynthesizeAttribute;
         }
 
+  // DQ (3/4/2016): Klocworks reports a problem with "isSgClassDeclaration(n)->get_endOfConstruct() != NULL".
   // These used to be a problem, so we can continue to test these specific cases.
-     ROSE_ASSERT (isSgCaseOptionStmt(n)   == NULL || isSgCaseOptionStmt(n)->get_body()             != NULL);
-     ROSE_ASSERT (isSgClassDeclaration(n) == NULL || isSgClassDeclaration(n)->get_endOfConstruct() != NULL);
+  // ROSE_ASSERT (isSgCaseOptionStmt(n)   == NULL || isSgCaseOptionStmt(n)->get_body()             != NULL);
+     SgCaseOptionStmt* caseOptionStm = isSgCaseOptionStmt(n);
+     ROSE_ASSERT (caseOptionStm == NULL || caseOptionStm->get_body() != NULL);
+
+  // DQ (3/4/2016): Klocworks reports a problem with "isSgClassDeclaration(n)->get_endOfConstruct() != NULL".
+  // ROSE_ASSERT (isSgClassDeclaration(n) == NULL || isSgClassDeclaration(n)->get_endOfConstruct() != NULL);
+  // ROSE_ASSERT (isSgClassDeclaration(n) == NULL || (isSgClassDeclaration(n) != NULL && isSgClassDeclaration(n)->get_endOfConstruct() != NULL) );
+     SgClassDeclaration* classDeclaration = isSgClassDeclaration(n);
+     ROSE_ASSERT (classDeclaration == NULL || classDeclaration->get_endOfConstruct() != NULL);
 
   // Only process SgLocatedNode object and the SgFile object
   // SgFile* fileNode           = dynamic_cast<SgFile*>(n);

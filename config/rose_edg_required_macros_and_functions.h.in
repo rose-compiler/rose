@@ -40,9 +40,25 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
+
 /* DQ (9/1/2014): Define this for the Intel compiler (to avoid Intel specific code not handled by EDG) */
 #ifdef __INTEL_COMPILER
   #define _OVERRIDE_COMPLEX_SPECIALIZATION_
+
+/* DQ (4/3/2016): This appears to work fine as a definition for the missing macro support for the Intel V16 compiler. 
+   Note that undefining the macro does not work well, and results in references to undefined functions.  
+   This appears to be a clang specific macro function (compiler extension) that is supported in Intel V16 C++ cpmpiler.
+ */
+  #define __has_include_next(file) 1
+
+/* DQ (5/10/2016): Ignoring the SSE support (turn it off). */
+  #define _PMMINTRIN_H_INCLUDED
+  #define _TMMINTRIN_H_INCLUDED
+  #define _NMMINTRIN_H_INCLUDED
+  #define _SMMINTRIN_H_INCLUDED
+  #define _ZMMINTRIN_H_INCLUDED
+  #define _INCLUDED_IMM
+  #define _BITS_OPT_RANDOM_H
 #endif
 
 /* DQ (8/28/2015): Adding specialized support for Intel compiler. */
@@ -67,6 +83,13 @@
   extern int  _FENV_PUBAPI fesetexceptflag (const fexcept_t *__flagp, int __excepts) ;
 #endif
 
+/* DQ (4/16/2016): Added Clang support.  Turn off the use of the type generic 
+   math header file.  It is not yet clear what we should do with these.
+ */
+#ifdef __clang__
+   #define __TGMATH_H
+#endif
+
 /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
 /* This shuld be a test of the version of EDG, but it is not clear how to do that. */
 #if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 8))
@@ -83,6 +106,11 @@
    #define _GTHREAD_USE_MUTEX_INIT_FUNC
    #define _GTHREAD_USE_RECURSIVE_MUTEX_INIT_FUNC
    #define _GTHREAD_USE_COND_INIT_FUNC
+#endif
+
+/* DQ (5/10/2016): Added support for GNU 5.x compilers (at least 5.1) */
+#if ((__GNUC__ > 4) && (__GNUC_MINOR__ >= 1) && (__GNUC_PATCHLEVEL__ >= 0))
+   #undef __has_include(STR)
 #endif
 
 /* DQ (10/22/2010): Isolate some of the OSX specific details. */
@@ -696,12 +724,16 @@ was just float or double for complex<float> or complex<double>.
 #if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
 /* C++ case is different because the header files will define a complex type (see hdrs1/complex) */
 
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 4))
+/* DQ (5/02/2016): These need to be defined away for the case of GNU 4.2 (and I think anything less than GNU 4.4). */
+/* Note that Clang will pertend to be GNU 4.2.1. */
+#ifndef __clang__
   #define __complex__
   #define __real__ 
   #define __imag__ 
-
-/* DQ (9/26/2006): Plum Hall uses this for C++ code, but I think that we have define it away */
   #define _Complex
+#endif
+#endif
 
 /* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
    don't like this fix).  This is required when constant folding is turned off.

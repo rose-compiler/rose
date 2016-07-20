@@ -3,12 +3,14 @@
 // ################################################################
 
 #include "grammarString.h"
-#include "terminal.h"
-#include "string_functions.h"
+#include "AstNodeClass.h"
+#include "StringUtility.h"
+#include "FileUtility.h"
 #include <string>
 #include <sstream>
 
 using namespace std;
+using namespace rose;
 
 // ################################################################
 // #            GrammarString Member Functions                    #
@@ -755,7 +757,7 @@ GrammarString::getDataAccessFunctionPrototypeString () const
    }
 
 string
-GrammarString::getFunctionNameString ( Terminal & node )
+GrammarString::getFunctionNameString ( AstNodeClass & node )
    {
 
   // printf ("Inside of GrammarString::getFunctionNameString(node) \n");
@@ -1233,14 +1235,14 @@ GrammarString::buildDestructorSource()
    }
 
 string
-GrammarString::containerElementTypeString(Terminal & node) const
+GrammarString::containerElementTypeString(AstNodeClass & node) const
    {
   // DQ (10/8/2014): This returns the name of the type where this data member is a container.
   // The container type is required as part of ATerm support in reading the ATerms and generating
   // the ROSE IR.
 
      string typenameString = this->getTypeNameString();
-     Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+     AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
      string returnString = "";
 
@@ -1248,8 +1250,8 @@ GrammarString::containerElementTypeString(Terminal & node) const
      printf ("In GrammarString::containerElementTypeString(): node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
 #endif
 
-  // ROSE_ASSERT(typeKind == Terminal::SGCLASS_POINTER_LIST);
-     if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+  // ROSE_ASSERT(typeKind == AstNodeClass::SGCLASS_POINTER_LIST);
+     if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST)
         {
        // return the case using a switch over the types (for now).
           if (typenameString == "SgFilePtrList")
@@ -1596,7 +1598,7 @@ GrammarString::containerElementTypeString(Terminal & node) const
         }
        else
         {
-          printf ("ERROR: GrammarString::containerElementTypeString() only defined for Terminal::SGCLASS_POINTER_LIST type data members \n");
+          printf ("ERROR: GrammarString::containerElementTypeString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
           printf ("   --- typenameString = %s \n",typenameString.c_str());
           ROSE_ASSERT(false);
         }
@@ -1606,13 +1608,13 @@ GrammarString::containerElementTypeString(Terminal & node) const
 
 
 string
-GrammarString::containerAppendFunctionNameString(Terminal & node) const
+GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
    {
   // DQ (10/8/2014): This returns the name of the append function for the container.
   // This is not standardized in ROSE (and shoudl be).
 
      string typenameString = this->getTypeNameString();
-     Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+     AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
   // Maybe this is the simplest way to handle this.
   // string returnString = "append";
@@ -1623,8 +1625,8 @@ GrammarString::containerAppendFunctionNameString(Terminal & node) const
      printf ("In GrammarString::containerAppendFunctionNameString(): node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
 #endif
 
-  // ROSE_ASSERT(typeKind == Terminal::SGCLASS_POINTER_LIST);
-     if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+  // ROSE_ASSERT(typeKind == AstNodeClass::SGCLASS_POINTER_LIST);
+     if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST)
         {
        // return the case using a switch over the types (for now).
           if (typenameString == "SgFilePtrList")
@@ -1966,7 +1968,7 @@ GrammarString::containerAppendFunctionNameString(Terminal & node) const
         }
        else
         {
-          printf ("ERROR: GrammarString::containerAppendFunctionNameString() only defined for Terminal::SGCLASS_POINTER_LIST type data members \n");
+          printf ("ERROR: GrammarString::containerAppendFunctionNameString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
           printf ("   --- typenameString = %s \n",typenameString.c_str());
           ROSE_ASSERT(false);
         }

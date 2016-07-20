@@ -1,7 +1,7 @@
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
-#include "terminal.h"
+#include "AstNodeClass.h"
 
 // What should be the behavior of the default constructor for Grammar
 
@@ -18,8 +18,8 @@ Grammar::setUpNodes ()
 
   // printf ("Exiting after test in Grammar::setUpNodes()! \n");
 
-     Terminal & Expression = *lookupTerminal(terminalList, "Expression");
-     Terminal & Statement  = *lookupTerminal(terminalList, "Statement");
+     AstNodeClass & Expression = *lookupTerminal(terminalList, "Expression");
+     AstNodeClass & Statement  = *lookupTerminal(terminalList, "Statement");
 
   // DQ (11/21/2007): This is part of support for the common block statement
      NEW_TERMINAL_MACRO (CommonBlockObject, "CommonBlockObject",     "TEMP_CommonBlockObject" );
@@ -241,12 +241,12 @@ Grammar::setUpNodes ()
   // NEW_NONTERMINAL_MACRO (LocatedNode, LocatedNodeSupport| Statement | Expression | Token, "LocatedNode", "LocatedNodeTag", false );
      NEW_NONTERMINAL_MACRO (LocatedNode, Token | LocatedNodeSupport| Statement | Expression, "LocatedNode", "LocatedNodeTag", false );
 
-     Terminal & Type    = *lookupTerminal(terminalList, "Type");
-     Terminal & Symbol  = *lookupTerminal(terminalList, "Symbol");
-     Terminal & Support = *lookupTerminal(terminalList, "Support");
+     AstNodeClass & Type    = *lookupTerminal(terminalList, "Type");
+     AstNodeClass & Symbol  = *lookupTerminal(terminalList, "Symbol");
+     AstNodeClass & Support = *lookupTerminal(terminalList, "Support");
 
   // DQ (3/14/2007): Added IR support for binaries
-     Terminal & AsmNode = *lookupTerminal(terminalList, "AsmNode");
+     AstNodeClass & AsmNode = *lookupTerminal(terminalList, "AsmNode");
 
   // printf ("nonTerminalList.size() = %" PRIuPTR " \n",nonTerminalList.size());
 

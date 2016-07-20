@@ -49,10 +49,13 @@
 #define Sawyer_Attribute_H
 
 #include <boost/any.hpp>
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <Sawyer/Exception.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
+#include <Sawyer/Synchronization.h>
 #include <string>
 #include <vector>
 
@@ -145,41 +148,48 @@ SAWYER_EXPORT extern const Id INVALID_ID;
  *  stored in a single, global attribute symbol table. This method throws an @ref AlreadyExists error if the specified name
  *  already exists in that global table. Once an attribute is registered its ID never changes and it is never removed from the
  *  global attribute symbol table. There is no guarantee that attribute ID numbers are small consecutive integers, although
- *  that is how the current implementation works. */
+ *  that is how the current implementation works.
+ *
+ *  Thread safety: This method is thread safe. */
 SAWYER_EXPORT Id declare(const std::string &name);
 
 /** Returns the ID for an attribute name.
  *
  *  Looks up the specified name in the global attribute symbol table and returns its identification number.  Returns @ref
- *  INVALID_ID if the name does not exist. */
+ *  INVALID_ID if the name does not exist.
+ *
+ *  Thread safety: This method is thread safe. */
 SAWYER_EXPORT Id id(const std::string &name);
 
 /** Returns the name for an attribute ID.
  *
  *  Looks up the specified attribute ID in the global attribute symbol table and returns its name.  Returns the empty string if
- *  the ID does not exist. */
+ *  the ID does not exist.
+ *
+ *  Thread safety: This method is thread safe. */
 SAWYER_EXPORT const std::string& name(Id);
 
 /** Exception for non-existing values.
  *
  *  This exception is thrown when querying an attribute value and no value is stored for the specified attribute ID. */
-class SAWYER_EXPORT DoesNotExist: public std::domain_error {
+class SAWYER_EXPORT DoesNotExist: public Exception::NotFound {
 public:
     ~DoesNotExist() throw () {}
 
     /** Constructor taking an attribute name or description. */
     explicit DoesNotExist(const std::string &attrName)
-        : std::domain_error(attrName + " does not exist in object") {}
+        : Exception::NotFound(attrName + " does not exist in object") {}
 };
 
 /** Exception thrown when redeclaring an existing attribute. */
-class SAWYER_EXPORT AlreadyExists: public std::runtime_error {
+class SAWYER_EXPORT AlreadyExists: public Exception::AlreadyExists {
 public:
     ~AlreadyExists() throw () {}
 
     /** Constructor taking an attribute name or description. */
     AlreadyExists(const std::string &attrName, Id id)
-        : std::runtime_error(attrName + " is already a declared attribute (id=" + boost::lexical_cast<std::string>(id) + ")") {}
+        : Exception::AlreadyExists(attrName + " is already a declared attribute (id=" +
+                                   boost::lexical_cast<std::string>(id) + ")") {}
 };
 
 /** Exception thrown when wrong data type is queried. */
@@ -188,28 +198,72 @@ typedef boost::bad_any_cast WrongQueryType;
 /** API and storage for attributes.
  *
  *  This is the interface inherited by objects that can store attributes.  See the @ref Attribute "namespace" for usage and
- *  examples. */
-class SAWYER_EXPORT Storage {
+ *  examples.
+ *
+ *  This attribute container can either synchronize access to its members in a multi-threaded environment, or not
+ *  synchronize. Synchronization can be disabled, in which case the container is slightly faster but the user must synchronize
+ *  at a higher level. The default is to synchronize access if %Sawyer is configured with multi-thread support.  The @p SyncTag
+ *  template argument should be either @ref MultiThreadedTag or @ref SingleThreadedTag. */
+template<class SyncTag = SAWYER_THREAD_TAG>
+class Storage {
+public:
+    typedef SynchronizationTraits<SyncTag> Sync;
+
+private:
     typedef Sawyer::Container::Map<Id, boost::any> AttrMap;
     AttrMap values_;
+    mutable typename Sync::Mutex mutex_;
+
 public:
+    /** Default constructor.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
+    Storage() {}
+    ~Storage() {}                                       // possibly required for MSVC linking
+
+    /** Copy constructor.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
+    Storage(const Storage &other) {
+        typename Sync::LockGuard lock(other.mutex_);
+        values_ = other.values_;
+    }
+
+    /** Assignment operator.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
+    Storage& operator=(const Storage &other) {
+        typename Sync::LockGuard2 lock(mutex_, other.mutex_);
+        values_ = other.values_;
+        return *this;
+    }
+
     /** Check attribute existence.
      *
-     *  Returns true if an attribute with the specified identification number exists in this object, false otherwise. */
+     *  Returns true if an attribute with the specified identification number exists in this object, false otherwise.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
     bool attributeExists(Id id) const {
+        typename Sync::LockGuard lock(mutex_);
         return values_.exists(id);
     }
     
     /** Erase an attribute.
      *
      *  Causes the attribute to not be stored anymore. Does nothing if the attribute was not stored to begin with. Upon return,
-     *  the @ref attributeExists method will return false for this @p id. */
+     *  the @ref attributeExists method will return false for this @p id.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
     void eraseAttribute(Id id) {
+        typename Sync::LockGuard lock(mutex_);
         values_.erase(id);
     }
 
-    /** Erase all attributes. */
+    /** Erase all attributes.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
     void clearAttributes() {
+        typename Sync::LockGuard lock(mutex_);
         values_.clear();
     }
 
@@ -217,19 +271,42 @@ public:
      *
      *  Stores the specified value for the specified attribute, overwriting any previously stored value for the specified
      *  key. The attribute type can be almost anything and can be changed for each call, but the same type must be used when
-     *  retrieving the attribute. */
+     *  retrieving the attribute.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
     template<typename T>
     void setAttribute(Id id, const T &value) {
+        typename Sync::LockGuard lock(mutex_);
         values_.insert(id, boost::any(value));
+    }
+
+    /** Store an attribute if not already present.
+     *
+     *  Stores the specified value if the specified attribute does not yet exist. Returns true if the value was stored, false
+     *  if not stored.  The attribute type can be almost anything and can be changed for each call, but the same type must be
+     *  used when retrieving the attribute.
+     *
+     *  Thread safety: Ths method is thread safe when synchronization is enabled. */
+    template<typename T>
+    bool setAttributeMaybe(Id id, const T &value) {
+        typename Sync::LockGuard lock(mutex_);
+        if (!values_.exists(id)) {
+            values_.insert(id, boost::any(value));
+            return true;
+        }
+        return false;
     }
 
     /** Get an attribute that is known to exist.
      *
      *  Returns the value for the attribute with the specified @p id.  The attribute must exist or a @ref DoesNotExist
      *  exception is thrown.  The type must match the type used when the attribute was stored, or a @ref WrongQueryType
-     *  exception is thrown. */
+     *  exception is thrown.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
     template<typename T>
     T getAttribute(Id id) const {
+        typename Sync::LockGuard lock(mutex_);
         AttrMap::ConstNodeIterator found = values_.find(id);
         if (found == values_.nodes().end()) {
             std::string name = Attribute::name(id);
@@ -239,6 +316,7 @@ public:
                 throw DoesNotExist(name);
             }
         }
+        checkBoost();
         return boost::any_cast<T>(values_.getOptional(id).orDefault());
     }
 
@@ -246,9 +324,13 @@ public:
      *
      *  If the attribute exists, return its value, otherwise return the specified value. Throws @ref WrongQueryType if the
      *  stored attribute's value type doesn't match the type of the provided default value (if no value is stored then the
-     *  provided default type isn't checked). */
+     *  provided default type isn't checked).
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
     template<typename T>
     T attributeOrElse(Id id, const T &dflt) const {
+        typename Sync::LockGuard lock(mutex_);
+        checkBoost();
         return boost::any_cast<T>(values_.getOptional(id).orElse(dflt));
     }
 
@@ -256,9 +338,12 @@ public:
      *
      *  Returns the attribute value if it exists, or a default-constructed value otherwise. Throws
      *  @ref WrongQueryType if the stored attribute's value type doesn't match the specified type (if no value is stored then
-     *  the default type isn't checked). */
+     *  the default type isn't checked).
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
     template<typename T>
     T attributeOrDefault(Id id) const {
+        typename Sync::LockGuard lock(mutex_);
         AttrMap::ConstNodeIterator found = values_.find(id);
         if (found == values_.nodes().end())
             return T();
@@ -267,22 +352,37 @@ public:
 
     /** Return the attribute as an optional value.
      *
-     *  Returns the attribute value if it exists, or returns nothing. */
+     *  Returns the attribute value if it exists, or returns nothing.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
     template<typename T>
     Sawyer::Optional<T> optionalAttribute(Id id) const {
+        typename Sync::LockGuard lock(mutex_);
         AttrMap::ConstNodeIterator found = values_.find(id);
         if (found == values_.nodes().end())
             return Sawyer::Nothing();
         return boost::any_cast<T>(found->value());
     }
 
-    /** Number of attributes stored. */
+    /** Number of attributes stored.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
     size_t nAttributes() const {
+        typename Sync::LockGuard lock(mutex_);
         return values_.size();
     }
 
-    /** Returns ID numbers for all IDs stored in this container. */
-    std::vector<Id> attributeIds() const;
+    /** Returns ID numbers for all IDs stored in this container.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
+    std::vector<Id> attributeIds() const {
+        typename Sync::LockGuard lock(mutex_);
+        std::vector<Id> retval;
+        retval.reserve(values_.size());
+        BOOST_FOREACH (Id id, values_.keys())
+            retval.push_back(id);
+        return retval;
+    }
 };
 
 } // namespace

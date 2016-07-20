@@ -8,7 +8,6 @@
  * cleaner access to ReachingDefinition Analysis using SgNode.
  *  */
 
-#include "sage3basic.h"
 #include "ReachingDefinition.h"
 #include <DefUseChain.h>
 #include <AstInterface_ROSE.h>

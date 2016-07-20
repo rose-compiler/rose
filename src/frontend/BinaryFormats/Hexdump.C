@@ -34,7 +34,7 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const
                                    size_t n, const HexdumpFormat &fmt)
 {
     /* Provide default formats. This is done here so that the header file doesn't depend on <inttypes.h> */
-    const char *addr_fmt = fmt.addr_fmt ? fmt.addr_fmt : "0x%08" PRIx64": ";
+    const char *addr_fmt = fmt.addr_fmt ? fmt.addr_fmt : "0x%08" PRIx64 ": ";
     const char *numeric_fmt = fmt.numeric_fmt ? fmt.numeric_fmt : "%02x";
     const char *numeric_sep = fmt.numeric_sep ? fmt.numeric_sep : " ";
     const char *prefix = fmt.prefix ? fmt.prefix : "";

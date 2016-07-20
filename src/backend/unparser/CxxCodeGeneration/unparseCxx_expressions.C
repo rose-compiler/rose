@@ -16,6 +16,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_HIDDEN_LIST_DATA 0
@@ -213,16 +214,31 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
      ROSE_ASSERT(lambdaExp != NULL);
 
+     // Liao, 7/1/2016
+     // To workaround some wrong AST generated from RAJA LULESH code
+     // we clear skip base type flag of unparse_info
+     if (info.SkipBaseType())
+     {
+       cout<<"Warning in Unparse_ExprStmt::unparseLambdaExpression().  Unparse_Info has skipBaseType() set. Unset it now."<<endl;
+       //ROSE_ASSERT(false);
+       info.unset_SkipBaseType ();
+     }
+
      curprint(" [");
+     // if '=' or '&' exists
+     bool hasCaptureCharacter = false;
+     int commaCounter = 0;
 
      if (lambdaExp->get_capture_default() == true)
         {
-          curprint("=,");
+          curprint("=");
+          hasCaptureCharacter = true; 
         }
 
      if (lambdaExp->get_default_is_by_reference() == true)
         {
-          curprint("&,");
+          curprint("&");
+          hasCaptureCharacter = true;
         }
 
      ROSE_ASSERT(lambdaExp->get_lambda_capture_list() != NULL);
@@ -232,8 +248,22 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
           SgLambdaCapture* lambdaCapture = lambdaExp->get_lambda_capture_list()->get_capture_list()[i];
           ROSE_ASSERT(lambdaCapture != NULL);
 
+
           if (lambdaCapture->get_capture_variable() != NULL)
              {
+
+              // Liao 6/24/2016, we output ",item" when 
+              // When not output , : first comma and there is no previous = or & character
+              if (commaCounter == 0) // look backwards one identifier
+              {
+                if (hasCaptureCharacter)
+                  curprint(",");
+                commaCounter ++; 
+              }
+              else
+                curprint(",");
+
+
                if (lambdaCapture->get_capture_by_reference() == true)
                   {
                     curprint("&");
@@ -242,10 +272,12 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
                unp->u_exprStmt->unparseExpression(lambdaCapture->get_capture_variable(),info);
              }
 
+#if 0
           if (i < bound-1)
              {
                curprint(",");
              }
+#endif             
         }
      curprint("] ");
 
@@ -464,7 +496,9 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
   // DQ (5/7/2013): I think these should be false so that the full type will be output.
      if (info.isTypeFirstPart()  == true)
         {
+#if 0
           printf ("WARNING: In unparseTemplateName(): info.isTypeFirstPart() == true \n");
+#endif
         }
   // ROSE_ASSERT(info.isTypeFirstPart()  == false);
      ROSE_ASSERT(info.isTypeSecondPart() == false);
@@ -675,20 +709,58 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
           SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
           while (i != templateArgListPtr.end())
              {
+               // skip pack expansion argument, it will be NULL anyway
+               if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+               {
+                 i++;
+                 continue; 
+               }
+
 #if 0
                printf ("In unparseTemplateArgumentList(): templateArgList element *i = %s explicitlySpecified = %s \n",(*i)->class_name().c_str(),((*i)->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 #if 0
                unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
-            // unparseTemplateArgument(*i,info);
+           // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
                i++;
 
+
+               // When to output , ?  the argument must not be the last one.
                if (i != templateArgListPtr.end())
                   {
-                 // unp->u_exprStmt->curprint(" , ");
+                    // check if if is a class type for C++ 11 lambda function
+                    bool hasLambdaFollowed = false;
+                    SgTemplateArgument* arg = *i; 
+                    if (arg != NULL) 
+                    {
+                      if (SgClassType * ctype = isSgClassType (arg->get_type()))
+                      {
+                        if (SgNode* pnode = ctype->get_declaration()->get_parent())
+                        {
+                          if (isSgLambdaExp(pnode))
+                          {
+                            hasLambdaFollowed = true; 
+                          }
+                        }
+                      }
+                    }
+               // When to skip , ?
+               // condition 1: next item is a lambda function
+              //  Or condition 2:  next item is an ending parameter pack argument (parameter pack argument in the middle should have , )
+              //
+              //  Negate this , we get when to output ,
+              //
+              if (!(hasLambdaFollowed  || 
+                  ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument 
+                    && ((i+1)== templateArgListPtr.end())  )) )
+                 unp->u_exprStmt->curprint(" , ");
 
+#if 0
+                 // unp->u_exprStmt->curprint(" , ");
+                 // Now the argument is in the middle. It's next argument must not be start_of_pack_expansion_argument
+                 // Since the next argument will be unparsed to be NULL
                  // DQ (2/7/2015): See C++11 test2015_01.C for where we have to handle this special case.
                     if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
                        {
@@ -699,8 +771,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                        }
                       else
                        {
-                         unp->u_exprStmt->curprint(" , ");
+                             unp->u_exprStmt->curprint(" , ");
                        }
+#endif
 
                   }
              }
@@ -710,7 +783,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
        else
         {
        // DQ (5/26/2014): In the case of a template instantiation with empty template argument list, output
-       // a " " to be consistant with the behavior when there is a non-empty template argument list.
+       // a " " to be consistent with the behavior when there is a non-empty template argument list.
        // This is a better fix for the template issue that Robb pointed out and that was fixed last week.
           unp->u_exprStmt->curprint(" ");
         }
@@ -1122,6 +1195,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
 #if 0
      unp->u_exprStmt->curprint(string("/* templateArgument is explicitlySpecified = ") + ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + " */");
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
      SgUnparse_Info newInfo(info);
@@ -1551,7 +1628,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
 #if 0
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
-  // curprint("\n/* Bottom of unparseTemplateArgument */ \n");
+     curprint("\n/* Bottom of unparseTemplateArgument */ \n");
 #endif
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
@@ -2837,9 +2914,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      ROSE_ASSERT(decl != NULL);
      if (decl->get_parent() == NULL)
         {
-          printf ("Error: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) \n",decl,decl->class_name().c_str(),decl->get_name().str(),mfd->get_name().str());
+          printf ("Note: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) (OK for index expresion in array type) \n",
+               decl,decl->class_name().c_str(),decl->get_name().str(),mfd->get_name().str());
         }
-     ROSE_ASSERT(decl->get_parent() != NULL);
+  // DQ (5/30/2016): This need not have a parent if it is an expression in index for an array type (see test2016_33.C).
+  // ROSE_ASSERT(decl->get_parent() != NULL);
 
      bool print_colons = false;
 

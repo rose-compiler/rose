@@ -155,6 +155,9 @@ void *$CLASSNAME::operator new ( size_t Size )
                 // VALGRIND_MAKE_NOACCESS(Current_Link, CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME));
 #               endif
 
+             // DQ (3/4/2016): Added assertion to avoid passing NULL pointer out of this function (detected by Klocworks static analysis).
+                ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
+
 #               if COMPILE_DEBUG_STATEMENTS
                 if (ROSE_DEBUG > 1) {
                     printf("Called ROSE_MALLOC for Array $CLASSNAME_Memory_Block_List.size() = %" PRIuPTR "\n",
@@ -201,6 +204,9 @@ void *$CLASSNAME::operator new ( size_t Size )
                     // VALGRIND_MAKE_WRITABLE(&Current_Link[i].p_freepointer, sizeof(&Current_Link[i].p_freepointer));
 #                   endif
                     $CLASSNAME_Current_Link[i].p_freepointer = &($CLASSNAME_Current_Link[i+1]);
+
+                 // DQ (3/4/2016): Added assertion to avoid passing NULL pointer out of this function (detected by Klocworks static analysis).
+                    ROSE_ASSERT($CLASSNAME_Current_Link[i].p_freepointer != NULL);
                 }
 
                 // Set the pointer of the last one to NULL!

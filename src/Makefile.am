@@ -140,13 +140,13 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
    $(top_builddir)/src/midend/programTransformation/singleStatementToBlockNormalization/libSingleStatementToBlockNormalization.la \
-   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/libmidend.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(top_builddir)/src/util/libroseSawyer.la \
+   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
@@ -155,6 +155,7 @@ endif
 # DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
 # used $(libroseOpenFortranParserlibraries) to replace $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
 # used $(librosePHPlibraries) to replace $(top_builddir)/src/frontend/PHPFrontend/librosePHPFrontend.la
+
 
 EXTRA_DIST = CMakeLists.txt extra.docs
 
@@ -240,6 +241,11 @@ if ROSE_USE_GCC_OMP
    librose_la_LIBADD += lgomp
 endif
 
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+if USING_CLANG_COMPILER
+librose_la_LIBADD += -lstdc++
+endif
+
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
 librose_la_LDFLAGS = -no-undefined
 
@@ -275,6 +281,13 @@ testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # testSharedRoseLib_LDFLAGS  = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
 # testSharedRoseLib_LDFLAGS  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # testSharedRoseLib_LDFLAGS  = $(ROSE_DWARF_LIBS_WITH_PATH)
+
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+if USING_CLANG_COMPILER
+testSharedRoseLib_LDADD += -lstdc++ 
+endif
 
 # AM_LDFLAGS = $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
 # AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
@@ -341,7 +354,12 @@ rose_config_CPPFLAGS =									\
 	-DINSTALLED_LDFLAGS='"$(subst ",\",$(rose_config_installed_ldflags))"'		\
 	-DBUILD_LDFLAGS='"$(subst ",\",$(rose_config_build_ldflags))"'
 
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+if USING_CLANG_COMPILER
+rose_config_LDADD += -lstdc++
+endif
 
 print:
 	@echo "libroseLibraries = $(libroseLibraries)"
@@ -382,10 +400,6 @@ endif
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)
-
-
-
-
 
 
 

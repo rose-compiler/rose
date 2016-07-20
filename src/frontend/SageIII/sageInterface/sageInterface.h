@@ -62,7 +62,18 @@ ROSE_DLL_API std::string getVariantName (VariantT v);
  *  numerous types of operations that are common to general analysis and transformation of the AST. */
 namespace SageInterface
    {
-  // DQ (4/3/2014): Added general AST support seperate from the AST.
+  // Liao 6/22/2016: keep records of loop init-stmt normalization, later help undo it to support autoPar.
+  struct Transformation_Record
+  {
+    // a lookup table to check if a for loop has been normalized for its c99-style init-stmt
+    std::map <SgForStatement* , bool > forLoopInitNormalizationTable; 
+    // Detailed record about the original declaration (1st in the pair) and the normalization generated new declaration (2nd in the pair)
+    std::map <SgForStatement* , std::pair<SgVariableDeclaration*, SgVariableDeclaration*>  >  forLoopInitNormalizationRecord;
+  } ;
+
+  ROSE_DLL_API extern Transformation_Record trans_records;
+
+  // DQ (4/3/2014): Added general AST support separate from the AST.
 
   // Container and API for analysis information that is outside of the AST and as a result
   // prevents frequent modification of the IR.
@@ -332,6 +343,31 @@ struct hash_nodeptr
    /*! \brief Generate a useful name to describe the SgToken IR node
     */
      std::string get_name ( const SgToken* token );
+
+  // DQ (3/20/2016): Added to refactor some of the DSL infrastructure support.
+   /*! \brief Generate a useful name to support construction of identifiers from declarations.
+
+       This function permits names to be generated that will be unique across translation units
+       (a specific requirement different from the context of the get_name() functions above).
+
+       \internal This supports only a restricted set of declarations presently.
+    */
+     std::string generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration );
+     std::string generateUniqueNameForUseAsIdentifier_support ( SgDeclarationStatement* declaration );
+
+   /*! \brief Global map of name collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     extern std::map<std::string,int>     local_name_collision_map;
+     extern std::map<std::string,SgNode*> local_name_to_node_map;
+     extern std::map<SgNode*,std::string> local_node_to_name_map;
+
+   /*! \brief Traversal to set the global map of names to node and node to names.collisions to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void computeUniqueNameForUseAsIdentifier( SgNode* astNode );
+
+   /*! \brief Reset map variables used to support generateUniqueNameForUseAsIdentifier() function.
+    */
+     void reset_name_collision_map();
 
  //@}
 
@@ -774,6 +810,9 @@ void setSourcePositionPointersToNull(SgNode *node);
 //! Set source position info(Sg_File_Info) as transformation generated for all SgNodes in memory pool
   ROSE_DLL_API void setSourcePositionForTransformation_memoryPool();
 
+//! Check if a node is from a system header file
+  ROSE_DLL_API bool insideSystemHeader (SgLocatedNode* node);
+
 //! Set the source position of SgLocatedNode to Sg_File_Info::generateDefaultFileInfo(). These nodes WILL be unparsed. Not for transformation usage.
 // ROSE_DLL_API void setSourcePosition (SgLocatedNode * locatedNode);
 // ************************************************************************
@@ -1072,6 +1111,9 @@ ROSE_DLL_API void setLoopStride(SgNode* loop, SgExpression* stride);
 //! Normalize loop init stmt by promoting the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable, if necessary
 ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 
+//! Undo the normalization of for loop's C99 init declaration. Previous record of normalization is used to ease the reverse transformation.
+ROSE_DLL_API bool unnormalizeForLoopInitDeclaration(SgForStatement* loop);
+
 //! Normalize a for loop, return true if successful. Generated constants will be fold by default.
 //!
 //! Translations are :
@@ -1084,6 +1126,12 @@ ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i-- is normalized to i+=-1
 //!           i-=s is normalized to i+= -s
 ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop, bool foldConstant = true);
+
+//! Normalize a for loop's test expression 
+//!           i<x is normalized to i<= (x-1) and
+//!           i>x is normalized to i>= (x+1)
+ROSE_DLL_API bool normalizeForLoopTest(SgForStatement* loop);
+ROSE_DLL_API bool normalizeForLoopIncrement(SgForStatement* loop);
 
 //!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
 ROSE_DLL_API bool doLoopNormalization(SgFortranDo* loop);
@@ -1198,60 +1246,102 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
  statement.  If fortranLabel is non-empty, continues (CYCLEs) to that label
  within nested loops are included in the returned list.
 */
-  std::vector<SgContinueStmt*> findContinueStmts(SgStatement* code, const std::string& fortranLabel = "");
-  std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
-  std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
+std::vector<SgContinueStmt*> findContinueStmts(SgStatement* code, const std::string& fortranLabel = "");
+std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
+std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
 
 //! Collect all variable references in a subtree
-  void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
+void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
 
   //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
-  template <typename T>
-  T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
-  {
-    bool found = false;
-    if (!root) return 0;
-    T* decl = dynamic_cast<T*>(root);
-    if (decl!=NULL)
-    {
-      if (scope)
-      {
-        if ((decl->get_scope() == scope)&&
-            (decl->search_for_symbol_from_symbol_table()->get_name()==name))
-        { 
-          found = true;
-        }
-      }
-      else // Liao 2/9/2010. We should allow NULL scope
-      {
-        if(decl->search_for_symbol_from_symbol_table()->get_name()==name)
-        {
-          found = true;
-       }
-      }
-    }
-
-   if (found)
+template <typename T>
+T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
    {
-     if (isDefining)
-     {
-       ROSE_ASSERT (decl->get_definingDeclaration() != NULL);
-       return dynamic_cast<T*> (decl->get_definingDeclaration()); 
-     }
-     else 
-       return decl;
-   }
+     bool found = false;
 
-    std::vector<SgNode*> children = root->get_traversalSuccessorContainer();
-    for (std::vector<SgNode*>::const_iterator i = children.begin();
-            i != children.end(); ++i)
-    {
-     T* target= findDeclarationStatement<T> (*i,name, scope, isDefining);
-     if (target)
-       return target;
-    }
-    return 0;
-  }
+#if 0
+     printf ("In findDeclarationStatement(): root       = %p \n",root);
+     printf ("In findDeclarationStatement(): name       = %s \n",name.c_str());
+     printf ("In findDeclarationStatement(): scope      = %p \n",scope);
+     printf ("In findDeclarationStatement(): isDefining = %s \n",isDefining ? "true" : "false");
+#endif
+
+  // Do we really want a NULL pointer to be acceptable input to this function? 
+  // Maybe we should have an assertion that it is non-null?
+     if (!root) return NULL;
+
+     T* decl = dynamic_cast<T*>(root);
+
+#if 0
+     printf ("In findDeclarationStatement(): decl       = %p \n",decl);
+#endif
+
+     if (decl != NULL)
+        {
+          if (scope)
+             {
+               if ((decl->get_scope() == scope) && (decl->search_for_symbol_from_symbol_table()->get_name() == name))
+                  { 
+                    found = true;
+                  }
+             }
+            else // Liao 2/9/2010. We should allow NULL scope
+             {
+               SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
+#if 0
+               printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table() = %p \n",symbol);
+               printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table()->get_name() = %s \n",symbol->get_name().str());
+#endif
+               if (decl->search_for_symbol_from_symbol_table()->get_name() == name)
+                  {
+                    found = true;
+                  }
+             }
+        }
+
+     if (found)
+        {
+          if (isDefining)
+             {
+#if 0
+               printf ("In findDeclarationStatement(): decl->get_firstNondefiningDeclaration() = %p \n",decl->get_firstNondefiningDeclaration());
+               printf ("In findDeclarationStatement(): decl->get_definingDeclaration()         = %p \n",decl->get_definingDeclaration());
+#endif
+               ROSE_ASSERT (decl->get_definingDeclaration() != NULL);
+#if 0
+               printf ("In findDeclarationStatement(): returing decl->get_definingDeclaration() = %p \n",decl->get_definingDeclaration());
+#endif
+               return dynamic_cast<T*> (decl->get_definingDeclaration()); 
+             }
+            else 
+             {
+#if 0
+               printf ("In findDeclarationStatement(): returing decl = %p \n",decl);
+#endif
+               return decl;
+             }
+        }
+
+     std::vector<SgNode*> children = root->get_traversalSuccessorContainer();
+
+#if 0
+     printf ("In findDeclarationStatement(): children.size() = %zu \n",children.size());
+#endif
+
+  // DQ (4/10/2016): Note that if we are searching for a function member that has it's defining 
+  // declaration defined outside of the class then it will not be found in the child list.
+     for (std::vector<SgNode*>::const_iterator i = children.begin(); i != children.end(); ++i)
+        {
+          T* target = findDeclarationStatement<T> (*i,name,scope,isDefining);
+
+          if (target)
+             {
+               return target;
+             }
+        }
+
+     return NULL;
+   }
 //! Topdown traverse a subtree from root to find the first function declaration matching the given name, scope (optional, can be NULL), and defining or nondefining flag. This is an instantiation of findDeclarationStatement<T>.
   SgFunctionDeclaration* findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining);
 
@@ -1929,7 +2019,7 @@ ROSE_DLL_API void ReductionRecognition(SgForStatement* loop, std::set< std::pair
 /*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression. */
 ROSE_DLL_API void constantFolding(SgNode* r);
 
-//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted.
+//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements (with duplicated statement s) and return expressions with side effects. Return the number of statements inserted.
 /*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement.
  */
 ROSE_DLL_API int instrumentEndOfFunction(SgFunctionDeclaration * func, SgStatement* s);

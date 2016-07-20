@@ -202,6 +202,23 @@ message(STATUS "The ROSE SCM version identifier is ${ROSE_SCM_VERSION_ID}")
 message(STATUS "The ROSE SCM version Unix timestamp is ${ROSE_SCM_VERSION_UNIX_DATE}")
 
 #-------------------------------------------------------------------------------
+# Configuration synopsis used by rose::initialize.  The ROSE_CONFIG_TOKEN is
+# #define'd as a string in rose_config.h and ultimately rosePublicConfig.h and
+# the string is a synopsis of some important configuration details. This string
+# is passed by user code to the rose::initialize function which compares it
+# against the same macro compiled into the ROSE library. If their contents differ
+# it means that the ROSE header files being used by the user are not the same
+# as the ROSE header files that were used to compile librose being linked by the
+# user and bad things will probably happen.
+#
+# The CMake ROSE_CONFIG_TOKEN variable is the string that becomes the eventual
+# value of the ROSE_CONFIG_TOKEN C preprocessor macro.  We initialize it here,
+# but other parts of the CMake file might augment its value with additional
+# information (e.g., adding the boost version number).
+#-------------------------------------------------------------------------------
+set(ROSE_CONFIG_TOKEN "rose-${ROSE_SCM_VERSION_ID}")
+
+#-------------------------------------------------------------------------------
 # Boost C++ Libraries
 #-------------------------------------------------------------------------------
 set(Boost_USE_STATIC_LIBS FALSE)        
@@ -245,12 +262,15 @@ if(NOT Boost_FOUND)
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
 
+set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} boost-${Boost_VERSION}")
+
 # If the boost is compiled with multi-thread support then we must add "-pthread" to all compile and link commands, or whatever
 # is appropriate for the system.  With GCC it is not sufficient to just add "-lpthread" to the link commands--the "-pthread"
 # switch MUST be added to the compile commands as well.
 find_package(Threads)
 if(CMAKE_COMPILER_IS_GNUCXX AND "${CMAKE_USE_PTHREADS_INIT}")
   add_definitions(-pthread)
+  set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} pthread")
 endif()
 
 
@@ -327,7 +347,8 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # --------- please do all system, platform, software tests here --------------
 
 # Setup EDG version
-set(EDG_VERSION "4.7" CACHE STRING
+# Set default EDG version to 4.9
+set(EDG_VERSION "4.9" CACHE STRING
   "major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).")
 string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
 string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
@@ -345,6 +366,9 @@ if ("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
   if ("${EDG_MINOR_VERSION}" VERSION_EQUAL "7")
     set(ROSE_USE_EDG_VERSION_4_7 1)
   endif()
+  if ("${EDG_MINOR_VERSION}" VERSION_EQUAL "9")
+    set(ROSE_USE_EDG_VERSION_4_9 1)
+  endif()
 endif()
 
 # Check if we need to download the EDG binary tarball
@@ -355,16 +379,21 @@ else()
   set(edg_lib "")
   set(BINARY_EDG 1)
   if (NOT WIN32)
-  # no need to display this message after the file has been downloaded
-  if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
-    message(WARNING
-      "At build time, CMake will attempt to download a required library "
-      "tarball.\n"
-      "Please note that this EDG binary tarball is currently only available "
-      "for the GCC compiler.\n" )
-  endif()
-  include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
-  set(edg_lib EDG)
+    if(EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz")
+      execute_process(
+      COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
+    else()
+    # no need to display this message after the file has been downloaded
+      if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
+        message(WARNING
+          "At build time, CMake will attempt to download a required library "
+          "tarball.\n"
+          "Please note that this EDG binary tarball is currently only available "
+          "for the GCC compiler.\n" )
+      endif()
+      include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+      set(edg_lib EDG)
+    endif()
   endif()
 endif()
 

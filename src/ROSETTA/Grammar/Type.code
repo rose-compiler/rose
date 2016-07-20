@@ -1187,7 +1187,7 @@ SgTypeString::get_mangled (void) const
 #if 0
      if (this->p_definedUsingScalarLength == true)
         {
-          mangled_length_name = StringUtility::numberToString(this->p_lengthScalar);
+            mangled_length_name = rose::StringUtility::numberToString(this->p_lengthScalar);
         }
        else
         {
@@ -1907,7 +1907,8 @@ SgType::stripType(unsigned char bit_array) const
                               if ( (bit_array & STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
                                  {
 #if 0
-                                   printf ("In loop of SgType::stripType(): found SgTypedefType \n");
+                                   printf ("In loop of SgType::stripType(): found SgTypedefType: currentType = %p = %s typedefType->get_base_type() = %p = %s \n",
+                                        currentType,currentType->class_name().c_str(),typedefType->get_base_type(),typedefType->get_base_type()->class_name().c_str());
 #endif
                                 // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
                                    currentType = typedefType->get_base_type();
@@ -3239,7 +3240,7 @@ SgTypeOfType::get_mangled (void) const
 
        // base_name += base_expression->get_mangled();
        // base_name += SageInterface::get_name(base_expression);
-          base_name += string("_base_expr_") + StringUtility::numberToString(this);
+          base_name += string("_base_expr_") + rose::StringUtility::numberToString(this);
 
 #if 0
           printf ("DONE: In $CLASSNAME::get_mangled(): base_expression = %p = %s accumulated base_name = %s \n",base_expression,base_expression->class_name().c_str(),base_name.str());
@@ -3480,8 +3481,13 @@ SgJavaParameterizedType::get_name() const {
                 }
                 SgType *type = (*i) -> get_type();
                 SgArrayType *array_type = isSgArrayType(type);
-                ROSE_ASSERT(array_type || isSgNamedType(type));
-                name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+
+             // DQ (3/19/2016): Klocworks reports the use of isSgNamedType(type) as an issue, since it could be NULL (as it sees it).
+             // ROSE_ASSERT(array_type || isSgNamedType(type));
+             // name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+                SgNamedType *named_type = isSgNamedType(type);
+                ROSE_ASSERT(array_type != NULL || named_type != NULL);
+                name += (array_type ? array_type -> get_name() : named_type -> get_name()).getString();
             }
             name += ">";
         }
@@ -3609,25 +3615,33 @@ SgJavaWildcardType::is_unbound() {
 }
 
 SgName
-SgJavaWildcardType::get_name() const {
-    string name = "?";
+SgJavaWildcardType::get_name() const 
+   {
+     string name = "?";
 
-    if (p_bound_type != NULL) {
-        if (p_has_extends) {
-            name += " extends ";
+     if (p_bound_type != NULL) 
+        {
+          if (p_has_extends) {
+              name += " extends ";
+          }
+          else if (p_has_super) {
+              name += " super ";
+          }
+
+          SgType *type = p_bound_type;
+          SgArrayType *array_type = isSgArrayType(type);
+	  ROSE_ASSERT(array_type || isSgNamedType(type));
+
+       // DQ (3/19/2016): Klocworks reports the use of isSgNamedType(type) as an issue, since it could be NULL (as it sees it).
+       // ROSE_ASSERT(array_type || isSgNamedType(type));
+       // name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+          SgNamedType *named_type = isSgNamedType(type);
+          ROSE_ASSERT(array_type != NULL || named_type != NULL);
+          name += (array_type ? array_type -> get_name() : named_type -> get_name()).getString();
         }
-        else if (p_has_super) {
-            name += " super ";
-        }
 
-        SgType *type = p_bound_type;
-        SgArrayType *array_type = isSgArrayType(type);
-	ROSE_ASSERT(array_type || isSgNamedType(type));
-        name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
-    }
-
-    return SgName(name);
-}
+     return SgName(name);
+   }
 
 SgName
 SgJavaWildcardType::get_qualified_name() const {
@@ -3779,7 +3793,7 @@ SgTemplateType::get_mangled(void) const
   // We need to asspciate template template arguments with their associated declarations and not just there name.
   // See test2012_217.C (return types of functions should be different, have different mangled names, for each function).
   // mangled_name += StringUtility::numberToString(this->get_declaration());
-     mangled_name += StringUtility::numberToString(this);
+     mangled_name += rose::StringUtility::numberToString(this);
 
 #if 0
     printf ("In SgTemplateType::get_mangled(): this = %p mangled_name = %s \n",this,mangled_name.str());
@@ -5560,7 +5574,9 @@ SgName
 SgArrayType::get_name(void) const {
     string dimensions = "[]";
     SgType *type = p_base_type;
-    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) {
+
+    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) 
+    {
         dimensions += "[]";
         type = array_type -> get_base_type();
     }
@@ -5596,9 +5612,19 @@ SgArrayType::get_name(void) const {
     else if (isSgTypeString(type)) {
         name = "String";
     }
-    else if (isSgNamedType(type)) {
-        name = isSgNamedType(type) -> get_name().getString();
+    else 
+    { 
+   // DQ (3/19/2016): Klocworks reports this as an issue because the result of the 2nd call to isSgNamedType() 
+   // is not clearly the same result as the first call.  The fix is to just make a single call and save the result.
+   // if (isSgNamedType(type)) 
+      SgNamedType* namedType = isSgNamedType(type);
+      if (namedType != NULL) 
+         {
+        // name = isSgNamedType(type) -> get_name().getString();
+           name = namedType -> get_name().getString();
+         }
     }
+
     name += dimensions;
 
     return SgName(name);
@@ -5608,7 +5634,9 @@ SgName
 SgArrayType::get_qualified_name(void) const {
     string dimensions = "[]";
     SgType *type = p_base_type;
-    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) {
+
+    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) 
+    {
         dimensions += "[]";
         type = array_type -> get_base_type();
     }
@@ -5644,9 +5672,19 @@ SgArrayType::get_qualified_name(void) const {
     else if (isSgTypeString(type)) {
         name = "String";
     }
-    else if (isSgNamedType(type)) {
-        name = isSgNamedType(type) -> get_qualified_name().getString();
+    else 
+    {
+   // DQ (3/19/2016): Klocworks reports this as an issue because the result of the 2nd call to isSgNamedType() 
+   // is not clearly the same result as the first call.  The fix is to just make a single call and save the result.
+   // if (isSgNamedType(type)) 
+      SgNamedType* namedType = isSgNamedType(type);
+      if (namedType != NULL) 
+         {
+        // name = isSgNamedType(type) -> get_qualified_name().getString();
+           name = namedType -> get_qualified_name().getString();
+         }
     }
+
     name += dimensions;
 
     return SgName(name);
@@ -6193,7 +6231,7 @@ SgFunctionType::createType(SgPartialFunctionType* ft, SgExpression* optional_for
   // be rebuilt after the AST is build (in a post-processing phase).
      static int functionCounter = 0;
      string baseName = "function_";
-     string mangleName = baseName + StringUtility::numberToString(functionCounter++);
+     string mangleName = baseName + rose::StringUtility::numberToString(functionCounter++);
      SgName nname = mangleName;
 
 #if 0
@@ -6271,7 +6309,7 @@ SgMemberFunctionType::createType(SgPartialFunctionType* ft, SgExpression* option
   // be rebuilt after the AST is build (in a post-processing phase).
      static int functionCounter = 0;
      string baseName = "memberfunction_";
-     string mangleName = baseName + StringUtility::numberToString(functionCounter++);
+     string mangleName = baseName + rose::StringUtility::numberToString(functionCounter++);
      SgName nname = mangleName;
 
 #if 0
@@ -7226,6 +7264,34 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
        // Only look for pointers to type in the global type table.
           SgType* t = get_globalTypeTable()->lookup_type(name);
 
+       // DQ (2/23/2016): Add test and reset type returned from globalTypeTable if it is not a SgDeclType.
+       // I have at least one case where the type table returns a SgModifierType (not clear if that is correct behavior).
+       // Detect this case for now and make sure it can't happen in general.
+          if (t != NULL && isSgDeclType(t) == NULL)
+             {
+               printf ("Error: This name = %s does not return the correct type from the globalTypeTable: t = %p = %s reset t == NULL \n",name.str(),t,t->class_name().c_str());
+
+            // Note: were we detect that this is a SgModifierType it is a default built SgModifierType.
+            // This kind of SgModifierType is only used in the frontend to support references to types 
+            // in templates that have not been defined yet.  It is rare to see these.  In this case the
+            // modifier's name mangling does not change the name and so that name can appear in the 
+            // globalTypeTable() and a SgModifierType.  For now we are issuing a warning about this and
+            // forcing a new SgDeclType type to be used.
+               SgModifierType* modifierType = isSgModifierType(t);
+               if (modifierType != NULL)
+                  {
+#if 0
+                    SgTypeModifier & typeModifier = modifierType->get_typeModifier();
+                    typeModifier.display("does not return the correct type from the globalTypeTable");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+               t = NULL;
+             }
+
           if (t == NULL)
              {
             // The pointer type was not found in the type table, put it into the global type table.
@@ -7257,7 +7323,17 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
                newType = NULL;
 
                newType = isSgDeclType(t);
+
+            // DQ (2/23/2016): Added assertion.
+               if (newType == NULL)
+                  {
+                    printf ("In createType(SgExpression* base_expression, SgExpression* kind): isSgDeclType(t) == NULL: error: t = %p = %s \n",t,t->class_name().c_str());
+                  }
+               assert(newType != NULL);
              }
+
+       // DQ (2/23/2016): Added assertion.
+          assert(newType != NULL);
 
           base_type->p_decltype_ref_to = newType;
           assert(base_type->p_decltype_ref_to != NULL);

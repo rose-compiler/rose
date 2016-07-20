@@ -37,6 +37,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 // global variable for turning on and off internal debugging
 int ROSE_DEBUG = 0;
@@ -129,7 +130,11 @@ readlineVersionString() {
 static std::string
 libmagicVersionString() {
 #ifdef ROSE_HAVE_LIBMAGIC
+#ifdef MAGIC_VERSION
     return StringUtility::numberToString(MAGIC_VERSION);
+#else
+    return "unknown (but enabled)";
+#endif
 #else
     return "unknown (libmagic is disabled)";
 #endif

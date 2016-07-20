@@ -178,7 +178,7 @@ std::string
 rose_rva_t::to_string() const
 {
     char s[1024];
-    sprintf(s, "0x%08" PRIx64" (%" PRIu64 ")", get_rva(), get_rva());
+    sprintf(s, "0x%08" PRIx64 " (%" PRIu64 ")", get_rva(), get_rva());
     std::string ss = s;
 
     if (get_section()) {

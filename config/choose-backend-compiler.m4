@@ -77,12 +77,43 @@ dnl build using ROSE)
     ])
 
 # DQ (8/29/2005): Added support for version numbering of backend compiler
-  BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
-  BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+# BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
+# BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+
+  echo "BACKEND_CXX_COMPILER = $BACKEND_CXX_COMPILER"
+  if test x$BACKEND_CXX_COMPILER == xclang; then
+    echo "Note: detected Clang compiler for backend compiler with ROSE."
+
+    # `echo|clang --version`
+
+  # BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`clang --version | grep -Po '(?<=version )[^;]+' | cut -d\. -f1`
+  # BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`clang --version | grep -Po '(?<=version )[^;]+' | cut -d\. -f2`
+  # BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -v |& grep -Po '(?<=version )[^;]+' | cut -d\. -f1 | cut -d\( -f1`
+  # BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -v |& grep -Po '(?<=version )[^;]+' | cut -d\. -f2 | cut -d\( -f1`
+  # ${srcdir}/config/syntax.sh
+    BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getClangMajorVersionNumber.sh`
+    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getClangMinorVersionNumber.sh`
+
+    echo "     (clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+    echo "     (clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+
+   # exit 1
+  else
+    echo "Else case not using Clang (choose backend compiler)"
+    BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
+    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+
+    echo "     (non-clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+    echo "     (non-clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+  # exit 1
+  fi
 
 # echo "back-end compiler for generated translators to use will be: $BACKEND_CXX_COMPILER"
   echo "     C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
   echo "     C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+
+# echo "Exiting in computing the c++ compiler version number (which has to be different for Clang)"
+# exit 1
 
 # Use this to get the major and minor version numbers for gfortran (which maps --version to -dumpversion, unlike gcc and g++)
 # gfortran --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2

@@ -31,6 +31,9 @@ using namespace std;
 
 int main(int argc, char *argv[])
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
   // Set the verbose level of ROSE (for debugging).
      SgProject::set_verbose(2);
 

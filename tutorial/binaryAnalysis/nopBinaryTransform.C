@@ -126,6 +126,9 @@ void NopReplacementTraversal::visit ( SgNode* n )
 
 int main( int argc, char * argv[] )
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv);
 

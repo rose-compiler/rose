@@ -21,7 +21,7 @@ typedef std::string FileName;
 
 
 //! [providing]
-struct MyClass: public Sawyer::Attribute::Storage {
+struct MyClass: public Sawyer::Attribute::Storage<> {
     // additional members...
 };
 //! [providing]
