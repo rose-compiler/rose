@@ -24,6 +24,14 @@ SPRAY::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 
 void
 SPRAY::PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
+  if(!_flow.contains(lab)) {
+    // schroder3 (2016-07-07): If the label does not exist in the CFG, then
+    //  it does not have predecessors and the given pre-info therefore does
+    //  not change. This check is necessary if Flow::pred(Label) uses the
+    //  Sawyer graph as underlying datastructure because Flow::pred then
+    //  expects that the given label exists in the CFG.
+    return;
+  }
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
     Lattice* predInfo=_initialElementFactory.create();
@@ -46,8 +54,8 @@ SPRAY::PASolver1::runSolver() {
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {
     Edge edge=_workList.take();
-    Label lab0=edge.source;
-    Label lab1=edge.target;
+    Label lab0=edge.source();
+    Label lab1=edge.target();
     //if(_trace)
     //  cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
@@ -94,7 +102,9 @@ SPRAY::PASolver1::runSolver() {
         }
         
         Flow outEdges=_flow.outEdges(lab1);
-        _workList.add(outEdges);
+	for (Flow::iterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
+	  _workList.add(*i);
+	}
         if(_trace)
           cout<<"TRACE: adding to worklist: "<<outEdges.toString()<<endl;
       } else {

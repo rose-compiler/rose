@@ -236,8 +236,11 @@ splitThunkFunctions(Partitioner &partitioner) {
 
         // Is the thunk pattern a proper subsequence of the entry block?
         bool thunkIsPrefix = thunkSize < entryBlock->nInstructions();
-        if (!thunkIsPrefix && candidate->basicBlockAddresses().size()==1)
+        if (!thunkIsPrefix && candidate->basicBlockAddresses().size()==1) {
+            // Function is only a thunk already, so make sure the FUNC_THUNK bit is set.
+            candidate->insertReasons(SgAsmFunction::FUNC_THUNK);
             continue;                                   // function is only a thunk already
+        }
         if (!thunkIsPrefix && entryVertex->nOutEdges() != 1)
             continue;                                   // thunks have only one outgoing edge
 

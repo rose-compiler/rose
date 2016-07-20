@@ -2,6 +2,7 @@
 #include "sage3basic.h"
 #include "TransitionGraph.h"
 #include "Analyzer.h"
+#include "CodeThornException.h"
 
 using namespace CodeThorn;
 
@@ -522,6 +523,6 @@ Transition TransitionGraph::getStartTransition() {
   if(foundElementIter!=end())
     return **foundElementIter;
   else {
-    throw "TransitionGraph: no start transition found.";
+    throw CodeThorn::Exception("TransitionGraph: no start transition found.");
   }
 }

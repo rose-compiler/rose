@@ -14,6 +14,7 @@
 #include "CommandLineOptions.h"
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
+#include "CodeThornException.h"
 
 #include "boost/regex.hpp"
 
@@ -36,8 +37,8 @@ void InputOutput::recordVariable(OpType op0,VariableId varId) {
   case STDOUT_VAR:
   case STDERR_VAR:
     break;
-  default: cerr<<"Error: wrong IO operation type."<<endl;
-    ROSE_ASSERT(0);
+  default:
+    throw CodeThorn::Exception("InputOutput::recordVariable: wrong IO operation type.");
   }
   op=op0;
   var=varId;
@@ -91,8 +92,7 @@ string InputOutput::toString() const {
   case FAILED_ASSERT: str="failedassert";break;
   case VERIFICATION_ERROR: str="verificationerror";break;
   default:
-    cerr<<"FATAL ERROR: unknown IO operation abstraction.";
-    exit(1);
+    CodeThorn::Exception("InputOutput::toString: unknown IO operation abstraction.");
   }
   return str;
 }
@@ -114,7 +114,7 @@ string InputOutput::toString(VariableIdMapping* variableIdMapping) const {
   case FAILED_ASSERT: str="failedassert";break;
   case VERIFICATION_ERROR: str="verificationerror";break;
   default:
-    cerr<<"FATAL ERROR: unknown IO operation abstraction.";
+    CodeThorn::Exception("InputOutput::toString: unknown IO operation abstraction.");
     exit(1);
   }
   return str;
@@ -167,28 +167,28 @@ void PState::fromStream(istream& is) {
   int __varIdCode=-1; 
   VariableId __varId; 
   AValue __varAValue; 
-  if(!SPRAY::Parse::checkWord("{",is)) throw "Error: Syntax error PState. Expected '{'.";
+  if(!SPRAY::Parse::checkWord("{",is)) throw CodeThorn::Exception("Error: Syntax error PState. Expected '{'.");
   is>>c;
   // read pairs (varname,varvalue)
   while(c!='}') {
-    if(c!='(') throw "Error: Syntax error PState. Expected '('.";
+    if(c!='(') throw CodeThorn::Exception("Error: Syntax error PState. Expected '('.");
     is>>c;
-    if(c!='V') throw "Error: Syntax error PState. Expected VariableId.";
+    if(c!='V') throw CodeThorn::Exception("Error: Syntax error PState. Expected VariableId.");
     is>>__varIdCode;
     assert(__varIdCode>=0);
     VariableId __varId;
     __varId.setIdCode(__varIdCode);
     is>>c;
-    if(c!=',') { cout << "Error: found "<<c<<"__varIdCode="<<__varIdCode<<endl; throw "Error: Syntax error PState. Expected ','.";}
+    if(c!=',') { cout << "Error: found "<<c<<"__varIdCode="<<__varIdCode<<endl; throw CodeThorn::Exception("Error: Syntax error PState. Expected ','.");}
     is>>__varAValue;
     is>>c;    
-    if(c!=')' && c!=',') throw "Error: Syntax error PState. Expected ')' or ','.";
+    if(c!=')' && c!=',') throw CodeThorn::Exception("Error: Syntax error PState. Expected ')' or ','.");
     is>>c;
     //cout << "DEBUG: Read from istream: ("<<__varId.toString()<<","<<__varAValue.toString()<<")"<<endl;
     (*this)[__varId]=__varAValue;
     if(c==',') is>>c;
   }
-  if(c!='}') throw "Error: Syntax error PState. Expected '}'.";
+  if(c!='}') throw CodeThorn::Exception("Error: Syntax error PState. Expected '}'.");
 }
 
 void PState::toStream(ostream& os) const {
@@ -322,7 +322,7 @@ bool PState::varIsConst(VariableId varId) const {
   } else {
     // TODO: this allows variables (intentionally) not to be in PState but still to analyze
     // however, this check will have to be reinstated once this mode is fully supported
-    return false; // throw "Error: PState::varIsConst : variable does not exist.";
+    return false; // throw CodeThorn::Exception("Error: PState::varIsConst : variable does not exist.";
   }
 }
 bool PState::varIsTop(VariableId varId) const {
@@ -333,7 +333,7 @@ bool PState::varIsTop(VariableId varId) const {
   } else {
     // TODO: this allows variables (intentionally) not to be in PState but still to analyze
     // however, this check will have to be reinstated once this mode is fully supported
-    return false; // throw "Error: PState::varIsConst : variable does not exist.";
+    return false; // throw CodeThorn::Exception("Error: PState::varIsConst : variable does not exist.";
   }
 }
 /*! 
@@ -500,6 +500,43 @@ istream& CodeThorn::operator>>(istream& is, PState& pState) {
   return is;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2016.
+ */
+// define order for ParProEState elements (necessary for ParProEStateSet)
+bool CodeThorn::operator<(const ParProEState& e1, const ParProEState& e2) {
+  return e1.getLabel()<e2.getLabel();
+}
+
+bool CodeThorn::operator==(const ParProEState& e1, const ParProEState& e2) {
+  return e1.getLabel()==e2.getLabel();
+}
+
+bool CodeThorn::operator!=(const ParProEState& e1, const ParProEState& e2) {
+  return !(e1==e2);
+}
+
+string ParProEState::toString() const {
+  ParProLabel label = getLabel();
+  bool firstEntry = true;
+  stringstream ss;
+  ss << "Label_";
+  for (ParProLabel::iterator i=label.begin(); i!=label.end(); i++) {
+    if (!firstEntry) {
+      ss << "_";
+    }
+    firstEntry = false;
+    ss << *i;
+  }
+  ss << "";
+  return ss.str();
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 // define order for EState elements (necessary for EStateSet)
 bool CodeThorn::operator<(const EState& e1, const EState& e2) {
   if(e1.label()!=e2.label())

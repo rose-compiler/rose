@@ -340,6 +340,190 @@ test_exception_safety() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test SgNode attribute interface
+
+class Attr6: public AstAttribute, public AllocationCounter<Attr6> {
+private:
+    size_t &nCopies_;
+    bool isDeleted_;
+
+public:
+    explicit Attr6(size_t &nCopies): nCopies_(nCopies), isDeleted_(false) {
+        ++nCopies_;
+    }
+
+    ~Attr6() {
+        ASSERT_always_forbid(isDeleted_);
+        ASSERT_always_require(nCopies_ > 0);
+        isDeleted_ = true;
+        --nCopies_;
+    }
+
+    Attr6(const Attr6 &other)
+        : nCopies_(other.nCopies_), isDeleted_(false) {
+        ++nCopies_;
+    }
+
+    Attr6& operator=(const Attr6 &other) {
+        ASSERT_always_forbid(isDeleted_);
+        ASSERT_always_require(nCopies_ > 0);
+        ASSERT_always_forbid(other.isDeleted_);
+        ASSERT_always_require(other.nCopies_ > 0);
+    }
+
+public:
+    // Override virtual functions from AstAttribute
+    OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE { return CONTAINER_OWNERSHIP; }
+    AstAttribute* constructor() const ROSE_OVERRIDE { return new Attr6(*(new size_t(0))); } // size_t is leaked
+    AstAttribute* copy() const ROSE_OVERRIDE { return new Attr6(*this); }
+    std::string attribute_class_name() const ROSE_OVERRIDE { return "Attr6"; }
+};
+
+static void
+test_ast_attributes() {
+    SgIntVal *node0 = SageBuilder::buildIntVal(1);
+    ASSERT_always_not_null(node0);
+    ASSERT_always_require(node0->numberOfAttributes() == 0);
+    ASSERT_always_forbid(node0->attributeExists("attr0"));
+    ASSERT_always_forbid(node0->attributeExists("attr1"));
+    ASSERT_always_require(0 == AllocationCounter<Attr6>::nAllocated);
+
+    // Create and insert the first attribute
+    size_t attr0_n = 0;
+    Attr6 *attr0 = new Attr6(attr0_n);
+    ASSERT_always_not_null(attr0);
+    node0->addNewAttribute("attr0", attr0);
+    ASSERT_always_require(node0->numberOfAttributes() == 1);
+    ASSERT_always_require(node0->attributeExists("attr0"));
+    ASSERT_always_forbid(node0->attributeExists("attr1"));
+    ASSERT_always_require(1 == AllocationCounter<Attr6>::nAllocated);
+
+    // Create and insert the second attribute
+    size_t attr1_n = 0;
+    Attr6 *attr1 = new Attr6(attr1_n);
+    ASSERT_always_not_null(attr1);
+    node0->addNewAttribute("attr1", attr1);
+    ASSERT_always_require(node0->numberOfAttributes() == 2);
+    ASSERT_always_require(node0->attributeExists("attr0"));
+    ASSERT_always_require(node0->attributeExists("attr1"));
+    ASSERT_always_require(2 == AllocationCounter<Attr6>::nAllocated);
+
+    // Retrieve the attributes
+    ASSERT_always_require(attr0 == node0->getAttribute("attr0"));
+    ASSERT_always_require(1 == attr0_n);
+    ASSERT_always_require(attr1 == node0->getAttribute("attr1"));
+    ASSERT_always_require(1 == attr1_n);
+    ASSERT_always_require(NULL == node0->getAttribute("attr2"));
+    ASSERT_always_require(2 == AllocationCounter<Attr6>::nAllocated);
+
+    // "Update" an attribute that doesn't exist (i.e., do nothing)
+    size_t attr2_n = 0;
+    Attr6 *attr2 = new Attr6(attr2_n);
+    ASSERT_always_not_null(attr2);
+    ASSERT_always_forbid(node0->attributeExists("attr2"));
+    node0->updateAttribute("attr2", attr2);
+    ASSERT_always_forbid(node0->attributeExists("attr2"));
+    ASSERT_always_require(0 == attr2_n);
+    attr2 = NULL;
+    ASSERT_always_require(2 == AllocationCounter<Attr6>::nAllocated);
+
+    // "Update" an existing attribute (i.e., erase existing attribute and insert the new one in its place)
+    size_t attr3_n = 0;
+    Attr6 *attr3 = new Attr6(attr3_n);
+    ASSERT_always_not_null(attr3);
+    ASSERT_always_require(node0->attributeExists("attr0"));
+    ASSERT_always_require(node0->getAttribute("attr0") == attr0);
+    node0->updateAttribute("attr0", attr3);
+    ASSERT_always_require(node0->attributeExists("attr0"));
+    ASSERT_always_require(node0->getAttribute("attr0") == attr3);
+    ASSERT_always_require(0 == attr0_n);
+    ASSERT_always_require(1 == attr3_n);
+    ASSERT_always_require(2 == AllocationCounter<Attr6>::nAllocated);
+
+    // "Remove" (i.e., erase) an attribute
+    ASSERT_always_require(node0->getAttribute("attr0") == attr3);
+    ASSERT_always_require(1 == attr3_n);
+    node0->removeAttribute("attr0");
+    ASSERT_always_forbid(node0->attributeExists("attr0"));
+    ASSERT_always_require(node0->getAttribute("attr0") == NULL);
+    ASSERT_always_require(0 == attr3_n);
+    attr3 = NULL;
+    ASSERT_always_require(1 == AllocationCounter<Attr6>::nAllocated);
+
+    // "Set" an attribute that doesn't exist (i.e., insert it)
+    size_t attr4_n = 0;
+    Attr6 *attr4 = new Attr6(attr4_n);
+    ASSERT_always_not_null(attr4);
+    ASSERT_always_forbid(node0->attributeExists("attr4"));
+    node0->setAttribute("attr4", attr4);
+    ASSERT_always_require(node0->attributeExists("attr4"));
+    ASSERT_always_require(node0->getAttribute("attr4") == attr4);
+    ASSERT_always_require(1 == attr4_n);
+    ASSERT_always_require(2 == AllocationCounter<Attr6>::nAllocated);
+
+    // "Set" an attribute that exists (i.e., erase the old value and insert the new one)
+    size_t attr5_n = 0;
+    Attr6 *attr5 = new Attr6(attr5_n);
+    ASSERT_always_not_null(attr5);
+    ASSERT_always_require(node0->attributeExists("attr4"));
+    ASSERT_always_require(node0->getAttribute("attr4") == attr4);
+    ASSERT_always_require(1 == attr4_n);
+    node0->setAttribute("attr4", attr5);
+    ASSERT_always_require(node0->attributeExists("attr4"));
+    ASSERT_always_require(node0->getAttribute("attr4") == attr5);
+    ASSERT_always_require(0 == attr4_n);
+    attr4 = NULL;
+    ASSERT_always_require(1 == attr5_n);
+    ASSERT_always_require(2 == AllocationCounter<Attr6>::nAllocated);
+
+    // Copy the AST node, which should make copies of the attributes
+    ASSERT_always_require(2 == node0->numberOfAttributes());
+    ASSERT_always_require(node0->attributeExists("attr1"));
+    ASSERT_always_require(node0->getAttribute("attr1") == attr1);
+    ASSERT_always_require(node0->attributeExists("attr4"));
+    ASSERT_always_require(node0->getAttribute("attr4") == attr5); // because an earlier test replaced it
+
+    AstAttributeMechanism *node0_attrs = node0->get_attributeMechanism();
+    ASSERT_always_not_null(node0_attrs);
+    SgTreeCopy deep;
+    SgIntVal *node1 = isSgIntVal(node0->copy(deep));
+    ASSERT_always_require(node0->get_attributeMechanism() == node0_attrs);
+    ASSERT_always_not_null(node1);
+    ASSERT_always_not_null(node1->get_attributeMechanism());
+    ASSERT_always_require(node0->get_attributeMechanism() != node1->get_attributeMechanism());
+
+    ASSERT_always_require(2 == node0->numberOfAttributes());
+    ASSERT_always_require(node0->attributeExists("attr1"));
+    ASSERT_always_require(node0->getAttribute("attr1") == attr1);
+    ASSERT_always_require(node0->attributeExists("attr4"));
+    ASSERT_always_require(node0->getAttribute("attr4") == attr5);
+
+    ASSERT_always_require(2 == node1->numberOfAttributes());
+    ASSERT_always_require(node1->attributeExists("attr1"));
+    ASSERT_always_require(node1->getAttribute("attr1") != attr1);
+    ASSERT_always_require(node1->attributeExists("attr4"));
+    ASSERT_always_require(node1->getAttribute("attr4") != attr5);
+
+    ASSERT_always_require(4 == AllocationCounter<Attr6>::nAllocated);
+    ASSERT_always_require(2 == attr1_n);
+    ASSERT_always_require(2 == attr5_n);
+
+    // Delete an ast node, which should delete its attributes
+    SageInterface::deleteAST(node1);
+    node1 = NULL;
+
+    ASSERT_always_require(2 == node0->numberOfAttributes());
+    ASSERT_always_require(node0->attributeExists("attr1"));
+    ASSERT_always_require(node0->getAttribute("attr1") == attr1);
+    ASSERT_always_require(node0->attributeExists("attr4"));
+    ASSERT_always_require(node0->getAttribute("attr4") == attr5);
+
+    ASSERT_always_require(2 == AllocationCounter<Attr6>::nAllocated);
+    ASSERT_always_require(1 == attr1_n);
+    ASSERT_always_require(1 == attr5_n);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int
 main() {
@@ -352,4 +536,5 @@ main() {
     test_missing_copy();
     test_self_copy();
     test_exception_safety();
+    test_ast_attributes();
 }

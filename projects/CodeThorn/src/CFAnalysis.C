@@ -10,6 +10,7 @@
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
+#include "SprayException.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -118,7 +119,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
-      throw "Error: interFlow: unknown call exp (not a SgFunctionCallExp).";
+      throw SPRAY::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
     SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall);
     Label callLabel,entryLabel,exitLabel,callReturnLabel;
     if(funDef==0) {
@@ -214,6 +215,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgContinueStmt:
   case V_SgReturnStmt:
   case V_SgVariableDeclaration:
+  case V_SgCaseOptionStmt:
+  case V_SgDefaultOptionStmt:
       return labeler->getLabel(node);
   case V_SgExprStatement: {
     return labeler->getLabel(node);
@@ -234,7 +237,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
     if(stmtPtrList.size()==0) {
       // empty initializer list (hence, an initialization stmt cannot be initial stmt of for)
-      throw "Error: for-stmt: initializer-list is empty. Not supported.";
+      throw SPRAY::Exception("Error: for-stmt: initializer-list is empty. Not supported.");
     }
     assert(stmtPtrList.size()>0);
     node=*stmtPtrList.begin();
@@ -477,28 +480,9 @@ int CFAnalysis::reduceEmptyConditionNodes(Flow& flow) {
 int CFAnalysis::reduceNode(Flow& flow, Label lab) {
   Flow inFlow=flow.inEdges(lab);
   Flow outFlow=flow.outEdges(lab);
-  EdgeTypeSet unionEdgeTypeSets;
-  for(Flow::iterator i=inFlow.begin();i!=inFlow.end();++i) {
-    EdgeTypeSet edgeTypeSet=(*i).types();
-    unionEdgeTypeSets.insert(edgeTypeSet.begin(),edgeTypeSet.end());
-  }
-  for(Flow::iterator i=outFlow.begin();i!=outFlow.end();++i) {
-    EdgeTypeSet edgeTypeSet=(*i).types();
-    unionEdgeTypeSets.insert(edgeTypeSet.begin(),edgeTypeSet.end());
-  }
   // edge type cleanup
   // if true and false edge exist, remove both (merging true and false branches to a single branch)
-  // if forward and backward exist, remove backward (we are removing a cycle)
-  if(unionEdgeTypeSets.find(EDGE_TRUE)!=unionEdgeTypeSets.end()
-     && unionEdgeTypeSets.find(EDGE_FALSE)!=unionEdgeTypeSets.end()) {
-    unionEdgeTypeSets.erase(EDGE_TRUE);
-    unionEdgeTypeSets.erase(EDGE_FALSE);
-  }
-  if(unionEdgeTypeSets.find(EDGE_FORWARD)!=unionEdgeTypeSets.end()
-     && unionEdgeTypeSets.find(EDGE_BACKWARD)!=unionEdgeTypeSets.end()) {
-    unionEdgeTypeSets.erase(EDGE_FORWARD);
-    unionEdgeTypeSets.erase(EDGE_BACKWARD);
-  }
+  // if forward and backward exist, remove forward (we are not removing the cycle)
   
   /* description of essential operations:
    *   inedges: (n_i,b)
@@ -510,18 +494,50 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
   if(inFlow.size()==0 && outFlow.size()==0) {
     return 0;
   } else if(inFlow.size()>0 && outFlow.size()>0) {
+    set<Edge> toErase;
+    set<Edge> toInsert;
     for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
       for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
         Edge e1=*initer;
         Edge e2=*outiter;
         // preserve edge annotations of ingoing and outgoing edges
-        Edge newEdge=Edge(e1.source,unionEdgeTypeSets,e2.target);
-        flow.erase(e1);
-        flow.erase(e2);
-        flow.insert(newEdge);
+        EdgeTypeSet unionEdgeTypeSet;
+        EdgeTypeSet edgeTypeSet1=(*initer).types();
+        unionEdgeTypeSet.insert(edgeTypeSet1.begin(),edgeTypeSet1.end());
+        EdgeTypeSet edgeTypeSet2=(*outiter).types();
+        // only copy an edge annotation in the outgoing edge if it is
+        // not a true-annotation or a false-annotation
+        for(EdgeTypeSet::iterator i=edgeTypeSet2.begin();i!=edgeTypeSet2.end();++i) {
+          if(*i!=EDGE_TRUE && *i!=EDGE_FALSE) {
+            unionEdgeTypeSet.insert(*i);
+          }
+        }
+        if(unionEdgeTypeSet.find(EDGE_TRUE)!=unionEdgeTypeSet.end()
+           && unionEdgeTypeSet.find(EDGE_FALSE)!=unionEdgeTypeSet.end()) {
+          unionEdgeTypeSet.erase(EDGE_TRUE);
+          unionEdgeTypeSet.erase(EDGE_FALSE);
+        }
+        if(unionEdgeTypeSet.find(EDGE_FORWARD)!=unionEdgeTypeSet.end()
+           && unionEdgeTypeSet.find(EDGE_BACKWARD)!=unionEdgeTypeSet.end()) {
+          unionEdgeTypeSet.erase(EDGE_FORWARD);
+          // keep backward edge annotation
+        }
+        
+        Edge newEdge=Edge(e1.source(),unionEdgeTypeSet,e2.target());
+        toErase.insert(e1);
+        toErase.insert(e2);
+        if(e1.source()!=e2.target()) {
+          toInsert.insert(newEdge);
+        }
       }
-      return 1;
     }
+    for(set<Edge>::iterator i=toErase.begin();i!=toErase.end();++i) {
+      flow.erase(*i);
+    }
+    for(set<Edge>::iterator i=toInsert.begin();i!=toInsert.end();++i) {
+      flow.insert(*i);
+    }
+    return 1;
   } else if(inFlow.size()>0) {
     for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
       Edge e1=*initer;
@@ -541,8 +557,8 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
 int CFAnalysis::optimizeFlow(Flow& flow) {
   int n=0;
   // TODO: reduce: SgBreakStmt, SgContinueStmt, SgLabelStatement, SgGotoStatement
-  n+=reduceBlockBeginEndNodes(flow);
-  n+=reduceEmptyConditionNodes(flow);
+  n+=reduceBlockBeginNodes(flow);
+  //n+=reduceEmptyConditionNodes(flow);
   return n;
 }
 
@@ -557,12 +573,13 @@ int CFAnalysis::reduceBlockBeginNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
-    if(labeler->isBlockBeginLabel(*i)||labeler->isBlockEndLabel(*i)) {
+    if(labeler->isBlockBeginLabel(*i)) {
       cnt+=reduceNode(flow,*i);
     }
   }
   return cnt;
 }
+
 int CFAnalysis::reduceBlockEndNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
@@ -666,7 +683,7 @@ Flow CFAnalysis::WhileAndDoWhileLoopFlow(SgNode* node,
                                          EdgeType edgeTypeParam1,
                                          EdgeType edgeTypeParam2) {
   if(!(isSgWhileStmt(node) || isSgDoWhileStmt(node))) {
-    throw "Error: WhileAndDoWhileLoopFlow: unsupported loop construct.";
+    throw SPRAY::Exception("Error: WhileAndDoWhileLoopFlow: unsupported loop construct.");
   }
   SgNode* condNode=SgNodeHelper::getCond(node);
   Label condLabel=getLabel(condNode);
@@ -837,13 +854,13 @@ Flow CFAnalysis::flow(SgNode* node) {
       // target is increment expr
       SgExpression* incExp=SgNodeHelper::getForIncExpr(loopStmt);
       if(!incExp)
-        throw "Error: for-loop: empty incExpr not supported.";
+        throw SPRAY::Exception("CFAnalysis: for-loop: empty incExpr not supported.");
       SgNode* targetNode=incExp;
       ROSE_ASSERT(targetNode);
       Edge edge=Edge(getLabel(node),EDGE_FORWARD,getLabel(targetNode));
       edgeSet.insert(edge);
     } else {
-      throw "Error: CFAnalysis: continue in unknown loop construct (not while,do-while, or for).";
+      throw SPRAY::Exception("CFAnalysis: continue in unknown loop construct (not while,do-while, or for).");
     }
     return edgeSet;
   }
@@ -998,7 +1015,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     SgNode* condNode=SgNodeHelper::getCond(node);
     if(!condNode)
-      throw "Error: for-loop: empty condition not supported yet.";
+      throw SPRAY::Exception("Error: for-loop: empty condition not supported yet.");
     Flow flowInitToCond=flow(lastNode,condNode);
     edgeSet+=flowInitToCond;
     Label condLabel=getLabel(condNode);
@@ -1007,35 +1024,33 @@ Flow CFAnalysis::flow(SgNode* node) {
     Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
     edge.addType(EDGE_FORWARD);
     Flow flowB=flow(bodyNode);
-    LabelSet finalSetB=finalLabels(bodyNode);
     edgeSet+=flowB;
     edgeSet.insert(edge);
-    // back edges
+
+    // Increment Expression:
+    SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
+    if(!incExp)
+      throw SPRAY::Exception("Error: for-loop: empty incExpr not supported yet.");
+    ROSE_ASSERT(incExp);
+    Label incExpLabel=getLabel(incExp);
+    ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);
+
+    // Edges from final labels of for body to the increment expression:
+    LabelSet finalSetB=finalLabels(bodyNode);
     for(LabelSet::iterator i=finalSetB.begin();i!=finalSetB.end();++i) {
-      SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
-      if(!incExp)
-        throw "Error: for-loop: empty incExpr not supported yet.";
-      ROSE_ASSERT(incExp);
-      Label incExpLabel=getLabel(incExp);
-      ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);
-      Edge e1,e2;
+      Edge edgeToIncExpr=Edge(*i,EDGE_FORWARD,incExpLabel);
       if(SgNodeHelper::isCond(labeler->getNode(*i))) {
-        e1=Edge(*i,EDGE_FALSE,incExpLabel);
-        e1.addType(EDGE_FORWARD);
-        e2=Edge(incExpLabel,EDGE_BACKWARD,condLabel);
-      } else {
-        e1=Edge(*i,EDGE_FORWARD,incExpLabel);
-        e2=Edge(incExpLabel,EDGE_BACKWARD,condLabel);
+        edgeToIncExpr.addType(EDGE_FALSE);
       }
-      edgeSet.insert(e1);
-      edgeSet.insert(e2);
+      edgeSet.insert(edgeToIncExpr);
     }
+
+    // Edge from increment expression back to condition:
+    Edge backwardEdge = Edge(incExpLabel,EDGE_BACKWARD,condLabel);
+    edgeSet.insert(backwardEdge);
     return edgeSet;
   }
-
   default:
-    cerr << "Error: Unknown node in CFAnalysis::flow: "<<node->sage_class_name()<<endl; 
-    cerr << "Problemnode: "<<node->unparseToString()<<endl;
-    exit(1);
+    throw SPRAY::Exception("Unknown node in CFAnalysis::flow: "+node->class_name()+" Problemnode: "+node->unparseToString());
   }
 }

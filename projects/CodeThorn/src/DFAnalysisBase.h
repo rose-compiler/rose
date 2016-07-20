@@ -61,6 +61,7 @@ class DFAnalysisBase {
   Labeler* getLabeler();
   CFAnalysis* getCFAnalyzer();
   VariableIdMapping* getVariableIdMapping();
+  FunctionIdMapping* getFunctionIdMapping();
   Flow* getFlow() { return &_flow; }
   Lattice* getPreInfo(Label lab);
   Lattice* getPostInfo(Label lab);

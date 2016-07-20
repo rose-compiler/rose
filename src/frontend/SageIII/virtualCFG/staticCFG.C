@@ -16,11 +16,16 @@ void CFG::clearNodesAndEdges()
         {
             foreach (SgDirectedGraphEdge* edge, graph_->computeEdgeSetOut(node))
             {
-                delete edge->getAttribute("info");
+                // This would be so much simpler if the attribute used container-owns-attribute paradigm. In any case, we
+                // cannot delete the attribute without first removing it from the container because the container needs to be
+                // able to figure out how the attribute wants to have its memory managed, and it does so by asking it.
+                AstAttribute *edgeAttr = edge->getAttribute("info");
                 delete edge;
+                delete edgeAttr;
             }
-            delete node->getAttribute("info");
+            AstAttribute *nodeAttr = node->getAttribute("info");
             delete node;
+            delete nodeAttr;
         }
         delete graph_;
     }
