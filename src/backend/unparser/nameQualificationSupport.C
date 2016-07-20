@@ -1,8 +1,14 @@
 #include "sage3basic.h"
+#include "Diagnostics.h"
 #include "nameQualificationSupport.h"
 
 using namespace std;
 
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+Sawyer::Message::Facility NameQualificationTraversal::mlog;
 #define DEBUG_NAME_QUALIFICATION_LEVEL 0
 
 // ***********************************************************
@@ -56,6 +62,16 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNa
      t.traverse(node,ih);
    }
 
+void NameQualificationTraversal::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("NameQualificationTraversal", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
 
 // DQ (7/23/2011): This function is only used locally.
 // void generateNameQualificationSupportWithScope( SgNode* node, const NameQualificationTraversal & parentTraversal, SgScopeStatement* currentScope )
@@ -425,7 +441,7 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeSignedInt:
           case V_SgTypeSignedLong:
           case V_SgTypeSignedLongLong:
-            
+
        // DQ (11/6/2014): Added support for C++11 rvalue references.
           case V_SgRvalueReferenceType:
 
@@ -442,9 +458,11 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
        // DQ (3/28/2015): Adding GNU C language extension.
           case V_SgTypeOfType:
 
-            //sk: Matrix type
-        case V_SgTypeMatrix:
-        case V_SgTypeTuple:
+       // DQ (4/29/2016): Added support for complex types.
+          case V_SgTypeComplex:
+          //  pp (7/16/2016) Matrix and tuple  (Matlab)
+          case V_SgTypeMatrix:
+          case V_SgTypeTuple:
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
@@ -3778,7 +3796,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             }
                            else
                             {
-                              printf ("Warning: In name qualification support: alternativeDecaration == NULL (see test2005_103.C) \n");
+                              mprintf ("Warning: In name qualification support: alternativeDecaration == NULL (see test2005_103.C) \n");
                             }
                        }
                   }
@@ -6772,8 +6790,33 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
         }
        else
         {
+#if 0
+       // DQ (5/23/2016): Output some date to use in debugging this case.
+          printf ("usingDeclaration = %p \n",usingDeclaration);
+          usingDeclaration->get_file_info()->display("NameQualificationTraversal::setNameQualification(SgUsingDeclarationStatement, SgDeclarationStatement,int): debug");
+#endif
+       // If it already exists then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(usingDeclaration);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+#if 1
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
    }
 
@@ -7032,7 +7075,7 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
         }
        else
         {
-       // If it already existes then overwrite the existing information.
+       // If it already exists then overwrite the existing information.
           std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(initializedName);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
@@ -7508,7 +7551,7 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
         }
        else
         {
-       // If it already existes then overwrite the existing information.
+       // If it already exists then overwrite the existing information.
           std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(classDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 

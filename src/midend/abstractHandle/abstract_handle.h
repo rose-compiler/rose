@@ -23,6 +23,13 @@
 #include "rose_msvc.h"
 #endif
 
+// DQ (4/17/2016): This appears to be needed for ROSE to emulate Clang
+// in compiling ROSE files in tests/CompileTests/RoseExample_tests.
+#ifdef __clang__
+// Find value for PATH_MAX
+#include<linux/limits.h>
+#endif
+
 namespace AbstractHandle{
 
   //source position information:

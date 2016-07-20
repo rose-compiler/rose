@@ -3,6 +3,7 @@
 #include "rose.h"
 
 using namespace std;
+using namespace rose;
 
 // DQ (9/9/2005): Don't include the database by default
 // TPS (01Dec2008): Enabled mysql and this fails.
@@ -14,6 +15,9 @@ using namespace std;
 
 int main( int argc, char * argv[] ) 
    {
+  // Initialize and check compatibility. See rose::initialize
+     ROSE_INITIALIZE;
+
 // TPS (01Dec2008): Enabled mysql and this fails.
 // seems like it is not supposed to be included
 #if 0

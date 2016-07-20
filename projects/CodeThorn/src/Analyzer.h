@@ -26,24 +26,40 @@
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
 #include "StateRepresentations.h"
+#include "TransitionGraph.h"
 #include "PropertyValueTable.h"
+#include "CTIOLabeler.h"
+#include "VariableValueMonitor.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 
 namespace CodeThorn {
 
-#define DEBUGPRINT_STMT 0x1
-#define DEBUGPRINT_STATE 0x2
-#define DEBUGPRINT_STATEMOD 0x4
-#define DEBUGPRINT_INFO 0x8
-  
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
   class AstNodeInfo : public AstAttribute {
   public:
+    // MS 2016: necessary with the new attribute mechanism but possibly not
+    // necessary if the mechanism is adapted. Look for
+    // (*i)->addNewAttribute("info",attr); in Analyzer.C
+    virtual std::string attribute_class_name() const {
+      return "AstNodeInfo";
+    }
+    virtual AstNodeInfo* copy() {
+      AstNodeInfo* newNodeInfo=new AstNodeInfo();
+      newNodeInfo->label=this->label;
+      newNodeInfo->initialLabel=this->initialLabel;
+      newNodeInfo->finalLabelsSet=this->finalLabelsSet;
+      return newNodeInfo;
+    }
+    AstNodeInfo::OwnershipPolicy
+      getOwnershipPolicy() const ROSE_OVERRIDE {
+      return CONTAINER_OWNERSHIP;
+    }
+
   AstNodeInfo():label(0),initialLabel(0){}
     std::string toString() { std::stringstream ss;
       ss<<"\\n lab:"<<label<<" ";
@@ -63,35 +79,6 @@ namespace CodeThorn {
   typedef std::list<const EState*> EStateWorkList;
   typedef std::pair<int, const EState*> FailedAssertion;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
-
-  class Analyzer;
-
-  class VariableValueMonitor {
-  public:
-    enum VariableMode { VARMODE_FORCED_TOP, VARMODE_ADAPTIVE_TOP, VARMODE_PRECISE, VARMODE_FORCED_PRECISE};
-    VariableValueMonitor();
-    void setThreshold(size_t threshold);
-    size_t getThreshold();
-    bool isActive();
-    // the init function only uses the variableIds of a given estate (not its values) for initialization
-    void init(const EState* estate);
-    void init(const PState* pstate);
-    VariableIdSet getHotVariables(Analyzer* analyzer, const EState* estate);
-    VariableIdSet getHotVariables(Analyzer* analyzer, const PState* pstate);
-    VariableIdSet getVariables();
-    void setVariableMode(VariableMode,VariableId);
-    VariableMode getVariableMode(VariableId);
-    void update(Analyzer* analyzer, EState* estate);
-    bool isHotVariable(Analyzer* analyzer, VariableId varId);
-    std::string toString(VariableIdMapping* variableIdMapping);
-#if 0
-    bool isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId);
-#endif
-  private:
-    std::map<VariableId,std::set<int>* > _variablesMap;
-    std::map<VariableId,VariableMode> _variablesModeMap;
-    long int _threshold;
-  };
 
 /*! 
   * \author Markus Schordan
@@ -123,9 +110,11 @@ namespace CodeThorn {
     bool isEmptyWorkList();
     const EState* topWorkList();
     const EState* popWorkList();
+    void swapWorkLists();
     
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
+    bool isLTLRelevantEState(const EState* estate);
     bool isLTLRelevantLabel(Label label);
     bool isStdIOLabel(Label label);
     bool isStartLabel(Label label);
@@ -136,20 +125,13 @@ namespace CodeThorn {
     // reduces all states different to stdin and stdout.
     void stdIOFoldingOfTransitionGraph();
     void semanticFoldingOfTransitionGraph();
-    void semanticEliminationOfTransitions();
-    int semanticEliminationOfSelfInInTransitions();
-    // eliminates only input states
-    int semanticEliminationOfDeadStates();
-    int semanticFusionOfInInTransitions();
     // requires semantically reduced STG
-    int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
-    // this function requires that no LTL graph is computed
-    void deleteNonRelevantEStates();
 
     // bypasses and removes all states that are not standard I/O states
+    // (old version, works correctly, but has a long execution time)
     void removeNonIOStates();
     // bypasses and removes all states that are not stdIn/stdOut/stdErr/failedAssert states
     void reduceToObservableBehavior();
@@ -168,8 +150,14 @@ namespace CodeThorn {
     // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
     // shortest ones leading to the individual failing assertion (returns -1 otherwise).
     int extractAssertionTraces();
-    
+
+    // determines whether lab is a function call label of a function call of the form 'x=f(...)' and returns the varible-id of the lhs, if it exists.
+    bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
   private:
+
+    // only used in LTL-driven mode
+    void setStartEState(const EState* estate);
+
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
       a new state is entered into stateSet and a pointer to it is returned.
     */
@@ -234,17 +222,17 @@ namespace CodeThorn {
     //solver 8 becomes the active solver used by the analyzer. Deletion of previous data iff "resetAnalyzerData" is set to true.
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
     //! requires init
-    void runSolver1();
-    void runSolver2();
-    void runSolver3();
     void runSolver4();
     void runSolver5();
-    void runSolver6();
-    void runSolver7();
     void runSolver8();
     void runSolver9();
     void runSolver10();
+    void runSolver11();
+    void runSolver12();
     void runSolver();
+    // first: list of new states (worklist), second: set of found existing states
+    typedef pair<EStateWorkList,EStateSet> SubSolverResultType;
+    SubSolverResultType subSolver(const EState* currentEStatePtr);
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
     void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
     CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
@@ -253,8 +241,8 @@ namespace CodeThorn {
 
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    SPRAY::IOLabeler* getLabeler() const {
-      SPRAY::IOLabeler* ioLabeler=dynamic_cast<SPRAY::IOLabeler*>(cfanalyzer->getLabeler());
+    CTIOLabeler* getLabeler() const {
+      CTIOLabeler* ioLabeler=dynamic_cast<CTIOLabeler*>(cfanalyzer->getLabeler());
       ROSE_ASSERT(ioLabeler);
       return ioLabeler;
     }
@@ -281,10 +269,11 @@ namespace CodeThorn {
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
     
-    //bool isAssertExpr(SgNode* node);
     bool isFailedAssertEState(const EState* estate);
+    bool isVerificationErrorEState(const EState* estate);
     //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
     EState createFailedAssertEState(const EState estate, Label target);
+    EState createVerificationErrorEState(const EState estate, Label target);
     //! list of all asserts in a program
     std::list<SgNode*> listOfAssertNodes(SgProject *root);
     //! rers-specific error_x: assert(0) version 
@@ -313,8 +302,6 @@ namespace CodeThorn {
     void setSolver(int solver) { _solver=solver; }
     int getSolver() { return _solver;}
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
-    void setLTLVerifier(int v) { _ltlVerifier=v; }
-    int getLTLVerifier() { return _ltlVerifier; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
@@ -327,7 +314,6 @@ namespace CodeThorn {
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
     std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
-    void setCsvAssertLiveFileName(std::string filename) { _csv_assert_live_file=filename; }
     VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
     void setStgTraceFileName(std::string filename) {
       _stg_trace_filename=filename;
@@ -336,7 +322,6 @@ namespace CodeThorn {
       fout<<"START"<<endl;
       fout.close();    // close. Will be used with append.
     }
-    std::string _csv_assert_live_file; // to become private
   private:
     std::string _stg_trace_filename;
  public:
@@ -356,10 +341,9 @@ namespace CodeThorn {
     void setPatternSearchRepetitions(size_t patternReps) { _patternSearchRepetitions=patternReps; }
     void setPatternSearchMaxSuffixDepth(size_t suffixDepth) { _patternSearchMaxSuffixDepth=suffixDepth; }
     void setPatternSearchAssertTable(PropertyValueTable* patternSearchAsserts) { _patternSearchAssertTable = patternSearchAsserts; };
-    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_RANDOM_MODE1 };
+    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_LOOP_AWARE_SYNC, EXPL_RANDOM_MODE1 };
     void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
     void eventGlobalTopifyTurnedOn();
-    void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
     bool isPrecise();
     PropertyValueTable reachabilityResults;
@@ -400,6 +384,13 @@ namespace CodeThorn {
     void setAssertCondVarsSet(set<VariableId> acVars);
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
     void setGlobalTopifyMode(GlobalTopifyMode mode);
+    void setExternalErrorFunctionName(std::string externalErrorFunctionName);
+    // enables external function semantics 
+    void enableExternalFunctionSemantics();
+    void disableExternalFunctionSemantics();
+    bool isUsingExternalFunctionSemantics() { return _externalFunctionSemantics; }
+    void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
+    bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<VariableId> _compoundIncVarsSet;
@@ -410,7 +401,10 @@ namespace CodeThorn {
     std::list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
-    EStateWorkList estateWorkList;
+    EStateWorkList* estateWorkListCurrent;
+    EStateWorkList* estateWorkListNext;
+    EStateWorkList estateWorkListOne;
+    EStateWorkList estateWorkListTwo;
     EStateSet estateSet;
     PStateSet pstateSet;
     ConstraintSetMaintainer constraintSetMaintainer;
@@ -419,7 +413,6 @@ namespace CodeThorn {
     set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
     int _displayDiff;
     int _numberOfThreadsToUse;
-    int _ltlVerifier;
     int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
     int _solver;
@@ -445,45 +438,22 @@ namespace CodeThorn {
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
-    bool _minimizeStates;
     bool _topifyModeActive;
+    int _swapWorkListsCount; // currently only used for debugging purposes
     int _iterations;
     int _approximated_iterations;
     int _curr_iteration_cnt;
     int _next_iteration_cnt;
+    bool _externalFunctionSemantics;
+    string _externalErrorFunctionName; // the call of this function causes termination of analysis
+    string _externalNonDetIntFunctionName;
+    string _externalNonDetLongFunctionName;
+    string _externalExitFunctionName;
+    //bool _modeLTLDriven;
   }; // end of class Analyzer
   
 } // end of namespace CodeThorn
 
-#define RERS_SPECIALIZATION
-#ifdef RERS_SPECIALIZATION
-// RERS-binary-binding-specific declarations
-#define STR_VALUE(arg) #arg
-
-// integer variables
-#define INIT_GLOBALVAR(VARNAME) VARNAME = new int[numberOfThreads];
-#define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME[thread_id] = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue();
-//cout<<"PSTATEVAR:"<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<"="<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().toString()<<endl;
-#define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(VARNAME[thread_id]);
-
-// pointers to integer variables
-#define INIT_GLOBALPTR(VARNAME) VARNAME = new int*[numberOfThreads]; 
-#define COPY_PSTATEPTR_TO_GLOBALPTR(VARNAME) VARNAME[thread_id] = analyzer->mapGlobalVarAddress[analyzer->getVarNameByIdCode(pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue())]
-#define COPY_GLOBALPTR_TO_PSTATEPTR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(analyzer->globalVarIdByName(analyzer->mapAddressGlobalVar[VARNAME[thread_id]]).getIdCode());
-
-// create an entry in the mapping    <var_address>  <-->  <var_name>
-#define REGISTER_GLOBAL_VAR_ADDRESS(VARNAME) analyzer->mapGlobalVarInsert(STR_VALUE(VARNAME), (int*) &VARNAME);
-
-namespace RERS_Problem {
-  void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
-  void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
-  void rersGlobalVarsArrayInit(int numberOfThreads);
-  void createGlobalVarAddressMaps(CodeThorn::Analyzer* analyzer);
-
-  void calculate_output(int numberOfThreads);
-  extern int* output;
-}
-// END OF RERS-binary-binding-specific declarations
-#endif
+#include "RersSpecialization.h"
 
 #endif

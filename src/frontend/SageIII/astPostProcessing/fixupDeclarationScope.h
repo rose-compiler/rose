@@ -21,6 +21,10 @@ class FixupAstDeclarationScope
 
           virtual ~FixupAstDeclarationScope() {};
           void visit ( SgNode* node );
+
+       // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+          static Sawyer::Message::Facility mlog;
+          static void initDiagnostics();
    };
 
 // endif for FIXUP_DECLARATION_SCOPE_H

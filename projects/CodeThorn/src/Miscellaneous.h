@@ -21,7 +21,7 @@ namespace CodeThorn {
   std::string color(std::string name);
   void nocheck(std::string checkIdentifier, bool checkResult);
   void check(std::string checkIdentifier, bool checkResult, bool check=true);
-
+  std::string readableruntime(double timeInMilliSeconds);
 } // end of namespace CodeThorn
 
 #endif

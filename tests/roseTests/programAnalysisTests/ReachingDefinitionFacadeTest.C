@@ -5,6 +5,7 @@
  * Created on August 15, 2011, 4:16 PM
  */
 
+#include "sage3basic.h"
 #include "ReachingDefinitionFacade.h"
 
 using namespace std;

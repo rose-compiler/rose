@@ -1,34 +1,16 @@
 #ifndef __GRAMMARSTRING_H__
 #define __GRAMMARSTRING_H__
 
-#include <string>
-#include "ROSETTA_macros.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string>
-#include "string_functions.h"
-
-// BP : 11/30/01
-// #ifndef STL_LIST_IS_BROKEN
-// #include STL_LIST_HEADER_FILE
-// #endif
-
-// BP : 11/30/01
-// #ifndef NAMESPACE_IS_BROKEN
-// using namespace std;
-// #endif
-
-// BP : 11/30/01
-// #ifndef IOSTREAM_IS_BROKEN
-// #include IOSTREAM_HEADER_FILE
-// #endif
+#include "grammar.h"
+#include "StringUtility.h"
+#include "FileUtility.h"
 
 #include <iostream>
 
-// using namespace std;
-
-// class GrammarTreeNode;   // forward declaration
-class Terminal;
+class AstNodeClass;
 
 class GrammarString
 {
@@ -80,7 +62,7 @@ class GrammarString
   GrammarString & operator= ( const GrammarString & X );
 
   void setVirtual ( const bool & X );
-  virtual std::string getFunctionNameString ( Terminal & node );
+  virtual std::string getFunctionNameString ( AstNodeClass & node );
 
   std::string getConstructorPrototypeParameterString();
   std::string getConstructorSourceParameterString();
@@ -103,7 +85,7 @@ class GrammarString
   friend bool operator== ( const GrammarString & X, const GrammarString & Y );
   // char* getFunctionNameStringTestAgainstExclusions ( GrammarTreeNode & node );
   std::string getFunctionNameStringTestAgainstExclusions 
-    ( Terminal & node,
+    ( AstNodeClass & node,
       std::vector<GrammarString *> &,
       std::vector<GrammarString *> & excludeList );
 
@@ -114,11 +96,11 @@ class GrammarString
   // MS 2014: 
   std::string infoFieldsToString() const;
 
-// DQ (10/8/2014): This returns the name of the type where this data member is a container.
-// The container type is required as part of ATerm support in reading the ATerms and generating
-// the ROSE IR.
-  std::string containerElementTypeString(Terminal & node) const;
-  std::string containerAppendFunctionNameString(Terminal & node) const;
+  // DQ (10/8/2014): This returns the name of the type where this data member is a container.
+  // The container type is required as part of ATerm support in reading the ATerms and generating
+  // the ROSE IR.
+  std::string containerElementTypeString(AstNodeClass & node) const;
+  std::string containerAppendFunctionNameString(AstNodeClass & node) const;
 
   void setIsInConstructorParameterList(ConstructParamEnum X);
   ConstructParamEnum getIsInConstructorParameterList() const;
@@ -150,12 +132,12 @@ class GrammarString
 
   // BP : 10/10/2001, five functions moved from Grammar class
   static std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
-  static inline StringUtility::FileWithLineNumbers copyEdit ( const StringUtility::FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken ) {return StringUtility::copyEdit(inputString, oldToken, newToken);}
-  static inline StringUtility::FileWithLineNumbers copyEdit ( const StringUtility::FileWithLineNumbers& inputString, const std::string& oldToken, const StringUtility::FileWithLineNumbers& newToken ) {return StringUtility::copyEdit(inputString, oldToken, newToken);}
+  static inline rose::StringUtility::FileWithLineNumbers copyEdit ( const rose::StringUtility::FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken ) {return rose::StringUtility::copyEdit(inputString, oldToken, newToken);}
+  static inline rose::StringUtility::FileWithLineNumbers copyEdit ( const rose::StringUtility::FileWithLineNumbers& inputString, const std::string& oldToken, const rose::StringUtility::FileWithLineNumbers& newToken ) {return rose::StringUtility::copyEdit(inputString, oldToken, newToken);}
   static bool isContainedIn ( const std::string& longString, const std::string& shortString );
   // A smarter string concatination function (corrects for space in the target automatically)
   static std::string stringConcatenate ( const std::string& target, const std::string& endingString );
-
+  
 };
 
 #endif

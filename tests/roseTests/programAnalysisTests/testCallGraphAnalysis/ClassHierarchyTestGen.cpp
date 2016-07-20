@@ -101,7 +101,7 @@ void generateOutStreams(const vector<string> & fileNames, vector<ostream*> & ost
     {
         stringstream path;
         path<<outputFolderName << "/" << fileNames[i];
-        ofstream * stream = new ofstream(path.str().c_str());
+        std::ofstream * stream = new std::ofstream(path.str().c_str());
         ostreamVec.push_back(stream);
 
         *stream << "#ifndef " << StringToUpper(fileNames[i]) << endl;
@@ -127,7 +127,7 @@ void printMain(const vector<string> & headerFiles)
 {
     stringstream fileName;
     fileName << outputFolderName << "/" << "main.cpp";
-    ofstream os (fileName.str().c_str());
+    std::ofstream os (fileName.str().c_str());
 
     for(size_t i=0; i < headerFiles.size(); i++)
         os << "#include \"" << headerFiles[i] << "\"" << endl;
@@ -195,7 +195,7 @@ void printGraphToFile(Graph & g,const vector<string> & vertexNames )
 {
     stringstream fileName;
     fileName << outputFolderName << "/" << "dumpfile.cmp.out";
-    ofstream os (fileName.str().c_str());
+    std::ofstream os (fileName.str().c_str());
     printGraph(os,g,vertexNames);
 }
 

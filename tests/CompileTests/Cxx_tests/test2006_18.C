@@ -78,12 +78,14 @@ static void conv_host_fp_to_float()
 #endif
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// #if ( __GNUC__ == 3 )
+#if ( defined(__clang__) == 0 && __GNUC__ == 3 )
 
 #include <fstream>
 #include <math.h>
 
-#if ( (__GNUC__ == 3) && (__GNUC_MINOR__ < 4) )
+// #if ( (__GNUC__ == 3) && (__GNUC_MINOR__ < 4) )
+#if ( defined(__clang__) == 0 && __GNUC__ == 3  && __GNUC_MINOR__ < 4 )
 
 #ifdef isfinite
   #warning isdef isfinite

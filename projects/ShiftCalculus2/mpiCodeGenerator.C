@@ -5,6 +5,7 @@
 #include "mpiCodeGenerator.h"
 
 using namespace std;
+using namespace rose;
 using namespace AstFromString; // parser building blocks
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -424,8 +425,14 @@ void MPI_Code_Generator::transForLoop(SgForStatement* for_stmt, SgVariableDeclar
   // rewrite the lower and upper bounds
   // Assumption: the loop is already normalized to be canonical Fortran style: inclusive bounds
   setLoopLowerBound(for_stmt, buildIntVal(0));
-  setLoopUpperBound(for_stmt, buildVarRefExp(local_size_decl));
+// (PHLin: 3/29/2016)
+// The upperbound condition can be less than, or less than equal.  Need to be more strict about the transformation.
+//  setLoopUpperBound(for_stmt, buildVarRefExp(local_size_decl));
 
+    SgExprStatement* exprStmt = isSgExprStatement(getLoopCondition(for_stmt));
+    SgBinaryOp* expr = isSgBinaryOp(exprStmt->get_expression());
+    SgBinaryOp* newExpr = buildLessThanOp(expr->get_lhs_operand(), buildVarRefExp(local_size_decl));
+    exprStmt->set_expression(newExpr);
 }
 
 SgExprStatement* MPI_Code_Generator::buildMPI_Barrier(SgScopeStatement* insertion_scope)
@@ -684,7 +691,7 @@ void MPI_Code_Generator::transMPIDeviceMaster (SgOmpTargetStatement * t_stmt)
    {
      // save current stmt before getting next one 
      SgStatement* cur_stmt = next_stmt;
-     next_stmt = getNextStatement (next_stmt);
+     next_stmt = SageInterface::getNextStatement (next_stmt);
      //ROSE_ASSERT (next_stmt != NULL);
      if (SgVariableDeclaration* decl = isSgVariableDeclaration (cur_stmt))
        splitVariableDeclaration (decl);
@@ -696,7 +703,7 @@ void MPI_Code_Generator::transMPIDeviceMaster (SgOmpTargetStatement * t_stmt)
    {
      // save current stmt before getting next one 
      SgStatement* cur_stmt = next_stmt;
-     next_stmt = getNextStatement (next_stmt);
+     next_stmt = SageInterface::getNextStatement (next_stmt);
      //ROSE_ASSERT (next_stmt != NULL);
 
      if (!isSgVariableDeclaration(cur_stmt))
@@ -952,26 +959,26 @@ namespace MPI_Code_Generator
         insertStatementAfter (end_attribute->pragma_node, ifstmt);
         SgBasicBlock * bb = isSgBasicBlock(ifstmt->get_true_body());
 
-        SgStatement* next_stmt = getNextStatement(cur_attr->pragma_node); // the next stmt is BB, skip it by starting the search from it
+        SgStatement* next_stmt = SageInterface::getNextStatement(cur_attr->pragma_node); // the next stmt is BB, skip it by starting the search from it
         ROSE_ASSERT (next_stmt != NULL);
         // normalize all declarations
         while ( next_stmt != end_attribute ->pragma_node)
         {
           // save current stmt before getting next one 
           SgStatement* cur_stmt = next_stmt; 
-          next_stmt = getNextStatement (next_stmt);
+          next_stmt = SageInterface::getNextStatement (next_stmt);
           ROSE_ASSERT (next_stmt != NULL);
 
           if (SgVariableDeclaration* decl = isSgVariableDeclaration (cur_stmt))
             splitVariableDeclaration (decl);
         }
         // move all non-declaration statements in between into the block
-        next_stmt = getNextStatement(cur_attr->pragma_node); //reset from the beginning
+        next_stmt = SageInterface::getNextStatement(cur_attr->pragma_node); //reset from the beginning
         while ( next_stmt != end_attribute ->pragma_node) 
         {
           // save current stmt before getting next one 
           SgStatement* cur_stmt = next_stmt; 
-          next_stmt = getNextStatement (next_stmt);
+          next_stmt = SageInterface::getNextStatement (next_stmt);
           ROSE_ASSERT (next_stmt != NULL);
            
           if (!isSgVariableDeclaration(cur_stmt))

@@ -67,13 +67,13 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
     VariableId varId=(*i).first;
     //string variableName=variableIdMapping.uniqueShortVariableName(varId);
     string variableName=variableIdMapping.variableName(varId);
-    set<CppCapsuleConstIntLattice> valueSet=(*i).second;
+    set<ConstIntLattice> valueSet=(*i).second;
     stringstream setstr;
     setstr<<"{";
-    for(set<CppCapsuleConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
+    for(set<ConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
       if(i!=valueSet.begin())
         setstr<<",";
-      setstr<<(*i).getValue().toString();
+      setstr<<(*i).toString();
     }
     setstr<<"}";
     cout<<variableName<<"="<<setstr.str()<<";";

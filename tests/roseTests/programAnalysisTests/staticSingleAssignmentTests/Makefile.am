@@ -72,8 +72,14 @@ test2011_05.c \
 testAnsiC.c \
 testCvsCpp.c \
 test_CplusplusMacro_C.c \
-YardenPragmaPackExample.c \
-Yarden_client.c 
+YardenPragmaPackExample.c 
+
+# Yarden_client.c 
+
+if !USING_CLANG_COMPILER
+C_TESTCODES_REQUIRED_TO_PASS += \
+   Yarden_client.c 
+endif
 
 C_FAILURE_TESTCODES = \
 expected failure (need special compile cmd) test2005_168.c \
@@ -281,15 +287,12 @@ test2004_162.C \
 test2004_163.C \
 test2004_164.C \
 test2005_01.C \
-test2005_03.C \
 test2005_04.C \
 test2005_05.C \
 test2005_07.C \
 test2005_08.C \
 test2005_09.C \
-test2005_11.C \
 test2005_12.C \
-test2005_13.C \
 test2005_14.C \
 test2005_15.C \
 test2005_16.C \
@@ -326,12 +329,10 @@ test2005_61.C \
 test2005_62.C \
 test2005_63.C \
 test2005_65.C \
-test2005_66.C \
 test2005_67.C \
 test2005_68.C \
 test2005_70.C \
 test2005_71.C \
-test2005_72.C \
 test2005_77.C \
 test2005_78.C \
 test2005_80.C \
@@ -386,7 +387,6 @@ test2005_146.C \
 test2005_147.C \
 test2005_148.C \
 test2005_149.C \
-test2005_153.C \
 test2005_154.C \
 test2005_156.C \
 test2005_157.C \
@@ -658,6 +658,17 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C
+
+if !USING_CLANG_COMPILER
+CXX_TESTCODES_REQUIRED_TO_PASS += \
+   test2005_03.C \
+   test2005_11.C \
+   test2005_13.C \
+   test2005_66.C \
+   test2005_72.C \
+   test2005_153.C 
+endif
+
 
 NEW_FAIL_EDG47= \
    test2003_36.C \

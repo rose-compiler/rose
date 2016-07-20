@@ -101,6 +101,11 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
           SgScopeStatement* explictlySpecifiedCurrentScope;
 
      public:
+       // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+          static Sawyer::Message::Facility mlog;
+          static void initDiagnostics();
+
+     public:
        // DQ (4/3/2014): This map of sets is build once and then used to resolve when declarations have been
        // placed into scopes where they would permit name qualification (see test2014_32.C).
           SageInterface::DeclarationSets* declarationSet;

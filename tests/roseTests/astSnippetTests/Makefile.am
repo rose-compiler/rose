@@ -802,7 +802,9 @@ $(EXTRAS_TARGETS_C): extras_%.passed: injectSnippet listSnippets $(EXTRAS_SNIPPE
 EXTRAS_SNIPPET_FILES_J = $(notdir $(wildcard $(EXTRAS_SNIPPET_DIR)/*.java))
 EXTRAS_TARGETS_J = $(addprefix extras_, $(addsuffix .passed, $(EXTRAS_SNIPPET_FILES_J)))
 EXTRAS_SPECIMEN_J = $(srcdir)/SmallSpecimensJava/Specimen1.java
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 TEST_TARGETS += $(EXTRAS_TARGETS_J)
+endif
 
 $(EXTRAS_TARGETS_J): \
 extras_%.passed: injectSnippet listSnippets $(EXTRAS_SNIPPET_DIR)/% $(EXTRAS_SPECIMEN_J) $(INJECT_ALL_TEST)

@@ -123,7 +123,7 @@ countMatches(const Set &s1, Set s2, Value delta, Value mask) {
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
 
     // Parse command line
     Settings settings;

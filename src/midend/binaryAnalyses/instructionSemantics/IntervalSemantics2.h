@@ -9,7 +9,6 @@
 
 #include "BaseSemantics2.h"
 #include "integerOps.h"
-#include "rangemap.h"
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
 
@@ -18,41 +17,14 @@ namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
 
-/** An interval analysis semantic domain.
- *
- *  Each value in this domain is a set of intervals in the 32-bit unsigned integer space.  The intervals are represented by
- *  ROSE's Range type and the set of ranges is represented by ROSE's RangeMap class. In other words, a semantic value is
- *  actually a discontiguous set of intervals rather than the single interval that's usually used in these kinds of analyses. */
+/** An interval analysis semantic domain. */
 namespace IntervalSemantics {
 
-/** Range of possible values.  We only define this so the range-printing methods are a bit more intuitive for semantic
- *  analysis.  Otherwise we'll end up using the Extent::print() method which is more suitable for things like section
- *  addresses. */
-class Interval: public Range<uint64_t> {
-public:
-    Interval(): Range<uint64_t>() {}
-    explicit Interval(uint64_t first): Range<uint64_t>(first) {}
-    Interval(uint64_t first, uint64_t size): Range<uint64_t>(first, size) {}
-    Interval(const Range<uint64_t> &other): Range<uint64_t>(other) {} /*implicit*/
-
-    static Interval inin(const uint64_t &first, const uint64_t &last) {
-        ASSERT_require(first<=last);
-        Interval retval;
-        retval.first(first);
-        retval.last(last);
-        return retval;
-    }
-
-    /** Convert a bit mask to a string. */
-    static std::string to_string(uint64_t n);
-
-    void print(std::ostream &o) const;
-};
-
-std::ostream& operator<<(std::ostream &o, const Interval &x);
+/* Single contiguous interval. */
+typedef Sawyer::Container::Interval<uint64_t> Interval;
 
 /** Set of intervals. */
-typedef RangeMap<Interval> Intervals;
+typedef Sawyer::Container::IntervalSet<Interval> Intervals;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Semantic values
@@ -64,27 +36,32 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 /** Type of values manipulated by the IntervalSemantics domain. */
 class SValue: public BaseSemantics::SValue {
 protected:
-    Intervals p_intervals;
+    Intervals intervals_;
+    bool isBottom_;
 
 protected:
     // Protected constructors. See base class and public members for documentation
-    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
-        p_intervals.insert(Interval::inin(0, IntegerOps::genMask<uint64_t>(nbits)));
+    explicit SValue(size_t nbits):
+        BaseSemantics::SValue(nbits), isBottom_(false){
+        intervals_.insert(Interval::hull(0, IntegerOps::genMask<uint64_t>(nbits)));
     }
-    SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
+    SValue(size_t nbits, uint64_t number)
+        : BaseSemantics::SValue(nbits), isBottom_(false) {
         number &= IntegerOps::genMask<uint64_t>(nbits);
-        p_intervals.insert(Interval(number));
+        intervals_.insert(number);
     }
-    SValue(size_t nbits, uint64_t v1, uint64_t v2): BaseSemantics::SValue(nbits) {
+    SValue(size_t nbits, uint64_t v1, uint64_t v2):
+        BaseSemantics::SValue(nbits), isBottom_(false) {
         v1 &= IntegerOps::genMask<uint64_t>(nbits);
         v2 &= IntegerOps::genMask<uint64_t>(nbits);
         ASSERT_require(v1<=v2);
-        p_intervals.insert(Interval::inin(v1, v2));
+        intervals_.insert(Interval::hull(v1, v2));
     }
-    SValue(size_t nbits, const Intervals &intervals): BaseSemantics::SValue(nbits) {
-        ASSERT_require(!intervals.empty());
-        ASSERT_require((intervals.max() <= IntegerOps::genMask<uint64_t>(nbits)));
-        p_intervals = intervals;
+    SValue(size_t nbits, const Intervals &intervals):
+        BaseSemantics::SValue(nbits), isBottom_(false) {
+        ASSERT_require(!intervals.isEmpty());
+        ASSERT_require((intervals.greatest() <= IntegerOps::genMask<uint64_t>(nbits)));
+        intervals_ = intervals;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,28 +72,44 @@ public:
         return SValuePtr(new SValue(1));
     }
 
-    /** Instantiate a new undefined value of particular size. */
-    static SValuePtr instance(size_t nbits) {
+    /** Instantiate a new data-flow-bottom value of specified width. */
+    static SValuePtr instance_bottom(size_t nbits) {
+        SValue *self = new SValue(nbits);
+        self->isBottom_ = true;
+        return SValuePtr(self);
+    }
+
+    /** Instantiate a new undefined value of particular width.  Currently, there is no distinction between an unspecified
+     *  value, an undefined value, and an interval that can represent any value of the specified size. */
+    static SValuePtr instance_undefined(size_t nbits) {
         return SValuePtr(new SValue(nbits));
     }
 
-    /** Instantiate a new concrete value of particular size. */
-    static SValuePtr instance(size_t nbits, uint64_t number) {
+    /** Instantiate a new unspecified value of specific width.
+     *
+     *  Currently, there is no distinction between an unspecified value, an undefined value, and an interval that can represent
+     *  any value of the specified size. */
+    static SValuePtr instance_unspecified(size_t nbits) {
+        return SValuePtr(new SValue(nbits));
+    }
+
+    /** Instantiate a new concrete value of particular width. */
+    static SValuePtr instance_integer(size_t nbits, uint64_t number) {
         return SValuePtr(new SValue(nbits, number));
     }
 
     /** Instantiate a new value from a set of intervals. */
-    static SValuePtr instance(size_t nbits, const Intervals &intervals) {
+    static SValuePtr instance_intervals(size_t nbits, const Intervals &intervals) {
         return SValuePtr(new SValue(nbits, intervals));
     }
 
     /** Instantiate a new value that's constrained to be between two unsigned values, inclusive. */
-    static SValuePtr instance(size_t nbits, uint64_t v1, uint64_t v2) {
+    static SValuePtr instance_hull(size_t nbits, uint64_t v1, uint64_t v2) {
         return SValuePtr(new SValue(nbits, v1, v2));
     }
 
     /** Instantiate a new copy of an existing value. */
-    static SValuePtr instance(const SValuePtr &other) {
+    static SValuePtr instance_copy(const SValuePtr &other) {
         return SValuePtr(new SValue(*other));
     }
     
@@ -134,17 +127,17 @@ public:
     // Virtual allocating constructors inherited from the super class
 public:
     virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_bottom(nbits);
     }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_undefined(nbits);
     }
     virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_unspecified(nbits);
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t number) const ROSE_OVERRIDE {
-        return instance(nbits, number);
+        return instance_integer(nbits, number);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
@@ -161,13 +154,13 @@ public:
 public:
     /** Construct a ValueType that's constrained to be between two unsigned values, inclusive. */
     virtual SValuePtr create(size_t nbits, uint64_t v1, uint64_t v2) {
-        return instance(nbits, v1, v2);
+        return instance_hull(nbits, v1, v2);
     }
 
     /** Construct a ValueType from a rangemap. Note that this does not truncate the rangemap to contain only values that would
      *  be possible for the ValueType size--see unsignedExtend() for that. */
     virtual SValuePtr create(size_t nbits, const Intervals &intervals) {
-        return instance(nbits, intervals); 
+        return instance_intervals(nbits, intervals); 
     }
 
     /** Generate ranges from bits. Given the set of bits that could be set, generate a range.  We have to be careful here
@@ -185,33 +178,31 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual bool isBottom() const ROSE_OVERRIDE {
-        return false;
+        return isBottom_;
     }
 
     virtual bool is_number() const ROSE_OVERRIDE {
-        return 1==p_intervals.size();
+        return 1==intervals_.size();
     }
     
     virtual uint64_t get_number() const {
-        ASSERT_require(1==p_intervals.size());
-        return p_intervals.min();
+        ASSERT_require(1==intervals_.size());
+        return intervals_.least();
     }
 
-    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const ROSE_OVERRIDE {
-        output <<p_intervals <<"[" <<get_width() <<"]";
-    }
+    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods introduced at this level of the class hierarchy
 public:
     /** Returns the rangemap stored in this value. */
     const Intervals& get_intervals() const {
-        return p_intervals;
+        return intervals_;
     }
 
     /** Changes the rangemap stored in the value. */
     void set_intervals(const Intervals &intervals) {
-        p_intervals = intervals;
+        intervals_ = intervals;
     }
 
     /** Returns all possible bits that could be set. */

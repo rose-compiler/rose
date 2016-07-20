@@ -257,7 +257,8 @@
 #include "rose_attributes_list.h"
 
 // Include ROSE common utility function library
-#include "string_functions.h"
+#include "StringUtility.h"
+#include "FileUtility.h"
 #include "escape.h"
 
 // Include support for Brian Gunney's command line parser tool (nice work)
@@ -452,6 +453,8 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 
 // endif for ifndef ROSE_USE_SWIG_SUPPORT
 // #endif
+
+#include <initialize.h>                                 // defines rose::initialize
 
 #endif
 

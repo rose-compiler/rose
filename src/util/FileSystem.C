@@ -167,13 +167,16 @@ findNamesRecursively(const Path &root) {
     return findNamesRecursively(root, isExisting, isDirectory);
 }
 
-#if (__cplusplus >= 201103L) 
-#if !defined(BOOST_COMPILED_WITH_CXX11)
-   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
-#else
-   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
-#endif
-#endif
+// This doesn't make any sense! First, BOOST_COMPILED_WITH_CXX11 is never defined in any version of boost. Second, even if it
+// were defined, it would come from boost header files which are always compiled with the same compile as that which is
+// compiling this source file. [Robb Matzke 2016-02-17]
+//#if (__cplusplus >= 201103L) 
+//#if !defined(BOOST_COMPILED_WITH_CXX11)
+//   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
+//#else
+//   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
+//#endif
+//#endif
 
 void
 copyFile(const Path &src, const Path &dst) {

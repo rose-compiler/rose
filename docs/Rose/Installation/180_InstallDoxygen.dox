@@ -5,10 +5,9 @@
  *
  *  Instructions for installing <a href="http://www.stack.nl/~dimitri/doxygen">Doxygen</a>, a ROSE software dependency.
  *
- *  @section installing_doxygen_rhel Redhat Enterprise Linux
+ *  @section installing_doxygen_rhel Red Hat Enterprise Linux 7
  *
- *  @todo Describe how to install Doxygen on RHEL.
- *  Todo.
+ *  Run <code>yum install doxygen</code> as the administrator.
  *
  *  @section installing_doxygen_wheezy Debian 7 "Wheezy"
  *

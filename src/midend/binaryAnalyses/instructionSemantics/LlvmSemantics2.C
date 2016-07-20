@@ -227,7 +227,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         std::ostream &o;
         const RegisterDescriptors &regs;
         const RegisterDictionary *dictionary;
-        std::set<uint64_t> seen;
+        std::set<SymbolicExpr::Hash> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
         virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) ROSE_OVERRIDE {
@@ -1035,7 +1035,6 @@ RiscOperators::emit_global_read(std::ostream &o, const std::string &varname, siz
     ASSERT_require(!varname.empty() && varname[0]=='@');
     LeafPtr t1 = next_temporary(nbits);
     if (llvmVersion_ < 3007000) {
-        static unsigned nwarnings = 0;
         if (0 == llvmVersion_ && 0 == nVersionWarnings++)
             mlog[WARN] <<"LLVM version number is unknown; assuming 1-argument \"load\" instructions\n";
         o <<prefix() <<llvm_lvalue(t1) <<" = load " <<llvm_integer_type(nbits) <<"* " <<varname <<"\n";

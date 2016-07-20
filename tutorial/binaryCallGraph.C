@@ -8,6 +8,7 @@
 //! [headers]
 
 //! [namespaces]
+using namespace rose;
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 //! [namespaces]
@@ -48,6 +49,7 @@ parseCommandLine(int argc, char *argv[], Partitioner2::Engine &engine, Settings 
 int
 main(int argc, char *argv[]) {
     //! [setup]
+    ROSE_INITIALIZE;
     Settings settings;
     Partitioner2::Engine engine;
     std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);

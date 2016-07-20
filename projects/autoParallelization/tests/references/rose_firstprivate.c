@@ -1,3 +1,4 @@
+#include "omp.h" 
 int g;
 
 void foo()

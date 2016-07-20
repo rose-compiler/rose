@@ -754,6 +754,7 @@ bgl_time_remove_vertex()
     // testing performance when we already know its bad, and why would ROSE generic graph algorithms want to ever delete a
     // vertex knowing that performance is bad and that they have to specialize based on graph type.
     std::cout <<"  remove vertex:   not implemented for this graph type\n";
+    return Totals();
 #else
     GraphType g;
     start_deadman(2);
@@ -1104,7 +1105,9 @@ static void run_sawyer() {
 
 static void run_sawyer_pool() {
     // "int" could be "void" for this test when supported
-    typedef Sawyer::Container::Graph<int, int, Sawyer::UnsynchronizedPoolAllocator> sgl1;
+    typedef Sawyer::Container::GraphVertexNoKey<int> VertexKey;
+    typedef Sawyer::Container::GraphEdgeNoKey<int> EdgeKey;
+    typedef Sawyer::Container::Graph<int, int, VertexKey, EdgeKey, Sawyer::UnsynchronizedPoolAllocator> sgl1;
     sgl_test_all<sgl1>("Sawyer Graph using memory pools");
 }
 
@@ -1116,7 +1119,9 @@ static void run_sawyer_bgl() {
 
 static void run_sawyer_bgl_pool() {
     // "int" could be "void" for this test when supported
-    typedef Sawyer::Container::Graph<int, int, Sawyer::UnsynchronizedPoolAllocator> sgl1;
+    typedef Sawyer::Container::GraphVertexNoKey<int> VertexKey;
+    typedef Sawyer::Container::GraphEdgeNoKey<int> EdgeKey;
+    typedef Sawyer::Container::Graph<int, int, VertexKey, EdgeKey, Sawyer::UnsynchronizedPoolAllocator> sgl1;
     bgl_test_all<sgl1>("Sawyer Graph w/BGL interface using memory pools");
 }
 

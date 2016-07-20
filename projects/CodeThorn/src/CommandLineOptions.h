@@ -24,10 +24,7 @@ private:
   std::map<std::string,bool> mapping;
 };
 
-enum ResultsFormat { RF_UNKNOWN, RF_RERS2012, RF_RERS2013 };
-
 extern BoolOptions boolOptions; // defined in CommandLineOptions.C
 extern boost::program_options::variables_map args; // defined in CommandLineOptions.C
 extern int option_debug_mode;
-extern ResultsFormat resultsFormat;
 #endif

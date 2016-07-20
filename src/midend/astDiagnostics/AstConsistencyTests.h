@@ -334,6 +334,10 @@ class TestChildPointersInMemoryPool : public ROSE_VisitTraversal
       //! static function to do test on any IR node
           static void test();
 
+       // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+          static Sawyer::Message::Facility mlog;
+          static void initDiagnostics();
+
           virtual void visit( SgNode * );
    };
 

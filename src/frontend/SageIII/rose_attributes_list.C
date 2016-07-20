@@ -16,11 +16,12 @@
 //  Include the token class from Wave
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 //  Include Wave itself
 #include <boost/wave.hpp>
 
 token_container wave_tokenStream;
-
+#endif
 
 // #include <boost/wave/grammars/cpp_xpression_grammar.hpp> //as_string
 
@@ -42,6 +43,7 @@ std::map<std::string,ROSEAttributesList* > mapFilenameToAttributes;
 using namespace std;
 using namespace rose;
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // DQ (3/9/2013): Moved this function from the header file to support SWIG
 std::string
 PreprocessingInfo::rose_macro_call::get_expanded_string()
@@ -52,13 +54,15 @@ PreprocessingInfo::rose_macro_call::get_expanded_string()
           os << (*iter).get_value();
      return os.str();
    }
+#endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // DQ (3/9/2013): Moved this function from the header file to support SWIG (to be uniform with fix above).
 PreprocessingInfo::rose_macro_call::rose_macro_call()
    : macro_call(), arguments(),expanded_macro()
    {
    }
-
+#endif
 
 // JH (01/03/2006) methods for packing the PreprocessingInfo data, in order to store it into
 // a file and rebuild it!
@@ -83,10 +87,13 @@ unsigned int PreprocessingInfo::packed_size () const
   // Until we add the support to save all the Wave data into 
   // the AST file we would have to reprocess the relevant 
   // file to store this.
-     packedSize += sizeof (tokenStream) +
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
+     packedSize += 
+                   sizeof (tokenStream) +
                    sizeof (macroDef) +
                    sizeof (macroCall) +
                    sizeof (includeDirective);
+#endif
 // #endif
 
   // Debugging information.  What can we assert about the packedSize vs. the sizeof(PreprocessingInfo)?
@@ -207,6 +214,7 @@ void PreprocessingInfo::unpacked( char* storePointer )
      printf ("DONE: Calling display on unpacked Sg_File_Info object \n");
 #endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
 // #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
@@ -217,6 +225,7 @@ void PreprocessingInfo::unpacked( char* storePointer )
      macroCall        = NULL;
      includeDirective = NULL;
 // #endif     
+#endif
 
   // DQ (2/28/2010): Some assertion checking that will be done later in the unparser.
   // This test helps debug if any of the data members are set at an offset to there 
@@ -230,6 +239,7 @@ void PreprocessingInfo::unpacked( char* storePointer )
 // Member functions for class PreprocessingInfo
 // ********************************************
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
 // #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
@@ -240,44 +250,53 @@ PreprocessingInfo::get_macro_call()
    { 
      return macroCall;
    } 
+#endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // AS(012006) Added to support macros
 PreprocessingInfo::rose_macro_definition*
 PreprocessingInfo::get_macro_def()
    {
      return macroDef;
    } 
+#endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 //AS(060706) Added support for include directive
 PreprocessingInfo::rose_include_directive*
 PreprocessingInfo::get_include_directive()
    {
      return includeDirective;
    } 
+#endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 const token_container*
 PreprocessingInfo::get_token_stream()
    {
      return tokenStream;
    } 
+#endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 void PreprocessingInfo::push_back_token_stream(token_type tok)
    {
      tokenStream->push_back(tok);
 
-     internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) ;
+     internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+   }
+#endif
 
-   } 
-
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 void PreprocessingInfo::push_front_token_stream(token_type tok)
    {
      tokenStream->insert(tokenStream->begin(),tok);
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
-
   }
+#endif
 
-
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // AS(012006) Added to support macros
 PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType typeOfDirective, RelativePositionType relPos) 
    : whatSortOfDirective(typeOfDirective), relativePosition(relPos)
@@ -318,7 +337,9 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
          std::cout << " String for declaration:" << internalString<< " at line: " << lineNo << " and col:" << colNo << std::endl;
 
    }
+#endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 // AS(012006) Added to support macros
 PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionType relPos) 
 // DQ (2/28/2010): Removed preinitialization list to avoid compiler warnings about the order 
@@ -392,7 +413,9 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionTyp
         }
 
    }
+#endif
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositionType relPos) 
 // DQ (2/28/2010): Removed preinitialization list to avoid compiler warnings about the order 
 // of the initializations.  These are due to a reordering of the data members in the class
@@ -483,8 +506,9 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositi
 #endif
         }
    }
+#endif
 
-
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePositionType relPos) 
 // DQ (2/28/2010): Removed preinitialization list to avoid compiler warnings about the order 
 // of the initializations.  These are due to a reordering of the data members in the class
@@ -524,8 +548,10 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
   // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
      p_isTransformation = false;
    }
+#endif
 
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 PreprocessingInfo::PreprocessingInfo( token_type directive, token_list_container expression, bool expression_value, DirectiveType dirType, RelativePositionType relPos )
    : relativePosition(relPos)
    {
@@ -566,6 +592,7 @@ PreprocessingInfo::PreprocessingInfo( token_type directive, token_list_container
 #endif
         }
    }
+#endif
 
 // #endif
 
@@ -2597,25 +2624,29 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
 #if 0
                     printf ("quotedFilename = %s \n",quotedFilename.c_str());
 #endif
-                    ROSE_ASSERT(quotedFilename[0] == '\"');
-                    ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
-                    std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+                 // DQ (6/1/2016): Fix for case of trailing spaces after the line number (no quoted file name).  See test2016_17.c.
+                 // ROSE_ASSERT(quotedFilename[0] == '\"');
+                    if (quotedFilename[0] == '\"')
+                       {
+                         ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+                         std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
 #if 0
-                    printf ("filename = %s \n",filename.c_str());
+                         printf ("filename = %s \n",filename.c_str());
 #endif
-                 // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
-                    Sg_File_Info::addFilenameToMap(filename);
+                      // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
+                         Sg_File_Info::addFilenameToMap(filename);
 
-                    int fileId = Sg_File_Info::getIDFromFilename(filename);
+                         int fileId = Sg_File_Info::getIDFromFilename(filename);
 
-                    if (SgProject::get_verbose() > 1)
-                       {
-                         printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
-                       }
+                         if (SgProject::get_verbose() > 1)
+                            {
+                              printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
+                            }
 
-                    if (filenameIdSet.find(fileId) == filenameIdSet.end())
-                       {
-                         filenameIdSet.insert(fileId);
+                         if (filenameIdSet.find(fileId) == filenameIdSet.end())
+                            {
+                              filenameIdSet.insert(fileId);
+                            }
                        }
                   }
                  else

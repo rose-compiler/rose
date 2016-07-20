@@ -29,7 +29,7 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *
  *  A basic block is a read-only object once it reaches the BB_COMPLETE state, and can thus be shared between partitioners and
  *  threads.  The memory for these objects is shared and managed by a shared pointer implementation. */
-class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
+class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
     /** Shared pointer to a basic block. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;
@@ -164,6 +164,12 @@ public:
      *  block. */
     rose_addr_t address() const { return startVa_; }
 
+    /** Get all instruction addresses.
+     *
+     *  The return value is the set of all virtual addresses for both instruction starting addresses and the internal addresses
+     *  of instructions. */
+    AddressIntervalSet insnAddresses() const;
+
     /** Get the address after the end of the final instruction.
      *
      *  This is the address that immediately follows the final byte of the instruction that is executed last by the basic
@@ -228,6 +234,11 @@ public:
 public:
     /** Get the number of data blocks owned. */
     size_t nDataBlocks() const { return dblocks_.size(); }
+
+    /** Addresses that are part of static data.
+     *
+     *  Returns all addresses that are part of static data. */
+    AddressIntervalSet dataAddresses() const;
 
     /** Determine if this basic block contains the specified data block.
      *

@@ -828,7 +828,9 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                  else
                   {
                  // DQ (1/21/2013): This case is part of supporting template instnations than don't have an associated template declaration.
+#if 0
                     printf ("In ProcessMemberFunctionTemplateDeclarations(): Note that some template instantiations might not have an associated template declaration (see test2013_08.C, and BoxLib test2013_15.C) \n");
+#endif
                   }
                
 #if 0

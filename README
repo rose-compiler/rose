@@ -8,7 +8,6 @@
 
   ROSE compiler -- A compiler infrastructure to build source-to-source program
                    transformation and analysis tools.
-  Version 0.9.6a
 
   http://www.rosecompiler.org/
 

@@ -1,6 +1,7 @@
 #include "ai_measurement.h"
 
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace AstFromString;
@@ -31,6 +32,7 @@ namespace ArithemeticIntensityMeasurement
     return string(FPOpKindNameList[op_kind]);
   } 
   bool debug;
+  int algorithm_version = 1;
   // default file name to store the report
   string report_filename = "ai_tool_report.txt";
   string report_option ="-report-file";
@@ -65,13 +67,29 @@ namespace ArithemeticIntensityMeasurement
    ss<<"----------Floating Point Operation Counts---------------------"<<endl;
    ss<<comment<<endl;
    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
-   ss<<node->class_name() <<"@" <<endl;
-   ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
+   if (node != NULL)
+   {
+     ss<<node->class_name() <<"@" <<endl;
+     ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line()<<":"<<node->get_file_info()->get_col() <<endl;
+   }
+   else
+     ss<< "NULL node"<<endl;
    ss<<"\tfp_plus:"<< plus_count<<endl;
    ss<<"\tfp_minus:"<< minus_count<<endl;
    ss<<"\tfp_multiply:"<< multiply_count<<endl;
    ss<<"\tfp_divide:"<< divide_count<<endl;
    ss<<"\tfp_total:"<< getTotalCount()<<endl;
+
+   ss<<"----------Memory Operation Counts---------------------"<<endl;
+   ss<<comment<<endl;
+   if (load_bytes== NULL)
+     ss<<"\tLoads: NULL "<<endl;
+   else
+     ss<<"\tLoads:"<< load_bytes->unparseToString()<<endl;
+   if (store_bytes== NULL)
+     ss<<"\tStores: NULL "<<endl;
+   else
+     ss<<"\tStores:"<< store_bytes->unparseToString()<<endl;
 
    return ss.str();
  }
@@ -138,7 +156,13 @@ namespace ArithemeticIntensityMeasurement
        addDivideCount(i);
        break;
      default:
-       assert (false);  
+       {
+         //TODO : we should ignore some unrecognized op kind
+         //Another case list to ignore them one by one
+        cerr<< ArithemeticIntensityMeasurement::toString(c_type) <<endl; 
+        assert (false);  
+        break;
+       }
    }
  }
 
@@ -351,7 +375,7 @@ namespace ArithemeticIntensityMeasurement
 
 
  // obtain read or write variables processed by all nested loops, if any
- void getVariablesProcessedByInnerLoops (SgScopeStatement* current_loop_body, bool isRead, std::set<SgInitializedName*>& var_set)
+ void getVariablesProcessedByInnerLoops (SgStatement* current_loop_body, bool isRead, std::set<SgInitializedName*>& var_set)
  {
    // AST query to find all loops
    // add all read/write variables into the var_set
@@ -386,17 +410,17 @@ namespace ArithemeticIntensityMeasurement
   //   Iterate on each variable in the set
   //     group them into buckets based on types, using a map<SgType*, int> to store this
   //   Iterate the list of buckets to generate count*sizeof(type) + .. expression 
-  SgExpression* calculateBytes (std::set<SgInitializedName*>& name_set, SgScopeStatement* scope, bool isRead)
+  SgExpression* calculateBytes (std::set<SgInitializedName*>& name_set, SgStatement* lbody, bool isRead)
   {
     SgExpression* result = NULL; 
     if (name_set.size()==0) return result;
 
    // the input is essentially the loop body, a scope statement
-   ROSE_ASSERT (scope != NULL);
+   ROSE_ASSERT (lbody!= NULL);
     // We need to record the associated loop info.
     SgStatement* loop= NULL;
-    SgForStatement* forloop = isSgForStatement(scope->get_scope());
-    SgFortranDo* doloop = isSgFortranDo(scope->get_scope());
+    SgForStatement* forloop = isSgForStatement(lbody->get_scope());
+    SgFortranDo* doloop = isSgFortranDo(lbody->get_scope());
 
     if (forloop)
       loop = forloop;
@@ -404,7 +428,7 @@ namespace ArithemeticIntensityMeasurement
       loop = doloop;
     else
     {
-      cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< scope->class_name()<<endl;
+      cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< lbody->class_name()<<endl;
       assert(false);
     }   
 
@@ -412,7 +436,12 @@ namespace ArithemeticIntensityMeasurement
 
    // get all processed variables by inner loops
     std::set<SgInitializedName*> processed_var_set; 
-    getVariablesProcessedByInnerLoops (scope, isRead, processed_var_set);
+    // We only exclude inner loop's variables in analysis&instrumentation mode
+    // The problem of redundant accumulation during execution happens only in this mode.
+    // The static analysis only mode does not have this concern.
+    // We want to be able to statically estimate
+   // if (running_mode == e_analysis_and_instrument)
+      getVariablesProcessedByInnerLoops (lbody, isRead, processed_var_set);
     
     // fill in the type-based counters
     std::set<SgInitializedName*>::iterator set_iter; 
@@ -526,6 +555,7 @@ namespace ArithemeticIntensityMeasurement
    for (it=input.begin(); it!=input.end(); it++)
    {
      SgInitializedName* iname = (*it);
+     if (iname ==NULL) continue; // this pointer of a class has NO SgInitializedName associated !!
      if (isSgArrayType (iname->get_type()))
        result.insert(iname);
  //    cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
@@ -551,13 +581,13 @@ namespace ArithemeticIntensityMeasurement
   {
     std::pair <SgExpression*, SgExpression*> result; 
     assert (input != NULL);
-   // the input is essentially the loop body, a scope statement
-    SgScopeStatement* scope = isSgScopeStatement(input);
+   // the input is essentially the loop body, a statement
+    SgStatement* lbody = isSgStatement(input);
 
     // We need to record the associated loop info.
     //SgStatement* loop= NULL;
-    SgForStatement* forloop = isSgForStatement(scope->get_scope());
-    SgFortranDo* doloop = isSgFortranDo(scope->get_scope());
+    SgForStatement* forloop = isSgForStatement(lbody->get_scope());
+    SgFortranDo* doloop = isSgFortranDo(lbody->get_scope());
 
     if (forloop)
     {
@@ -605,11 +635,21 @@ namespace ArithemeticIntensityMeasurement
     }
     if (!includeScalars )
       writeVars =  filterVariables (writeVars);
-    result.first =  calculateBytes (readVars, scope, true);
-    result.second =  calculateBytes (writeVars, scope, false);
+    result.first =  calculateBytes (readVars, lbody, true);
+    result.second =  calculateBytes (writeVars, lbody, false);
     return result;
   }
 
+  // count memory load/store operations, store into attribute FPCounters
+  void CountMemOperations(SgLocatedNode* input, bool includeScalars /*= true*/, bool includeIntType /*= true*/)
+  {
+    ROSE_ASSERT (input != NULL);
+    std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (input, includeScalars, includeIntType);
+    FPCounters* mycounters = getFPCounters (input); 
+    mycounters->setLoadBytes (load_store_count_pair.first);
+    mycounters->setStoreBytes (load_store_count_pair.second);
+ }
+  
   //! Count floating point operations seen in a subtree
   void CountFPOperations(SgLocatedNode* input)
   {
@@ -648,9 +688,12 @@ namespace ArithemeticIntensityMeasurement
       // Check if the operation is on float point data type
       if (bop->get_type()->isFloatType())
       {
+        // For instrumentation mode, we need to avoid double count FLOPs in inner loops
         // we assume the traverse is inside out, the inner loop will be processed first!
         // An operation is counted once when its innermost enclosing loop is processed. 
         // Using a map to avoid double counting an operation when it is enclosed in multiple loops
+        //
+        // For static counting only mode, this is a less concern.
         if (!FPVisitMAP[bop]) 
         {
 	  addFPCount (input, op_kind);
@@ -661,6 +704,7 @@ namespace ArithemeticIntensityMeasurement
     //Must update the total counter here
     FPCounters* fp_counters = getFPCounters (input); 
     fp_counters->updateTotal ();
+#if 0
     // write results to a report file
     if (running_mode == e_static_counting)
     {
@@ -668,6 +712,7 @@ namespace ArithemeticIntensityMeasurement
       cout<<"Writing counter results to "<< report_filename <<endl;
       reportFile<< fp_counters->toString();
     }
+#endif
     // debugging info
     if (debug)
       printFPCount (input);
@@ -744,7 +789,7 @@ namespace ArithemeticIntensityMeasurement
     const char* old_char = c_char;
     SgNode* old_node = c_sgnode;
 
-    c_sgnode = getNextStatement(pragmaDecl);
+    c_sgnode = SageInterface::getNextStatement(pragmaDecl);
     assert (c_sgnode != NULL);
 
     c_char = pragmaString.c_str();
@@ -834,11 +879,11 @@ namespace ArithemeticIntensityMeasurement
     // Only for a do-loop which immediately follows  chiterations =  ..
     SgVariableSymbol * chiterations_sym = lookupVariableSymbolInParentScopes(SgName("chiterations"), isSgScopeStatement(loop));
     if (chiterations_sym==NULL) return NULL;
-    SgStatement* prev_stmt = getPreviousStatement(loop,false);
+    SgStatement* prev_stmt = SageInterface::getPreviousStatement(loop,false);
 
     // backwards search, skipping pragma declaration etc.
     while (prev_stmt!=NULL && !isAssignmentStmtOf (prev_stmt, chiterations_sym->get_declaration()))
-      prev_stmt = getPreviousStatement(prev_stmt,false);
+      prev_stmt = SageInterface::getPreviousStatement(prev_stmt,false);
     if (prev_stmt == NULL) return NULL;
 
     // To support nested loops, we need to use unique chiterations variable for each loop
@@ -911,5 +956,427 @@ namespace ArithemeticIntensityMeasurement
     return prev_stmt; 
   } // end instrumentLoopForCounting()
 
+  // Obtain the kind of FP operation from a binary operation
+  fp_operation_kind_enum getFPOpKind (SgBinaryOp* bop)
+  {
+    fp_operation_kind_enum op_kind = e_unknown; 
+    ROSE_ASSERT (bop != NULL);
+    switch (bop->variantT())
+    {
+      case V_SgAddOp:
+      case V_SgPlusAssignOp:
+        op_kind = e_plus; 
+        break;
+      case V_SgSubtractOp:
+      case V_SgMinusAssignOp:  
+        op_kind = e_minus;
+        break;      
+      case V_SgMultiplyOp:
+      case V_SgMultAssignOp:  
+        op_kind = e_multiply;
+        break;      
+      case V_SgDivideOp:
+      case V_SgDivAssignOp:  
+        op_kind = e_divide;
+        break;      
+      //skip a set of binary ops which do not involve FP operation at all  
+      case V_SgAssignOp:
+      case V_SgPntrArrRefExp: // this is integer operation for array address calculation
+      case V_SgLessThanOp: //TODO how to convert this if compare two FP operands ??
+      case V_SgDotExp:
+      case V_SgArrowExp:
+      case V_SgCommaOpExp:
+        break;
+      default:
+      {
+        cerr<<"getFPOpKind () unrecognized binary op kind: "<< bop->class_name() <<endl;
+        ROSE_ASSERT (false);
+      }
+    } //end switch    
+
+    return op_kind;
+  }
+  // Bottomup evaluate attribute
+  FPCounters OperationCountingTraversal::evaluateSynthesizedAttribute (SgNode* n, SubTreeSynthesizedAttributes synthesizedAttributeList )
+  {
+    FPCounters returnAttribute; 
+    bool hasHandled = false; 
+    // Skip compiler generated code
+    if (isSgLocatedNode(n) && isSgLocatedNode(n)->get_file_info()->isCompilerGenerated() 
+        && !isSgAssignInitializer(n)  // SgAssignInitializer misses file info. right now, workaround it.
+        && !isSgBasicBlock(n)  // switch-case statement: basic blocks are generated for case or default option statements
+        && !isSgCastExp(n))  // compiler generated cast expressions
+    {
+      hasHandled = true;  
+    }
+    else  if (SgExpression* expr = isSgExpression (n))
+    {
+      if (SgBinaryOp* bop = isSgBinaryOp(expr))
+      {
+        // sum up lhs and rhs operation counts
+        FPCounters lhs_counters = synthesizedAttributeList[SgBinaryOp_lhs_operand_i];
+        FPCounters rhs_counters = synthesizedAttributeList[SgBinaryOp_rhs_operand_i];
+        returnAttribute = lhs_counters + rhs_counters;
+
+        // only consider FP operation for now TODO: make this configurable
+        if (bop->get_type()->isFloatType())
+        {
+          // based on current bop kind, increment an additional counter 
+          fp_operation_kind_enum op_kind = getFPOpKind (bop);    
+          if (op_kind !=e_unknown )
+          {
+            returnAttribute.addCount (op_kind, 1);
+            returnAttribute.updateTotal();
+          }
+        }
+        hasHandled = true; 
+      }// unary operations
+      // Other expressions
+      else if (SgFunctionCallExp* func_call = isSgFunctionCallExp (n))
+      {
+        // Function call handling:   foo(a,b, c+d)
+        // The FPLOPs should come from parameter list and function body(synthesized separately )
+        SgExpression* func_ref = func_call->get_function();
+        SgExprListExp* args = func_call->get_args();
+        FPCounters* child_counter1 = getFPCounters (func_ref);
+        FPCounters* child_counter2 = getFPCounters (args);
+        returnAttribute = *child_counter1 + *child_counter2;
+        hasHandled = true; 
+      }
+      else if (SgFunctionRefExp* func_ref = isSgFunctionRefExp (n))
+      {
+        // TODO: interprocedural synthesize analysis, until reaching a fixed point 
+        cout<<"Warning: encountering a function call "<< func_ref->get_symbol()->get_name()<<"(), assuming 0 FLOPS for now."  <<endl;
+        hasHandled = true; 
+      }
+      else if (SgConditionalExp * conditional_exp = isSgConditionalExp(n))
+      {
+        SgExpression*  cond_exp = conditional_exp->get_conditional_exp();
+        SgExpression*  true_exp = conditional_exp->get_true_exp();
+        SgExpression* false_exp = conditional_exp->get_false_exp();
+        
+        FPCounters* cond_counters = new FPCounters();
+        FPCounters* true_counters = new FPCounters();
+        FPCounters* false_counters= new FPCounters();
+        FPCounters* larger_counters=new FPCounters();
+
+        if (cond_exp)
+          *cond_counters = *(getFPCounters (cond_exp));
+        if (true_exp)
+          *true_counters = *(getFPCounters (true_exp));
+        if (false_exp)
+          *false_counters = *(getFPCounters (false_exp));
+        
+        // We estimate the upper bound of FLOPS for now
+        // TODO: using runtime profiling information to pick the right branch
+        if (true_counters->getTotalCount() > false_counters->getTotalCount())
+          larger_counters = true_counters; 
+        else
+          larger_counters = false_counters; 
+
+        returnAttribute = *cond_counters + *larger_counters;
+        hasHandled = true; 
+      }
+      else if (isSgValueExp(n))
+      {
+
+        // accessing a value does not involving FLOP operations.
+        hasHandled = true; 
+      }
+      else if (isSgVarRefExp(n))
+      {
+
+        // accessing a variable does not involving FLOP operations.
+        hasHandled = true; 
+      }
+      else if ( isSgVarArgStartOp(n) // other expressions without FLOPs 
+               )
+      {
+        hasHandled = true; 
+      }
+ 
+    }
+    else if (SgStatement* stmt = isSgStatement(n))
+    {
+      if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
+      {
+        // Ditch this synthesizedAttributeList thing, hard to use
+        // I just directly grab child node's attribute I saved previously.
+        // Directly synthesize from child expression
+        FPCounters* child_counters = getFPCounters (exp_stmt->get_expression());
+        returnAttribute = *child_counters;
+        hasHandled = true; 
+      }
+      else if (SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(n))
+      {
+        SgFunctionParameterList * plist = func_decl->get_parameterList();
+        SgFunctionDefinition* def = func_decl->get_definition();
+        if (def != NULL)
+        {
+          FPCounters* child_counter1 = getFPCounters (plist);
+          FPCounters* child_counter2 = getFPCounters (def);
+          returnAttribute = *child_counter1 + *child_counter2;
+        }
+        hasHandled = true; 
+      }
+      else if (SgVariableDeclaration* decl = isSgVariableDeclaration(n))
+      {
+        //e.g. float a = b+c;   the initialization may involve some operations
+        SgInitializedNamePtrList name_list = decl->get_variables();
+        for (size_t i =0; i< name_list.size(); i++)
+        {
+          SgInitializedName* name = name_list[i];
+          FPCounters* child_counters = getFPCounters (name);
+          returnAttribute = returnAttribute + *child_counters;
+        }
+        hasHandled = true; 
+      }
+      else if (isSgFunctionParameterList(n))
+      {
+       // only a set of arguments declared, no FP operations are involved. 
+        hasHandled = true; 
+      }
+      else if (SgIfStmt * if_stmt = isSgIfStmt(n))
+      {
+        SgStatement* cond_stmt = if_stmt->get_conditional();
+        SgStatement* true_stmt = if_stmt->get_true_body();
+        SgStatement* false_stmt = if_stmt->get_false_body();
+        
+        FPCounters* cond_counters = new FPCounters();
+        FPCounters* true_counters = new FPCounters();
+        FPCounters* false_counters= new FPCounters();
+        FPCounters* larger_counters=new FPCounters();
+
+        if (cond_stmt)
+          *cond_counters = *(getFPCounters (cond_stmt));
+        if (true_stmt)
+          *true_counters = *(getFPCounters (true_stmt));
+        if (false_stmt)
+          *false_counters = *(getFPCounters (false_stmt));
+        
+        // We estimate the upper bound of FLOPS for now
+        // TODO: using runtime profiling information to pick the right branch
+        if (true_counters->getTotalCount() > false_counters->getTotalCount())
+          larger_counters = true_counters; 
+        else
+          larger_counters = false_counters; 
+
+        returnAttribute = *cond_counters + *larger_counters;
+        hasHandled = true; 
+      }
+
+      else if (SgBasicBlock* block = isSgBasicBlock(n))
+      {
+        SgStatementPtrList stmt_list = block->get_statements();
+        for (size_t i =0; i< stmt_list.size(); i++)
+        {
+          SgStatement* stmt_in_block = stmt_list[i];
+          ROSE_ASSERT (stmt_in_block != NULL);
+          SgCaseOptionStmt* case_option = isSgCaseOptionStmt (stmt_in_block);
+          SgDefaultOptionStmt * default_option = isSgDefaultOptionStmt (stmt_in_block);
+          FPCounters* fpcounters = getFPCounters (stmt_in_block);
+
+          // regular sequence of statement
+          if (case_option == NULL && default_option == NULL)
+          {
+            returnAttribute = returnAttribute + *fpcounters; 
+          }
+          else // either case option or default option statement, we only keep the max value so far for upper bound estimation
+            //TODO using profiling results to improve accuracy
+          {
+            if (fpcounters->getTotalCount() > returnAttribute.getTotalCount())
+              returnAttribute =  *fpcounters;
+          }  
+        }
+        hasHandled = true; 
+      }
+      else if (SgClassDefinition* block= isSgClassDefinition(n))
+      {
+        SgDeclarationStatementPtrList stmt_list = block->get_members();
+        for (size_t i =0; i< stmt_list.size(); i++)
+        {
+          SgStatement* stmt_in_block = stmt_list[i];
+          ROSE_ASSERT (stmt_in_block != NULL);
+          FPCounters* fpcounters = getFPCounters (stmt_in_block);
+          returnAttribute = returnAttribute + *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+      else if (SgClassDeclaration* decl_stmt = isSgClassDeclaration(n))
+      {
+        SgClassDefinition* body = decl_stmt->get_definition();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+      else if (SgForStatement* for_stmt = isSgForStatement(n))
+      {
+        SgStatement* body = for_stmt->get_loop_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+        // TODO: no multiplication of loop iteration count for now
+      }
+      else if (SgWhileStmt * w_stmt = isSgWhileStmt(n))
+      {
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+        // TODO: no multiplication of loop iteration count for now
+      }
+      else if (SgDoWhileStmt * w_stmt = isSgDoWhileStmt(n))
+      {
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+        // TODO: no multiplication of loop iteration count for now
+      }
+      // go through all statements following until reaching break;
+       else if (SgCaseOptionStmt * w_stmt = isSgCaseOptionStmt(n))
+      {
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+       else if (SgDefaultOptionStmt * w_stmt = isSgDefaultOptionStmt(n))
+      {
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+ 
+       else if (SgSwitchStatement* w_stmt = isSgSwitchStatement(n))
+      {
+        // the body block should be in charge of select the max of case branch
+        SgStatement* body = w_stmt->get_body();
+        if (body != NULL)
+        {
+          FPCounters* fpcounters = getFPCounters (body);
+          returnAttribute = *fpcounters; 
+        }
+        SgStatement* selector = w_stmt->get_item_selector();
+        if (selector)
+        {
+          FPCounters* fpcounters = getFPCounters (selector);
+          returnAttribute = returnAttribute + *fpcounters; 
+        }
+        hasHandled = true; 
+      }
+ 
+      else if ( isSgContinueStmt(n) // no OPs for continue;
+               ||isSgBreakStmt(n)
+               ||isSgLabelStatement(n)
+               ||isSgGotoStatement(n)
+               ||isSgNullStatement(n)
+               ||isSgEnumDeclaration(n)  
+               )
+      {
+        hasHandled = true; 
+      }
+ 
+    } // end if statement
+
+//    if (isSgAssignInitializer(n))
+//      printf ("find assign initializer %p \n", n);
+    //default case: upward propagate counters if only a single child or error messages for multiple children
+    if (!hasHandled)
+    {
+      // only one child, directly synthesize/copy it 
+      if (synthesizedAttributeList.size()==1)
+      {
+        returnAttribute = synthesizedAttributeList[0];
+      }
+      else
+      {
+        // ignore some known types of nodes
+        if (!isSgPragma(n) && 
+            !isSgGlobal(n) && 
+            !isSgSourceFile(n))
+        {
+          cerr<<"Error in OperationCountingTraversal::evaluateSynthesizedAttribute(): unhandled node with multiple children for "<< n->class_name()<<endl;
+          if (SgLocatedNode* lnode = isSgLocatedNode(n))
+          {
+            lnode->get_file_info()->display();
+          }
+          ROSE_ASSERT (false);
+        }
+      }  
+    }
+
+    // Extra step: copy values to the attribute of the node
+    // Patch up the node information here.  operator+ used before may corrupt the node info.
+    returnAttribute.setNode (isSgLocatedNode(n));
+    SgLocatedNode* lnode = isSgLocatedNode (n);
+    if (lnode != NULL )
+    {
+      FPCounters* fpcounters = getFPCounters (lnode); // create attribute on fly if not existing
+      *fpcounters = returnAttribute;
+      //debugging here
+      if (debug) 
+        fpcounters->printInfo (n->class_name()); 
+    }
+
+
+    // Verify the correctness using optionally pragmas 
+    // verify the counting results are consistent with reference results from pragmas   
+    if (SgStatement* stmt = isSgStatement(n))
+    {
+      if (SgStatement* prev_stmt = SageInterface::getPreviousStatement(stmt))
+      {
+        if (SgPragmaDeclaration* p_decl = isSgPragmaDeclaration(prev_stmt))
+        {
+          FPCounters* ref_result = parse_aitool_pragma(p_decl);                                                          
+          FPCounters* current_result = getFPCounters (lnode);
+          if (ref_result != NULL)
+          {
+            if (!current_result->consistentWithReference (ref_result))
+            {
+              cerr<<"Error. Calculated FP operation counts differ from reference counts parsed from pragma!"<<endl;
+              ref_result->printInfo("Reference counts are ....");
+              current_result->printInfo("Calculated counts are ....");
+              assert (false);
+            }
+          }
+        } // end if pragma
+      } // end if prev stmt
+    } // end if stmt
+    return returnAttribute;
+  }
+
+  FPCounters FPCounters::operator+ (const FPCounters & right) const
+  {
+    FPCounters retVal;
+
+    retVal.plus_count = plus_count + right.plus_count;
+    retVal.minus_count = minus_count + right.minus_count;
+    retVal.multiply_count = multiply_count + right.multiply_count;
+    retVal.divide_count = divide_count + right.divide_count;
+    retVal.total_count = total_count + right.total_count;
+
+    //TODO: add load/store expressions
+    return retVal; 
+  }
 
 } // end of namespace

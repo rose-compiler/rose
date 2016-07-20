@@ -181,7 +181,6 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, const SValuePt
     if (!registers_.exists(reg)) {
         if (!accessCreatesLocations_)
             throw RegisterNotPresent(reg);
-        size_t nbits = reg.get_nbits();
         SValuePtr newval = dflt->copy();
         std::string regname = regdict->lookup(reg);
         if (!regname.empty() && newval->get_comment().empty())
@@ -726,16 +725,10 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
     BOOST_FOREACH (const RegPair &otherRegVal, other->get_stored_registers()) {
         const RegisterDescriptor &otherReg = otherRegVal.desc;
         const BaseSemantics::SValuePtr &otherValue = otherRegVal.value;
-        if (is_partly_stored(otherReg)) {
-            BaseSemantics::SValuePtr dflt = ops->undefined_(otherReg.get_nbits());
-            BaseSemantics::SValuePtr thisValue = readRegister(otherReg, dflt, ops);
-            if (BaseSemantics::SValuePtr merged = thisValue->createOptionalMerge(otherValue, merger(),
-                                                                                 ops->solver()).orDefault()) {
-                writeRegister(otherReg, merged, ops);
-                changed = true;
-            }
-        } else {
-            writeRegister(otherReg, otherValue, ops);
+        BaseSemantics::SValuePtr dflt = ops->undefined_(otherReg.get_nbits());
+        BaseSemantics::SValuePtr thisValue = readRegister(otherReg, dflt, ops);
+        if (BaseSemantics::SValuePtr merged = thisValue->createOptionalMerge(otherValue, merger(), ops->solver()).orDefault()) {
+            writeRegister(otherReg, merged, ops);
             changed = true;
         }
     }

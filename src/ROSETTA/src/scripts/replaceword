@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Author: Markus Schordan, 2013.
+
+oldidentifier=$1
+newidentifier=$2
+
+numargs=$#
+allargs="$@";
+
+if [ $numargs -le 2 ]; then
+  echo "Usage: OLDWORD NEWWORD FILE1 FILE2 ..."
+  exit
+fi
+i=0;
+for file in $allargs; do 
+  if [ $i -ge 2 ]; then
+    if [ -e $file ]; then
+
+      sed "s/\<$oldidentifier\>/$newidentifier/g" < $file > /tmp/$file.tmp;
+	  changed=`diff $file /tmp/$file.tmp | wc -l`
+      if [ $changed -ge 1 ]; then
+        mv /tmp/$file.tmp $file
+        echo "$file: replaced $oldidentifier with $newidentifier."
+      else
+        #echo "unchanged."
+        rm /tmp/$file.tmp
+      fi
+    else
+      echo "Error: file $file does not exist."
+      exit
+    fi
+  fi
+  i=$(($i + 1));
+done
+

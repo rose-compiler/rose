@@ -66,6 +66,10 @@ public:
     ss<<index;
     return ss.str();
   }
+  virtual AstAttribute::OwnershipPolicy
+    getOwnershipPolicy() const ROSE_OVERRIDE {
+    return CONTAINER_OWNERSHIP;
+  }
 };
 
 class ConstReporter {
@@ -106,6 +110,7 @@ private:
   
 class Specialization {
  public:
+  Specialization();
   void transformArrayProgram(SgProject* root, Analyzer* analyzer);
   void extractArrayUpdateOperations(Analyzer* ana,
                                     ArrayUpdatesSequence& arrayUpdates,
@@ -122,6 +127,7 @@ class Specialization {
   int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, string varInitName, int initConst, VariableIdMapping* variableIdMapping);
   SgFunctionDefinition* getSpecializedFunctionRootNode() { return _specializedFunctionRootNode; }
   static int numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping);
+  void setCheckAllLoops(bool val);
  private:
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
   int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root);
@@ -147,6 +153,9 @@ class Specialization {
   void transformArrayAccess(SgNode* node, VariableIdMapping* variableIdMapping);
 
   SgFunctionDefinition* _specializedFunctionRootNode;
+
+  // for data race check of all loops independent on whether they are marked as parallel loops
+  bool _checkAllLoops;
 };
 
 #endif

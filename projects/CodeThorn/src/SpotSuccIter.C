@@ -14,7 +14,7 @@ void SpotSuccIter::first() {
 }
 
 void SpotSuccIter::next() {
-  assert(!done());
+  ROSE_ASSERT(!done());
   iter++;
 }
 
@@ -49,6 +49,11 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
     return bddfalse;
   } 
 
+  if(io.isNonIO()) {
+    cerr<<"ERROR: non-IO state in SpotSuccIter::generateSpotTransition"<<endl;
+    exit(1);
+  }
+
   AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
 
   // check if there exists a single input or output value (remove for support of symbolic analysis)
@@ -60,7 +65,7 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
     }
   }
   //determine possible input / output values at target state
-  //cout << "DEBUG: generateSpotTransition. target state's label: " << myTarget->label() << "   target state's InputOutput val: " << myTarget->io.op << endl;
+  //cout << "DEBUG: generateSpotTransition. target state's label: " << myTarget->label() << "   target state's InputOutput operator: " << myTarget->io.op << endl;
   int ioValAtTarget = myIOVal.getIntValue();
 #if 1
   //convert the single input/output value into set representations (for future symbolic analysis mode)

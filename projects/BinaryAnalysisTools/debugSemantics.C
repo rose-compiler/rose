@@ -634,7 +634,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     ::mlog = Sawyer::Message::Facility("tool");
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
 

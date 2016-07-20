@@ -188,6 +188,20 @@ raw_insns_x86_specimens =			\
 raw_rot13_x86_specimens =			\
     buffer2.rot13
 
+#------------------------------------------------------------------------------------------------------------------------
+# Big specimens not intended to be unit tests and which might take too long on slow hardware. Anything over about 500k.
+
+large_specimens =				\
+    PFE32.EXE					\
+    bgl-helloworld-mpicc			\
+    bgl-helloworld-mpixlc			\
+    hello.mip					\
+    libTest-amd64.a				\
+    pocketputty.exe				\
+    pocketputty2.exe				\
+    puttytel.exe				\
+    vm-final.raw
+
 ###############################################################################################################################
 # Other distributed files, not necessarily binary specimens
 

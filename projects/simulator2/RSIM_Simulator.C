@@ -8,6 +8,7 @@
 
 #include <sys/wait.h>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 SAWYER_THREAD_TRAITS::RecursiveMutex RSIM_Simulator::class_rwlock;
@@ -185,7 +186,7 @@ RSIM_Simulator::ctor()
 {
     static bool classInitialized = false;
     if (!classInitialized) {
-        rose::Diagnostics::initialize();
+        ROSE_INITIALIZE;
         mlog = Sawyer::Message::Facility("RSIM", rose::Diagnostics::destination);
         rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
         classInitialized = true;

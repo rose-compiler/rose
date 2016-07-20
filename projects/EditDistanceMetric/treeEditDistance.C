@@ -7,6 +7,7 @@
 #include "rose.h"
 
 using namespace std;
+using namespace rose;
 
 #include "treeEditDistance.h"
 #include "sequenceGeneration.h"

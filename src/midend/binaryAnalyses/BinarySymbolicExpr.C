@@ -208,7 +208,7 @@ struct Hasher: Visitor {
 
     virtual VisitAction postVisit(const Ptr &node) ROSE_OVERRIDE {
         if (!node->isHashed()) {                        // probably true, but some other thread may have beaten us here.
-            uint64_t h = hash(hash(node->domainWidth(), node->nBits()), node->flags());
+            Hash h = hash(hash(node->domainWidth(), node->nBits()), node->flags());
             if (LeafPtr leaf = node->isLeafNode()) {
                 if (leaf->isNumber()) {
                     if (leaf->nBits() <= 64) {
@@ -242,7 +242,8 @@ struct Hasher: Visitor {
     // Incorporates data into the existing hash, h, and returns a new hash. This is no particular well-known algorithm, but
     // testing showed that it gives pretty well-distributed results for close values, particularly when called on two or more
     // pieces of data.
-    uint64_t hash(uint64_t h, uint64_t data) {
+    Hash hash(Hash h, uint64_t data) {
+        ASSERT_require(sizeof(h) == 8);
         for (size_t i=0; i<64-6; i += 6) {
             unsigned sa = ((data >> i) ^ h ^ i) & 0x3f;
             h = (h >> (64-sa)) | (h << sa);
@@ -252,7 +253,7 @@ struct Hasher: Visitor {
     }
 };
 
-uint64_t
+Hash
 Node::hash() {
     if (0==hashval_) {
         Hasher hasher;
@@ -263,7 +264,7 @@ Node::hash() {
 }
 
 void
-Node::hash(uint64_t h) {
+Node::hash(Hash h) {
     boost::unique_lock<boost::mutex> lock(symbolicExprMutex);
     hashval_ = h;
 }

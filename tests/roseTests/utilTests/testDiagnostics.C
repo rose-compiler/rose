@@ -4,6 +4,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 int
@@ -12,7 +13,7 @@ main() {
     // Diagnostics::initialize or frontend.
     std::ostringstream ss;
     rose::Diagnostics::destination = Sawyer::Message::StreamSink::instance(ss);
-    rose::Diagnostics::initialize();
+    ROSE_INITIALIZE;
 
     // Emit some message and check that it appeared
     mlog[INFO] <<"-test 1-\n";

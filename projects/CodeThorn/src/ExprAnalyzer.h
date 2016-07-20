@@ -1,5 +1,5 @@
-#ifndef EVAL_EXPR_H
-#define EVAL_EXPR_H
+#ifndef CT_EXPR_ANALYZER_H
+#define CT_EXPR_ANALYZER_H
 
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
@@ -74,9 +74,12 @@ class ExprAnalyzer {
   bool getSkipSelectedFunctionCalls();
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
+  AType::ConstIntLattice constIntLatticeFromSgValueExp(SgValueExp* valueExp);
  private:
-  //! evaluates an expression (whithout maintaining state information)
-  //AValue pureEvalConstInt(SgNode* node,EState& estate);
+  //! This function turn a single result into a one-elment list with
+  //! this one result. This function is used to combine cases where the result
+  //! might be empty or have multiple results as well.
+  static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
   VariableIdMapping* _variableIdMapping;
   bool _skipSelectedFunctionCalls;
   bool _skipArrayAccesses;

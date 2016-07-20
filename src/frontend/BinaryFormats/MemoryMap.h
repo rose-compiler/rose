@@ -94,7 +94,7 @@ private:
 
 public:
 
-    // Whoever pollutes all namespaces with these common word proprocessor symbols is a lunatic!
+    // Whoever pollutes all namespaces with these common word preprocessor symbols is a lunatic!
 #   if defined(READABLE) || defined(WRITABLE) || defined(EXECUTABLE) || defined(IMMUTABLE) || defined(PRIVATE)
 #    ifdef _MSC_VER
 #     pragma message("Undefining common words from the global namespace: READABLE, WRITABLE, EXECUTABLE, IMMUTABLE, PRIVATE")

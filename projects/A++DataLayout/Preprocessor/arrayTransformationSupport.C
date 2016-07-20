@@ -1,5 +1,6 @@
 #include "arrayPreprocessor.h"
 
+using namespace rose;
 using namespace SageBuilder;
 using namespace SageInterface;
 

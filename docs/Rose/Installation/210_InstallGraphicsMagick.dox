@@ -5,7 +5,7 @@
  *
  *  Instructions for installing <a href="http://www.graphicsmagick.org">GraphicsMagick</a>, a ROSE software dependency.
  *
- *  @section installing_graphicsmagick_rhel Redhat Enterprise Linux
+ *  @section installing_graphicsmagick_rhel Red Hat Enterprise Linux 7
  *
  *  @todo Describe how to install GraphicsMagick on RHEL.
  *  Todo.
@@ -15,5 +15,9 @@
  *  Run <code>apt-get install libgraphicsmagick-dev</code> as the administrator.
  *
  *  @section installing_graphicsmagick_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libgraphicsmagick-dev</code> as the administrator.
+ *
+ *  @section installing_graphicsmagick_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
  *
  *  Run <code>apt-get install libgraphicsmagick-dev</code> as the administrator. */

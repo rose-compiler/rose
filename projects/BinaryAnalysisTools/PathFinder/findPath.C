@@ -1932,7 +1932,7 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
 
 int main(int argc, char *argv[]) {
     // Initialization
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     PathFinder::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(PathFinder::mlog);
     Sawyer::Message::Stream info(PathFinder::mlog[INFO]);

@@ -1,5 +1,6 @@
 // This code attempts to use every modifier in C++
-#ifdef __GNUC__
+// #ifdef __GNUC__
+#if ( defined(__clang__) || defined(__GNUC__) )
 // GNU specific case
    #define RESTRICT __restrict__
    #define EXPORT 

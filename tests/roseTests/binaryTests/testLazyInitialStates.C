@@ -310,7 +310,7 @@ analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &fun
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     ::mlog = Diagnostics::Facility("tool");
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
 

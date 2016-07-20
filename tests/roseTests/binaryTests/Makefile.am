@@ -193,8 +193,7 @@ testPeConstruct.passed: testPeConstruct.conf testPeConstruct
 noinst_PROGRAMS += shiftResizeSection
 shiftResizeSection_SOURCES = shiftResizeSection.C
 shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-# DQ (2/18/2016): Commented out after discussion with Robb (issue with Windows support).
-# TEST_TARGETS += shiftResizeSection.passed
+TEST_TARGETS += shiftResizeSection.passed
 EXTRA_DIST += shiftResizeSection.conf shiftResizeSection.ans
 MOSTLYCLEANFILES += arm-ctrlaltdel.dump-1 arm-ctrlaltdel.dump-2 arm-ctrlaltdel.dump-3
 shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection execFormatsTest
@@ -374,6 +373,19 @@ TEST_TARGETS += cory007.passed
 cory007.passed: $(TEST_EXIT_STATUS) cory007
 	@$(RTH_RUN) CMD="./cory007" $< $@
 
+# Test and demonstrate binary attributes
+noinst_PROGRAMS += cory008
+cory008_SOURCES = cory008.C
+cory008_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory008.passed
+EXTRA_DIST += cory008.ans
+cory008.passed: $(TEST_WITH_ANSWER) cory008 cory008.ans
+	@$(RTH_RUN)								\
+		TITLE="base objects in SgAsmIntegerValueExpression [$@]"	\
+		CMD="./cory008 $(top_srcdir)/binaries/samples/i386-nologin"	\
+		ANS=$(srcdir)/cory008.ans					\
+		$< $@
+
 # Test symbolic semantics memory read-after-write
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C
@@ -511,7 +523,7 @@ noinst_PROGRAMS += testPartitioner2
 testPartitioner2_SOURCES = testPartitioner2.C
 testPartitioner2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 testPartitioner2_specimens = $(filter-out \
-	$(any_any_mips_specimens) $(any_any_ppc_specimens) pocketputty.exe pocketputty2.exe puttytel.exe, \
+	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(large_specimens), \
 	$(any_exe_any_specimens))
 testPartitioner2_directory = $(top_srcdir)/binaries/samples
 testPartitioner2_test_targets = $(addprefix testPartitioner2_, $(addsuffix .passed, $(testPartitioner2_specimens)))
@@ -526,11 +538,11 @@ TEST_TARGETS += $(testPartitioner2_test_targets)
 #END TEMPORARY [RPM 2015-02-19]
 
 $(testPartitioner2_test_targets): testPartitioner2_%.passed: $(testPartitioner2_directory)/% testPartitioner2 testPartitioner2_%.ans
-	@$(RTH_RUN)						\
-		TITLE="testPartitioner2 $(notdir $<) [$@]"	\
-		USE_SUBDIR=yes					\
-		CMD="$$(pwd)/testPartitioner2 $<"		\
-		ANS="$(srcdir)/testPartitioner2_$*.ans"		\
+	@$(RTH_RUN)												\
+		TITLE="testPartitioner2 $(notdir $<) [$@]"							\
+		USE_SUBDIR=yes											\
+		CMD="$$(pwd)/testPartitioner2 $(if $(findstring exefmt,$<), --no-inter-function-calls) $<"	\
+		ANS="$(srcdir)/testPartitioner2_$*.ans"							\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 .PHONY: check-testPartitioner2
@@ -539,7 +551,8 @@ check-testPartitioner2: $(testPartitioner2_test_targets)
 # Disassembly of executable files (DOS, ELF, PE) of various architectures (amd64, Arm, Mips, M68k, PowerPC, x86)
 # MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
 # PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
-disassemble1_specimens = $(filter-out $(any_any_mips_specimens) $(any_any_ppc_specimens), $(any_exe_any_specimens))
+disassemble1_specimens = \
+	$(filter-out $(any_any_mips_specimens) $(any_any_ppc_specimens) $(large_specimens), $(any_exe_any_specimens))
 disassemble1_directory = $(top_srcdir)/binaries/samples
 disassemble1_test_targets = $(addprefix disassemble1_, $(addsuffix .passed, $(disassemble1_specimens)))
 disassemble1_answers = $(disassemble1_test_targets:.passed=.ans)
@@ -557,7 +570,7 @@ $(disassemble1_test_targets): disassemble1_%.passed: $(disassemble1_directory)/%
 		$(srcdir)/disassemble.conf $@
 
 # Disassembly of raw x86 buffers (these should probably have position independent code)
-disassemble2_specimens = $(raw_insns_x86_specimens)
+disassemble2_specimens = $(filter-out $(large_specimens), $(raw_insns_x86_specimens))
 disassemble2_directory = $(top_srcdir)/binaries/samples
 disassemble2_test_targets = $(addprefix disassemble2_, $(addsuffix .passed, $(disassemble2_specimens)))
 disassemble2_answers = $(disassemble2_test_targets:.passed=.ans)
@@ -776,7 +789,7 @@ llvmVersion = $(shell llvm-as --version 2>&1 |sed -nr '/LLVM version/ s/.*versio
 # 128-bit registers are not supported, so don't try to test them (pentium-xxm)
 # Test takes too long when compiled with debugging (puttytel.exe)
 llvmTranscoder_Specimens =						\
-	$(filter-out pentium-xmm puttytel.exe,				\
+	$(filter-out pentium-xmm $(large_specimens),			\
 		$(elf_exe_x86_specimens) $(pe_exe_x86_specimens))
 llvmTranscoder_TestTargets = $(addprefix llvm-xcode-, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
 TEST_TARGETS += $(llvmTranscoder_TestTargets)
@@ -914,9 +927,8 @@ testStaticSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 # We lack semantics for some architectures, so don't try to test them (the result would be an std::runtime_error with the
 # message "no instruction semantics for architecture".  Also, we skip pocketputty2.exe because it takes too long with lots
 # of debugging is enabled.
-testStaticSemantics_specimens = $(filter-out						\
-	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(any_any_arm_specimens)	\
-	pocketputty2.exe								\
+testStaticSemantics_specimens = $(filter-out								\
+	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(any_any_arm_specimens) $(large_specimens)	\
 	,$(any_exe_any_specimens))
 testStaticSemantics_directory = $(top_srcdir)/binaries/samples
 testStaticSemantics_test_targets = $(addprefix testStaticSemantics_, $(addsuffix .passed, $(testStaticSemantics_specimens)))
@@ -1051,7 +1063,7 @@ demo_testReadPastEOF: testReadPastEOF
 # Test various things for all our sample binaries
 
 #--------------------------------------------------------------------------------
-parse_Specimens = $(any_exe_any_specimens)
+parse_Specimens = $(filter-out $(large_specimens), $(any_exe_any_specimens))
 parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
 TEST_TARGETS += $(parse_Targets)
 
@@ -1063,7 +1075,7 @@ check_parse_container: $(parse_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-disassemble_Specimens = $(filter-out $(any_any_mips_specimens), $(any_exe_any_specimens))
+disassemble_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
 disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemble_Specimens)))
 TEST_TARGETS += $(disassemble_Targets)
 
@@ -1075,7 +1087,7 @@ check_disassemble: $(disassemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-unparse_Specimens = $(filter-out $(any_any_mips_specimens), $(any_exe_any_specimens))
+unparse_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
 unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens)))
 TEST_TARGETS += $(unparse_Targets)
 
@@ -1099,7 +1111,7 @@ check_assemble: $(assemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all the ARM specimens are failing, and have been. This might be due to poor disassembly. [Robb Matzke 2013-08-30]
-astio_Specimens = $(filter-out $(any_any_arm_specimens), $(any_exe_any_specimens))
+astio_Specimens = $(filter-out $(any_any_arm_specimens) $(large_specimens), $(any_exe_any_specimens))
 astio_Targets = $(addprefix astio_, $(addsuffix .passed, $(astio_Specimens)))
 TEST_TARGETS += $(astio_Targets)
 

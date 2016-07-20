@@ -259,13 +259,13 @@ int main(int argc, char** argv)
     {
         string filename = classNames[i];
         filename.append(".h");
-        ofstream fstr ( prependPath(outputFolderName,filename).c_str());
+        std::ofstream fstr ( prependPath(outputFolderName,filename).c_str());
         printClass(fstr,i);
 
     }
 
-    ofstream mainfile (prependPath(outputFolderName,"testcase.cpp").c_str());
-    ofstream dumpfile (prependPath(outputFolderName,"dumfile.cmp").c_str());
+    std::ofstream mainfile (prependPath(outputFolderName,"testcase.cpp").c_str());
+    std::ofstream dumpfile (prependPath(outputFolderName,"dumfile.cmp").c_str());
 
     mainfile << "#include \"" << classNames[classCount-1] << ".h\"" << endl;
 

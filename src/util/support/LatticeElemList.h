@@ -24,7 +24,10 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
 
   typedef typename DoublyLinkedListWrap<T>::iterator iterator;
   typedef typename DoublyLinkedListWrap<T>::const_iterator const_iterator;
-  DoublyLinkedListWrap<T>::First;
+
+  // DQ (4/12/2016): Clang c++11 mode error: "C++11 does not allow access declarations; use using declarations instead"
+  // DoublyLinkedListWrap<T>::First;
+  using DoublyLinkedListWrap<T>::First;
 
    bool AddElem( const T& _item, LatticeElemMerge<T> *Merge = 0)
    { if (Merge != 0 && Merge->IsTop(_item))

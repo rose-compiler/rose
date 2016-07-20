@@ -7,7 +7,8 @@
 // Skip version 4.x gnu compilers
 // TOO (2/15/2011): Thrifty compiler (gcc 3.4.4) has the same error
 // as stated below ("more than one operator "||" matches these operands")...
-#if ( __GNUC__ == 3 && __GNUC_MINOR__ != 4 )
+// #if ( __GNUC__ == 3 && __GNUC_MINOR__ != 4 )
+#if ( defined(__clang__) == 0 && __GNUC__ == 3 && __GNUC_MINOR__ != 4 )
 
 #include <iostream>
 

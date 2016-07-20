@@ -65,3 +65,7 @@ AstUnparseAttribute::replacementStringExists()
      return result;
    }
 
+AstUnparseAttribute::OwnershipPolicy
+AstUnparseAttribute::getOwnershipPolicy() const {
+  return CONTAINER_OWNERSHIP;
+}

@@ -75,6 +75,8 @@ class CFAnalysis {
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   SPRAY::Labeler* labeler;
   bool _createLocalEdge;
+  bool isLoopConstructRootNode(SgNode* node);
+  SgNode* correspondingLoopConstruct(SgNode* node);
 };    
 
 } // end of namespace CodeThorn

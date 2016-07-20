@@ -590,5 +590,9 @@ void DefineVariableDescriptor::Dump() const
 #include <AnnotDescriptors.C>
 template class WriteContainer<list<SymbolicFunctionDeclaration>, ',', '(', ')'>;
 template class WriteContainer<vector<SymbolicFunctionDeclaration>, ',', '(', ')'>;
-template class pair<SymbolicValDescriptor, SymbolicValDescriptor>;
+
+// DQ (4/12/2016): Clang c++11 mode error: "explicit instantiation of 'std::pair' must occur in namespace 'std'"
+// template class pair<SymbolicValDescriptor, SymbolicValDescriptor>;
+template class std::pair<SymbolicValDescriptor, SymbolicValDescriptor>;
+
 #endif

@@ -418,7 +418,7 @@ Dominance::apply_to_ast(const DominanceGraph &idg)
         SgAsmBlock *dom_block = get(boost::vertex_name, idg, source(*ei, idg));
         SgAsmBlock *sub_block = get(boost::vertex_name, idg, target(*ei, idg));
         if (debug) {
-            fprintf(debug, "  edge (d,s) = (%" PRIuPTR ",%" PRIuPTR ") = (0x%08"PRIx64", 0x%08"PRIx64")\n",
+            fprintf(debug, "  edge (d,s) = (%" PRIuPTR ",%" PRIuPTR ") = (0x%08" PRIx64 ", 0x%08" PRIx64 ")\n",
                     source(*ei, idg), target(*ei, idg), dom_block->get_address(), sub_block->get_address());
         }
         sub_block->set_immediate_dominator(dom_block);
@@ -554,7 +554,7 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
             } else {
                 fprintf(debug, " function <%s>", func->get_name().c_str());
             }
-            fprintf(debug, " at 0x%08"PRIx64"\n", func->get_entry_va());
+            fprintf(debug, " at 0x%08" PRIx64 "\n", func->get_entry_va());
         }
     }
 
@@ -570,7 +570,7 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
         typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
             SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
-            fprintf(debug, "    %" PRIuPTR " 0x%08"PRIx64" --> {", (size_t)(*vi), block?block->get_address():0);
+            fprintf(debug, "    %" PRIuPTR " 0x%08" PRIx64 " --> {", (size_t)(*vi), block?block->get_address():0);
             typename boost::graph_traits<ControlFlowGraph>::out_edge_iterator ei, ei_end;
             for (boost::tie(ei, ei_end)=out_edges(*vi, cfg); ei!=ei_end; ++ei) {
                 fprintf(debug, " %" PRIuPTR "", (size_t)target(*ei, cfg));
@@ -800,7 +800,7 @@ Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
             } else {
                 fprintf(debug, " function <%s>", func->get_name().c_str());
             }
-            fprintf(debug, " at 0x%08"PRIx64"\n", func->get_entry_va());
+            fprintf(debug, " at 0x%08" PRIx64 "\n", func->get_entry_va());
         }
     }
 
@@ -810,7 +810,7 @@ Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
     std::vector<CFG_Vertex> retblocks = ControlFlow().return_blocks(cfg, start);
     if (1==retblocks.size()) {
         if (debug)
-            fprintf(debug, "  CFG has unique exit vertex %" PRIuPTR ", block 0x%08"PRIx64"\n",
+            fprintf(debug, "  CFG has unique exit vertex %" PRIuPTR ", block 0x%08" PRIx64 "\n",
                     retblocks[0],
                     get(boost::vertex_name, cfg, retblocks[0])->get_address());
         build_postdom_relation_from_cfg(cfg, start, retblocks[0], result);

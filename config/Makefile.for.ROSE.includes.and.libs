@@ -227,6 +227,10 @@ endif
 ROSE_INTEL_COMPILER_MATH_LIBS += -lm
 endif
 
+if USING_CLANG_COMPILER
+# DQ (4/13/2016): Is there were we put the support to include -lstdc++.so on the link line directly?
+endif
+
 # DQ (3/6/2013): We need to build a SWIG path that can't include the isystem option.
 # Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the 
 # boost specified on the configure

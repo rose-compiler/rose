@@ -5,6 +5,7 @@
 #include <Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
+using namespace rose;
 using namespace Sawyer::Message::Common;
 using namespace StringUtility;
 using namespace SageInterface;
@@ -70,7 +71,7 @@ buildAst(int argc, char *argv[], Settings &settings) {
 int
 main(int argc, char *argv[])
 {
-    rose::Diagnostics::initialize();
+    ROSE_INITIALIZE;
     ::mlog = Sawyer::Message::Facility("tool");
     rose::Diagnostics::mfacilities.insertAndAdjust(::mlog);
 

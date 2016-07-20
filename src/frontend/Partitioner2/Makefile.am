@@ -21,6 +21,7 @@ libPartitioner_la_SOURCES =			\
 	Exception.C				\
 	Function.C				\
 	FunctionCallGraph.C			\
+	FunctionNoop.C				\
 	GraphViz.C				\
 	InstructionProvider.C			\
 	MayReturnAnalysis.C			\

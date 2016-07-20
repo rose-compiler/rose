@@ -9,7 +9,8 @@
 // a typedef of a __complex__ float, double, long double type).
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// #if ( __GNUC__ == 3 )
+#if ( defined(__clang__) == 0 && __GNUC__ == 3 )
 
 #include<complex>
 

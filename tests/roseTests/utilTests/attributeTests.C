@@ -343,7 +343,7 @@ test_exception_safety() {
 
 int
 main() {
-    rose::Diagnostics::initialize();
+    ROSE_INITIALIZE;
 
     test_allocation_counter();
     test_value_deletion();

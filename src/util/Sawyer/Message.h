@@ -1480,12 +1480,22 @@ public:
      *  SAWYER_MESG(mlog[DEBUG]) <<"the memory map is: " <<memoryMap <<"\n";
      * @endcode
      *
-     * Thread safety: This method is thread-safe. */
+     * Thread safety: This method is thread-safe.
+     *
+     * @{ */
     operator void*() const {
         return enabled() ? const_cast<Stream*>(this) : NULL;
     }
-    bool operator!() const { return !enabled(); }
+#if __cplusplus >= 201103L
+    explicit operator bool() const {
+        return enabled();
+    }
+#endif
+    /** @} */
 
+    /** Returns false if this stream is enabled. */
+    bool operator!() const { return !enabled(); }
+        
     // See Stream::bool()
     #define SAWYER_MESG(message_stream) message_stream && message_stream
 

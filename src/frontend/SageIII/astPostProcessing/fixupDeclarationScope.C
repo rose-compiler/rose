@@ -1,6 +1,14 @@
 #include "sage3basic.h"
 
+#include "Diagnostics.h"
+
 #include "fixupDeclarationScope.h"
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/24/2016): Adding Message logging mechanism.
+Sawyer::Message::Facility FixupAstDeclarationScope::mlog;
 
 
 void fixupAstDeclarationScope( SgNode* node )
@@ -79,7 +87,7 @@ void fixupAstDeclarationScope( SgNode* node )
                  // DQ (1/30/2014): Cleaning up some output spew.
                     if (SgProject::get_verbose() > 0)
                        {
-                         printf ("WARNING: This is the wrong scope (declaration = %p = %s): associatedScope = %p = %s correctScope = %p = %s \n",
+                         mprintf ("WARNING: This is the wrong scope (declaration = %p = %s): associatedScope = %p = %s correctScope = %p = %s \n",
                               *j,(*j)->class_name().c_str(),associatedScope,associatedScope->class_name().c_str(),correctScope,correctScope->class_name().c_str());
                        }
 #if 0
@@ -98,6 +106,19 @@ void fixupAstDeclarationScope( SgNode* node )
      printf ("Leaving fixupAstDeclarationScope() node = %p = %s \n",node,node->class_name().c_str());
 #endif
    }
+
+
+void FixupAstDeclarationScope::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+          mlog = Sawyer::Message::Facility("FixupAstDeclarationScope", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        }
+   }
+
 
 void
 FixupAstDeclarationScope::visit ( SgNode* node )

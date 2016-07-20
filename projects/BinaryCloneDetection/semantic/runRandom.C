@@ -253,7 +253,7 @@ isUnnamed(const P2::Function::Ptr &function) {
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     mlog = Sawyer::Message::Facility("tool");
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 

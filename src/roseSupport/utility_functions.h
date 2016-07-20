@@ -67,7 +67,7 @@ ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatH
 // other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
 ROSE_DLL_API int backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_USE_ROSE_macro = false );
 
-// DQ (2/6/2010): This backend forces all code to be generated but still uses the beakend vendor 
+// DQ (2/6/2010): This backend forces all code to be generated but still uses the backend vendor 
 // compiler to compile the original code.  This is a step between backendUsingOriginalInputFile(),
 // which does not generate code; and backend() which generated code and compiles it.  The use of
 // this backend permits an intermediate test of robustness where the code that we generate might

@@ -1,7 +1,6 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
-#include <BinaryNoOperation.h>
 #include <BinaryString.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/Modules.h>
@@ -12,8 +11,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <Sawyer/CommandLine.h>
-#include <Sawyer/GraphTraversal.h>
-#include <Sawyer/ProgressBar.h>
 #include <stringify.h>
 
 using namespace rose::Diagnostics;
@@ -393,9 +390,9 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
 }
 
 AddressIntervalSet
-deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold) {
+deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
     AddressIntervalSet changes;
-    if (0==threshold)
+    if (leaveAtFront + leaveAtBack >= threshold)
         return changes;
     rose_addr_t va = map.hull().least();
     AddressInterval zeros;
@@ -426,9 +423,10 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold) {
         }
         va += nRead;
     }
-    if (zeros.size()>=threshold) {
-        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
-        changes.insert(zeros);
+    if (zeros.size() >= threshold && zeros.size() >= leaveAtFront + leaveAtBack) {
+        AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront, zeros.greatest()-leaveAtBack);
+        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+        changes.insert(affected);
     }
     return changes;
 }
@@ -535,13 +533,19 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmInterpretation *interp) {
 
 size_t
 findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader, std::vector<Function::Ptr> &functions) {
+    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrNames;
+
+    // This traversal only finds the addresses for the new functions, it does not modify the AST since that's a dangerous thing
+    // to do while we're traversing it.  It shouldn't make any difference though because we're traversing a different part of
+    // the AST (the ELF/PE container) than we're modifying (instructions).
     struct T1: AstSimpleProcessing {
         const Partitioner &partitioner;
         SgAsmGenericHeader *fileHeader;
-        std::vector<Function::Ptr> &functions;
-        size_t nInserted;
-        T1(const Partitioner &p, SgAsmGenericHeader *fh, std::vector<Function::Ptr> &functions)
-            : partitioner(p), fileHeader(fh), functions(functions), nInserted(0) {}
+        AddrNames addrNames;
+
+        T1(const Partitioner &p, SgAsmGenericHeader *h)
+            : partitioner(p), fileHeader(h) {}
+
         void visit(SgNode *node) {
             if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
                 if (symbol->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
@@ -551,17 +555,17 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                     SgAsmGenericSection *section = symbol->get_bound();
 
                     // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
-                    // different address than it expected to be mapped, then adjust the symbol's value by the same amount.
+                    // different address than it expected to be mapped, then adjust the symbol's value by the same amount. Keep
+                    // only the first non-empty name we find for each address.
                     rose_addr_t va = value;
                     if (section!=NULL && section->is_mapped() &&
                         section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
                         va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
                     }
                     if (partitioner.discoverInstruction(va)) {
-                        Function::Ptr function = Function::instance(va, symbol->get_name()->get_string(),
-                                                                    SgAsmFunction::FUNC_SYMBOL);
-                        if (insertUnique(functions, function, sortFunctionsByAddress))
-                            ++nInserted;
+                        std::string &s = addrNames.insertMaybeDefault(va);
+                        if (s.empty())
+                            s = symbol->get_name()->get_string();
                     }
 
                     // Sometimes weak symbol values are offsets from a section (this code handles that), but other times
@@ -569,17 +573,24 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK)
                         value += section->get_mapped_actual_va();
                     if (partitioner.discoverInstruction(value)) {
-                        Function::Ptr function = Function::instance(value, symbol->get_name()->get_string(),
-                                                                    SgAsmFunction::FUNC_SYMBOL);
-                        if (insertUnique(functions, function, sortFunctionsByAddress))
-                            ++nInserted;
+                        std::string &s = addrNames.insertMaybeDefault(value);
+                        if (s.empty())
+                            s = symbol->get_name()->get_string();
                     }
                 }
             }
         }
-    } t1(partitioner, fileHeader, functions);
+    } t1(partitioner, fileHeader);
+
+    size_t nInserted = 0;
     t1.traverse(fileHeader, preorder);
-    return t1.nInserted;
+    BOOST_FOREACH (const AddrNames::Node &node, t1.addrNames.nodes()) {
+        Function::Ptr function = Function::instance(node.key(), node.value(), SgAsmFunction::FUNC_SYMBOL);
+        if (insertUnique(functions, function, sortFunctionsByAddress))
+            ++nInserted;
+    }
+                    
+    return nInserted;
 }
 
 std::vector<Function::Ptr>
@@ -622,12 +633,11 @@ nameConstants(const Partitioner &partitioner) {
 
 SgAsmBlock*
 buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, const Function::Ptr &parentFunction,
-                   bool relaxed) {
-
+                   const AstConstructionSettings &settings) {
     ASSERT_not_null(bb);
     ASSERT_not_null(parentFunction);
     if (bb->isEmpty()) {
-        if (relaxed) {
+        if (settings.allowEmptyBasicBlocks) {
             mlog[WARN] <<"creating an empty basic block AST node at " <<StringUtility::addrToString(bb->address()) <<"\n";
         } else {
             return NULL;
@@ -635,7 +645,20 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
     }
 
     ControlFlowGraph::ConstVertexIterator bblockVertex = partitioner.findPlaceholder(bb->address());
-    SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(bb->instructions());
+
+    std::vector<SgAsmInstruction*> insns = bb->instructions();
+    for (size_t i=0; i<insns.size(); ++i) {
+        if (settings.copyAllInstructions) {
+            SgTreeCopy deep;
+            SgAsmInstruction *newInsn = isSgAsmInstruction(insns[i]->copy(deep));
+            ASSERT_not_null(newInsn);
+            ASSERT_require(newInsn != insns[i]);
+            ASSERT_require(newInsn->get_address() == insns[i]->get_address());
+            insns[i] = newInsn;
+        }
+    }
+
+    SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(insns);
     ast->set_comment(bb->comment());
     unsigned reasons = 0;
 
@@ -664,7 +687,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
     // deltas based on which function was analyzed. We must choose one function's stack deltas and we must make sure they're
     // current. The approach we take is simple: just store the stack deltas each time and let the last one win.
     if (sdAnalysis.hasResults()) {
-        BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+        BOOST_FOREACH (SgAsmInstruction *insn, insns)
             insn->set_stackDeltaIn(sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn)));
     }
 
@@ -700,7 +723,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
 }
 
 SgAsmBlock*
-buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, bool relaxed) {
+buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings &settings) {
     // Build the static data item
     SgUnsignedCharList rawBytes(dblock->size(), 0);
     size_t nRead = partitioner.memoryMap().at(dblock->address()).read(rawBytes).size();
@@ -712,7 +735,7 @@ buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, 
 }
 
 SgAsmFunction*
-buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, bool relaxed) {
+buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, const AstConstructionSettings &settings) {
     ASSERT_not_null(function);
 
     // Build the child basic block IR nodes and remember all the data blocks
@@ -724,7 +747,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
             mlog[WARN] <<function->printableName() <<" bblock "
                        <<StringUtility::addrToString(blockVa) <<" does not exist in the CFG; no AST node created\n";
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            if (SgAsmBlock *child = buildBasicBlockAst(partitioner, bb, function, relaxed))
+            if (SgAsmBlock *child = buildBasicBlockAst(partitioner, bb, function, settings))
                 children.push_back(child);
             BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
                 insertUnique(dblocks, dblock, sortDataBlocks);
@@ -734,7 +757,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
     if (children.empty()) {
-        if (relaxed) {
+        if (settings.allowFunctionWithNoBasicBlocks) {
             mlog[WARN] <<"creating an empty AST node for " <<function->printableName() <<"\n";
         } else {
             return NULL;
@@ -744,7 +767,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     // Build the child data block IR nodes.  The data blocks attached to the SgAsmFunction node are the union of the data
     // blocks owned by the function and the data blocks owned by each of its basic blocks.
     BOOST_FOREACH (const DataBlock::Ptr &dblock, dblocks) {
-        if (SgAsmBlock *child = buildDataBlockAst(partitioner, dblock, relaxed))
+        if (SgAsmBlock *child = buildDataBlockAst(partitioner, dblock, settings))
             children.push_back(child);
     }
 
@@ -804,17 +827,17 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
 }
 
 SgAsmBlock*
-buildGlobalBlockAst(const Partitioner &partitioner, bool relaxed) {
+buildGlobalBlockAst(const Partitioner &partitioner, const AstConstructionSettings &settings) {
     // Create the children first
     std::vector<SgAsmFunction*> children;
     BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
-        if (SgAsmFunction *func = buildFunctionAst(partitioner, function, relaxed)) {
+        if (SgAsmFunction *func = buildFunctionAst(partitioner, function, settings)) {
             children.push_back(func);
         }
     }
     if (children.empty()) {
-        if (relaxed) {
-            mlog[WARN] <<"building an empty global block\n";
+        if (settings.allowEmptyGlobalBlock) {
+            mlog[WARN] <<"building an empty AST binary global block\n";
         } else {
             return NULL;
         }
@@ -830,8 +853,8 @@ buildGlobalBlockAst(const Partitioner &partitioner, bool relaxed) {
 }
 
 SgAsmBlock*
-buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, bool relaxed) {
-    if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, relaxed)) {
+buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, const AstConstructionSettings &settings) {
+    if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, settings)) {
         fixupAstPointers(global, interp);
         fixupAstCallingConventions(partitioner, global);
         if (interp) {
@@ -888,7 +911,15 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
                    const SgAsmGenericSectionPtrList &mappedSections)
             : insnIndex(insnIndex), bblockIndex(bblockIndex), funcIndex(funcIndex), mappedSections(mappedSections) {}
         void visit(SgNode *node) {
-            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+            std::vector<SgAsmIntegerValueExpression*> ivals;
+            if (SgAsmBlock *blk = isSgAsmBlock(node)) {
+                // SgAsmBlock::p_successors is not traversed due to limitations of ROSETTA, so traverse explicitly.
+                ivals = blk->get_successors();
+            } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+                ivals.push_back(ival);
+            }
+
+            BOOST_FOREACH (SgAsmIntegerValueExpression *ival, ivals) {
                 if (ival->get_baseNode()==NULL) {
                     rose_addr_t va = ival->get_absoluteValue();
                     SgAsmNode *base = NULL;
@@ -945,84 +976,13 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
 
 std::vector<Function::Ptr>
 findNoopFunctions(const Partitioner &partitioner) {
-    std::vector<Function::Ptr> noOpFunctions;           // those functions that are determined to be no-ops
-
-    // No-op analyser. We use an arbitrary concrete initial stack pointer because it allows the analysis to assume stack
-    // semantics. That is, items popped from the stack are no longer considered to be valid memory.  Using an odd value for the
-    // initial stack reduces the number of false positives for stack-aligning instructions being no-ops (e.g., "AND SP,
-    // 0xfffffff0" will not be a no-op).
-    NoOperation noOpAnalyzer(partitioner.newDispatcher(partitioner.newOperators()));
-    noOpAnalyzer.initialStackPointer(0xdddd0001);
-
-    // Function call graph
-    FunctionCallGraph cgAnalyzer = partitioner.functionCallGraph();
-    const FunctionCallGraph::Graph &cg = cgAnalyzer.graph();
-
-    // Use a function call graph and process functions using a reverse depth-first traversal. We do this because if function A
-    // calls or transfers control to function B we need to know whether function B is a no-op before we can determine if
-    // function A is a no-op.  Actually, that's not precisely true -- it is necessary but not sufficient for B to be a no-op in
-    // order for A to be a no-op.
-    Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "no-op function analysis");
-    typedef Sawyer::Container::Algorithm::DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
-    std::vector<bool> processed(cg.nVertices(), false);
-    for (size_t i=0; i<cg.nVertices(); ++i) {
-        if (processed[i])
-            continue;
-        for (Traversal t(cg, cg.findVertex(i), Sawyer::Container::Algorithm::LEAVE_VERTEX); t; ++t) {
-            if (processed[t.vertex()->id()])
-                continue;
-            ++progress;
-            Function::Ptr function = t.vertex()->value();
-            bool funcIsNoOp = true;                         // assume function is no-op and prove otherwise
-
-            // Does this BB have CFG successors that belong to some other function?  The calling function can be a no-op only
-            // if the callee is already proven to be a no-op.  Recursive calls don't affect the outcome.
-            BOOST_FOREACH (const Function::Ptr &callee, cgAnalyzer.callees(function)) {
-                if (callee != function && !existsUnique(noOpFunctions, callee, sortFunctionsByAddress)) {
-                    funcIsNoOp = false;
-                    break;
-                }
-            }
-
-            // The current function cannot be a no-op if any of its basic blocks are not no-os.
-            if (funcIsNoOp) {
-                BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
-                    if (BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
-                        // Get the instructions for this block, excluding the final instruction if this is a function return.
-                        std::vector<SgAsmInstruction*> insns = bb->instructions();
-                        if (partitioner.basicBlockIsFunctionReturn(bb)) {
-                            insns.pop_back();
-                        } else {
-                            // If the basic block is not a function return and its CFG successor is undiscovered or
-                            // indeterminate then we must assume that its successor imparts some effect to this function.
-                            ControlFlowGraph::ConstVertexIterator placeholder = partitioner.findPlaceholder(bbVa);
-                            ASSERT_forbid(placeholder == partitioner.cfg().vertices().end());
-                            BOOST_FOREACH (const ControlFlowGraph::Edge &edge, placeholder->outEdges()) {
-                                if (edge.target()->value().type() != V_BASIC_BLOCK) {
-                                    funcIsNoOp = false;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        if (funcIsNoOp && !noOpAnalyzer.isNoop(insns))
-                            funcIsNoOp = false;
-                    } else {
-                        funcIsNoOp = false;                     // one of its basic blocks is missing
-                    }
-                    if (!funcIsNoOp)
-                        break;
-                }
-            }
-
-            if (funcIsNoOp)
-                insertUnique(noOpFunctions, function, sortFunctionsByAddress);
-            processed[t.vertex()->id()] = true;
-        }
+    partitioner.allFunctionIsNoop();
+    std::vector<Function::Ptr> retval;
+    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+        if (function->isNoop().getOptional().orElse(false))
+            insertUnique(retval, function, sortFunctionsByAddress);
     }
-
-    ASSERT_require(isSorted(noOpFunctions, sortFunctionsByAddress));
-    return noOpFunctions;
+    return retval;
 }
 
 void

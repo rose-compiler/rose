@@ -4,6 +4,7 @@ int x = 9;
 
 void foo(int x, int y);
 
+#if !defined(__clang__)
 #if __GNUC__ > 4 || \
   (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
                        (__GNUC_MINOR__ == 4 && \
@@ -20,5 +21,10 @@ void foo(int x, int y = x)
    {
    }
 #endif
-
+#else
+ //gcc version >=4.4.0
+void foo(int x, int y)
+   {
+   }
+#endif
 

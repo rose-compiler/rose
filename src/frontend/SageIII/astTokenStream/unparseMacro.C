@@ -248,11 +248,13 @@ did_removal:
           if( isSgExpression(macroNode) == NULL )
           {
 #ifndef USE_ROSE
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
          // If we are using ROSE to compile ROSE source code then the Wave support is not present.
             PreprocessingInfo::rose_macro_call* macroCall = curPreproc->get_macro_call();
 
             if(macroCall->expanded_macro.size() > 0 && boost::wave::token_id(macroCall->expanded_macro.back()) != boost::wave::T_COLON)
               replacementString +=";";
+#endif
 #endif
           }
 

@@ -11,5 +11,18 @@ int main(int argc,char *argv[])
     }
   }
   return 0;
-} 
+}
+
+// with shadow i and j
+void foo (int i, int j)
+{
+  double a[20][20];
+  for (int i = 0; i <= 19 - 1; i += 1) {
+    for (int j = 0; j <= 20 - 1; j += 1) {
+      a[i][j] += a[i + 1][j];
+    }
+  }
+
+}
+
 
