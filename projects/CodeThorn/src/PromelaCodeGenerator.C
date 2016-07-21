@@ -110,7 +110,7 @@ string PromelaCodeGenerator::generateActionListener() {
   actionChannelAndListener << "chan act = [0] of {mtype};" << endl;
   actionChannelAndListener << endl;
   actionChannelAndListener << "/* Most recent message event */" << endl;
-  actionChannelAndListener << "mtype lastAction;" << endl;
+  actionChannelAndListener << "mtype lastAction = nop;" << endl;
   actionChannelAndListener << endl;
   actionChannelAndListener << "/* Action listener */" << endl;
   actionChannelAndListener << "active proctype Listener()" << endl;

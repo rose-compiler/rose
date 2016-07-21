@@ -114,7 +114,7 @@ void ParallelAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automa
   unsigned int totalNumberOfEdges = 0;
   vector<unsigned int> numSyncedTransitions(automata.size());
   for (unsigned int i = 0; i < automata.size(); ++i) {
-    totalNumberOfEdges += automata[i]->size();
+    totalNumberOfEdges += (automata[i]->size() - 1);  // do not count the initial transition (must not be relabeled)
     numSyncedTransitions[i] = 0;
   }
   if ((unsigned int) numSynchronizations > (totalNumberOfEdges / 2)) {
@@ -138,11 +138,13 @@ void ParallelAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automa
     Edge edgeOne;
     do {
       edgeOne = chooseRandomEdge(automata[automataIndexOne]);
-    } while (synchronized.find(edgeOne.getAnnotation()) != synchronized.end());
+    } while (synchronized.find(edgeOne.getAnnotation()) != synchronized.end()
+	     || edgeOne.getAnnotation() == "");  // do not relabel the initial starting transition
     Edge edgeTwo;
     do {
       edgeTwo = chooseRandomEdge(automata[automataIndexTwo]);
-    } while (synchronized.find(edgeTwo.getAnnotation()) != synchronized.end());
+    } while (synchronized.find(edgeTwo.getAnnotation()) != synchronized.end()
+	     || edgeOne.getAnnotation() == "");  // do not relabel the initial starting transition
     // relabel and store information on what has been relabeled
     string newAnnotation = synchedAnnotations.next();
     synchronized[newAnnotation] = pair<string, string>(edgeOne.getAnnotation(), edgeTwo.getAnnotation());
