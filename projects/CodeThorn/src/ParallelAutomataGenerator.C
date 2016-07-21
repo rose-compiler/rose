@@ -111,14 +111,29 @@ vector<Flow*> ParallelAutomataGenerator::randomlySyncedCircleAutomata(int numAut
 void ParallelAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automata, pair<int,int> numSyncBounds,
 							    CfaAnnotationGenerator& synchedAnnotations) {
   int numSynchronizations = randomIntInRange(numSyncBounds);
+  unsigned int totalNumberOfEdges = 0;
+  vector<unsigned int> numSyncedTransitions(automata.size());
+  for (unsigned int i = 0; i < automata.size(); ++i) {
+    totalNumberOfEdges += automata[i]->size();
+    numSyncedTransitions[i] = 0;
+  }
+  if ((unsigned int) numSynchronizations > (totalNumberOfEdges / 2)) {
+    cerr << "ERROR: "<<numSynchronizations<<" synchronizing relabelings where selected, however only ";
+    cerr <<totalNumberOfEdges<<" edges exist in total." << endl;
+    ROSE_ASSERT(0);
+  }
   boost::unordered_map<string, pair<string, string> > synchronized;
   for (int i = 0; i < numSynchronizations; ++i) {
     // select two different automata for synchronization
-    int automataIndexOne = randomIntInRange(pair<int,int>(0, automata.size()-1));
+    int automataIndexOne;
+    do {
+      automataIndexOne = randomIntInRange(pair<int,int>(0, automata.size()-1));
+    } while (numSyncedTransitions[automataIndexOne] >= automata[automataIndexOne]->size());
     int automataIndexTwo;
     do {
       automataIndexTwo = randomIntInRange(pair<int,int>(0, automata.size()-1));
-    } while (automataIndexOne == automataIndexTwo);
+    } while (automataIndexOne == automataIndexTwo 
+	     || numSyncedTransitions[automataIndexTwo] >= automata[automataIndexTwo]->size());
     // only select edges that are not synchronized yet
     Edge edgeOne;
     do {
@@ -131,6 +146,8 @@ void ParallelAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automa
     // relabel and store information on what has been relabeled
     string newAnnotation = synchedAnnotations.next();
     synchronized[newAnnotation] = pair<string, string>(edgeOne.getAnnotation(), edgeTwo.getAnnotation());
+    ++numSyncedTransitions[automataIndexOne];
+    ++numSyncedTransitions[automataIndexTwo];
     // TODO: maybe add a relabeling function to the Flow interface
     Edge newEdgeOne = edgeOne;
     Edge newEdgeTwo = edgeTwo;
