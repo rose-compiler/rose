@@ -8,32 +8,31 @@ ParProSpotSuccIter::ParProSpotSuccIter(ParProTransitionGraph& tg, const ParProES
 				       const boost::unordered_map<string, int>& p2d) 
                                       : _source(state), stg(tg), propName2DictNum(p2d) {
   _outEdges = stg.succ(&state);
-  if (_outEdges.begin() == _outEdges.end()) {
-    if (stg.isComplete()) {
-      _needToAddSelfLoop = true;
-      _selfLoopIsNext = true;
-    } else {
-      _needToAddSelfLoop = false;
-    }
+  if (stg.isComplete()) {
+    _needToAddSelfLoop = true;
+    _upcomingSelfLoop = true;
   } else {
     _needToAddSelfLoop = false;
   }
 }
 
 void ParProSpotSuccIter::first() {
-  if (!_needToAddSelfLoop) {
-    iter = _outEdges.begin();
-  } else {
-    _selfLoopIsNext = true;
+  iter = _outEdges.begin();
+  if (_needToAddSelfLoop) {
+    _upcomingSelfLoop = true;
   }
 }
 
 void ParProSpotSuccIter::next() {
   ROSE_ASSERT(!done());
   if (!_needToAddSelfLoop) {
-    iter++;
+    ++iter;
   } else {
-    _selfLoopIsNext = false;
+    if (iter != _outEdges.end()) {
+      ++iter;
+    } else {
+      _upcomingSelfLoop = false;
+    }
   }
 }
 
@@ -41,7 +40,7 @@ bool ParProSpotSuccIter::done() const {
   if (!_needToAddSelfLoop) {
     return iter == _outEdges.end();
   } else {
-    return !_selfLoopIsNext;
+    return iter == _outEdges.end() && !_upcomingSelfLoop;
   }
 }
 
@@ -51,7 +50,12 @@ spot::state* ParProSpotSuccIter::current_state() const {
     ParProSpotState* nextState = new ParProSpotState( *iter->target );  
     return nextState;
   } else {
-    return new ParProSpotState(_source); // simulates a self loop
+    if (iter != _outEdges.end()) {
+      ParProSpotState* nextState = new ParProSpotState( *iter->target );  
+      return nextState;
+    } else {
+      return new ParProSpotState(_source); // simulates a self loop
+    }
   }
 }
 
@@ -60,10 +64,14 @@ bdd ParProSpotSuccIter::current_condition() const {
   if (!_needToAddSelfLoop) {
     return generateSpotTransition(*iter);
   } else {
-    Edge edge;
-    edge.setAnnotation("program terminated already");
-    ParProTransition transition(&_source, edge, &_source);
-    return generateSpotTransition(transition);
+    if (iter != _outEdges.end()) {
+      return generateSpotTransition(*iter);
+    } else {
+      Edge edge;
+      edge.setAnnotation("over-approximation loop");
+      ParProTransition transition(&_source, edge, &_source);
+      return generateSpotTransition(transition);
+    }
   }
 }
 
@@ -72,10 +80,14 @@ string ParProSpotSuccIter::format_current_condition() const {
   if (!_needToAddSelfLoop) {
     return generateFormattedSpotTransition(*iter);
   } else {
-    Edge edge;
-    edge.setAnnotation("program terminated already");
-    ParProTransition transition(&_source, edge, &_source);
-    return generateFormattedSpotTransition(transition);
+    if (iter != _outEdges.end()) {
+      return generateFormattedSpotTransition(*iter);
+    } else {
+      Edge edge;
+      edge.setAnnotation("over-approximation loop");
+      ParProTransition transition(&_source, edge, &_source);
+      return generateFormattedSpotTransition(transition);
+    }
   }
 }
 
