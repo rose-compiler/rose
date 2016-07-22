@@ -1,10 +1,7 @@
 // Author: Marc Jasper, 2016.
 
 #include "ParallelAutomataGenerator.h"
-
-// remove me (the next two lines only exist due to function "test()")
-#include "Miscellaneous.h"
-using namespace CodeThorn;
+#include "Miscellaneous2.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -72,11 +69,6 @@ Flow* ParallelAutomataGenerator::randomCircleAutomaton(int numCircles,
   return result;
 }
 
-int ParallelAutomataGenerator::randomIntInRange(pair<int,int> range) {
-  int rangeLength = range.second - range.first + 1;
-  return range.first + (rand() % rangeLength);
-}
-
 Edge ParallelAutomataGenerator::chooseRandomEdge(Flow* cfa) {
   int finalIteratorIndex = randomIntInRange(pair<int, int>(0, (cfa->size() - 1)));
   Flow::iterator iter = cfa->begin();
@@ -102,14 +94,11 @@ vector<Flow*> ParallelAutomataGenerator::randomlySyncedCircleAutomata(int numAut
     result[i] = randomCircleAutomaton(numCircles, lengthBounds, numIntersectionsBounds, numGen, annotationGen);
   }
   // ... and then synchronize them using random relabeling
-  // TODO: label the synchronized transitions differently so that they are easier to spot and understand
-  CfaAnnotationGenerator synchedAnnotations(numAutomata + 1000);
-  randomlySynchronizeAutomata(result, numSyncsBounds, synchedAnnotations);
+  randomlySynchronizeAutomata(result, numSyncsBounds);
   return result;
 }
 
-void ParallelAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automata, pair<int,int> numSyncBounds,
-							    CfaAnnotationGenerator& synchedAnnotations) {
+void ParallelAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automata, pair<int,int> numSyncBounds) {
   int numSynchronizations = randomIntInRange(numSyncBounds);
   unsigned int totalNumberOfEdges = 0;
   vector<unsigned int> numSyncedTransitions(automata.size());
@@ -144,9 +133,9 @@ void ParallelAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automa
     do {
       edgeTwo = chooseRandomEdge(automata[automataIndexTwo]);
     } while (synchronized.find(edgeTwo.getAnnotation()) != synchronized.end()
-	     || edgeOne.getAnnotation() == "");  // do not relabel the initial starting transition
+	     || edgeTwo.getAnnotation() == "");  // do not relabel the initial starting transition
     // relabel and store information on what has been relabeled
-    string newAnnotation = synchedAnnotations.next();
+    string newAnnotation = edgeOne.getAnnotation() + "__" + edgeTwo.getAnnotation();
     synchronized[newAnnotation] = pair<string, string>(edgeOne.getAnnotation(), edgeTwo.getAnnotation());
     ++numSyncedTransitions[automataIndexOne];
     ++numSyncedTransitions[automataIndexTwo];

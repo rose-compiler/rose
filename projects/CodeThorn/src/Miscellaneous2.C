@@ -160,3 +160,8 @@ SPRAY::Parse::integerSet(string setstring) {
     return intSet;
 }
 
+int SPRAY::randomIntInRange(pair<int,int> range) {
+  int rangeLength = range.second - range.first + 1;
+  return range.first + (rand() % rangeLength);
+}
+
