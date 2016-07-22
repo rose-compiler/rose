@@ -269,9 +269,9 @@ if OS_MACOSX
 if HAS_LIBRARY_GCRYPT
 PORT_PATH = $(shell which port)
 PORT_HOME = $(shell dirname $(PORT_PATH))/..
-LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt -lgcc_eh
+LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt 
 else
-LDFLAGS += -lgcc_eh
+LDFLAGS += 
 endif
 endif
 
