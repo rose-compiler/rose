@@ -34,8 +34,8 @@ for f in \
     Access Assert AddressMap AddressSegment AllocatingBuffer Attribute BiMap BitVector BitVectorSupport Buffer CommandLine \
     Cached Callbacks DefaultAllocator DenseIntegerSet Exception DistinctList Graph GraphAlgorithm GraphBoost GraphTraversal \
     IndexedList Interval IntervalMap IntervalSet IntervalSetMap Map MappedBuffer Markup MarkupPod Message NullBuffer Optional \
-    PoolAllocator ProgressBar Sawyer Set SharedPointer SmallObject Stack StaticBuffer Stopwatch Synchronization ThreadWorkers \
-    WarningsOff WarningsRestore
+    PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StaticBuffer Stopwatch Synchronization \
+    ThreadWorkers WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
