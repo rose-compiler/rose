@@ -7100,6 +7100,12 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                break;
              }
 
+       // schroder3 (2016-06-28): Commented out the assignment of returnSymbol. Reason:
+       //  I think we should not return a symbol in this case because we can not say anything about the function that is actually called by this function call expression.
+       //  E.g. in case of a call C of the return value of get_random_func_address ("get_random_func_address()()") get_random_func_address has nothing to do with the
+       //                                                                                                     ^-C
+       //  function called by C. Previously the returned symbol was therefore not the associated function symbol of this function call expression.
+       //
        // DQ (2/25/2013): Added support for this case, but I would like to review this (likely OK).
           case V_SgFunctionCallExp:
              {
@@ -7108,10 +7114,11 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgFunctionCallExp \n");
                functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): new case to be supported: checking this out: debug");
 #endif
-               SgFunctionCallExp* nestedFunctionCallExp = isSgFunctionCallExp(functionExp);
-               ROSE_ASSERT(nestedFunctionCallExp != NULL);
 
-               returnSymbol = nestedFunctionCallExp->getAssociatedFunctionSymbol();
+//               SgFunctionCallExp* nestedFunctionCallExp = isSgFunctionCallExp(functionExp);
+//               ROSE_ASSERT(nestedFunctionCallExp != NULL);
+//
+//               returnSymbol = nestedFunctionCallExp->getAssociatedFunctionSymbol();
                break;
              }
 
