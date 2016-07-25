@@ -130,6 +130,7 @@ class ComputeAddressTakenInfo
     void visit(SgFunctionCallExp* sgn);
     void visit(SgThisExp* sgn);
     void visit(SgNode* sgn);
+    void insertVariableId(VariableId);
     void insertFunctionId(FunctionId);
     void debugPrint(SgNode* sgn);
     AddressTakenSearchKind getSearchKind();

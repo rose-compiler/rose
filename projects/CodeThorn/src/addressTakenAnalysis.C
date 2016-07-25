@@ -116,14 +116,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn
     }
   }
   // insert the id into VariableIdSet
-  cati.variableAddressTakenInfo.second.insert(id);
-
-  if(debuglevel > 0) {
-    std::cout << "INFO: Added id " << id.getIdCode() << " (Symbol "
-        << cati.vidm.getSymbol(id)->unparseToString()
-        << " (" << SgNodeHelper::symbolToString(cati.vidm.getSymbol(id)) << "))"
-        << std::endl;
-  }
+  insertVariableId(id);
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclaration* sgn) {
@@ -274,13 +267,28 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
   operand->accept(*this);
 }
 
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(VariableId id) {
+  ROSE_ASSERT(id.isValid());
+
+  cati.variableAddressTakenInfo.second.insert(id);
+
+  if(debuglevel > 0) {
+    std::cout << "INFO: Added variable id " << id.getIdCode() << " (Name "
+              << cati.vidm.variableName(id) << ")"
+              << std::endl;
+  }
+}
+
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertFunctionId(FunctionId id) {
   ROSE_ASSERT(id.isValid());
-  if(debuglevel > 0) {
-    std::cout << "function symbol " << id.toString(cati.fidm) << std::endl;
-    std::cout << "count" << cati.functionAddressTakenInfo.second.count(id) << std::endl;
-  }
+
   cati.functionAddressTakenInfo.second.insert(id);
+
+  if(debuglevel > 0) {
+    std::cout << "INFO: Added function id " << id.getIdCode() << " (Name: "
+              << cati.fidm.getFunctionNameFromFunctionId(id) << ")"
+              << std::endl;
+  }
 }
 
 // void f() { }
