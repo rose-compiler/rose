@@ -6881,8 +6881,10 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
   //   - SgArrowExp
   //   - SgArrowStarOp
   //   - SgPointerDerefExp
+  //   - SgAddressOfOp
   //   - SgFunctionRefExp
   //   - SgMemberFunctionRefExp
+  // schroder3 (2016-06-28): There are some more (see below).
 
   // Some virtual functions are resolved statically (e.g. for objects allocated on the stack)
      bool isAlwaysResolvedStatically = false;
@@ -6890,6 +6892,8 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
      SgExpression* functionExp = this->get_function();
      switch (functionExp->variantT())
         {
+       // schroder3 (2016-06-28): Added SgAddressOp (for example "(&f)()", "(*&***&**&*&f)()" or "(&***&**&*&f)()")
+       //
        // EDG3 removes all SgPointerDerefExp nodes from an expression like this
        //    void f() { (***f)(); }
        // EDG4 does not.  Therefore, if the thing to which the pointers ultimately point is a SgFunctionRefExp then we
@@ -6901,19 +6905,19 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
        // In this case return NULL should be allowed and the caller has to handle it accordingly
        //
           case V_SgPointerDerefExp:
+          case V_SgAddressOfOp:
              {
-               SgPointerDerefExp *exp = isSgPointerDerefExp(functionExp);
-               SgFunctionRefExp *fref = NULL;
-               while (exp && !fref) 
-                  {
-                    fref = isSgFunctionRefExp(exp->get_operand_i());
-                    exp  = isSgPointerDerefExp(exp->get_operand_i());
-                  }
+               SgExpression *exp = functionExp;
+               while (isSgPointerDerefExp(exp) || isSgAddressOfOp(exp)) {
+                 exp = isSgUnaryOp(exp)->get_operand();
+               }
 
-               if (!fref)
-                    break;
+               if (!isSgFunctionRefExp(exp)) {
+                 // Unable to find associated function symbol: return 0:
+                 break;
+               }
 
-               functionExp = fref;
+               functionExp = exp;
              }
        // fall through
 
