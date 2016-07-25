@@ -1387,6 +1387,14 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<me <<"(startVa = " <<StringUtility::addrToString(startVa) <<")\n";
 
+    // Avoid creating large basic blocks since this can drastically slow down instruction semantics. Large basic blocks are a
+    // real possibility here because we're likely to be interpreting data areas as code. We're not creating any permanent basic
+    // blocks in this analysis, so limiting the size here has no effect on which blocks are ultimately added to the control
+    // flow graph.  The smaller the limit, the more likely that a multi-instruction call will get split into two blocks and not
+    // detected. Multi-instruction calls are an obfuscation technique.
+    Sawyer::TemporaryCallback<BasicBlockCallback::Ptr>
+        tcb(partitioner.basicBlockCallbacks(), Modules::BasicBlockSizeLimiter::instance(20)); // arbitrary
+
     while (AddressInterval unusedVas = partitioner.aum().nextUnused(startVa)) {
 
         // The unused interval must have executable addresses, otherwise skip to the next unused interval.
