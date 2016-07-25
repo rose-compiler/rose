@@ -127,9 +127,13 @@ class ComputeAddressTakenInfo
     void visit(SgMemberFunctionRefExp* sgn);
     void visit(SgTemplateFunctionRefExp* sgn);
     void visit(SgTemplateMemberFunctionRefExp* sgn);
+    void visit(SgReturnStmt* sgn);
     void visit(SgFunctionCallExp* sgn);
     void visit(SgThisExp* sgn);
     void visit(SgAddressOfOp* sgn);
+    void visit(SgCtorInitializerList* sgn);
+    void visit(SgConstructorInitializer* sgn);
+    void visit(SgFunctionParameterList* sgn);
     void visit(SgNode* sgn);
     void insertVariableId(VariableId);
     void insertFunctionId(FunctionId);

@@ -210,6 +210,17 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp*
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
+  if(searchKind == ATSK_ImplicitAddressOnly) {
+    // This is an entry point for a implicit function address-taking search
+    if(isSgFunctionType(sgn->get_type()->findBaseType())) {
+      SgNode* rhs_op = sgn->get_rhs_operand();
+      rhs_op->accept(*this);
+    }
+    else {
+      // No function type ==> no implicit function address-taking:
+      return;
+    }
+  }
   SgNode* lhs_op = sgn->get_lhs_operand();
   lhs_op->accept(*this);
 }
@@ -327,6 +338,22 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateMember
   // raise the flag
   // functions can potentially modify anything
   cati.variableAddressTakenInfo.first = true;
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgReturnStmt* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+  SgFunctionDefinition* funcDef = SgNodeHelper::getClosestParentFunctionDefinitionOfLocatedNode(sgn);
+  ROSE_ASSERT(funcDef);
+  SgFunctionDeclaration * funcDecl = funcDef->get_declaration();
+  ROSE_ASSERT(funcDecl);
+  SgType* funcReturnType = funcDecl->get_type()->get_return_type();
+  SgExpression* returnExpr = sgn->get_expression();
+  ROSE_ASSERT(returnExpr);
+  std::vector<VariableId> associationTargets;
+  // TODO: all variables on the lhs of assignments that have a call of a function with the same
+  //  type as this function on the rhs.
+  handleAssociation(associationTargets, funcReturnType, returnExpr);
 }
 
 // A& foo() { return A(); }
@@ -540,6 +567,142 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
   //  a member function then we should already have the object, to which "this" points, in our address taken
   //  variables set, because a call of a member function from a non object context is not possible without
   //  specifying an object.
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionParameterList* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-07-21): Iterate over parameters and check for default arguments
+  //  (=initializations) and for parameters of reference type:
+  const SgInitializedNamePtrList& parameterInitNames = sgn->get_args();
+  for(SgInitializedNamePtrList::const_iterator i = parameterInitNames.begin();
+      i != parameterInitNames.end(); ++i
+  ) {
+    SgSymbol* correspondingSymbol = (*i)->search_for_symbol_from_symbol_table();
+    if(!correspondingSymbol) {
+      // This should be a non-defining declaration then:
+      SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(sgn->get_parent());
+      ROSE_ASSERT(funcDecl);
+      if(!funcDecl->get_definition()) {
+        // Non-defining declaration. Two cases:
+        //  1) There is a defining declaration in the AST and we will see it later.
+        //  2) There is no defining declaration in the AST: There is nothing we could
+        //     do, because there are no symbols for parameters of function declarations
+        //     in the ROSE AST. (This is okay because it is optional to give
+        //     parameters names. And even if there are names in the declaration then
+        //     they are never used because only the names in the definition are used.)
+        //  In both cases we do nothing:
+        continue;
+      }
+      else {
+        // A defining declaration resp. a definition should always have symbols for their
+        //  parameters:
+        throw SPRAY::Exception("Unable to find symbol of parameter in defining declaration.");
+      }
+    }
+    // There is a symbol available at this point.
+
+    // Debug output:
+    if(debuglevel > 0) {
+      SgSymbol* correspondingSymbol = (*i)->search_for_symbol_from_symbol_table();
+      std::cout << "Parameter: " << (*i)->unparseToString()
+                << "(Symbol: " << (correspondingSymbol ? correspondingSymbol->get_name().getString() +
+                    ", " + correspondingSymbol->class_name() : std::string("<none>"))
+                << ")" << std::endl;
+    }
+
+    VariableId parameter = cati.vidm.variableId(*i);
+    SgType* parameterType = (*i)->get_type();
+    ROSE_ASSERT(parameterType);
+
+    // The target of a possible default argument is the current parameter:
+    std::vector<VariableId> associationTargets;
+    associationTargets.push_back(parameter);
+
+    // Check for default argument:
+    if(SgAssignInitializer* defaultArgument = isSgAssignInitializer((*i)->get_initializer())) {
+      // Handle alias/ reference creation and implicit address-taking inside the default argument
+      //  initialization:
+      handleAssociation(associationTargets, parameterType, defaultArgument->get_operand());
+    }
+    else if(isSgAggregateInitializer((*i)->get_initializer()) || isSgCompoundInitializer((*i)->get_initializer())) {
+      // Currently not supported (TODO).
+      std::cout << "WARNING: Unsupported default argument initializer for parameter " << cati.vidm.variableName(parameter) << std::endl;
+    }
+    else {
+      if(isSgInitializer((*i)->get_initializer())) {
+        throw SPRAY::Exception("Unknown initializer for parameter " + cati.vidm.variableName(parameter));
+      }
+
+      // No default argument: Add the parameter to the address taken set anyway if it is of
+      //  reference type.
+      if(SgNodeHelper::isReferenceType((*i)->get_type())) {
+        insertVariableId(parameter);
+      }
+    }
+  }
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConstructorInitializer* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-07-20): Call of a constructor: Basically the same as a function call expr:
+  //  Get the argument expressions and the parameter types:
+  if(const SgExprListExp* argumentExpressionListContainer = sgn->get_args()) {
+    const SgExpressionPtrList argumentExpressions = argumentExpressionListContainer->get_expressions();
+    if(argumentExpressions.size() > 0) {
+      // Arguments are available.
+      // Determine the parameter types:
+      const SgMemberFunctionDeclaration* constructorDecl = sgn->get_declaration();
+      // If we have arguments, then there should be a declaration (calls of a default copy constructor
+      //  do currently not appear as SgConstructorInitializer in the AST):
+      ROSE_ASSERT(constructorDecl);
+      // Iterate over the parameters and extract the parameter types:
+      const SgInitializedNamePtrList& parameterInitNames = constructorDecl->get_args();
+      SgTypePtrList parameterTypes;
+      for(SgInitializedNamePtrList::const_iterator i = parameterInitNames.begin();
+          i != parameterInitNames.end(); ++i
+      ) {
+        parameterTypes.push_back((*i)->get_type());
+      }
+      // Handle the arguments in the same way as a normal (member) function call:
+      handleCall(parameterTypes, argumentExpressionListContainer->get_expressions());
+    }
+  }
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCtorInitializerList* sgn) {
+  std::cout << std::endl << std::endl;
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-07-20): Constructor initializer list: There is a reference creation if
+  //  the initialized member has reference type and there might be an implicit address-taking
+  //  if the initialized member has function pointer type. Check every initialized member:
+  SgInitializedNamePtrList& constructorInitializers = sgn->get_ctors();
+  for (SgInitializedNamePtrList::const_iterator i = constructorInitializers.begin();
+      i != constructorInitializers.end(); ++i
+  ) {
+    // Member initialization or delegated constructor call:
+    if(isSgConstructorInitializer((*i)->get_initializer())) {
+      // The constructor initializer is handled by the corresponding visit member function.
+      continue;
+    }
+    SgInitializedName* initializedMember = *i;
+
+    VariableId memberVariable = cati.vidm.variableId(initializedMember);
+    ROSE_ASSERT(memberVariable.isValid());
+
+    // We know the target of the initialization: the member:
+    std::vector<VariableId> possibleTargets;
+    possibleTargets.push_back(memberVariable);
+
+    // Add the variables in the init expression:
+    SgAssignInitializer* memberInitializer = isSgAssignInitializer(initializedMember->get_initializer());
+    ROSE_ASSERT(memberInitializer);
+
+    // Handle the type of the member together with the initializer expression:
+    handleAssociation(possibleTargets, initializedMember->get_type(), memberInitializer->get_operand());
+  }
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAddressOfOp* sgn)
