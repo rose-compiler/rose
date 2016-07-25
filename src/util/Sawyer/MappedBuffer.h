@@ -11,7 +11,10 @@
 #include <Sawyer/AllocatingBuffer.h>
 #include <Sawyer/Buffer.h>
 #include <Sawyer/Sawyer.h>
+#include <Sawyer/StaticBuffer.h>
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
@@ -47,7 +50,17 @@ public:
      *
      *  The parameters describe which file (by name) and part thereof should be mapped into memory. */
     static typename Buffer<A, T>::Ptr instance(const boost::iostreams::mapped_file_params &params) {
-        return typename Buffer<A, T>::Ptr(new MappedBuffer(params));
+        try {
+            return typename Buffer<A, T>::Ptr(new MappedBuffer(params));
+        } catch (const std::ios_base::failure &e) {
+            if (boost::contains(e.what(), "Invalid argument") &&
+                boost::filesystem::is_regular_file(params.path) &&
+                boost::filesystem::is_empty(params.path)) {
+                return StaticBuffer<Address, Value>::instance((const Value*)NULL, 0);
+            } else {
+                throw;
+            }
+        }
     }
 
     /** Map a file by name.
@@ -62,7 +75,7 @@ public:
         params.flags = mode;
         params.length = length;
         params.offset = offset;
-        return typename Buffer<A, T>::Ptr(new MappedBuffer(params));
+        return instance(params);
     }
 
     // It doesn't make sense to copy a memory-mapped buffer since the point of copying is to result in two independent buffers
@@ -86,7 +99,7 @@ public:
     }
 
     void resize(Address n) /*override*/ {
-        if (n != device_.size())
+        if (n != this->size())
             throw std::runtime_error("resizing not allowed for MappedBuffer");
     }
 
