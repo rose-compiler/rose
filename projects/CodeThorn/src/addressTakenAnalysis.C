@@ -73,10 +73,37 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn
             << std::endl;
 }
 
+SPRAY::ComputeAddressTakenInfo::OperandToVariableId::AddressTakenSearchKind SPRAY::ComputeAddressTakenInfo::OperandToVariableId::getSearchKind() {
+  return searchKind;
+}
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::setSearchKind(AddressTakenSearchKind newSearchKind) {
+  searchKind = newSearchKind;
+}
+
 // base case for the recursion
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
 { 
   if(debuglevel > 0) debugPrint(sgn);
+
+  if(searchKind == ATSK_ImplicitAddressOnly) {
+    // Check whether this variable has the right type to be subject of the implicit
+    //  address taking
+    const SgType* varType = sgn->get_type();
+    if(SgNodeHelper::isPointerType(varType)) {
+      return;
+    }
+    const SgType* underlyingType = varType;
+    if(const SgReferenceType* varRefType = SgNodeHelper::isReferenceType(varType)) {
+      underlyingType = varRefType->get_base_type();
+    }
+
+    if(!isSgFunctionType(underlyingType)) {
+      // Only functions and variables of function (reference type) are subject to the implicit
+      //  address-taking:
+      return;
+    }
+  }
+
   VariableId id = cati.vidm.variableId(sgn);
   ROSE_ASSERT(id.isValid());
   // schroder3 (Jun 2016): Check for bitfield:
@@ -99,9 +126,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn
   }
 }
 
-
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclaration* sgn)
-{
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclaration* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
   // Check if this is a declaration of a reference:
   SgInitializedName* varDeclInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(sgn);
@@ -361,7 +386,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
     // static/non-static will be determined later.
   }
   else if(isSgArrowExp(firstChildOfCallExp)) {
-    // a->b (a is a pointer to an object, b is a member function):
+    // a->b (a is a pointer to an object, b is a member function TODO: or a function pointer/ reference):
     calleeKind = CK_MemberFunction;
     baseExprKind = BEK_Pointer;
     // static/non-static will be determined later.
@@ -384,7 +409,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
     // No base expression:
     baseExprKind = BEK_None;
     // The callee is a (static member-)function or a function pointer (== "static member-function pointer").
-    //  but a distinction between these kinds gives not advantage here:
+    //  but a distinction between these kinds gives no advantage here:
     calleeKind = CK_Unknown;
     memberFunctionKind = MFK_Unknown;
 

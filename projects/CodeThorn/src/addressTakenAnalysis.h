@@ -48,28 +48,67 @@ class ComputeAddressTakenInfo
   typedef std::pair<bool, FunctionIdSet> FunctionAddressTakenInfo;
   VariableIdMapping& vidm;
   FunctionIdMapping& fidm;
+
   // result to be computed by this analysis
   // bool is set to true when operand of SgAddressOfExp is a complicated
   // expression for which VariableId cannot be determined
   // example: &(*p)
-  VariableAddressTakenInfo variableAddressTakenInfo; // variables of which the address was taken
-  FunctionAddressTakenInfo functionAddressTakenInfo; // functions of which the address was taken
+  VariableAddressTakenInfo variableAddressTakenInfo;
+  // schroder3 (2016-07-19): second result of this analysis: set of function ids of address taken
+  //  functions. The bool is currently not set.
+  FunctionAddressTakenInfo functionAddressTakenInfo;
 
+  // schroder3 (2016-07-19): Extended comment by function ids,
+  //  reference creation and implicit address-taking of functions.
+  //
   // address can be taken for any expression that is lvalue
   // The purpose of this class is to traverse arbitrary
   // expressions that are operands of SgAddressOfOp and find the
-  // variable whose address is actually taken.
+  // variables and functions whose address is actually taken. In
+  // addition, SgVariableDeclaration and SgFunctionCallExp nodes are
+  // searched for alias/ reference creation. Furthermore,
+  // SgAssignOp and SgReturnStmt are considered too, because
+  // they might contain a implicit address-taking of a function.
+  //
   // For example in expression &(a.b->c),  'c' address is
   // actually taken. This class simply traverses the operand
   // of SgAddressOfOp to identify 
-  // the variable whose address is taken
+  // the variable or function whose address is taken
   // 
+  // schroder3 (2016-07-19): TODO: Rename to reflect the current purpose
+  //  (something like AddressTakingNodeToAddressTakenSet?)
   class OperandToVariableId : public ROSE_VisitorPatternDefaultBase
   {
     ComputeAddressTakenInfo& cati;
     int debuglevel;
+    // Stores which kind of address-takings should be added to the address taken set
+    //  during the current traverse.
+   public:
+    enum AddressTakenSearchKind {
+      ATSK_Everything,
+      ATSK_ImplicitAddressOnly
+    };
+   private:
+
+    // RAII for a temporary change of searchKind to ATSK_ImplicitAddressOnly:
+    class ImplicitAddressOnlyRAII {
+      AddressTakenSearchKind& _searchKind;
+      AddressTakenSearchKind _prevSearchKind;
+     public:
+      ImplicitAddressOnlyRAII(AddressTakenSearchKind& searchKind)
+      : _searchKind(searchKind), _prevSearchKind(searchKind) {
+        _searchKind = ATSK_ImplicitAddressOnly;
+      }
+
+      ~ImplicitAddressOnlyRAII() {
+        _searchKind = _prevSearchKind;
+      }
+    };
+
+    AddressTakenSearchKind searchKind;
   public:
-  OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati), debuglevel(0) { }
+  OperandToVariableId(ComputeAddressTakenInfo& _cati)
+      : cati(_cati), debuglevel(0), searchKind(ATSK_Everything) { }
     void visit(SgVarRefExp*);
     void visit(SgVariableDeclaration*);
     void visit(SgDotExp*);
@@ -93,6 +132,8 @@ class ComputeAddressTakenInfo
     void visit(SgNode* sgn);
     void insertFunctionId(FunctionId);
     void debugPrint(SgNode* sgn);
+    AddressTakenSearchKind getSearchKind();
+    void setSearchKind(AddressTakenSearchKind);
   };
 public:
   ComputeAddressTakenInfo(VariableIdMapping& _vidm, FunctionIdMapping& _fidm) : vidm(_vidm), fidm(_fidm)
