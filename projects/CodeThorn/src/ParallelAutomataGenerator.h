@@ -49,11 +49,9 @@ namespace SPRAY {
     Flow* randomCircleAutomaton(int numCircles, 
 				std::pair<int,int> lengthBounds, std::pair<int,int> numIntersectionsBounds, 
 				NumberGenerator& labelIds, CfaAnnotationGenerator& annotations);
-    void randomlySynchronizeAutomata(std::vector<Flow*> automata, std::pair<int,int> numSyncsBounds,
-				     CfaAnnotationGenerator& synchedAnnotations);
+    void randomlySynchronizeAutomata(std::vector<Flow*> automata, std::pair<int,int> numSyncsBounds);
 
   private:
-    int randomIntInRange(std::pair<int,int> range);
     Edge chooseRandomEdge(Flow* cfa);
     Label chooseRandomNode(Flow* cfa);
   };

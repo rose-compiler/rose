@@ -13,6 +13,9 @@ BUILDDIR=$(cd $2; pwd) # store the absolute path
 #$3: Only clean temporary test files
 MAKE_CLEAN_ONLY=$3
 
+#$3: Skip analyterix tests
+SKIP_ANALYTERIX_TESTS=$3
+
 TEST_ROOT_DIR="${SRCDIR}/tests/analyterix/"
 
 INPUT_FILE="subject.C"
@@ -101,6 +104,12 @@ cleanUp() {
 }
 
 echo "Analyterix test directory: ${TEST_ROOT_DIR}"
+
+# Check whether analyterix tests should be skipped:
+if [ "$SKIP_ANALYTERIX_TESTS" == "1" ]; then
+  echo -e "${WARNING_MSG_PREFIX}Skipping of analyterix tests is requested. Will not perform tests."
+  exit 0
+fi
 
 # Clean up temporary files that may have been left from a previous test run before performing the tests:
 cleanUp

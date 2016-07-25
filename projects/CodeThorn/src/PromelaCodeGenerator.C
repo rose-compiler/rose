@@ -110,15 +110,17 @@ string PromelaCodeGenerator::generateActionListener() {
   actionChannelAndListener << "chan act = [0] of {mtype};" << endl;
   actionChannelAndListener << endl;
   actionChannelAndListener << "/* Most recent message event */" << endl;
-  actionChannelAndListener << "mtype lastAction;" << endl;
+  actionChannelAndListener << "mtype lastAction = nop;" << endl;
   actionChannelAndListener << endl;
   actionChannelAndListener << "/* Action listener */" << endl;
   actionChannelAndListener << "active proctype Listener()" << endl;
   actionChannelAndListener << "{" << endl;
-  actionChannelAndListener << "  do" << endl;
-  actionChannelAndListener << "  :: act ? lastAction ->" << endl;
-  actionChannelAndListener << "step: skip" << endl;
-  actionChannelAndListener << "  od" << endl;
+  actionChannelAndListener << "  atomic {" << endl;
+  actionChannelAndListener << "    do" << endl;
+  actionChannelAndListener << "    :: act ? lastAction ->" << endl;
+  actionChannelAndListener << "  step: skip" << endl;
+  actionChannelAndListener << "    od" << endl;
+  actionChannelAndListener << "  }" << endl;
   actionChannelAndListener << "}" << endl;
   return actionChannelAndListener.str();
 }

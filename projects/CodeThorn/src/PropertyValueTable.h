@@ -58,6 +58,7 @@ class PropertyValueTable {
   void init();
   void init(size_t size);
   int entriesWithValue(PropertyValue v);
+  void shuffle();
   size_t size() { return _propertyValueTable.size(); }
  private:
   string reachToString(PropertyValue num);
