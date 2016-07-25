@@ -307,68 +307,50 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
     RoseAst ast(*k);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      SgSymbol* sym=0;
-      bool found=false;
-      int arraySize=-1; // -1 denotes: not an array
-      if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-        sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
-        if(sym) {
-          found=true;
-          if(/*modeVariableIdForEachArrayElement &&*/ SgNodeHelper::isArrayDeclaration(varDecl)) {
-            SgNode* initName0=varDecl->get_traversalSuccessorByIndex(1); // get-InitializedName
-            ROSE_ASSERT(initName0);
-            SgInitializedName* initName=isSgInitializedName(initName0);
-            ROSE_ASSERT(initName);
-            SgType* type=initName->get_type();
-            if(SgArrayType* arrayType=isSgArrayType(type)) {
-              //cout<<"DEBUG: found array type."<<endl;
-              // returns 0 if type does not contain size
-              arraySize=getArrayElementCount(arrayType);
-            }
+      if(SgInitializedName* initName = isSgInitializedName(*i)) {
+        if(!isSgVariableDeclaration(initName->get_parent()) && !isSgFunctionParameterList(initName->get_parent())) {
+          // Parent is e.g. SgCtorInitializerList or SgEnumDeclaration but no var decl and no parameter decl: Do nothing:
+          continue;
+        }
+
+        // Variable found: Try to get the variable's symbol:
+        SgSymbol* sym = initName->search_for_symbol_from_symbol_table();
+        if(!sym) {
+          //cout << "computeVariableSymbolMapping: SgInitializedName \"" << initName->unparseToString() << "\" without associated symbol found." << endl;
+
+          // Registration is not possible without symbol.
+          // This is presumably a parameter in a declaration or a built-in variable (e.g. __builtin__x). (TODO: Is it possible to assert this?)
+          //  ==> It is okay to ignore these:
+          continue;
+        }
+        // Check if the symbol is already registered:
+        if(symbolSet.find(sym) == symbolSet.end()) {
+          // New symbol: Check for array symbol:
+          SgType* type = initName->get_type();
+          if(SgArrayType* arrayType=isSgArrayType(type)) {
+            // Try to find the array dimensions:
+            //cout<<"DEBUG: found array type."<<endl;
+            // returns 0 if type does not contain size
+            int arraySize = getArrayElementCount(arrayType);
             if(arraySize==0) {
               // check the initializer
               arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initName->get_initializer()));
             }
             if(arraySize > 0) {
               //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<varDecl->unparseToString()<<endl;
+              // Array dimensions found: Registration as array symbol:
               registerNewArraySymbol(sym, arraySize);
-              symbolSet.insert(sym);
-              found = false;
+              // Do not register as normal symbol and continue with next iteration:
+              continue;
+            }
+            else {
+              // Array dimensions are not available at compile time: Register as normal symbol (no continue;)
             }
           }
-        } else {
-          cerr<<"WARNING: computeVariableSymbolMapping: VariableDeclaration without associated symbol found. Ignoring.";
-        }
-        assert(!isSgVariableDefinition(sym));
-      }
-      if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
-        sym=SgNodeHelper::getSymbolOfVariable(varRef);
-        if(sym)
-          found=true;
-        else
-          cerr<<"WARNING: computeVariableSymbolMapping: VarRefExp without associated symbol found. Ignoring.";
-        assert(!isSgVariableDefinition(sym));
-      }
-      if(found) {
-        //cout << "INFO: var: "<<SgNodeHelper::symbolToString(sym)<<endl;
-        // currently not possible because variables in forward declarations are not represented by a SgSymbol (only as SgName).
-#if 0
-        if(SgNodeHelper::isVariableSymbolInFunctionForwardDeclaration(sym)) {
-          // special case: we exclude variables in forward declarations to be used in variable id mappings.
-          cout << "INFO: ignoring variable in forward declaration: "<<SgNodeHelper::symbolToString(sym)<<endl;
-          continue;
-        }
-#endif        
-        //string longName=SgNodeHelper::uniqueLongVariableName(sym);
-        
-        // ensure all symbols are SgVariableSymbol
-        SgVariableSymbol* finalvarsym=isSgVariableSymbol(sym);
-        assert(finalvarsym);
-        //MapPair pair=make_pair(longName,finalvarsym);
-        if(symbolSet.find(finalvarsym)==symbolSet.end()) {
-          assert(finalvarsym);
-          registerNewSymbol(finalvarsym);
-          symbolSet.insert(finalvarsym);
+          // Register new symbol as normal variable symbol:
+          registerNewSymbol(sym);
+          // Remember that this symbol was already registered:
+          symbolSet.insert(sym);
         }
       }
     }
