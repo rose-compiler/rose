@@ -1406,7 +1406,7 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
 
         while (startVa <= unusedExecutableVas.greatest()) {
             // Discover the basic block. It's possible that the partitioner already knows about this block location but just
-            // hasn't tried looking for it's instructions yet.  I don't think this happens within the stock engine because it
+            // hasn't tried looking for its instructions yet.  I don't think this happens within the stock engine because it
             // tries to recursively discover all basic blocks before it starts scanning things that might be data. But users
             // might call this before they've processed all the outstanding placeholders.  Consider the following hypothetical
             // user's partitioner state 

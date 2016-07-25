@@ -55,6 +55,19 @@ PreventDiscontiguousBlocks::operator()(bool chain, const Args &args) {
     return chain;
 }
 
+bool
+BasicBlockSizeLimiter::operator()(bool chain, const Args &args) {
+    if (chain && args.bblock->nInstructions() >= maxInsns_) {
+        args.results.terminate = TERMINATE_NOW;
+        if (mlog[DEBUG]) {
+            mlog[DEBUG] <<"BasicBlockSizeLimiter triggered:\n";
+            BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
+                mlog[DEBUG] <<"        " <<unparseInstructionWithAddress(insn) <<"\n";
+        }
+    }
+    return chain;
+}
+
 // class method
 Sawyer::CommandLine::SwitchGroup
 InstructionLister::switches(Settings &settings) {
