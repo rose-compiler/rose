@@ -287,6 +287,7 @@ int main( int argc, char * argv[] ) {
       ;
 
     parallelProgramOptions.add_options()
+      ("seed",po::value< int >(),"seed value for randomly selected integers (concurrency-related non-determinism might still affect results).")
       ("generate-automata",po::value< string >(),"generate random control flow automata that can be interpreted and analyzed as a parallel program.")
       ("num-automata",po::value< int >(),"select the number of parallel automata to generate.")
       ("num-syncs-range",po::value< string >(),"select a range for the number of random synchronizations between the generated automata (csv pair of integers).")
@@ -516,7 +517,11 @@ int main( int argc, char * argv[] ) {
   boolOptions.processZeroArgumentsOption("reduce-cfg"); // this handles 'no-reduce-cfg'
 
   if (args.count("generate-automata")) {
-    srand(time(NULL));
+    if (args.count("seed")) {
+      srand(args["seed"].as<int>());
+    } else {
+      srand(time(NULL));
+    }
     ParallelAutomataGenerator automataGenerator;
     int numberOfAutomata = 10;
     if (args.count("num-automata")) {
@@ -553,7 +558,11 @@ int main( int argc, char * argv[] ) {
 
 
   if (args.count("automata-dot-input")) {
-    srand(time(NULL));
+    if (args.count("seed")) {
+      srand(args["seed"].as<int>());
+    } else {
+      srand(time(NULL));
+    }
     DotGraphCfgFrontend dotGraphCfgFrontend;
     string filename = args["automata-dot-input"].as<string>();
     CfgsAndAnnotationMap cfgsAndMap = dotGraphCfgFrontend.parseDotCfgs(filename);

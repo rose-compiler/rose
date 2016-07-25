@@ -79,7 +79,7 @@ bool CodeThorn::operator!=(const ParallelSystem& p1, const ParallelSystem& p2) {
 }
 
 string ParProLtlMiner::randomLtlFormula(vector<string> atomicPropositions, int maxProductions) {
-  int numberOfRules = 10; // Note: this has to reflect the number of different case statements in the swtich-case block below.
+  int numberOfRules = 10; // Note: this has to reflect the number of different case statements in the switch-case block below.
   int production;
   if (maxProductions == 0) {
     production = 9;
