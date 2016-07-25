@@ -7,6 +7,7 @@
 #include <fstream>
 #include <algorithm>
 #include "addressTakenAnalysis.h"
+#include "SprayException.h"
 
 using namespace CodeThorn;
 using namespace SPRAY;
@@ -121,34 +122,32 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclaration* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
-  // Check if this is a declaration of a reference:
+
+
   SgInitializedName* varDeclInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(sgn);
   ROSE_ASSERT(varDeclInitName);
   SgType* varDeclType = varDeclInitName->get_type();
   ROSE_ASSERT(varDeclType);
-  if(SgReferenceType* varDeclReferenceType = isSgReferenceType(varDeclType)) {
-    // schroder3 (Jul 2016):
-    //  Declaration of a reference: A reference creates an alias of the variable that is referenced by the reference.
-    //  This alias works in both directions. For example if we have the code "int b = 0; int& c = b;" then we can
-    //  change the value of b by using c ("c = 1;") and we can change the "value" of c by using b ("b = 2;"). We
-    //  therefore have to add the reference variable as well as the variables in the init expression to the address
-    //  taken set.
 
-    //  Reference variable:
-    VariableId refVarid = cati.vidm.variableId(sgn);
-    cati.variableAddressTakenInfo.second.insert(refVarid);
+  // schroder3 (2016-07-21):
+  //  The declared variable is the target of the initialization:
+  std::vector<VariableId> possibleTargets;
+  possibleTargets.push_back(cati.vidm.variableId(sgn));
 
-    //  Init expression:
-    //  Currently we treat every variable in the init expression of the reference as if it's address was taken, because
-    //  we currently have no mapping between the reference and the variables in the init expression. It is therefore
-    //  currently not possible to add the variable to the address taken set only if the address of the reference is taken.
-    SgExpression* varDeclInitExpr = SgNodeHelper::getInitializerExpressionOfVariableDeclaration(sgn);
-    if(debuglevel > 0) {
-      std::cout << "INFO: Reference declaration of type " << varDeclReferenceType->unparseToString() << std::endl;
-      std::cout << "INFO: Type of init expression: " << varDeclInitExpr->get_type()->unparseToString() << std::endl;
-    }
-    varDeclInitExpr->accept(*this);
-  }
+  // schroder3 (2016-07-21):
+  //  Add the variables/ functions in the init expression. Two cases:
+  //
+  //  Initialization of a reference:
+  //   Currently we treat every variable in the init expression of the reference as if its address was taken, because
+  //   we currently have no mapping between the reference and the variables in the init expression. It is therefore
+  //   currently not possible to add the variable to the address taken set only if the address of the reference is taken.
+  //
+  //  Initialization of a variable with underlying function pointer type:
+  //   There might be an implicit address-taking of a function if the initializer contains a function:
+  //   Traverse the initializer and only add functions to the address-taken set (and do not add variables of function type):
+  //
+  //  Handle both cases:
+  handleAssociation(possibleTargets, varDeclType, SgNodeHelper::getInitializerExpressionOfVariableDeclaration(sgn));
 }
 
 // only the rhs_op of SgDotExp is modified
@@ -525,11 +524,54 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
     parameterTypes = calleeType->get_arguments();
 //  }
 
+  handleCall(parameterTypes, arguments);
+
+  // we can look at its defintion and process the return expression ?
+  // function calls can modify anything
+  // raise the flag more analysis required
+  cati.variableAddressTakenInfo.first = true;
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+  // schroder3 (Jun 2016):
+  //  If we have a "this" expression then we are inside an object context. If this "this" is used for a call of
+  //  a member function then we should already have the object, to which "this" points, in our address taken
+  //  variables set, because a call of a member function from a non object context is not possible without
+  //  specifying an object.
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAddressOfOp* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+  // schroder3 (Jul 2016):
+  //  This is only valid if we are currently looking for an implicit address-taking of a function
+  if(searchKind == ATSK_ImplicitAddressOnly) {
+    // We found an address-of operator and the address-taking is therefore not implicit. Do not traverse
+    //  the sub-tree:
+    return;
+  }
+  else {
+    ROSE_ASSERT(false);
+  }
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+  std::cerr << "unhandled operand " << sgn->class_name() << " of SgAddressOfOp in AddressTakenAnalysis\n";
+  std::cerr << sgn->unparseToString() << std::endl;
+  ROSE_ASSERT(0);
+}
+
+// schroder3 (2016-07-20): Handles the arguments of a constructor or (member) function call regarding their "address-taken-ness".
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleCall(const SgTypePtrList& parameterTypes, const SgExpressionPtrList& argumentExpressions) {
   // Iterators:
-  SgExpressionPtrList::const_iterator argIter = arguments.begin();
+  SgExpressionPtrList::const_iterator argIter = argumentExpressions.begin();
   SgTypePtrList::const_iterator paramTypeIter = parameterTypes.begin();
   // Look at each argument:
-  while(argIter != arguments.end()) {
+  while(argIter != argumentExpressions.end()) {
     // Get the current argument;
     /*const*/ SgExpression* argument = *argIter;
     if(debuglevel > 0) {
@@ -551,8 +593,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
     }
 
     if(!parameterType) {
-      std::cout << "ERROR: No type of parameter!" << std::endl;
-      exit(1);
+      throw SPRAY::Exception("No type of parameter!");
     }
 
     // Output the type as string if in debug mode:
@@ -571,38 +612,84 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
       break;
     }
 
-    // Check whether the type is a reference type:
-    if(isSgReferenceType(parameterType)) {
-      // Add all variables that are used in the argument expression to the address taken set:
-      argument->accept(*this);
-    }
+    // Possible parameters:
+    std::vector<VariableId> possibleParameters;
+    // TODO: Try to determine the function that is currently called. If this does not work,
+    //  get all functions that could be called given the current function type.
+
+    // If the parameter's type is a reference type:
+    //  Add all variables that are used in the argument expression to the address taken set.
+    // If the parameter's type is a function pointer type:
+    //  Add all functions that are used in the argument expression and do not have a address-of
+    //  operator to the address taken set
+    // Handle both cases:
+    handleAssociation(possibleParameters, parameterType, argument);
 
     ++argIter;
     ++paramTypeIter;
   }
-
-  // we can look at its defintion and process the return expression ?
-  // function calls can modify anything
-  // raise the flag more analysis required
-  cati.variableAddressTakenInfo.first = true;
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
-{
-  if(debuglevel > 0) debugPrint(sgn);
-  // schroder3 (Jun 2016):
-  //  If we have a "this" expression then we are inside an object context. If this "this" is used for a call of
-  //  a member function then we should already have the object, to which "this" points, in our address taken
-  //  variables set, because a call of a member function from a non object context is not possible without
-  //  specifying an object.
-}
+// schroder3 (2016-07-20): Handles all kinds of associations (currently initializations and assignments) regarding their "address-taken-ness".
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(const std::vector<VariableId> possibleTargetEntities,
+                                                                            const SgType* targetEntityType, /*const*/ SgExpression* associatedExpression) {
+  // TODO: As soon as every caller of this function provides a list of possible target entities the targetEntityType parameter can be removed.
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
-{
-  if(debuglevel > 0) debugPrint(sgn);
-  std::cerr << "unhandled operand " << sgn->class_name() << " of SgAddressOfOp in AddressTakenAnalysis\n";
-  std::cerr << sgn->unparseToString() << std::endl;
-  ROSE_ASSERT(0);
+  ROSE_ASSERT(targetEntityType);
+  if(associatedExpression) {
+
+    for(std::vector<VariableId>::const_iterator i = possibleTargetEntities.begin();
+        i != possibleTargetEntities.end(); ++i
+    ) {
+      ROSE_ASSERT((*i).isValid());
+      ROSE_ASSERT(cati.vidm.getType(*i) == targetEntityType);
+    }
+
+    // If we have a reference to pointer to function type then we handle it as a reference type and
+    //  not as a function type.
+    if(SgNodeHelper::isReferenceType(targetEntityType)) {
+      // Initialization of a reference: A reference creates an alias of the variable that is referenced by the reference.
+      //  This alias works in both directions. For example if we have the code "int b = 0; int& c = b;" then we can
+      //  change the value of b by using c ("c = 1;") and we can change the "value" of c by using b ("b = 2;"). We
+      //  therefore have to add the reference variable as well as the variables in the init expression to the address
+      //  taken set. (But we only add the reference variable if we have a init expression.)
+
+      // Add all possible targets of this initialization to the address taken set:
+      for(std::vector<VariableId>::const_iterator i = possibleTargetEntities.begin();
+          i != possibleTargetEntities.end(); ++i
+      ) {
+        // Consistency check:
+        insertVariableId(*i);
+      }
+
+      // The type of the target entity is a reference type:
+      //  Treat every variable in the expression as if there is a alias/ reference creation of the variable. Currently we
+      //  add every variable in the expression to the adderss-taken set because we have no mapping between the target refernce and
+      //  the variables in the expression. It is therefore currently not possible to add the variable to the address taken set only
+      //  if the address of the target reference is taken.
+      associatedExpression->accept(*this);
+    }
+    else {
+      // This feature is currently disabled:
+      return;
+
+      const SgPointerType* targetEntityPointerType = SgNodeHelper::isPointerType(targetEntityType);
+      if(targetEntityPointerType && isSgFunctionType(targetEntityPointerType->get_base_type())) {
+        // The underlying type of the target entity is a function pointer type:
+        //  There might be an implicit address-taking of a function if the expression contains a function:
+        //  Traverse the expression and only add functions to the address-taken set (and do not add variables of function type):
+        // Use RAII to change the searchKind to implicitAddressOnly during the following traverse:
+        ImplicitAddressOnlyRAII implicitAddressOnly(searchKind);
+        associatedExpression->accept(*this);
+      }
+      else {
+        // No alias/ reference creation and no implicit function address-taking. ==> nothing to do
+      }
+    }
+  }
+  else {
+    // No expression ==> no alias/ reference creation and no implicit function address-taking. ==> nothing to do
+  }
 }
 
 void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)

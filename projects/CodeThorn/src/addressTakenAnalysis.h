@@ -129,9 +129,14 @@ class ComputeAddressTakenInfo
     void visit(SgTemplateMemberFunctionRefExp* sgn);
     void visit(SgFunctionCallExp* sgn);
     void visit(SgThisExp* sgn);
+    void visit(SgAddressOfOp* sgn);
     void visit(SgNode* sgn);
     void insertVariableId(VariableId);
     void insertFunctionId(FunctionId);
+    // schroder3 (2016-07-20): Handles the arguments of a constructor or (member) function call regarding their "address-taken-ness".
+    void handleCall(const SgTypePtrList& parameterTypes, const SgExpressionPtrList& argumentExpressions);
+    // schroder3 (2016-07-20): Handles all kinds of associations (currently initializations and assignments) regarding their "address-taken-ness".
+    void handleAssociation(const std::vector<VariableId> possibleTargetEntities, const SgType* targetEntityType, /*const*/ SgExpression* associatedExpression);
     void debugPrint(SgNode* sgn);
     AddressTakenSearchKind getSearchKind();
     void setSearchKind(AddressTakenSearchKind);
