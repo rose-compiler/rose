@@ -420,13 +420,15 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                 while (firstZero+nZeros < nRead && buf[firstZero+nZeros]==0) ++nZeros;
 
                 if (zeros.isEmpty()) {
-                    zeros = AddressInterval::baseSize(va+firstZero, nZeros);
-                } else if (zeros.greatest()+1 == va+firstZero) {
+                    zeros = AddressInterval::baseSize(accessed.least()+firstZero, nZeros);
+                } else if (zeros.greatest()+1 == accessed.least()+firstZero) {
                     zeros = AddressInterval::baseSize(zeros.least(), zeros.size()+nZeros);
                 } else {
-                    if (zeros.size() >= threshold) {
-                        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
-                        changes.insert(zeros);
+                    if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
+                        AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront,
+                                                                         zeros.greatest()-leaveAtBack);
+                        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+                        changes.insert(affected);
                     }
                     zeros = AddressInterval::baseSize(va+firstZero, nZeros);
                 }
@@ -434,9 +436,11 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                 firstZero += nZeros+1;
             }
         }
-        va += nRead;
+        if (accessed.greatest() == map.greatest())
+            break;                                      // avoid possible overflow in next statement
+        va = accessed.greatest() + 1;
     }
-    if (zeros.size() >= threshold && zeros.size() >= leaveAtFront + leaveAtBack) {
+    if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
         AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront, zeros.greatest()-leaveAtBack);
         map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
         changes.insert(affected);
