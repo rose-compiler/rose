@@ -484,6 +484,43 @@ SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
     //cerr<<"WARNING: SgInitializedName: symbol-look-up would fail: get_name()=="<<initName->get_name()<< " .. skipping."<<endl;
     //return 0;
     //}
+  // schroder3 (2016-07-22): If the init name is in a constructor initializer list then is does not have a valid symbol.
+  if(SgCtorInitializerList* ctorInitializerList = isSgCtorInitializerList(initName->get_parent())) {
+    ROSE_ASSERT(initName->search_for_symbol_from_symbol_table() == 0);
+    //  Find the declaration of the corresponding member and use the declaration's init name instead:
+    SgMemberFunctionDeclaration* parentConstructorDecl = isSgMemberFunctionDeclaration(ctorInitializerList->get_parent());
+    ROSE_ASSERT(parentConstructorDecl);
+    SgClassDefinition* correspondingClass = isSgClassDefinition(parentConstructorDecl->get_class_scope());
+    ROSE_ASSERT(correspondingClass);
+    // Is init name a member initializer or a call of (base) class constructor?
+    if(isSgConstructorInitializer(initName->get_initializer())) {
+      // Init name "is" a call of a (base) class constructor. Finding the declaration of this constructor
+      //  is currently not supported (TODO).
+    }
+    else {
+      // Find the corresponding member declaration:
+      SgDeclarationStatementPtrList& members = correspondingClass->get_members();
+      bool declFound = false;
+      for(SgDeclarationStatementPtrList::const_iterator i = members.begin(); i != members.end(); ++i) {
+        if(SgVariableDeclaration* varDecl = isSgVariableDeclaration(*i)) {
+          SgInitializedName* currMemberInitName = getInitializedNameOfVariableDeclaration(varDecl);
+          ROSE_ASSERT(currMemberInitName);
+          if(currMemberInitName->get_name() == initName->get_name()) {
+            // Found the corresponding member declaration. Use the member declaration's init name to get
+            //  the symbol:
+            initName = currMemberInitName;
+            declFound = true;
+            break;
+          }
+        }
+      }
+      if(!declFound) {
+        throw SPRAY::Exception("Error: Unable to find declaration of member \"" + initName->get_name().getString()
+                                + "\" that is referenced in constructor initializer list.");
+      }
+    }
+  }
+  // Return the symbol of the init name:
   SgSymbol* varsym=initName->search_for_symbol_from_symbol_table();
   return varsym;
 }
@@ -812,6 +849,50 @@ set<SgVariableDeclaration*> SgNodeHelper::localVariableDeclarationsOfFunction(Sg
   return localVarDecls;
 }
 
+//! schroder3 (2016-07-22): Returns the closest function definition that contains the given node
+SgFunctionDefinition* SgNodeHelper::getClosestParentFunctionDefinitionOfLocatedNode(SgLocatedNode* locatedNode) {
+  SgNode* node = locatedNode;
+  while((node = node->get_parent())) {
+    if(SgFunctionDefinition* funcDef = isSgFunctionDefinition(node)) {
+      return funcDef;
+    }
+  }
+  return 0;
+}
+
+// schroder3 (2016-07-22): Modified version of SageInterface::isPointerType(...) that
+//  returns the underlying pointer type.
+const SgPointerType* SgNodeHelper::isPointerType(const SgType* t) {
+  if(isSgPointerType(t)) {
+    return isSgPointerType(t);
+  }
+  else if(isSgTypedefType(t)) {
+    return SgNodeHelper::isPointerType(isSgTypedefType(t)->get_base_type());
+  }
+  else if(isSgModifierType(t)) {
+    return SgNodeHelper::isPointerType(isSgModifierType(t)->get_base_type());
+  }
+  else {
+    return 0;
+  }
+}
+
+// schroder3 (2016-07-22): Modified version of SageInterface::isReferenceType(...) tha
+//  returns the underlying reference type.
+const SgReferenceType* SgNodeHelper::isReferenceType(const SgType* t) {
+  if(isSgReferenceType(t)) {
+    return isSgReferenceType(t);
+  }
+  else if(isSgTypedefType(t)) {
+    return SgNodeHelper::isReferenceType(isSgTypedefType(t)->get_base_type());
+  }
+  else if(isSgModifierType(t)) {
+    return SgNodeHelper::isReferenceType(isSgModifierType(t)->get_base_type());
+  }
+  else {
+    return 0;
+  }
+}
 
 
 /*! 
