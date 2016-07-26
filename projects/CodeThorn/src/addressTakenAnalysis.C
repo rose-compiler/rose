@@ -74,28 +74,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn
             << std::endl;
 }
 
-SPRAY::ComputeAddressTakenInfo::OperandToVariableId::AddressTakenSearchKind SPRAY::ComputeAddressTakenInfo::OperandToVariableId::getSearchKind() {
-  return searchKind;
-}
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::setSearchKind(AddressTakenSearchKind newSearchKind) {
-  searchKind = newSearchKind;
-}
-
-
-
 // base case for the recursion
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
 { 
   if(debuglevel > 0) debugPrint(sgn);
-
-  if(searchKind == ATSK_ImplicitAddressOnly) {
-    // Check whether this variable has not the right type to be subject of the implicit
-    //  address taking:
-    const SgType* varType = sgn->get_type();
-    if(!SgNodeHelper::isTypeEligibleForFunctionToPointerConversion(varType)) {
-      return;
-    }
-  }
 
   VariableId id = cati.vidm.variableId(sgn);
   ROSE_ASSERT(id.isValid());
@@ -197,8 +179,8 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefEx
     // Currently this should only be possible in case of a lvalue of function type:
     ROSE_ASSERT(isSgFunctionType(sgn->get_operand()->get_type()));
 
-    // Find all variables/ functions in the operand expression. (The implicit address-of
-    // was already found and ATSK_ImplicitAddressOnly is therefore not enabled.)
+    // Find all variables/ functions in the operand expression because their address is
+    //  implicitly taken.
     SgNode* dereferencee = sgn->get_operand();
     dereferencee->accept(*this);
   }
@@ -233,17 +215,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp*
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
-  if(searchKind == ATSK_ImplicitAddressOnly) {
-    // This is an entry point for a implicit function address-taking search
-    if(isSgFunctionType(sgn->get_type()->findBaseType())) {
-      SgNode* rhs_op = sgn->get_rhs_operand();
-      rhs_op->accept(*this);
-    }
-    else {
-      // No function type ==> no implicit function address-taking:
-      return;
-    }
-  }
+
   SgNode* lhs_op = sgn->get_lhs_operand();
   lhs_op->accept(*this);
 }
@@ -732,9 +704,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAddressOfOp* s
   // schroder3 (2016-07-26): Two cases:
   //  a) We are currently looking for an implicit address-taking:
   //     An address-of operator was found and the address-taking is therefore not implicit
-  //     ==> Traverse the sub-tree without the ATSK_ImplicitAddressOnly option ==> case b
+  //     ==> case b
   //  b) We are currently *not* looking for an implicit address-taking:
-  //     The sub-tree of will be traversed separately ==> Do not traverse the sub-tree.
+  //     The sub-tree of this address-of operator will be traversed separately ==> Do not
+  //     traverse the sub-tree.
   //
   //  ==> nothing to do in both cases.
 }
@@ -852,13 +825,15 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
       associatedExpression->accept(*this);
     }
     else {
-      const SgPointerType* targetEntityPointerType = SgNodeHelper::isPointerType(targetEntityType);
-      if(targetEntityPointerType && isSgFunctionType(targetEntityPointerType->get_base_type())) {
+      // schroder3 (2016-07-26): There is an implicit address-taking in the association if the target
+      //  entity is of function pointer type and if the associated expression is of function (reference) type:
+      if(SgNodeHelper::isFunctionPointerType(targetEntityType)
+         && SgNodeHelper::isTypeEligibleForFunctionToPointerConversion(associatedExpression->get_type())
+      ) {
         // The underlying type of the target entity is a function pointer type:
-        //  There might be an implicit address-taking of a function if the expression contains a function:
-        //  Traverse the expression and only add functions to the address-taken set (and do not add variables of function type):
-        // Use RAII to change the searchKind to implicitAddressOnly during the following traverse:
-        ImplicitAddressOnlyRAII implicitAddressOnly(searchKind);
+        //  There might be an implicit address-taking in the expression:
+        //  Traverse the expression and only add functions or variables of function reference type to the
+        //  address-taken set (and do not add variables of non function reference type):
         associatedExpression->accept(*this);
       }
       else {
@@ -942,10 +917,15 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
     // SgNode* head = (*it)["$HEAD"];
     // debugPrint(head); debugPrint(matchedOperand);
     OperandToVariableId optovid(*this);
-    if(isSgAssignOp(matchedNode)) {
-      optovid.setSearchKind(OperandToVariableId::ATSK_ImplicitAddressOnly);
+    if(const SgAssignOp* assignment = isSgAssignOp(matchedNode)) {
+      // Only traverse the rhs of the assignment and only if there is an implicit address-taking:
+      std::vector<VariableId> assignmentTargets;
+      // TODO: All possible variables in the lhs of this assignment.
+      optovid.handleAssociation(assignmentTargets, assignment->get_lhs_operand()->get_type(), assignment->get_rhs_operand());
     }
-    matchedNode->accept(optovid);
+    else {
+      matchedNode->accept(optovid);
+    }
   }              
 }
 
