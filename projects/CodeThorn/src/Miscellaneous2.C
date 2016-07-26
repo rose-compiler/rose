@@ -6,6 +6,7 @@
 
 #include "Miscellaneous2.h"
 #include <cctype>
+#include <cstdlib>
 #include "SprayException.h"
 
 using namespace std;
