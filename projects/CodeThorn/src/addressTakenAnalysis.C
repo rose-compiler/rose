@@ -123,7 +123,6 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclaration* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
-
   SgInitializedName* varDeclInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(sgn);
   ROSE_ASSERT(varDeclInitName);
   SgType* varDeclType = varDeclInitName->get_type();
@@ -518,8 +517,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
       // Nothing to do as described above.
     }
     else {
-      std::cout << "ERROR: Invalid internal state. firstChildOfCallExp:" << firstChildOfCallExp->unparseToString() << std::endl;
-      exit(1);
+      throw SPRAY::Exception("Invalid internal state. firstChildOfCallExp: " + firstChildOfCallExp->unparseToString());
     }
   }
 
@@ -672,7 +670,6 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConstructorIni
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCtorInitializerList* sgn) {
-  std::cout << std::endl << std::endl;
   if(debuglevel > 0) debugPrint(sgn);
 
   // schroder3 (2016-07-20): Constructor initializer list: There is a reference creation if
@@ -953,7 +950,6 @@ VariableIdSet SPRAY::CollectTypeInfo::getReferenceTypeSet()
 {
   return referenceTypeSet;
 }
-
 
 void SPRAY::CollectTypeInfo::collectTypes()
 {
