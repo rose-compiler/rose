@@ -81,26 +81,18 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::setSearchKind(AddressT
   searchKind = newSearchKind;
 }
 
+
+
 // base case for the recursion
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
 { 
   if(debuglevel > 0) debugPrint(sgn);
 
   if(searchKind == ATSK_ImplicitAddressOnly) {
-    // Check whether this variable has the right type to be subject of the implicit
-    //  address taking
+    // Check whether this variable has not the right type to be subject of the implicit
+    //  address taking:
     const SgType* varType = sgn->get_type();
-    if(SgNodeHelper::isPointerType(varType)) {
-      return;
-    }
-    const SgType* underlyingType = varType;
-    if(const SgReferenceType* varRefType = SgNodeHelper::isReferenceType(varType)) {
-      underlyingType = varRefType->get_base_type();
-    }
-
-    if(!isSgFunctionType(underlyingType)) {
-      // Only functions and variables of function (reference type) are subject to the implicit
-      //  address-taking:
+    if(!SgNodeHelper::isTypeEligibleForFunctionToPointerConversion(varType)) {
       return;
     }
   }

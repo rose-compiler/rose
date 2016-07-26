@@ -302,6 +302,14 @@ namespace SgNodeHelper {
   //  underlying reference type.
   const SgReferenceType* isReferenceType(const SgType* t);
 
+  // schroder3 (2016-07-26): Returns the given type as a SgPointerType if it is a
+  //  function pointer type. Returns 0 otherwise.
+  const SgPointerType* isFunctionPointerType(const SgType* type);
+
+  // schroder3 (2016-07-26): Returns the (underlying) function type of the given type if the given
+  //  type is eligible for function-to-pointer conversion. Returns 0 otherwise.
+  const SgFunctionType* isTypeEligibleForFunctionToPointerConversion(const SgType* type);
+
   // determines whether decl declares an array
   bool isArrayDeclaration(SgVariableDeclaration* decl);
 

@@ -894,6 +894,28 @@ const SgReferenceType* SgNodeHelper::isReferenceType(const SgType* t) {
   }
 }
 
+// schroder3 (2016-07-26): Returns the given type as a SgPointerType if it is a
+//  function pointer type. Returns 0 otherwise.
+const SgPointerType* SgNodeHelper::isFunctionPointerType(const SgType* type) {
+  if(const SgPointerType* pointerType = SgNodeHelper::isPointerType(type)) {
+    if(isSgFunctionType(pointerType->get_base_type())) {
+      return pointerType;
+    }
+  }
+  return 0;
+}
+
+// schroder3 (2016-07-26): Returns the (underlying) function type of the given type if the given
+//  type is eligible for function-to-pointer conversion. Returns 0 otherwise.
+const SgFunctionType* SgNodeHelper::isTypeEligibleForFunctionToPointerConversion(const SgType* type) {
+  // Only lvalues of function (reference) type are eligible for function-to-pointer
+  //  conversion.
+  if(const SgReferenceType* refType = SgNodeHelper::isReferenceType(type)) {
+    type = refType->get_base_type();
+  }
+
+  return isSgFunctionType(type);
+}
 
 /*! 
   * \author Markus Schordan
