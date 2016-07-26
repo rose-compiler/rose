@@ -478,9 +478,9 @@ struct B33
 
 };
 
-B33 operator+(const B33& b1, const B33& b2)
+B33 operator+(const B33& b1_ref, const B33& b2_ref)
 {
-    return B33(b1.val + b2.val);
+    return B33(b1_ref.val + b2_ref.val);
 }
 
 void foo33()
@@ -714,9 +714,9 @@ int foo43()
     m_arr[0][0] = 4;
     my_arr[0][0] = 5;
 }
-void foo44(int (&arr)[10][10])
+void foo44(int (&arr_ref)[10][10])
 {
-    arr[0][0] = 1;
+    arr_ref[0][0] = 1;
 }
 
 void bar44()

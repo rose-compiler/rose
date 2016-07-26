@@ -8,7 +8,9 @@ V,<unstable>,im,<unstable>,<unstable>,1
 V,<unstable>,member,<unstable>,<unstable>,1
 V,<unstable>,inner_test,<unstable>,<unstable>,1
 V,<unstable>,inner_test2,<unstable>,<unstable>,1
+V,<unstable>,b_ref,<unstable>,<unstable>,1
 V,<unstable>,b2,<unstable>,<unstable>,1
+V,<unstable>,i_ref,<unstable>,<unstable>,1
 V,<unstable>,inner_test222,<unstable>,<unstable>,1
 V,<unstable>,inner_test223,<unstable>,<unstable>,1
 V,<unstable>,inner_test224,<unstable>,<unstable>,1
@@ -24,6 +26,9 @@ V,<unstable>,inner_test23,<unstable>,<unstable>,1
 V,<unstable>,i_ol,<unstable>,<unstable>,1
 V,<unstable>,i_ol,<unstable>,<unstable>,1
 V,<unstable>,i_ol,<unstable>,<unstable>,1
+V,<unstable>,ik,<unstable>,<unstable>,1
+V,<unstable>,global,<unstable>,<unstable>,1
+V,<unstable>,m,<unstable>,<unstable>,1
 V,<unstable>,r2,<unstable>,<unstable>,1
 V,<unstable>,r,<unstable>,<unstable>,1
 V,<unstable>,inner_test5,<unstable>,<unstable>,1
@@ -37,7 +42,7 @@ V,<unstable>,k3,<unstable>,<unstable>,1
 V,<unstable>,k4,<unstable>,<unstable>,1
 V,<unstable>,kr3,<unstable>,<unstable>,1
 V,<unstable>,kr2,<unstable>,<unstable>,1
-V,<unstable>,b,<unstable>,<unstable>,1
+V,<unstable>,b1,<unstable>,<unstable>,1
 V,<unstable>,b2,<unstable>,<unstable>,1
 V,<unstable>,i4,<unstable>,<unstable>,1
 V,<unstable>,i5,<unstable>,<unstable>,1
