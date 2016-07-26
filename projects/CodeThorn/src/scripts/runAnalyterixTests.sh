@@ -127,7 +127,9 @@ FAILED_TESTS=""
 echo "Performing tests..."
 for currTestDir in "${TEST_ROOT_DIR}"*; do
   # Nothing to do if not a directory:
-  [ -d "${currTestDir}" ] || exit 0
+  if [ ! -d "${currTestDir}" ]; then 
+    continue;
+  fi
   
   # Name of the current test:
   TEST_NAME="$(basename ${currTestDir})"
