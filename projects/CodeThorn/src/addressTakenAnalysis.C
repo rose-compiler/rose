@@ -833,9 +833,6 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
       associatedExpression->accept(*this);
     }
     else {
-      // This feature is currently disabled:
-      return;
-
       const SgPointerType* targetEntityPointerType = SgNodeHelper::isPointerType(targetEntityType);
       if(targetEntityPointerType && isSgFunctionType(targetEntityPointerType->get_base_type())) {
         // The underlying type of the target entity is a function pointer type:
@@ -857,10 +854,9 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
 
 void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
 {
-  // query to match all SgAddressOfOp subtrees
+  // query to match all subtrees of interest
   // process query
-  ProcessQuery collectSgAddressOfOp;
-  // TODO: not sufficient to pick up address taken by function pointers
+  ProcessQuery collectAddressTakingRelatedNodes;
   std::string matchquery;
 
 // "#SgTemplateArgument|"
@@ -872,33 +868,61 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
   // skipping all template declaration specific nodes as they dont have any symbols
   // we still traverse SgTemplateInstatiation*
   matchquery = \
-    "#SgTemplateClassDeclaration|"
-    "#SgTemplateFunctionDeclaration|"
-    "#SgTemplateMemberFunctionDeclaration|"
-    "#SgTemplateVariableDeclaration|"
-    "#SgTemplateClassDefinition|"
-    "#SgTemplateFunctionDefinition|"
-    "$HEAD=SgAddressOfOp($OP)|"
-    // schroder3 (Jun 2016): Call by reference creates an alias of the argument
-    "$OP=SgFunctionCallExp|"
-    // schroder3 (Jun 2016): Creating a reference creates an alias of a variable
-    "$OP=SgVariableDeclaration";
+      // schroder3 (2016-07-20): Commented out the "#SgTemplate..." query parts because they do not have an effect.
+//    "#SgTemplateClassDeclaration|"
+//    "#SgTemplateFunctionDeclaration|"
+//    "#SgTemplateMemberFunctionDeclaration|"
+//    "#SgTemplateVariableDeclaration|" // TODO: remove?
+//    "#SgTemplateClassDefinition|"
+//    "#SgTemplateFunctionDefinition|"
 
-  // schroder3: TODO: There is also implicit address taking of functions (==> normalization)
-  //  (e.g. "void func() {} int main() { void (*fp)() = func; /*fp contains address of func without using address of operator */}")
+    // schroder3 (Jun 2016): The obvious one:
+    "SgAddressOfOp($OP)|"
+
+    // schroder3 (Jun 2016): Call by reference creates an alias of the argument and if a non-static member function
+    //  is called on an object then the address of that object is accessible in the member function via "this"
+    // schroder3 (2016-07-19): ... and the address is implicitly taken if a function is
+    //  provided as an argument for a parameter of function pointer type
+    "$OP=SgFunctionCallExp|"
+    // schroder3 (2016-07-20): The same (except the call on an object) applies to a constructor call:
+    "$OP=SgConstructorInitializer|"
+
+    // schroder3 (2016-07-20): There will be an alias/ reference creation for every function parameter of reference type
+    //  TODO: Replace this by a more precise method (e.g. try to add reference parameters when handling function calls)
+    "$OP=SgFunctionParameterList|"
+
+    // schroder3 (Jun 2016): Creating a reference creates an alias of a variable
+    // schroder3 (2016-07-19): ... and a variable declaration can contain an implicit function address-taking
+    "$OP=SgVariableDeclaration|"
+
+    // schroder3 (2016-07-20): Initializing a member reference variable creates an alias
+    // schroder3 (2016-07-20): ... and initializing a member of function pointer type with a function (reference)
+    // implicitly takes the address.
+    "$OP=SgCtorInitializerList|"
+
+    // schroder3 (2016-07-20): Returning a variable from a function with reference return type creates an alias
+    // schroder3 (2016-07-20): ... and returning a function from a function with function pointer return type
+    //  can contain an implicit function address-taking.
+    "$OP=SgReturnStmt|"
+
+    // schroder3 (2016-07-19): An assignment can contain an implicit function address-taking.
+    "$OP=SgAssignOp";
 
 //  std::cout << std::endl << "Variable Id Mapping:" << std::endl;
 //  this->vidm.toStream(std::cout);
 //  std::cout << std::endl << "Function Id Mapping:" << std::endl;
 //  this->fidm.toStream(std::cout);
 
-  MatchResult& matches = collectSgAddressOfOp(matchquery, root);
+  MatchResult& matches = collectAddressTakingRelatedNodes(matchquery, root);
   for(MatchResult::iterator it = matches.begin(); it != matches.end(); ++it) {
-    SgNode* matchedOperand = (*it)["$OP"];
+    SgNode* matchedNode = (*it)["$OP"];
     // SgNode* head = (*it)["$HEAD"];
     // debugPrint(head); debugPrint(matchedOperand);
     OperandToVariableId optovid(*this);
-    matchedOperand->accept(optovid);
+    if(isSgAssignOp(matchedNode)) {
+      optovid.setSearchKind(OperandToVariableId::ATSK_ImplicitAddressOnly);
+    }
+    matchedNode->accept(optovid);
   }              
 }
 
