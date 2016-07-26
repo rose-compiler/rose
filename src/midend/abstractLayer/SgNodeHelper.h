@@ -210,6 +210,9 @@ namespace SgNodeHelper {
   //! returns the set of all local variable-declarations of a function
   std::set<SgVariableDeclaration*> localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef);
 
+  //! schroder3 (2016-07-22): Returns the closest function definition that contains the given node
+  SgFunctionDefinition* getClosestParentFunctionDefinitionOfLocatedNode(SgLocatedNode* locatedNode);
+
   //! returns the child of SgExprStatement (which is guaranteed to be unique and to exist)
   SgNode* getExprStmtChild(SgNode* node);
 
@@ -290,6 +293,14 @@ namespace SgNodeHelper {
 
   // checks for float, double, long double
   bool isFloatingPointType(SgType* type);
+
+  // schroder3 (2016-07-22): Modified version of SageInterface::isPointerType(...) that returns the
+  //  underlying pointer type.
+  const SgPointerType* isPointerType(const SgType* t);
+
+  // schroder3 (2016-07-22): Modified version of SageInterface::isReferenceType(...) that returns the
+  //  underlying reference type.
+  const SgReferenceType* isReferenceType(const SgType* t);
 
   // determines whether decl declares an array
   bool isArrayDeclaration(SgVariableDeclaration* decl);
