@@ -171,6 +171,9 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowStarOp* s
   rhs_op->accept(*this);
 }
 
+// schroder3 (2016-07-26): There might be an implicit address-of operator. Apart
+//  from that, the old comment is still correct:
+//
 // For example q = &(*p) where both q and p are pointer types
 // In the example, q can potentially modify all variables pointed to by p
 // same as writing q = p.
@@ -182,7 +185,24 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowStarOp* s
 // as a consequence of the expressions similar to above.
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefExp* sgn)
 {
- if(debuglevel > 0) debugPrint(sgn);
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-07-26): Check for an implicit address-of operator:
+  if(sgn->get_operand()->get_type()->isEquivalentType(sgn->get_type())) {
+    // The type of the operand to the dereference operator and the type of the
+    //  result of the dereference operator are equal. This implies that there
+    //  is a implicit address-of operator that takes the address of the operand
+    //  before this dereference operator dereferences the address afterwards.
+    //
+    // Currently this should only be possible in case of a lvalue of function type:
+    ROSE_ASSERT(isSgFunctionType(sgn->get_operand()->get_type()));
+
+    // Find all variables/ functions in the operand expression. (The implicit address-of
+    // was already found and ATSK_ImplicitAddressOnly is therefore not enabled.)
+    SgNode* dereferencee = sgn->get_operand();
+    dereferencee->accept(*this);
+  }
+
   // we raise a flag
   cati.variableAddressTakenInfo.first = true;
 }
@@ -709,16 +729,14 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCtorInitialize
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAddressOfOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
-  // schroder3 (Jul 2016):
-  //  This is only valid if we are currently looking for an implicit address-taking of a function
-  if(searchKind == ATSK_ImplicitAddressOnly) {
-    // We found an address-of operator and the address-taking is therefore not implicit. Do not traverse
-    //  the sub-tree:
-    return;
-  }
-  else {
-    ROSE_ASSERT(false);
-  }
+  // schroder3 (2016-07-26): Two cases:
+  //  a) We are currently looking for an implicit address-taking:
+  //     An address-of operator was found and the address-taking is therefore not implicit
+  //     ==> Traverse the sub-tree without the ATSK_ImplicitAddressOnly option ==> case b
+  //  b) We are currently *not* looking for an implicit address-taking:
+  //     The sub-tree of will be traversed separately ==> Do not traverse the sub-tree.
+  //
+  //  ==> nothing to do in both cases.
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
@@ -806,7 +824,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
         i != possibleTargetEntities.end(); ++i
     ) {
       ROSE_ASSERT((*i).isValid());
-      ROSE_ASSERT(cati.vidm.getType(*i) == targetEntityType);
+      ROSE_ASSERT(cati.vidm.getType(*i)->isEquivalentType(targetEntityType));
     }
 
     // If we have a reference to pointer to function type then we handle it as a reference type and
@@ -907,7 +925,11 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
     "$OP=SgReturnStmt|"
 
     // schroder3 (2016-07-19): An assignment can contain an implicit function address-taking.
-    "$OP=SgAssignOp";
+    "$OP=SgAssignOp|"
+
+    // schroder3 (2016-07-26): An dereference/ indirection operator can contain an implicit address taking if
+    //  the operand is of function type.
+    "$OP=SgPointerDerefExp";
 
 //  std::cout << std::endl << "Variable Id Mapping:" << std::endl;
 //  this->vidm.toStream(std::cout);
