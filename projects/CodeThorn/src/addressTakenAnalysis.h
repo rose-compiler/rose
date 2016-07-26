@@ -113,6 +113,8 @@ class ComputeAddressTakenInfo
     void visit(SgVariableDeclaration*);
     void visit(SgDotExp*);
     void visit(SgArrowExp*);
+    void visit(SgDotStarOp*);
+    void visit(SgArrowStarOp*);
     void visit(SgPointerDerefExp*);
     void visit(SgPntrArrRefExp*);
     void visit(SgAssignOp* sgn);

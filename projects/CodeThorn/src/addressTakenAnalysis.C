@@ -158,10 +158,22 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotExp* sgn)
   rhs_op->accept(*this);
 }
 
-// only the rhs_op of SgDotExp is modified
+// only the rhs_op of SgArrowExp is modified
 // recurse on rhs_op
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
 {
+  if(debuglevel > 0) debugPrint(sgn);
+  SgNode* rhs_op = sgn->get_rhs_operand();
+  rhs_op->accept(*this);
+}
+
+// schroder3 (2016-07-26): ".*" and "->*": The rhs is accessed.
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotStarOp* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+  SgNode* rhs_op = sgn->get_rhs_operand();
+  rhs_op->accept(*this);
+}
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowStarOp* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
   SgNode* rhs_op = sgn->get_rhs_operand();
   rhs_op->accept(*this);
