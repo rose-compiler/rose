@@ -783,10 +783,11 @@ SgExpressionPtrList& SgNodeHelper::getFunctionCallActualParameterList(SgNode* no
   return isSgExprListExp(node->get_traversalSuccessorByIndex(1))->get_expressions();
 }
 
-SgType* SgNodeHelper::getCalleeType(SgFunctionCallExp* call) {
-  const SgNode* firstChildOfCallExp = call->get_traversalSuccessorByIndex(0);
-  if(const SgExpression* calleeExpression = isSgExpression(firstChildOfCallExp)) {
-    return calleeExpression->get_type();
+// schroder3 (2016-07-27): Returns the callee of the given call expression
+SgExpression* SgNodeHelper::getCalleeOfCall(/*const*/ SgFunctionCallExp* call) {
+  SgNode* firstChildOfCallExp = call->get_traversalSuccessorByIndex(0);
+  if(SgExpression* calleeExpression = isSgExpression(firstChildOfCallExp)) {
+    return calleeExpression;
   }
   else {
     ROSE_ASSERT(false);
@@ -794,19 +795,12 @@ SgType* SgNodeHelper::getCalleeType(SgFunctionCallExp* call) {
   }
 }
 
-SgFunctionType* SgNodeHelper::getCalleeFunctionType(SgFunctionCallExp* call) {
-  SgType* calleeType = getCalleeType(call);
-  // It is possible to call a reference to a pointer to a function. Return the underlying
-  // function type:
-  if(const SgReferenceType* calleeReferenceType =isSgReferenceType(calleeType)) {
-    calleeType = calleeReferenceType->get_base_type();
-  }
-  if(const SgPointerType* calleePointerType = isSgPointerType(calleeType)) {
-    calleeType = calleePointerType->get_base_type();
-  }
-  // We should have a function type now:
-  SgFunctionType* calleeFunctionType = isSgFunctionType(calleeType);
-  ROSE_ASSERT((calleeFunctionType || cout << "non-function-type: " << calleeType->unparseToString() << " (" << calleeType->class_name() << ")" << endl, calleeFunctionType));
+// schroder3 (2016-06-24): Returns the function type of the callee of the given call expression
+SgFunctionType* SgNodeHelper::getCalleeFunctionType(/*const*/ SgFunctionCallExp* call) {
+  SgExpression* callee = getCalleeOfCall(call);
+  // The callee should have a (underlying) function type:
+  SgFunctionType* calleeFunctionType = isCallableExpression(callee);
+  ROSE_ASSERT(calleeFunctionType);
   return calleeFunctionType;
 }
 
@@ -914,6 +908,29 @@ const SgFunctionType* SgNodeHelper::isTypeEligibleForFunctionToPointerConversion
     type = refType->get_base_type();
   }
 
+  return isSgFunctionType(type);
+}
+
+// schroder3 (2016-07-27): Returns the underlying function type of the given expression if it
+//  is callable. Returns 0 otherwise.
+//
+//  A special handling of expressions of class type where the corresponding class has a call
+//   operator ("operator()(...)") is not necessary because ROSE normalizes calls like "A a; a(1);"
+//   to "A a; a.operator()(1);". This also applies to calls of lambdas.
+SgFunctionType* SgNodeHelper::isCallableExpression(/*const*/ SgExpression* expr) {
+  return isCallableType(expr->get_type());
+}
+
+// schroder3 (2016-07-27): Returns the underlying function type if the given type
+//  is callable i.e. a expression of this type could be called. Returns 0 otherwise.
+SgFunctionType* SgNodeHelper::isCallableType(/*const*/ SgType* type) {
+  // It is possible to call a reference to a pointer to a function:
+  if(const SgReferenceType* referenceType = isReferenceType(type)) {
+    type = referenceType->get_base_type();
+  }
+  if(const SgPointerType* pointerType = isPointerType(type)) {
+    type = pointerType->get_base_type();
+  }
   return isSgFunctionType(type);
 }
 
