@@ -81,38 +81,14 @@ class ComputeAddressTakenInfo
   {
     ComputeAddressTakenInfo& cati;
     int debuglevel;
-    // Stores which kind of address-takings should be added to the address taken set
-    //  during the current traverse.
    public:
-    enum AddressTakenSearchKind {
-      ATSK_Everything,
-      ATSK_ImplicitAddressOnly
-    };
-   private:
-
-    // RAII for a temporary change of searchKind to ATSK_ImplicitAddressOnly:
-    class ImplicitAddressOnlyRAII {
-      AddressTakenSearchKind& _searchKind;
-      AddressTakenSearchKind _prevSearchKind;
-     public:
-      ImplicitAddressOnlyRAII(AddressTakenSearchKind& searchKind)
-      : _searchKind(searchKind), _prevSearchKind(searchKind) {
-        _searchKind = ATSK_ImplicitAddressOnly;
-      }
-
-      ~ImplicitAddressOnlyRAII() {
-        _searchKind = _prevSearchKind;
-      }
-    };
-
-    AddressTakenSearchKind searchKind;
-  public:
-  OperandToVariableId(ComputeAddressTakenInfo& _cati)
-      : cati(_cati), debuglevel(0), searchKind(ATSK_Everything) { }
+    OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati), debuglevel(0) { }
     void visit(SgVarRefExp*);
     void visit(SgVariableDeclaration*);
     void visit(SgDotExp*);
     void visit(SgArrowExp*);
+    void visit(SgDotStarOp*);
+    void visit(SgArrowStarOp*);
     void visit(SgPointerDerefExp*);
     void visit(SgPntrArrRefExp*);
     void visit(SgAssignOp* sgn);
@@ -142,8 +118,6 @@ class ComputeAddressTakenInfo
     // schroder3 (2016-07-20): Handles all kinds of associations (currently initializations and assignments) regarding their "address-taken-ness".
     void handleAssociation(const std::vector<VariableId> possibleTargetEntities, const SgType* targetEntityType, /*const*/ SgExpression* associatedExpression);
     void debugPrint(SgNode* sgn);
-    AddressTakenSearchKind getSearchKind();
-    void setSearchKind(AddressTakenSearchKind);
   };
 public:
   ComputeAddressTakenInfo(VariableIdMapping& _vidm, FunctionIdMapping& _fidm) : vidm(_vidm), fidm(_fidm)

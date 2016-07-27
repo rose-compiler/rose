@@ -74,36 +74,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn
             << std::endl;
 }
 
-SPRAY::ComputeAddressTakenInfo::OperandToVariableId::AddressTakenSearchKind SPRAY::ComputeAddressTakenInfo::OperandToVariableId::getSearchKind() {
-  return searchKind;
-}
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::setSearchKind(AddressTakenSearchKind newSearchKind) {
-  searchKind = newSearchKind;
-}
-
 // base case for the recursion
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
 { 
   if(debuglevel > 0) debugPrint(sgn);
-
-  if(searchKind == ATSK_ImplicitAddressOnly) {
-    // Check whether this variable has the right type to be subject of the implicit
-    //  address taking
-    const SgType* varType = sgn->get_type();
-    if(SgNodeHelper::isPointerType(varType)) {
-      return;
-    }
-    const SgType* underlyingType = varType;
-    if(const SgReferenceType* varRefType = SgNodeHelper::isReferenceType(varType)) {
-      underlyingType = varRefType->get_base_type();
-    }
-
-    if(!isSgFunctionType(underlyingType)) {
-      // Only functions and variables of function (reference type) are subject to the implicit
-      //  address-taking:
-      return;
-    }
-  }
 
   VariableId id = cati.vidm.variableId(sgn);
   ROSE_ASSERT(id.isValid());
@@ -158,7 +132,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotExp* sgn)
   rhs_op->accept(*this);
 }
 
-// only the rhs_op of SgDotExp is modified
+// only the rhs_op of SgArrowExp is modified
 // recurse on rhs_op
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
 {
@@ -167,6 +141,21 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
   rhs_op->accept(*this);
 }
 
+// schroder3 (2016-07-26): ".*" and "->*": The rhs is accessed.
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotStarOp* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+  SgNode* rhs_op = sgn->get_rhs_operand();
+  rhs_op->accept(*this);
+}
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowStarOp* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+  SgNode* rhs_op = sgn->get_rhs_operand();
+  rhs_op->accept(*this);
+}
+
+// schroder3 (2016-07-26): There might be an implicit address-of operator. Apart
+//  from that, the old comment is still correct:
+//
 // For example q = &(*p) where both q and p are pointer types
 // In the example, q can potentially modify all variables pointed to by p
 // same as writing q = p.
@@ -178,7 +167,24 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
 // as a consequence of the expressions similar to above.
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefExp* sgn)
 {
- if(debuglevel > 0) debugPrint(sgn);
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-07-26): Check for an implicit address-of operator:
+  if(sgn->get_operand()->get_type()->isEquivalentType(sgn->get_type())) {
+    // The type of the operand to the dereference operator and the type of the
+    //  result of the dereference operator are equal. This implies that there
+    //  is a implicit address-of operator that takes the address of the operand
+    //  before this dereference operator dereferences the address afterwards.
+    //
+    // Currently this should only be possible in case of a lvalue of function type:
+    ROSE_ASSERT(isSgFunctionType(sgn->get_operand()->get_type()));
+
+    // Find all variables/ functions in the operand expression because their address is
+    //  implicitly taken.
+    SgNode* dereferencee = sgn->get_operand();
+    dereferencee->accept(*this);
+  }
+
   // we raise a flag
   cati.variableAddressTakenInfo.first = true;
 }
@@ -209,17 +215,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp*
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
-  if(searchKind == ATSK_ImplicitAddressOnly) {
-    // This is an entry point for a implicit function address-taking search
-    if(isSgFunctionType(sgn->get_type()->findBaseType())) {
-      SgNode* rhs_op = sgn->get_rhs_operand();
-      rhs_op->accept(*this);
-    }
-    else {
-      // No function type ==> no implicit function address-taking:
-      return;
-    }
-  }
+
   SgNode* lhs_op = sgn->get_lhs_operand();
   lhs_op->accept(*this);
 }
@@ -386,43 +382,96 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
 
   // What kind of call do we have?
   enum CalleeKind {
-    CK_Unknown = 0,
     CK_Function = 1,
-    CK_FunctionPointer= 2,
-    CK_FunctionOrFunctionPointer = 3,
-    CK_MemberFunction = 4, // ., ->
-    CK_MemberFunctionPointer = 8, // .*, ->*
-    CK_MemberFunctionOrMemberFunctionPointer = 12
-  } calleeKind = CK_Unknown;
+    CK_FunctionPointer = 2,
+    CK_FunctionPointerReference = 4,
+    CK_FunctionReference = 8,
+    CK_FunctionPointerOrFunctionPointerReferenceOrFunctionReference = 14,
+    CK_FunctionLike = 15,
+    CK_MemberFunction = 16, // ., ->
+    CK_MemberFunctionPointer = 32, // .*, ->*
+    CK_MemberFunctionLike = 48,
+    CK_Any = (CK_FunctionLike | CK_MemberFunctionLike)
+  } calleeKind = CK_Any;
 
   enum MemberFunctionKind {
-    MFK_Unknown = 0,
     MFK_None = 1,
-    MFK_NonStatic= 2,
-    MFK_Static= 4
-  } memberFunctionKind = MFK_Unknown;
+    MFK_NonStatic = 2,
+    MFK_Static = 4,
+    MFK_Any = 7
+  } memberFunctionKind = MFK_Any;
 
   enum BaseExprKind {
-    BEK_Unknown = 0,
     BEK_None = 1,
     BEK_Pointer = 2,
     BEK_Object = 4,
     BEK_PointerOrObject = 6,
-  } baseExprKind = BEK_Unknown;
+    BEK_Any = 15
+  } baseExprKind = BEK_Any;
 
   const SgNode* firstChildOfCallExp = sgn->get_traversalSuccessorByIndex(0);
 
-  if(isSgDotExp(firstChildOfCallExp)) {
-    // a.b (a is an object, b is a member function):
-    calleeKind = CK_MemberFunction;
-    baseExprKind = BEK_Object;
-    // static/non-static will be determined later.
-  }
-  else if(isSgArrowExp(firstChildOfCallExp)) {
-    // a->b (a is a pointer to an object, b is a member function TODO: or a function pointer/ reference):
-    calleeKind = CK_MemberFunction;
-    baseExprKind = BEK_Pointer;
-    // static/non-static will be determined later.
+  if(isSgDotExp(firstChildOfCallExp) || isSgArrowExp(firstChildOfCallExp)) {
+    // a.b or a->b (b is a member function or a member of function pointer/ reference type):
+
+    // Determine the callee kind:
+    // There should always be a member of function type or a member function (because something like a.( b ? c : d) is not allowed):
+    const SgExpression* rhs = static_cast<const SgBinaryOp*>(firstChildOfCallExp)->get_rhs_operand();
+    ROSE_ASSERT(rhs);
+    ROSE_ASSERT(SgNodeHelper::isCallableExpression(const_cast<SgExpression*>(rhs)));
+    if(const SgMemberFunctionRefExp* memberFunctionRefExpr = isSgMemberFunctionRefExp(rhs)) {
+      calleeKind = CK_MemberFunction;
+      // Check whether the called member function is static or not:
+      // There should be at least a forward declaration:
+      SgMemberFunctionDeclaration* memberFunctionDecl = memberFunctionRefExpr->getAssociatedMemberFunctionDeclaration();
+      ROSE_ASSERT(memberFunctionDecl);
+      if(debuglevel > 0) {
+        std::cout << "Mem func decl: " << memberFunctionDecl->unparseToString() << std::endl;
+      }
+      // The static modifier is attached to the (implicit) forward declaration or to the defining declaration
+      //  depending on how the declaration/definition is written in the source code. We therefore have to check
+      //  both declarations for the presence of a static modifier.
+      // First check whether the forward declaration is static:
+      if(memberFunctionDecl->get_declarationModifier().get_storageModifier().isStatic()) {
+        memberFunctionKind = MFK_Static;
+      }
+      else {
+        // The forward declaration is not static. Check whether the defining declaration is static (if it exists):
+        SgMemberFunctionDeclaration* memberFuncDefiningDecl = isSgMemberFunctionDeclaration(memberFunctionDecl->get_definingDeclaration());
+        if(debuglevel > 0) {
+          std::cout << "Mem func def decl: " << (memberFuncDefiningDecl ? memberFuncDefiningDecl->unparseToString() : std::string("none")) << std::endl;
+        }
+        if(memberFuncDefiningDecl && memberFuncDefiningDecl->get_declarationModifier().get_storageModifier().isStatic()) {
+          memberFunctionKind = MFK_Static;
+        }
+        else {
+          memberFunctionKind = MFK_NonStatic;
+        }
+      }
+    }
+    else if(isSgVarRefExp(rhs)) {
+      // Distinction between function reference/ pointer/ reference to pointer gives no advantage here:
+      calleeKind = CK_FunctionPointerOrFunctionPointerReferenceOrFunctionReference;
+      // No member function:
+      memberFunctionKind = MFK_None;
+    }
+    else {
+      // Neither member function nor member on the rhs of dot or arrow operator: Not allowed:
+      ROSE_ASSERT(false);
+    }
+
+    // Determine base expression kind:
+    if(isSgDotExp(firstChildOfCallExp)) {
+        // a.b (a is an object):
+        baseExprKind = BEK_Object;
+    }
+    else if(isSgArrowExp(firstChildOfCallExp)) {
+      // a->b (a is a pointer to an object):
+      baseExprKind = BEK_Pointer;
+    }
+    else {
+      ROSE_ASSERT(false);
+    }
   }
   else if(isSgArrowStarOp(firstChildOfCallExp)) {
     // a->*b (a is a pointer to an object, b is a member function pointer):
@@ -441,45 +490,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
   else {
     // No base expression:
     baseExprKind = BEK_None;
-    // The callee is a (static member-)function or a function pointer (== "static member-function pointer").
-    //  but a distinction between these kinds gives no advantage here:
-    calleeKind = CK_Unknown;
-    memberFunctionKind = MFK_Unknown;
-
-  }
-
-  if(calleeKind == CK_MemberFunction) {
-    // Check whether the called member function is static or not:
-
-    // We should always have a member function ref expr because something like a.( b ? c : d) is not allowed:
-    SgMemberFunctionRefExp* memberFunctionRefExpr = isSgMemberFunctionRefExp(static_cast<const SgBinaryOp*>(firstChildOfCallExp)->get_rhs_operand());
-    ROSE_ASSERT(memberFunctionRefExpr);
-    // There should be at least a forward declaration:
-    SgMemberFunctionDeclaration* memberFunctionDecl = memberFunctionRefExpr->getAssociatedMemberFunctionDeclaration();
-    ROSE_ASSERT(memberFunctionDecl);
-    if(debuglevel > 0) {
-      std::cout << "Mem func decl: " << memberFunctionDecl->unparseToString() << std::endl;
-    }
-    // The static modifier is attached to the (implicit) forward declaration or to the defining declaration
-    //  depending on how the declaration/definition is written in the source code. We therefore have to check
-    //  both declarations for the presence of a static modifier.
-    // First check whether the forward declaration is static:
-    if(memberFunctionDecl->get_declarationModifier().get_storageModifier().isStatic()) {
-      memberFunctionKind = MFK_Static;
-    }
-    else {
-      // The forward declaration is not static. Check whether the defining declaration is static (if it exists):
-      SgMemberFunctionDeclaration* memberFuncDefiningDecl = isSgMemberFunctionDeclaration(memberFunctionDecl->get_definingDeclaration());
-      if(debuglevel > 0) {
-        std::cout << "Mem func def decl: " << (memberFuncDefiningDecl ? memberFuncDefiningDecl->unparseToString() : std::string("none")) << std::endl;
-      }
-      if(memberFuncDefiningDecl && memberFuncDefiningDecl->get_declarationModifier().get_storageModifier().isStatic()) {
-        memberFunctionKind = MFK_Static;
-      }
-      else {
-        memberFunctionKind = MFK_NonStatic;
-      }
-    }
+    // The callee is a (static member-)function, a function pointer (== "static member-function pointer")
+    //  or a function (pointer) reference but a distinction between these kinds gives no advantage here:
+    calleeKind = static_cast<CalleeKind>(CK_FunctionLike | CK_MemberFunction);
+    memberFunctionKind = static_cast<MemberFunctionKind>(MFK_None | MFK_Static);
   }
 
   if(debuglevel > 0) {
@@ -496,9 +510,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
   // If this is a call of a non-static member function, then add the object, on which the member function
   //  is called, to the address taken set. This is necessary because inside a non-static member function
   //  the address of the object is accessible via "this".
-  if((calleeKind & CK_MemberFunctionOrMemberFunctionPointer)
-      && (memberFunctionKind == MFK_NonStatic || memberFunctionKind == MFK_Unknown)
-  ) {
+  if((calleeKind & CK_MemberFunctionLike) && (memberFunctionKind & MFK_NonStatic)) {
     if(debuglevel > 0) {
       std::cout << "Member function type: " << isSgExpression(firstChildOfCallExp)->get_type()->unparseToString() << std::endl;
     }
@@ -508,12 +520,12 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
     //  dereference this pointer to get the real object on which the member function is called.
     //  Therefore only variables from which the address was already taken in an other way (e.g. via
     //  address-of operator) are affected.
-    if(baseExprKind == BEK_Object) {
+    if((baseExprKind & BEK_Object)) {
       SgExpression* memFuncCallBaseExpr = static_cast<const SgBinaryOp*>(firstChildOfCallExp)->get_lhs_operand();
       // Add all variables that are used in the base expression to the address taken set:
       memFuncCallBaseExpr->accept(*this);
     }
-    else if(baseExprKind == BEK_Pointer) {
+    else if((baseExprKind & BEK_Pointer)) {
       // Nothing to do as described above.
     }
     else {
@@ -705,16 +717,15 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCtorInitialize
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAddressOfOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
-  // schroder3 (Jul 2016):
-  //  This is only valid if we are currently looking for an implicit address-taking of a function
-  if(searchKind == ATSK_ImplicitAddressOnly) {
-    // We found an address-of operator and the address-taking is therefore not implicit. Do not traverse
-    //  the sub-tree:
-    return;
-  }
-  else {
-    ROSE_ASSERT(false);
-  }
+  // schroder3 (2016-07-26): Two cases:
+  //  a) We are currently looking for an implicit address-taking:
+  //     An address-of operator was found and the address-taking is therefore not implicit
+  //     ==> case b
+  //  b) We are currently *not* looking for an implicit address-taking:
+  //     The sub-tree of this address-of operator will be traversed separately ==> Do not
+  //     traverse the sub-tree.
+  //
+  //  ==> nothing to do in both cases.
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
@@ -802,7 +813,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
         i != possibleTargetEntities.end(); ++i
     ) {
       ROSE_ASSERT((*i).isValid());
-      ROSE_ASSERT(cati.vidm.getType(*i) == targetEntityType);
+      ROSE_ASSERT(cati.vidm.getType(*i)->isEquivalentType(targetEntityType));
     }
 
     // If we have a reference to pointer to function type then we handle it as a reference type and
@@ -830,13 +841,15 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
       associatedExpression->accept(*this);
     }
     else {
-      const SgPointerType* targetEntityPointerType = SgNodeHelper::isPointerType(targetEntityType);
-      if(targetEntityPointerType && isSgFunctionType(targetEntityPointerType->get_base_type())) {
+      // schroder3 (2016-07-26): There is an implicit address-taking in the association if the target
+      //  entity is of function pointer type and if the associated expression is of function (reference) type:
+      if(SgNodeHelper::isFunctionPointerType(targetEntityType)
+         && SgNodeHelper::isTypeEligibleForFunctionToPointerConversion(associatedExpression->get_type())
+      ) {
         // The underlying type of the target entity is a function pointer type:
-        //  There might be an implicit address-taking of a function if the expression contains a function:
-        //  Traverse the expression and only add functions to the address-taken set (and do not add variables of function type):
-        // Use RAII to change the searchKind to implicitAddressOnly during the following traverse:
-        ImplicitAddressOnlyRAII implicitAddressOnly(searchKind);
+        //  There might be an implicit address-taking in the expression:
+        //  Traverse the expression and only add functions or variables of function reference type to the
+        //  address-taken set (and do not add variables of non function reference type):
         associatedExpression->accept(*this);
       }
       else {
@@ -903,7 +916,11 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
     "$OP=SgReturnStmt|"
 
     // schroder3 (2016-07-19): An assignment can contain an implicit function address-taking.
-    "$OP=SgAssignOp";
+    "$OP=SgAssignOp|"
+
+    // schroder3 (2016-07-26): An dereference/ indirection operator can contain an implicit address taking if
+    //  the operand is of function type.
+    "$OP=SgPointerDerefExp";
 
 //  std::cout << std::endl << "Variable Id Mapping:" << std::endl;
 //  this->vidm.toStream(std::cout);
@@ -916,10 +933,15 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
     // SgNode* head = (*it)["$HEAD"];
     // debugPrint(head); debugPrint(matchedOperand);
     OperandToVariableId optovid(*this);
-    if(isSgAssignOp(matchedNode)) {
-      optovid.setSearchKind(OperandToVariableId::ATSK_ImplicitAddressOnly);
+    if(const SgAssignOp* assignment = isSgAssignOp(matchedNode)) {
+      // Only traverse the rhs of the assignment and only if there is an implicit address-taking:
+      std::vector<VariableId> assignmentTargets;
+      // TODO: All possible variables in the lhs of this assignment.
+      optovid.handleAssociation(assignmentTargets, assignment->get_lhs_operand()->get_type(), assignment->get_rhs_operand());
     }
-    matchedNode->accept(optovid);
+    else {
+      matchedNode->accept(optovid);
+    }
   }              
 }
 

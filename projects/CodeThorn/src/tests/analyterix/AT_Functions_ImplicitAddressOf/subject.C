@@ -122,6 +122,10 @@ void func11(int i) {
 
 }
 
+void func12(int i) {
+
+}
+
 int main() {
 
 
@@ -157,6 +161,9 @@ int main() {
   void(*func_ptr4)(int) = &*func_ptr3; // No address taking
   void(*func_ptr5)(int);
   func_ptr5 = func_ptr4; // No address taking
+
+  void(*func_ptr6)(int);
+  func_ptr6 = /*implicit address-of*/func12;
 
   func2(/*implicit address-of*/func6);
   getFuncAddress(func3);
