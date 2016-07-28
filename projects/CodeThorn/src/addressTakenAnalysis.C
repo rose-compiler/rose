@@ -579,6 +579,11 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
   //  specifying an object.
 }
 
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaExp* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+}
+
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionParameterList* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
