@@ -39,7 +39,9 @@ endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
-noinst_PROGRAMS += 				\
+noinst_PROGRAMS +=				\
+   binaryAnalysisExample			\
+   binaryAnalysis_symbolTable			\
    binaryCallGraph				\
    binaryFunctionCfg				\
    binaryHelloWorld				\
@@ -73,8 +75,6 @@ NOINST_TUTORIAL_EXAMPLES = \
    ASTGraphGenerator \
    ASTGraphGeneratorCustomized \
    bin_example \
-   binaryAnalysisExample \
-   binaryAnalysis_symbolTable \
    binaryFileRead \
    binaryFileWrite \
    sb_callgraphAnalysis \
