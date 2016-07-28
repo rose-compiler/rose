@@ -75,4 +75,18 @@ class D {
 int main() {
   int i = 0;
   C<int> c(i);
+
+  // Const lvalue references can be initialized by providing a rvalue:
+  bool bbb;
+  const int i_const = 2;
+  const int& ir_const1 = 12;
+  const int& ir_const2 = i_const;
+
+  const int i_const3 = 2;
+  const int& ir_const3 = (bbb ? i_const3 : 42);
+
+  int i_2 = 23;
+  int& ir_2 = i_2;
+
+  E* const & er_const = new E();
 }

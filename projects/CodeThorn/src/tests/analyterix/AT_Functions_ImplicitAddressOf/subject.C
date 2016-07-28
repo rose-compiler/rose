@@ -126,6 +126,10 @@ void func12(int i) {
 
 }
 
+void func13(int i) {
+
+}
+
 int main() {
 
 
@@ -151,8 +155,7 @@ int main() {
 
   void(*func_ptr)(int) = /*implicit address-of*/func;
   void(*&ref_func_ptr)(int) = func_ptr;
-
-
+  ref_func_ptr = /*implicit address-of*/func13;
 
   void(&func_ref)(int) = func5;
   void(*func_ptr2)(int) = /*implicit address-of*/func_ref;
