@@ -705,10 +705,5 @@ Edge Flow::iterator::operator*() {
   return result;
 }
 
-Flow::iterator Flow::iterator::operator++(int) {
-  Flow::iterator result = *this;
-  ++*this;
-  return result;
-}
 #endif
 
