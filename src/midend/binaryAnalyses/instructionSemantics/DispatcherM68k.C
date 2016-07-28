@@ -758,7 +758,7 @@ struct IP_cmpa: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         SValuePtr a0 = ops->signExtend(d->read(args[0], nBits), 32);
-        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr a1 = d->read(args[1], 32);
         d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
@@ -991,17 +991,22 @@ struct IP_divs: P {
         if (2==args.size()) {
             assert_args(insn, args, 2);
             if (args[0]->get_nBits() == 16) {
-                // (a1[16] / a0[16]) : (a1[16] % a0[16]) -> a1[32]
+                // DIVS.W <ea>, Dn
+                // The word form divides a 32-bit argument (args[1]) by a 16-bit argument (args[0]) to get a 16-bit quotient
+                // and a 16-bit remainder. The quotient is stored in the lower 16 bits of the result (args[1]) and the
+                // remainder is stored in the higher 16 bits.
                 ASSERT_require(args[1]->get_nBits()==32);
                 d->decrementRegisters(args[0]);
                 SValuePtr divisor = d->read(args[0], 16);
-                SValuePtr dividend = ops->extract(d->read(args[1], 32), 0, 16);
-                quotient = ops->signedDivide(dividend, divisor);
+                SValuePtr dividend = d->read(args[1], 32);
+                quotient = ops->extract(ops->signedDivide(dividend, divisor), 0, 16);
                 SValuePtr remainder = ops->signedModulo(dividend, divisor);
                 d->write(args[1], ops->concat(quotient, remainder));
                 d->incrementRegisters(args[0]);
             } else if (args[0]->get_nBits() == 32) {
-                // a1[32] / a0[32] -> a1[32]
+                // DIVS.L <ea>, Dn
+                // The "first long form" divides a 32-bit argument (args[1]) by a 32-bit argument (args[0]) to get a 32-bit
+                // quotient which is stored in the destination (args[1]). The remainder is discarded.
                 ASSERT_require(args[1]->get_nBits()==32);
                 d->decrementRegisters(args[0]);
                 SValuePtr divisor = d->read(args[0], 32);
@@ -1021,7 +1026,7 @@ struct IP_divs: P {
             SValuePtr divisor = d->read(args[0], 32);
             SValuePtr arg1 = d->read(args[1], 32);
             SValuePtr dividend = ops->concat(d->read(args[2], 32), arg1);
-            quotient = ops->signedDivide(dividend, divisor);
+            quotient = ops->extract(ops->signedDivide(dividend, divisor), 0, 32);
             SValuePtr remainder = ops->signedModulo(dividend, divisor);
             d->write(args[1], remainder);
             d->write(args[2], quotient);
@@ -1069,17 +1074,22 @@ struct IP_divu: P {
         if (2==args.size()) {
             assert_args(insn, args, 2);
             if (args[0]->get_nBits() == 16) {
-                // (a1[16] / a0[16]) : (a1[16] % a0[16]) -> a1[32]
+                // DIVU.W <ea>, Dn
+                // The word form divides a 32-bit argument (args[1]) by a 16-bit argument(args[0]) to get a 16-bit quotient and
+                // a 16-bit remainder. The quotient is stored in the lower 16 bits of the result (args[1]) and the remainder is
+                // stored in the higher 16 bits.
                 ASSERT_require(args[1]->get_nBits()==32);
                 d->decrementRegisters(args[0]);
                 SValuePtr divisor = d->read(args[0], 16);
-                SValuePtr dividend = ops->extract(d->read(args[1], 32), 0, 16);
-                quotient = ops->unsignedDivide(dividend, divisor);
+                SValuePtr dividend = d->read(args[1], 32);
+                quotient = ops->extract(ops->unsignedDivide(dividend, divisor), 0, 16);
                 SValuePtr remainder = ops->unsignedModulo(dividend, divisor);
                 d->write(args[1], ops->concat(quotient, remainder));
                 d->incrementRegisters(args[0]);
             } else if (args[0]->get_nBits() == 32) {
-                // a1[32] / a0[32] -> a1[32]
+                // DIVU.L <ea>, Dn
+                // The "first long form" divides a 32-bit argument (args[1]) by a 32-bit argument (args[0]) to get a 32-bit
+                // quotient which is stored in the destination (args[1]). The remainder is discarded.
                 ASSERT_require(args[1]->get_nBits()==32);
                 d->decrementRegisters(args[0]);
                 SValuePtr divisor = d->read(args[0], 32);
@@ -1089,7 +1099,7 @@ struct IP_divu: P {
                 d->incrementRegisters(args[0]);
             }
         } else {
-            // DIVS.L <ea>, Dr, Dq
+            // DIVU.L <ea>, Dr, Dq
             // The dividend is 64-bits Dr:Dq and both a quotient and remainder are stored
             assert_args(insn, args, 3);
             ASSERT_require(args[0]->get_nBits()==32);
@@ -1099,7 +1109,7 @@ struct IP_divu: P {
             SValuePtr divisor = d->read(args[0], 32);
             SValuePtr arg1 = d->read(args[1], 32);
             SValuePtr dividend = ops->concat(d->read(args[2], 32), arg1);
-            quotient = ops->unsignedDivide(dividend, divisor);
+            quotient = ops->extract(ops->unsignedDivide(dividend, divisor), 0, 32);
             SValuePtr remainder = ops->unsignedModulo(dividend, divisor);
             d->write(args[1], remainder);
             d->write(args[2], quotient);

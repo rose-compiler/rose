@@ -1387,6 +1387,14 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<me <<"(startVa = " <<StringUtility::addrToString(startVa) <<")\n";
 
+    // Avoid creating large basic blocks since this can drastically slow down instruction semantics. Large basic blocks are a
+    // real possibility here because we're likely to be interpreting data areas as code. We're not creating any permanent basic
+    // blocks in this analysis, so limiting the size here has no effect on which blocks are ultimately added to the control
+    // flow graph.  The smaller the limit, the more likely that a multi-instruction call will get split into two blocks and not
+    // detected. Multi-instruction calls are an obfuscation technique.
+    Sawyer::TemporaryCallback<BasicBlockCallback::Ptr>
+        tcb(partitioner.basicBlockCallbacks(), Modules::BasicBlockSizeLimiter::instance(20)); // arbitrary
+
     while (AddressInterval unusedVas = partitioner.aum().nextUnused(startVa)) {
 
         // The unused interval must have executable addresses, otherwise skip to the next unused interval.
@@ -1406,7 +1414,7 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
 
         while (startVa <= unusedExecutableVas.greatest()) {
             // Discover the basic block. It's possible that the partitioner already knows about this block location but just
-            // hasn't tried looking for it's instructions yet.  I don't think this happens within the stock engine because it
+            // hasn't tried looking for its instructions yet.  I don't think this happens within the stock engine because it
             // tries to recursively discover all basic blocks before it starts scanning things that might be data. But users
             // might call this before they've processed all the outstanding placeholders.  Consider the following hypothetical
             // user's partitioner state 

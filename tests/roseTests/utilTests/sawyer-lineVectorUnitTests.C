@@ -34,8 +34,8 @@ test01() {
         ASSERT_always_require(v3.character(0, 0) == EOF);
         ASSERT_always_require(v3.character(BIG_OFFSET, 0) == EOF);
         ASSERT_always_require(v3.character(0, BIG_OFFSET) == EOF);
-        ASSERT_always_require(v3.line(0) == NULL);
-        ASSERT_always_require(v3.line(BIG_OFFSET) == NULL);
+        ASSERT_always_require(v3.lineChars(0) == NULL);
+        ASSERT_always_require(v3.lineChars(BIG_OFFSET) == NULL);
         ASSERT_always_require(v3.characterIndex(0) == 0);
         ASSERT_always_require(v3.characterIndex(BIG_OFFSET) == 0);
         ASSERT_always_require(v3.lineIndex(0) == 0);
@@ -106,11 +106,11 @@ test02() {
 
     {
         LineVector v7(n, s);
-        ASSERT_always_not_null(v7.line(0));
-        ASSERT_always_require(0 == strncmp(v7.line(0), "a\n", 2));
-        ASSERT_always_require(0 == strncmp(v7.line(3), "\n", 1));
-        ASSERT_always_require(v7.line(4) == NULL);
-        ASSERT_always_require(v7.line(BIG_OFFSET) == NULL);
+        ASSERT_always_not_null(v7.lineChars(0));
+        ASSERT_always_require(0 == strncmp(v7.lineChars(0), "a\n", 2));
+        ASSERT_always_require(0 == strncmp(v7.lineChars(3), "\n", 1));
+        ASSERT_always_require(v7.lineChars(4) == NULL);
+        ASSERT_always_require(v7.lineChars(BIG_OFFSET) == NULL);
     }
 
     {
@@ -198,12 +198,12 @@ test03() {
 
     {
         LineVector v7(n, s);
-        ASSERT_always_not_null(v7.line(0));
-        ASSERT_always_require(0 == strncmp(v7.line(0), "a\n", 2));
-        ASSERT_always_require(0 == strncmp(v7.line(3), "\n", 1));
-        ASSERT_always_require(0 == strncmp(v7.line(4), "g", 1));
-        ASSERT_always_require(v7.line(5) == NULL);
-        ASSERT_always_require(v7.line(BIG_OFFSET) == NULL);
+        ASSERT_always_not_null(v7.lineChars(0));
+        ASSERT_always_require(0 == strncmp(v7.lineChars(0), "a\n", 2));
+        ASSERT_always_require(0 == strncmp(v7.lineChars(3), "\n", 1));
+        ASSERT_always_require(0 == strncmp(v7.lineChars(4), "g", 1));
+        ASSERT_always_require(v7.lineChars(5) == NULL);
+        ASSERT_always_require(v7.lineChars(BIG_OFFSET) == NULL);
     }
 
     {
