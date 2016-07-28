@@ -13,7 +13,7 @@ BUILDDIR=$(cd $2; pwd) # store the absolute path
 #$3: Only clean temporary test files
 MAKE_CLEAN_ONLY=$3
 
-#$3: Skip analyterix tests
+#$4: Skip analyterix tests
 SKIP_ANALYTERIX_TESTS=$4
 
 TEST_ROOT_DIR="${SRCDIR}/tests/analyterix/"
