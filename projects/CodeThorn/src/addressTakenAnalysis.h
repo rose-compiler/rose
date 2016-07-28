@@ -110,6 +110,7 @@ class ComputeAddressTakenInfo
     void visit(SgCtorInitializerList* sgn);
     void visit(SgConstructorInitializer* sgn);
     void visit(SgFunctionParameterList* sgn);
+    void visit(SgLambdaExp* sgn);
     void visit(SgNode* sgn);
     void insertVariableId(VariableId);
     void insertFunctionId(FunctionId);
