@@ -81,7 +81,7 @@ namespace SPRAY {
       iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
       Edge operator*();
       iterator& operator++() { SawyerCfg::EdgeIterator::operator++(); return *this; }
-      iterator operator++(int);
+      iterator operator++(int) { return iterator(SawyerCfg::EdgeIterator::operator++(1)); }
       EdgeTypeSet getTypes();
       std::string getAnnotation();
       Label source();
