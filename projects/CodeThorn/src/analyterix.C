@@ -311,18 +311,13 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
   if(option_at_analysis) {
     cout<<"STATUS: running address taken analysis."<<endl;
-    cout<<"STATUS: creating ICFG."<<endl;
-    // TODO: compute ICFG without creating an analysis!
-    SPRAY::IntervalAnalysis* analyzer=new SPRAY::IntervalAnalysis();
-    analyzer->initialize(root);
     cout << "STATUS: computing variable and function mappings."<<endl;
     // compute variableId mappings
     VariableIdMapping variableIdMapping;
     variableIdMapping.computeVariableSymbolMapping(root);
     // Compute function id mappings:
     FunctionIdMapping functionIdMapping;
-    //functionIdMapping.computeFunctionSymbolMapping(root);
-    functionIdMapping.computeFunctionSymbolMapping(*(analyzer->getFlow()), *(analyzer->getCFAnalyzer()->getLabeler()));
+    functionIdMapping.computeFunctionSymbolMapping(root);
 
     cout << "STATUS: computing address taken sets."<<endl;
     SPRAY::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
