@@ -268,6 +268,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConditionalExp
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
+
   SgNode* operand = sgn->get_operand();
   operand->accept(*this);
 }
@@ -817,7 +818,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleCall(const SgTyp
 }
 
 // schroder3 (2016-07-20): Handles all kinds of associations (currently initializations and assignments) regarding their "address-taken-ness".
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(const AssociationKind associationKind, const std::vector<VariableId> possibleTargetEntities,
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(const AssociationKind associationKind, const std::vector<VariableId>& possibleTargetEntities,
                                                                             const SgType* targetEntityType, /*const*/ SgExpression* associatedExpression) {
   // TODO: As soon as every caller of this function provides a list of possible target entities the targetEntityType parameter can be removed.
 
@@ -831,9 +832,19 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
       ROSE_ASSERT(cati.vidm.getType(*i)->isEquivalentType(targetEntityType));
     }
 
+    if(debuglevel > 0) {
+      std::cout << "Association kind: " << associationKind << std::endl;
+      std::cout << "Target type: " << targetEntityType->unparseToString() << std::endl;
+      std::cout << "Associated expression: " << associatedExpression->unparseToString() << std::endl;
+      std::cout << "Associated expression type: " << associatedExpression->get_type()->unparseToString() << std::endl;
+    }
+
     // If we have a reference to pointer to function type then we handle it as a reference type and
     //  not as a function type.
     if(const SgReferenceType* targetEntityReferenceType = SgNodeHelper::isReferenceType(targetEntityType)) {
+      if(debuglevel > 0) {
+        std::cout << "... is reference type." << std::endl;
+      }
       if(associationKind == AK_Initialization) {
         // Initialization of a reference: A reference creates an alias of the variable that is referenced by the reference.
         //  This alias works in both directions. For example if we have the code "int b = 0; int& c = b;" then we can
@@ -855,10 +866,16 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
         //  if the address of the target reference is taken.
         associatedExpression->accept(*this);
       }
-      else {
-        ROSE_ASSERT(associationKind == AK_Assignment);
+      else if(associationKind == AK_Assignment) {
         // Assignment of a reference: The variable that is referenced by the reference is assigned.
         //  ==> no alias/ reference creation, but there might be an implicit address-taking in the assignment.
+      }
+      else if(associationKind == AK_Cast) {
+        // Cast of a reference:
+        //  ==> no alias/ reference creation, but there might be an implicit address-taking in the assignment.
+      }
+      else {
+        ROSE_ASSERT(false);
       }
 
       // Remove the reference for the following implicit address-taking check:
@@ -870,6 +887,9 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
     if(SgNodeHelper::isFunctionPointerType(targetEntityType)
        && SgNodeHelper::isTypeEligibleForFunctionToPointerConversion(associatedExpression->get_type())
     ) {
+      if(debuglevel > 0) {
+        std::cout << "... found implicit address-taking." << std::endl;
+      }
       // The underlying type of the target entity is a function pointer type:
       //  There might be an implicit address-taking in the expression:
       //  Traverse the expression and only add functions or variables of function reference type to the
@@ -938,9 +958,13 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
     // schroder3 (2016-07-19): An assignment can contain an implicit function address-taking.
     "$OP=SgAssignOp|"
 
-    // schroder3 (2016-07-26): An dereference/ indirection operator can contain an implicit address taking if
+    // schroder3 (2016-07-26): A dereference/ indirection operator can contain an implicit address taking if
     //  the operand is of function type.
-    "$OP=SgPointerDerefExp";
+    "$OP=SgPointerDerefExp|"
+
+    // schroder3 (2016-07-28): A cast can contain an implicit address taking e.g. if the operand is of function type
+    //  and if the cast type is a function pointer type.
+    "$OP=SgCastExp";
 
 //  std::cout << std::endl << "Variable Id Mapping:" << std::endl;
 //  this->vidm.toStream(std::cout);
@@ -959,6 +983,12 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
       // TODO: All possible variables in the lhs of this assignment.
       optovid.handleAssociation(OperandToVariableId::AK_Assignment, assignmentTargets,
                                 assignment->get_lhs_operand()->get_type(), assignment->get_rhs_operand());
+    }
+    else if(const SgCastExp* castExpr = isSgCastExp(matchedNode)) {
+      // Traverse the operand if there is an implicit address-taking:
+      // The "target" of the association is the parent expression but there is no variable
+      optovid.handleAssociation(OperandToVariableId::AK_Cast, std::vector<VariableId>(),
+                                castExpr->get_type(), castExpr->get_operand());
     }
     else {
       matchedNode->accept(optovid);

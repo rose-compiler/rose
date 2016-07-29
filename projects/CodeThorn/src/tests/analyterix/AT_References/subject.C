@@ -88,5 +88,7 @@ int main() {
   int i_2 = 23;
   int& ir_2 = i_2;
 
+  void(* const &ref_func_ptr)(int) = reinterpret_cast<void(*)(int)>(12345);
+
   E* const & er_const = new E();
 }

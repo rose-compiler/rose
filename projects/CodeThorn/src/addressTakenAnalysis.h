@@ -84,7 +84,8 @@ class ComputeAddressTakenInfo
    public:
     enum AssociationKind {
       AK_Assignment,
-      AK_Initialization
+      AK_Initialization,
+      AK_Cast
     };
     OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati), debuglevel(0) { }
     void visit(SgVarRefExp*);
@@ -122,7 +123,7 @@ class ComputeAddressTakenInfo
     // schroder3 (2016-07-20): Handles the arguments of a constructor or (member) function call regarding their "address-taken-ness".
     void handleCall(const SgTypePtrList& parameterTypes, const SgExpressionPtrList& argumentExpressions);
     // schroder3 (2016-07-20): Handles all kinds of associations (currently initializations and assignments) regarding their "address-taken-ness".
-    void handleAssociation(const AssociationKind associationKind, const std::vector<VariableId> possibleTargetEntities,
+    void handleAssociation(const AssociationKind associationKind, const std::vector<VariableId>& possibleTargetEntities,
                            const SgType* targetEntityType, /*const*/ SgExpression* associatedExpression);
     void debugPrint(SgNode* sgn);
   };
