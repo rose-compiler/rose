@@ -210,7 +210,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgLabelStatement:
     return labeler->getLabel(node);
   case V_SgFunctionDefinition:
-    return labeler->getLabel(node);
+  case V_SgClassDeclaration:
   case V_SgBreakStmt:
   case V_SgContinueStmt:
   case V_SgReturnStmt:
@@ -315,6 +315,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgVariableDeclaration:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
+  case V_SgClassDeclaration:
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
   case V_SgExprStatement: {
@@ -848,6 +849,7 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgExprStatement:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
+  case V_SgClassDeclaration:
     return edgeSet;
   case V_SgContinueStmt: {
     SgNode* loopStmt=correspondingLoopConstruct(node);
