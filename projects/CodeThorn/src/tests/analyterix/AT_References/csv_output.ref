@@ -1,0 +1,11 @@
+V,<unstable>,next,<unstable>,<unstable>,1
+V,<unstable>,_next,<unstable>,<unstable>,1
+V,<unstable>,_next2,<unstable>,<unstable>,1
+V,<unstable>,next2,<unstable>,<unstable>,1
+V,<unstable>,f,<unstable>,<unstable>,1
+V,<unstable>,f1,<unstable>,<unstable>,1
+V,<unstable>,last,<unstable>,<unstable>,1
+V,<unstable>,global,<unstable>,<unstable>,1
+V,<unstable>,templRef,<unstable>,<unstable>,1
+V,<unstable>,i,<unstable>,<unstable>,1
+V,<unstable>,templParam,<unstable>,<unstable>,1

@@ -47,12 +47,10 @@ void ParProAnalyzer::init(std::vector<Flow*> cfas, boost::unordered_map<int, int
   _cfgIdToStateIndex = cfgIdToStateIndex;
 }
 
-ParProEState ParProAnalyzer::getTerminationState() {
-  ParProLabel label = ParProLabel(_cfas.size());
-  for (unsigned int i=0; i<_cfas.size(); i++) {
-    label[i] = _artificalTerminationLabels[i]; 
-  }
-  return ParProEState(label);
+ParProEState ParProAnalyzer::setComponentToTerminationState(unsigned int i, const ParProEState* state) {
+  ParProLabel newLabel = state->getLabel();
+  newLabel[i] = _artificalTerminationLabels[i];
+  return ParProEState(newLabel);
 }
 
 void ParProAnalyzer::initializeSolver() {
@@ -160,7 +158,7 @@ list<pair<Edge, ParProEState> > ParProAnalyzer::parProTransferFunction(const Par
 	    // ...but also include the case where the execution stops (none of these two cases is guaranteed to be part of the actual global behavior).
 	    Edge terminationEdge = Edge(source->getLabel()[i], _artificalTerminationLabels[i]);
 	    terminationEdge.setAnnotation("terminate (due to approximation)");
-	    result.push_back(pair<Edge, ParProEState>(terminationEdge, getTerminationState()));
+	    result.push_back(pair<Edge, ParProEState>(terminationEdge, setComponentToTerminationState(i, source)));
 	  } else if (_approximation==COMPONENTS_UNDER_APPROX) {
 	    // under-approximation here means to simply not include transitions that may or may not be feasible
 	  } else {

@@ -195,11 +195,11 @@ namespace SgNodeHelper {
   //! return a function-call's argument list
   SgExpressionPtrList& getFunctionCallActualParameterList(SgNode* node);
 
-  // Returns the type of the callee of the given call expression
-  SgType* getCalleeType(SgFunctionCallExp* call);
+  // schroder3 (2016-07-27): Returns the callee of the given call expression
+  SgExpression* getCalleeOfCall(/*const*/ SgFunctionCallExp* call);
 
-  // Returns the function type of the callee of the given call expression
-  SgFunctionType* getCalleeFunctionType(SgFunctionCallExp* call);
+  // schroder3 (2016-06-24): Returns the function type of the callee of the given call expression
+  SgFunctionType* getCalleeFunctionType(/*const*/SgFunctionCallExp* call);
 
   //! return a function-definition's list of formal paramters
   SgInitializedNamePtrList& getFunctionDefinitionFormalParameterList(SgNode* node);
@@ -209,6 +209,9 @@ namespace SgNodeHelper {
 
   //! returns the set of all local variable-declarations of a function
   std::set<SgVariableDeclaration*> localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef);
+
+  //! schroder3 (2016-07-22): Returns the closest function definition that contains the given node
+  SgFunctionDefinition* getClosestParentFunctionDefinitionOfLocatedNode(SgLocatedNode* locatedNode);
 
   //! returns the child of SgExprStatement (which is guaranteed to be unique and to exist)
   SgNode* getExprStmtChild(SgNode* node);
@@ -290,6 +293,30 @@ namespace SgNodeHelper {
 
   // checks for float, double, long double
   bool isFloatingPointType(SgType* type);
+
+  // schroder3 (2016-07-22): Modified version of SageInterface::isPointerType(...) that returns the
+  //  underlying pointer type.
+  const SgPointerType* isPointerType(const SgType* t);
+
+  // schroder3 (2016-07-22): Modified version of SageInterface::isReferenceType(...) that returns the
+  //  underlying reference type.
+  const SgReferenceType* isReferenceType(const SgType* t);
+
+  // schroder3 (2016-07-26): Returns the given type as a SgPointerType if it is a
+  //  function pointer type. Returns 0 otherwise.
+  const SgPointerType* isFunctionPointerType(const SgType* type);
+
+  // schroder3 (2016-07-26): Returns the (underlying) function type of the given type if the given
+  //  type is eligible for function-to-pointer conversion. Returns 0 otherwise.
+  const SgFunctionType* isTypeEligibleForFunctionToPointerConversion(const SgType* type);
+
+  // schroder3 (2016-07-27): Returns the underlying function type of the given expression if it
+  //  is callable. Returns 0 otherwise.
+  SgFunctionType* isCallableExpression(/*const*/ SgExpression* expr);
+
+  // schroder3 (2016-07-27): Returns the underlying function type if the given type
+  //  is callable i.e. a expression of this type could be called. Returns 0 otherwise.
+  SgFunctionType* isCallableType(/*const*/ SgType* type);
 
   // determines whether decl declares an array
   bool isArrayDeclaration(SgVariableDeclaration* decl);

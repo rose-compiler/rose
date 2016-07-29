@@ -54,6 +54,7 @@ class Visualizer {
   void setEStateSet(CodeThorn::EStateSet* x);
   void setTransitionGraph(CodeThorn::TransitionGraph* x);
   void createMappings();
+  std::string cfasToDotSubgraphs(std::vector<Flow*> cfas);
   std::string pstateToString(const CodeThorn::PState* pstate);
   std::string pstateToDotString(const CodeThorn::PState* pstate);
   std::string estateToString(const CodeThorn::EState* estate);

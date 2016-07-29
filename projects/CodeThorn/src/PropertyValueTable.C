@@ -1,5 +1,6 @@
 #include "PropertyValueTable.h"
 #include "CodeThornException.h"
+#include "Miscellaneous2.h"
 
 // basic file operations
 #include <iostream>
@@ -408,4 +409,50 @@ string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotati
     propertiesRersFormat << endl;
   }
   return propertiesRersFormat.str();
+}
+
+void PropertyValueTable::shuffle() {
+  // create temporary maps that the randomly selected properties will be copied to
+  // (this is not a copy-in-place function)
+  map<string, size_t> idByFormula;
+  map<size_t, PropertyValue> propertyValueTable;
+  map<size_t, string> formulas;
+  map<size_t, string> counterexamples;
+  map<size_t, string> annotations;
+  // store information on what has been copied already (used to randomly select the next property)
+  int numCopied = 0;
+  map<size_t, bool> copied;
+  for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); ++i) {
+    copied[(*i).first] = false;
+  }
+  for (unsigned int i = 1; i <= size(); ++i) {
+    // randomly select a property that has not been copied yet
+    int indexNotCopied = SPRAY::randomIntInRange( pair<int,int>(0, ((size() -1) - numCopied)) );
+    map<size_t, string>::iterator iter = _formulas.begin();
+    int indexNotCopiedIter = 0;
+    while (indexNotCopiedIter < indexNotCopied || copied[(*iter).first]) {
+      if (!copied[(*iter).first]) {
+	++indexNotCopiedIter;
+      }
+      ++iter;
+      ROSE_ASSERT(iter != _formulas.end());
+    }
+    size_t index = (*iter).first;
+    // cout << "DEBUG: new index: " << i << "   old index: " << index << endl;
+    // copy property information
+    propertyValueTable[i] = _propertyValueTable[index];
+    formulas[i] = _formulas[index];
+    idByFormula[formulas[i]] = i;
+    counterexamples[i] = _counterexamples[index];
+    annotations[i] = _annotations[index];    
+    // update the information on already copied properties
+    ++numCopied;
+    copied[index] = true;
+  }
+  // replace existing maps that represent the entire PropertyValueTable
+  _idByFormula = idByFormula;
+  _propertyValueTable = propertyValueTable;
+  _formulas = formulas;
+  _counterexamples = counterexamples;
+  _annotations = annotations;
 }

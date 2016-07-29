@@ -1,0 +1,47 @@
+// called twice:
+
+int getPlusFour(int value)
+// 0 iv-analysis-in : {i->[7,7], k->[18,28], m->[14,14], $p0->[14,24]}
+{
+// 3 iv-analysis-in : {value->[14,24], i->[7,7], k->[18,28], m->[14,14]}
+  return value + 4;
+// 3 iv-analysis-out: {value->[14,24], i->[7,7], k->[18,28], m->[14,14], $r->[18,28]}
+}
+// 0 iv-analysis-out: {value->[14,24], i->[7,7], k->[18,28], m->[14,14]}
+// called once:
+
+int getPlusThree(int value)
+// 4 iv-analysis-in : {i->[4,4], $p0->[4,4]}
+{
+// 7 iv-analysis-in : {value->[4,4], i->[4,4]}
+  return value + 3;
+// 7 iv-analysis-out: {value->[4,4], i->[4,4], $r->[7,7]}
+}
+// 4 iv-analysis-out: {value->[4,4], i->[4,4]}
+
+int main()
+// 8 iv-analysis-in : {}
+{
+// 11 iv-analysis-in : {}
+  int i = 4;
+// 11 iv-analysis-out: {i->[4,4]}
+// 12 iv-analysis-in : {i->[4,4]}
+  i = getPlusThree(i);
+// 12 iv-analysis-out: {i->[4,4], $p0->[4,4]}
+// 14 iv-analysis-in : {i->[7,7]}
+  int k = 24;
+// 14 iv-analysis-out: {i->[7,7], k->[24,24]}
+// 15 iv-analysis-in : {i->[7,7], k->[24,24]}
+  int m = 14;
+// 15 iv-analysis-out: {i->[7,7], k->[24,24], m->[14,14]}
+// 16 iv-analysis-in : {i->[7,7], k->[24,24], m->[14,14]}
+  k = getPlusFour(k);
+// 16 iv-analysis-out: {i->[7,7], k->[24,24], m->[14,14], $p0->[24,24]}
+// 18 iv-analysis-in : {i->[7,7], k->[18,28], m->[14,14]}
+  m = getPlusFour(m);
+// 18 iv-analysis-out: {i->[7,7], k->[18,28], m->[14,14], $p0->[14,14]}
+// 20 iv-analysis-in : {i->[7,7], k->[18,28], m->[18,28]}
+  int z = 1;
+// 20 iv-analysis-out: {i->[7,7], k->[18,28], m->[18,28], z->[1,1]}
+}
+// 8 iv-analysis-out: bot
