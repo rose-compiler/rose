@@ -753,7 +753,15 @@ Flow CFAnalysis::flow(SgNode* node) {
     Flow tmpEdgeSet;
     // search for all functions and union flow for all functions
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      if(isSgFunctionDefinition(*i)) {
+      // schroder3 (2016-07-29): Added " && !isSgTemplateFunctionDefinition(*i)" to prevent
+      //  SgTemplateFunctionDefinition nodes from being added to the ICFG. SgTemplateFunctionDefinitions
+      //  are never called because they are only used in template declarations (SgTemplateDeclaration)
+      //  (and not in template instantiation or specialization declarations (SgTemplateInstantiationFunctionDecl)).
+      //  Template instantiation/ specialization declarations have "normal" SgFunctionDefinition nodes as
+      //  corresponding definition. Even in case of an implicit instantiation of an implicit specialization ROSE
+      //  creates a SgTemplateInstantiationFunctionDecl and copies the body of the SgTemplateFunctionDefinition
+      //  to a new SgFunctionDefinition and uses the SgFunctionDefinition as definition.
+      if(isSgFunctionDefinition(*i) && !isSgTemplateFunctionDefinition(*i)) {
         // schroder3 (2016-07-12): We can not skip the children of a function definition
         //  because there might be a member function definition inside the function definition.
         //  Example:
