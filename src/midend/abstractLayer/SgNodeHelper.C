@@ -484,6 +484,43 @@ SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
     //cerr<<"WARNING: SgInitializedName: symbol-look-up would fail: get_name()=="<<initName->get_name()<< " .. skipping."<<endl;
     //return 0;
     //}
+  // schroder3 (2016-07-22): If the init name is in a constructor initializer list then is does not have a valid symbol.
+  if(SgCtorInitializerList* ctorInitializerList = isSgCtorInitializerList(initName->get_parent())) {
+    ROSE_ASSERT(initName->search_for_symbol_from_symbol_table() == 0);
+    //  Find the declaration of the corresponding member and use the declaration's init name instead:
+    SgMemberFunctionDeclaration* parentConstructorDecl = isSgMemberFunctionDeclaration(ctorInitializerList->get_parent());
+    ROSE_ASSERT(parentConstructorDecl);
+    SgClassDefinition* correspondingClass = isSgClassDefinition(parentConstructorDecl->get_class_scope());
+    ROSE_ASSERT(correspondingClass);
+    // Is init name a member initializer or a call of (base) class constructor?
+    if(isSgConstructorInitializer(initName->get_initializer())) {
+      // Init name "is" a call of a (base) class constructor. Finding the declaration of this constructor
+      //  is currently not supported (TODO).
+    }
+    else {
+      // Find the corresponding member declaration:
+      SgDeclarationStatementPtrList& members = correspondingClass->get_members();
+      bool declFound = false;
+      for(SgDeclarationStatementPtrList::const_iterator i = members.begin(); i != members.end(); ++i) {
+        if(SgVariableDeclaration* varDecl = isSgVariableDeclaration(*i)) {
+          SgInitializedName* currMemberInitName = getInitializedNameOfVariableDeclaration(varDecl);
+          ROSE_ASSERT(currMemberInitName);
+          if(currMemberInitName->get_name() == initName->get_name()) {
+            // Found the corresponding member declaration. Use the member declaration's init name to get
+            //  the symbol:
+            initName = currMemberInitName;
+            declFound = true;
+            break;
+          }
+        }
+      }
+      if(!declFound) {
+        throw SPRAY::Exception("Error: Unable to find declaration of member \"" + initName->get_name().getString()
+                                + "\" that is referenced in constructor initializer list.");
+      }
+    }
+  }
+  // Return the symbol of the init name:
   SgSymbol* varsym=initName->search_for_symbol_from_symbol_table();
   return varsym;
 }
@@ -746,10 +783,11 @@ SgExpressionPtrList& SgNodeHelper::getFunctionCallActualParameterList(SgNode* no
   return isSgExprListExp(node->get_traversalSuccessorByIndex(1))->get_expressions();
 }
 
-SgType* SgNodeHelper::getCalleeType(SgFunctionCallExp* call) {
-  const SgNode* firstChildOfCallExp = call->get_traversalSuccessorByIndex(0);
-  if(const SgExpression* calleeExpression = isSgExpression(firstChildOfCallExp)) {
-    return calleeExpression->get_type();
+// schroder3 (2016-07-27): Returns the callee of the given call expression
+SgExpression* SgNodeHelper::getCalleeOfCall(/*const*/ SgFunctionCallExp* call) {
+  SgNode* firstChildOfCallExp = call->get_traversalSuccessorByIndex(0);
+  if(SgExpression* calleeExpression = isSgExpression(firstChildOfCallExp)) {
+    return calleeExpression;
   }
   else {
     ROSE_ASSERT(false);
@@ -757,19 +795,12 @@ SgType* SgNodeHelper::getCalleeType(SgFunctionCallExp* call) {
   }
 }
 
-SgFunctionType* SgNodeHelper::getCalleeFunctionType(SgFunctionCallExp* call) {
-  SgType* calleeType = getCalleeType(call);
-  // It is possible to call a reference to a pointer to a function. Return the underlying
-  // function type:
-  if(const SgReferenceType* calleeReferenceType =isSgReferenceType(calleeType)) {
-    calleeType = calleeReferenceType->get_base_type();
-  }
-  if(const SgPointerType* calleePointerType = isSgPointerType(calleeType)) {
-    calleeType = calleePointerType->get_base_type();
-  }
-  // We should have a function type now:
-  SgFunctionType* calleeFunctionType = isSgFunctionType(calleeType);
-  ROSE_ASSERT((calleeFunctionType || cout << "non-function-type: " << calleeType->unparseToString() << " (" << calleeType->class_name() << ")" << endl, calleeFunctionType));
+// schroder3 (2016-06-24): Returns the function type of the callee of the given call expression
+SgFunctionType* SgNodeHelper::getCalleeFunctionType(/*const*/ SgFunctionCallExp* call) {
+  SgExpression* callee = getCalleeOfCall(call);
+  // The callee should have a (underlying) function type:
+  SgFunctionType* calleeFunctionType = isCallableExpression(callee);
+  ROSE_ASSERT(calleeFunctionType);
   return calleeFunctionType;
 }
 
@@ -812,7 +843,96 @@ set<SgVariableDeclaration*> SgNodeHelper::localVariableDeclarationsOfFunction(Sg
   return localVarDecls;
 }
 
+//! schroder3 (2016-07-22): Returns the closest function definition that contains the given node
+SgFunctionDefinition* SgNodeHelper::getClosestParentFunctionDefinitionOfLocatedNode(SgLocatedNode* locatedNode) {
+  SgNode* node = locatedNode;
+  while((node = node->get_parent())) {
+    if(SgFunctionDefinition* funcDef = isSgFunctionDefinition(node)) {
+      return funcDef;
+    }
+  }
+  return 0;
+}
 
+// schroder3 (2016-07-22): Modified version of SageInterface::isPointerType(...) that
+//  returns the underlying pointer type.
+const SgPointerType* SgNodeHelper::isPointerType(const SgType* t) {
+  if(isSgPointerType(t)) {
+    return isSgPointerType(t);
+  }
+  else if(isSgTypedefType(t)) {
+    return SgNodeHelper::isPointerType(isSgTypedefType(t)->get_base_type());
+  }
+  else if(isSgModifierType(t)) {
+    return SgNodeHelper::isPointerType(isSgModifierType(t)->get_base_type());
+  }
+  else {
+    return 0;
+  }
+}
+
+// schroder3 (2016-07-22): Modified version of SageInterface::isReferenceType(...) tha
+//  returns the underlying reference type.
+const SgReferenceType* SgNodeHelper::isReferenceType(const SgType* t) {
+  if(isSgReferenceType(t)) {
+    return isSgReferenceType(t);
+  }
+  else if(isSgTypedefType(t)) {
+    return SgNodeHelper::isReferenceType(isSgTypedefType(t)->get_base_type());
+  }
+  else if(isSgModifierType(t)) {
+    return SgNodeHelper::isReferenceType(isSgModifierType(t)->get_base_type());
+  }
+  else {
+    return 0;
+  }
+}
+
+// schroder3 (2016-07-26): Returns the given type as a SgPointerType if it is a
+//  function pointer type. Returns 0 otherwise.
+const SgPointerType* SgNodeHelper::isFunctionPointerType(const SgType* type) {
+  if(const SgPointerType* pointerType = SgNodeHelper::isPointerType(type)) {
+    if(isSgFunctionType(pointerType->get_base_type())) {
+      return pointerType;
+    }
+  }
+  return 0;
+}
+
+// schroder3 (2016-07-26): Returns the (underlying) function type of the given type if the given
+//  type is eligible for function-to-pointer conversion. Returns 0 otherwise.
+const SgFunctionType* SgNodeHelper::isTypeEligibleForFunctionToPointerConversion(const SgType* type) {
+  // Only lvalues of function (reference) type are eligible for function-to-pointer
+  //  conversion.
+  if(const SgReferenceType* refType = SgNodeHelper::isReferenceType(type)) {
+    type = refType->get_base_type();
+  }
+
+  return isSgFunctionType(type);
+}
+
+// schroder3 (2016-07-27): Returns the underlying function type of the given expression if it
+//  is callable. Returns 0 otherwise.
+//
+//  A special handling of expressions of class type where the corresponding class has a call
+//   operator ("operator()(...)") is not necessary because ROSE normalizes calls like "A a; a(1);"
+//   to "A a; a.operator()(1);". This also applies to calls of lambdas.
+SgFunctionType* SgNodeHelper::isCallableExpression(/*const*/ SgExpression* expr) {
+  return isCallableType(expr->get_type());
+}
+
+// schroder3 (2016-07-27): Returns the underlying function type if the given type
+//  is callable i.e. a expression of this type could be called. Returns 0 otherwise.
+SgFunctionType* SgNodeHelper::isCallableType(/*const*/ SgType* type) {
+  // It is possible to call a reference to a pointer to a function:
+  if(const SgReferenceType* referenceType = isReferenceType(type)) {
+    type = referenceType->get_base_type();
+  }
+  if(const SgPointerType* pointerType = isPointerType(type)) {
+    type = pointerType->get_base_type();
+  }
+  return isSgFunctionType(type);
+}
 
 /*! 
   * \author Markus Schordan

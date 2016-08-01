@@ -18,6 +18,7 @@ namespace CodeThorn {
 
   void write_file(std::string filename, std::string data);
   std::string int_to_string(int x);
+  std::pair<int,int> parseCsvIntPair(std::string toParse);
   std::string color(std::string name);
   void nocheck(std::string checkIdentifier, bool checkResult);
   void check(std::string checkIdentifier, bool checkResult, bool check=true);

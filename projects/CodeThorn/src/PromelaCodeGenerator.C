@@ -110,15 +110,17 @@ string PromelaCodeGenerator::generateActionListener() {
   actionChannelAndListener << "chan act = [0] of {mtype};" << endl;
   actionChannelAndListener << endl;
   actionChannelAndListener << "/* Most recent message event */" << endl;
-  actionChannelAndListener << "mtype lastAction;" << endl;
+  actionChannelAndListener << "mtype lastAction = nop;" << endl;
   actionChannelAndListener << endl;
   actionChannelAndListener << "/* Action listener */" << endl;
   actionChannelAndListener << "active proctype Listener()" << endl;
   actionChannelAndListener << "{" << endl;
-  actionChannelAndListener << "  do" << endl;
-  actionChannelAndListener << "  :: act ? lastAction ->" << endl;
-  actionChannelAndListener << "step: skip" << endl;
-  actionChannelAndListener << "  od" << endl;
+  actionChannelAndListener << "  atomic {" << endl;
+  actionChannelAndListener << "    do" << endl;
+  actionChannelAndListener << "    :: act ? lastAction ->" << endl;
+  actionChannelAndListener << "  step: skip" << endl;
+  actionChannelAndListener << "    od" << endl;
+  actionChannelAndListener << "  }" << endl;
   actionChannelAndListener << "}" << endl;
   return actionChannelAndListener.str();
 }
@@ -131,24 +133,27 @@ string PromelaCodeGenerator::generateCode(Flow& automaton, int id, EdgeAnnotatio
   ss << "  int state = "<<automaton.getStartLabel().getId()<<";" << endl;
   ss << "  do" << endl;
 
-  set<Label> visited; //TODO: change to hashset
+  set<Label> visited; //TODO: maybe change to hashset
   list<Label> worklist;
   worklist.push_back(automaton.getStartLabel());
   visited.insert(automaton.getStartLabel());
   while (!worklist.empty()) {
     Label label = worklist.front();
     worklist.pop_front();
-    ss << "  :: state == "<<label.getId()<<" -> if" << endl;
+    ss << "  :: state == "<<label.getId()<<" ->" << endl;
+    ss << "    atomic {" << endl;
+    ss << "      if" << endl;
     Flow outEdges = automaton.outEdges(label);
     for (Flow::iterator i=outEdges.begin(); i!= outEdges.end(); ++i) {
-      ss << "    :: "<<communicationDetails((*i).getAnnotation(), id, edgeAnnotationMap) << endl;
-      ss << "      state = "<<(*i).target().getId()<<";" << endl;
+      ss << "      :: "<<communicationDetails((*i).getAnnotation(), id, edgeAnnotationMap) << endl;
+      ss << "        state = "<<(*i).target().getId()<<";" << endl;
       if (visited.find((*i).target()) == visited.end()) {
 	worklist.push_back((*i).target());
         visited.insert((*i).target());
       }
     }
-    ss << "    fi" << endl;
+    ss << "      fi" << endl;
+    ss << "    }" << endl;
   }
 
   ss << "  od" << endl;
@@ -198,7 +203,7 @@ string PromelaCodeGenerator::communicationDetails(string edgeAnnotation, int cur
   }
   ss << " ->" << endl;
   if (messageReceived) {
-    ss << "      act ! "<<edgeAnnotation;
+    ss << "        act ! "<<edgeAnnotation;
   }
   return ss.str();
 }

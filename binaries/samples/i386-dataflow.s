@@ -66,6 +66,7 @@ ifTest4:
 do1:
 .loop:
 	mov ebx, 1
+	inc eax
 	cmp eax, 10
 	jne .loop
 
@@ -78,6 +79,7 @@ do1:
 do2:
 .loop:
 	mov ebx, eax
+	inc eax
 	cmp eax, 10
 	jne .loop
 
@@ -85,8 +87,9 @@ do2:
 	ret
 	
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; A loop that makes the same assignment every time
+;;; A loop that makes the same assignment every time, but might never execute
 while1:
+	mov ebx, 0
 .loop:
 	cmp eax, 10
 	je .end
@@ -99,8 +102,9 @@ while1:
 	ret
 
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; A loop that makes a different assignment every time
+;;; A loop that makes a different assignment every time, but might never execute
 while2:
+	mov ebx, 0
 .loop:
 	cmp eax, 10
 	je .end

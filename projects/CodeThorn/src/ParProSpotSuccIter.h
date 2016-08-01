@@ -62,7 +62,7 @@ typedef boost::unordered_map<string, int> String2Int;
     ParProTransitions::const_iterator iter;
     // two flags for simulating self loops for leaf nodes
     bool _needToAddSelfLoop;
-    bool _selfLoopIsNext;
+    bool _upcomingSelfLoop;
   };
 }
 

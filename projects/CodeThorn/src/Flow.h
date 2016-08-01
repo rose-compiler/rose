@@ -134,6 +134,7 @@ namespace SPRAY {
     void setDotOptionEdgeAnnotationsOnly(bool opt);
     void setDotOptionFixedColor(bool opt);
     void setDotFixedColor(std::string color);
+    void setDotFixedNodeColor(std::string color);
     void setDotOptionHeaderFooter(bool opt);
     std::string toDot(Labeler *labeler);
     void setTextOptionPrintType(bool opt);
@@ -155,6 +156,7 @@ namespace SPRAY {
     bool _stringNoType;
     bool _dotOptionFixedColor;
     std::string _fixedColor;
+    std::string _fixedNodeColor;
     bool _dotOptionHeaderFooter;
     Label _startLabel;
 #ifdef USE_SAWYER_GRAPH
