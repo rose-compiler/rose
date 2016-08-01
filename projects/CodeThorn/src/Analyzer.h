@@ -111,6 +111,7 @@ namespace CodeThorn {
     const EState* topWorkList();
     const EState* popWorkList();
     void swapWorkLists();
+    size_t memorySizeContentEStateWorkLists();
     
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
