@@ -288,7 +288,18 @@ void Labeler::createLabels(SgNode* root) {
         }
       }
     }
-    if(isSgExprStatement(*i)||isSgReturnStmt(*i)||isSgVariableDeclaration(*i))
+    // schroder3 (2016-07-12): We can not skip the children of a variable declaration
+    //  because there might be a member function definition inside the variable declaration.
+    //  Example:
+    //   int main() {
+    //     class A {
+    //      public:
+    //       void mf() {
+    //         int i = 2;
+    //       }
+    //     } a; // Var decl
+    //   }
+    if(isSgExprStatement(*i)||isSgReturnStmt(*i)/*||isSgVariableDeclaration(*i)*/)
       i.skipChildrenOnForward();
   }
   std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
