@@ -22,6 +22,10 @@ string Transition::toString() const {
   return string("(")+s1+", "+s2+", "+s3+")";
 }
 
+size_t Transition::memorySize() const {
+  return sizeof(*this);
+}
+
 TransitionHashFun::TransitionHashFun() {
 }
 
@@ -485,7 +489,27 @@ bool TransitionGraph::isComplete() {
   return _completeSTG;
 }
 
-
+size_t TransitionGraph::memorySize() const {
+  size_t mem = HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred>::memorySize();
+  // The size of the Transition objects has been counted by the HSetMaintainer already.
+  // However, the additional pointers in the _inEdges and _outEdges maps need to be considered too.
+  for (map<const EState*,TransitionPtrSet >::const_iterator i=_inEdges.begin(); i!=_inEdges.end(); ++i) {
+    for (TransitionPtrSet::const_iterator k=(*i).second.begin(); k!=(*i).second.end(); ++k) {
+      mem+=sizeof(*k);
+    }
+    mem+=sizeof(*i);
+  }
+  for (map<const EState*,TransitionPtrSet >::const_iterator i=_outEdges.begin(); i!=_outEdges.end(); ++i) {
+    for (TransitionPtrSet::const_iterator k=(*i).second.begin(); k!=(*i).second.end(); ++k) {
+      mem+=sizeof(*k);
+    }
+    mem+=sizeof(*i);
+  }
+  for(set<const EState*>::const_iterator i=_recomputedestateSet.begin(); i!= _recomputedestateSet.end(); ++i) {
+    mem+=sizeof(*i);
+  }
+  return mem + sizeof(*this);  // TODO: check if sizeof(base class HSetMaintainer) is now counted twice
+}
 
 /*! 
   * \author Markus Schordan

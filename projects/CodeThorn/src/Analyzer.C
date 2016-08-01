@@ -582,6 +582,20 @@ void Analyzer::swapWorkLists() {
   incIterations();
 }
 
+size_t Analyzer::memorySizeContentEStateWorkLists() {
+  size_t mem = 0;
+#pragma omp critical(ESTATEWL) 
+  {
+    for (EStateWorkList::iterator i=estateWorkListOne.begin(); i!=estateWorkListOne.end(); ++i) {
+      mem+=sizeof(*i);
+    }
+    for (EStateWorkList::iterator i=estateWorkListTwo.begin(); i!=estateWorkListTwo.end(); ++i) {
+      mem+=sizeof(*i);
+    }
+  }
+  return mem;
+}
+
 #define PARALLELIZE_BRANCHES
 
 const EState* Analyzer::addToWorkListIfNew(EState estate) {
@@ -3064,23 +3078,26 @@ void Analyzer::runSolver12() {
         prevStateSetSizeDisplay=estateSetSize;
       }
 
-      if (args.count("max-memory-stg")) {
+      if (args.count("max-memory")) {
 #pragma omp critical(HASHSET)
 	{
 	  estateSetSize = estateSet.size();
 	}
 	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  long totalMemoryStg = 0;
-#pragma omp critical(HASHSET)
-	  {
-	    totalMemoryStg+=getPStateSet()->memorySize(); // pstateSetBytes
-	    totalMemoryStg+=getEStateSet()->memorySize(); // eStateSetBytes
-	    long transitionGraphSize=getTransitionGraph()->size();
-	    totalMemoryStg+=transitionGraphSize*sizeof(Transition); // transitionGraphBytes
-	    totalMemoryStg+=getConstraintSetMaintainer()->memorySize(); // constraintSetsBytes
-	    //cout << "DEBUG: total memory stg:" << totalMemoryStg << "(" <<getPStateSet()->memorySize()<<"/"<<getEStateSet()->memorySize()<<"/"<<transitionGraphSize*sizeof(Transition)<<"/"<<getConstraintSetMaintainer()->memorySize()<<")"<< endl;
+	  long physicalMemoryUsedLinux = -1;
+	  long residentSetSize = -1;
+	  FILE* statm = NULL;
+	  if ((statm = fopen( "/proc/self/statm", "r" )) != NULL) {
+	    if (fscanf( statm, "%*s%ld", &residentSetSize ) == 1) {
+	      physicalMemoryUsedLinux = residentSetSize * sysconf(_SC_PAGESIZE);
+	    }
 	  }
-	  if (totalMemoryStg >= _maxBytesStg) {
+	  fclose(statm);
+	  if (physicalMemoryUsedLinux == -1) {
+	    cerr << "ERROR: Physical memory consumption could not be determined even though option --max-memory was selected." << endl;
+	    ROSE_ASSERT(0);
+	  }
+	  if (physicalMemoryUsedLinux >= _maxBytesStg) {
 #pragma omp critical(ESTATEWL)
 	    {
 	      terminate = true;
@@ -3166,13 +3183,13 @@ void Analyzer::runSolver12() {
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)
                 addToWorkList(newEStatePtr);
-              recordTransition(currentEStatePtr,e,newEStatePtr);
+	      recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
               const EState* newEStatePtr;
               newEStatePtr=processNewOrExisting(newEState);
-              recordTransition(currentEStatePtr,e,newEStatePtr);        
+	      recordTransition(currentEStatePtr,e,newEStatePtr);        
               
               if(isVerificationErrorEState(&newEState)) {
 #pragma omp critical
@@ -3960,3 +3977,4 @@ void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
  void Analyzer::setAssertCondVarsSet(set<VariableId> acVars) {
    _assertCondVarsSet=acVars;
  }
+
