@@ -44,6 +44,8 @@
 #include "ParProLtlMiner.h"
 #include "ParProExplorer.h"
 #include "ParallelAutomataGenerator.h"
+#include <unistd.h>
+#include <sys/resource.h>
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -390,7 +392,7 @@ int main( int argc, char * argv[] ) {
       ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
       ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
       ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
-      ("max-memory-stg",po::value< int >(),"Stop computing the STG after it amounts to approximately <arg> Bytes of memory. (default: no limit). Currently requires --solver=12.")
+      ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Linux systems.")
       ("resource-limit-diff",po::value< int >(),"Check if the resource limit is reached every <arg> computed estates.")
       ("print-all-options",po::value< string >(),"print the default values for all yes/no command line options.")
       ("rewrite","rewrite AST applying all rewrite system rules.")
@@ -848,7 +850,7 @@ int main( int argc, char * argv[] ) {
     analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
-  if (args.count("max-memory-stg")) {
+  if (args.count("max-memory")) {
     bool notSupported=false;
     if(args.count("solver")) {
       int solver=args["solver"].as<int>();
@@ -860,10 +862,10 @@ int main( int argc, char * argv[] ) {
       notSupported=true; 
     }
     if(notSupported) {
-      cout << "Error: option \"--max-memory-stg\" currently requires \"--solver=12\"." << endl;
+      cout << "Error: option \"--max-memory\" currently requires \"--solver=12\"." << endl;
       exit(1);
     }
-    long int maxBytes = args["max-memory-stg"].as<int>();
+    long int maxBytes = args["max-memory"].as<long int>();
     analyzer.setMaxBytesStg(maxBytes);
   }
 
@@ -1364,7 +1366,11 @@ int main( int argc, char * argv[] ) {
   long numOfConstEStates=0;//(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
   long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
 
-  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
+  // Linux-specific solution to finding the peak phyisical memory consumption (rss). 
+  // Not necessarily supported by every OS.
+  struct rusage resourceUsage;
+  getrusage(RUSAGE_SELF, &resourceUsage);
+  long totalMemory=resourceUsage.ru_maxrss * 1024;
 
   double totalRunTime=frontEndRunTime+initRunTime+analysisRunTime;
 

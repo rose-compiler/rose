@@ -3078,23 +3078,26 @@ void Analyzer::runSolver12() {
         prevStateSetSizeDisplay=estateSetSize;
       }
 
-      if (args.count("max-memory-stg")) {
+      if (args.count("max-memory")) {
 #pragma omp critical(HASHSET)
 	{
 	  estateSetSize = estateSet.size();
 	}
 	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  long totalMemoryStg = 0;
-#pragma omp critical(HASHSET)
-	  {
-	    totalMemoryStg+=getPStateSet()->memorySize();  // pstateSetBytes
-	    totalMemoryStg+=getEStateSet()->memorySize();  // eStateSetBytes
-	    totalMemoryStg+=getTransitionGraph()->memorySize();  // transitionGraphBytes
-	    totalMemoryStg+=getConstraintSetMaintainer()->memorySize();  // constraintSetsBytes
-	    totalMemoryStg+=memorySizeContentEStateWorkLists();  // workListBytes
-	    // cout << "DEBUG: total memory stg:" << totalMemoryStg << "(" <<getPStateSet()->memorySize()<<"/"<<getEStateSet()->memorySize()<<"/"<<getTransitionGraph()->memorySize()<<"/"<<getConstraintSetMaintainer()->memorySize()<<"/"<<memorySizeContentEStateWorkLists()<<")"<< endl;
+	  long physicalMemoryUsedLinux = -1;
+	  long residentSetSize = -1;
+	  FILE* statm = NULL;
+	  if ((statm = fopen( "/proc/self/statm", "r" )) != NULL) {
+	    if (fscanf( statm, "%*s%ld", &residentSetSize ) == 1) {
+	      physicalMemoryUsedLinux = residentSetSize * sysconf(_SC_PAGESIZE);
+	    }
 	  }
-	  if (totalMemoryStg >= _maxBytesStg) {
+	  fclose(statm);
+	  if (physicalMemoryUsedLinux == -1) {
+	    cerr << "ERROR: Physical memory consumption could not be determined even though option --max-memory was selected." << endl;
+	    ROSE_ASSERT(0);
+	  }
+	  if (physicalMemoryUsedLinux >= _maxBytesStg) {
 #pragma omp critical(ESTATEWL)
 	    {
 	      terminate = true;
