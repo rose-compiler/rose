@@ -126,6 +126,26 @@ void func12(int i) {
 
 }
 
+void func13(int i) {
+
+}
+
+void func14(int i) {
+
+}
+
+void func15(int i) {
+
+}
+
+void func16(int i) {
+
+}
+
+void func17(int i) {
+
+}
+
 int main() {
 
 
@@ -151,8 +171,7 @@ int main() {
 
   void(*func_ptr)(int) = /*implicit address-of*/func;
   void(*&ref_func_ptr)(int) = func_ptr;
-
-
+  ref_func_ptr = /*implicit address-of*/func13;
 
   void(&func_ref)(int) = func5;
   void(*func_ptr2)(int) = /*implicit address-of*/func_ref;
@@ -164,6 +183,11 @@ int main() {
 
   void(*func_ptr6)(int);
   func_ptr6 = /*implicit address-of*/func12;
+
+  static_cast<void(*)(int)>(/*implicit address-of*/func14);
+  static_cast<void(*)(int)>(&func15);
+  reinterpret_cast<void(*)(int)>(/*implicit address-of*/func16);
+  (void(*)(int))(/*implicit address-of*/func17);
 
   func2(/*implicit address-of*/func6);
   getFuncAddress(func3);
