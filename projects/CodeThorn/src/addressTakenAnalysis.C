@@ -64,6 +64,14 @@ SPRAY::ComputeAddressTakenInfo::FunctionAddressTakenInfo SPRAY::ComputeAddressTa
   return functionAddressTakenInfo;
 }
 
+bool SPRAY::ComputeAddressTakenInfo::getAddAddressTakingsInsideTemplateDecls() {
+  return addAddressTakingsInsideTemplateDecls;
+}
+
+void SPRAY::ComputeAddressTakenInfo::setAddAddressTakingsInsideTemplateDecls(bool addAddressTakingsInsideTemplateDecls){
+  this->addAddressTakingsInsideTemplateDecls = addAddressTakingsInsideTemplateDecls;
+}
+
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn)
 {
   std::cerr << sgn->class_name() << ": " 
@@ -915,17 +923,28 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
 // "#SgTemplateParameterVal|"
 // "#SgTemplateParamterList|"
   
-  // skipping all template declaration specific nodes as they dont have any symbols
-  // we still traverse SgTemplateInstatiation*
-  matchquery = \
-      // schroder3 (2016-07-20): Commented out the "#SgTemplate..." query parts because they do not have an effect.
-//    "#SgTemplateClassDeclaration|"
-//    "#SgTemplateFunctionDeclaration|"
-//    "#SgTemplateMemberFunctionDeclaration|"
-//    "#SgTemplateVariableDeclaration|" // TODO: remove?
-//    "#SgTemplateClassDefinition|"
-//    "#SgTemplateFunctionDefinition|"
+  // schroder3 (2016-07-29): Skip all nodes that are located in a sub-tree of a template declaration or definition,
+  //  because these nodes are never executed. They are never executed because there is always a specialization
+  //  (SgTemplateInstatiation... node) that is used (and which is not skipped). Even in case of an implicit specialization the content
+  //  of the template declaration/ definition is copied to specialization/ instantiation node (which is not skipped) and the
+  //  address-takings can be found in these copies. It is is possible to deactivate the skipping of these nodes by setting
+  //  addAddressTakingsInsideTemplateDecls to true.
+  if(!addAddressTakingsInsideTemplateDecls) {
+    // schroder3 (2016-07-29): Uncommented the "#SgTemplate..." query parts because they have an effect now
+    //  (Address-Taken-Analysis works with template functions now and member function definitions inside template class
+    //  declarations should be available soon).
+    // schroder3 (2016-07-20): Commented out the "#SgTemplate..." query parts because they do not have an effect.
+    matchquery =
+      "#SgTemplateClassDeclaration|"
+      "#SgTemplateFunctionDeclaration|"
+      "#SgTemplateMemberFunctionDeclaration|"
+      "#SgTemplateVariableDeclaration|"
+      "#SgTemplateClassDefinition|"
+      "#SgTemplateFunctionDefinition|"
+    ;
+  }
 
+  matchquery +=
     // schroder3 (Jun 2016): The obvious one:
     "SgAddressOfOp($OP)|"
 

@@ -49,6 +49,10 @@ class ComputeAddressTakenInfo
   VariableIdMapping& vidm;
   FunctionIdMapping& fidm;
 
+  // schroder3 (2016-07-29): Controls whether address-takings inside template declarations/
+  //  definitions should be added to the address-taken set or not.
+  bool addAddressTakingsInsideTemplateDecls;
+
   // result to be computed by this analysis
   // bool is set to true when operand of SgAddressOfExp is a complicated
   // expression for which VariableId cannot be determined
@@ -128,7 +132,8 @@ class ComputeAddressTakenInfo
     void debugPrint(SgNode* sgn);
   };
 public:
-  ComputeAddressTakenInfo(VariableIdMapping& _vidm, FunctionIdMapping& _fidm) : vidm(_vidm), fidm(_fidm)
+  ComputeAddressTakenInfo(VariableIdMapping& _vidm, FunctionIdMapping& _fidm)
+    : vidm(_vidm), fidm(_fidm), addAddressTakingsInsideTemplateDecls(false)
   {
     variableAddressTakenInfo.first = false;
     functionAddressTakenInfo.first = false;
@@ -137,6 +142,13 @@ public:
   void printAddressTakenInfo();
   VariableAddressTakenInfo getVariableAddressTakenInfo();
   FunctionAddressTakenInfo getFunctionAddressTakenInfo();
+
+  // schroder3 (2016-07-29): Added getter and setter:
+  bool getAddAddressTakingsInsideTemplateDecls();
+private:
+  // schroder3 (2016-07-29): This is currently private because setting the member to true will
+  //  make tests fail.
+  void setAddAddressTakingsInsideTemplateDecls(bool);
 };
 
 /*************************************************
