@@ -15,6 +15,7 @@ add_library(mpaGraphAnalysis OBJECT
   CallGraphAnalysis.C
   SB_Graph.C
   RoseSrc_CallGraphAnalysis.C
+  dummyFunction.cpp
 )
 endif()
 add_dependencies(mpaGraphAnalysis rosetta_generated)
