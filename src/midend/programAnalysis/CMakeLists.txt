@@ -124,6 +124,7 @@ else()
     graphAnalysis/SB_Graph.C
     graphAnalysis/CallGraphAnalysis.C
     graphAnalysis/RoseSrc_CallGraphAnalysis.C
+    graphAnalysis/dummyFunction.cpp
     staticSingleAssignment/staticSingleAssignmentCalculation.C
     staticSingleAssignment/staticSingleAssignmentQueries.C
     staticSingleAssignment/uniqueNameTraversal.C
