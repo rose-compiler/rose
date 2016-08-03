@@ -110,25 +110,57 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclar
   SgType* varDeclType = varDeclInitName->get_type();
   ROSE_ASSERT(varDeclType);
 
-  // schroder3 (2016-07-21):
-  //  The declared variable is the target of the initialization:
-  std::vector<VariableId> possibleTargets;
-  possibleTargets.push_back(cati.vidm.variableId(sgn));
+  if(debuglevel > 0) {
+    std::cout << "init name: " << varDeclInitName->unparseToString() << std::endl;
+    std::cout << "type: " << varDeclType->unparseToString() << std::endl;
+    std::cout << "class name: " << varDeclType->class_name() << std::endl;
+  }
 
-  // schroder3 (2016-07-21):
-  //  Add the variables/ functions in the init expression. Two cases:
-  //
-  //  Initialization of a reference:
-  //   Currently we treat every variable in the init expression of the reference as if its address was taken, because
-  //   we currently have no mapping between the reference and the variables in the init expression. It is therefore
-  //   currently not possible to add the variable to the address taken set only if the address of the reference is taken.
-  //
-  //  Initialization of a variable with underlying function pointer type:
-  //   There might be an implicit address-taking of a function if the initializer contains a function:
-  //   Traverse the initializer and only add functions to the address-taken set (and do not add variables of function type):
-  //
-  //  Handle both cases:
-  handleAssociation(AK_Initialization, possibleTargets, varDeclType, SgNodeHelper::getInitializerExpressionOfVariableDeclaration(sgn));
+  SgExpression* varDeclInitializer = SgNodeHelper::getInitializerExpressionOfVariableDeclaration(sgn);
+
+  // schroder3 (2016-08-01): Check whether this is a declaration inside a catch (e.g. "try { } catch(int& i) { }"):
+  if(isSgCatchOptionStmt(sgn->get_parent())) {
+    // A "catch variable" has no initializer:
+    ROSE_ASSERT(!varDeclInitializer);
+    // Check whether this is a "declaration" of an ellipsis in a catch ("try { } catch(... /* <- */) { }"):
+    if(isSgTypeEllipse(varDeclType)) {
+      ROSE_ASSERT(varDeclInitName->unparseToString() == "");
+      // Because this is not a real variable declaration (no name, no real type, no symbol) there is nothing to do.
+    }
+    // Check whether this is a declaration of an reference:
+    else if(SgNodeHelper::isReferenceType(varDeclType)) {
+      // A catch statement might catch a rethrown exception (If this is a catch of a rethrown exception then the variable in
+      //  this catch statement is an alias of the rethrown exception and therefore likely an alias of another "catch variable"):
+      //  Add the variable to the address-taken-set though there is no initializer expression:
+      insertVariableId(cati.vidm.variableId(sgn));
+    }
+    else {
+      // no initializer and no declaration of reference type: nothing to do
+    }
+  }
+  else {
+    // "normal" variable declaration:
+
+    // schroder3 (2016-07-21):
+    //  The declared variable is the target of the initialization:
+    std::vector<VariableId> possibleTargets;
+    possibleTargets.push_back(cati.vidm.variableId(sgn));
+
+    // schroder3 (2016-07-21):
+    //  Add the variables/ functions in the init expression. Two cases:
+    //
+    //  Initialization of a reference:
+    //   Currently we treat every variable in the init expression of the reference as if its address was taken, because
+    //   we currently have no mapping between the reference and the variables in the init expression. It is therefore
+    //   currently not possible to add the variable to the address taken set only if the address of the reference is taken.
+    //
+    //  Initialization of a variable with underlying function pointer type:
+    //   There might be an implicit address-taking of a function if the initializer contains a function:
+    //   Traverse the initializer and only add functions to the address-taken set (and do not add variables of function type):
+    //
+    //  Handle both cases:
+    handleAssociation(AK_Initialization, possibleTargets, varDeclType, varDeclInitializer);
+  }
 }
 
 // only the rhs_op of SgDotExp is modified
@@ -752,6 +784,41 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAddressOfOp* s
   //  ==> nothing to do in both cases.
 }
 
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThrowOp* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-02): A throw can contain an implicit address taking e.g. if the throw
+  //  expression is of function type and if there is a catch for function pointer types.
+  //  (Alias/ reference creation through catch is not possible because throw copy-initializes
+  //  the exception object from the throw expression.)
+  if(sgn->get_throwKind() != SgThrowOp::throw_expression) {
+    // Nothing to do if there is no expression (e.g. in case of a rethrow):
+    return;
+  }
+  else {
+    SgExpression* throwExpression = sgn->get_operand();
+    ROSE_ASSERT(throwExpression);
+    // Check for implicit address-taking:
+    if(SgNodeHelper::isTypeEligibleForFunctionToPointerConversion(throwExpression->get_type())) {
+      // Implicit address-taking possible. Four cases:
+      //  1) There is an enclosing try:
+      //     1.1) There is a matching catch statement: implicit address-taking found
+      //     1.1) There is an ellipsis catch statement: catched variable is not accessible but can
+      //          be rethrown: implicit address-taking possible
+      //     1.2) There is no matching catch statement: there might be another try somewhere:
+      //          implicit address-taking possible
+      //  2) There is no enclosing try: there might be another try somewhere: implicit
+      //     address-taking possible
+      //
+      //  ==> implicit address-taking in all cases possible:
+      //  TODO: Refine this (e.g. if there is only an ellipsis catch without rethrow then the function
+      //        address is not accessible)
+      throwExpression->accept(*this);
+    }
+  }
+}
+
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
@@ -983,7 +1050,11 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
 
     // schroder3 (2016-07-28): A cast can contain an implicit address taking e.g. if the operand is of function type
     //  and if the cast type is a function pointer type.
-    "$OP=SgCastExp";
+    "$OP=SgCastExp|"
+
+    // schroder3 (2016-08-02): A throw can contain an implicit address taking e.g. if the throw expression is of
+    //  function type and if there is a catch for function pointer types.
+    "$OP=SgThrowOp";
 
 //  std::cout << std::endl << "Variable Id Mapping:" << std::endl;
 //  this->vidm.toStream(std::cout);
