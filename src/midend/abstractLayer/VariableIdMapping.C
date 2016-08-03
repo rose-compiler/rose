@@ -340,6 +340,8 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
               //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<varDecl->unparseToString()<<endl;
               // Array dimensions found: Registration as array symbol:
               registerNewArraySymbol(sym, arraySize);
+              // Remember that this symbol is already registered:
+              symbolSet.insert(sym);
               // Do not register as normal symbol and continue with next iteration:
               continue;
             }
