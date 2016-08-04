@@ -4,6 +4,7 @@
 #include "ParProExplorer.h"
 #include "PropertyValueTable.h"
 #include "SpotConnection.h"
+#include "Miscellaneous2.h"
 
 using namespace SPRAY;
 using namespace boost;
@@ -15,10 +16,32 @@ _stgOverApprox(NULL),
 _stgUnderApprox(NULL) {
 }
 
+set<int> ParallelSystem::getComponentIds() const {
+  set<int> result;
+  for (map<int, Flow*>::const_iterator i=_components.begin(); i!=_components.end(); ++i) {
+    result.insert((*i).first);
+  }
+  return result;
+}
+
 set<string> ParallelSystem::getAnnotations() const {
   set<string> result;
   for (map<int, Flow*>::const_iterator i=_components.begin(); i!=_components.end(); ++i) {
     set<string> annotations = (*i).second->getAllAnnotations();
+    result.insert(annotations.begin(), annotations.end());
+  }
+  // TODO: improve representation so that the empty string does not need to be treated special
+  set<string>::iterator iter = result.find("");
+  if (iter != result.end()) {
+    result.erase(iter);
+  }
+  return result;
+}
+
+set<string> ParallelSystem::getAnnotations(list<int> componentIds) {
+  set<string> result;
+  for (list<int>::iterator i=componentIds.begin(); i!=componentIds.end(); ++i) {
+    set<string> annotations = _components[*i]->getAllAnnotations();
     result.insert(annotations.begin(), annotations.end());
   }
   // TODO: improve representation so that the empty string does not need to be treated special
@@ -126,11 +149,23 @@ string ParProLtlMiner::randomLtlFormula(vector<string> atomicPropositions, int m
 PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int minNumComponents) {
   ROSE_ASSERT(system.hasStgOverApprox() && system.hasStgUnderApprox());
   PropertyValueTable* result = new PropertyValueTable();
-  set<string> annotations = system.getAnnotations();
+  set<string> annotations;
   vector<string> annotationVec;
-  annotationVec.reserve(annotations.size());
-  copy(annotations.begin(), annotations.end(), back_inserter(annotationVec));
+  ROSE_ASSERT(_numComponentsForLtlAnnotations <= system.size());
+  if (_numComponentsForLtlAnnotations == system.size()) {
+    annotations = system.getAnnotations();
+    annotationVec.reserve(annotations.size());
+    copy(annotations.begin(), annotations.end(), back_inserter(annotationVec));
+  }
   for (unsigned int i = 0; i < _numberOfMiningsPerSubsystem; ++i) {
+    if (_numComponentsForLtlAnnotations < system.size()) {
+      pair<int,int> range(0, (system.size() - 1));
+      list<int> componentIdsForAnnotations = nDifferentRandomIntsInSet(_numComponentsForLtlAnnotations, system.getComponentIds());
+      annotations = system.getAnnotations(componentIdsForAnnotations);
+      annotationVec.clear();
+      annotationVec.reserve(annotations.size());
+      copy(annotations.begin(), annotations.end(), back_inserter(annotationVec));
+    }
     string ltlProperty = randomLtlFormula(annotationVec, 2);
     if (_spotConnection.checkPropertyParPro(ltlProperty, *system.stgOverApprox(), system.getAnnotations()) == PROPERTY_VALUE_YES) {
       const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
@@ -156,11 +191,23 @@ PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int m
   PropertyValueTable* result = new PropertyValueTable();
   int verifiableCount = 0;
   int falsifiableCount = 0;
-  set<string> annotations = system.getAnnotations();
+  set<string> annotations;
   vector<string> annotationVec;
-  annotationVec.reserve(annotations.size());
-  copy(annotations.begin(), annotations.end(), back_inserter(annotationVec));
+  ROSE_ASSERT(_numComponentsForLtlAnnotations <= system.size());
+  if (_numComponentsForLtlAnnotations == system.size()) {
+    annotations = system.getAnnotations();
+    annotationVec.reserve(annotations.size());
+    copy(annotations.begin(), annotations.end(), back_inserter(annotationVec));
+  }
   for (unsigned int i = 0; i < _numberOfMiningsPerSubsystem; ++i) {
+    if (_numComponentsForLtlAnnotations < system.size()) {
+      pair<int,int> range(0, (system.size() - 1));
+      list<int> componentIdsForAnnotations = nDifferentRandomIntsInSet(_numComponentsForLtlAnnotations, system.getComponentIds());
+      annotations = system.getAnnotations(componentIdsForAnnotations);
+      annotationVec.clear();
+      annotationVec.reserve(annotations.size());
+      copy(annotations.begin(), annotations.end(), back_inserter(annotationVec));
+    }
     string ltlProperty = randomLtlFormula(annotationVec, 2);
     if (verifiableCount < minNumVerifiable
 	&& _spotConnection.checkPropertyParPro(ltlProperty, *system.stgOverApprox(), system.getAnnotations()) == PROPERTY_VALUE_YES) {

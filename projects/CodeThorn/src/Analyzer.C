@@ -5,10 +5,8 @@
  *************************************************************/
 
 #include "sage3basic.h"
-
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
-#include <unistd.h>
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "AnalysisAbstractionLayer.h"
@@ -73,8 +71,10 @@ Analyzer::Analyzer():
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
   _maxIterations(-1),
+  _maxBytes(-1),
   _maxTransitionsForcedTop(-1),
   _maxIterationsForcedTop(-1),
+  _maxBytesForcedTop(-1),
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
@@ -312,18 +312,23 @@ void Analyzer::addToWorkList(const EState* estate) {
 }
 
 bool Analyzer::isActiveGlobalTopify() {
-  if(_maxTransitionsForcedTop==-1 && _maxIterationsForcedTop==-1)
+  if(_maxTransitionsForcedTop==-1 && _maxIterationsForcedTop==-1 && _maxBytesForcedTop==-1)
     return false;
-  if(_topifyModeActive) {
+  if(_topifyModeActive)
     return true;
-  } else {
-    if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop)
-        || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop) ) {
-      _topifyModeActive=true;
-      eventGlobalTopifyTurnedOn();
-      boolOptions.setOption("rers-binary",false);
-      return true;
+  // TODO: add a critical section that guards "transitionGraph.size()"
+  if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop) 
+      || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop)
+      || (_maxBytesForcedTop!=-1 && getPhysicalMemorySize() > _maxBytesForcedTop) ) {
+#pragma omp critical(ACTIVATE_TOPIFY_MODE)
+    {
+      if (!_topifyModeActive) {
+	_topifyModeActive=true;
+	eventGlobalTopifyTurnedOn();
+	boolOptions.setOption("rers-binary",false);
+      }
     }
+    return true;
   }
   return false;
 }
@@ -422,13 +427,6 @@ void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId va
   //exit(1);
   pstate.setVariableToTop(varId);
   //cset.removeAllConstraintsOfVar(varId);
-}
-
-// PState and cset are assumed to exist. Pstate is assumed to be topified. Only for topify mode.
-EState Analyzer::createEStateFastTopifyMode(Label label, const PState* oldPStatePtr, const ConstraintSet* oldConstraintSetPtr) {
-  ROSE_ASSERT(isActiveGlobalTopify());
-  EState estate=EState(label,oldPStatePtr,oldConstraintSetPtr);
-  return estate;
 }
 
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
@@ -3049,7 +3047,7 @@ void Analyzer::runSolver12() {
     while(!terminate) {
 #pragma omp critical(ESTATEWL)
       {
-        if (all_false(workVector)) {
+        if (threadNum == 0 && all_false(workVector)) {
           if ( (estateWorkListCurrent->empty() && estateWorkListNext->empty())) { 
             terminate = true;
 	  }
@@ -3078,30 +3076,24 @@ void Analyzer::runSolver12() {
         prevStateSetSizeDisplay=estateSetSize;
       }
 
-      if (args.count("max-memory")) {
+      if (args.count("max-memory") || args.count("max-memory-forced-top")) {
 #pragma omp critical(HASHSET)
 	{
 	  estateSetSize = estateSet.size();
 	}
 	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  long physicalMemoryUsedLinux = -1;
-	  long residentSetSize = -1;
-	  FILE* statm = NULL;
-	  if ((statm = fopen( "/proc/self/statm", "r" )) != NULL) {
-	    if (fscanf( statm, "%*s%ld", &residentSetSize ) == 1) {
-	      physicalMemoryUsedLinux = residentSetSize * sysconf(_SC_PAGESIZE);
-	    }
-	  }
-	  fclose(statm);
-	  if (physicalMemoryUsedLinux == -1) {
-	    cerr << "ERROR: Physical memory consumption could not be determined even though option --max-memory was selected." << endl;
-	    ROSE_ASSERT(0);
-	  }
-	  if (physicalMemoryUsedLinux >= _maxBytesStg) {
+	  if (args.count("max-memory")) {
+	    if (getPhysicalMemorySize() >= _maxBytes) {
+#pragma omp critical(ESTATEWL)
+              {
+                terminate = true;
+	 	terminatedWithIncompleteStg = true;
+	      }
+            }
+	  } else if (args.count("max-memory-forced-top")){
 #pragma omp critical(ESTATEWL)
 	    {
-	      terminate = true;
-	      terminatedWithIncompleteStg = true;
+	      isActiveGlobalTopify();
 	    }
 	  }
 	  prevStateSetSizeResource=estateSetSize;
