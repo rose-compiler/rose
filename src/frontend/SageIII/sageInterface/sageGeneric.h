@@ -543,6 +543,14 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgTemplateInstantiationDefn>(*n));
         break;
 
+      case V_SgTemplateClassDeclaration:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateClassDeclaration>(*n));
+        break;
+
+      case V_SgTemplateClassDefinition:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateClassDefinition>(*n));
+        break;
+
       case V_SgTemplateInstantiationFunctionDecl:
         Dispatcher::dispatch(rv, assume_sage_type<SgTemplateInstantiationFunctionDecl>(*n));
         break;
@@ -1662,7 +1670,7 @@ namespace sg
       case V_SgAsmIntegerValueExpression:
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmIntegerValueExpression>(*n));
         break;
-    
+
       case V_SgAsmFloatValueExpression:
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmFloatValueExpression>(*n));
         break;

@@ -351,6 +351,7 @@ rose_config_CPPFLAGS =									\
 	-DINSTALLED_CPPFLAGS='"$(subst ",\",$(rose_config_installed_cppflags))"'	\
 	-DBUILD_CPPFLAGS='"$(subst ",\",$(rose_config_build_cppflags))"'		\
 	-DCFLAGS='"$(subst ",\",$(CFLAGS))"'						\
+	-DCXXFLAGS='"$(subst ",\",$(CXXFLAGS))"'					\
 	-DINSTALLED_LDFLAGS='"$(subst ",\",$(rose_config_installed_ldflags))"'		\
 	-DBUILD_LDFLAGS='"$(subst ",\",$(rose_config_build_ldflags))"'
 

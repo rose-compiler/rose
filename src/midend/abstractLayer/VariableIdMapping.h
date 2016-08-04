@@ -153,6 +153,7 @@ class VariableId {
   //std::string longVariableName() const;
   //VariableId(SgSymbol* sym);
   bool isValid() const { return _id!=-1; }
+  static const char * const idKindIndicator;
  public:
   //SgSymbol* getSymbol() const; // only public because of ContraintSetHashFun
 
