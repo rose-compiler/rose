@@ -1,7 +1,5 @@
 
-void func10() {
-
-}
+void func10() { }
 
 class Test2 {
  public:
@@ -57,94 +55,54 @@ void (*getFuncAddress2(void(&fr2)(int)))(int) {
   return /*implicit address-of*/fr2;
 }
 
-void func_as_default_arg() {
+void func_as_default_arg() { }
 
-}
+void func_w_default(void(*fp_w_default)() = /*implicit address-of*/func_as_default_arg) { }
 
-void func_w_default(void(*fp_w_default)() = /*implicit address-of*/func_as_default_arg) {
+void func(int i) { }
 
-}
+void func3(int i) { }
 
-void func(int i) {
-  
-}
+void func4(int i) { }
 
-void func3(int i) {
+void func5(int i) { }
 
-}
+void func6(int i) { }
 
-void func4(int i) {
-
-}
-
-void func5(int i) {
-
-}
-
-void func6(int i) {
-
-}
-
-void func7(int i) {
-
-}
+void func7(int i) { }
 
 void (*getFuncAddress())(int) {
   return /*implicit address-of*/func7;
 }
 
 template<typename A, typename B>
-class TemplateClass {
+class TemplateClass { };
 
-};
+void func_overloaded(TemplateClass<int, bool> t) { }
 
-void func_overloaded(TemplateClass<int, bool> t) {
+void func_overloaded(Test t) { }
 
-}
+void func_overloaded(int t) { }
 
-void func_overloaded(Test t) {
+void func_overloaded(bool t) { }
 
-}
+void func8(int i) { }
 
-void func_overloaded(int t) {
+void func11(int i) { }
 
-}
+void func12(int i) { }
 
-void func_overloaded(bool t) {
+void func13(int i) { }
 
-}
+void func14(int i) { }
 
-void func8(int i) {
+void func15(int i) { }
 
-}
+void func16(int i) { }
 
-void func11(int i) {
+void func17(int i) { }
 
-}
-
-void func12(int i) {
-
-}
-
-void func13(int i) {
-
-}
-
-void func14(int i) {
-
-}
-
-void func15(int i) {
-
-}
-
-void func16(int i) {
-
-}
-
-void func17(int i) {
-
-}
+void func18(int i) { }
 
 int main() {
 
@@ -196,5 +154,11 @@ int main() {
   ref_func_ptr(2);
   getFuncAddress(func4)(2);
 
+  try {
+    throw /*implicit address-of*/func18;
+  }
+  catch(void(*fp)(int)) {
+
+  }
 }
 
