@@ -12,7 +12,7 @@ if(WIN32)
   return()
 endif()
 
-if (CMAKE_COMPILER_IS_GNUCC)
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 #  message("find gnucc  ${CMAKE_C_COMPILER}")
   if(NOT BACKEND_C_COMPILER)
     set (BACKEND_C_COMPILER  ${CMAKE_C_COMPILER})
@@ -47,12 +47,31 @@ if (CMAKE_COMPILER_IS_GNUCC)
 
 #  message("BACKEND_C_COMPILER_MINOR_VERSION_NUMBER= ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER}")
 
-endif (CMAKE_COMPILER_IS_GNUCC)
+elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+  if(NOT BACKEND_C_COMPILER)
+    set (BACKEND_C_COMPILER  ${CMAKE_C_COMPILER})
+  endif()
+  execute_process ( COMMAND basename ${BACKEND_C_COMPILER}
+#                   COMMAND sed 's/.$//'  # remove the trailing return or whatever strange character
+                  OUTPUT_VARIABLE BACKEND_C_COMPILER_NAME_WITHOUT_PATH
+  )
+  string (REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_C_COMPILER_NAME_WITHOUT_PATH ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH})
+  message("BACKEND_C_COMPILER_NAME_WITHOUT_PATH=${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}^")
+  execute_process ( COMMAND ${BACKEND_C_COMPILER} --version
+                  COMMAND grep -Po "(?<=version )[^;]+"
+                  COMMAND cut -d. -f1
+                  OUTPUT_VARIABLE BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER)
+  string (REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER  ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER})
+  execute_process ( COMMAND ${BACKEND_C_COMPILER} --version
+                  COMMAND grep -Po "(?<=version )[^;]+"
+                  COMMAND cut -d. -f2
+                  OUTPUT_VARIABLE BACKEND_C_COMPILER_MINOR_VERSION_NUMBER)
+  string (REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER})
+endif ()
 
 # --------check CXX compiler -----------------------
 include (roseCMakeDetermineCXXCompiler)
-
-if (CMAKE_COMPILER_IS_GNUCXX)
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 #  message("find gnucxx  ${CMAKE_CXX_COMPILER}")
   if(NOT BACKEND_CXX_COMPILER)
     set (BACKEND_CXX_COMPILER  ${CMAKE_CXX_COMPILER})
@@ -76,7 +95,27 @@ if (CMAKE_COMPILER_IS_GNUCXX)
   string (REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER})
 #  message("BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER= ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER}")
 
-endif (CMAKE_COMPILER_IS_GNUCXX)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  if(NOT BACKEND_CXX_COMPILER)
+    set (BACKEND_CXX_COMPILER  ${CMAKE_CXX_COMPILER})
+  endif()
+  execute_process ( COMMAND basename ${BACKEND_CXX_COMPILER}  
+                      OUTPUT_VARIABLE BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH
+                        )
+  message("BACKEND_CXX_COMPILER= ${BACKEND_CXX_COMPILER}")
+  string (REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
+  message("BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH= ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}")
+  execute_process ( COMMAND ${BACKEND_CXX_COMPILER} --version
+                  COMMAND grep -Po "(?<=version )[^;]+"
+                  COMMAND cut -d. -f1
+                  OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER)
+  string (REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER})
+  execute_process ( COMMAND ${BACKEND_CXX_COMPILER} --version
+                  COMMAND grep -Po "(?<=version )[^;]+"
+                  COMMAND cut -d. -f2
+                  OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER)
+  string (REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER})
+endif ()
 
 if(enable-fortran)
   # --------check Fortran compiler -----------------------
@@ -118,4 +157,15 @@ if(enable-fortran)
   #  message("BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER= ${BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER}")
 
   endif  ("${CMAKE_Fortran_COMPILER}"  MATCHES ".*gfortran$")
+endif()
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  # using Clang
+  set(BACKEND_CXX_IS_CLANG_COMPILER 1)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  # using GCC
+  set(BACKEND_CXX_IS_GNU_COMPILER 1)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  # using Intel C++
+  set(BACKEND_CXX_IS_INTEL_COMPILER 1)
 endif()
