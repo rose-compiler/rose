@@ -18,7 +18,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
 SUBDIRS = libltdl config src
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
-   SUBDIRS += tests
+#   SUBDIRS += tests
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
