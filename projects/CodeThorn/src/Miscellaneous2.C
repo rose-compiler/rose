@@ -6,6 +6,7 @@
 
 #include "Miscellaneous2.h"
 #include <cctype>
+#include <cstdlib>
 #include "SprayException.h"
 
 using namespace std;
@@ -158,5 +159,10 @@ SPRAY::Parse::integerSet(string setstring) {
       throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
 #endif
     return intSet;
+}
+
+int SPRAY::randomIntInRange(pair<int,int> range) {
+  int rangeLength = range.second - range.first + 1;
+  return range.first + (rand() % rangeLength);
 }
 

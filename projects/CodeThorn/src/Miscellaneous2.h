@@ -16,6 +16,7 @@
 
 namespace SPRAY {
   std::string replace_string(std::string toModify, std::string toReplace, std::string with);
+  int randomIntInRange(std::pair<int,int> range);
  namespace Parse {
    bool checkWord(std::string w,std::istream& is);
    void parseString(std::string w,std::istream& is);

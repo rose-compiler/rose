@@ -74,7 +74,7 @@ public:
      * virtual address for that source location.  This method fills in the mapping so that any unmapped virtual address within
      * a certain delta of a previous mapped address will map to the same source location as the previous mapped address.
      * Mappings will be added only for addresses where the distance between the next lower mapped address and the next higher
-     * mapped address is lass than or equal to @p max_hole_size. */
+     * mapped address is less than or equal to @p max_hole_size. */
     void fix_holes(size_t max_hole_size=64);
 
     /** Given an address, return the (single) source location for that address. If the specified address is not in the domain
