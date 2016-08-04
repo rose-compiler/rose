@@ -155,18 +155,22 @@ Engine::loaderSwitches() {
               .argument("state", enumParser<MemoryDataAdjustment>(settings_.loader.memoryDataAdjustment)
                         ->with("constant", DATA_IS_CONSTANT)
                         ->with("initialized", DATA_IS_INITIALIZED)
-                        ->with("default", DATA_NO_CHANGE))
+                        ->with("no-change", DATA_NO_CHANGE))
               .doc("Globally adjusts the memory map to influence how the partitioner treats reads from concrete memory "
                    "addresses.  The values for @v{state} are one of these words:"
+
                    "@named{constant}{Causes write access to be removed from all memory segments and the partitioner treats "
                    "memory reads as returning a concrete value." +
                    std::string(DATA_IS_CONSTANT==settings_.loader.memoryDataAdjustment?" This is the default.":"") + "}"
+
                    "@named{initialized}{Causes the initialized bit to be added to all memory segments and the partitioner "
                    "treats reads from such addresses to return a concrete value, plus if the address is writable, "
                    "indeterminate values." +
                    std::string(DATA_IS_INITIALIZED==settings_.loader.memoryDataAdjustment?" This is the default.":"") + "}"
-                   "@named{default}{Causes the engine to not change data access bits for memory." +
+
+                   "@named{no-change}{Causes the engine to not change data access bits for memory." +
                    std::string(DATA_NO_CHANGE==settings_.loader.memoryDataAdjustment?" This is the default.":"") + "}"
+
                    "One of the things influenced by these access flags is indirect jumps, like x86 \"jmp [@v{addr}]\". If "
                    "@v{addr} is constant memory, then the \"jmp\" has a single constant successor; if @v{addr} is "
                    "non-constant but initialized, then the \"jmp\" will have a single constant successor and indeterminate "
@@ -206,8 +210,9 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.usingSemantics)
               .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
                    "it can use slower but more accurate methods, such as symbolic semantics.  This switch enables use of "
-                   "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is " +
-                   std::string(settings_.partitioner.usingSemantics?"true":"false") + "."));
+                   "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is "
+                   "to " +
+                   std::string(settings_.partitioner.usingSemantics?"":"not ") + "use semantics."));
     sg.insert(Switch("no-use-semantics")
               .key("use-semantics")
               .intrinsicValue(false, settings_.partitioner.usingSemantics)
@@ -286,7 +291,7 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.findingThunks)
               .doc("Search for common thunk patterns in areas of executable memory that have not been previously "
                    "discovered to contain other functions.  When this switch is enabled, the function-searching callbacks "
-                   "include the patterns to match thunks.  This switch does not cause the thunk's instructions to be "
+                   "include patterns to match thunks.  This switch does not cause the thunk's instructions to be "
                    "detached as a separate function from the thunk's target function; that's handled by the "
                    "@s{split-thunks} switch.  The @s{no-find-thunks} switch turns thunk searching off. The default "
                    "is to " + std::string(settings_.partitioner.findingThunks ? "" : "not ") + "search for thunks."));
@@ -334,9 +339,9 @@ Engine::partitionerSwitches() {
     sg.insert(Switch("intra-function-data")
               .intrinsicValue(true, settings_.partitioner.findingIntraFunctionData)
               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
-                   "followed by the same function then add that region of memory to that function as a static data block."
-                   "The @s{no-intra-function-data} switch turns this feature off.  The default is " +
-                   std::string(settings_.partitioner.findingIntraFunctionData?"true":"false") + "."));
+                   "followed by the same function then add that region of memory to that function as a static data block. "
+                   "The @s{no-intra-function-data} switch turns this feature off.  The default is to " +
+                   std::string(settings_.partitioner.findingIntraFunctionData?"":"not ") + "perform this analysis."));
     sg.insert(Switch("no-intra-function-data")
               .key("intra-function-data")
               .intrinsicValue(false, settings_.partitioner.findingIntraFunctionData)
@@ -349,7 +354,7 @@ Engine::partitionerSwitches() {
                    "to find the call sites rather than looking for architecture-specific call instructions, and attempts "
                    "to prune away things that are not legitimate calls. The @s{no-inter-function-calls} switch turns this "
                    "feature off. The default is to " +
-                   std::string(settings_.partitioner.findingInterFunctionCalls?"":"not ") + " perform this analysis."));
+                   std::string(settings_.partitioner.findingInterFunctionCalls?"":"not ") + "perform this analysis."));
     sg.insert(Switch("no-inter-function-calls")
               .key("inter-function-calls")
               .intrinsicValue(false, settings_.partitioner.findingInterFunctionCalls)
@@ -401,7 +406,7 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.doingPostAnalysis)
               .doc("Run all enabled post-partitioning analysis functions.  For instance, calculate stack deltas for each "
                    "instruction, and may-return analysis for each function.  The individual analyses are enabled and "
-                   "disabled separately with other s{post-*} switches. Some of these analyses will only work if "
+                   "disabled separately with other @s{post-*} switches. Some of these analyses will only work if "
                    "instruction semantics are enabled (see @s{use-semantics}).  The @s{no-post-analysis} switch turns "
                    "this off, although analysis will still be performed where it is needed for partitioning.  The "
                    "default is to " + std::string(settings_.partitioner.doingPostAnalysis?"":"not ") +
@@ -453,11 +458,11 @@ Engine::partitionerSwitches() {
 
     sg.insert(Switch("post-calling-convention")
               .intrinsicValue(true, settings_.partitioner.doingPostCallingConvention)
-              .doc("Run the calling-convention analysis for each function. This relatively expensive analysis uses "
-                   "use-def, stack-delta, memory variable discovery, and data-flow to determine characteristics of the "
-                   "function and then matches it against a dictionary of calling conventions appropriate for the "
-                   "architecture.  The @s{no-post-calling-convention} disables this analysis. The default is that this "
-                   "analysis is " +
+              .doc("Run the calling-convention analysis for each function if post-partitioning analysis is enabled with the "
+                   "@s{post-analysis} switch. This relatively expensive analysis uses use-def, stack-delta, memory variable "
+                   "discovery, and data-flow to determine characteristics of the function and then matches it against a "
+                   "dictionary of calling conventions appropriate for the architecture.  The @s{no-post-calling-convention} "
+                   "disables this analysis. The default is that this analysis is " +
                    std::string(settings_.partitioner.doingPostCallingConvention?"enabled":"disabled") + "."));
     sg.insert(Switch("no-post-calling-convention")
               .key("post-calling-convention")
@@ -523,7 +528,7 @@ Engine::astConstructionSwitches() {
     sg.insert(Switch("ast-allow-empty-functions")
               .intrinsicValue(true, settings_.astConstruction.allowFunctionWithNoBasicBlocks)
               .doc("Allows creation of an AST that has functions with no instructions. This can happen, for instance, when "
-                   "an analysis indicated that a particular virtual address is the start of a function, but no memory is "
+                   "an analysis indicated that a particular virtual address is the start of a function but no memory is "
                    "mapped at that address. This is common for things like functions from shared libraries that have not "
                    "been linked in before the analysis starts.  The @s{no-ast-allow-empty-functions} will instead elide all "
                    "empty functions from the AST. The default is to " +
@@ -548,13 +553,21 @@ Engine::astConstructionSwitches() {
 
     sg.insert(Switch("ast-copy-instructions")
               .intrinsicValue(true, settings_.astConstruction.copyAllInstructions)
-              .doc("Casues all instructions to be deep-copied from the partitioner's instruction provider into the AST. "
+              .doc("Causes all instructions to be deep-copied from the partitioner's instruction provider into the AST. "
                    "Although this slows down AST construction and increases memory since SageIII nodes are not garbage "
-                   "collected, copy instructions ensures that the AST is a tree. Turning off the copying with the "
+                   "collected, copying instructions ensures that the AST is a tree. Turning off the copying with the "
                    "@s{no-ast-copy-instructions} switch will result in the AST being a lattice if the partitioner has "
                    "determined that two or more functions contain the same basic block, and therefore the same instructions. "
                    "The default is to " + std::string(settings_.astConstruction.copyAllInstructions ? "" : "not ") +
-                   "copy instructions."));
+                   "copy instructions.\n\n"
+
+                   "Note that within the partitioner data structures it's the basic blocks that are shared when two or "
+                   "more functions point to the same block, but within the AST, sharing is at the instruction "
+                   "(SgAsmInstruction) level. It was designed this way because it's common to store function-specific "
+                   "analysis results as attributes attached to basic blocks (SgAsmBlock nodes) in the AST and sharing at "
+                   "the block level would break those programs. Users that store analysis results by attaching them to "
+                   "partitioner basic blocks (Partitioner2::BasicBlock) should be aware that those blocks can be shared "
+                   "among functions."));
     sg.insert(Switch("no-ast-copy-instructions")
               .key("ast-copy-instructions")
               .intrinsicValue(false, settings_.astConstruction.copyAllInstructions)
@@ -1387,6 +1400,14 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<me <<"(startVa = " <<StringUtility::addrToString(startVa) <<")\n";
 
+    // Avoid creating large basic blocks since this can drastically slow down instruction semantics. Large basic blocks are a
+    // real possibility here because we're likely to be interpreting data areas as code. We're not creating any permanent basic
+    // blocks in this analysis, so limiting the size here has no effect on which blocks are ultimately added to the control
+    // flow graph.  The smaller the limit, the more likely that a multi-instruction call will get split into two blocks and not
+    // detected. Multi-instruction calls are an obfuscation technique.
+    Sawyer::TemporaryCallback<BasicBlockCallback::Ptr>
+        tcb(partitioner.basicBlockCallbacks(), Modules::BasicBlockSizeLimiter::instance(20)); // arbitrary
+
     while (AddressInterval unusedVas = partitioner.aum().nextUnused(startVa)) {
 
         // The unused interval must have executable addresses, otherwise skip to the next unused interval.
@@ -1406,7 +1427,7 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
 
         while (startVa <= unusedExecutableVas.greatest()) {
             // Discover the basic block. It's possible that the partitioner already knows about this block location but just
-            // hasn't tried looking for it's instructions yet.  I don't think this happens within the stock engine because it
+            // hasn't tried looking for its instructions yet.  I don't think this happens within the stock engine because it
             // tries to recursively discover all basic blocks before it starts scanning things that might be data. But users
             // might call this before they've processed all the outstanding placeholders.  Consider the following hypothetical
             // user's partitioner state 

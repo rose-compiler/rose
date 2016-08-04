@@ -3570,6 +3570,12 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                break;
              }
 
+        case V_SgMatlabForStatement:
+          {
+            return;
+            break;
+          }
+             
 
        // DQ (12/23/2012): Added support for templates.
           case V_SgTemplateFunctionDefinition:
@@ -8679,6 +8685,13 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     isSgForStatement(parent)->set_increment(newExp);
     // TODO: any other cases here??
   }
+  else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent))
+    {
+      if(matlabFor->get_index() == oldExp)
+        matlabFor->set_index(newExp);
+      else if(matlabFor->get_range() == oldExp)
+        matlabFor->set_range(newExp);
+    }
   else if (isSgReturnStmt(parent))
     isSgReturnStmt(parent)->set_expression(newExp);
   else  if (isSgBinaryOp(parent)!=NULL){

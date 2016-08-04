@@ -124,6 +124,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/ProgressBar.h			\
 	Sawyer/Sawyer.h				\
 	Sawyer/Set.h				\
+	Sawyer/SharedObject.h			\
 	Sawyer/SharedPointer.h			\
 	Sawyer/SmallObject.h			\
 	Sawyer/Stack.h				\

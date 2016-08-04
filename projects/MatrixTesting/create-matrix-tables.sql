@@ -6,17 +6,17 @@ begin transaction;
 --
 -- The folowing tables are created automatically by the web application
 --
---  auth_users		-- application-level user information
---  auth_info		-- Wt::Auth information about each user
---  auth_identities	-- login name(s) for each user
---  auth_tokens		-- web browser tokens to maintain logins between sessions
+--  auth_users          -- application-level user information
+--  auth_info           -- Wt::Auth information about each user
+--  auth_identities     -- login name(s) for each user
+--  auth_tokens         -- web browser tokens to maintain logins between sessions
 
 --
 -- Persistent interface settings
 --
 create table interface_settings (
-    rose_public_version text default '',		-- version number to show by default on the public parts of the site
-    pass_criteria text default 'end' 			-- what test needs to be reached for ROSE to be considered useful
+    rose_public_version text default '',                -- version number to show by default on the public parts of the site
+    pass_criteria text default 'end'                    -- what test needs to be reached for ROSE to be considered useful
 );
 
 insert into interface_settings (rose_public_version) values ('');
@@ -207,7 +207,7 @@ insert into test_names values ( 'end',              999 );
 
 create table test_results (
     id serial primary key,
-    enabled boolean default true,			-- can be set to false to prevent test from showing in browser
+    enabled boolean default true,                       -- can be set to false to prevent test from showing in browser
 
     -- who did the testing and reporting
     reporting_user integer references auth_users(id),   -- user making this report
@@ -231,7 +231,7 @@ create table test_results (
     rmc_dlib            varchar(64) default 'unknown',
     rmc_doxygen         varchar(64) default 'unknown',
     rmc_edg             varchar(64) default 'unknown',
-    rmc_java		varchar(64) default 'unknown',
+    rmc_java            varchar(64) default 'unknown',
     rmc_languages       varchar(64) default 'unknown',
     rmc_magic           varchar(64) default 'unknown',
     rmc_optimize        varchar(64) default 'unknown',
@@ -262,7 +262,7 @@ create table test_results (
 
     -- Information about the first error message.
     first_error text,
-    first_error_staging text				-- temporary column when for searching for errors
+    first_error_staging text                            -- temporary column when for searching for errors
 );
 
 --
@@ -279,11 +279,11 @@ create table attachments (
 -- Stores info about error messages
 --
 create table errors (
-    status text not null,				-- point at which error was detected
-    message text not null,				-- the error message
-    issue_name text default '', 			-- name of corresponding JIRA issue if any
-    commentary text default '',				-- commentary about the error message
-    mtime int	     					-- time that commentary was added/changed (unix)
+    status text not null,                               -- point at which error was detected
+    message text not null,                              -- the error message
+    issue_name text default '',                         -- name of corresponding JIRA issue if any
+    commentary text default '',                         -- commentary about the error message
+    mtime int default 0                                 -- time that commentary was added/changed (unix)
 );
 
 commit;

@@ -1,5 +1,5 @@
 /* unparse_type.C
- * This C file contains the general function to unparse types as well as
+1;95;0c * This C file contains the general function to unparse types as well as
  * functions to unparse every kind of type.
  */
 
@@ -86,6 +86,34 @@ string get_type_name(SgType* t)
           case T_SIGNED_LONG_LONG:        return "signed long long";
           case T_UNSIGNED_LONG_LONG:      return "unsigned long long";
 
+        case T_MATRIX:                    return "Matrix<" + get_type_name(isSgTypeMatrix(t)->get_base_type()) + ">";
+
+        case T_TUPLE:
+          {
+            SgTypeTuple *typeTuple = isSgTypeTuple(t);
+            SgTypePtrList typeList = typeTuple->get_types();
+
+            SgTypePtrList::iterator typeIterator;
+              
+            std::string typeString = "std::tuple<";
+            if(typeList.size() != 0)
+              {
+                typeIterator = typeList.begin();
+                typeString += get_type_name(*typeIterator);
+
+                ++typeIterator;
+              }
+            
+            for(; typeIterator != typeList.end(); ++typeIterator)
+              {
+                typeString += "," + get_type_name(*typeIterator);
+              }
+
+            typeString += ">";
+
+            return typeString;
+            
+          }
        // DQ (3/24/2014): Added support for 128-bit integers.
           case T_SIGNED_128BIT_INTEGER:   return "__int128";
           case T_UNSIGNED_128BIT_INTEGER: return "unsigned __int128";
@@ -587,6 +615,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_SIGNED_128BIT_INTEGER:
                case T_UNSIGNED_128BIT_INTEGER:
 
+                 //SK: Matrix type for Matlab
+               case T_MATRIX:
+             case T_TUPLE:
                case T_LONG_DOUBLE:
                case T_STRING:
                case T_BOOL:
