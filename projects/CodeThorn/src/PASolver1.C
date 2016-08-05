@@ -56,6 +56,23 @@ SPRAY::PASolver1::runSolver() {
     Edge edge=_workList.take();
     Label lab0=edge.source();
     Label lab1=edge.target();
+
+    // schroder3 (2016-08-05): Set up the combine and approximatedBy member functions according
+    //  to the edge type.
+    void(Lattice::*combineMemFunc)(Lattice&);
+    bool(Lattice::*approximatedByMemFunc)(Lattice&);
+    if(edge.isType(EDGE_BACKWARD)) {
+      combineMemFunc = &Lattice::combineAsymmetric;
+      approximatedByMemFunc = &Lattice::approximatedByAsymmetric;
+      if(_trace) {
+        cout << "TRACE: BACKWARD edge" << endl;
+      }
+    }
+    else {
+      combineMemFunc = &Lattice::combine;
+      approximatedByMemFunc = &Lattice::approximatedBy;
+    }
+
     //if(_trace)
     //  cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
@@ -83,7 +100,8 @@ SPRAY::PASolver1::runSolver() {
         cout<<endl;
       }
       
-      bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
+      // schroder3 (2016-08-05): Check whether the combine below will change something.
+      bool isApproximatedBy=(info->*approximatedByMemFunc)(*_analyzerDataPreInfo[lab1.getId()]);
       if(!isApproximatedBy) {
         if(_trace) {
           cout<<"TRACE: old df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
@@ -94,7 +112,7 @@ SPRAY::PASolver1::runSolver() {
           cout<<endl;
         }
 
-        _analyzerDataPreInfo[lab1.getId()]->combine(*info);
+        (_analyzerDataPreInfo[lab1.getId()]->*combineMemFunc)(*info);
         
         if(_trace) {
           cout<<"TRACE: new df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);

@@ -265,6 +265,20 @@ class GenericIntervalLattice {
     return false;
   }
 
+  GenericIntervalLattice getCopy() const {
+    GenericIntervalLattice copy;
+    copy.overwriteWith(*this);
+    return copy;
+  }
+
+  void overwriteWith(const GenericIntervalLattice& other) {
+    this->_low = other._low;
+    this->_isLowInf = other._isLowInf;
+    this->_high = other._high;
+    this->_isHighInf = other._isHighInf;
+    ROSE_ASSERT(*this == other);
+  }
+
   void meet(GenericIntervalLattice other) {
     // 1. handle lower bounds
     if(isLowInf() && other.isLowInf()) {
@@ -746,11 +760,26 @@ class GenericIntervalLattice {
     return GenericIntervalLattice::createFromBoolLattice(res);
   }
 
-  bool operator==(GenericIntervalLattice l2) {
-    return (isTop() && l2.isTop())
-    || (isBot() && l2.isBot())
-    || (getLow()==l2.getLow() && getHigh()==l2.getHigh())
-    ;
+  bool operator==(GenericIntervalLattice other) {
+    if(_isLowInf != other._isLowInf) {
+      return false;
+    }
+    else if(_isHighInf != other._isHighInf) {
+      return false;
+    }
+    // inf values are the same from here:
+    else if(!_isLowInf) {
+      // only check _low if low inf is not set
+      return _low == other._low;
+    }
+    else if(!_isHighInf) {
+      // only check _high if high inf is not set
+      return _high == other._high;
+    }
+    else {
+      // low inf and high inf are the same and both set: both are top:
+      return true;
+    }
   }
 
  private:
