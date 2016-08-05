@@ -7,6 +7,7 @@
 #include <sstream>
 #include <cassert>
 #include "AType.h"
+#include "SprayException.h"
 
 // Author: Markus Schordan, 2014.
 
@@ -20,14 +21,20 @@ typedef CodeThorn::AType::BoolLattice BoolLatticeType;
 
 namespace SPRAY {
 
+  enum JoinMode {
+      JM_Exact,
+      JM_InfinityIfUnequal,
+      JM_InfinityAsymmetric
+    };
+
 template<typename Type>
 class GenericIntervalLattice {
   // creates an interval with a known left and right boundary
  public:
- GenericIntervalLattice():_exactJoin(true) { setTop();}
- GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false),_exactJoin(true) {} 
- GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false),_exactJoin(true) {} 
-  void setExactJoin(bool exact) { _exactJoin=exact; }
+ GenericIntervalLattice() { setTop();}
+ GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false) {}
+ GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false) {}
+
   static GenericIntervalLattice highInfInterval(Type left) {
     GenericIntervalLattice t;
     t.setIsLowInf(false);
@@ -259,42 +266,66 @@ class GenericIntervalLattice {
     unifyEmptyInterval();
   }
 
-  void join(GenericIntervalLattice other) {
+  void join(GenericIntervalLattice other, JoinMode joinMode = JM_Exact) {
     // subsumption in case none of the two intervals has an unknown bound
-    if(!isInfLength()&&!other.isInfLength()) {
-      // handle 2 cases i) subset (2 variants), ii) constants (interval-length==1 for both)
-      if((_low>=other._low && _high<=other._high)
-         ||(other._low>=_low && other._high<=_high)
-         ||(isConst()&&other.isConst()) ) {
-        _low=std::min(_low,other._low);
-        _high=std::max(_high,other._high);
-        return;
-      }
-    }
+//    if(!isInfLength()&&!other.isInfLength()) {
+//      // handle 2 cases i) subset (2 variants), ii) constants (interval-length==1 for both)
+//      if((_low>=other._low && _high<=other._high)
+//         ||(other._low>=_low && other._high<=_high)
+//         ||(isConst()&&other.isConst()) ) {
+//        _low=std::min(_low,other._low);
+//        _high=std::max(_high,other._high);
+//        return;
+//      }
+//    }
     if(isLowInf()||other.isLowInf()) {
       setIsLowInf(true);
-   } else {
-      if(_exactJoin) {
+    }
+    else {
+      if(joinMode == JM_Exact) {
         _low=std::min(_low,other._low);
-      } else {
+      }
+      else if(joinMode == JM_InfinityIfUnequal) {
         if(_low!=other._low) {
           setIsLowInf(true);
         } else {
           // keep _low
         }
       }
+      else if(joinMode == JM_InfinityAsymmetric) {
+        if(other._low < _low) {
+          setIsLowInf(true);
+        } else {
+          // keep _low
+        }
+      }
+      else {
+        throw SPRAY::Exception("Invalid join mode.");
+      }
     }
     if(isHighInf()||other.isHighInf()) {
       setIsHighInf(true);
-    } else {
-      if(_exactJoin) {
+    }
+    else {
+      if(joinMode == JM_Exact) {
         _high=std::max(_high,other._high);
-      } else {
+      }
+      else if(joinMode == JM_InfinityIfUnequal) {
         if(_high!=other._high) {
           setIsHighInf(true);
         } else {
           // keep _high
         }
+      }
+      else if(joinMode == JM_InfinityAsymmetric) {
+        if(other._high > _high) {
+          setIsHighInf(true);
+        } else {
+          // keep _high
+        }
+      }
+      else {
+        throw SPRAY::Exception("Invalid join mode.");
       }
     }
   }
@@ -657,7 +688,6 @@ class GenericIntervalLattice {
   Type _high;
   bool _isLowInf;
   bool _isHighInf;
-  bool _exactJoin;
 };
 
 }
