@@ -362,7 +362,7 @@ MemoryMap::insertProcessDocumentation() {
             "The process will be momentarily stopped (unless the \"noattach\" option was specified, in which case it is assumed "
             "to already be stopped) while its readable memory is copied into ROSE and mapped at the same addresses and with "
             "the same permissions as in the process. Then the process is resumed (unless \"noattach\").  If a read fails when "
-            "copying a memory segment from the process into ROSE then"
+            "copying a memory segment from the process into ROSE then "
             "the memory map will contain only that data which was successfully read and all subsequent addresses for that "
             "segment are not mapped in ROSE.  The segments will have names like \"proc:@v{pid}@v{error}(@v{name})\" where "
             "@v{error} is an optional error message in square brackets and @v{name} is the name of the memory segment "
