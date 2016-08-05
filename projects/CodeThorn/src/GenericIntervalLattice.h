@@ -18,6 +18,9 @@
 
 // we may want to make this type a template parameter of IntervalLattice for handling relational operators
 typedef CodeThorn::AType::BoolLattice BoolLatticeType;
+typedef CodeThorn::AType::Top BoolLatticeTop;
+typedef CodeThorn::AType::Bot BoolLatticeBot;
+
 
 namespace SPRAY {
 
@@ -34,6 +37,29 @@ class GenericIntervalLattice {
  GenericIntervalLattice() { setTop();}
  GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false) {}
  GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false) {}
+
+
+ static GenericIntervalLattice createFromBoolLattice(const BoolLatticeType& boolValue) {
+   if(boolValue.isTop()) {
+     GenericIntervalLattice gil;
+     gil.setTop();
+     return gil;
+   }
+   else if(boolValue.isTrue()) {
+     return GenericIntervalLattice(1);
+   }
+   else if(boolValue.isFalse()) {
+     return GenericIntervalLattice(0);
+   }
+   else if(boolValue.isBot()) {
+    GenericIntervalLattice gil;
+    gil.setBot();
+    return gil;
+   }
+   else {
+     throw SPRAY::Exception("createFromBoolLattice: internal error.");
+   }
+ }
 
   static GenericIntervalLattice highInfInterval(Type left) {
     GenericIntervalLattice t;
@@ -327,6 +353,21 @@ class GenericIntervalLattice {
       else {
         throw SPRAY::Exception("Invalid join mode.");
       }
+    }
+  }
+
+  BoolLatticeType toBoolLattice() const {
+    if(isBot()) {
+      return BoolLatticeType(BoolLatticeBot());
+    }
+    else if(isTrue()) {
+      return BoolLatticeType(true);
+    }
+    else if(isFalse()) {
+      return BoolLatticeType(false);
+    }
+    else {
+      return BoolLatticeType(BoolLatticeTop());
     }
   }
 
@@ -636,7 +677,6 @@ class GenericIntervalLattice {
     }
   }
 
-
   static BoolLatticeType isSmaller(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     // 0. handle special case when both intervals are of length 1
     // 1. check for overlap (if yes, we do not know)
@@ -661,9 +701,51 @@ class GenericIntervalLattice {
 	return BoolLatticeType(false);
     }
   }
+
+  static GenericIntervalLattice isSmallerInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    BoolLatticeType res = isSmaller(l1,l2);
+    return GenericIntervalLattice::createFromBoolLattice(res);
+  }
+
   static BoolLatticeType isSmallerOrEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     return isSmaller(l1,l2)||isEqual(l1,l2);
   }
+
+  static GenericIntervalLattice isSmallerOrEqualInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    BoolLatticeType res = isSmallerOrEqual(l1,l2);
+    return GenericIntervalLattice::createFromBoolLattice(res);
+  }
+
+  static BoolLatticeType isGreater(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    // a > b <=> !(a <= b)
+    return !isSmallerOrEqual(l1,l2);
+  }
+
+  static GenericIntervalLattice isGreaterInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    BoolLatticeType res = isGreater(l1,l2);
+    return GenericIntervalLattice::createFromBoolLattice(res);
+  }
+
+  static BoolLatticeType isGreaterOrEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    // a >= b <=> !(a < b)
+    return !isSmaller(l1,l2);
+  }
+
+  static GenericIntervalLattice isGreaterOrEqualInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    BoolLatticeType res = isGreaterOrEqual(l1,l2);
+    return GenericIntervalLattice::createFromBoolLattice(res);
+  }
+
+  static GenericIntervalLattice logicalAndInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    BoolLatticeType res = l1.toBoolLattice() && l2.toBoolLattice();
+    return GenericIntervalLattice::createFromBoolLattice(res);
+  }
+
+  static GenericIntervalLattice logicalOrInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    BoolLatticeType res = l1.toBoolLattice() || l2.toBoolLattice();
+    return GenericIntervalLattice::createFromBoolLattice(res);
+  }
+
   bool operator==(GenericIntervalLattice l2) {
     return (isTop() && l2.isTop())
     || (isBot() && l2.isBot())
