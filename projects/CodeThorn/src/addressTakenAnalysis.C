@@ -181,16 +181,18 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
   rhs_op->accept(*this);
 }
 
-// schroder3 (2016-07-26): ".*" and "->*": The rhs is accessed.
+// schroder3 (2016-08-08): "A.*B" and "A->*Bb": The result is the member (function)
+//  specified by the pointer B. This operator dereferences B (and A if it is a pointer)
+//  to determine its result. If this is the operand of an address-of operator then there
+//  is currently no way to determine the variable or function from which the address is
+//  taken and that variable or function should already be in the address-taken-set anyway.
+//  Furthermore, there is no additional address-taking inside this operator. Thus there
+//  is nothing to do (calls are handled separately).
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotStarOp* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
-  SgNode* rhs_op = sgn->get_rhs_operand();
-  rhs_op->accept(*this);
 }
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowStarOp* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
-  SgNode* rhs_op = sgn->get_rhs_operand();
-  rhs_op->accept(*this);
 }
 
 // schroder3 (2016-07-26): There might be an implicit address-of operator. Apart
