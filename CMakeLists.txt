@@ -1280,3 +1280,4 @@ add_subdirectory(cmake)
 include(cmake/ROSECPack.cmake)
 
 message(Status "Finished ...")
+#dummy message for testing jenkins
