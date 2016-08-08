@@ -967,9 +967,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
       if(debuglevel > 0) {
         std::cout << "... found implicit address-taking." << std::endl;
       }
-      // The underlying type of the target entity is a function pointer type:
-      //  There might be an implicit address-taking in the expression:
-      //  Traverse the expression and only add functions or variables of function reference type to the
+      // Traverse the expression and only add functions or variables of function reference type to the
       //  address-taken set (and do not add variables of non function reference type):
       associatedExpression->accept(*this);
     }
@@ -979,19 +977,111 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
-{
+void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root) {
+  // schroder3 (2016-08-09): Check whether the ASTMatching should should be used to determine
+  //  all address-taken-relevant nodes:
+  if(useASTMatching) {
+    computeAddressTakenInfoUsingASTMatching(root);
+    // Do not compute the addess-taken-set twice:
+    return;
+  }
+  // else: Do not use the ASTMatching:
+
+  // schroder3 (2016-08-08): Create AST visitor, iterate over the AST, and handle all nodes that are relevant
+  //  for the address-taken-analysis:
+  OperandToVariableId optovid(*this);
+  RoseAst ast(root);
+  for(RoseAst::iterator i = ast.begin(); i != ast.end(); ++i) {
+
+    // schroder3 (2016-07-29): Skip all nodes that are located in a sub-tree of a template declaration or definition
+    //  because these nodes are never executed. They are never executed because there is always a specialization
+    //  (SgTemplateInstatiation... node) that is used (and which is not skipped). Even in case of an implicit specialization the content
+    //  of the template declaration/ definition is copied to specialization/ instantiation node (which is not skipped) and the
+    //  address-takings can be found in these copies. It is is possible to deactivate the skipping of these nodes by setting
+    //  addAddressTakingsInsideTemplateDecls to true.
+    if(!addAddressTakingsInsideTemplateDecls
+       && (isSgTemplateFunctionDeclaration(*i)
+       || isSgTemplateMemberFunctionDeclaration(*i)
+       || isSgTemplateVariableDeclaration(*i)
+       || isSgTemplateClassDefinition(*i)
+       || isSgTemplateFunctionDefinition(*i))
+    ) {
+      i.skipChildrenOnForward();
+    }
+
+    // schroder3 (Jun 2016): The obvious one:
+    else if(SgAddressOfOp* addressOf = isSgAddressOfOp(*i)) {
+      addressOf->get_operand()->accept(optovid);
+    }
+
+    // schroder3 (2016-07-19): An assignment can contain an implicit function address-taking.
+    else if(SgAssignOp* assignment = isSgAssignOp(*i)) {
+      // Only traverse the rhs of the assignment and only if there is an implicit address-taking:
+      std::vector<VariableId> assignmentTargets;
+      // TODO: All possible variables in the lhs of this assignment.
+      optovid.handleAssociation(OperandToVariableId::AK_Assignment, assignmentTargets,
+                                assignment->get_lhs_operand()->get_type(), assignment->get_rhs_operand());
+    }
+
+    // schroder3 (2016-07-28): A cast can contain an implicit address taking e.g. if the operand is of function type
+    //  and if the cast type is a function pointer type.
+    else if(SgCastExp* castExpr = isSgCastExp(*i)) {
+      // Traverse the operand if there is an implicit address-taking:
+      // The "target" of the association is the parent expression but there is no variable
+      optovid.handleAssociation(OperandToVariableId::AK_Cast, std::vector<VariableId>(),
+                                castExpr->get_type(), castExpr->get_operand());
+    }
+    else if(
+
+    // schroder3 (Jun 2016): Call by reference creates an alias of the argument and if a non-static member function
+    //  is called on an object then the address of that object is accessible in the member function via "this"
+    // schroder3 (2016-07-19): ... and the address is implicitly taken if a function is
+    //  provided as an argument for a parameter of function pointer type
+            isSgFunctionCallExp(*i)
+    // schroder3 (2016-07-20): The same (except the call on an object) applies to a constructor call:
+         || isSgConstructorInitializer(*i)
+
+    // schroder3 (2016-07-20): There will be an alias/ reference creation for every function parameter of reference type
+    //  TODO: Replace this by a more precise method (e.g. try to add reference parameters when handling function calls)
+         || isSgFunctionParameterList(*i)
+
+    // schroder3 (Jun 2016): Creating a reference creates an alias of a variable
+    // schroder3 (2016-07-19): ... and a variable declaration can contain an implicit function address-taking
+         || isSgVariableDeclaration(*i)
+
+    // schroder3 (2016-07-20): Initializing a member reference variable creates an alias
+    // schroder3 (2016-07-20): ... and initializing a member of function pointer type with a function (reference)
+    //  implicitly takes the address.
+         || isSgCtorInitializerList(*i)
+
+    // schroder3 (2016-07-20): Returning a variable from a function with reference return type creates an alias
+    // schroder3 (2016-07-20): ... and returning a function from a function with function pointer return type
+    //  can contain an implicit function address-taking.
+         || isSgReturnStmt(*i)
+
+    // schroder3 (2016-07-26): A dereference/ indirection operator can contain an implicit address taking if
+    //  the operand is of function type.
+         || isSgPointerDerefExp(*i)
+
+    // schroder3 (2016-08-02): A throw can contain an implicit address taking e.g. if the throw expression is of
+    //  function type and if there is a catch for function pointer types.
+         || isSgThrowOp(*i)
+
+    ) {
+      // schroder3 (2016-08-08): Look for address-takings:
+      (*i)->accept(optovid);
+    }
+  }
+}
+
+// schroder3 (2016-08-09): Alternative to computeAddressTakenInfo(...) that uses the ASTMatching mechanism.
+//  This is currently slower than computeAddressTakenInfo(...).
+void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfoUsingASTMatching(SgNode* root) {
   // query to match all subtrees of interest
   // process query
   ProcessQuery collectAddressTakingRelatedNodes;
   std::string matchquery;
 
-// "#SgTemplateArgument|"
-// "#SgTemplateArgumentList|"
-// "#SgTemplateParameter|"
-// "#SgTemplateParameterVal|"
-// "#SgTemplateParamterList|"
-  
   // schroder3 (2016-07-29): Skip all nodes that are located in a sub-tree of a template declaration or definition,
   //  because these nodes are never executed. They are never executed because there is always a specialization
   //  (SgTemplateInstatiation... node) that is used (and which is not skipped). Even in case of an implicit specialization the content
@@ -1058,11 +1148,6 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
     //  function type and if there is a catch for function pointer types.
     "$OP=SgThrowOp";
 
-//  std::cout << std::endl << "Variable Id Mapping:" << std::endl;
-//  this->vidm.toStream(std::cout);
-//  std::cout << std::endl << "Function Id Mapping:" << std::endl;
-//  this->fidm.toStream(std::cout);
-
   MatchResult& matches = collectAddressTakingRelatedNodes(matchquery, root);
   for(MatchResult::iterator it = matches.begin(); it != matches.end(); ++it) {
     SgNode* matchedNode = (*it)["$OP"];
@@ -1085,7 +1170,7 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root)
     else {
       matchedNode->accept(optovid);
     }
-  }              
+  }
 }
 
 // pretty print
