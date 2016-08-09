@@ -20,6 +20,7 @@
 #include "AnalysisAstAnnotator.h"
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
+#include "Miscellaneous2.h"
 #include "ProgramStats.h"
 #include "AnalysisAbstractionLayer.h"
 #include "AType.h"
@@ -71,6 +72,7 @@ bool option_rose_rd_analysis=false;
 bool option_fi_constanalysis=false;
 const char* csvConstResultFileName=0;
 const char* csvAddressTakenResultFileName=0;
+const char* csvDeadCodeFileName = 0;
 bool option_rd_analysis=false;
 bool option_ud_analysis=false;
 bool option_lv_analysis=false;
@@ -488,6 +490,34 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     if(option_check_static_array_bounds) {
       checkStaticArrayBounds(root,intervalAnalyzer);
     }
+    // schroder3 (2016-08-08): Generate csv-file that contains unreachable statements:
+    if(csvDeadCodeFileName) {
+      // Generate file name and open file:
+      std::string deadCodeCsvFileName = option_prefix;
+      deadCodeCsvFileName += csvDeadCodeFileName;
+      ofstream deadCodeCsvFile;
+      deadCodeCsvFile.open(deadCodeCsvFileName.c_str());
+      // Iteratate over all CFG nodes/ labels:
+      for(Flow::const_nodes_iterator i = intervalAnalyzer->getFlow()->nodes_begin(); i != intervalAnalyzer->getFlow()->nodes_end(); ++i) {
+        const Label& label = *i;
+        // Do not output a function call twice (only the function call label and not the function call return label):
+        if(!intervalAnalyzer->getLabeler()->isFunctionCallReturnLabel(label)) {
+          /*const*/ IntervalPropertyState& intervalsLattice = *static_cast<IntervalPropertyState*>(intervalAnalyzer->getPreInfo(i->getId()));
+          if(intervalsLattice.isBot()) {
+            // Unreachable statement found:
+            const SgNode* correspondingNode = intervalAnalyzer->getLabeler()->getNode(label);
+            ROSE_ASSERT(correspondingNode);
+            // Do not output scope statements ({ }, ...)
+            if(!isSgScopeStatement(correspondingNode)) {
+              deadCodeCsvFile << correspondingNode->get_file_info()->get_line()
+                              << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
+                              << endl;
+            }
+          }
+        }
+      }
+      deadCodeCsvFile.close();
+    }
 
     delete fipa;
   }
@@ -656,6 +686,7 @@ int main(int argc, char* argv[]) {
       ("optimize-icfg", "prunes conditions with empty blocks, block begin, and block end icfg nodes.")
       ("no-optmize-icfg", "does not optimize icfg.")
       ("interval-analysis", "perform interval analysis.")
+      ("csv-deadcode", po::value< string >(), "perform interval analysis and generate csv-file [arg] with dead code.")
       ("trace", "show operations as performed by selected solver.")
       ("check-static-array-bounds", "check static array bounds (uses interval analysis).")
       ("print-varid-mapping", "prints variableIdMapping")
@@ -707,6 +738,11 @@ int main(int argc, char* argv[]) {
     if(args.count("interval-analysis")) {
       option_interval_analysis=true;
     }
+    if(args.count("csv-deadcode")) {
+      option_interval_analysis = true;
+      csvDeadCodeFileName = args["csv-deadcode"].as<string>().c_str();
+    }
+
     if(args.count("check-static-array-bounds")) {
       option_interval_analysis=true;
       option_check_static_array_bounds=true;
@@ -740,6 +776,7 @@ int main(int argc, char* argv[]) {
       if (string(argv[i]) == "--prefix" 
        || string(argv[i]) == "--csv-fi-constanalysis"
        || string(argv[i]) == "--csv-at-analysis"
+       || string(argv[i]) == "--csv-deadcode"
       ) {
         // do not confuse ROSE frontend
         argv[i] = strdup("");

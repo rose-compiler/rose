@@ -21,7 +21,7 @@ int main() {
   }
   else {
     // unreachable
-    i = 20;
+    i = (10, 20);
   }
 
   if(i < -1) {
