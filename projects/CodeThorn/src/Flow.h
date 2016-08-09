@@ -89,12 +89,39 @@ namespace SPRAY {
     private:
       Edge* operator->();
     };
+
+    // schroder3 (2016-08-08): Added nodes iterators:
+    class nodes_iterator : public SawyerCfg::VertexIterator {
+     public:
+      nodes_iterator(const SawyerCfg::VertexIterator& it) : SawyerCfg::VertexIterator(it) { }
+      Label& operator*();
+      Label* operator->();
+    };
+    class const_nodes_iterator : public SawyerCfg::ConstVertexIterator {
+     public:
+      const_nodes_iterator(const SawyerCfg::ConstVertexIterator& it) : SawyerCfg::ConstVertexIterator(it) { }
+      // Construction with non-const iterator is possible:
+      const_nodes_iterator(const nodes_iterator& it) : SawyerCfg::ConstVertexIterator(it) { }
+      const Label& operator*() const;
+      const Label* operator->() const;
+    };
 #else
     typedef std::set<Edge>::iterator iterator;
 #endif
     Flow();
+
+    // Edge iterators:
     iterator begin();
     iterator end();
+
+    // schroder3 (2016-08-08): Added node iterators:
+    nodes_iterator nodes_begin();
+    nodes_iterator nodes_end();
+    const_nodes_iterator nodes_begin() const;
+    const_nodes_iterator nodes_end() const;
+    const_nodes_iterator nodes_cbegin() const;
+    const_nodes_iterator nodes_cend() const;
+
     Flow operator+(Flow& s2);
     Flow& operator+=(Flow& s2);
     std::pair<Flow::iterator, bool> insert(Edge e);

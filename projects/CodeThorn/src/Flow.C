@@ -4,6 +4,7 @@
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
+#include "SprayException.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -392,6 +393,46 @@ Flow::iterator Flow::end() {
 #endif
 }
 
+Flow::nodes_iterator Flow::nodes_begin() {
+#ifdef USE_SAWYER_GRAPH
+  return nodes_iterator(_sawyerFlowGraph.vertices().begin());
+#else
+  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+#endif
+}
+
+Flow::nodes_iterator Flow::nodes_end() {
+#ifdef USE_SAWYER_GRAPH
+  return nodes_iterator(_sawyerFlowGraph.vertices().end());
+#else
+  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+#endif
+}
+
+Flow::const_nodes_iterator Flow::nodes_begin() const {
+#ifdef USE_SAWYER_GRAPH
+  return const_nodes_iterator(_sawyerFlowGraph.vertices().begin());
+#else
+  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+#endif
+}
+
+Flow::const_nodes_iterator Flow::nodes_end() const {
+#ifdef USE_SAWYER_GRAPH
+  return const_nodes_iterator(_sawyerFlowGraph.vertices().end());
+#else
+  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+#endif
+}
+
+Flow::const_nodes_iterator Flow::nodes_cbegin() const {
+  return nodes_begin();
+}
+
+Flow::const_nodes_iterator Flow::nodes_cend() const {
+  return nodes_end();
+}
+
 Flow Flow::operator+(Flow& s2) {
   Flow result;
   result=*this;
@@ -703,6 +744,19 @@ Edge Flow::iterator::operator*() {
   Edge result = Edge(source(), getTypes(), target());
   result.setAnnotation(getAnnotation());
   return result;
+}
+
+Label& Flow::nodes_iterator::operator *() {
+  return SawyerCfg::VertexIterator::operator *().value();
+}
+Label* Flow::nodes_iterator::operator ->() {
+  return &operator *();
+}
+const Label& Flow::const_nodes_iterator::operator *() const {
+  return SawyerCfg::ConstVertexIterator::operator *().value();
+}
+const Label* Flow::const_nodes_iterator::operator ->() const {
+  return &operator *();
 }
 
 #endif
