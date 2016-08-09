@@ -59,8 +59,45 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     case V_SgGreaterThanOp:    return domain->isGreaterInterval(evaluate(lhs),evaluate(rhs));
     case V_SgGreaterOrEqualOp: return domain->isGreaterOrEqualInterval(evaluate(lhs),evaluate(rhs));
 
-    case V_SgAndOp:            return domain->logicalAndInterval(evaluate(lhs),evaluate(rhs));
-    case V_SgOrOp:             return domain->logicalOrInterval(evaluate(lhs),evaluate(rhs));
+    // schroder3 (2016-08-09): Short circuit logical && and ||
+    case V_SgAndOp: {
+      NumberIntervalLattice lhsResult = evaluate(lhs);
+      // Short circuit evaluation:
+      if(lhsResult.isFalse() || lhsResult.isBot()) {
+        return lhsResult;
+      }
+      else {
+        NumberIntervalLattice rhsResult = evaluate(rhs);
+        if(lhsResult.isTop() && rhsResult.isBot()) {
+          // Possible combinations: true && bot (= bot) or false && bot (= false, because rhs is not executed)
+          //  Return false because bot joined with false is false:
+          return NumberIntervalLattice(false);
+        }
+        else {
+          // All other cases: Both sides are always executed: Use non-short-circuit &&:
+          return domain->nonShortCircuitLogicalAndInterval(lhsResult, rhsResult);
+        }
+      }
+    }
+    case V_SgOrOp: {
+      NumberIntervalLattice lhsResult = evaluate(lhs);
+      // Short circuit evaluation:
+      if(lhsResult.isTrue() || lhsResult.isBot()) {
+        return lhsResult;
+      }
+      else {
+        NumberIntervalLattice rhsResult = evaluate(rhs);
+        if(lhsResult.isTop() && rhsResult.isBot()) {
+          // Possible combinations: true || bot (= true, because rhs is not executed) or false || bot (= bot)
+          //  Return true because bot joined with true is true:
+          return NumberIntervalLattice(true);
+        }
+        else {
+          // All other cases: Both sides are always executed: Use non-short-circuit ||:
+          return domain->nonShortCircuitLogicalOrInterval(lhsResult, rhsResult);
+        }
+      }
+    }
 
     case V_SgAddOp:            return domain->arithAdd(evaluate(lhs),evaluate(rhs));
     case V_SgSubtractOp:       return domain->arithSub(evaluate(lhs),evaluate(rhs));
@@ -212,21 +249,26 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     SgNode* trueBranch=SgNodeHelper::getTrueBranch(node);
     SgNode* falseBranch=SgNodeHelper::getFalseBranch(node);
     NumberIntervalLattice condVal=evaluate(cond);
+    // schroder3 (2016-08-09): Changed behavior: Previously every non-const interval
+    //  was treated the same as top. However non-const intervals that do not contain
+    //  zero are always true.
     if(condVal.isBot()) {
       return NumberIntervalLattice::bot();
-    } else if(condVal.isTop()||!condVal.isConst()) {
+    }
+    else if(condVal.isTrue()) {
+      return evaluate(trueBranch);
+    }
+    else if(condVal.isFalse()) {
+      return evaluate(falseBranch);
+    }
+    else if(condVal.isTop()) {
       // analyse both true-branch and false-branch and join.
-        NumberIntervalLattice trueBranchResult=evaluate(trueBranch);
-        NumberIntervalLattice falseBranchResult=evaluate(falseBranch);
-        return NumberIntervalLattice::join(trueBranchResult,falseBranchResult);
-    } else {
-      ROSE_ASSERT(condVal.isConst());
-      SPRAY::Number num=condVal.getConst();
-      int intVal=num.getInt();
-      if(intVal==0)
-        return evaluate(trueBranch);
-      else
-        return evaluate(falseBranch);
+      NumberIntervalLattice trueBranchResult=evaluate(trueBranch);
+      NumberIntervalLattice falseBranchResult=evaluate(falseBranch);
+      return NumberIntervalLattice::join(trueBranchResult,falseBranchResult);
+    }
+    else {
+      ROSE_ASSERT(false);
     }
   }
 

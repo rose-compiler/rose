@@ -318,6 +318,17 @@ class GenericIntervalLattice {
 //        return;
 //      }
 //    }
+    // schroder3 (2016-08-09): Handle empty/ bot intervals: If one of the
+    //  intervals is empty then the result is the other one:
+    if(other.isEmpty()) {
+      return;
+    }
+    if(isEmpty()) {
+      overwriteWith(other);
+      return;
+    }
+
+
     if(isLowInf()||other.isLowInf()) {
       setIsLowInf(true);
     }
@@ -656,6 +667,10 @@ class GenericIntervalLattice {
   }
 
   static BoolLatticeType isEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    // schroder3 (2016-08-09): Propagate bot:
+    if(l1.binaryOperationOnBot(l2)) {
+      return BoolLatticeType(BoolLatticeBot());
+    }
     if(l1.isConst()&&l2.isConst()) {
       return BoolLatticeType(l1.getConst()==l2.getConst());
     }
@@ -692,9 +707,13 @@ class GenericIntervalLattice {
   }
 
   static BoolLatticeType isSmaller(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    // schroder3 (2016-08-09): Propagate bot:
+    if(l1.binaryOperationOnBot(l2)) {
+      return BoolLatticeType(BoolLatticeBot());
+    }
     // 0. handle special case when both intervals are of length 1
     // 1. check for overlap (if yes, we do not know)
-    // 2. if no overlap check bounds    
+    // 2. if no overlap check bounds
     if(l1.isConst()&&l2.isConst()) {
       return BoolLatticeType(l1.getConst()<l2.getConst());
     }
@@ -750,14 +769,32 @@ class GenericIntervalLattice {
     return GenericIntervalLattice::createFromBoolLattice(res);
   }
 
-  static GenericIntervalLattice logicalAndInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
-    BoolLatticeType res = l1.toBoolLattice() && l2.toBoolLattice();
-    return GenericIntervalLattice::createFromBoolLattice(res);
+  // schroder3 (2016-08-09): non-short-circuit logical &&
+  static BoolLatticeType nonShortCircuitLogicalAnd(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    if(l1.binaryOperationOnBot(l2)) {
+      // Propagate bot:
+      return BoolLatticeType(BoolLatticeBot());
+    }
+    else {
+      return l1.toBoolLattice() && l2.toBoolLattice();
+    }
+  }
+  static GenericIntervalLattice nonShortCircuitLogicalAndInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    return GenericIntervalLattice::createFromBoolLattice(nonShortCircuitLogicalAnd(l1, l2));
   }
 
-  static GenericIntervalLattice logicalOrInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
-    BoolLatticeType res = l1.toBoolLattice() || l2.toBoolLattice();
-    return GenericIntervalLattice::createFromBoolLattice(res);
+  // schroder3 (2016-08-09): non-short-circuit logical ||
+  static BoolLatticeType nonShortCircuitLogicalOr(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    if(l1.binaryOperationOnBot(l2)) {
+      // Propagate bot:
+      return BoolLatticeType(BoolLatticeBot());
+    }
+    else {
+      return l1.toBoolLattice() || l2.toBoolLattice();
+    }
+  }
+  static GenericIntervalLattice nonShortCircuitLogicalOrInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    return GenericIntervalLattice::createFromBoolLattice(nonShortCircuitLogicalOr(l1, l2));
   }
 
   bool operator==(GenericIntervalLattice other) {
