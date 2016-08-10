@@ -99,19 +99,9 @@ NumberIntervalLattice::NumberIntervalLattice(Number value)
 { }
 
 NumberIntervalLattice::NumberIntervalLattice(Number left, Number right) {
-  setLow(left);
-  setHigh(right);
+  setFiniteInterval(left, right);
 }
 
 NumberIntervalLattice::NumberIntervalLattice(GenericIntervalLattice<Number> interval) {
-  if(interval.isLowInf()) {
-    setLowInf();
-  } else {
-    setLow(interval.getLow());
-  }
-  if(interval.isHighInf()) {
-    setHighInf();
-  } else {
-    setHigh(interval.getHigh());
-  }
+  overwriteWith(interval);
 }

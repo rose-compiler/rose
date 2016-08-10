@@ -118,18 +118,21 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     case V_SgLshiftAssignOp:
     case V_SgRshiftAssignOp:
     case V_SgAssignOp: {
+      NumberIntervalLattice lhsResult = NumberIntervalLattice::top();
+      VariableId lhsVarId;
       NumberIntervalLattice rhsResult=evaluate(rhs);
+
+      // Determine the lhs result and topify if necessary:
       if(isSgPointerDerefExp(lhs)) {
         VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
         // TODO: more precise: merge each interval of the lhs memloc-variable(s) with the interval of rhsResult
         ips->topifyVariableSet(varIdSet);
-        return rhsResult;
       }
       if(SgVarRefExp* lhsVar=isSgVarRefExp(lhs)) {
         ROSE_ASSERT(variableIdMapping);
         //variableIdMapping->toStream(cout);
-        VariableId varId=variableIdMapping->variableId(lhsVar);
-        if(variableIdMapping->hasReferenceType(varId)) {
+        lhsVarId = variableIdMapping->variableId(lhsVar);
+        if(variableIdMapping->hasReferenceType(lhsVarId)) {
           // schroder3 (2016-07-05):
           //  We change a reference and we do not know which variable the reference refers to.
           //  ==> Set all variables from which the address was taken (this includes variables from which
@@ -137,48 +140,51 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
           VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
           ips->topifyVariableSet(varIdSet);
         }
-        else {
-          // Set the interval:
-          NumberIntervalLattice operatorResult;
-          NumberIntervalLattice lhsResult = ips->getVariable(varId);
-          switch(node->variantT()) {
-            case V_SgAssignOp:
-              operatorResult = rhsResult;
-              break;
-            case V_SgPlusAssignOp:
-              operatorResult = domain->arithAdd(lhsResult, rhsResult);
-              break;
-            case V_SgMinusAssignOp:
-              operatorResult = domain->arithSub(lhsResult, rhsResult);
-              break;
-            case V_SgMultAssignOp:
-              operatorResult = domain->arithMul(lhsResult, rhsResult);
-              break;
-            case V_SgDivAssignOp:
-              operatorResult = domain->arithDiv(lhsResult, rhsResult);
-              break;
-            case V_SgModAssignOp:
-              operatorResult = domain->arithMod(lhsResult, rhsResult);
-              break;
-            case V_SgLshiftAssignOp:
-              operatorResult = domain->bitwiseShiftLeft(lhsResult, rhsResult);
-              break;
-            case V_SgRshiftAssignOp:
-              operatorResult = domain->bitwiseShiftRight(lhsResult, rhsResult);
-              break;
-            default:
-              throw SPRAY::Exception("CppExprEvaluator::evaluate: internal error: unsupported case.");
-          }
-          ips->setVariable(varId, operatorResult);
-        }
-        return rhsResult;
+        lhsResult = ips->getVariable(lhsVarId);
       } else {
         //        if(_showWarnings)
           //          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<"("<<lhs->class_name()<<") ... setting all address-taken variables to unbounded interval and using rhs interval."<<endl;
         VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
         ips->topifyVariableSet(varIdSet);
-        return NumberIntervalLattice::top();
       }
+
+      // Compute the operator result:
+      NumberIntervalLattice operatorResult;
+      switch(node->variantT()) {
+        case V_SgAssignOp:
+          operatorResult = rhsResult;
+          break;
+        case V_SgPlusAssignOp:
+          operatorResult = domain->arithAdd(lhsResult, rhsResult);
+          break;
+        case V_SgMinusAssignOp:
+          operatorResult = domain->arithSub(lhsResult, rhsResult);
+          break;
+        case V_SgMultAssignOp:
+          operatorResult = domain->arithMul(lhsResult, rhsResult);
+          break;
+        case V_SgDivAssignOp:
+          operatorResult = domain->arithDiv(lhsResult, rhsResult);
+          break;
+        case V_SgModAssignOp:
+          operatorResult = domain->arithMod(lhsResult, rhsResult);
+          break;
+        case V_SgLshiftAssignOp:
+          operatorResult = domain->bitwiseShiftLeft(lhsResult, rhsResult);
+          break;
+        case V_SgRshiftAssignOp:
+          operatorResult = domain->bitwiseShiftRight(lhsResult, rhsResult);
+          break;
+        default:
+          throw SPRAY::Exception("CppExprEvaluator::evaluate: internal error: unsupported case.");
+      }
+
+      // Set lhs variable to the operator result if possible:
+      if(lhsVarId.isValid()) {
+        ips->setVariable(lhsVarId, operatorResult);
+      }
+
+      return operatorResult;
     }
     default:
       if(_sound) {

@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include "sage3basic.h"
 #include "GenericIntervalLattice.h"
 
 namespace SPRAY {

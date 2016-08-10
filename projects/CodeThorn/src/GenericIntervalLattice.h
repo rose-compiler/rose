@@ -140,16 +140,36 @@ class GenericIntervalLattice {
   bool isHighInf() const {
     return _isHighInf;
   }
-  void setLow(Type val) {
+
+  // schroder3 (2016-08-10): Commented out setLow(...) and setHigh(...) because the
+  //  containing unifyEmptyInterval(...) yields wrong results. For example given the
+  //  following code:
+  //    setLow(-3); setHigh(-2);
+  //    setLow(2)/*unifyEmptyInterval(...) sets low to 1 (and high to -1) here*/; setHigh(3);
+  //  Result is [1, 3] instead of the intended [2, 3].
+  //  ==> use setFiniteInterval(...) instead
+  //
+  //  void setLow(Type val) {
+  //    setIsLowInf(false);
+  //    _low=val;
+  //    unifyEmptyInterval();
+  //  }
+  //  void setHigh(Type val) {
+  //    setIsHighInf(false);
+  //    _high=val;
+  //    unifyEmptyInterval();
+  //  }
+
+  // schroder3 (2016-08-10): Added this as a replacement for setLow(...) and setHeight(...)
+  //  (see comment above).
+  void setFiniteInterval(Type low, Type high) {
     setIsLowInf(false);
-    _low=val;
-    unifyEmptyInterval();
-  }
-  void setHigh(Type val) {
+    _low = low;
     setIsHighInf(false);
-    _high=val;
+    _high = high;
     unifyEmptyInterval();
   }
+
   void setLowInf() {
     setIsLowInf(true);
     _low=-1;
@@ -277,6 +297,7 @@ class GenericIntervalLattice {
     this->_high = other._high;
     this->_isHighInf = other._isHighInf;
     ROSE_ASSERT(*this == other);
+    unifyEmptyInterval();
   }
 
   void meet(GenericIntervalLattice other) {
@@ -542,8 +563,7 @@ class GenericIntervalLattice {
       Type n4=other._high;
       Type nmin=std::min(n1*n3,std::min(n1*n4,std::min(n2*n3,n2*n4)));
       Type nmax=std::max(n1*n3,std::max(n1*n4,std::max(n2*n3,n2*n4)));
-      setLow(nmin);
-      setHigh(nmax);
+      setFiniteInterval(nmin, nmax);
       return;
     } else {
       setIsLowInf(true);
@@ -582,8 +602,7 @@ class GenericIntervalLattice {
 
       Type nmin=std::min(n1/n3,std::min(n1/n4,std::min(n2/n3,n2/n4)));
       Type nmax=std::max(n1/n3,std::max(n1/n4,std::max(n2/n3,n2/n4)));
-      setLow(nmin);
-      setHigh(nmax);
+      setFiniteInterval(nmin, nmax);
       return;
     } else {
       setIsLowInf(true);
@@ -609,8 +628,7 @@ class GenericIntervalLattice {
       Type n4=other._high;
       Type nmin=std::min(n1%n3,std::min(n1%n4,std::min(n2%n3,n2%n4)));
       Type nmax=std::max(n1%n3,std::max(n1%n4,std::max(n2%n3,n2%n4)));
-      setLow(nmin);
-      setHigh(nmax);
+      setFiniteInterval(nmin, nmax);
       return;
     } else {
       setIsLowInf(true);
@@ -633,8 +651,7 @@ class GenericIntervalLattice {
       Type n4=other._high;
       Type nmin=std::min(n1<<n3,std::min(n1<<n4,std::min(n2<<n3,n2<<n4)));
       Type nmax=std::max(n1<<n3,std::max(n1<<n4,std::max(n2<<n3,n2<<n4)));
-      setLow(nmin);
-      setHigh(nmax);
+      setFiniteInterval(nmin, nmax);
       return;
     } else {
       setIsLowInf(true);
@@ -657,8 +674,7 @@ class GenericIntervalLattice {
       Type n4=other._high;
       Type nmin=std::min(n1>>n3,std::min(n1>>n4,std::min(n2>>n3,n2>>n4)));
       Type nmax=std::max(n1>>n3,std::max(n1>>n4,std::max(n2>>n3,n2>>n4)));
-      setLow(nmin);
-      setHigh(nmax);
+      setFiniteInterval(nmin, nmax);
       return;
     } else {
       setIsLowInf(true);
