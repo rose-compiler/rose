@@ -797,6 +797,14 @@ class GenericIntervalLattice {
     return GenericIntervalLattice::createFromBoolLattice(nonShortCircuitLogicalOr(l1, l2));
   }
 
+  // schroder3 (2016-08-09): logical not (!)
+  static BoolLatticeType logicalNot(GenericIntervalLattice l) {
+    return !l.toBoolLattice();
+  }
+  static GenericIntervalLattice logicalNotInterval(GenericIntervalLattice l) {
+    return GenericIntervalLattice::createFromBoolLattice(logicalNot(l));
+  }
+
   bool operator==(GenericIntervalLattice other) {
     if(_isLowInf != other._isLowInf) {
       return false;

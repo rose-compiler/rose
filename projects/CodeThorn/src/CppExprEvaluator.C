@@ -194,6 +194,9 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     case V_SgMinusOp: {
       return domain->arithSub(NumberIntervalLattice(Number(0)),evaluate(operand));
     }
+    case V_SgNotOp: {
+      return domain->logicalNotInterval(evaluate(operand));
+    }
     case V_SgAddressOfOp:
     case V_SgPointerDerefExp:
       // discard result as pointer value intervals are not represented in this domain, but evaluate to ensure all side-effects are represented in the state

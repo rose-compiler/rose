@@ -64,5 +64,13 @@ int main() {
     i = -60;
   }
 
+  if(!(i < -100 || i >= -40) && i != 4) {
+    i = -70;
+  }
+  else {
+    // unreachable
+    i = -80;
+  }
+
   int l;
 }
