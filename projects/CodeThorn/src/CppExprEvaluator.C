@@ -212,7 +212,8 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       if(varRefExp) {
         VariableId varId=variableIdMapping->variableId(varRefExp);
         IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
-        NumberIntervalLattice res=domain->arithAdd(NumberIntervalLattice(Number(1)),evaluate(SgNodeHelper::getFirstChild(node)));
+        Number plusOrMinusOne = (isSgMinusMinusOp(node) ? -1 : (isSgPlusPlusOp(node) ? 1 : (ROSE_ASSERT(false), 0)));
+        NumberIntervalLattice res=domain->arithAdd(evaluate(operand), plusOrMinusOne);
         if(variableIdMapping->hasReferenceType(varId)) {
           // schroder3 (2016-07-05):
           //  We change a reference and we do not know which variable the reference refers to.
