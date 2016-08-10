@@ -243,7 +243,7 @@ class GenericIntervalLattice {
   static bool checkForDivisionByZero(const GenericIntervalLattice& dividend, GenericIntervalLattice& divisor) {
     if(isSubIntervalOf(GenericIntervalLattice(static_cast<Type>(0))/*[0, 0]*/, divisor)) {
       // Other interval contains 0 and this is therefore a possible division by zero.
-      std::cout << "WARNING: division by interval that is containing zero (dividend: " << dividend.toString() << ", divisor: " << divisor.toString() << ")." << std::endl;
+      //std::cout << "WARNING: division by interval that is containing zero (dividend: " << dividend.toString() << ", divisor: " << divisor.toString() << ")." << std::endl;
       // Adjust interval limits if they are zero to avoid division-by-zero error while
       //  computing the new interval limits:
       if(divisor._low == 0 && divisor._high == 0) {
@@ -318,6 +318,7 @@ class GenericIntervalLattice {
 //        return;
 //      }
 //    }
+
     // schroder3 (2016-08-09): Handle empty/ bot intervals: If one of the
     //  intervals is empty then the result is the other one:
     if(other.isEmpty()) {
@@ -327,7 +328,6 @@ class GenericIntervalLattice {
       overwriteWith(other);
       return;
     }
-
 
     if(isLowInf()||other.isLowInf()) {
       setIsLowInf(true);

@@ -96,9 +96,7 @@ NumberIntervalLattice::NumberIntervalLattice(){}
 
 NumberIntervalLattice::NumberIntervalLattice(Number value)
     : GenericIntervalLattice<Number>(value)
-{
-
-}
+{ }
 
 NumberIntervalLattice::NumberIntervalLattice(Number left, Number right) {
   setLow(left);

@@ -185,6 +185,9 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         if(_showWarnings) cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
         ips->topifyAllVariables();
       }
+      else if(_showWarnings) {
+        cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<"("<<node->unparseToString()<<") ... using unbounded result interval."<<endl;
+      }
       return NumberIntervalLattice::top();
     }
   }
@@ -242,6 +245,9 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       if(_sound) {
         if(_showWarnings) cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
         ips->topifyAllVariables();
+      }
+      else if(_showWarnings) {
+        cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<"("<<node->unparseToString()<<") ... using unbounded result interval."<<endl;
       }
       return NumberIntervalLattice::top();
     }

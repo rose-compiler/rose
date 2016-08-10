@@ -52,8 +52,10 @@ class ComputeAddressTakenInfo
   // schroder3 (2016-07-29): Controls whether address-takings inside template declarations/
   //  definitions should be added to the address-taken set or not.
   bool addAddressTakingsInsideTemplateDecls;
+
   // schroder3 (2016-08-09): Specifies whether the ASTMatching should be used to determine
-  //  all address-taken-relevant nodes. Currently slower than for-loop with if-else constructs.
+  //  all address-taken-relevant nodes. Currently slower than the for-loop with if-else
+  //  constructs.
   bool useASTMatching;
 
   // result to be computed by this analysis
