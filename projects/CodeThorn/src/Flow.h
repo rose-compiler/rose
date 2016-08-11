@@ -90,21 +90,11 @@ namespace SPRAY {
       Edge* operator->();
     };
 
+    // schroder3 (2016-08-11): Replaced node iterator wrapper classes by typedefs of the
+    //  already existing Sawyer graph vertex value iterator classes.
     // schroder3 (2016-08-08): Added nodes iterators:
-    class nodes_iterator : public SawyerCfg::VertexIterator {
-     public:
-      nodes_iterator(const SawyerCfg::VertexIterator& it) : SawyerCfg::VertexIterator(it) { }
-      Label& operator*();
-      Label* operator->();
-    };
-    class const_nodes_iterator : public SawyerCfg::ConstVertexIterator {
-     public:
-      const_nodes_iterator(const SawyerCfg::ConstVertexIterator& it) : SawyerCfg::ConstVertexIterator(it) { }
-      // Construction with non-const iterator is possible:
-      const_nodes_iterator(const nodes_iterator& it) : SawyerCfg::ConstVertexIterator(it) { }
-      const Label& operator*() const;
-      const Label* operator->() const;
-    };
+    typedef SawyerCfg::VertexValueIterator nodes_iterator;
+    typedef SawyerCfg::ConstVertexValueIterator const_nodes_iterator;
 #else
     typedef std::set<Edge>::iterator iterator;
 #endif

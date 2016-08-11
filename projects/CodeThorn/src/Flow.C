@@ -395,7 +395,7 @@ Flow::iterator Flow::end() {
 
 Flow::nodes_iterator Flow::nodes_begin() {
 #ifdef USE_SAWYER_GRAPH
-  return nodes_iterator(_sawyerFlowGraph.vertices().begin());
+  return _sawyerFlowGraph.vertexValues().begin();
 #else
   throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
@@ -403,7 +403,7 @@ Flow::nodes_iterator Flow::nodes_begin() {
 
 Flow::nodes_iterator Flow::nodes_end() {
 #ifdef USE_SAWYER_GRAPH
-  return nodes_iterator(_sawyerFlowGraph.vertices().end());
+  return _sawyerFlowGraph.vertexValues().end();
 #else
   throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
@@ -411,7 +411,7 @@ Flow::nodes_iterator Flow::nodes_end() {
 
 Flow::const_nodes_iterator Flow::nodes_begin() const {
 #ifdef USE_SAWYER_GRAPH
-  return const_nodes_iterator(_sawyerFlowGraph.vertices().begin());
+  return _sawyerFlowGraph.vertexValues().begin();
 #else
   throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
@@ -419,7 +419,7 @@ Flow::const_nodes_iterator Flow::nodes_begin() const {
 
 Flow::const_nodes_iterator Flow::nodes_end() const {
 #ifdef USE_SAWYER_GRAPH
-  return const_nodes_iterator(_sawyerFlowGraph.vertices().end());
+  return _sawyerFlowGraph.vertexValues().end();
 #else
   throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
@@ -744,19 +744,6 @@ Edge Flow::iterator::operator*() {
   Edge result = Edge(source(), getTypes(), target());
   result.setAnnotation(getAnnotation());
   return result;
-}
-
-Label& Flow::nodes_iterator::operator *() {
-  return SawyerCfg::VertexIterator::operator *().value();
-}
-Label* Flow::nodes_iterator::operator ->() {
-  return &operator *();
-}
-const Label& Flow::const_nodes_iterator::operator *() const {
-  return SawyerCfg::ConstVertexIterator::operator *().value();
-}
-const Label* Flow::const_nodes_iterator::operator ->() const {
-  return &operator *();
 }
 
 #endif
