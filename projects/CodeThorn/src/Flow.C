@@ -393,7 +393,7 @@ Flow::iterator Flow::end() {
 #endif
 }
 
-Flow::nodes_iterator Flow::nodes_begin() {
+Flow::node_iterator Flow::nodes_begin() {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().begin();
 #else
@@ -401,7 +401,7 @@ Flow::nodes_iterator Flow::nodes_begin() {
 #endif
 }
 
-Flow::nodes_iterator Flow::nodes_end() {
+Flow::node_iterator Flow::nodes_end() {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().end();
 #else
@@ -409,7 +409,7 @@ Flow::nodes_iterator Flow::nodes_end() {
 #endif
 }
 
-Flow::const_nodes_iterator Flow::nodes_begin() const {
+Flow::const_node_iterator Flow::nodes_begin() const {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().begin();
 #else
@@ -417,7 +417,7 @@ Flow::const_nodes_iterator Flow::nodes_begin() const {
 #endif
 }
 
-Flow::const_nodes_iterator Flow::nodes_end() const {
+Flow::const_node_iterator Flow::nodes_end() const {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().end();
 #else
@@ -425,11 +425,11 @@ Flow::const_nodes_iterator Flow::nodes_end() const {
 #endif
 }
 
-Flow::const_nodes_iterator Flow::nodes_cbegin() const {
+Flow::const_node_iterator Flow::nodes_cbegin() const {
   return nodes_begin();
 }
 
-Flow::const_nodes_iterator Flow::nodes_cend() const {
+Flow::const_node_iterator Flow::nodes_cend() const {
   return nodes_end();
 }
 

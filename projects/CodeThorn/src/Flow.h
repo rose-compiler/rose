@@ -93,8 +93,8 @@ namespace SPRAY {
     // schroder3 (2016-08-11): Replaced node iterator wrapper classes by typedefs of the
     //  already existing Sawyer graph vertex value iterator classes.
     // schroder3 (2016-08-08): Added nodes iterators:
-    typedef SawyerCfg::VertexValueIterator nodes_iterator;
-    typedef SawyerCfg::ConstVertexValueIterator const_nodes_iterator;
+    typedef SawyerCfg::VertexValueIterator node_iterator;
+    typedef SawyerCfg::ConstVertexValueIterator const_node_iterator;
 #else
     typedef std::set<Edge>::iterator iterator;
 #endif
@@ -105,12 +105,12 @@ namespace SPRAY {
     iterator end();
 
     // schroder3 (2016-08-08): Added node iterators:
-    nodes_iterator nodes_begin();
-    nodes_iterator nodes_end();
-    const_nodes_iterator nodes_begin() const;
-    const_nodes_iterator nodes_end() const;
-    const_nodes_iterator nodes_cbegin() const;
-    const_nodes_iterator nodes_cend() const;
+    node_iterator nodes_begin();
+    node_iterator nodes_end();
+    const_node_iterator nodes_begin() const;
+    const_node_iterator nodes_end() const;
+    const_node_iterator nodes_cbegin() const;
+    const_node_iterator nodes_cend() const;
 
     Flow operator+(Flow& s2);
     Flow& operator+=(Flow& s2);

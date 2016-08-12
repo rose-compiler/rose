@@ -498,7 +498,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       ofstream deadCodeCsvFile;
       deadCodeCsvFile.open(deadCodeCsvFileName.c_str());
       // Iteratate over all CFG nodes/ labels:
-      for(Flow::const_nodes_iterator i = intervalAnalyzer->getFlow()->nodes_begin(); i != intervalAnalyzer->getFlow()->nodes_end(); ++i) {
+      for(Flow::const_node_iterator i = intervalAnalyzer->getFlow()->nodes_begin(); i != intervalAnalyzer->getFlow()->nodes_end(); ++i) {
         const Label& label = *i;
         // Do not output a function call twice (only the function call label and not the function call return label):
         if(!intervalAnalyzer->getLabeler()->isFunctionCallReturnLabel(label)) {
