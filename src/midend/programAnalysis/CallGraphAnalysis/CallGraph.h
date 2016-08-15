@@ -142,7 +142,7 @@ class ROSE_DLL_API CallGraphBuilder
 
 };
 //! Generate a dot graph named 'fileName' from a call graph 
-//TODO this function is not defined? If so, need to be removed. 
+//TODO this function is    not defined? If so, need to be removed. 
 // AstDOTGeneration::writeIncidenceGraphToDOTFile() is used instead in the tutorial. Liao 6/17/2012
 void GenerateDotGraph ( SgIncidenceDirectedGraph *graph, std::string fileName );
 
@@ -163,6 +163,9 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         bool operator()(SgNode *node) {
             SgFunctionDeclaration *f = isSgFunctionDeclaration(node);
             assert(!f || f==f->get_firstNondefiningDeclaration()); // node uniqueness test
+            if(isSgTemplateFunctionDeclaration(f)||isSgTemplateMemberFunctionDeclaration(f)) {
+              std::cerr<<"Error: CallGraphBuilder: call referring to node "<<f->class_name()<<" :: function-name:"<<f->get_qualified_name()<<std::endl;
+            }
             return f && !isSgTemplateMemberFunctionDeclaration(f) && !isSgTemplateFunctionDeclaration(f) && pred(f);
         }
     };
