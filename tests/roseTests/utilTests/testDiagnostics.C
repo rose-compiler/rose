@@ -4,6 +4,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 int

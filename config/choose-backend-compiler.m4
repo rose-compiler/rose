@@ -55,8 +55,8 @@ dnl build using ROSE)
     ] ,
     [ 
     # Alternatively use the specified fortran compiler
-	 # BACKEND_FORTRAN_COMPILER="$FC"
-	   BACKEND_FORTRAN_COMPILER="gfortran"
+	   BACKEND_FORTRAN_COMPILER="$FC"
+	 # BACKEND_FORTRAN_COMPILER="gfortran"
       echo "default back-end fortran compiler for generated translators to use: $BACKEND_FORTRAN_COMPILER"
     ])
 

@@ -95,6 +95,12 @@ namespace AutoParallelization
 
   //! Output the difference between user-defined OpenMP and compiler-generated OpenMP
   void diffUserDefinedAndCompilerGeneratedOpenMP(SgSourceFile* sfile);
+
+  //! Check if two expressions access different memory locations. If in double, return false
+  //This is helpful to exclude some dependence relations involving two obvious different memory location accesses
+  //TODO: move to SageInterface when ready
+  bool differentMemoryLocation(SgExpression* e1, SgExpression* e2);
+
 } //end namespace
 
 #endif //auto_par_support_INCLUDED

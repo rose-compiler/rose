@@ -6,6 +6,7 @@
 
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
+#include "CodeThornException.h"
 
 using namespace CodeThorn;
 using namespace SPRAY;
@@ -135,7 +136,7 @@ AType::ConstIntLattice ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* v
     int val=exp->get_value();
     return ConstIntLattice(val);
   } else {
-    throw "Error: constIntLatticeFromSgValueExp::unsupported number type in SgValueExp.";
+    throw CodeThorn::Exception("Error: constIntLatticeFromSgValueExp::unsupported number type in SgValueExp.");
   }
 }
 
@@ -384,7 +385,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
-              throw "Error: Top found in relational operator (not supported yet).";
+              throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
           }
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           resultList.push_back(res);
@@ -394,7 +395,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           res.result=(lhsResult.result.operatorMore(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
-              throw "Error: Top found in relational operator (not supported yet).";
+              throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
           }
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           resultList.push_back(res);
@@ -404,7 +405,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           res.result=(lhsResult.result.operatorLess(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
-              throw "Error: Top found in relational operator (not supported yet).";
+              throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
           }
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           resultList.push_back(res);
@@ -414,7 +415,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
-              throw "Error: Top found in relational operator (not supported yet).";
+              throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
           }
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           resultList.push_back(res);
@@ -539,7 +540,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         }
         default:
             cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
-          throw "Error: evalConstInt::unkown binary operation.";
+          throw CodeThorn::Exception("Error: evalConstInt::unkown binary operation.");
         }
       }
     }
@@ -635,15 +636,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       // return default value
       return listify(res);
     } else {
-      throw "Error: evalConstInt::function call inside expression.";
+      throw CodeThorn::Exception("Error: evalConstInt::function call inside expression.");
     }
 
   }
   default:
     cerr << "@NODE:"<<node->sage_class_name()<<endl;
-    throw "Error: evalConstInt::unknown operation failed.";
+    throw CodeThorn::Exception("Error: evalConstInt::unknown operation failed.");
   } // end of switch
-  throw "Error: evalConstInt failed.";
+  throw CodeThorn::Exception("Error: evalConstInt failed.");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

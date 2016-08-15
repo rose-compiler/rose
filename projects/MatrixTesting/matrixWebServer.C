@@ -54,6 +54,8 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
+using namespace rose;
+
 static const char* WILD_CARD_STR = "*";
 enum ChartType { BAR_CHART, LINE_CHART };
 enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, CVT_DURATION_AVE };
@@ -2654,9 +2656,13 @@ public:
                                 "compiler and each column is a boost version since these are the two most sensitive ROSE "
                                 "dependencies. Green represents cases where all tested configurations passed, and red "
                                 "represents where all failed, with a spectrum of colors between those two extremes. Cells "
-                                "that are dark gray indicate that no tests were run, and cells that are partly desaturated "
-                                "(i.e., between a bright color and gray) represent configurations where only a few tests "
-                                "were performed.</p>"));
+                                "that are white indicate that no tests were run, and cells that are light colored "
+                                "(i.e., between a bright color and white) represent configurations where only a few tests "
+                                "were performed.</p>"
+
+                                "<p>Not all of these configurations are officially supported by ROSE. See "
+                                "<a href=\"http://rosecompiler.org/ROSE_HTML_Reference/installation.html\">"
+                                "Installing ROSE</a> for details.</p>"));
         addWidget(wPassDefinition_);
         tableModel_ = new StatusModel;
         tableModel_->setDepMajorIsData(true);
@@ -3656,11 +3662,11 @@ public:
             styleSheet().addRule(cssClass, bgColor);
             for (int j=0; j<5; ++j) {
                 std::string cssClass2 = cssClass + "-" + StringUtility::numberToString(j);
-                bgColor = "background-color:" + rose::Color::fade(c, 1.0-j*0.25).toHtml() + ";";
+                bgColor = "background-color:" + rose::Color::lighten(c, 1.0-j*0.25).toHtml() + ";";
                 styleSheet().addRule(cssClass2, bgColor);
             }
         }
-        styleSheet().addRule(".chart-zero", "background-color:" + rose::Color::HSV(0, 0, 0.3).toHtml() + ";");
+        styleSheet().addRule(".chart-zero", "background-color:" + rose::Color::HSV(0, 0, 1).toHtml() + ";");
 
         // Styles of error priority table cells
         styleSheet().addRule(".error-count-cell", "border:1px solid black;");

@@ -1,6 +1,8 @@
 #ifndef EQUALITY_MAINTAINER_C
 #define EQUALITY_MAINTAINER_C
 
+#include "CodeThornException.h"
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -49,7 +51,7 @@ void EqualityMaintainer<T>::addEquality(T var1, T var2) {
       equality.erase(i2);
     }
     return;
-  default: throw "Error: EqualityMaintainer::addEquality: programmatic error.";
+  default: throw CodeThorn::Exception("Error: EqualityMaintainer::addEquality: programmatic error.");
   }
 }
 

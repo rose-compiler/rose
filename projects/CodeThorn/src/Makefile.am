@@ -25,12 +25,14 @@ libspray_la_SOURCES=\
  CFAnalysis.h \
  DFAnalysisBase.h \
  DFTransferFunctions.h \
+ DotGraphCfgFrontend.h \
  IntervalAnalysis.h \
  IntervalAstAttribute.h \
  IntervalAstAttributeInterface.h \
  IntervalPropertyState.h \
  IntervalPropertyStateFactory.h \
  IntervalTransferFunctions.h \
+ FunctionIdMapping.h \
  LVAnalysis.h \
  LVAstAttribute.h \
  LVAstAttributeInterface.h \
@@ -38,12 +40,16 @@ libspray_la_SOURCES=\
  LVTransferFunctions.h \
  LanguageRestrictor.h \
  Miscellaneous2.h \
+ Normalization.h \
  NumberIntervalLattice.h \
+ ParallelAutomataGenerator.h \
  PASolver1.h \
  PointerAnalysisInterface.h \
+ PromelaCodeGenerator.h \
  RDAnalysis.h \
  RDAstAttribute.h \
  RDTransferFunctions.h \
+ SprayException.h \
  WorkListSeq.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
@@ -53,6 +59,7 @@ libspray_la_SOURCES=\
  CppExprEvaluator.C \
  DFAnalysisBase.C \
  DFTransferFunctions.C \
+ DotGraphCfgFrontend.C \
  Flow.C \
  IntervalAnalysis.C \
  IntervalAstAttribute.C \
@@ -60,6 +67,7 @@ libspray_la_SOURCES=\
  IntervalPropertyState.C \
  IntervalTransferFunctions.C \
  IntervalAstAttributeInterface.C \
+ FunctionIdMapping.C \
  LanguageRestrictor.C \
  Lattice.C \
  LVAnalysis.C \
@@ -68,9 +76,12 @@ libspray_la_SOURCES=\
  LVLattice.C \
  LVTransferFunctions.C \
  Miscellaneous2.C \
+ Normalization.C \
  NumberIntervalLattice.C \
+ ParallelAutomataGenerator.C \
  PASolver1.C \
  PointerAnalysisInterface.C \
+ PromelaCodeGenerator.C \
  PropertyState.C \
  RDAnalysis.C \
  RDAstAttribute.C \
@@ -93,6 +104,11 @@ codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
+  CodeThornException.h \
+  ParProAnalyzer.C                 \
+  ParProAnalyzer.h                 \
+  ParProExplorer.C                 \
+  ParProExplorer.h                 \
   ArrayElementAccessData.h \
   ArrayElementAccessData.C \
   CollectionOperators.h            \
@@ -138,18 +154,33 @@ codethorn_SOURCES = \
   Specialization.C \
   SpotConnection.C \
   SpotConnection.h \
+  SpotRenameVisitor.C \
+  SpotRenameVisitor.h \
+  SpotMiscellaneous.C \
+  SpotMiscellaneous.h \
   SpotTgba.C \
   SpotTgba.h \
   SpotState.C \
   SpotState.h \
   SpotSuccIter.C \
   SpotSuccIter.h \
+  ParProSpotTgba.C \
+  ParProSpotTgba.h \
+  ParProSpotState.C \
+  ParProSpotState.h \
+  ParProSpotSuccIter.C \
+  ParProSpotSuccIter.h \
+  ParProLtlMiner.C                 \
+  ParProLtlMiner.h                 \
+  ReadWriteData.h \
   StateRepresentations.C           \
   StateRepresentations.h           \
   Timer.cpp                        \
   Timer.h                          \
   TransitionGraph.h                \
   TransitionGraph.C                \
+  ParProTransitionGraph.h          \
+  ParProTransitionGraph.C          \
   VariableValueMonitor.h \
   VariableValueMonitor.C \
   Visualizer.C                     \
@@ -372,7 +403,7 @@ varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
   rdmain.C 
 
 woodpecker_DEPENDENCIES=libspray.la
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize
 woodpecker_LDFLAGS = -L$(SPOT_PREFIX)/lib
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
@@ -383,6 +414,10 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   UDAstAttribute.C                 \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
+  SpotMiscellaneous.C 		   \
+  SpotMiscellaneous.h 		   \
+  SpotRenameVisitor.C 		   \
+  SpotRenameVisitor.h 		   \
   ProgramStats.h                 \
   ProgramStats.C                 \
   FIConstAnalysis.h FIConstAnalysis.C \
@@ -409,11 +444,12 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
 #  DFAnalysisBase.h
 
 analyterix_DEPENDENCIES=libspray.la
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
 analyterix_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
+  CodeThornException.h \
   DataDependenceVisualizer.C \
   DataDependenceVisualizer.h \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \
@@ -424,6 +460,10 @@ analyterix_SOURCES = \
   LanguageRestrictorCollection.h \
   Miscellaneous.C \
   Miscellaneous.h \
+  SpotMiscellaneous.C \
+  SpotMiscellaneous.h \
+  SpotRenameVisitor.C \
+  SpotRenameVisitor.h \
   ProgramStats.C \
   ProgramStats.h \
   PropertyValueTable.C \
@@ -456,6 +496,11 @@ analyterix_SOURCES = \
 
 
 check-local:
+	@echo ================================================================
+	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
+	@echo ================================================================
+	@$(srcdir)/scripts/runAnalyterixTests.sh $(srcdir) $(top_builddir)/projects/CodeThorn/src $(clean-only) $(skip-analyterix) # Run analyterix tests
+
 	./codethorn --internal-checks	
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@echo ================================================================
@@ -482,11 +527,11 @@ check-local:
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
-	rm -f *.consistent
-	$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) . #test the analysis of RERS Problem1403 (which features arrays)
-	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
-	$(srcdir)/scripts/runBuechiTransformTests $(srcdir) . #confirm that option --keep-error-states=yes does not lead to erroneous results
-	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
+	@rm -f *.consistent
+	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
+	@$(srcdir)/scripts/runLtlRegressionTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS examples in several versions and compare to previous results
+	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results
+	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat

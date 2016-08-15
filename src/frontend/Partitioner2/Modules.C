@@ -55,6 +55,19 @@ PreventDiscontiguousBlocks::operator()(bool chain, const Args &args) {
     return chain;
 }
 
+bool
+BasicBlockSizeLimiter::operator()(bool chain, const Args &args) {
+    if (chain && args.bblock->nInstructions() >= maxInsns_) {
+        args.results.terminate = TERMINATE_NOW;
+        if (mlog[DEBUG]) {
+            mlog[DEBUG] <<"BasicBlockSizeLimiter triggered:\n";
+            BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
+                mlog[DEBUG] <<"        " <<unparseInstructionWithAddress(insn) <<"\n";
+        }
+    }
+    return chain;
+}
+
 // class method
 Sawyer::CommandLine::SwitchGroup
 InstructionLister::switches(Settings &settings) {
@@ -407,13 +420,15 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                 while (firstZero+nZeros < nRead && buf[firstZero+nZeros]==0) ++nZeros;
 
                 if (zeros.isEmpty()) {
-                    zeros = AddressInterval::baseSize(va+firstZero, nZeros);
-                } else if (zeros.greatest()+1 == va+firstZero) {
+                    zeros = AddressInterval::baseSize(accessed.least()+firstZero, nZeros);
+                } else if (zeros.greatest()+1 == accessed.least()+firstZero) {
                     zeros = AddressInterval::baseSize(zeros.least(), zeros.size()+nZeros);
                 } else {
-                    if (zeros.size() >= threshold) {
-                        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
-                        changes.insert(zeros);
+                    if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
+                        AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront,
+                                                                         zeros.greatest()-leaveAtBack);
+                        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+                        changes.insert(affected);
                     }
                     zeros = AddressInterval::baseSize(va+firstZero, nZeros);
                 }
@@ -421,9 +436,11 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                 firstZero += nZeros+1;
             }
         }
-        va += nRead;
+        if (accessed.greatest() == map.greatest())
+            break;                                      // avoid possible overflow in next statement
+        va = accessed.greatest() + 1;
     }
-    if (zeros.size() >= threshold && zeros.size() >= leaveAtFront + leaveAtBack) {
+    if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
         AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront, zeros.greatest()-leaveAtBack);
         map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
         changes.insert(affected);
@@ -533,13 +550,19 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmInterpretation *interp) {
 
 size_t
 findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader, std::vector<Function::Ptr> &functions) {
+    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrNames;
+
+    // This traversal only finds the addresses for the new functions, it does not modify the AST since that's a dangerous thing
+    // to do while we're traversing it.  It shouldn't make any difference though because we're traversing a different part of
+    // the AST (the ELF/PE container) than we're modifying (instructions).
     struct T1: AstSimpleProcessing {
         const Partitioner &partitioner;
         SgAsmGenericHeader *fileHeader;
-        std::vector<Function::Ptr> &functions;
-        size_t nInserted;
-        T1(const Partitioner &p, SgAsmGenericHeader *fh, std::vector<Function::Ptr> &functions)
-            : partitioner(p), fileHeader(fh), functions(functions), nInserted(0) {}
+        AddrNames addrNames;
+
+        T1(const Partitioner &p, SgAsmGenericHeader *h)
+            : partitioner(p), fileHeader(h) {}
+
         void visit(SgNode *node) {
             if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
                 if (symbol->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
@@ -549,17 +572,17 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                     SgAsmGenericSection *section = symbol->get_bound();
 
                     // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
-                    // different address than it expected to be mapped, then adjust the symbol's value by the same amount.
+                    // different address than it expected to be mapped, then adjust the symbol's value by the same amount. Keep
+                    // only the first non-empty name we find for each address.
                     rose_addr_t va = value;
                     if (section!=NULL && section->is_mapped() &&
                         section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
                         va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
                     }
                     if (partitioner.discoverInstruction(va)) {
-                        Function::Ptr function = Function::instance(va, symbol->get_name()->get_string(),
-                                                                    SgAsmFunction::FUNC_SYMBOL);
-                        if (insertUnique(functions, function, sortFunctionsByAddress))
-                            ++nInserted;
+                        std::string &s = addrNames.insertMaybeDefault(va);
+                        if (s.empty())
+                            s = symbol->get_name()->get_string();
                     }
 
                     // Sometimes weak symbol values are offsets from a section (this code handles that), but other times
@@ -567,17 +590,24 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK)
                         value += section->get_mapped_actual_va();
                     if (partitioner.discoverInstruction(value)) {
-                        Function::Ptr function = Function::instance(value, symbol->get_name()->get_string(),
-                                                                    SgAsmFunction::FUNC_SYMBOL);
-                        if (insertUnique(functions, function, sortFunctionsByAddress))
-                            ++nInserted;
+                        std::string &s = addrNames.insertMaybeDefault(value);
+                        if (s.empty())
+                            s = symbol->get_name()->get_string();
                     }
                 }
             }
         }
-    } t1(partitioner, fileHeader, functions);
+    } t1(partitioner, fileHeader);
+
+    size_t nInserted = 0;
     t1.traverse(fileHeader, preorder);
-    return t1.nInserted;
+    BOOST_FOREACH (const AddrNames::Node &node, t1.addrNames.nodes()) {
+        Function::Ptr function = Function::instance(node.key(), node.value(), SgAsmFunction::FUNC_SYMBOL);
+        if (insertUnique(functions, function, sortFunctionsByAddress))
+            ++nInserted;
+    }
+                    
+    return nInserted;
 }
 
 std::vector<Function::Ptr>

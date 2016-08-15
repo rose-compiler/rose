@@ -6,6 +6,8 @@
 
 #include "Miscellaneous2.h"
 #include <cctype>
+#include <cstdlib>
+#include "SprayException.h"
 
 using namespace std;
 
@@ -77,7 +79,7 @@ SPRAY::Parse::parseString(string w,istream& is) {
     string s;
     is>>s;
     cerr<< "Parsed "<<i<<"characters. Remaining input: "<<s<<"..."<<endl;
-    throw "Parser Error.";
+    throw SPRAY::Exception("Parser Error.");
   }
 }
 
@@ -118,7 +120,7 @@ SPRAY::Parse::integerList(string liststring) {
     if(ss.peek()=='[')
       ss.ignore();
     else
-      throw "Error: parse integer-values: wrong input format (at start).";
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
     int i;
     while(ss>>i) {
       //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
@@ -130,7 +132,7 @@ SPRAY::Parse::integerList(string liststring) {
     if(ss.peek()==']')
       ss.ignore();
     else
-      throw "Error: parse integer-values: wrong input format (at end).";
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
 #endif
     return intList;
 }
@@ -142,7 +144,7 @@ SPRAY::Parse::integerSet(string setstring) {
     if(ss.peek()=='{')
       ss.ignore();
     else
-      throw "Error: parse integer-values: wrong input format (at start).";
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
     int i;
     while(ss>>i) {
       //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
@@ -154,8 +156,13 @@ SPRAY::Parse::integerSet(string setstring) {
     if(ss.peek()=='}')
       ss.ignore();
     else
-      throw "Error: parse integer-values: wrong input format (at end).";
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
 #endif
     return intSet;
+}
+
+int SPRAY::randomIntInRange(pair<int,int> range) {
+  int rangeLength = range.second - range.first + 1;
+  return range.first + (rand() % rangeLength);
 }
 

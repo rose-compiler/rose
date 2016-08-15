@@ -4,6 +4,7 @@
 #include <functional>
 #include <ostream>
 using namespace std;
+using namespace rose;
 
 bool VERBOSE_MESSAGES_OF_WAVE = true;
 bool do_db_optimization = false;

@@ -25,7 +25,7 @@
 # Standard C++ compiler stuff (see rose-config --help)
 CXX      = $(shell $(ROSE_INSTALLED)/bin/rose-config cxx)
 CPPFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cppflags)
-CFLAGS   = $(shell $(ROSE_INSTALLED)/bin/rose-config cflags)
+CXXFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cxxflags)
 LDFLAGS  = $(shell $(ROSE_INSTALLED)/bin/rose-config ldflags)
 LIBDIRS  = $(shell $(ROSE_INSTALLED)/bin/rose-config libdirs)
 
@@ -37,10 +37,10 @@ MOSTLYCLEANFILES =
 all: demo
 
 demo.o: demo.C
-	$(CXX) $(CPPFLAGS) $(CFLAGS) -o $@ -c $^
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $^
 
 demo: demo.o
-	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 	@echo "Remember to set:"
 	@echo "  LD_LIBRARY_PATH=$(LIBDIRS):$$LD_LIBRARY_PATH"
 

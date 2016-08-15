@@ -4,10 +4,19 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include "sage3basic.h" // included for the ROSE_ASSERT macro
+
 #include "Miscellaneous.h"
 #include "CommandLineOptions.h"
 #include <cctype>
 #include <iomanip>
+#include "CodeThornException.h"
+
+//BOOST includes
+#include "boost/algorithm/string.hpp"
+#include "boost/algorithm/string/regex.hpp"
+#include "boost/regex.hpp"
+#include "boost/lexical_cast.hpp"
 
 using namespace std;
 
@@ -49,6 +58,15 @@ string CodeThorn::int_to_string(int x) {
   return ss.str();
 }
 
+pair<int,int> CodeThorn::parseCsvIntPair(string toParse) {
+  vector<string> values; 
+  boost::split(values, toParse, boost::is_any_of(",")); 
+  ROSE_ASSERT(values.size() == 2); // needs to be a pair
+  int valOne = boost::lexical_cast<int>(values[0]);
+  int valTwo = boost::lexical_cast<int>(values[1]);
+  return pair<int,int>(valOne, valTwo);
+}
+
 string CodeThorn::color(string name) {
 #ifndef CT_IGNORE_COLORS_BOOLOPTIONS
   if(!boolOptions["colors"]) 
@@ -84,7 +102,7 @@ string CodeThorn::color(string name) {
       return c+"3"+int_to_string(i)+"m";
   }
   else
-    throw "Error: unknown color code.";
+    throw CodeThorn::Exception("Error: unknown color code.");
 }
 
 string CodeThorn::readableruntime(double timeInMilliSeconds) {

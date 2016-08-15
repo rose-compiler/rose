@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "rosePublicConfig.h"
 
+#include "AsmUnparser_compat.h"
 #include "BinaryDebugger.h"
 #include "BinaryLoader.h"
 #include "Diagnostics.h"
@@ -35,6 +36,13 @@ namespace Partitioner2 {
 void
 Engine::init() {
     rose::initialize(NULL);
+#if ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
+    static bool emitted = false;
+    if (!emitted) {
+        emitted = true;
+        mlog[WARN] <<"ROSE_PARTITIONER_EXPENSIVE_CHECKS is enabled\n";
+    }
+#endif
 }
 
 void
@@ -74,7 +82,7 @@ hasAnyCalleeReturn(const Partitioner &partitioner, const ControlFlowGraph::Const
         return boost::logic::indeterminate;
     return false;
 }
-    
+
 // Increment the address as far as possible while avoiding overflow.
 static rose_addr_t
 incrementAddress(rose_addr_t va, rose_addr_t amount, rose_addr_t maxaddr) {
@@ -147,18 +155,22 @@ Engine::loaderSwitches() {
               .argument("state", enumParser<MemoryDataAdjustment>(settings_.loader.memoryDataAdjustment)
                         ->with("constant", DATA_IS_CONSTANT)
                         ->with("initialized", DATA_IS_INITIALIZED)
-                        ->with("default", DATA_NO_CHANGE))
+                        ->with("no-change", DATA_NO_CHANGE))
               .doc("Globally adjusts the memory map to influence how the partitioner treats reads from concrete memory "
                    "addresses.  The values for @v{state} are one of these words:"
+
                    "@named{constant}{Causes write access to be removed from all memory segments and the partitioner treats "
                    "memory reads as returning a concrete value." +
                    std::string(DATA_IS_CONSTANT==settings_.loader.memoryDataAdjustment?" This is the default.":"") + "}"
+
                    "@named{initialized}{Causes the initialized bit to be added to all memory segments and the partitioner "
                    "treats reads from such addresses to return a concrete value, plus if the address is writable, "
                    "indeterminate values." +
                    std::string(DATA_IS_INITIALIZED==settings_.loader.memoryDataAdjustment?" This is the default.":"") + "}"
-                   "@named{default}{Causes the engine to not change data access bits for memory." +
+
+                   "@named{no-change}{Causes the engine to not change data access bits for memory." +
                    std::string(DATA_NO_CHANGE==settings_.loader.memoryDataAdjustment?" This is the default.":"") + "}"
+
                    "One of the things influenced by these access flags is indirect jumps, like x86 \"jmp [@v{addr}]\". If "
                    "@v{addr} is constant memory, then the \"jmp\" has a single constant successor; if @v{addr} is "
                    "non-constant but initialized, then the \"jmp\" will have a single constant successor and indeterminate "
@@ -198,8 +210,9 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.usingSemantics)
               .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
                    "it can use slower but more accurate methods, such as symbolic semantics.  This switch enables use of "
-                   "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is " +
-                   std::string(settings_.partitioner.usingSemantics?"true":"false") + "."));
+                   "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is "
+                   "to " +
+                   std::string(settings_.partitioner.usingSemantics?"":"not ") + "use semantics."));
     sg.insert(Switch("no-use-semantics")
               .key("use-semantics")
               .intrinsicValue(false, settings_.partitioner.usingSemantics)
@@ -278,7 +291,7 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.findingThunks)
               .doc("Search for common thunk patterns in areas of executable memory that have not been previously "
                    "discovered to contain other functions.  When this switch is enabled, the function-searching callbacks "
-                   "include the patterns to match thunks.  This switch does not cause the thunk's instructions to be "
+                   "include patterns to match thunks.  This switch does not cause the thunk's instructions to be "
                    "detached as a separate function from the thunk's target function; that's handled by the "
                    "@s{split-thunks} switch.  The @s{no-find-thunks} switch turns thunk searching off. The default "
                    "is to " + std::string(settings_.partitioner.findingThunks ? "" : "not ") + "search for thunks."));
@@ -326,12 +339,25 @@ Engine::partitionerSwitches() {
     sg.insert(Switch("intra-function-data")
               .intrinsicValue(true, settings_.partitioner.findingIntraFunctionData)
               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
-                   "followed by the same function then add that region of memory to that function as a static data block."
-                   "The @s{no-intra-function-data} switch turns this feature off.  The default is " +
-                   std::string(settings_.partitioner.findingIntraFunctionData?"true":"false") + "."));
+                   "followed by the same function then add that region of memory to that function as a static data block. "
+                   "The @s{no-intra-function-data} switch turns this feature off.  The default is to " +
+                   std::string(settings_.partitioner.findingIntraFunctionData?"":"not ") + "perform this analysis."));
     sg.insert(Switch("no-intra-function-data")
               .key("intra-function-data")
               .intrinsicValue(false, settings_.partitioner.findingIntraFunctionData)
+              .hidden(true));
+
+    sg.insert(Switch("inter-function-calls")
+              .intrinsicValue(true, settings_.partitioner.findingInterFunctionCalls)
+              .doc("Near the end of processing look for function calls that occur in the executable regions between "
+                   "existing functions, and turn the call targets into functions. The analysis uses instruction semantics "
+                   "to find the call sites rather than looking for architecture-specific call instructions, and attempts "
+                   "to prune away things that are not legitimate calls. The @s{no-inter-function-calls} switch turns this "
+                   "feature off. The default is to " +
+                   std::string(settings_.partitioner.findingInterFunctionCalls?"":"not ") + "perform this analysis."));
+    sg.insert(Switch("no-inter-function-calls")
+              .key("inter-function-calls")
+              .intrinsicValue(false, settings_.partitioner.findingInterFunctionCalls)
               .hidden(true));
 
     sg.insert(Switch("data-functions")
@@ -380,7 +406,7 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.doingPostAnalysis)
               .doc("Run all enabled post-partitioning analysis functions.  For instance, calculate stack deltas for each "
                    "instruction, and may-return analysis for each function.  The individual analyses are enabled and "
-                   "disabled separately with other s{post-*} switches. Some of these analyses will only work if "
+                   "disabled separately with other @s{post-*} switches. Some of these analyses will only work if "
                    "instruction semantics are enabled (see @s{use-semantics}).  The @s{no-post-analysis} switch turns "
                    "this off, although analysis will still be performed where it is needed for partitioning.  The "
                    "default is to " + std::string(settings_.partitioner.doingPostAnalysis?"":"not ") +
@@ -432,11 +458,11 @@ Engine::partitionerSwitches() {
 
     sg.insert(Switch("post-calling-convention")
               .intrinsicValue(true, settings_.partitioner.doingPostCallingConvention)
-              .doc("Run the calling-convention analysis for each function. This relatively expensive analysis uses "
-                   "use-def, stack-delta, memory variable discovery, and data-flow to determine characteristics of the "
-                   "function and then matches it against a dictionary of calling conventions appropriate for the "
-                   "architecture.  The @s{no-post-calling-convention} disables this analysis. The default is that this "
-                   "analysis is " +
+              .doc("Run the calling-convention analysis for each function if post-partitioning analysis is enabled with the "
+                   "@s{post-analysis} switch. This relatively expensive analysis uses use-def, stack-delta, memory variable "
+                   "discovery, and data-flow to determine characteristics of the function and then matches it against a "
+                   "dictionary of calling conventions appropriate for the architecture.  The @s{no-post-calling-convention} "
+                   "disables this analysis. The default is that this analysis is " +
                    std::string(settings_.partitioner.doingPostCallingConvention?"enabled":"disabled") + "."));
     sg.insert(Switch("no-post-calling-convention")
               .key("post-calling-convention")
@@ -502,7 +528,7 @@ Engine::astConstructionSwitches() {
     sg.insert(Switch("ast-allow-empty-functions")
               .intrinsicValue(true, settings_.astConstruction.allowFunctionWithNoBasicBlocks)
               .doc("Allows creation of an AST that has functions with no instructions. This can happen, for instance, when "
-                   "an analysis indicated that a particular virtual address is the start of a function, but no memory is "
+                   "an analysis indicated that a particular virtual address is the start of a function but no memory is "
                    "mapped at that address. This is common for things like functions from shared libraries that have not "
                    "been linked in before the analysis starts.  The @s{no-ast-allow-empty-functions} will instead elide all "
                    "empty functions from the AST. The default is to " +
@@ -527,13 +553,21 @@ Engine::astConstructionSwitches() {
 
     sg.insert(Switch("ast-copy-instructions")
               .intrinsicValue(true, settings_.astConstruction.copyAllInstructions)
-              .doc("Casues all instructions to be deep-copied from the partitioner's instruction provider into the AST. "
+              .doc("Causes all instructions to be deep-copied from the partitioner's instruction provider into the AST. "
                    "Although this slows down AST construction and increases memory since SageIII nodes are not garbage "
-                   "collected, copy instructions ensures that the AST is a tree. Turning off the copying with the "
+                   "collected, copying instructions ensures that the AST is a tree. Turning off the copying with the "
                    "@s{no-ast-copy-instructions} switch will result in the AST being a lattice if the partitioner has "
                    "determined that two or more functions contain the same basic block, and therefore the same instructions. "
                    "The default is to " + std::string(settings_.astConstruction.copyAllInstructions ? "" : "not ") +
-                   "copy instructions."));
+                   "copy instructions.\n\n"
+
+                   "Note that within the partitioner data structures it's the basic blocks that are shared when two or "
+                   "more functions point to the same block, but within the AST, sharing is at the instruction "
+                   "(SgAsmInstruction) level. It was designed this way because it's common to store function-specific "
+                   "analysis results as attributes attached to basic blocks (SgAsmBlock nodes) in the AST and sharing at "
+                   "the block level would break those programs. Users that store analysis results by attaching them to "
+                   "partitioner basic blocks (Partitioner2::BasicBlock) should be aware that those blocks can be shared "
+                   "among functions."));
     sg.insert(Switch("no-ast-copy-instructions")
               .key("ast-copy-instructions")
               .intrinsicValue(false, settings_.astConstruction.copyAllInstructions)
@@ -770,7 +804,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             } else {
                 resource = fileName;
             }
-            
+
             // Parse and load the S-Record file
             if (resource.size()!=strlen(resource.c_str())) {
                 throw std::runtime_error("file name contains internal NUL characters: \"" +
@@ -905,7 +939,7 @@ Engine::createBarePartitioner() {
 
     // Should the partitioner favor list-based or map-based containers for semantic memory states?
     p.semanticMemoryParadigm(settings_.partitioner.semanticMemoryParadigm);
-            
+
     // Miscellaneous settings
     p.enableSymbolicSemantics(settings_.partitioner.usingSemantics);
     if (settings_.partitioner.followingGhostEdges)
@@ -920,9 +954,9 @@ Engine::createBarePartitioner() {
         p.basicBlockCallbacks().append(cb);
         p.attachFunction(Function::instance(settings_.partitioner.peScramblerDispatcherVa,
                                             p.addressName(settings_.partitioner.peScramblerDispatcherVa),
-                                            SgAsmFunction::FUNC_USERDEF)); 
+                                            SgAsmFunction::FUNC_USERDEF));
     }
-    
+
     return p;
 }
 
@@ -955,7 +989,7 @@ Engine::createTunedPartitioner() {
         p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
         return p;
     }
-    
+
     if (dynamic_cast<DisassemblerX86*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
@@ -1188,7 +1222,7 @@ Engine::makeImportFunctions(Partitioner &partitioner, SgAsmInterpretation *inter
         ModulesPe::rebaseImportAddressTables(partitioner, ModulesPe::getImportIndex(partitioner, interp));
         BOOST_FOREACH (const Function::Ptr &function, ModulesPe::findImportFunctions(partitioner, interp))
             insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
-    
+
         // ELF imports
         BOOST_FOREACH (const Function::Ptr &function, ModulesElf::findPltFunctions(partitioner, interp))
             insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
@@ -1330,7 +1364,7 @@ Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr
             readVa = incrementAddress(readVa, wordSize, maxaddr);
             continue;                                   // would overlap with existing instruction
         }
-        
+
         // All seems okay, so make a function there
         // FIXME[Robb P. Matzke 2014-12-08]: USERDEF is not the best, most descriptive reason, but it's what we have for now
         mlog[INFO] <<"possible code address " <<StringUtility::addrToString(targetVa)
@@ -1358,9 +1392,167 @@ Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) 
     return functions;
 }
 
+std::vector<Function::Ptr>
+Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t &startVa /*in,out*/) {
+    static const rose_addr_t MAX_ADDR(-1);
+    static const std::vector<Function::Ptr> NO_FUNCTIONS;
+    static const char *me = "makeFunctionFromInterFunctionCalls: ";
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<me <<"(startVa = " <<StringUtility::addrToString(startVa) <<")\n";
+
+    // Avoid creating large basic blocks since this can drastically slow down instruction semantics. Large basic blocks are a
+    // real possibility here because we're likely to be interpreting data areas as code. We're not creating any permanent basic
+    // blocks in this analysis, so limiting the size here has no effect on which blocks are ultimately added to the control
+    // flow graph.  The smaller the limit, the more likely that a multi-instruction call will get split into two blocks and not
+    // detected. Multi-instruction calls are an obfuscation technique.
+    Sawyer::TemporaryCallback<BasicBlockCallback::Ptr>
+        tcb(partitioner.basicBlockCallbacks(), Modules::BasicBlockSizeLimiter::instance(20)); // arbitrary
+
+    while (AddressInterval unusedVas = partitioner.aum().nextUnused(startVa)) {
+
+        // The unused interval must have executable addresses, otherwise skip to the next unused interval.
+        AddressInterval unusedExecutableVas = map_.within(unusedVas).require(MemoryMap::EXECUTABLE).available();
+        if (unusedExecutableVas.isEmpty()) {
+            if (unusedVas.greatest() == MAX_ADDR) {
+                startVa = MAX_ADDR;
+                return NO_FUNCTIONS;
+            } else {
+                startVa = unusedVas.greatest() + 1;
+                continue;
+            }
+        }
+        startVa = unusedExecutableVas.least();
+        SAWYER_MESG(debug) <<me <<"examining interval " <<StringUtility::addrToString(unusedExecutableVas.least())
+                           <<".." <<StringUtility::addrToString(unusedExecutableVas.greatest()) <<"\n";
+
+        while (startVa <= unusedExecutableVas.greatest()) {
+            // Discover the basic block. It's possible that the partitioner already knows about this block location but just
+            // hasn't tried looking for its instructions yet.  I don't think this happens within the stock engine because it
+            // tries to recursively discover all basic blocks before it starts scanning things that might be data. But users
+            // might call this before they've processed all the outstanding placeholders.  Consider the following hypothetical
+            // user's partitioner state 
+            //          B1: push ebp            ; this block's insns are discovered
+            //              mov ebp, esp
+            //              test eax, eax
+            //              je B3
+            //          B2: inc eax             ; this block's insns are discovered
+            //          B3: ???                 ; this block is known, but no instructions discovered yet
+            //              ???                 ; arbitrary number of blocks
+            //          Bn: push ebp            ; this block's insns are discovered
+            //              mov ebp, esp
+            // To this analysis, the region (B3+1)..Bn is ambiguous. It could be code or data or some of both. Ideally, we
+            // should have used the recursive disassembly to process this area already. We'll just pretend it's all unknown and
+            // process it with a linear sweep like normal. This is probably fine for normal code since linear and recursive are
+            // mostly the same and we'll eventually discover the correct blocks anyway when we finally do the recursive (this
+            // analysis doesn't actually create blocks in this region -- it only looks for call sites).
+            BasicBlock::Ptr bb;
+            if (partitioner.placeholderExists(startVa)) {
+#if 0 // DEBUGGING [Robb P Matzke 2016-06-30]
+                if (mlog[WARN]) {
+                    mlog[WARN] <<me <<"va " <<StringUtility::addrToString(startVa) <<" has ambiguous disposition:\n";
+                    static bool emitted = false;
+                    if (!emitted) {
+                        mlog[WARN] <<"  it is a basic block (with undiscovered instructions),\n"
+                                   <<"  and it is absent from the address usage map\n"
+                                   <<"  this analysis should be called after all pending instructions are discovered\n";
+                        mlog[WARN] <<"  interval " <<StringUtility::addrToString(startVa)
+                                   <<".." <<StringUtility::addrToString(unusedExecutableVas.greatest())
+                                   <<" treated as unknown\n";
+                        mlog[WARN] <<"  the CFG contains "
+                                   <<StringUtility::plural(partitioner.undiscoveredVertex()->nInEdges(), "blocks")
+                                   <<" lacking instructions\n";
+                        emitted = true;
+                    }
+                }
+#endif
+            } else {
+                bb = partitioner.discoverBasicBlock(startVa);
+            }
+
+            // Increment the startVa to be the next unused address. We can't just use the fall-through address of the basic
+            // block we just discovered because it might not be contiguous in memory.  Watch out for overflow since it's
+            // possible that startVa is already the last address in the address space (in which case we leave startVa as is and
+            // return).
+            if (bb == NULL || bb->nInstructions() == 0) {
+                if (startVa == MAX_ADDR)
+                    return NO_FUNCTIONS;
+                ++startVa;
+                continue;
+            }
+            if (debug) {
+                debug <<me <<bb->printableName() <<"\n";
+                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                    debug <<me <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+            }
+            AddressIntervalSet bbVas = bb->insnAddresses();
+            if (!bbVas.leastNonExistent(bb->address()).assignTo(startVa)) // address of first hole, or following address
+                startVa = MAX_ADDR;                                       // bb ends at max address
+
+            // Basic block sanity checks because we're not sure that we're actually disassembling real code. The basic block
+            // should not overlap with anything (basic block, data block, function) already attached to the CFG.
+            if (partitioner.aum().anyExists(bbVas)) {
+                SAWYER_MESG(debug) <<me <<"candidate basic block overlaps with another; skipping\n";
+                continue;
+            }
+            if (!partitioner.basicBlockIsFunctionCall(bb)) {
+                SAWYER_MESG(debug) <<me <<"candidate basic block is not a function call; skipping\n";
+                continue;
+            }
+
+            // Look at the basic block successors to find those which appear to be function calls. Note that the edge types are
+            // probably all E_NORMAL at this point rather than E_FUNCTION_CALL, and the call-return edges are not yet present.
+            std::set<rose_addr_t> candidateFunctionVas; // entry addresses for potential new functions
+            BOOST_FOREACH (const BasicBlock::Successor &succ, partitioner.basicBlockSuccessors(bb)) {
+                if (succ.expr()->is_number() && succ.expr()->get_width() <= 64) {
+                    rose_addr_t targetVa = succ.expr()->get_number();
+                    if (targetVa == bb->fallthroughVa()) {
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" is fall-through\n";
+                    } else if (partitioner.functionExists(targetVa)) {
+                        // We already know about this function, so move on -- nothing to see here.
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" already exists\n";
+                    } else if (partitioner.aum().exists(targetVa)) {
+                        // Target is inside some basic block, data block, or function but not a function entry. The basic block
+                        // we just discovered is probably bogus, therefore ignore everything about it.
+                        candidateFunctionVas.clear();
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" has a conflict\n";
+                        break;
+                    } else if (!map_.at(targetVa).require(MemoryMap::EXECUTABLE).exists()) {
+                        // Target is in an unmapped area or is not executable. The basic block we just discovered is probably
+                        // bogus, therefore ignore everything about it.
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" not executable\n";
+                        candidateFunctionVas.clear();
+                        break;
+                    } else {
+                        // Looks good.
+                        candidateFunctionVas.insert(targetVa);
+                    }
+                }
+            }
+
+            // Create new functions containing only the entry blocks. We'll discover the rest of their blocks later by
+            // recursively following their control flow.
+            if (!candidateFunctionVas.empty()) {
+                std::vector<Function::Ptr> newFunctions;
+                BOOST_FOREACH (rose_addr_t functionVa, candidateFunctionVas) {
+                    Function::Ptr newFunction = Function::instance(functionVa, SgAsmFunction::FUNC_CALL_INSN);
+                    newFunctions.push_back(partitioner.attachOrMergeFunction(newFunction));
+                    SAWYER_MESG(debug) <<me <<"created " <<newFunction->printableName() <<" from " <<bb->printableName() <<"\n";
+                }
+                return newFunctions;
+            }
+
+            // Avoid overflow or infinite loop
+            if (startVa == MAX_ADDR)
+                return NO_FUNCTIONS;
+        }
+    }
+    return NO_FUNCTIONS;
+}
+
 void
 Engine::discoverFunctions(Partitioner &partitioner) {
     rose_addr_t nextPrologueVa = 0;                     // where to search for function prologues
+    rose_addr_t nextInterFunctionCallVa = 0;            // where to search for inter-function call instructions
     rose_addr_t nextReadAddr = 0;                       // where to look for read-only function addresses
 
     while (1) {
@@ -1375,6 +1567,14 @@ Engine::discoverFunctions(Partitioner &partitioner) {
             continue;
         }
 
+        // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics
+        // to find calls to functions that we don't know about yet.
+        if (settings_.partitioner.findingInterFunctionCalls) {
+            newFunctions = makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);
+            if (!newFunctions.empty())
+                continue;
+        }
+
         // Try looking for a function address mentioned in read-only memory
         if (settings_.partitioner.findingDataFunctionPointers) {
             if (Function::Ptr function = makeNextDataReferencedFunction(partitioner, nextReadAddr /*in,out*/)) {
@@ -1382,7 +1582,7 @@ Engine::discoverFunctions(Partitioner &partitioner) {
                 continue;
             }
         }
-        
+
         // Nothing more to do
         break;
     }
@@ -1412,7 +1612,7 @@ Engine::attachDeadCodeToFunction(Partitioner &partitioner, const Function::Ptr &
                 retval.insert(ghost);
             }
         }
-        
+
         // If we're about to do more iterations then we should recursively discover instructions for pending basic blocks. Once
         // we've done that we should traverse the function's CFG to see if some of those new basic blocks are reachable and
         // should also be attached to the function.
@@ -1723,7 +1923,7 @@ Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner &partitioner
         pending.insert(va);
     finalCallReturn_.clear();
     processedCallReturn_.clear();
-    
+
     std::vector<bool> seen(partitioner.cfg().nVertices(), false);
     while (!pending.empty()) {
         rose_addr_t startVa = *pending.begin();

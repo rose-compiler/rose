@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # This list is now copied to C_TESTCODES_REQUIRED_TO_VERIFY, Liao 3/9/2016
 # the code which can be parallelized or confirmed as not parallelizable now
+#null_for_test.c  TODO Liao 6/9/2016
 C_TESTCODES_REQUIRED_TO_PASS = \
 accumulateForce.c \
 anti_dep.c \
@@ -40,6 +41,7 @@ scalar_output.c \
 scalar_privatization.c \
 scalar_true.c \
 shared.c \
+struct.c \
 plusPlusOp.c \
 true_dep.c \
 true_dep_2.c \
@@ -72,7 +74,8 @@ class_member.C \
 ifstmt.C \
 iterator2.C \
 iteratorloop.C \
-test20100223.C 
+test20100223.C \
+Hydro_applyVelocityBC.C
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet

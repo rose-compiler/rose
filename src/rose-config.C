@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 // The following symbols should be defined on our compile command line:
@@ -33,13 +34,14 @@ enum Mode {
 struct Config {
     const char *cxx;                                    // C++ compiler command
     const char *cppflags;                               // C preprocessor switches
-    const char *cflags;                                 // C++ compiling switches excluding preprocessor switches
+    const char *cflags;                                 // C compiling switches excluding preprocessor switches
+    const char *cxxflags;                               // C++ compiling switches excluding preprocessor switches
     const char *ldflags;                                // Loader/linker switches
 };
 
 static Config configs[] = {
-    { CXX, BUILD_CPPFLAGS,     CFLAGS, BUILD_LDFLAGS     },
-    { CXX, INSTALLED_CPPFLAGS, CFLAGS, INSTALLED_LDFLAGS }
+    { CXX, BUILD_CPPFLAGS,     CFLAGS, CXXFLAGS, BUILD_LDFLAGS     },
+    { CXX, INSTALLED_CPPFLAGS, CFLAGS, CXXFLAGS, INSTALLED_LDFLAGS }
 };
 
 struct Settings {
@@ -62,12 +64,20 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
              "This command displays various configuration settings that are useful in user makefiles when compiling or "
              "linking a program that uses ROSE.  Two modes of compiling are available depending on the @s{mode} switch. "
              "The @v{variable} can be any of the following words:"
+
              "@named{cxx}{Displays the name of the C++ compiler.}"
+
              "@named{cppflags}{Shows the switches that should be passed to the C preprocessor as part of compile commands.}"
-             "@named{cflags}{Shows the compiler switches, excluding preprocessor switches, that should be used when compiling "
+
+             "@named{cflags}{Shows the C compiler switches, excluding preprocessor switches, that should be used when compiling "
              "a program that uses ROSE.}"
+
+             "@named{cxxflags}{Shows the C++ compiler switches, excluding preprocessor switches, that should be used when "
+             "compiling a program that uses ROSE.}"
+
              "@named{ldflags}{Shows the compiler switches that should be used when linking a program that uses the ROSE "
              "library.}"
+
              "@named{libdirs}{Shows a colon-separated list of library directories. These are the directories that might "
              "contain shared libraries.}");
 
@@ -157,6 +167,8 @@ main(int argc, char *argv[]) {
                 std::cout <<makefileEscape(config.cppflags) <<"\n";
             } else if (command == "cflags") {
                 std::cout <<makefileEscape(config.cflags) <<"\n";
+            } else if (command == "cxxflags") {
+                std::cout <<makefileEscape(config.cxxflags) <<"\n";
             } else if (command == "ldflags") {
                 std::cout <<makefileEscape(config.ldflags) <<"\n";
             } else if (command == "libdirs") {

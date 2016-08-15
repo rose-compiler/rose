@@ -2621,12 +2621,10 @@ Grammar::setUpBinaryInstructions()
     AsmNode.setFunctionSource("SOURCE_BINARY", "../Grammar/BinaryInstruction.code");
     AsmNode.setDataPrototype("AttachedPreprocessingInfoType*", "attachedPreprocessingInfoPtr", "= NULL",
                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, COPY_DATA);
-    AsmNode.setDataPrototype("AstAttributeMechanism*", "asmAttributeMechanism", "= NULL",
-                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
     AsmNode.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
     AsmNode.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
     AsmNode.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
     AsmNode.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
     AsmNode.setDataPrototype("AstAttributeMechanism*", "attributeMechanism", "= NULL",
-                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+                             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 }

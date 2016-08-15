@@ -14,7 +14,6 @@ using namespace br_stl;
 #include <boost/unordered_set.hpp>
 #endif
 
-//#include "/usr/include/valgrind/memcheck.h"
 //#define HSET_MAINTAINER_DEBUG_MODE
 
 /*! 
@@ -214,7 +213,7 @@ public:
         ++i) {
       mem+=(*i)->memorySize();
     }
-    return mem+sizeof(*this);
+    return mem+sizeof(*this); //TODO: check if sizeof is correct here
   }
 
  private:

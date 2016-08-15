@@ -12,6 +12,8 @@
 #include "AstAnnotator.h"
 #include "AType.h"
 #include "Miscellaneous2.h"
+#include "tgba/succiter.hh"
+#include "tgba/state.hh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
@@ -145,6 +147,47 @@ void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
 void Visualizer::setEStateSet(EStateSet* x) { estateSet=x; }
 void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 
+string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
+  // define a color scheme
+  int numColors = 16;
+  vector<string> colors(numColors);
+  colors[0] = "#6699FF";
+  colors[1] = "#7F66FF";
+  colors[2] = "#CC66FF";
+  colors[3] = "#FF66E6";
+
+  colors[4] = "#66E6FF";
+  colors[5] = "#2970FF";
+  colors[6] = "#004EEB";
+  colors[7] = "#FF6699";
+
+  colors[8] = "#66FFCC";
+  colors[9] = "#EB9C00";
+  colors[10] = "#FFB829";
+  colors[11] = "#FF7F66";
+
+  colors[12] = "#66FF7F";
+  colors[13] = "#99FF66";
+  colors[14] = "#E6FF66";
+  colors[15] = "#FFCC66";
+
+  stringstream ss;
+  ss << "digraph G {" << endl;
+  for (unsigned int i = 0; i < cfas.size(); ++i) {
+    Flow* cfa = cfas[i];
+    cfa->setDotOptionHeaderFooter(false);
+    cfa->setDotOptionDisplayLabel(true);
+    cfa->setDotOptionDisplayStmt(false);
+    cfa->setDotOptionEdgeAnnotationsOnly(true);
+    cfa->setDotFixedNodeColor(colors[(i % numColors)]);
+    ss << "  subgraph component" << i << " {" << endl;
+    ss << cfa->toDot(NULL);
+    ss << "  }" << endl;
+  }
+  ss << "}" << endl;
+  return ss.str();
+}
+
 string Visualizer::pstateToString(const PState* pstate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
@@ -246,16 +289,21 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   return s;
 }
 
-#if 0
-string Visualizer::transitionGraphToDot() {
+string Visualizer::parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph) {
+  EStateTransitionMap* outEdgesMap = parProTransitionGraph->getOutEdgesMap();
   stringstream ss;
-  for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-    ss <<"\""<<estateToString((*j).source)<<"\""<< "->" <<"\""<<estateToString((*j).target)<<"\"";
-    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
+  ss << "digraph G {" << endl;
+  for(EStateTransitionMap::iterator i=outEdgesMap->begin(); i!=outEdgesMap->end(); i++) {
+    const ParProEState* source = i->first;
+    ParProTransitions outEdges = i->second;
+    for (ParProTransitions::iterator k=outEdges.begin(); k!=outEdges.end(); k++) {
+      ss <<"  \""<<source->toString()<<"\""<< "->" <<"\""<<k->target->toString()<<"\"";
+      ss <<" [label=\""<<k->edge.getAnnotation()<<"\"]"<<";"<<endl;      
+    }
   }
+  ss << "}" << endl;
   return ss.str();
 }
-#endif
 
 string Visualizer::transitionGraphToDot() {
   tg1=true;
@@ -267,7 +315,7 @@ string Visualizer::transitionGraphToDot() {
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
     ss <<"\""<<estateToString((*j)->source)<<"\""<< "->" <<"\""<<estateToString((*j)->target)<<"\"";
-    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source));
+    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source()));
     ss <<"["<<(*j)->edge.typesToString()<<"]";
     ss <<"\" ";
     ss <<" color="<<(*j)->edge.color()<<" ";
@@ -517,6 +565,109 @@ string Visualizer::estateIdStringWithTemporaries(const EState* estate) {
   return ss.str();
 }
 
+string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
+					      ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
+					      bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings) {
+      stringstream dot;
+      map<string, string> clusters;
+      string racePointSizeStr = "0.5";
+      dot << "digraph G {" << endl;
+      for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
+          imap!=indexToReadWriteDataMap.end();
+          ++imap) {
+        IndexVector index=(*imap).first;
+	int parallel_loop_id = *(--index.end());
+      	dot << boost::lexical_cast<string>(parallel_loop_id)<<" [fontsize=16]" << endl;
+        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].readArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].readArrayAccessSet.end();++i) {
+	  string node_shape;
+	  string edge_color;
+	  // highlight data races
+	  if (readWriteRaces.find(*i) != readWriteRaces.end()) {
+	    if (prominentRaceWarnings) {
+	      node_shape = "[label = \"R/W race\", shape = doubleoctagon, style=filled, fillcolor = red, fontcolor=white, fontsize=18]";
+	      edge_color = "red";
+	    } else {
+	      node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      edge_color = "blue";	      
+	    }
+	  } else {
+	    if (arrayElementsAsPoints) {
+	      node_shape = "[label = \"\", shape = point]";
+	    } else {
+	      node_shape = "[shape = rectangle]";
+	    }
+            edge_color = "blue";
+	  }
+	  // record read edge
+          dot<<"  "<<"\""<<(*i).toStringNoSsaSubscript(variableIdMapping)<<"\""<<" -> "<<parallel_loop_id<<"[color="<<edge_color<<"]"<<endl;
+	  // add details for the node representing the array element access
+	  string varName = variableIdMapping->variableName(i->getVariable());
+	  map<string, string>::iterator iter = clusters.find(varName);
+	  if (iter != clusters.end()) {
+	    iter->second += "\"" + (*i).toStringNoSsaSubscript(variableIdMapping) + "\"" + node_shape + "\n";
+	  } else {
+	    string clusterstring;
+	    if (useClusters) {
+	      string clusterstring = "subgraph cluster_" + varName + " { \n";
+	    }
+	    clusterstring += "\"" + (*i).toStringNoSsaSubscript(variableIdMapping) + "\"" + node_shape + "\n";
+	    clusters[varName] = clusterstring;
+	  }
+        }
+        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].writeArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].writeArrayAccessSet.end();++i) {
+	  string node_shape;
+	  string edge_color;
+	  if (readWriteRaces.find(*i) != readWriteRaces.end()) {
+	    if (prominentRaceWarnings) {
+	      node_shape = "[label = \"R/W race\", shape = doubleoctagon, style=filled, fillcolor = red, fontcolor=white, fontsize=18]";
+	      edge_color = "red";
+	    } else {
+	      node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      edge_color = "\"#47A11D\"";	      
+	    }
+	  } else if (writeWriteRaces.find(*i) != writeWriteRaces.end()) {
+	    if (prominentRaceWarnings) {
+	      node_shape = "[label = \"W/W race\", shape = doubleoctagon, style=filled, fillcolor = red, fontcolor=white, fontsize=18]";
+	      edge_color = "red";
+	    } else {
+	      node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      edge_color = "\"#47A11D\"";	      
+	    }
+	  } else {
+	    if (arrayElementsAsPoints) {
+	      node_shape = "[label = \"\", shape = point]";
+	    } else {
+	      node_shape = "[shape = rectangle]";
+	    }
+	    edge_color = "\"#47A11D\"";
+	  }
+	  // record write edge
+          dot<<"  "<<parallel_loop_id<<" -> "<<"\""<<(*i).toStringNoSsaSubscript(variableIdMapping)<<"\""<<"[color="<<edge_color<<"]"<<endl;
+	  // add details for the node representing the array element access
+	  string varName = variableIdMapping->variableName(i->getVariable());
+	  map<string, string>::iterator iter = clusters.find(varName);
+	  if (iter != clusters.end()) {
+	    iter->second += "\"" + (*i).toStringNoSsaSubscript(variableIdMapping) + "\"" + node_shape + "\n";
+	  } else {
+	    string clusterstring;
+	    if (useClusters) {
+	      string clusterstring = "subgraph cluster_" + varName + " { \n";
+	    }
+	    clusterstring += "\"" + (*i).toStringNoSsaSubscript(variableIdMapping) + "\"" + node_shape + "\n";
+	    clusters[varName] = clusterstring;
+	  }
+        }
+      }
+      for (map<string, string>::iterator k = clusters.begin(); k !=clusters.end(); k++) {
+	if (useClusters) {
+	  (k->second) += "} \n";
+	}
+	dot << k->second << endl;
+      }
+      dot << "}" << endl;
+      return dot.str();
+ }
+
 string Visualizer::foldedTransitionGraphToDot() {
   tg2=true;
   stringstream ss;
@@ -550,6 +701,46 @@ string Visualizer::foldedTransitionGraphToDot() {
   }
   ss<<"}\n";
   tg2=false;
+  return ss.str();
+}
+
+struct spot_state_compare {
+  bool operator() (spot::state* const& lhs, spot::state* const& rhs) const {
+    if (lhs->compare(rhs) < 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+};
+
+string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
+  stringstream ss;
+  ss << "digraph G {" << endl;
+  spot::state* initState = tgba.get_init_state();
+  list<spot::state*> worklist;
+  set<spot::state*, spot_state_compare> added;
+  worklist.push_back(initState);
+  added.insert(initState);
+  while (!worklist.empty()) {
+    spot::state* next = worklist.front();
+    ss <<"  "<< "\""<<tgba.format_state(next)<<"\" [ label=\"\" ]" << endl;
+    worklist.pop_front();
+    spot::tgba_succ_iterator* outEdgesIter = tgba.succ_iter(next, NULL, NULL);
+    outEdgesIter->first();
+    while(!outEdgesIter->done()) {
+      spot::state* successor = outEdgesIter->current_state();
+      ss <<"  "<< "\""<<tgba.format_state(next)<<"\""<<" -> "<<"\""<<tgba.format_state(successor)<<"\"";
+      ss <<" [ label=\""<<tgba.transition_annotation(outEdgesIter)<<"\" ]" << endl;
+      if (added.find(successor) == added.end()) {
+	worklist.push_back(successor);
+	added.insert(successor);
+      }
+      outEdgesIter->next();
+    }
+    delete outEdgesIter;
+  }
+  ss << "}" << endl;
   return ss.str();
 }
 

@@ -13,6 +13,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
 using namespace rose::Diagnostics;
@@ -2933,13 +2934,20 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
        // if ( (printParen == true) && (currentFile->get_Fortran_only() == false) )
           if (printParen == true)
              {
-            // Make sure this is not an expresion list
-               ROSE_ASSERT (isSgExprListExp(expr) == NULL);
+               if(isSgMatrixExp(expr))
+                 {
+                   printParen = false;
+                 }
+               else
+                 {               
+                   // Make sure this is not an expresion list
+                   ROSE_ASSERT (isSgExprListExp(expr) == NULL);
 #if 0
-               curprint ("/* In unparseExpression(): output ( */ \n ");
+                   curprint ("/* In unparseExpression(): output ( */ \n ");
 #endif
-            // Output the left paren
-               curprint ("(");
+                   // Output the left paren
+                   curprint ("(");
+                 }
              }
 
        // DQ (10/7/2004): Definitions should never be unparsed within code generation for expressions
@@ -2979,6 +2987,12 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                     break;
                   }
 
+             case MATRIX_EXP:
+               {
+                 unparseMatrixExp(expr, info);
+                 break;
+               }
+                  
             // DQ (8/15/2007): This has been moved to the base class
                case EXPR_LIST: { unparseExprList(expr, info); break; }
 
@@ -5891,6 +5905,27 @@ UnparseLanguageIndependentConstructs::unparseComplexVal(SgExpression* expr, SgUn
    }
 
 
+void UnparseLanguageIndependentConstructs::unparseMatrixExp(SgExpression *expr, SgUnparse_Info& info)
+{
+  SgMatrixExp *matrix = isSgMatrixExp(expr);
+
+  SgExpressionPtrList::iterator i = matrix->get_expressions().begin();
+
+  curprint("[");
+  
+  for(; i != matrix->get_expressions().end(); ++i)
+    {
+      SgUnparse_Info newinfo(info);
+      newinfo.set_SkipBaseType();
+
+      unparseExpression(*i, newinfo);
+
+      curprint(";");
+    }
+
+  curprint("]");
+}
+
 void
 UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -7212,6 +7247,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgUnsignedLongLongIntVal: // return 0;
           case V_SgUnsignedLongVal:        // return 0;
           case V_SgComplexVal:             // return 0;
+          case V_SgMatrixExp:
                                      precedence_value = 0; break;
 
           case V_SgCAFCoExpression:        // return 16;

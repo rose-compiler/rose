@@ -21,12 +21,12 @@ include $(srcdir)/asmUnparser/Makefile_variables
 include $(srcdir)/unparser/JavaCodeGeneration/Makefile_variables
 include $(srcdir)/unparser/X10CodeGeneration/Makefile_variables
 
-if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-include $(srcdir)/unparser/MatlabCodeGeneration/Makefile_variables
-matlabCodeGenerationPath=$(srcdir)/unparser/MatlabCodeGeneration#
-else
-matlabCodeGenerationPath=
-endif
+# if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+# include $(srcdir)/unparser/MatlabCodeGeneration/Makefile_variables
+# matlabCodeGenerationPath=$(srcdir)/unparser/MatlabCodeGeneration#
+# else
+# matlabCodeGenerationPath=
+# endif
 
 unparserPath=$(srcdir)/unparser#
 cxxCodeGenerationPath=$(srcdir)/unparser/CxxCodeGeneration#

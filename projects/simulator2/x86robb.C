@@ -7,6 +7,8 @@
 #include "RSIM_Linux32.h"
 #include "RSIM_Adapter.h"
 
+using namespace rose;
+
 class MemoryTransactionTester: public RSIM_Callbacks::InsnCallback {
 public:
     rose_addr_t when;           // EIP value at which to trigger the test

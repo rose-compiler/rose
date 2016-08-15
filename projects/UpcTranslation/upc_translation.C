@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 namespace upcTranslation{

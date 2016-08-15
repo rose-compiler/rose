@@ -46,11 +46,15 @@
 #include <cmath>
 #include "assert.h"
 
+#include "FunctionIdMapping.h"
 // ROSE analyses
 #include "VariableRenaming.h"
 
 // temporary
 #include "IntervalTransferFunctions.h"
+
+#include "SprayException.h"
+#include "CodeThornException.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -66,6 +70,7 @@ bool option_generalanalysis=false;
 bool option_rose_rd_analysis=false;
 bool option_fi_constanalysis=false;
 const char* csvConstResultFileName=0;
+const char* csvAddressTakenResultFileName=0;
 bool option_rd_analysis=false;
 bool option_ud_analysis=false;
 bool option_lv_analysis=false;
@@ -74,6 +79,7 @@ bool option_check_static_array_bounds=false;
 bool option_at_analysis=false;
 bool option_trace=false;
 bool option_optimize_icfg=false;
+bool option_csv_stable=false;
 
 //boost::program_options::variables_map args;
 
@@ -164,6 +170,126 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
   }
 }
 
+// schroder3 (2016-07-05): Attaches the given comment to the preprocessing info of the given node. The comment
+//  is inserted without appending comment characters ("//", "/*", "*/") and should therefore contain these
+//  characters. The argument for the second parameter specifies whether the comment should be attached before or
+//  after the given node.
+void insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgLocatedNode* node) {
+  ROSE_ASSERT(posSpecifier==PreprocessingInfo::before || posSpecifier==PreprocessingInfo::after);
+  PreprocessingInfo* commentInfo =
+    new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment,
+                          comment,
+                          "user-generated",0, 0, 0,
+                          posSpecifier // e.g. PreprocessingInfo::before
+                          );
+  node->addToAttachedPreprocessingInfo(commentInfo);
+}
+
+// schroder3 (2016-07-12): Returns the mangled stable/portable scope of the given statement.
+//  FIXME: There are some places (see comment below) in the rose mangling which add the address
+//  of the AST node to the mangled name. Due to this, this function currently does not return
+//  a stable/portable mangled scope in all cases.
+string getScopeAsMangledStableString(SgLocatedNode* stmt) {
+  SgNode* parent = stmt;
+  // Go up in the AST and look for the closest scope of the given statement:
+  while((parent = parent->get_parent())) {
+    SgStatement* declScope = 0;
+    // Look for a FunctionParameterList or a ScopeStatement:
+    if(SgFunctionParameterList* functionParams = isSgFunctionParameterList(parent)) {
+      // Special case: Function parameter: The scope is
+      //  the corresponding function definition/declaration:
+      //  Function declaration is enough, because we only need the function
+      //  name and types to create the mangled scope.
+      declScope = isSgFunctionDeclaration(functionParams->get_parent());
+      ROSE_ASSERT(declScope);
+    }
+    else if(SgScopeStatement* scope = isSgScopeStatement(parent)) {
+      declScope = scope;
+    }
+
+    if(declScope) {
+      // Found the scope of the given statement.
+
+      // In theory it should work by using
+      //   return mangleQualifiersToString(declScope);
+      //  but there are the following problems in functions that get called by mangleQualifiersToString(...):
+      //   1) SgFunctionDeclaration::get_mangled_name() mangles every function with the name "main" (even
+      //      those that are not in the global scope) as
+      //       main_<address of the AST node>
+      //      .
+      //   2) SgTemplateArgument::get_mangled_name(...) adds the address of a AST node to the mangled
+      //      name if the template argument is a type and it's parent is a SgTemplateInstantiationDecl.
+      //  Especially because of the address we can not use this as a portable scope representation.
+      //
+      // Workaround for 1): Replace the name of every function definition/declaration that has the name "main" and that
+      //  is a direct or indirect scope parent of declScope by a temporary name that is different from "main".
+      //  Then use mangleQualifiersToString(...) to mangle the scope. Finally, replace occurrences of the
+      //  temporary name in the mangled-scope by "main".
+      //
+      // Workaround for 2): Currently none.
+
+      // Workaround for 1):
+      string tempName = string("(]"); // Something that does not appear in a function or operator name.
+      SgName tempSgName = SgName(tempName);
+      SgName mainSgName = SgName("main");
+      vector<SgFunctionDeclaration*> main_func_decls;
+      SgStatement* scopeParent = declScope;
+      // Collect all functions that have "main" as their name and replace their name
+      //  by the temporary name:
+      while((scopeParent = scopeParent->get_scope()) && !isSgGlobal(scopeParent)) {
+        SgFunctionDefinition* funcDef = isSgFunctionDefinition(scopeParent);
+        if(SgFunctionDeclaration* funcDecl = funcDef ? funcDef->get_declaration() :0) {
+          if(funcDecl->get_name() == tempSgName) {
+            // There is a function whose name contains tempName. The mangled scope
+            //  will probably be wrong:
+            throw SPRAY::Exception("Found function whose name contains the reserved text \"" + tempName + "\". "
+                                   "Mangling of scope is not possible.");
+          }
+          else if(funcDecl->get_name() == mainSgName) {
+            main_func_decls.push_back(funcDecl);
+            funcDecl->set_name(tempSgName);
+          }
+        }
+      }
+
+      // Create the mangled-scope:
+      string mangled_scope;
+      if(SgFunctionDeclaration* fundDecl = isSgFunctionDeclaration(declScope)) {
+        // Special case: A function decl node is not a scope statement:
+        mangled_scope = fundDecl->get_mangled_name();
+      }
+      else if(SgScopeStatement* scope = isSgScopeStatement(declScope)) {
+        mangled_scope = mangleQualifiersToString(scope);
+      }
+      else {
+        ROSE_ASSERT(false);
+      }
+
+      // Replace occurrences of the temporary name in the mangled-scope
+      //  by "main" and restore the previous name ("main") of the functions:
+      for(vector<SgFunctionDeclaration*>::const_iterator i = main_func_decls.begin();
+          i != main_func_decls.end(); ++i
+      ) {
+          (*i)->set_name(mainSgName);
+          size_t start = mangled_scope.find(tempName);
+          // TODO: Functions and local classes (and more?) are mangled as L0R, L1R, ... and not with their
+          //  scope. Because of that, there is no corresponding temporary name in
+          //  the mangled-scope sometimes:
+          if(start != string::npos) {
+            mangled_scope.replace(start, tempName.length(), string("main"));
+          }
+      }
+      if(mangled_scope.find(tempName) != string::npos) {
+        // There is a function whose name contains tempName. Because we abort above if there is such a function
+        //  this should not happen.
+        ROSE_ASSERT(false);
+      }
+      return mangled_scope;
+    }
+  }
+  return string("");
+}
+
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
 
   SPRAY::DFAnalysisBase::normalizeProgram(root);
@@ -185,12 +311,146 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
   if(option_at_analysis) {
     cout<<"STATUS: running address taken analysis."<<endl;
+    cout<<"STATUS: creating ICFG."<<endl;
+    // TODO: compute ICFG without creating an analysis!
+    SPRAY::IntervalAnalysis* analyzer=new SPRAY::IntervalAnalysis();
+    analyzer->initialize(root);
+    cout << "STATUS: computing variable and function mappings."<<endl;
     // compute variableId mappings
     VariableIdMapping variableIdMapping;
     variableIdMapping.computeVariableSymbolMapping(root);
-    SPRAY::FIPointerAnalysis fipa(&variableIdMapping,root);
+    // Compute function id mappings:
+    FunctionIdMapping functionIdMapping;
+    //functionIdMapping.computeFunctionSymbolMapping(root);
+    functionIdMapping.computeFunctionSymbolMapping(*(analyzer->getFlow()), *(analyzer->getCFAnalyzer()->getLabeler()));
+
+    cout << "STATUS: computing address taken sets."<<endl;
+    SPRAY::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
     fipa.initialize();
     fipa.run();
+
+    //cout << "STATUS: computed address taken sets:"<<endl;
+    //fipa.getFIPointerInfo()->printInfoSets();
+
+    bool createCsv = false;
+    ofstream addressTakenCsvFile;
+    if(csvAddressTakenResultFileName) {
+      std::string addressTakenCsvFileName = option_prefix;
+      addressTakenCsvFileName += csvAddressTakenResultFileName;
+      addressTakenCsvFile.open(addressTakenCsvFileName.c_str());
+      createCsv = true;
+    }
+
+    cout << "INFO: annotating declarations of address taken variables and functions."<<endl;
+
+    // Annotate declarations/definitions of variables from which the address was taken:
+    VariableIdSet addressTakenVariableIds = fipa.getAddressTakenVariables();
+    for(VariableIdSet::const_iterator idIter = addressTakenVariableIds.begin(); idIter != addressTakenVariableIds.end(); ++idIter) {
+      // Determine the variable declaration/definition:
+      SgLocatedNode* decl = variableIdMapping.getVariableDeclaration(*idIter);
+      if(!decl) {
+        // The current variable is presumably a function parameter: Try to get the initialized name:
+        SgVariableSymbol* varSymbol = isSgVariableSymbol(variableIdMapping.getSymbol(*idIter));
+        ROSE_ASSERT(varSymbol);
+        SgInitializedName* paramDecl = isSgInitializedName(varSymbol->get_declaration());
+        // We should not have a real variable declaration for the parameter:
+        ROSE_ASSERT(isSgFunctionParameterList(paramDecl->get_declaration()));
+
+        // Use the InitializedName:
+        decl = paramDecl;
+      }
+
+      if(decl) {
+        // Create the comment:
+        ostringstream commentStream;
+        commentStream << "/* Address of \"" << variableIdMapping.variableName(*idIter) << "\" is "
+                      << "presumably taken.*/";
+
+        // Annotate first declaration:
+        insertComment(commentStream.str(), PreprocessingInfo::before, decl);
+        // TODO: Annotate other declarations too!
+
+        // Annotate definition if available (e.g. not available in case of parameter):
+        if(SgDeclarationStatement* variableDeclaration = isSgDeclarationStatement(decl)) {
+          if(SgDeclarationStatement* definingDeclaration = variableDeclaration->get_definingDeclaration()) {
+            insertComment(commentStream.str(), PreprocessingInfo::before, definingDeclaration);
+          }
+        }
+
+        if(createCsv) {
+          // Write variable info to csv:
+          addressTakenCsvFile << VariableId::idKindIndicator << ","
+                              // The id of the variable (id codes are influenced by the used system headers
+                              //  and are therefore not stable/portable):
+                              << (option_csv_stable ? string("<unstable>") : int_to_string((*idIter).getIdCode())) << ","
+                              // Name of the variable:
+                              << variableIdMapping.variableName(*idIter) << ","
+
+                              // TODO: Mangled scope and type are currently not stable/portable
+                              //  (see comments in getScopeAsMangledStableString(...))
+                              // Mangled type of the variable (non-mangled type may contain commas (e.g. "A<int,bool>"):
+                              << (option_csv_stable ? string("<unstable>") : variableIdMapping.getType(*idIter)->get_mangled().getString()) << ","
+                              // Mangled scope of the variable:
+                              << (option_csv_stable ? string("<unstable>") : getScopeAsMangledStableString(decl)) << ","
+
+                              // Is the address taken? (currently only address taken variables are output to csv)
+                              << "1" << endl;
+        }
+      }
+      else {
+        cout << "ERROR: No declaration for " << variableIdMapping.uniqueShortVariableName(*idIter) << " available." << endl;
+        ROSE_ASSERT(false);
+      }
+    }
+
+    // Annotate declarations and definitions of functions from which the address was taken:
+    FunctionIdSet addressTakenFunctionIds = fipa.getAddressTakenFunctions();
+    for(FunctionIdSet::const_iterator idIter = addressTakenFunctionIds.begin(); idIter != addressTakenFunctionIds.end(); ++idIter) {
+
+      if(SgFunctionDeclaration* decl = functionIdMapping.getFunctionDeclaration(*idIter)) {
+        // Create the comment:
+        ostringstream commentStream;
+        commentStream << "/* Address of \"" << functionIdMapping.getFunctionNameFromFunctionId(*idIter) << "(...)\" is "
+                      << "presumably taken.*/";
+
+        // Annotate first declaration:
+        insertComment(commentStream.str(), PreprocessingInfo::before, decl);
+        // TODO: Annotate other declarations too!
+
+        // Annotate definition if available:
+        if(SgDeclarationStatement* definingDeclaration = decl->get_definingDeclaration()) {
+          insertComment(commentStream.str(), PreprocessingInfo::before, definingDeclaration);
+        }
+
+        if(createCsv) {
+          addressTakenCsvFile << FunctionId::idKindIndicator << ","
+                              // The id of the function (id codes are influenced by the used system headers
+                              //  and are therefore not stable/portable):
+                              << (option_csv_stable ? string("<unstable>") : int_to_string((*idIter).getIdCode())) << ","
+                              // Name of the function:
+                              << functionIdMapping.getFunctionNameFromFunctionId(*idIter) << ","
+
+                              // TODO: Mangled scope and type are currently not stable/portable
+                              //  (see comments in getScopeAsMangledStableString(...))
+                              // Mangled type of the function (non-mangled type may contain commas (e.g. "void (A<int,bool>)"):
+                              << (option_csv_stable ? string("<unstable>") : functionIdMapping.getTypeFromFunctionId(*idIter)->get_mangled().getString()) << ","
+                              // Mangled scope of the function:
+                              << (option_csv_stable ? string("<unstable>") :getScopeAsMangledStableString(decl)) << ","
+
+                              // Is the address taken? (currently only address taken functions are output to csv)
+                              << "1" << endl;
+        }
+      }
+      else {
+        cout << "ERROR: No declaration for " << functionIdMapping.getUniqueShortNameFromFunctionId(*idIter) << " available." << endl;
+        ROSE_ASSERT(false);
+      }
+    }
+
+    if(createCsv) {
+      addressTakenCsvFile.close();
+    }
+
 #if 0
     VariableIdSet vidset=fipa.getModByPointer();
     cout<<"mod-set: "<<SPRAY::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
@@ -204,7 +464,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     intervalAnalyzer->initialize(root);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
-    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(),root);
+    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
     fipa->initialize();
     fipa->run();
     intervalAnalyzer->setPointerAnalysis(fipa);
@@ -396,6 +656,7 @@ int main(int argc, char* argv[]) {
       ("lv-analysis", "perform live variables analysis.")
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
+      ("csv-at-analysis",po::value< string >(), "generate csv-file [arg] with address-taken analysis data.")
       ("icfg-dot", "generates the ICFG as dot file.")
       ("optimize-icfg", "prunes conditions with empty blocks, block begin, and block end icfg nodes.")
       ("no-optmize-icfg", "does not optimize icfg.")
@@ -406,6 +667,7 @@ int main(int argc, char* argv[]) {
       ("print-varid-mapping-array", "prints variableIdMapping with array element varids.")
       ("print-label-mapping", "prints mapping of labels to statements")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
+      ("csv-stable", "do not output csv data that is not stable/portable across environments.")
       ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -471,11 +733,19 @@ int main(int argc, char* argv[]) {
     if(args.count("at-analysis")) {
       option_at_analysis=true;
     }
+    if (args.count("csv-at-analysis")) {
+      csvAddressTakenResultFileName=args["csv-at-analysis"].as<string>().c_str();
+      option_at_analysis=true;
+    }
+    if (args.count("csv-stable")) {
+      option_csv_stable=true;
+    }
     // clean up string-options in argv
     for (int i=1; i<argc; ++i) {
       if (string(argv[i]) == "--prefix" 
-          || string(argv[i]) == "--csv-const-result"
-          ) {
+       || string(argv[i]) == "--csv-fi-constanalysis"
+       || string(argv[i]) == "--csv-at-analysis"
+      ) {
         // do not confuse ROSE frontend
         argv[i] = strdup("");
         assert(i+1<argc);
@@ -545,6 +815,15 @@ int main(int argc, char* argv[]) {
   cout<< "STATUS: finished."<<endl;
 
   // main function try-catch
+  } catch(CodeThorn::Exception& e) {
+    cerr << "CodeThorn::Exception raised: " << e.what() << endl;
+    return 1;
+  } catch(SPRAY::Exception& e) {
+    cerr << "Spray::Exception raised: " << e.what() << endl;
+    return 1;
+  } catch(std::exception& e) {
+    cerr << "std::exception raised: " << e.what() << endl;
+    return 1;
   } catch(char* str) {
     cerr << "*Exception raised: " << str << endl;
     return 1;

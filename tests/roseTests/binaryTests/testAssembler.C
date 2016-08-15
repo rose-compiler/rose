@@ -6,6 +6,7 @@
 
 #include "rose.h"
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 
 /* Collects all instructions from all basic blocks into a map by instruction address. */

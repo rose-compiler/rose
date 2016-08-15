@@ -1,9 +1,7 @@
 #ifndef FLOW_H
 #define FLOW_H
 
-#include <boost/graph/adjacency_list.hpp> 
-#include <boost/graph/graphviz.hpp>
-using namespace boost; 
+#define USE_SAWYER_GRAPH
 
 #include "SgNodeHelper.h"
 #include "Labeler.h"
@@ -17,6 +15,16 @@ namespace SPRAY {
   class Edge;
   typedef std::set<Edge> EdgeSet;
   typedef std::set<EdgeType> EdgeTypeSet;
+  
+#ifdef USE_SAWYER_GRAPH
+  struct EdgeData {
+    EdgeData(EdgeTypeSet t, std::string a) : edgeTypes(t), annotation(a) {} 
+    EdgeTypeSet edgeTypes;
+    std::string annotation;
+  };
+
+  typedef Sawyer::Container::Graph<Label, EdgeData, Label> SawyerCfg;  
+#endif
 
   /*! 
    * \author Markus Schordan
@@ -32,10 +40,9 @@ namespace SPRAY {
     std::string toStringNoType() const;
     std::string toDotColored() const;
     std::string toDotFixedColor(std::string) const;
+    std::string toDotAnnotationOnly() const; 
     std::string typesToString() const;
     static std::string typeToString(EdgeType et);
-    Label source;
-    Label target;
     bool isType(EdgeType et) const;
     void addType(EdgeType et);
     void addTypes(std::set<EdgeType> ets);
@@ -45,9 +52,16 @@ namespace SPRAY {
     std::string color() const;
     std::string dotEdgeStyle() const;
     long hash() const;
+    Label source() const { return _source; }
+    Label target() const { return _target; }
     EdgeTypeSet getTypes() const { return _types; }
+    std::string getAnnotation() const { return _annotation; }
+    void setAnnotation(std::string annotation) { _annotation = annotation;}
   private:
+    Label _source;
+    Label _target;
     EdgeTypeSet _types;
+    std::string _annotation;
   };
   
   bool operator==(const Edge& e1, const Edge& e2);
@@ -59,17 +73,44 @@ namespace SPRAY {
    * \date 2012.
    */
 
-  class Flow : public std::set<Edge> {
+  class Flow {
   public:  
+#ifdef USE_SAWYER_GRAPH
+    class iterator : public SawyerCfg::EdgeIterator {
+    public: 
+      iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
+      Edge operator*();
+      iterator& operator++() { SawyerCfg::EdgeIterator::operator++(); return *this; }
+      iterator operator++(int);
+      EdgeTypeSet getTypes();
+      std::string getAnnotation();
+      Label source();
+      Label target();
+    private:
+      Edge* operator->();
+    };
+#else
+    typedef std::set<Edge>::iterator iterator;
+#endif
     Flow();
+    iterator begin();
+    iterator end();
     Flow operator+(Flow& s2);
     Flow& operator+=(Flow& s2);
+    std::pair<Flow::iterator, bool> insert(Edge e);
+    Flow::iterator find(Edge e);
+    bool contains(Edge e);
+    bool contains(Label l);
+    void erase(Flow::iterator iter);
+    size_t erase(Edge e);
+    size_t size();
     LabelSet nodeLabels();
     LabelSet sourceLabels();
     LabelSet targetLabels();
     LabelSet pred(Label label);
     LabelSet succ(Label label);
     LabelSet reachableNodes(Label start);
+    std::set<std::string> getAllAnnotations();
 
     //LabelSet reachableNodesOnPath(Label start, Label target);
     /* computes all nodes which are reachable in the graph from the start node. A path is terminated by either the target node 
@@ -80,12 +121,20 @@ namespace SPRAY {
     
     Flow inEdges(Label label);
     Flow outEdges(Label label);
+#ifdef USE_SAWYER_GRAPH
+    boost::iterator_range<Flow::iterator> inEdgesIterator(Label label);
+    boost::iterator_range<Flow::iterator> outEdgesIterator(Label label);
+#endif
     Flow edgesOfType(EdgeType edgeType);
     Flow outEdgesOfType(Label label, EdgeType edgeType);
+    Label getStartLabel() { return _startLabel; }
+    void setStartLabel(Label label) { _startLabel = label; }
     void setDotOptionDisplayLabel(bool opt);
     void setDotOptionDisplayStmt(bool opt);
+    void setDotOptionEdgeAnnotationsOnly(bool opt);
     void setDotOptionFixedColor(bool opt);
     void setDotFixedColor(std::string color);
+    void setDotFixedNodeColor(std::string color);
     void setDotOptionHeaderFooter(bool opt);
     std::string toDot(Labeler *labeler);
     void setTextOptionPrintType(bool opt);
@@ -96,12 +145,6 @@ namespace SPRAY {
     std::size_t deleteEdges(Flow& flow);
     void establishBoostGraph();
     
-    //Define the graph using those classes
-    typedef adjacency_list<listS, vecS, directedS, Label, std::set<EdgeType> > FlowGraph;
-    //Some typedefs for simplicity
-    typedef graph_traits<FlowGraph>::vertex_descriptor vertex_t;
-    typedef graph_traits<FlowGraph>::edge_descriptor edge_t;
-    void boostify();
     //! inverts all edges in the graph. The root node is updated. This operation is only successful if
     //! the original graph had exactly one final node (which becomes the start node of the new graph).
     SPRAY::Flow reverseFlow();
@@ -109,13 +152,18 @@ namespace SPRAY {
   private:
     bool _dotOptionDisplayLabel;
     bool _dotOptionDisplayStmt;
+    bool _dotOptionEdgeAnnotationsOnly;
     bool _stringNoType;
     bool _dotOptionFixedColor;
     std::string _fixedColor;
+    std::string _fixedNodeColor;
     bool _dotOptionHeaderFooter;
-    bool _boostified;
-    Sawyer::Container::Graph< Label, EdgeType>  _SawyerflowGraph;
-    FlowGraph _flowGraph;
+    Label _startLabel;
+#ifdef USE_SAWYER_GRAPH
+    SawyerCfg  _sawyerFlowGraph;
+#else
+    std::set<Edge> _edgeSet;
+#endif
   };
   
   class InterEdge {

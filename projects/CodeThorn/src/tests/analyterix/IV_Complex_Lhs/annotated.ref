@@ -1,0 +1,39 @@
+
+int &forward(int &value)
+// 0 iv-analysis-in : bot
+{
+// 3 iv-analysis-in : bot
+  return value;
+// 3 iv-analysis-out: bot
+}
+// 0 iv-analysis-out: bot
+
+int main()
+// 4 iv-analysis-in : {}
+{
+// 7 iv-analysis-in : {}
+  int i = 4;
+// 7 iv-analysis-out: {i->[4,4]}
+// 8 iv-analysis-in : {i->[4,4]}
+  int m = 3;
+// 8 iv-analysis-out: {i->[4,4], m->[3,3]}
+// 9 iv-analysis-in : {i->[4,4], m->[3,3]}
+  m = 6;
+// 9 iv-analysis-out: {i->[4,4], m->[6,6]}
+// <=> m = 5
+// 10 iv-analysis-in : {i->[4,4], m->[6,6]}
+  ((i , m)) = 5;
+// 10 iv-analysis-out: {i->[4,4], m->[5,5]}
+// <=> i = 7
+// 11 iv-analysis-in : {i->[4,4], m->[5,5]}
+  (i < 10?i : m) = 7;
+// 11 iv-analysis-out: {i->[7,7], m->[5,5]}
+// 12 iv-analysis-in : {i->[7,7], m->[5,5]}
+  int k = 2;
+// 12 iv-analysis-out: {i->[7,7], m->[5,5], k->[2,2]}
+// <=> k = 9
+// 13 iv-analysis-in : {i->[7,7], m->[5,5], k->[2,2]}
+  forward(k) = 9;
+// 13 iv-analysis-out: {i->[7,7], m->[5,5], k->[9,9]}
+}
+// 4 iv-analysis-out: bot
