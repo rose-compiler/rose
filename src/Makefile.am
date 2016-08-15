@@ -187,7 +187,7 @@ endif
 
 # Matzke (8/11/2016) I think "--version" is always supported now regardless of which frontends are compiled
 check-trivial-program: testSharedRoseLib$(EXEEXT) check-boost-linkage
-	@echo "  TEST     whether a trivial ROSE program runs"
+	@echo "  TEST     whether a trivial ROSE program runs [$@]"
 	${AM_V_at}if ! ./testSharedRoseLib$(EXEEXT) --version; then					\
 	  echo "error: You cannot run a program linked with ROSE. Please be sure that your" >&2;	\
 	  echo "error: LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the" >&2;	\
@@ -196,7 +196,7 @@ check-trivial-program: testSharedRoseLib$(EXEEXT) check-boost-linkage
 	fi
 
 check-boost-linkage: testSharedRoseLib$(EXEEXT)
-	@echo "  TEST     boost shared linkage"
+	@echo "  TEST     boost shared linkage [$@]"
 	${AM_V_at}$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
 
 .PHONY: check-trivial-program check-boost-linkage
