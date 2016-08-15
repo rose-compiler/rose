@@ -313,14 +313,14 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
 
   // Make the file name different each time a new set of transformation strings are compiled
      static int fileNumber = 1;
-     std::string numberString   = StringUtility::numberToString(fileNumber++);
+     std::string numberString   = rose::StringUtility::numberToString(fileNumber++);
      //std::string fileNameString = "rose_transformation_" + currentFileName + numberString + ".C";
      std::string fileNameString = "rose_transformation_" + numberString + "_" + currentFileNameWithSuffix;
 
   // For now - write the string representing the file containing the strings representing the
   // transformation out to a file Later we can try to avoid the intermediate file generation (but
   // for now this helps us debug the whole transformation specification mechanism).
-     StringUtility::writeFile(
+     rose::StringUtility::writeFile(
           /* string containing transformation strings */ finalSourceCodeString.c_str(),
        // /* filename */ "rose_transformation.C",
           /* filename */ fileNameString.c_str(),
@@ -464,13 +464,13 @@ MidLevelRewrite<ASTNodeCollection>::postponeMacroExpansion ( std::string macroCa
      static int counter = 0;
 
   // std::string prefix = "char* rose_macro_declaration_" + StringUtility::numberToString(counter) + " = \"ROSE-TRANSFORMATION-MACRO:";
-     std::string prefix = "char* rose_macro_declaration_" + StringUtility::numberToString(counter) + " = \"ROSE-MACRO-CALL:";
+     std::string prefix = "char* rose_macro_declaration_" + rose::StringUtility::numberToString(counter) + " = \"ROSE-MACRO-CALL:";
      std::string suffix = "\";";
 
   // Fix quoted strings to escape all quotes (escaped quotes are unescaped in
   // the unparser (the other end))
   // string returnString = prefix + macroCall + suffix;
-     std::string processedInputString = StringUtility::copyEdit (macroCall,"\"","\\\"");
+     std::string processedInputString = rose::StringUtility::copyEdit (macroCall,"\"","\\\"");
      std::string returnString = prefix + processedInputString + suffix;
 
   // printf ("In postponeMacroExpansion(): returnString = %s \n",returnString.c_str());

@@ -116,6 +116,7 @@ AstNodePtr AstInterface::GetFunctionDefinition( const AstNodePtr &n, std::string
 
 std::string get_type_name( SgType* t);
 using namespace std;
+using namespace rose;
 
 // Removing the leading "::" from a qualified name
 string StripGlobalQualifier(string name)

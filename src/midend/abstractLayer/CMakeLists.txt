@@ -1,5 +1,6 @@
 
 add_library(abstractLayer OBJECT
+  SprayException.h
   AstAnnotator.C
   CPAstAttributeInterface.C
   DFAstAttribute.C

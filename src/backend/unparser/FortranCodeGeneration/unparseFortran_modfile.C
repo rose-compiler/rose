@@ -4,6 +4,7 @@
 #include "unparseFortran_modfile.h"
 
 using namespace std;
+using namespace rose;
 
 string 
 get_rmod_dir(SgFile* sfile)

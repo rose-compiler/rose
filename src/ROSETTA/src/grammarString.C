@@ -4,11 +4,13 @@
 
 #include "grammarString.h"
 #include "AstNodeClass.h"
-#include "string_functions.h"
+#include "StringUtility.h"
+#include "FileUtility.h"
 #include <string>
 #include <sstream>
 
 using namespace std;
+using namespace rose;
 
 // ################################################################
 // #            GrammarString Member Functions                    #

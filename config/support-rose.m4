@@ -1727,6 +1727,7 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 AC_CONFIG_FILES([
 stamp-h
 Makefile
+bin/Makefile
 config/Makefile
 src/Makefile
 src/util/Makefile
@@ -2129,6 +2130,9 @@ projects/TileK/doc/tilek-rtl-opencl.doxy
 projects/TileK/doc/tilek-cuda.doxy
 projects/TileK/doc/tilek-rtl-cuda.doxy
 tests/Makefile
+tests/UnitTests/Makefile
+tests/UnitTests/Rose/Makefile
+tests/UnitTests/Rose/SageBuilder/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile

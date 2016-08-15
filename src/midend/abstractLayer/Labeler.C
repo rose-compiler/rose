@@ -3,6 +3,7 @@
  *************************************************************/
 
 #include "sage3basic.h"
+#include "SprayException.h"
 
 #include "Labeler.h"
 #include "SgNodeHelper.h"
@@ -158,8 +159,7 @@ string LabelProperty::labelTypeToString(LabelType lt) {
   case LABEL_BLOCKEND: return "blockend";
   case LABEL_EMPTY_STMT: return "emptystmt";
   default:
-    cerr<<"Error: unknown label type."<<endl;
-    exit(1);
+    throw SPRAY::Exception("Error: unknown label type.");
   }
 }
 
@@ -288,7 +288,18 @@ void Labeler::createLabels(SgNode* root) {
         }
       }
     }
-    if(isSgExprStatement(*i)||isSgReturnStmt(*i)||isSgVariableDeclaration(*i))
+    // schroder3 (2016-07-12): We can not skip the children of a variable declaration
+    //  because there might be a member function definition inside the variable declaration.
+    //  Example:
+    //   int main() {
+    //     class A {
+    //      public:
+    //       void mf() {
+    //         int i = 2;
+    //       }
+    //     } a; // Var decl
+    //   }
+    if(isSgExprStatement(*i)||isSgReturnStmt(*i)/*||isSgVariableDeclaration(*i)*/)
       i.skipChildrenOnForward();
   }
   std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
@@ -302,10 +313,17 @@ string Labeler::labelToString(Label lab) {
 }
 
 SgNode* Labeler::getNode(Label label) {
-  if(label.getId()>=mappingLabelToLabelProperty.size() || label==Label()) {
-    cerr << "Error: mapping size: "<<mappingLabelToLabelProperty.size();
-    cerr << " getNode: label"<<label<<" => 0."<<endl;
-    exit(1);
+  if(label.getId()>=mappingLabelToLabelProperty.size()) {
+    stringstream ss;
+    ss <<"[ "
+       << label.getId()
+       << " >= "
+       << mappingLabelToLabelProperty.size()
+       << " ]";
+    string errorInfo=ss.str();
+    throw SPRAY::Exception("Labeler: getNode: label id out of bounds "+errorInfo);
+  } else if(label==Label()) {
+    throw SPRAY::Exception("Labeler: getNode: invalid label id");
   }
   return mappingLabelToLabelProperty[label.getId()].getNode();
 }
@@ -354,7 +372,7 @@ Label Labeler::getLabel(SgNode* node) {
     computeNodeToLabelMapping(); // sets _isValidMappingNodeToLabel to true.
     return mappingNodeToLabel[node];
   }
-  throw "Error: internal error getLabel.";
+  throw SPRAY::Exception("Error: internal error getLabel.");
 }
 
 long Labeler::numberOfLabels() {

@@ -18,7 +18,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
 SUBDIRS = libltdl config src
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
-   SUBDIRS += tests
+#   SUBDIRS += tests
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
@@ -58,6 +58,8 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
+	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
+	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif
