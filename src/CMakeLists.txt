@@ -97,6 +97,7 @@ add_subdirectory(backend)
 
 
 ########### next target ###############
+if (enable-binary-analysis)
 set(rose_LIB_SRCS
   dummyCppFileForLibrose.C
   ${ROSETTA_SRC}
@@ -133,7 +134,43 @@ set(rose_LIB_SRCS
   $<TARGET_OBJECTS:astRewriteMechanism>
   $<TARGET_OBJECTS:mstl>
 )
-
+else()
+set(rose_LIB_SRCS
+  dummyCppFileForLibrose.C
+  ${ROSETTA_SRC}
+  $<TARGET_OBJECTS:unparser>
+  $<TARGET_OBJECTS:sage3>
+  $<TARGET_OBJECTS:virtualCFG>
+  $<TARGET_OBJECTS:astFromString>
+  $<TARGET_OBJECTS:roseSupport>
+  $<TARGET_OBJECTS:rosePartitioner2>
+  $<TARGET_OBJECTS:roseDisassemblers>
+  $<TARGET_OBJECTS:roseBinaryFormats>
+  $<TARGET_OBJECTS:roseBinaryLoader>
+  $<TARGET_OBJECTS:roseAsmUnparser>
+  $<TARGET_OBJECTS:astMerge>
+  $<TARGET_OBJECTS:astFixup>
+  $<TARGET_OBJECTS:midend>
+  $<TARGET_OBJECTS:abstractHandle>
+  $<TARGET_OBJECTS:abstractLayer>
+  $<TARGET_OBJECTS:astDiagnostics>
+  $<TARGET_OBJECTS:astProcessing>
+  $<TARGET_OBJECTS:astMatching>
+  $<TARGET_OBJECTS:midend_util>
+  $<TARGET_OBJECTS:midend_binary>
+  $<TARGET_OBJECTS:midend_pt>
+  $<TARGET_OBJECTS:sageInterface>
+  $<TARGET_OBJECTS:astTokenStream>
+  $<TARGET_OBJECTS:astHiddenTypeAndDeclarationLists>
+  $<TARGET_OBJECTS:astVisualization>
+  $<TARGET_OBJECTS:includeDirectivesProcessing>
+  $<TARGET_OBJECTS:astPostProcessing>
+  $<TARGET_OBJECTS:failsafe>
+  $<TARGET_OBJECTS:trans_tracking>
+  $<TARGET_OBJECTS:astRewriteMechanism>
+  $<TARGET_OBJECTS:mstl>
+)
+endif()
 
 if(enable-java)
   list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:roseJava>)
