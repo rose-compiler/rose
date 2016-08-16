@@ -18,37 +18,37 @@ Analyterix test infrastructure
    * `<X>.cmpmd`  
      Various comparision mode files which specify the comparision mode when comparing an output file `<X>.<Y>` with the corresponding reference file `<X>.ref`. Each of these files has to contain `equal`, `supersetOrEqual`, or `subsetOrEqual`. The comparision mode can therefore be specified for each reference file separately. If there is no comparision mode file for a reference file, then the default comparision mode `equal` is used. If one of the comparision modes `subsetOrEqual` or `supersetOrEqual` is specified for a reference file then the test passes if the files are equal **or** if the lines of the output file are a superset/ subset of the lines of the reference file. 
      * **Example**  
-       Reference file `deadcode.ref` contains:
+      Reference file `deadcode.ref` contains:
         ~~~
         2,i = 1;
         3,j = 3;
         ~~~
-       Comparision mode file `deadcode.cmpmd` contains:
+      Comparision mode file `deadcode.cmpmd` contains:
         ~~~
         subsetOrEqual
         ~~~ 
-       * If output file `deadcode.csv` contains:
+        * If output file `deadcode.csv` contains:
           ~~~       
           2,i = 1;
           ~~~
     
           ==> Output is subset of reference: Test passes.
     
-       * If output file `deadcode.csv` contains the following instead:
+        * If output file `deadcode.csv` contains the following instead:
           ~~~
           2,i = 1;
           4,k = 2;
           ~~~
           ==> Output is neither subset of (nor superset of) nor equal to reference: test fails.
     
-       * If output file `deadcode.csv` contains the following instead:
+        * If output file `deadcode.csv` contains the following instead:
           ~~~
           2,i = 1;
           3,j = 3;
           ~~~
          ==> Output and reference are equal: test passes.
     
-       * If output file `deadcode.csv` contains the following instead:
+        * If output file `deadcode.csv` contains the following instead:
           ~~~
           2,i = 1;
           3,j = 3;
