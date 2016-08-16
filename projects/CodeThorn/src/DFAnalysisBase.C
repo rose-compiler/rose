@@ -71,6 +71,7 @@ void DFAnalysisBase::computeAllPreInfo() {
 void DFAnalysisBase::computeAllPostInfo() {
   if(!_postInfoIsValid) {
     computeAllPreInfo();
+    cout << "INFO: computing post data."<<endl;
     // compute set of used labels in ICFG.
     for(Labeler::iterator i=getLabeler()->begin();i!=getLabeler()->end();++i) {
       Label lab=*i;
