@@ -693,20 +693,60 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionParame
       //  initialization:
       handleAssociation(AK_Initialization, associationTargets, parameterType, defaultArgument->get_operand());
     }
-    else if(isSgAggregateInitializer((*i)->get_initializer()) || isSgCompoundInitializer((*i)->get_initializer())) {
-      // Currently not supported (TODO).
-      std::cout << "WARNING: Unsupported default argument initializer for parameter " << cati.vidm.variableName(parameter) << std::endl;
-    }
     else {
-      if(isSgInitializer((*i)->get_initializer())) {
-        throw SPRAY::Exception("Unknown initializer for parameter " + cati.vidm.variableName(parameter));
-      }
-
-      // No default argument: Add the parameter to the address taken set anyway if it is of
+      // Two cases:
+      //   1) Initializer other than assign initializer: Handled separately
+      //   2) No initializer
+      //  In both cases only add the parameter to the address taken set if it is of
       //  reference type.
       if(SgNodeHelper::isReferenceType((*i)->get_type())) {
         insertVariableId(parameter);
       }
+    }
+  }
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDesignatedInitializer* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-15): Designated initializer allows to initiate members by providing their
+  //  name in the initialization list. C only as far as is know. Not supported yet (TODO):
+  throw SPRAY::Exception("SgDesignatedInitializer not supported.");
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundInitializer* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-15): Compound literals: Constructs a temporary object or array from initialization list:
+  //  alias/ reference creation in case of initialization of an object and implicit function to pointer conversion
+  //  in both cases are possible.
+  // TODO: Not supported yet:
+  throw SPRAY::Exception("SgCompoundInitializer not supported.");
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundLiteralExp* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-15): Compound literal expression: currently this is a node without children
+  //  (and a symbol as attribute) but there is no access to the particular initializations: Nothing to do (TODO):
+  std::cout << "SgCompoundLiteralExp symbol: " << SgNodeHelper::symbolToString(sgn->get_symbol()) << std::endl;
+  ROSE_ASSERT(sgn->get_numberOfTraversalSuccessors() == 0);
+  throw SPRAY::Exception("SgCompoundLiteralExp not supported.");
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAggregateInitializer* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-15): aggregate initialization of an object or an array. In case of an object it
+  //  is basically the same as a constructor call.
+  if(const SgExprListExp* argumentExpressionListContainer = sgn->get_initializers()) {
+    // TODO: Try to get the object member types resp. the array element type! Without this information
+    //  put everything that occurs in one of the aggregate init expressions into the address-taken-set:
+    const SgExpressionPtrList& argumentExpressions = argumentExpressionListContainer->get_expressions();
+    for(SgExpressionPtrList::const_iterator i = argumentExpressions.begin();
+        i != argumentExpressions.end(); ++i
+    ) {
+      (*i)->accept(*this);
     }
   }
 }
@@ -717,8 +757,13 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConstructorIni
   // schroder3 (2016-07-20): Call of a constructor: Basically the same as a function call expr:
   //  Get the argument expressions and the parameter types:
   if(const SgExprListExp* argumentExpressionListContainer = sgn->get_args()) {
-    const SgExpressionPtrList argumentExpressions = argumentExpressionListContainer->get_expressions();
+    const SgExpressionPtrList& argumentExpressions = argumentExpressionListContainer->get_expressions();
     if(argumentExpressions.size() > 0) {
+      if(argumentExpressions.size() == 1 && isSgAggregateInitializer(argumentExpressions[0])) {
+        // This aggregate initialization will be handled separately.
+        return;
+      }
+
       // Arguments are available.
       // Determine the parameter types:
       const SgMemberFunctionDeclaration* constructorDecl = sgn->get_declaration();
@@ -734,7 +779,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConstructorIni
         parameterTypes.push_back((*i)->get_type());
       }
       // Handle the arguments in the same way as a normal (member) function call:
-      handleCall(parameterTypes, argumentExpressionListContainer->get_expressions());
+      handleCall(parameterTypes, argumentExpressions);
     }
   }
 }
@@ -765,7 +810,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCtorInitialize
 
     // Add the variables in the init expression:
     SgAssignInitializer* memberInitializer = isSgAssignInitializer(initializedMember->get_initializer());
-    ROSE_ASSERT(memberInitializer);
+    if(!memberInitializer) {
+      // Other initializers are handled separately
+      return;
+    }
 
     // Handle the type of the member together with the initializer expression:
     handleAssociation(AK_Initialization, possibleTargets, initializedMember->get_type(), memberInitializer->get_operand());
@@ -1066,6 +1114,20 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root) {
     // schroder3 (2016-08-02): A throw can contain an implicit address taking e.g. if the throw expression is of
     //  function type and if there is a catch for function pointer types.
          || isSgThrowOp(*i)
+
+    // schroder3 (2016-08-15): Aggregate/ "brace" initialization of an object or an array: alias/ reference creation
+    //  in case of initialization of an object and implicit function to pointer conversion in both cases are possible.
+         || isSgAggregateInitializer(*i)
+
+    // schroder3 (2016-08-15): Compound literals: Constructs a temporary object or array from initialization list:
+    //  alias/ reference creation in case of initialization of an object and implicit function to pointer conversion
+    //  in both cases are possible.
+         || isSgCompoundInitializer(*i)
+         || isSgCompoundLiteralExp(*i)
+
+    // schroder3 (2016-08-15): Designated initializers allow to initiate members by providing their
+    //  name in the initialization list. C only as far as is know.
+         || isSgDesignatedInitializer(*i)
 
     ) {
       // schroder3 (2016-08-08): Look for address-takings:
