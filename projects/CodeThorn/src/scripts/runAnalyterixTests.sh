@@ -25,6 +25,7 @@ HAS_TO_FAIL_FILE="fails"
 TIMEOUT_FILE="timeout"
 
 REF_FILE_EXT="ref"
+COMPARE_MODE_FILE_EXT="cmpmd"
 OUTPUT_FILE_EXTS="csv C dot"
 
 # neutral color codes begin
@@ -70,7 +71,7 @@ echoAndRunCommand(){
       done
     
       # The command timed out: end it:
-      echo -e "$2${ERROR_COLOR_BEGIN}Timed out${COLOR_END}: Killing process now..."
+      echo -e "$2Timed out: Killing process now..."
       # Try SIGTERM first:
       kill -s SIGTERM ${COMMAND_PID} && kill -0 ${COMMAND_PID} || exit 0
       sleep "1s"
@@ -101,6 +102,16 @@ cleanUp() {
     find "${TEST_ROOT_DIR}" ! -name "${INPUT_FILE}" ! -name "${ARGUMENTS_FILE}" ! -name "${HAS_TO_FAIL_FILE}" ! -name "${TIMEOUT_FILE}" -name "*.${OUTPUT_EXT}" -delete
   done
   echo "Cleaning done."
+}
+
+isSubset() {
+ FIRST="$(cat "$2" | sort -u)"
+ SECOND="$(cat "$1" "$2" | sort -u)"
+ if [ "${FIRST}" == "${SECOND}" ]; then
+   return "0"
+ else
+   return "1"
+ fi
 }
 
 echo "Analyterix test directory: ${TEST_ROOT_DIR}"
@@ -194,9 +205,9 @@ for currTestDir in "${TEST_ROOT_DIR}"*; do
     if [ ! "${ANALYTERIX_EXIT_CODE}" -eq "0" ]; then
       if [ "${ANALYTERIX_EXIT_CODE}" -eq "124" ] && [ "${TIMEOUT}" -gt "0" ] ; then
         # Currently not used because of own timeout implemenation:
-        echo -e "${TEST_ERROR_MSG_PREFIX}Analyterix timed out."
+        echo -e "${TEST_WARNING_MSG_PREFIX}Analyterix timed out."
       else
-        echo -e "${TEST_ERROR_MSG_PREFIX}Analyterix' exit code is ${ANALYTERIX_EXIT_CODE} (and not 0)."
+        echo -e "${TEST_WARNING_MSG_PREFIX}Analyterix' exit code is ${ANALYTERIX_EXIT_CODE} (and not 0)."
       fi
       exit 1
     else
@@ -213,6 +224,16 @@ for currTestDir in "${TEST_ROOT_DIR}"*; do
       fi
       # Reference file name without extension (and without path):
       REF_FILE_BASE=$(basename "${currRefFile}" ${REF_FILE_EXT})
+      
+      # How should the ref file be compared with the output file? Default is equal:
+      COMPARE_MODE="equal"
+      # Look for comparision mode file:
+      CURR_COMPARE_MODE_FILE="${currTestDir}/${REF_FILE_BASE}${COMPARE_MODE_FILE_EXT}"
+      if [ -f ${CURR_COMPARE_MODE_FILE} ]; then
+        # Read comparision mode file content into COMPARE_MODE:
+        COMPARE_MODE=$(<${CURR_COMPARE_MODE_FILE})
+      fi
+      
       echo -e "${TEST_MSG_PREFIX}Searching for output file that corresponds to reference file \"${REF_FILE_BASE}${REF_FILE_EXT}\"..."
       OUTPUT_FILE_FOUND="0"
       # For each possible extension: check whether there is a corresponding output file.
@@ -225,14 +246,43 @@ for currTestDir in "${TEST_ROOT_DIR}"*; do
         OUTPUT_FILE_MSG="${TEST_MSG_PREFIX}Output file \"$(basename "${CURR_OUTPUT_FILE}")\""
         # Does the possible output file exist?
         if [ -f ${CURR_OUTPUT_FILE} ]; then
-          echo -e "${OUTPUT_FILE_MSG} found. Comparing with reference file..."
           # We found the corresponding output file. Compare it with the reference file:
+          echo -e "${OUTPUT_FILE_MSG} found. Comparing with reference file by using comparision mode \"${COMPARE_MODE}\"..."
+          echo -e "${TEST_MSG_PREFIX}Checking for equality..."
+          # Currently the equality test is needed in all cases:
           diff ${currRefFile} ${CURR_OUTPUT_FILE}
-          if [ ! "$?" -eq 0 ]; then
-            echo -e "${TEST_ERROR_MSG_PREFIX}Output does not match reference (see diff above)."
+          EQUAL_RESULT="$?"
+          
+          if [ "${COMPARE_MODE}" == "equal" ]; then
+            # The result is the result of the equality check:
+            COMPARE_RESULT=${EQUAL_RESULT}
+            COMPARE_MSG_PART="equal to"
+          elif [ "${COMPARE_MODE}" == "subsetOrEqual" ]; then
+            # Check for subset if the files are not equal:
+            echo -e "${TEST_MSG_PREFIX}Checking for subset..."
+            if [ ! "${EQUAL_RESULT}" -eq 0 ]; then
+              isSubset "${CURR_OUTPUT_FILE}" "${currRefFile}"
+              COMPARE_RESULT="$?"
+            fi
+            COMPARE_MSG_PART="a subset of or equal to"
+          elif [ "${COMPARE_MODE}" == "supersetOrEqual" ]; then
+            # Check for superset if the files are not equal:
+            echo -e "${TEST_MSG_PREFIX}Checking for superset..."
+            if [ ! "${EQUAL_RESULT}" -eq 0 ]; then
+              isSubset "${currRefFile}" "${CURR_OUTPUT_FILE}"
+              COMPARE_RESULT="$?"
+            fi
+            COMPARE_MSG_PART="a superset of or equal to"
+          else 
+            echo -e "${TEST_ERROR_MSG_PREFIX}Unknown comparision mode: ${COMPARE_MODE}"
+            exit 2
+          fi
+          
+          if [ ! "${COMPARE_RESULT}" -eq 0 ]; then
+            echo -e "${TEST_MSG_PREFIX}Output is not ${COMPARE_MSG_PART} reference."
             exit 1	
           else
-            echo -e "${TEST_MSG_PREFIX}Files match."
+            echo -e "${TEST_MSG_PREFIX}Output is ${COMPARE_MSG_PART} reference."
             OUTPUT_FILE_FOUND="1"
           fi
           # It does not make sense to search for further corresponding output files:
@@ -243,17 +293,22 @@ for currTestDir in "${TEST_ROOT_DIR}"*; do
       done 
       # It is an error if analyterix did not produce an output file for a reference file:
       if [ "${OUTPUT_FILE_FOUND}" == "0" ]; then
-        echo -e "${TEST_ERROR_MSG_PREFIX}No corresponding output file found."
+        echo -e "${TEST_MSG_PREFIX}No corresponding output file found."
         exit 1
       fi 
     done
     
     # Test passed:
-    echo -e "${TEST_SUCCESS_MSG_PREFIX}Passed."
+    echo -e "${TEST_MSG_PREFIX}Passed."
     exit 0
   )
   # Get test exit code:
   FAILED=$?
+  if [ "${FAILED}" -eq "2" ]; then
+    # Error while executing the test.
+    exit 1
+  fi
+  
   echo -e "${TEST_MSG_PREFIX}Finished. Comparing result with expected result..."
   if [ "${HAS_TO_FAIL}" == "${FAILED}" ]; then
     # Build the result message:

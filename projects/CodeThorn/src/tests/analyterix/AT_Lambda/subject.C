@@ -1,10 +1,12 @@
+// TODO: lambda and l2 should not be in the address taken set because a "this" pointing to the lambda itself is not available.
+
 int func() {
   return 1;
 }
 
 int main() {
   auto lambda = [](){};
-  lambda(); // lambda should not be in the address taken set because a "this" pointing to the lambda itself is not available.
+  lambda();
 
   auto l2 = [](int& i_ref, bool b, int(*fp)()){
       &b;
