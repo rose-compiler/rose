@@ -528,6 +528,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing LV analysis."<<endl;
     lvAnalysis->setBackwardAnalysis();
     lvAnalysis->initialize(root);
+    cout << "STATUS: running pointer analysis."<<endl;
+    ROSE_ASSERT(lvAnalysis->getVariableIdMapping());
+    SPRAY::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), lvAnalysis->getFunctionIdMapping(), root);
+    fipa->initialize();
+    fipa->run();
+    lvAnalysis->setPointerAnalysis(fipa);
     cout << "STATUS: initializing LV transfer functions."<<endl;
     lvAnalysis->initializeTransferFunctions();
     cout << "STATUS: initializing LV global variables."<<endl;
