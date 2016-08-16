@@ -274,9 +274,13 @@ DFAnalysisBase::run() {
     cout<<"INFO: Initialized "<<*i<<" with ";
     cout<<_analyzerDataPreInfo[(*i).getId()]->toString(getVariableIdMapping());
     cout<<endl;
-    Flow outEdges=_flow.outEdges(*i);
-    for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
-      _workList.add(*j);
+    // schroder3 (2016-08-16): Topological sorted CFG as worklist initialization is currently
+    //  not supported for backward analyses. Add the extremal label's outgoing edges instead.
+    if(!isForwardAnalysis()) {
+      Flow outEdges=_flow.outEdges(*i);
+      for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
+        _workList.add(*j);
+      }
     }
 #if 0
     LabelSet initsucc=_flow.succ(*i);
@@ -285,6 +289,21 @@ DFAnalysisBase::run() {
     }
 #endif
   }
+
+  // schroder3 (2016-08-16): Use the topological sorted CFG as worklist initialization. This avoids
+  //  unnecessary computations that might occur (e.g. if the if-branch and else-branch
+  //  do not have an equivalent number of nodes).
+  if(isForwardAnalysis()) {
+    ROSE_ASSERT(_extremalLabels.size() == 1);
+    Label startLabel = *(_extremalLabels.begin());
+    std::list<Edge> topologicalEdgeList = _flow.getTopologicalSortedEdgeList(startLabel);
+    cout << "INFO: Using topological sorted CFG as work list initialization." << endl;
+    for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
+      //cout << (*i).toString() << endl;
+      _workList.add(*i);
+    }
+  }
+
   cout<<"INFO: work list size after initialization: "<<_workList.size()<<endl;
   solve();
 }

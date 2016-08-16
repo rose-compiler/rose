@@ -141,6 +141,8 @@ namespace SPRAY {
 #ifdef USE_SAWYER_GRAPH
     boost::iterator_range<Flow::iterator> inEdgesIterator(Label label);
     boost::iterator_range<Flow::iterator> outEdgesIterator(Label label);
+    // schroder3 (2016-08-16): Returns a topological sorted list of CFG-edges
+    std::list<Edge> getTopologicalSortedEdgeList(Label startLabel);
 #endif
     Flow edgesOfType(EdgeType edgeType);
     Flow outEdgesOfType(Label label, EdgeType edgeType);

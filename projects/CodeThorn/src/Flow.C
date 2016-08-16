@@ -5,6 +5,7 @@
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
 #include "SprayException.h"
+#include "Sawyer/GraphTraversal.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -649,6 +650,21 @@ boost::iterator_range<Flow::iterator> Flow::outEdgesIterator(Label label) {
   ROSE_ASSERT(vertexIter != _sawyerFlowGraph.vertices().end());
   boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*vertexIter).outEdges();
   return boost::iterator_range<Flow::iterator>(Flow::iterator(edges.begin()), Flow::iterator(edges.end()));
+}
+
+// schroder3 (2016-08-16): Returns a topological sorted list of CFG-edges
+std::list<Edge> Flow::getTopologicalSortedEdgeList(Label startLabel) {
+  std::list<Edge> topologicalSortedEdges;
+  SawyerCfg::VertexIterator startLabelIter = _sawyerFlowGraph.findVertexValue(startLabel);
+  // Depth first post-order traversal over the edges:
+  using namespace Sawyer::Container::Algorithm;
+  DepthFirstForwardGraphTraversal<SawyerCfg> depthFirstTraversal(_sawyerFlowGraph, startLabelIter, LEAVE_EDGE);
+  for(; depthFirstTraversal; ++depthFirstTraversal) {
+    // Use the edge iterator's dereference operator to construct the Edge object:
+    Edge edge = *iterator(depthFirstTraversal.edge());
+    topologicalSortedEdges.push_front(edge);
+  }
+  return topologicalSortedEdges;
 }
 #endif
 
