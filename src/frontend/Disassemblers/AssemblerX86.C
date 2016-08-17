@@ -1760,6 +1760,10 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
 SgUnsignedCharList
 AssemblerX86::assembleProgram(const std::string &source)
 {
+#if BOOST_VERSION < 104700
+#warning "rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0"
+    ASSERT_not_reachable("rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0");
+#else
     struct Resources {
         FileSystem::Path srcFileName, dstFileName;
         FILE *nasmOutput;
@@ -1818,4 +1822,5 @@ AssemblerX86::assembleProgram(const std::string &source)
         throw Exception("nasm didn't produce output in " + r.dstFileName.native());
     ASSERT_not_null(buf->data());
     return SgUnsignedCharList(buf->data(), buf->data() + buf->size());
+#endif
 }
