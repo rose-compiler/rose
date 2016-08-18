@@ -184,6 +184,9 @@ testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 if USING_CLANG_COMPILER
 testSharedRoseLib_LDADD += -lstdc++
 endif
+if OS_MACOSX
+testSharedRoseLib_LDFLAGS = -Xlinker -rpath $(JAVA_JVM_PATH)
+endif
 
 # Matzke (8/11/2016) I think "--version" is always supported now regardless of which frontends are compiled
 check-trivial-program: testSharedRoseLib$(EXEEXT) check-boost-linkage
