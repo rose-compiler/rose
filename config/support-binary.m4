@@ -113,6 +113,18 @@ AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 AM_CONDITIONAL([HAS_LIBRARY_GCRYPT], [test "x$HAVE_GCRYPT" = "xyes"])
 
+dnl http://dlib.net
+AC_ARG_WITH(dlib,
+        [  --with-dlib=PATH Installation prefix for optional dlib (http://dlib.net) library.
+                            Dlib requires no installation; just untar its source and specify
+                            the name of the directory that was created (e.g., "dlib-18.17") and
+                            which contains the "dlib" subdirectory.],
+        [AC_DEFINE(ROSE_HAVE_DLIB, 1, [Defined if dlib is available.])
+         if test "$with_dlib" = "yes"; then DLIB_PREFIX=/usr; else DLIB_PREFIX="$with_dlib"; fi],
+        [with_dlib=no])
+AC_SUBST(DLIB_PREFIX)
+AM_CONDITIONAL(ROSE_HAVE_DLIB, test "$with_dlib" != "no")
+
 # Check for POSIX threads.  Just because we have POSIX threads does not necessarily mean that the user wants ROSE
 # to be compiled with multi-thread support.  See also "--with-boost-thread" configure switch.
 AC_CHECK_HEADERS(pthread.h)
