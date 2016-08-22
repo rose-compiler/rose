@@ -83,6 +83,7 @@ bool option_at_analysis=false;
 bool option_trace=false;
 bool option_optimize_icfg=false;
 bool option_csv_stable=false;
+bool option_no_topological_sort=false;
 
 //boost::program_options::variables_map args;
 
@@ -459,6 +460,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: creating interval analyzer."<<endl;
     SPRAY::IntervalAnalysis* intervalAnalyzer=new SPRAY::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
+    intervalAnalyzer->setNoTopologicalSort(option_no_topological_sort);
     intervalAnalyzer->initialize(root);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
@@ -528,6 +530,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     SPRAY::LVAnalysis* lvAnalysis=new SPRAY::LVAnalysis();
     cout << "STATUS: initializing LV analysis."<<endl;
     lvAnalysis->setBackwardAnalysis();
+    lvAnalysis->setNoTopologicalSort(option_no_topological_sort);
     lvAnalysis->initialize(root);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(lvAnalysis->getVariableIdMapping());
@@ -634,6 +637,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       cout << "STATUS: creating RD analyzer."<<endl;
       SPRAY::RDAnalysis* rdAnalysis=new SPRAY::RDAnalysis();
       cout << "STATUS: initializing RD analyzer."<<endl;
+      rdAnalysis->setNoTopologicalSort(option_no_topological_sort);
       rdAnalysis->initialize(root);
       cout << "STATUS: initializing RD transfer functions."<<endl;
       rdAnalysis->initializeTransferFunctions();
@@ -758,6 +762,7 @@ int main(int argc, char* argv[]) {
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
       ("csv-at-analysis",po::value< string >(), "generate csv-file [arg] with address-taken analysis data.")
+      ("no-topological-sort", "do not initialize the worklist with topological sorted CFG.")
       ("icfg-dot", "generates the ICFG as dot file.")
       ("optimize-icfg", "prunes conditions with empty blocks, block begin, and block end icfg nodes.")
       ("no-optmize-icfg", "does not optimize icfg.")
@@ -850,6 +855,9 @@ int main(int argc, char* argv[]) {
     }
     if (args.count("csv-stable")) {
       option_csv_stable=true;
+    }
+    if (args.count("no-topological-sort")) {
+      option_no_topological_sort=true;
     }
 
     // clean up string-options in argv

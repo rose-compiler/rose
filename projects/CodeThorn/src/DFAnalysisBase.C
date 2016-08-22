@@ -23,6 +23,7 @@ DFAnalysisBase::DFAnalysisBase():
   _transferFunctions(0),
   _initialElementFactory(0),
   _analysisType(DFAnalysisBase::FORWARD_ANALYSIS),
+  _no_topological_sort(false),
   _pointerAnalysisInterface(0),
   _pointerAnalysisEmptyImplementation(0)
 {}
@@ -109,6 +110,14 @@ bool DFAnalysisBase::isForwardAnalysis() {
 
 bool DFAnalysisBase::isBackwardAnalysis() {
   return _analysisType==DFAnalysisBase::BACKWARD_ANALYSIS;
+}
+
+bool DFAnalysisBase::getNoTopologicalSort() {
+  return _no_topological_sort;
+}
+
+void DFAnalysisBase::setNoTopologicalSort(bool no_topological_sort) {
+  _no_topological_sort = no_topological_sort;
 }
 
 // outdated
@@ -277,7 +286,7 @@ DFAnalysisBase::run() {
     cout<<endl;
     // schroder3 (2016-08-16): Topological sorted CFG as worklist initialization is currently
     //  not supported for backward analyses. Add the extremal label's outgoing edges instead.
-    if(!isForwardAnalysis()) {
+    if(_no_topological_sort || !isForwardAnalysis()) {
       Flow outEdges=_flow.outEdges(*i);
       for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
         _workList.add(*j);
@@ -294,7 +303,7 @@ DFAnalysisBase::run() {
   // schroder3 (2016-08-16): Use the topological sorted CFG as worklist initialization. This avoids
   //  unnecessary computations that might occur (e.g. if the if-branch and else-branch
   //  do not have an equivalent number of nodes).
-  if(isForwardAnalysis()) {
+  if(!_no_topological_sort && isForwardAnalysis()) {
     ROSE_ASSERT(_extremalLabels.size() == 1);
     Label startLabel = *(_extremalLabels.begin());
     std::list<Edge> topologicalEdgeList = _flow.getTopologicalSortedEdgeList(startLabel);
