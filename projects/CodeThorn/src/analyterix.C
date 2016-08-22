@@ -323,6 +323,13 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     FunctionIdMapping functionIdMapping;
     functionIdMapping.computeFunctionSymbolMapping(root);
 
+    if(option_trace) {
+      std::cout << std::endl << "TRACE: Variable Id Mapping:" << std::endl;
+      variableIdMapping.toStream(std::cout);
+      std::cout << std::endl << "TRACE: Function Id Mapping:" << std::endl;
+      functionIdMapping.toStream(std::cout);
+    }
+
     cout << "STATUS: computing address taken sets."<<endl;
     SPRAY::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
     fipa.initialize();
@@ -879,6 +886,10 @@ int main(int argc, char* argv[]) {
     boolOptions.registerOption("semantic-fold",false); // temporary
     boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
+
+    if(option_trace) {
+      cout << "TRACE: AST node count: " << root->numberOfNodesInSubtree() << endl;
+    }
     //  AstTests::runAllTests(root);
 
    if(option_stats) {
