@@ -134,6 +134,8 @@ class ComputeAddressTakenInfo
     void visit(SgNode* sgn);
     void insertVariableId(VariableId);
     void insertFunctionId(FunctionId);
+    void insertAllVariableIds();
+    void insertAllFunctionIds();
     // schroder3 (2016-07-20): Handles the arguments of a constructor or (member) function call regarding their "address-taken-ness".
     void handleCall(const SgTypePtrList& parameterTypes, const SgExpressionPtrList& argumentExpressions);
     // schroder3 (2016-07-20): Handles all kinds of associations (currently initializations and assignments) regarding their "address-taken-ness".

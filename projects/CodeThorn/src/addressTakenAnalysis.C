@@ -315,6 +315,20 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
   operand->accept(*this);
 }
 
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertAllFunctionIds() {
+  FunctionIdSet allFuncIds = cati.fidm.getFunctionIdSet();
+  for(FunctionIdSet::const_iterator i = allFuncIds.begin(); i != allFuncIds.end(); ++i) {
+    insertFunctionId(*i);
+  }
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertAllVariableIds() {
+  VariableIdSet allVarIds = cati.vidm.getVariableIdSet();
+  for(VariableIdSet::const_iterator i = allVarIds.begin(); i != allVarIds.end(); ++i) {
+    insertVariableId(*i);
+  }
+}
+
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(VariableId id) {
   ROSE_ASSERT(id.isValid());
 
@@ -711,7 +725,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDesignatedInit
 
   // schroder3 (2016-08-15): Designated initializer allows to initiate members by providing their
   //  name in the initialization list. C only as far as is know. Not supported yet (TODO):
-  throw SPRAY::Exception("SgDesignatedInitializer not supported.");
+  std::cout << "WARNING: Designated initializers are not supported yet. Inserting all variables and"
+                 " functions into the address-taken set." << std::endl;
+  insertAllVariableIds();
+  insertAllFunctionIds();
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundInitializer* sgn) {
@@ -721,7 +738,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundInitia
   //  alias/ reference creation in case of initialization of an object and implicit function to pointer conversion
   //  in both cases are possible.
   // TODO: Not supported yet:
-  throw SPRAY::Exception("SgCompoundInitializer not supported.");
+  std::cout << "WARNING: Compound literals are not supported yet. Inserting all variables and"
+               " functions into the address-taken set." << std::endl;
+  insertAllVariableIds();
+  insertAllFunctionIds();
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundLiteralExp* sgn) {
@@ -731,7 +751,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundLitera
   //  (and a symbol as attribute) but there is no access to the particular initializations: Nothing to do (TODO):
   std::cout << "SgCompoundLiteralExp symbol: " << SgNodeHelper::symbolToString(sgn->get_symbol()) << std::endl;
   ROSE_ASSERT(sgn->get_numberOfTraversalSuccessors() == 0);
-  throw SPRAY::Exception("SgCompoundLiteralExp not supported.");
+  std::cout << "WARNING: Compound literal expressions are not supported yet. Inserting all variables and"
+               " functions into the address-taken set." << std::endl;
+  insertAllVariableIds();
+  insertAllFunctionIds();
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAggregateInitializer* sgn) {
