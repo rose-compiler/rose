@@ -615,7 +615,34 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
 //  else {
 //    std::cout << "INFO: no function definition found for call " << sgn->unparseToString()
 //            << ". Will use parameter types of callee type instead." << std::endl;
-    parameterTypes = calleeType->get_arguments();
+  parameterTypes = calleeType->get_arguments();
+  // schroder3 (2016-08-17): Check for an implicitly declared function (e.g. gettimeofday(...) can
+  //  be used without an include and without an explicit declaration). This is only allowed in C and
+  //  it is deprecated starting with C99 (as far as i know). The type of these functions is "int()"
+  //  (even if they have parameters) and there is therefore no information about the parameter types.
+  if(parameterTypes.size() == 0 && arguments.size() > 0) {
+    if(isSgTypeInt(calleeType->get_return_type())) {
+      // The type is int(): Make sure that this is compiled as C code:
+      SgNode* node = sgn;
+      while(!isSgFile((node = node->get_parent())));
+      SgFile* enclosingFile = isSgFile(node);
+      ROSE_ASSERT(enclosingFile);
+      if(enclosingFile->get_outputLanguage() == SgFile::e_C_output_language) {
+        // This should be C code. TODO: This might be overwritten by -std=... ?
+        // Because C has no references, they only possible address-taking is the function to pointer
+        //  conversion. Make the parameter type a function pointer type if the argument type is a
+        //  function type:
+        for(SgExpressionPtrList::const_iterator i = arguments.begin(); i != arguments.end(); ++i) {
+          SgType* parameterType = (*i)->get_type();
+          if(isSgFunctionType(parameterType)) {
+            parameterType = SgPointerType::createType(parameterType);
+          }
+          parameterTypes.push_back(parameterType);
+        }
+      }
+    }
+
+  }
 //  }
 
   handleCall(parameterTypes, arguments);
