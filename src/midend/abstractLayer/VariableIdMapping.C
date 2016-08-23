@@ -268,8 +268,17 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
 VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   assert(sym);
   VariableId newId;
-  // intentionally a friend action to avoid that users can create VariableIds from int.
-  newId._id=mappingSymToVarId[sym];
+  // schroder3 (2016-08-23): Added if-else to make sure that this does not create a
+  //  new mapping entry (with id 0) if the given symbol is not in the mapping yet
+  //  (std::map's operator[] creates a new entry with value-initialization (zero-initialization
+  //  in this case) if its argument is not in the map).
+  if(mappingSymToVarId.count(sym)) {
+    // intentionally a friend action to avoid that users can create VariableIds from int.
+    newId._id=mappingSymToVarId[sym];
+  }
+  else {
+    ROSE_ASSERT(!newId.isValid());
+  }
   return newId;
 }
 
