@@ -6,6 +6,7 @@
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
 #include "Miscellaneous2.h"
+#include "SprayException.h"
 
 using namespace SPRAY;
 using namespace AnalysisAbstractionLayer;
@@ -42,7 +43,14 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
   //cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
   SPRAY::VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
-    setOfUsedVars.insert(variableIdMapping->variableId(*i));
+    VariableId id = variableIdMapping->variableId(*i);
+    if(!id.isValid()) {
+      ostringstream exceptionMsg;
+      exceptionMsg << "AnalysisAbstractionLayer::usedVariablesInsideFunctions: Invalid variable id for SgVarRefExp "
+                   << (*i)->unparseToString() << ", Symbol: " << (*i)->get_symbol() << endl;
+      throw SPRAY::Exception(exceptionMsg.str());
+    }
+    setOfUsedVars.insert(id);
   }
   return setOfUsedVars;
 }
