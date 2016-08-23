@@ -269,7 +269,7 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   assert(sym);
   VariableId newId;
   // intentionally a friend action to avoid that users can create VariableIds from int.
-  newId._id=mappingSymToVarId[sym]; 
+  newId._id=mappingSymToVarId[sym];
   return newId;
 }
 
@@ -307,26 +307,50 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
     RoseAst ast(*k);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      if(SgInitializedName* initName = isSgInitializedName(*i)) {
-        if(!isSgVariableDeclaration(initName->get_parent()) && !isSgFunctionParameterList(initName->get_parent())) {
-          // Parent is e.g. SgCtorInitializerList or SgEnumDeclaration but no var decl and no parameter decl: Do nothing:
-          continue;
-        }
+      // Try to find a symbol, type, and initializer of the current node:
+      SgSymbol* sym = 0;
+      SgType* type = 0;
+      SgInitializer* initializer = 0;
 
-        // Variable found: Try to get the variable's symbol:
-        SgSymbol* sym = initName->search_for_symbol_from_symbol_table();
-        if(!sym) {
+      // schroder3 (2016-08-18): Added variables that are "declared" in a lambda capture. There is currently no SgInitializedName for
+      //  these closure variables.
+      if(SgLambdaCapture* lambdaCapture = isSgLambdaCapture(*i)) {
+        // Add the closure variable (which is a member of enclosing lambda's anonymous class) to the mapping. (Even in case of a
+        //  capture by reference there is a new reference member that references to the same variable as the captured reference.)
+        SgVarRefExp* closureVar = isSgVarRefExp(lambdaCapture->get_closure_variable());
+        ROSE_ASSERT(closureVar);
+        sym = closureVar->get_symbol();
+        ROSE_ASSERT(sym);
+        type = closureVar->get_type();
+      }
+      else if(SgInitializedName* initName = isSgInitializedName(*i)) {
+        // Variable/ parameter found: Try to get its symbol:
+        sym = initName->search_for_symbol_from_symbol_table();
+        if(sym) {
+          type = initName->get_type();
+          initializer = initName->get_initializer();
+        }
+        else {
           //cout << "computeVariableSymbolMapping: SgInitializedName \"" << initName->unparseToString() << "\" without associated symbol found." << endl;
 
           // Registration is not possible without symbol.
-          // This is presumably a parameter in a declaration or a built-in variable (e.g. __builtin__x). (TODO: Is it possible to assert this?)
-          //  ==> It is okay to ignore these:
-          continue;
+          // This is presumably a parameter in a declaration, a built-in variable (e.g. __builtin__x), an enum value, or a child of a SgCtorInitializerList.
+          //  TODO: Is it possible to assert this?
+          //  ==> It is okay to ignore these.
         }
+      }
+      // schroder3 (2016-08-22): This is currently not necessary because we will insert the variable when traversing its declaration.
+      // else if(SgVarRefExp* varRef = isSgVarRefExp(*i)) {
+      //   sym = varRef->get_symbol();
+      //   ROSE_ASSERT(sym);
+      // }
+
+      if(sym) {
+        // Symbol found. There should be a type:
+        ROSE_ASSERT(type);
         // Check if the symbol is already registered:
         if(symbolSet.find(sym) == symbolSet.end()) {
           // New symbol: Check for array symbol:
-          SgType* type = initName->get_type();
           if(SgArrayType* arrayType=isSgArrayType(type)) {
             // Try to find the array dimensions:
             //cout<<"DEBUG: found array type."<<endl;
@@ -334,7 +358,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
             int arraySize = getArrayElementCount(arrayType);
             if(arraySize==0) {
               // check the initializer
-              arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initName->get_initializer()));
+              arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initializer));
             }
             if(arraySize > 0) {
               //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<varDecl->unparseToString()<<endl;
