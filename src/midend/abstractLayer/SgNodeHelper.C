@@ -564,18 +564,22 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   } else {
     if(SgVariableSymbol* varsym=isSgVariableSymbol(node)) {
       SgInitializedName* initname=varsym->get_declaration();
-      ROSE_ASSERT(initname);
+      // schroder3 (2016-08-23): Commented out assertion because lambda closure variables do
+      //  not have a SgInitializedName node.
+      // ROSE_ASSERT(initname);
+      if(initname) {
 #if 1
-      node=initname->get_declaration();
-      ROSE_ASSERT(node);
-#else
-      // this way we would be using variable definitions
-      SgNode* node1=initname->get_definition();
-      if(!node1)
         node=initname->get_declaration();
-      else
-        node=node1;
+        ROSE_ASSERT(node);
+#else
+        // this way we would be using variable definitions
+        SgNode* node1=initname->get_definition();
+        if(!node1)
+          node=initname->get_declaration();
+        else
+          node=node1;
 #endif
+      }
     }
     if(SgVarRefExp* varRef=isSgVarRefExp(node)) {
       SgVariableSymbol* varsym=isSgVariableSymbol(SgNodeHelper::getSymbolOfVariable(varRef));
