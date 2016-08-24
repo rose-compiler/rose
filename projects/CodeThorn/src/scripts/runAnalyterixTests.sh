@@ -17,6 +17,7 @@ MAKE_CLEAN_ONLY=$3
 SKIP_ANALYTERIX_TESTS=$4
 
 TEST_ROOT_DIR="${SRCDIR}/tests/analyterix/"
+TEST_BUILD_ROOT_DIR="${BUILDDIR}/analyterix_tests/"
 
 INPUT_FILE="subject.C"
 ANNOTATED_OUTPUT_FILE="annotated.C"
@@ -96,11 +97,8 @@ echoAndRunCommand(){
 }
 
 cleanUp() {
-  echo "Cleaning up temporary files..."
-  # Remove every output file (every file with an output extension except special test files)
-  for OUTPUT_EXT in ${OUTPUT_FILE_EXTS}; do
-    find "${TEST_ROOT_DIR}" ! -name "${INPUT_FILE}" ! -name "${ARGUMENTS_FILE}" ! -name "${HAS_TO_FAIL_FILE}" ! -name "${TIMEOUT_FILE}" -name "*.${OUTPUT_EXT}" -delete
-  done
+  echo "Cleaning up test files in build tree ..."
+  rm -rf "${TEST_BUILD_ROOT_DIR}" || exit 1
   echo "Cleaning done."
 }
 
@@ -114,7 +112,8 @@ isSubset() {
  fi
 }
 
-echo "Analyterix test directory: ${TEST_ROOT_DIR}"
+echo "Analyterix test source directory: ${TEST_ROOT_DIR}"
+echo "Analyterix test build directory: ${TEST_BUILD_ROOT_DIR}"
 
 # Check whether analyterix tests should be skipped:
 if [ "$SKIP_ANALYTERIX_TESTS" == "1" ]; then
@@ -136,6 +135,7 @@ TEST_COUNT_PASS=0
 TEST_COUNT_FAIL=0
 FAILED_TESTS=""
 echo "Performing tests..."
+mkdir "${TEST_BUILD_ROOT_DIR}" || exit 1
 for currTestDir in "${TEST_ROOT_DIR}"*; do
   # Nothing to do if not a directory:
   if [ ! -d "${currTestDir}" ]; then 
@@ -152,6 +152,19 @@ for currTestDir in "${TEST_ROOT_DIR}"*; do
   TEST_WARNING_MSG_PREFIX="${TEST_MSG_PREFIX}${WARNING_MSG_PREFIX}"
   TEST_SUCCESS_MSG_PREFIX="${TEST_MSG_PREFIX}${SUCCESS_MSG_PREFIX}"
 
+  # Create corresponding folder in build dir:
+  currTestBuildDir="${TEST_BUILD_ROOT_DIR}${TEST_NAME}"
+  echo -e "${TEST_MSG_PREFIX}Establish test directory in build tree ..."
+  mkdir "${currTestBuildDir}" || exit 1
+  cp -rf "${currTestDir}/." "${currTestBuildDir}" || exit 1
+  
+  # Set the current test build directory as working directory
+  #  (this way arguments to analyterix can be relative)
+  cd "${currTestBuildDir}" || exit 1
+  
+  # The build test directory is now the main test directory:
+  currTestDir="${currTestBuildDir}"
+  
   # Check for the subject:
   if [ ! -f ${currTestDir}/${INPUT_FILE} ]; then 
    echo -e "${TEST_ERROR_MSG_PREFIX}Subject/Input \"${currTestDir}/${INPUT_FILE}\" not found."
@@ -172,11 +185,6 @@ for currTestDir in "${TEST_ROOT_DIR}"*; do
   # Execute test in a subshell (This way "exit" can be used to stop/end the test and the 
   #  result can be handled at one place.)
   ( 
-    # Set the current test directory as working directory
-    #  (this way path arguments to analyterix can be relative to the test directory)
-    echo -e "Entering directory ${currTestDir}..."
-    cd "${currTestDir}"
-    
     echo -e "${TEST_MSG_PREFIX}Starting and expecting to ${FAIL_PASS_STRING} ..."
     
     # Individual arguments for analyterix:
