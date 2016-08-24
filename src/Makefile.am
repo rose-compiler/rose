@@ -173,29 +173,46 @@ pkginclude_HEADERS = \
      midend/astDiagnostics/AstConsistencyTests.h \
      backend/asmUnparser/AsmUnparser_compat.h
 
+########################################################################################################################
+# Test that a simple ROSE program can run, and as a side effect, print some version numbers.
+# DQ (9/8/2006): The ROSE/docs/Rose/Makefile references the testSharedRoseLib program, so maybe is should be installed?
+noinst_PROGRAMS = testSharedRoseLib
+testSharedRoseLib_SOURCES = testRoseLib.C
+testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
+testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+if USING_CLANG_COMPILER
+testSharedRoseLib_LDADD += -lstdc++
+endif
+if OS_MACOSX
+testSharedRoseLib_LDFLAGS = -Xlinker -rpath $(JAVA_JVM_PATH)
+endif
+
+# Matzke (8/11/2016) I think "--version" is always supported now regardless of which frontends are compiled
+check-trivial-program: testSharedRoseLib$(EXEEXT) check-boost-linkage
+	@echo "  TEST     whether a trivial ROSE program runs [$@]"
+	${AM_V_at}if ! ./testSharedRoseLib$(EXEEXT) --version; then					\
+	  echo "error: You cannot run a program linked with ROSE. Please be sure that your" >&2;	\
+	  echo "error: LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the" >&2;	\
+	  echo "error: correct libraries (JVM, Boost, librose.so, etc.)" >&2;				\
+	  exit 1;											\
+	fi
+
+check-boost-linkage: testSharedRoseLib$(EXEEXT)
+	@echo "  TEST     boost shared linkage [$@]"
+	${AM_V_at}$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
+
+.PHONY: check-trivial-program check-boost-linkage
+
+########################################################################################################################
+
 # DQ (9/22/2006): Because we now use libtool, the shared library is a reference to the separate
 # dynamic libraries in each directory and so testMultiRoseLib is redundant with testSharedRoseLib.
 # This is true only if we have configured --with-development-libraries, else we have static
 # in each directory and we will link with the collection of all static libraries.
-# DQ (9/8/2006): The ROSE/docs/Rose/Makefile references the testSharedRoseLib program, so maybe is should be installed?
-# bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
+
 noinst_PROGRAMS = testSharedRoseLib 
-all-local: testSharedRoseLib$(EXEEXT) $(srcdir)/inputForTestRoseLib.c
-	@$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
-if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-#	DQ (1/26/2016): Test using an input program where we have configured ROSE for C/C++ source code support.
-#	However, we can't compile a code with this since the -m32 flag will cause EDG to have an error: "Expected HOST_ALIGNMENT_REQUIRED is 4"
-#	So we just want to run using the --version option to make sure it runs.
-#	@echo "[INFO] Testing whether a simple program linked with ROSE can be run: ./testSharedRoseLib$(EXEEXT) $(srcdir)/inputForTestRoseLib.c" >&2
-#	@./testSharedRoseLib$(EXEEXT) $(srcdir)/inputForTestRoseLib.c || (echo "[ERROR] You cannot run a program linked with ROSE. Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
-	@echo "[INFO] Testing executable ROSE program after linking: ./testSharedRoseLib$(EXEEXT) --version" >&2
-	@./testSharedRoseLib$(EXEEXT) --version || (echo "[ERROR] You cannot run a program linked with ROSE. Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
-else
-#	DQ (1/26/2016): Test using no input file since we have NOT configured ROSE for C/C++ source code support (this is the same are before).
-	@echo "[INFO] Testing whether a simple program linked with ROSE can be run (a warning will be issued because the translator is being run without an input file):" >&2
-	@./testSharedRoseLib$(EXEEXT) || (echo "[ERROR] You cannot run a program linked with ROSE. Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)
-endif
-	@echo "[INFO] Success!"
+all-local: check-trivial-program check-boost-linkage
 
 # PC (9/15/2006): force the use of the C++ linker
 LINK = $(CXXLINK)
@@ -273,20 +290,6 @@ LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt
 else
 LDFLAGS += 
 endif
-endif
-
-testSharedRoseLib_SOURCES = testRoseLib.C
-testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
-testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-# testSharedRoseLib_LDFLAGS  = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
-# testSharedRoseLib_LDFLAGS  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-# testSharedRoseLib_LDFLAGS  = $(ROSE_DWARF_LIBS_WITH_PATH)
-
-# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
-testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
-if USING_CLANG_COMPILER
-testSharedRoseLib_LDADD += -lstdc++ 
 endif
 
 # AM_LDFLAGS = $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
