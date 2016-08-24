@@ -304,6 +304,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_97.C \
    lulesh.C \
    luleshTALC.C \
+   Area-01.C \
    $(NEW_TESTCODES)
 
 # DQ (11/13/2015): Added test codes:
