@@ -13,6 +13,7 @@
 #include <Sawyer/Assert.h>
 #include <Sawyer/Optional.h>                            // FIXME[Robb Matzke 2014-08-22]: only needed for Sawyer::Nothing
 #include <Sawyer/Sawyer.h>
+#include <Sawyer/SharedObject.h>
 #include <Sawyer/Synchronization.h>
 
 namespace Sawyer {
@@ -258,39 +259,6 @@ template<class T>
 void clear(SharedPointer<T> &ptr) {
     ptr = SharedPointer<T>();
 }
-    
-/** Base class for reference counted objects.
- *
- *  Any reference counted object should inherit from this class, which provides a default constructor, virtual destructor, and
- *  a private reference count data member.
- *
- *  @sa SharedPointer, @ref SharedFromThis */
-class SAWYER_EXPORT SharedObject {
-    template<class U> friend class SharedPointer;
-    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
-    mutable size_t nrefs_;
-public:
-    /** Default constructor.  Initializes the reference count to zero. */
-    SharedObject(): nrefs_(0) {}
-
-    /** Copy constructor.
-     *
-     *  The reference count of the new object is set to zero since no pointers can exist yet. */
-    SharedObject(const SharedObject &other): nrefs_(0) {}
-
-    /** Assignment.
-     *
-     *  Assigning one object to another doesn't change the reference count or mutex of either object. */
-    SharedObject& operator=(const SharedObject &other) {
-        return *this;
-    }
-
-    /** Virtual destructor. Verifies that the reference count is zero. */
-    virtual ~SharedObject() {
-        ASSERT_require(nrefs_==0);
-    }
-
-};
 
 /** Creates SharedPointer from this.
  *
