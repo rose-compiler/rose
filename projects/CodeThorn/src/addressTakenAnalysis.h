@@ -53,6 +53,11 @@ class ComputeAddressTakenInfo
   //  definitions should be added to the address-taken set or not.
   bool addAddressTakingsInsideTemplateDecls;
 
+  // schroder3 (2016-08-09): Specifies whether the ASTMatching should be used to determine
+  //  all address-taken-relevant nodes. Currently slower than the for-loop with if-else
+  //  constructs.
+  bool useASTMatching;
+
   // result to be computed by this analysis
   // bool is set to true when operand of SgAddressOfExp is a complicated
   // expression for which VariableId cannot be determined
@@ -122,9 +127,15 @@ class ComputeAddressTakenInfo
     void visit(SgLambdaExp* sgn);
     void visit(SgExpression* sgn);
     void visit(SgThrowOp* sgn);
+    void visit(SgAggregateInitializer* sgn);
+    void visit(SgCompoundInitializer* sgn);
+    void visit(SgCompoundLiteralExp* sgn);
+    void visit(SgDesignatedInitializer* sgn);
     void visit(SgNode* sgn);
     void insertVariableId(VariableId);
     void insertFunctionId(FunctionId);
+    void insertAllVariableIds();
+    void insertAllFunctionIds();
     // schroder3 (2016-07-20): Handles the arguments of a constructor or (member) function call regarding their "address-taken-ness".
     void handleCall(const SgTypePtrList& parameterTypes, const SgExpressionPtrList& argumentExpressions);
     // schroder3 (2016-07-20): Handles all kinds of associations (currently initializations and assignments) regarding their "address-taken-ness".
@@ -134,12 +145,15 @@ class ComputeAddressTakenInfo
   };
 public:
   ComputeAddressTakenInfo(VariableIdMapping& _vidm, FunctionIdMapping& _fidm)
-    : vidm(_vidm), fidm(_fidm), addAddressTakingsInsideTemplateDecls(false)
+    : vidm(_vidm), fidm(_fidm), addAddressTakingsInsideTemplateDecls(false), useASTMatching(false)
   {
     variableAddressTakenInfo.first = false;
     functionAddressTakenInfo.first = false;
   }
   void computeAddressTakenInfo(SgNode* root);
+  // schroder3 (2016-08-09): Alternative to computeAddressTakenInfo(...) that uses the ASTMatching mechanism.
+  //  This is currently slower than computeAddressTakenInfo(...).
+  void computeAddressTakenInfoUsingASTMatching(SgNode* root);
   void printAddressTakenInfo();
   VariableAddressTakenInfo getVariableAddressTakenInfo();
   FunctionAddressTakenInfo getFunctionAddressTakenInfo();
