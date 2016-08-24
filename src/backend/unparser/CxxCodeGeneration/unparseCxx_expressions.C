@@ -256,8 +256,12 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
           SgLambdaCapture* lambdaCapture = lambdaExp->get_lambda_capture_list()->get_capture_list()[i];
           ROSE_ASSERT(lambdaCapture != NULL);
 
-
-          if (lambdaCapture->get_capture_variable() != NULL)
+          // schroder3 (2016-08-23): Do not print implicit captures because this generates ill-formed code if
+          //  there is a capture default (C++ standard section [expr.prim.lambda] point 8) (g++ allows this in
+          //  non-pedantic mode, clang++ does not). Example: do not transform "int i; [&](){i;};" to ill-formed
+          //  "int i; [&, &i](){i;}"). In addition, this change prevents the printing of "&this" (which is
+          //  ill-formed too) when "this" is implicitly captured.
+          if (!lambdaCapture->get_implicit() && lambdaCapture->get_capture_variable() != NULL)
              {
 
               // Liao 6/24/2016, we output ",item" when 
