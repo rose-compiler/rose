@@ -168,6 +168,9 @@ $(C_TEST_DIFF_FILES): $(C_TEST_Generated_Files)
 	echo "Verifying autoPar translation by using diff ..."; \
 	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
+# special file to debug dep graph information
+probe.o: ../autoPar $(@:.o=.c)
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) -rose:autopar:enable_debug $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) &> $(@).out 
 
 $(C_TEST_Objects): ../autoPar $(@:.o=.c)
 	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) >> $(@).out 
