@@ -18,6 +18,9 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
       $(srcdir)/RoseBin_DotGraph.cpp \
       $(srcdir)/RoseBin_Graph.cpp \
       $(srcdir)/RoseBin_GmlGraph.cpp
+else
+   sourse_files += \
+      $(srcdir)/dummyFunction.cpp 
 endif
 
 # DQ (5/2/2009): I wonder why we can't form predicates this way (does not work in Automake).

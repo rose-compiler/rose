@@ -1,3 +1,4 @@
+if (enable-binary-analysis)
 add_library(midend_binary OBJECT
   AbstractLocation.C
   BinaryCallingConvention.C
@@ -55,6 +56,11 @@ add_library(midend_binary OBJECT
   instructionSemantics/SymbolicSemantics2.C
   instructionSemantics/TraceSemantics2.C
   instructionSemantics/YicesSolver.C)
+else()
+add_library(midend_binary OBJECT
+  dummyBinaryMidend.C
+)
+endif()
 add_dependencies(midend_binary rosetta_generated)
 
 ########### install files ###############

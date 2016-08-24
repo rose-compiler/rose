@@ -52,7 +52,7 @@ fi
 boostlibdirs="$(eval $cmd)"
 
 if test -n "$boostlibdirs"; then
-    echo "[INFO] [${0}] Boost is being linked from '$(echo "$boostlibdirs" | xargs)' in '$LIBRARY'"
+    : echo "[INFO] [${0}] Boost is being linked from '$(echo "$boostlibdirs" | xargs)' in '$LIBRARY'"
 else
     echo "[ERROR] [${0}] Boost link dependencies not found in '${LIBRARY}'."
     echo "  It looks like the directory you specified during ROSE's configure step for Boost libraries"

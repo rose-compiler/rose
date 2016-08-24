@@ -175,13 +175,14 @@ size_t OnlyCurrentDirectory::nselected = 0;
 
 int main(int argc, char **argv)
 {
+  /*
     std::cerr <<"*******************************************************************************************************\n"
               <<"*** BIG FAT WARNING:  This test, " <<argv[0] <<",\n"
               <<"*** only works if the input files are in the right place in the ROSE source tree!  If they are not\n"
               <<"*** in the correct location the test will pass without doing anything.  Look for output lines that\n"
               <<"*** begin with \"OnlyCurrentDirectory is selecting node\" (there should be at least one).\n"
               <<"*******************************************************************************************************\n";
-
+  */
     std::vector<std::string> argvList(argv, argv + argc);
 
     //Read the comparison file
@@ -198,12 +199,12 @@ int main(int argc, char **argv)
     OnlyCurrentDirectory selector;
     cgb.buildCallGraph(selector);
     if (0==selector.nselected) {
-        std::cerr <<"You didn't heed the BIG FAT WARNING from above!\n";
-        exit(1);
+      std::cerr <<"Error: Test did not detect any function call. All tests contain at least one function call."<<std::endl;
+      exit(1);
     }
 
-     if (graphCompareOutput == "")
-        graphCompareOutput = ((project->get_outputFileName()) + ".cg.dmp");
+    if (graphCompareOutput == "")
+       graphCompareOutput = ((project->get_outputFileName()) + ".cg.dmp");
 
     cout << "Writing custom compare to: " << graphCompareOutput << endl;
 
