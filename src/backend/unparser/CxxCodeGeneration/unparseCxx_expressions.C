@@ -229,17 +229,25 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      bool hasCaptureCharacter = false;
      int commaCounter = 0;
 
-     if (lambdaExp->get_capture_default() == true)
-        {
-          curprint("=");
-          hasCaptureCharacter = true; 
-        }
 
-     if (lambdaExp->get_default_is_by_reference() == true)
-        {
-          curprint("&");
-          hasCaptureCharacter = true;
-        }
+
+     // schroder3 (2016-08-23): Do not print "&" AND "=" (because "[&=](){}" is ill-formed):
+     if (lambdaExp->get_capture_default() == true) {
+       if (lambdaExp->get_default_is_by_reference() == true) {
+         curprint("&");
+       }
+       else {
+         curprint("=");
+       }
+       hasCaptureCharacter = true;
+     }
+     else {
+       // schroder3 (2016-08-23): Consistency check: If there is no capture default then there should be no
+       //  by-reference-capture default:
+       ROSE_ASSERT(!lambdaExp->get_default_is_by_reference());
+     }
+
+
 
      ROSE_ASSERT(lambdaExp->get_lambda_capture_list() != NULL);
      size_t bound = lambdaExp->get_lambda_capture_list()->get_capture_list().size();
