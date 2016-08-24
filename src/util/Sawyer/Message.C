@@ -654,44 +654,17 @@ Prefix::silentInstance() {
 // thread-safe (assuming Windows API is thread-safe)
 SAWYER_EXPORT void
 Prefix::setProgramName() {
-#ifdef BOOST_WINDOWS
-# if 0 // [Robb Matzke 2014-06-13] temporarily disable for ROSE linking error (needs psapi.lib in Windows)
-    if (HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId())) {
-        TCHAR buffer[MAX_PATH];
-        if (GetModuleFileNameEx(handle, 0, buffer, MAX_PATH)) { // requires linking with MinGW's psapi.a
-            std::string name = buffer;
-            size_t slash_idx = name.rfind('\\');
-            if (slash_idx != std::string::npos)
-                name = name.substr(slash_idx+1);
-            if (name.size()>4 && 0==name.substr(name.size()-4, 4).compare(".exe"))
-                name = name.substr(0, name.size()-4);
-            programName_ = name;
-        }
-        CloseHandle(handle);
-    }
-# else
-    programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
-# endif
-#elif defined(__APPLE__) && defined(__MACH__)
-    programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
-#else
-    // no synchronization necessary for this global state
-    if (FILE *f = fopen("/proc/self/cmdline", "r")) {
-        std::string name;
-        int c;
-        while ((c = fgetc(f)) > 0)
-            name += (char)c;
-        fclose(f);
-        size_t slash_idx = name.rfind('/');
-        if (slash_idx != std::string::npos)
-            name = name.substr(slash_idx+1);
+    std::string name = thisExecutableName();
+    if (name.empty()) {
+        programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
+    } else {
+        size_t slashIdx = name.rfind('/');
+        if (slashIdx != std::string::npos)
+            name = name.substr(slashIdx+1);
         if (name.size()>3 && 0==name.substr(0, 3).compare("lt-"))
             name = name.substr(3);
         programName_ = name;
     }
-#endif
-    if (programName_.orElse("").empty())
-        throw std::runtime_error("cannot obtain program name for message prefixes");
 }
 
 SAWYER_EXPORT const Optional<double>

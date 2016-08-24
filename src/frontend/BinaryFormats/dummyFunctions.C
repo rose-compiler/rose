@@ -265,3 +265,199 @@ rose_rva_t rose_rva_t::operator=(const rose_rva_t &other) {
     section = other.section;
     return *this;
 }
+
+rose_addr_t
+rose_rva_t::get_rva() const
+{
+    rose_addr_t rva = addr;
+    return rva;
+}
+
+void
+SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie)
+{}
+
+void
+SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn, AddressSpace space, Elasticity elasticity)
+{}
+
+
+void
+SgAsmGenericHeader::ctor()
+{}
+
+void
+SgAsmPEFileHeader::ctor()
+{}
+
+void
+SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset)
+{}
+
+
+void
+SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset)
+{}
+
+void
+SgAsmDOSFileHeader::ctor()
+{}
+
+void
+SgAsmElfFileHeader::ctor()
+{}
+
+void SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *s)
+{}
+
+void
+SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *s1,SgAsmElfSection *s2)
+{}
+
+void SgAsmElfDynamicSection::ctor(SgAsmElfStringSection *s)
+{}
+
+void
+SgAsmElfNoteSection::ctor()
+{}
+
+void
+SgAsmElfEHFrameSection::ctor()
+{}
+
+void
+SgAsmElfSymverSection::ctor()
+{}
+
+void SgAsmElfSymverDefinedSection::ctor(SgAsmElfStringSection *s)
+{}
+
+void SgAsmElfSymverNeededSection::ctor(SgAsmElfStringSection *s)
+{}
+
+void
+SgAsmElfSectionTable::ctor()
+{}
+
+void
+SgAsmElfSegmentTable::ctor()
+{}
+
+void SgAsmPEImportSection::ctor()
+{}
+
+void SgAsmPEExportSection::ctor()
+{}
+
+void SgAsmPEStringSection::ctor()
+{}
+
+void SgAsmPESectionTable::ctor()
+{}
+
+void SgAsmDOSExtendedHeader::ctor()
+{}
+
+void
+SgAsmCoffSymbolTable::ctor()
+{}
+
+void SgAsmNESectionTable::ctor()
+{}
+
+void SgAsmNENameTable::ctor(rose_addr_t i)
+{}
+
+void SgAsmNEModuleTable::ctor(rose_addr_t i1, rose_addr_t i2)
+{}
+
+void SgAsmNEStringTable::ctor(rose_addr_t i1, rose_addr_t i2)
+{}
+
+void SgAsmNEEntryTable::ctor(rose_addr_t i1, rose_addr_t i2)
+{}
+
+void SgAsmNERelocTable::ctor(SgAsmNESection *s)
+{}
+
+void SgAsmLESectionTable::ctor(rose_addr_t i1, rose_addr_t i2)
+{}
+
+void SgAsmLENameTable::ctor(rose_addr_t i)
+{}
+
+void SgAsmLEPageTable::ctor(rose_addr_t i1, rose_addr_t i2)
+{}
+
+void SgAsmLEEntryTable::ctor(rose_addr_t i)
+{}
+
+void SgAsmLERelocTable::ctor(rose_addr_t i)
+{}
+
+void SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *s)
+{}
+
+void SgAsmElfStrtab::ctor()
+{}
+
+void SgAsmBasicString::ctor()
+{}
+
+void SgAsmStoredString::ctor(SgAsmGenericStrtab *s,rose_addr_t i,bool b)
+{}
+void SgAsmStoredString::ctor(SgAsmGenericStrtab *strtab, const std::string &s)
+{}
+void SgAsmStoredString::ctor(SgAsmStringStorage *storage)
+{}
+
+void SgAsmElfRelocEntry::ctor(SgAsmElfRelocSection *s)
+{}
+
+void SgAsmPEExportEntry::ctor(SgAsmGenericString *fname, unsigned ordinal, rose_rva_t expaddr, SgAsmGenericString *forwarder)
+{}
+
+void SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *s){}
+
+void SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *s){}
+
+void SgAsmElfSymverEntry::ctor(SgAsmElfSymverSection *s){}
+
+void SgAsmElfSymverDefinedEntry::ctor(SgAsmElfSymverDefinedSection *s){}
+
+void SgAsmElfSymverDefinedAux::ctor(SgAsmElfSymverDefinedEntry* entry, SgAsmElfSymverDefinedSection* symver){}
+
+void SgAsmElfSymverNeededEntry::ctor(SgAsmElfSymverNeededSection *s){}
+
+void SgAsmElfSymverNeededAux::ctor(SgAsmElfSymverNeededEntry* entry, SgAsmElfSymverNeededSection* symver){}
+
+void SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, const std::string &dll_name){}
+
+void SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section){}
+
+void SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, const RVASizePair_disk *disk){}
+
+void SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size){}
+
+void SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe){}
+
+void SgAsmPEImportItem::ctor(SgAsmPEImportItemList *parent){}
+void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir){}
+void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, const std::string &name, unsigned hint){}
+void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, unsigned ordinal){}
+
+size_t SgAsmPEImportSection::mesg_nprinted = 0;
+
+
+rose_addr_t
+rose_rva_t::get_va() const
+{}
+
+std::string
+SgAsmGenericSection::read_content_str(const MemoryMap *map, rose_addr_t start_va, bool strict)
+{}
+
+
+std::string
+SgAsmGenericSection::read_content_str(rose_addr_t abs_offset, bool strict)
+{}

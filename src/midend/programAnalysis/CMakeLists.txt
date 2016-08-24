@@ -28,6 +28,7 @@ add_subdirectory(EditDistance)
 
 
 if (NOT enable-internalFrontendDevelopment)
+if (enable-binary-analysis)
   add_library(midend_pa OBJECT
     defUseAnalysis/DefUseAnalysisAbstract.cpp
     defUseAnalysis/DefUseAnalysis.cpp
@@ -58,7 +59,6 @@ if (NOT enable-internalFrontendDevelopment)
     staticInterproceduralSlicing/CreateSliceSet.C
     staticInterproceduralSlicing/SystemDependenceGraph.C
     staticInterproceduralSlicing/DefUseExtension.C
-    CFG/CFG_OA.C
     CFG/CFG_ROSE.C
     pointerAnal/PtrAnalCFG.C
     pointerAnal/PtrAnal.C
@@ -82,6 +82,59 @@ if (NOT enable-internalFrontendDevelopment)
     EditDistance/EditDistance.C
     EditDistance/TreeEditDistance.C
   )
+else()
+  add_library(midend_pa OBJECT
+    defUseAnalysis/DefUseAnalysisAbstract.cpp
+    defUseAnalysis/DefUseAnalysis.cpp
+    defUseAnalysis/GlobalVarAnalysis.cpp
+    defUseAnalysis/LivenessAnalysis.cpp
+    defUseAnalysis/dfaToDot.cpp
+    defUseAnalysis/DefUseAnalysis_perFunction.cpp
+    valuePropagation/ValueAnnot.C
+    valuePropagation/ValuePropagate.C
+    variableRenaming/VariableRenaming.C
+    OAWrap/OAWrap.C
+    OAWrap/SAGE2OA.C
+    CallGraphAnalysis/CallGraphDB.C
+    CallGraphAnalysis/CallGraph.C
+    CallGraphAnalysis/ClassHierarchyGraph.C
+    staticInterproceduralSlicing/MergedDependenceGraph.C
+    staticInterproceduralSlicing/ControlFlowGraph.C
+    staticInterproceduralSlicing/FunctionDependenceGraph.C
+    staticInterproceduralSlicing/ControlDependenceGraph.C
+    staticInterproceduralSlicing/DependenceGraph.C
+    staticInterproceduralSlicing/EDefUse.C
+    staticInterproceduralSlicing/DataDependenceGraph.C
+    staticInterproceduralSlicing/SlicingInfo.C
+    staticInterproceduralSlicing/CreateSlice.C
+    staticInterproceduralSlicing/CreateSliceSet.C
+    staticInterproceduralSlicing/SystemDependenceGraph.C
+    staticInterproceduralSlicing/DefUseExtension.C
+    CFG/CFG_ROSE.C
+    pointerAnal/PtrAnalCFG.C
+    pointerAnal/PtrAnal.C
+    bitvectorDataflow/DataFlowAnalysis.C
+    bitvectorDataflow/ReachingDefinition.C
+    bitvectorDataflow/DefUseChain.C
+    VirtualFunctionAnalysis/VirtualFunctionAnalysis.C
+    VirtualFunctionAnalysis/PtrAliasAnalysis.C
+    VirtualFunctionAnalysis/IntraProcAliasAnalysis.C
+    VirtualFunctionAnalysis/IntraProcDataFlowAnalysis.C
+    VirtualFunctionAnalysis/InterProcDataFlowAnalysis.C
+    graphAnalysis/SB_Graph.C
+    graphAnalysis/CallGraphAnalysis.C
+    graphAnalysis/RoseSrc_CallGraphAnalysis.C
+    graphAnalysis/dummyFunction.cpp
+    staticSingleAssignment/staticSingleAssignmentCalculation.C
+    staticSingleAssignment/staticSingleAssignmentQueries.C
+    staticSingleAssignment/uniqueNameTraversal.C
+    staticSingleAssignment/defsAndUsesTraversal.C
+    staticSingleAssignment/reachingDef.C
+    staticSingleAssignment/staticSingleAssignmentInterprocedural.C
+    EditDistance/EditDistance.C
+    EditDistance/TreeEditDistance.C
+  )
+endif()
   add_dependencies(midend_pa rosetta_generated)
 
 endif()

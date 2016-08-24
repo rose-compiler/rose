@@ -48,32 +48,47 @@ class ComputeAddressTakenInfo
   typedef std::pair<bool, FunctionIdSet> FunctionAddressTakenInfo;
   VariableIdMapping& vidm;
   FunctionIdMapping& fidm;
+
   // result to be computed by this analysis
   // bool is set to true when operand of SgAddressOfExp is a complicated
   // expression for which VariableId cannot be determined
   // example: &(*p)
-  VariableAddressTakenInfo variableAddressTakenInfo; // variables of which the address was taken
-  FunctionAddressTakenInfo functionAddressTakenInfo; // functions of which the address was taken
+  VariableAddressTakenInfo variableAddressTakenInfo;
+  // schroder3 (2016-07-19): second result of this analysis: set of function ids of address taken
+  //  functions. The bool is currently not set.
+  FunctionAddressTakenInfo functionAddressTakenInfo;
 
+  // schroder3 (2016-07-19): Extended comment by function ids,
+  //  reference creation and implicit address-taking of functions.
+  //
   // address can be taken for any expression that is lvalue
   // The purpose of this class is to traverse arbitrary
   // expressions that are operands of SgAddressOfOp and find the
-  // variable whose address is actually taken.
+  // variables and functions whose address is actually taken. In
+  // addition, SgVariableDeclaration and SgFunctionCallExp nodes are
+  // searched for alias/ reference creation. Furthermore,
+  // SgAssignOp and SgReturnStmt are considered too, because
+  // they might contain a implicit address-taking of a function.
+  //
   // For example in expression &(a.b->c),  'c' address is
   // actually taken. This class simply traverses the operand
   // of SgAddressOfOp to identify 
-  // the variable whose address is taken
+  // the variable or function whose address is taken
   // 
+  // schroder3 (2016-07-19): TODO: Rename to reflect the current purpose
+  //  (something like AddressTakingNodeToAddressTakenSet?)
   class OperandToVariableId : public ROSE_VisitorPatternDefaultBase
   {
     ComputeAddressTakenInfo& cati;
     int debuglevel;
-  public:
-  OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati), debuglevel(0) { }
+   public:
+    OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati), debuglevel(0) { }
     void visit(SgVarRefExp*);
     void visit(SgVariableDeclaration*);
     void visit(SgDotExp*);
     void visit(SgArrowExp*);
+    void visit(SgDotStarOp*);
+    void visit(SgArrowStarOp*);
     void visit(SgPointerDerefExp*);
     void visit(SgPntrArrRefExp*);
     void visit(SgAssignOp* sgn);
@@ -88,10 +103,20 @@ class ComputeAddressTakenInfo
     void visit(SgMemberFunctionRefExp* sgn);
     void visit(SgTemplateFunctionRefExp* sgn);
     void visit(SgTemplateMemberFunctionRefExp* sgn);
+    void visit(SgReturnStmt* sgn);
     void visit(SgFunctionCallExp* sgn);
     void visit(SgThisExp* sgn);
+    void visit(SgAddressOfOp* sgn);
+    void visit(SgCtorInitializerList* sgn);
+    void visit(SgConstructorInitializer* sgn);
+    void visit(SgFunctionParameterList* sgn);
     void visit(SgNode* sgn);
+    void insertVariableId(VariableId);
     void insertFunctionId(FunctionId);
+    // schroder3 (2016-07-20): Handles the arguments of a constructor or (member) function call regarding their "address-taken-ness".
+    void handleCall(const SgTypePtrList& parameterTypes, const SgExpressionPtrList& argumentExpressions);
+    // schroder3 (2016-07-20): Handles all kinds of associations (currently initializations and assignments) regarding their "address-taken-ness".
+    void handleAssociation(const std::vector<VariableId> possibleTargetEntities, const SgType* targetEntityType, /*const*/ SgExpression* associatedExpression);
     void debugPrint(SgNode* sgn);
   };
 public:

@@ -1,0 +1,11 @@
+V,<unstable>,global,<unstable>,<unstable>,1
+V,<unstable>,i1,<unstable>,<unstable>,1
+V,<unstable>,i2,<unstable>,<unstable>,1
+V,<unstable>,global_2,<unstable>,<unstable>,1
+V,<unstable>,i1_2,<unstable>,<unstable>,1
+V,<unstable>,i2_2,<unstable>,<unstable>,1
+V,<unstable>,i,<unstable>,<unstable>,1
+F,<unstable>,func,<unstable>,<unstable>,1
+F,<unstable>,func2,<unstable>,<unstable>,1
+F,<unstable>,func_2,<unstable>,<unstable>,1
+F,<unstable>,func2_2,<unstable>,<unstable>,1

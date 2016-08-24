@@ -66,7 +66,7 @@ public:
   SgFunctionType* getTypeFromFunctionId(FunctionId) const;
 
   bool isTemporaryFunctionId(FunctionId id) const;
-  std::string getSymbolNameFromFunctionId(FunctionId id) const;
+  std::string getFunctionNameFromFunctionId(FunctionId id) const;
   std::string getUniqueShortNameFromFunctionId(FunctionId id) const;
 
   // Adds the given symbol to the mapping
@@ -151,8 +151,9 @@ class FunctionId {
   friend class ConstraintSetHashFun;
  public:
   FunctionId();
+  static const char * const idKindIndicator;
   // Returns the id code as a string with the given prefix
-  std::string toString(const char* prefix = "F") const;
+  std::string toString(const char* prefix = idKindIndicator) const;
   // Uses the given mapping to return a more detailed string representation
   std::string toString(const FunctionIdMapping& vid) const;
   // Returns the id code

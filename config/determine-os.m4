@@ -74,23 +74,14 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
       if test "x$build_vendor" = xapple; then
           OS_vendor=$build_vendor
           case $build_os in
-            darwin8*)
-               OS_release=10.4
-               ;;
-            darwin9*)
-               OS_release=10.5
-               ;;
-            darwin10*)
-               OS_release=10.6
-               ;;
-            darwin11*)
-               OS_release=10.7
-               ;;
-            darwin12*)
-               OS_release=10.8
-               ;;
             darwin13*)
                OS_release=10.9
+               ;;
+            darwin14*)
+               OS_release=10.10
+               ;;
+            darwin15*)
+               OS_release=10.11
                ;;
             *)
              echo "Error: Apple Mac OSX version not recognized as either darwin8 or darwin9 ... (build_os = $build_os)";

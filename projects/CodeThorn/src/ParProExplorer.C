@@ -96,6 +96,7 @@ void ParProExplorer::explore() {
       recalculateNumVerifiedFalsified();
       cout << "STATUS: verifiable: "<<_numVerified<<"   falsified: "<<_numFalsified << endl;
     }
+    _properties->shuffle();
   } else if (_randomSubsetMode == PAR_PRO_NUM_SUBSETS_FINITE) {
     if (_componentSelection == PAR_PRO_COMPONENTS_SUBSET_FIXED) {
       ParallelSystem system = exploreOnce();
@@ -113,6 +114,7 @@ void ParProExplorer::explore() {
 	  break;
 	}
       }
+      _properties->shuffle();
     }
   } else if (_randomSubsetMode == PAR_PRO_NUM_SUBSETS_NONE) {
     ParallelSystem system = exploreOnce();
