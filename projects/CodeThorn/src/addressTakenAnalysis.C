@@ -218,7 +218,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefEx
     //  is a implicit address-of operator that takes the address of the operand
     //  before this dereference operator dereferences the address afterwards.
     //
-    // Currently this should only be possible in case of a lvalue of function type:
+    // Currently this should only be possible in case of a function type:
     ROSE_ASSERT(isSgFunctionType(sgn->get_operand()->get_type()));
 
     // Find all variables/ functions in the operand expression because their address is
