@@ -1016,7 +1016,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
 
     // If we have a reference to pointer to function type then we handle it as a reference type and
     //  not as a function type.
-    if(const SgReferenceType* targetEntityReferenceType = SgNodeHelper::isReferenceType(targetEntityType)) {
+    if(const SgType* targetEntityReferenceType = SgNodeHelper::isReferenceType(targetEntityType)) {
       if(debuglevel > 0) {
         std::cout << "... is reference type." << std::endl;
       }
@@ -1054,7 +1054,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
       }
 
       // Remove the reference for the following implicit address-taking check:
-      targetEntityType = targetEntityReferenceType->get_base_type();
+      targetEntityType = SgNodeHelper::getReferenceBaseType(targetEntityReferenceType);
     }
 
     // There is an implicit address-taking in the association if the target entity is of function
