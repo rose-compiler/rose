@@ -91,7 +91,9 @@ libspray_la_SOURCES=\
  AnalysisAbstractionLayer.C \
  ProgramAbstractionLayer.C \
  addressTakenAnalysis.C \
- defUseQuery.C
+ defUseQuery.C \
+ Timer.h \
+ Timer.cpp
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files

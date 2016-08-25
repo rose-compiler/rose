@@ -734,7 +734,12 @@ class GenericIntervalLattice {
       return BoolLatticeType(l1.getConst()<l2.getConst());
     }
     if(haveOverlap(l1,l2)) {
-      return BoolLatticeType(CodeThorn::AType::Top());
+      if(!l2.isHighInf() && !l1.isLowInf() && l2.getHigh() == l1.getLow()) {
+        return BoolLatticeType(false);
+      }
+      else {
+        return BoolLatticeType(CodeThorn::AType::Top());
+      }
     } else {
       if(l1.isHighInf())
         return false;
@@ -757,7 +762,8 @@ class GenericIntervalLattice {
   }
 
   static BoolLatticeType isSmallerOrEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
-    return isSmaller(l1,l2)||isEqual(l1,l2);
+    // a <= b <=> !(a > b)
+    return !isGreater(l1,l2);
   }
 
   static GenericIntervalLattice isSmallerOrEqualInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
@@ -766,8 +772,8 @@ class GenericIntervalLattice {
   }
 
   static BoolLatticeType isGreater(GenericIntervalLattice l1, GenericIntervalLattice l2) {
-    // a > b <=> !(a <= b)
-    return !isSmallerOrEqual(l1,l2);
+    // a > b <=> b < a
+    return isSmaller(l2,l1);
   }
 
   static GenericIntervalLattice isGreaterInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {

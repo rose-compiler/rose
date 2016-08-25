@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include "PASolver1.h"
+#include "Timer.h"
 
 SPRAY::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 				  vector<Lattice*>& analyzerDataPreInfo,
@@ -50,7 +51,9 @@ SPRAY::PASolver1::computePostInfo(Label lab,Lattice& info) {
 // runs until worklist is empty
 void
 SPRAY::PASolver1::runSolver() {
+  Timer solverTimer;
   cout<<"INFO: solver 1 started."<<endl;
+  solverTimer.start();
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {
     Edge edge=_workList.take();
@@ -133,7 +136,7 @@ SPRAY::PASolver1::runSolver() {
     }
     delete info;
   }
-  cout<<"INFO: solver 1 finished."<<endl;
+  cout<<"INFO: solver 1 finished after " << static_cast<unsigned long>(solverTimer.getElapsedTimeInMilliSec()) << "ms."<<endl;
 }
 
 #endif

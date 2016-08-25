@@ -16,6 +16,9 @@ V,<unstable>,a2,<unstable>,<unstable>,1
 V,<unstable>,p,<unstable>,<unstable>,1
 V,<unstable>,val,<unstable>,<unstable>,1
 V,<unstable>,arr,<unstable>,<unstable>,1
+V,<unstable>,a12,<unstable>,<unstable>,1
+V,<unstable>,p12,<unstable>,<unstable>,1
+V,<unstable>,f12,<unstable>,<unstable>,1
 V,<unstable>,array1,<unstable>,<unstable>,1
 V,<unstable>,arr,<unstable>,<unstable>,1
 V,<unstable>,arrB,<unstable>,<unstable>,1
@@ -59,6 +62,7 @@ V,<unstable>,b3,<unstable>,<unstable>,1
 V,<unstable>,other,<unstable>,<unstable>,1
 V,<unstable>,b,<unstable>,<unstable>,1
 V,<unstable>,c0,<unstable>,<unstable>,1
+V,<unstable>,_c,<unstable>,<unstable>,1
 V,<unstable>,other,<unstable>,<unstable>,1
 V,<unstable>,b,<unstable>,<unstable>,1
 V,<unstable>,c1,<unstable>,<unstable>,1

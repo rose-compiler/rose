@@ -77,4 +77,22 @@ int main(int argc, char** argv) {
     "unreachable code 7";
   }
 
+  double d = 3.4;
+
+  if(d >= 3 && d <=4) {
+    "reachable code";
+  }
+  else {
+    "unreachable code 8";
+  }
+
+  int* ip2 = nullptr;
+
+  if(ip2 == 0) {
+    "reachable code";
+  }
+  else {
+    "unreachable code 9";
+  }
+
 }

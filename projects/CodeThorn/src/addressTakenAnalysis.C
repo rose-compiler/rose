@@ -218,7 +218,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefEx
     //  is a implicit address-of operator that takes the address of the operand
     //  before this dereference operator dereferences the address afterwards.
     //
-    // Currently this should only be possible in case of a lvalue of function type:
+    // Currently this should only be possible in case of a function type:
     ROSE_ASSERT(isSgFunctionType(sgn->get_operand()->get_type()));
 
     // Find all variables/ functions in the operand expression because their address is
@@ -313,6 +313,20 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
 
   SgNode* operand = sgn->get_operand();
   operand->accept(*this);
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertAllFunctionIds() {
+  FunctionIdSet allFuncIds = cati.fidm.getFunctionIdSet();
+  for(FunctionIdSet::const_iterator i = allFuncIds.begin(); i != allFuncIds.end(); ++i) {
+    insertFunctionId(*i);
+  }
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertAllVariableIds() {
+  VariableIdSet allVarIds = cati.vidm.getVariableIdSet();
+  for(VariableIdSet::const_iterator i = allVarIds.begin(); i != allVarIds.end(); ++i) {
+    insertVariableId(*i);
+  }
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(VariableId id) {
@@ -601,7 +615,34 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
 //  else {
 //    std::cout << "INFO: no function definition found for call " << sgn->unparseToString()
 //            << ". Will use parameter types of callee type instead." << std::endl;
-    parameterTypes = calleeType->get_arguments();
+  parameterTypes = calleeType->get_arguments();
+  // schroder3 (2016-08-17): Check for an implicitly declared function (e.g. gettimeofday(...) can
+  //  be used without an include and without an explicit declaration). This is only allowed in C and
+  //  it is deprecated starting with C99 (as far as i know). The type of these functions is "int()"
+  //  (even if they have parameters) and there is therefore no information about the parameter types.
+  if(parameterTypes.size() == 0 && arguments.size() > 0) {
+    if(isSgTypeInt(calleeType->get_return_type())) {
+      // The type is int(): Make sure that this is compiled as C code:
+      SgNode* node = sgn;
+      while(!isSgFile((node = node->get_parent())));
+      SgFile* enclosingFile = isSgFile(node);
+      ROSE_ASSERT(enclosingFile);
+      if(enclosingFile->get_outputLanguage() == SgFile::e_C_output_language) {
+        // This should be C code. TODO: This might be overwritten by -std=... ?
+        // Because C has no references, they only possible address-taking is the function to pointer
+        //  conversion. Make the parameter type a function pointer type if the argument type is a
+        //  function type:
+        for(SgExpressionPtrList::const_iterator i = arguments.begin(); i != arguments.end(); ++i) {
+          SgType* parameterType = (*i)->get_type();
+          if(isSgFunctionType(parameterType)) {
+            parameterType = SgPointerType::createType(parameterType);
+          }
+          parameterTypes.push_back(parameterType);
+        }
+      }
+    }
+
+  }
 //  }
 
   handleCall(parameterTypes, arguments);
@@ -693,20 +734,69 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionParame
       //  initialization:
       handleAssociation(AK_Initialization, associationTargets, parameterType, defaultArgument->get_operand());
     }
-    else if(isSgAggregateInitializer((*i)->get_initializer()) || isSgCompoundInitializer((*i)->get_initializer())) {
-      // Currently not supported (TODO).
-      std::cout << "WARNING: Unsupported default argument initializer for parameter " << cati.vidm.variableName(parameter) << std::endl;
-    }
     else {
-      if(isSgInitializer((*i)->get_initializer())) {
-        throw SPRAY::Exception("Unknown initializer for parameter " + cati.vidm.variableName(parameter));
-      }
-
-      // No default argument: Add the parameter to the address taken set anyway if it is of
+      // Two cases:
+      //   1) Initializer other than assign initializer: Handled separately
+      //   2) No initializer
+      //  In both cases only add the parameter to the address taken set if it is of
       //  reference type.
       if(SgNodeHelper::isReferenceType((*i)->get_type())) {
         insertVariableId(parameter);
       }
+    }
+  }
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDesignatedInitializer* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-15): Designated initializer allows to initiate members by providing their
+  //  name in the initialization list. C only as far as is know. Not supported yet (TODO):
+  std::cout << "WARNING: Designated initializers are not supported yet. Inserting all variables and"
+                 " functions into the address-taken set." << std::endl;
+  insertAllVariableIds();
+  insertAllFunctionIds();
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundInitializer* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-15): Compound literals: Constructs a temporary object or array from initialization list:
+  //  alias/ reference creation in case of initialization of an object and implicit function to pointer conversion
+  //  in both cases are possible.
+  // TODO: Not supported yet:
+  std::cout << "WARNING: Compound literals are not supported yet. Inserting all variables and"
+               " functions into the address-taken set." << std::endl;
+  insertAllVariableIds();
+  insertAllFunctionIds();
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundLiteralExp* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-15): Compound literal expression: currently this is a node without children
+  //  (and a symbol as attribute) but there is no access to the particular initializations: Nothing to do (TODO):
+  std::cout << "SgCompoundLiteralExp symbol: " << SgNodeHelper::symbolToString(sgn->get_symbol()) << std::endl;
+  ROSE_ASSERT(sgn->get_numberOfTraversalSuccessors() == 0);
+  std::cout << "WARNING: Compound literal expressions are not supported yet. Inserting all variables and"
+               " functions into the address-taken set." << std::endl;
+  insertAllVariableIds();
+  insertAllFunctionIds();
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAggregateInitializer* sgn) {
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-15): aggregate initialization of an object or an array. In case of an object it
+  //  is basically the same as a constructor call.
+  if(const SgExprListExp* argumentExpressionListContainer = sgn->get_initializers()) {
+    // TODO: Try to get the object member types resp. the array element type! Without this information
+    //  put everything that occurs in one of the aggregate init expressions into the address-taken-set:
+    const SgExpressionPtrList& argumentExpressions = argumentExpressionListContainer->get_expressions();
+    for(SgExpressionPtrList::const_iterator i = argumentExpressions.begin();
+        i != argumentExpressions.end(); ++i
+    ) {
+      (*i)->accept(*this);
     }
   }
 }
@@ -717,8 +807,13 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConstructorIni
   // schroder3 (2016-07-20): Call of a constructor: Basically the same as a function call expr:
   //  Get the argument expressions and the parameter types:
   if(const SgExprListExp* argumentExpressionListContainer = sgn->get_args()) {
-    const SgExpressionPtrList argumentExpressions = argumentExpressionListContainer->get_expressions();
+    const SgExpressionPtrList& argumentExpressions = argumentExpressionListContainer->get_expressions();
     if(argumentExpressions.size() > 0) {
+      if(argumentExpressions.size() == 1 && isSgAggregateInitializer(argumentExpressions[0])) {
+        // This aggregate initialization will be handled separately.
+        return;
+      }
+
       // Arguments are available.
       // Determine the parameter types:
       const SgMemberFunctionDeclaration* constructorDecl = sgn->get_declaration();
@@ -734,7 +829,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConstructorIni
         parameterTypes.push_back((*i)->get_type());
       }
       // Handle the arguments in the same way as a normal (member) function call:
-      handleCall(parameterTypes, argumentExpressionListContainer->get_expressions());
+      handleCall(parameterTypes, argumentExpressions);
     }
   }
 }
@@ -765,7 +860,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCtorInitialize
 
     // Add the variables in the init expression:
     SgAssignInitializer* memberInitializer = isSgAssignInitializer(initializedMember->get_initializer());
-    ROSE_ASSERT(memberInitializer);
+    if(!memberInitializer) {
+      // Other initializers are handled separately
+      return;
+    }
 
     // Handle the type of the member together with the initializer expression:
     handleAssociation(AK_Initialization, possibleTargets, initializedMember->get_type(), memberInitializer->get_operand());
@@ -817,6 +915,66 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThrowOp* sgn)
       //  TODO: Refine this (e.g. if there is only an ellipsis catch without rethrow then the function
       //        address is not accessible)
       throwExpression->accept(*this);
+    }
+  }
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaCapture* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-22): A lambda capture by reference creates an alias between the outside/ capture
+  //  variable and the inside/ closure variable. Functions can not be captured.
+
+  // Check for capture by reference
+  if(sgn->get_capture_by_reference()) {
+    // This capture creates the closure variable (a reference member of the lambda object which is of
+    //  anonymous class type) as an alias of the capture variable/ this.
+
+    SgExpression* captureExpression = sgn->get_capture_variable();
+
+    SgVarRefExp* closureVariable = isSgVarRefExp(sgn->get_closure_variable());
+    ROSE_ASSERT(closureVariable);
+    VariableId closureVariableId = cati.vidm.variableId(closureVariable);
+    ROSE_ASSERT(closureVariableId.isValid());
+    const SgType* closureVarType = cati.vidm.getType(closureVariableId);
+
+    // The capture can be a variable or the "this" pointer:
+    if(SgVarRefExp* captureVariable = isSgVarRefExp(captureExpression)) {
+      VariableId captureVariableId = cati.vidm.variableId(captureVariable);
+      ROSE_ASSERT(captureVariableId.isValid());
+      // Check the types:
+      const SgType* captureVarType = cati.vidm.getType(captureVariableId);
+      const SgType* captureVarBaseType = SgNodeHelper::isReferenceType(captureVarType)
+                                       ? SgNodeHelper::getReferenceBaseType(captureVarType)
+                                       : captureVarType;
+
+      // Closure variable type should be a lvalue reference type:
+      ROSE_ASSERT(SgNodeHelper::isLvalueReferenceType(closureVarType));
+
+      // Capture variable should have the same base type as the closure variable:
+      ROSE_ASSERT(captureVarBaseType->isEquivalentType(SgNodeHelper::getReferenceBaseType(closureVarType)));
+
+      // The closure variable is the newly created reference that gets initialized with the capture variable:
+      std::vector<VariableId> possibleTargets;
+      possibleTargets.push_back(closureVariableId);
+
+      // Handle the alias creation:
+      handleAssociation(AK_Initialization, possibleTargets, closureVarType, captureExpression);
+    }
+    else if(isSgThisExp(captureExpression)) {
+      // schroder3 (2016-08-25): The "this" pointer is captured by value (C++11) and this should therefore be
+      //  unreachable code. However an implicit "this" capture is currently marked as by-reference if the capture
+      //  default is by-reference. Ignore this capture because it does not include an alias creation.
+
+      // Some consistency checks: The captured "this" is a pointer...
+      ROSE_ASSERT(SgNodeHelper::isPointerType(captureExpression->get_type()));
+      //  ... and the pointer is copied to the closure variable which is not of reference type but of pointer type:
+      ROSE_ASSERT(!SgNodeHelper::isReferenceType(closureVarType));
+      ROSE_ASSERT(SgNodeHelper::isPointerType(closureVarType));
+    }
+    else {
+      ROSE_ASSERT(false);
     }
   }
 }
@@ -918,7 +1076,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
 
     // If we have a reference to pointer to function type then we handle it as a reference type and
     //  not as a function type.
-    if(const SgReferenceType* targetEntityReferenceType = SgNodeHelper::isReferenceType(targetEntityType)) {
+    if(const SgType* targetEntityReferenceType = SgNodeHelper::isReferenceType(targetEntityType)) {
       if(debuglevel > 0) {
         std::cout << "... is reference type." << std::endl;
       }
@@ -956,7 +1114,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
       }
 
       // Remove the reference for the following implicit address-taking check:
-      targetEntityType = targetEntityReferenceType->get_base_type();
+      targetEntityType = SgNodeHelper::getReferenceBaseType(targetEntityReferenceType);
     }
 
     // There is an implicit address-taking in the association if the target entity is of function
@@ -1066,6 +1224,24 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root) {
     // schroder3 (2016-08-02): A throw can contain an implicit address taking e.g. if the throw expression is of
     //  function type and if there is a catch for function pointer types.
          || isSgThrowOp(*i)
+
+    // schroder3 (2016-08-15): Aggregate/ "brace" initialization of an object or an array: alias/ reference creation
+    //  in case of initialization of an object and implicit function to pointer conversion in both cases are possible.
+         || isSgAggregateInitializer(*i)
+
+    // schroder3 (2016-08-15): Compound literals: Constructs a temporary object or array from initialization list:
+    //  alias/ reference creation in case of initialization of an object and implicit function to pointer conversion
+    //  in both cases are possible.
+         || isSgCompoundInitializer(*i)
+         || isSgCompoundLiteralExp(*i)
+
+    // schroder3 (2016-08-15): Designated initializers allow to initiate members by providing their
+    //  name in the initialization list. C only as far as is know.
+         || isSgDesignatedInitializer(*i)
+
+   // schroder3 (2016-08-22): A lambda capture by reference creates an alias between the outside/ capture variable and
+   //  the inside/ closure variable.
+        || isSgLambdaCapture(*i)
 
     ) {
       // schroder3 (2016-08-08): Look for address-takings:

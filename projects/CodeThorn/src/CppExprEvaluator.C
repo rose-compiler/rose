@@ -7,6 +7,7 @@
 #include "CppExprEvaluator.h"
 #include "IntervalPropertyState.h"
 #include "SgNodeHelper.h"
+#include <cmath>
 
 using namespace std;
 
@@ -290,12 +291,20 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
 
   switch(node->variantT()) {
   case V_SgIntVal: return NumberIntervalLattice(Number(isSgIntVal(node)->get_value()));
+  case V_SgDoubleVal: {
+    // schroder3 (2016-08-22): Create smallest integer interval that contains the double value:
+    double value = isSgDoubleVal(node)->get_value();
+    return NumberIntervalLattice(Number(floor(value)), Number(ceil(value)));
+  }
 
   case V_SgUnsignedCharVal: return NumberIntervalLattice(Number(isSgUnsignedCharVal(node)->get_value()));
   case V_SgUnsignedShortVal: return NumberIntervalLattice(Number(isSgUnsignedShortVal(node)->get_value()));
   case V_SgUnsignedIntVal: return NumberIntervalLattice(Number(isSgUnsignedIntVal(node)->get_value()));
   case V_SgUnsignedLongVal: return NumberIntervalLattice(Number(isSgUnsignedLongVal(node)->get_value()));
   case V_SgUnsignedLongLongIntVal: return NumberIntervalLattice(Number(isSgUnsignedLongLongIntVal(node)->get_value()));
+
+  // schroder3 (2016-08-22): C++11 nullptr keyword:
+  case V_SgNullptrValExp: return NumberIntervalLattice(Number(0));
 
   case V_SgStringVal: return NumberIntervalLattice::top();
 
