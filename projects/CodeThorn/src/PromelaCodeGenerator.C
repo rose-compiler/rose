@@ -265,9 +265,9 @@ string PromelaCodeGenerator::communicationDetails(string edgeAnnotation, int cur
   ss << " ->" << endl;
   if (messageReceived) {
     if (useTransitionIds) {
-      ss << "        act ! "<<transitionIdMap[edgeAnnotation];
+      ss << "        act ! "<<transitionIdMap[edgeAnnotation]<<";";
     } else {
-      ss << "        act ! "<<edgeAnnotation;
+      ss << "        act ! "<<edgeAnnotation<<";";
     }
   }
   return ss.str();
