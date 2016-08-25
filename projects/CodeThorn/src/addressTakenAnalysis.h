@@ -131,6 +131,7 @@ class ComputeAddressTakenInfo
     void visit(SgCompoundInitializer* sgn);
     void visit(SgCompoundLiteralExp* sgn);
     void visit(SgDesignatedInitializer* sgn);
+    void visit(SgLambdaCapture* sgn);
     void visit(SgNode* sgn);
     void insertVariableId(VariableId);
     void insertFunctionId(FunctionId);

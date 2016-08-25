@@ -919,6 +919,66 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThrowOp* sgn)
   }
 }
 
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaCapture* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-22): A lambda capture by reference creates an alias between the outside/ capture
+  //  variable and the inside/ closure variable. Functions can not be captured.
+
+  // Check for capture by reference
+  if(sgn->get_capture_by_reference()) {
+    // This capture creates the closure variable (a reference member of the lambda object which is of
+    //  anonymous class type) as an alias of the capture variable/ this.
+
+    SgExpression* captureExpression = sgn->get_capture_variable();
+
+    SgVarRefExp* closureVariable = isSgVarRefExp(sgn->get_closure_variable());
+    ROSE_ASSERT(closureVariable);
+    VariableId closureVariableId = cati.vidm.variableId(closureVariable);
+    ROSE_ASSERT(closureVariableId.isValid());
+    const SgType* closureVarType = cati.vidm.getType(closureVariableId);
+
+    // The capture can be a variable or the "this" pointer:
+    if(SgVarRefExp* captureVariable = isSgVarRefExp(captureExpression)) {
+      VariableId captureVariableId = cati.vidm.variableId(captureVariable);
+      ROSE_ASSERT(captureVariableId.isValid());
+      // Check the types:
+      const SgType* captureVarType = cati.vidm.getType(captureVariableId);
+      const SgType* captureVarBaseType = SgNodeHelper::isReferenceType(captureVarType)
+                                       ? SgNodeHelper::getReferenceBaseType(captureVarType)
+                                       : captureVarType;
+
+      // Closure variable type should be a lvalue reference type:
+      ROSE_ASSERT(SgNodeHelper::isLvalueReferenceType(closureVarType));
+
+      // Capture variable should have the same base type as the closure variable:
+      ROSE_ASSERT(captureVarBaseType->isEquivalentType(SgNodeHelper::getReferenceBaseType(closureVarType)));
+
+      // The closure variable is the newly created reference that gets initialized with the capture variable:
+      std::vector<VariableId> possibleTargets;
+      possibleTargets.push_back(closureVariableId);
+
+      // Handle the alias creation:
+      handleAssociation(AK_Initialization, possibleTargets, closureVarType, captureExpression);
+    }
+    else if(isSgThisExp(captureExpression)) {
+      // schroder3 (2016-08-25): The "this" pointer is captured by value (C++11) and this should therefore be
+      //  unreachable code. However an implicit "this" capture is currently marked as by-reference if the capture
+      //  default is by-reference. Ignore this capture because it does not include an alias creation.
+
+      // Some consistency checks: The captured "this" is a pointer...
+      ROSE_ASSERT(SgNodeHelper::isPointerType(captureExpression->get_type()));
+      //  ... and the pointer is copied to the closure variable which is not of reference type but of pointer type:
+      ROSE_ASSERT(!SgNodeHelper::isReferenceType(closureVarType));
+      ROSE_ASSERT(SgNodeHelper::isPointerType(closureVarType));
+    }
+    else {
+      ROSE_ASSERT(false);
+    }
+  }
+}
+
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
@@ -1178,6 +1238,10 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root) {
     // schroder3 (2016-08-15): Designated initializers allow to initiate members by providing their
     //  name in the initialization list. C only as far as is know.
          || isSgDesignatedInitializer(*i)
+
+   // schroder3 (2016-08-22): A lambda capture by reference creates an alias between the outside/ capture variable and
+   //  the inside/ closure variable.
+        || isSgLambdaCapture(*i)
 
     ) {
       // schroder3 (2016-08-08): Look for address-takings:
