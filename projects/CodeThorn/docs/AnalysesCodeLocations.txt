@@ -1,0 +1,35 @@
+* Address-Taken Analysis:
+  - projects/CodeThorn/src/addressTakenAnalysis.{h|C}
+  - projects/CodeThorn/src/analyterix.C (CSV output)
+
+
+* Interval Analysis:
+  - projects/CodeThorn/src/CppExprEvaluator.{h|C}
+    * SPRAY::CppExprEvaluator::evaluate(SgNode*)
+  - projects/CodeThorn/src/IntervalPropertyState.{h|C}
+    * SPRAY::IntervalPropertyState::combine(...)
+    * SPRAY::IntervalPropertyState::combineAsymmetric(...)
+  - projects/CodeThorn/src/IntervalTransferFunctions.{h|C}
+    * SPRAY::IntervalTransferFunctions::transferCondition(...)
+    * SPRAY::IntervalTransferFunctions::evalExpression(...)
+    * SPRAY::IntervalTransferFunctions::transferExpression(...)
+  - projects/CodeThorn/src/GenericIntervalLattice.h
+    * ...
+  - projects/CodeThorn/src/NumberIntervalLattice.{h|C}
+
+* Liveness Analysis
+  - projects/CodeThorn/src/AnalysisAbstractionLayer.{h|C}
+    * AnalysisAbstractionLayer::useVariables(...)
+    * AnalysisAbstractionLayer::defVariables(...)
+  - projects/CodeThorn/src/defUseQuery.{h|C}
+    * ExprWalker::visit(SgFunctionCallExp* )
+    * ExprWalker::visit(SgCompoundAssignOp*)
+
+* Deadcode Analysis
+  - projects/CodeThorn/src/analyterix.C
+
+* Topological Sort
+  - projects/CodeThorn/src/DFAnalysisBase.{h|C}
+    * DFAnalysisBase::run(...)
+  - projects/CodeThorn/src/Flow.{h|C}
+    * Flow::getTopologicalSortedEdgeList (...)
