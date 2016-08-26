@@ -119,7 +119,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     case V_SgLshiftAssignOp:
     case V_SgRshiftAssignOp:
     case V_SgAssignOp: {
-      NumberIntervalLattice lhsResult = NumberIntervalLattice::top();
+      NumberIntervalLattice lhsResult = evaluate(lhs);
       VariableId lhsVarId;
       NumberIntervalLattice rhsResult=evaluate(rhs);
 
@@ -140,6 +140,9 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
           //  an alias/reference was created) to top:
           VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
           ips->topifyVariableSet(varIdSet);
+        }
+        else {
+          ROSE_ASSERT(ips->getVariable(lhsVarId) == lhsResult);
         }
         lhsResult = ips->getVariable(lhsVarId);
       } else {
@@ -332,8 +335,10 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     if(SgNodeHelper::getFunctionName(node)=="__assert_fail") {
       return NumberIntervalLattice::bot();
     } else {
-      if(_showWarnings) cout<<"Warning: unknown function call: "<<node->unparseToString()<<" ... using unbounded result interval."<<endl;
-      return NumberIntervalLattice::top();
+      // schroder3 (2016-08-25): The CppExprEvaluator can not handle calls. Instead, calls should be handled by the corresponding transfer function. This call is
+      //  probably inside an expresion and was therefore not handled by the transfer function. This means that the input is not normalized and we abort here
+      //  because even returning top would be wrong because the function call can change other variables.
+      throw SPRAY::NormalizationRequiredException("CppExprEvaluator can not handle SgFunctionCallExp nodes (Node: " + node->unparseToString() + ").");
     }
   }
   default: // generates top element
