@@ -739,11 +739,17 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgExpression* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
-  // schroder3 (2016-07-28): It is possible to get here for example if this is the initializer expression of a const
-  //  lvalue reference declaration and we look at this initializer because there might be a variable/ function (e.g.
-  //  "const int& cir = (bool_var ? 42 : int_val);").
-  // Some of SgExpression's subclasses (e.g. SgConditionalExp) are handled by specific visit member functions but
-  //  if they are not then there is nothing to do.
+  // schroder3 (2016-07-28): Some of SgExpression's subclasses (e.g. SgConditionalExp) are handled by specific
+  //  visit member functions but if they are not then there should be nothing to do. It is for example possible to
+  //  get here if this is the initializer expression of a const lvalue reference declaration and we look at this
+  //  initializer because there might be a variable/ function (e.g. "const int& cir = (bool_var ? 42 : int_val);").
+  //
+  //  If this expression has a reference type then ignoring this expression would ignore a possible address-taking.
+  //  Make sure that this does not happen:
+  if(SgNodeHelper::isReferenceType(sgn->get_type())) {
+    throw SPRAY::Exception("Address-Taken Analysis: Unhandled " + sgn->class_name() + " node of reference type "
+                           + sgn->get_type()->unparseToString() + ".");
+  }
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaExp* sgn)
@@ -1181,7 +1187,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
       }
       else if(associationKind == AK_Cast) {
         // Cast of a reference:
-        //  ==> no alias/ reference creation, but there might be an implicit address-taking in the assignment.
+        //  ==> no alias/ reference creation, but there might be an implicit address-taking in the expression that is casted.
       }
       else {
         ROSE_ASSERT(false);
