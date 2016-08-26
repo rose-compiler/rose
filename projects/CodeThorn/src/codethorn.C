@@ -298,6 +298,7 @@ int main( int argc, char * argv[] ) {
       ("circle-length-range",po::value< string >(),"select a range for the length of circles that are used to construct an automaton (csv pair of integers).")
       ("num-intersections-range",po::value< string >(),"select a range for the number of intersections of a newly added circle with existing circles in the automaton (csv pair of integers).")
       ("automata-dot-input",po::value< string >(),"reads in parallel automata with synchronized transitions from a given .dot file.")
+      ("keep-systems",po::value< string >(),"store computed parallel systems (over- and under-approximated STGs) during exploration  so that they do not need to be recomputed ([yes]|no).")
       ("use-components",po::value< string >(),"Selects which parallel components are chosen for analyzing the (approximated) state space ([all] | subset-fixed | subset-random).")
       ("fixed-components",po::value< string >(),"A list of IDs of parallel components used for analysis (e.g. \"1,2,4,7\"). Use only with \"--use-components=subset-fixed\".")
       ("num-random-components",po::value< int >(),"Number of different random components used for the analysis. Use only with \"--use-components=subset-random\". Default: min(3, <num-parallel-components>)")
@@ -502,6 +503,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("set-stg-incomplete",false);
 
+  boolOptions.registerOption("keep-systems",true);
   boolOptions.registerOption("output-with-results",false);
   boolOptions.registerOption("output-with-annotations",false);
 
@@ -604,6 +606,11 @@ int main( int argc, char * argv[] ) {
     }
 
     ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
+    if (boolOptions["keep-systems"]) {
+      explorer.setStoreComputedSystems(true);
+    } else {
+      explorer.setStoreComputedSystems(false);
+    }
     if (args.count("use-components")) {
       string componentSelection = args["use-components"].as<string>();
       if (componentSelection == "all") {
