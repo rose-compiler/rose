@@ -309,6 +309,15 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   // schroder3 (2016-08-22): C++11 nullptr keyword:
   case V_SgNullptrValExp: return NumberIntervalLattice(Number(0));
 
+  // schroder3 (2016-08-25): empty expression (e.g. ";;")
+  case V_SgNullExpression: throw SPRAY::Exception("CppExprEvaluator can not handle SgNullExpression nodes.");
+
+  // schroder3 (2016-08-25): Convert char to integer:
+  case V_SgCharVal: {
+    char value = isSgCharVal(node)->get_value();
+    return NumberIntervalLattice(Number(static_cast<int>(value)));
+  }
+
   case V_SgStringVal: return NumberIntervalLattice::top();
 
   case V_SgVarRefExp: {
