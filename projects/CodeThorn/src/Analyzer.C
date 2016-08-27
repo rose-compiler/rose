@@ -72,9 +72,11 @@ Analyzer::Analyzer():
   _maxTransitions(-1),
   _maxIterations(-1),
   _maxBytes(-1),
+  _maxSeconds(-1),
   _maxTransitionsForcedTop(-1),
   _maxIterationsForcedTop(-1),
   _maxBytesForcedTop(-1),
+  _maxSecondsForcedTop(-1),
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
@@ -86,6 +88,8 @@ Analyzer::Analyzer():
   _next_iteration_cnt(0),
   _externalFunctionSemantics(false)
 {
+  _analysisTimer.start();
+  _analysisTimer.stop();
   variableIdMapping.setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
@@ -312,14 +316,15 @@ void Analyzer::addToWorkList(const EState* estate) {
 }
 
 bool Analyzer::isActiveGlobalTopify() {
-  if(_maxTransitionsForcedTop==-1 && _maxIterationsForcedTop==-1 && _maxBytesForcedTop==-1)
+  if(_maxTransitionsForcedTop==-1 && _maxIterationsForcedTop==-1 && _maxBytesForcedTop==-1 && _maxSecondsForcedTop==-1)
     return false;
   if(_topifyModeActive)
     return true;
   // TODO: add a critical section that guards "transitionGraph.size()"
   if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop) 
       || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop)
-      || (_maxBytesForcedTop!=-1 && getPhysicalMemorySize() > _maxBytesForcedTop) ) {
+      || (_maxBytesForcedTop!=-1 && getPhysicalMemorySize() > _maxBytesForcedTop)
+      || (_maxSecondsForcedTop!=-1 && analysisRunTimeInSeconds() > _maxSecondsForcedTop) ) {
 #pragma omp critical(ACTIVATE_TOPIFY_MODE)
     {
       if (!_topifyModeActive) {
@@ -3005,7 +3010,8 @@ void Analyzer::runSolver11() {
   cout << "analysis with solver 11 finished (worklist is empty)."<<endl;
 }
 
-void Analyzer::runSolver12() {
+void Analyzer::runSolver12() { 
+  _analysisTimer.start();
   if(isUsingExternalFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
@@ -3099,7 +3105,29 @@ void Analyzer::runSolver12() {
 	  prevStateSetSizeResource=estateSetSize;
 	}
       }
-
+      if (args.count("max-time") || args.count("max-time-forced-top")) {
+#pragma omp critical(HASHSET)
+	{
+	  estateSetSize = estateSet.size();
+	}
+	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
+	  if (args.count("max-time")) {
+	    if (analysisRunTimeInSeconds() >= _maxSeconds) {
+#pragma omp critical(ESTATEWL)
+              {
+                terminate = true;
+	 	terminatedWithIncompleteStg = true;
+	      }
+            }
+	  } else if (args.count("max-time-forced-top")){
+#pragma omp critical(ESTATEWL)
+	    {
+	      isActiveGlobalTopify();
+	    }
+	  }
+	  prevStateSetSizeResource=estateSetSize;
+	}
+      }
       //perform reduction to I/O/worklist states only if specified threshold was reached
       if (ioReductionActive) {
 #pragma omp critical
@@ -3223,6 +3251,7 @@ void Analyzer::runSolver12() {
       } // conditional: test if work is available
     } // while
   } // omp parallel
+  _analysisTimer.stop();
   const bool isComplete=true;
   if (!isPrecise()) {
     _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
@@ -3970,3 +3999,12 @@ void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
    _assertCondVarsSet=acVars;
  }
 
+
+long Analyzer::analysisRunTimeInSeconds() {
+  long result;
+#pragma omp critical(TIMER)
+  {
+    result = (long) (_analysisTimer.getElapsedTimeInMilliSec() / 1000);
+  }
+  return result;
+}

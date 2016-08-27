@@ -394,9 +394,11 @@ int main( int argc, char * argv[] ) {
       ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
       ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
       ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")
+      ("max-time",po::value< long int >(),"Stop computing the STG after an analysis time of approximately <arg> seconds has been reached. (default: no limit). Currently requires --solver=12.")
       ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
       ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
       ("max-memory-forced-top",po::value< long int >(),"Performs approximation after <arg> bytes of physical memory have been used (default: no limit). Currently requires options --exploration-mode=loop-aware-sync, --solver=12, and only supports Unix systems.")
+      ("max-time-forced-top",po::value< long int >(),"Performs approximation after an analysis time of approximately <arg> seconds has been reached. (default: no limit). Currently requires --solver=12.")
       ("resource-limit-diff",po::value< int >(),"Check if the resource limit is reached every <arg> computed estates.")
       ("print-all-options",po::value< string >(),"print the default values for all yes/no command line options.")
       ("rewrite","rewrite AST applying all rewrite system rules.")
@@ -865,7 +867,7 @@ int main( int argc, char * argv[] ) {
     analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
-  if (args.count("max-memory") || args.count("max-memory-forced-top")) {
+  if (args.count("max-memory") || args.count("max-memory-forced-top") || args.count("max-time") || args.count("max-time-forced-top")) {
     bool notSupported=false;
     if(args.count("solver")) {
       int solver=args["solver"].as<int>();
@@ -877,14 +879,20 @@ int main( int argc, char * argv[] ) {
       notSupported=true; 
     }
     if(notSupported) {
-      cout << "ERROR: options \"--max-memory\" and \"--max-memory-forced-top\" currently require \"--solver=12\"." << endl;
+      cout << "ERROR: options \"--max-memory\", \"--max-time\", \"--max-memory-forced-top\", and \"--max-time-forced-top\" currently require \"--solver=12\"." << endl;
       exit(1);
     }
     if (args.count("max-memory")) {
       analyzer.setMaxBytes(args["max-memory"].as<long int>());
     }
+    if (args.count("max-time")) {
+      analyzer.setMaxSeconds(args["max-time"].as<long int>());
+    }
     if (args.count("max-memory-forced-top")) {
       analyzer.setMaxBytesForcedTop(args["max-memory-forced-top"].as<long int>());
+    }
+    if (args.count("max-time-forced-top")) {
+      analyzer.setMaxSecondsForcedTop(args["max-time-forced-top"].as<long int>());
     }
   }
 
