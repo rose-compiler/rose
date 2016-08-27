@@ -121,7 +121,10 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
   * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
-  evalExpression(lab,node,pstate); // ignore return value
+  // schroder3 (2016-08-25): Added if to ignore SgNullExpressions (e.g. ";;")
+  if(!isSgNullExpression(node)) {
+    evalExpression(lab,node,pstate); // ignore return value
+  }
 }
 
 void SPRAY::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& pstate) {
