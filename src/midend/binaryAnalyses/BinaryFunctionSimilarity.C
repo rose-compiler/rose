@@ -4,15 +4,21 @@
 #include <EditDistance/LinearEditDistance.h>
 #include <Partitioner2/Partitioner.h>
 
-#include <dlib/matrix.h>
-#include <dlib/optimization.h>
+#ifdef ROSE_HAVE_DLIB
+    #include <dlib/matrix.h>
+    #include <dlib/optimization.h>
+#endif
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
 namespace rose {
 namespace BinaryAnalysis {
 
+#ifdef ROSE_HAVE_DLIB
 typedef dlib::matrix<double> DistanceMatrix;
+#else
+typedef int DistanceMatrix;
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Supporting functions
@@ -37,6 +43,7 @@ cartesianDistance(const FunctionSimilarity::CartesianPoint &a, const FunctionSim
 // vector V such that V[i] = j maps rows i to columns j.
 static std::vector<long>
 findMinimumAssignment(const DistanceMatrix &matrix) {
+#ifdef ROSE_HAVE_DLIB
     ASSERT_forbid(matrix.size() == 0);
     ASSERT_require(matrix.nr() == matrix.nc());
 
@@ -61,6 +68,9 @@ findMinimumAssignment(const DistanceMatrix &matrix) {
             intMatrix(i, j) = round(-iGreatest * (matrix(i, j) - minValue) / (maxValue - minValue));
     }
     return dlib::max_cost_assignment(intMatrix);
+#else
+    throw Exception("dlib support is necessary for FunctionSimilarity analysis; see ROSE installation instructions");
+#endif
 }
 
 // Given a square matrix and a 1:1 mapping from rows to columns, return the total cost of the mapping.
