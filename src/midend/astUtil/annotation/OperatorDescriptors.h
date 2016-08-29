@@ -11,6 +11,7 @@ typedef ContainerDescriptor<std::vector<NameDescriptor>, NameDescriptor,',','(',
 //!Parameter types    
 typedef ContainerDescriptor<std::vector<TypeDescriptor>, TypeDescriptor,',','(',')'>
     ParamTypeDescriptor;
+//
 //! Representation for function parameter names and types.
 class ParameterDeclaration
 {
@@ -62,6 +63,7 @@ public:
   void operator() (SymbolicValDescriptor& result);
   SymbolicAstWrap find( const std::string& parname);
 };
+
 //! Representation for an operator (function)
 class OperatorDeclaration {
   std::string signiture; //operator name
@@ -106,6 +108,7 @@ class OPDescriptorTemp : public BaseClass
    }
   void Dump() const { write(std::cerr); }
 };
+
 //! a set of names separated by ',', begin with '(', end with ')'
 typedef  SetDescriptor<NameDescriptor,',','(',')'> NameGroup; 
 //! A container of std::list<> of elment of NameGroup type

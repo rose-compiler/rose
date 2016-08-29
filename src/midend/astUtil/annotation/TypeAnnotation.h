@@ -53,7 +53,7 @@ typedef AnnotCollectionBase<TypeDescriptor> TypeCollectionBase;
 typedef ReadAnnotCollection<TypeDescriptor, '{', ';','}'> ReadTypeCollection;
 
 //! A map storing types and their descriptors, the descriptor could be any instantiated types as a template class.
-// Descriptor could be either of has_value, array, array_opt annoation types
+// Descriptor could be either of has_value, array, array_opt annotation types
 template <class Descriptor>
 class TypeCollection 
 {
@@ -67,8 +67,10 @@ class TypeCollection
       public:
         const_iterator( const typename std::map< std::string,Descriptor>::const_iterator& that) 
           : std::map<std::string, Descriptor>::const_iterator(that) {}
+
         TypeDescriptor get_type() const 
             { return std::map<std::string,Descriptor>::const_iterator::operator*().first; }
+
         const Descriptor& get_desc() const 
             { return  std::map<std::string,Descriptor>::const_iterator::operator*().second; }
      };
