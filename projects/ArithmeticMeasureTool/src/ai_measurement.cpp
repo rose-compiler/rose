@@ -1336,6 +1336,11 @@ namespace ArithemeticIntensityMeasurement
       //debugging here
       if (debug) 
         fpcounters->printInfo (n->class_name()); 
+
+     // write to the report file here, bottom up order though, not a good idea
+      ofstream reportFile(report_filename.c_str(), ios::app);
+//      cout<<"Writing counter results to "<< report_filename <<endl;
+      reportFile<< fpcounters->toString();
     }
 
 
@@ -1362,6 +1367,8 @@ namespace ArithemeticIntensityMeasurement
         } // end if pragma
       } // end if prev stmt
     } // end if stmt
+
+
     return returnAttribute;
   }
 
