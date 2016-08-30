@@ -118,4 +118,31 @@ checkBoost() {
                           "boost::any move constructor has infinite recursion in boost-1.54");
 }
 
+// thread-safe (assuming Windows API is thread-safe)
+SAWYER_EXPORT std::string
+thisExecutableName() {
+    std::string retval;
+#ifdef BOOST_WINDOWS
+# if 0 // [Robb Matzke 2014-06-13] temporarily disable for ROSE linking error (needs psapi.lib in Windows)
+    if (HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId())) {
+        TCHAR buffer[MAX_PATH];
+        if (GetModuleFileNameEx(handle, 0, buffer, MAX_PATH)) // requires linking with MinGW's psapi.a
+            retval = buffer;
+        CloseHandle(handle);
+    }
+# endif
+#elif defined(__APPLE__) && defined(__MACH__)
+    // unknown
+#else
+    // no synchronization necessary for this global state
+    if (FILE *f = fopen("/proc/self/cmdline", "r")) {
+        int c;
+        while ((c = fgetc(f)) > 0)
+            retval += (char)c;
+        fclose(f);
+    }
+#endif
+    return retval;
+}
+
 } // namespace
