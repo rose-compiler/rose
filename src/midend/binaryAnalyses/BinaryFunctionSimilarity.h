@@ -50,15 +50,18 @@ namespace BinaryAnalysis {
  *  4. Query results */
 class FunctionSimilarity {
 public:
-    // Exceptions thrown by this analysis
+    /* Exceptions thrown by this analysis. */
     class Exception: public std::runtime_error {
     public:
         Exception(const std::string &what): std::runtime_error(what) {}
         ~Exception() throw () {}
     };
 
-    // Types of characteristic values
-    enum CValKind { CARTESIAN_POINT, ORDERED_LIST };    /**< Kinds of characteristic values. */
+    /** Kinds of characteristic values. */
+    enum CValKind {
+        CARTESIAN_POINT,                                /**< Values are N-dimensional Cartesian points. */
+        ORDERED_LIST                                    /**< Values are lists of integers. */
+    };
     typedef std::vector<double> CartesianPoint;         /**< Characteristic value that's a Cartesian point. */
     typedef std::vector<int> OrderedList;               /**< Characteristic value that's an ordered list of integers. */
 
@@ -365,7 +368,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Internal functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-protected:
+private:
     static double comparePointClouds(const PointCloud&, const PointCloud&);
     static double compareOrderedLists(const OrderedLists&, const OrderedLists&);
 };
