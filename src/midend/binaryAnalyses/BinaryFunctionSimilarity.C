@@ -69,7 +69,8 @@ findMinimumAssignment(const DistanceMatrix &matrix) {
     }
     return dlib::max_cost_assignment(intMatrix);
 #else
-    throw Exception("dlib support is necessary for FunctionSimilarity analysis; see ROSE installation instructions");
+    throw FunctionSimilarity::Exception("dlib support is necessary for FunctionSimilarity analysis"
+                                        "; see ROSE installation instructions");
 #endif
 }
 
