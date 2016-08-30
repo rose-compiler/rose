@@ -44,9 +44,9 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += PythonFrontend
 endif
 
-if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-   SUBDIRS += MatlabFrontend
-endif
+# if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+#    SUBDIRS += MatlabFrontend
+# endif
 
 SUBDIRS += DLX
 

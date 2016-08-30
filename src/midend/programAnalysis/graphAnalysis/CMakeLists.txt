@@ -1,7 +1,24 @@
 
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
-
+if (enable-binary-analysis)
+add_library(mpaGraphAnalysis OBJECT
+  CallGraphAnalysis.C
+  SB_Graph.C
+  RoseSrc_CallGraphAnalysis.C
+  RoseBin_DotGraph.cpp
+  RoseBin_Graph.cpp
+  RoseBin_GmlGraph.cpp
+)
+else()
+add_library(mpaGraphAnalysis OBJECT
+  CallGraphAnalysis.C
+  SB_Graph.C
+  RoseSrc_CallGraphAnalysis.C
+  dummyFunction.cpp
+)
+endif()
+add_dependencies(mpaGraphAnalysis rosetta_generated)
 ########### next target ###############
 
 

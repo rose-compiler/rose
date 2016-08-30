@@ -1,7 +1,5 @@
 #include "sage3basic.h"
-
 #include "Diagnostics.h"
-
 #include "nameQualificationSupport.h"
 
 using namespace std;
@@ -11,8 +9,6 @@ using namespace rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
 Sawyer::Message::Facility NameQualificationTraversal::mlog;
-
-
 #define DEBUG_NAME_QUALIFICATION_LEVEL 0
 
 // ***********************************************************
@@ -464,7 +460,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
 
        // DQ (4/29/2016): Added support for complex types.
           case V_SgTypeComplex:
-
+          //  pp (7/16/2016) Matrix and tuple  (Matlab)
+          case V_SgTypeMatrix:
+          case V_SgTypeTuple:
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:

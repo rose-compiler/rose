@@ -27,7 +27,12 @@
 // in compiling ROSE files in tests/CompileTests/RoseExample_tests.
 #ifdef __clang__
 // Find value for PATH_MAX
+// Pei-hung (06/22/2016): OSX has limits.h in /usr/include
+#if defined(__APPLE__) && defined(__MACH__)
+#include<limits.h>
+#else
 #include<linux/limits.h>
+#endif
 #endif
 
 namespace AbstractHandle{

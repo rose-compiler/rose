@@ -518,18 +518,9 @@ test_ast_attributes() {
     ASSERT_always_require(node0->attributeExists("attr4"));
     ASSERT_always_require(node0->getAttribute("attr4") == attr5);
 
-#if 1 // [Robb P Matzke 2016-07-12]: These three tests fail due to a bug in ROSE
-    // The bug is that the following Sage nodes use NO_DELETE instead of DEF_DELETE when they add the AstAttributeMechanism
-    // pointer: SgAsmNode, SgLocatedNode, SgPragma, SgDirectory, SgFileList, SgFile, SgGraphNode, SgGraphEdge, SgGraph,
-    // SgProject, SgSymbol, SgType.  Since the AstAttributeMechanism object is not deleted when its Sage node is deleted, the
-    // attributes that it contains are never deleted even if those attributes use the container-owns-attribute paradigm.
-    mlog[WARN] <<"SageInterface::deleteAST unit tests are skipped due to a bug in ROSE\n";
-#else
     ASSERT_always_require(2 == AllocationCounter<Attr6>::nAllocated);
     ASSERT_always_require(1 == attr1_n);
     ASSERT_always_require(1 == attr5_n);
-#endif
-    
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
