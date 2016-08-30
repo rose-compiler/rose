@@ -8,6 +8,7 @@
     #include <dlib/matrix.h>
     #include <dlib/optimization.h>
 #endif
+#include <Sawyer/ThreadWorkers.h>
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
@@ -15,16 +16,19 @@ namespace rose {
 namespace BinaryAnalysis {
 
 #ifdef ROSE_HAVE_DLIB
+// Use the DLib matrix if possible since we'll be passing it to dlib::max_cost_assignment
 typedef dlib::matrix<double> DistanceMatrix;
 #else
-struct DistanceMatrixDummy {
-    DistanceMatrixDummy(long, long) {}
-    long nr() const { ASSERT_not_reachable("no dlib support"); }
-    long nc() const { ASSERT_not_reachable("no dlib support"); }
-    double& operator()(long, long) { ASSERT_not_reachable("no dlib support"); }
-    double operator()(long, long) const { ASSERT_not_reachable("no dlib support"); }
+// A simple matrix that has the same API as dlib::matrix, but only the parts we actually use.
+class DistanceMatrix {
+    std::vector<std::vector<double> > data_;
+public:
+    DistanceMatrix(long nr, long nc): data_(nr, std::vector<double>(nc, 0.0)) {}
+    long nr() const { return data_.size(); }
+    long nc() const { return data_.empty() ? (size_t)0 : data_[0].size(); }
+    double& operator()(long i, long j) { return data_[i][j]; }
+    double operator()(long i, long j) const { return data_[i][j]; }
 };
-typedef DistanceMatrixDummy DistanceMatrix;
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -257,6 +261,66 @@ FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr
 std::vector<FunctionSimilarity::FunctionDistancePair>
 FunctionSimilarity::compareOneToAll(const P2::Function::Ptr &needle) const {
     return compareOneToMany(needle, functions_.keys());
+}
+
+// Represents a single task in a multi-threaded collection of tasks.
+struct ComparisonTask {
+    P2::Function::Ptr a, b;                             // two functions to compare
+    double &result;                                     // location where result is to be stored
+
+    ComparisonTask(const P2::Function::Ptr &a, const P2::Function::Ptr &b, double &result)
+        : a(a), b(b), result(result) {}
+};
+
+// Collection of tasks which the worker threads process
+typedef Sawyer::Container::Graph<ComparisonTask> ComparisonTasks;
+
+// How a worker thread processes one task
+struct ComparisonFunctor {
+    const FunctionSimilarity *self;
+
+    explicit ComparisonFunctor(const FunctionSimilarity *self)
+        : self(self) {}
+
+    void operator()(size_t taskId, const ComparisonTask &task) {
+        task.result = self->compare(task.a, task.b);
+    }
+};
+
+std::vector<FunctionSimilarity::FunctionDistancePair>
+FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std::vector<P2::Function::Ptr> &others) const {
+    // Reserve space for the answers
+    std::vector<FunctionDistancePair> retval;
+    retval.reserve(others.size());
+    BOOST_FOREACH (const P2::Function::Ptr &other, others)
+        retval.push_back(FunctionDistancePair(other, NAN));
+
+    // Create tasks for the worker threads
+    ComparisonTasks tasks;
+    for (size_t i=0; i<others.size(); ++i)
+        tasks.insertVertex(ComparisonTask(needle, others[i], retval[i].second));
+
+    // Do the work and store the results in retval
+    Sawyer::workInParallel(tasks, CommandlineProcessing::genericSwitchArgs.threads, ComparisonFunctor(this));
+    return retval;
+}
+
+std::vector<std::vector<double> >
+FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list1,
+                                      const std::vector<P2::Function::Ptr> &list2) const {
+    // Reserve space for the answers
+    std::vector<std::vector<double> > retval(list1.size(), std::vector<double>(list2.size(), NAN));
+
+    // Create tasks for the worker threads
+    ComparisonTasks tasks;
+    for (size_t i=0; i<list1.size(); ++i) {
+        for (size_t j=0; j<list2.size(); ++j)
+            tasks.insertVertex(ComparisonTask(list1[i], list2[j], retval[i][j]));
+    }
+
+    // Do the work and store the results in retval
+    Sawyer::workInParallel(tasks, CommandlineProcessing::genericSwitchArgs.threads, ComparisonFunctor(this));
+    return retval;
 }
 
 std::vector<FunctionSimilarity::FunctionPair>

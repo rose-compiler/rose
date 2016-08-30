@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_FunctionSimilarity_H
 
 #include <Partitioner2/Function.h>
+#include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
 namespace rose {
@@ -287,17 +288,18 @@ public:
      *
      *  Compare the given @p needle function with all other @p haystack functions. The returned list is unsorted.
      *
+     *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
+     *  <code>--threads=N</code> switch.
+     *
      * @{ */
     template<class FunctionIterator>
     std::vector<FunctionDistancePair>
     compareOneToMany(const Partitioner2::Function::Ptr &needle,
                      const boost::iterator_range<FunctionIterator> &haystack) const {
-        std::vector<FunctionDistancePair> retval;
-        BOOST_FOREACH (const Partitioner2::Function::Ptr &other, haystack) {
-            if (other != needle)
-                retval.push_back(FunctionDistancePair(other, compare(needle, other)));
-        }
-        return retval;
+        std::vector<Partitioner2::Function::Ptr> others;
+        BOOST_FOREACH (const Partitioner2::Function::Ptr &other, haystack)
+            others.push_back(other);
+        return compareOneToMany(needle, others);
     }
 
     template<class FunctionIterator>
@@ -309,11 +311,20 @@ public:
 
     std::vector<FunctionDistancePair>
     compareOneToMany(const Partitioner2::Function::Ptr &needle,
-                     const std::vector<Partitioner2::Function::Ptr> &haystack) const {
-        return compareOneToMany(needle, haystack.begin(), haystack.end());
-    }
+                     const std::vector<Partitioner2::Function::Ptr> &haystack) const;
     /** @} */
-    
+
+    /** Compare many functions to many others.
+     *
+     *  Given two ordered lists of functions, calculate the distances from all functions of the first list to all functions of
+     *  the second list.  The return value is a matrix whose rows are indexed by the functions of the first list and whose
+     *  columns are indexed by the functions of the second list.
+     *
+     *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
+     *  <code>--threads=N</code> switch. */
+    std::vector<std::vector<double> > compareManyToMany(const std::vector<Partitioner2::Function::Ptr>&,
+                                                        const std::vector<Partitioner2::Function::Ptr>&) const;
+
     /** Minimum cost 1:1 mapping.
      *
      *  Compute the minimum cost 1:1 mapping of functions in the first list to those in the second.  If one list is smaller
