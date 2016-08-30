@@ -101,9 +101,11 @@ AC_ARG_WITH(ether,
                       Xen is a hypervisor for running virtual machines (http://www.xen.org)
                       Ether is a layer on top of Xen for accessing Windows XP OS-level data
                       structures (http://ether.gtisc.gatech.edu)],
-        [AC_DEFINE(ROSE_USE_ETHER, 1, [Defined if Ether from Georgia Tech is available.])
-         if test "$with_ether" = "yes"; then ETHER_PREFIX=/usr; else ETHER_PREFIX="$with_ether"; fi],
+        [],
         [with_ether=no])
+AS_IF([test "$with_ether" != no],
+        [AC_DEFINE(ROSE_USE_ETHER, 1, [Defined if Ether from Georgia Tech is available.])
+         if test "$with_ether" = "yes"; then ETHER_PREFIX=/usr; else ETHER_PREFIX="$with_ether"; fi])
 AC_SUBST(ETHER_PREFIX)
 AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 
@@ -119,9 +121,11 @@ AC_ARG_WITH(dlib,
                             Dlib requires no installation; just untar its source and specify
                             the name of the directory that was created (e.g., "dlib-18.17") and
                             which contains the "dlib" subdirectory.],
+        [],
+	[with_dlib=no])
+AS_IF([test "$with_dlib" != "no"],
         [AC_DEFINE(ROSE_HAVE_DLIB, 1, [Defined if dlib is available.])
-         if test "$with_dlib" = "yes"; then DLIB_PREFIX=/usr; else DLIB_PREFIX="$with_dlib"; fi],
-        [with_dlib=no])
+         if test "$with_dlib" = "yes"; then DLIB_PREFIX=/usr; else DLIB_PREFIX="$with_dlib"; fi])
 AC_SUBST(DLIB_PREFIX)
 AM_CONDITIONAL(ROSE_HAVE_DLIB, test "$with_dlib" != "no")
 
