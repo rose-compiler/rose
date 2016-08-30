@@ -439,7 +439,29 @@ SgFunctionSymbol* SgNodeHelper::getSymbolOfFunctionDeclaration(SgFunctionDeclara
 SgSymbol*
 SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
   SgVariableSymbol* varSym=varRefExp->get_symbol();
-  if(varSym==0) {
+  if(varSym) {
+    // schroder3 (2016-08-23): Check for incorrect AST structure which is an indicator that the wrong
+    //  symbol is referenced. This is known to happen inside catch blocks if the SgVarRefExp refers to
+    //  the caught variable.
+    SgNode* initName = varSym->get_declaration();
+    if(initName) {
+      SgNode* initNameParent = initName->get_parent();
+      if(initNameParent->get_childIndex(initName) > initNameParent->get_numberOfTraversalSuccessors()) {
+        // Incorrect AST structure: Node is not a child of its parent node. This is currently only known to happen
+        //  inside a catch block:
+        SgCatchOptionStmt* catchStmt = isSgCatchOptionStmt(initNameParent->get_parent());
+        ROSE_ASSERT(catchStmt);
+        // Get the correct symbol:
+        SgVariableDeclaration* decl = catchStmt->get_condition();
+        ROSE_ASSERT(decl);
+        SgVariableSymbol* correctVarSym = isSgVariableSymbol(SgNodeHelper::getSymbolOfVariableDeclaration(decl));
+        ROSE_ASSERT(correctVarSym);
+        ROSE_ASSERT(symbolToString(correctVarSym) == symbolToString(varSym));
+        varSym = correctVarSym;
+      }
+    }
+  }
+  if(!varSym) {
     throw SPRAY::Exception("SgNodeHelper::getSymbolofVariable: SgVariableSymbol of varRefExp==0");
 #if 0
     SgInitializedName* varInitName=varSym->get_declaration(); // schroder3: varSym is 0 here!
@@ -564,18 +586,22 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   } else {
     if(SgVariableSymbol* varsym=isSgVariableSymbol(node)) {
       SgInitializedName* initname=varsym->get_declaration();
-      ROSE_ASSERT(initname);
+      // schroder3 (2016-08-23): Commented out assertion because lambda closure variables do
+      //  not have a SgInitializedName node.
+      // ROSE_ASSERT(initname);
+      if(initname) {
 #if 1
-      node=initname->get_declaration();
-      ROSE_ASSERT(node);
-#else
-      // this way we would be using variable definitions
-      SgNode* node1=initname->get_definition();
-      if(!node1)
         node=initname->get_declaration();
-      else
-        node=node1;
+        ROSE_ASSERT(node);
+#else
+        // this way we would be using variable definitions
+        SgNode* node1=initname->get_definition();
+        if(!node1)
+          node=initname->get_declaration();
+        else
+          node=node1;
 #endif
+      }
     }
     if(SgVarRefExp* varRef=isSgVarRefExp(node)) {
       SgVariableSymbol* varsym=isSgVariableSymbol(SgNodeHelper::getSymbolOfVariable(varRef));
