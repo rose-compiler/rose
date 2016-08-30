@@ -261,6 +261,8 @@ int main() {
     int& kr3 = k4;
     int& kr2 = (i ? k2 : k3);
 
+    kr3 = 3;
+
     int k5 = k;
 
     void(Test::*test_mem_func_ptr)(bool&, bool, int&, int) = &Test::member_func2;

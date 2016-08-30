@@ -5,10 +5,8 @@
  *************************************************************/
 
 #include "sage3basic.h"
-
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
-#include <unistd.h>
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "AnalysisAbstractionLayer.h"
@@ -73,8 +71,10 @@ Analyzer::Analyzer():
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
   _maxIterations(-1),
+  _maxBytes(-1),
   _maxTransitionsForcedTop(-1),
   _maxIterationsForcedTop(-1),
+  _maxBytesForcedTop(-1),
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
@@ -312,18 +312,23 @@ void Analyzer::addToWorkList(const EState* estate) {
 }
 
 bool Analyzer::isActiveGlobalTopify() {
-  if(_maxTransitionsForcedTop==-1 && _maxIterationsForcedTop==-1)
+  if(_maxTransitionsForcedTop==-1 && _maxIterationsForcedTop==-1 && _maxBytesForcedTop==-1)
     return false;
-  if(_topifyModeActive) {
+  if(_topifyModeActive)
     return true;
-  } else {
-    if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop)
-        || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop) ) {
-      _topifyModeActive=true;
-      eventGlobalTopifyTurnedOn();
-      boolOptions.setOption("rers-binary",false);
-      return true;
+  // TODO: add a critical section that guards "transitionGraph.size()"
+  if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop) 
+      || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop)
+      || (_maxBytesForcedTop!=-1 && getPhysicalMemorySize() > _maxBytesForcedTop) ) {
+#pragma omp critical(ACTIVATE_TOPIFY_MODE)
+    {
+      if (!_topifyModeActive) {
+	_topifyModeActive=true;
+	eventGlobalTopifyTurnedOn();
+	boolOptions.setOption("rers-binary",false);
+      }
     }
+    return true;
   }
   return false;
 }
@@ -422,13 +427,6 @@ void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId va
   //exit(1);
   pstate.setVariableToTop(varId);
   //cset.removeAllConstraintsOfVar(varId);
-}
-
-// PState and cset are assumed to exist. Pstate is assumed to be topified. Only for topify mode.
-EState Analyzer::createEStateFastTopifyMode(Label label, const PState* oldPStatePtr, const ConstraintSet* oldConstraintSetPtr) {
-  ROSE_ASSERT(isActiveGlobalTopify());
-  EState estate=EState(label,oldPStatePtr,oldConstraintSetPtr);
-  return estate;
 }
 
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
@@ -580,6 +578,20 @@ void Analyzer::swapWorkLists() {
   estateWorkListCurrent = estateWorkListNext;
   estateWorkListNext = tmp;
   incIterations();
+}
+
+size_t Analyzer::memorySizeContentEStateWorkLists() {
+  size_t mem = 0;
+#pragma omp critical(ESTATEWL) 
+  {
+    for (EStateWorkList::iterator i=estateWorkListOne.begin(); i!=estateWorkListOne.end(); ++i) {
+      mem+=sizeof(*i);
+    }
+    for (EStateWorkList::iterator i=estateWorkListTwo.begin(); i!=estateWorkListTwo.end(); ++i) {
+      mem+=sizeof(*i);
+    }
+  }
+  return mem;
 }
 
 #define PARALLELIZE_BRANCHES
@@ -3035,7 +3047,7 @@ void Analyzer::runSolver12() {
     while(!terminate) {
 #pragma omp critical(ESTATEWL)
       {
-        if (all_false(workVector)) {
+        if (threadNum == 0 && all_false(workVector)) {
           if ( (estateWorkListCurrent->empty() && estateWorkListNext->empty())) { 
             terminate = true;
 	  }
@@ -3064,27 +3076,24 @@ void Analyzer::runSolver12() {
         prevStateSetSizeDisplay=estateSetSize;
       }
 
-      if (args.count("max-memory-stg")) {
+      if (args.count("max-memory") || args.count("max-memory-forced-top")) {
 #pragma omp critical(HASHSET)
 	{
 	  estateSetSize = estateSet.size();
 	}
 	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  long totalMemoryStg = 0;
-#pragma omp critical(HASHSET)
-	  {
-	    totalMemoryStg+=getPStateSet()->memorySize(); // pstateSetBytes
-	    totalMemoryStg+=getEStateSet()->memorySize(); // eStateSetBytes
-	    long transitionGraphSize=getTransitionGraph()->size();
-	    totalMemoryStg+=transitionGraphSize*sizeof(Transition); // transitionGraphBytes
-	    totalMemoryStg+=getConstraintSetMaintainer()->memorySize(); // constraintSetsBytes
-	    //cout << "DEBUG: total memory stg:" << totalMemoryStg << "(" <<getPStateSet()->memorySize()<<"/"<<getEStateSet()->memorySize()<<"/"<<transitionGraphSize*sizeof(Transition)<<"/"<<getConstraintSetMaintainer()->memorySize()<<")"<< endl;
-	  }
-	  if (totalMemoryStg >= _maxBytesStg) {
+	  if (args.count("max-memory")) {
+	    if (getPhysicalMemorySize() >= _maxBytes) {
+#pragma omp critical(ESTATEWL)
+              {
+                terminate = true;
+	 	terminatedWithIncompleteStg = true;
+	      }
+            }
+	  } else if (args.count("max-memory-forced-top")){
 #pragma omp critical(ESTATEWL)
 	    {
-	      terminate = true;
-	      terminatedWithIncompleteStg = true;
+	      isActiveGlobalTopify();
 	    }
 	  }
 	  prevStateSetSizeResource=estateSetSize;
@@ -3166,13 +3175,13 @@ void Analyzer::runSolver12() {
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)
                 addToWorkList(newEStatePtr);
-              recordTransition(currentEStatePtr,e,newEStatePtr);
+	      recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
               const EState* newEStatePtr;
               newEStatePtr=processNewOrExisting(newEState);
-              recordTransition(currentEStatePtr,e,newEStatePtr);        
+	      recordTransition(currentEStatePtr,e,newEStatePtr);        
               
               if(isVerificationErrorEState(&newEState)) {
 #pragma omp critical
@@ -3960,3 +3969,4 @@ void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
  void Analyzer::setAssertCondVarsSet(set<VariableId> acVars) {
    _assertCondVarsSet=acVars;
  }
+

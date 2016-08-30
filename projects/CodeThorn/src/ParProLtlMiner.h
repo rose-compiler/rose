@@ -27,11 +27,13 @@ namespace CodeThorn {
 
   class ParProExplorer;
 
-  struct ParallelSystem {
+  class ParallelSystem {
   public:
     ParallelSystem();
 
     std::set<string> getAnnotations() const;
+    std::set<int> getComponentIds() const;
+    std::set<string> getAnnotations(std::list<int> componentIds);
     size_t size() const { return _components.size(); }
     void addComponent(int id, Flow* cfa);
     std::string toString() const;
@@ -102,7 +104,8 @@ namespace CodeThorn {
 
     PropertyValueTable* mineProperties(ParallelSystem& system, int minNumComponents);
     PropertyValueTable* mineProperties(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable);
-    void setNumberOfMiningsPerSubsystem(int numMinings) { _numberOfMiningsPerSubsystem = numMinings; }
+    void setNumberOfMiningsPerSubsystem(unsigned int numMinings) { _numberOfMiningsPerSubsystem = numMinings; }
+    void setNumberOfComponentsForLtlAnnotations(unsigned int numComponentsLtl) { _numComponentsForLtlAnnotations = numComponentsLtl; }
 
   private:
     std::string randomLtlFormula(std::vector<std::string> atomicPropositions, int maxProductions);
@@ -113,6 +116,7 @@ namespace CodeThorn {
 					   std::list<const ParallelSystem*>& worklist);
     void initiateSubsystemsOf(const ParallelSystem* system);
     
+    unsigned int _numComponentsForLtlAnnotations;
     unsigned int _numberOfMiningsPerSubsystem;
     ParProExplorer* _parProExplorer;
 

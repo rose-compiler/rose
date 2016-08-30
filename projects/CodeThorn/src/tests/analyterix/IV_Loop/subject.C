@@ -7,4 +7,7 @@ int main() {
       continue;
     }
   }
+  int i2;
+
+  int i3;
 }

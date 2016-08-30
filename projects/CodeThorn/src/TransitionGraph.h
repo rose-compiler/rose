@@ -16,6 +16,7 @@ namespace CodeThorn {
     Edge edge;
     const EState* target; // target node
     string toString() const;
+    size_t memorySize() const;
   private:
   };
   
@@ -92,6 +93,7 @@ namespace CodeThorn {
     void setIsComplete(bool v);
     bool isPrecise();
     bool isComplete();
+    size_t memorySize() const;
     void setAnalyzer(Analyzer* analyzer) {
       ROSE_ASSERT(getModeLTLDriven());
       _analyzer=analyzer;

@@ -104,8 +104,9 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
       //cout<<"INFO: detected non-reachable state."<<endl;
       //cout<<"DEBUG: EDGE: "<<edge.toString()<<endl;
       //cout<<"RESULT: "<<res.toString()<<endl;
-      ROSE_ASSERT(!res.isBot());
-      ROSE_ASSERT((res.isFalse()&&edge.isType(SPRAY::EDGE_TRUE))
+      // schroder3(2016-08-09): The result of the condition might be bot if there is a
+      //  division by zero.
+      ROSE_ASSERT(res.isBot() || (res.isFalse()&&edge.isType(SPRAY::EDGE_TRUE))
                   ||(res.isTrue()&&edge.isType(SPRAY::EDGE_FALSE)));
       // non-reachable state
       ips.setBot();
@@ -143,6 +144,13 @@ SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(La
   _cppExprEvaluator->setPropertyState(&pstate);
   //cout<<"PSTATE:";pstate.toStream(cout,getVariableIdMapping());cout<<endl;
   niLattice=_cppExprEvaluator->evaluate(node);
+  // schroder3 (2016-08-09): Check the result before returning it to the caller. If the
+  //  result of an expression is bot (e.g. because of a division by zero) then set the
+  //  interval property state to bot too because the following code is unreachable.
+  if(niLattice.isBot()) {
+    IntervalPropertyState& ips = dynamic_cast<IntervalPropertyState&>(pstate);
+    ips.setBot();
+  }
   return niLattice;
 }
 

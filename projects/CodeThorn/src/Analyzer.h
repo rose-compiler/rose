@@ -111,6 +111,7 @@ namespace CodeThorn {
     const EState* topWorkList();
     const EState* popWorkList();
     void swapWorkLists();
+    size_t memorySizeContentEStateWorkLists();
     
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
@@ -172,7 +173,6 @@ namespace CodeThorn {
     EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
     const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
     
-    EState createEStateFastTopifyMode(Label label, const PState* oldPStatePtr, const ConstraintSet* oldConstraintSetPtr);
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
@@ -334,7 +334,8 @@ namespace CodeThorn {
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
-    void setMaxBytesStg(long int maxBytes) { _maxBytesStg=maxBytes; }
+    void setMaxBytes(long int maxBytes) { _maxBytes=maxBytes; }
+    void setMaxBytesForcedTop(long int maxBytesForcedTop) { _maxBytesForcedTop=maxBytesForcedTop; }
     void setStartPState(PState startPState) { _startPState=startPState; }
     void setReconstructMaxInputDepth(size_t inputDepth) { _reconstructMaxInputDepth=inputDepth; }
     void setReconstructMaxRepetitions(size_t repetitions) { _reconstructMaxRepetitions=repetitions; }
@@ -423,9 +424,10 @@ namespace CodeThorn {
     set<const EState*> _newNodesToFold;
     long int _maxTransitions;
     long int _maxIterations;
+    long int _maxBytes;
     long int _maxTransitionsForcedTop;
     long int _maxIterationsForcedTop;
-    long int _maxBytesStg;
+    long int _maxBytesForcedTop;
     PState _startPState;
     int _reconstructMaxInputDepth;
     int _reconstructMaxRepetitions;

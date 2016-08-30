@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include "sage3basic.h"
 #include "GenericIntervalLattice.h"
 
 namespace SPRAY {
@@ -46,6 +47,7 @@ namespace SPRAY {
   class NumberIntervalLattice : public SPRAY::GenericIntervalLattice<Number> {
   public:
     NumberIntervalLattice();
+    NumberIntervalLattice(Number value);
     NumberIntervalLattice(Number left, Number right);
     // required for the conversion of the return-type of some GenericIntervalLattice functions
     NumberIntervalLattice(GenericIntervalLattice<Number>);

@@ -23,6 +23,7 @@ namespace CodeThorn {
   void nocheck(std::string checkIdentifier, bool checkResult);
   void check(std::string checkIdentifier, bool checkResult, bool check=true);
   std::string readableruntime(double timeInMilliSeconds);
+  long getPhysicalMemorySize();
 } // end of namespace CodeThorn
 
 #endif
