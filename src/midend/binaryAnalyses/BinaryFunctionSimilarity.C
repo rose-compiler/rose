@@ -17,7 +17,14 @@ namespace BinaryAnalysis {
 #ifdef ROSE_HAVE_DLIB
 typedef dlib::matrix<double> DistanceMatrix;
 #else
-typedef int DistanceMatrix;
+struct DistanceMatrixDummy {
+    DistanceMatrixDummy(long, long) {}
+    long nr() const { ASSERT_not_reachable("no dlib support"); }
+    long nc() const { ASSERT_not_reachable("no dlib support"); }
+    double& operator()(long, long) { ASSERT_not_reachable("no dlib support"); }
+    double operator()(long, long) const { ASSERT_not_reachable("no dlib support"); }
+};
+typedef DistanceMatrixDummy DistanceMatrix;
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,9 +84,9 @@ findMinimumAssignment(const DistanceMatrix &matrix) {
 // Given a square matrix and a 1:1 mapping from rows to columns, return the total cost of the mapping.
 static double
 totalAssignmentCost(const DistanceMatrix &matrix, const std::vector<long> assignment) {
+    double sum = 0.0;
     ASSERT_require(matrix.nr() == matrix.nc());
     ASSERT_require((size_t)matrix.nr() == assignment.size());
-    double sum = 0.0;
     for (long i=0; i<matrix.nr(); ++i) {
         ASSERT_require(assignment[i] < matrix.nc());
         sum += matrix(i, assignment[i]);
