@@ -42,8 +42,8 @@
 #      2. The .dynstr may have an internal hole that is a byte larger in #3 than in #2
 #      3. The .dynstr in #2 has a 1-byte free list while the free list in #3 is empty
 #      4. The internal hole in "ELF Load (segment 2)" is smaller in #2 than in #3
-
 exe1="$1"
+blddir="$2"
 rose_switches=-rose:read_executable_file_format_only
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -59,18 +59,18 @@ rm -f $exebase.dump $exebase.new
 rm -f $exebase.new.dump $exebase.new.new
 
 echo "running execFormatsTest..." >&2
-./execFormatsTest $rose_switches $exe1 >&2 || exit 1
+$blddir/execFormatsTest $rose_switches $exe1 >&2 || exit 1
 grep -v '\.data at 0x' <$exebase.dump >$dump1
 rm $exebase.dump
 diff $exe1 $exebase.new || exit 1
 
 echo "running shiftResizeSection to extend .dynstr by 1 byte..." >&2
-./shiftResizeSection $rose_switches $exe1 .dynstr 0 1 >&2 || exit 1
+$blddir/shiftResizeSection $rose_switches $exe1 .dynstr 0 1 >&2 || exit 1
 grep -v '\.data at 0x' <$exebase.dump >$dump2
 rm $exebase.dump
 
 echo "running execFormats test to read modified executable..." >&2
-./execFormatsTest $rose_switches $exebase.new >&2 || exit 1
+$blddir/execFormatsTest $rose_switches $exebase.new >&2 || exit 1
 grep -v '\.data at 0x' <$exebase.new.dump >$dump3
 rm -f $exebase.new.dump
 

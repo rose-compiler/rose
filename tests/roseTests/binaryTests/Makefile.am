@@ -10,7 +10,6 @@ EXTRA_DIST = \
 # Forward declarations
 TEST_TARGETS=
 noinst_PROGRAMS=
-bin_PROGRAMS=
 MOSTLYCLEANFILES=
 
 if USE_BINARY_ANALYSIS_TESTS
@@ -20,401 +19,644 @@ AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/library
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
-TEST_SPECIMEN = $(srcdir)/specimen_tests.conf
+
 
 ###############################################################################################################################
-# These are tools that should be installed
-###############################################################################################################################
-
-bin_PROGRAMS += disassemble
-disassemble_SOURCES = disassemble.C linux_syscalls.C
-disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-###############################################################################################################################
-# The executables and their test cases...
-###############################################################################################################################
-
 # Check boost consistency
+###############################################################################################################################
 noinst_PROGRAMS += testBoost
 testBoost_SOURCES = testBoost.C
 testBoost_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testBoost.passed
-testBoost.passed: testBoost
-	./testBoost
 
+TEST_TARGETS += testBoost.passed
+testBoost.passed: $(TEST_EXIT_STATUS) testBoost
+	@$(RTH_RUN)				\
+		TITLE="boost linkage [$@]"	\
+		CMD="./testBoost"		\
+		$< $@
+
+
+###############################################################################################################################
 # Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
+###############################################################################################################################
 noinst_PROGRAMS += testSymbolicExprParser
 testSymbolicExprParser_SOURCES = testSymbolicExprParser.C
 testSymbolicExprParser_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+
 TEST_TARGETS += testSymbolicExprParser.passed
-testSymbolicExprParser.passed: $(TEST_WITH_ANSWER) testSymbolicExprParser
+testSymbolicExprParser.passed: $(TEST_WITH_ANSWER) testSymbolicExprParser testSymbolicExprParser.ans
 	@$(RTH_RUN)						\
 		TITLE="parsing of symbolic expressions [$@]"	\
 		CMD="./testSymbolicExprParser"			\
 		ANS="$(srcdir)/testSymbolicExprParser.ans"	\
 		$< $@
 
+
+###############################################################################################################################
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
-# the AST (*.new). The *.new file is typically identical to the original executable.
+# the AST (*.new). The *.new file is typically identical to the original executable. This is essentially the same as
+# tutorial/identityTranslator and is used by some of the other binary tests in this directory.
+###############################################################################################################################
+
 noinst_PROGRAMS += execFormatsTest
 execFormatsTest_SOURCES = execFormatsTest.C
 execFormatsTest_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += execFormatsTest.passed
-EXTRA_DIST += execFormatsTest.conf
-execFormatsTest.passed: execFormatsTest.conf execFormatsTest
-	@$(RTH_RUN) $< $@
 
 
-# Tests for the newer BinaryAnalysis::ControlFlow class.
+###############################################################################################################################
+# Tests for BinaryAnalysis::ControlFlow class.
+###############################################################################################################################
 noinst_PROGRAMS += testControlFlow
 testControlFlow_SOURCES = testControlFlow.C
 testControlFlow_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testControlFlow-A.passed testControlFlow-B.passed testControlFlow-C.passed testControlFlow-D.passed \
-	testControlFlow-E.passed
-EXTRA_DIST += testControlFlow.conf testControlFlow-A.dot testControlFlow-B.dot testControlFlow-C.dot testControlFlow-D.dot \
-	testControlFlow-E.dot
-testControlFlow-A.passed: testControlFlow.conf testControlFlow
-	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=A INPUT=buffer2.bin $< $@
-testControlFlow-B.passed: testControlFlow.conf testControlFlow
-	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=B INPUT=buffer2.bin $< $@
-testControlFlow-C.passed: testControlFlow.conf testControlFlow
-	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=C INPUT=buffer2.bin $< $@
-testControlFlow-D.passed: testControlFlow.conf testControlFlow
-	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=D INPUT=buffer2.bin $< $@
-testControlFlow-E.passed: testControlFlow.conf testControlFlow
-	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=E INPUT=buffer2.bin $< $@
 
-# Test the new binary CFG that points to instructions rather than basic blocks. No test is necessary since this
+testControlFlow_algorithms = A B C D E
+testControlFlow_targets = $(addsuffix .passed, $(addprefix testControlFlow-, $(testControlFlow_algorithms)))
+testControlFlow_answers = $(testControlFlow_targets:.passed=.ans)
+
+EXTRA_DIST += $(testControlFlow_answers)
+TEST_TARGETS += $(testControlFlow_targets)
+
+$(testControlFlow_targets): testControlFlow-%.passed: $(TEST_WITH_ANSWER) testControlFlow testControlFlow-%.dot
+	@$(RTH_RUN)								\
+		TITLE="AST-based control flow graph, algorithm $* [$@]"		\
+		CMD="./testControlFlow $* $(BINARY_SAMPLES)/buffer2.bin"	\
+		ANS="$(srcdir)/testControlFlow-$*.dot"				\
+		$< $@
+
+
+###############################################################################################################################
+# Test the binary CFG that points to instructions rather than basic blocks. No test is necessary since this
 # is tested by testControlFlow already.  The cfg2.C file serves mostly as a clear example of how to generate an
 # instruction-based CFG and write it to a GraphViz file along with some extra info on each vertex.
+###############################################################################################################################
+# FIXME ROSE-475 [Robb P. Matzke 2016-08-31]: This is an example, not a test. Move it to the documentation instead.
+
 noinst_PROGRAMS += cfg2
 cfg2_SOURCES = cfg2.C
 cfg2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-# Tests for the newer BinaryAnalysis::FunctionCall class.
+
+###############################################################################################################################
+# Tests for the BinaryAnalysis::FunctionCall class.
+###############################################################################################################################
 noinst_PROGRAMS += testFunctionCall
 testFunctionCall_SOURCES = testFunctionCall.C
 testFunctionCall_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testFunctionCall-A.passed testFunctionCall-B.passed
-EXTRA_DIST += testFunctionCall.conf testFunctionCall-A.dot testFunctionCall-B.dot
-testFunctionCall-A.passed: testFunctionCall.conf testFunctionCall
-	@$(RTH_RUN) CMD=testFunctionCall ALGORITHM=A INPUT=buffer2.bin $< $@
-testFunctionCall-B.passed: testFunctionCall.conf testFunctionCall
-	@$(RTH_RUN) CMD=testFunctionCall ALGORITHM=B INPUT=buffer2.bin $< $@
 
+TEST_TARGETS += testFunctionCall-A.passed testFunctionCall-B.passed
+EXTRA_DIST += testFunctionCall-A.dot testFunctionCall-B.dot
+
+testFunctionCall-A.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-A.dot
+	@$(RTH_RUN)								\
+		TITLE="function calls, algorithm A [$@]"			\
+		CMD="./testFunctionCall A $(BINARY_SAMPLES)/buffer2.bin"	\
+		ANS="$(srcdir)/testFunctionCall-A.dot"				\
+		$< $@
+
+testFunctionCall-B.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-B.dot
+	@$(RTH_RUN)								\
+		TITLE="function calls, algorithm B [$@]"			\
+		CMD="./testFunctionCall B $(BINARY_SAMPLES)/buffer2.bin"	\
+		ANS="$(srcdir)/testFunctionCall-B.dot"				\
+		$< $@
+
+
+###############################################################################################################################
 # Tests for control flow dominance graphs.
+###############################################################################################################################
 noinst_PROGRAMS += testDominance
 testDominance_SOURCES = testDominance.C
 testDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testDominance-A.passed testDominance-B.passed testDominance-C.passed testDominance-D.passed
-EXTRA_DIST += testDominance.conf testDominance-A.ans testDominance-B.ans testDominance-C.ans testDominance-D.ans
-testDominance-A.passed: testDominance.conf testDominance
-	@$(RTH_RUN) CMD=testDominance ALGORITHM=A INPUT=buffer2.bin $< $@
-testDominance-B.passed: testDominance.conf testDominance
-	@$(RTH_RUN) CMD=testDominance ALGORITHM=B INPUT=buffer2.bin $< $@
-testDominance-C.passed: testDominance.conf testDominance
-	@$(RTH_RUN) CMD=testDominance ALGORITHM=C INPUT=buffer2.bin $< $@
-testDominance-D.passed: testDominance.conf testDominance
-	@$(RTH_RUN) CMD=testDominance ALGORITHM=D INPUT=buffer2.bin $< $@
+
+testDominance_algorithms = A B C D
+testDominance_targets = $(addsuffix .passed, $(addprefix testDominance-, $(testDominance_algorithms)))
+testDominance_answers = $(testDominance_targets:.passed=.ans)
+
+EXTRA_DIST += $(testDominance_answers)
+TEST_TARGETS = $(testDominance_targets)
+
+$(testDominance_targets): testDominance-%.passed: $(TEST_WITH_ANSWER) testDominance testDominance-%.ans
+	@$(RTH_RUN)							\
+		TITLE="graph dominance, algorithm $* [$@]"		\
+		CMD="./testDominance $* $(BINARY_SAMPLES)/buffer2.bin"	\
+		ANS="$(srcdir)/testDominance-$*.ans"			\
+		$< $@
 
 
+###############################################################################################################################
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
 # quite easy to do, but it turns out to involve lots of details.
+###############################################################################################################################
 noinst_PROGRAMS += testElfStrtab
 testElfStrtab_SOURCES = testElfStrtab.C
 testElfStrtab_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testElfStrtab.passed
-EXTRA_DIST += testElfStrtab.conf
-testElfStrtab.passed: testElfStrtab.conf testElfStrtab
-	@$(RTH_RUN) INPUT=arm-poweroff $< $@
+
+testElfStrtab.passed: $(TEST_EXIT_STATUS) testElfStrtab
+	@$(RTH_RUN)								\
+		TITLE="ELF string table allocation [$@]"			\
+		CMD="$$(pwd)/testElfStrtab $(BINARY_SAMPLES)/arm-poweroff"	\
+		USE_SUBDIR=yes							\
+		$< $@
 
 
+###############################################################################################################################
 # Reads in an ELF executable and changes the byte order from little-endian to big-endian or vice versa and writes out a new
 # file. Note that the byte order change affects the ELF file format but not the executable described by that format.
+###############################################################################################################################
 noinst_PROGRAMS += testElfByteOrder
 testElfByteOrder_SOURCES = testElfByteOrder.C
 testElfByteOrder_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testElfByteOrder.passed
 EXTRA_DIST += testElfByteOrder.conf
+
 testElfByteOrder.passed: testElfByteOrder.conf testElfByteOrder execFormatsTest testElfStrtab.passed
-	@$(RTH_RUN) INPUT=arm-poweroff $< $@
+	@$(RTH_RUN)						\
+		TITLE="modification of byte order [$@]"	\
+		INPUT=arm-poweroff				\
+		$< $@
 
 
+###############################################################################################################################
 # Reads in an ELF executable and changes the word size from eight to four bytes or vice versa and writes out a new file. Note
 # that the word size change affects the ELF file format but not the executable described by that format.
+###############################################################################################################################
 noinst_PROGRAMS += testElfWordSize
 testElfWordSize_SOURCES = testElfWordSize.C
 testElfWordSize_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testElfWordSize.passed
 EXTRA_DIST += testElfWordSize.conf
+
 testElfWordSize.passed: testElfWordSize.conf testElfWordSize execFormatsTest testElfStrtab.passed testElfByteOrder.passed
-	@$(RTH_RUN) INPUT=arm-poweroff $< $@
+	@$(RTH_RUN)					\
+		TITLE="modification of word size [$@]"	\
+		INPUT=arm-poweroff			\
+		$< $@
 
 
+###############################################################################################################################
 # Demonstrates how to change names of dynamically-linked functions. This example reads an ELF executable dynamically linked to
 # the MPI library and changes all calls to PMPI_* functions with calls to XMPI_* functions. See the top of the source file
 # for more details.
+###############################################################################################################################
 noinst_PROGRAMS += testElfSchulz
 testElfSchulz_SOURCES = testElfSchulz.C
 testElfSchulz_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testElfSchulz-1.passed testElfSchulz-2.passed
 EXTRA_DIST += testElfSchulz.conf
+
 testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz execFormatsTest
-	@$(RTH_RUN) FLAGS='-rose:partitioner_search -leftovers' N=1 $< $@
+	@$(RTH_RUN)							\
+		TITLE="rename dynamically linked functions #1 [$@]"	\
+		FLAGS='-rose:partitioner_search -leftovers'		\
+		N=1							\
+		$< $@
 testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz execFormatsTest
-	@$(RTH_RUN) FLAGS='-rose:partitioner_search -leftovers' N=2 $< $@
+	@$(RTH_RUN)							\
+		TITLE="rename dynamically linked functions #2 [$@]"	\
+		FLAGS='-rose:partitioner_search -leftovers'		\
+		N=2							\
+		$< $@
 
 
+###############################################################################################################################
 # Demonstrates how to build an ELF executable from scratch. Lots of comments in the source code. The resulting file is executable
 # on an x86 Linux using syscall 1 to exit with a particular value.
+###############################################################################################################################
 noinst_PROGRAMS += testElfConstruct
 testElfConstruct_SOURCES = testElfConstruct.C
 testElfConstruct_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testElfConstruct.passed
-EXTRA_DIST += testElfConstruct.conf
-MOSTLYCLEANFILES += a.out
-testElfConstruct.passed: testElfConstruct.conf testElfConstruct
-	@$(RTH_RUN) $< $@
+
+testElfConstruct.passed: $(TEST_EXIT_STATUS) testElfConstruct
+	@$(RTH_RUN)						\
+		TITLE="build an ELF file from scratch [$@]"	\
+		CMD="$$(pwd)/testElfConstruct"			\
+		USE_SUBDIR=yes					\
+		$< $@
 
 
+###############################################################################################################################
 # Demonstrates how to build a PE executable from scratch. This demo is not as complete at the ELF version, but does show how to
 # create a file that contains multiple format headers (a DOS header and a PE header).
+###############################################################################################################################
 noinst_PROGRAMS += testPeConstruct
 testPeConstruct_SOURCES = testPeConstruct.C
 testPeConstruct_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testPeConstruct.passed
-EXTRA_DIST += testPeConstruct.conf
-MOSTLYCLEANFILES += a.out
-testPeConstruct.passed: testPeConstruct.conf testPeConstruct
-	@$(RTH_RUN) $< $@
+
+testPeConstruct.passed: $(TEST_EXIT_STATUS) testPeConstruct
+	@$(RTH_RUN)						\
+		TITLE="build a PE file from scratch [$@]"	\
+		CMD="$$(pwd)/testPeConstruct"			\
+		USE_SUBDIR=yes					\
+		$< $@
 
 
+###############################################################################################################################
 # Changes the size and/or location of a section in an executable file.
+###############################################################################################################################
 noinst_PROGRAMS += shiftResizeSection
 shiftResizeSection_SOURCES = shiftResizeSection.C
 shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += shiftResizeSection.passed
-EXTRA_DIST += shiftResizeSection.conf shiftResizeSection.ans
-MOSTLYCLEANFILES += arm-ctrlaltdel.dump-1 arm-ctrlaltdel.dump-2 arm-ctrlaltdel.dump-3
-shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection execFormatsTest
-	@$(RTH_RUN) INPUT=arm-ctrlaltdel $< $@
+EXTRA_DIST += shiftResizeSection.ans
 
-# Check whether the instruction semantics classes can be specialized. This is only a compile test; we never actually
-# run the program since the same classes are exercised by other tests.
-noinst_PROGRAMS += subSemantics
-subSemantics_SOURCES = subSemantics.C
-subSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+shiftResizeSection.passed: $(TEST_WITH_ANSWER) shiftResizeSection execFormatsTest shiftResizeSection.ans
+	@$(RTH_RUN)											\
+		TITLE="changing section size and/or location [$@]"					\
+		CMD="$(srcdir)/testShiftResizeSection.sh $(BINARY_SAMPLES)/arm-ctrlaltdel $$(pwd)"	\
+		ANS="$(srcdir)/shiftResizeSection.ans"							\
+		USE_SUBDIR=yes										\
+		$< $@
 
-# Check whether the dominance classes can be specialized.
+
+###############################################################################################################################
+# Check whether the dominance classes can be specialized.  This is a compile-only test.
+###############################################################################################################################
 noinst_PROGRAMS += subDominance
 subDominance_SOURCES = subDominance.C
 subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
+
+###############################################################################################################################
+# Test ROSE + XEN Ether interface
+###############################################################################################################################
 noinst_PROGRAMS += testEtherInsns
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testEtherInsns.passed
-EXTRA_DIST += testEtherInsns.conf
-testEtherInsns.passed: testEtherInsns.conf testEtherInsns
-	@$(RTH_RUN) $< $@
+
+testEtherInsns.passed: $(TEST_EXIT_STATUS) testEtherInsns
+	@$(RTH_RUN)									\
+		TITLE="interface to XEN Ether [$@]"					\
+		DISABLED="cannot be run automatically; requires human interaction"	\
+		$< $@
 
 
+###############################################################################################################################
 # Program to show function boundary information for a binary executable
+###############################################################################################################################
 noinst_PROGRAMS += functionBoundaries
 functionBoundaries_SOURCES=functionBoundaries.C
 functionBoundaries_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += functionBoundaries_1.passed functionBoundaries_2.passed functionBoundaries_3.passed
 EXTRA_DIST += functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans
-functionBoundaries_1.passed: $(BINARY_SAMPLES)/i686-test1.O0.bin functionBoundaries
-	@$(RTH_RUN) USE_SUBDIR=yes CMD="$$(pwd)/functionBoundaries $<" \
-		ANS=$(srcdir)/functionBoundaries_1.ans \
+
+functionBoundaries_1.passed: $(BINARY_SAMPLES)/i686-test1.O0.bin functionBoundaries functionBoundaries_1.ans
+	@$(RTH_RUN)							\
+		TITLE="detect function boundaries $(notdir $<) [$@]"	\
+		USE_SUBDIR=yes						\
+		CMD="$$(pwd)/functionBoundaries $<"			\
+		ANS=$(srcdir)/functionBoundaries_1.ans			\
 		$(TEST_WITH_ANSWER) $@
-functionBoundaries_2.passed: $(BINARY_SAMPLES)/i686-test1.O3.bin functionBoundaries
-	@$(RTH_RUN) USE_SUBDIR=yes CMD="$$(pwd)/functionBoundaries $<" \
-		ANS=$(srcdir)/functionBoundaries_2.ans \
+functionBoundaries_2.passed: $(BINARY_SAMPLES)/i686-test1.O3.bin functionBoundaries functionBoundaries_2.ans
+	@$(RTH_RUN)							\
+		TITLE="detect function boundaries $(notdir $<) [$@]"	\
+		USE_SUBDIR=yes						\
+		CMD="$$(pwd)/functionBoundaries $<"			\
+		ANS=$(srcdir)/functionBoundaries_2.ans			\
 		$(TEST_WITH_ANSWER) $@
-functionBoundaries_3.passed: $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin functionBoundaries
-	@$(RTH_RUN) USE_SUBDIR=yes CMD="$$(pwd)/functionBoundaries $<" \
-		ANS=$(srcdir)/functionBoundaries_3.ans \
+functionBoundaries_3.passed: $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin functionBoundaries functionBoundaries_3.ans
+	@$(RTH_RUN)							\
+		TITLE="detect function boundaries $(notdir $<) [$@]"	\
+		USE_SUBDIR=yes						\
+		CMD="$$(pwd)/functionBoundaries $<"			\
+		ANS=$(srcdir)/functionBoundaries_3.ans			\
 		$(TEST_WITH_ANSWER) $@
 
 
+###############################################################################################################################
 # Program to add read-only data to ELF core dumps.
+###############################################################################################################################
 noinst_PROGRAMS += expandCoreDump
 expandCoreDump_SOURCES=expandCoreDump.C
 expandCoreDump_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += expandCoreDump.passed
-EXTRA_DIST += expandCoreDump.conf
-expandCoreDump.passed: expandCoreDump.conf expandCoreDump
-	@$(RTH_RUN) $< $@
+
+expandCoreDump.passed: $(TEST_EXIT_STATUS) expandCoreDump
+	@$(RTH_RUN)							\
+		TITLE="adding read-only data to core dumps [$@]"	\
+		DISABLED="not currently tested"				\
+		$< $@
 
 
+###############################################################################################################################
 # Program that encodes/decodes data similar to ROT-13 but acceping binary data
+###############################################################################################################################
 noinst_PROGRAMS += rot13
 rot13_SOURCES=rot13.C
+
 TEST_TARGETS += rot13.passed
 EXTRA_DIST += rot13.conf
+
 rot13.passed: rot13.conf rot13
-	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
+	@$(RTH_RUN)				\
+		TITLE="binary ROT-13 [$@]"	\
+		INPUT=i686-test1.O0.bin		\
+		$< $@
 
 
+###############################################################################################################################
 # Program to test the assembler (see also "disassemble --assemble")
+###############################################################################################################################
 noinst_PROGRAMS += testAssembler
 testAssembler_SOURCES=testAssembler.C
 testAssembler_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testAssembler.passed
-EXTRA_DIST += testAssembler.conf testAssembler.ans
-testAssembler.passed: testAssembler.conf testAssembler
-	@$(RTH_RUN) INPUT=buffer2.bin $< $@
+EXTRA_DIST += testAssembler.ans
+
+testAssembler.passed: $(TEST_WITH_ANSWER) testAssembler testAssembler.ans
+	@$(RTH_RUN)												\
+		TITLE="x86 assembler [$@]"									\
+		CMD="$$(pwd)/testAssembler -rose:partitioner_search -leftovers $(BINARY_SAMPLES)/buffer2.bin"	\
+		USE_SUBDIR=yes											\
+		ANS="$(srcdir)/testAssembler.ans"								\
+		$< $@
 
 
+###############################################################################################################################
 # Program to test that we can write and then read an AST for a binary executable
+###############################################################################################################################
 noinst_PROGRAMS += testAstIO
 testAstIO_SOURCES=testAstIO.C
 testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testAstIO.passed
-EXTRA_DIST += testAstIO.conf
-MOSTLYCLEANFILES += i686-test1.O0.bin.ast i686-test1.O0.bin-1.dump i686-test1.O0.bin-2.dump
-testAstIO.passed: testAstIO.conf testAstIO
-	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
 
+TEST_TARGETS += testAstIO.passed
+
+testAstIO.passed: $(TEST_EXIT_STATUS) testAstIO
+	@$(RTH_RUN)								\
+		TITLE="writing and reading binary AST format [$@]"		\
+		CMD="$$(pwd)/testAstIO $(BINARY_SAMPLES)/i686-test1.O0.bin"	\
+		USE_SUBDIR=yes							\
+		$< $@
+
+
+###############################################################################################################################
 # Program to test that SgAsmGenericFile::neuter works across AST-IO.
+###############################################################################################################################
 noinst_PROGRAMS += testAstNeuter
 testAstNeuter_SOURCES=testAstNeuter.C
 testAstNeuter_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testAstNeuter.passed
 EXTRA_DIST += testAstNeuter.conf
+
 MOSTLYCLEANFILES += testAstNeuter.ast
 testAstNeuter.passed: testAstNeuter.conf testAstNeuter
-	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
+	@$(RTH_RUN)							\
+		TITLE="that neutering works across binary AST IO [$@]"	\
+		CMD="$$(pwd)/testAstNeuter" INPUT="i686-test1.O0.bin"	\
+		USE_SUBDIR=yes						\
+		$< $@
 
+
+###############################################################################################################################
 # Program to test the RegisterDescriptor and RegisterDictionary classes.
+###############################################################################################################################
 noinst_PROGRAMS += testRegisters
 testRegisters_SOURCES=testRegisters.C
 testRegisters_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testRegisters.passed
-EXTRA_DIST += testRegisters.conf
-testRegisters.passed: testRegisters.conf testRegisters
-	@$(RTH_RUN) $< $@
 
+TEST_TARGETS += testRegisters.passed
+
+testRegisters.passed: $(TEST_EXIT_STATUS) testRegisters
+	@$(RTH_RUN)							\
+		TITLE="register descriptors and dictionaries [$@]"	\
+		CMD="./testRegisters"					\
+		$< $@
+
+
+###############################################################################################################################
 # Tests reading past the end-of-file
+###############################################################################################################################
 noinst_PROGRAMS += testReadPastEOF
 testReadPastEOF_SOURCES = testReadPastEOF.C
 testReadPastEOF_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 TEST_TARGETS += testReadPastEOF.passed
 EXTRA_DIST += testReadPastEOF.conf testReadPastEOF.ans
-testReadPastEOF.passed: testReadPastEOF.conf testReadPastEOF
-	@$(RTH_RUN) $< $@
 
+testReadPastEOF.passed: testReadPastEOF.conf testReadPastEOF testReadPastEOF.ans
+	@$(RTH_RUN) \
+		TITLE="reading past end-of-file [$@]" \
+		$< $@
+
+
+###############################################################################################################################
 # Not sure what this does.
+###############################################################################################################################
 if ROSE_USE_SQLITE_DATABASE
+
 noinst_PROGRAMS += testLibraryDb
 testLibraryDb_SOURCES = testLibraryDb.C
 testLibraryDb_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 TEST_TARGETS += testLibraryDb.passed
-EXTRA_DIST += testLibraryDb.conf
-MOSTLYCLEANFILES += test.db
-testLibraryDb.passed: testLibraryDb.conf testLibraryDb
-	@$(RTH_RUN) $< $@
+
+testLibraryDb.passed: $(TEST_EXIT_STATUS) testLibraryDb
+	@$(RTH_RUN)					\
+		TITLE="library identification [$@]"	\
+		CMD="$$(pwd)/testLibraryDb"		\
+		USE_SUBDIR=yes				\
+		$< $@
+
 endif
 
+
+###############################################################################################################################
 # Tests reading import sections from PE files
+###############################################################################################################################
 noinst_PROGRAMS += testPeImports
 testPeImports_SOURCES = testPeImports.C
 testPeImports_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += testPeImports.passed
-EXTRA_DIST += testPeImports.conf testPeImports.ans
-testPeImports.passed: testPeImports.conf testPeImports
-	@$(RTH_RUN) INPUT=proxycfg.exe $< $@
 
+TEST_TARGETS += testPeImports.passed
+EXTRA_DIST += testPeImports.ans
+
+testPeImports.passed: $(TEST_WITH_ANSWER) testPeImports testPeImports.ans
+	@$(RTH_RUN)													\
+		TITLE="that PE import tables can be parsed [$@]"							\
+		CMD="$$(pwd)/testPeImports -rose:read_executable_file_format_only $(BINARY_SAMPLES)/proxycfg.exe"	\
+		USE_SUBDIR=yes												\
+		ANS="$(srcdir)/testPeImports.ans"									\
+		$< $@
+
+
+###############################################################################################################################
 # Symbolic semantics test from Cory Cohen that triggers a reference-counting bug.
+###############################################################################################################################
 noinst_PROGRAMS += cory001
 cory001_SOURCES = cory001.C
 cory001_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += cory001.passed
-EXTRA_DIST += cory001.conf
-cory001.passed: cory001.conf cory001
-	@$(RTH_RUN) CMD=./cory001 $< $@
 
+TEST_TARGETS += cory001.passed
+
+cory001.passed: $(TEST_EXIT_STATUS) cory001
+	@$(RTH_RUN)						\
+		TITLE="reference counting [$@]"			\
+		CMD="./cory001 $(BINARY_SAMPLES)//buffer2.bin"	\
+		$< $@
+
+
+###############################################################################################################################
 # Binary CFG test from Cory Cohen that doesn't compile.  This is only a linking test--do not run it.
+###############################################################################################################################
 noinst_PROGRAMS += cory002
 cory002_SOURCES = cory002.C
 cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
+
+###############################################################################################################################
 # Test certain RegisterStateGeneric stuff
+###############################################################################################################################
 noinst_PROGRAMS += cory003
 cory003_SOURCES = cory003.C
 cory003_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += cory003.passed
-cory003.passed: $(TEST_EXIT_STATUS) cory003
-	@$(RTH_RUN) CMD=./cory003 $< $@
 
+TEST_TARGETS += cory003.passed
+
+cory003.passed: $(TEST_EXIT_STATUS) cory003
+	@$(RTH_RUN)					\
+		TITLE="generic register states [$@]"	\
+		CMD=./cory003				\
+		$< $@
+
+
+###############################################################################################################################
 # Test register clearing in subclass constructor
+###############################################################################################################################
 noinst_PROGRAMS += cory004
 cory004_SOURCES = cory004.C
 cory004_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += cory004.passed
-cory004.passed: $(TEST_EXIT_STATUS) cory004
-	@$(RTH_RUN) CMD=./cory004 $< $@
 
+TEST_TARGETS += cory004.passed
+
+cory004.passed: $(TEST_EXIT_STATUS) cory004
+	@$(RTH_RUN)							\
+		TITLE="register clearing in subclass container [$@]"	\
+		CMD=./cory004						\
+		$< $@
+
+
+###############################################################################################################################
 # Test disassembling between functions
+###############################################################################################################################
 noinst_PROGRAMS += cory006
 cory006_SOURCES = cory006.C
 cory006_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += cory006.passed
-cory006.passed: $(TEST_EXIT_STATUS) cory006
-	@$(RTH_RUN) CMD="./cory006 $(top_srcdir)/binaries/samples/i386-cory006" $< $@
 
+TEST_TARGETS += cory006.passed
+
+cory006.passed: $(TEST_EXIT_STATUS) cory006
+	@$(RTH_RUN)						\
+		TITLE="inter-functon disassembly [$@]"		\
+		CMD="./cory006 $(BINARY_SAMPLES)//i386-cory006"	\
+		$< $@
+
+
+###############################################################################################################################
 # Test and demonstrate binary attributes
+###############################################################################################################################
 noinst_PROGRAMS += cory007
 cory007_SOURCES = cory007.C
 cory007_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += cory007.passed
-cory007.passed: $(TEST_EXIT_STATUS) cory007
-	@$(RTH_RUN) CMD="./cory007" $< $@
 
+TEST_TARGETS += cory007.passed
+
+cory007.passed: $(TEST_EXIT_STATUS) cory007
+	@$(RTH_RUN)				\
+		TITLE="binary attributes [$@]"	\
+		CMD="./cory007"			\
+		$< $@
+
+
+###############################################################################################################################
 # Test and demonstrate binary attributes
+###############################################################################################################################
 noinst_PROGRAMS += cory008
 cory008_SOURCES = cory008.C
 cory008_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 TEST_TARGETS += cory008.passed
 EXTRA_DIST += cory008.ans
+
 cory008.passed: $(TEST_WITH_ANSWER) cory008 cory008.ans
 	@$(RTH_RUN)								\
 		TITLE="base objects in SgAsmIntegerValueExpression [$@]"	\
-		CMD="./cory008 $(top_srcdir)/binaries/samples/i386-nologin"	\
+		CMD="./cory008 $(BINARY_SAMPLES)/i386-nologin"			\
 		ANS=$(srcdir)/cory008.ans					\
 		$< $@
 
+
+###############################################################################################################################
 # Test symbolic semantics memory read-after-write
+###############################################################################################################################
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C
 testSymReadWrite_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 TEST_TARGETS += testSymReadWrite.passed
 EXTRA_DIST += testSymReadWrite.conf testSymReadWrite.ans
-testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadWrite
-	@$(RTH_RUN) INPUT=memreadwrite $< $@
 
+testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadWrite
+	@$(RTH_RUN)							\
+		TITLE="symbolic semantic domain read/write [$@]"	\
+		INPUT=memreadwrite					\
+		$< $@
+
+
+###############################################################################################################################
 # Test the WorkList class
+###############################################################################################################################
 noinst_PROGRAMS += testWorkList
 testWorkList_SOURCES = testWorkList.C
 testWorkList_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += testWorkList.passed
-testWorkList.passed: $(TEST_EXIT_STATUS) testWorkList
-	@$(RTH_RUN) CMD=./testWorkList $< $@
 
+TEST_TARGETS += testWorkList.passed
+
+testWorkList.passed: $(TEST_EXIT_STATUS) testWorkList
+	@$(RTH_RUN)					\
+		TITLE="work list unit tests [$@]"	\
+		CMD=./testWorkList			\
+		$< $@
+
+
+###############################################################################################################################
 # Test ROSE's Map<T> class
+###############################################################################################################################
 noinst_PROGRAMS += testMap
 testMap_SOURCES = testMap.C
 testMap_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += testMap.passed
-testMap.passed: $(TEST_EXIT_STATUS) testMap
-	@$(RTH_RUN) CMD=./testMap $< $@
 
+TEST_TARGETS += testMap.passed
+
+testMap.passed: $(TEST_EXIT_STATUS) testMap
+	@$(RTH_RUN)							\
+		TITLE="custom Map class unit tests (deprecated) [$@]"	\
+		CMD=./testMap						\
+		$< $@
+
+
+###############################################################################################################################
 # Test pointer detection
+###############################################################################################################################
 noinst_PROGRAMS += testPointerDetection
 testPointerDetection_SOURCES = testPointerDetection.C
 testPointerDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 PointerDetectionSpecimen = $(BINARY_SAMPLES)/i386-pointers
 PointerDetectionSpecimenFunctions =											\
 	simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 simple11 simple12	\
@@ -427,34 +669,61 @@ PointerDetectionSpecimenFunctionsNonWorking =	\
 PointerDetectionSwitches =											\
 	$(patsubst %,--function=%,										\
 	    $(filter-out $(PointerDetectionSpecimenFunctionsNonWorking),$(PointerDetectionSpecimenFunctions)))
+
+EXTRA_DIST += testPointerDetection.ans
 TEST_TARGETS += testPointerDetection.passed
-testPointerDetection.passed: testPointerDetection $(TEST_WITH_ANSWER)
+
+testPointerDetection.passed: $(TEST_WITH_ANSWER) testPointerDetection testPointerDetection.ans
 	@$(RTH_RUN)											\
-	    TITLE="testing pointer detection [$@]"							\
+	    TITLE="pointer detection [$@]"								\
 	    CMD="./testPointerDetection $(PointerDetectionSwitches) $(PointerDetectionSpecimen)"	\
 	    ANS=$(srcdir)/testPointerDetection.ans							\
-	    $(TEST_WITH_ANSWER) $@
+	    $< $@
 
+
+###############################################################################################################################
 # Test function call detection
+###############################################################################################################################
 noinst_PROGRAMS += testCallDetection
 testCallDetection_SOURCES = testCallDetection.C
 testCallDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 TEST_TARGETS += testCallDetection.passed
 EXTRA_DIST += testCallDetection.ans
-testCallDetection.passed: $(BINARY_SAMPLES)/i386-fcalls testCallDetection
-	@$(RTH_RUN) CMD="./testCallDetection $<" ANS=$(srcdir)/testCallDetection.ans $(top_srcdir)/scripts/test_with_answer $@
 
+testCallDetection.passed: $(TEST_WITH_ANSWER) $(BINARY_SAMPLES)/i386-fcalls testCallDetection testCallDetection.ans
+	@$(RTH_RUN)								\
+		TITLE="function call detection [$@]"				\
+		CMD="$$(pwd)/testCallDetection $(BINARY_SAMPLES)/i386-fcalls"	\
+		USE_SUBDIR=yes							\
+		ANS=$(srcdir)/testCallDetection.ans				\
+		$< $@
+
+
+###############################################################################################################################
 # Test analysis to see whether a function returns a value
+###############################################################################################################################
 noinst_PROGRAMS += testReturnsValue
 testReturnsValue_SOURCES = testReturnsValue.C
 testReturnsValue_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += testReturnsValue.passed
-testReturnsValue.passed: $(BINARY_SAMPLES)/buffer2.bin testReturnsValue
-	@$(RTH_RUN) CMD="./testReturnsValue $<" $(TEST_EXIT_STATUS) $@
 
+TEST_TARGETS += testReturnsValue.passed
+
+testReturnsValue.passed: $(BINARY_SAMPLES)/buffer2.bin testReturnsValue $(TEST_EXIT_STATUS)
+	@$(RTH_RUN)						\
+		TITLE="function-returns-value analysis [$@]"	\
+		CMD="./testReturnsValue $<"			\
+		$(TEST_EXIT_STATUS) $@
+
+
+###############################################################################################################################
 # Unit tests for use-def (executed created below)
+###############################################################################################################################
+# Uses "symbolicSemantics2" executable compiled in another test.
+
 TEST_TARGETS += usedef.passed
 EXTRA_DIST += usedef.ans usedef.conf
+
 usedef.passed: usedef.conf symbolicSemantics2 $(BINARY_SAMPLES)/usedef
 	@$(RTH_RUN)											\
 		USE_SUBDIR=yes										\
@@ -463,54 +732,94 @@ usedef.passed: usedef.conf symbolicSemantics2 $(BINARY_SAMPLES)/usedef
 		ANS="$(srcdir)/usedef.ans"								\
 		$< $@
 
+
+###############################################################################################################################
 # Test BitPattern<> class template
+###############################################################################################################################
 noinst_PROGRAMS += testBitPattern
 testBitPattern_SOURCES = testBitPattern.C
 testBitPattern_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += testBitPattern.passed
-testBitPattern.passed: testBitPattern
-	@$(RTH_RUN) CMD="./testBitPattern" $(TEST_EXIT_STATUS) $@
 
+TEST_TARGETS += testBitPattern.passed
+
+testBitPattern.passed: $(TEST_EXIT_STATUS) testBitPattern
+	@$(RTH_RUN)					\
+		TITLE="bit pattern matcher [$@]"	\
+		CMD="./testBitPattern"			\
+		$< $@
+
+
+###############################################################################################################################
 # Random number generator tests
+###############################################################################################################################
 noinst_PROGRAMS += testRNG
 testRNG_SOURCES = testRNG.C
 testRNG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-TEST_TARGETS += testRNG.passed
-testRNG.passed: testRNG
-	@$(RTH_RUN) CMD="./testRNG" $(TEST_EXIT_STATUS) $@
 
+TEST_TARGETS += testRNG.passed
+
+testRNG.passed: $(TEST_EXIT_STATUS) testRNG
+	@$(RTH_RUN)								\
+		TITLE="pseudo random number generator (deprecated) [$@]"	\
+		CMD="./testRNG"							\
+		$< $@
+
+
+###############################################################################################################################
 # Symbolic expression simplifications
+###############################################################################################################################
 noinst_PROGRAMS += testSymbolicSimplification
 testSymbolicSimplification_SOURCES = testSymbolicSimplification.C
 testSymbolicSimplification_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 TEST_TARGETS += testSymbolicSimplification.passed
+EXTRA_DIST += testSymbolicSimplification.ans
+
 testSymbolicSimplification.passed: $(TEST_WITH_ANSWER) testSymbolicSimplification testSymbolicSimplification.ans
 	@$(RTH_RUN)						\
-		TITLE="test symbolic simplification [$@]"	\
+		TITLE="symbolic simplification [$@]"		\
 		CMD="./testSymbolicSimplification"		\
 		ANS="$(srcdir)/testSymbolicSimplification.ans"	\
 		$< $@
 
+
+###############################################################################################################################
 # Symbolic expression user-defined flags
+###############################################################################################################################
 noinst_PROGRAMS += testSymbolicFlags
 testSymbolicFlags_SOURCES = testSymbolicFlags.C
 testSymbolicFlags_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 TEST_TARGETS += testSymbolicFlags.passed
+EXTRA_DIST += testSymbolicFlags.ans
+
 testSymbolicFlags.passed: $(TEST_WITH_ANSWER) testSymbolicFlags testSymbolicFlags.ans
 	@$(RTH_RUN)					\
-		TITLE="test symbolic flags [$@]"	\
+		TITLE="symbolic flags [$@]"		\
 		CMD="./testSymbolicFlags"		\
 		ANS="$(srcdir)/testSymbolicFlags.ans"	\
 		$< $@
 
-# Instruction semantics verification
+
+###############################################################################################################################
+# Instruction semantics verification.
+###############################################################################################################################
 noinst_PROGRAMS += verifySemantics
 verifySemantics_SOURCES = verifySemantics.C
 verifySemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
+TEST_TARGETS += verifySemantics.passed
+
+verifySemantics.passed: $(TEST_EXIT_STATUS) verifySemantics
+	@$(RTH_RUN)							\
+		TITLE="instruction semantics verification"		\
+		DISABLED="not portable enough to run automatically"	\
+		CMD=false						\
+		$< $@
+
 
 ###############################################################################################################################
-# Disassembly tests
+# Disassembly tests using rose::BinaryAnalysis::Partitioner2
 ###############################################################################################################################
 
 # Disassembles executables using Partitioner2
@@ -522,12 +831,14 @@ verifySemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 noinst_PROGRAMS += testPartitioner2
 testPartitioner2_SOURCES = testPartitioner2.C
 testPartitioner2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 testPartitioner2_specimens = $(filter-out \
 	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(large_specimens), \
 	$(any_exe_any_specimens))
-testPartitioner2_directory = $(top_srcdir)/binaries/samples
+
 testPartitioner2_test_targets = $(addprefix testPartitioner2_, $(addsuffix .passed, $(testPartitioner2_specimens)))
 testPartitioner2_answers = $(testPartitioner2_test_targets:.passed=.ans)
+
 EXTRA_DIST += $(testPartitioner2_answers)
 TEST_TARGETS += $(testPartitioner2_test_targets)
 
@@ -537,7 +848,7 @@ TEST_TARGETS += $(testPartitioner2_test_targets)
 #	mv $@ $(srcdir)/$@
 #END TEMPORARY [RPM 2015-02-19]
 
-$(testPartitioner2_test_targets): testPartitioner2_%.passed: $(testPartitioner2_directory)/% testPartitioner2 testPartitioner2_%.ans
+$(testPartitioner2_test_targets): testPartitioner2_%.passed: $(BINARY_SAMPLES)/% testPartitioner2 testPartitioner2_%.ans
 	@$(RTH_RUN)												\
 		TITLE="testPartitioner2 $(notdir $<) [$@]"							\
 		USE_SUBDIR=yes											\
@@ -548,54 +859,63 @@ $(testPartitioner2_test_targets): testPartitioner2_%.passed: $(testPartitioner2_
 .PHONY: check-testPartitioner2
 check-testPartitioner2: $(testPartitioner2_test_targets)
 
+
+###############################################################################################################################
+# Disassembly tests using the old partitioner (deprecated)
+###############################################################################################################################
+
+noinst_PROGRAMS += disassemble
+disassemble_SOURCES = disassemble.C linux_syscalls.C
+disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 # Disassembly of executable files (DOS, ELF, PE) of various architectures (amd64, Arm, Mips, M68k, PowerPC, x86)
 # MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
 # PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
 disassemble1_specimens = \
 	$(filter-out $(any_any_mips_specimens) $(any_any_ppc_specimens) $(large_specimens), $(any_exe_any_specimens))
-disassemble1_directory = $(top_srcdir)/binaries/samples
 disassemble1_test_targets = $(addprefix disassemble1_, $(addsuffix .passed, $(disassemble1_specimens)))
 disassemble1_answers = $(disassemble1_test_targets:.passed=.ans)
+
 EXTRA_DIST += $(disassemble1_answers) disassemble.conf
 TEST_TARGETS += $(disassemble1_test_targets)
 
-$(disassemble1_test_targets): disassemble1_%.passed: $(disassemble1_directory)/% disassemble disassemble.conf disassemble1_%.ans
-	@$(RTH_RUN) \
-		TITLE="disassemble $(notdir $<) [$@]" \
-		USE_SUBDIR=yes \
-		EXE="$$(pwd)/disassemble" \
-		SWITCHES= \
-		PSEARCH="-rose:partitioner_search -leftovers" \
-		ARGS="$<" \
+$(disassemble1_test_targets): disassemble1_%.passed: $(BINARY_SAMPLES)/% disassemble disassemble.conf disassemble1_%.ans
+	@$(RTH_RUN)						\
+		TITLE="disassemble $(notdir $<) [$@]"		\
+		USE_SUBDIR=yes					\
+		EXE="$$(pwd)/disassemble"			\
+		SWITCHES=					\
+		PSEARCH="-rose:partitioner_search -leftovers"	\
+		ARGS="$<"					\
 		$(srcdir)/disassemble.conf $@
 
 # Disassembly of raw x86 buffers (these should probably have position independent code)
 disassemble2_specimens = $(filter-out $(large_specimens), $(raw_insns_x86_specimens))
-disassemble2_directory = $(top_srcdir)/binaries/samples
 disassemble2_test_targets = $(addprefix disassemble2_, $(addsuffix .passed, $(disassemble2_specimens)))
 disassemble2_answers = $(disassemble2_test_targets:.passed=.ans)
+
 EXTRA_DIST += $(disassemble2_answers)
 TEST_TARGETS += $(disassemble2_test_targets)
 
-disassemble2_buffer2.raw.passed: $(disassemble2_directory)/buffer2.raw disassemble disassemble.conf disassemble2_buffer2.raw.ans
-	@$(RTH_RUN) \
-		TITLE="disassemble $(notdir $<) [$@]" \
-		USE_SUBDIR=yes \
-		EXE="$$(pwd)/disassemble" \
-		SWITCHES="--disassemble --linear --raw=0x08048310" \
-		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown" \
-		ARGS="$< 0x08048310" \
+disassemble2_buffer2.raw.passed: $(BINARY_SAMPLES)/buffer2.raw disassemble disassemble.conf disassemble2_buffer2.raw.ans
+	@$(RTH_RUN)													\
+		TITLE="disassemble $(notdir $<) [$@]"									\
+		USE_SUBDIR=yes												\
+		EXE="$$(pwd)/disassemble"										\
+		SWITCHES="--disassemble --linear --raw=0x08048310"							\
+		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown"	\
+		ARGS="$< 0x08048310"											\
 		$(srcdir)/disassemble.conf $@
 
-disassemble2_vm-final.raw.passed: $(disassemble2_directory)/vm-final.raw disassemble disassemble.conf disassemble2_vm-final.raw.ans
-	@$(RTH_RUN) \
-		DISABLED="This takes forever to run" \
-		TITLE="disassemble $(notdir $<) [$@]" \
-		USE_SUBDIR=yes \
-		EXE="$$(pwd)/disassemble" \
-		SWITCHES="--disassemble --linear --raw=0x00c01000" \
-		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown" \
-		ARGS="$< 0x00c00000" \
+disassemble2_vm-final.raw.passed: $(BINARY_SAMPLES)/vm-final.raw disassemble disassemble.conf disassemble2_vm-final.raw.ans
+	@$(RTH_RUN)													\
+		DISABLED="This takes forever to run"									\
+		TITLE="disassemble $(notdir $<) [$@]"									\
+		USE_SUBDIR=yes												\
+		EXE="$$(pwd)/disassemble"										\
+		SWITCHES="--disassemble --linear --raw=0x00c01000"							\
+		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown"	\
+		ARGS="$< 0x00c00000"											\
 		$(srcdir)/disassemble.conf $@
 
 disassemble2_other_targets = $(filter-out	\
@@ -603,16 +923,17 @@ disassemble2_other_targets = $(filter-out	\
 	disassemble2_vm-final.raw.passed	\
 	,$(disassemble2_test_targets))
 
-$(disassemble2_other_targets): disassemble2_%.passed: $(disassemble2_directory)/% disassemble
-	@$(RTH_RUN) \
-		DISABLED="unknown map and entry address" \
-		TITLE="disassemble $(notdir $<) [$@]" \
-		CMD=false \
+$(disassemble2_other_targets): disassemble2_%.passed: $(BINARY_SAMPLES)/% disassemble
+	@$(RTH_RUN)						\
+		DISABLED="unknown map and entry address"	\
+		TITLE="disassemble $(notdir $<) [$@]"		\
+		CMD=false					\
 		$(srcdir)/disassemble.conf $@
 
 # A convenient target for just testing the disassembler
 .PHONY: check-disassemble
 check-disassemble: $(disassemble1_test_targets) $(disassemble2_test_targets)
+
 
 ###############################################################################################################################
 # Instruction semantics tests.
@@ -633,7 +954,7 @@ check-semantics:											\
         symbolicSemantics.passed        symbolicSemantics2.passed        traceSymbolicSemantics2.passed	\
         yicesSemanticsExe.passed        yicesSemanticsExe2.passed					\
         yicesSemanticsLib.passed        yicesSemanticsLib2.passed					\
-        multiSemantics.passed           						\
+        multiSemantics.passed										\
         findConstants.passed										\
         findConstantsABI.passed										\
                                         semanticsSubclassing.passed     
@@ -732,7 +1053,6 @@ semanticsSubclassing_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 TEST_TARGETS += semanticsSubclassing.passed
 semanticsSubclassing.passed: $(TEST_EXIT_STATUS) semanticsSubclassing
 	@$(RTH_RUN) CMD=./semanticsSubclassing $< $@
-
 
 
 ###############################################################################################################################
@@ -862,7 +1182,6 @@ check-llvm-analysis: $(llvmAnalysis_TestTargets)
 check-llvm: $(llvmTranscoder_TestTargets) $(llvmAnalysis_TestTargets)
 
 
-
 ###############################################################################################################################
 # Binary tainted flow analysis
 ###############################################################################################################################
@@ -888,6 +1207,7 @@ $(taintedFlow_TestTargets): taint_%.passed: $(BINARY_SAMPLES)/% taintedFlow tain
 
 .PHONY: check-taint
 check-taint: $(taintedFlow_TestTargets)
+
 
 ###############################################################################################################################
 # No-op analysis tests
@@ -916,6 +1236,7 @@ $(testNoop_TestTargets): noop_%.passed: $(BINARY_SAMPLES)/% testNoop
 .PHONY: check-noop
 check-noop: $(testNoop_TestTargets)
 
+
 ###############################################################################################################################
 # Static semantics tests
 ###############################################################################################################################
@@ -930,11 +1251,10 @@ testStaticSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 testStaticSemantics_specimens = $(filter-out								\
 	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(any_any_arm_specimens) $(large_specimens)	\
 	,$(any_exe_any_specimens))
-testStaticSemantics_directory = $(top_srcdir)/binaries/samples
 testStaticSemantics_test_targets = $(addprefix testStaticSemantics_, $(addsuffix .passed, $(testStaticSemantics_specimens)))
-TEST_TARGETS += $(testPartitioner2_test_targets)
+TEST_TARGETS += $(testStaticSemantics_test_targets)
 
-$(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(testStaticSemantics_directory)/% testStaticSemantics
+$(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(BINARY_SAMPLES)/% testStaticSemantics
 	@$(RTH_RUN)						\
 		TITLE="testStaticSemantics $(notdir $<) [$@]"	\
 		USE_SUBDIR=yes					\
@@ -944,6 +1264,7 @@ $(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(testStaticS
 .PHONY: check-testStaticSemantics
 check-testStaticSemantics: $(testStaticSemantics_test_targets)
 
+
 ###############################################################################################################################
 # Data-flow tests
 ###############################################################################################################################
@@ -951,7 +1272,9 @@ check-testStaticSemantics: $(testStaticSemantics_test_targets)
 noinst_PROGRAMS += testLazyInitialStates
 testLazyInitialStates_SOURCES = testLazyInitialStates.C
 testLazyInitialStates_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 TEST_TARGETS += testLazyInitialStates.passed
+
 testLazyInitialStates.passed: $(BINARY_SAMPLES)/i386-initialState testLazyInitialStates
 	@$(RTH_RUN)									\
 		TITLE="lazy symbolic states [$@]"					\
@@ -959,116 +1282,24 @@ testLazyInitialStates.passed: $(BINARY_SAMPLES)/i386-initialState testLazyInitia
 		CMD="$$(pwd)/testLazyInitialStates --isa=i386 --start=0 map:0=rx::$<"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 
-###############################################################################################################################
-# DEMOS
-#
-# These demonstrate various aspects of ROSE's binary executable abilities. They are meant to be run sequentially (regardless
-# of make's "-j" switch) and produce output for human consumption.
-###############################################################################################################################
-DEMO_PHONY_TARGETS=$(patsubst %,demo_%,$(noinst_PROGRAMS))
-
-demos: demos-local
-
-demos-local: $(DEMO_PHONY_TARGETS)
-
-demo_execFormatsTest: execFormatsTest
-	@echo; echo; echo "Demo for $<"; echo
-	./execFormatsTest $(BINARY_SAMPLES)/buffer2.bin
-	@echo "See file buffer2.bin.dump for information regarding the executable format"
-	@echo "See file rose-buffer2.bin.s for disassembly of instructions"
-
-demo_testElfStrtab: testElfStrtab demo_execFormatsTest
-	@echo; echo; echo "Demo for $<"; echo
-	./testElfStrtab $(BINARY_SAMPLES)/arm-poweroff
-
-demo_testElfByteOrder: testElfByteOrder demo_testElfStrtab
-	@echo; echo; echo "Demo for $<"; echo
-	./testElfByteOrder $(BINARY_SAMPLES)/arm-poweroff
-
-demo_testElfWordSize: testElfWordSize demo_testElfByteOrder
-	@echo; echo; echo "Demo for $<"; echo
-	./testElfWordSize $(BINARY_SAMPLES)/arm-poweroff
-
-demo_testElfSchulz: testElfSchulz demo_testElfWordSize
-	@echo; echo; echo "Demo for $<"; echo
-	./testElfSchulz $(BINARY_SAMPLES)/schulz-sample1.so
-	./testElfSchulz $(BINARY_SAMPLES)/schulz-sample2.so
-
-demo_testElfConstruct: testElfConstruct demo_testElfSchulz
-	@echo; echo; echo "Demo for $<"; echo
-	./testElfConstruct
-
-demo_testPeConstruct: testPeConstruct demo_testElfConstruct
-	@echo; echo; echo "Demo for $<"; echo
-	./testPeConstruct
-
-demo_shiftResizeSection: shiftResizeSection demo_testPeConstruct
-	@echo; echo; echo "Demo for $<"; echo
-	$(srcdir)/testShiftResizeSection.sh $(BINARY_SAMPLES)/arm-ctrlaltdel >arm-ctrlaltdel.ans
-
-demo_findConstants: findConstants demo_shiftResizeSection
-	@echo; echo; echo "Demo for $<"; echo
-	./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin
-
-demo_findConstantsABI: findConstantsABI demo_findConstants
-	@echo; echo; echo "Demo for $<"; echo
-	./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin
-
-demo_partialSymbolicSemantics: partialSymbolicSemantics demo_findConstantsABI
-	@echo; echo; echo "Demo for $<"; echo
-	./partialSymbolicSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin
-
-demo_symbolicSemantics: symbolicSemantics demo_partialSymbolicSemantics
-	: no demo yet for symbolicSemantics
-
-demo_yicesSemanticsExe: yicesSemanticsExe demo_symbolicSemantics
-	: no demo yet for yicesSemanticsExe
-
-demo_yicesSemanticsLib: yicesSemanticsLib demo_yicesSemanticsLib
-	: no demo yet for yicesSemanticsLib
-
-demo_disassemble: disassemble demo_yicesSemanticsLib
-	@echo; echo; echo "Demo for $<"; echo
-	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
-	@echo "output has been dumped to i686-test1.O0.bin.dump"
-
-demo_testAssembler: testAssembler demo_yicesSemanticsLib
-	@echo; echo; echo "Demo for $<"; echo
-	./testAssembler $(BINARY_SAMPLES)/buffer2.bin
-
-demo_expandCoreDump: expandCoreDump demo_testAssembler
-	: no demo yet for expandCoreDump
-
-demo_functionBoundaries: functionBoundaries demo_exapndCoreDump
-	@echo; echo; echo "Demo for $<";
-	@echo "The functionBoundaries tool prints information about what binary functions were detected and why."
-	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin
-
-demo_rot13: rot13
-	: no demo yet for rot13
-
-demo_testAstIO: testAstIO
-	: no demo yet for $<
-
-demo_testAstNeuter: testAstNeuter
-	: no demo yet for $<
-
-demo_testRegisters: testRegisters
-	: no demo yet for $<
-
-demo_testReadPastEOF: testReadPastEOF
-	: no demo yet for $<
 
 ###############################################################################################################################
 # Test various things for all our sample binaries
+###############################################################################################################################
+# These all depend on the deprecated "disassemble" tool.
 
 #--------------------------------------------------------------------------------
 parse_Specimens = $(filter-out $(large_specimens), $(any_exe_any_specimens))
 parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
+
 TEST_TARGETS += $(parse_Targets)
 
 $(parse_Targets): parse_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN)					\
+		TITLE="parse $(notdir $<) [$@]"		\
+		CMD="$$(pwd)/disassemble $(abspath $<)"	\
+		USE_SUBDIR=yes				\
+		$(TEST_EXIT_STATUS) $@
 
 .PHONY: check_parse_container
 check_parse_container: $(parse_Targets)
@@ -1077,10 +1308,15 @@ check_parse_container: $(parse_Targets)
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
 disassemble_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
 disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemble_Specimens)))
+
 TEST_TARGETS += $(disassemble_Targets)
 
 $(disassemble_Targets): disassemble_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble --quiet" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN)						\
+		TITLE="disassemble $(notdir $<) [$@]"		\
+		CMD="$$(pwd)/disassemble --quiet $(abspath $<)"	\
+		USE_SUBDIR=yes					\
+		$(TEST_EXIT_STATUS) $@
 
 .PHONY: check_disassemble
 check_disassemble: $(disassemble_Targets)
@@ -1089,10 +1325,15 @@ check_disassemble: $(disassemble_Targets)
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
 unparse_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
 unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens)))
+
 TEST_TARGETS += $(unparse_Targets)
 
 $(unparse_Targets): unparse_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN)					\
+		TITLE="unparse $(notdir $<) [$@]"	\
+		CMD="$$(pwd)/disassemble $(abspath $<)"	\
+		USE_SUBDIR=yes				\
+		$(TEST_EXIT_STATUS) $@
 
 .PHONY: check_unparse
 check_unparse: $(unparse_Targets)
@@ -1101,10 +1342,15 @@ check_unparse: $(unparse_Targets)
 #FIXME: all of the x86 executables have at least one thing that doesn't assemble [Robb Matzke 2013-08-30]
 #assemble_Specimens = $(any_exe_x86_specimens)
 assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specimens)))
+
 TEST_TARGETS += $(assemble_Targets)
 
 $(assemble_Targets): assemble_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble --quiet --reassemble --show-bad" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN)									\
+		TITLE="assemble $(notdir $<) [$@]"					\
+		CMD="$$(pwd)/disassemble --quiet --reassemble --show-bad $(abspath $<)"	\
+		USE_SUBDIR=yes								\
+		$(TEST_EXIT_STATUS) $@
 
 .PHONY: check_assemble
 check_assemble: $(assemble_Targets)
@@ -1113,10 +1359,15 @@ check_assemble: $(assemble_Targets)
 #FIXME: all the ARM specimens are failing, and have been. This might be due to poor disassembly. [Robb Matzke 2013-08-30]
 astio_Specimens = $(filter-out $(any_any_arm_specimens) $(large_specimens), $(any_exe_any_specimens))
 astio_Targets = $(addprefix astio_, $(addsuffix .passed, $(astio_Specimens)))
+
 TEST_TARGETS += $(astio_Targets)
 
 $(astio_Targets): astio_%.passed: $(BINARY_SAMPLES)/% testAstIO
-	@$(RTH_RUN) CMD="`pwd`/testAstIO -rose:binary" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN)							\
+		TITLE="binary AST IO for $(notdir $<) [$@]"		\
+		CMD="$$(pwd)/testAstIO -rose:binary $(abspath $<)"	\
+		USE_SUBDIR=yes						\
+		$(TEST_EXIT_STATUS) $@
 
 .PHONY: check_astio
 check_astio: $(astio_Targets)
@@ -1125,19 +1376,14 @@ check_astio: $(astio_Targets)
 .PHONY: check_specimens
 check_specimens: check_parse_container check_disassemble check_unparse check_assemble check_astio
 
+
 ###############################################################################################################################
-# Miscellaneous....
+# Standard boilerplate
 ###############################################################################################################################
 
 # Don't delete things indiscriminately--sometimes developers have other related files that should not be touched!
 # Rather than use one big MOSTLYCLEANFILES, split things into smaller parts so we don't get command lines that are too big.
 clean-local:
-	rm -f $(addsuffix .dump, $(all_specimens))
-	rm -f $(addsuffix .new, $(all_specimens))
-	rm -f $(addsuffix .new.dump, $(all_specimens))
-	rm -f $(addsuffix .new.new, $(all_specimens))
-	rm -f $(addprefix rose_, $(addsuffix .s, $(all_specimens)))
-	rm -f $(addprefix rose_, $(addsuffix .new.s, $(all_specimens)))
 	rm -f $(MOSTLYCLEANFILES)
 	rm -f $(TEST_TARGETS)
 	rm -f $(TEST_TARGETS:.passed=.failed)
@@ -1150,7 +1396,6 @@ check-local:
 	@echo "  TESTING (disabled: all tests disabled for Cygwin)"
 else
 check-local: $(TEST_TARGETS)
-	$(RTH_STATS)
 endif
 
 else
