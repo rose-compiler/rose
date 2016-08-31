@@ -17,6 +17,7 @@ void TaintedFlow::initDiagnostics() {}
 void InstructionSemantics2::initDiagnostics() {}
 void NoOperation::initDiagnostics() {}
 void CallingConvention::initDiagnostics() {}
+void FunctionSimilarity::initDiagnostics() {}
 
 namespace PointerDetection {
     void initDiagnostics() {}

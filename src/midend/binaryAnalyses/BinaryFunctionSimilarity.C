@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 
 #include <BinaryFunctionSimilarity.h>
+#include <Diagnostics.h>
 #include <EditDistance/LinearEditDistance.h>
 #include <Partitioner2/Partitioner.h>
 
@@ -8,8 +9,11 @@
     #include <dlib/matrix.h>
     #include <dlib/optimization.h>
 #endif
+#include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 
+using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
 namespace rose {
@@ -31,9 +35,21 @@ public:
 };
 #endif
 
+Sawyer::Message::Facility FunctionSimilarity::mlog;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+FunctionSimilarity::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::FunctionSimilarity", Diagnostics::destination);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
+    }
+}
 
 std::ostream&
 operator<<(std::ostream &out, const FunctionSimilarity &x) {
@@ -289,6 +305,11 @@ struct ComparisonFunctor {
 
 std::vector<FunctionSimilarity::FunctionDistancePair>
 FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std::vector<P2::Function::Ptr> &others) const {
+    ASSERT_not_null(needle);
+    Sawyer::Message::Stream where = mlog[WHERE];
+    SAWYER_MESG(where) <<"comparing " <<needle->printableName() <<" to " <<StringUtility::plural(others.size(), "others") <<"\n";
+    Sawyer::Stopwatch stopwatch;
+
     // Reserve space for the answers
     std::vector<FunctionDistancePair> retval;
     retval.reserve(others.size());
@@ -302,12 +323,18 @@ FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std:
 
     // Do the work and store the results in retval
     Sawyer::workInParallel(tasks, CommandlineProcessing::genericSwitchArgs.threads, ComparisonFunctor(this));
+    SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
     return retval;
 }
 
 std::vector<std::vector<double> >
 FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list1,
                                       const std::vector<P2::Function::Ptr> &list2) const {
+    Sawyer::Message::Stream where = mlog[WHERE];
+    SAWYER_MESG(where) <<"comparing " <<StringUtility::plural(list1.size(), "functions")
+                       <<" to " <<StringUtility::plural(list2.size(), "functions");
+    Sawyer::Stopwatch stopwatch;
+
     // Reserve space for the answers
     std::vector<std::vector<double> > retval(list1.size(), std::vector<double>(list2.size(), NAN));
 
@@ -320,12 +347,18 @@ FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list
 
     // Do the work and store the results in retval
     Sawyer::workInParallel(tasks, CommandlineProcessing::genericSwitchArgs.threads, ComparisonFunctor(this));
+    SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
     return retval;
 }
 
 std::vector<FunctionSimilarity::FunctionPair>
 FunctionSimilarity::minimumCostMapping(const std::vector<P2::Function::Ptr> &list1,
                                        const std::vector<P2::Function::Ptr> &list2) const {
+    Sawyer::Message::Stream where = mlog[WHERE];
+    SAWYER_MESG(where) <<"minimum mapping between " <<StringUtility::plural(list1.size(), "functions")
+                       <<" and " <<StringUtility::plural(list2.size(), "functions");
+    Sawyer::Stopwatch stopwatch;
+
     size_t n = std::max(list1.size(), list2.size());
     DistanceMatrix dm(n, n);
     for (size_t i=0; i<n; ++i) {
@@ -345,6 +378,8 @@ FunctionSimilarity::minimumCostMapping(const std::vector<P2::Function::Ptr> &lis
         retval.push_back(FunctionPair(i < list1.size() ? list1[i] : P2::Function::Ptr(),
                                       j < list2.size() ? list2[j] : P2::Function::Ptr()));
     }
+
+    SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
     return retval;
 }
 

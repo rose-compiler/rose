@@ -49,6 +49,9 @@ namespace BinaryAnalysis {
  *  3. Populate metric categories with characteristic data for each function
  *  4. Query results */
 class FunctionSimilarity {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Public types and data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /* Exceptions thrown by this analysis. */
     class Exception: public std::runtime_error {
@@ -81,6 +84,12 @@ public:
     /** Pair of functions. */
     typedef std::pair<Partitioner2::Function::Ptr, Partitioner2::Function::Ptr> FunctionPair;
 
+    /** Diagnostic streams */
+    static Sawyer::Message::Facility mlog;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Private types and data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     // Declaration for metric categories.
     struct Category {
@@ -360,6 +369,9 @@ public:
     // Printing and debugging
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Initializes and registers disassembler diagnostic streams. See Diagnostics::initialize(). */
+    static void initDiagnostics();
+
     /** Print characteristic values for this analysis.
      *
      *  This is a multi-line output intended for debugging. */
