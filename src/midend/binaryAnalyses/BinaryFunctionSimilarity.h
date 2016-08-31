@@ -341,8 +341,8 @@ public:
      *
      *  Compute the minimum cost 1:1 mapping of functions in the first list to those in the second.  If one list is smaller
      *  than the other then it is temporarily padded with null functions. */
-    std::vector<FunctionPair> minimumCostMapping(const std::vector<Partitioner2::Function::Ptr> &list1,
-                                                 const std::vector<Partitioner2::Function::Ptr> &list2) const;
+    std::vector<FunctionPair> findMinimumCostMapping(const std::vector<Partitioner2::Function::Ptr> &list1,
+                                                     const std::vector<Partitioner2::Function::Ptr> &list2) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Sorting
