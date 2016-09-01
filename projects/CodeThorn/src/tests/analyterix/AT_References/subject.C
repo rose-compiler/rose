@@ -72,6 +72,10 @@ class D {
   int& unused; // should not be in the address taken set!
 };
 
+void rvaluefunc(int&& rvalueref) {
+
+}
+
 int main() {
   int i = 0;
   C<int> c(i);
@@ -91,4 +95,12 @@ int main() {
   void(* const &ref_func_ptr)(int) = reinterpret_cast<void(*)(int)>(12345);
 
   E* const & er_const = new E();
+
+  // rvalue references:
+  int i_3 = 0;
+  int&& irr = static_cast<int&&>(i_3);
+
+  int i_4 = 1;
+  rvaluefunc(static_cast<int&&>(i_4));
+
 }

@@ -30,6 +30,7 @@ namespace CodeThorn {
   class ParallelSystem {
   public:
     ParallelSystem();
+    void deleteStgs();
 
     std::set<string> getAnnotations() const;
     std::set<int> getComponentIds() const;
@@ -106,20 +107,35 @@ namespace CodeThorn {
     PropertyValueTable* mineProperties(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable);
     void setNumberOfMiningsPerSubsystem(unsigned int numMinings) { _numberOfMiningsPerSubsystem = numMinings; }
     void setNumberOfComponentsForLtlAnnotations(unsigned int numComponentsLtl) { _numComponentsForLtlAnnotations = numComponentsLtl; }
+    void setStoreComputedSystems(bool storeSystems) { _storeComputedSystems = storeSystems; }
 
   private:
-    std::string randomLtlFormula(std::vector<std::string> atomicPropositions, int maxProductions);
+    std::string randomLtlFormula(std::vector<std::string> atomicPropositions, int maxProductions); // deprecated
+    std::pair<std::string, std::string> randomLtlFormula(std::set<std::string> atomicPropositions);
+    std::pair<std::string, std::string> randomTemporalFormula(std::set<std::string>& atomicPropositions, int temporalDepth, bool withOuterParens=true);
+    std::pair<std::string, std::string> randomFrequentEventFormula(std::set<std::string>& atomicPropositions, int temporalDepth, bool withOuterParens=true);
+    std::pair<std::string, std::string> randomRareEventFormula(std::set<std::string>& atomicPropositions, int temporalDepth, bool withOuterParens=true);
+    std::string randomAtomicProposition(std::set<std::string>& atomicPropositions);
+    // version that stores computed parallel systems
     bool passesFilter(std::string ltlProperty, PropertyValue correctValue, 
 		      const ParallelSystem* system, int minNumComponents);
     void exploreSubsystemsAndAddToWorklist(const ParallelSystem* system, 
 					   ComponentApproximation approxMode, 
 					   std::list<const ParallelSystem*>& worklist);
     void initiateSubsystemsOf(const ParallelSystem* system);
+    // version that recomputed parallel systems every time (lower memory consumption)
+    bool passesFilter(std::string ltlProperty, PropertyValue correctValue, 
+		      ParallelSystem& system, int minNumComponents);
+    void exploreSubsystemsAndAddToWorklist(ParallelSystem& system, 
+					   ComponentApproximation approxMode, 
+					   std::list<ParallelSystem>& worklist);
+    list<ParallelSystem> initiateSubsystemsOf(ParallelSystem& system);
     
     unsigned int _numComponentsForLtlAnnotations;
     unsigned int _numberOfMiningsPerSubsystem;
     ParProExplorer* _parProExplorer;
 
+    bool _storeComputedSystems;
     ParallelSystemSet _subsystems;
     ParallelSystemDag _subsystemsOf;
     SpotConnection _spotConnection;

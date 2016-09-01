@@ -897,11 +897,16 @@ const SgPointerType* SgNodeHelper::isPointerType(const SgType* t) {
   }
 }
 
-// schroder3 (2016-07-22): Modified version of SageInterface::isReferenceType(...) tha
+// schroder3 (2016-08-17): Added support for rvalue reference types. See isLvalueReferenceType(...)
+//  if only lvalue references are desired.
+// schroder3 (2016-07-22): Modified version of SageInterface::isReferenceType(...) that
 //  returns the underlying reference type.
-const SgReferenceType* SgNodeHelper::isReferenceType(const SgType* t) {
-  if(isSgReferenceType(t)) {
-    return isSgReferenceType(t);
+//
+// Returns the underlying (without typedefs and modifiers) rvalue OR lvalue reference type if the
+//  given type is such a reference type. Returns 0 otherwise.
+const SgType* SgNodeHelper::isReferenceType(const SgType* t) {
+  if(isSgReferenceType(t) /* <- tests for lvalue reference */ || isSgRvalueReferenceType(t)) {
+    return t;
   }
   else if(isSgTypedefType(t)) {
     return SgNodeHelper::isReferenceType(isSgTypedefType(t)->get_base_type());
@@ -911,6 +916,45 @@ const SgReferenceType* SgNodeHelper::isReferenceType(const SgType* t) {
   }
   else {
     return 0;
+  }
+}
+
+// schroder3 (2016-08-22): Modified version of SageInterface::isReferenceType(...) that
+//  returns the underlying LVALUE reference type.
+const SgReferenceType* SgNodeHelper::isLvalueReferenceType(const SgType* t) {
+  if(const SgType* underlyingRvalueOrLvalueRef = isReferenceType(t)) {
+    return isSgReferenceType(underlyingRvalueOrLvalueRef); // isSgReferenceType tests for lvalue reference
+  }
+  else {
+    return 0;
+  }
+}
+
+// schroder3 (2016-08-22): Returns the underlying RVALUE reference type if the given type is a
+//  rvalue reference type. Returns 0 otherwise.
+const SgRvalueReferenceType* SgNodeHelper::isRvalueReferenceType(const SgType* t) {
+  if(const SgType* underlyingRvalueOrLvalueRef = isReferenceType(t)) {
+    return isSgRvalueReferenceType(underlyingRvalueOrLvalueRef);
+  }
+  else {
+    return 0;
+  }
+}
+
+// schroder3 (2016-08-22): Wrapper around SgReferenceType::get_base_type(...) and
+//  SgRvalueReferenceType::get_base_type(...) that works for both reference types.
+//  (This is a workaround for the missing mutual base class of SgReferenceType and
+//  SgRvalueReferenceType.)
+SgType* SgNodeHelper::getReferenceBaseType(const SgType* t) {
+  if(const SgReferenceType* lvalueReferenceType = isLvalueReferenceType(t)) {
+    return lvalueReferenceType->get_base_type();
+  }
+  else if(const SgRvalueReferenceType* rvalueReferenceType = isRvalueReferenceType(t)) {
+    return rvalueReferenceType->get_base_type();
+  }
+  else {
+    throw SPRAY::Exception("SgNodeHelper::getReferenceBaseType(...): Parameter is not a"
+        " lvalue or rvalue reference type.");
   }
 }
 
@@ -930,8 +974,8 @@ const SgPointerType* SgNodeHelper::isFunctionPointerType(const SgType* type) {
 const SgFunctionType* SgNodeHelper::isTypeEligibleForFunctionToPointerConversion(const SgType* type) {
   // Only lvalues of function (reference) type are eligible for function-to-pointer
   //  conversion.
-  if(const SgReferenceType* refType = SgNodeHelper::isReferenceType(type)) {
-    type = refType->get_base_type();
+  if(const SgType* refType = SgNodeHelper::isReferenceType(type)) {
+    type = getReferenceBaseType(refType);
   }
 
   return isSgFunctionType(type);
@@ -951,8 +995,8 @@ SgFunctionType* SgNodeHelper::isCallableExpression(/*const*/ SgExpression* expr)
 //  is callable i.e. a expression of this type could be called. Returns 0 otherwise.
 SgFunctionType* SgNodeHelper::isCallableType(/*const*/ SgType* type) {
   // It is possible to call a reference to a pointer to a function:
-  if(const SgReferenceType* referenceType = isReferenceType(type)) {
-    type = referenceType->get_base_type();
+  if(const SgType* referenceType = isReferenceType(type)) {
+    type = getReferenceBaseType(referenceType);
   }
   if(const SgPointerType* pointerType = isPointerType(type)) {
     type = pointerType->get_base_type();
