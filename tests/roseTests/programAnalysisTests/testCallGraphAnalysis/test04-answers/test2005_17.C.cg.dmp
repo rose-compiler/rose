@@ -1,1 +1,3 @@
-main ->
+destroy < values >  ->
+example < int > ::foo ->
+main -> destroy < values >  example < int > ::foo
