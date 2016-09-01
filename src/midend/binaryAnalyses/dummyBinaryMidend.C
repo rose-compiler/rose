@@ -1,13 +1,15 @@
 #include "sage3basic.h"
-#include "BinaryDataFlow.h"
-#include "BinaryTaintedFlow.h"
-#include "BinaryNoOperation.h"
+
 #include "BinaryCallingConvention.h"
+#include "BinaryDataFlow.h"
+#include "BinaryFunctionSimilarity.h"
+#include "BinaryNoOperation.h"
 #include "BinaryString.h"
-#include "RoseBin_FlowAnalysis.h"
-#include "RoseBin_Graph.h"
+#include "BinaryTaintedFlow.h"
 #include "GraphAlgorithms.h"
 #include "RoseBin_CallGraphAnalysis.h" 
+#include "RoseBin_FlowAnalysis.h"
+#include "RoseBin_Graph.h"
 
 namespace rose {
 namespace BinaryAnalysis {
