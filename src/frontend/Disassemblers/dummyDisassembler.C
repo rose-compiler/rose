@@ -183,3 +183,18 @@ namespace BinaryAnalysis{
 void Partitioner::initDiagnostics() {}
 } // namespace
 } // namespace
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmBlock
+
+bool
+SgAsmBlock::has_instructions() const
+{
+    const SgAsmStatementPtrList &stmts = get_statementList();
+    for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+        if (isSgAsmInstruction(*si))
+            return true;
+    }
+    return false;
+}

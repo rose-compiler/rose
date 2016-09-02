@@ -41,7 +41,7 @@ all: RERS_BINARY
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include $< $(BOOST_CPPFLAGS) -c 
 
 %.o: %.C
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include $< $(BOOST_CPPFLAGS) -c 
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include -I$(SPOT_PREFIX)/include -I$(SPOT_PREFIX)/include/spot $< $(BOOST_CPPFLAGS) -c 
 
 $(TOOLNAME3): $(OBJECT_FILES) RERS_empty_specialization.o $(TOOLNAME3).o 
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) RERS_empty_specialization.o $(OBJECT_FILES) $(TOOLNAME3).o $(ROSE_LIBS) $(BOOST_CPPFLAGS) -o$(TOOLNAME3)

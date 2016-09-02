@@ -1,3 +1,4 @@
+if (enable-binary-analysis)
 add_library(roseBinaryFormats OBJECT
   ### Utilities ###
   ByteOrder.C
@@ -47,6 +48,12 @@ add_library(roseBinaryFormats OBJECT
   ExecNE.C
   ExecLE.C
 )
+else()
+add_library(roseBinaryFormats OBJECT
+  dummyFunctions.C
+)
+endif()
+
 add_dependencies(roseBinaryFormats rosetta_generated)
 
 

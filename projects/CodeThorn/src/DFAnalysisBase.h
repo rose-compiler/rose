@@ -41,6 +41,8 @@ class DFAnalysisBase {
   void setBackwardAnalysis();
   bool isForwardAnalysis();
   bool isBackwardAnalysis();
+  bool getNoTopologicalSort();
+  void setNoTopologicalSort(bool);
   // computes state for global variable initializations
   virtual Lattice* initializeGlobalVariables(SgProject* root);
   // initializes an element with the combined global initialization state and the extremal value
@@ -109,6 +111,7 @@ class DFAnalysisBase {
   PropertyStateFactory* _initialElementFactory;
   SPRAY::PASolver1* _solver;
   AnalysisType _analysisType;
+  bool _no_topological_sort;
  private:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
   SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation;

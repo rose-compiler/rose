@@ -396,7 +396,9 @@ NEW_TESTCODES = \
    test2016_40.C
 
 # Liao 7/1/2016: template_function (T * __restrict__* ptr) is not supported.
-#   test2016_41.C
+# Details in https://rosecompiler.atlassian.net/browse/ROSE-390
+#   test2016_41.C // conflicting with Dan's
+#   restrict_template_parameter.C  // moved to this file
 
 # Unused test files:
 # test2016_41.C

@@ -92,9 +92,18 @@ void ParProExplorer::explore() {
     }
     while(_numVerified < _numRequiredVerifiable || _numFalsified < _numRequiredFalsifiable) {
       ParallelSystem system = exploreOnce();
-      _properties->append( *(ltlAnalysis(system)) );
+      PropertyValueTable* intermediateResult = ltlAnalysis(system);
+      _properties->append( *intermediateResult );
+      if (!_storeComputedSystems) {
+	system.deleteStgs();
+      }
+      delete intermediateResult;
+      int numVerifiedOld = _numVerified;
+      int numFalsifiedOld = _numFalsified;
       recalculateNumVerifiedFalsified();
-      cout << "STATUS: verifiable: "<<_numVerified<<"   falsified: "<<_numFalsified << endl;
+      if (_numVerified != numVerifiedOld || _numFalsified != numFalsifiedOld) {
+	cout << "STATUS: verifiable: "<<_numVerified<<"   falsified: "<<_numFalsified << endl;
+      }
     }
     _properties->shuffle();
   } else if (_randomSubsetMode == PAR_PRO_NUM_SUBSETS_FINITE) {
@@ -104,7 +113,12 @@ void ParProExplorer::explore() {
     } else {
       for (int i = 0; i < _numDifferentSubsets; i++) {
 	ParallelSystem system = exploreOnce();
-	_properties->append( *(ltlAnalysis(system)) );
+	PropertyValueTable* intermediateResult = ltlAnalysis(system);
+	_properties->append( *intermediateResult );
+	if (!_storeComputedSystems) {
+	  system.deleteStgs();
+	}
+	delete intermediateResult;	
 	recalculateNumVerifiedFalsified();
 	if ( _ltlMode == PAR_PRO_LTL_MODE_MINE) {
 	  cout << "STATUS: verifiable: "<<_numVerified<<"   falsified: "<<_numFalsified << endl;
@@ -138,8 +152,7 @@ ParallelSystem ParProExplorer::exploreOnce() {
     parProAnalyzer.setAnnotationMap(_annotationMap);
     parProAnalyzer.initializeSolver();
     parProAnalyzer.runSolver();
-    ParProTransitionGraph* stg = new ParProTransitionGraph();
-    stg = parProAnalyzer.getTransitionGraph();
+    ParProTransitionGraph* stg = parProAnalyzer.getTransitionGraph();
     system.setStg(stg);
   } else if (_componentSelection == PAR_PRO_COMPONENTS_SUBSET_FIXED) {
     for (set<int>::iterator i=_fixedComponentIds.begin(); i!=_fixedComponentIds.end(); i++) {
@@ -214,14 +227,12 @@ void ParProExplorer::computeStgApprox(ParallelSystem& system, ComponentApproxima
   parProAnalyzer.initializeSolver();
   parProAnalyzer.runSolver();
  if (approxMode == COMPONENTS_OVER_APPROX) {
-   ParProTransitionGraph* stg = new ParProTransitionGraph();
-   stg = parProAnalyzer.getTransitionGraph();
+   ParProTransitionGraph* stg = parProAnalyzer.getTransitionGraph();
    stg->setIsPrecise(false);
    stg->setIsComplete(true);
    system.setStgOverApprox(stg);
  } else {
-   ParProTransitionGraph* stg = new ParProTransitionGraph();
-   stg = parProAnalyzer.getTransitionGraph();
+   ParProTransitionGraph* stg = parProAnalyzer.getTransitionGraph();
    stg->setIsPrecise(true);
    stg->setIsComplete(false);
    system.setStgUnderApprox(stg);

@@ -62,7 +62,15 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
           list.resize(temp_list.size());
           std::copy(temp_list.begin(), temp_list.end(), list.begin());
 #else
+#if defined(__APPLE__) && defined(__MACH__)
+          //Pei-Hung (7/28/2016): OSX El Capitan has issue with bind2nd.  
+          vector<SgAsmX86Instruction*> temp_list;
+          AstQueryNamespace::querySubTree(func, std::bind2nd( vis, &temp_list ));
+          list.resize(temp_list.size());
+          std::copy(temp_list.begin(), temp_list.end(), list.begin());
+#else
           AstQueryNamespace::querySubTree(func, std::bind2nd( vis, &list ));
+#endif
 #endif
       int validInstructions = func->nrOfValidInstructions(list);
       funcMap[func]=counter;

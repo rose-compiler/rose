@@ -16,6 +16,9 @@ mpaGraphAnalysis_la_sources+=\
 	$(mpaGraphAnalysisPath)/RoseBin_DotGraph.cpp \
 	$(mpaGraphAnalysisPath)/RoseBin_Graph.cpp \
 	$(mpaGraphAnalysisPath)/RoseBin_GmlGraph.cpp
+else
+mpaGraphAnalysis_la_sources+=\
+	$(mpaGraphAnalysisPath)/dummyFunction.cpp
 endif
 
 
