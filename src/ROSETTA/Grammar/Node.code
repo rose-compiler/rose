@@ -217,6 +217,10 @@ typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 #include <semaphore.h>
 #ifndef _MSC_VER
 // mutex does not work on Windows
+// Pei-Hung (07/28/2016) 'sem_init' has been explicitly marked deprecated in OSX El Capitan
+#if defined(__APPLE__) && defined(__MACH__)
+// mutex does not work on Mac 
+#else
 class mutex
    {
   // This class was added by Valentin David (summer of 2007) as part of support for Stratego using a Java interface.
@@ -240,6 +244,7 @@ class mutex
                sem_post(&mut);
              }
    };
+#endif
 #endif
 //! Declarations to be placed at the top of the header file for this grammar
 /*! The typedefs simplify the resulting generated code.  Note that the use of STL
