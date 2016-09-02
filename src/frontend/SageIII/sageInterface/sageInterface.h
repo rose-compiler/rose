@@ -2534,7 +2534,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
     for template instantiations that are a part of definitions in a file, thus we have this function to detect this specific normalization.
  */
 template < class T >
-ROSE_DLL_API bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionDeclaration* function, T* filter )
+bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionDeclaration* function, T* filter )
    {
   // DQ (9/1/2016): This function is called in the Call graph generation to avoid filtering out EDG normalized 
   // function template instnatiations (which come from normalized template functions and member functions).
