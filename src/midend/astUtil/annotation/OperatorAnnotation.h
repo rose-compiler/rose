@@ -154,25 +154,31 @@ class OperatorAliasAnnotation : public FunctionAliasInterface
 
   virtual bool read_annot_name( const std::string& annotname) const
    { return annotname == "alias" || annotname == "allow_alias"; }
+
   static OperatorAliasAnnotation* inst;
   OperatorAliasAnnotation() {}
+
  public:
   static OperatorAliasAnnotation* get_inst() 
     { if (inst == 0) inst = new OperatorAliasAnnotation();
       return inst; }
+
   //! Inherited from FunctionAliasInterface    
   bool may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result, 
                CollectObject<std::pair<AstNodePtr,int> >& collectalias);
+
   //! Inherited from FunctionAliasInterface
   bool allow_alias( AstInterface& fa, const AstNodePtr& fd, 
                     CollectObject<std::pair<AstNodePtr,int> >& collectalias);
   void Dump() const
     { aliasInfo.Dump(); allowaliasInfo.Dump(); }
+
   void register_annot()
     { ReadAnnotation* op = ReadAnnotation::get_inst();
       op->add_OperatorCollection(&aliasInfo); 
       op->add_OperatorCollection(&allowaliasInfo); }
 };
+
 //! Replace an operator with another equivalent operation, which is specified by "inline" annotation
 //e.g: operator floatArray::operator() (int index) {  inline { this.elem(index) }; }
 //     All ..array(index).. will be replaced by array.elem(index) in the code

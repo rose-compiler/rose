@@ -6035,6 +6035,23 @@ SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntVal_nfi(unsigned 
   return result;
 }
 
+SgTemplateType* SageBuilder::buildTemplateType(SgName name/* ="" */, int template_parameter_position/* = -1*/)
+{
+  SgTemplateType* result = new SgTemplateType (name, template_parameter_position);
+  ROSE_ASSERT (result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgTemplateParameter * SageBuilder::buildTemplateParameter (SgTemplateParameter::template_parameter_enum parameterType, SgType* t)
+{
+  ROSE_ASSERT (t);
+  SgTemplateParameter* result = new SgTemplateParameter(parameterType, t);
+  ROSE_ASSERT (result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgTemplateParameterVal* SageBuilder::buildTemplateParameterVal(int template_parameter_position)
 {
   SgTemplateParameterVal* templateParameterValue = new SgTemplateParameterVal(template_parameter_position,"");
