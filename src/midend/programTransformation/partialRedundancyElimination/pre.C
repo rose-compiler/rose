@@ -8,7 +8,7 @@
 #include "replaceExpressionWithStatement.h"
 #include "inlinerSupport.h"
 #include "expressionTreeEqual.h"
-#include "controlFlowGraph.h"
+#include "preControlFlowGraph.h"
 
 #include "constantFolding.h"
 
