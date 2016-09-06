@@ -202,6 +202,8 @@ check-boost-linkage: testSharedRoseLib$(EXEEXT)
 	@echo "  TEST     boost shared linkage [$@]"
 	${AM_V_at}$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
 
+check-local: check-trivial-program check-boost-linkage
+
 .PHONY: check-trivial-program check-boost-linkage
 
 ########################################################################################################################
@@ -212,7 +214,7 @@ check-boost-linkage: testSharedRoseLib$(EXEEXT)
 # in each directory and we will link with the collection of all static libraries.
 
 noinst_PROGRAMS = testSharedRoseLib 
-all-local: check-trivial-program check-boost-linkage
+all-local:
 
 # PC (9/15/2006): force the use of the C++ linker
 LINK = $(CXXLINK)
