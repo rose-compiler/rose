@@ -291,7 +291,10 @@ void ExprWalker::visit(SgCompoundAssignOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
-  DefUseVarsInfo lduvi = getDefUseVarsInfo_rec(lhs, vidm, true);
+  // schroder3 (2016-08-22): Added second traversal of lhs because the lhs is
+  //  read/ used AND written/ defd:
+  DefUseVarsInfo lduviMod = getDefUseVarsInfo_rec(lhs, vidm, true);
+  DefUseVarsInfo lduviNonMod = getDefUseVarsInfo_rec(lhs, vidm, false);
   DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(rhs, vidm, false);
   // if the rhs writes to a memory (i.e side-effect)
   // raise the side-effect flag
@@ -299,7 +302,7 @@ void ExprWalker::visit(SgCompoundAssignOp* sgn)
     rduvi.setUseAfterDef();
   }
   // union lduvi and rduvi
-  duvi = lduvi + rduvi;
+  duvi = lduviMod + lduviNonMod + rduvi;
 }
 
 /*************************************************
@@ -709,6 +712,17 @@ void ExprWalker::visit(SgSubtractOp* sgn)
 
 void ExprWalker::visit(SgFunctionCallExp* sgn)
 {
+  // schroder3 (2016-08-22): Added traversal of arguments because the variables inside them
+  //  are used.
+  SgExpressionPtrList& arguments = sgn->get_args()->get_expressions();
+  for(SgExpressionPtrList::const_iterator i = arguments.begin(); i != arguments.end(); ++i) {
+    DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(*i, vidm, false);
+    if(rduvi.isUseAfterDefCandidate()) {
+      rduvi.setUseAfterDef();
+    }
+    duvi = duvi + rduvi;
+  }
+
   FunctionCallExpSet& func_set = duvi.getFunctionCallExpSetMod();
   func_set.insert(sgn);
 }

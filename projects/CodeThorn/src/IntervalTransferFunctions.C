@@ -96,21 +96,20 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
   }
   if(SgExpression* expr=isSgExpression(node)) {
     NumberIntervalLattice res=evalExpression(lab0,expr,pstate);
-    if((res.isTrue() && edge.isType(SPRAY::EDGE_TRUE))
-       ||(res.isFalse() && edge.isType(SPRAY::EDGE_FALSE))
-       ||(res.isTop())) {
-      return;
-    } else {
+    // schroder3 (2016-08-25): Removed assertions that checked whether the result is either true,
+    //  false, bot, or top because the expression result can also be an interval that is neither
+    //  true, false, bot, nor top (e.g. "if(0.5) { }" returns the interval [0, 1] as condition
+    //  result). Just set the lattice to bot if the result is bot or if the branch is unreachable
+    //  (and do nothing in all other cases):
+    if(res.isBot() || (res.isFalse() && edge.isType(SPRAY::EDGE_TRUE))
+                   || (res.isTrue() && edge.isType(SPRAY::EDGE_FALSE))
+    ) {
       //cout<<"INFO: detected non-reachable state."<<endl;
       //cout<<"DEBUG: EDGE: "<<edge.toString()<<endl;
       //cout<<"RESULT: "<<res.toString()<<endl;
-      ROSE_ASSERT(!res.isBot());
-      ROSE_ASSERT((res.isFalse()&&edge.isType(SPRAY::EDGE_TRUE))
-                  ||(res.isTrue()&&edge.isType(SPRAY::EDGE_FALSE)));
-      // non-reachable state
       ips.setBot();
-      return;
     }
+    return;
   } else {
     cerr<<"Error: interval analysis: unsupported condition type."<<endl;
     exit(1);
@@ -122,7 +121,10 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
   * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
-  evalExpression(lab,node,pstate); // ignore return value
+  // schroder3 (2016-08-25): Added if to ignore SgNullExpressions (e.g. ";;")
+  if(!isSgNullExpression(node)) {
+    evalExpression(lab,node,pstate); // ignore return value
+  }
 }
 
 void SPRAY::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& pstate) {
@@ -143,6 +145,13 @@ SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(La
   _cppExprEvaluator->setPropertyState(&pstate);
   //cout<<"PSTATE:";pstate.toStream(cout,getVariableIdMapping());cout<<endl;
   niLattice=_cppExprEvaluator->evaluate(node);
+  // schroder3 (2016-08-09): Check the result before returning it to the caller. If the
+  //  result of an expression is bot (e.g. because of a division by zero) then set the
+  //  interval property state to bot too because the following code is unreachable.
+  if(niLattice.isBot()) {
+    IntervalPropertyState& ips = dynamic_cast<IntervalPropertyState&>(pstate);
+    ips.setBot();
+  }
   return niLattice;
 }
 

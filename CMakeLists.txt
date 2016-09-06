@@ -254,7 +254,7 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 endif (WIN32)
 
 # Ensure that Boost is found. Environment variable BOOST_ROOT can help to find a user-specified path to Boost.
-SET(Boost_ADDITIONAL_VERSIONS "1.59.0" "1.55.0" "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
+#SET(Boost_ADDITIONAL_VERSIONS "1.59.0" "1.55.0" "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
 find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
 
 if(NOT Boost_FOUND)
@@ -426,6 +426,9 @@ if (enable-c)
 endif()
 
 option(enable-cuda "Enable cuda support in ROSE." ON)
+if (APPLE)
+  set(enable-cuda OFF)
+endif (APPLE)
 if (enable-cuda)
   find_package(CUDA REQUIRED)
   set(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT 1)
@@ -521,6 +524,9 @@ option(enable-assembly-semantics
   "Enable semantics-based analysis of assembly code" OFF)
 
 option(enable-binary-analysis "Enable binary analysis support in ROSE." ON)
+if (APPLE)
+  set(enable-binary-analysis OFF)
+endif (APPLE)
 if (enable-binary-analysis)
   set(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT 1)
 endif()
@@ -921,12 +927,18 @@ endif(NOT BISON_FOUND)
 
 if (NOT WIN32)
   find_library(M_LIB m)
+if(NOT APPLE)
   find_library(RT_LIB rt)
+endif (NOT APPLE)
 endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
 if (NOT WIN32)
+if(NOT APPLE)
   set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
+else (NOT APPLE)
+  set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${CMAKE_THREAD_LIBS_INIT})
+endif (NOT APPLE)
 else (NOT WIN32)
   set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib psapi.lib)
 endif (NOT WIN32)

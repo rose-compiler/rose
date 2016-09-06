@@ -1,4 +1,4 @@
-
+if (enable-binary-analysis)
 add_library(roseDisassemblers OBJECT
   InstructionEnumsMips.h InstructionEnumsX86.h Assembler.C AssemblerX86.C
   AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C
@@ -12,6 +12,11 @@ add_library(roseDisassemblers OBJECT
   SgAsmIntegerValueExpression.C SgAsmInterpretation.C SgAsmType.C
   SgAsmM68kInstruction.C SgAsmMipsInstruction.C SgAsmPowerpcInstruction.C
   SgAsmX86Instruction.C x86InstructionProperties.C RegisterParts.C)
+else()
+add_library(roseDisassemblers OBJECT
+  dummyDisassembler.C
+)
+endif()
 add_dependencies(roseDisassemblers rosetta_generated)
 
 

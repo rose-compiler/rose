@@ -31,25 +31,59 @@ namespace ssa_private
     struct FunctionFilter
     {
 
+#define DEBUG_SSA_FILTER 0
+
         bool operator()(SgFunctionDeclaration * funcDecl)
         {
             ROSE_ASSERT(funcDecl != NULL);
 
-            //Don't process any built-in functions
+         // DQ (8/30/2016): Reorganize this to allow it to be more easily debugged.
+            bool returnValue = true;
+
+         // Don't process any built-in functions
             std::string filename = funcDecl->get_file_info()->get_filename();
+#if DEBUG_SSA_FILTER
+            printf ("In FunctionFilter::operator():funcDecl = %p = %s name = %s: filename = %s \n",funcDecl,funcDecl->class_name().c_str(),funcDecl->get_name().str(),filename.c_str());
+#endif
             if (filename.find("include") != std::string::npos)
-                return false;
+              {
+                returnValue = false;
+              }
 
-            //Exclude compiler generated functions, but keep template instantiations
-            if (funcDecl->get_file_info()->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(funcDecl)
+         // DQ (8/30/2016): Don't allow template functions.
+         // if (isSgTemplateFunctionDeclaration(funcDecl) || isSgTemplateMemberFunctionDeclaration(funcDecl))
+         // if (returnValue == true && funcDecl->get_file_info()->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(funcDecl)
+         //         && !isSgTemplateInstantiationMemberFunctionDecl(funcDecl))
+            SgFunctionDeclaration* definingFunction = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
+            bool functionDefinitionIsCompilerGenerated = definingFunction != NULL ? definingFunction->isCompilerGenerated() : false;
+
+#if DEBUG_SSA_FILTER
+            printf ("definingFunction = %p functionDefinitionIsCompilerGenerated = %s \n",definingFunction,functionDefinitionIsCompilerGenerated ? "true" : "false");
+#endif
+
+            if (returnValue == true && functionDefinitionIsCompilerGenerated && !isSgTemplateInstantiationFunctionDecl(funcDecl)
                     && !isSgTemplateInstantiationMemberFunctionDecl(funcDecl))
-                return false;
+              {
+#if DEBUG_SSA_FILTER
+                printf ("In FunctionFilter::operator(): compiler generated and is NOT a template instantiation function or member function: setting returnValue == false \n");
+#endif
+                returnValue = false;
+              }
 
-            //We don't process functions that don't have definitions
-            if (funcDecl->get_definingDeclaration() == NULL)
-                return false;
+         // We don't process functions that don't have definitions
+            if (returnValue == true && funcDecl->get_definingDeclaration() == NULL)
+              {
+#if DEBUG_SSA_FILTER
+                printf ("In FunctionFilter::operator(): funcDecl->get_definingDeclaration() == NULL: setting returnValue == false \n");
+#endif
+                returnValue = false;
+              }
 
-            return true;
+#if DEBUG_SSA_FILTER
+            printf ("Leaving FunctionFilter::operator(): funcDecl = %p = %s name = %s returnValue = %s \n",funcDecl,funcDecl->class_name().c_str(),funcDecl->get_name().str(),returnValue ? "true" : "false");
+#endif
+
+            return returnValue;
         }
     };
 

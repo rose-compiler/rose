@@ -81,7 +81,7 @@ namespace SPRAY {
       iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
       Edge operator*();
       iterator& operator++() { SawyerCfg::EdgeIterator::operator++(); return *this; }
-      iterator operator++(int);
+      iterator operator++(int) { return iterator(SawyerCfg::EdgeIterator::operator++(1)); }
       EdgeTypeSet getTypes();
       std::string getAnnotation();
       Label source();
@@ -89,12 +89,29 @@ namespace SPRAY {
     private:
       Edge* operator->();
     };
+
+    // schroder3 (2016-08-11): Replaced node iterator wrapper classes by typedefs of the
+    //  already existing Sawyer graph vertex value iterator classes.
+    // schroder3 (2016-08-08): Added nodes iterators:
+    typedef SawyerCfg::VertexValueIterator node_iterator;
+    typedef SawyerCfg::ConstVertexValueIterator const_node_iterator;
 #else
     typedef std::set<Edge>::iterator iterator;
 #endif
     Flow();
+
+    // Edge iterators:
     iterator begin();
     iterator end();
+
+    // schroder3 (2016-08-08): Added node iterators:
+    node_iterator nodes_begin();
+    node_iterator nodes_end();
+    const_node_iterator nodes_begin() const;
+    const_node_iterator nodes_end() const;
+    const_node_iterator nodes_cbegin() const;
+    const_node_iterator nodes_cend() const;
+
     Flow operator+(Flow& s2);
     Flow& operator+=(Flow& s2);
     std::pair<Flow::iterator, bool> insert(Edge e);
@@ -124,6 +141,8 @@ namespace SPRAY {
 #ifdef USE_SAWYER_GRAPH
     boost::iterator_range<Flow::iterator> inEdgesIterator(Label label);
     boost::iterator_range<Flow::iterator> outEdgesIterator(Label label);
+    // schroder3 (2016-08-16): Returns a topological sorted list of CFG-edges
+    std::list<Edge> getTopologicalSortedEdgeList(Label startLabel);
 #endif
     Flow edgesOfType(EdgeType edgeType);
     Flow outEdgesOfType(Label label, EdgeType edgeType);

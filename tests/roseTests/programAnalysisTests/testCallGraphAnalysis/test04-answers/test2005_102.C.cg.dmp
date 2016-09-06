@@ -1,1 +1,2 @@
-foo ->
+boost::throw_exception < bad_cast >  ->
+foo -> boost::throw_exception < bad_cast > 
