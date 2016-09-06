@@ -414,6 +414,7 @@ NEW_TESTCODES = \
 # test2016_51.C
 # test2016_52.C
 # test2016_53.C
+# test2016_71.C
 
 # DQ (6/6/2016): This is a cpp generated file and too specific to later version gnu 
 # compilers (gnu 4.8.x and later and or later versions of RedHat (RH 7 and later)).
