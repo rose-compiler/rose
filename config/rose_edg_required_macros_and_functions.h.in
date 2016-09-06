@@ -225,6 +225,10 @@ typedef __SIZE_TYPE__ size_t;
 /* Disable inclusion of complex.h on Mac OS X */
 #define __COMPLEX__
 
+/* Defined this to avoid warnings (e.g. test2001_11.C) from 3.4.6 systems header files. */
+/* DQ (9/6/2016): This is also required to support tests/CompileTests/mergeAST_tests/mergeTest_134.C */
+#define __weakref__(NAME)
+
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
