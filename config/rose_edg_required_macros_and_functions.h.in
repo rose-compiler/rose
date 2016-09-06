@@ -174,6 +174,61 @@
   #error "Macro ROSE_LANGUAGE_MODE should have been defined ROSE_LANGUAGE_MODE == 0 for C and C99 and ROSE_LANGUAGE_MODE == 1 for C++ (CUDA == 2, OpenCL == 3)"
 #endif
 
+/* DQ (9/1/2016): Adding support for ROSE generated builtin functions */
+// #include "rose_generated_builtin_functions.h"
+
+/* typedef long unsigned int size_t; */
+typedef __SIZE_TYPE__ size_t;
+
+
+/* DQ (9/2/2016): This is part of what is required using the new automated support for builtin functions. */
+#if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
+/* C++ case is different because the header files will define a complex type (see hdrs1/complex) */
+
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 4))
+/* DQ (5/02/2016): These need to be defined away for the case of GNU 4.2 (and I think anything less than GNU 4.4). */
+/* Note that Clang will pertend to be GNU 4.2.1. */
+#ifndef __clang__
+  #define __complex__
+  #define __real__ 
+  #define __imag__ 
+  #define _Complex
+#endif
+#endif
+
+/* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
+   don't like this fix).  This is required when constant folding is turned off.
+ */
+/* #define _Imaginary __imag__ */
+#else
+/* This works for both C and C99 modes */
+  #define __complex__ _Complex
+  #define __real__
+  #define __imag__
+
+/* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
+   don't like this fix).  This is required when constant folding is turned off.
+ */
+  #define _Imaginary __imag__
+#endif
+
+/* gcc uses the C99 name _Complex_I in <complex.h>, but our EDG doesn't handle
+   the GCC extension that they define it to. */
+#ifdef __INTEL_COMPILER
+/* #define _Complex_I __I__ */
+#else
+#define _Complex_I __I__
+#endif
+
+/* Disable inclusion of complex.h on Linux */
+#define _COMPLEX_H
+/* Disable inclusion of complex.h on Mac OS X */
+#define __COMPLEX__
+
+// $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
+
+/* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
+#if 0
 /* DQ (4/12/2015): Removing this mapping for __builtin_va_start to __builtin_stdarg_start
    since EDG now supports __builtin_va_start directly.
  */
@@ -316,6 +371,9 @@ long double __builtin_sinl   (long double __builtin__x);
 float       __builtin_sqrtf  (float       __builtin__x);
 long double __builtin_sqrtl  (long double __builtin__x);
 
+/* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
+#endif
+
 /* DQ (11/6/2014): Use a different mechanism to handle these for the GNU 4.7 compiler and above (required form C++11) */
 #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
 
@@ -413,6 +471,10 @@ DQ (6/19/2007): These might required math.h to be included.
 
 /* #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) */
 #endif
+
+
+/* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
+#if 0
 
 /* int __builtin_isgreater(x,y) isgreater(x,y);
 int __builtin_isgreaterequal(x,y) isgreaterequal(x,y);
@@ -1988,6 +2050,8 @@ void prefetch (const __global float16 *p, size_t num_elements);
 
 #endif
 
+/* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
+#endif
 
 /***************************************************************************************
   SSE and MMX support (declarations for builtin functions defined in GNU header files)
