@@ -49,6 +49,10 @@ namespace CodeThorn {
     void setRandomSubsetMode(RandomSubsetMode randomSubsetMode) { _randomSubsetMode = randomSubsetMode; }
     void setNumberDifferentComponentSubsets(int numDifferentSubsets) { _numDifferentSubsets = numDifferentSubsets; }
     void setNumberRandomComponents(int numRandomComponents) { _numRandomComponents = numRandomComponents; }
+    void setStoreComputedSystems(bool keepSystems) { 
+      _storeComputedSystems = keepSystems;
+      _parProLtlMiner.setStoreComputedSystems(keepSystems); 
+    }
     void setNumberOfComponentsForLtlAnnotations(unsigned int numComponentsLtl) { 
       _parProLtlMiner.setNumberOfComponentsForLtlAnnotations(numComponentsLtl); 
     }
@@ -76,6 +80,7 @@ namespace CodeThorn {
     int _numVerified;
     int _numFalsified;
 
+    bool _storeComputedSystems;
     ComponentSelection _componentSelection;
     std::set<int> _fixedComponentIds;
     RandomSubsetMode _randomSubsetMode;

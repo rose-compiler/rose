@@ -1,2 +1,4 @@
 foo::bar_function ->
-main ->
+main -> test < &bar_function >  test < &bar_variable > 
+test < &bar_function >  ->
+test < &bar_variable >  ->

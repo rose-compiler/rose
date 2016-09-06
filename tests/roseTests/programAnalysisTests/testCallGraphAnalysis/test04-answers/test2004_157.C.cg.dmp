@@ -3,5 +3,8 @@ A::A ->
 A::operator* ->
 A::operator-> ->
 A::operator[] ->
-foo -> A::A A::A A::operator[] foobar
+B < int > ::B ->
+B < int > ::B ->
+B < int > ::operator[] ->
+foo -> A::A A::A A::operator[] B < int > ::operator[] foobar
 foobar ->

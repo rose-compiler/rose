@@ -1,3 +1,21 @@
+A < A< int > > ::A ->
+A < A< int > > ::A ->
+A < A< int > > ::A ->
+A < A< int > > ::operator new ->
+A < A< int > > ::operator new ->
+A < A< int > > ::operator& ->
+A < A< int > > ::operator* ->
+A < A< int > > ::operator-> ->
+A < A< int > > ::operator[] ->
+A < int > ::A ->
+A < int > ::A ->
+A < int > ::A ->
+A < int > ::operator new ->
+A < int > ::operator new ->
+A < int > ::operator& ->
+A < int > ::operator* ->
+A < int > ::operator-> ->
+A < int > ::operator[] ->
 fooError ->
 fooError ->
 fooError ->

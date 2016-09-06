@@ -1,1 +1,2 @@
-foo ->
+A < int > ::f ->
+foo -> A < int > ::f

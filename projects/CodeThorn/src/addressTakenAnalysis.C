@@ -218,7 +218,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefEx
     //  is a implicit address-of operator that takes the address of the operand
     //  before this dereference operator dereferences the address afterwards.
     //
-    // Currently this should only be possible in case of a lvalue of function type:
+    // Currently this should only be possible in case of a function type:
     ROSE_ASSERT(isSgFunctionType(sgn->get_operand()->get_type()));
 
     // Find all variables/ functions in the operand expression because their address is
@@ -329,15 +329,89 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertAllVariableIds()
   }
 }
 
+// schroder3 (2015-08-25): Insert the given variable into the address-taken set and add sibling
+//  members if the given variable is a member of an union.
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(VariableId id) {
-  ROSE_ASSERT(id.isValid());
+  class VariableIdInserter {
+    ComputeAddressTakenInfo& cati;
+    int debuglevel;
+   public:
+    VariableIdInserter(ComputeAddressTakenInfo& info, int debugLevel)
+         : cati(info), debuglevel(debugLevel) { }
+    void operator ()(VariableId id) {
+      ROSE_ASSERT(id.isValid());
 
-  cati.variableAddressTakenInfo.second.insert(id);
+      cati.variableAddressTakenInfo.second.insert(id);
 
-  if(debuglevel > 0) {
-    std::cout << "INFO: Added variable id " << id.getIdCode() << " (Name "
-              << cati.vidm.variableName(id) << ")"
-              << std::endl;
+      if(debuglevel > 0) {
+        std::cout << "INFO: Added variable id " << id.getIdCode() << " (Name "
+                  << cati.vidm.variableName(id) << ")"
+                  << std::endl;
+      }
+    }
+  } insertVariableIdInternal(cati, debuglevel);
+
+  // Insert the id
+  insertVariableIdInternal(id);
+
+  // Check whether this variable is a member of an union.
+  if(SgVariableDeclaration* varDecl = cati.vidm.getVariableDeclaration(id)) {
+    // Check whether this variable is a member by looking at the closest enclosing scope:
+    SgNode* parent = varDecl;
+    SgClassDefinition* varRecordDef = 0;
+    while((parent = parent->get_parent())) {
+      if(isSgScopeStatement(parent)) {
+        varRecordDef = isSgClassDefinition(parent);
+        break;
+      }
+    }
+    if(varRecordDef) {
+      // Variable is a member. Check whether the corresponding record is a union:
+      SgClassDeclaration* varRecordDecl = varRecordDef->get_declaration();
+      ROSE_ASSERT(varRecordDecl);
+      if(varRecordDecl->get_class_type() == SgClassDeclaration::e_union) {
+        // Variable is a member of an union: Add all other members of the union to the address-taken set:
+        const SgDeclarationStatementPtrList& unionMembers = varRecordDef->get_members();
+        for(SgDeclarationStatementPtrList::const_iterator i = unionMembers.begin(); i != unionMembers.end(); ++i) {
+          // Only add members (and not member functions):
+          if(SgVariableDeclaration* unionMember = isSgVariableDeclaration(*i)) {
+            VariableId unionMemberVarId = cati.vidm.variableId(unionMember);
+            // Do not use insertVariableId(...) to avoid that the same union member is checked multiple times.
+            insertVariableIdInternal(unionMemberVarId);
+            // Check for nested unions:
+            if(SgClassType* memberRecordType = isSgClassType(cati.vidm.getType(unionMemberVarId))) {
+              SgClassDeclaration* memberRecordDecl = isSgClassDeclaration(memberRecordType->get_declaration());
+              ROSE_ASSERT(memberRecordDecl);
+              if(memberRecordDecl->get_class_type() == SgClassDeclaration::e_union) {
+                // Nested union found. Recursively call insertVariableId(...) for the first member of the nested union:
+                if((memberRecordDecl = isSgClassDeclaration(memberRecordDecl->get_definingDeclaration()))){
+                  SgClassDefinition* unionRecordDef = memberRecordDecl->get_definition();
+                  ROSE_ASSERT(unionRecordDef);
+                  const SgDeclarationStatementPtrList& memberUnionMembers = unionRecordDef->get_members();
+                  for(SgDeclarationStatementPtrList::const_iterator j = memberUnionMembers.begin(); j != memberUnionMembers.end(); ++j) {
+                    // Only add members (and not member functions):
+                    if(SgVariableDeclaration* memberUnionMember = isSgVariableDeclaration(*j)) {
+                      VariableId memberUnionMemberVarId = cati.vidm.variableId(memberUnionMember);
+                      insertVariableId(memberUnionMemberVarId);
+                      // Recursion of insertVariableId(...) will insert other members and deeper nested union members:
+                      break;
+                    }
+                  }
+                }
+                else {
+                  throw SPRAY::Exception("Nested union variable " + cati.vidm.variableName(unionMemberVarId) + ": Unable to find defining declaration of union " + memberRecordDecl->get_qualified_name().getString() + ".");
+                  // (We could add all variables (that are members of an union) to the address-taken set instead.)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  else {
+    // If there is no SgVariableDeclaration then the variable is a function parameter or a closure variable. In both cases
+    //  the variable is no member.
   }
 }
 
@@ -665,11 +739,17 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgExpression* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
-  // schroder3 (2016-07-28): It is possible to get here for example if this is the initializer expression of a const
-  //  lvalue reference declaration and we look at this initializer because there might be a variable/ function (e.g.
-  //  "const int& cir = (bool_var ? 42 : int_val);").
-  // Some of SgExpression's subclasses (e.g. SgConditionalExp) are handled by specific visit member functions but
-  //  if they are not then there is nothing to do.
+  // schroder3 (2016-07-28): Some of SgExpression's subclasses (e.g. SgConditionalExp) are handled by specific
+  //  visit member functions but if they are not then there should be nothing to do. It is for example possible to
+  //  get here if this is the initializer expression of a const lvalue reference declaration and we look at this
+  //  initializer because there might be a variable/ function (e.g. "const int& cir = (bool_var ? 42 : int_val);").
+  //
+  //  If this expression has a reference type then ignoring this expression would ignore a possible address-taking.
+  //  Make sure that this does not happen:
+  if(SgNodeHelper::isReferenceType(sgn->get_type())) {
+    throw SPRAY::Exception("Address-Taken Analysis: Unhandled " + sgn->class_name() + " node of reference type "
+                           + sgn->get_type()->unparseToString() + ".");
+  }
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaExp* sgn)
@@ -919,6 +999,66 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThrowOp* sgn)
   }
 }
 
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaCapture* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+
+  // schroder3 (2016-08-22): A lambda capture by reference creates an alias between the outside/ capture
+  //  variable and the inside/ closure variable. Functions can not be captured.
+
+  // Check for capture by reference
+  if(sgn->get_capture_by_reference()) {
+    // This capture creates the closure variable (a reference member of the lambda object which is of
+    //  anonymous class type) as an alias of the capture variable/ this.
+
+    SgExpression* captureExpression = sgn->get_capture_variable();
+
+    SgVarRefExp* closureVariable = isSgVarRefExp(sgn->get_closure_variable());
+    ROSE_ASSERT(closureVariable);
+    VariableId closureVariableId = cati.vidm.variableId(closureVariable);
+    ROSE_ASSERT(closureVariableId.isValid());
+    const SgType* closureVarType = cati.vidm.getType(closureVariableId);
+
+    // The capture can be a variable or the "this" pointer:
+    if(SgVarRefExp* captureVariable = isSgVarRefExp(captureExpression)) {
+      VariableId captureVariableId = cati.vidm.variableId(captureVariable);
+      ROSE_ASSERT(captureVariableId.isValid());
+      // Check the types:
+      const SgType* captureVarType = cati.vidm.getType(captureVariableId);
+      const SgType* captureVarBaseType = SgNodeHelper::isReferenceType(captureVarType)
+                                       ? SgNodeHelper::getReferenceBaseType(captureVarType)
+                                       : captureVarType;
+
+      // Closure variable type should be a lvalue reference type:
+      ROSE_ASSERT(SgNodeHelper::isLvalueReferenceType(closureVarType));
+
+      // Capture variable should have the same base type as the closure variable:
+      ROSE_ASSERT(captureVarBaseType->isEquivalentType(SgNodeHelper::getReferenceBaseType(closureVarType)));
+
+      // The closure variable is the newly created reference that gets initialized with the capture variable:
+      std::vector<VariableId> possibleTargets;
+      possibleTargets.push_back(closureVariableId);
+
+      // Handle the alias creation:
+      handleAssociation(AK_Initialization, possibleTargets, closureVarType, captureExpression);
+    }
+    else if(isSgThisExp(captureExpression)) {
+      // schroder3 (2016-08-25): The "this" pointer is captured by value (C++11) and this should therefore be
+      //  unreachable code. However an implicit "this" capture is currently marked as by-reference if the capture
+      //  default is by-reference. Ignore this capture because it does not include an alias creation.
+
+      // Some consistency checks: The captured "this" is a pointer...
+      ROSE_ASSERT(SgNodeHelper::isPointerType(captureExpression->get_type()));
+      //  ... and the pointer is copied to the closure variable which is not of reference type but of pointer type:
+      ROSE_ASSERT(!SgNodeHelper::isReferenceType(closureVarType));
+      ROSE_ASSERT(SgNodeHelper::isPointerType(closureVarType));
+    }
+    else {
+      ROSE_ASSERT(false);
+    }
+  }
+}
+
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
@@ -1016,7 +1156,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
 
     // If we have a reference to pointer to function type then we handle it as a reference type and
     //  not as a function type.
-    if(const SgReferenceType* targetEntityReferenceType = SgNodeHelper::isReferenceType(targetEntityType)) {
+    if(const SgType* targetEntityReferenceType = SgNodeHelper::isReferenceType(targetEntityType)) {
       if(debuglevel > 0) {
         std::cout << "... is reference type." << std::endl;
       }
@@ -1047,14 +1187,14 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
       }
       else if(associationKind == AK_Cast) {
         // Cast of a reference:
-        //  ==> no alias/ reference creation, but there might be an implicit address-taking in the assignment.
+        //  ==> no alias/ reference creation, but there might be an implicit address-taking in the expression that is casted.
       }
       else {
         ROSE_ASSERT(false);
       }
 
       // Remove the reference for the following implicit address-taking check:
-      targetEntityType = targetEntityReferenceType->get_base_type();
+      targetEntityType = SgNodeHelper::getReferenceBaseType(targetEntityReferenceType);
     }
 
     // There is an implicit address-taking in the association if the target entity is of function
@@ -1178,6 +1318,10 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root) {
     // schroder3 (2016-08-15): Designated initializers allow to initiate members by providing their
     //  name in the initialization list. C only as far as is know.
          || isSgDesignatedInitializer(*i)
+
+   // schroder3 (2016-08-22): A lambda capture by reference creates an alias between the outside/ capture variable and
+   //  the inside/ closure variable.
+        || isSgLambdaCapture(*i)
 
     ) {
       // schroder3 (2016-08-08): Look for address-takings:

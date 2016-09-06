@@ -96,22 +96,20 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
   }
   if(SgExpression* expr=isSgExpression(node)) {
     NumberIntervalLattice res=evalExpression(lab0,expr,pstate);
-    if((res.isTrue() && edge.isType(SPRAY::EDGE_TRUE))
-       ||(res.isFalse() && edge.isType(SPRAY::EDGE_FALSE))
-       ||(res.isTop())) {
-      return;
-    } else {
+    // schroder3 (2016-08-25): Removed assertions that checked whether the result is either true,
+    //  false, bot, or top because the expression result can also be an interval that is neither
+    //  true, false, bot, nor top (e.g. "if(0.5) { }" returns the interval [0, 1] as condition
+    //  result). Just set the lattice to bot if the result is bot or if the branch is unreachable
+    //  (and do nothing in all other cases):
+    if(res.isBot() || (res.isFalse() && edge.isType(SPRAY::EDGE_TRUE))
+                   || (res.isTrue() && edge.isType(SPRAY::EDGE_FALSE))
+    ) {
       //cout<<"INFO: detected non-reachable state."<<endl;
       //cout<<"DEBUG: EDGE: "<<edge.toString()<<endl;
       //cout<<"RESULT: "<<res.toString()<<endl;
-      // schroder3(2016-08-09): The result of the condition might be bot if there is a
-      //  division by zero.
-      ROSE_ASSERT(res.isBot() || (res.isFalse()&&edge.isType(SPRAY::EDGE_TRUE))
-                  ||(res.isTrue()&&edge.isType(SPRAY::EDGE_FALSE)));
-      // non-reachable state
       ips.setBot();
-      return;
     }
+    return;
   } else {
     cerr<<"Error: interval analysis: unsupported condition type."<<endl;
     exit(1);
@@ -123,7 +121,10 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
   * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
-  evalExpression(lab,node,pstate); // ignore return value
+  // schroder3 (2016-08-25): Added if to ignore SgNullExpressions (e.g. ";;")
+  if(!isSgNullExpression(node)) {
+    evalExpression(lab,node,pstate); // ignore return value
+  }
 }
 
 void SPRAY::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& pstate) {

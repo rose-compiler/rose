@@ -22,7 +22,11 @@ int main() {
 
   int k = 2;
 
-  forward(k) = 9; // <=> k = 9
+  // Not normalized:
+  // forward(k) = 9; // <=> k = 9
+  // Normalized:
+  int& ir_normalization = forward(k); // this will create the function call in the CFG in the future
+  ir_normalization = 9;
 
   if(k != 9) {
     "unreachable3";
