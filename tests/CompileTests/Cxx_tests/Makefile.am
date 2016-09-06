@@ -1396,7 +1396,7 @@ test2013_236.C.passed: $(TEST_TRANSLATOR)
 # and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
 test_unparse_includes_option.passed: $(TEST_TRANSLATOR)
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/16/2013): Test linking the resulting translated file. Phil Miller reported an error and the issue
 # is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
