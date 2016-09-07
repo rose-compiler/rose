@@ -9,6 +9,8 @@
  * 
  * @ref pdf_generator "pdfGenerator" Generate pdf dump of AST
  *
+ * @ref auto_par "autoPar" Automatic Parallelization using OpenMP
+
  * @ref declaration_move "Declaration Move Tool" Re-scoping variable declarations 
  * 
  *

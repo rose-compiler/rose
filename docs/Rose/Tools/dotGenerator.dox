@@ -87,6 +87,13 @@
  *  run.sh ttt.c_WholeAST.dot
  * @endcode
  * 
+ * @section sec_limit Limitation
+ * Due to the limitation of visualization tools, dotGenerator and dotGeneratorWholeASTGraph have a threshold of the max number of nodes supported.
+ * Once the threshold is reached, the tools will give up and report an error.
+ *  
+ * It is recommended to use simplest input code without including any headers to meet the requirement.
+ * Alternatively, you can use @ref pdf_generator "pdfGenerator" to generate a pdf file for large input files.
+ * 
  *  This page is generated from $ROSE/docs/Rose/Tools/dotGenerator.dox */
 
 
