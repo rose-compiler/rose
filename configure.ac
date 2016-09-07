@@ -48,6 +48,7 @@ AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
 
 AM_CONFIG_HEADER([rose_config.h])
+AM_EXTRA_RECURSIVE_TARGETS([check-smoke check-nonsmoke check-all])
 
 # TOO1 (9/23/2013): Use the builtin verbose mechanism of Automake:
 #

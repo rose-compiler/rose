@@ -530,10 +530,6 @@ ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 # with make distcheck rule 
 # -lannotationLanguageParser(appears after -lvaluePropagation)
 
-# Location of sample binary files (executables, libraries, etc) that serve as input to
-# some of the binary analysis tests.
-BINARY_SAMPLES = $(top_srcdir)/binaries/samples
-
 # Test harness variables. See "rth_run.pl --help" for more info.  The RTH_RUN_FLAGS is meant to be set on the
 # "make" command-line, but the default depends on the value of the verbosity $(V) flag.
 
@@ -545,7 +541,7 @@ RTH_RUN_FLAGS = $(RTH_RUN_FLAGS_V_$(V))
 RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	srcdir=$(abspath $(srcdir)) top_srcdir=$(abspath $(top_srcdir)) \
 	blddir=$$(pwd) top_blddir=$(abspath $(top_builddir)) \
-	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
+	VALGRIND=$(VALGRIND)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 
