@@ -4,6 +4,8 @@
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
+#include "SprayException.h"
+#include "Sawyer/GraphTraversal.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -392,6 +394,46 @@ Flow::iterator Flow::end() {
 #endif
 }
 
+Flow::node_iterator Flow::nodes_begin() {
+#ifdef USE_SAWYER_GRAPH
+  return _sawyerFlowGraph.vertexValues().begin();
+#else
+  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+#endif
+}
+
+Flow::node_iterator Flow::nodes_end() {
+#ifdef USE_SAWYER_GRAPH
+  return _sawyerFlowGraph.vertexValues().end();
+#else
+  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+#endif
+}
+
+Flow::const_node_iterator Flow::nodes_begin() const {
+#ifdef USE_SAWYER_GRAPH
+  return _sawyerFlowGraph.vertexValues().begin();
+#else
+  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+#endif
+}
+
+Flow::const_node_iterator Flow::nodes_end() const {
+#ifdef USE_SAWYER_GRAPH
+  return _sawyerFlowGraph.vertexValues().end();
+#else
+  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+#endif
+}
+
+Flow::const_node_iterator Flow::nodes_cbegin() const {
+  return nodes_begin();
+}
+
+Flow::const_node_iterator Flow::nodes_cend() const {
+  return nodes_end();
+}
+
 Flow Flow::operator+(Flow& s2) {
   Flow result;
   result=*this;
@@ -609,6 +651,21 @@ boost::iterator_range<Flow::iterator> Flow::outEdgesIterator(Label label) {
   boost::iterator_range<SawyerCfg::EdgeIterator> edges =(*vertexIter).outEdges();
   return boost::iterator_range<Flow::iterator>(Flow::iterator(edges.begin()), Flow::iterator(edges.end()));
 }
+
+// schroder3 (2016-08-16): Returns a topological sorted list of CFG-edges
+std::list<Edge> Flow::getTopologicalSortedEdgeList(Label startLabel) {
+  std::list<Edge> topologicalSortedEdges;
+  SawyerCfg::VertexIterator startLabelIter = _sawyerFlowGraph.findVertexValue(startLabel);
+  // Depth first post-order traversal over the edges:
+  using namespace Sawyer::Container::Algorithm;
+  DepthFirstForwardGraphTraversal<SawyerCfg> depthFirstTraversal(_sawyerFlowGraph, startLabelIter, LEAVE_EDGE);
+  for(; depthFirstTraversal; ++depthFirstTraversal) {
+    // Use the edge iterator's dereference operator to construct the Edge object:
+    Edge edge = *iterator(depthFirstTraversal.edge());
+    topologicalSortedEdges.push_front(edge);
+  }
+  return topologicalSortedEdges;
+}
 #endif
 
 Flow Flow::outEdgesOfType(Label label, EdgeType edgeType) {
@@ -705,10 +762,5 @@ Edge Flow::iterator::operator*() {
   return result;
 }
 
-Flow::iterator Flow::iterator::operator++(int) {
-  Flow::iterator result = *this;
-  ++*this;
-  return result;
-}
 #endif
 

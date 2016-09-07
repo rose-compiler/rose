@@ -1,1 +1,4 @@
 main ->
+std::templateInNamespace < double > ::foobar ->
+std::templateInNamespace < float > ::foobar ->
+std::templateInNamespace < int > ::foobar ->

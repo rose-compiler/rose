@@ -44,6 +44,7 @@ namespace SPRAY {
   class ParProTransitionGraph {
   public:
     ParProTransitionGraph() : _preciseStg(true), _completeStg(false) {}
+    void deleteStates();
     void add(ParProTransition transition);
     void setStartState(const ParProEState* state) { _startState = state; } 
     const ParProEState* getStartState() { return _startState; } 

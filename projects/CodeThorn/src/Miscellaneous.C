@@ -143,3 +143,22 @@ string CodeThorn::readableruntime(double timeInMilliSeconds) {
   return s.str();
 }
 
+long CodeThorn::getPhysicalMemorySize() {
+  long physicalMemoryUsedUnix = -1;
+#if defined(__unix__) || defined(__unix) || defined(unix)
+  long residentSetSize = -1;
+  FILE* statm = NULL;
+  if ((statm = fopen( "/proc/self/statm", "r" )) != NULL) {
+    if (fscanf( statm, "%*s%ld", &residentSetSize ) == 1) {
+      physicalMemoryUsedUnix = residentSetSize * sysconf(_SC_PAGESIZE);
+    }
+  }
+  fclose(statm);
+#endif
+  if (physicalMemoryUsedUnix == -1) {
+    cerr << "ERROR: Physical memory consumption could not be determined." << endl;
+    ROSE_ASSERT(0);
+  }
+  return physicalMemoryUsedUnix;
+}
+

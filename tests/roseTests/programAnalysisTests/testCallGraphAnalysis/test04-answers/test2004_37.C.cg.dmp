@@ -1,1 +1,2 @@
-main ->
+foo < int >  ->
+main -> foo < int > 
