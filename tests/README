@@ -1,99 +1,110 @@
-This directory contains tests for ROSE.  
+This directory hierarchy contains tests (checker + specimen pairs)
+that fall into two categories: smoke tests and non-smoke tests.
 
-The tests are divided into separate directories to test the ability to
-compile code and the ability to execute the compiled code separately. Other
-tests isolate parts of the internal ROSE infrastructure for testing that
-use to be in the ROSE/src directory but could not be colocated there under the
-new directory structure.
+=== Definitions ===
 
-Since ROSE optimizes the use of libraries and A++ is the only current library that
-ROSE can optimize, tests that test the ability of ROSE to optimize performance
-are located in the RunTests directory.  Before any optimization can occur, we have to
-be able to process the code through ROSE, this is sufficiently significant as a problem
-that we have a separate directory of compile tests to test the ability of the preprocessor 
-(and all of it's different phases). These compiler tests (code fragments that are or have been
-a problem to compile properly) are located in the CompileTests directory.
+"Smoke tests" are the minimal set of small, fast, simple tests run by
+end users via "make check" to test that ROSE basically functions. All
+smoke tests _together_ should take no more than a couple minutes on
+average hardware.
 
-   All translators build using ROSE should
-be able to parse, process internally (generate ASTs), unparse, and
-compile (with a C++ compiler)  the codes in each of these directories.
+"Non-smoke tests" are everything else.
 
-Different ROSE Translators (for testing different levels of infrastructure):
-   (full test) testTranslator.C:
-      This translator tests all parts of the CPP preprocessor support, parsing,
-   AST generation, AST consistency tests, source code regeneration (unparsing),
-   and compilation of the generated source code to build an object file or binary
-   executable.  Except that no specific analysis or transformation is done this
-   is a comprehensive of the base level ROSE infrastructure.  This translator is
-   used for ALL of internal testing using ROSE on the regression test codes in
-   the CompileTests directory. This is the most complete test of the base level
-   of compiler infrastructure for ROSE (on C, C++, Fortran, PHP, OpenMP, UPC,
-   and for binary analysis).
+A "test" is a pair consisting of a "checker" (some program that
+verifies some ROSE functionality) and an optional "specimen" (some
+input to the checker). Specimens for source analysis checkers are
+usually small source code files, and specimens for binary analysis
+checkers are usually small executables. Another compatible definition
+of test is: the basic unit of work done by a makefile, i.e., a make
+target and its rules.
 
-   (partial test) testParser.C:
-      This translator only tests the ability to parse the input application.
-   For C/C++ it runs the EDG frontend over the application (this includes the CPP
-   preprocessing step, and EDG's semantic analysis).  For Fortran this translator
-   runs only the CPP preprocessing step, the semantic analysis, and the parser
-   (OFP) over the application.  Thus this is a test of the smallest subset of the
-   base level ROSE infrastructure.
-
-   (partial test) testAnalysis.C:
-      This translator only test the CPP preprocessor support, parsing,
-   AST generation, AST consistency tests.  It does build an object file or
-   binary executable, but it does so using the original input file and not
-   the code generated from the AST.  As a result this tests a subset of the
-   base level ROSE infrastructure.
-
-   (partial test) testCodeGeneration.C:
-      This translator tests all the parts of the base level infrastructure
-   except that the original source code is used to build an object file or binary
-   executable. Thus the source code generation is done, but it is not used, and
-   the object file or executable is generated from the original source file instead.
-   This tests the ability of the code generation to complete, but does not test
-   the quality of the generated source code (i.e. does not test if the generated
-   source code will compile).  This test allows certain name qualification errors
-   to pass undetected but permits the basic code generation infrastructure to be
-   tested.
-
-   (AST File I/O test) testAstFileIO.C:
-      This translator tests the support in ROSE to generate the AST and dump it
-   to a file and read it back in.  This AST File I/O is a critical piece of ROSE
-   infrastructure for future work on AST merge, it writes and reads the AST as a
-   binary formatted file.  This test code tests just the AST binary file I/O.
-   There are a number of steps:
-      1) The input file is read and the AST is generated.
-      2) The AST is unparsed to generate source code to a file (generated source
-         code file 1).
-      3) The AST is dumped to a binary formatted file on disk (binary file 1).
-      4) The AST is deleted (state is reset)
-      5) The binary file of the AST is read from disk and the AST is generated
-         (using binary file 1).
-      6) Another source file is generated by unparsing the AST to a file
-         (generated source code file 2).
-      7) A diff of generated source code files 1 and 2 is run.
-   There must be no differences between generated source code files 1 and 2
-   for this tests to pass.
-
-Directories:
-   CompileTests:
-      This directory contains code fragments that test the internal compiler mechanisms.
-   Many code fragments or whole codes are present which have or continue to present
-   problems in the compilation.  The CompileTests directory consists of several directories,
-   the README file in that CompileTests directory gives more specific information.
-
-   RunTests:
-      This directory contains subdirectories representing code which uses libraries that
-   ROSE can optimize.  It's purpose is to test the optimization mechanisms within ROSE.
-   A testing harness (used in A++/P++ and developed by Brian Miller) will be use to report
-   the performance of the optimizations at a later stage.
-
-   roseTests:
-      This directory tests the internal ROSE infrastructure. It contains separate 
-   subdirectories for individual parts of ROSE. See ROSE/tests/roseTests/README 
-   for details.
-
-   translatorTests:
-      This directory contains test translators and their input codes for regression tests of ROSE.
+A "test" in this context is not the same as in "unit test". A checker
+can implement a collection of related unit tests (or even related
+function tests for that matter).
 
 
+=== Directory organization ===
+
+Smoke tests are housed in the $ROSE/tests/smoke directory while
+non-smoke tests are house in $ROSE/tests/nonsmoke.  Note that when
+"non-smoke" appears as a directory or variable name we always omit the
+hyphen (this practice makes parallel concepts more parallel in name,
+such as "foo_smoke_bar" vs. "foo_nonsmoke_bar", instead of an extra
+understore in the second one).
+
+
+=== Repository organization ===
+
+Smoke tests (and their checkers and specimens) are housed in the same
+repo as the ROSE library source code so they can always be distributed
+with ROSE and do some basic, quick sanity checks when the user says
+"make check".
+
+Non-smoke tests (and their checkers and specimens), will eventually be
+housed in a separate, optional repository which is expected to be
+quite large.
+
+
+=== FAQ ===
+
+Q1. If I have a checker that runs on both smoke and non-smoke
+specimens, where should I put it?
+
+    Smoke trumps non-smoke.  If you have a specimen that's used by
+    both, or a checker that runs in both then it must be stored in the
+    smoke side.  This is because the definition of "smoke" is that
+    it's something that happens when the user runs "make check"
+    regardless of whether they've downloaded the optional non-smoke
+    repo.  A non-smoke makefile is free to reference checkers and/or
+    specimens stored in the smoke side, but not vice versa.
+
+
+Q2. If I create a new specimen, where should I put it?
+
+    The answer has two parts: whether to put the specimen on the smoke
+    or non-smoke side, and whether to put the specimen in a directory
+    with checkers or in a directory devoted to only specimens.
+
+    Smoke trumps non-smoke.  If the specimen is used by any smoke
+    checker (regardless of whether it's also used by a non-smoke
+    checker) then it must be stored in the $ROSE/tests/smoke
+    hierarchy.
+
+    If you expect the specimen to be used by checkers in more than one
+    directory, including the case when its used by both smoke and
+    non-smoke checkers, then it must be stored in one of the
+    specimen-only $ROSE/tests/*/specimens hierarchies (where "*" is
+    either "smoke" or "nonsmoke"), otherwise you're free to store the
+    specimen in the same (only) directory where it's used.
+
+    Each of the tests/*/specimens subdirectory has its own organization
+    that's up to the maintainer. However, most every directory will
+    have a Specimens.inc file whose lists need to be updated.
+   
+
+Q3. I added a new specimen (no new checkers yet) and make
+    check (or make check-all) already fails. What gives?
+
+    Some makefile rules are written in a way such that they
+    automatically create a test target for every specimen known to the
+    system.  Furthermore, some of these rules compare the test's
+    output with a known good answer. You'll need to contact the test
+    author for guidance on how to compute the answer for your new
+    specimen for that checker.
+
+
+Q4. In my non-smoke directory, why do "make check" and "make
+    check-smoke" build the non-smoke checkers?
+
+    This is a limitation of automake: automake assumes that "make
+    check" depends on all programs that the makefile could generate. A
+    more precise approach would be to have each test target depend on
+    its checker (which is already true in a correctly written
+    makefile).
+
+
+Q4. What if I have a project that uses non-smoke specimens?
+
+    If a project depends on non-smoke tests, then the project's
+    configuration step should verify that the depencency is present,
+    the same as it would do for any other dependency.

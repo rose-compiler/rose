@@ -2130,6 +2130,30 @@ projects/TileK/doc/tilek-rtl-opencl.doxy
 projects/TileK/doc/tilek-cuda.doxy
 projects/TileK/doc/tilek-rtl-cuda.doxy
 tests/Makefile
+tests/nonsmoke/Makefile
+tests/nonsmoke/ExamplesForTestWriters/Makefile
+tests/nonsmoke/acceptance/Makefile
+tests/nonsmoke/functional/Makefile
+tests/nonsmoke/functional/binaryAnalysis/Makefile
+tests/nonsmoke/functional/binaryAnalysis/libraryIdentification_tests/Makefile
+tests/nonsmoke/functional/binaryAnalysis/Pin_tests/Makefile
+tests/nonsmoke/functional/binaryAnalysis/Dwarf_tests/Makefile
+tests/nonsmoke/specimens/Makefile
+tests/nonsmoke/specimens/binary/Makefile
+tests/nonsmoke/specimens/c/Makefile
+tests/nonsmoke/specimens/c++/Makefile
+tests/nonsmoke/specimens/fortran/Makefile
+tests/nonsmoke/specimens/java/Makefile
+tests/nonsmoke/unit/Makefile
+tests/smoke/Makefile
+tests/smoke/functional/Makefile
+tests/smoke/specimens/Makefile
+tests/smoke/specimens/binary/Makefile
+tests/smoke/specimens/c/Makefile
+tests/smoke/specimens/c++/Makefile
+tests/smoke/specimens/fortran/Makefile
+tests/smoke/specimens/java/Makefile
+tests/smoke/unit/Makefile
 tests/UnitTests/Makefile
 tests/UnitTests/Rose/Makefile
 tests/UnitTests/Rose/SageBuilder/Makefile
@@ -2230,10 +2254,6 @@ tests/roseTests/astSnippetTests/Makefile
 tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
-tests/roseTests/binaryTests/Makefile
-tests/roseTests/binaryTests/libraryIdentification_tests/Makefile
-tests/roseTests/binaryTests/Pin_tests/Makefile
-tests/roseTests/binaryTests/Dwarf_tests/Makefile
 tests/roseTests/loopProcessingTests/Makefile
 tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/ompLoweringTests/fortran/Makefile
@@ -2311,8 +2331,6 @@ tools/Makefile
 scripts/Makefile
 demo/Makefile
 demo/qrose/Makefile
-binaries/Makefile
-binaries/samples/Makefile
 ])
 
 # Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade

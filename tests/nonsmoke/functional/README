@@ -1,0 +1,14 @@
+This directory hierarchy contains functional non-smoke tests.
+
+=== Definitions ===
+
+"Functional tests" are larger than a unit tests, but still more
+focused than something like compiling an entire application.  Example:
+a functional test might check that a proper control flow graph can be
+constructed and traversed.
+
+"Non-smoke tests" are anything but smoke tests. ("Smoke tests" are the
+minimal set of small, fast, simple tests run by end users via "make
+check" to test that ROSE basically functions. All smoke tests
+_together_ should take no more than a couple minutes on average
+hardware.)
