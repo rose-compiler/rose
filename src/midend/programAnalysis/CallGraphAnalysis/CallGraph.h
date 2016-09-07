@@ -163,9 +163,12 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         bool operator()(SgNode *node) {
             SgFunctionDeclaration *f = isSgFunctionDeclaration(node);
             assert(!f || f==f->get_firstNondefiningDeclaration()); // node uniqueness test
+#if 0
+         // DQ (8/25/2016): This is not a meaningful test since all functions will be in the memory pool, including template functions and template member functions.
             if(isSgTemplateFunctionDeclaration(f)||isSgTemplateMemberFunctionDeclaration(f)) {
               std::cerr<<"Error: CallGraphBuilder: call referring to node "<<f->class_name()<<" :: function-name:"<<f->get_qualified_name()<<std::endl;
             }
+#endif
             return f && !isSgTemplateMemberFunctionDeclaration(f) && !isSgTemplateFunctionDeclaration(f) && pred(f);
         }
     };
@@ -182,7 +185,15 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     BOOST_FOREACH(SgNode *node, fdecl_nodes) {
         SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(node);
         SgFunctionDeclaration *unique = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
-        if (isSelected(pred)(unique) && graphNodes.find(unique)==graphNodes.end()) {
+#if 0
+        printf ("In buildCallGraph(): loop over functions from memory pool: fdecl  = %p = %s name = %s \n",fdecl,fdecl->class_name().c_str(),fdecl->get_name().str());
+        printf ("In buildCallGraph(): loop over functions from memory pool: unique = %p = %s name = %s \n",unique,unique->class_name().c_str(),unique->get_name().str());
+#endif
+        if (isSelected(pred)(unique) && graphNodes.find(unique)==graphNodes.end()) 
+           {
+#if 0
+            printf ("Collect function calls in unique function: unique = %p \n",unique);
+#endif
             FunctionData fdata(unique, project, &classHierarchy); // computes functions called by unique
             callGraphData.push_back(fdata);
             std::string functionName = unique->get_qualified_name().getString();
@@ -190,7 +201,15 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
             graphNode->set_SgNode(unique);
             graphNodes[unique] = graphNode;
             graph->addNode(graphNode);
-        }
+          }
+         else
+          {
+#if 0
+            printf ("Function not selected for processing: unique = %p \n",unique);
+            printf ("   --- isSelected(pred)(unique) = %s \n",isSelected(pred)(unique) ? "true" : "false");
+            printf ("   --- graphNodes.find(unique)==graphNodes.end() = %s \n",graphNodes.find(unique)==graphNodes.end() ? "true" : "false");
+#endif
+          }
     }
 
     // Add edges to the graph
