@@ -360,33 +360,12 @@ void FunctionIdMapping::computeFunctionSymbolMapping(SgProject* project) {
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
     RoseAst ast(*k);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      SgSymbol* sym=0;
-      bool found=false;
-      if(SgFunctionDeclaration* funcDecl=isSgFunctionDeclaration(*i)) {
-        sym=SgNodeHelper::getSymbolOfFunctionDeclaration(funcDecl);
-        if(sym) {
-          found=true;
-        } else {
-          cerr<<"WARNING: computeFunctionSymbolMapping: FunctionDeclaration without associated symbol found. Ignoring.";
-        }
-        assert(!isSgFunctionDefinition(sym));
-      }
-      if(SgFunctionRefExp* funcRef=isSgFunctionRefExp(*i)) {
-        sym=SgNodeHelper::getSymbolOfFunction(funcRef);
-        if(sym)
-          found=true;
-        else
-          cerr<<"WARNING: computeFunctionSymbolMapping: FunctionRefExp without associated symbol found. Ignoring.";
-        assert(!isSgFunctionDefinition(sym));
-      }
-      if(found) {
-        // ensure all symbols are SgFunctionSymbol
-        SgFunctionSymbol* finalfuncsym=isSgFunctionSymbol(sym);
-        assert(finalfuncsym);
-        //MapPair pair=make_pair(longName,finalfuncsym);
-        if(symbolSet.find(finalfuncsym)==symbolSet.end()) {
-          registerNewSymbol(finalfuncsym);
-          symbolSet.insert(finalfuncsym);
+      if(SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(*i)) {
+        SgFunctionSymbol* funcSymbol = SgNodeHelper::getSymbolOfFunctionDeclaration(funcDecl);
+        ROSE_ASSERT(funcSymbol);
+        if(symbolSet.find(funcSymbol) == symbolSet.end()) {
+          registerNewSymbol(funcSymbol);
+          symbolSet.insert(funcSymbol);
         }
       }
     }

@@ -30,6 +30,20 @@ class HSetMaintainer
   {
 public:
   typedef pair<bool,const KeyType*> ProcessingResult;
+
+  HSetMaintainer() { _keepStatesDuringDeconstruction = false; }
+
+  HSetMaintainer(bool keepStates) { _keepStatesDuringDeconstruction = keepStates; }
+
+  virtual ~HSetMaintainer() {
+    if (!_keepStatesDuringDeconstruction){
+      typename HSetMaintainer::iterator i;
+      for (i=this->begin(); i!=this->end(); ++i) {
+	delete (*i);
+      } 
+    }
+  }
+
   bool exists(KeyType& s) { 
     return determine(s)!=0;
   }
@@ -150,6 +164,14 @@ public:
       KeyType* keyPtr=new KeyType();
       *keyPtr=key;
       res=this->insert(keyPtr);
+      if (!res.second) {
+	// this case should never occur, condition "iter!=this->end()" above would have been satisfied and 
+	// this else branch would have therefore been ignored
+	cerr << "ERROR: HSetMaintainer: Element was not inserted even though it could not be found in the set." << endl;
+	ROSE_ASSERT(0);
+	delete keyPtr;
+	keyPtr = NULL; 
+      } 
     }
 #ifdef HSET_MAINTAINER_DEBUG_MODE
     std::pair<typename HSetMaintainer::iterator, bool> res1;
@@ -212,12 +234,14 @@ public:
         i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end();
         ++i) {
       mem+=(*i)->memorySize();
+      mem+=sizeof(*i);
     }
-    return mem+sizeof(*this); //TODO: check if sizeof is correct here
+    return mem+sizeof(*this);
   }
 
  private:
   //const KeyType* ptr(KeyType& s) {}
+  bool _keepStatesDuringDeconstruction;
 };
 
 #endif

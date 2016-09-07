@@ -1,1 +1,2 @@
-foo ->
+foo -> std::min < int > 
+std::min < int >  ->

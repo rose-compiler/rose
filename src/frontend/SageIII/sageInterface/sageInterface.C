@@ -21339,3 +21339,77 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
      return isSame;
    }
+
+
+#if 0
+// This is modified to be a template function and so must be moved to the header file.
+// DQ (8/30/2016): Added function to detect EDG AST normalization.
+bool
+SageInterface::isNormalizedTemplateInstantiation (SgFunctionDeclaration* function)
+   {
+  // This function is called in the Call graph generation to avoid filtering out EDG normalized 
+  // function template instnatiations (which come from normalized template functions and member functions).
+
+     bool retval = false;
+
+#if 1
+  // DQ (8/30/2016): We need to mark this as an EDG normalization so that we can detect it as an exception 
+  // to some simple attempts to filter the AST (e.g. for the Call Graph implementation which filters on only 
+  // functions in the current directory).  This explicit makring makes it much easier to get this test correct.
+  // But we still need to look at if the location of the parent template is something that we wnat to output.
+  // If tis is a template instantiation then it is not enough to look only at the non-defining declaration if 
+  // it is not compiler generated.
+     retval = function->get_marked_as_edg_normalization();
+#else
+  // Test for this to be a template instantation (in which case it was marked as 
+  // compiler generated but we may want to allow it to be used in the call graph, 
+  // if it's template was a part was defined in the current directory).
+     SgTemplateInstantiationFunctionDecl*       templateInstantiationFunction       = isSgTemplateInstantiationFunctionDecl(function);
+     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(function);
+
+     if (templateInstantiationFunction != NULL)
+        {
+       // When the defining function has been normalized by EDG, only the non-defining declaration will have a source position.
+          templateInstantiationFunction = isSgTemplateInstantiationFunctionDecl(templateInstantiationFunction->get_firstNondefiningDeclaration());
+          SgTemplateFunctionDeclaration* templateFunctionDeclaration = templateInstantiationFunction->get_templateDeclaration();
+          if (templateFunctionDeclaration != NULL)
+             {
+            // retval = operator()(templateFunctionDeclaration);
+               retval = (templateFunctionDeclaration->isCompilerGenerated() == false);
+             }
+            else
+             {
+             // Assume false.
+             }
+
+#if DEBUG_SELECTOR
+          printf ("   --- case of templateInstantiationFunction: retval = %s \n",retval ? "true" : "false");
+#endif
+        }
+       else
+        {
+          if (templateInstantiationMemberFunction != NULL)
+             {
+            // When the defining function has been normalized by EDG, only the non-defining declaration will have a source position.
+               templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(templateInstantiationMemberFunction->get_firstNondefiningDeclaration());
+               SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = templateInstantiationMemberFunction->get_templateDeclaration();
+               if (templateMemberFunctionDeclaration != NULL)
+                  {
+                 // retval = operator()(templateMemberFunctionDeclaration);
+                    retval = (templateMemberFunctionDeclaration->isCompilerGenerated() == false);
+                  }
+                 else
+                  {
+                 // Assume false.
+                  }
+
+#if DEBUG_SELECTOR
+               printf ("   --- case of templateInstantiationMemberFunction: retval = %s \n",retval ? "true" : "false");
+#endif
+             }
+        }
+#endif
+
+     return retval;
+   }
+#endif

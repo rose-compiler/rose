@@ -20,7 +20,11 @@ A::foo ->
 A::foo ->
 A::foo ->
 A::operator bool ->
+A_T < bool > ::foo ->
+A_T < const void * > ::foo ->
+A_T < double > ::foo ->
+A_T < int > ::foo ->
 B::B::bar -> A::foo
 B::B::foo ->
 B::B::operator bool ->
-foo -> A0::foo A0::foo A::A A::A A::foo B::B::operator bool
+foo -> A0::foo A0::foo A::A A::A A::foo A_T < bool > ::foo B::B::operator bool

@@ -1,1 +1,2 @@
-foo ->
+foo -> std::foobar < double > 
+std::foobar < double >  ->

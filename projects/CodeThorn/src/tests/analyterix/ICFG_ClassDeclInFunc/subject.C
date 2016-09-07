@@ -1,3 +1,17 @@
+void f() {
+  class B {
+
+  };
+}
+
+void f2() {
+  int i;
+  i = 1;
+  class C {
+
+  };
+}
+
 int main() {
   class A { 
    public:
@@ -9,5 +23,9 @@ int main() {
   };
   A a;
   a.mf();
+
+  f();
+
+  f2();
 }
 

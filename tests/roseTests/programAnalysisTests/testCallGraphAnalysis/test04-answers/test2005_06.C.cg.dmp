@@ -1,2 +1,9 @@
+X < int > ::foo ->
+X < int > ::operator++ ->
+X < int > ::operator++ ->
+X < int > ::operator- ->
+X < int > ::operator-> ->
+X < int > ::operator= ->
 foobar ->
-main -> foobar
+main -> X < int > ::foo X < int > ::operator++ X < int > ::operator++ X < int > ::operator- X < int > ::operator= foobar operator+
+operator+ ->

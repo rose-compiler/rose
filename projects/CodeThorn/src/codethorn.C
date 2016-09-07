@@ -44,6 +44,9 @@
 #include "ParProLtlMiner.h"
 #include "ParProExplorer.h"
 #include "ParallelAutomataGenerator.h"
+#if defined(__unix__) || defined(__unix) || defined(unix)
+#include <sys/resource.h>
+#endif
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -295,9 +298,11 @@ int main( int argc, char * argv[] ) {
       ("circle-length-range",po::value< string >(),"select a range for the length of circles that are used to construct an automaton (csv pair of integers).")
       ("num-intersections-range",po::value< string >(),"select a range for the number of intersections of a newly added circle with existing circles in the automaton (csv pair of integers).")
       ("automata-dot-input",po::value< string >(),"reads in parallel automata with synchronized transitions from a given .dot file.")
+      ("keep-systems",po::value< string >(),"store computed parallel systems (over- and under-approximated STGs) during exploration  so that they do not need to be recomputed ([yes]|no).")
       ("use-components",po::value< string >(),"Selects which parallel components are chosen for analyzing the (approximated) state space ([all] | subset-fixed | subset-random).")
       ("fixed-components",po::value< string >(),"A list of IDs of parallel components used for analysis (e.g. \"1,2,4,7\"). Use only with \"--use-components=subset-fixed\".")
       ("num-random-components",po::value< int >(),"Number of different random components used for the analysis. Use only with \"--use-components=subset-random\". Default: min(3, <num-parallel-components>)")
+      ("num-components-ltl",po::value< int >(),"Number of different random components used to generate a random LTL property. Default: value of option --num-random-components (a.k.a. all analyzed components)")
       ("minimum-components",po::value< int >(),"Number of different parallel components that need to be explored together in order to be able to analyze the mined properties. (default: 3).")
       ("different-component-subsets",po::value< int >(),"Number of random component subsets. The solver will be run for each of the random subsets. Use only with \"--use-components=subset-random\" (default: no termination).")
       ("ltl-mode",po::value< string >(),"\"check\" checks the properties passed to option \"--check-ltl=<filename>\". \"mine\" searches for automatically generated properties that adhere to certain criteria. \"none\" means no LTL analysis (default).")
@@ -388,9 +393,12 @@ int main( int argc, char * argv[] ) {
       ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
       ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
       ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
+      ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")
+      ("max-time",po::value< long int >(),"Stop computing the STG after an analysis time of approximately <arg> seconds has been reached. (default: no limit). Currently requires --solver=12.")
       ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
       ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
-      ("max-memory-stg",po::value< int >(),"Stop computing the STG after it amounts to approximately <arg> Bytes of memory. (default: no limit). Currently requires --solver=12.")
+      ("max-memory-forced-top",po::value< long int >(),"Performs approximation after <arg> bytes of physical memory have been used (default: no limit). Currently requires options --exploration-mode=loop-aware-sync, --solver=12, and only supports Unix systems.")
+      ("max-time-forced-top",po::value< long int >(),"Performs approximation after an analysis time of approximately <arg> seconds has been reached. (default: no limit). Currently requires --solver=12.")
       ("resource-limit-diff",po::value< int >(),"Check if the resource limit is reached every <arg> computed estates.")
       ("print-all-options",po::value< string >(),"print the default values for all yes/no command line options.")
       ("rewrite","rewrite AST applying all rewrite system rules.")
@@ -497,6 +505,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("set-stg-incomplete",false);
 
+  boolOptions.registerOption("keep-systems",true);
   boolOptions.registerOption("output-with-results",false);
   boolOptions.registerOption("output-with-annotations",false);
 
@@ -599,6 +608,11 @@ int main( int argc, char * argv[] ) {
     }
 
     ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
+    if (boolOptions["keep-systems"]) {
+      explorer.setStoreComputedSystems(true);
+    } else {
+      explorer.setStoreComputedSystems(false);
+    }
     if (args.count("use-components")) {
       string componentSelection = args["use-components"].as<string>();
       if (componentSelection == "all") {
@@ -643,6 +657,11 @@ int main( int argc, char * argv[] ) {
 	  ROSE_ASSERT(0);
 	} else if (ltlMode == "mine") {
 	  explorer.setLtlMode(PAR_PRO_LTL_MODE_MINE);
+	  if (args.count("num-components-ltl")) {
+	    explorer.setNumberOfComponentsForLtlAnnotations(args["num-components-ltl"].as<int>());
+	  } else {
+	    explorer.setNumberOfComponentsForLtlAnnotations(std::min(3, (int) cfgsAsVector.size()));
+	  }
 	  if (args.count("minimum-components")) {
 	    explorer.setMinNumComponents(args["minimum-components"].as<int>());
 	  }
@@ -848,7 +867,7 @@ int main( int argc, char * argv[] ) {
     analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
-  if (args.count("max-memory-stg")) {
+  if (args.count("max-memory") || args.count("max-memory-forced-top") || args.count("max-time") || args.count("max-time-forced-top")) {
     bool notSupported=false;
     if(args.count("solver")) {
       int solver=args["solver"].as<int>();
@@ -860,11 +879,21 @@ int main( int argc, char * argv[] ) {
       notSupported=true; 
     }
     if(notSupported) {
-      cout << "Error: option \"--max-memory-stg\" currently requires \"--solver=12\"." << endl;
+      cout << "ERROR: options \"--max-memory\", \"--max-time\", \"--max-memory-forced-top\", and \"--max-time-forced-top\" currently require \"--solver=12\"." << endl;
       exit(1);
     }
-    long int maxBytes = args["max-memory-stg"].as<int>();
-    analyzer.setMaxBytesStg(maxBytes);
+    if (args.count("max-memory")) {
+      analyzer.setMaxBytes(args["max-memory"].as<long int>());
+    }
+    if (args.count("max-time")) {
+      analyzer.setMaxSeconds(args["max-time"].as<long int>());
+    }
+    if (args.count("max-memory-forced-top")) {
+      analyzer.setMaxBytesForcedTop(args["max-memory-forced-top"].as<long int>());
+    }
+    if (args.count("max-time-forced-top")) {
+      analyzer.setMaxSecondsForcedTop(args["max-time-forced-top"].as<long int>());
+    }
   }
 
   if(args.count("reconstruct-assert-paths")) {
@@ -1364,7 +1393,15 @@ int main( int argc, char * argv[] ) {
   long numOfConstEStates=0;//(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
   long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
 
+#if defined(__unix__) || defined(__unix) || defined(unix)
+  // Unix-specific solution to finding the peak phyisical memory consumption (rss). 
+  // Not necessarily supported by every OS.
+  struct rusage resourceUsage;
+  getrusage(RUSAGE_SELF, &resourceUsage);
+  long totalMemory=resourceUsage.ru_maxrss * 1024;
+#else
   long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
+#endif
 
   double totalRunTime=frontEndRunTime+initRunTime+analysisRunTime;
 

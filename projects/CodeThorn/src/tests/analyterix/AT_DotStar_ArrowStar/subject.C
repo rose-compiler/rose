@@ -32,4 +32,8 @@ int main() {
   void (**fp)(int) = &((a2.*void_int_func_mem_ptr) = func2);
   A* ap2 = new A();
   void (**fp2)(int) = &((ap2->*void_int_func_mem_ptr) = func3);
+
+  A a3, a4, a5;
+  A* ap3 = new A();
+  void (**fp3)(int) = &(&a4 > &a5 ? ((a3.*void_int_func_mem_ptr) = func2) : (ap3->*void_int_func_mem_ptr));
 }

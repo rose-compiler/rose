@@ -10,12 +10,14 @@ using namespace std;
 ParProAnalyzer::ParProAnalyzer():
 _startTransitionAnnotation(""),
 _transitionGraph(new ParProTransitionGraph()),
+_eStateSet(ParProEStateSet(true)),
 _numberOfThreadsToUse(1),
 _approximation(COMPONENTS_NO_APPROX) {}
 
 ParProAnalyzer::ParProAnalyzer(std::vector<Flow*> cfas):
 _startTransitionAnnotation(""),
 _transitionGraph(new ParProTransitionGraph()),
+_eStateSet(ParProEStateSet(true)),
 _numberOfThreadsToUse(1),
 _approximation(COMPONENTS_NO_APPROX) {
   init(cfas);
@@ -24,6 +26,7 @@ _approximation(COMPONENTS_NO_APPROX) {
 ParProAnalyzer::ParProAnalyzer(std::vector<Flow*> cfas, boost::unordered_map<int, int>& cfgIdToStateIndex): 
 _startTransitionAnnotation(""),
 _transitionGraph(new ParProTransitionGraph()),
+_eStateSet(ParProEStateSet(true)),
 _numberOfThreadsToUse(1),
 _approximation(COMPONENTS_NO_APPROX) {
   init(cfas, cfgIdToStateIndex);

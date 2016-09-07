@@ -23,6 +23,7 @@ DFAnalysisBase::DFAnalysisBase():
   _transferFunctions(0),
   _initialElementFactory(0),
   _analysisType(DFAnalysisBase::FORWARD_ANALYSIS),
+  _no_topological_sort(false),
   _pointerAnalysisInterface(0),
   _pointerAnalysisEmptyImplementation(0)
 {}
@@ -71,6 +72,7 @@ void DFAnalysisBase::computeAllPreInfo() {
 void DFAnalysisBase::computeAllPostInfo() {
   if(!_postInfoIsValid) {
     computeAllPreInfo();
+    cout << "INFO: computing post data."<<endl;
     // compute set of used labels in ICFG.
     for(Labeler::iterator i=getLabeler()->begin();i!=getLabeler()->end();++i) {
       Label lab=*i;
@@ -108,6 +110,14 @@ bool DFAnalysisBase::isForwardAnalysis() {
 
 bool DFAnalysisBase::isBackwardAnalysis() {
   return _analysisType==DFAnalysisBase::BACKWARD_ANALYSIS;
+}
+
+bool DFAnalysisBase::getNoTopologicalSort() {
+  return _no_topological_sort;
+}
+
+void DFAnalysisBase::setNoTopologicalSort(bool no_topological_sort) {
+  _no_topological_sort = no_topological_sort;
 }
 
 // outdated
@@ -155,8 +165,7 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
   cout << "INIT: establishing program abstraction layer." << endl;
   _programAbstractionLayer=new ProgramAbstractionLayer();
   _programAbstractionLayer->setModeArrayElementVariableId(variableIdForEachArrayElement);
-  // We will compute the function id mapping based on the ICFG later
-  _programAbstractionLayer->initialize(root, /*computeFunctionIdMapping=*/false);
+  _programAbstractionLayer->initialize(root);
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
   _pointerAnalysisEmptyImplementation->initialize();
   _pointerAnalysisEmptyImplementation->run();
@@ -178,9 +187,6 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
     int numReducedNodes=0; //_cfanalyzer->reduceBlockBeginNodes(_flow);
     cout << "INIT: Optimization finished (reduced nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
-  // Compute function id mapping based on the ICFG:
-  getFunctionIdMapping()->computeFunctionSymbolMapping(_flow, *getLabeler());
-
 
   ROSE_ASSERT(_initialElementFactory);
   for(long l=0;l<getLabeler()->numberOfLabels();++l) {
@@ -278,9 +284,13 @@ DFAnalysisBase::run() {
     cout<<"INFO: Initialized "<<*i<<" with ";
     cout<<_analyzerDataPreInfo[(*i).getId()]->toString(getVariableIdMapping());
     cout<<endl;
-    Flow outEdges=_flow.outEdges(*i);
-    for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
-      _workList.add(*j);
+    // schroder3 (2016-08-16): Topological sorted CFG as worklist initialization is currently
+    //  not supported for backward analyses. Add the extremal label's outgoing edges instead.
+    if(_no_topological_sort || !isForwardAnalysis()) {
+      Flow outEdges=_flow.outEdges(*i);
+      for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
+        _workList.add(*j);
+      }
     }
 #if 0
     LabelSet initsucc=_flow.succ(*i);
@@ -289,6 +299,21 @@ DFAnalysisBase::run() {
     }
 #endif
   }
+
+  // schroder3 (2016-08-16): Use the topological sorted CFG as worklist initialization. This avoids
+  //  unnecessary computations that might occur (e.g. if the if-branch and else-branch
+  //  do not have an equivalent number of nodes).
+  if(!_no_topological_sort && isForwardAnalysis()) {
+    ROSE_ASSERT(_extremalLabels.size() == 1);
+    Label startLabel = *(_extremalLabels.begin());
+    std::list<Edge> topologicalEdgeList = _flow.getTopologicalSortedEdgeList(startLabel);
+    cout << "INFO: Using topological sorted CFG as work list initialization." << endl;
+    for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
+      //cout << (*i).toString() << endl;
+      _workList.add(*i);
+    }
+  }
+
   cout<<"INFO: work list size after initialization: "<<_workList.size()<<endl;
   solve();
 }

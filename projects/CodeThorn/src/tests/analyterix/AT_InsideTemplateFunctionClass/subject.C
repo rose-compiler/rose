@@ -8,10 +8,10 @@ class TemplateClass {
 };
 
 template <class T>
-T tempFunc(T& t) {
+T tempFunc(T& t_ref) {
   int i_temp2 = 0;
   &i_temp2;
-  return t;
+  return t_ref;
 }
 
 int main() {
@@ -20,4 +20,7 @@ int main() {
 
   int i = 1;
   int i2 = tempFunc<int>(i);
+
+  int (*fp)(int&);
+  fp = tempFunc<int>;
 }
