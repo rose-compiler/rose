@@ -102,6 +102,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_56.C \
    test2014_57.C \
    test2014_58.C \
+   test2014_60.C \
+   test2014_61.C \
    test2014_62.C \
    test2014_67.C \
    test2014_68.C \
@@ -449,10 +451,11 @@ NEW_TESTCODES += \
    test2013_243.C 
 endif
 
+# DQ (8/20/2016): These are now fixed.
 # These is a single bug represented in two test codes and from the guys working on SystemC.
-FAILING_TESTS_SYSTEMC = \
-   test2014_60.C \
-   test2014_61.C 
+# FAILING_TESTS_SYSTEMC = \
+#    test2014_60.C \
+#    test2014_61.C 
 
 
 if !ROSE_USE_EDG_VERSION_4_7
