@@ -8,7 +8,7 @@
 #include <Sawyer/CommandLine.h>
 
 //Rama (12/22/2006): changing the class to a namespace and removing the "static"ness of the "member" functions
-
+//! Command line processing utility functions
 namespace CommandlineProcessing
    {
           /** Generic command-line components.
