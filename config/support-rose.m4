@@ -2134,10 +2134,10 @@ tests/nonsmoke/Makefile
 tests/nonsmoke/ExamplesForTestWriters/Makefile
 tests/nonsmoke/acceptance/Makefile
 tests/nonsmoke/functional/Makefile
-tests/nonsmoke/functional/binaryAnalysis/Makefile
-tests/nonsmoke/functional/binaryAnalysis/libraryIdentification_tests/Makefile
-tests/nonsmoke/functional/binaryAnalysis/Pin_tests/Makefile
-tests/nonsmoke/functional/binaryAnalysis/Dwarf_tests/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Dwarf_tests/Makefile
 tests/nonsmoke/specimens/Makefile
 tests/nonsmoke/specimens/binary/Makefile
 tests/nonsmoke/specimens/c/Makefile
@@ -2146,8 +2146,9 @@ tests/nonsmoke/specimens/fortran/Makefile
 tests/nonsmoke/specimens/java/Makefile
 tests/nonsmoke/unit/Makefile
 tests/smoke/Makefile
+tests/smoke/ExamplesForTestWriters/Makefile
 tests/smoke/functional/Makefile
-tests/smoke/functional/binaryAnalysis/Makefile
+tests/smoke/functional/BinaryAnalysis/Makefile
 tests/smoke/specimens/Makefile
 tests/smoke/specimens/binary/Makefile
 tests/smoke/specimens/c/Makefile

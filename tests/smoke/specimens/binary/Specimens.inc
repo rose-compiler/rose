@@ -8,4 +8,4 @@
 
 smoke_specimens_binary_directory = $(abspath $(top_srcdir))/tests/smoke/specimens/binary
 
-smoke_specimens_binary_list = x86-simple
+smoke_specimens_binary_list = x86-elf-exe

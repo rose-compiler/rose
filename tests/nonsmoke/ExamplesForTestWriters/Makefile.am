@@ -1,5 +1,7 @@
 # This makefile serves as the canonical example for writing tests.  When creating your own, don't both
 # copying these extensive comments -- refer back to this file instead if you want.
+#
+# See also, tests/smoke/ExamplesForTestWriters/Makefile.am
 
 
 ########################################################################################################################
@@ -61,14 +63,14 @@ checkCompilation_SOURCES = checkCompilation.C
 #
 # The next level of checker is one that we compile and run, but it doesn't need to process any specimens.
 
-noinst_PROGRAMS += checkNoInputs
-checkNoInputs_SOURCES = checkNoInputs.C
+noinst_PROGRAMS += noInputs
+noInputs_SOURCES = noInputs.C
 
 # In this case, the test is one checker run with no specimens. We'll use the checker name as the basis for the
 # make target. The convention is that test targets end with ".passed", and that the list of all targets is saved
 # in a make variable named $(TEST_TARGETS).
 
-TEST_TARGETS += checkNoInputs.passed
+TEST_TARGETS += noInputs.passed
 
 # The test itself should depend on the checker and all specimens (in this case none). The command should be to run
 # the ROSE Test Harness (RTH). It's documentation can be found by running "$ROSE/scripts/rth_run.pl --help". In short,
@@ -95,12 +97,12 @@ TEST_TARGETS += checkNoInputs.passed
 #  11. It can organize tests so that they don't need to run again if they already passed (i.e., *.passed exists)
 #  12. Tests can share RTH configuration files so commands don't need to be repeated in the makefile.
 
-checkNoInputs.passed: checkNoInputs
+noInputs.passed: noInputs
 	@$(RTH_RUN)							\
 		TITLE="run something basic [$@]"			\
-		CMD="$$(pwd)/checkNoInputs"				\
 		USE_SUBDIR=yes						\
-		$(abspath $(top_srcdir))/scripts/test_exit_status $@
+		CMD="$$(pwd)/noInputs"					\
+		$(top_srcdir)/scripts/test_exit_status $@
 
 
 
@@ -111,28 +113,28 @@ checkNoInputs.passed: checkNoInputs
 # specimens can be easily changed, although in such a small example it might be clearer to list all three tests
 # explicitly.
 
-noinst_PROGRAMS += checkWithInput
-checkWithInput_SOURCES = checkWithInput.C
+noinst_PROGRAMS += parser
+parser_SOURCES = parser.C
 
 # The explicit list of specimens. If you have specimens coming from multiple specimen directories you'll have to
 # include the directory name and make special provisions below to prevent conflicts in the test target names.
 
-checkWithInput_specdir = $(nonsmoke_specimens_binary_directory)
-checkWithInput_specimens = i386-fcalls i386-fld i386-lea
+parser_specdir = $(nonsmoke_specimens_binary_directory)
+parser_specimens = i386-fcalls i386-fld i386-lea
 
 # Create test target names by combining the checker name with the specimen name.  There are three specimens, thus
 # we'll have three test names corresponding to three make targets. Again, we use the convention that test targets
 # always end with ".passed".
 
-checkWithInput_targets = $(addprefix checkWithInput_, $(addsuffix .passed, $(checkWithInput_specimens)))
-TEST_TARGETS += $(checkWithInput_targets)
+parser_targets = $(addprefix parser_, $(addsuffix .passed, $(parser_specimens)))
+TEST_TARGETS += $(parser_targets)
 
 # For this example, we expect our checker to produce some output and we want to match that output against a
 # known, good answer.  The convention for $(RTH_RUN) is that the answer is stored in the same directory as
 # the checker and that they have the extension ".ans".  It's fine (and works) to use some other convention, although
 # doing so ends up being slightly more work in the long run.
 
-checkWithInput_answers = $(checkWithInput_targets:.passed=.ans)
+parser_answers = $(parser_targets:.passed=.ans)
 
 # Declare the make targets for these tests using a pattern rule. Each test target depends on the checker, the
 # input specimen, and the expected answer that corresponds with the test. The "$*" in the body expands to whatever
@@ -143,20 +145,20 @@ checkWithInput_answers = $(checkWithInput_targets:.passed=.ans)
 # for cleaning up after it without indiscriminately removing any additional files that a developer might have put
 # there himself -- don't just say things like "rm *.o"!).
 
-$(checkWithInput_targets): checkWithInput_%.passed: checkWithInput $(checkWithInput_specdir)/% checkWithInput_%.ans
-	@$(RTH_RUN)								\
-		TITLE="parsing is accurate for $* [$@]"			\
-		CMD="$$(pwd)/checkWithInput $(checkWithInput_specdir)/$*"	\
-		ANS="$(abspath $(srcdir))/checkWithInput_$*.ans"		\
-		USE_SUBDIR=yes							\
-		$(abspath $(top_srcdir))/scripts/test_with_answer $@
+$(parser_targets): parser_%.passed: parser $(parser_specdir)/% parser_%.ans
+	@$(RTH_RUN)						\
+		TITLE="parsing is accurate for $* [$@]"	\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/parser $(parser_specdir)/$*"	\
+		ANS="$(abspath $(srcdir))/parser_$*.ans"	\
+		$(top_srcdir)/scripts/test_with_answer $@
 
 # This step is optional, but sometimes it's useful to have additional make targets for running one group of tests,
 # such as this checker run on these three specimens.  You can use whatever names you like (this is your makefile), but
-# my approach is to use "check-<checkername>" (which in this example with its generic checker name is a little awkward).
+# my approach is to use "check-<checkername>"
 
-.PHONY: check-checkWithInput
-check-checkWithInput: $(checkWithInput_targets)
+.PHONY: check-parser
+check-parser: $(parser_targets)
 
 
 
@@ -166,36 +168,72 @@ check-checkWithInput: $(checkWithInput_targets)
 # Here's a more complicated example that runs one checker on many specimens with the specimen list coming from some
 # other location. As the list is updated we automatically create more tests.
 #
-# We'll use the same checkWithInput as above, so no need for adding it noinst_PROGRAMS again.  However, we will need
-# to use some other prefix for our variables, such as "cwi2" (for checkWithInput #2).
+# We'll use the same "parser" checker as above, so no need for adding it noinst_PROGRAMS again.  However, we will need
+# to use some other prefix for our variables, such as "parser2".
 
 # Our specimens are all ELF executables except those for the MIPS architecture. This wildcard matching is why we've
 # included SpecimenSets.inc instead of (or really, in addition to) Specimens.inc. The pattern is
 # nonsmoke_specimens_binary_<container>_<filetype>_<architecture>. Another common example is filtering out specific
 # specimens that you know are not meant to work (not shown here).
 
-cwi2_specdir = $(nonsmoke_specimens_binary_directory)
-cwi2_specimens = $(filter-out $(nonsmoke_specimens_binary_any_any_mips), $(nonsmoke_specimens_binary_elf_exe_any))
+parser2_specdir = $(nonsmoke_specimens_binary_directory)
+parser2_specimens = $(filter-out $(nonsmoke_specimens_binary_any_any_mips), $(nonsmoke_specimens_binary_elf_exe_any))
 
 # Create the list of test targets
-cwi2_targets = $(addprefix cwi2_, $(addsuffix .passed, $(cwi2_specimens)))
-TEST_TARGETS += $(cwi2_targets)
+parser2_targets = $(addprefix parser2_, $(addsuffix .passed, $(parser2_specimens)))
+TEST_TARGETS += $(parser2_targets)
 
 # Create the make target rules. This time we don't compare with an answer file because it would mean that if someone
 # added a new specimen they'd need to know how to also create a new answer file. Binary analysis often takes this
 # approach (using answers) but everyone that would add a new binary specimen also knows how to create and manually
 # verify the answers for each checker.
 
-$(cwi2_targets): cwi2_%.passed: checkWithInput $(cwi2_specdir)/%
-	@$(RTH_RUN)								\
-		TITLE="parsing passes (no answer) for $* [$@]"			\
-		CMD="$$(pwd)/checkWithInput $(checkWithInput_specdir)/$*"	\
-		USE_SUBDIR=eys							\
-		$(abspath $(top_srcdir))/scripts/test_exit_status $@
+$(parser2_targets): parser2_%.passed: parser $(parser2_specdir)/%
+	@$(RTH_RUN)						\
+		TITLE="parsing passes (no answer) for $* [$@]"	\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/parser $(parser2_specdir)/$*"	\
+		$(top_srcdir)/scripts/test_exit_status $@
 
 # A rule for running just these tests
-.PHONY: check-cwi2
-check-cwi2: $(cwi2_targets)
+.PHONY: check-parser2
+check-parser2: $(parser2_targets)
+
+
+########################################################################################################################
+# A smoke checker that needs to run on non-smoke specimens
+#
+# This time we have a checker on the smoke side (presumably because it needs to be run on some smoke specimens) that
+# we also want to run on some non-smoke specimens.  The only change that needs to be made is that instead of compiling
+# the checker in this directory, we need to compile it in the smoke directory.  If you have a lot of this situation then
+# it's convenient to declare these two variables at the top of this non-smoke makefile:
+
+# Smoke directories corresponding to our non-smoke $(srcdir) and $(blddir) directories
+SMOKE_SRCDIR = $(abspath $(top_srcdir))/tests/smoke/ExamplesForTestWriters
+SMOKE_BLDDIR = $(abspath $(top_builddir))/tests/smoke/ExamplesForTestWriters
+
+# If the checker's dependencies are simple, here's the easy way to build it.
+$(SMOKE_BLDDIR)/runAlgorithm: $(SMOKE_SRCDIR)/runAlgorithm.C
+	$(MAKE) -C $(SMOKE_BLDDIR) runAlgorithm
+
+# Get a list of specimens. We'll hard code a list this time.
+runAlgorithm_specimens = $(nonsmoke_specimens_binary_elf_exe_amd64)
+
+# Create the test targets
+runAlgorithm_targets = $(addprefix runAlgorithm_, $(addsuffix .passed, $(runAlgorithm_specimens)))
+TEST_TARGETS += $(runAlgorithm_targets)
+
+# The test rules need to depend on the checker in the smoke build directory
+$(runAlgorithm_targets): runAlgorithm_%.passed: $(SMOKE_BLDDIR)/runAlgorithm
+	@$(RTH_RUN)						\
+		TITLE="algorithm foo on $* [$@]"		\
+		USE_SUBDIR=yes					\
+		CMD="$< --algorithm=foo $*"			\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+# A rule for running just these tests
+.PHONY: check-runAlgorithm
+check-runAlgorithm: $(runAlgorithm_targets)
 
 
 

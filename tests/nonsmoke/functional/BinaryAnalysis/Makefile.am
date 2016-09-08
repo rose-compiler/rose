@@ -17,6 +17,10 @@ if USE_BINARY_ANALYSIS_TESTS
 # Location of binary specimens
 SPECIMEN_DIR = $(nonsmoke_specimens_binary_directory)
 
+# Corresponding smoke directory
+SMOKE_BLDDIR = $(abspath $(top_builddir))/tests/smoke/functional/BinaryAnalysis
+SMOKE_SRCDIR = $(abspath $(top_srcdir))/tests/smoke/functional/BinaryAnalysis
+
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
 
@@ -825,9 +829,9 @@ verifySemantics.passed: $(TEST_EXIT_STATUS) verifySemantics
 # + PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
 # + The pocketputty.exe pocketputty2.exe puttytel.exe are not good unit tests because they're too large; they take too
 #   long when extensive debugging is enabled on heavily loaded or slow machines.
-noinst_PROGRAMS += testPartitioner2
-testPartitioner2_SOURCES = testPartitioner2.C
-testPartitioner2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+$(SMOKE_BLDDIR)/testPartitioner2: $(SMOKE_SRCDIR)/testPartitioner2.C
+	$(MAKE) -C $(SMOKE_BLDDIR) testPartitioner2
 
 # Be careful where the comma is located!
 testPartitioner2_specimens = $(filter-out		\
@@ -843,18 +847,13 @@ EXTRA_DIST += $(testPartitioner2_answers)
 TEST_TARGETS += $(testPartitioner2_test_targets)
 TEST_TARGETS += testPartitioner2_buffer2.bin.passed
 
-#BEGIN TEMPORARY [RPM 2015-02-19]
-#$(testPartitioner2_answers): testPartitioner2_%.ans:
-#	./testPartitioner2 $(testPartitioner2_directory)/$* >$@
-#	mv $@ $(srcdir)/$@
-#END TEMPORARY [RPM 2015-02-19]
-
-$(testPartitioner2_test_targets): testPartitioner2_%.passed: $(SPECIMEN_DIR)/% testPartitioner2 testPartitioner2_%.ans
-	@$(RTH_RUN)												\
-		TITLE="testPartitioner2 $(notdir $<) [$@]"							\
-		USE_SUBDIR=yes											\
-		CMD="$$(pwd)/testPartitioner2 $(if $(findstring exefmt,$<), --no-inter-function-calls) $<"	\
-		ANS="$(srcdir)/testPartitioner2_$*.ans"							\
+$(testPartitioner2_test_targets): \
+testPartitioner2_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 testPartitioner2_%.ans
+	@$(RTH_RUN)													\
+		TITLE="testPartitioner2 $(notdir $<) [$@]"								\
+		USE_SUBDIR=yes												\
+		CMD="$(SMOKE_BLDDIR)/testPartitioner2 $(if $(findstring exefmt,$<), --no-inter-function-calls) $<"	\
+		ANS="$(srcdir)/testPartitioner2_$*.ans"								\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 .PHONY: check-testPartitioner2
