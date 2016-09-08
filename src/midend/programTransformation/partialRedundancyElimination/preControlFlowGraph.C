@@ -5,7 +5,7 @@
 #include "sageBuilder.h"
 #include "CFG.h"
 #include <AstInterface_ROSE.h>
-#include "controlFlowGraph.h"
+#include "preControlFlowGraph.h"
 
 using namespace std;
 

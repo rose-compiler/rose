@@ -999,9 +999,23 @@ $CLASSNAME::get_mangled (void) const
              }
             else
              {
+            // DQ (9/6/2016): This is where the name of the class is used and where it can collide with a 
+            // complex type (SgTypeComplex) if the class name is "_Complex".  This is why we need something
+            // other than the name to be used here.  Unclear if a single prefix is sufficent or if we need 
+            // a different prefix for each type of named type.  It come down to is there can be multiple 
+            // types with the same name, and there is only a choice of SgNamedTypes: SgClassType, SgTypedefType, 
+            // and SgEnumType.  These can't have the same name, so we need not have a unity prefix for each type.
+            // I think the issue is that MANGLED_ID_STRING is not defined for any of the SgNameType IR nodes.
+#if 0
+               printf ("In get_mangled(void): (get_type_kind() != NULL): this = %p = %s MANGLED ID STRING = %s \n",this,this->class_name().c_str(),"MANGLED_ID_STRING");
+#endif
                name += SageInterface::generateUniqueName(get_type_kind(),false);
              }
         }
+
+#if 0
+     printf ("Leaving get_mangled(void): this = %p = %s MANGLED_ID_STRING = %s \n",this,this->class_name().c_str(),"MANGLED_ID_STRING");
+#endif
 
      return name;
    }
@@ -3382,9 +3396,11 @@ SgName
 SgClassType::get_mangled(void) const
    {
      ROSE_ASSERT(this != NULL);
+
 #if 0
      printf ("In SgClassType::get_mangled(): get_name() = %s \n",get_name().str());
 #endif
+
      SgName mangled_name;
   // if (get_name().get_length() != 0) // not anonymous
      if (get_name().is_null() == false) // not anonymous
@@ -3419,11 +3435,15 @@ SgClassType::get_mangled(void) const
                  // This is for just a simple SgClassDeclaration.
                     mangled_name = class_decl->get_mangled_name();
 #if 0
-                    printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration calling class_decl->get_mangled_name() --- mangled_name = %s \n",mangled_name.str());
+                    printf ("In SgClassType::get_mangled(): SgClassDeclaration calling class_decl->get_mangled_name() --- mangled_name = %s \n",mangled_name.str());
 #endif
                   }
              }
         }
+
+#if 0
+     printf ("Leaving SgClassType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
 
      return mangled_name;
    }
