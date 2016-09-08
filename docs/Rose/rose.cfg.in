@@ -753,6 +753,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
                          @top_srcdir@/src/frontend/BinaryFormats \
+                         @top_srcdir@/src/midend/abstractHandle \
                          @top_srcdir@/src/midend/binaryAnalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/dataflowanalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics \
