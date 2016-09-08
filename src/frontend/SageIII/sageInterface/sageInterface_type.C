@@ -472,6 +472,9 @@ bool isPointerToNonConstType(SgType* type)
         return false;
         break;
 
+   // DQ (9/7/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
+      case V_SgTypeSigned128bitInteger:
+
         // DQ (8/27/2006): Changed name of SgComplex to make it more consistant with other 
         // type names and added SgTypeImaginary IR node (for C99 complex support).
       case V_SgTypeComplex:
@@ -618,6 +621,9 @@ bool isCopyConstructible(SgType* type)
             return isCopyConstructible(isSgTypedefType(type)->get_base_type());
             break;
 
+     // DQ (9/7/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
+        case V_SgTypeSigned128bitInteger:
+
         case V_SgReferenceType:
             // DQ (8/27/2006): Changed name of SgComplex to make it more consistent with other 
             // type names and added SgTypeImaginary IR node (for C99 complex support).
@@ -658,6 +664,8 @@ bool isCopyConstructible(SgType* type)
     }
     return true;
 }
+
+
   // Is a type assignable?  This may not quite work properly.
   // Liao, 3/3/2009 based on the code for isCopyConstructible()
   // TYPE a, b; is a=b; allowed ?
@@ -733,6 +741,9 @@ bool isCopyConstructible(SgType* type)
         return isAssignable(isSgTypedefType(type)->get_base_type());
         break;
 
+     // DQ (9/7/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
+        case V_SgTypeSigned128bitInteger:
+
       case V_SgTypeComplex: // C99 complex is assignable
       case V_SgTypeImaginary:
       case V_SgEnumType:
@@ -774,6 +785,10 @@ bool isCopyConstructible(SgType* type)
   // Does a type have a trivial (built-in) destructor?
   bool hasTrivialDestructor(SgType* t) {
     switch (t->variantT()) {
+
+     // DQ (9/7/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
+        case V_SgTypeSigned128bitInteger:
+
       // DQ (8/27/2006): Changed name of SgComplex to make it more consistant with other 
       // type names and added SgTypeImaginary IR node (for C99 complex support).
       case V_SgTypeComplex:
