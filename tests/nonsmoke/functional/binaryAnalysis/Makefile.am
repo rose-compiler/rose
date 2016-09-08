@@ -25,22 +25,6 @@ TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
 
 
 ###############################################################################################################################
-# Check boost consistency
-###############################################################################################################################
-noinst_PROGRAMS += testBoost
-testBoost_SOURCES = testBoost.C
-testBoost_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-TEST_TARGETS += testBoost.passed
-
-testBoost.passed: $(TEST_EXIT_STATUS) testBoost
-	@$(RTH_RUN)				\
-		TITLE="boost linkage [$@]"	\
-		CMD="./testBoost"		\
-		$< $@
-
-
-###############################################################################################################################
 # Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
 ###############################################################################################################################
 noinst_PROGRAMS += testSymbolicExprParser
