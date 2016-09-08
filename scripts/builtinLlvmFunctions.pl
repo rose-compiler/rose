@@ -5,6 +5,18 @@
 This script reads the LLVM Builtins.def file (specified on the command-line or provided as standard input) and produces a
 C++ .h file on standard output. The generated .h file contains declarations for the built-in functions.
 
+=head1 SWITCHES
+
+=over
+
+=item --constexpr=filename
+
+Obtain a list of function names from the specified file. These are the functions that should have "constexpr" added
+to their return type. The functions should be listed one per line. Lines whose first non-space character is '#' are
+ignored.
+
+=back
+
 =cut
 
 
@@ -144,6 +156,27 @@ sub commentary {
 }
 
 ########################################################################################################################
+# Process command-line
+my %constexprs;
+while (@ARGV && $ARGV[0] =~ /^-/) {
+    my($arg) = shift @ARGV;
+    if ($arg eq '--') {
+	last;
+    } elsif ($arg =~ /^--constexpr=(.+)/) {
+	# Read the file that contains a list of function names that need "constexpr" added to their return type.
+	open F, "<", $1 or die "cannot open $1: $!\n";
+	while (<F>) {
+	    if (/^\s*([a-zA-Z_]\w*)\s*$/ && substr($1,0,1) ne "#") {
+		$constexprs{$1} = "ROSE_CONSTEXPR";
+	    }
+	}
+	close F;
+    } elsif ($arg =~ /^-/) {
+	die "unknown argument: $arg\n";
+    }
+}
+
+########################################################################################################################
 commentary;
 print "\n" x 10;
 while (<>) {
@@ -157,12 +190,13 @@ while (<>) {
             print STDERR "$0: error: unrecognized attribute type specification '$letter'\n    at $ARGV:$.: $_";
             $status = 1;
         } else {
-            my($decl) = "$retval $fname(" . join(", ", @argtypes) . ") $attribute;";
+            my($decl) = "$constexprs{$fname} $retval $fname(" . join(", ", @argtypes) . ") $attribute;";
             # This cleanup is entirely optional, but it makes the output look nicer.
             $decl =~ s/\s{2,}/ /g;                 # single spaces only
             $decl =~ s/\s*(\W)\s*/$1/g;            # remove spacing around non-word tokens
             $decl =~ s/,/, /g;                     # add spaces after commas
             $decl =~ s/([)*])(\w)/$1 $2/g;         # space between certain things
+	    $decl =~ s/^\s+//;			   # remove space at beginning of line
             print $decl, "\n";
         }
     } elsif (/^\s*BUILTIN\b/) {
