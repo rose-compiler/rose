@@ -13489,7 +13489,10 @@ SgClassDeclaration::get_mangled_name(void) const
        // DQ (3/14/2012): I think that we can assert this.  No, if the scope is SgGlobal (for example) then the mangledName is empty.
        // ROSE_ASSERT(mangledScopeName.is_null() == false);
 
-          SgName mangledName = joinMangledQualifiers(mangledScopeName,get_name());
+       // DQ (9/6/2016): We require a prefix to the name to avoid name collisions (see test2005_199.C and simplified test (but non-failing) in test2016_60.C).
+       // SgName mangledName = joinMangledQualifiers(mangledScopeName,get_name());
+          SgName prefixed_name = "class_" + get_name();
+          SgName mangledName = joinMangledQualifiers(mangledScopeName,prefixed_name);
 #if 0
           printf ("In SgClassDeclaration::get_mangled_name(): (NOT found in cache) mangledName = %s \n",mangledName.str());
 #endif
@@ -14766,9 +14769,11 @@ SgEnumDeclaration::get_mangled_name (void) const
                   }
              }
 
+       // DQ (9/6/2016): We require a prefix to the name to avoid name collisions (see test2005_199.C and simplified test (but non-failing) in test2016_60.C).
        // SgName mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()),get_name());
-          SgName mangledName = joinMangledQualifiers (mangleQualifiersString,get_name());
-
+       // SgName mangledName = joinMangledQualifiers (mangleQualifiersString,get_name());
+          SgName prefixed_name = "enum_" + get_name();
+          SgName mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name);
 #if 0
           printf ("In SgEnumDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #endif
@@ -16020,7 +16025,10 @@ SgTypedefDeclaration::get_mangled_name (void) const
 #endif
              }
 
-          mangledName = joinMangledQualifiers (mangleQualifiersString,get_name()) + baseType->get_mangled();
+       // DQ (9/6/2016): We require a prefix to the name to avoid name collisions (see test2005_199.C and simplified test (but non-failing) in test2016_60.C).
+       // mangledName = joinMangledQualifiers (mangleQualifiersString,get_name()) + baseType->get_mangled();
+          SgName prefixed_name = "typedef_" + get_name();
+          mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseType->get_mangled();
 
        // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
           mangledName += "__typedef_declaration";

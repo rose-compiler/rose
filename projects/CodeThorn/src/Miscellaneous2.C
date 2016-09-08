@@ -166,3 +166,38 @@ int SPRAY::randomIntInRange(pair<int,int> range) {
   return range.first + (rand() % rangeLength);
 }
 
+list<int> SPRAY::nDifferentRandomIntsInSet(int n, set<int> values) {
+  list<int> result;
+  list<int> indices = nDifferentRandomIntsInRange(n, pair<int,int>(0, values.size() - 1));
+  indices.sort();
+  set<int>::iterator iterSet = values.begin();
+  list<int>::iterator iterIndices = indices.begin();
+  int index = 0;
+  while(iterIndices != indices.end()) {
+    // move to the next chosen set element (virtual index)
+    while(index < *iterIndices) {
+      ++iterSet;
+      ++index;
+    }
+    // add set element to the results
+    result.push_back(*iterSet);
+    ++iterIndices;
+  }
+  return result;
+}
+
+list<int> SPRAY::nDifferentRandomIntsInRange(int n, pair<int,int> range) {
+  list<int> result;
+  for (int i = 0; i < n; ++i) {
+    int chosen_intermediate = randomIntInRange( pair<int,int>(range.first, (range.second - i)) );
+    int chosen_final = chosen_intermediate;
+    for (list<int>::const_iterator k=result.begin(); k!=result.end(); ++k) {
+      if (*k <= chosen_intermediate) {
+	++chosen_final;
+      }
+    }
+    result.push_back(chosen_final);
+  }
+  return result;
+}
+
