@@ -321,6 +321,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                break;
              }
 
+       // DQ (9/6/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
+          case V_SgTypeSigned128bitInteger:
+
        // DQ (2/2/2011): Unclear if there is anything to do here for this type (any associated IR nodes would have been visited already).
           case V_SgTypeLabel:
 

@@ -207,7 +207,7 @@ for currTestDir in "${TEST_ROOT_DIR}"*; do
     
     # Run analyterix with the given arguments and echo the command before:
     echo -e "${TEST_MSG_PREFIX}Executing analyterix${TIMEOUT_MSG} by using the following command:"
-    echoAndRunCommand "${TIMEOUT}" "${TEST_MSG_PREFIX}" "$BUILDDIR/analyterix ${INPUT_FILE} -rose:output ${ANNOTATED_OUTPUT_FILE} ${ARGUMENTS}"
+    echoAndRunCommand "${TIMEOUT}" "${TEST_MSG_PREFIX}" "$BUILDDIR/analyterix ${INPUT_FILE} --edg:no_warnings -rose:output ${ANNOTATED_OUTPUT_FILE} ${ARGUMENTS}"
     # Check whether the execution was not successful:
     ANALYTERIX_EXIT_CODE=$?
     if [ ! "${ANALYTERIX_EXIT_CODE}" -eq "0" ]; then
