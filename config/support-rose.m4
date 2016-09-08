@@ -2147,6 +2147,7 @@ tests/nonsmoke/specimens/java/Makefile
 tests/nonsmoke/unit/Makefile
 tests/smoke/Makefile
 tests/smoke/functional/Makefile
+tests/smoke/functional/binaryAnalysis/Makefile
 tests/smoke/specimens/Makefile
 tests/smoke/specimens/binary/Makefile
 tests/smoke/specimens/c/Makefile
