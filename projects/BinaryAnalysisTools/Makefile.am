@@ -4,7 +4,6 @@ pkginclude_HEADERS =
 EXTRA_DIST =
 MOSTLYCLEANFILES =
 TEST_TARGETS =
-BINARY_SPECIMENS = $(top_srcdir)/binaries/samples
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
@@ -228,11 +227,11 @@ pkginclude_HEADERS +=				\
 #------------------------------------------------------------------------------------------------------------------------
 # find similar functions in two specimens
 
-if ROSE_USE_DLIB
+if ROSE_HAVE_DLIB
 
 bin_PROGRAMS += findSimilarFunctions
 findSimilarFunctions_SOURCES = findSimilarFunctions.C
-findSimilarFunctions_CPPFLAGS = $(ROSE_INCLUDES) -I$(DLIB_PREFIX)
+findSimilarFunctions_CPPFLAGS = $(ROSE_INCLUDES)
 findSimilarFunctions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 endif
@@ -285,10 +284,11 @@ x86_function_vas_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 ########################################################################################################################
 ########################################################################################################################
 
-# Uses the debugSemantics and a carefully crafted input specimen to test features of RegisterStateGeneric
+# Uses the debugSemantics and a carefully crafted input specimen to test features of RegisterStateGeneric.
+
 TEST_TARGETS += testAdaptiveRegisters.passed
-testAdaptiveRegisters.passed: $(BINARY_SPECIMENS)/x86-64-adaptiveRegs		\
-			      $(srcdir)/TestAnswers/testAdaptiveRegisters.ans	\
+testAdaptiveRegisters.passed: $(srcdir)/specimens/x86-64-adaptiveRegs		\
+			      $(srcdir)/TestAnswers/testAdaptiveRegisters.ans		\
 			      debugSemantics
 	@$(RTH_RUN)												\
 		TITLE="RegisterStateGeneric [$@]"								\

@@ -117,15 +117,7 @@ graph_test_6a.passed: inputCode_main.C graph_test_6
 		$(TEST_EXIT_STATUS) $@
 
 TEST_TARGETS += graph_test_6b.passed
-graph_test_6b.passed: $(top_srcdir)/binaries/samples/x86-64-ctrlaltdel graph_test_6
-	@$(RTH_RUN) \
-		DISABLED="not automatically tested by original makefile" \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/graph_test_6 $(abspath $<)" \
-		$(TEST_EXIT_STATUS) $@
-
-TEST_TARGETS += graph_test_6c.passed
-graph_test_6c.passed: $(top_srcdir)/binaries/samples/pocketputty.exe graph_test_6
+graph_test_6b.passed: $(top_srcdir)/tests/smoke/specimens/binary/x86-elf-exe graph_test_6
 	@$(RTH_RUN) \
 		DISABLED="not automatically tested by original makefile" \
 		USE_SUBDIR=yes \

@@ -306,6 +306,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_97.C \
    lulesh.C \
    luleshTALC.C \
+   Area-01.C \
    $(NEW_TESTCODES)
 
 # DQ (11/13/2015): Added test codes:
@@ -449,6 +450,7 @@ NEW_TESTCODES = \
 # test2016_51.C
 # test2016_52.C
 # test2016_53.C
+# test2016_71.C
 
 # DQ (6/6/2016): This is a cpp generated file and too specific to later version gnu 
 # compilers (gnu 4.8.x and later and or later versions of RedHat (RH 7 and later)).
@@ -1434,7 +1436,7 @@ test2013_236.C.passed: $(TEST_TRANSLATOR)
 # and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
 test_unparse_includes_option.passed: $(TEST_TRANSLATOR)
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/16/2013): Test linking the resulting translated file. Phil Miller reported an error and the issue
 # is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
