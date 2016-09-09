@@ -10,7 +10,7 @@ int
 main(int argc, char** argv)
 {
     // CH (2/2/2010): Skip this test since access denied
-    return 0;
+    return 1;
 
     FileNameClassification classification;
 

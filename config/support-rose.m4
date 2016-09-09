@@ -2138,6 +2138,7 @@ tests/nonsmoke/functional/BinaryAnalysis/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Dwarf_tests/Makefile
+tests/nonsmoke/functional/Utility/Makefile
 tests/nonsmoke/specimens/Makefile
 tests/nonsmoke/specimens/binary/Makefile
 tests/nonsmoke/specimens/c/Makefile
@@ -2289,7 +2290,6 @@ tests/roseTests/roseHPCToolkitTests/data/03/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/roseHPCToolkitTests/data/Makefile
-tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
