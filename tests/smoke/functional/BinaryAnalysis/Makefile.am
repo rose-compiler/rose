@@ -1,6 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/tests/smoke/specimens/binary/Specimens.inc
 
+if USE_BINARY_ANALYSIS_TESTS
+
 noinst_PROGRAMS =
 TEST_TARGETS =
 EXTRA_DIST =
@@ -39,6 +41,8 @@ check-testPartitioner2: $(testPartitioner2_targets)
 ###############################################################################################################################
 # Boilerplate
 ###############################################################################################################################
+
+endif
 
 check-smoke-local: $(TEST_TARGETS)
 check-nonsmoke-local:
