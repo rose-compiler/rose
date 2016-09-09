@@ -1303,6 +1303,14 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #endif
 
 #if 0
+     printf ("In unparseLanguageSpecificStatement(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseLanguageSpecificStatement(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
+#if 0
   // Debugging support
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
      if (declarationStatement != NULL)
@@ -1564,6 +1572,14 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
      printf ("In unparseLanguageSpecificStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
      curprint (string("/* Inside of unparseLanguageSpecificStatement() stmt = ") + stmt->class_name() + " */ \n");
 #endif
+
+#if 0
+     printf ("Leaving unparseLanguageSpecificStatement(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("Leaving unparseLanguageSpecificStatement(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
    }
 
 
@@ -7506,6 +7522,9 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      ninfo.set_SkipClassDefinition();
 
+  // DQ (9/9/2016): Added to conform to unifor testing that these are always equal.
+     ninfo.set_SkipEnumDefinition();
+               
   // DQ (10/13/2006): test2004_133.C demonstrates where we need to unparse qualified names for class definitions (defining declaration).
   // DQ (10/11/2006): Don't generate qualified names for the class name of a defining declaration
   // ninfo.set_SkipQualifiedNames();
@@ -7526,6 +7545,9 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      ninfo.unset_SkipClassDefinition();
 
+  // DQ (9/9/2016): Added to conform to unifor testing that these are always equal.
+     ninfo.unset_SkipEnumDefinition();
+               
 #if 0
   // DQ (1/2/2012): The name stored in SgClassDeclaration contains the template arguments (now that this is set we don't need this code).
   // DQ (1/2/2012): If this is the template instantiation then it could be marked as a specialization (supported by ROSE) 

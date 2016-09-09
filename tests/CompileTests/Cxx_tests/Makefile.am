@@ -395,13 +395,46 @@ NEW_TESTCODES = \
    test2016_34.C \
    test2016_36.C \
    test2016_38.C \
-   test2016_40.C
+   test2016_39.C \
+   test2016_40.C \
+   test2016_41.C \
+   test2016_42.C \
+   test2016_43.C \
+   test2016_44.C \
+   test2016_45.C \
+   test2016_46.C \
+   test2016_47.C \
+   test2016_48.C \
+   test2016_49.C \
+   test2016_50.C \
+   test2016_51.C \
+   test2016_52.C \
+   test2016_53.C \
+   test2016_54.C \
+   test2016_55.C \
+   test2016_56.C \
+   test2016_57.C \
+   test2016_58.C \
+   test2016_59.C \
+   test2016_60.C \
+   test2016_61.C \
+   test2016_62.C \
+   test2016_63.C \
+   test2016_64.C \
+   test2016_65.C \
+   test2016_66.C \
+   test2016_67.C \
+   test2016_68.C \
+   test2016_69.C \
+   test2016_70.C \
+   test2016_80.C
 
 # Liao 7/1/2016: template_function (T * __restrict__* ptr) is not supported.
 # Details in https://rosecompiler.atlassian.net/browse/ROSE-390
 #   test2016_41.C // conflicting with Dan's
 #   restrict_template_parameter.C  // moved to this file
 
+# DQ (9/7/2016): These are now used.
 # Unused test files:
 # test2016_41.C
 # test2016_42.C
