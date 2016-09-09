@@ -428,7 +428,8 @@ NEW_TESTCODES = \
    test2016_68.C \
    test2016_69.C \
    test2016_70.C \
-   test2016_80.C
+   test2016_80.C \
+   test2016_81.C
 
 # Liao 7/1/2016: template_function (T * __restrict__* ptr) is not supported.
 # Details in https://rosecompiler.atlassian.net/browse/ROSE-390
