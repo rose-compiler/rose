@@ -6,7 +6,6 @@ noinst_PROGRAMS =
 TEST_TARGETS =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-EXTRA_DIST = tests.conf
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -22,22 +21,6 @@ testCopyFile.passed: testCopyFile
 		CMD="$$(pwd)/testCopyFile"			\
 		$(top_srcdir)/scripts/test_exit_status $@
 
-# Test that boost::regex works
-noinst_PROGRAMS += testBoostRegex
-testBoostRegex_SOURCES = testBoostRegex.C
-testBoostRegex_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-TEST_TARGETS += testBoostRegex.passed
-testBoostRegex.passed: testBoostRegex
-	@$(RTH_RUN) CMD=./testBoostRegex $(top_srcdir)/scripts/test_exit_status $@
-
-# Tests the RangeMap class
-noinst_PROGRAMS += testRangeMap
-testRangeMap_SOURCES = testRangeMap.C
-testRangeMap_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-TEST_TARGETS += testRangeMap.passed
-testRangeMap.passed: tests.conf testRangeMap
-	@$(RTH_RUN) CMD=./testRangeMap $< $@
-
 noinst_PROGRAMS += testFileNameClassifier
 testFileNameClassifier_SOURCES = testFileNameClassifier.C
 testFileNameClassifier_LDADD   = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
@@ -46,33 +29,15 @@ if ROSE_BUILD_OS_IS_CYGWIN
 else
 TEST_TARGETS += testFileNameClassifier.passed
 endif
-testFileNameClassifier.passed: tests.conf testFileNameClassifier
+testFileNameClassifier.passed: $(top_srcdir)/scripts/test_exit_status testFileNameClassifier
 	@$(RTH_RUN) CMD=./testFileNameClassifier $< $@
-
-# Tests the StringUtility functions
-noinst_PROGRAMS += testStringUtility
-testStringUtility_SOURCES = testStringUtility.C
-testStringUtility_LDADD   = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-TEST_TARGETS += testStringUtility.passed
-testStringUtility.passed: tests.conf testStringUtility
-	@$(RTH_RUN) CMD=./testStringUtility $< $@
-
-# Tests that diagnostics are working
-noinst_PROGRAMS += testDiagnostics
-testDiagnostics_SOURCES = testDiagnostics.C
-testDiagnostics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-TEST_TARGETS += testDiagnostics.passed
-testDiagnostics.passed: $(top_srcdir)/scripts/test_exit_status testDiagnostics
-	@$(RTH_RUN)				\
-		TITLE="diagnostics [$@]"	\
-		CMD=./testDiagnostics $< $@
 
 # Test file name support
 noinst_PROGRAMS += filenameSupport
 filenameSupport_SOURCES = filenameSupport.C
 filenameSupport_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 TEST_TARGETS += filenameSupport.passed
-filenameSupport.passed: tests.conf filenameSupport
+filenameSupport.passed: $(top_srcdir)/scripts/test_exit_status filenameSupport
 	@$(RTH_RUN) CMD=./filenameSupport $< $@
 
 # Test for directory support (SgDirectory IR node)
@@ -80,17 +45,8 @@ noinst_PROGRAMS += directorySupport
 directorySupport_SOURCES = directorySupport.C
 directorySupport_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 TEST_TARGETS += directorySupport.passed
-directorySupport.passed: tests.conf directorySupport $(__minimal_input_code)
-	@$(RTH_RUN) CMD=./directorySupport ARGS="-c -rose:verbose 0 $(__minimal_input_code)" $< $@
-
-# Tests for parallel sorting
-noinst_PROGRAMS += testSort
-testSort_SOURCES = testSort.C
-testSort_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-TEST_TARGETS += testSort.passed
-EXTRA_DIST += testSort.conf
-testSort.passed: testSort.conf testSort
-	@$(RTH_RUN) TITLE="various parallel sorting [$@]" CMD="$$(pwd)/testSort"  $< $@
+directorySupport.passed: $(top_srcdir)/scripts/test_exit_status directorySupport $(__minimal_input_code)
+	@$(RTH_RUN) CMD="./directorySupport -c -rose:verbose 0 $(__minimal_input_code)" $< $@
 
 # Tests performance of various graph implementations
 noinst_PROGRAMS += graphPerformance
@@ -107,31 +63,6 @@ graphIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 TEST_TARGETS += graphIO.passed
 graphIO.passed: graphIO
 	@$(RTH_RUN) TITLE="graph I/O [$@]" CMD="$(abspath $<)" $(top_srcdir)/scripts/test_exit_status $@
-
-# tests the RangeMap class
-noinst_PROGRAMS += rangeMapTests
-rangeMapTests_SOURCES = rangeMapTests.C
-rangeMapTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-TEST_TARGETS += rangeMapTests.passed
-EXTRA_DIST += rangeMapTests.ans
-rangeMapTests.passed: rangeMapTests rangeMapTests.ans $(top_srcdir)/scripts/test_with_answer
-	@$(RTH_RUN)						\
-		TITLE="RangeMap tests [$@]"			\
-		CMD="$(abspath $<)"				\
-		ANS="$(srcdir)/rangeMapTests.ans"		\
-		$(top_srcdir)/scripts/test_with_answer $@
-
-# Test AstAttributeMechanism
-noinst_PROGRAMS += attributeTests
-attributeTests_SOURCES = attributeTests.C
-attributeTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-TEST_TARGETS += attributeTests.passed
-attributeTests.passed: attributeTests
-	@$(RTH_RUN)						\
-		TITLE="AstAttributeMechanism tests [$@]"	\
-		CMD="$(abspath $<)"				\
-		$(top_srcdir)/scripts/test_exit_status $@
-
 
 check-local: $(TEST_TARGETS)
 
