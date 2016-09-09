@@ -760,9 +760,9 @@ was just float or double for complex<float> or complex<double>.
 #endif
 
 /* Disable inclusion of complex.h on Linux */
-#define _COMPLEX_H
+/* #define _COMPLEX_H */
 /* Disable inclusion of complex.h on Mac OS X */
-#define __COMPLEX__
+/* #define __COMPLEX__ */
 
 /* DQ (8/25/2009): Added complex builtin functions as required to compile parts of ROSE with ROSE */
 /* #if _GLIBCXX_USE_C99_COMPLEX */
