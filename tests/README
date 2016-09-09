@@ -48,7 +48,7 @@ quite large.
 === FAQ ===
 
 Q1. If I have a checker that runs on both smoke and non-smoke
-specimens, where should I put it?
+    specimens, where should I put it?
 
     Smoke trumps non-smoke.  If you have a specimen that's used by
     both, or a checker that runs in both then it must be stored in the
@@ -59,16 +59,44 @@ specimens, where should I put it?
     specimens stored in the smoke side, but not vice versa.
 
 
-Q2. If I create a new specimen, where should I put it?
+Q2. If I create a new checker, where should I put it?
+
+    First, is the checker intended to be run as part of the small,
+    fast, always-distributed set of tests run by users?  If yes, think
+    again. If still yes, put it somewhere in the tests/smoke hierarchy
+    otherwise use the tests/nonsmoke hierarchy. Project checkers should
+    always be in project directories.
+
+    Next, decide whether the checker is doing unit tests, functional
+    tests, or acceptance tests. Unit tests are very small tests of
+    some particular API and generally have no file I/O, are single
+    threaded, and very fast. They're good candidates for smoke
+    tests. Acceptance tests are at the opposite end of the spectrum
+    and might take many minutes to run (such as using ROSE to compile
+    an entire application which then runs its own test
+    suite). Functional tests are everything in between. Most of the
+    tests are functional tests.  The tests/{smoke,nonsmoke}
+    directories have subdirectories for each kind of test: unit,
+    functional, acceptance.
+
+    Finally, decide what namespace, class, analysis, etc. the checker
+    is validating and put it in a subdirectory that reflects its scope
+    in the library. E.g., functional non-smoke checkers that validate the
+    host of things in rose::BinaryAnalysis might go in
+    tests/nonsmoke/functional/BinaryAnalysis. Use the same
+    capitalization as the source code, but beware that some
+    filesystems are case insensitive.
+
+
+Q3. If I create a new specimen, where should I put it?
 
     The answer has two parts: whether to put the specimen on the smoke
     or non-smoke side, and whether to put the specimen in a directory
     with checkers or in a directory devoted to only specimens.
 
-    Smoke trumps non-smoke.  If the specimen is used by any smoke
-    checker (regardless of whether it's also used by a non-smoke
-    checker) then it must be stored in the $ROSE/tests/smoke
-    hierarchy.
+    If the specimen is used by any smoke checker (regardless of
+    whether it's also used by a non-smoke checker) then it must be
+    stored in the $ROSE/tests/smoke hierarchy.
 
     If you expect the specimen to be used by checkers in more than one
     directory, including the case when its used by both smoke and
@@ -80,9 +108,16 @@ Q2. If I create a new specimen, where should I put it?
     Each of the tests/*/specimens subdirectory has its own organization
     that's up to the maintainer. However, most every directory will
     have a Specimens.inc file whose lists need to be updated.
-   
 
-Q3. I added a new specimen (no new checkers yet) and make
+
+Q4. If I create a new test, where does its make rule go?
+
+    If the test uses a smoke checker and only smoke specimens put the
+    rule in one of the makefiles under the tests/smoke directory
+    structure, otherwise it should go on the tests/nonsmoke side.
+
+
+Q5. I added a new specimen (no new checkers yet) and make
     check (or make check-all) already fails. What gives?
 
     Some makefile rules are written in a way such that they
@@ -93,7 +128,7 @@ Q3. I added a new specimen (no new checkers yet) and make
     specimen for that checker.
 
 
-Q4. In my non-smoke directory, why do "make check" and "make
+Q6. In my non-smoke directory, why do "make check" and "make
     check-smoke" build the non-smoke checkers?
 
     This is a limitation of automake: automake assumes that "make
@@ -103,7 +138,7 @@ Q4. In my non-smoke directory, why do "make check" and "make
     makefile).
 
 
-Q4. What if I have a project that uses non-smoke specimens?
+Q7. What if I have a project that uses non-smoke specimens?
 
     If a project depends on non-smoke tests, then the project's
     configuration step should verify that the depencency is present,
