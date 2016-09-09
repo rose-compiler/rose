@@ -2158,6 +2158,7 @@ tests/smoke/specimens/java/Makefile
 tests/smoke/unit/Makefile
 tests/smoke/unit/Boost/Makefile
 tests/smoke/unit/Sawyer/Makefile
+tests/smoke/unit/Utility/Makefile
 tests/UnitTests/Makefile
 tests/UnitTests/Rose/Makefile
 tests/UnitTests/Rose/SageBuilder/Makefile
