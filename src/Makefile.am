@@ -318,6 +318,7 @@ rose_config_installed_cppflags =		\
 	$(INTEL_PIN_INCLUDE_PATHS)		\
 	$(ROSE_ETHER_INCLUDE)			\
 	$(ROSE_ATERM_INCLUDE)			\
+	$(ROSE_DLIB_INCLUDES)			\
 	$(BOOST_CPPFLAGS)
 rose_config_build_cppflags = $(ROSE_INCLUDES)
 
@@ -346,6 +347,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_ATERM_LIBS)			\
 	$(ROSE_YAML_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
+	$(ROSE_DLIB_LIBS_WITH_PATH)		\
 	-lm
 rose_config_build_ldflags =			\
 	$(LIBS_WITH_RPATH)			\

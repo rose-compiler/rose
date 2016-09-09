@@ -4,7 +4,7 @@ dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 dnl The version number in the AC_INIT expression has been placed there automatically by the "build" script. We cannot
 dnl do the replacement here in the configure file because AC_INIT's second argument must be a literal string, not a
 dnl shell variable.
-AC_INIT([ROSE], [0.9.7.73])
+AC_INIT([ROSE], [0.9.7.80])
 AC_PREREQ([2.59])
 
 dnl +--------------------------------------------------------------------------+
@@ -48,6 +48,7 @@ AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
 
 AM_CONFIG_HEADER([rose_config.h])
+AM_EXTRA_RECURSIVE_TARGETS([check-smoke check-nonsmoke check-all])
 
 # TOO1 (9/23/2013): Use the builtin verbose mechanism of Automake:
 #
