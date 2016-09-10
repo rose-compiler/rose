@@ -120,7 +120,7 @@ int main()
   RAJA::forall<RAJA::switcher_exec>
     (0, n, 
      [=] (int i) {  // mimic the possible input file
-     a[i] = 0.5;
+     a[i] = 0.5*a[i];
      });
 
 

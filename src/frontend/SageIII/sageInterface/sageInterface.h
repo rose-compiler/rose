@@ -426,6 +426,10 @@ struct hash_nodeptr
    \brief Not sure the classifications right now
  */
 
+   //! Save AST into a pdf file. Start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
+   void saveToPDF(SgNode* node, std::string filename);
+   void saveToPDF(SgNode* node); // enable calling from gdb
+
  // DQ (2/12/2012): Added some diagnostic support.
 //! Diagnostic function for tracing back through the parent list to understand at runtime where in the AST a failure happened.
    void whereAmI(SgNode* node);

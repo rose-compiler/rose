@@ -66,8 +66,17 @@ bool isRAJAforallStmt(SgNode* n, SgFunctionRefExp** ref_exp_out, SgLambdaExp** l
           { 
             SgExprListExp* parameters = exp -> get_args();
             SgExpressionPtrList explist = parameters->get_expressions();
-            *lambda_exp_out = isSgLambdaExp(explist[explist.size()-1]); // last parameter must to the lambda function
-            ROSE_ASSERT (*lambda_exp_out!= NULL);
+            SgExpression* last_exp = explist[explist.size()-1];
+            // Some weired code have a constructor in between. we have to use query to find lambdaExp
+            //*lambda_exp_out = isSgLambdaExp(last_exp); // last parameter must to the lambda function
+            vector <SgLambdaExp*> lvec = querySubTree<SgLambdaExp>(last_exp); //, V_SgLambdaExp);
+            if (lvec.size()!= 1)
+            {
+              cerr<<"error: last expression of RAJA::forall() does not contain lambda exp SgLambdaExp. It is "<< last_exp->unparseToString() <<endl;
+              exp->get_file_info()->display();
+              ROSE_ASSERT (lvec.size() ==1);
+            }
+            *lambda_exp_out= lvec[0];
           }
           ret = true;
         }   
@@ -100,8 +109,9 @@ bool processStatements(SgNode* n)
      {
        SgBasicBlock* body = lambda_exp->get_lambda_function()->get_definition()->get_body();
        ROSE_ASSERT (body != NULL);
-       cout<<"Debugging: Found a RAJA::forall function call's body"<<endl;
-       body->get_file_info()->display();
+       cout<<"Debugging: a RAJA::forall loop:"<< body->get_file_info()->get_line();
+       FPCounters* fp_counters = calculateArithmeticIntensity(body);
+       cout<<fp_counters->toString()<<endl;
      }
   }  
   else  // all other regular C/C++ loop cases 
