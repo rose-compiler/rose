@@ -307,7 +307,7 @@ clean-local:
 	rm -f $(MOSTLYCLEANFILES)
 	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
 
-check-local: $(TEST_TARGETS)
+check-local check-smoke check-nonsmoke check-all: $(TEST_TARGETS)
 
 
 endif
