@@ -1,4 +1,4 @@
-
+#include "sage3basic.h"
 #include <iostream>
 #include <sstream>
 
@@ -6,7 +6,6 @@
 #include "AnalysisInterface.h"
 #include <assert.h>
 #include "CommandOptions.h"
-#include "sage3basic.h"
 #include "AstInterface.h"
 #include "AstInterface_ROSE.h"
 
