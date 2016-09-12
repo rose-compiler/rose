@@ -149,6 +149,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                "what argument values are used in the synthesis mode.");
 
     SwitchGroup sg("Tool-specific switches");
+    sg.nameSpace("tool");
 
     sg.insert(Switch("decoder")
               .argument("address", nonNegativeIntegerParser(settings.decoderVa))
