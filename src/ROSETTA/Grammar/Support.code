@@ -8304,10 +8304,26 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
                break;
              }
 
+       // DQ (9/12/2016): Providing better implementation for template typedef symbol support.
        // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
           case V_SgTemplateTypedefSymbol:
              {
+#if 0
                printf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateArgument>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+               SgTemplateTypedefSymbol* templateTypedefSymbol = isSgTemplateTypedefSymbol(symbol);
+               ROSE_ASSERT(templateTypedefSymbol != NULL);
+
+               ROSE_ASSERT(templateTypedefSymbol->get_declaration() != NULL);
+
+               SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(templateTypedefSymbol->get_declaration());
+            // ROSE_ASSERT(templateTypedefDeclaration != NULL);
+
+               if (templateTypedefDeclaration != NULL)
+                  {
+                 // returnList = templateTypedefDeclaration->get_templateArguments();
+                    returnList = templateTypedefDeclaration->get_templateSpecializationArguments();
+                  }
                break;
              }
 
