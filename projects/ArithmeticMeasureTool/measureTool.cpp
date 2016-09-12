@@ -127,10 +127,11 @@ bool processStatements(SgNode* n)
       else if (running_mode == e_static_counting)
       {  
         SgStatement* lbody = loop->get_loop_body();
-        CountFPOperations (lbody);
-        CountMemOperations (lbody , false, true); // bool includeScalars /*= true*/, bool includeIntType /*= true*/
+//        CountFPOperations (lbody);
+//        CountMemOperations (lbody , false, true); // bool includeScalars /*= true*/, bool includeIntType /*= true*/
+//        FPCounters* fp_counters = getFPCounters (lbody);
+        FPCounters* fp_counters = calculateArithmeticIntensity(lbody);
 
-        FPCounters* fp_counters = getFPCounters (lbody);
         ofstream reportFile(report_filename.c_str(), ios::app);
         //     cout<<"Writing counter results to "<< report_filename <<endl;
         reportFile<< fp_counters->toString();

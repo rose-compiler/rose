@@ -98,8 +98,17 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
     {
       returnAttribute.newValue = ArithemeticIntensityMeasurement::get_int_value (vexp);
     }
+    else // propagate the result for others
+    {
+      cerr<<"error, unhandled case in IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute() "<<astNode->class_name() <<endl;
+    }
   }
-
+  else
+  {
+      cerr<<"error, non-expression is encountered in IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute() "<<astNode->class_name() <<endl;
+  }
+  
+//  cout<<"debugging IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute() synth value is "<< returnAttribute.newValue << " for" <<astNode->class_name()<<endl;
   return returnAttribute;
 
 }
@@ -194,6 +203,10 @@ namespace ArithemeticIntensityMeasurement
     if (node != NULL)
     {
       ss<<node->class_name() <<"@" <<endl;
+      //debugging
+     // if (!isSgForStatement(node))
+     //   ROSE_ASSERT (false); // we cannot assert this. we pass loop body to the counting function. The body can be any types of statements
+
       ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line()<<":"<<node->get_file_info()->get_col() <<endl;
     }
     else
@@ -371,7 +384,9 @@ namespace ArithemeticIntensityMeasurement
     IntExpressionEvaluationAttribute a1, a2;
     a1 = trav1.traverse (load_bytes);
     a2 = trav2.traverse (store_bytes);
-    int total_bytes = a1.newValue + a2.newValue; 
+    load_bytes_int = a1.newValue;
+    store_bytes_int = a2.newValue;
+    int total_bytes = load_bytes_int + store_bytes_int;
     if (total_bytes !=0)
        intensity = (float)total_count/total_bytes;
     else
