@@ -390,7 +390,7 @@ namespace ArithemeticIntensityMeasurement
     if (total_bytes !=0)
        intensity = (float)total_count/total_bytes;
     else
-       intensity = 9999.9;  //max value
+       intensity = 99999.9;  //max value
     return intensity;
   }
 
@@ -589,8 +589,10 @@ namespace ArithemeticIntensityMeasurement
       loop = doloop;
     else
     {
-      cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< lbody->class_name()<<endl;
-      assert(false);
+      //support RAJA::forall loop, which may be a function definition only
+      loop = lbody->get_scope();
+//      cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< lbody->class_name()<<endl;
+//      assert(false);
     }   
 
     std::map<SgType* , int> type_based_counters; 
@@ -643,7 +645,14 @@ namespace ArithemeticIntensityMeasurement
           base_type = isSgArrayType(base_type)->get_base_type(); 
         } while (isSgArrayType (base_type));
       }
-      else 
+      else if (isSgPointerType (stripped_type)) // we now allow pointer types used as arrays like double *a..,;  a[i]= ..
+      {
+        base_type = stripped_type;
+        do {
+          base_type = isSgPointerType(base_type)->get_base_type(); 
+        } while (isSgPointerType (base_type));
+      }
+      else
       {
         cerr<<"Error in calculateBytes(). Unhandled stripped type:"<<stripped_type->class_name()<<endl;
         assert (false);
@@ -707,17 +716,65 @@ namespace ArithemeticIntensityMeasurement
   }  
 
 
+  //! check if a pointer is ever used as an array
+  // Check if there is a SgVarRefExp of this init. And the SgVarRefExp shows up as part of lhs operator of SgPntrArrRefExp. 
+  // We cannot just compare lhs, since sometimes there is this->a  involved. 
+  // TODO: put into SageInterface
+  // We pass a scope parameter to narrow down the search scope. Otherwise we have to search all member function declarations within a class definition
+  bool pointerUsedAsArray (SgInitializedName* iname, SgScopeStatement* scope)
+  {
+    bool rt = false;
+//    SgScopeStatement* scope = iname->get_scope();
+    ROSE_ASSERT (scope != NULL);
+    // find all SgPntrArrRefExp, find all lhs operators
+    // This cannot penetrate nested member function declarations within a scope of type SgClassDefinition
+    vector<SgPntrArrRefExp* > array_vec = querySubTree<SgPntrArrRefExp> (scope);
+
+    // filter out SgPntrArrRefExp which is not the bottom SgPntrArrRefExp of a multi dimensional array
+    vector<SgPntrArrRefExp*> bottom_arrays; 
+    for (vector<SgPntrArrRefExp* >::iterator iter = array_vec.begin(); iter != array_vec.end(); iter++)
+    {
+      SgPntrArrRefExp* current = *iter;
+      // lhs is another array, skip
+      if (SgPntrArrRefExp* lhs = isSgPntrArrRefExp (current->get_lhs_operand_i()))
+        continue;
+      else
+        bottom_arrays.push_back(current);
+    }
+
+    // Now for each bottom arrayRefExp, search its lhs for SgVarRefExp which points to the iname
+    for (vector<SgPntrArrRefExp* >::iterator iter = bottom_arrays.begin(); iter != bottom_arrays.end(); iter++)
+    {
+      SgPntrArrRefExp* current = *iter;
+      vector<SgVarRefExp* > refs = querySubTree<SgVarRefExp> (current->get_lhs_operand_i());
+      for (vector<SgVarRefExp* >::iterator iter2 = refs.begin(); iter2!= refs.end(); iter2 ++)
+      {
+        SgVarRefExp* cref = *iter2; 
+        if (cref->get_symbol()->get_declaration()== iname)
+        {
+          return true;
+        }
+      }
+    }
+
+    return rt; 
+  }
+
+
   // Only keep desired types
-  std::set<SgInitializedName* > filterVariables(const std::set<SgInitializedName* > & input)
+  // Sometimes pointer typed variables are used as array, such as double* a = new ..., later a[i] = xx, etc
+  // provide the search scope, otherwise we have to penetrate member function declarations within a class definition, which is the scope of iname
+  std::set<SgInitializedName* > filterVariables(const std::set<SgInitializedName* > & input, SgScopeStatement* scope)
   {
     std::set<SgInitializedName* > result; 
     std::set<SgInitializedName*>::iterator it;
+    ROSE_ASSERT (scope != NULL);
 
     for (it=input.begin(); it!=input.end(); it++)
     {
       SgInitializedName* iname = (*it);
       if (iname ==NULL) continue; // this pointer of a class has NO SgInitializedName associated !!
-      if (isSgArrayType (iname->get_type()))
+      if (isSgArrayType (iname->get_type()) || pointerUsedAsArray (iname, scope) )
         result.insert(iname);
       //    cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
     }
@@ -770,6 +827,8 @@ namespace ArithemeticIntensityMeasurement
     std::set<SgInitializedName*> writeVars;
 
     bool success = SageInterface::collectReadWriteVariables (isSgStatement(input), readVars, writeVars);
+    SgScopeStatement* scope = getEnclosingFunctionDefinition(input);
+    ROSE_ASSERT (scope!= NULL);
     if (success!= true)
     {
       cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
@@ -786,7 +845,7 @@ namespace ArithemeticIntensityMeasurement
     }
 
     if (!includeScalars )
-      readVars =  filterVariables (readVars);
+      readVars =  filterVariables (readVars, scope);
     if (debug)
       cout<<"debug: found write variables (SgInitializedName) count = "<<writeVars.size()<<endl;
     for (it=writeVars.begin(); it!=writeVars.end(); it++)
@@ -796,7 +855,7 @@ namespace ArithemeticIntensityMeasurement
         cout<<scalar_or_array(iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
     }
     if (!includeScalars )
-      writeVars =  filterVariables (writeVars);
+      writeVars =  filterVariables (writeVars, scope);
     result.first =  calculateBytes (readVars, lbody, true);
     result.second =  calculateBytes (writeVars, lbody, false);
     return result;
