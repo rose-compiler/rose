@@ -232,7 +232,34 @@
 /* DQ (9/6/2016): This is also required to support tests/CompileTests/mergeAST_tests/mergeTest_134.C */
 #define __weakref__(NAME)
 
+
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
+
+
+/* DQ (9/12/2016): Added builtin functions (not yet supported in config/Builtins.def). */
+
+int __builtin_ia32_bsrsi(int x);
+unsigned long long __builtin_ia32_rdpmc(int x);
+unsigned long long __builtin_ia32_rdtsc(void);
+unsigned long long __builtin_ia32_rdtscp(unsigned int *__A);
+unsigned char      __builtin_ia32_rolqi(unsigned char __X, int __C);
+unsigned short     __builtin_ia32_rolhi(unsigned short __X, int __C);
+unsigned char      __builtin_ia32_rorqi(unsigned char __X, int __C);
+unsigned short     __builtin_ia32_rorhi(unsigned short __X, int __C);
+void               __builtin_ia32_pause();
+int                __builtin_ia32_bsrdi(long long __X);
+long long          __builtin_bswap64(long long __X);
+
+void               __builtin_ia32_fxsave(void *__P);
+void               __builtin_ia32_fxrstor(void *__P);
+void               __builtin_ia32_fxsave64(void *__P);
+void               __builtin_ia32_fxrstor64(void *__P);
+unsigned char      __builtin_ia32_addcarryx_u32(unsigned char __CF, unsigned int __X, unsigned int __Y, unsigned int *__P);
+unsigned char      __builtin_ia32_addcarryx_u64(unsigned char __CF, unsigned long __X, unsigned long __Y, unsigned long long *__P);
+
+
+
+
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
@@ -381,6 +408,12 @@ long double __builtin_sqrtl  (long double __builtin__x);
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
+
+
+
+#if 0
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+
 /* DQ (11/6/2014): Use a different mechanism to handle these for the GNU 4.7 compiler and above (required form C++11) */
 #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
 
@@ -478,6 +511,11 @@ DQ (6/19/2007): These might required math.h to be included.
 
 /* #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) */
 #endif
+
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#endif
+
+
 
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
@@ -2060,6 +2098,12 @@ void prefetch (const __global float16 *p, size_t num_elements);
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
+
+
+
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#if 0
+
 /***************************************************************************************
   SSE and MMX support (declarations for builtin functions defined in GNU header files)
 ****************************************************************************************/
@@ -2412,6 +2456,11 @@ int __builtin_ia32_psrlqi(long long,int);
 // However, integer types such as int32_t are not defined here.
 int __builtin_bswap32 (int x);
 /* long int __builtin_bswap64 (long int x); */
+
+
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#endif
+
 
 
 /* DQ (9/6/2016): We need size_t to be defined, but we only want it defined so that the builtin functions 
