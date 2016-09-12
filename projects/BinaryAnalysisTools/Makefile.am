@@ -4,7 +4,6 @@ pkginclude_HEADERS =
 EXTRA_DIST =
 MOSTLYCLEANFILES =
 TEST_TARGETS =
-BINARY_SPECIMENS = $(top_srcdir)/binaries/samples
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
@@ -285,10 +284,11 @@ x86_function_vas_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 ########################################################################################################################
 ########################################################################################################################
 
-# Uses the debugSemantics and a carefully crafted input specimen to test features of RegisterStateGeneric
+# Uses the debugSemantics and a carefully crafted input specimen to test features of RegisterStateGeneric.
+
 TEST_TARGETS += testAdaptiveRegisters.passed
-testAdaptiveRegisters.passed: $(BINARY_SPECIMENS)/x86-64-adaptiveRegs		\
-			      $(srcdir)/TestAnswers/testAdaptiveRegisters.ans	\
+testAdaptiveRegisters.passed: $(srcdir)/specimens/x86-64-adaptiveRegs		\
+			      $(srcdir)/TestAnswers/testAdaptiveRegisters.ans		\
 			      debugSemantics
 	@$(RTH_RUN)												\
 		TITLE="RegisterStateGeneric [$@]"								\
@@ -307,7 +307,7 @@ clean-local:
 	rm -f $(MOSTLYCLEANFILES)
 	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
 
-check-local: $(TEST_TARGETS)
+check-local check-smoke check-nonsmoke check-all: $(TEST_TARGETS)
 
 
 endif

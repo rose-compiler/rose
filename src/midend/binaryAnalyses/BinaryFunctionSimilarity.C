@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 
 #include <BinaryFunctionSimilarity.h>
+#include <Diagnostics.h>
 #include <EditDistance/LinearEditDistance.h>
 #include <Partitioner2/Partitioner.h>
 
@@ -8,28 +9,56 @@
     #include <dlib/matrix.h>
     #include <dlib/optimization.h>
 #endif
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stopwatch.h>
+#include <Sawyer/ThreadWorkers.h>
 
+using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
 namespace rose {
 namespace BinaryAnalysis {
 
 #ifdef ROSE_HAVE_DLIB
+// Use the DLib matrix if possible since we'll be passing it to dlib::max_cost_assignment
 typedef dlib::matrix<double> DistanceMatrix;
 #else
-struct DistanceMatrixDummy {
-    DistanceMatrixDummy(long, long) {}
-    long nr() const { ASSERT_not_reachable("no dlib support"); }
-    long nc() const { ASSERT_not_reachable("no dlib support"); }
-    double& operator()(long, long) { ASSERT_not_reachable("no dlib support"); }
-    double operator()(long, long) const { ASSERT_not_reachable("no dlib support"); }
+// A simple matrix that has the same API as dlib::matrix, but only the parts we actually use.
+class DistanceMatrix {
+    std::vector<std::vector<double> > data_;
+public:
+    DistanceMatrix(long nr, long nc): data_(nr, std::vector<double>(nc, 0.0)) {}
+    long nr() const { return data_.size(); }
+    long nc() const { return data_.empty() ? (size_t)0 : data_[0].size(); }
+    double& operator()(long i, long j) { return data_[i][j]; }
+    double operator()(long i, long j) const { return data_[i][j]; }
 };
-typedef DistanceMatrixDummy DistanceMatrix;
 #endif
+
+Sawyer::Message::Facility FunctionSimilarity::mlog;
+
+// Approx number of tasks to create for each worker thread. The finest granularity of work (a single comparison between two
+// functions) is often not the most efficient way to schedule worker threads because if the comparisons are cheap then the
+// scheduling overhead accounts for a higher percentage of the total time. The opposite exteme of one task per thread, is also
+// not always efficient because the length of the tasks can be quite different from one another. A compromise is to create some
+// fixed number of tasks per worker thread so the individual tasks are larger, but there's still enough of them to balance the
+// work load.
+static const size_t tasksPerWorker = 100;               // arbitrary
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+FunctionSimilarity::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::FunctionSimilarity", Diagnostics::destination);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
+    }
+}
 
 std::ostream&
 operator<<(std::ostream &out, const FunctionSimilarity &x) {
@@ -227,26 +256,37 @@ FunctionSimilarity::lists(const P2::Function::Ptr &function, CategoryId id) cons
 
 double
 FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr &f2) const {
-    ASSERT_not_null(f1);
-    ASSERT_not_null(f2);
+    ASSERT_require(f1 != NULL || f2 != NULL);
 
-    if (!functions_.exists(f1))
+    if (f1 && !functions_.exists(f1))
         throw Exception(f1->printableName() + " is not analyzed");
-    if (!functions_.exists(f2))
+    if (f2 && !functions_.exists(f2))
         throw Exception(f2->printableName() + " is not analyzed");
-    const FunctionInfo &finfo1 = functions_[f1];
-    const FunctionInfo &finfo2 = functions_[f2];
+
+    // If only one function is supplied, then compare it against no-function (i.e., use the distance of the non-null function
+    // from the origin).
+    const FunctionInfo empty;
+    const FunctionInfo &finfo1 = f1 ? functions_[f1] : empty;
+    const FunctionInfo &finfo2 = f2 ? functions_[f2] : empty;
 
     std::vector<double> categoryDistances;
     for (CategoryId id=0; id<categories_.size(); ++id) {
         double d = NAN;
         switch (categories_[id].kind) {
-            case CARTESIAN_POINT:
-                d = comparePointClouds(finfo1.categories[id].pointCloud, finfo2.categories[id].pointCloud);
+            case CARTESIAN_POINT: {
+                static const PointCloud emptyCloud;
+                const PointCloud &cd1 = id < finfo1.categories.size() ? finfo1.categories[id].pointCloud : emptyCloud;
+                const PointCloud &cd2 = id < finfo2.categories.size() ? finfo2.categories[id].pointCloud : emptyCloud;
+                d = comparePointClouds(cd1, cd2);
                 break;
-            case ORDERED_LIST:
-                d = compareOrderedLists(finfo1.categories[id].orderedLists, finfo2.categories[id].orderedLists);
+            }
+            case ORDERED_LIST: {
+                static const OrderedLists emptyLists;
+                const OrderedLists &cd1 = id < finfo1.categories.size() ? finfo1.categories[id].orderedLists : emptyLists;
+                const OrderedLists &cd2 = id < finfo2.categories.size() ? finfo2.categories[id].orderedLists : emptyLists;
+                d = compareOrderedLists(cd1, cd2);
                 break;
+            }
         }
         ASSERT_require(!isnan(d));
         categoryDistances.push_back(d * categories_[id].weight);
@@ -259,21 +299,218 @@ FunctionSimilarity::compareOneToAll(const P2::Function::Ptr &needle) const {
     return compareOneToMany(needle, functions_.keys());
 }
 
+// Represents a single task in a multi-threaded collection of tasks.
+struct ComparisonTask {
+    P2::Function::Ptr a;                                // first of two functions to compare
+    std::vector<P2::Function::Ptr> b;                   // second of two functions to compare
+    std::vector<double*> results;                       // locations where results are to be stored
+
+    /*implicit*/ ComparisonTask(const P2::Function::Ptr &a)
+        : a(a) {}
+    ComparisonTask(const P2::Function::Ptr &a, const P2::Function::Ptr &b, double &result)
+        : a(a), b(1, b), results(1, &result) {}
+    void insert(const P2::Function::Ptr &b, double &result) {
+        this->b.push_back(b);
+        results.push_back(&result);
+    }
+};
+
+// Collection of tasks which the worker threads process
+typedef Sawyer::Container::Graph<ComparisonTask> ComparisonTasks;
+
+// How a worker thread processes one task
+struct ComparisonFunctor {
+    const FunctionSimilarity *self;
+    Sawyer::ProgressBar<size_t> &progress;
+
+    ComparisonFunctor(const FunctionSimilarity *self, Sawyer::ProgressBar<size_t> &progress)
+        : self(self), progress(progress) {}
+
+    void operator()(size_t taskId, const ComparisonTask &task) {
+        ASSERT_require(task.b.size() == task.results.size());
+        for (size_t i=0; i<task.b.size(); ++i)
+            *task.results[i] = self->compare(task.a, task.b[i]);
+        ++progress;
+    }
+};
+
+std::vector<FunctionSimilarity::FunctionDistancePair>
+FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std::vector<P2::Function::Ptr> &others) const {
+    ASSERT_not_null(needle);
+    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    if (0 == nThreads)
+        nThreads = boost::thread::hardware_concurrency();
+
+    Sawyer::Message::Stream where = mlog[WHERE];
+    SAWYER_MESG(where) <<"comparing " <<needle->printableName()
+                       <<" to " <<StringUtility::plural(others.size(), "others")
+                       <<" with " <<StringUtility::plural(nThreads, "threads");
+    Sawyer::Stopwatch stopwatch;
+
+    // Reserve space for the answers
+    std::vector<FunctionDistancePair> retval;
+    retval.reserve(others.size());
+    BOOST_FOREACH (const P2::Function::Ptr &other, others) {
+        ASSERT_not_null(other);
+        retval.push_back(FunctionDistancePair(other, NAN));
+    }
+
+    // Create tasks for the worker threads. See docs for 'tasksPerWorker' above.
+    size_t nTasks = nThreads > 1 ? nThreads * tasksPerWorker : (size_t)1;
+    size_t comparisonsPerTask = (others.size() + nTasks - 1) / nTasks;
+    ComparisonTasks tasks;
+    for (size_t i = 0; i < others.size(); i += comparisonsPerTask) {
+        ComparisonTasks::VertexIterator task = tasks.insertVertex(needle);
+        for (size_t j = 0; j < comparisonsPerTask && i+j < others.size(); ++j)
+            task->value().insert(others[i+j], retval[i+j].second);
+    }
+    SAWYER_MESG(mlog[DEBUG]) <<StringUtility::plural(tasks.nVertices(), "tasks")
+                             <<" for " <<StringUtility::plural(nThreads, "threads") <<"\n";
+
+#ifndef NDEBUG
+    {
+        size_t totalComparisons = 0;
+        BOOST_FOREACH (ComparisonTasks::Vertex &v, tasks.vertices())
+            totalComparisons += v.value().b.size();
+        ASSERT_require(others.size() == totalComparisons);
+    }
+#endif
+
+    // Do the work and store the results in retval
+    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
+    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+    SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
+    return retval;
+}
+
+std::vector<std::vector<double> >
+FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list1,
+                                      const std::vector<P2::Function::Ptr> &list2) const {
+    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    if (0 == nThreads)
+        nThreads = boost::thread::hardware_concurrency();
+
+    Sawyer::Message::Stream where = mlog[WHERE];
+    SAWYER_MESG(where) <<"comparing " <<StringUtility::plural(list1.size(), "functions")
+                       <<" to " <<StringUtility::plural(list2.size(), "functions")
+                       <<" with " <<StringUtility::plural(nThreads, "threads");
+    Sawyer::Stopwatch stopwatch;
+
+    // Reserve space for the answers
+    std::vector<std::vector<double> > retval(list1.size(), std::vector<double>(list2.size(), NAN));
+
+    // Create tasks for the worker threads. See docs for 'tasksPerWorker' above. This won't be so efficient worker scheduling
+    // wise if list2 is small compared list1.
+    size_t nTasks = nThreads > 1 ? nThreads * tasksPerWorker : (size_t)1;
+    size_t comparisonsPerTask = (list1.size() * list2.size() + nTasks - 1) / nTasks;
+    ComparisonTasks tasks;
+    for (size_t row = 0; row < list1.size(); ++row) {
+        ASSERT_not_null(list1[row]);
+        for (size_t col = 0; col < list2.size(); col += comparisonsPerTask) {
+            ComparisonTasks::VertexIterator task = tasks.insertVertex(list1[row]);
+            for (size_t i = 0; i < comparisonsPerTask && col+i < list2.size(); ++i) {
+                ASSERT_not_null(list2[col+i]);
+                task->value().insert(list2[col+i], retval[row][col+i]);
+            }
+        }
+    }
+    SAWYER_MESG(mlog[DEBUG]) <<StringUtility::plural(tasks.nVertices(), "tasks")
+                             <<" for " <<StringUtility::plural(nThreads, "threads") <<"\n";
+
+#ifndef NDEBUG
+    {
+        size_t totalComparisons = 0;
+        BOOST_FOREACH (ComparisonTasks::Vertex &v, tasks.vertices())
+            totalComparisons += v.value().b.size();
+        ASSERT_require(list1.size() * list2.size() == totalComparisons);
+    }
+#endif
+
+    // Do the work and store the results in retval
+    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
+    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+    SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
+    return retval;
+}
+
 std::vector<FunctionSimilarity::FunctionPair>
-FunctionSimilarity::minimumCostMapping(const std::vector<P2::Function::Ptr> &list1,
+FunctionSimilarity::findMinimumCostMapping(const std::vector<P2::Function::Ptr> &list1,
                                        const std::vector<P2::Function::Ptr> &list2) const {
+    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    if (0 == nThreads)
+        nThreads = boost::thread::hardware_concurrency();
+
+    Sawyer::Message::Stream where = mlog[WHERE], debug = mlog[DEBUG];
+    SAWYER_MESG(where) <<"minimum mapping between " <<StringUtility::plural(list1.size(), "functions")
+                       <<" and " <<StringUtility::plural(list2.size(), "functions")
+                       <<" with " <<StringUtility::plural(nThreads, "threads");
+    Sawyer::Stopwatch stopwatch;
+
+    // Reserve space for the comparison matrix.
     size_t n = std::max(list1.size(), list2.size());
     DistanceMatrix dm(n, n);
-    for (size_t i=0; i<n; ++i) {
-        P2::Function::Ptr f1 = i < list1.size() ? list1[i] : P2::Function::Ptr();
-        for (size_t j=0; j<n; ++j) {
-            P2::Function::Ptr f2 = j < list2.size() ? list2[j] : P2::Function::Ptr();
-            dm(i, j) = compare(f1, f2);
+
+    // Create tasks for the worker threads. See docs for 'tasksPerWorker' above. This won't be so efficient worker scheduling
+    // wise if list2 is small compared list1.
+    size_t nTasks = nThreads > 1 ? nThreads * tasksPerWorker : (size_t)1;
+    size_t comparisonsPerTask = (list1.size() * list2.size() + nTasks - 1) / nTasks;
+    ComparisonTasks tasks;
+    for (size_t row = 0; row < list1.size(); ++row) {
+        ASSERT_not_null(list1[row]);
+        for (size_t col = 0; col < list2.size(); col += comparisonsPerTask) {
+            ComparisonTasks::VertexIterator task = tasks.insertVertex(list1[row]);
+            for (size_t i = 0; i < comparisonsPerTask && col+i < list2.size(); ++i) {
+                ASSERT_not_null(list2[col+i]);
+                task->value().insert(list2[col+i], dm(row, col+i));
+            }
         }
     }
 
+    // Create tasks to initialize the part of the square matrix where there's only one function, due to one of the lists being
+    // shorter than the other.
+    if (list1.size() < list2.size()) {
+        ASSERT_require(list2.size() == n);
+        for (size_t row = list1.size(); row < n; ++row) {
+            for (size_t col = 0; col < n; col += comparisonsPerTask) {
+                ComparisonTasks::VertexIterator task = tasks.insertVertex(P2::Function::Ptr());
+                for (size_t i = 0; i < comparisonsPerTask && col+i < n; ++i)
+                    task->value().insert(list2[col+i], dm(row, col+i));
+            }
+        }
+    } else if (list2.size() < list1.size()) {
+        ASSERT_require(list1.size() == n);
+        for (size_t row = 0; row < n; ++row) {
+            for (size_t col = list2.size(); col < n; col += comparisonsPerTask) {
+                ComparisonTasks::VertexIterator task = tasks.insertVertex(list1[row]);
+                for (size_t i = 0; i < comparisonsPerTask && col+i < n; ++i)
+                    task->value().insert(P2::Function::Ptr(), dm(row, col+i));
+            }
+        }
+    }
+    SAWYER_MESG(debug) <<StringUtility::plural(tasks.nVertices(), "tasks")
+                       <<" for " <<StringUtility::plural(nThreads, "threads") <<"\n";
+
+#ifndef NDEBUG
+    {
+        size_t totalComparisons = 0;
+        BOOST_FOREACH (ComparisonTasks::Vertex &v, tasks.vertices())
+            totalComparisons += v.value().b.size();
+        ASSERT_require(n*n == totalComparisons);
+    }
+#endif
+
+    // Initialize the distance matrix
+    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
+    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+
+    // Find the minimum total cost 1:1 assignment of list1 functions (rows) to list2 functions (cols)
+    debug <<"starting Kuhn-Munkres";
     std::vector<long> assignment = findMinimumAssignment(dm);
     ASSERT_require(assignment.size() == n);
+    debug <<"; done\n";
+    
+    // Convert mapping to a return type that doesn't depend on dlib.  This function won't run if dlib isn't available, but at
+    // least user code compiles without having to do anything special.
     std::vector<FunctionPair> retval;
     retval.reserve(n);
     for (size_t i=0; i<n; ++i) {
@@ -281,6 +518,8 @@ FunctionSimilarity::minimumCostMapping(const std::vector<P2::Function::Ptr> &lis
         retval.push_back(FunctionPair(i < list1.size() ? list1[i] : P2::Function::Ptr(),
                                       j < list2.size() ? list2[j] : P2::Function::Ptr()));
     }
+
+    SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
     return retval;
 }
 

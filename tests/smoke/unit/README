@@ -1,0 +1,15 @@
+This directory hierarchy contains unit smoke tests.
+
+=== Definitions ===
+
+"Unit tests" have the following characteristics:
+   * Test a single interface (API or private interface)
+   * Use only interfaces that are previously tested
+   * Run entirely in memory (no I/O)
+   * Are single threaded (except for those whose sole purpose is to test thread APIs)
+   * Are fast
+
+"Smoke tests" are the minimal set of small, fast, simple tests run by
+end users via "make check" to test that ROSE basically functions. All
+smoke tests _together_ should take no more than a couple minutes on
+average hardware.
