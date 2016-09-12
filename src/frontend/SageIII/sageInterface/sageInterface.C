@@ -18103,6 +18103,47 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
    }
 
 
+//! Check if a function declaration is a C++11 lambda function
+// TODO, expose to SageInterface namespace
+bool isLambdaFunction (SgFunctionDeclaration* func)
+{
+  bool rt = false;
+  ROSE_ASSERT (func != NULL);
+  SgNode* p = func->get_parent();
+  ROSE_ASSERT (p != NULL);
+  SgLambdaExp* le = isSgLambdaExp (p);
+  if (le && le->get_lambda_function() == func)
+    rt = true; 
+  return rt;   
+}
+
+// check if a variable reference is this->a[i] inside of a lambda function
+// SgArrowExp <SgThisExp,  SgVarRefExp>, both are compiler generated nodes
+// class symbol of ThisExp 's declaration is AutonomousDeclaration SgClassDeclaration
+// its parent is SgLambdaExp, and lambda_closure_class points back to this class declaration
+bool isLambdaCapturedVariable (SgVarRefExp* varRef)
+{
+  bool rt = false;
+  ROSE_ASSERT (varRef!= NULL);
+  SgNode* parent = varRef->get_parent();
+  if (SgArrowExp *p = isSgArrowExp(parent))
+  {
+    SgThisExp* te = isSgThisExp(p->get_lhs_operand_i());
+    if (te != NULL)
+    {
+      SgClassDeclaration* cdecl = isSgClassDeclaration(te->get_class_symbol()->get_declaration());
+      ROSE_ASSERT (cdecl != NULL); // each this exp should have a class decl
+      if (SgLambdaExp* le = isSgLambdaExp(cdecl->get_parent()))
+      {
+        if (le->get_lambda_closure_class() == cdecl ) // the class is a lambda closure class
+          rt = true; 
+      }
+    }
+
+  }
+  return rt; 
+}
+
 //! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
 //TODO consult  AstInterface::IsVarRef() for more cases
 SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
@@ -18130,7 +18171,8 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
        if (isSgDotExp(parent)->get_rhs_operand() == current)
         return convertRefToInitializedName(parent);
     }
-    else if(isSgArrowExp(parent))
+    // avoid backtracking to parent if this is part of lambda function 
+    else if(isSgArrowExp(parent) && ! isLambdaCapturedVariable ( isSgVarRefExp(current) ) )
     {
       if (isSgArrowExp(parent)->get_rhs_operand() == current)
         return convertRefToInitializedName(parent);
@@ -18148,8 +18190,16 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
   {
     SgExpression* lhs = isSgArrowExp(current)->get_lhs_operand();
     ROSE_ASSERT(lhs);
+    // Liao 9/12/2016, special handling for variables inside of C++11 lambda functions
+    // They capture variables outside of the lambda function. 
+    // They are represented as a class variable of an anonymous class, this->a[i]
+    // So, we have to recognize this pattern, and pass the rhs variable to obtain initialized name.
      // has to resolve this recursively
-    return convertRefToInitializedName(lhs);
+    SgFunctionDeclaration* efunc =  getEnclosingFunctionDeclaration (current);
+    if (isLambdaFunction (efunc) )
+      return convertRefToInitializedName( isSgArrowExp(current)->get_rhs_operand() );
+    else
+      return convertRefToInitializedName(lhs);
   } // The following expression types are usually introduced by left hand operands of DotExp, ArrowExp
   else if (isSgThisExp(current))
   {
@@ -18330,7 +18380,8 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   // Actual side effect analysis
   if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1))
   {
-//    cerr<<"error in side effect analysis!"<<endl;
+    cerr<<"Warning: failed in side effect analysis within SageInterface::collectReadWriteRefs()!"<<endl;
+    //ROSE_ASSERT (false);
     return false;
   }
 
@@ -18378,6 +18429,7 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
   for (; iter!=readRefs.end();iter++)
   {
     SgNode* current = *iter;
+    ROSE_ASSERT (current != NULL);
     SgInitializedName* name = convertRefToInitializedName(current);
    // Only insert unique ones
 #if 0   //
@@ -18389,6 +18441,7 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
     }
 #else
     // We use std::set to ensure uniqueness now
+    ROSE_ASSERT (name != NULL);
     readVars.insert(name);
 #endif
   }
@@ -18397,6 +18450,7 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
   for (; iterw!=writeRefs.end();iterw++)
   {
     SgNode* current = *iterw;
+    ROSE_ASSERT (current != NULL);
     SgInitializedName* name = convertRefToInitializedName(current);
    // Only insert unique ones
 #if 0   //
@@ -18408,6 +18462,7 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
     }
 #else
     // We use std::set to ensure uniqueness now
+    ROSE_ASSERT (name != NULL);
     writeVars.insert(name);
 #endif
   }
