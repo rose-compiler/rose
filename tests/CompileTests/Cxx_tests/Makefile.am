@@ -414,7 +414,6 @@ NEW_TESTCODES = \
    test2016_55.C \
    test2016_56.C \
    test2016_57.C \
-   test2016_58.C \
    test2016_59.C \
    test2016_60.C \
    test2016_61.C \
@@ -428,11 +427,14 @@ NEW_TESTCODES = \
    test2016_69.C \
    test2016_70.C \
    test2016_80.C \
-   test2016_81.C
+   test2016_81.C \
+   test2016_82.C \
+   test2016_83.C 
 
 # DQ (/12/2016): We can't add this because it is a CPP-preprocessed file containing 
 # references to the __int128 type which is not portable to older versions of GNU compilers.
 #  test2016_39.C 
+#  test2016_58.C 
 
 # Liao 7/1/2016: template_function (T * __restrict__* ptr) is not supported.
 # Details in https://rosecompiler.atlassian.net/browse/ROSE-390
