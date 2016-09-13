@@ -177,9 +177,12 @@
 /* DQ (9/1/2016): Adding support for ROSE generated builtin functions */
 // #include "rose_generated_builtin_functions.h"
 
+/* DQ (9/6/2016): We need size_t to be defined, but we only want it defined so that the builtin functions 
+   will make sense, then we will undefine it and allow the header files to define it properly.
+ */
 /* typedef long unsigned int size_t; */
-typedef __SIZE_TYPE__ size_t;
-
+/* typedef __SIZE_TYPE__ size_t; */
+#define size_t __SIZE_TYPE__
 
 /* DQ (9/2/2016): This is part of what is required using the new automated support for builtin functions. */
 #if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
@@ -224,6 +227,10 @@ typedef __SIZE_TYPE__ size_t;
 #define _COMPLEX_H
 /* Disable inclusion of complex.h on Mac OS X */
 #define __COMPLEX__
+
+/* Defined this to avoid warnings (e.g. test2001_11.C) from 3.4.6 systems header files. */
+/* DQ (9/6/2016): This is also required to support tests/CompileTests/mergeAST_tests/mergeTest_134.C */
+#define __weakref__(NAME)
 
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
 
@@ -2405,6 +2412,12 @@ int __builtin_ia32_psrlqi(long long,int);
 // However, integer types such as int32_t are not defined here.
 int __builtin_bswap32 (int x);
 /* long int __builtin_bswap64 (long int x); */
+
+
+/* DQ (9/6/2016): We need size_t to be defined, but we only want it defined so that the builtin functions 
+   will make sense, then we will undefine it and allow the header files to define it properly.
+ */
+#undef size_t
 
 /* matching else for SKIP_ROSE_BUILTIN_DECLARATIONS */
 #else
