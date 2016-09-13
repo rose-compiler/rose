@@ -1,0 +1,17 @@
+This directory hierarchy contains acceptance tests.
+
+ACCEPTANCE TESTS ARE ALMOST CERTAINLY NON-SMOKE TESTS.
+
+=== Definitions ===
+
+Compared to unit tests or functional tests, acceptance tests tend to be:
+  * Larger in terms of what they test (more APIs tested at one time)
+  * More I/O intensive (processing large specimens, perhaps whole applications)
+  * More memory intensive (might use a few gigabytes of RAM)
+  * More CPU intensive (might take many minutes per test)
+
+"Non-smoke tests" are anything but smoke tests. ("Smoke tests" are the
+minimal set of small, fast, simple tests run by end users via "make
+check" to test that ROSE basically functions. All smoke tests
+_together_ should take no more than a couple minutes on average
+hardware.)

@@ -1139,6 +1139,13 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ( "SgFunctionParameterScope*", "functionParameterScope", "= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/30/2016): Add a data member to detect specific EDG normalizations to functions defined in 
+  // templates and moved to be declarations outside of the template declarations (also effects the 
+  // associated template instantiations).
+     FunctionDeclaration.setDataPrototype ("bool", "marked_as_edg_normalization", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
 #if 0

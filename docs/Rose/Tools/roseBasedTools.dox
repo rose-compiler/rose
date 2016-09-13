@@ -3,6 +3,14 @@
 /** @page rosetools ROSE-Based Tools
  *  A List of Program Transformation Tools Built On Top Of ROSE
  *
+ * @ref identity_translator "identityTranslator" Simplest source-to-source translator built using ROSE.
+ *
+ * @ref dot_generator "dotGenerator and dotGeneratorWholeASTGraph" Generate dot graph dump of AST
+ * 
+ * @ref pdf_generator "pdfGenerator" Generate pdf dump of AST
+ *
+ * @ref auto_par "autoPar" Automatic Parallelization using OpenMP
+
  * @ref declaration_move "Declaration Move Tool" Re-scoping variable declarations 
  * 
  *

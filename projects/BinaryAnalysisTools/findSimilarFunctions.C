@@ -73,6 +73,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen1} [--] @v{specimen2}");
 
     SwitchGroup tool("Switches for this tool");
+    tool.nameSpace("tool");
 
     tool.insert(Switch("metric")
                 .argument("name", enumParser(settings.metric)

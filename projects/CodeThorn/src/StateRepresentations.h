@@ -243,6 +243,8 @@ class ParProEStateEqualToPred {
 class ParProEStateSet : public HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred> {
   public:
   ParProEStateSet():HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>(),_constraintSetMaintainer(0){}
+  ParProEStateSet(bool keepStates):HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>(keepStates),
+                                   _constraintSetMaintainer(0){}
   public:
    typedef HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>::ProcessingResult ProcessingResult;
   private:
@@ -354,7 +356,7 @@ class EStateEqualToPred {
  */
  class EStateSet : public HSetMaintainer<EState,EStateHashFun,EStateEqualToPred> {
  public:
- EStateSet():HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>(),_constraintSetMaintainer(0){}
+   EStateSet():HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>(),_constraintSetMaintainer(0){}
  public:
   typedef HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult ProcessingResult;
   string toString(VariableIdMapping* variableIdMapping=0) const;

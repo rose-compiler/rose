@@ -7,7 +7,7 @@ class A {
 };
 
 int main() {    
-  A::mf();  // SgFunctionCallExp::getAssociatedFunctionSymbol(...) finds mf
-  (*A::mf)();  // SgFunctionCallExp::getAssociatedFunctionSymbol(...) does not find mf
+  A::mf();     // SgFunctionCallExp::getAssociatedFunctionSymbol(...) finds mf
+  (*A::mf)();  // TODO: SgFunctionCallExp::getAssociatedFunctionSymbol(...) does not find mf
 }
 

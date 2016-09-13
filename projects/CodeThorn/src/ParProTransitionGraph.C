@@ -28,6 +28,12 @@ bool SPRAY::operator<(const ParProTransition& t1, const ParProTransition& t2) {
   return (t1.edge.getAnnotation()<t2.edge.getAnnotation());
 }
 
+void ParProTransitionGraph::deleteStates() {
+  for (EStateTransitionMap::iterator i=_outEdges.begin(); i!=_outEdges.end(); ++i) {
+    delete (*i).first;  // delete all the ParProEStates
+  }
+}
+
 void ParProTransitionGraph::add(ParProTransition transition) {
   EStateTransitionMap::iterator res = _outEdges.find(transition.source);
   if (res != _outEdges.end()) {

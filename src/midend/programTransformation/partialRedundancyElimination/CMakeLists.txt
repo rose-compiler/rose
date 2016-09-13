@@ -7,7 +7,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES  expressionTreeEqual.h pre.h controlFlowGraph.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  expressionTreeEqual.h pre.h preControlFlowGraph.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 
@@ -18,12 +18,12 @@ install(FILES  expressionTreeEqual.h pre.h controlFlowGraph.h DESTINATION ${INCL
 #INCLUDES = $(ROSE_INCLUDES) -I${top_srcdir}/src/midend/programAnalysis/CFG 
 #
 #libpreSources = \
-#   expressionTreeEqual.C pre.C controlFlowGraph.C
+#   expressionTreeEqual.C pre.C preControlFlowGraph.C
 #
 #noinst_LTLIBRARIES = libpre.la
 #libpre_la_SOURCES = $(libpreSources)
 #
-#include_HEADERS = expressionTreeEqual.h pre.h controlFlowGraph.h
+#include_HEADERS = expressionTreeEqual.h pre.h preControlFlowGraph.h
 #
 #clean-local:
 #	rm -rf Templates.DB ii_files ti_files core

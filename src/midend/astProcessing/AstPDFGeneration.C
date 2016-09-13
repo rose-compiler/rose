@@ -23,6 +23,7 @@ using namespace std;
 class AstPDFGeneration_private : public PDFGeneration {
 public:
   virtual void generate(std::string filename, SgNode* node);
+  virtual void generate(SgProject* projectNode);
   void generateInputFiles(SgProject* projectNode);
   void generateWithinFile(const std::string& filename, SgFile* node); // ****
   void generateWithinFile(SgFile* node); // ****
@@ -32,6 +33,11 @@ public:
   void edit_page(size_t pageNumber, SgNode* node, PDFInheritedAttribute inheritedValue);
   AstNodeVisitMapping::MappingType addrPageMapping;
 };
+
+void AstPDFGeneration::generate(SgProject* projectNode) {
+  AstPDFGeneration_private p;
+  p.generate(projectNode);
+}
 
 void AstPDFGeneration::generate(std::string filename, SgNode* node) {
   AstPDFGeneration_private p;
@@ -66,6 +72,21 @@ AstPDFGeneration_private::generate(string filename, SgNode* node) {
   traverse(node,pdfIA);
   pdf_finalize();
 // cout << "done (full AST)." << endl;
+}
+
+// Full AST for the entire project, one pdf file for each input source file
+// Liao, 8/19/2016
+void
+AstPDFGeneration_private::generate(SgProject* projectNode) {
+  const SgFilePtrList& fList = projectNode->get_fileList();
+  for (SgFilePtrList::const_iterator fl_iter = fList.begin();
+       fl_iter != fList.end(); fl_iter++) {
+    ROSE_ASSERT(*fl_iter!=0);
+    SgFile* fp = *fl_iter;
+    std::string filename = fp->getFileName(); 
+    filename = rose::StringUtility::stripPathFromFileName(filename);
+    generate(filename,  *fl_iter);
+  }
 }
 
 void

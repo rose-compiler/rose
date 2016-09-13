@@ -24,7 +24,15 @@ bool SPRAY::Lattice::approximatedBy(Lattice& other) {
 }
 #endif
 
+bool SPRAY::Lattice::approximatedByAsymmetric(Lattice& other) {
+  return approximatedBy(other);
+}
+
 void SPRAY::Lattice::combine(Lattice& other){
+}
+
+void SPRAY::Lattice::combineAsymmetric(Lattice& other) {
+  combine(other);
 }
 
 bool SPRAY::Lattice::isBot(){
