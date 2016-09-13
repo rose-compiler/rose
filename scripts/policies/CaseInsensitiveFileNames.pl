@@ -2,13 +2,18 @@
 # DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 Some file systems do not distinguish between upper and lower case characters in
-a file or directory name.  The following directories have files whose names
-would conflict on such a filesystem:
+a file or directory name.  Having two files with equal case insensitive names
+causes problems with certain Git operations (like clone and merge) because Git
+thinks it has created a file with a certain checksum, but the checksums don't
+match when they're rechecked later.  This checker runs in all subdirectories
+including tests and projects since violations could cause Git to not work.
+The following directories have files whose names would conflict on such a
+filesystem:
 EOF
 
 
 use strict;
-my $warning = "warning ";
+my $warning;
 my $nfail=0;
 
 sub checkdir {
@@ -21,6 +26,8 @@ sub checkdir {
   my %index;
   for my $entry (@entries) {
     next if $entry =~ /^\.\.?$/;
+    next if $entry =~ /^\.git$/; # Git can handle its own problems
+    next if $entry =~ /^_build/; # typical names for build directories
     checkdir("$dir/$entry") if -d "$dir/$entry" && ! -d "$dir/$entry/include_staging";
     my $key = lc $entry;
     $index{$key} ||= [];
