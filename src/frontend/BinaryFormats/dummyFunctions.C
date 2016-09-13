@@ -447,17 +447,6 @@ void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, const std::string &na
 void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, unsigned ordinal){}
 
 size_t SgAsmPEImportSection::mesg_nprinted = 0;
-
-
-rose_addr_t
-rose_rva_t::get_va() const
-{}
-
-std::string
-SgAsmGenericSection::read_content_str(const MemoryMap *map, rose_addr_t start_va, bool strict)
-{}
-
-
-std::string
-SgAsmGenericSection::read_content_str(rose_addr_t abs_offset, bool strict)
-{}
+rose_addr_t rose_rva_t::get_va() const { return 0; }
+std::string SgAsmGenericSection::read_content_str(const MemoryMap*, rose_addr_t, bool) { return ""; }
+std::string SgAsmGenericSection::read_content_str(rose_addr_t, bool) { return ""; }
