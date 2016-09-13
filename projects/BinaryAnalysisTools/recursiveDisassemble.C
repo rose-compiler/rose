@@ -94,7 +94,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Switches for output
     SwitchGroup out("Output switches");
-    out.nameSpace("out");
+    out.name("out");
     out.doc("These switches control the various ways that this tool produces output. Switches related to GraphViz output "
             "are described in their own section.");
 
@@ -226,7 +226,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Switches controlling GraphViz output
     SwitchGroup dot("Graphviz switches");
-    dot.nameSpace("gv");
+    dot.name("gv");
     dot.doc("Switches that affect GraphViz output for control flow graphs (CFG) and function call graphs (CG).");
 
     dot.insert(Switch("basename")
@@ -322,7 +322,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Switches for debugging
     SwitchGroup dbg("Debugging switches");
-    dbg.nameSpace("debug");
+    dbg.name("debug");
     dbg.doc("These debugging switches are intended mostly for ROSE developers and direct users of the ROSE library. "
             "Interpretation of the results often requires considerable knowledge of implementation details.");
 

@@ -55,7 +55,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
         .errorStream(mlog[FATAL]);
 
     SwitchGroup fmt("Format switches");
-    fmt.nameSpace("fmt");
+    fmt.name("fmt");
 
     fmt.insert(Switch("hexdump")
                .intrinsicValue(true, settings.showAsHex)
@@ -75,7 +75,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                     "command, usualyl by specifying \"@@v{prefix}.load\" at the end of its command-line."));
 
     SwitchGroup out("Output switches");
-    out.nameSpace("out");
+    out.name("out");
 
     out.insert(Switch("map")
                .intrinsicValue(true, settings.showMap)
@@ -89,7 +89,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                     "not all output formats permit standard output."));
 
     SwitchGroup misc("Other switches");
-    misc.nameSpace("misc");
+    misc.name("misc");
 
     misc.insert(Switch("where")
                 .argument("interval", P2::addressIntervalParser(settings.where))
