@@ -108,6 +108,23 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
         exit 1
    fi
 
+ # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
+   echo "Now output the builtin generated file into build directory."
+ # cp ${srcdir}/config/rose_generated_builtin_functions.h ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+   ${srcdir}/scripts/builtinLlvmFunctions.pl ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+
+   echo "Now output the builtin generated file from the build directory."
+ # cat ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+
+ # echo "Now output the builtin generated file."
+ # cat ${srcdir}/config/rose_generated_builtin_functions.h > $tmpFile
+ # cat ${srcdir}/config/rose_generated_builtin_functions.h > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+   echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file."
+
+   sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+
+ # "./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h"
+
  # echo "Exiting as a test in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
  # exit 1
 ])
