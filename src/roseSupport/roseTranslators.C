@@ -18,6 +18,10 @@ CppToCppTranslator::~CppToCppTranslator() {
   setAstRoot(NULL);
 }
 
+void CppToCppTranslator::setOptions(const std::vector <std::string>& argvList) {
+  getAstRoot()->processCommandLine(argvList);
+}
+
 void CppToCppTranslator::setOptions(int argc,char** argv) {
   getAstRoot()->processCommandLine(argc,argv);
 }
@@ -64,11 +68,15 @@ void CppToCppTranslator::setAstRoot(SgProject* p) {
 
 /********************************************************/
 
+bool CppToPdfTranslator::dumpFullAST = false; 
+
 void CppToPdfTranslator::backend() {
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   AstPDFGeneration pdf;
-  pdf.generateInputFiles(getAstRoot());  // traverse AST from the input files only
-//  pdf.generate(getAstRoot()); // traverse entire AST 
+  if (dumpFullAST)
+    pdf.generate(getAstRoot()); // traverse entire AST 
+  else  
+    pdf.generateInputFiles(getAstRoot());  // traverse AST from the input files only
 #endif
 }
 
@@ -94,6 +102,7 @@ void CppToCppTranslator::printMessage(string s) {
   if (getAstRoot()->get_useBackendOnly() == false)
     cout << s << endl;
 }
+
 
 void CppToVendorTranslator::backend()
    {
