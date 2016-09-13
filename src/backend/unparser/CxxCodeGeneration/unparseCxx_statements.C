@@ -9899,14 +9899,15 @@ Unparse_ExprStmt::unparseTemplateHeader(SgClassDeclaration* classDeclaration, Sg
   // (I think this only applies to template member and non-member functions).  If this applies
   // to other declarations then we should make this a template function to refactor the support.
 
-#if 1
+#if 0
      printf ("In unparseTemplateHeader(SgClassDeclaration): classDeclaration->get_name_qualification_length() = %d \n",classDeclaration->get_name_qualification_length());
 #endif
 
+#if 0
   // SgName template_header = classDeclaration->get_template_header();
      SgName template_header = "template < typename T>";
 
-#if 1
+#if 0
      printf ("In unparseTemplateHeader(SgClassDeclaration): template_header = %s \n",template_header.str());
 #endif
 
@@ -9914,6 +9915,7 @@ Unparse_ExprStmt::unparseTemplateHeader(SgClassDeclaration* classDeclaration, Sg
   // curprint(template_header.str());
      curprint(string("\n\n") + template_header + "\n");
   // curprint("\n");
+#endif
    }
 
 

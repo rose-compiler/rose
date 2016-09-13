@@ -232,32 +232,27 @@
 /* DQ (9/6/2016): This is also required to support tests/CompileTests/mergeAST_tests/mergeTest_134.C */
 #define __weakref__(NAME)
 
+/* For debugging use the separate generated header file of builtin functions. */
+#if __cplusplus >= 201103L
+#  define ROSE_CONSTEXPR constexpr
+// #warning "Set ROSE_CONSTEXPR to constexpr"
+#else
+#  define ROSE_CONSTEXPR
+// #warning "NOT setting ROSE_CONSTEXPR to constexpr"
+#endif
+
 
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
 
 
-/* DQ (9/12/2016): Added builtin functions (not yet supported in config/Builtins.def). */
-
-int __builtin_ia32_bsrsi(int x);
-unsigned long long __builtin_ia32_rdpmc(int x);
-unsigned long long __builtin_ia32_rdtsc(void);
-unsigned long long __builtin_ia32_rdtscp(unsigned int *__A);
-unsigned char      __builtin_ia32_rolqi(unsigned char __X, int __C);
-unsigned short     __builtin_ia32_rolhi(unsigned short __X, int __C);
-unsigned char      __builtin_ia32_rorqi(unsigned char __X, int __C);
-unsigned short     __builtin_ia32_rorhi(unsigned short __X, int __C);
-void               __builtin_ia32_pause();
-int                __builtin_ia32_bsrdi(long long __X);
+/* DQ (9/12/2016): Added builtin functions (not yet supported in config/Builtins.def).
+   These are required to compile: tests/CompileTests/Cxx11_tests/test2015_08.C 
+ */
 long long          __builtin_bswap64(long long __X);
-
 void               __builtin_ia32_fxsave(void *__P);
 void               __builtin_ia32_fxrstor(void *__P);
 void               __builtin_ia32_fxsave64(void *__P);
 void               __builtin_ia32_fxrstor64(void *__P);
-unsigned char      __builtin_ia32_addcarryx_u32(unsigned char __CF, unsigned int __X, unsigned int __Y, unsigned int *__P);
-unsigned char      __builtin_ia32_addcarryx_u64(unsigned char __CF, unsigned long __X, unsigned long __Y, unsigned long long *__P);
-
-
 
 
 

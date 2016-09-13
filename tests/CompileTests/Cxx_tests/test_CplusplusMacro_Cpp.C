@@ -39,6 +39,7 @@
 //  #warning "ROSE_LANGUAGE_MODE is defined for internal ROSE use only, and is not defined for the vendor compiler.
 #endif
 
+#if 0
 // DQ (9/10/2016): Checking how _GLIBCXX_CONSTEXPR is being set for C++11 support.
 // #include <bits/c++config.h>
 #include "rose_c++config.h"
@@ -63,3 +64,4 @@ abs(double __x)
    {
      return __builtin_fabs(__x);
    }
+#endif
