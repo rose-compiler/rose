@@ -1,0 +1,4 @@
+operator VectorXY::VectorXY(double xx, double yy)
+{
+  modify none; read {xx,yy}; 
+}

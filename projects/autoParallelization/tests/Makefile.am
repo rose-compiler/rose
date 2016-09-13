@@ -75,7 +75,8 @@ ifstmt.C \
 iterator2.C \
 iteratorloop.C \
 test20100223.C \
-Hydro_applyVelocityBC.C
+Hydro_applyVelocityBC.C \
+Hydro_constructor_1.C
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
@@ -177,7 +178,8 @@ $(C_TEST_Objects): ../autoPar $(@:.o=.c)
 #$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out) # pipeline buries return code
 
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) >> $(@).out
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/../annot/tinyHydro.annot $(srcdir)/$(@:.o=.C) >> $(@).out
+
 rose_interp1_elem.C: ../autoPar interp1_elem.C
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
 rose_doall_vector.C: ../autoPar doall_vector.C
