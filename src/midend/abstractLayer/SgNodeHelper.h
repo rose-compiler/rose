@@ -298,9 +298,28 @@ namespace SgNodeHelper {
   //  underlying pointer type.
   const SgPointerType* isPointerType(const SgType* t);
 
-  // schroder3 (2016-07-22): Modified version of SageInterface::isReferenceType(...) that returns the
-  //  underlying reference type.
-  const SgReferenceType* isReferenceType(const SgType* t);
+  // schroder3 (2016-08-17): Added support for rvalue reference types. See isLvalueReferenceType(...)
+  //  if only lvalue references are desired.
+  // schroder3 (2016-07-22): Modified version of SageInterface::isReferenceType(...) that
+  //  returns the underlying reference type.
+  //
+  // Returns the underlying (without typedefs and mofifiers) rvalue OR lvalue reference type if the
+  //  given type is such a reference type. Returns 0 otherwise.
+  const SgType* isReferenceType(const SgType* t);
+
+  // schroder3 (2016-08-22): Modified version of SageInterface::isReferenceType(...) that
+  //  returns the underlying LVALUE reference type.
+  const SgReferenceType* isLvalueReferenceType(const SgType* t);
+
+  // schroder3 (2016-08-22): Returns the underlying RVALUE reference type if the given type is a
+  //  rvalue reference type. Returns 0 otherwise.
+  const SgRvalueReferenceType* isRvalueReferenceType(const SgType* t);
+
+  // schroder3 (2016-08-22): Wrapper around SgReferenceType::get_base_type(...) and
+  //  SgRvalueReferenceType::get_base_type(...) that works for both reference types.
+  //  (This is a workaround for the missing mutual base class of SgReferenceType and
+  //  SgRvalueReferenceType.)
+  SgType* getReferenceBaseType(const SgType* t);
 
   // schroder3 (2016-07-26): Returns the given type as a SgPointerType if it is a
   //  function pointer type. Returns 0 otherwise.

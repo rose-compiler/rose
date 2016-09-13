@@ -202,6 +202,8 @@ check-boost-linkage: testSharedRoseLib$(EXEEXT)
 	@echo "  TEST     boost shared linkage [$@]"
 	${AM_V_at}$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
 
+check-local: check-trivial-program check-boost-linkage
+
 .PHONY: check-trivial-program check-boost-linkage
 
 ########################################################################################################################
@@ -212,7 +214,7 @@ check-boost-linkage: testSharedRoseLib$(EXEEXT)
 # in each directory and we will link with the collection of all static libraries.
 
 noinst_PROGRAMS = testSharedRoseLib 
-all-local: check-trivial-program check-boost-linkage
+all-local:
 
 # PC (9/15/2006): force the use of the C++ linker
 LINK = $(CXXLINK)
@@ -316,6 +318,7 @@ rose_config_installed_cppflags =		\
 	$(INTEL_PIN_INCLUDE_PATHS)		\
 	$(ROSE_ETHER_INCLUDE)			\
 	$(ROSE_ATERM_INCLUDE)			\
+	$(ROSE_DLIB_INCLUDES)			\
 	$(BOOST_CPPFLAGS)
 rose_config_build_cppflags = $(ROSE_INCLUDES)
 
@@ -344,6 +347,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_ATERM_LIBS)			\
 	$(ROSE_YAML_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
+	$(ROSE_DLIB_LIBS_WITH_PATH)		\
 	-lm
 rose_config_build_ldflags =			\
 	$(LIBS_WITH_RPATH)			\
