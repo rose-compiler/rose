@@ -659,6 +659,11 @@ math.C \
 inputForLoopLocator.C \
 X.C
 
+# DQ (8/31/2016): This is now fixed.
+# DQ (8/26/2016): Failing test with new template fix (likely similar problem to call graph fix).
+# test2006_78.C 
+
+
 if !USING_CLANG_COMPILER
 CXX_TESTCODES_REQUIRED_TO_PASS += \
    test2005_03.C \

@@ -7171,7 +7171,9 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case not supported: debug");
                printf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
 
-#if 1
+               // schroder3 (2016-07-25): Changed "#if 1" to "#if 0" to remove ROSE_ASSERT. If this member function is unable to determine the
+               //  associated function then it should return 0 instead of raising an assertion.
+#if 0
             // DQ (2/23/2013): Allow this to be commented out so that I can generate the DOT graphs to better understand the problem in test2013_69.C.
                ROSE_ASSERT(false);
 #endif

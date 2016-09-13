@@ -94,20 +94,14 @@ std::ostream& SPRAY::operator<<(std::ostream& out, Number& number) {
 
 NumberIntervalLattice::NumberIntervalLattice(){}
 
+NumberIntervalLattice::NumberIntervalLattice(Number value)
+    : GenericIntervalLattice<Number>(value)
+{ }
+
 NumberIntervalLattice::NumberIntervalLattice(Number left, Number right) {
-  setLow(left);
-  setHigh(right);
+  setFiniteInterval(left, right);
 }
 
 NumberIntervalLattice::NumberIntervalLattice(GenericIntervalLattice<Number> interval) {
-  if(interval.isLowInf()) {
-    setLowInf();
-  } else {
-    setLow(interval.getLow());
-  }
-  if(interval.isHighInf()) {
-    setHighInf();
-  } else {
-    setHigh(interval.getHigh());
-  }
+  overwriteWith(interval);
 }

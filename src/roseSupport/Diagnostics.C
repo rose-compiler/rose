@@ -6,6 +6,7 @@
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
 #include "BinaryCallingConvention.h"                    // rose::BinaryAnalysis::CallingConvention
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
+#include "BinaryFunctionSimilarity.h"                   // rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryLoader.h"                               // BinaryLoader
 #include "BinaryNoOperation.h"                          // rose::BinaryAnalysis::NoOperation
 #include "BinaryPointerDetection.h"                     // rose::BinaryAnalysis::PointerDetection
@@ -92,18 +93,19 @@ void initialize() {
         // using the POSIX unbuffered output functions.  Calling these initializers should make all the streams point to the
         // rose::Diagnostics::destination that we set above.
         BinaryLoader::initDiagnostics();
-        BinaryAnalysis::Disassembler::initDiagnostics();
-        BinaryAnalysis::Partitioner::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
+        BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
-        BinaryAnalysis::TaintedFlow::initDiagnostics();
-        BinaryAnalysis::Partitioner2::initDiagnostics();
-        BinaryAnalysis::PointerDetection::initDiagnostics();
+        BinaryAnalysis::Disassembler::initDiagnostics();
+        BinaryAnalysis::FunctionSimilarity::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
+        BinaryAnalysis::NoOperation::initDiagnostics();
+        BinaryAnalysis::Partitioner2::initDiagnostics();
+        BinaryAnalysis::Partitioner::initDiagnostics();
+        BinaryAnalysis::PointerDetection::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
-        BinaryAnalysis::NoOperation::initDiagnostics();
-        BinaryAnalysis::CallingConvention::initDiagnostics();
+        BinaryAnalysis::TaintedFlow::initDiagnostics();
         EditDistance::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
 

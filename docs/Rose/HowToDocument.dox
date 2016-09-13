@@ -242,6 +242,16 @@
  *    enum constants it's sometimes more convenient to put the documenting comment *after* the declaration, in which case the
  *    comment should start with <code>/\*\*\<</code>.
  *
+ *  @section doxy_build Build Doxygen Docs
+ *   To generate ROSE's Doxygen documentation locally, run: 
+ *
+ *    cd $ROSE_BUILD/docs/Rose
+ *
+ *    make doxygen_docs
+ *
+ *   Please note that you can ignore warning messages about things not documented. 
+ *   When it is doen, you can open it by typing "firefox $ROSE_BUILD/docs/Rose/ROSE_WebPages/ROSE_HTML_Reference/index.html"
+ * 
  *  @section doxy_next Next steps
  *
  *  Doxygen, as one would expect from a documentation generator, is well documented at its

@@ -166,10 +166,10 @@ int main11()
 }
 struct A12
 {
-    int a;
-    int* p;
-    float f;
-} sA12 = { sA12.a=0, sA12.p = 0, sA12.f=0.0};
+    int a12;
+    int* p12;
+    float f12;
+} sA12 = { sA12.a12=0, sA12.p12 = 0, sA12.f12=0.0};
 
 
 

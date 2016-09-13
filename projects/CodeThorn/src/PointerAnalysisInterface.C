@@ -10,8 +10,12 @@ bool SPRAY::PointerAnalysisInterface::hasDereferenceOperation(SgExpression* exp)
   RoseAst ast(exp);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgExpression* exp=isSgExpression(*i)) {
-      if(isSgArrowExp(exp)
-         ||isSgPointerDerefExp(exp)
+      if(   isSgArrowExp(exp)
+         || isSgArrowStarOp(exp)
+         || isSgDotStarOp(exp)
+         || isSgPointerDerefExp(exp)
+         || isSgPntrArrRefExp(exp)
+         || isSgFunctionCallExp(exp)
          ||(isSgVarRefExp(exp)&&isSgReferenceType(exp->get_type()))
          ) {
         return true;

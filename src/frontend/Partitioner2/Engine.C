@@ -119,6 +119,10 @@ Sawyer::CommandLine::SwitchGroup
 Engine::loaderSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Loader switches");
+    sg.nameSpace("loader");
+    sg.doc("The loader is responsible for mapping a specimen into the address space used for disassembling and analysis. "
+           "ROSE uses a virtualized address space (the MemoryMap class) to isolate the address space of a specimen from "
+           "the address space of ROSE itself.");
 
     sg.insert(Switch("remove-zeros")
               .argument("size", nonNegativeIntegerParser(settings_.loader.deExecuteZerosThreshold), "128")
@@ -183,6 +187,10 @@ Sawyer::CommandLine::SwitchGroup
 Engine::disassemblerSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Disassembler switches");
+    sg.nameSpace("disassemble");
+    sg.doc("These switches affect the disassembler proper, which is the software responsible for decoding machine "
+           "instruction bytes into ROSE internal representations.  The disassembler only decodes instructions at "
+           "given addresses and is not responsible for determining what addresses of the virtual address space are decoded.");
 
     sg.insert(Switch("isa")
               .argument("architecture", anyParser(settings_.disassembler.isaName))
@@ -197,6 +205,9 @@ Sawyer::CommandLine::SwitchGroup
 Engine::partitionerSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Partitioner switches");
+    sg.nameSpace("partition");
+    sg.doc("The partitioner is the part of ROSE that drives a disassembler. While the disassembler knows how to decode "
+           "a machine instruction to an internal representation, the partitioner knows where to decode.");
 
     sg.insert(Switch("start")
               .argument("addresses", listParser(nonNegativeIntegerParser(settings_.partitioner.startingVas)))
@@ -513,50 +524,52 @@ Sawyer::CommandLine::SwitchGroup
 Engine::astConstructionSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("AST construction switches");
+    sg.nameSpace("ast");
+    sg.doc("These switches control how an abstract syntax tree (AST) is generated from partitioner results.");
 
-    sg.insert(Switch("ast-allow-empty-global-block")
+    sg.insert(Switch("allow-empty-global-block")
               .intrinsicValue(true, settings_.astConstruction.allowEmptyGlobalBlock)
               .doc("Allows creation of an empty AST if the partitioner does not find any functions. The "
-                   "@s{no-ast-allow-empty-global-block} switch causes a null AST to be returned instead. The default is to " +
+                   "@s{no-allow-empty-global-block} switch causes a null AST to be returned instead. The default is to " +
                    std::string(settings_.astConstruction.allowEmptyGlobalBlock ? "create an empty " : "not create an ") +
                    "AST."));
-    sg.insert(Switch("no-ast-allow-empty-global-block")
-              .key("ast-allow-empty-global-block")
+    sg.insert(Switch("no-allow-empty-global-block")
+              .key("allow-empty-global-block")
               .intrinsicValue(false, settings_.astConstruction.allowEmptyGlobalBlock)
               .hidden(true));
 
-    sg.insert(Switch("ast-allow-empty-functions")
+    sg.insert(Switch("allow-empty-functions")
               .intrinsicValue(true, settings_.astConstruction.allowFunctionWithNoBasicBlocks)
               .doc("Allows creation of an AST that has functions with no instructions. This can happen, for instance, when "
                    "an analysis indicated that a particular virtual address is the start of a function but no memory is "
                    "mapped at that address. This is common for things like functions from shared libraries that have not "
-                   "been linked in before the analysis starts.  The @s{no-ast-allow-empty-functions} will instead elide all "
+                   "been linked in before the analysis starts.  The @s{no-allow-empty-functions} will instead elide all "
                    "empty functions from the AST. The default is to " +
                    std::string(settings_.astConstruction.allowFunctionWithNoBasicBlocks ? "allow " : "elide ") +
                    "empty functions."));
-    sg.insert(Switch("no-ast-allow-empty-functions")
-              .key("ast-allow-empty-functions")
+    sg.insert(Switch("no-allow-empty-functions")
+              .key("allow-empty-functions")
               .intrinsicValue(false, settings_.astConstruction.allowFunctionWithNoBasicBlocks)
               .hidden(true));
 
-    sg.insert(Switch("ast-allow-empty-basic-blocks")
+    sg.insert(Switch("allow-empty-basic-blocks")
               .intrinsicValue(true, settings_.astConstruction.allowEmptyBasicBlocks)
               .doc("Allows creation of an AST that has basic blocks with no instructions. This can happen when an analysis "
                    "indicates that a basic block exists at a particular virtual address but no memory is mapped at that "
-                   "address. The @s{no-ast-allow-empty-basic-blocks} will instead elide all empty blocks from the AST. The "
+                   "address. The @s{no-allow-empty-basic-blocks} will instead elide all empty blocks from the AST. The "
                    "default is to " + std::string(settings_.astConstruction.allowEmptyBasicBlocks ? "allow " : "elide ") +
                    "empty blocks."));
-    sg.insert(Switch("no-ast-allow-empty-basic-blocks")
-              .key("ast-allow-empty-basic-blocks")
+    sg.insert(Switch("no-allow-empty-basic-blocks")
+              .key("allow-empty-basic-blocks")
               .intrinsicValue(false, settings_.astConstruction.allowEmptyBasicBlocks)
               .hidden(true));
 
-    sg.insert(Switch("ast-copy-instructions")
+    sg.insert(Switch("copy-instructions")
               .intrinsicValue(true, settings_.astConstruction.copyAllInstructions)
               .doc("Causes all instructions to be deep-copied from the partitioner's instruction provider into the AST. "
                    "Although this slows down AST construction and increases memory since SageIII nodes are not garbage "
                    "collected, copying instructions ensures that the AST is a tree. Turning off the copying with the "
-                   "@s{no-ast-copy-instructions} switch will result in the AST being a lattice if the partitioner has "
+                   "@s{no-copy-instructions} switch will result in the AST being a lattice if the partitioner has "
                    "determined that two or more functions contain the same basic block, and therefore the same instructions. "
                    "The default is to " + std::string(settings_.astConstruction.copyAllInstructions ? "" : "not ") +
                    "copy instructions.\n\n"
@@ -568,8 +581,8 @@ Engine::astConstructionSwitches() {
                    "the block level would break those programs. Users that store analysis results by attaching them to "
                    "partitioner basic blocks (Partitioner2::BasicBlock) should be aware that those blocks can be shared "
                    "among functions."));
-    sg.insert(Switch("no-ast-copy-instructions")
-              .key("ast-copy-instructions")
+    sg.insert(Switch("no-copy-instructions")
+              .key("copy-instructions")
               .intrinsicValue(false, settings_.astConstruction.copyAllInstructions)
               .hidden(true));
 

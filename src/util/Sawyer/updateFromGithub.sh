@@ -50,8 +50,7 @@ do
     cp "$SAWYER_ROOT/docs/examples/$f" docs/examples/.
 done
 
-# Copy some of Sawyer's unit tests into the ROSE source tree.  The destination location should be changed to be the same
-# as the rest of the unit testing, but that location has not been decided yet.
+# Copy some of Sawyer's unit tests into the ROSE source tree.
 for f in                                        \
     Container/addressMapUnitTests.C             \
     Container/attributeUnitTests.C              \
@@ -70,7 +69,7 @@ for f in                                        \
     Container/setUnitTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";
-    ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/roseTests/utilTests/sawyer-$(basename "$f")
+    ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/smoke/unit/Sawyer/$(basename "$f")
 done
 
 

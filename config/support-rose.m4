@@ -2130,6 +2130,36 @@ projects/TileK/doc/tilek-rtl-opencl.doxy
 projects/TileK/doc/tilek-cuda.doxy
 projects/TileK/doc/tilek-rtl-cuda.doxy
 tests/Makefile
+tests/nonsmoke/Makefile
+tests/nonsmoke/ExamplesForTestWriters/Makefile
+tests/nonsmoke/acceptance/Makefile
+tests/nonsmoke/functional/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Dwarf_tests/Makefile
+tests/nonsmoke/functional/Utility/Makefile
+tests/nonsmoke/specimens/Makefile
+tests/nonsmoke/specimens/binary/Makefile
+tests/nonsmoke/specimens/c/Makefile
+tests/nonsmoke/specimens/c++/Makefile
+tests/nonsmoke/specimens/fortran/Makefile
+tests/nonsmoke/specimens/java/Makefile
+tests/nonsmoke/unit/Makefile
+tests/smoke/Makefile
+tests/smoke/ExamplesForTestWriters/Makefile
+tests/smoke/functional/Makefile
+tests/smoke/functional/BinaryAnalysis/Makefile
+tests/smoke/specimens/Makefile
+tests/smoke/specimens/binary/Makefile
+tests/smoke/specimens/c/Makefile
+tests/smoke/specimens/c++/Makefile
+tests/smoke/specimens/fortran/Makefile
+tests/smoke/specimens/java/Makefile
+tests/smoke/unit/Makefile
+tests/smoke/unit/Boost/Makefile
+tests/smoke/unit/Sawyer/Makefile
+tests/smoke/unit/Utility/Makefile
 tests/UnitTests/Makefile
 tests/UnitTests/Rose/Makefile
 tests/UnitTests/Rose/SageBuilder/Makefile
@@ -2230,10 +2260,6 @@ tests/roseTests/astSnippetTests/Makefile
 tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
-tests/roseTests/binaryTests/Makefile
-tests/roseTests/binaryTests/libraryIdentification_tests/Makefile
-tests/roseTests/binaryTests/Pin_tests/Makefile
-tests/roseTests/binaryTests/Dwarf_tests/Makefile
 tests/roseTests/loopProcessingTests/Makefile
 tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/ompLoweringTests/fortran/Makefile
@@ -2264,7 +2290,6 @@ tests/roseTests/roseHPCToolkitTests/data/03/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/roseHPCToolkitTests/data/Makefile
-tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
@@ -2311,8 +2336,6 @@ tools/Makefile
 scripts/Makefile
 demo/Makefile
 demo/qrose/Makefile
-binaries/Makefile
-binaries/samples/Makefile
 ])
 
 # Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
