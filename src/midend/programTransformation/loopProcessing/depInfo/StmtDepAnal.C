@@ -10,6 +10,9 @@
 
 extern bool DebugDep();
 
+// 2*i+1 input exp,  loop variable i, size 1 loop nest
+// the decomposed coeffecient vector is 2
+// return 1 as the left term. 
 template <class VarVec, class CoeffVec>
 SymbolicVal DecomposeAffineExpression(
             const SymbolicVal& exp, const VarVec& vars, CoeffVec& vec, int size)
@@ -35,19 +38,19 @@ SymbolicVal DecomposeAffineExpression(
     }
     return val;
   }
-
+// Coefficient vector, current coefficient, bounds vector, GetBoundOperator, Split coefficient vector
 template <class CoeffVec, class BoundVec, class BoundOp>
 bool SplitEquation( CoeffVec& cur, 
                       const SymbolicVal& cut, const BoundVec& bounds, 
                       BoundOp& boundop, CoeffVec& split)
  {
-     int dim = cur.size()-1;
-     SymbolicVal leftval = cur[dim];
+     int dim = cur.size()-1; 
+     SymbolicVal leftval = cur[dim]; // obtain the last coefficient, which is right side terms without using loop index variable
      if (leftval != 0) {
        CompareRel r1 = CompareVal(leftval,-cut, &boundop);
        CompareRel r2 = CompareVal(leftval,cut, &boundop);
        bool lt = ((r1 & REL_GT) && (r2 & REL_LT)) || ((r1 & REL_LT) && (r2 & REL_GT)); 
-       if (!lt) {
+       if (!lt) { // relation of r1 and r2 must be reversed pair, or error
          if (DebugDep())
            std::cerr << "unable to split because " << leftval.toString() << " ? " << cut.toString() << std::endl;
          return false;   
@@ -82,7 +85,7 @@ bool SplitEquation( CoeffVec& cur,
         if (j == dim && (left == 0 || (CompareVal(left,cut) & REL_LT)))  {
           for (j = 0; j < dim; ++j) {
              if (split[j] != 0)
-                cur[j] = 0;
+                cur[j] = 0; // clear some coefficency values
           }
         
           return true;
