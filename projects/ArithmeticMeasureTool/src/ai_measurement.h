@@ -32,6 +32,10 @@ namespace ArithemeticIntensityMeasurement
 
   std::string toString (fp_operation_kind_enum op_kind);
 
+  //! Estimate the byte size of types
+  int getSizeOf(SgType* t);
+
+
   //Data structure to store the information for an associated node, mostly a loop 
   // The counters are for a single iteration, not considering iteration count.
   //Using AstAttribute to enable propagation
@@ -63,6 +67,8 @@ namespace ArithemeticIntensityMeasurement
       SgExpression* getLoadBytes() {return load_bytes; }
       SgExpression* getStoreBytes() {return store_bytes; }
 
+      float getIntensity(); // obtain the estimated intensity
+
       // default constructor required
       FPCounters(SgLocatedNode *n=NULL): node(n)
     {
@@ -74,6 +80,11 @@ namespace ArithemeticIntensityMeasurement
 
       load_bytes = NULL;
       store_bytes = NULL;
+
+      load_bytes_int = 0;
+      store_bytes_int = 0;
+
+      intensity = -1.0; 
     }
 
     // copy constructor is required for synthesized attributes
@@ -88,6 +99,11 @@ namespace ArithemeticIntensityMeasurement
 
       load_bytes = x.load_bytes;
       store_bytes = x.store_bytes;
+
+      load_bytes_int = x.load_bytes_int;
+      store_bytes_int  = x.store_bytes_int;
+
+      intensity = x.intensity; 
     }
 
     // used to synthesize counters from children nodes
@@ -105,6 +121,10 @@ namespace ArithemeticIntensityMeasurement
       //type sizes are machine dependent, we only generate expressions with sizeof() terms.
       SgExpression* load_bytes;
       SgExpression* store_bytes; 
+      int load_bytes_int; 
+      int store_bytes_int; 
+
+      float intensity; // the final intensity
 
       // without assertion
       int getRawTotalCount () { return total_count; }
@@ -137,6 +157,9 @@ namespace ArithemeticIntensityMeasurement
     public: 
       FPCounters evaluateSynthesizedAttribute (SgNode* n, SubTreeSynthesizedAttributes synthesizedAttributeList );
   }; 
+
+  // Top level interface: estimate AI for an input stmt (it could be a block of stmts)
+ FPCounters* calculateArithmeticIntensity(SgLocatedNode* stmt, bool includeScalars = false, bool includeIntType = false); 
 
  // interface functions to manipulate FPCounters
   void CountFPOperations(SgLocatedNode* input);
@@ -175,6 +198,8 @@ namespace ArithemeticIntensityMeasurement
 
  //! if a statement is an assignment statement to a variable
   bool isAssignmentStmtOf (SgStatement* stmt, SgInitializedName* init_name);
+
+  int get_int_value(SgValueExp * sg_value_exp);
 
 } // end namespace
 

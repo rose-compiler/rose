@@ -6,13 +6,123 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace AstFromString;
 
+// synthesized attribute to evaluate expressions like 7*sizeof(float) + 5 * sizeof(double) 
+// 2*sizeof(float) + 5* sizeof(double)
+class IntExpressionEvaluationAttribute
+{
+ public: 
+  int newValue; // load store bytes are integer values
+  IntExpressionEvaluationAttribute():newValue(0){};
+  IntExpressionEvaluationAttribute (const IntExpressionEvaluationAttribute &X):newValue(X.newValue) {};
+};
+
+class IntExpressionEvaluationTraversal: public SgBottomUpProcessing<IntExpressionEvaluationAttribute>
+{
+  public:
+    IntExpressionEvaluationAttribute evaluateSynthesizedAttribute (SgNode* n, SubTreeSynthesizedAttributes synthesizedAttributeList);
+};
+
+// For T type which is compatible for all binary operators we are interested in.
+template<typename T>
+T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
+{
+  T foldedValue; // to be converted to result type   
+  switch (binaryOperator->variantT())
+  {
+    // integer-exclusive oprations
+    case V_SgAddOp:
+      {
+        foldedValue = lhsValue + rhsValue;
+        break;
+      }
+    case V_SgMultiplyOp:
+      {
+        foldedValue = lhsValue * rhsValue;
+        break;
+      }
+    default:
+      {
+        cerr<<"warning: calculuate - unhandled operator type:"<<binaryOperator->class_name()<<endl;
+        ROSE_ASSERT(false); // the expression is very limited form. We try to be restrictive here. //Not every binary operation type can be evaluated
+      }
+  }// end switch
+  return foldedValue; 
+} 
+
+// For T type which is compatible for all unary operators we are interested in.
+template<typename T>
+T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
+{
+  T foldedValue; // to be converted to result type
+  switch (unaryOperator->variantT())
+  {
+#if 0
+    // integer-exclusive oprations
+    case V_SgMinusOp: // this should not appear in our size expressions.
+      {
+        foldedValue = -theValue;
+        break;
+      }
+#endif
+   default:
+      {
+        cerr<<"warning: calculuate - unhandled operator type:"<<unaryOperator->class_name()<<endl;
+        ROSE_ASSERT(false); // the expression is very limited form. We try to be restrictive here. //Not every binary operation type can be evaluated
+      }
+  }
+  return foldedValue;
+}
+
+// 7*sizeof(float) + 5 * sizeof(double)
+IntExpressionEvaluationAttribute
+IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode, SubTreeSynthesizedAttributes synthesizedAttributeList)
+{
+  IntExpressionEvaluationAttribute returnAttribute;
+
+  SgExpression* exp = isSgExpression(astNode);
+  if (exp != NULL)
+  {
+    if (SgSizeOfOp * sop = isSgSizeOfOp(exp))
+    {
+       SgType* t = sop->get_operand_type();
+       returnAttribute.newValue = ArithemeticIntensityMeasurement::getSizeOf (t);
+    }
+    else if (SgBinaryOp* bop = isSgBinaryOp(exp) )
+    {
+      int lhsvalue, rhsvalue;
+      lhsvalue =  synthesizedAttributeList[SgBinaryOp_lhs_operand_i].newValue;
+      rhsvalue =  synthesizedAttributeList[SgBinaryOp_rhs_operand_i].newValue;
+      returnAttribute.newValue = calculate_t ( bop, lhsvalue, rhsvalue);
+    }
+    else if (SgValueExp* vexp = isSgValueExp(exp))
+    {
+      returnAttribute.newValue = ArithemeticIntensityMeasurement::get_int_value (vexp);
+    }
+    else // propagate the result for others
+    {
+      cerr<<"error, unhandled case in IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute() "<<astNode->class_name() <<endl;
+    }
+  }
+  else
+  {
+      cerr<<"error, non-expression is encountered in IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute() "<<astNode->class_name() <<endl;
+  }
+  
+//  cout<<"debugging IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute() synth value is "<< returnAttribute.newValue << " for" <<astNode->class_name()<<endl;
+  return returnAttribute;
+
+}
+
+//----------------------------------------
+
+
 namespace ArithemeticIntensityMeasurement
 {
   running_mode_enum running_mode = e_analysis_and_instrument;
   std::map <SgNode*, bool> FPVisitMAP; // record if a flop operation is counted or not
-//we have to be more specific, if a variable is processed and the variable is within a inner loops
-//then we skip it's counting in outer loop for load/store
-//The best case is we have access to all variable references, in addition to SgInitializedName for Side Effect Analysis
+  //we have to be more specific, if a variable is processed and the variable is within a inner loops
+  //then we skip it's counting in outer loop for load/store
+  //The best case is we have access to all variable references, in addition to SgInitializedName for Side Effect Analysis
   std::map <SgNode*, std::set<SgInitializedName*> > LoopLoadVariables; // record processed read variables for a loop
   std::map <SgNode*, std::set<SgInitializedName*> > LoopStoreVariables; // record processed write variables for a loop
   // helper array to conver to string
@@ -25,6 +135,29 @@ namespace ArithemeticIntensityMeasurement
     "e_multiply", 
     "e_divide" 
   };
+
+  int get_int_value(SgValueExp * sg_value_exp)
+  {
+    int rtval;
+    ROSE_ASSERT (sg_value_exp!=NULL);
+    if (isSgBoolValExp(sg_value_exp))
+      rtval = isSgBoolValExp(sg_value_exp)->get_value();
+    else if (isSgCharVal(sg_value_exp))
+      rtval = isSgCharVal(sg_value_exp)->get_value();
+    else if (isSgEnumVal(sg_value_exp))
+      rtval = isSgEnumVal(sg_value_exp)->get_value();
+    else if (isSgIntVal(sg_value_exp))
+      rtval = isSgIntVal(sg_value_exp)->get_value();
+    else if (isSgShortVal(sg_value_exp))
+      rtval = isSgShortVal(sg_value_exp)->get_value();
+    else
+    {
+      cerr<<"error: wrong value exp type for cf_get_int_value():"<<sg_value_exp->class_name()<<endl;
+      ROSE_ASSERT(false);
+    }
+    return rtval;
+  }
+
 
   std::string toString (fp_operation_kind_enum op_kind)
   {
@@ -39,371 +172,399 @@ namespace ArithemeticIntensityMeasurement
 
   int loop_id = 0;
 
- bool isAssignmentStmtOf (SgStatement* stmt, SgInitializedName* init_name)
- {
+  bool isAssignmentStmtOf (SgStatement* stmt, SgInitializedName* init_name)
+  {
 
-   bool rt = false;
+    bool rt = false;
 
-   ROSE_ASSERT (stmt != NULL);
-   ROSE_ASSERT ( init_name != NULL);
-   if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
-   {
-     if (SgAssignOp * assign_op = isSgAssignOp (exp_stmt->get_expression()))
-     {
-       if (SgVarRefExp* var_exp = isSgVarRefExp (assign_op->get_lhs_operand()) )
-       {
-         if (var_exp->get_symbol()->get_declaration() == init_name)
-           rt = true;
-       }
-     }
-   }
-   return rt;
+    ROSE_ASSERT (stmt != NULL);
+    ROSE_ASSERT ( init_name != NULL);
+    if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
+    {
+      if (SgAssignOp * assign_op = isSgAssignOp (exp_stmt->get_expression()))
+      {
+        if (SgVarRefExp* var_exp = isSgVarRefExp (assign_op->get_lhs_operand()) )
+        {
+          if (var_exp->get_symbol()->get_declaration() == init_name)
+            rt = true;
+        }
+      }
+    }
+    return rt;
 
- }
+  }
 
- string FPCounters::toString(std::string comment)
- {
-   stringstream ss; 
-   ss<<"----------Floating Point Operation Counts---------------------"<<endl;
-   ss<<comment<<endl;
-   //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
-   if (node != NULL)
-   {
-     ss<<node->class_name() <<"@" <<endl;
-     ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line()<<":"<<node->get_file_info()->get_col() <<endl;
-   }
-   else
-     ss<< "NULL node"<<endl;
-   ss<<"\tfp_plus:"<< plus_count<<endl;
-   ss<<"\tfp_minus:"<< minus_count<<endl;
-   ss<<"\tfp_multiply:"<< multiply_count<<endl;
-   ss<<"\tfp_divide:"<< divide_count<<endl;
-   ss<<"\tfp_total:"<< getTotalCount()<<endl;
+  string FPCounters::toString(std::string comment)
+  {
+    stringstream ss; 
+    ss<<"----------Floating Point Operation Counts---------------------"<<endl;
+    ss<<comment<<endl;
+    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
+    if (node != NULL)
+    {
+      ss<<node->class_name() <<"@" <<endl;
+      //debugging
+     // if (!isSgForStatement(node))
+     //   ROSE_ASSERT (false); // we cannot assert this. we pass loop body to the counting function. The body can be any types of statements
 
-   ss<<"----------Memory Operation Counts---------------------"<<endl;
-   ss<<comment<<endl;
-   if (load_bytes== NULL)
-     ss<<"\tLoads: NULL "<<endl;
-   else
-     ss<<"\tLoads:"<< load_bytes->unparseToString()<<endl;
-   if (store_bytes== NULL)
-     ss<<"\tStores: NULL "<<endl;
-   else
-     ss<<"\tStores:"<< store_bytes->unparseToString()<<endl;
+      ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line()<<":"<<node->get_file_info()->get_col() <<endl;
+    }
+    else
+      ss<< "NULL node"<<endl;
+    ss<<"\tfp_plus:"<< plus_count<<endl;
+    ss<<"\tfp_minus:"<< minus_count<<endl;
+    ss<<"\tfp_multiply:"<< multiply_count<<endl;
+    ss<<"\tfp_divide:"<< divide_count<<endl;
+    ss<<"\tfp_total:"<< getTotalCount()<<endl;
 
-   return ss.str();
- }
- void FPCounters::printInfo(std::string comment/* ="" */)
- {
+    ss<<"----------Memory Operation Counts---------------------"<<endl;
+    ss<<comment<<endl;
+    if (load_bytes== NULL)
+      ss<<"\tLoads: NULL "<<endl;
+    else
+      ss<<"\tLoads:"<< load_bytes->unparseToString()<<endl;
+    ss<<"\tLoads int: "<<load_bytes_int<<endl;
+    if (store_bytes== NULL)
+      ss<<"\tStores: NULL "<<endl;
+    else
+      ss<<"\tStores:"<< store_bytes->unparseToString()<<endl;
+    ss<<"\tStore int: "<<store_bytes_int<<endl;
+    ss<<"----------Arithmetic Intensity---------------------"<<endl;
+    ss <<"AI="<<intensity<<endl;
+
+    return ss.str();
+  }
+
+  void FPCounters::printInfo(std::string comment/* ="" */)
+  {
 #if 0   
-   cout<<"----------Floating Point Operation Counts---------------------"<<endl;
-   cout<<comment<<endl;
-   //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
-   cout<<node->class_name() <<"@" <<endl;
-   cout<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
-   cout<<"\tfp_plus:"<< plus_count<<endl;
-   cout<<"\tfp_minus:"<< minus_count<<endl;
-   cout<<"\tfp_multiply:"<< multiply_count<<endl;
-   cout<<"\tfp_divide:"<< divide_count<<endl;
-   cout<<"\tfp_total:"<< getTotalCount()<<endl;
+    cout<<"----------Floating Point Operation Counts---------------------"<<endl;
+    cout<<comment<<endl;
+    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
+    cout<<node->class_name() <<"@" <<endl;
+    cout<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
+    cout<<"\tfp_plus:"<< plus_count<<endl;
+    cout<<"\tfp_minus:"<< minus_count<<endl;
+    cout<<"\tfp_multiply:"<< multiply_count<<endl;
+    cout<<"\tfp_divide:"<< divide_count<<endl;
+    cout<<"\tfp_total:"<< getTotalCount()<<endl;
 #else
-  cout<<toString(comment);
+    cout<<toString(comment);
 #endif
- }
+  }
 
- // a transformation to instrument loops to obtain loop iteration counts at runtime
+  // a transformation to instrument loops to obtain loop iteration counts at runtime
 
- bool FPCounters::consistentWithReference(FPCounters* refCounters)
- {
-   //We should not use getTotalCount() since it calcultes the total count on the fly!
-   bool rt = true;
-   if (refCounters->getRawTotalCount() != 0 )
-     if (total_count != refCounters->getRawTotalCount()) rt = false;
+  bool FPCounters::consistentWithReference(FPCounters* refCounters)
+  {
+    //We should not use getTotalCount() since it calcultes the total count on the fly!
+    bool rt = true;
+    if (refCounters->getRawTotalCount() != 0 )
+      if (total_count != refCounters->getRawTotalCount()) rt = false;
 
-   if (refCounters->getPlusCount() != 0 )
-     if (plus_count != refCounters->getPlusCount()) rt = false;
+    if (refCounters->getPlusCount() != 0 )
+      if (plus_count != refCounters->getPlusCount()) rt = false;
 
-   if (refCounters->getMinusCount() != 0 )
-     if (minus_count != refCounters->getMinusCount()) rt = false;
+    if (refCounters->getMinusCount() != 0 )
+      if (minus_count != refCounters->getMinusCount()) rt = false;
 
-   if (refCounters->getMultiplyCount() != 0 )
-     if (multiply_count != refCounters->getMultiplyCount()) rt = false;
+    if (refCounters->getMultiplyCount() != 0 )
+      if (multiply_count != refCounters->getMultiplyCount()) rt = false;
 
-   if (refCounters->getDivideCount() != 0 )
-     if (divide_count != refCounters->getDivideCount()) rt = false;
+    if (refCounters->getDivideCount() != 0 )
+      if (divide_count != refCounters->getDivideCount()) rt = false;
 
-   return rt; 
- }
+    return rt; 
+  }
 
- void FPCounters::addCount (fp_operation_kind_enum c_type, int i )
- {
-   switch (c_type)
-   {
-     case e_total: 
-       cerr<<"FPCounters::addCount(): adding to total FP count is not allowed. Must add to counters of specific operation (+, -, *, or /)!"<<endl;
-       assert (false);
-       break;
-     case e_plus:
-       addPlusCount(i);
-       break;
-     case e_minus:
-       addMinusCount(i);
-       break;
-     case e_multiply:
-       addMultiplyCount(i);
-       break;
-     case e_divide:
-       addDivideCount(i);
-       break;
-     default:
-       {
-         //TODO : we should ignore some unrecognized op kind
-         //Another case list to ignore them one by one
-        cerr<< ArithemeticIntensityMeasurement::toString(c_type) <<endl; 
-        assert (false);  
+  void FPCounters::addCount (fp_operation_kind_enum c_type, int i )
+  {
+    switch (c_type)
+    {
+      case e_total: 
+        cerr<<"FPCounters::addCount(): adding to total FP count is not allowed. Must add to counters of specific operation (+, -, *, or /)!"<<endl;
+        assert (false);
         break;
-       }
-   }
- }
+      case e_plus:
+        addPlusCount(i);
+        break;
+      case e_minus:
+        addMinusCount(i);
+        break;
+      case e_multiply:
+        addMultiplyCount(i);
+        break;
+      case e_divide:
+        addDivideCount(i);
+        break;
+      default:
+        {
+          //TODO : we should ignore some unrecognized op kind
+          //Another case list to ignore them one by one
+          cerr<< ArithemeticIntensityMeasurement::toString(c_type) <<endl; 
+          assert (false);  
+          break;
+        }
+    }
+  }
 
- // used for storing parsed counter numbers from pragmas
- void FPCounters::setCount (fp_operation_kind_enum c_type, int i )
- {
-   switch (c_type)
-   {
-     case e_total: 
-       if (total_count == 0)
-       {
-         total_count = i;
-       }
-       else
-       {
-         cerr<<"FPCounters::setCount(): adding total count to a none zero existing value, possibly overwritting it!"<<endl;
-         assert (false);
-       }
-       break;
-     case e_plus:
-       if (plus_count == 0)
-       {
-         plus_count = i;
-       }
-       else
-       {
-         cerr<<"FPCounters::setCount(): adding plus count to a none zero existing value, possibly overwritting it!"<<endl;
-         assert (false);
-       }
-       break;
-     case e_minus:
-       if (minus_count == 0)
-       {
-         minus_count = i;
-       }
-       else
-       {
-         cerr<<"FPCounters::setCount(): adding minus count to a none zero existing value, possibly overwritting it!"<<endl;
-         assert (false);
-       }
-       break;
-     case e_multiply:
-       if (multiply_count == 0)
-       {
-         multiply_count = i;
-       }
-       else
-       {
-         cerr<<"FPCounters::setCount(): adding multiply count to a none zero existing value, possibly overwritting it!"<<endl;
-         assert (false);
-       }
-       break;
-     case e_divide:
-       if (divide_count == 0)
-       {
-         divide_count = i;
-       }
-       else
-       {
-         cerr<<"FPCounters::setCount(): adding divide count to a none zero existing value, possibly overwritting it!"<<endl;
-         assert (false);
-       }
-       break;
-     default:
-       assert (false);  
-   }
- }
+  // used for storing parsed counter numbers from pragmas
+  void FPCounters::setCount (fp_operation_kind_enum c_type, int i )
+  {
+    switch (c_type)
+    {
+      case e_total: 
+        if (total_count == 0)
+        {
+          total_count = i;
+        }
+        else
+        {
+          cerr<<"FPCounters::setCount(): adding total count to a none zero existing value, possibly overwritting it!"<<endl;
+          assert (false);
+        }
+        break;
+      case e_plus:
+        if (plus_count == 0)
+        {
+          plus_count = i;
+        }
+        else
+        {
+          cerr<<"FPCounters::setCount(): adding plus count to a none zero existing value, possibly overwritting it!"<<endl;
+          assert (false);
+        }
+        break;
+      case e_minus:
+        if (minus_count == 0)
+        {
+          minus_count = i;
+        }
+        else
+        {
+          cerr<<"FPCounters::setCount(): adding minus count to a none zero existing value, possibly overwritting it!"<<endl;
+          assert (false);
+        }
+        break;
+      case e_multiply:
+        if (multiply_count == 0)
+        {
+          multiply_count = i;
+        }
+        else
+        {
+          cerr<<"FPCounters::setCount(): adding multiply count to a none zero existing value, possibly overwritting it!"<<endl;
+          assert (false);
+        }
+        break;
+      case e_divide:
+        if (divide_count == 0)
+        {
+          divide_count = i;
+        }
+        else
+        {
+          cerr<<"FPCounters::setCount(): adding divide count to a none zero existing value, possibly overwritting it!"<<endl;
+          assert (false);
+        }
+        break;
+      default:
+        assert (false);  
+    }
+  }
 
+  float FPCounters::getIntensity()
+  {
+    //if already calculated, return it directly
+    if (intensity != -1.0)
+      return intensity;
 
-
- int FPCounters::getCount (fp_operation_kind_enum c_type = e_total)
- {
-   switch (c_type)
-   {
-     case e_total: 
-       return getTotalCount();
-       break;
-     case e_plus:
-       return getPlusCount();
-       break;
-     case e_minus:
-       return getMinusCount();
-       break;
-     case e_multiply:
-       return getMultiplyCount();
-       break;
-     case e_divide:
-       return getDivideCount();
-       break;
-     default:
-       assert (false);  
-   }
-   assert (false);  
-   return 0;
- }
-
- FPCounters * getFPCounters (SgLocatedNode* n)
- {
-   assert (n!= NULL);
-   FPCounters * fp_counters = NULL; 
-   if (n->attributeExists("FPCounters")) 
-   {
-     AstAttribute* attr = n->getAttribute("FPCounters");
-     fp_counters = dynamic_cast<FPCounters* > (attr);
-   }
-   else
-   {
-     fp_counters = new FPCounters (n);
-     assert (fp_counters != NULL);
-     n->setAttribute("FPCounters", fp_counters);
-   }
-
-   assert(n->attributeExists("FPCounters")); 
-   assert (fp_counters != NULL);
-
-   return fp_counters;
- }
-
- // Helper function to manipulate the attribute
- // Get a FP operation count from node n.
- int getFPCount (SgLocatedNode* n, fp_operation_kind_enum c_type)
- {
-   assert (n != NULL);
-   FPCounters * fp_counters = getFPCounters (n);
-   return fp_counters ->getCount(c_type);
- }
-
- void printFPCount (SgLocatedNode* n)
- {
-   assert (n != NULL);
-   FPCounters * fp_counters = getFPCounters (n);
-   fp_counters ->printInfo();
-
- }
- void addFPCount (SgLocatedNode* n, fp_operation_kind_enum c_type, int i/* =1 */)
- {
-   assert (n != NULL);
-   FPCounters * fp_counters = dynamic_cast<FPCounters* > (n->getAttribute("FPCounters"));
-   if (fp_counters == NULL ) 
-   {
-     fp_counters = new FPCounters (n);
-     assert (fp_counters != NULL);
-     n->setAttribute("FPCounters", fp_counters);
-   }
-
-   return fp_counters ->addCount(c_type, i);
- }
-
- // ! A helper function to check scalar vs. array types
- static string scalar_or_array(SgType* t)
- {
-   assert (t!= NULL);
-   string scalar_or_array;
-   if (isScalarType(t))
-     scalar_or_array = "Scalar";
-   else if (isSgArrayType(t))
-     scalar_or_array = "Array";
-   else
-   {
-     cerr<<"Error. scalar_or_array(SgType*) encounters a type which is neither a scalar nor array type!" << t->class_name()<<endl;
-   }
-   return scalar_or_array;
- }
-
- //! Estimate the size of some types, workaround of sizeof
- //Assuming 64-bit Linux machine
- // http://docs.oracle.com/cd/E19957-01/805-4939/z40007365fe9/index.html 
- int getSizeOf(SgType* t)
- {
-   int rt =0; 
-   assert (t!=NULL);
-   // Fortran allow type_kind for types, read this first
-   if (SgExpression* kind_exp =t->get_type_kind() )
-   {
-     SgIntVal* int_val = isSgIntVal (kind_exp);
-     if (int_val != NULL)
-       rt = int_val->get_value();
-     else
-     {
-       cerr<<"Error in getSizeOf(), only SgIntVal type_kind is handled. Unhandled type_kind "<< kind_exp->class_name()<<endl;
-       assert(false);
-     }  
-   } 
-   else
-   {
-     switch (t->variantT())
-     {
-       case V_SgTypeDouble:
-         rt = 8;
-         break;
-       case V_SgTypeInt:
-         {
-           rt = 4;
-           break;
-         }
-       case V_SgTypeFloat:
-         rt = 4;
-         break;
-       default:
-         {
-           cerr<<"Error in getSizeOf() of ai_measurement.cpp . Unhandled type: "<<t->class_name()<<endl;
-           assert (false);
-         }
-
-     }
-   }
-   return rt; 
-
- }
+    //Otherwise do the evaluation: operations/bytes
+    IntExpressionEvaluationTraversal trav1, trav2;
+    IntExpressionEvaluationAttribute a1, a2;
+    a1 = trav1.traverse (load_bytes);
+    a2 = trav2.traverse (store_bytes);
+    load_bytes_int = a1.newValue;
+    store_bytes_int = a2.newValue;
+    int total_bytes = load_bytes_int + store_bytes_int;
+    if (total_bytes !=0)
+       intensity = (float)total_count/total_bytes;
+    else
+       intensity = 9999.9;  //max value
+    return intensity;
+  }
 
 
- // obtain read or write variables processed by all nested loops, if any
- void getVariablesProcessedByInnerLoops (SgStatement* current_loop_body, bool isRead, std::set<SgInitializedName*>& var_set)
- {
-   // AST query to find all loops
-   // add all read/write variables into the var_set
-   VariantVector vv;
-   vv.push_back(V_SgForStatement);  
-   vv.push_back(V_SgFortranDo);  
-   Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(current_loop_body, vv); 
-   for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
-   {
-     SgStatement* loop = isSgStatement(*i);
-     if (debug)
-       cout<< "Found nested loop at line:"<< loop->get_file_info()->get_line()<<endl;
-     std::set<SgInitializedName*> src_var_set ;
-     if (isRead)
-       src_var_set = LoopLoadVariables[loop];
-     else
-       src_var_set = LoopStoreVariables[loop];
-     std::set<SgInitializedName*>::iterator j; 
-     if (debug)
-       cout<< "\t Insert processed variable:"<<endl;
-     for (j= src_var_set.begin(); j!= src_var_set.end(); j++)
-     {
+  int FPCounters::getCount (fp_operation_kind_enum c_type = e_total)
+  {
+    switch (c_type)
+    {
+      case e_total: 
+        return getTotalCount();
+        break;
+      case e_plus:
+        return getPlusCount();
+        break;
+      case e_minus:
+        return getMinusCount();
+        break;
+      case e_multiply:
+        return getMultiplyCount();
+        break;
+      case e_divide:
+        return getDivideCount();
+        break;
+      default:
+        assert (false);  
+    }
+    assert (false);  
+    return 0;
+  }
+
+  FPCounters * getFPCounters (SgLocatedNode* n)
+  {
+    assert (n!= NULL);
+    FPCounters * fp_counters = NULL; 
+    if (n->attributeExists("FPCounters")) 
+    {
+      AstAttribute* attr = n->getAttribute("FPCounters");
+      fp_counters = dynamic_cast<FPCounters* > (attr);
+    }
+    else
+    {
+      fp_counters = new FPCounters (n);
+      assert (fp_counters != NULL);
+      n->setAttribute("FPCounters", fp_counters);
+    }
+
+    assert(n->attributeExists("FPCounters")); 
+    assert (fp_counters != NULL);
+
+    return fp_counters;
+  }
+
+  // Helper function to manipulate the attribute
+  // Get a FP operation count from node n.
+  int getFPCount (SgLocatedNode* n, fp_operation_kind_enum c_type)
+  {
+    assert (n != NULL);
+    FPCounters * fp_counters = getFPCounters (n);
+    return fp_counters ->getCount(c_type);
+  }
+
+  void printFPCount (SgLocatedNode* n)
+  {
+    assert (n != NULL);
+    FPCounters * fp_counters = getFPCounters (n);
+    fp_counters ->printInfo();
+
+  }
+  void addFPCount (SgLocatedNode* n, fp_operation_kind_enum c_type, int i/* =1 */)
+  {
+    assert (n != NULL);
+    FPCounters * fp_counters = dynamic_cast<FPCounters* > (n->getAttribute("FPCounters"));
+    if (fp_counters == NULL ) 
+    {
+      fp_counters = new FPCounters (n);
+      assert (fp_counters != NULL);
+      n->setAttribute("FPCounters", fp_counters);
+    }
+
+    return fp_counters ->addCount(c_type, i);
+  }
+
+  // ! A helper function to check scalar vs. array types
+  static string scalar_or_array(SgType* t)
+  {
+    assert (t!= NULL);
+    string scalar_or_array;
+    if (isScalarType(t))
+      scalar_or_array = "Scalar";
+    else if (isSgArrayType(t))
+      scalar_or_array = "Array";
+    else
+    {
+      cerr<<"Error. scalar_or_array(SgType*) encounters a type which is neither a scalar nor array type!" << t->class_name()<<endl;
+    }
+    return scalar_or_array;
+  }
+
+  //! Estimate the size of some types, workaround of sizeof
+  //Assuming 64-bit Linux machine
+  // http://docs.oracle.com/cd/E19957-01/805-4939/z40007365fe9/index.html 
+  int getSizeOf(SgType* t)
+  {
+    int rt =0; 
+    assert (t!=NULL);
+    // Fortran allow type_kind for types, read this first
+    if (SgExpression* kind_exp =t->get_type_kind() )
+    {
+      SgIntVal* int_val = isSgIntVal (kind_exp);
+      if (int_val != NULL)
+        rt = int_val->get_value();
+      else
+      {
+        cerr<<"Error in getSizeOf(), only SgIntVal type_kind is handled. Unhandled type_kind "<< kind_exp->class_name()<<endl;
+        assert(false);
+      }  
+    } 
+    else
+    {
+      switch (t->variantT())
+      {
+        case V_SgTypeDouble:
+          rt = 8;
+          break;
+        case V_SgTypeInt:
+          {
+            rt = 4;
+            break;
+          }
+        case V_SgTypeFloat:
+          rt = 4;
+          break;
+        default:
+          {
+            cerr<<"Error in getSizeOf() of ai_measurement.cpp . Unhandled type: "<<t->class_name()<<endl;
+            assert (false);
+          }
+      }
+    }
+    return rt; 
+
+  }
+
+
+  // obtain read or write variables processed by all nested loops, if any
+  void getVariablesProcessedByInnerLoops (SgStatement* current_loop_body, bool isRead, std::set<SgInitializedName*>& var_set)
+  {
+    // AST query to find all loops
+    // add all read/write variables into the var_set
+    VariantVector vv;
+    vv.push_back(V_SgForStatement);  
+    vv.push_back(V_SgFortranDo);  
+    Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(current_loop_body, vv); 
+    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+    {
+      SgStatement* loop = isSgStatement(*i);
+      if (debug)
+        cout<< "Found nested loop at line:"<< loop->get_file_info()->get_line()<<endl;
+      std::set<SgInitializedName*> src_var_set ;
+      if (isRead)
+        src_var_set = LoopLoadVariables[loop];
+      else
+        src_var_set = LoopStoreVariables[loop];
+      std::set<SgInitializedName*>::iterator j; 
+      if (debug)
+        cout<< "\t Insert processed variable:"<<endl;
+      for (j= src_var_set.begin(); j!= src_var_set.end(); j++)
+      {
         var_set.insert(*j);
-       if (debug)
-         cout<< "\t \t "<<(*j)->get_name()<<endl;
-     }
-   }
- }
+        if (debug)
+          cout<< "\t \t "<<(*j)->get_name()<<endl;
+      }
+    }
+  }
   //! Return an expression like 8*sizeof(int)+ 3*sizeof(float) + 5*sizeof(double) for a list of variables accessed (either read or write)
   // For array variable, we should only count a single element access, not the entire array size
   // Algorithm:  
@@ -415,8 +576,8 @@ namespace ArithemeticIntensityMeasurement
     SgExpression* result = NULL; 
     if (name_set.size()==0) return result;
 
-   // the input is essentially the loop body, a scope statement
-   ROSE_ASSERT (lbody!= NULL);
+    // the input is essentially the loop body, a scope statement
+    ROSE_ASSERT (lbody!= NULL);
     // We need to record the associated loop info.
     SgStatement* loop= NULL;
     SgForStatement* forloop = isSgForStatement(lbody->get_scope());
@@ -434,15 +595,15 @@ namespace ArithemeticIntensityMeasurement
 
     std::map<SgType* , int> type_based_counters; 
 
-   // get all processed variables by inner loops
+    // get all processed variables by inner loops
     std::set<SgInitializedName*> processed_var_set; 
     // We only exclude inner loop's variables in analysis&instrumentation mode
     // The problem of redundant accumulation during execution happens only in this mode.
     // The static analysis only mode does not have this concern.
     // We want to be able to statically estimate
-   // if (running_mode == e_analysis_and_instrument)
-      getVariablesProcessedByInnerLoops (lbody, isRead, processed_var_set);
-    
+    // if (running_mode == e_analysis_and_instrument)
+    getVariablesProcessedByInnerLoops (lbody, isRead, processed_var_set);
+
     // fill in the type-based counters
     std::set<SgInitializedName*>::iterator set_iter; 
     for (set_iter = name_set.begin(); set_iter != name_set.end(); set_iter++)
@@ -457,7 +618,7 @@ namespace ArithemeticIntensityMeasurement
       // will be skipped when processing outer loops.
       if (isRead)
       {
-         // if inner loops already processed it, skip it
+        // if inner loops already processed it, skip it
         if (processed_var_set.find(init_name) != processed_var_set.end())
           continue; 
         else
@@ -479,7 +640,7 @@ namespace ArithemeticIntensityMeasurement
       {  // we may have multi-dimensional arrays like int a[][][];
         base_type = stripped_type; 
         do {
-         base_type = isSgArrayType(base_type)->get_base_type(); 
+          base_type = isSgArrayType(base_type)->get_base_type(); 
         } while (isSgArrayType (base_type));
       }
       else 
@@ -507,9 +668,9 @@ namespace ArithemeticIntensityMeasurement
       if (is_Fortran_language())
       {
 #if 0  // this does not work. cannot find func symbol for sizeof()       
-      // In Fortran sizeof() is a function call, not  SgSizeOfOp.
-      // type name is a variable in the AST, 
-      // Too much trouble to build 
+        // In Fortran sizeof() is a function call, not  SgSizeOfOp.
+        // type name is a variable in the AST, 
+        // Too much trouble to build 
         assert (scope !=NULL);
         // This does not work
         //SgFunctionSymbol* func_sym = lookupFunctionSymbolInParentScopes(SgName("sizeof"), scope);
@@ -537,31 +698,31 @@ namespace ArithemeticIntensityMeasurement
         assert (false);
       }
       SgExpression* mop = buildMultiplyOp(buildIntVal(count), sizeof_exp);
-       if (result == NULL)
-         result = mop; 
-       else 
-         result = buildAddOp(result, mop);
+      if (result == NULL)
+        result = mop; 
+      else 
+        result = buildAddOp(result, mop);
     }
     return result; 
   }  
 
 
- // Only keep desired types
- std::set<SgInitializedName* > filterVariables(const std::set<SgInitializedName* > & input)
- {
-   std::set<SgInitializedName* > result; 
-   std::set<SgInitializedName*>::iterator it;
+  // Only keep desired types
+  std::set<SgInitializedName* > filterVariables(const std::set<SgInitializedName* > & input)
+  {
+    std::set<SgInitializedName* > result; 
+    std::set<SgInitializedName*>::iterator it;
 
-   for (it=input.begin(); it!=input.end(); it++)
-   {
-     SgInitializedName* iname = (*it);
-     if (iname ==NULL) continue; // this pointer of a class has NO SgInitializedName associated !!
-     if (isSgArrayType (iname->get_type()))
-       result.insert(iname);
- //    cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
-   }
-   return result; 
- }
+    for (it=input.begin(); it!=input.end(); it++)
+    {
+      SgInitializedName* iname = (*it);
+      if (iname ==NULL) continue; // this pointer of a class has NO SgInitializedName associated !!
+      if (isSgArrayType (iname->get_type()))
+        result.insert(iname);
+      //    cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
+    }
+    return result; 
+  }
 
   // Count the load and store bytes for the 
   // I think we can only return expressions to calculate the value, not the actual values,
@@ -581,14 +742,15 @@ namespace ArithemeticIntensityMeasurement
   {
     std::pair <SgExpression*, SgExpression*> result; 
     assert (input != NULL);
-   // the input is essentially the loop body, a statement
+
+    // the input is essentially the loop body, a statement
     SgStatement* lbody = isSgStatement(input);
 
+#if 0 //RAJA::forall loops don't have classic loop nodes
     // We need to record the associated loop info.
     //SgStatement* loop= NULL;
     SgForStatement* forloop = isSgForStatement(lbody->get_scope());
     SgFortranDo* doloop = isSgFortranDo(lbody->get_scope());
-
     if (forloop)
     {
       //loop = forloop;
@@ -602,7 +764,7 @@ namespace ArithemeticIntensityMeasurement
       cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< input->class_name()<<endl;
       assert(false);
     }
-
+#endif
     //Plan A: use and extend Qing's side effect analysis
     std::set<SgInitializedName*> readVars;
     std::set<SgInitializedName*> writeVars;
@@ -610,7 +772,7 @@ namespace ArithemeticIntensityMeasurement
     bool success = SageInterface::collectReadWriteVariables (isSgStatement(input), readVars, writeVars);
     if (success!= true)
     {
-       cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
+      cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
     }
 
     std::set<SgInitializedName*>::iterator it;
@@ -648,8 +810,20 @@ namespace ArithemeticIntensityMeasurement
     FPCounters* mycounters = getFPCounters (input); 
     mycounters->setLoadBytes (load_store_count_pair.first);
     mycounters->setStoreBytes (load_store_count_pair.second);
- }
-  
+  }
+
+ 
+  FPCounters*  calculateArithmeticIntensity(SgLocatedNode* body, bool includeScalars /*= false */, bool includeIntType /*= false */)
+  {
+    ROSE_ASSERT (body != NULL);
+    CountFPOperations (body);
+    CountMemOperations (body , includeScalars, includeIntType); 
+    FPCounters* fp_counters = getFPCounters (body);
+    fp_counters->getIntensity(); // calculate intensity by trying to get it
+    return fp_counters;
+  }
+
+
   //! Count floating point operations seen in a subtree
   void CountFPOperations(SgLocatedNode* input)
   {
@@ -657,29 +831,29 @@ namespace ArithemeticIntensityMeasurement
     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
     {
       fp_operation_kind_enum op_kind = e_unknown; 
-//      bool isFPType = false;
+      //      bool isFPType = false;
       // check operation type
       SgBinaryOp* bop= isSgBinaryOp(*i);
       switch (bop->variantT())
       {
-	case V_SgAddOp:
-	case V_SgPlusAssignOp:
-	  op_kind = e_plus; 
-	  break;
-	case V_SgSubtractOp:
-	case V_SgMinusAssignOp:  
-	  op_kind = e_minus;
-	  break;	
-	case V_SgMultiplyOp:
-	case V_SgMultAssignOp:  
-	  op_kind = e_multiply;
-	  break;	
-	case V_SgDivideOp:
-	case V_SgDivAssignOp:  
-	  op_kind = e_divide;
-	  break;	
-	default:
-	  break;  
+        case V_SgAddOp:
+        case V_SgPlusAssignOp:
+          op_kind = e_plus; 
+          break;
+        case V_SgSubtractOp:
+        case V_SgMinusAssignOp:  
+          op_kind = e_minus;
+          break;	
+        case V_SgMultiplyOp:
+        case V_SgMultAssignOp:  
+          op_kind = e_multiply;
+          break;	
+        case V_SgDivideOp:
+        case V_SgDivAssignOp:  
+          op_kind = e_divide;
+          break;	
+        default:
+          break;  
       } //end switch
 
       // skip this expression if unknown operation kind 
@@ -696,7 +870,7 @@ namespace ArithemeticIntensityMeasurement
         // For static counting only mode, this is a less concern.
         if (!FPVisitMAP[bop]) 
         {
-	  addFPCount (input, op_kind);
+          addFPCount (input, op_kind);
           FPVisitMAP[bop] = true;
         }
       }	
@@ -801,9 +975,9 @@ namespace ArithemeticIntensityMeasurement
       int op_count = 0; 
       while (parse_fp_counter_clause (& fp_op_kind, & op_count))
       {
-	if (debug)
-	  cout<<"parse_aitool_pragma() set "<< toString(fp_op_kind) <<" with value "<<op_count<<endl;
-	result->setCount (fp_op_kind, op_count); 
+        if (debug)
+          cout<<"parse_aitool_pragma() set "<< toString(fp_op_kind) <<" with value "<<op_count<<endl;
+        result->setCount (fp_op_kind, op_count); 
       }
     } 
     // may have incomplete info in the pragma
@@ -816,7 +990,7 @@ namespace ArithemeticIntensityMeasurement
     if (debug)
     { 
       if (result != NULL)
-	result->printInfo();
+        result->printInfo();
     }
 
     return result;
@@ -831,11 +1005,11 @@ namespace ArithemeticIntensityMeasurement
     assert (per_iter_bytecount_exp != NULL);
     SgExpression* lhs_exp = buildVarRefExp(lhs_sym);
     SgExpression* rhs_exp = buildAddOp( buildVarRefExp(lhs_sym),
-                                        buildMultiplyOp (buildVarRefExp(iter_count_sym), per_iter_bytecount_exp) );
+        buildMultiplyOp (buildVarRefExp(iter_count_sym), per_iter_bytecount_exp) );
     return buildAssignStatement(lhs_exp, rhs_exp);
   }
 
- // Build counter accumulation statement like chloads = chloads + chiterations * (2 * 8)
+  // Build counter accumulation statement like chloads = chloads + chiterations * (2 * 8)
   // chloads is the counter name, chiterations is iteration_count_name, 2*8 is the per-iteration count expression.
   SgExprStatement* buildCounterAccumulationStmt (std::string counter_name, std::string iteration_count_name, SgExpression* count_exp_per_iteration, SgScopeStatement* scope)
   {
@@ -919,7 +1093,7 @@ namespace ArithemeticIntensityMeasurement
     if (forloop)
       loop_body = forloop->get_loop_body();
     else if (doloop)
-       loop_body = doloop->get_body();
+      loop_body = doloop->get_body();
     assert (loop_body != NULL);     
 
     // count FP operations for each loop
@@ -979,7 +1153,7 @@ namespace ArithemeticIntensityMeasurement
       case V_SgDivAssignOp:  
         op_kind = e_divide;
         break;      
-      //skip a set of binary ops which do not involve FP operation at all  
+        //skip a set of binary ops which do not involve FP operation at all  
       case V_SgAssignOp:
       case V_SgPntrArrRefExp: // this is integer operation for array address calculation
       case V_SgLessThanOp: //TODO how to convert this if compare two FP operands ??
@@ -988,10 +1162,10 @@ namespace ArithemeticIntensityMeasurement
       case V_SgCommaOpExp:
         break;
       default:
-      {
-        cerr<<"getFPOpKind () unrecognized binary op kind: "<< bop->class_name() <<endl;
-        ROSE_ASSERT (false);
-      }
+        {
+          cerr<<"getFPOpKind () unrecognized binary op kind: "<< bop->class_name() <<endl;
+          ROSE_ASSERT (false);
+        }
     } //end switch    
 
     return op_kind;
@@ -1054,7 +1228,7 @@ namespace ArithemeticIntensityMeasurement
         SgExpression*  cond_exp = conditional_exp->get_conditional_exp();
         SgExpression*  true_exp = conditional_exp->get_true_exp();
         SgExpression* false_exp = conditional_exp->get_false_exp();
-        
+
         FPCounters* cond_counters = new FPCounters();
         FPCounters* true_counters = new FPCounters();
         FPCounters* false_counters= new FPCounters();
@@ -1066,7 +1240,7 @@ namespace ArithemeticIntensityMeasurement
           *true_counters = *(getFPCounters (true_exp));
         if (false_exp)
           *false_counters = *(getFPCounters (false_exp));
-        
+
         // We estimate the upper bound of FLOPS for now
         // TODO: using runtime profiling information to pick the right branch
         if (true_counters->getTotalCount() > false_counters->getTotalCount())
@@ -1090,11 +1264,11 @@ namespace ArithemeticIntensityMeasurement
         hasHandled = true; 
       }
       else if ( isSgVarArgStartOp(n) // other expressions without FLOPs 
-               )
+          )
       {
         hasHandled = true; 
       }
- 
+
     }
     else if (SgStatement* stmt = isSgStatement(n))
     {
@@ -1133,7 +1307,7 @@ namespace ArithemeticIntensityMeasurement
       }
       else if (isSgFunctionParameterList(n))
       {
-       // only a set of arguments declared, no FP operations are involved. 
+        // only a set of arguments declared, no FP operations are involved. 
         hasHandled = true; 
       }
       else if (SgIfStmt * if_stmt = isSgIfStmt(n))
@@ -1141,7 +1315,7 @@ namespace ArithemeticIntensityMeasurement
         SgStatement* cond_stmt = if_stmt->get_conditional();
         SgStatement* true_stmt = if_stmt->get_true_body();
         SgStatement* false_stmt = if_stmt->get_false_body();
-        
+
         FPCounters* cond_counters = new FPCounters();
         FPCounters* true_counters = new FPCounters();
         FPCounters* false_counters= new FPCounters();
@@ -1153,7 +1327,7 @@ namespace ArithemeticIntensityMeasurement
           *true_counters = *(getFPCounters (true_stmt));
         if (false_stmt)
           *false_counters = *(getFPCounters (false_stmt));
-        
+
         // We estimate the upper bound of FLOPS for now
         // TODO: using runtime profiling information to pick the right branch
         if (true_counters->getTotalCount() > false_counters->getTotalCount())
@@ -1246,7 +1420,7 @@ namespace ArithemeticIntensityMeasurement
         // TODO: no multiplication of loop iteration count for now
       }
       // go through all statements following until reaching break;
-       else if (SgCaseOptionStmt * w_stmt = isSgCaseOptionStmt(n))
+      else if (SgCaseOptionStmt * w_stmt = isSgCaseOptionStmt(n))
       {
         SgStatement* body = w_stmt->get_body();
         if (body != NULL)
@@ -1256,7 +1430,7 @@ namespace ArithemeticIntensityMeasurement
         }
         hasHandled = true; 
       }
-       else if (SgDefaultOptionStmt * w_stmt = isSgDefaultOptionStmt(n))
+      else if (SgDefaultOptionStmt * w_stmt = isSgDefaultOptionStmt(n))
       {
         SgStatement* body = w_stmt->get_body();
         if (body != NULL)
@@ -1266,8 +1440,8 @@ namespace ArithemeticIntensityMeasurement
         }
         hasHandled = true; 
       }
- 
-       else if (SgSwitchStatement* w_stmt = isSgSwitchStatement(n))
+
+      else if (SgSwitchStatement* w_stmt = isSgSwitchStatement(n))
       {
         // the body block should be in charge of select the max of case branch
         SgStatement* body = w_stmt->get_body();
@@ -1284,22 +1458,22 @@ namespace ArithemeticIntensityMeasurement
         }
         hasHandled = true; 
       }
- 
+
       else if ( isSgContinueStmt(n) // no OPs for continue;
-               ||isSgBreakStmt(n)
-               ||isSgLabelStatement(n)
-               ||isSgGotoStatement(n)
-               ||isSgNullStatement(n)
-               ||isSgEnumDeclaration(n)  
-               )
+          ||isSgBreakStmt(n)
+          ||isSgLabelStatement(n)
+          ||isSgGotoStatement(n)
+          ||isSgNullStatement(n)
+          ||isSgEnumDeclaration(n)  
+          )
       {
         hasHandled = true; 
       }
- 
+
     } // end if statement
 
-//    if (isSgAssignInitializer(n))
-//      printf ("find assign initializer %p \n", n);
+    //    if (isSgAssignInitializer(n))
+    //      printf ("find assign initializer %p \n", n);
     //default case: upward propagate counters if only a single child or error messages for multiple children
     if (!hasHandled)
     {
@@ -1337,9 +1511,9 @@ namespace ArithemeticIntensityMeasurement
       if (debug) 
         fpcounters->printInfo (n->class_name()); 
 
-     // write to the report file here, bottom up order though, not a good idea
+      // write to the report file here, bottom up order though, not a good idea
       ofstream reportFile(report_filename.c_str(), ios::app);
-//      cout<<"Writing counter results to "<< report_filename <<endl;
+      //      cout<<"Writing counter results to "<< report_filename <<endl;
       reportFile<< fpcounters->toString();
     }
 

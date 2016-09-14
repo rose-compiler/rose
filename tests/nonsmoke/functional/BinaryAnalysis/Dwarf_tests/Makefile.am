@@ -82,24 +82,16 @@ $(TEST_Objects): binaryReader
 	$(VALGRIND) ./binaryReader $(srcdir)/$@
 
 check-local:
-	@echo "Development tests for Dwarf support."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) test_dwarf
 	@$(MAKE) test_rose_dwarf
-	@echo "***********************************************************************************************************************"
-	@echo "****** ROSE/developersScratchSpace/Dan/Dwarf_tests: make check rule complete (terminated normally)        ******"
-	@echo "***********************************************************************************************************************"
 else
 check-local:
-	@echo "Development tests for Binary Disassembly."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "***********************************************************************************************************************"
-	@echo "****** ROSE/developersScratchSpace/Dan/Dwarf_tests: skipped due to --disable-binary-analysis-tests    ***"
-	@echo "***********************************************************************************************************************"
 endif
 
 EXTRA_DIST = CMakeLists.txt testProgram.C
