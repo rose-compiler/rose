@@ -1,4 +1,5 @@
 # DQ (9/3/2006): This is a very old directory of test codes (no longer tested)
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 ## Process this file with automake to create Makefile.in
 
