@@ -2851,6 +2851,8 @@ Grammar::buildReferenceToPointerHandlerCode()
         {
           s +=  "     void apply(" + terminalList[i]->name + " *&r, const SgName &n, bool traverse)\n"
                 "        {\n"
+                "          ROSE_ASSERT(this != NULL);\n"
+             // "          ROSE_ASSERT(r != NULL);\n"
                 "          static_cast<ImplClass *>(this)->genericApply(r, n, traverse);\n"
                 "        }\n\n";
         }
@@ -2863,9 +2865,25 @@ Grammar::buildReferenceToPointerHandlerCode()
           "     void genericApply(NodeSubclass*& r, const SgName& n, bool traverse)\n"
           "        {\n"
           "          SgNode* sgn = r;\n"
-          "          (*this)(sgn, n, traverse);\n"
-          "          ROSE_ASSERT (sgn == NULL || dynamic_cast<NodeSubclass*>(sgn));\n"
-          "          r = dynamic_cast<NodeSubclass*>(sgn);\n"
+          "          (*this)(sgn, n, traverse);\n\n"
+          "       // DQ (9/7/2016): Make this more specific.\n"
+          "       // ROSE_ASSERT (sgn == NULL || dynamic_cast<NodeSubclass*>(sgn));\n"
+       // "          printf (\"sgn = %p \\n\",sgn);\n"
+       // "          ROSE_ASSERT (sgn != NULL);\n"
+       // DQ (9/8/2016): This is not alowed since in the header file the template where
+       // this code lives comes before the definitions of the ROSE IR node classes.
+       // "          printf (\"sgn->class_name() = %s \\n\",sgn->class_name().c_str());\n"
+       // "          ROSE_ASSERT (dynamic_cast<NodeSubclass*>(sgn) != NULL);\n\n"
+       // "          r = dynamic_cast<NodeSubclass*>(sgn);\n"
+          "          if (r != NULL) \n"
+          "             {\n"
+          "               r = dynamic_cast<NodeSubclass*>(sgn);\n"
+          "             }\n"
+       // "            else\n"
+       // "             {\n"
+       // "               printf (\"sgn = %p \\n\",sgn);\n"
+       // "               printf (\"dynamic_cast<NodeSubclass*>(sgn) = %p \\n\",dynamic_cast<NodeSubclass*>(sgn));\n"
+       // "             }\n"
           "        }\n\n"
 
           "     virtual void operator()(SgNode*&, const SgName&, bool) = 0;\n"
