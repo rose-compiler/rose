@@ -43,6 +43,14 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
      curprint(string("\n /*    unparseLanguageSpecificExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
 #endif
 
+#if 0
+     printf ("In unparseLanguageSpecificExpression(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseLanguageSpecificExpression(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      switch (expr->variant())
         {
        // DQ (4/18/2013): I don't think this is ever called this way, IR node resolve to the derived classes not the base classes.
@@ -205,6 +213,15 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                break;
              }
         }
+
+#if 0
+     printf ("Leaving unparseLanguageSpecificExpression(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("Leaving unparseLanguageSpecificExpression(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
    }
 
 
@@ -1213,6 +1230,14 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      ROSE_ASSERT(false);
 #endif
 
+#if 0
+     printf ("In unparseTemplateArgument(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      SgUnparse_Info newInfo(info);
 
   // DQ (8/6/2007): Turn this off now that we have a more sophisticated hidden declaration and hidden type list mechanism.
@@ -1642,6 +1667,15 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
      curprint("\n/* Bottom of unparseTemplateArgument */ \n");
 #endif
+
+#if 0
+     printf ("Leaving unparseTemplateArgument(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("Leaving unparseTemplateArgument(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
      unp->u_exprStmt->curprint ( string("\n/* Bottom of unparseTemplateArgument */ \n"));
@@ -4967,7 +5001,14 @@ Unparse_ExprStmt::unparseAlignOfOp(SgExpression* expr, SgUnparse_Info & info)
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
+
           info2.set_SkipClassDefinition();
+#if 0
+          printf ("In unparseAlignOfOp(expr = %p): Added call to set_SkipEnumDefinition() for symetry with call to set_SkipClassDefinition() \n",expr);
+#endif
+       // DQ (9/9/2016): Added call to set_SkipEnumDefinition().
+          info2.set_SkipEnumDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
 
@@ -5060,7 +5101,15 @@ Unparse_ExprStmt::unparseUpcLocalSizeOfOp(SgExpression* expr, SgUnparse_Info & i
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
+
           info2.set_SkipClassDefinition();
+
+#if 0
+          printf ("In unparseUpcLocalSizeOfOp(expr = %p): Added call to set_SkipEnumDefinition() for symetry with call to set_SkipClassDefinition() \n",expr);
+#endif
+       // DQ (9/9/2016): Added call to set_SkipEnumDefinition().
+          info2.set_SkipEnumDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
           unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
@@ -5088,7 +5137,15 @@ Unparse_ExprStmt::unparseUpcBlockSizeOfOp(SgExpression* expr, SgUnparse_Info & i
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
+
           info2.set_SkipClassDefinition();
+
+#if 0
+          printf ("In unparseUpcBlockSizeOfOp(expr = %p): Added call to set_SkipEnumDefinition() for symetry with call to set_SkipClassDefinition() \n",expr);
+#endif
+       // DQ (9/9/2016): Added call to set_SkipEnumDefinition().
+          info2.set_SkipEnumDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
           unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
@@ -5116,7 +5173,14 @@ Unparse_ExprStmt::unparseUpcElemSizeOfOp(SgExpression* expr, SgUnparse_Info & in
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
+
           info2.set_SkipClassDefinition();
+#if 0
+          printf ("In unparseUpcElemSizeOfOp(expr = %p): Added call to set_SkipEnumDefinition() for symetry with call to set_SkipClassDefinition() \n",expr);
+#endif
+       // DQ (9/9/2016): Added call to set_SkipEnumDefinition().
+          info2.set_SkipEnumDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
           unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
