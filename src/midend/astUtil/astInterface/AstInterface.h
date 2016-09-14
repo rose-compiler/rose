@@ -44,7 +44,7 @@ class AstNodePtr {
     { return repr < that.repr; }
   virtual void print() const // for debugging
     { std::cerr << AstToString(*this); }
-  ~AstNodePtr() {}
+  virtual ~AstNodePtr() {}
   void * get_ptr() const { return repr; }
 };
 #define AST_NULL AstNodePtr()
