@@ -1,5 +1,11 @@
 #!/usr/bin/perl
 
+=head1 SYNOPSIS
+
+builtinLlvmFunctions.pl [switches] files...
+
+builtinLlvmFunctions.pl [switches] < file
+
 =head1 DESCRIPTION
 
 This script reads the LLVM Builtins.def file (specified on the command-line or provided as standard input) and produces a
