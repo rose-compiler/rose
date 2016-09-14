@@ -197,6 +197,10 @@
   #define __imag__ 
   #define _Complex
 #endif
+
+/* DQ (9/13/2016): The GNU 4.2 compiler requires this to be turned off (fails for test2011_133.C). */
+#undef __SSE2__
+
 #endif
 
 /* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
