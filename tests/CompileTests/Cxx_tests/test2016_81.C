@@ -8,6 +8,7 @@
 
 #include <complex.h>
 
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 4))
 typedef complex float complex_float;
 typedef float _Complex complex_float;
 
@@ -19,4 +20,5 @@ int main()
     y = 1.0;
     return 0;
 }
+#endif
 
