@@ -592,7 +592,7 @@ namespace AutoParallelization
     remove(liveOuts0.begin(),liveOuts0.end(),invarname);
 
     std::vector<SgInitializedName*> allVars,depVars, invariantVars, privateVars,lastprivateVars, 
-      firstprivateVars,reductionVars, reductionResults;
+      firstprivateVars,reductionVars; // reductionResults;
     // Only consider scalars for now
     CollectVisibleVaribles(sg_node,allVars,invariantVars,true);
     sort(allVars.begin(), allVars.end());
@@ -712,7 +712,23 @@ namespace AutoParallelization
         inserter(reductionVars, reductionVars.begin()));
     RecognizeReduction(sg_node,attribute, reductionVars);
 #else
-    reductionResults = RecognizeReduction(sg_node,attribute, liveIns);
+   
+    //reductionResults = RecognizeReduction(sg_node,attribute, liveIns);
+    // Using the better SageInterface version , Liao 9/14/2016
+    std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum > > reductionResults;
+    SageInterface::ReductionRecognition ( isSgForStatement (sg_node), reductionResults);
+    if(enable_debug)
+      cout<<"Debug dump reduction:"<<endl;
+    for (std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum > > ::iterator 
+            iter = reductionResults.begin(); iter!= reductionResults.end();iter++) 
+    {
+       SgInitializedName* iname = (*iter).first;
+       OmpSupport::omp_construct_enum optype = (*iter).second;
+       attribute->addVariable (optype,iname->get_name().getString(), iname); 
+       if(enable_debug)
+        cout<< iname->get_qualified_name().getString()<<endl;
+    }
+
 #endif   
 
 #if 0
@@ -756,6 +772,8 @@ namespace AutoParallelization
     }
   } // end AutoScoping()
 
+
+#if 0 // refactored into SageInterface ReductionRecognition ()
   // Recognize reduction variables for a loop
   /* 
    * Algorithms:
@@ -779,11 +797,15 @@ namespace AutoParallelization
     {
       std::vector<SgInitializedName*> *resultVars = new std::vector<SgInitializedName*>;
       ROSE_ASSERT(loop && isSgForStatement(loop)&& attribute);
+      // No candidate variables, return
+      // TODO: this is not necessary, if a reduction idiom is matched, the variable should be a candidate
+      // Depending on liveness analysis is not a good idea.
       if (candidateVars.size()==0) 
         return *resultVars;
+
       //Store the times of references for each variable
       std::map <SgInitializedName*, vector<SgVarRefExp* > > var_references;
-
+      // have to consider the entire loop, including loop header
       Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(loop, V_SgVarRefExp);
       Rose_STL_Container<SgNode*>::iterator iter = reflist.begin();
       for (; iter!=reflist.end(); iter++)
@@ -797,13 +819,14 @@ namespace AutoParallelization
           var_references[initname].push_back(ref_exp);
         }
       }
-      //Consider variables referenced at most twice
+      // Iterate through all candidates
       std::vector<SgInitializedName*>::iterator niter=candidateVars.begin();
       for (; niter!=candidateVars.end(); niter++)
       {
         SgInitializedName* initname = *niter;
         bool isReduction = false;
-        // referenced once only
+        //Consider variables referenced at most twice
+        // 1. Referenced once only
         if (var_references[initname].size()==1) 
         {
           if(enable_debug)
@@ -883,7 +906,7 @@ namespace AutoParallelization
             }// end if on left side  
           } 
         } 
-        // referenced twice within a same statement
+        //2. Referenced twice within a same statement
         else if (var_references[initname].size()==2)
         {
           if(enable_debug)
@@ -892,6 +915,7 @@ namespace AutoParallelization
           SgVarRefExp* ref_exp2 = *(++var_references[initname].begin());
           SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp1);
           SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref_exp2);
+
           if (stmt != stmt2) 
             continue;
           // must be assignment statement using 
@@ -989,8 +1013,8 @@ namespace AutoParallelization
                   default:
                     break;
                 }  
-              } // end matching associative operations
-            }  
+              } // end matching binary operations
+            } // end if showing up in both sides  
           } // end if assignop  
         }// end referenced twice
         if (isReduction)
@@ -998,7 +1022,7 @@ namespace AutoParallelization
       }// end for ()  
       return *resultVars;
     } // end RecognizeReduction()
-
+#endif 
   // Collect all classified variables from an OmpAttribute attached to a loop node
   void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& result)
   {

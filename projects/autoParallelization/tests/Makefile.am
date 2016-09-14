@@ -35,6 +35,7 @@ private.c \
 reduction.c \
 reduction_2.c \
 reduction_fake.c \
+reduction_max.c \
 regression01.c \
 scalar_anti.c \
 scalar_output.c \
@@ -76,7 +77,8 @@ iterator2.C \
 iteratorloop.C \
 test20100223.C \
 Hydro_applyVelocityBC.C \
-Hydro_constructor_1.C
+Hydro_constructor_1.C \
+Hydro_max_min.C
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
@@ -119,10 +121,10 @@ CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 # we want to use diff to compare generated files with reference files
 # Pending test cases: TODO
-#minusMinus.c  
-#multiReduction.c // not supported 
 # TODO: diff patches is a better choice.  Tolerate other differences introduced by ROSE.
 C_TESTCODES_REQUIRED_TO_VERIFY = $(C_TESTCODES_REQUIRED_TO_PASS)
+
+CXX_TESTCODES_REQUIRED_TO_VERIFY = $(CXX_TESTCODES_REQUIRED_TO_PASS)
 
 # Old list, not in use
 C_TESTCODES_REQUIRED_TO_VERIFY0 = \
@@ -154,20 +156,28 @@ lastprivate.c
 # TODO discard this list once all files are verified
 
 C_TEST_Generated_Files = $(addprefix rose_,${C_TESTCODES_REQUIRED_TO_VERIFY})
+CXX_TEST_Generated_Files = $(addprefix rose_,${CXX_TESTCODES_REQUIRED_TO_VERIFY})
+
 DIFF=diff
 REFERENCE_PATH=$(top_srcdir)/projects/autoParallelization/tests/references
 
 C_TEST_DIFF_FILES=$(C_TEST_Generated_Files:.c=.c.diff)
+CXX_TEST_DIFF_FILES=$(CXX_TEST_Generated_Files:.C=.C.diff)
+
+$(CXX_TEST_Generated_Files):$(CXX_TEST_Objects)
 
 $(C_TEST_Generated_Files):../autoPar 
 	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:rose_%=%) >> log.out
 
 # object files means rose_ *.c files also exist
-#$(C_TEST_DIFF_FILES):$(C_TEST_Objects)
 # TODO not good enough, we want to depend on individual generated file here
 $(C_TEST_DIFF_FILES): $(C_TEST_Generated_Files) 
 	echo "Verifying autoPar translation by using diff ..."; \
 	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
+
+$(CXX_TEST_DIFF_FILES): $(CXX_TEST_Generated_Files) 
+	echo "Verifying autoPar translation by using diff ..."; \
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 # special file to debug dep graph information
 probe.o: ../autoPar $(@:.o=.c)
@@ -210,7 +220,7 @@ check-local:
 	@$(MAKE) test_diff.out
 	@$(MAKE) inner_only.out
 	@$(MAKE) doall_2.out
-	@$(MAKE) $(C_TEST_DIFF_FILES)
+	@$(MAKE) $(C_TEST_DIFF_FILES) $(CXX_TEST_DIFF_FILES)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
