@@ -4,6 +4,7 @@
 #include "markLhsValues.h"
 #include "fixupNames.h"
 #include "FileUtility.h"
+#include "AstPDFGeneration.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -20637,6 +20638,18 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
      return traversal.returnset;
    }
 
+
+void SageInterface:: saveToPDF(SgNode* node)
+{
+  saveToPDF(node, string("temp.pdf") );
+}
+//! Save AST into a pdf file, start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
+void SageInterface:: saveToPDF(SgNode* node, std::string filename)
+{
+  ROSE_ASSERT(node != NULL); 
+  AstPDFGeneration pdf;
+  pdf.generateWithinFile(filename, getEnclosingFileNode(node));
+}
 
 bool SageInterface::insideSystemHeader (SgLocatedNode* node)
 {

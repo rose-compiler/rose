@@ -549,6 +549,9 @@ UnparseFortran_type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
   // a defining declaration within a return type, function parameter, or sizeof expression. 
   ninfo.set_SkipClassDefinition();
 
+  // DQ (9/9/2016): We have to make the handling of enum definitions consistant with that of class definitions.
+  ninfo.set_SkipEnumDefinition();
+
   if (ninfo.isTypeFirstPart()) {
       if (needParen) {
           ninfo.unset_isReferenceToSomething();

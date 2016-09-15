@@ -13,6 +13,78 @@ using namespace SageBuilder;
 using namespace ArithemeticIntensityMeasurement; 
 
 int local_loop_id=0; // unique loop id, at least for the context of each function
+bool considerLambda = false; // if lambda function bodies should be included for estimation. 
+
+//TODO: refactor into some RAJA handling namespace
+//! Check if a statement is from RAJA headers, like installraja/include/RAJA/IndexSet.hxx 
+bool insideRAJAHeader(SgLocatedNode* node)
+{
+  bool rtval = false;
+  ROSE_ASSERT (node != NULL);
+  Sg_File_Info* finfo = node->get_file_info();
+  if (finfo!=NULL)
+  {
+    string fname = finfo->get_filenameString();
+    string header_str1 = string("include/RAJA");
+    // if the file name has a sys header path of either source or build tree
+    if ((fname.find (header_str1, 0) != string::npos)
+       )
+      rtval = true;
+  }
+  return rtval;
+}
+
+//! Check if a node is a call statement to RAJA::forall (...), return bool and save function ref exp
+bool isRAJAforallStmt(SgNode* n, SgFunctionRefExp** ref_exp_out, SgLambdaExp** lambda_exp_out)
+{
+  bool ret = false; 
+  if (SgExprStatement* estmt = isSgExprStatement(n))
+  {   
+    if (SgFunctionCallExp* exp = isSgFunctionCallExp(estmt->get_expression()))
+    {   
+      if (SgFunctionRefExp* ref_exp = isSgFunctionRefExp (exp->get_function()))
+      {   
+        SgFunctionSymbol* fs = ref_exp->get_symbol_i();
+        string func_name =fs->get_name().getString();
+        bool hasRightName = (func_name.find("forall",0) ==0);
+        SgScopeStatement* f_scope = fs->get_declaration()->get_scope();
+        bool hasRightScope = false;
+        if (SgNamespaceDefinitionStatement* def = isSgNamespaceDefinitionStatement(f_scope))
+        {   
+          SgNamespaceDeclarationStatement* decl = def->get_namespaceDeclaration();
+          if (decl->get_name().getString() == "RAJA")
+            hasRightScope = true;
+        }   
+
+        if (hasRightName && hasRightScope)
+        {   
+     //     cout<<"Debugging: Found a RAJA::forall function call!"<<endl;
+     //     estmt->get_file_info()->display();
+          if (ref_exp_out != NULL)
+            *ref_exp_out = ref_exp;
+          if (lambda_exp_out != NULL)
+          { 
+            SgExprListExp* parameters = exp -> get_args();
+            SgExpressionPtrList explist = parameters->get_expressions();
+            SgExpression* last_exp = explist[explist.size()-1];
+            // Some weired code have a constructor in between. we have to use query to find lambdaExp
+            //*lambda_exp_out = isSgLambdaExp(last_exp); // last parameter must to the lambda function
+            vector <SgLambdaExp*> lvec = querySubTree<SgLambdaExp>(last_exp); //, V_SgLambdaExp);
+            if (lvec.size()!= 1)
+            {
+              cerr<<"error: last expression of RAJA::forall() does not contain lambda exp SgLambdaExp. It is "<< last_exp->unparseToString() <<endl;
+              exp->get_file_info()->display();
+              ROSE_ASSERT (lvec.size() ==1);
+            }
+            *lambda_exp_out= lvec[0];
+          }
+          ret = true;
+        }   
+      }   
+    }   
+  } 
+  return ret; 
+}
 
 bool processStatements(SgNode* n)
 {
@@ -24,75 +96,95 @@ bool processStatements(SgNode* n)
       return false;
   }
 
-  if (insideSystemHeader(isSgLocatedNode(n)))
+  if (insideSystemHeader(isSgLocatedNode(n)) ||insideRAJAHeader(isSgLocatedNode(n)) )
     return false;
 
-  // For C/C++ loops 
-  if (isSgForStatement(n)!=NULL){
-    SgForStatement* loop = isSgForStatement(n);
-    SgScopeStatement* scope = loop->get_scope();
-    ROSE_ASSERT(scope != NULL);
-
-   if (running_mode == e_analysis_and_instrument)
-     instrumentLoopForCounting (loop);
-   else if (running_mode == e_static_counting)
-   {  
-     SgStatement* lbody = loop->get_loop_body();
-     CountFPOperations (lbody);
-     CountMemOperations (lbody , false, true); // bool includeScalars /*= true*/, bool includeIntType /*= true*/
-
-     FPCounters* fp_counters = getFPCounters (lbody);
-     ofstream reportFile(report_filename.c_str(), ios::app);
-//     cout<<"Writing counter results to "<< report_filename <<endl;
-     reportFile<< fp_counters->toString();
-
-     // verify the counting results are consistent with reference results from pragmas	 
-     if (SgStatement* prev_stmt = getPreviousStatement(loop))
-     {
-       if (isSgPragmaDeclaration(prev_stmt))
-       {
-         FPCounters* ref_result = getFPCounters (prev_stmt);
-         FPCounters* current_result = getFPCounters (lbody);
-         if (ref_result != NULL)
-         {
-           if (!current_result->consistentWithReference (ref_result))
-           {
-             cerr<<"Error. Calculated FP operation counts differ from reference counts parsed from pragma!"<<endl;
-             ref_result->printInfo("Reference counts are ....");
-             current_result->printInfo("Calculated counts are ....");
-           }
-           assert (current_result->consistentWithReference (ref_result)); 
-         }
-         else
-         {
-           // I believe ref_result should be available at this point
-           assert (false);
-         }  
-       }
-     } // end verification
-   } 
-  }
-  //TODO: merge this into the previous branch: parsing and verifying the same time.
-  // Get reference FP operation counting values from pragma, if available.
-  // This is no longer useful since we use bottomup traversal!!
-  // We should split this into another phase!!
-  else if (isSgPragmaDeclaration(n))
+  // consider RAJA::forall loops, lambda functions only, estimate arithmetic intensity
+  if (considerLambda)
   {
-    FPCounters* result = parse_aitool_pragma(isSgPragmaDeclaration(n));
-    if (result != NULL)
+     // RAJA::forall template function calls
+     SgFunctionRefExp* ref_exp = NULL;   
+     SgLambdaExp* lambda_exp = NULL;
+     if (isRAJAforallStmt (n, &ref_exp, &lambda_exp))
+     {
+       SgBasicBlock* body = lambda_exp->get_lambda_function()->get_definition()->get_body();
+       ROSE_ASSERT (body != NULL);
+       cout<<"Debugging: a RAJA::forall loop:"<< body->get_file_info()->get_line();
+       FPCounters* fp_counters = calculateArithmeticIntensity(body);
+       cout<<fp_counters->toString()<<endl;
+     }
+  }  
+  else  // all other regular C/C++ loop cases 
+  {
+    // For C/C++ loops 
+    if (isSgForStatement(n)!=NULL){
+      SgForStatement* loop = isSgForStatement(n);
+      SgScopeStatement* scope = loop->get_scope();
+      ROSE_ASSERT(scope != NULL);
+
+      if (running_mode == e_analysis_and_instrument)
+        instrumentLoopForCounting (loop);
+      else if (running_mode == e_static_counting)
+      {  
+        SgStatement* lbody = loop->get_loop_body();
+//        CountFPOperations (lbody);
+//        CountMemOperations (lbody , false, true); // bool includeScalars /*= true*/, bool includeIntType /*= true*/
+//        FPCounters* fp_counters = getFPCounters (lbody);
+        FPCounters* fp_counters = calculateArithmeticIntensity(lbody);
+
+        ofstream reportFile(report_filename.c_str(), ios::app);
+        //     cout<<"Writing counter results to "<< report_filename <<endl;
+        reportFile<< fp_counters->toString();
+
+        // verify the counting results are consistent with reference results from pragmas	 
+        if (SgStatement* prev_stmt = getPreviousStatement(loop))
+        {
+          if (isSgPragmaDeclaration(prev_stmt))
+          {
+            FPCounters* ref_result = getFPCounters (prev_stmt);
+            FPCounters* current_result = getFPCounters (lbody);
+            if (ref_result != NULL)
+            {
+              if (!current_result->consistentWithReference (ref_result))
+              {
+                cerr<<"Error. Calculated FP operation counts differ from reference counts parsed from pragma!"<<endl;
+                ref_result->printInfo("Reference counts are ....");
+                current_result->printInfo("Calculated counts are ....");
+              }
+              assert (current_result->consistentWithReference (ref_result)); 
+            }
+            else
+            {
+              // I believe ref_result should be available at this point
+              assert (false);
+            }  
+          }
+        } // end verification
+      } 
+    }
+    //TODO: merge this into the previous branch: parsing and verifying the same time.
+    // Get reference FP operation counting values from pragma, if available.
+    // This is no longer useful since we use bottomup traversal!!
+    // We should split this into another phase!!
+    else if (isSgPragmaDeclaration(n))
     {
-      isSgPragmaDeclaration(n) -> setAttribute("FPCounters", result);
-      if (debug)
+      FPCounters* result = parse_aitool_pragma(isSgPragmaDeclaration(n));
+      if (result != NULL)
       {
-        FPCounters* result2 = getFPCounters (isSgLocatedNode(n));
-        result2->printInfo("After set and getFPCounters");
+        isSgPragmaDeclaration(n) -> setAttribute("FPCounters", result);
+        if (debug)
+        {
+          FPCounters* result2 = getFPCounters (isSgLocatedNode(n));
+          result2->printInfo("After set and getFPCounters");
+        }
       }
     }
-  }
-  // Now Fortran support
-  else if (SgFortranDo* doloop = isSgFortranDo(n))
-  {
-     instrumentLoopForCounting (doloop);
+    // Now Fortran support
+    else if (SgFortranDo* doloop = isSgFortranDo(n))
+    {
+      instrumentLoopForCounting (doloop);
+    }
+
   }
   return true;
 }
@@ -119,6 +211,14 @@ int main (int argc, char** argv)
   {
     running_mode = e_static_counting; 
   }
+
+  if (CommandlineProcessing::isOption(argvList,"-support_raja_loops","", true))
+  {
+    considerLambda = true;  // RAJA::forall () loops
+    running_mode = e_static_counting; // additionally make sure we enter the static counting mode
+    argvList.push_back ("-rose:Cxx11_only"); // ensure C++ 11 mode is turned on
+  }
+
 
   if (CommandlineProcessing::isOption(argvList,"-use-algorithm-v2","", true))
   {
