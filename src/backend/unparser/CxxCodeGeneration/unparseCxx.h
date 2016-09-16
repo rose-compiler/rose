@@ -388,6 +388,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (9/7/2014): Support for unparsing of the template header within template declarations (I think this only applies to template member and non-member functions).
           virtual void unparseTemplateHeader(SgFunctionDeclaration* functionDeclaration, SgUnparse_Info& info);
 
+       // DQ (9/11/2016): Adding symetric support for template class declarations.
+          virtual void unparseTemplateHeader(SgClassDeclaration* classDeclaration, SgUnparse_Info& info);
+
        // DQ (12/26/2011): Supporting function for all template declarations (initially at least).
           template<class T> void unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info);
 
