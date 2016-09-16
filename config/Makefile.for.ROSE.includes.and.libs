@@ -115,6 +115,14 @@ if ROSE_HAVE_LIBMAGIC
   ROSE_LIBMAGIC_LIBS_WITH_PATH = -L@ROSE_LIBMAGIC_PREFIX@/lib -lmagic
 endif
 
+# Math algorithms from http://dlib.net. This is a headers-only library neede by some binary analyses.
+if ROSE_HAVE_DLIB
+  ROSE_DLIB_INCLUDES = -I@DLIB_PREFIX@
+  ROSE_DLIB_LIBS =
+  ROSE_DLIB_LIBS_WITH_PATH =
+endif
+
+
 GLUT_LIBS = ${glut_path}
 
 # ROSE-DWARF libdwarf support
@@ -409,6 +417,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(ROSE_YAML_INCLUDES) \
      $(ROSE_READLINE_INCLUDES) \
      $(ROSE_LIBMAGIC_INCLUDES) \
+     $(ROSE_DLIB_INCLUDES) \
      $(ROSE_DWARF_INCLUDES) \
      $(ROSE_WINE_INCLUDES) \
      $(VALGRIND_CFLAGS) \
@@ -479,7 +488,8 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
   $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
   $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) $(ROSE_EXPERIMENTAL_OFP_LIBS) \
-  $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH)
+  $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH) \
+  $(ROSE_DLIB_LIBS_WITH_PATH)
 
 # DQ (3/13/2009): Removed this from ROSE_LIBS because libtool warnings say it should be in AM_LDFLAGS
 # (this is because it has been moved from being linked statically to being linked dynamically).
@@ -520,10 +530,6 @@ ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 # with make distcheck rule 
 # -lannotationLanguageParser(appears after -lvaluePropagation)
 
-# Location of sample binary files (executables, libraries, etc) that serve as input to
-# some of the binary analysis tests.
-BINARY_SAMPLES = $(top_srcdir)/binaries/samples
-
 # Test harness variables. See "rth_run.pl --help" for more info.  The RTH_RUN_FLAGS is meant to be set on the
 # "make" command-line, but the default depends on the value of the verbosity $(V) flag.
 
@@ -535,7 +541,7 @@ RTH_RUN_FLAGS = $(RTH_RUN_FLAGS_V_$(V))
 RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	srcdir=$(abspath $(srcdir)) top_srcdir=$(abspath $(top_srcdir)) \
 	blddir=$$(pwd) top_blddir=$(abspath $(top_builddir)) \
-	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
+	VALGRIND=$(VALGRIND)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 
@@ -543,3 +549,31 @@ RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 # (depreicated in automake and for which many warnings are generated).
 CPPFLAGS = $(AM_CPPFLAGS)
 
+# Temporary workaround for lack of AM_EXTRA_RECURSIVE_TARGETS in automake 1.11 and 1.12 [Matzke, 2016-09-14]
+# The check for "." is because $ROSE/tests adds "." to SUBDIRS which would otherwise result in infinite recursion.
+# The checks for other names are because we don't want to recurse into some directories that don't include this
+# file and therefore don't have this rule (but that means these names can't be test subdirecties elsewhere either).
+check-smoke check-nonsmoke check-all:
+	@for subdir in $(SUBDIRS); do						\
+		if [ "$$subdir" != .						\
+			-a "$$subdir" != libltdl				\
+			-a "$$subdir" != config					\
+			-a "$$subdir" != EDG					\
+			-a "$$subdir" != DLX					\
+			-a "$$subdir" != MFB					\
+			-a "$$subdir" != MDCG					\
+			-a "$$subdir" != KLT					\
+			-a "$$subdir" != 3rdPartyLibraries			\
+			-a "$$subdir" != roseHPCToolkit				\
+			-a "$$subdir" != projects				\
+			-a "$$subdir" != docs					\
+			-a "$$subdir" != tools ]; then				\
+			echo "Making $@ in $$subdir";				\
+			$(MAKE) $(AM_MAKEFLAGS) -C "$$subdir" $@ || exit 1;	\
+		fi;								\
+	done
+	$(MAKE) $(AM_MAKEFLAGS) $@-local
+
+check-smoke-local check-nonsmoke-local check-all-local:
+
+.PHONY: check-smoke check-nonsmoke check-all check-smoke-local check-nonsmoke-local check-all-local

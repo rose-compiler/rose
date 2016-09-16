@@ -76,6 +76,7 @@ libroseSawyer_la_SOURCES =			\
 	Sawyer/Assert.C				\
 	Sawyer/Attribute.C			\
 	Sawyer/CommandLine.C			\
+	Sawyer/CommandLineBoost.C		\
 	Sawyer/GraphTraversal.C			\
 	Sawyer/Markup.C				\
 	Sawyer/MarkupPod.C			\
@@ -100,6 +101,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Cached.h				\
 	Sawyer/Callbacks.h			\
 	Sawyer/CommandLine.h			\
+	Sawyer/CommandLineBoost.h		\
 	Sawyer/DefaultAllocator.h		\
 	Sawyer/DenseIntegerSet.h		\
 	Sawyer/DistinctList.h			\

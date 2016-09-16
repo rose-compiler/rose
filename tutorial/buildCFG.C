@@ -4,7 +4,7 @@
 #include <GraphUpdate.h>
 #include "CFGImpl.h"
 #include "GraphDotOutput.h"
-#include "controlFlowGraph.h"
+#include "preControlFlowGraph.h"
 #include "CommandOptions.h"
 
 using namespace std;
