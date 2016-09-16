@@ -11,8 +11,9 @@
 STL_CPP98_HEADERS_PASSING="algorithm deque exception functional limits list map memory new numeric queue set stack typeinfo utility valarray vector"
 STL_CPP98_HEADERS_FAILING="bitset complex fstream iomanip ios iosfwd iostream istream iterator locale ostream sstream stdexcept streambuf string"
 
-STL_CPP11_HEADERS_PASSING=""
-STL_CPP11_HEADERS_FAILING="algorithm bitset complex deque exception fstream functional iomanip ios iosfwd iostream istream iterator limits list locale map memory new numeric ostream queue set sstream stack stdexcept streambuf string typeinfo utility valarray vector"
+# C++11 TESTS only are expected to pass for frontend (T0_FAIL+T1_FAIL==0 (not yet for T2_FAIL))
+STL_CPP11_HEADERS_PASSING="algorithm bitset complex deque exception fstream functional iomanip ios iosfwd iostream istream iterator limits list locale map memory new numeric ostream queue set sstream stack stdexcept streambuf string typeinfo utility valarray vector"
+STL_CPP11_HEADERS_FAILING=""
 
 ###############################################################################
 
@@ -74,7 +75,7 @@ for header in ${STL_HEADERS}; do
           if [ -e rose_test_${header}.pp.C ]
           then
               echo -n "PASS" # 1
-              ((T1_PASS+=1))
+              ((T1_PASS+=1) )
               g++ -std=$LANG_STANDARD rose_test_${header}.pp.C -w -Wfatal-errors > /dev/null 2>&1
               if [ $? -eq 0 ]; then
                   echo -n " PASS : 100.00%" # 2
@@ -144,7 +145,8 @@ echo "-----------------------------------------------------------------"
 echo "STL C++11 CHECK"
 echo "-----------------------------------------------------------------"
 check "$STL_CPP11_HEADERS_PASSING" "c++11" ""
-if [ $TOTAL_FAIL -gt 0 ]; then
+((CPP11TESTFAILS=T0_FAIL+T1_FAIL))
+if [ $CPP11TESTFAILS -gt 0 ]; then
   test_failed
 fi
 
