@@ -2129,6 +2129,7 @@ projects/TileK/doc/tilek-opencl.doxy
 projects/TileK/doc/tilek-rtl-opencl.doxy
 projects/TileK/doc/tilek-cuda.doxy
 projects/TileK/doc/tilek-rtl-cuda.doxy
+projects/xgenTranslator/Makefile
 tests/Makefile
 tests/UnitTests/Makefile
 tests/UnitTests/Rose/Makefile
