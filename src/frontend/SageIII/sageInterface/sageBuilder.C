@@ -2161,6 +2161,11 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
      printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterTypeList) \n");
      printf ("Inside of SageBuilder::buildFunctionType() return_type = %s \n",return_type->get_mangled().str());
      printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %" PRIuPTR " \n",typeList->get_arguments().size());
+     for (size_t i=0; i < typeList->get_arguments().size(); i++)
+        {
+          ROSE_ASSERT(typeList->get_arguments()[i] != NULL);
+          printf ("   --- typeList->get_arguments()[%zu] = %p = %s \n",i,typeList->get_arguments()[i],typeList->get_arguments()[i]->class_name().c_str());
+        }
 #endif
 #if 0
   // DQ (1/21/2014): Activate this test to see how we are building SgFunctionType with return type as SgFunctionType (see test2014_53.c).

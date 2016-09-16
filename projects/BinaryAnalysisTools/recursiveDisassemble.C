@@ -94,6 +94,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Switches for output
     SwitchGroup out("Output switches");
+    out.name("out");
+    out.doc("These switches control the various ways that this tool produces output. Switches related to GraphViz output "
+            "are described in their own section.");
 
     out.insert(Switch("select-functions")
                .argument("how", enumParser(settings.selectFunctions)
@@ -223,46 +226,49 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Switches controlling GraphViz output
     SwitchGroup dot("Graphviz switches");
-    dot.insert(Switch("gv-basename")
+    dot.name("gv");
+    dot.doc("Switches that affect GraphViz output for control flow graphs (CFG) and function call graphs (CG).");
+
+    dot.insert(Switch("basename")
                .argument("path", anyParser(settings.gvBaseName))
                .doc("Base name for GraphViz dot files.  The full name is created by appending details about what is "
                     "contained in the file.  For instance, a control flow graph for the function \"main\" has the "
                     "string \"cfg-main.dot\" appended.  The default is \"" + settings.gvBaseName + "\"."));
 
-    dot.insert(Switch("gv-subgraphs")
+    dot.insert(Switch("subgraphs")
                .intrinsicValue(true, settings.gvUseFunctionSubgraphs)
-               .doc("Organize GraphViz output into subgraphs, one per function.  The @s{no-gv-subgraphs} switch disables "
+               .doc("Organize GraphViz output into subgraphs, one per function.  The @s{no-subgraphs} switch disables "
                     "subgraphs. The default is to " + std::string(settings.gvUseFunctionSubgraphs?"":"not ") + "emit "
                     "subgraphs for those GraphViz files where it makes sense."));
-    dot.insert(Switch("no-gv-subgraphs")
-               .key("gv-subgraphs")
+    dot.insert(Switch("no-subgraphs")
+               .key("subgraphs")
                .intrinsicValue(false, settings.gvUseFunctionSubgraphs)
                .hidden(true));
 
-    dot.insert(Switch("gv-show-insns")
+    dot.insert(Switch("show-insns")
                .intrinsicValue(true, settings.gvShowInstructions)
                .doc("Show disassembled instructions in the GraphViz output rather than only starting addresses. Emitting "
                     "just addresses makes the GraphViz files much smaller but requires a separate assembly listing to "
-                    "interpret the graphs.  The @s{no-gv-show-instructions} causes only addresses to be emitted.  The "
+                    "interpret the graphs.  The @s{no-show-instructions} causes only addresses to be emitted.  The "
                     "default is to emit " + std::string(settings.gvShowInstructions?"instructions":"only addresses") + "."));
-    dot.insert(Switch("no-gv-show-insns")
-               .key("gv-show-insns")
+    dot.insert(Switch("no-show-insns")
+               .key("show-insns")
                .intrinsicValue(false, settings.gvShowInstructions)
                .hidden(true));
 
-    dot.insert(Switch("gv-show-funcret")
+    dot.insert(Switch("show-funcret")
                .intrinsicValue(true, settings.gvShowFunctionReturns)
                .doc("Show the function return edges in control flow graphs. These are the edges originating at a basic block "
                     "that serves as a function return and usually lead to the indeterminate vertex.  Including them in "
                     "multi-function graphs makes the graphs more complicated than they need to be for visualization. The "
-                    "@s{no-gv-show-funcret} switch disables these edges. The default is to " +
+                    "@s{no-show-funcret} switch disables these edges. The default is to " +
                     std::string(settings.gvShowFunctionReturns?"":"not ") + "show these edges."));
-    dot.insert(Switch("no-gv-show-funcret")
-               .key("gv-show-funcret")
+    dot.insert(Switch("no-show-funcret")
+               .key("show-funcret")
                .intrinsicValue(false, settings.gvShowFunctionReturns)
                .hidden(true));
 
-    dot.insert(Switch("gv-cfg-function")
+    dot.insert(Switch("cfg-function")
                .argument("name", listParser(anyParser(settings.gvCfgFunctions)))
                .explosiveLists(true)
                .whichValue(SAVE_ALL)
@@ -270,52 +276,56 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                     "entry address for the function as an decimal, octal, or hexadecimal number, or the string \"all\" "
                     "(they are matched in that order).  One file will be created for each output and the name of the file "
                     "is constructed by appending the following hyphen-separated parts to the GraphViz base name specified "
-                    "with @s{gv-basename}: the string \"cfg\", the hexadecimal entry address for the function, the name "
+                    "with @s{basename}: the string \"cfg\", the hexadecimal entry address for the function, the name "
                     "of the function with special characters replaced by underscores, and the string \".dot\".  This switch "
                     "may occur multiple times or multiple @v{name} values may be separated by commas."));
 
-    dot.insert(Switch("gv-cfg-global")
+    dot.insert(Switch("cfg-global")
                .intrinsicValue(true, settings.gvCfgGlobal)
-               .doc("Emits a global control flow graph saving it in a file whose name is the @s{gv-basename} suffixed with "
-                    "the string \"cfg-global.dot\". The @s{no-gv-cfg-global} switch disables this. The default is to " +
+               .doc("Emits a global control flow graph saving it in a file whose name is the @s{basename} suffixed with "
+                    "the string \"cfg-global.dot\". The @s{no-cfg-global} switch disables this. The default is to " +
                     std::string(settings.gvCfgGlobal?"":"not ") + "produce this file."));
-    dot.insert(Switch("no-gv-cfg-global")
-               .key("gv-cfg-global")
+    dot.insert(Switch("no-cfg-global")
+               .key("cfg-global")
                .intrinsicValue(false, settings.gvCfgGlobal)
                .hidden(true));
 
-    dot.insert(Switch("gv-cfg-interval")
+    dot.insert(Switch("cfg-interval")
                .argument("interval", P2::addressIntervalParser(settings.gvCfgInterval))
                .doc("Emits a control flow graph for those basic blocks that begin within the specified interval. " +
                     P2::AddressIntervalParser::docString() + " The name of the GraphViz file will be the prefix "
-                    "specified via @s{gv-basename} followed by the following hyphen-separated components: "
+                    "specified via @s{basename} followed by the following hyphen-separated components: "
                     "the string \"cfg\", the interval starting address in hexadecimal, and the interval inclusive final "
                     "address in hexadecimal. The extension \".dot\" is appended."));
 
-    dot.insert(Switch("gv-call-graph")
+    dot.insert(Switch("call-graph")
                .intrinsicValue(true, settings.gvCallGraph)
-               .doc("Emit a function call graph to the GraphViz file whose name is specified by the @s{gv-basename} prefix "
-                    "followed by the string \"cg.dot\". The @s{no-gv-call-graph} switch disables this output. The default "
+               .doc("Emit a function call graph to the GraphViz file whose name is specified by the @s{basename} prefix "
+                    "followed by the string \"cg.dot\". The @s{no-call-graph} switch disables this output. The default "
                     "is to " + std::string(settings.gvCallGraph?"":"not ") + "produce this file.\n"));
-    dot.insert(Switch("no-gv-call-graph")
-               .key("gv-call-graph")
+    dot.insert(Switch("no-call-graph")
+               .key("call-graph")
                .intrinsicValue(false, settings.gvCallGraph)
                .hidden(true));
 
-    dot.insert(Switch("gv-inline-imports")
+    dot.insert(Switch("inline-imports")
                .intrinsicValue(true, settings.gvInlineImports)
                .doc("When emitting a function call graph, inline imports into their callers and display the names of inlined "
                     "functions in the output.  This sometimes makes the output much cleaner.  Import functions are identified "
                     "by their names only: any name ending with \".dll\" or \"@plt\" is considered an imported function. This "
-                    "feature is disabled with the @s{no-gv-inline-imports} switch.  The default is to " +
+                    "feature is disabled with the @s{no-inline-imports} switch.  The default is to " +
                     std::string(settings.gvInlineImports?"":"not ") + "perform this inlining."));
-    dot.insert(Switch("no-gv-inline-imports")
-               .key("gv-inline-imports")
+    dot.insert(Switch("no-inline-imports")
+               .key("inline-imports")
                .intrinsicValue(false, settings.gvInlineImports)
                .hidden(true));
 
     // Switches for debugging
     SwitchGroup dbg("Debugging switches");
+    dbg.name("debug");
+    dbg.doc("These debugging switches are intended mostly for ROSE developers and direct users of the ROSE library. "
+            "Interpretation of the results often requires considerable knowledge of implementation details.");
+
     dbg.insert(Switch("trigger")
                .argument("what", anyParser(settings.triggers))
                .whichValue(SAVE_ALL)

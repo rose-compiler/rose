@@ -1,1 +1,2 @@
-main ->
+A_4_36::foo < int >  ->
+main -> A_4_36::foo < int > 

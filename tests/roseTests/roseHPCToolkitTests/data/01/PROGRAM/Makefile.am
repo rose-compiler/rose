@@ -4,6 +4,7 @@
 # or position of the Defense Department, the United States government,
 # or Rice University.
 #
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXTRA_DIST = example.hpcstruct
 

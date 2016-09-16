@@ -38,7 +38,6 @@ if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
  # If we can't process the tutorial directory then we can't run demos
    SUBDIRS += demo
 endif
-SUBDIRS += binaries
 # endif for controling Insure++ usage.
 endif
 endif
@@ -425,8 +424,6 @@ NumberOfMakefiles:
 	@du -a $(srcdir)/docs | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in demo directory: "
 	@du -a $(srcdir)/demo | $(FILTER_MAKEFILES) | wc -l
-	@echo "Number of Makefile.am files in binaries directory: "
-	@du -a $(srcdir)/binaries | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in tools directory: "
 	@du -a $(srcdir)/tools | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in config directory: "

@@ -14,6 +14,8 @@ int __builtin_ia32_psrldi(int,int);
 int __builtin_ia32_psrlqi(long long,int);
 #endif
 
+// int __builtin_ia32_paddq(long long,long long);
+
 #ifdef __INTEL_COMPILER
 // Added type for Intel compilers.
 // typedef __m64 v2si;

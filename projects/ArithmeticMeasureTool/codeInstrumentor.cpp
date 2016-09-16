@@ -145,6 +145,7 @@ void countingLoops(SgProject* project)
 
 
 //Now in the instrumenting mode, we first read in the program info. file
+// store the file content info. into a map loop_id_map[loop_path]=loop_id
 std::map<string, size_t> loop_id_map; 
 int readProgramInfoFile()
 {
@@ -183,7 +184,9 @@ int readProgramInfoFile()
   {
     cerr<<"Warning: readProgramInfoFile() cannot open file:"<<file_w_loop_count<<endl;
     //while_count = 0; 
-    assert (false);
+    // We cannot assert here. Some app's build system has a test command for C++ compiler with -g -c option, which triggers the assertion
+    //assert (false);
+    return -1; 
   }
 
   cout<<"readProgramInfoFile() read line # "<< while_count<<endl;
@@ -360,6 +363,7 @@ int main (int argc, char** argv)
   SgProject* project = frontend(argvList);
 
 //option:  -exe_mode:loop_counting
+  int read_count = 0; 
   if (exe_mode==e_loop_counting)
   {
     countingLoops (project);
@@ -372,17 +376,21 @@ int main (int argc, char** argv)
     if (file_list.size()>0)
     {
       cout<<"Running in the loop instrumenting mode ... "<<endl;
-      int read_count = readProgramInfoFile();
+      read_count = readProgramInfoFile();
     }
 
-    SgFilePtrList::iterator iter;
-    for (iter= file_list.begin(); iter!=file_list.end(); iter++)
+    // Do nothing if the loop count file is not available.
+    if (read_count != -1 )
     {
-      SgFile* cur_file = *iter;
-      SgSourceFile * sfile = isSgSourceFile(cur_file);
-      if (sfile!=NULL)
-        instrumentSourceFile(sfile, file_w_loop_count, file_w_loop_iter_count);
-    } // end for SgFile
+      SgFilePtrList::iterator iter;
+      for (iter= file_list.begin(); iter!=file_list.end(); iter++)
+      {
+        SgFile* cur_file = *iter;
+        SgSourceFile * sfile = isSgSourceFile(cur_file);
+        if (sfile!=NULL)
+          instrumentSourceFile(sfile, file_w_loop_count, file_w_loop_iter_count);
+      } // end for SgFile
+    }
   }
 
   // Generate source code from AST and invoke your
