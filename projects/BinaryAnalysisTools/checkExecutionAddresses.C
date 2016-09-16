@@ -64,6 +64,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         .with(engine.loaderSwitches());
     
     SwitchGroup tool("Tool specific switches");
+    tool.name("tool");
     tool.insert(Switch("map")
                 .argument("how", enumParser(settings.mapSource)
                           ->with("native", MAP_NATIVE)

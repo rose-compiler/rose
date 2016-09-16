@@ -1,4 +1,4 @@
-
+#include "sage3basic.h"
 #include <iostream>
 #include <sstream>
 
@@ -6,7 +6,8 @@
 #include "AnalysisInterface.h"
 #include <assert.h>
 #include "CommandOptions.h"
-
+#include "AstInterface.h"
+#include "AstInterface_ROSE.h"
 
 bool DebugLocalInfoCollect ()
 {
@@ -496,8 +497,16 @@ operator()( AstInterface& fa, const AstNodePtr& funcdef)
   AstNodePtr  body;
   AstInterface::AstNodeList params;
   if (!fa.IsFunctionDefinition(funcdef, 0, &params, 0, &body)) {
-     std::cerr << "Error: alias analysis requires function definition as input instead of " << AstToString(funcdef) << std::endl;
-     assert(false);
+    SgNode* s = AstNodePtrImpl(funcdef).get_ptr();                                                                                                   
+    SgNode* d = s;                                                                                                                              
+    if (s->variantT() ==  V_SgFunctionDefinition)                                                                                               
+    {                                                                                                                                         
+      SgFunctionDefinition *def =  isSgFunctionDefinition(s);                                                                                 
+      d = def->get_declaration();                                                                                                             
+    }      
+    //std::cerr << "Error: alias analysis requires function definition of a supported declaration type as input instead of " << AstToString(funcdef) << std::endl;
+    std::cerr << "Error: alias analysis requires function definition of a supported declaration type as input instead of " << d->class_name() << std::endl;
+    assert(false);
   }
 
   ModifyAliasMap collect(fa, aliasmap);

@@ -211,7 +211,6 @@ copyFiles:
 	cp $(srcdir)/*.C $(top_srcdir)/tests/CompilerTests/Pin_tests
 
 check-local:
-	@echo "Development tests for Intel Pin tests."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 #	@$(MAKE) $(PASSING_TEST_Objects)
@@ -220,16 +219,9 @@ check-local:
 	@$(MAKE) testStaticBinaryAnalysis
 	@$(MAKE) testStaticDynamicBinaryAnalysis
 	@$(MAKE) testDynamicStaticBinaryAnalysis
-	@echo "********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/binaryTests/Pin_tests: make check rule complete (terminated normally) ******"
-	@echo "********************************************************************************************************"
 
 else
 check-local:
-	@echo "Intel Pin development tests NOT run.  To run these reconfigure with:"
-	@echo "*******************************************************************************************************"
-	@echo "*************** make check not run here: configure --with-IntelPin=<path to Intel Pin> ****************"
-	@echo "*******************************************************************************************************"
 
 # endif of configuration for ROSE_USE_INTEL_PIN
 endif

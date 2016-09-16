@@ -98,6 +98,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     //------------------------------------------------
     SwitchGroup sem("Semantics class switches");
+    sem.name("class");
+    sem.doc("These switches control which classes are used when constructing the instruction semantics framework.");
+
     sem.insert(Switch("value")
                .argument("class", anyParser(settings.valueClassName))
                .doc("Name of the class that represents semantic values. If not specified, use the default value class for "
@@ -124,6 +127,10 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     //------------------------------------------------
     SwitchGroup ctl("Semantics control switches");
+    ctl.name("ctl");
+    ctl.doc("These switches control various operational characteristics of the instruction semantics framework. The "
+            "applicability of some of these switches depends on the classes used to construct the framework.");
+
     ctl.insert(Switch("solver")
                .argument("name", anyParser(settings.solverName))
                .doc("Enables use of an SMT solver of the specified class.  See \"@s{solver} list\" for the list of "
@@ -205,6 +212,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     //------------------------------------------------
     SwitchGroup out("Output switches");
+    out.name("out");
+    out.doc("These switches control what kind of output is produced.");
+
     out.insert(Switch("show-states")
                .intrinsicValue(true, settings.showStates)
                .doc("Turns on display of state information after each instruction is processed.  State output can be "

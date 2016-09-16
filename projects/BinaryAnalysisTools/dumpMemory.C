@@ -55,6 +55,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
         .errorStream(mlog[FATAL]);
 
     SwitchGroup fmt("Format switches");
+    fmt.name("fmt");
+
     fmt.insert(Switch("hexdump")
                .intrinsicValue(true, settings.showAsHex)
                .doc("Dump the specimen memory as ASCII text using an output format similar to the @man{hexdump}(1) command."));
@@ -73,6 +75,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                     "command, usualyl by specifying \"@@v{prefix}.load\" at the end of its command-line."));
 
     SwitchGroup out("Output switches");
+    out.name("out");
+
     out.insert(Switch("map")
                .intrinsicValue(true, settings.showMap)
                .doc("Show information about the memory map on standard output.  If no output formats are specified then the "
@@ -85,6 +89,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                     "not all output formats permit standard output."));
 
     SwitchGroup misc("Other switches");
+    misc.name("misc");
+
     misc.insert(Switch("where")
                 .argument("interval", P2::addressIntervalParser(settings.where))
                 .doc("Specifies the addresses that should be dumped. The default is to dump all mapped addresses. " +
