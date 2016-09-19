@@ -52,7 +52,7 @@ add_library(midend_pt OBJECT
   implicitCodeGeneration/analysisUtils.C
   implicitCodeGeneration/shortCircuitingTransformation.C
   partialRedundancyElimination/expressionTreeEqual.C
-  partialRedundancyElimination/controlFlowGraph.C
+  partialRedundancyElimination/preControlFlowGraph.C
   partialRedundancyElimination/pre.C
   constantFolding/constantFolding.C
   functionCallNormalization/FunctionNormalization.C

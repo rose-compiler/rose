@@ -31,11 +31,11 @@ fi
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
 for f in \
-    Access Assert AddressMap AddressSegment AllocatingBuffer Attribute BiMap BitVector BitVectorSupport Buffer CommandLine \
-    Cached Callbacks DefaultAllocator DenseIntegerSet Exception DistinctList Graph GraphAlgorithm GraphBoost GraphTraversal \
-    IndexedList Interval IntervalMap IntervalSet IntervalSetMap Map MappedBuffer Markup MarkupPod Message NullBuffer Optional \
-    PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StaticBuffer Stopwatch Synchronization \
-    ThreadWorkers WarningsOff WarningsRestore
+    Access Assert AddressMap AddressSegment AllocatingBuffer Attribute BiMap BitVector BitVectorSupport Buffer Cached \
+    Callbacks CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet Exception DistinctList Graph GraphAlgorithm \
+    GraphBoost GraphTraversal IndexedList Interval IntervalMap IntervalSet IntervalSetMap Map MappedBuffer Markup MarkupPod \
+    Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack \
+    StaticBuffer Stopwatch Synchronization ThreadWorkers WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
@@ -50,8 +50,7 @@ do
     cp "$SAWYER_ROOT/docs/examples/$f" docs/examples/.
 done
 
-# Copy some of Sawyer's unit tests into the ROSE source tree.  The destination location should be changed to be the same
-# as the rest of the unit testing, but that location has not been decided yet.
+# Copy some of Sawyer's unit tests into the ROSE source tree.
 for f in                                        \
     Container/addressMapUnitTests.C             \
     Container/attributeUnitTests.C              \
@@ -70,7 +69,7 @@ for f in                                        \
     Container/setUnitTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";
-    ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/roseTests/utilTests/sawyer-$(basename "$f")
+    ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/smoke/unit/Sawyer/$(basename "$f")
 done
 
 

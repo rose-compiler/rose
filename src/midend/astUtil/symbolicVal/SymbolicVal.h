@@ -403,7 +403,7 @@ SymbolicVal Min(const SymbolicVal &v1, const SymbolicVal &v2,
 SymbolicVal UnwrapVarCond( const SymbolicCond& valCond,
                          const SymbolicVar &pivot, SymbolicBound& pivotBound ); //return pivot coefficient
 
-bool FindVal( const SymbolicVal &v, const SymbolicVal &sub);
+bool FindVal( const SymbolicVal &v, const SymbolicVal &sub); // find substr in v, usually find loop index inside an expression
 SymbolicVal ReplaceVal( const SymbolicVal &v, const SymbolicVal &sub, const SymbolicVal& newval);
 SymbolicVal ReplaceVal( const SymbolicVal &v, MapObject<SymbolicVal, SymbolicVal>& valmap);
 

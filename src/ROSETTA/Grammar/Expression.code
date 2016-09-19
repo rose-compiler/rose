@@ -1135,13 +1135,19 @@ HEADER_CAST_EXPRESSION_START
        */
           enum cast_type_enum
              {
-               e_unknown          = 0,  /*!< Unknown value (error value) */
-               e_default          = 1,  /*!< Default value (default) */
-               e_C_style_cast     = 2,  /*!< C style cast */
-               e_const_cast       = 3,  /*!< C++ const cast */
-               e_static_cast      = 4,  /*!< C++ static cast */
-               e_dynamic_cast     = 5,  /*!< C++ dynamic cast */
-               e_reinterpret_cast = 6   /*!< C++ reinterpret cast */
+               e_unknown               = 0, /*!< Unknown value (error value) */
+               e_default               = 1, /*!< Default value (default) */
+               e_C_style_cast          = 2, /*!< C style cast */
+               e_const_cast            = 3, /*!< C++ const cast */
+               e_static_cast           = 4, /*!< C++ static cast */
+               e_dynamic_cast          = 5, /*!< C++ dynamic cast */
+               e_reinterpret_cast      = 6,  /*!< C++ reinterpret cast */
+            // DQ (8/22/2016): Adding more comprehensive setting of cast semantics (as part of improved C++ cast support).
+            // Not clear if these really need to be present.
+            // e_reference_cast        = 7, /*!< C++ reference cast (base class cast) */
+            // e_rvalue_reference_cast = 8,  /*!< C++ rvalue reference cast (base class cast to rvalue) */
+               e_safe_cast             = 8, /*!< C++ MSVC specific safe cast */
+               e_last_cast  /*!< Last entry in enum of cast types */
              };
 
        // Sg_e_cast_type cast_type();
@@ -1177,6 +1183,8 @@ HEADER_CAST_EXPRESSION_START
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required() const;
           void set_global_qualification_required(bool global_qualification_required);
+
+          static std::string cast_type_to_string ( enum cast_type_enum );
 
 HEADER_CAST_EXPRESSION_END
 
@@ -6051,6 +6059,30 @@ SgCastExp::set_global_qualification_required ( bool global_qualification_require
   // set_isModified(true);
 
      p_global_qualification_required = global_qualification_required;
+   }
+
+std::string
+SgCastExp::cast_type_to_string ( enum cast_type_enum cast_type )
+   {
+     string s;
+
+     switch (cast_type)
+       {
+         case e_unknown: s = "e_unknown"; break;
+         case e_default: s = "e_default"; break;
+         case e_C_style_cast: s = "e_C_style_cast"; break;
+         case e_const_cast: s = "e_const_cast"; break;
+         case e_static_cast: s = "e_static_cast"; break;
+         case e_dynamic_cast: s = "e_dynamic_cast"; break;
+         case e_reinterpret_cast: s = "e_reinterpret_cast"; break;
+         case e_safe_cast: s = "e_safe_cast"; break;
+         case e_last_cast: s = "e_last_cast"; break;
+
+         default:
+              printf ("ERROR: default reach in switch: cast_type = %d \n",cast_type);
+       }
+
+     return s;
    }
 
 
