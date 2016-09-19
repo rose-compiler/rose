@@ -213,7 +213,6 @@ check-local: check-trivial-program check-boost-linkage
 # This is true only if we have configured --with-development-libraries, else we have static
 # in each directory and we will link with the collection of all static libraries.
 
-noinst_PROGRAMS = testSharedRoseLib 
 all-local:
 
 # PC (9/15/2006): force the use of the C++ linker
