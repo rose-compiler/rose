@@ -45,6 +45,15 @@ public:
         return typename Buffer<A, T>::Ptr(new AllocatingBuffer(size));
     }
 
+    /** Allocating constructor.
+     *
+     *  Allocates a new buffer that points to a copy of the specified string. */
+    static typename Buffer<A, T>::Ptr instance(const std::string &s) {
+        typename Buffer<A, T>::Ptr retval(new AllocatingBuffer(s.size()));
+        retval->write(s.c_str(), 0, s.size());
+        return retval;
+    }
+    
     typename Buffer<A, T>::Ptr copy() const /*override*/ {
         typename Buffer<A, T>::Ptr newBuffer = instance(this->size());
         Address nWritten = newBuffer->write(&values_[0], 0, this->size());
