@@ -98,7 +98,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     //------------------------------------------------
     SwitchGroup sem("Semantics class switches");
-    sem.nameSpace("class");
+    sem.name("class");
     sem.doc("These switches control which classes are used when constructing the instruction semantics framework.");
 
     sem.insert(Switch("value")
@@ -127,7 +127,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     //------------------------------------------------
     SwitchGroup ctl("Semantics control switches");
-    ctl.nameSpace("ctl");
+    ctl.name("ctl");
     ctl.doc("These switches control various operational characteristics of the instruction semantics framework. The "
             "applicability of some of these switches depends on the classes used to construct the framework.");
 
@@ -212,7 +212,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     //------------------------------------------------
     SwitchGroup out("Output switches");
-    out.nameSpace("out");
+    out.name("out");
     out.doc("These switches control what kind of output is produced.");
 
     out.insert(Switch("show-states")

@@ -39,7 +39,7 @@ parseCommandLine(int argc, char *argv[], BinaryAnalysis::Partitioner2::Engine &e
         .with(engine.loaderSwitches());
     
     SwitchGroup tool("Switches specific to this tool");
-    tool.nameSpace("tool");
+    tool.name("tool");
 
     tool.insert(Switch("addresses")
                 .argument("interval", BinaryAnalysis::Partitioner2::addressIntervalParser(settings.limits))

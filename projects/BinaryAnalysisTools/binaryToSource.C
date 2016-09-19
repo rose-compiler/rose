@@ -27,7 +27,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     Parser parser = engine.commandLineParser(purpose, description);
 
     SwitchGroup tool("Tool-specific switches");
-    tool.nameSpace("tool");
+    tool.name("tool");
 
     tool.insert(Switch("trace-generation")
                 .intrinsicValue(true, settings.generator.traceRiscOps)

@@ -1,10 +1,10 @@
 add_library(util_sawyer OBJECT
-  Assert.C Attribute.C CommandLine.C GraphTraversal.C Markup.C MarkupPod.C
+  Assert.C Attribute.C CommandLine.C CommandLineBoost.C GraphTraversal.C Markup.C MarkupPod.C
   Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C Synchronization.C)
 
 install(FILES
     Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h Attribute.h BiMap.h
-    BitVector.h BitVectorSupport.h Buffer.h Cached.h Callbacks.h CommandLine.h
+    BitVector.h BitVectorSupport.h Buffer.h Cached.h Callbacks.h CommandLine.h CommandLineBoost.h
     DefaultAllocator.h DenseIntegerSet.h DistinctList.h Exception.h Graph.h GraphAlgorithm.h
     GraphBoost.h GraphTraversal.h IndexedList.h
     Interval.h IntervalMap.h IntervalSet.h IntervalSetMap.h Map.h MappedBuffer.h Markup.h

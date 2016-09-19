@@ -104,6 +104,9 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
        // DQ (9/5/2015): I think this is the support we need for test2015_57.C (compound literals used as expressions).
           case V_SgAggregateInitializer:
 
+       // DQ (9/12/2016): Adding support for whatever types are used within alignOf operators.
+          case V_SgAlignOfOp:
+
           case V_SgTypeIdOp:
           case V_SgSizeOfOp:
           case V_SgNewExp:

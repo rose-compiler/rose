@@ -684,7 +684,7 @@ class SplitFraction : public SymbolicVisitor
       return hasfrac;
    }
 };
-
+// extract fraction from v, save integral/rac if the last two pointers are not NULL
 bool HasFraction(const SymbolicVal& v, SymbolicVal* integral, 
                     SymbolicVal* frac)
 {

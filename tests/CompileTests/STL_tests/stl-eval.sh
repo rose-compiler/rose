@@ -67,7 +67,8 @@ for header in ${STL_HEADERS}; do
       echo -n "PASS " # 0
       ((T0_PASS+=1))
       {
-          $TOOL2 $TOOL2_BACKEND $BS_INCLUDE test_${header}.pp.C -std=$LANG_STANDARD &> /dev/null
+#         $TOOL2 $TOOL2_BACKEND $BS_INCLUDE test_${header}.pp.C -std=$LANG_STANDARD &> /dev/null
+          $TOOL2 $TOOL2_BACKEND $BS_INCLUDE test_${header}.pp.C -std=$LANG_STANDARD
       } > /dev/null 2>&1
       if [ $? -eq 0 ]; then
           if [ -e rose_test_${header}.pp.C ]
@@ -124,6 +125,7 @@ TOTAL_FAIL=0
 echo "-----------------------------------------------------------------"
 echo "STL C++98 CHECK"
 echo "-----------------------------------------------------------------"
+# DQ: (comment out here to skip these tests).
 check "$STL_CPP98_HEADERS_PASSING" "c++98" ""
 if [ ${TOTAL_FAIL} -gt 0 ]; then
   test_failed
@@ -133,6 +135,7 @@ echo
 echo "-----------------------------------------------------------------"
 echo "STL C++98 CHECK (EXPECTED FAILS)"
 echo "-----------------------------------------------------------------"
+# DQ: (comment out here to skip these tests).
 check "$STL_CPP98_HEADERS_FAILING" "c++98" "[expected fail]"
 
 TOTAL_FAIL=0
@@ -157,6 +160,7 @@ echo -e "${GREEN}ALL TESTS PASSED (that are expected to pass)${COLOREND}"
 echo -e "${GREEN}-----------------------------------------------------------------${COLOREND}"
 
 # clean up (remove all generated files. cleanup is only performed when all tests passed)
+# DQ: (comment out here to save generated files).
 cleanup
 
 # NOTES on cpp:
