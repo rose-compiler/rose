@@ -166,7 +166,7 @@ PodMarkup::emit(const std::string &doc) {
                       " -w 'date:" + escapeSingleQuoted(versionDateOrDefault()) + "'"
                       " -w 'release:" + escapeSingleQuoted(versionStringOrDefault()) + "'"
                       " -w 'section:" + escapeSingleQuoted(chapterNumberOrDefault()) + "'"
-                      " '" + escapeSingleQuoted(tmpFile.name().native()) + "'";
+                      " '" + escapeSingleQuoted(tmpFile.name().string()) + "'";
 
     system(cmd.c_str());
 };

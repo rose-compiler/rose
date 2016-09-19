@@ -30,7 +30,7 @@ LineVector::LineVector(size_t nBytes, const char *buf)
 void
 LineVector::load(const boost::filesystem::path &path) {
     clear();
-    buffer_ = MappedBuffer<size_t, char>::instance(path.native());
+    buffer_ = MappedBuffer<size_t, char>::instance(path);
     charBuf_ = buffer_->data();
     ASSERT_require(charBuf_ != NULL || buffer_->size() == 0);
 }
