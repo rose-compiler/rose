@@ -10,8 +10,8 @@
 #define Sawyer_CommandLine_H
 
 #include <Sawyer/Assert.h>
+#include <Sawyer/DocumentMarkup.h>
 #include <Sawyer/Map.h>
-#include <Sawyer/Markup.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
@@ -164,11 +164,6 @@ class Switch;
 class SwitchGroup;
 class Parser;
 class ParserResult;
-
-/** Check that documentation markup is valid.
- *
- *  Tests the supplied markup string for validity, throwing an <code>std::runtime_error</code> if something is wrong. */
-SAWYER_EXPORT void checkMarkup(const std::string&);
 
 /** The order in which things are sorted in the documentation. */
 enum SortOrder {
@@ -2058,7 +2053,7 @@ public:
      * @sa @ref doc
      *
      * @{ */
-    Switch& synopsis(const std::string &s) { checkMarkup(s); synopsis_ = s; return *this; }
+    Switch& synopsis(const std::string &s) { synopsis_ = s; return *this; }
     std::string synopsis() const;
     /** @} */
 
@@ -2099,7 +2094,7 @@ public:
      *  Even switches with no documentation will show up in the generated documentation--they will be marked as "Not
      *  documented".  To suppress them entirely, set their @ref hidden property to true.
      * @{ */
-    Switch& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
+    Switch& doc(const std::string &s) { documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
     /** @} */
 
@@ -2540,7 +2535,7 @@ public:
      *  within this group.
      *
      * @{ */
-    SwitchGroup& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
+    SwitchGroup& doc(const std::string &s) { documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
     /** @} */
 
@@ -2963,25 +2958,13 @@ public:
      *  markup in the Sawyer::Markup language, with some extensions specific to command-line parsing. */
     std::string documentationMarkup() const;
 
-    /** Parsed documentation markup.
-     *
-     *  Parses the supplied documentation markup (or gets it via @ref documentationMarkup) and returns the result. An
-     *  <code>std::runtime_error</code> is thrown if there are any problems parsing the documentation string.
-     *
-     * @{ */
-    Markup::ParserResult parseDocumentation() const;
-    Markup::ParserResult parseDocumentation(const std::string&) const;
-    /** @} */
-
     /** Generate Perl POD documentation.
      *
      *  Generates a Perl POD string for this parser. */
     std::string podDocumentation() const;
 
-    /** Generate Unix man-page (nroff) documentation.
-     *
-     *  Generates NRoff source code for this parser. */
-    std::string manDocumentation() const;
+    /** Generate plain text documentation. */
+    std::string textDocumentation() const;
 
     /** Print documentation to standard output. Use a pager if possible. */
     void emitDocumentationToPager() const;
@@ -3070,6 +3053,10 @@ private:
     std::string ambiguityErrorMesg(const std::string &longSwitchString, const std::string &optionalPart,
                                    const std::string &longSwitchName, const NamedSwitches &ambiguities);
     std::string ambiguityErrorMesg(const std::string &shortSwitchString, const NamedSwitches &ambiguities);
+
+    // Initialize a documentation parser by registering things like @s, @man, etc.  The argument is a subclass such as
+    // Document::PodMarkup.
+    void initDocGrammar(Document::Markup::Grammar& /*in,out*/) const;
 
     // FIXME[Robb Matzke 2014-02-21]: Some way to parse command-lines from a config file, or to merge parsed command-lines with
     // a yaml config file, etc.
