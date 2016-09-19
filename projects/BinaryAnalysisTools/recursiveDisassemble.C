@@ -312,7 +312,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(true, settings.gvInlineImports)
                .doc("When emitting a function call graph, inline imports into their callers and display the names of inlined "
                     "functions in the output.  This sometimes makes the output much cleaner.  Import functions are identified "
-                    "by their names only: any name ending with \".dll\" or \"@plt\" is considered an imported function. This "
+                    "by their names only: any name ending with \".dll\" or \"@@plt\" is considered an imported function. This "
                     "feature is disabled with the @s{no-inline-imports} switch.  The default is to " +
                     std::string(settings.gvInlineImports?"":"not ") + "perform this inlining."));
     dot.insert(Switch("no-inline-imports")

@@ -198,7 +198,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     output.insert(Switch("show-hexdump")
                   .intrinsicValue(true, settings.showHexDump)
-                  .doc("Show unused addresses in @man{hexdump}(1) style. The @s{no-show-hexdump} disables this feature. The "
+                  .doc("Show unused addresses in @man{hexdump}{1} style. The @s{no-show-hexdump} disables this feature. The "
                        "default is to " + std::string(settings.showHexDump?"":"not ") + "show this output."));
     output.insert(Switch("no-show-hexdump")
                   .key("show-hexdump")
