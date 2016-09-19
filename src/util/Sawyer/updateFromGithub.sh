@@ -52,22 +52,26 @@ do
 done
 
 # Copy some of Sawyer's unit tests into the ROSE source tree.
-for f in                                        \
-    Container/addressMapUnitTests.C             \
-    Container/attributeUnitTests.C              \
-    Container/bitvecTests.C                     \
-    Container/denseIntegerSetUnitTests.C        \
-    Container/distinctListUnitTests.C           \
-    Container/graphIsomorphismTests.C           \
-    Container/graphUnitTests.C                  \
-    Container/indexedGraphDemo.C                \
-    Container/intervalSetMapUnitTests.C         \
-    Container/intervalUnitTests.C               \
-    Container/lineVectorUnitTests.C             \
-    Container/listUnitTests.C                   \
-    Container/mapUnitTests.C                    \
-    Container/optionalUnitTests.C               \
-    Container/setUnitTests.C
+for f in					\
+    CommandLine/cmdUnitTests.C			\
+    Container/addressMapUnitTests.C		\
+    Container/attributeUnitTests.C		\
+    Container/bitvecTests.C			\
+    Container/denseIntegerSetUnitTests.C	\
+    Container/distinctListUnitTests.C		\
+    Container/graphIsomorphismTests.C		\
+    Container/graphUnitTests.C			\
+    Container/indexedGraphDemo.C		\
+    Container/intervalSetMapUnitTests.C		\
+    Container/intervalUnitTests.C		\
+    Container/lineVectorUnitTests.C		\
+    Container/listUnitTests.C			\
+    Container/mapUnitTests.C			\
+    Container/optionalUnitTests.C		\
+    Container/setUnitTests.C			\
+    Markup/markupUnitTests.C			\
+    Message/mesgUnitTests.C			\
+    Pointers/ptrUnitTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";
     ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/smoke/unit/Sawyer/$(basename "$f")
