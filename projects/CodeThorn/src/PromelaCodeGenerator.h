@@ -31,10 +31,14 @@ namespace SPRAY {
     std::string generateCode(CfgsAndAnnotationMap& parallelComponents);
 
   private:
-    std::string generateCode(Flow& automaton, int id, EdgeAnnotationMap edgeAnnotationMap);
-    std::string communicationDetails(std::string edgeAnnotation, int currentAutomaton, EdgeAnnotationMap edgeAnnotationMap);
-    std::string generateActionListener();
-    std::string ltlAtomicPropositions(EdgeAnnotationMap& annotationMap);
+    std::string generateCode(Flow& automaton, int id, EdgeAnnotationMap edgeAnnotationMap, 
+			     bool useTransitionIds, boost::unordered_map<std::string, int>& transitionIdMap);
+    std::string communicationDetails(std::string edgeAnnotation, int currentAutomaton, EdgeAnnotationMap edgeAnnotationMap,
+				     bool useTransitionIds, boost::unordered_map<std::string, int>& transitionIdMap);
+    std::string generateActionListener(std::string messageType,
+				       bool useTransitionIds, boost::unordered_map<std::string, int>& transitionIdMap);
+    std::string ltlAtomicPropositions(EdgeAnnotationMap& annotationMap,
+				      bool useTransitionIds, boost::unordered_map<std::string, int>& transitionIdMap);
   };
 
 } // end of namespace SPRAY

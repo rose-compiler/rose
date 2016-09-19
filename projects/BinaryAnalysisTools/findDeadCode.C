@@ -59,6 +59,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     parser.errorStream(::mlog[FATAL]);
 
     SwitchGroup analysis("Dead code analysis switches");
+    analysis.name("dc");
 
     analysis.insert(Switch("reachable-address")
                     .argument("addresses", P2::addressIntervalParser(settings.reachableVas))
@@ -122,6 +123,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                          "zero (the default) will assume addresses are the same as the architecture's word size."));
 
     SwitchGroup output("Output switches");
+    output.name("out");
 
     output.insert(Switch("show-map")
                   .intrinsicValue(true, settings.showMap)

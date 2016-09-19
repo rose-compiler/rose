@@ -1,11 +1,38 @@
+# We are moving to a new organization that has only two $ROSE/test subdirectories:
+#
+#   * "smoke" is the directory hierarchy containing all smoke tests, checkers, and specimens and is intended to be run
+#     by end users using "make check". The ENTIRE collection of smoke tests should take at most a couple of minutes to
+#     run on average hardware.
+#
+#   * "non-smoke" is the directory hierarchy that contains all other tests. This will eventually be a separate Git repository.
+
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+SUBDIRS = smoke nonsmoke
+
+########################################################################################################################
+# The remainder of this makefile is deprecated. Everything that follows should be migrated to either the "smoke" or
+# "non-smoke" subdirectories.
+########################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
 include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
 
 # DQ (4/17/2010): If we are not supporting C++ then we can't run most of our tests, but if 
 # we are supporting only Fortran then we can at least run the Fortran tests (same with PHP).
 # SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests translatorTests
 # SUBDIRS = CompileTests roseTests
-SUBDIRS = . UnitTests CompileTests
+SUBDIRS += . UnitTests CompileTests
 
 if !ROSE_USE_CLANG_FRONTEND
 

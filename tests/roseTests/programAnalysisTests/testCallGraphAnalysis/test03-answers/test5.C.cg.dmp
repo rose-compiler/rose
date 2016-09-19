@@ -1,2 +1,3 @@
+X < Y > ::getRemapField -> Y::foo
 Y::foo ->
-main ->
+main -> X < Y > ::getRemapField

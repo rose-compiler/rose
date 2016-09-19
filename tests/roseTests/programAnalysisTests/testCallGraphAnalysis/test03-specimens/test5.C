@@ -22,6 +22,8 @@ class Y
    {
      public:
         void foo() {};
+     // If uncommented, then getRemapField() will record that both functions are (or could be) called.
+     // void foobar() {};
    };
 
 

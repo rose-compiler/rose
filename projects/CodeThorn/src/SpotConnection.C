@@ -368,17 +368,21 @@ bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, s
   spot::emptiness_check_result* ce = ec->check();
   if(ce) {   //a counterexample exists, original formula does not hold on the model
     result = false;
-    spot::tgba_run* run = ce->accepting_run();
-    if (run) {
-      ostringstream runResult;
-      spot::print_tgba_run(runResult, &product, run);
-      //assign a string representation of the counter example if the corresponding out parameter is set
-      if (ce_ptr) {
-        std::string r = runResult.str();
-        r = filterCounterexample(r, boolOptions["counterexamples-with-output"]);
-        *ce_ptr = new string(r);//formatRun(r);	
+    //assign a string representation of the counterexample if the corresponding out parameter is set
+    if (ce_ptr) {
+      spot::tgba_run* run = ce->accepting_run();
+      if (run) {
+	ostringstream runResult;
+	spot::print_tgba_run(runResult, &product, run);
+	//assign a string representation of the counterexample if the corresponding out parameter is set
+	std::string r = runResult.str();
+	r = filterCounterexample(r, boolOptions["counterexamples-with-output"]);
+	*ce_ptr = new string(r);//formatRun(r);	
+	delete run;
+      } else {
+	cerr << "ERROR: SPOT says a counterexample exist but no accepting run could be returned." << endl;
+	ROSE_ASSERT(0);
       }
-      delete run;
     }
     delete ce;
   } else {    //the product automaton defines the empty language, the formula holds on the given model

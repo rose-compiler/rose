@@ -1785,8 +1785,11 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       break;
   }  
   
-  default: 
-    return false;
+  default:
+    {
+//      cerr<<"Warning: unrecognized function declaration by AstInterface::IsFunctionDefinition() in AstInterface.C  "<<d->class_name()<<endl;
+      return false;
+    }
   }
   if (l != 0) {
     SgInitializedNamePtrList& names = l->get_args();

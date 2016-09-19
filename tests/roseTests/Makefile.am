@@ -42,19 +42,7 @@ if !ROSE_USE_INSURE
 # This was not a problem the second time that Insure++ compiled ROSE.
 
 # DQ (8/23/2013): This is a part of SUBDIRS above and is redundant here.
-# DQ (9/2/2011): utilTests has C++ specific tests.
 # SUBDIRS += roseHPCToolkitTests utilTests
 # SUBDIRS += roseHPCToolkitTests
 
-# DQ (9/2/2011): Only run these tests if C or C++ is supported.
-#if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   SUBDIRS += utilTests
-#endif
-endif
-
-# Binary tests are a current problem for Insure++.
-if !ROSE_USE_INSURE
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   SUBDIRS += binaryTests
-endif
 endif

@@ -91,7 +91,9 @@ libspray_la_SOURCES=\
  AnalysisAbstractionLayer.C \
  ProgramAbstractionLayer.C \
  addressTakenAnalysis.C \
- defUseQuery.C
+ defUseQuery.C \
+ Timer.h \
+ Timer.cpp
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files
@@ -499,7 +501,7 @@ check-local:
 	@echo ================================================================
 	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
 	@echo ================================================================
-	@$(srcdir)/scripts/runAnalyterixTests.sh $(srcdir) $(top_builddir)/projects/CodeThorn/src $(clean-only) $(skip-analyterix) # Run analyterix tests
+#	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
 
 	./codethorn --internal-checks	
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
@@ -528,6 +530,7 @@ check-local:
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	@rm -f *.consistent
+	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
 	@$(srcdir)/scripts/runLtlRegressionTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS examples in several versions and compare to previous results
 	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results

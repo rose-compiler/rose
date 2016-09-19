@@ -98,6 +98,7 @@ sub is_generated {
   return 1 if m(/src/roseIndependentSupport/dot2gml/parseDotGrammar\.h$);
   return 1 if m(/\.#); # Emacs temporary file
   return 1 if m(~$); # Emacs backup file
+  return 1 if m(/\.git);
   return 0;
 }
 

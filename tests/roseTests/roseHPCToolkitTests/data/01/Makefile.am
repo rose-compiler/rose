@@ -3,6 +3,7 @@
 # Nothing in this work should be construed as reflecting the official policy
 # or position of the Defense Department, the United States government,
 # or Rice University.
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # ROSE-HPCT module: Example data set 01
 
