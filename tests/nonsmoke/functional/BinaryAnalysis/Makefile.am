@@ -11,6 +11,7 @@ EXTRA_DIST = \
 TEST_TARGETS=
 noinst_PROGRAMS=
 MOSTLYCLEANFILES=
+PHONIES=
 
 if USE_BINARY_ANALYSIS_TESTS
 
@@ -856,7 +857,7 @@ testPartitioner2_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 te
 		ANS="$(srcdir)/testPartitioner2_$*.ans"								\
 		$(top_srcdir)/scripts/test_with_answer $@
 
-.PHONY: check-testPartitioner2
+PHONIES += check-testPartitioner2
 check-testPartitioner2: $(testPartitioner2_test_targets)
 
 
@@ -936,7 +937,7 @@ $(disassemble2_other_targets): disassemble2_%.passed: $(SPECIMEN_DIR)/% disassem
 		$(srcdir)/disassemble.conf $@
 
 # A convenient target for just testing the disassembler
-.PHONY: check-disassemble
+PHONIES += check-disassemble
 check-disassemble: $(disassemble1_test_targets) $(disassemble2_test_targets)
 
 
@@ -950,7 +951,7 @@ check-disassemble: $(disassemble1_test_targets) $(disassemble2_test_targets)
 
 # Convenience target to run all these semantics tests. This target is not run automatically by "make check" (which instead
 # depends on each of the targets individually rather than just this one).
-.PHONY: check-semantics
+PHONIES += check-semantics
 #       API1 (the old stuff)            API2 (the newer stuff)           Extra tests
 check-semantics:											\
         nullSemantics.passed            nullSemantics2.passed						\
@@ -1132,7 +1133,7 @@ $(llvmTranscoder_TestTargets): llvm-xcode-%.passed: $(SPECIMEN_DIR)/% llvmTransc
 		LLVM_VERSION="$(llvmVersion)"		\
 		$(srcdir)/llvmTranscoder.conf $@
 
-.PHONY: check-llvm-xcode
+PHONIES += check-llvm-xcode
 check-llvm-xcode: $(llvmTranscoder_TestTargets)
 
 #--------------- tests that run LLVM analysis passes using LLVM's "opt" command
@@ -1183,12 +1184,12 @@ $(llvmAnalysis_TestTargets): llvm-analysis-%.passed: $(llvmAnalysis_SpecimenDir)
 		TRANSCODER="$(abspath llvmTranscoder) --llvm=$(llvmVersion)"				\
 		$(srcdir)/llvmAnalysis.conf $@
 
-.PHONY: check-llvm-analysis
+PHONIES += check-llvm-analysis
 check-llvm-analysis: $(llvmAnalysis_TestTargets)
 
 #-------------- all LLVM-specific tests
 
-.PHONY: check-llvm
+PHONIES += check-llvm
 check-llvm: $(llvmTranscoder_TestTargets) $(llvmAnalysis_TestTargets)
 
 
@@ -1215,7 +1216,7 @@ $(taintedFlow_TestTargets): taint_%.passed: $(SPECIMEN_DIR)/% taintedFlow tainte
 		ANS="$(abs_srcdir)/taint_$*.ans" \
 		$(abs_srcdir)/taintedFlow.conf $@
 
-.PHONY: check-taint
+PHONIES += check-taint
 check-taint: $(taintedFlow_TestTargets)
 
 
@@ -1243,7 +1244,7 @@ $(testNoop_TestTargets): noop_%.passed: $(SPECIMEN_DIR)/% testNoop
 		ANS="$(abs_srcdir)/noop_$*.ans"					\
 		$(top_srcdir)/scripts/test_with_answer $@
 
-.PHONY: check-noop
+PHONIES += check-noop
 check-noop: $(testNoop_TestTargets)
 
 
@@ -1271,7 +1272,7 @@ $(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(SPECIMEN_DI
 		CMD="$$(pwd)/testStaticSemantics $<"		\
 		$(top_srcdir)/scripts/test_exit_status $@
 
-.PHONY: check-testStaticSemantics
+PHONIES += check-testStaticSemantics
 check-testStaticSemantics: $(testStaticSemantics_test_targets)
 
 
@@ -1311,7 +1312,7 @@ $(parse_Targets): parse_%.passed: $(SPECIMEN_DIR)/% disassemble
 		USE_SUBDIR=yes				\
 		$(TEST_EXIT_STATUS) $@
 
-.PHONY: check_parse_container
+PHONIES += check_parse_container
 check_parse_container: $(parse_Targets)
 
 #--------------------------------------------------------------------------------
@@ -1328,7 +1329,7 @@ $(disassemble_Targets): disassemble_%.passed: $(SPECIMEN_DIR)/% disassemble
 		USE_SUBDIR=yes					\
 		$(TEST_EXIT_STATUS) $@
 
-.PHONY: check_disassemble
+PHONIES += check_disassemble
 check_disassemble: $(disassemble_Targets)
 
 #--------------------------------------------------------------------------------
@@ -1345,7 +1346,7 @@ $(unparse_Targets): unparse_%.passed: $(SPECIMEN_DIR)/% disassemble
 		USE_SUBDIR=yes				\
 		$(TEST_EXIT_STATUS) $@
 
-.PHONY: check_unparse
+PHONIES += check_unparse
 check_unparse: $(unparse_Targets)
 
 #--------------------------------------------------------------------------------
@@ -1362,7 +1363,7 @@ $(assemble_Targets): assemble_%.passed: $(SPECIMEN_DIR)/% disassemble
 		USE_SUBDIR=yes								\
 		$(TEST_EXIT_STATUS) $@
 
-.PHONY: check_assemble
+PHONIES += check_assemble
 check_assemble: $(assemble_Targets)
 
 #--------------------------------------------------------------------------------
@@ -1379,11 +1380,11 @@ $(astio_Targets): astio_%.passed: $(SPECIMEN_DIR)/% testAstIO
 		USE_SUBDIR=yes						\
 		$(TEST_EXIT_STATUS) $@
 
-.PHONY: check_astio
+PHONIES += check_astio
 check_astio: $(astio_Targets)
 
 #--------------------------------------------------------------------------------
-.PHONY: check_specimens
+PHONIES += check_specimens
 check_specimens: check_parse_container check_disassemble check_unparse check_assemble check_astio
 
 
@@ -1424,3 +1425,4 @@ clean-local:
 	rm -f $(TEST_TARGETS:.passed=.out)
 	rm -f $(TEST_TARGETS:.passed=.err)
 
+.PHONY: $(PHONIES)
