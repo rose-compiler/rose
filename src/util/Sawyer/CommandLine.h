@@ -2061,14 +2061,10 @@ public:
      *
      *  Parts of the text can be marked by surrounding the text in curly braces and prepending a tag consisting of an "@"
      *  followed by a word.  For instance, <code>\@b{foo}</code> makes the word "foo" bold and <code>\@i{foo}</code> makes it
-     *  italic.  The tags <code>\@bold</code> and <code>\@italic</code> can be used instead of <code>\@b</code> and
-     *  <code>\@i</code>, but the longer names make the documentation less readable in the C++ source code.
+     *  italic.
      *
      *  The text between the curly braces can be any length, and if it contains curly braces they must either balance or be
-     *  escaped with a preceding backslash (or two backslashes if they're inside a C++ string literal).  The delimiters (), [],
-     *  or <> may be used instead of curly braces. The delimiter must immediately follow the tag name with no intervening white
-     *  space: <code>\@b<foo> \@i(bar)</code>. Readability can be improved even more by substituting white space for the
-     *  delimiters: <code>the word \@b foo is in bold face.</code>
+     *  escaped with a preceding "@@". The curly braces that star and argument must not be preceded by white space.
      *
      *  Besides describing the format of a piece of text, markup is also used to describe the intent of a piece of text--that a
      *  word is a switch string (<code>\@s</code>), a variable (<code>\@v</code>), or a reference to a Unix man page
@@ -2076,8 +2072,8 @@ public:
      *  which is interpretted as a command-line switch. The library will add the correct prefix--probably "-\-" for long names
      *  and "-" for short names, but whatever is specified in the switch declaration. Even switches that haven't been declared
      *  can be marked with <code>\@s</code>.  The <code>\@v</code> tag marks a word as a variable, usually the name of a switch
-     *  argument.  The <code>\@man</code> tag takes two arguments: the name of a Unix man page and the section in which the page
-     *  appears: <code>the \@man(ls)(1) command lists contents of a directory.</code>
+     *  argument.  The <code>\@man</code> tag takes two arguments, the second of which is optional: the name of a Unix man page
+     *  and the section in which the page appears: <code>the \@man{ls}{1} command lists contents of a directory.</code>
      *
      *  The <code>\@prop</code> tag takes one argument which is a property name and evaluates to the property value as a string.
      *  The following properties are defined:
