@@ -154,7 +154,7 @@ TextMarkup::emit(const std::string &doc) {
     FileSystem::TemporaryFile tmpFile;
     tmpFile.stream() <<rendered;
     tmpFile.stream().close();
-    std::string cmd = "${PAGER-less} '" + escapeSingleQuoted(tmpFile.name().native()) + "'";
+    std::string cmd = "${PAGER-less} '" + escapeSingleQuoted(tmpFile.name().string()) + "'";
     if (system(cmd.c_str()) ==0)
         return;
 

@@ -103,7 +103,7 @@ public:
 
     /** Create a token stream from the contents of a file. */
     explicit TokenStream(const boost::filesystem::path &fileName)
-        : name_(fileName.native()), content_(fileName.native()), at_(0) {}
+        : name_(fileName.string()), content_(fileName.string()), at_(0) {}
 
     /** Create a token stream from a string.
      *
