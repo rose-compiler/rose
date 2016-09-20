@@ -675,8 +675,7 @@ main(int argc, char *argv[])
      * can be controlled by the same command-line switches that control ROSE.
      *------------------------------------------------------------------------------------------------------------------------*/
     ROSE_INITIALIZE;
-    mlog = Sawyer::Message::Facility("tool", rose::Diagnostics::destination);
-    rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+    rose::Diagnostics::initAndRegister(mlog, "tool");
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Generic switches
