@@ -114,6 +114,7 @@ private:
     // Info about each function
     struct FunctionInfo {
         std::vector<CharacteristicValues> categories;   // characteristic values orgnized by CategoryId
+        FunctionInfo(): categories() {}                 // LLVM's clang++ 3.5 and 3.7 don't generate this for const objs
     };
 
     // Info about all functions

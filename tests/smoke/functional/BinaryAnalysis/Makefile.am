@@ -6,6 +6,7 @@ if USE_BINARY_ANALYSIS_TESTS
 noinst_PROGRAMS =
 TEST_TARGETS =
 EXTRA_DIST =
+PHONIES =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
@@ -34,7 +35,7 @@ testPartitioner2_%.passed: $(testPartitioner2_specdir)/% testPartitioner2 testPa
 		ANS="$(srcdir)/testPartitioner2_$*.ans"	\
 		$(top_srcdir)/scripts/test_with_answer $@
 
-.PHONY: check-testPartitioner2
+PHONIES += check-testPartitioner2
 check-testPartitioner2: $(testPartitioner2_targets)
 
 
@@ -57,3 +58,4 @@ clean-local:
 	rm -f $(TEST_TARGETS:.passed=.out)
 	rm -f $(TEST_TARGETS:.passed=.err)
 
+.PHONY: $(PHONIES)

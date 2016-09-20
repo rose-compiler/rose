@@ -10,8 +10,8 @@
 #define Sawyer_CommandLine_H
 
 #include <Sawyer/Assert.h>
+#include <Sawyer/DocumentMarkup.h>
 #include <Sawyer/Map.h>
-#include <Sawyer/Markup.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
@@ -164,11 +164,6 @@ class Switch;
 class SwitchGroup;
 class Parser;
 class ParserResult;
-
-/** Check that documentation markup is valid.
- *
- *  Tests the supplied markup string for validity, throwing an <code>std::runtime_error</code> if something is wrong. */
-SAWYER_EXPORT void checkMarkup(const std::string&);
 
 /** The order in which things are sorted in the documentation. */
 enum SortOrder {
@@ -2058,7 +2053,7 @@ public:
      * @sa @ref doc
      *
      * @{ */
-    Switch& synopsis(const std::string &s) { checkMarkup(s); synopsis_ = s; return *this; }
+    Switch& synopsis(const std::string &s) { synopsis_ = s; return *this; }
     std::string synopsis() const;
     /** @} */
 
@@ -2066,14 +2061,10 @@ public:
      *
      *  Parts of the text can be marked by surrounding the text in curly braces and prepending a tag consisting of an "@"
      *  followed by a word.  For instance, <code>\@b{foo}</code> makes the word "foo" bold and <code>\@i{foo}</code> makes it
-     *  italic.  The tags <code>\@bold</code> and <code>\@italic</code> can be used instead of <code>\@b</code> and
-     *  <code>\@i</code>, but the longer names make the documentation less readable in the C++ source code.
+     *  italic.
      *
      *  The text between the curly braces can be any length, and if it contains curly braces they must either balance or be
-     *  escaped with a preceding backslash (or two backslashes if they're inside a C++ string literal).  The delimiters (), [],
-     *  or <> may be used instead of curly braces. The delimiter must immediately follow the tag name with no intervening white
-     *  space: <code>\@b<foo> \@i(bar)</code>. Readability can be improved even more by substituting white space for the
-     *  delimiters: <code>the word \@b foo is in bold face.</code>
+     *  escaped with a preceding "@@". The curly braces that star and argument must not be preceded by white space.
      *
      *  Besides describing the format of a piece of text, markup is also used to describe the intent of a piece of text--that a
      *  word is a switch string (<code>\@s</code>), a variable (<code>\@v</code>), or a reference to a Unix man page
@@ -2081,8 +2072,8 @@ public:
      *  which is interpretted as a command-line switch. The library will add the correct prefix--probably "-\-" for long names
      *  and "-" for short names, but whatever is specified in the switch declaration. Even switches that haven't been declared
      *  can be marked with <code>\@s</code>.  The <code>\@v</code> tag marks a word as a variable, usually the name of a switch
-     *  argument.  The <code>\@man</code> tag takes two arguments: the name of a Unix man page and the section in which the page
-     *  appears: <code>the \@man(ls)(1) command lists contents of a directory.</code>
+     *  argument.  The <code>\@man</code> tag takes two arguments, the second of which is optional: the name of a Unix man page
+     *  and the section in which the page appears: <code>the \@man{ls}{1} command lists contents of a directory.</code>
      *
      *  The <code>\@prop</code> tag takes one argument which is a property name and evaluates to the property value as a string.
      *  The following properties are defined:
@@ -2099,7 +2090,7 @@ public:
      *  Even switches with no documentation will show up in the generated documentation--they will be marked as "Not
      *  documented".  To suppress them entirely, set their @ref hidden property to true.
      * @{ */
-    Switch& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
+    Switch& doc(const std::string &s) { documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
     /** @} */
 
@@ -2540,7 +2531,7 @@ public:
      *  within this group.
      *
      * @{ */
-    SwitchGroup& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
+    SwitchGroup& doc(const std::string &s) { documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
     /** @} */
 
@@ -2963,25 +2954,13 @@ public:
      *  markup in the Sawyer::Markup language, with some extensions specific to command-line parsing. */
     std::string documentationMarkup() const;
 
-    /** Parsed documentation markup.
-     *
-     *  Parses the supplied documentation markup (or gets it via @ref documentationMarkup) and returns the result. An
-     *  <code>std::runtime_error</code> is thrown if there are any problems parsing the documentation string.
-     *
-     * @{ */
-    Markup::ParserResult parseDocumentation() const;
-    Markup::ParserResult parseDocumentation(const std::string&) const;
-    /** @} */
-
     /** Generate Perl POD documentation.
      *
      *  Generates a Perl POD string for this parser. */
     std::string podDocumentation() const;
 
-    /** Generate Unix man-page (nroff) documentation.
-     *
-     *  Generates NRoff source code for this parser. */
-    std::string manDocumentation() const;
+    /** Generate plain text documentation. */
+    std::string textDocumentation() const;
 
     /** Print documentation to standard output. Use a pager if possible. */
     void emitDocumentationToPager() const;
@@ -3070,6 +3049,10 @@ private:
     std::string ambiguityErrorMesg(const std::string &longSwitchString, const std::string &optionalPart,
                                    const std::string &longSwitchName, const NamedSwitches &ambiguities);
     std::string ambiguityErrorMesg(const std::string &shortSwitchString, const NamedSwitches &ambiguities);
+
+    // Initialize a documentation parser by registering things like @s, @man, etc.  The argument is a subclass such as
+    // Document::PodMarkup.
+    void initDocGrammar(Document::Markup::Grammar& /*in,out*/) const;
 
     // FIXME[Robb Matzke 2014-02-21]: Some way to parse command-lines from a config file, or to merge parsed command-lines with
     // a yaml config file, etc.
