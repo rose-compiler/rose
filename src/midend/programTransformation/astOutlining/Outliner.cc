@@ -167,6 +167,107 @@ Outliner::outline (SgStatement* s, const std::string& func_name)
   }  
 }
 
+//! Return a description of the outliner's command-line switches. When these switches are parsed, they will adjust settings
+//  in this @ref Outliner.
+Sawyer::CommandLine::SwitchGroup
+Outliner::commandLineSwitches() {
+    using namespace Sawyer::CommandLine;
+
+    SwitchGroup switches("Outliner switches");
+    switches.doc("These switches control ROSE's outliner. Outlining is the process of replacing a block of consecutive "
+                 "statements with a function call to a new function containing those statements. Conceptually, outlining "
+                 "is the inverse of inlining.");
+    switches.name("rose:outline");
+
+    switches.insert(Switch("enable_debug")
+                    .intrinsicValue(true, enable_debug)
+                    .doc("Enable debugging ode for outlined functions."));
+
+    switches.insert(Switch("preproc-only")
+                    .intrinsicValue(true, preproc_only_)
+                    .doc("Enable preprocessing only."));
+
+    switches.insert(Switch("parameter_wrapper")
+                    .intrinsicValue(true, useParameterWrapper)
+                    .doc("Enable parameter wrapping."));
+
+    switches.insert(Switch("structure_wrapper")
+                    .intrinsicValue(true, useStructureWrapper)
+                    .doc("Enable parameter wrapping using a structure."));
+
+    switches.insert(Switch("new_file")
+                    .intrinsicValue(true, useNewFile)
+                    .doc("Enable new source file for outlined functions."));
+
+    switches.insert(Switch("exclude_headers")
+                    .intrinsicValue(true, exclude_headers)
+                    .doc("Exclude headers in the new file containing outlined functions."));
+
+    switches.insert(Switch("enable_classic")
+                    .intrinsicValue(true, enable_classic)
+                    .doc("Enable a classic way for outlined functions."));
+
+    switches.insert(Switch("temp_variable")
+                    .intrinsicValue(true, temp_variable)
+                    .doc("Enable using temp variables to reduce pointer dereferencing for outlined functions."));
+
+    switches.insert(Switch("use_dlopen")
+                    .intrinsicValue(true, use_dlopen)
+                    .doc("Use @man{dlopen}(3) to find an outlined function saved into a new source file."));
+
+    switches.insert(Switch("abstract_handle")
+                    .argument("handle", anyParser(handles))
+                    .whichValue(SAVE_ALL)               // if switch appears more than once, save all values not just last
+                    .doc("Enable using abstract handles to specify targets for outlining."));
+
+    switches.insert(Switch("output_path")
+                    .argument("name", anyParser(output_path))
+                    .doc("Use a custom output path."));
+
+    switches.insert(Switch("enable_liveness")
+                    .intrinsicValue(true, enable_liveness)
+                    .doc("This switch is only honored if @s{temp_variable} was specified."));
+
+    return switches;
+}
+
+//! Validate outliner settings. This should be called after outliner settings are adjusted (directly or by command-line
+//  parsing) and before the outliner is used to outline source code.
+void
+Outliner::validateSettings() {
+    if (!output_path.empty()) {
+        // remove trailing '/'
+        while (output_path[output_path.size()-1]=='/')
+            output_path.erase(output_path.end()-1);
+        // Create such path if not exists
+        bfs::path my_path(output_path);
+        if (!bfs::exists(my_path))
+            bfs::create_directory(my_path);
+        if (!bfs::is_directory(my_path)) {
+            cerr<<"output_path:"<<output_path<<" is not a path!"<<endl;
+            ROSE_ASSERT(false);
+        }
+    }
+
+    //------------ handle side effects of options-----------
+    if (useStructureWrapper) {
+        useParameterWrapper = true;
+    }
+    //    use_dlopen = false;
+    if (use_dlopen) {
+        // turn on useNewFile as a side effect
+        useNewFile= true;
+        // also use parameter wrapper to simplify the call
+        useParameterWrapper = true;
+        temp_variable = true;
+        exclude_headers = true;
+        if (output_path.empty()) {
+            output_path="/tmp";
+        }
+    }
+}
+
+// Deprecated [Robb P Matzke 2016-09-11]: Use Outliner::commandLineSwitches and Sawyer::CommandLine instead.
 //! Set internal options based on command line options
 void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 {
@@ -258,19 +359,6 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 
   if (CommandlineProcessing::isOptionWithParameter (argvList,"-rose:outline:","output_path",output_path, true))
   {
-    // remove trailing '/'
-    while (output_path[output_path.size()-1]=='/')
-      output_path.erase(output_path.end()-1);
-    // Create such path if not exists
-    bfs::path my_path(output_path); 
-    if (!bfs::exists(my_path))
-      bfs::create_directory(my_path);
-    if (!bfs::is_directory(my_path))  
-    {
-      cerr<<"output_path:"<<output_path<<" is not a path!"<<endl;
-      ROSE_ASSERT(false);
-    }
-
     if (enable_debug)
       cout<<"Using a custom output path:"<<output_path<<endl;
   }
@@ -278,27 +366,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 //    output_path="";
 
 
-  //------------ handle side effects of options-----------
-  if (useStructureWrapper) 
-   {
-     useParameterWrapper = true;
-   } 
-  //    use_dlopen = false;
-  if (use_dlopen)
-  {
-    // turn on useNewFile as a side effect
-    useNewFile= true;
-    // also use parameter wrapper to simplify the call
-    useParameterWrapper = true;
-    temp_variable = true;
-    exclude_headers = true;
-    if (output_path.empty())
-    {
-      output_path="/tmp";
-    }
-  }
-
- if (temp_variable)    
+ if (use_dlopen || temp_variable)    
   {
     if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_liveness",true))
       enable_liveness = true;
@@ -327,6 +395,8 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"\t-rose:outline:enable_debug                     run outliner in a debugging mode"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;
   }
+
+  validateSettings();
 }
 
 
