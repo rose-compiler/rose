@@ -51,8 +51,7 @@ void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          mlog = Sawyer::Message::Facility("FixupAstSymbolTablesToSupportAliasedSymbols", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+          rose::Diagnostics::initAndRegister(mlog, "rose::FixupAstSymbolTablesToSupportAliasedSymbols");
         }
    }
 
