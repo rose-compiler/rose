@@ -2162,6 +2162,9 @@ src/util/stringSupport/Makefile
 src/util/support/Makefile
 stamp-h
 tests/Makefile
+tests/CompileTests/Makefile
+tests/CompileTests/OpenMP_tests/Makefile
+tests/CompileTests/x10_tests/Makefile
 tests/nonsmoke/ExamplesForTestWriters/Makefile
 tests/nonsmoke/Makefile
 tests/nonsmoke/acceptance/Makefile
@@ -2315,6 +2318,10 @@ tests/nonsmoke/specimens/c/Makefile
 tests/nonsmoke/specimens/fortran/Makefile
 tests/nonsmoke/specimens/java/Makefile
 tests/nonsmoke/unit/Makefile
+tests/roseTests/Makefile
+tests/roseTests/ompLoweringTests/Makefile
+tests/roseTests/programAnalysisTests/Makefile
+tests/roseTests/programAnalysisTests/typeTraitTests/Makefile
 tests/smoke/ExamplesForTestWriters/Makefile
 tests/smoke/Makefile
 tests/smoke/functional/BinaryAnalysis/Makefile

@@ -13,7 +13,7 @@ conditional-check-local:
 	@echo "****** ROSE/projects/OpenMP_Translator/tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
 else
-condtional-check-local:
+conditional-check-local:
 	@echo "\nOpenMP tests NOT run.  To run these reconfigure with:"
 	@echo "********************************************************************************************"
 	@echo "********* make check not run here: configure --with-omni_omp_runtime_support=<path> ********"
