@@ -34,7 +34,7 @@ if ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT
 	@echo "Tests OpenCl support (parsing)"
 	@$(MAKE) $(TESTCODES_Objects)
 	@echo "***********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/OpenClTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/OpenClTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 else
 	@echo "Rose is configured without OpenCL support"

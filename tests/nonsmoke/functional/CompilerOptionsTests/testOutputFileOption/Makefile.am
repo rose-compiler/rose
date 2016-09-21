@@ -7,7 +7,7 @@ TESTCODES = test_bool.C
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
+TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROSE_FLAGS)
 
 $(TEST_TRANSLATOR):
 	$(MAKE) testTranslator -C $(top_builddir)/tests

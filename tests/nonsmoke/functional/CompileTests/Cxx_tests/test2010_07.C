@@ -16,7 +16,7 @@
 // Note that the problem is that the use of ROSE_ASSERT() is in a function in a struct.
 // Used elsewhere ROSE_ASSERT() is not a problem.  Also the issue is that
 // CPP will translate this into:
-// ((!"Inside of struct Y::foo1 (using assert)") ? static_cast<void> (0) : (__assert_fail ("!\"Inside of struct Y::foo1 (using assert)\"", "/home/dquinlan/ROSE/git-dq-main-rc/tests/CompileTests/Cxx_tests/test2010_07.C", 21, __PRETTY_FUNCTION__), static_cast<void> (0)));
+// ((!"Inside of struct Y::foo1 (using assert)") ? static_cast<void> (0) : (__assert_fail ("!\"Inside of struct Y::foo1 (using assert)\"", "/home/dquinlan/ROSE/git-dq-main-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2010_07.C", 21, __PRETTY_FUNCTION__), static_cast<void> (0)));
 // But EDG will substitute "__PRETTY_FUNCTION__" with "__assert_fail", or so it seems.
 
 struct Y

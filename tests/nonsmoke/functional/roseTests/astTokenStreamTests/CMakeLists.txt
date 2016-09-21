@@ -73,7 +73,7 @@ foreach(file_to_test ${TESTCODES})
   add_test(
     NAME tokenStreamMapping_${file_to_test}
     COMMAND tokenStreamMapping ${ROSE_FLAGS} -c
-      ${CMAKE_SOURCE_DIR}/tests/CompileTests/C_tests/${file_to_test}
+      ${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/C_tests/${file_to_test}
   )
 endforeach()
 

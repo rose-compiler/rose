@@ -16,11 +16,11 @@ TEST_Objects = ${TESTCODES:.C=.o}
 # ROSE_FLAGS = -rose:test 6
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
+TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROSE_FLAGS)
 
 ## These tests use the version of A++ source code (really only the header files) 
 ## that are a part of ROSE (located in ROSE/TESTS/CompileTests/A++Tests
-# AM_CPPFLAGS = -I. -I../../.. -I$(top_srcdir)/tests/CompileTests/A++Tests -I$(top_srcdir)/include
+# AM_CPPFLAGS = -I. -I../../.. -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Tests -I$(top_srcdir)/include
 # AM_CPPFLAGS = -I. -I../../.. -I$(srcdir)/../A++Code
 AM_CPPFLAGS = -I$(srcdir)/../A++Code
 
@@ -28,7 +28,7 @@ AM_CPPFLAGS = -I$(srcdir)/../A++Code
 check-local:
 	@$(MAKE) $(TEST_Objects)
 	@echo "**********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/A++Tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/A++Tests: make check rule complete (terminated normally) ******"
 	@echo "**********************************************************************************************"
 
 

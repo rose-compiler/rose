@@ -3,7 +3,7 @@ be able to parse, process internally (generate ASTs), unparse, and
 compile (with a C++ compiler)  the codes in each of these directories.
 
    The execution of the codes is not tested using theses tests, this is done 
-in the tests/RunTests directory (and sub-directories).  Seperate from the
+in the tests/nonsmoke/functional/RunTests directory (and sub-directories).  Seperate from the
 test codes in these directories, we support testing of whole application
 codes with ROSE, but these application tests are seperate from ROSE and
 the ROSE regression tests directory structure.

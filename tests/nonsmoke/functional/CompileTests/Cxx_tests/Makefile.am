@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/tests/input_codes/cxx/Makefile_variables
+include $(top_srcdir)/tests/nonsmoke/functional/input_codes/cxx/Makefile_variables
 
 # Import list of C++ test cases that should pass:
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS
@@ -14,7 +14,7 @@ include $(top_srcdir)/tests/input_codes/cxx/Makefile_variables
 
 # TOO1 (2013-08-05): Refactored testcode specification into separate global file:
 #
-#                      $ROSE/tests/input_codes/cxx/Makefile_variables
+#                      $ROSE/tests/nonsmoke/functional/input_codes/cxx/Makefile_variables
 #
 #                  This way all $ROSE/tests can utilize the same growing suite
 #                  of ROSE testcodes.
@@ -471,10 +471,10 @@ NEW_TESTCODES = \
 
 
 if !USING_CLANG_COMPILER
-# DQ (4/16/2016): Removed this test from the tests/input_codes/cxx/Makefile_Variables file
+# DQ (4/16/2016): Removed this test from the tests/nonsmoke/functional/input_codes/cxx/Makefile_Variables file
 # and put it into the Cxx_tests directory since it is a specific problem for Clang testing only.
 # test2005_50.C:  This was removed from being tested in the directory:
-#                 tests/roseTests/programTransformationTests/extractFunctionArgumentsTest/normalizationTranslator
+#                 tests/nonsmoke/functional/roseTests/programTransformationTests/extractFunctionArgumentsTest/normalizationTranslator
 #                 because this translator does not handle constness for char pointers that are
 #                 assigned from constant string literals (and constness is enforced in the generated 
 #                 code by the Clang compiler). 
@@ -553,7 +553,7 @@ ICPC_SPECIFIC_TESTCODES = \
 # This files for the GNU g++ 4.8.3 compiler (but works for 4.8.1 and other versions of g++ (4.2 thorugh 4.7).
 #  test2014_76.C 
 
-# DQ (9/24/2015): Removed test2013_304.C from tests/input_codes/cxx/Makefile_variables file since it
+# DQ (9/24/2015): Removed test2013_304.C from tests/nonsmoke/functional/input_codes/cxx/Makefile_variables file since it
 # does not compile with ROSE when imulating the Intel compiler (v14) which assumes c++11 mode. This
 # test is not placed into the regression tests when not using the Intel compiler.
 
@@ -1253,7 +1253,7 @@ else # !ROSE_USE_LONG_MAKE_CHECK_RULE
 # Shorten the list of code to compile to simplify checks using "make distcheck"
 # Note that the tests test2001_02.C and test2001_03.C are required because the
 # tests in ../C_subset_of_Cxx use them and that test2004_116.C is required 
-# because the tests in ROSE/tests/roseTests/programTransformationTests use it.
+# because the tests in ROSE/tests/nonsmoke/functional/roseTests/programTransformationTests use it.
 TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT)
 
 endif # ROSE_USE_LONG_MAKE_CHECK_RULE
@@ -1278,11 +1278,11 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENT
 # DQ (3/10/2013): Add the Boost path so that the case where Boost is not installed in /usr/include is covered.
 # Some of these test codes reference A++ header files as part of their tests
 # Include the path to A++ and the transformation specification
-# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
-# TESTCODE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
-# TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
+# TESTCODE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
+# TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
-APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+APP_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 # DQ (4/13/2016): Why is this suddenly required.  How did the A++ include directory go missing?
 # The reason it appears to be required is because clang is defining __GNUC__ to be the value 3
@@ -1578,10 +1578,10 @@ performance_timing:
 
 # DQ (11/19/2012): HPCToolKit use.  This makes some significant assumptions on how we have setup HPCToolKit.
 hpctoolkit:
-	hpcrun -e WALLCLOCK -- ../../testTranslator --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I/home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/Cxx_tests -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/Cxx_tests/testPerformance.C
+	hpcrun -e WALLCLOCK -- ../../testTranslator --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I/home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests/testPerformance.C
 #	hpcprof hpctoolkit-lt-testTranslator-measurements/lt-testTranslator-000000-000-0f802c45-7612-0.hpcrun
 	hpcprof hpctoolkit-lt-testTranslator-measurements/lt-testTranslator-000000-000-0f802c45-3676-0.hpcrun
-#	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
+#	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/nonsmoke/functional/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
 
 # check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
@@ -1597,7 +1597,7 @@ check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 #	@$(MAKE) test_common_configure_test_with_link_part_3
 	@$(MAKE) testTemplateExample
 	@echo "***********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 
 clean-local:

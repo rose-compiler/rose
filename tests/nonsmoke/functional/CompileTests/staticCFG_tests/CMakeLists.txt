@@ -10,7 +10,7 @@ target_link_libraries(testInterproceduralCFG ROSE_DLL EDG ${link_with_libraries}
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
-set(TESTCODE_INCLUDES -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code)
+set(TESTCODE_INCLUDES -I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code)
 
 set(ROSE_FLAGS --edg:no_warnings -w -rose:verbose 0 --edg:restrict)
 

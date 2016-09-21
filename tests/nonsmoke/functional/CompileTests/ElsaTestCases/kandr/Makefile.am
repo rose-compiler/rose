@@ -18,7 +18,7 @@ TEST_Objects = ${C_TESTCODES:.c=.o}
 
 ROSE_FLAGS = -rose:C --edg:no_warnings -w
 
-TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/testTranslator 
+TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/nonsmoke/functional/testTranslator 
 TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 
 $(TEST_Objects): $(C_TESTCODES)
@@ -34,7 +34,7 @@ clean-local:
 check-local: $(TRANSLATOR_EXECUTABLE) 
 	@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/C++Code/ElsaTestCases/kandr: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C++Code/ElsaTestCases/kandr: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
 

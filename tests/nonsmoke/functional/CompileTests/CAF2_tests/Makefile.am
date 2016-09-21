@@ -128,7 +128,7 @@ check-local:
 	@echo "Tests for CAF2 examples."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/CAF2_tests: make check rule complete (terminated normally) *****"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/CAF2_tests: make check rule complete (terminated normally) *****"
 	@echo "***********************************************************************************************"
 
 else
@@ -136,7 +136,7 @@ else
 # Fortran support not available in ROSE unless specified on the configure command line.
 check-local:
 	@echo "***********************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/CAF2_tests: FORTRAN NOT CONFIGURED IN ROSE *********"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/CAF2_tests: FORTRAN NOT CONFIGURED IN ROSE *********"
 	@echo "***********************************************************************************"
 endif
 

@@ -8,7 +8,7 @@ target_link_libraries(testVirtualCFG ROSE_DLL EDG ${link_with_libraries})
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
 set(TESTCODE_INCLUDES
-  -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code
+  -I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code
   -I${CMAKE_SOURCE_DIR}/src/frontend/SageIII)
 
 set(ROSE_FLAGS

@@ -1070,11 +1070,11 @@ ROSE_VERBOSE = -rose:verbose
 C_ONLY = -rose:C_only
 # C_ONLY =
 
-TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/testTranslator 
+TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/nonsmoke/functional/testTranslator 
 TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code -I$(srcdir) 
 # check-local:
 #	@echo "ROSE Test Codes."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
@@ -1102,7 +1102,7 @@ check-local: $(TRANSLATOR_EXECUTABLE)
 	@$(MAKE) $(TEST_Objects)
 	@$(MAKE) $(TEST2_Objects)
 	@echo "*********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/C++Code: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C++Code: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
 

@@ -199,9 +199,9 @@
 </SecHeader>
 <SecFlatProfileData>
 <M n="0" v="1.69E8"/><M n="1" v="1.69E8"/>
-<LM i="2" n="Load module /home/dxnguyen/git-rose/rose-zung/BUILD/tests/roseTests/roseHPCToolkitTests/example">
+<LM i="2" n="Load module /home/dxnguyen/git-rose/rose-zung/BUILD/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/example">
 <M n="0" v="1.69E8"/><M n="1" v="1.69E8"/>
- <F i="3" n="./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01/example.c">
+ <F i="3" n="./src/home/dxnguyen/git-rose/rose-zung/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/01/example.c">
  <M n="0" v="1.69E8"/> <M n="1" v="1.69E8"/>
   <P i="45" n="main" l="67">
   <M n="0" v="1.69E8"/>

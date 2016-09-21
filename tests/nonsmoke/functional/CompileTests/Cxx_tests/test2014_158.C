@@ -1,7 +1,7 @@
-// # 1 "/home/dquinlan/ROSE/git-dq-new_app-rc/tests/CompileTests/Cxx_tests/test2014_157.C"
+// # 1 "/home/dquinlan/ROSE/git-dq-new_app-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2014_157.C"
 // # 1 "<built-in>"
 // # 1 "<command-line>"
-// # 1 "/home/dquinlan/ROSE/git-dq-new_app-rc/tests/CompileTests/Cxx_tests/test2014_157.C"
+// # 1 "/home/dquinlan/ROSE/git-dq-new_app-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2014_157.C"
 // # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/vector" 1 3
 // # 59 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/vector" 3
        

@@ -205,7 +205,7 @@ set(files_to_test
   test2006_82.C test2006_83.C test2006_84.C lexPhase2003_01.C)
 
 list(APPEND ROSE_FLAGS
-  -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code
+  -I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code
   -I${CMAKE_CURRENT_SOURCE_DIR}
 )
 

@@ -77,7 +77,7 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Sources)
 	@$(MAKE) test_member_function
 	@echo "**************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/sytemc_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/sytemc_tests: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************"
 
 clean-local:

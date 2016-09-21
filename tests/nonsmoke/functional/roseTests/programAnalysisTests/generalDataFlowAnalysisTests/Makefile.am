@@ -98,7 +98,7 @@ clean-cxx-constprop-local:
 # This list comes from $(CXX_TESTDIR)/Makefile-pass.inc as of 2011-??-14 so we can remove failing tests.  Do not add these
 # names to EXTRA_DIST since they are in some other directory.  Additional comments about the failing tests can be found
 # scattered through out commit c8f4d3c of this file.
-CXX_TESTDIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+CXX_TESTDIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 
 # DQ (8/23/2013): Eliminated these failing tests. This work is being replaced shortly.
 CXX_CONSTPROP_SPECIMENS =
@@ -285,7 +285,7 @@ clean-c-constprop:
 
 # These names are in the $(C99_TESTDIR) directory, so do not add them to $(EXTRA_DIST).  Additional comments about the failing
 # tests can be found scattered through out commit c8f4d3c of this file.
-C99_TESTDIR = $(top_srcdir)/tests/CompileTests/C99_tests
+C99_TESTDIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C99_tests
 
 # DQ (8/23/2013): Eliminated these failing tests. This work is being replaced shortly.
 C99_CONSTPROP_SPECIMENS = 
@@ -316,7 +316,7 @@ clean-c99-constprop:
 
 # These names are in the $(F77_TESTDIR) directory, so do not add them to $(EXTRA_DIST).  Additional comments about the failing
 # tests can be found scattered through out commit c8f4d3c of this file.
-F77_TESTDIR = $(top_srcdir)/tests/CompileTests/Fortran_tests
+F77_TESTDIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Fortran_tests
 F77_CONSTPROP_SPECIMENS = test2007_222.f 
 F77_CONSTPROP_SPECIMENS_FAILING =										 \
 	lastTest.f test2007_129.f test2007_132.f test2007_148.f test2007_150.f test2007_151.f test2007_153.f	 \
@@ -356,7 +356,7 @@ clean-f77-constprop:
 
 # These names are in the $(F90_TESTDIR) directory, so do not add them to $(EXTRA_DIST).  Additional comments about the failing
 # tests can be found scattered through out commit c8f4d3c of this file.
-F90_TESTDIR = $(top_srcdir)/tests/CompileTests/Fortran_tests
+F90_TESTDIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Fortran_tests
 F90_CONSTPROP_SPECIMENS =
 F90_CONSTPROP_SPECIMENS_FAILING =											\
 	canonicalExample.f90 test2007_01.f90 test2007_02.f90 test2007_03.f90 test2007_04.f90 test2007_05.f90		\
@@ -405,7 +405,7 @@ clean-f90-constprop:
 
 # These names are in the $(F03_TESTDIR) directory, so do not add them to $(EXTRA_DIST).  Additional comments about the failing
 # tests can be found scattered through out commit c8f4d3c of this file.
-F03_TESTDIR = $(top_srcdir)/tests/CompileTests/Fortran_tests
+F03_TESTDIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Fortran_tests
 F03_CONSTPROP_SPECIMENS = test2007_37.f03
 F03_CONSTPROP_SPECIMENS_FAILING =											 \
 	test2007_112.f03 test2007_113.f03 test2007_114.f03 test2007_120.f03 test2007_123.f03 test2007_134.f03		 \
@@ -516,7 +516,7 @@ endif
 
 check-local: check-c-languages check-fortran-languages
 	@echo "************************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/generalDataFlowAnalysisTests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************************************************"
 
 

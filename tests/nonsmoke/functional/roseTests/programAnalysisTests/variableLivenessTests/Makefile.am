@@ -18,7 +18,7 @@ $(TEST_TARGETS): runTest_%.passed: runTest $(SPECIMEN_NAMES) $(TEST_CONFIG)
 
 check-local: $(TEST_TARGETS)
 	@echo "*****************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programAnalysisTests/variableLivenessTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/variableLivenessTests: make check rule complete (terminated normally) ******"
 	@echo "*****************************************************************************************************************************"
 
 clean-local:

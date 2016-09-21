@@ -6,7 +6,7 @@ noinst_PROGRAMS =
 ###############################################################################################################################
 
 # Location of input specimens (so we only need to list the file base names in the rest of the makefile).
-SPECIMEN_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+SPECIMEN_DIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 
 # These specimens were commented out in the edg3 branch with the comment that they "should be fixed (as opposed to testcodes
 # that are expected to fail)" and which currently also fail in the edg4x branch.
@@ -51,7 +51,7 @@ $(testVariableRenamingTests): tvr_%.passed: $(SPECIMEN_DIR)/% $(TEST_EXIT_STATUS
 
 check-local: $(testVariableRenamingTests)
 	@echo "*****************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programAnalysisTests/variableRenamingTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/variableRenamingTests: make check rule complete (terminated normally) ******"
 	@echo "*****************************************************************************************************************************"
 
 clean-local:

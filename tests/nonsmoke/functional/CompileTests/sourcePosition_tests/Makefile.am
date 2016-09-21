@@ -655,7 +655,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 ROSE_FLAGS = --edg:no_warnings -w
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
@@ -669,16 +669,16 @@ $(TEST_Objects): statements
 # DQ (11/11/2012): Example command-line to run tview on generated file in current directory.
 # Must be in the source directory and this there is no absolute path to the build_dir so this 
 # test is not really easy to make.  Not really important, maybe we can think about this later.
-# java tview /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc/tests/CompileTests/sourcePosition_tests/test2001_01.C
+# java tview /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/sourcePosition_tests/test2001_01.C
 # test:
-#	cd $(top_srcdir)/src/roseIndependentSupport/tview; pwd; ls; java tview /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc/tests/CompileTests/sourcePosition_tests/test2001_01.C
-#	cd $(top_srcdir)/src/roseIndependentSupport/tview; pwd; ls; java tview $(top_builddir)/tests/CompileTests/sourcePosition_tests/test2001_01.C
+#	cd $(top_srcdir)/src/roseIndependentSupport/tview; pwd; ls; java tview /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/sourcePosition_tests/test2001_01.C
+#	cd $(top_srcdir)/src/roseIndependentSupport/tview; pwd; ls; java tview $(top_builddir)/tests/nonsmoke/functional/CompileTests/sourcePosition_tests/test2001_01.C
 
 check-local:
 	@echo "Tests the source position information held within the AST."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/sourcePosition_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/sourcePosition_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
 distclean-local:

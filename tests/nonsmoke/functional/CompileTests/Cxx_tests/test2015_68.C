@@ -1,4 +1,4 @@
-# 1 "/home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx_tests/test2014_76.C"
+# 1 "/home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2014_76.C"
 # 1 "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-intel-v14--dq-development-rc/include-staging/icpc_HEADERS/rose_edg_required_macros_and_functions.h"
  
  
@@ -944,7 +944,7 @@ int __builtin_bswap32 (int x);
  
 # 2545 "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-intel-v14--dq-development-rc/include-staging/icpc_HEADERS/rose_edg_required_macros_and_functions.h"
 
-# 1 "/home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx_tests/test2014_76.C"
+# 1 "/home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2014_76.C"
 # 1 "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-intel-v14--dq-development-rc/include-staging/icpc_HEADERS/hdrs6/tr1/memory"
 
 
@@ -40055,7 +40055,7 @@ namespace tr1
 
 # 51 "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-intel-v14--dq-development-rc/include-staging/icpc_HEADERS/hdrs6/tr1/memory"
 
-# 2 "/home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx_tests/test2014_76.C"
+# 2 "/home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2014_76.C"
 
 namespace scallop {
 using std::tr1::shared_ptr;
@@ -43500,7 +43500,7 @@ namespace std
 
 
 
-# 8 "/home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx_tests/test2014_76.C"
+# 8 "/home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2014_76.C"
 
 
 namespace scallop {

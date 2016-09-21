@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator
+TEST_TRANSLATOR   =  $(top_builddir)/tests/nonsmoke/functional/testTranslator
 
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT

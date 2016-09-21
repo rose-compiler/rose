@@ -65,7 +65,7 @@ host_triplet = @host@
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS = testLValues$(EXEEXT)
-subdir = tests/roseTests/astLValueTests
+subdir = tests/nonsmoke/functional/roseTests/astLValueTests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acmacros/canonicalize-symlink.m4 \
 	$(top_srcdir)/acmacros/compiler-ar.m4 \
@@ -1000,9 +1000,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/config/Makefile.for.
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  --ignore-deps tests/roseTests/astLValueTests/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  --ignore-deps tests/nonsmoke/functional/roseTests/astLValueTests/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  --ignore-deps tests/roseTests/astLValueTests/Makefile
+	  $(AUTOMAKE) --foreign  --ignore-deps tests/nonsmoke/functional/roseTests/astLValueTests/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -1264,7 +1264,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 check-local: testLValues
 	./testLValues $(srcdir)/test_astLValues.C | tee output
 	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/astLValueTests/testLValues: make check rule complete (terminated normally) ***"
+	@echo "*** ROSE/tests/nonsmoke/functional/roseTests/astLValueTests/testLValues: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
 
 clean-local:

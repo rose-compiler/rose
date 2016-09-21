@@ -84,7 +84,7 @@ EXTRA_DIST = $(TESTCODES)
 check-local:
 	@$(MAKE) $(TEST_Objects)
 	@echo "***********************************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests: make check rule complete (terminated normally) ***"
+	@echo "*** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/staticInterproceduralSlicingTests: make check rule complete (terminated normally) ***"
 	@echo "***********************************************************************************************************************************"
 
 clean-local:

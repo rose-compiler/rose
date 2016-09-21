@@ -1,7 +1,7 @@
 // Note that this fails:
-//    ../../testGraphGeneration -isystem /home/dquinlan/local/boost_1_42_0_installTree-gxx-4.2.4/include -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/RoseExample_tests/testRoseHeaders_07.C
+//    ../../testGraphGeneration -isystem /home/dquinlan/local/boost_1_42_0_installTree-gxx-4.2.4/include -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/RoseExample_tests/testRoseHeaders_07.C
 // where as this succeeds:
-//    ../../testGraphGeneration -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/RoseExample_tests/testRoseHeaders_07.C
+//    ../../testGraphGeneration -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/RoseExample_tests/testRoseHeaders_07.C
 // 
 // The reason is that ROSE works when the isystem option is not specified is that EDG is seeing 
 // BOOST version 1.33 in /usr/include when we don't use the -isystem options but is seeing BOOST 

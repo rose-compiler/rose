@@ -56,6 +56,6 @@ check-local:
 	@echo "Tests for Expression Template examples."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "*********************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/ExpressionTemplateExample_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/ExpressionTemplateExample_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************"
 

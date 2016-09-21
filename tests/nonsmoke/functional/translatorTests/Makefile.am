@@ -180,7 +180,7 @@ endif
 check-local:
 	@$(MAKE) check-cxx check-fortran
 	@echo "****************************************************************************************"
-	@echo "****** ROSE/tests/translatorTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/translatorTests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************"
 
 

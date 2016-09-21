@@ -1,7 +1,7 @@
 ## Process this file with automake to create Makefile.in
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompilerOptionsTests/A++Code -I$(srcdir)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/nonsmoke/functional/CompilerOptionsTests/A++Code -I$(srcdir)
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)
 
 # DQ (12/5/2007): A++ does not compile with g++ version 4 and greater so the source
@@ -28,7 +28,7 @@ TEST_Objects = ${TESTCODES:.C=.o}
 # Restrict to level 6 testing for the moment
 # ROSE_FLAGS = -rose:test 6
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
+TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROSE_FLAGS)
 
 # PL (4/15/2014) include syntax uses system header file
 # this test has fail because -I has incorrect header file assigned.

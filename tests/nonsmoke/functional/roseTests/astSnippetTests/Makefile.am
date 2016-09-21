@@ -1040,7 +1040,7 @@ local_debug_tests: $(addsuffix .passed, test_1 test_2 test_3 test_4 test_5 test_
 
 check-local: $(TEST_TARGETS)
 	@echo "**************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/astSnippetTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/astSnippetTests: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************"
 
 clean-local:

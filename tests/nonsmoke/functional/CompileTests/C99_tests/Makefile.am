@@ -92,7 +92,7 @@ check-local:
 	@echo "Tests for C99 examples."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/C99_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C99_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 
 clean-local:

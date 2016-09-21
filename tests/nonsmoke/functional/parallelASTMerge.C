@@ -135,7 +135,7 @@ void MergeAst(AstStorage* storage, int n = 2)
         int nfile = filenames.size();
 
         // string arg = "./mergeAST ";
-        string arg = "../../../tests/testAstFileRead ";
+        string arg = "../../../tests/nonsmoke/functional/testAstFileRead ";
 
         for (int i = 0; i < filenames.size(); ++i)
         {
@@ -164,7 +164,7 @@ void MergeAst1(AstStorage* storage, int n = 2)
     vector<string> filenames = storage->GetFiles(n);
     if (!filenames.empty())
     {
-        string arg = "../../../tests/testAstFileRead ";
+        string arg = "../../../tests/nonsmoke/functional/testAstFileRead ";
 
         for (int i = 0; i < filenames.size(); ++i)
         {

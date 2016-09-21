@@ -80,13 +80,13 @@ ${BIN_DIR}/test_highlevel \
 		-rose:hpct:prof ${PROFILE_DIR}/PAPI_FP_OPS.xml \
 		-rose:hpct:prof ${PROFILE_DIR}/PAPI_L1_DCM.xml \
 		-rose:hpct:prof ${PROFILE_DIR}/PAPI_L2_TCM.xml \
-		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01=data/01 \
+		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/01=data/01 \
 	-c ${SRC_DIR}/${TARGET}.c >&1 | tee ${PROFILE_DIR}/test_hl01-answer.txt
 	
 # generate answer file for test_attach01a
 ${BIN_DIR}/attach_metrics \
 		-rose:hpct:prof ${ANALYSIS_DIR}/example_all_events.xml \
-		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01=data/01 \
+		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/01=data/01 \
 	-c ${SRC_DIR}/${TARGET}.c >&1 | tee ${ANALYSIS_DIR}/test_attach01a-answer.txt
 
 # generate answer file for test_attach01
@@ -95,7 +95,7 @@ ${BIN_DIR}/attach_metrics \
 		-rose:hpct:prof ${PROFILE_DIR}/PAPI_FP_OPS.xml \
 		-rose:hpct:prof ${PROFILE_DIR}/PAPI_L1_DCM.xml \
 		-rose:hpct:prof ${PROFILE_DIR}/PAPI_L2_TCM.xml \
-		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01=data/01 \
+		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/01=data/01 \
 	-c ${SRC_DIR}/${TARGET}.c >&1 | tee ${PROFILE_DIR}/test_attach01-answer.txt
 	
 # generate answer file for test_prop01
@@ -104,7 +104,7 @@ ${BIN_DIR}/propagate_metrics \
 		-rose:hpct:prof ${PROFILE_DIR}/PAPI_FP_OPS.xml \
 		-rose:hpct:prof ${PROFILE_DIR}/PAPI_L1_DCM.xml \
 		-rose:hpct:prof ${PROFILE_DIR}/PAPI_L2_TCM.xml \
-		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01=data/01 \
+		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/01=data/01 \
 	-c ${SRC_DIR}/${TARGET}.c >&1 | tee ${PROFILE_DIR}/test_prop01-answer.txt
 
 # eof

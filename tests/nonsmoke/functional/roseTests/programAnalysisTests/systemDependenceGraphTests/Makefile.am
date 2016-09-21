@@ -755,13 +755,13 @@ test2005_114.C \
 test2006_47.C 
 
 TEST_INCLUDES = \
-	-I$(top_srcdir)/tests/CompileTests/A++Code \
-	-I$(top_srcdir)/tests/CompileTests/C_tests \
-	-I$(top_srcdir)/tests/CompileTests/Cxx_tests 
+	-I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code \
+	-I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests \
+	-I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests 
 
 .PHONY: TEST_C
 TEST_C: 
-	@cp -f $(top_srcdir)/tests/CompileTests/C_tests/*.c . 
+	@cp -f $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/*.c . 
 	@$(MAKE) $(C_TESTCODES_REQUIRED_TO_PASS)
 	@rm -f *.c
 
@@ -771,7 +771,7 @@ $(C_TESTCODES_REQUIRED_TO_PASS): testSDG
 
 .PHONY: TEST_CXX
 TEST_CXX:
-	@cp -f $(top_srcdir)/tests/CompileTests/Cxx_tests/*.C .
+	@cp -f $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/*.C .
 	@$(MAKE) $(CXX_TESTCODES_REQUIRED_TO_PASS)
 	@rm -f *.C
 
@@ -783,7 +783,7 @@ check-local:
 	@echo TESTS DISABLED! #@$(MAKE) TEST_C
 	@echo TESTS DISABLED! #@$(MAKE) TEST_CXX
 	@echo "**********************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programAnalysisTests/systemDependenceGraphTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/systemDependenceGraphTests: make check rule complete (terminated normally) ******"
 	@echo "**********************************************************************************************************************************"
 
 clean-local:

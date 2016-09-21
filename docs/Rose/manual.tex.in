@@ -222,7 +222,7 @@ linkcolor=black,
 % TV (06/09/2010): Dependence analysis and Polyhedric Model
 \input{polyhedric}
 
-% This is ROSE/tests/tests.tex
+% This is ROSE/tests/nonsmoke/functional/tests.tex
 \input{tests}
 
 % This is ROSE/docs/Rose/testing.tex

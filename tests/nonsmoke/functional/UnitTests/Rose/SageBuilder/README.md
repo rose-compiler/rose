@@ -6,24 +6,24 @@ See Doxygen Documentation: http://rosecompiler.org/ROSE_HTML_Reference/namespace
 
 ```bash
 $ make check
-make[1]: Entering directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/UnitTests/Rose/SageBuilder'
+make[1]: Entering directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/nonsmoke/functional/UnitTests/Rose/SageBuilder'
 make librose.la -C ../../../../src
 make[2]: Entering directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/src'
 make[2]: `librose.la' is up to date.
 make[2]: Leaving directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/src'
 make  SgTypeBuildersUnitTests ExpressionBuilderUnitTests
-make[2]: Entering directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/UnitTests/Rose/SageBuilder'
+make[2]: Entering directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/nonsmoke/functional/UnitTests/Rose/SageBuilder'
   CXX      SgTypeBuildersUnitTests.o
   CXXLD    SgTypeBuildersUnitTests
   CXX      ExpressionBuilderUnitTests.o
   CXXLD    ExpressionBuilderUnitTests
-make[2]: Leaving directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/UnitTests/Rose/SageBuilder'
+make[2]: Leaving directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/nonsmoke/functional/UnitTests/Rose/SageBuilder'
 make  check-local
-make[2]: Entering directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/UnitTests/Rose/SageBuilder'
+make[2]: Entering directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/nonsmoke/functional/UnitTests/Rose/SageBuilder'
   TEST   SgTypeBuildersUnitTests
   TEST   ExpressionBuilderUnitTests
-make[2]: Leaving directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/UnitTests/Rose/SageBuilder'
-make[1]: Leaving directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/UnitTests/Rose/SageBuilder'
+make[2]: Leaving directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/nonsmoke/functional/UnitTests/Rose/SageBuilder'
+make[1]: Leaving directory `/home/too1/projects/rose/UNIT-86-unit-tests/compilation/tests/nonsmoke/functional/UnitTests/Rose/SageBuilder'
 
 $ cat SgTypeBuildersUnitTests.test
 ======== CUT ========

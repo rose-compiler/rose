@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/tests/input_codes/cxx/Makefile_variables
+include $(top_srcdir)/tests/nonsmoke/functional/input_codes/cxx/Makefile_variables
 
 EXTRA_DIST = 
 MOSTLYCLEANFILES = 
@@ -21,7 +21,7 @@ singleStatementToBlockNormalization_TEST_TARGETS = $(addsuffix .passed, $(single
 
 singleStatementToBlockNormalization_SWITCHES = \
 	--edg:no_warnings -w -rose:verbose 0 $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(ROSE__CXX_TESTS_DIR) \
-	-I$(top_srcdir)/tests/CompileTests/A++Code
+	-I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 $(singleStatementToBlockNormalization_TEST_TARGETS): \
 	%.passed: $(ROSE__CXX_TESTS_DIR)/% singleStatementToBlockNormalization $(TEST_EXIT_STATUS)

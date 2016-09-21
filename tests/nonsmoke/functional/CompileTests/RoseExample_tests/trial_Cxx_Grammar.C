@@ -30465,7 +30465,7 @@ SgStatement::get_scope(void) const
                     // JJW (10/10/2007) -- the non-NULL parent of a statement
                     // may not be a statement in the case of a statement
                     // expression (test case is
-                    // tests/CompileTests/Cxx_tests/test2006_148.C), so we need
+                    // tests/nonsmoke/functional/CompileTests/Cxx_tests/test2006_148.C), so we need
                     // to skip over non-statements
                     SgNode* stmtTemp = stmt;
                     do {

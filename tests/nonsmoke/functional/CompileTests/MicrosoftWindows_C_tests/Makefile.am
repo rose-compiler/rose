@@ -128,7 +128,7 @@ else
 	@echo "Microsoft C tests require GNU version 4.4 (or greater) backend compilers."
 endif
 	@echo "**************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/MicrosoftWindows_C_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/MicrosoftWindows_C_tests: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************************"
 
 clean-local:

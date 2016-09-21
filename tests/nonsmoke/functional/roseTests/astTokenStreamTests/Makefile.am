@@ -1195,12 +1195,12 @@ $(TEST_TRANSLATOR):
 
 # DQ (9/23/2013): Added better control to run tests more cleanly (command-line and any output put into *.passed file, or generates similar *.failed file is testing is unsuccessful).
 $(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(top_srcdir)/tests/CompileTests/C_tests/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
-	diff -u $(top_srcdir)/tests/CompileTests/C_tests/$(@:.c.passed=.c) ./rose_$(@:.c.passed=.c)
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
+	diff -u $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/$(@:.c.passed=.c) ./rose_$(@:.c.passed=.c)
 
 $(TEST_Cxx_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) -rose:unparse_tokens -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
-	diff -u $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.passed=.C) ./rose_$(@:.C.passed=.C)
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) -rose:unparse_tokens -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+	diff -u $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passed=.C) ./rose_$(@:.C.passed=.C)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Token Stream Mapping
@@ -1218,14 +1218,14 @@ TEST_Mapping_Source_passed = ${ALL_TESTCODES:.c=.c.mapping.passed}
 
 # DQ (9/23/2013): Added better control to run tests more cleanly (command-line and any output put into *.passed file, or generates similar *.failed file is testing is unsuccessful).
 $(TEST_Mapping_Source_passed): %.mapping.passed: tokenStreamMapping $(top_srcdir)/scripts/test_exit_status
-	@$(RTH_RUN) CMD="./tokenStreamMapping $(ROSE_FLAGS) -rose:unparse_using_leading_and_trailing_token_mappings -c $(top_srcdir)/tests/CompileTests/C_tests/$(@:.c.mapping.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
-	gcc -I$(top_srcdir)/tests/CompileTests/C_tests -c token_leading_$(@:.c.mapping.passed=.c)
-	gcc -I$(top_srcdir)/tests/CompileTests/C_tests -c token_trailing_$(@:.c.mapping.passed=.c)
+	@$(RTH_RUN) CMD="./tokenStreamMapping $(ROSE_FLAGS) -rose:unparse_using_leading_and_trailing_token_mappings -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/$(@:.c.mapping.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
+	gcc -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests -c token_leading_$(@:.c.mapping.passed=.c)
+	gcc -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests -c token_trailing_$(@:.c.mapping.passed=.c)
 
 testTokenMapping:
 	rm -f test2003_12.c.mapping.passed
 	@$(MAKE) test2003_12.c.mapping.passed
-	./tokenStreamMapping -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+	./tokenStreamMapping -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/test2003_12.c
 
 # Test code using -rose:verbose 2 to trigger output of evaluation files (*.c and *.dot files).
 test_unparsingUsingTokens : testUnparsingUsingTokenStream
@@ -1246,10 +1246,10 @@ test_typeTransformation_UsingTokens : testTypeTransformation
 #------------------------------------------------------------------------------------------------------------------------
 
 test_binary_after_token_unparsing:
-	gcc $(ROSE_FLAGS) -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c -o gcc_test2003_12.o
-	./tokenStreamMapping $(ROSE_FLAGS) -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+	gcc $(ROSE_FLAGS) -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/test2003_12.c -o gcc_test2003_12.o
+	./tokenStreamMapping $(ROSE_FLAGS) -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/test2003_12.c
 	gcc -c GlobalScopeDeclarationTokenStream.c -o rose_test2003_12.o
-	diff $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c GlobalScopeDeclarationTokenStream.c
+	diff $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/test2003_12.c GlobalScopeDeclarationTokenStream.c
 	diff gcc_test2003_12.o rose_test2003_12.o
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -1271,7 +1271,7 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) $(LIN_TEST_TARGETS)
 	@echo "******************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/astTokenStreamTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/astTokenStreamTests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"
 
 

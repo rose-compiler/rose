@@ -127,7 +127,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 
 
 # DQ (5/26/2013) (mergeTest_121.C) This is a failing test on Jenkins that I can now reproduce on my machine.
-# Command line to generate problem: ./testMerge --edg:no_warnings -w --edg:restrict -rose:astMerge -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/mergeAST_tests/mergeTest_121.C mergeTest_121_alt.C
+# Command line to generate problem: ./testMerge --edg:no_warnings -w --edg:restrict -rose:astMerge -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/mergeAST_tests/mergeTest_121.C mergeTest_121_alt.C
 # TOO1 (5/28/2013) (mergeTest_121.C) Add to EXTRA_DIST (below) to fix UnusedSourcesPolicy test.
 TESTCODES_TO_FIX = \
 	mergeTest_121.C
@@ -259,7 +259,7 @@ check-local:
 	@echo "Tests for AST merge mechanism."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "****************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/mergeAST_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/mergeAST_tests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************************"
 
 clean-local:

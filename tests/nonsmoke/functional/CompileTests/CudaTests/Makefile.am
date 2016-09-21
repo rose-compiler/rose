@@ -48,7 +48,7 @@ if ROSE_USE_EDG_VERSION_4_9
 	@$(MAKE) testDeviceTransformation_02
 endif
 	@echo "***********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/CudaTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/CudaTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 else
 	@echo "Rose is configured without C for CUDA support"

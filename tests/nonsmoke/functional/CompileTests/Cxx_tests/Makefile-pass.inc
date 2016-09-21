@@ -923,7 +923,7 @@ if !ROSE_USE_INSURE
       test2004_82.C
 endif
 
-# DQ (2/12/2011): This test fails for the astFileIO tests in tests/roseTests/astFileIOTests.
+# DQ (2/12/2011): This test fails for the astFileIO tests in tests/nonsmoke/functional/roseTests/astFileIOTests.
 # test2011_08.C 
 
 # DQ (6/25/2010): Removed as part of testing!
@@ -955,7 +955,7 @@ test2001_02.C \
 test2001_03.C \
 test2004_116.C
 
-# DQ (1/5/2009): This test fails only in the ROSE/tests/CompileTests/virtualCFG_tests directory.
+# DQ (1/5/2009): This test fails only in the ROSE/tests/nonsmoke/functional/CompileTests/virtualCFG_tests directory.
 # test2009_35.C
 
 # DQ (10/5/2007): Previous problems fixed, this is a remaining problem.

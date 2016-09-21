@@ -5,7 +5,7 @@ SUBDIRS = qrose
 # Demo of binary executable functionality. See binaryTests/Makefile.am for the complete list.
 # This demo does not require Qt.
 demo_1:
-	$(MAKE) -C $(top_builddir)/tests/roseTests/binaryTests demos
+	$(MAKE) -C $(top_builddir)/tests/nonsmoke/functional/roseTests/binaryTests demos
 	@echo "End of demo_1"
 
 # These demos require QT to support the QRose work used for the GUI in several ROSE tools

@@ -45,7 +45,7 @@ check-local:
 	@echo "Testing Python."
 	@$(MAKE) $(TEST_Objects)
 	@echo "***********************************************************************************************"
-	@echo "***** ROSE/tests/CompileTests/Python_tests: make check rule complete (terminated normally) ****"
+	@echo "***** ROSE/tests/nonsmoke/functional/CompileTests/Python_tests: make check rule complete (terminated normally) ****"
 	@echo "***********************************************************************************************"
 
 clean-local:

@@ -1,4 +1,4 @@
-// This test code is copied from: tests/roseTests/astInterfaceTests/inputdeepDelete.C
+// This test code is copied from: tests/nonsmoke/functional/roseTests/astInterfaceTests/inputdeepDelete.C
 
 #if 1
 const int  mnp=100;

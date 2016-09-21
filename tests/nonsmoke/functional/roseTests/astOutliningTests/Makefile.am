@@ -176,8 +176,8 @@ $(failing_test_targets): failing_%.passed: %
 
 include $(srcdir)/Makefile-pass.inc
 
-TEST_DIR = $(abs_top_srcdir)/tests/CompileTests/Cxx_tests
-TEST_INCLUDES = -I$(TEST_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
+TEST_DIR = $(abs_top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
+TEST_INCLUDES = -I$(TEST_DIR) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 0 -rose:outline:seq 7 -rose:outline:parameter_wrapper 
 
 if ROSE_USE_LONG_MAKE_CHECK_RULE

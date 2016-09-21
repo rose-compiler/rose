@@ -67,7 +67,7 @@ else()
     if(enable-fortran)
       add_subdirectory(Fortran_tests)
       # DQ (7/14/2013): Temporarily commented out this test to evaluate
-      # progress on tests/CompileTests directory.
+      # progress on tests/nonsmoke/functional/CompileTests directory.
       #add_subdirectory(CAF2_tests)
     endif()
 

@@ -89,7 +89,7 @@ MOSTLYCLEANFILES += $(patsubst %.C, %.o.cg.dmp, $(Test03Specimens))
 
 #------------------------------------------------------------------------------------------------------------------------
 # Test the specimens in the CompileTests/Cxx_tests for which we have answers in the $(Test04AnswersDir) directory.
-Test04SpecimenDir = $(top_srcdir)/tests/CompileTests/Cxx_tests
+Test04SpecimenDir = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 Test04AnswerDir = $(srcdir)/test04-answers
 Test04Specimens = $(notdir $(patsubst %.cg.dmp, %, $(wildcard $(Test04AnswerDir)/*.C.cg.dmp)))
 Test04Targets = $(addprefix t4_, $(addsuffix .passed, $(Test04Specimens)))
@@ -121,7 +121,7 @@ MOSTLYCLEANFILES += $(patsubst %.C, %.o.cg.dmp, $(Test04Specimens))
 
 check-local: $(TEST_TARGETS)
 	@echo "*****************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/testCallGraphAnalysis: make check rule complete (terminated normally) ******"
 	@echo "*****************************************************************************************************************************"
 
 clean-local:

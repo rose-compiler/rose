@@ -14,7 +14,7 @@ using namespace std;
 int main (int argc, char *argv[])
 {
   //absolute filename should also works
- // std::string fileName="/home/liao6/buildrose/tests/roseTests/astInterfaceTests/testfile525.cpp";
+ // std::string fileName="/home/liao6/buildrose/tests/nonsmoke/functional/roseTests/astInterfaceTests/testfile525.cpp";
   std::string fileName="testfile525.cpp";
   std::string fileName2="testfile626.cpp";
   std::string fileName3="rose_rose_testfile626.cpp";

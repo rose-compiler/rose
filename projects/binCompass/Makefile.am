@@ -41,7 +41,7 @@ check-local: binCompassMain$(EXEEXT)
 	@echo " *** 	./binCompassMain buffer2.bin -checkGraph -inter ****************************************************"
 	$(VALGRIND) ./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -checkGraph -inter > output
 	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
+	@echo "*** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
 
 CLEANFILES = *.dot dfg.dot thomas.dot cfg.dot unparsed.s dfg.gml out/buffer2.bin.PrintAsmInstruction.out out/buffer2.bin.PrintAsmFunctions.out output out/*

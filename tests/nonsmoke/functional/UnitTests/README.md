@@ -12,7 +12,7 @@ Common unit testing framework code is defined in `UNITS/include/rose/tests/unitT
 Note: Your test executable must be compiled with the appropriate header include search path:
 
 ```Makefile
-AM_CPPFLAGS = -I$(top_srcdir)/tests/UnitTests/include/
+AM_CPPFLAGS = -I$(top_srcdir)/tests/nonsmoke/functional/UnitTests/include/
 ```
 
 ### Linking
@@ -20,7 +20,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/tests/UnitTests/include/
 Unit test executables must link with `common.la` in their respective `Makefile.am`:
 
 ```Makefile
-LDADD = $(top_builddir)/tests/UnitTests/libcommon.la
+LDADD = $(top_builddir)/tests/nonsmoke/functional/UnitTests/libcommon.la
 ```
 
 ## Unit Tests

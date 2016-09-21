@@ -316,7 +316,7 @@ else
 	@echo "C++11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
 endif
 	@echo "*************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Cxx11_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx11_tests: make check rule complete (terminated normally) ******"
 	@echo "*************************************************************************************************"
 
 clean-local:

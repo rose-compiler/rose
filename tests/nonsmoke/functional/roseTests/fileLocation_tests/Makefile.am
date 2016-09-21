@@ -24,7 +24,7 @@ fileLocation_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 #					Input specimens
 #########################################################################################################################
 
-TESTCODES_DIRECTORY = $(top_srcdir)/tests/CompileTests/Cxx_tests
+TESTCODES_DIRECTORY = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 
 # This is a shorted list that tests more quickly.
 SHORT_LIST_TESTCODES_REQUIRED_TO_PASS =		\

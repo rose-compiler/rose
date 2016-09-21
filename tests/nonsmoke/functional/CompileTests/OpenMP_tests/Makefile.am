@@ -230,13 +230,13 @@ check-local:
 	@$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@$(MAKE) bonds-2.o macroIds.o $(C_OMP_ACC_TEST_Unparsed)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 else
 check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule for C/C++ skipped (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/OpenMP_tests: make check rule for C/C++ skipped (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 endif
 

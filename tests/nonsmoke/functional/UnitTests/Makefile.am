@@ -10,7 +10,7 @@ SUBDIRS =         \
 #------------------------------------------------------------------------------
 # Global Build Flags
 #------------------------------------------------------------------------------
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/UnitTests/include/
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/nonsmoke/functional/UnitTests/include/
 LDADD       = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------

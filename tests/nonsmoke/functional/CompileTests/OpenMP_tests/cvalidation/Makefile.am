@@ -95,7 +95,7 @@ check-local:
 	@echo "Tests for OpenMP C validation suite."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "****************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/OpenMP_tests/cvalidation: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/OpenMP_tests/cvalidation: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************************"
 
 clean-local:

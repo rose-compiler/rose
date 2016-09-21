@@ -834,7 +834,7 @@ EXTRA_ALL_TESTCODES = $(EXTRA_TESTCODES_REQUIRED_TO_PASS) $(TESTS_STILL_TOO_HARD
 ROSE_FLAGS = --edg:no_warnings -rose:verbose 0 --edg:restrict 
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
@@ -957,7 +957,7 @@ check-local:
 #	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_TEST_Sources)
 	@echo "***************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/copyAST_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/copyAST_tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
 
 clean-local:

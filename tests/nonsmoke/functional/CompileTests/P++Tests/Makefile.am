@@ -35,7 +35,7 @@ ROSE_FLAGS = -rose:test 6
 ## AM_CPPFLAGS = @Axx_INCLUDES@
 MPI_INCLUDE = -I/usr/local/mpi/mpich-1.1.1/include -I/usr/local/mpi/mpich-1.1.1/lib/solaris/ch_p4
 
-AM_CPPFLAGS = -I. -I../../.. -I$(top_srcdir)/tests/CompileTests/P++Tests -I$(top_srcdir)/include $(MPI_INCLUDE)
+AM_CPPFLAGS = -I. -I../../.. -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/P++Tests -I$(top_srcdir)/include $(MPI_INCLUDE)
 
 # libTestSource_a_SOURCES = $(TESTCODES)
 
@@ -47,7 +47,7 @@ check-local:
 	@echo "Tests for P++ (parallel array class) examples."
 	@$(MAKE) $(TEST_Objects)
 	@echo "**********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/P++Tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/P++Tests: make check rule complete (terminated normally) ******"
 	@echo "**********************************************************************************************"
 
 $(TEST_Objects): $(TESTCODES)

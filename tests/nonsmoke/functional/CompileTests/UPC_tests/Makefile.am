@@ -458,7 +458,7 @@ check-local:
 #	@$(MAKE) testForUpcThreadsKeywordInGeneratedCode
 #	@$(MAKE) testForUpcMythreadKeywordInGeneratedCode
 	@echo "***********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/UPC_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/UPC_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 
 clean-local:

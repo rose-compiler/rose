@@ -7,7 +7,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator 
+TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator 
 
 if ROSE_USE_WINDOWS_ANALYSIS_SUPPORT
 
@@ -62,8 +62,8 @@ $(QMTEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.qmt=.C)
 include $(top_srcdir)/config/QMTest_makefile.inc
 
 copyFiles:
-	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/MicrosoftWindows_tests
-	cp $(srcdir)/*.C $(top_srcdir)/tests/CompileTests/MicrosoftWindows_tests
+	cp $(srcdir)/*.h $(top_srcdir)/tests/nonsmoke/functional/CompileTests/MicrosoftWindows_tests
+	cp $(srcdir)/*.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/MicrosoftWindows_tests
 
 # Flymake Support in ROSE
 check-syntax:
@@ -75,7 +75,7 @@ check-local:
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "********************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/MicrosoftWindows_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/MicrosoftWindows_tests: make check rule complete (terminated normally) ******"
 	@echo "********************************************************************************************************************"
 else
 check-local:

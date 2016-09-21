@@ -645,7 +645,7 @@ install(TARGETS fileLocation DESTINATION bin)
 #TEST_Objects = ${ALL_TESTCODES:.C=.o}
 #
 ### Include the path to A++ and the transformation specification
-#TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+#TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 #
 #ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 #

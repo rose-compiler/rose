@@ -90,7 +90,7 @@ Directories:
 
    roseTests:
       This directory tests the internal ROSE infrastructure. It contains separate 
-   subdirectories for individual parts of ROSE. See ROSE/tests/roseTests/README 
+   subdirectories for individual parts of ROSE. See ROSE/tests/nonsmoke/functional/roseTests/README 
    for details.
 
    translatorTests:

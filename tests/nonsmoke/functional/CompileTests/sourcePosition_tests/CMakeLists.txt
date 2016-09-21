@@ -119,7 +119,7 @@ set(TESTCODES
   test_int_lexemes_donot_pass.C test_simple_int.C test_wchars.C
   lexPhase2003_01.C math.C inputForLoopLocator.C)
 
-set(TESTCODE_INCLUDES -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code)
+set(TESTCODE_INCLUDES -I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code)
 
 foreach(file_to_test ${TESTCODES})
 	configure_file(

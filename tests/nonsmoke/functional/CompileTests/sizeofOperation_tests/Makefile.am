@@ -50,7 +50,7 @@ check-local:
 	@echo "Tests for sizeof operation."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/sizeofOperation_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/sizeofOperation_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
 clean-local:

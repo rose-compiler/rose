@@ -51,7 +51,7 @@ TEST_Objects = ${TESTCODES:.C=.o}
 
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
+TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROSE_FLAGS)
 
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:
@@ -60,7 +60,7 @@ if USING_GNU_COMPILER
 	@$(MAKE) $(TEST_Objects)
 endif
 	@echo "*********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/A++Code: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/A++Code: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
 ../../testTranslator:

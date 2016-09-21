@@ -164,7 +164,7 @@ endif()
 set(ROSE_FLAGS --edg:no_warnings -rose:verbose 0 --edg:restrict)
 
 ## Include the path to A++ and the transformation specification
-set(TESTCODE_INCLUDES "-I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code")
+set(TESTCODE_INCLUDES "-I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code")
 
 foreach(testcode ${TESTCODES_REQUIRED_TO_PASS})
   get_filename_component(basename ${testcode} NAME_WE)

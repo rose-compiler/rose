@@ -14,7 +14,7 @@ TEST_Objects = ${TESTCODES:.C=.o}
 # ROSE_FLAGS = -rose:test 6
 ROSE_FLAGS =
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
+TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROSE_FLAGS)
 
 ## We don't have to add the A++ header files to the include path since we have placed
 ## them directly into the test code directory (testing only the compilation with ROSE
@@ -37,7 +37,7 @@ check-local:
 	@echo "Tests for Overture examples."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "**************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/OvertureCode: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/OvertureCode: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************"
 
 clean-local:

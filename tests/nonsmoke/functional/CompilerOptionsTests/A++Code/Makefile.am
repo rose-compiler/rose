@@ -1,8 +1,8 @@
 ## Process this file with automake to create Makefile.in
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompilerOptionsTests/A++Code -I$(srcdir) 
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code -I$(srcdir) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/nonsmoke/functional/CompilerOptionsTests/A++Code -I$(srcdir) 
 
 
 ## Add bugs to this line as they are fixed so that they can be used as test problems
@@ -27,7 +27,7 @@ TEST_Objects = ${TESTCODES:.C=.o}
 # Restrict to level 6 testing for the moment
 ROSE_FLAGS = -rose:test 6
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
+TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROSE_FLAGS)
 
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:

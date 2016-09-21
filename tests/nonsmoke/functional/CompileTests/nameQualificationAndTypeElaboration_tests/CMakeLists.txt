@@ -22,7 +22,7 @@ set(ROSE_FLAGS --edg:no_warnings -w -rose:verbose 0
 
 ## Include the path to A++ and the transformation specification
 set(TESTCODE_INCLUDES
-  -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code
+  -I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code
   -I${CMAKE_CURRENT_SOURCE_DIR})
 
 foreach(file_to_test ${TESTCODES})

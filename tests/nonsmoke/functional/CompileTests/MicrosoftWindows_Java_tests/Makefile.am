@@ -146,13 +146,13 @@ check-local:
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "*****************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/MicrosoftWindows_Java_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Java_tests: make check rule complete (terminated normally) ******"
 	@echo "*****************************************************************************************************************"
 else
 check-local:
 	@echo "Tests for Microsoft Windows Java."
 	@echo "***************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/MicrosoftWindows_Java_tests: JAVA LANGUAGE SUPPORT NOT CONFIGURED IN ROSE ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Java_tests: JAVA LANGUAGE SUPPORT NOT CONFIGURED IN ROSE ******"
 	@echo "***************************************************************************************************************"
 endif
 

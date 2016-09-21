@@ -78,7 +78,7 @@ TEST1_FLAGS = -rose:hpct:prof $(srcdir)/data/01/PROFILE/PAPI_TOT_CYC.xml \
               -rose:hpct:prof $(srcdir)/data/01/PROFILE/PAPI_FP_OPS.xml \
               -rose:hpct:prof $(srcdir)/data/01/PROFILE/PAPI_L1_DCM.xml \
               -rose:hpct:prof $(srcdir)/data/01/PROFILE/PAPI_L2_TCM.xml \
-              -rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01=data/01 
+              -rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/01=data/01 
 
 
 test_attach01:attach_metrics
@@ -86,7 +86,7 @@ test_attach01:attach_metrics
 
 # test_attach01a.sh
 TEST2_FLAGS = -rose:hpct:prof $(srcdir)/data/01/ANALYSIS/example_all_events.xml \
-              -rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01=data/01 
+              -rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/01=data/01 
 test_attach01a:attach_metrics
 	./attach_metrics$(EXEEXT) $(TEST2_FLAGS) -c  $(srcdir)/data/01/example.c
 
@@ -99,7 +99,7 @@ PHONIES += test_attach01 test_attach01a test_prop01 update_xml
 if ROSE_BUILD_OS_IS_CYGWIN
 check-local:
 	@echo "********************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/roseHPCToolkitTests: (commented out all tests for Cygwin) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests: (commented out all tests for Cygwin) ******"
 	@echo "********************************************************************************************"
 else
 check-local:
@@ -113,14 +113,14 @@ if ROSE_BUILD_C_LANGUAGE_SUPPORT
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_prop01.sh
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_hl01.sh
 	@echo "******************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/roseHPCToolkitTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"
 else
-	@echo "***** SKIPPING TESTS IN ROSE/tests/roseTests/roseHPCToolkitTests *****"
+	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
 	@echo "      because C/C++ language support is not enabled              *****"
 endif
 else
-	@echo "***** SKIPPING TESTS IN ROSE/tests/roseTests/roseHPCToolkitTests *****"
+	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
 endif
 endif
 

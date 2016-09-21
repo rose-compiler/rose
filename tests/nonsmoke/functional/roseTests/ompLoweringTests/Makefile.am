@@ -15,7 +15,7 @@ OMNI_PATH = @omni_omp_runtime_support_path@
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-# all input files are put into tests/CompileTests/OpenMP_tests
+# all input files are put into tests/nonsmoke/functional/CompileTests/OpenMP_tests
 # They are shared by both OpenMP parsing tests and OpenMP lowering tests
 
 # Put test codes without main() entry here
@@ -207,7 +207,7 @@ TESTCODE_CURRENTLY_FAILING = \
 	variables.c
 
 # we reuse the OpenMP sources files from the OpenMP compile test directory
-TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
+TEST_DIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests
 # the place to find omp.h, libgomp_g.h etc
 TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering -I$(top_builddir)
 
@@ -293,7 +293,7 @@ $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.cpp roseompacc
 # 2013-09-28]
 OMP_ACC_DIFF_FILES=$(PASSING_OMP_ACC_TEST_CUDA_Files:.cu=.cu.diff)
 DIFF=diff
-EXPECTED_PATH = $(top_srcdir)/tests/roseTests/ompLoweringTests/referenceResults
+EXPECTED_PATH = $(top_srcdir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/referenceResults
 $(OMP_ACC_DIFF_FILES):$(PASSING_OMP_ACC_TEST_CUDA_Files)
 	echo "Verifying OMP ACC translation by diff ..."; \
 	if $(DIFF) $(@:.cu.diff=.cu) $(EXPECTED_PATH)/$(@:.cu.diff=.cu) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi 
@@ -374,7 +374,7 @@ endif
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally)         ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/ompLoweringTests: make check rule complete (terminated normally)         ******"
 	@echo "***********************************************************************************************************"
 
 else
@@ -419,7 +419,7 @@ endif
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally)         ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/ompLoweringTests: make check rule complete (terminated normally)         ******"
 	@echo "***********************************************************************************************************"
 
 # USE gcc GOMP library
@@ -440,7 +440,7 @@ if OS_MACOSX
 endif
 #	$(MAKE) $(PASSING_Objects_With_main) # make objects with main entries here 
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests:                                                        ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/ompLoweringTests:                                                        ******"
 	@echo "******       compilation tests completed but executables are not generated and run                   ******"
 	@echo "****** configure option --with-gomp_omp_runtime_library to enable testing execution of OpenMP        ******"
 	@echo "****** for example: --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-4.4.1/lib/                   ******"

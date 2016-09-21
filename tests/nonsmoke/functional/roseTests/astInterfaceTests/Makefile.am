@@ -501,7 +501,7 @@ PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS = \
    $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) 
 #   $(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
 
-REFERENCE_PATH = $(top_srcdir)/tests/roseTests/astInterfaceTests/referenceResults
+REFERENCE_PATH = $(top_srcdir)/tests/nonsmoke/functional/roseTests/astInterfaceTests/referenceResults
 MOVE_DECLS_DIFF_FILES=$(PASSING_MOVE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
 
 MOVE_MERGE_DECLS_DIFF_FILES=$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
@@ -538,7 +538,7 @@ test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 # test2014_12.C demonstrates the first issue.
 test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS)
 	@echo "********************************************************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/astInterface_tests/moveDeclarationToInnermostScope: make test_move_decls_with_token_unparsing rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/astInterface_tests/moveDeclarationToInnermostScope: make test_move_decls_with_token_unparsing rule complete (terminated normally) ******"
 	@echo "********************************************************************************************************************************************************************"
 
 # DQ (11/4/2015): Restrict testing of the token-based unparsing to later versions of GNU compilers (at least initially).
@@ -1015,7 +1015,7 @@ unit-tests:
 # move_decls_diff_check move_merge_decls_diff_check
 check-local: $(generatedCodeExamples) move_diff_check 
 	@echo "*****************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/astInterface_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/astInterface_tests: make check rule complete (terminated normally) ******"
 	@echo "*****************************************************************************************************"
 
 clean-local:

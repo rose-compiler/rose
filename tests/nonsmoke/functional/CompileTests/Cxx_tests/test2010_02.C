@@ -18,7 +18,7 @@ generateNodeListFromAST ( SgNode* node )
               void visit (SgNode* n )
                  {
 // #ifndef USE_ROSE
-                // DQ (2/8/2010): This code demonstrates a bug in the unparser for ROSE when run using tests/testCodeGeneration
+                // DQ (2/8/2010): This code demonstrates a bug in the unparser for ROSE when run using tests/nonsmoke/functional/testCodeGeneration
                    ROSE_ASSERT(n != NULL);
                 // printf ("In generateNodeListFromAST building nodeList n = %p = %s \n",n,n->class_name().c_str());
                    nodeList.insert(n);

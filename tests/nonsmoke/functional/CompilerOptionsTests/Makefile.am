@@ -26,5 +26,5 @@ endif
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:
 	@echo "********************************************************************************************"
-	@echo "****** ROSE/tests/CompilerOptionsTests: make check rule complete (terminated normally) *****"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompilerOptionsTests: make check rule complete (terminated normally) *****"
 	@echo "********************************************************************************************"

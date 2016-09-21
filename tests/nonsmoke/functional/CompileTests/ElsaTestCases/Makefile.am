@@ -851,12 +851,12 @@ TEST_Objects = ${TESTCODES:.cc=.o}
 
 ROSE_FLAGS = --edg:no_warnings -w
 
-# TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/testTranslator 
+# TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/nonsmoke/functional/testTranslator 
 TRANSLATOR_EXECUTABLE = ../../testTranslator
 TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 
 ## Include the path to A++ and the transformation specification
-# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
+# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code -I$(srcdir) 
 
 $(TEST_Objects): $(TESTCODES)
 	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.cc)
@@ -873,7 +873,7 @@ check-local: $(TRANSLATOR_EXECUTABLE)
 	@$(MAKE) $(TEST_Objects)
 	@$(MAKE) $(TEST2_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/C++Code/ElsaTestCases: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C++Code/ElsaTestCases: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
 

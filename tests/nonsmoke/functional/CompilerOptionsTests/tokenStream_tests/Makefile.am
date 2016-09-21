@@ -69,7 +69,7 @@ check-local:
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***************************************************************************************************************"
-	@echo "****** ROSE/tests/CompilerOptionsTests/tokenStream_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompilerOptionsTests/tokenStream_tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************************"
 
 # endif

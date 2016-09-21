@@ -301,7 +301,7 @@ check-local:
 	@echo "Tests for C language subset of C++ (some features in C are disallowed in C++ and are tested in C_tests directory)."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/C_subset_of_Cxx_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C_subset_of_Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
 clean-local:

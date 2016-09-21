@@ -26,7 +26,7 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	@echo "Tests mix language support with C++ and Fortran"
 	@$(MAKE) $(TESTCODES_Objects)
 	@echo "*******************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/mixLanguage_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/mixLanguage_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************"
 else
 	@echo "Rose is configured without Fortran support"

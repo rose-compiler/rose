@@ -1,4 +1,4 @@
-// This is test2015_53.c in the C regression tests in ROSE (tests/CompileTests/C_tests directory):
+// This is test2015_53.c in the C regression tests in ROSE (tests/nonsmoke/functional/CompileTests/C_tests directory):
 
 // This code demonstrates where the internal block handling in ROSE
 // is incorrect when the default statement has a GNU statement-expression

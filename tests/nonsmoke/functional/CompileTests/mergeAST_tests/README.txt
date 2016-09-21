@@ -13,7 +13,7 @@ to the top of the file.
    4) g++ -E -D_GLIBCXX_GTHREAD_USE_WEAK=0 <file>
 
 Current problem test:
-   ./testMerge -rose:astMerge -c /home/dquinlan/ROSE/git-dq-main-rc/tests/CompileTests/mergeAST_tests/mergeTest_137.C
+   ./testMerge -rose:astMerge -c /home/dquinlan/ROSE/git-dq-main-rc/tests/nonsmoke/functional/CompileTests/mergeAST_tests/mergeTest_137.C
 
 
 DQ (9/24/2011): After fixing the AST so that constant folded values can be by default

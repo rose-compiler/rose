@@ -49,9 +49,9 @@ void bar()
 // file 'xyz.cc': function 'bar': gvar2, gvar3, gvar4
 
 // Actual output of test run (onlyInLambdaFunctions == false):
-// file: /home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx11_tests/globalVariablesInLambdas_test_01.C function: foo global variables: otherGlobalVar gvar1 gvar2 gvar4 
-// file: /home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx11_tests/globalVariablesInLambdas_test_01.C function: bar global variables: otherGlobalVar gvar2 gvar3 gvar4 
+// file: /home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx11_tests/globalVariablesInLambdas_test_01.C function: foo global variables: otherGlobalVar gvar1 gvar2 gvar4 
+// file: /home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx11_tests/globalVariablesInLambdas_test_01.C function: bar global variables: otherGlobalVar gvar2 gvar3 gvar4 
 
 // Actual output of test run (onlyInLambdaFunctions == true):
-// file: /home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx11_tests/globalVariablesInLambdas_test_01.C function: foo global variables: gvar1 gvar2 gvar4 
-// file: /home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx11_tests/globalVariablesInLambdas_test_01.C function: bar global variables: gvar2 gvar3 gvar4 
+// file: /home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx11_tests/globalVariablesInLambdas_test_01.C function: foo global variables: gvar1 gvar2 gvar4 
+// file: /home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx11_tests/globalVariablesInLambdas_test_01.C function: bar global variables: gvar2 gvar3 gvar4 

@@ -19,17 +19,17 @@ A<B<int>> ab; // works
 A<B<C<int>>> abc; // fails
 
 #if 0
-"/home/dquinlan/ROSE/git-dq-edg49-rc/tests/CompileTests/Cxx11_tests/test2014_71.C", line 19: error: 
+"/home/dquinlan/ROSE/git-dq-edg49-rc/tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2014_71.C", line 19: error: 
           expected a ">"
   A<B<C<int>>> abc; // fails
            ^
 
-"/home/dquinlan/ROSE/git-dq-edg49-rc/tests/CompileTests/Cxx11_tests/test2014_71.C", line 19: error: 
+"/home/dquinlan/ROSE/git-dq-edg49-rc/tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2014_71.C", line 19: error: 
           expected a ">"
   A<B<C<int>>> abc; // fails
                   ^
 
-"/home/dquinlan/ROSE/git-dq-edg49-rc/tests/CompileTests/Cxx11_tests/test2014_71.C", line 19: error: 
+"/home/dquinlan/ROSE/git-dq-edg49-rc/tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2014_71.C", line 19: error: 
           expected a ">"
   A<B<C<int>>> abc; // fails
                   ^

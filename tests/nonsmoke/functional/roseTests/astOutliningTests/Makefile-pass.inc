@@ -667,7 +667,7 @@ test2004_116.C
 # test2005_205.C
 # test2007_95.C -- JJW 3-3-2008 gcc doesn't accept this code, and the stuff in ROSE to allow it broke Naim
 
-# DQ (1/8/2008): This does not pass the tests in: tests/roseTests/astOutliningTests
+# DQ (1/8/2008): This does not pass the tests in: tests/nonsmoke/functional/roseTests/astOutliningTests
 # test2007_169.C 
 
 # JJW 5-22-2008 This is not portable to Mac OS X

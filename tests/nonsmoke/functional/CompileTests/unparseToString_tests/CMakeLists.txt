@@ -3,9 +3,9 @@ target_link_libraries(unparseToString ROSE_DLL EDG ${link_with_libraries} )
 
 set(ROSE_FLAGS --edg:no_warnings -w --edg:restrict)
 
-set(TESTCODE_DIR ${CMAKE_SOURCE_DIR}/tests/CompileTests/Cxx_tests)
+set(TESTCODE_DIR ${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/Cxx_tests)
 
-set(TESTCODE_INCLUDES -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code
+set(TESTCODE_INCLUDES -I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code
                       -I${TESTCODE_DIR})
 
 # This populates the list ROSE__CXX_TESTS

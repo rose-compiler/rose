@@ -18,7 +18,7 @@
 #include <boost/filesystem.hpp>
 
 #ifndef TEST_AST_FILE_READ
-# error "absolute-path-for $ROSE_BLD/tests/testAstFileRead must be set on the g++ command-line"
+# error "absolute-path-for $ROSE_BLD/tests/nonsmoke/functional/testAstFileRead must be set on the g++ command-line"
 #endif
 
 using namespace std;
@@ -207,7 +207,7 @@ void MergeAst1(AstStorage* storage, int n = 2)
     vector<string> filenames = storage->GetFiles(n);
     if (!filenames.empty())
     {
-        string arg = "../../../tests/testAstFileRead ";
+        string arg = "../../../tests/nonsmoke/functional/testAstFileRead ";
 
         for (int i = 0; i < filenames.size(); ++i)
         {

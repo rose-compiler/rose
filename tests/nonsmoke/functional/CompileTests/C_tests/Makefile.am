@@ -975,18 +975,18 @@ test_common_configure_test_with_link.passed: %.passed: $(testTranslator)
 test_tokenMapping: 
 #	rm -f test2003_12.c.mapping.passed
 #	@$(MAKE) test2003_12.c.mapping.passed
-	$(testTranslator) -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+	$(testTranslator) -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/test2003_12.c
 
 # DQ (1/19/2014): Test the use of the gnu "-S" option.
 test_gnu_S_option:
-	$(testTranslator) -S -o test2014_41.s $(top_srcdir)/tests/CompileTests/C_tests/test2014_41.c
+	$(testTranslator) -S -o test2014_41.s $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/test2014_41.c
 
 test_link_using_alias_attribute: $(testTranslator)
-	$(testTranslator) -o test2014_93 $(top_srcdir)/tests/CompileTests/C_tests/test2014_93.c
+	$(testTranslator) -o test2014_93 $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/test2014_93.c
 
 # DQ (2/17/2014): Added to force test of two week old asm fix for linking that didn't make it out in github.
 test_link_using_asm_symbol_injection: $(testTranslator)
-	$(testTranslator) -o test2014_83 $(top_srcdir)/tests/CompileTests/C_tests/test2014_83.c
+	$(testTranslator) -o test2014_83 $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/test2014_83.c
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -1117,8 +1117,8 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
         test2015_159.h
 
 copyFiles:
-	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
-	cp $(srcdir)/*.c $(top_srcdir)/tests/CompileTests/C_tests
+	cp $(srcdir)/*.h $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests
+	cp $(srcdir)/*.c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests
 
 check-pthread.passed: needs_reentrant.c $(testTranslator)
 	@$(RTH_RUN)								\
@@ -1155,7 +1155,7 @@ check-local: check-pthread.passed
 	@$(MAKE) test_compile_and_link_without_NDEBUG
 #	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
 clean-local:

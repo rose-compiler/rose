@@ -1495,7 +1495,7 @@ PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $
 PASSING_TEST_Sources = $(PASSING_TEST_F90_Sources) $(PASSING_TEST_F77_Sources) $(PASSING_TEST_F77_FIXED_FORMAT_Sources) $(PASSING_TEST_F03_Sources) 
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-TEST_TRANSLATOR=$(top_builddir)/tests/testTranslator
+TEST_TRANSLATOR=$(top_builddir)/tests/nonsmoke/functional/testTranslator
 
 # Go back and build the translator we are using to test Fortran (in case make check 
 # is run directly in this directory before make has been run from the root of the 
@@ -1505,8 +1505,8 @@ $(TEST_TRANSLATOR):
 
 # $(TEST_F90_Objects): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
 #	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90) && touch $@
-##	$(VALGRIND) $(top_builddir)/tests/testCodeGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
-##	$(VALGRIND) $(top_builddir)/tests/testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+##	$(VALGRIND) $(top_builddir)/tests/nonsmoke/functional/testCodeGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+##	$(VALGRIND) $(top_builddir)/tests/nonsmoke/functional/testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 ##	ls -l $@
 
 $(TEST_F90_Sources): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
@@ -1515,7 +1515,7 @@ $(TEST_F90_Sources): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
 
 # $(TEST_F77_Objects): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
 ##	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
-##	$(VALGRIND) $(top_builddir)/tests/testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+##	$(VALGRIND) $(top_builddir)/tests/nonsmoke/functional/testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 #	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77) && touch $@ 
 #	ls -l $@
 
@@ -1526,7 +1526,7 @@ $(TEST_F77_Sources): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
 # $(TEST_F77_FIXED_FORMAT_Objects): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
 #	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f) && touch $@
 ##	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
-##	$(VALGRIND) $(top_builddir)/tests/testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+##	$(VALGRIND) $(top_builddir)/tests/nonsmoke/functional/testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 ##	ls -l $@
 
 $(TEST_F77_FIXED_FORMAT_Sources): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
@@ -1557,7 +1557,7 @@ tests:
 #	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_TEST_Sources)
 	@echo "*********************************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg: make tests rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg: make tests rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************************"
 
 check-local:
@@ -1574,7 +1574,7 @@ else
 	@echo "Skipping Fortran code tests when using the gfortran version 4.0.x compiler (fails to support common command line options of later versions)."
 endif
 	@echo "*********************************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************************"
 
 else
@@ -1582,7 +1582,7 @@ else
 # Fortran support not available in ROSE unless specified on the configure command line.
 check-local:
 	@echo "*****************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg: FORTRAN NOT CONFIGURED IN ROSE ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg: FORTRAN NOT CONFIGURED IN ROSE ******"
 	@echo "*****************************************************************************************************************"
 endif
 

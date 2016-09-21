@@ -173,7 +173,7 @@ main( int argc, char * argv[] )
      myTraversal.traverseInputFiles (project,postorder);
 
 #if 1
-  // DQ (3/25/2006): These tests currently fail for the tests/roseTests/astRewriteTests/inputProgram2.C
+  // DQ (3/25/2006): These tests currently fail for the tests/nonsmoke/functional/roseTests/astRewriteTests/inputProgram2.C
   // DQ (2/6/2004): These tests fail in Coco for test2004_14.C
      printf ("Running agressive (slow) internal consistancy tests (after rewrite operation)! \n");
      AstTests::runAllTests(const_cast<SgProject*>(project));

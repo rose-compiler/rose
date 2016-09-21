@@ -49,13 +49,13 @@ check-local:
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
 #	@$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/FailSafe_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/FailSafe_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 else
 check-local:
 	@echo "Test for ROSE FailSafe Parser."
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/FailSafe_tests: make check rule for C/C++ skipped (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/FailSafe_tests: make check rule for C/C++ skipped (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 endif
 

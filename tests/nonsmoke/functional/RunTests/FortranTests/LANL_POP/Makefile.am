@@ -46,7 +46,7 @@ netcdf_blddir=$(abspath netcdf-4.1.1)
 netcdf_prefix=$(netcdf_blddir)/installed
 netcdf_lib=$(netcdf_prefix)/lib/libnetcdf.a
 
-translator = $(top_builddir)/tests/testTranslator
+translator = $(top_builddir)/tests/nonsmoke/functional/testTranslator
 translator_flags = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
 
 $(translator):

@@ -65,7 +65,7 @@ check-local:
 	@echo "Tests for Python examples (tests python header files as used by SWIG)."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "*********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/PythonExample_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/PythonExample_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
 
 clean-local:

@@ -696,7 +696,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(PERFORMANCE_REPORT_OPTION) $(COMMENTS_FROM_ALL_FILES_OPTION)
 #
 ### Include the path to A++ and the transformation specification
-#TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+#TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 #
 ## VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 ## VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=yes --error-limit=no --show-reachable=yes
@@ -749,8 +749,8 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #	cd QMTest; qmtest gui
 #
 #copyFiles:
-#	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/Cxx_tests
-#	cp $(srcdir)/*.C $(top_srcdir)/tests/CompileTests/Cxx_tests
+#	cp $(srcdir)/*.h $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
+#	cp $(srcdir)/*.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 #
 #check-local:
 #	@echo "Dan Quinlan's development tests."

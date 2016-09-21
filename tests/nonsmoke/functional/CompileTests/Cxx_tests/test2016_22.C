@@ -1,4 +1,4 @@
-# 1 "/home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx_tests/test2013_234.C"
+# 1 "/home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2013_234.C"
 # 1 "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG49-BOOST_1_60-dq-development-rc/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h"
  
  
@@ -947,7 +947,7 @@ int __builtin_bswap32 (int x);
  
 # 2586 "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG49-BOOST_1_60-dq-development-rc/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h"
 
-# 1 "/home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx_tests/test2013_234.C"
+# 1 "/home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2013_234.C"
 # 1 "/nfs/casc/overture/ROSE/opt/rhel7/x86_64/boost/1_60_0/gcc/4.8.4/include/boost/graph/adjacency_list.hpp"
 
 
@@ -160030,4 +160030,4 @@ struct graph_mutability_traits< adjacency_list<OEL,vecS,D,VP,EP,GP,EL> > {
 } 
 
 
-# 2 "/home/dquinlan/ROSE/git_rose_development/tests/CompileTests/Cxx_tests/test2013_234.C"
+# 2 "/home/dquinlan/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2013_234.C"

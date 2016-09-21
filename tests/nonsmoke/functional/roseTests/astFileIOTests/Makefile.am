@@ -22,7 +22,7 @@ astFileRead_SOURCES = astFileRead.C
 astFileRead_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 parallelMerge_SOURCES = parallelMerge.C
-parallelMerge_CPPFLAGS = -DTEST_AST_FILE_READ='"$(abspath $(top_builddir)/tests/testAstFileRead)"' $(ROSE_INCLUDES)
+parallelMerge_CPPFLAGS = -DTEST_AST_FILE_READ='"$(abspath $(top_builddir)/tests/nonsmoke/functional/testAstFileRead)"' $(ROSE_INCLUDES)
 parallelMerge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ EXTRA_DIST += testAstFileIO.conf
 
 include $(srcdir)/Makefile-pass-IO.inc
 Cxx_specimens = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
-Cxx_directory = $(abspath $(top_srcdir)/tests/CompileTests/Cxx_tests)
+Cxx_directory = $(abspath $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests)
 Cxx_binaries = $(addsuffix .binary, $(Cxx_specimens))
 $(Cxx_binaries): %.binary: $(Cxx_directory)/% ../../testAstFileIO
 	@$(RTH_RUN) \
@@ -442,8 +442,8 @@ endif
 ##  FailingTests = test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C
 ##  FailingTests_Binaries = $(FailingTests:.C=.o)
 ##  failingTest: $(FailingTests_Binaries)
-##  #	../../../tests/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C temp_output.C
-##  	../../../tests/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C
+##  #	../../../tests/nonsmoke/functional/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C temp_output.C
+##  	../../../tests/nonsmoke/functional/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C
 ##  
 ##  # test2003_21.C 
 ##  # test2003_19.C 

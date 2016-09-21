@@ -33,7 +33,7 @@ check-local:
 	@echo "Testing Matlab."
 	@$(MAKE) $(TEST_Objects)
 	@echo "***********************************************************************************************"
-	@echo "***** ROSE/tests/CompileTests/Matlab_tests: make check rule complete (terminated normally) ****"
+	@echo "***** ROSE/tests/nonsmoke/functional/CompileTests/Matlab_tests: make check rule complete (terminated normally) ****"
 	@echo "***********************************************************************************************"
 
 clean-local:

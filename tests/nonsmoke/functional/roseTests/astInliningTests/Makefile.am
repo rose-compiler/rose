@@ -79,7 +79,7 @@ test: $(TEST_TOKEN_STREAM_UNPARSING_TARGETS)
 
 check-local: $(TEST_TARGETS) $(TEST_TOKEN_STREAM_UNPARSING_TARGETS)
 	@echo "***************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/astInliningTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/astInliningTests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
 
 clean-local:

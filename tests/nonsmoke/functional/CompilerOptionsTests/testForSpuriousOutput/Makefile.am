@@ -14,7 +14,7 @@ CXX_TEST_Objects = ${CXX_TESTCODES:.C=.o}
 F90_TEST_Objects = ${F90_TESTCODES:.f90=.o}
 TEST_Objects = ${C_TEST_Objects} ${F90_TEST_Objects}
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
+TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROSE_FLAGS)
 
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:

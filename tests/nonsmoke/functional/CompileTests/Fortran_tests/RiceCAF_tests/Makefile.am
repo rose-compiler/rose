@@ -185,7 +185,7 @@ tests:
 	@$(MAKE) testMPItypes
 	@$(MAKE) testMultipleFortranFiles
 	@echo "***************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make tests rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests: make tests rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
 
 check-local:
@@ -206,7 +206,7 @@ else
 	@echo "Skipping Fortran code tests when using the gfortran version 4.0.x compiler (fails to support common command line options of later versions)."
 endif
 	@echo "***************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
 
 else
@@ -214,7 +214,7 @@ else
 # Fortran support not available in ROSE unless specified on the configure command line.
 check-local:
 	@echo "***********************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests: FORTRAN NOT CONFIGURED IN ROSE ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests: FORTRAN NOT CONFIGURED IN ROSE ******"
 	@echo "***********************************************************************************"
 endif
 

@@ -18,7 +18,7 @@ PASS=0
 set -x
 "$@" ./attach_metrics \
 		-rose:hpct:prof ${PROFILE_DIR}/example_all_events.xml \
-		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/roseTests/roseHPCToolkitTests/data/01=data/01 \
+		-rose:hpct:eqpath ./src/home/dxnguyen/git-rose/rose-zung/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/01=data/01 \
 	-c ${SRC_DIR}/example.c >&1 | tee test_attach01a-out.txt
 diff test_attach01a-out.txt ${PROFILE_DIR}/test_attach01a-answer.txt
 rc=$?

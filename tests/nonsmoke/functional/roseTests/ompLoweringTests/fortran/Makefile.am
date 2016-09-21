@@ -59,7 +59,7 @@ F90_TEST_OBJECT_REQUIRED_TO_RUN = ${F90_TESTCODES_REQUIRED_TO_RUN:.f90=.o}
 
 
 # we reuse the OpenMP sources files from the OpenMP compile test directory
-TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests/fortran
+TEST_DIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran
 
 # the place to find omp.h, libgomp_g.h etc
 TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering
@@ -123,7 +123,7 @@ check-local: ../roseomp
 	@echo "***************** Testing Fortran 90 input ******************"
 	$(MAKE) $(PASSING_F90_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests/fortran: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
 else
@@ -145,7 +145,7 @@ check-local: ../roseomp
 	$(MAKE) $(PASSING_F90_TEST_Objects)
 	$(MAKE) $(F90_TEST_OBJECT_REQUIRED_TO_RUN)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests/fortran:                       *******************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran:                       *******************************"
 	@echo "****       compilation tests completed but executables are not generated and run***************************"
 	@echo "****** configure option --with-gomp_omp_runtime_library to enable testing execution of OpenMP   ******"
 	@echo "****** for example: --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-4.4.1/lib/              ********"

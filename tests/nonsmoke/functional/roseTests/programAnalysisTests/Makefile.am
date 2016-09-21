@@ -79,7 +79,7 @@ ReachingDefinitionFacadeTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # Using the ROSE Test Harness for consistency with other tests
 
 # Note: "include $(VFA_SPECIMEN_DIR)/Makefile-pass.inc" doesn't work
-VFA_SPECIMEN_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+VFA_SPECIMEN_DIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 include $(srcdir)/../../CompileTests/Cxx_tests/Makefile-pass.inc
 
 if ROSE_USE_LONG_MAKE_CHECK_RULE
@@ -91,7 +91,7 @@ endif
 VFA_TEST_NAMES = $(basename $(VFA_TEST_SPECIMENS))
 VFA_TEST_TARGETS = $(addprefix vfa_, $(addsuffix .passed, $(VFA_TEST_NAMES)))
 VFA_TEST_SWITCHES = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
-VFA_TEST_INCLUDES = -I$(VFA_SPECIMEN_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
+VFA_TEST_INCLUDES = -I$(VFA_SPECIMEN_DIR) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 $(VFA_TEST_TARGETS): vfa_%.passed: $(VFA_SPECIMEN_DIR)/%.C VirtualFunctionAnalysisTest $(CHECK_EXIT_STATUS)
 	@$(RTH_RUN) CMD="./VirtualFunctionAnalysisTest $(VFA_TEST_SWITCHES) $(VFA_TEST_INCLUDES) -c $<" $(CHECK_EXIT_STATUS) $@
@@ -197,7 +197,7 @@ EXTRA_DIST +=								\
 
 check-local: check-vfa check-extra
 	@echo "*******************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programAnalysisTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************"
 
 

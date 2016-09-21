@@ -1,4 +1,4 @@
-export HUDSON_TRANSLATOR="/home/matzke/GS-CAD/ROSE/sources/lanlpop/_build/tests/testTranslator"
+export HUDSON_TRANSLATOR="/home/matzke/GS-CAD/ROSE/sources/lanlpop/_build/tests/nonsmoke/functional/testTranslator"
 export HUDSON_NUM_JOBS=20
 export HUDSON_FC="gfortran"
 export HUDSON_FFLAGS="-ffree-line-length-0"

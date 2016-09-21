@@ -397,7 +397,7 @@ else
 	@echo "Skipping POP code tests when using the gfortran version 4.0.x compiler (fails to compile POP code)."
 endif
 	@echo "******************************************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests/LANL_POP: make check rule complete (terminated normally using $(TRANSLATOR)) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests/LANL_POP: make check rule complete (terminated normally using $(TRANSLATOR)) ******"
 	@echo "******************************************************************************************************************************************"
 else
 check-local:

@@ -834,8 +834,8 @@ main(int argc, char *argv[])
                   .doc("Generate GraphViz dot file containing the control flow graph of each function.  These files will "
                        "be named \"x-FXXXXXXXX.dot\" where \"XXXXXXXX\" is a function entry address.  This switch also "
                        "generates a function call graph with the name \"x-cg.dot\". These files can be converted to HTML "
-                       "with the generate_html script found in tests/roseTests/binaryTests. The default is to not generate "
-                       "these dot files.  This feature is disabled with @s{no-cfg-dot}."));
+                       "with the generate_html script found in tests/nonsmoke/functional/roseTests/binaryTests. The default "
+                       "is to not generate these dot files.  This feature is disabled with @s{no-cfg-dot}."));
     output.insert(Switch("no-cfg-dot")
                   .key("cfg-dot")
                   .intrinsicValue(false, do_cfg_dot)

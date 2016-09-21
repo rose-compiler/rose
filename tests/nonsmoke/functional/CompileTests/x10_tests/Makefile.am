@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #===============================================================================
 if ROSE_BUILD_X10_LANGUAGE_SUPPORT
 #===============================================================================
-ROSE_TRANSLATOR = $(top_builddir)/tests/testTranslator
+ROSE_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator
 $(ROSE_TRANSLATOR):
 	@$(MAKE) testTranslator -C $(top_builddir)/tests
 
@@ -23,7 +23,7 @@ $(TESTCODES:.x10=.compile): $(ROSE_TRANSLATOR)
 check-local:
 	@$(MAKE) $(TESTCODES:.x10=.compile)
 	@echo "***********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/x10_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/x10_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 
 clean-local:
@@ -37,7 +37,7 @@ else
 check-local:
 	@echo "Skipping x10_tests because X10 language support is not enabled, see ROSE/configure --help"
 	@echo "***********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/x10_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/x10_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 #===============================================================================
 endif

@@ -47,7 +47,7 @@ check-local:
 	@echo "Tests for Color Graphing examples."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "****************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/colorAST_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/colorAST_tests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************************"
 
 clean-local:

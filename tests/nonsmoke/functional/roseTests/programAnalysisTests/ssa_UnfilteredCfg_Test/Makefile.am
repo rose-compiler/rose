@@ -747,13 +747,13 @@ test2005_114.C \
 test2006_47.C 
 
 TEST_INCLUDES = \
-	-I$(top_srcdir)/tests/CompileTests/A++Code \
-	-I$(top_srcdir)/tests/CompileTests/C_tests \
-	-I$(top_srcdir)/tests/CompileTests/Cxx_tests 
+	-I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code \
+	-I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests \
+	-I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests 
 
 .PHONY: TEST_C
 TEST_C: 
-	@cp -f $(top_srcdir)/tests/CompileTests/C_tests/*.c . 
+	@cp -f $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests/*.c . 
 	@$(MAKE) $(C_TESTCODES_REQUIRED_TO_PASS)
 	@rm -f *.c
 
@@ -763,7 +763,7 @@ $(C_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
 
 .PHONY: TEST_CXX
 TEST_CXX:
-	@cp -f $(top_srcdir)/tests/CompileTests/Cxx_tests/*.C .
+	@cp -f $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/*.C .
 	@$(MAKE) $(CXX_TESTCODES_REQUIRED_TO_PASS)
 	@rm -f *.C
 
@@ -775,7 +775,7 @@ check-local:
 	@$(MAKE) TEST_C
 	@$(MAKE) TEST_CXX
 	@echo "******************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programAnalysisTests/ssa_UnfilteredCfg_Test: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/ssa_UnfilteredCfg_Test: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************************************"
 
 clean-local:

@@ -426,7 +426,7 @@ make-distcheck)
 
     runBuildStep make-distcheck
 
-    # TOO (2/24/2011): Can't printRoseTranslatorVersion: requires librose.la and tests/testAnalysis
+    # TOO (2/24/2011): Can't printRoseTranslatorVersion: requires librose.la and tests/nonsmoke/functional/testAnalysis
     #make -j${NUM_PROCESS} -C src/ 
     #make -j${NUM_PROCESS} -C tests/ testAnalysis
     #printRoseTranslatorVersion

@@ -849,7 +849,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
             // DQ (3/2/2014): This might be a SgInitializedName that is a parameter to a non-defining 
             // function declaration that was not deleted when we deleted the AST.  If so then this 
-            // will be NULL. See tests/roseTests/astSnippetTests/specimen2014_03.c.
+            // will be NULL. See tests/nonsmoke/functional/roseTests/astSnippetTests/specimen2014_03.c.
                if (initializedName->get_scope()->get_symbol_table() == NULL)
                   {
                     printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());

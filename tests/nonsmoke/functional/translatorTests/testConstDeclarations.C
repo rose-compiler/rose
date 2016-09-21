@@ -1,6 +1,6 @@
 // This is a translator that demonstrates (or demonstrated) a bug in ROSE.
 // This is is provided as part of regression tests on translators that 
-// demonstrate bugs in ROSE and is different from the tests/CompileTests
+// demonstrate bugs in ROSE and is different from the tests/nonsmoke/functional/CompileTests
 // directory which demonstrates input codes that demonstrate bugs in ROSE.
 
 #include "rose.h"

@@ -7,22 +7,22 @@
 ## Minimal input codes (just enough to be 'compiled')
 
 if ROSE_BUILD_C_LANGUAGE_SUPPORT
-  __minimal_input_code = $(top_srcdir)/tests/input_codes/minimal/minimal.cpp
+  __minimal_input_code = $(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.cpp
 else
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-  __minimal_input_code = $(top_srcdir)/tests/input_codes/minimal/minimal.f90
+  __minimal_input_code = $(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.f90
 else
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-  __minimal_input_code = $(top_srcdir)/tests/input_codes/minimal/minimal.java
+  __minimal_input_code = $(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java
 else
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
-  __minimal_input_code = $(top_srcdir)/tests/input_codes/minimal/minimal.php
+  __minimal_input_code = $(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.php
 else
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
-  __minimal_input_code = $(top_srcdir)/tests/input_codes/minimal/minimal.py
+  __minimal_input_code = $(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.py
 else
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-  __minimal_input_code = $(top_srcdir)/tests/input_codes/minimal/minimal.binary
+  __minimal_input_code = $(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.binary
 endif # Binary analysis
 endif # Python
 endif # PHP

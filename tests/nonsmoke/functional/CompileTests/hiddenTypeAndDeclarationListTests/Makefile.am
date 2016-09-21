@@ -22,7 +22,7 @@ else # !ROSE_USE_LONG_MAKE_CHECK_RULE
 # Shorten the list of code to compile to simplify checks using "make distcheck"
 # Note that the tests test2001_02.C and test2001_03.C are required because the
 # tests in ../C_subset_of_Cxx use them and that test2004_116.C is required 
-# because the tests in ROSE/tests/roseTests/programTransformationTests use it.
+# because the tests in ROSE/tests/nonsmoke/functional/roseTests/programTransformationTests use it.
 TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT)
 
 endif # ROSE_USE_LONG_MAKE_CHECK_RULE
@@ -46,7 +46,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
@@ -82,7 +82,7 @@ check-local:
 	@echo "Tests of C++."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/hiddenTypeAndDeclarationListTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/hiddenTypeAndDeclarationListTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************************"
 
 clean-local:

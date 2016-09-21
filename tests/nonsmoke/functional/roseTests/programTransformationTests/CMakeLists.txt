@@ -109,7 +109,7 @@ set(icg_SWITCHES
 add_test(
   NAME icg_1
   COMMAND implicitCodeGenerationTest ${icg_SWITCHES}
-    -c ${CMAKE_SOURCE_DIR}/tests/CompileTests/Cxx_tests/test2004_116.C
+    -c ${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2004_116.C
 )
 
 add_test(

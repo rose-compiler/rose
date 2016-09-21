@@ -150,7 +150,7 @@ TEST_TARGETS += $(icg_TEST_TARGETS)
 EXTRA_DIST += inputCode_implicitCodeGenerationTest.C
 
 icg_SWITCHES = -icg:defaultFunctionGenerator -icg:shortCircuitingTransformation -icg:destructorCallAnnotator
-icg_1.passed: $(top_srcdir)/tests/CompileTests/Cxx_tests/test2004_116.C $(TEST_EXIT_STATUS) implicitCodeGenerationTest
+icg_1.passed: $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2004_116.C $(TEST_EXIT_STATUS) implicitCodeGenerationTest
 	@$(RTH_RUN) CMD="./implicitCodeGenerationTest $(icg_SWITCHES) -c $<" $(TEST_EXIT_STATUS) $@
 icg_2.passed: $(srcdir)/inputCode_implicitCodeGenerationTest.C $(TEST_EXIT_STATUS) implicitCodeGenerationTest
 	@$(RTH_RUN) CMD="./implicitCodeGenerationTest $(icg_SWITCHES) -c $<" $(TEST_EXIT_STATUS) $@
@@ -166,7 +166,7 @@ check-local:
 else
 check-local: $(TEST_TARGETS)
 	@echo "*************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programTransformationTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/programTransformationTests: make check rule complete (terminated normally) ******"
 	@echo "*************************************************************************************************************"
 endif
 

@@ -271,7 +271,7 @@ set(ROSE__CXX_TESTS
   inputBug327.C X.C dynamic_cast.C fstream.C test2005_06.C test2005_08.C
   test2012_57.C test2012_59.C test2013_milind_01.C
   #EXPECTED FAIL: test2013_195.C  test2013_242.C test2012_51.C test2013_31.C
-  #EXPECTED FAILURES in tests/CompileTests/unparseToString: 
+  #EXPECTED FAILURES in tests/nonsmoke/functional/CompileTests/unparseToString: 
   # test2013_38.C test2013_39.C test2013_40.C test2013_63.C
   # test2013_234.C test2013_240.C test2013_241.C test2013_246.C 
 

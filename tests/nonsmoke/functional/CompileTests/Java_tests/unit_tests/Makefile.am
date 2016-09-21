@@ -19,7 +19,7 @@ clean-local:
 check-local:
 	@$(MAKE) $(UNIT_TESTS)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Java_tests/unit_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Java_tests/unit_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
 UNIT_TESTS = \

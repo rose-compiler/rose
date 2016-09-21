@@ -525,76 +525,76 @@ testJavaCommandlineOptions: $(testTranslator)
 #-----------------------------
 # Java only
 #-----------------------------
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -rose:java
 #-----------------------------
 # Classpath
 #-----------------------------
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:classpath "/path/1:/path/2"
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:cp "/path/1:/path/2"
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -classpath "/path/1:/path/2"
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -cp "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -rose:java:classpath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -rose:java:cp "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -classpath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -cp "/path/1:/path/2"
 #-----------------------------
 # Sourcepath
 #-----------------------------
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:sourcepath "/path/1:/path/2"
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -sourcepath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -rose:java:sourcepath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -sourcepath "/path/1:/path/2"
 #-----------------------------
 # Destdir
 #-----------------------------
 	mkdir -p "$(builddir)/tmp/destdir"
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:d "$(builddir)/tmp/destdir"
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -d "$(builddir)/tmp/destdir"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -rose:java:d "$(builddir)/tmp/destdir"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -d "$(builddir)/tmp/destdir"
 #-----------------------------
 # Source Destdir
 #-----------------------------
 	mkdir -p "$(builddir)/tmp/source_destdir"
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ds "$(builddir)/tmp/source_destdir"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -rose:java:ds "$(builddir)/tmp/source_destdir"
 #-----------------------------
 # Source
 #-----------------------------
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.5
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.6
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.7
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -source 1.5
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -source 1.6
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -source 1.7
 #-----------------------------
 # Target
 #-----------------------------
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -target 1.6 -source 1.6
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -target 1.7 -source 1.7
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -target 1.6 -source 1.6
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -target 1.7 -source 1.7
 #-----------------------------
 # Encoding
 #-----------------------------
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding UTF8
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding ISO8859-1
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding SJIS
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding EUCJIS
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -encoding UTF8
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -encoding ISO8859-1
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -encoding SJIS
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -encoding EUCJIS
 #-----------------------------
 # -s
 #-----------------------------
 	mkdir -p "$(builddir)/tmp/generated_source_destdir" && \
-			$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -s "$(builddir)/tmp/generated_source_destdir"
+			$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -s "$(builddir)/tmp/generated_source_destdir"
 #-----------------------------
 # -nowarn
 #-----------------------------
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -nowarn
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -nowarn
 #-----------------------------
 # -verbose
 #-----------------------------
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -verbose
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -verbose
 #-----------------------------
 # @argfile
 #-----------------------------
-	echo "$(top_srcdir)/tests/input_codes/minimal/minimal.java" > argfile.txt && \
+	echo "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" > argfile.txt && \
 			$(testTranslator) @argfile.txt
 #-----------------------------
 # JVM Options
 #-----------------------------
 # Increase ECJ's JVM stack size
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ecj:jvm_options "-Xss5m"
+	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -rose:java:ecj:jvm_options "-Xss5m"
 #-----------------------------
 # Remote JVM Debugging
 # TOO1 (2/6/2014): Can't perform this test since it is interactive
 #-----------------------------
-#	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ecj:enable_remote_debugging
+#	$(testTranslator) "$(top_srcdir)/tests/nonsmoke/functional/input_codes/minimal/minimal.java" -rose:java:ecj:enable_remote_debugging
 
 # Build a rule to allow running all tests in parallel...
 extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option testJavaCommandlineOptions graphWithFileInfo
@@ -629,13 +629,13 @@ check-local: extraTests
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects)
 	@echo "************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
 else
 check-local:
 	@echo "Tests for Java."
 	@echo "**********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Java_tests: JAVA LANGUAGE SUPPORT NOT CONFIGURED IN ROSE ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Java_tests: JAVA LANGUAGE SUPPORT NOT CONFIGURED IN ROSE ******"
 	@echo "**********************************************************************************************"
 endif
 

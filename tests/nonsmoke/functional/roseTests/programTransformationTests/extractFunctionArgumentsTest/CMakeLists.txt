@@ -6,13 +6,13 @@ target_link_libraries(normalizationTranslator
   ROSE_DLL EDG ${link_with_libraries})
 
 # This populates the list ROSE__CXX_TESTS
-include(${CMAKE_SOURCE_DIR}/tests/CompileTests/Cxx_tests/Cxx_Testcodes.cmake)
+include(${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/Cxx_tests/Cxx_Testcodes.cmake)
 
-set(TESTCODE_DIR ${CMAKE_SOURCE_DIR}/tests/CompileTests/Cxx_tests)
+set(TESTCODE_DIR ${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/Cxx_tests)
 
 set(normalizationTranslator_SWITCHES
 	--edg:no_warnings -w -rose:verbose 0 -I${TESTCODE_DIR}
-  -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code)
+  -I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code)
 
 foreach(file_to_test ${ROSE__CXX_TESTS})
   add_test(

@@ -1,32 +1,25 @@
-# We are moving to a new organization that has only two $ROSE/test subdirectories:
-#
-#   * "smoke" is the directory hierarchy containing all smoke tests, checkers, and specimens and is intended to be run
-#     by end users using "make check". The ENTIRE collection of smoke tests should take at most a couple of minutes to
-#     run on average hardware.
-#
-#   * "non-smoke" is the directory hierarchy that contains all other tests. This will eventually be a separate Git repository.
-
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-SUBDIRS = smoke nonsmoke
+
+SUBDIRS =
 
 ########################################################################################################################
-# The remainder of this makefile is deprecated. Everything that follows should be migrated to either the "smoke" or
-# "non-smoke" subdirectories.
+# Utility functions
+
+SUBDIRS += Utility
+
+########################################################################################################################
+# rose::BinaryAnalysis
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+if !ROSE_USE_INSURE
+SUBDIRS += BinaryAnalysis
+endif
+endif
+
 ########################################################################################################################
 
 
-
-
-
-
-
-
-
-
-
-
-
-include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
+include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
 # DQ (4/17/2010): If we are not supporting C++ then we can't run most of our tests, but if 
 # we are supporting only Fortran then we can at least run the Fortran tests (same with PHP).
@@ -118,19 +111,19 @@ testTranslatorFoldedConstants_SOURCES   = testTranslatorFoldedConstants.C
 # This is a special format of the ROSE AST build for performance File I/O (to address the
 # requirements of large scale applications and their analysis).
 #
-# This executable is tested in tests/roseTests/astFileIO/Makefile.am. I'm not sure why it's tested down there
+# This executable is tested in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am. I'm not sure why it's tested down there
 # instead of here [RPM 2013-09-27].
 testAstFileIO_SOURCES = testAstFileIO.C
 
 # This tests the ability to read one or more of the binary AST files generated from the AST write.
 #
-# This executable is tested in tests/roseTests/astFileIO/Makefile.am.  I'm not sure why it's tested down there
+# This executable is tested in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am.  I'm not sure why it's tested down there
 # instead of here [RPM 2013-09-27].
 testAstFileRead_SOURCES = testAstFileRead.C
 
 # This test the parallel merge of AST files using Cong's threaded implmentation of the merge infrastructure.
 #
-# This seems to be similar to the version in tests/roseTests/astFileIO.
+# This seems to be similar to the version in tests/nonsmoke/functional/roseTests/astFileIO.
 parallelASTMerge_SOURCES = parallelASTMerge.C
 
 # This tests the ability to generate dot file (AST and WholeGraph) for the input application.
@@ -303,7 +296,7 @@ test_testTranslator: testObjectFileTranslator testLinkFileTranslator testCppFile
 # *******  AST File I/O Tests  *******
 # ************************************
 
-# Note: This executable is tested more extensively in tests/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
+# Note: This executable is tested more extensively in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
 testObjectFileFileAstFileIO: testAstFileIO
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C alt_AstFileIO_inputFile.C
@@ -319,7 +312,7 @@ test_testAstFileIO: testObjectFileFileAstFileIO
 # *******  AST File Read Tests  *******
 # *************************************
 
-# Note: This executable is tested more extensively in tests/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
+# Note: This executable is tested more extensively in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
 testAstRead: testAstFileRead testAstFileIO
 	cp $(srcdir)/inputFile.C alt_AstFileRead_inputFile.C
 	./testAstFileIO -c alt_AstFileRead_inputFile.C -o alt_AstFileRead_inputFile

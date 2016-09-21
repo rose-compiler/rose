@@ -496,11 +496,11 @@ ROSE_VERBOSE = -rose:verbose 0
 C_ONLY = -rose:C_only
 # C_ONLY =
 
-TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/testTranslator 
+TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/nonsmoke/functional/testTranslator 
 TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code -I$(srcdir) 
 
 # Test for Old-Style C function definitions
 test2004_19.o: $(srcdir)/test2004_19.C $(TRANSLATOR_EXECUTABLE)
@@ -666,7 +666,7 @@ check-local: $(TRANSLATOR_EXECUTABLE) test2004_19.o test2004_21.o test2004_22.o 
 	@$(MAKE) test_CplusplusMacro_Cpp.o
 	@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/C++Code: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C++Code: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
 

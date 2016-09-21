@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
+TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROSE_FLAGS)
 
 bin_PROGRAMS = memoryTranslator
 memoryTranslator_SOURCES = test.C
@@ -28,7 +28,7 @@ check-local:
 	@echo "#################################################"
 	@$(MAKE) $(TEST_Objects)
 	@echo "*****************************************************************************************************************"
-	@echo "*  ROSE/tests/RunTests/AstDeleteTests: make check rule complete (terminated normally)                           *"
+	@echo "*  ROSE/tests/nonsmoke/functional/RunTests/AstDeleteTests: make check rule complete (terminated normally)                           *"
 	@echo "*****************************************************************************************************************"
 
 

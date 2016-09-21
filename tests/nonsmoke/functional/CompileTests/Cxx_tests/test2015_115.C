@@ -1,6 +1,6 @@
 
 // This fails when processed using the move-tool
-// (see tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_141.C)
+// (see tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_141.C)
 // Note that test2015_116.C is a modification of this tests code.
 
 #include <list>

@@ -32,7 +32,7 @@ else() # !ROSE_USE_LONG_MAKE_CHECK_RULE
   # Shorten the list of code to compile to simplify checks using "make distcheck"
   # Note that the tests test2001_02.C and test2001_03.C are required because the
   # tests in ../C_subset_of_Cxx use them and that test2004_116.C is required
-  # because the tests in ROSE/tests/roseTests/programTransformationTests use it.
+  # because the tests in ROSE/tests/nonsmoke/functional/roseTests/programTransformationTests use it.
   set(TESTCODES ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT})
 endif() # ROSE_USE_LONG_MAKE_CHECK_RULE
 
@@ -42,7 +42,7 @@ set(SKIP_UNPARSE_C_ASM_STATEMENTS -rose:skip_unparse_asm_commands)
 set(ROSE_FLAGS --edg:no_warnings -w -rose:verbose 0
     ${SKIP_UNPARSE_C_ASM_STATEMENTS}
     -I${CMAKE_CURRENT_SOURCE_DIR}
-    -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code)
+    -I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code)
 
 foreach(testcode ${TESTCODES})
   compile_test(${testcode} TRUE)

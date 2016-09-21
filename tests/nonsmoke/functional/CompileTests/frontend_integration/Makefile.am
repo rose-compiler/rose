@@ -17,7 +17,7 @@ EXTRA_DIST = C-tests.inc Cxx-tests.inc
 
 check-local:
 	@echo "****************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/frontend_integration: (ROSE not configured for these tests) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/frontend_integration: (ROSE not configured for these tests) ******"
 	@echo "****************************************************************************************************"
 
 clean-local:

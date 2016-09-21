@@ -431,14 +431,14 @@ else # !ROSE_USE_LONG_MAKE_CHECK_RULE
 # Shorten the list of code to compile to simplify checks using "make distcheck"
 # Note that the tests test2001_02.C and test2001_03.C are required because the
 # tests in ../C_subset_of_Cxx use them and that test2004_116.C is required 
-# because the tests in ROSE/tests/roseTests/programTransformationTests use it.
+# because the tests in ROSE/tests/nonsmoke/functional/roseTests/programTransformationTests use it.
 TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT)
 
 endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
@@ -519,7 +519,7 @@ endif
 check-local: check-cxx check-c check-c99 check-fortran
 # check-local: $(CXX_FILES) $(C_FILES)
 	@echo "******************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/uninitializedField_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/uninitializedField_tests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"
 
 clean-local:
@@ -529,6 +529,6 @@ clean-local:
 else
 # None of this file is included when USE_VALGRIND is off
 check-local:
-	@echo "Skipping tests/CompileTests/uninitializedField_tests because Valgrind was not found" >&2
+	@echo "Skipping tests/nonsmoke/functional/CompileTests/uninitializedField_tests because Valgrind was not found" >&2
 
 endif

@@ -22,12 +22,12 @@ unparseProject_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 ########################################################################################################################
 
 # The list of specimens (which must all be from one directory so as to not be ambiguous)
-SPECIMEN_DIR = $(abs_top_srcdir)/tests/CompileTests/Cxx_tests
+SPECIMEN_DIR = $(abs_top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 ##DOES_NOT_WORK## include $(SPECIMEN_DIR)/Makefile-pass.inc
 include ../Cxx_tests/Makefile-pass.inc
 SPECIMENS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 TEST_CONFIG = $(top_srcdir)/scripts/test_exit_status
-TEST_INCLUDES = -I$(SPECIMEN_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
+TEST_INCLUDES = -I$(SPECIMEN_DIR) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 # The makefile targets for "make check"
 unparseAll_TEST_TARGETS = $(addprefix ua_, $(addsuffix .passed, $(SPECIMENS)))

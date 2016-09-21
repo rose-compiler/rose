@@ -66,10 +66,10 @@ endif()
 ## PerformanceTests directory as well.
 ## DIST_SUBDIRS = $(SUBDIRS)
 #
-## DQ (1/7/2004): Relocation of ROSE/src/rose.C to ROSE/tests/testTranslator.C
+## DQ (1/7/2004): Relocation of ROSE/src/rose.C to ROSE/tests/nonsmoke/functional/testTranslator.C
 ## Build rose.C test translator in this directory since it is only used for tests
 ## of the included test codes.  This code has been moved from the ROSE/src/rose.C
-## to ROSE/tests/testTranslator.C as part of the directory reorganization.
+## to ROSE/tests/nonsmoke/functional/testTranslator.C as part of the directory reorganization.
 ## The change was required because of the dependences of ROSE/src/rose.C upon
 ## libraries that had not yet been built.  There was no order in which the
 ## parent directories could be visited to build all the libraries require before 

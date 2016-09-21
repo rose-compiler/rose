@@ -164,7 +164,7 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 	@$(MAKE) $(PASSING_TEST_Objects)
 #	@$(MAKE) test_ofp
 	@echo "*******************************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests/experimental_frontend_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests/experimental_frontend_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************************************"
 else
 	@echo "*******************************************************************************************"

@@ -8,8 +8,8 @@ SUBDIRS =
 #------------------------------------------------------------------------------
 # Global Build Flags
 #------------------------------------------------------------------------------
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/UnitTests/include/
-LDADD       = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/tests/UnitTests/libcommon.la
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/nonsmoke/functional/UnitTests/include/
+LDADD       = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/tests/nonsmoke/functional/UnitTests/libcommon.la
 
 #------------------------------------------------------------------------------
 # ROSE Dependency
@@ -18,8 +18,8 @@ LDADD       = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/tests/UnitTests/li
 librose:
 	$(MAKE) librose.la -C $(top_builddir)/src
 
-$(top_builddir)/tests/UnitTests/libcommon.la:
-	$(MAKE) libcommon.la -C $(top_builddir)/tests/UnitTests
+$(top_builddir)/tests/nonsmoke/functional/UnitTests/libcommon.la:
+	$(MAKE) libcommon.la -C $(top_builddir)/tests/nonsmoke/functional/UnitTests
 
 #------------------------------------------------------------------------------
 # Build Targets

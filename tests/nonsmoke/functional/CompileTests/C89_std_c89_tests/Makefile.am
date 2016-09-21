@@ -147,8 +147,8 @@ EXTRA_DIST = $(ALL_TESTCODES) c-common.def \
              predict.def test2010_15.h test2013_05.h test2013_06.h
 
 copyFiles:
-	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
-	cp $(srcdir)/*.c $(top_srcdir)/tests/CompileTests/C_tests
+	cp $(srcdir)/*.h $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests
+	cp $(srcdir)/*.c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests
 
 check-local:
 	@echo "Tests for C."
@@ -156,7 +156,7 @@ check-local:
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 	@echo "*******************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/C89_std_c89_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C89_std_c89_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************"
 
 clean-local:

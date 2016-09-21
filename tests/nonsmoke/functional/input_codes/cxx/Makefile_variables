@@ -1,5 +1,5 @@
 
-ROSE__CXX_TESTS_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+ROSE__CXX_TESTS_DIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 
 # DQ (5/26/2014): Separate out test2014_241.C from use in the normalization tests.
 # ROSE__CXX_TESTS = 

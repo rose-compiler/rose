@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ######################################################
 
 # DQ (2/10/2013): Fixed makefile to build required testTranslator before running tests.
-# TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator 
+# TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator 
 TEST_TRANSLATOR = ../../testTranslator
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
@@ -85,7 +85,7 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/Cxx
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(PERFORMANCE_REPORT_OPTION)
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 #VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=yes --error-limit=no --show-reachable=yes
@@ -142,7 +142,7 @@ check-local:
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "*******************************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/nameQualificationAndTypeElaboration_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/nameQualificationAndTypeElaboration_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************************************"
 
 clean-local:

@@ -34,15 +34,15 @@ compass_parameters:
 	cp -f ../compass_parameters .
 
 testenv:
-	env ROSE_REGRESSION_ROOT ../../../../../tests/CompileTests/C_tests/ echo "$ROSE_REGRESSION_ROOT"
+	env ROSE_REGRESSION_ROOT ../../../../../tests/nonsmoke/functional/CompileTests/C_tests/ echo "$ROSE_REGRESSION_ROOT"
 
-#ROSE_REGRESSION_ROOT=../../../../../tests/CompileTests/C_tests/
+#ROSE_REGRESSION_ROOT=../../../../../tests/nonsmoke/functional/CompileTests/C_tests/
 test: buildInterpreter compass_parameters  
-	rm -f $(top_builddir)/tests/CompileTests/C_tests/test.db
-	echo "Cleaning ../../../../../tests/CompileTests/C_tests/ "
-	env ROSE_TEST_REGRESSION_ROOT=../../../../../tests/CompileTests/C_tests/  $(MAKE) -C ../../../../../tests/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter clean
-	echo "Making ../../../../../tests/CompileTests/C_tests/ "
-	env ROSE_TEST_REGRESSION_ROOT=../../../../../tests/CompileTests/C_tests/  $(MAKE) -C ../../../../../tests/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter check
+	rm -f $(top_builddir)/tests/nonsmoke/functional/CompileTests/C_tests/test.db
+	echo "Cleaning ../../../../../tests/nonsmoke/functional/CompileTests/C_tests/ "
+	env ROSE_TEST_REGRESSION_ROOT=../../../../../tests/nonsmoke/functional/CompileTests/C_tests/  $(MAKE) -C ../../../../../tests/nonsmoke/functional/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter clean
+	echo "Making ../../../../../tests/nonsmoke/functional/CompileTests/C_tests/ "
+	env ROSE_TEST_REGRESSION_ROOT=../../../../../tests/nonsmoke/functional/CompileTests/C_tests/  $(MAKE) -C ../../../../../tests/nonsmoke/functional/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter check
 
 
 #test: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C

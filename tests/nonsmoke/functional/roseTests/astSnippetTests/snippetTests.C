@@ -19,9 +19,9 @@ findSnippetFile(const std::string &fileName)
 
     std::vector<std::string> directories;
     directories.push_back(".");
-    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests");
-    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/SmallSpecimensC");
-    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/SmallSpecimensJava");
+    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/nonsmoke/functional/roseTests/astSnippetTests");
+    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/nonsmoke/functional/roseTests/astSnippetTests/SmallSpecimensC");
+    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/nonsmoke/functional/roseTests/astSnippetTests/SmallSpecimensJava");
     BOOST_FOREACH (const std::string &directory, directories) {
         std::string fullName = directory + "/" + fileName;
         if (0 == access(fullName.c_str(), R_OK))
