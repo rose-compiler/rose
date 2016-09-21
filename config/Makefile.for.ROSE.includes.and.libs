@@ -574,6 +574,19 @@ check-smoke check-nonsmoke check-all:
 	done
 	$(MAKE) $(AM_MAKEFLAGS) $@-local
 
-check-smoke-local check-nonsmoke-local check-all-local:
+check-smoke-local check-nonsmoke-local:
+check-all-local: check-smoke-local check-nonsmoke-local
 
-.PHONY: check-smoke check-nonsmoke check-all check-smoke-local check-nonsmoke-local check-all-local
+# Temporary until Jenkins and the Matrix are fixed to run "make check-all" isntead of "make check".  The correct version
+# should be that check-local depends only on check-smoke-local. [Matzke, 2016-09-21].
+check-local: check-smoke-local check-nonsmoke-local
+
+clean-test-targets:
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)
+	rm -f $(TEST_TARGETS:.passed=.out)
+	rm -f $(TEST_TARGETS:.passed=.err)
+
+clean-local: clean-test-targets
+
+.PHONY: check-smoke check-nonsmoke check-all check-smoke-local check-nonsmoke-local check-all-local clean-test-targets
