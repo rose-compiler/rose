@@ -69,7 +69,7 @@ copyFiles:
 check-syntax:
 	@$(compass_build_tooldir)/compass/compassMain $(CHK_SOURCES)
 
-check-local:
+conditional-check-local:
 	@echo "Dan Quinlan's development tests for C."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -78,12 +78,14 @@ check-local:
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/MicrosoftWindows_tests: make check rule complete (terminated normally) ******"
 	@echo "********************************************************************************************************************"
 else
-check-local:
+conditional-check-local:
 	@echo "\nMicrosoft Windows development tests NOT run.  To run these reconfigure with:"
 	@echo "**********************************************************************************"
 	@echo "****** make check not run here: configure --with-wine=<WINE directory path> ******"
 	@echo "**********************************************************************************"
 endif
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.pdf *~ *.ps *.out rose_performance_report_lockfile.lock

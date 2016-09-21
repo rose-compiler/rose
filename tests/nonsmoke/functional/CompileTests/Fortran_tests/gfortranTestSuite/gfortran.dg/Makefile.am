@@ -1560,7 +1560,7 @@ tests:
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg: make tests rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************************"
 
-check-local:
+conditional-check-local:
 	@echo "Tests for Fortran (from the gfortran tests suite)."
 	@echo "Run the gfortran testsuite tests...."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
@@ -1580,7 +1580,7 @@ endif
 else
 
 # Fortran support not available in ROSE unless specified on the configure command line.
-check-local:
+conditional-check-local:
 	@echo "*****************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg: FORTRAN NOT CONFIGURED IN ROSE ******"
 	@echo "*****************************************************************************************************************"
@@ -1595,6 +1595,8 @@ listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_F
 EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) \
              bom_include.inc  default_format_1.inc  default_format_2.inc  include_1.inc  include_4.inc \
              literal_character_constant_1.inc  use_only_3.inc
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o *.rmod *_postprocessed.*

@@ -107,7 +107,7 @@ if ROSE_USE_SSL_SUPPORT
 	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule skipped (SSL support disables this rule) ******" 
 	@echo "*******************************************************************************************************************"
 else	
-check-local:
+conditional-check-local:
 	@echo "Fortran tests for ROSE OpenMP parser"
 	@$(MAKE) $(PASSING_F77_TEST_OBJECTS)
 	@$(MAKE) $(PASSING_F90_TEST_OBJECTS)
@@ -116,7 +116,7 @@ check-local:
 	@echo "***********************************************************************************************************"
 endif	
 else
-check-local:
+conditional-check-local:
 	@echo "Fortran tests for ROSE OpenMP parser"
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule skipped (FORTRAN NOT CONFIGURED) ******" 
@@ -125,6 +125,9 @@ check-local:
 endif	
 
 EXTRA_DIST = $(ALL_TESTCODES)
+
+check-local: conditional-check-local
+
 clean-local:
 	rm -f *.o rose_*.* *.out *.dot
 	rm -rf QMTest

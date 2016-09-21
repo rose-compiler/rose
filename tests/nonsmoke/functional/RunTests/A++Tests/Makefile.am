@@ -51,12 +51,12 @@ LDADD = @Axx_LIBS@
 
 if AXXPXX_SPECIFIC_TESTS
 # This rule is run after automake's internal check rule (which we don't want to use)
-check-local:
+conditional-check-local:
 	@echo "These tests require configuration with path to a fully installed A++P++ Library"
 	@$(MAKE) $(TEST_Objects)
 
 else
-check-local:
+conditional-check-local:
 	@echo "\nThese examples require configuration with path to a fully installed A++P++ Library: rerun "
 	@echo "     configure --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install"
 	@echo "to run these tests. \n\n"
@@ -73,6 +73,8 @@ EXTRA_DIST = \
    test1.C
 
 # DISTCLEANFILES = $(TESTCODES)
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f core *.o rose_*.C *.sage.C *.show test2001_??.C.show \

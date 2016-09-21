@@ -373,12 +373,18 @@ test_testTemplates: testTemplates
 #	./predefinedMacros
 
 # Make check rule
-check-local: test
+conditional-check-local: test
 	@echo "************************************************************************"
 	@echo "****** ROSE/tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************"
 
+else
+
+conditional-check-local:
+
 endif
+
+check-local: conditional-check-local
 
 clean-local: myCleanRule
 

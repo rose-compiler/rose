@@ -97,12 +97,12 @@ PHONIES += test_attach01 test_attach01a test_prop01 update_xml
 
 # DQ (3/21/2009): These tests don't appear to run under Cygwin.
 if ROSE_BUILD_OS_IS_CYGWIN
-check-local:
+conditional-check-local:
 	@echo "********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests: (commented out all tests for Cygwin) ******"
 	@echo "********************************************************************************************"
 else
-check-local:
+conditional-check-local:
 # DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)
 if !OS_VENDOR_DEBIAN
 if ROSE_BUILD_C_LANGUAGE_SUPPORT
@@ -124,13 +124,6 @@ else
 endif
 endif
 
-clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files *.bin test_attach01a-out.txt test_attach01-out.txt test_prop01-out.txt test_hl01-out.txt
-	rm -f *.pdf
-
-distclean-local:
-	rm -rf Templates.DB
-
 update_xml:
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/data/01/updateXML.sh $(CC)
 
@@ -151,6 +144,15 @@ EXTRA_DIST = test_attach01a.sh \
   test_highlevel.cc
 
 endif # ROSE_BUILD_ROSEHPCT
+
+check-local: conditional-check-local
+
+clean-local:
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files *.bin test_attach01a-out.txt test_attach01-out.txt test_prop01-out.txt test_hl01-out.txt
+	rm -f *.pdf
+
+distclean-local:
+	rm -rf Templates.DB
 
 .PHONY: $(PHONIES)
 

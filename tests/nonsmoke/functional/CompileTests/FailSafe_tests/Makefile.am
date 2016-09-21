@@ -44,7 +44,7 @@ $(C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-check-local:
+conditional-check-local:
 	@echo "Test for ROSE FailSafe Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
 #	@$(MAKE) $(PASSING_CXX_TEST_Objects)
@@ -52,14 +52,16 @@ check-local:
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/FailSafe_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 else
-check-local:
+conditional-check-local:
 	@echo "Test for ROSE FailSafe Parser."
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/FailSafe_tests: make check rule for C/C++ skipped (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 endif
 
-EXTRA_DIST = $(ALL_TESTCODES) README 
+EXTRA_DIST = $(ALL_TESTCODES) README
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.* *.out

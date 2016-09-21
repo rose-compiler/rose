@@ -207,13 +207,7 @@ demoSourceEquivalence: testSourceEquivalence
 demoBinaryEquivalence: testBinaryEquivalence
 	eog $(srcdir)/astEquivalenceGraphForBinaryCode3.png &
 
-
-
-# ******************************************************
-#              Standard Makefile Content
-# ******************************************************
-
-check-local:
+conditional-check-local:
 	@echo "ROSE demo."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "Testing demos..." 
@@ -224,13 +218,20 @@ check-local:
 	@echo "******** ROSE/demo: make check rule complete (terminated normally) *********"
 	@echo "****************************************************************************"
 else
-check-local:
+conditional-check-local:
 	@echo "\nROSE demo requires Qt configure option (at least), Demo NOT run.  To run these reconfigure ROSE (see manual)"
 	@echo "***********************************************************************************************************************************************************"
 	@echo "**************************************************************** make check not run here: DEMO ************************************************************"
 	@echo "*** Expected configure line: <...>/configure --with-boost=<path> --with-qt=<path> --with-sqlite3=<path> --with-dwarf=<path> --enable-assembly-semantics ***"
 	@echo "***********************************************************************************************************************************************************"
 endif
+
+# ******************************************************
+#              Standard Makefile Content
+# ******************************************************
+
+.PHONY: conditional-check-local
+check-local: conditional-check-local
 
 EXTRA_DIST = CMakeLists.txt demo.txt
 

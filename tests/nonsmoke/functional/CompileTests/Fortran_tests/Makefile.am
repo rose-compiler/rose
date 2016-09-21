@@ -1375,7 +1375,7 @@ tests:
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests: make tests rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
 
-check-local:
+conditional-check-local:
 	@echo "Tests for Fortran."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -1401,7 +1401,7 @@ endif
 else
 
 # Fortran support not available in ROSE unless specified on the configure command line.
-check-local:
+conditional-check-local:
 	@echo "***********************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests: FORTRAN NOT CONFIGURED IN ROSE ******"
 	@echo "***********************************************************************************"
@@ -1425,6 +1425,8 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.f* *.rmod

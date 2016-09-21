@@ -113,7 +113,7 @@ check_PROGRAM = $(PASSING_F77_TEST_Executables) $(PASSING_F90_TEST_Executables)
 # Executables depend on objects
 # check-TESTS happens before check-local
 TESTS =  $(check_PROGRAM)
-check-local: ../roseomp
+conditional-check-local: ../roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing Fortran 77 input *******************"
 	$(MAKE) $(PASSING_F77_TEST_Objects)
@@ -128,12 +128,12 @@ check-local: ../roseomp
 
 else
 if ROSE_USE_OMNI_OPENMP
-check-local: ../roseomp
+conditional-check-local: ../roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "Link with Omni OpenMP runtime is not tested/supported yet."
 else
 #-------------compile only --------------------------------     
-check-local: ../roseomp
+conditional-check-local: ../roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing Fortran 77 input *******************"
 	$(MAKE) $(PASSING_F77_TEST_Objects)
@@ -158,6 +158,8 @@ OBJECTS_WITH_TESTS =				\
 	$(F77_TEST_OBJECT_REQUIRED_TO_RUN)	\
 	$(PASSING_F90_TEST_Objects)		\
 	$(F90_TEST_OBJECT_REQUIRED_TO_RUN)
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f $(OBJECTS_WITH_TESTS)

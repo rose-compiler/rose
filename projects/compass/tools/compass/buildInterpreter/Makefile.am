@@ -48,11 +48,6 @@ test: buildInterpreter compass_parameters
 #test: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C
 #	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui $(compass_test_dir)/exampleTest_1.C
 
-check-local:
-	@echo "************************************************************************************"
-	@echo "*** ROSE/projects/compass/tools/compass/buildInterpreter: make check rule complete (terminated normally) ***"
-	@echo "************************************************************************************"
-
 CLEANFILES = compass_parameters rqmgc
 
 endif

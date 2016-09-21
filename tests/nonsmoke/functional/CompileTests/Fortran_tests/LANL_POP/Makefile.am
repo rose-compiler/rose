@@ -385,7 +385,7 @@ check-analysis:
 	@$(MAKE) TRANSLATOR_EXECUTABLE=testAnalysis $(PASSING_TEST_Objects)
 	@echo "Test of check-analysis rule terminated normally..."
 
-check-local:
+conditional-check-local:
 	@echo "Tests for Fortran (LANL POP)."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -400,7 +400,7 @@ endif
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests/LANL_POP: make check rule complete (terminated normally using $(TRANSLATOR)) ******"
 	@echo "******************************************************************************************************************************************"
 else
-check-local:
+conditional-check-local:
 	@echo "\nROSE Fortran development tests using the LANL POP code NOT run.  To run these reconfigure with:"
 	@echo "*********************************************************************************************"
 	@echo "******************* make check not run here: configure --with-fortran ***********************"
@@ -411,6 +411,8 @@ copyFiles:
 	echo "LANL POP files not copied to ROSE/tests directory..."
 
 EXTRA_DIST = CMakeLists.txt mpif.h $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) $(F90_INCLUDED_MODULES)
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o *.s *.mod *.rmod rose_*.C rose_*.f rose_*.F* rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *_postprocessed.* *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock

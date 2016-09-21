@@ -162,13 +162,12 @@ icg_2.passed: $(srcdir)/inputCode_implicitCodeGenerationTest.C $(TEST_EXIT_STATU
 
 # DQ (3/21/2009): None of these tests appear to run under Cygwin.
 if ROSE_BUILD_OS_IS_CYGWIN
-check-local:
+conditinal-check-local:
 else
-check-local: $(TEST_TARGETS)
-	@echo "*************************************************************************************************************"
-	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/programTransformationTests: make check rule complete (terminated normally) ******"
-	@echo "*************************************************************************************************************"
+conditional-check-local: $(TEST_TARGETS)
 endif
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f $(TEST_TARGETS)

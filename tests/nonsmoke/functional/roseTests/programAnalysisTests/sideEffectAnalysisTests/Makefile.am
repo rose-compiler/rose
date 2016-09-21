@@ -28,9 +28,9 @@ $(TEST_TARGETS): %.passed: testSideEffect $(srcdir)/% $(srcdir)/%.ans $(top_srcd
 		ANS="$(srcdir)/$*.ans"							\
 		$(top_srcdir)/scripts/test_with_answer $@
 
+endif
+
 clean-local:
 	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
 
 check-local: $(TEST_TARGETS)
-
-endif

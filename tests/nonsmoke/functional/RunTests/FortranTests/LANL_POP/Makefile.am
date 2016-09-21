@@ -281,9 +281,13 @@ compare_answers: pristine.ans modified.ans
 	diff -u $^
 	@echo "  PASSED  LANL POP tests"
 
-check-local: compare_answers
+conditional-check-local: compare_answers
 
+else
+conditional-check-local:
 endif
+else
+conditional-check-local:
 endif
 
 ###############################################################################################################################
@@ -301,6 +305,8 @@ endif
 EXTRA_DIST = hudson.template make_rmod_deps.pl setup_run_dir.ROSE
 dist-hook:
 	cp -pPRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -rf $(netcdf_blddir)

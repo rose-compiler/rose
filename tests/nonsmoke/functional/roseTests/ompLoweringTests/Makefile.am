@@ -357,7 +357,7 @@ check_PROGRAM = $(PASSING_C_TEST_Executables) $(PASSING_CXX_TEST_Executables)
 # Executables depend on objects
 # check-TESTS happens before check-local
 TESTS =  $(check_PROGRAM) $(cuda_PROGRAM)
-check-local: roseomp
+conditional-check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
@@ -402,7 +402,7 @@ check_PROGRAM = $(PASSING_C_TEST_Executables) $(PASSING_CXX_TEST_Executables)
 # check-TESTS happens before check-local
 TESTS =  $(check_PROGRAM)  $(cuda_PROGRAM)
 
-check-local: roseomp
+conditional-check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
@@ -427,7 +427,7 @@ else
 
 TESTS =  $(cuda_PROGRAM)
 #-------------compile only --------------------------------	
-check-local: roseomp \
+conditional-check-local: roseomp \
 		$(PASSING_C_TEST_Objects) $(C_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CUDA_Files) \
 		$(PASSING_CXX_TEST_Objects) $(CXX_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files)
 if OS_MACOSX
@@ -448,7 +448,9 @@ endif
 
 endif # ROSE_USE_OMNI_OPENMP
  
-endif # 
+endif #
+
+check-local: conditional-check-local
 
 # Try not to delete files that a developer might have sitting in this directory--delete only things created by
 # running the makefile.  I.e., try not to use wildcards!  Also, we could have combined these variables into a

@@ -140,7 +140,7 @@ testGCJ: $(gcjTests_passing_Objects)
 # ********************************************************************************
 
 
-check-local: 
+conditional-check-local: 
 	@echo "Tests for Microsoft Windows Java."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -149,7 +149,7 @@ check-local:
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Java_tests: make check rule complete (terminated normally) ******"
 	@echo "*****************************************************************************************************************"
 else
-check-local:
+conditional-check-local:
 	@echo "Tests for Microsoft Windows Java."
 	@echo "***************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Java_tests: JAVA LANGUAGE SUPPORT NOT CONFIGURED IN ROSE ******"
@@ -190,3 +190,5 @@ dist-hook:
 	rm $(distdir)/*.java
 	@echo "Copying the correct versions of the java file from the srcdir = $(srcdir) to the distdir = $(distdir)"
 	cp -p $(srcdir)/*.java $(distdir)
+
+check-local: conditional-check-local

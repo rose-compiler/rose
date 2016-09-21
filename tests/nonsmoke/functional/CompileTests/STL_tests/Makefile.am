@@ -6,9 +6,11 @@ $(TEST_TRANSLATOR):
 	$(MAKE) -C $(top_builddir)/tests testTranslator
 
 if ROSE_USING_GCC_VERSION_LATER_4_8
-check-local: $(TEST_TRANSLATOR)
+conditional-check-local: $(TEST_TRANSLATOR)
 	TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX)  $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
 else
-check-local:
+conditional-check-local:
         @echo "ROSE/tests/nonsmoke/functional/CompileTests/STL_tests: make check rule skipped (not using g++ 4.8+ compiler)."
 endif
+
+check-local: conditional-check-local

@@ -83,15 +83,19 @@ endif
 	@echo "*  ROSE/tests/CompilerOptionTests/testGenerateSourceFileNames: make check rule complete (terminated normally)   *"
 	@echo "*****************************************************************************************************************"
 
-check-local:
+conditional-check-local:
 	$(MAKE) test
 	@echo "*****************************************************************************************************************"
 	@echo "*  ROSE/tests/CompilerOptionTests/testGenerateSourceFileNames: ############# TESTS COMMENTED OUT ############   *"
 	@echo "*****************************************************************************************************************"
 
+else
+conditional-check-local:
 endif
 
-EXTRA_DIST = doesFilesExist.sh  filesNotExist.sh test1.C 
+EXTRA_DIST = doesFilesExist.sh  filesNotExist.sh test1.C
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o test1 *.s rm *.out rose_*.C *.C.pdf *.dot core local_test-isystemOption.C *.dump *.new

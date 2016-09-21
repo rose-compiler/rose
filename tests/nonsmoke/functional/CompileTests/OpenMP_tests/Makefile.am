@@ -224,7 +224,7 @@ $(C_OMP_ACC_TEST_Unparsed): $(srcdir)/$(@:rose_%=%) parseOmp
 #	./parseOmp -rose:openmp:parse_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/$(@:rose_%=%)
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-check-local:
+conditional-check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
 	@$(MAKE) $(PASSING_CXX_TEST_Objects)
@@ -233,7 +233,7 @@ check-local:
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 else
-check-local:
+conditional-check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/OpenMP_tests: make check rule for C/C++ skipped (terminated normally) ******"
@@ -243,6 +243,8 @@ endif
 EXTRA_DIST = $(ALL_TESTCODES) README bonds-2.c \
 			 macroIds.c macroIds.h macroIdsDef.h \
 			 collapse_2.c 
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.* *.out

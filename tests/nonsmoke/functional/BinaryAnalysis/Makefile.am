@@ -1407,22 +1407,9 @@ check-nonsmoke-local:
 	@echo "  TESTING (disabled: binary frontend is not enabled)"
 endif
 
-
-check-smoke-local:
-
-# FIXME: check-local temporarily runs non-smoke tests as well until Jenkins and the matrix are fixed [Matzke, 2016-09-07]
-#check-local: check-smoke-local
-check-local: check-smoke-local check-nonsmoke-local
-
-check-all-local: check-smoke-local check-nonsmoke-local
-
 # Don't delete things indiscriminately--sometimes developers have other related files that should not be touched!
 # Rather than use one big MOSTLYCLEANFILES, split things into smaller parts so we don't get command lines that are too big.
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
-	rm -f $(TEST_TARGETS)
-	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.out)
-	rm -f $(TEST_TARGETS:.passed=.err)
 
 .PHONY: $(PHONIES)

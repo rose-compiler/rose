@@ -50,11 +50,6 @@ demo: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C
 	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui --outputDb $(top_builddir)/tests/nonsmoke/functional/CompileTests/C_tests/test.db
 	rm -f *.c *.h
 
-check-local:
-	@echo "************************************************************************************"
-	@echo "*** ROSE/projects/compass/tools/compass/gui: make check rule complete (terminated normally) ***"
-	@echo "************************************************************************************"
-
 CLEANFILES = compass_parameters
 
 endif

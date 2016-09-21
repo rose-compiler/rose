@@ -516,19 +516,21 @@ else
 check-fortran:
 endif
 
-check-local: check-cxx check-c check-c99 check-fortran
+conditional-check-local: check-cxx check-c check-c99 check-fortran
 # check-local: $(CXX_FILES) $(C_FILES)
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/uninitializedField_tests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"
 
-clean-local:
-	rm -f *.o *.temp.c *-o *-log *.mod
-	rm -rf QMTest
-
 else
 # None of this file is included when USE_VALGRIND is off
-check-local:
+conditional-check-local:
 	@echo "Skipping tests/nonsmoke/functional/CompileTests/uninitializedField_tests because Valgrind was not found" >&2
 
 endif
+
+check-local: conditional-check-local
+
+clean-local:
+	rm -f *.o *.temp.c *-o *-log *.mod
+	rm -rf QMTest
