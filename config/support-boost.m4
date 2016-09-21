@@ -65,7 +65,7 @@ fi
 
 # DQ (10/22/2015): Added more tests (1.55 through 1.62)
 # Define macros for conditional compilation of parts of ROSE based on version of boost
-# (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
+# (this ONLY happens for the tests in tests/nonsmoke/functional/CompilerOptionsTests/testWave)
 #
 # !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
 #
