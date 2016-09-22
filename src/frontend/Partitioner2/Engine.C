@@ -516,7 +516,7 @@ Engine::engineSwitches() {
                    "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
                    "function names and whose values are have a \"function.delta\" integer. The delta does not include "
                    "popping the return address from the stack in the final RET instruction.  Function names of the form "
-                   "\"lib:func\" are translated to the ROSE format \"func@lib\"."));
+                   "\"lib:func\" are translated to the ROSE format \"func@@lib\"."));
     return sg;
 }
 
