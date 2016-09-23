@@ -9,6 +9,7 @@ noinst_PROGRAMS =
 bin_PROGRAMS =
 CHECK_TARGETS =
 CLEAN_TARGETS =
+PHONIES =
 
 #------------------------------------------------------------------------------------------------------------------------
 # Header files, etc
@@ -33,11 +34,11 @@ $(findEnvironmentVars_TESTS): fev_%.passed: $(srcdir)/% findEnvironmentVars $(TE
 EXTRA_DIST += $(findEnvironmentVars_TESTS:.passed=.ans)
 
 CHECK_TARGETS += check-findEnvironmentVars
-.PHONY: check-findEnvironmentVars
+PHONIES += check-findEnvironmentVars
 check-findEnvironmentVars: $(findEnvironmentVars_TESTS)
 
 CLEAN_TARGETS += clean-findEnvironmentVars
-.PHONY: clean-findEnvironmentVars
+PHONIES += clean-findEnvironmentVars
 clean-findEnvironmentVars:
 	rm -f $(findEnvironmentVars_TESTS) $(findEnvironmentVars_TESTS:.passed=.failed)
 
@@ -54,11 +55,11 @@ $(findFileInput_TESTS): ffi_%.passed: $(srcdir)/% findFileInput $(TEST_WITH_ANSW
 EXTRA_DIST += $(findFileInput_TESTS:.passed=.ans)
 
 CHECK_TARGETS += check-findFileInput
-.PHONY: check-findFileInput
+PHONIES += check-findFileInput
 check-findFileInput: $(findFileInput_TESTS)
 
 CLEAN_TARGETS += clean-findFileInput
-.PHONY: clean-findFileInput
+PHONIES += clean-findFileInput
 clean-findFileInput:
 	rm -f $(findFileInput_TESTS) $(findFileInput_TESTS:.passed=.failed)
 
@@ -75,11 +76,11 @@ $(findSocketInput_TESTS): fsi_%.passed: $(srcdir)/% findSocketInput $(TEST_WITH_
 EXTRA_DIST += $(findSocketInput_TESTS:.passed=.ans)
 
 CHECK_TARGETS += check-findSocketInput
-.PHONY: check-findSocketInput
+PHONIES += check-findSocketInput
 check-findSocketInput: $(findSocketInput_TESTS)
 
 CLEAN_TARGETS += clean-findSocketInput
-.PHONY: clean-findSocketInput
+PHONIES += clean-findSocketInput
 clean-findSocketInput:
 	rm -f $(findSocketInput_TESTS) $(findSocketInput_TESTS:.passed=.failed)
 
@@ -96,11 +97,11 @@ $(findSharedMemory_TESTS): fsm_%.passed: $(srcdir)/% findSharedMemory $(TEST_WIT
 EXTRA_DIST += $(findSharedMemory_TESTS:.passed=.ans)
 
 CHECK_TARGETS += check-findSharedMemory
-.PHONY: check-findSharedMemory
+PHONIES += check-findSharedMemory
 check-findSharedMemory: $(findSharedMemory_TESTS)
 
 CLEAN_TARGETS += clean-findSharedMemory
-.PHONY: clean-findSharedMemory
+PHONIES += clean-findSharedMemory
 clean-findSharedMemory:
 	rm -f $(findSharedMemory_TESTS) $(findSharedMemory_TESTS:.passed=.failed)
 
@@ -111,3 +112,5 @@ clean-local: $(CLEAN_TARGETS)
 	rm -f $(MOSTLYCLEANFILES)
 
 endif
+
+.PHONY: $(PHONIES)

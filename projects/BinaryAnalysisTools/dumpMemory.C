@@ -59,7 +59,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
 
     fmt.insert(Switch("hexdump")
                .intrinsicValue(true, settings.showAsHex)
-               .doc("Dump the specimen memory as ASCII text using an output format similar to the @man{hexdump}(1) command."));
+               .doc("Dump the specimen memory as ASCII text using an output format similar to the @man{hexdump}{1} command."));
 
     fmt.insert(Switch("srecords")
                .intrinsicValue(true, settings.showAsSRecords)
