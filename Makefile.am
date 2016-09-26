@@ -59,6 +59,7 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
+	$(MAKE) install -C $(top_builddir)/tests/roseTests/astInterfaceTests
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif
