@@ -982,7 +982,7 @@ boost::uint64_t toInteger(const Word *words, size_t nbits) {
     for (size_t i=0; i<nTmpWords; ++i)
         result |= (boost::uint64_t)words[i] << (i * bitsPerWord<Word>::value);
     if (nbits < 64)
-        result &= ~((~UINT64_C(0)) << nbits);
+        result &= ~((~(boost::uint64_t)0) << nbits);
     return result;
 }
 

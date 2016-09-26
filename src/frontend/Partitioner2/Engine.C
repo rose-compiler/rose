@@ -119,7 +119,7 @@ Sawyer::CommandLine::SwitchGroup
 Engine::loaderSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Loader switches");
-    sg.nameSpace("loader");
+    sg.name("loader");
     sg.doc("The loader is responsible for mapping a specimen into the address space used for disassembling and analysis. "
            "ROSE uses a virtualized address space (the MemoryMap class) to isolate the address space of a specimen from "
            "the address space of ROSE itself.");
@@ -187,7 +187,7 @@ Sawyer::CommandLine::SwitchGroup
 Engine::disassemblerSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Disassembler switches");
-    sg.nameSpace("disassemble");
+    sg.name("disassemble");
     sg.doc("These switches affect the disassembler proper, which is the software responsible for decoding machine "
            "instruction bytes into ROSE internal representations.  The disassembler only decodes instructions at "
            "given addresses and is not responsible for determining what addresses of the virtual address space are decoded.");
@@ -205,7 +205,7 @@ Sawyer::CommandLine::SwitchGroup
 Engine::partitionerSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Partitioner switches");
-    sg.nameSpace("partition");
+    sg.name("partition");
     sg.doc("The partitioner is the part of ROSE that drives a disassembler. While the disassembler knows how to decode "
            "a machine instruction to an internal representation, the partitioner knows where to decode.");
 
@@ -516,7 +516,7 @@ Engine::engineSwitches() {
                    "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
                    "function names and whose values are have a \"function.delta\" integer. The delta does not include "
                    "popping the return address from the stack in the final RET instruction.  Function names of the form "
-                   "\"lib:func\" are translated to the ROSE format \"func@lib\"."));
+                   "\"lib:func\" are translated to the ROSE format \"func@@lib\"."));
     return sg;
 }
 
@@ -524,7 +524,7 @@ Sawyer::CommandLine::SwitchGroup
 Engine::astConstructionSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("AST construction switches");
-    sg.nameSpace("ast");
+    sg.name("ast");
     sg.doc("These switches control how an abstract syntax tree (AST) is generated from partitioner results.");
 
     sg.insert(Switch("allow-empty-global-block")
@@ -627,13 +627,11 @@ Engine::specimenNameDocumentation() {
 Sawyer::CommandLine::Parser
 Engine::commandLineParser(const std::string &purpose, const std::string &description) {
     using namespace Sawyer::CommandLine;
-    Parser parser;
-    parser.purpose(purpose.empty() ? std::string("analyze binary specimen") : purpose);
-    parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
-    parser.chapter(1, "ROSE Command-line Tools");
+    Parser parser =
+        CommandlineProcessing::createEmptyParser(purpose.empty() ? std::string("analyze binary specimen") : purpose,
+                                                 description);
+    parser.groupNameSeparator("-");                     // ROSE defaults to ":", which is sort of ugly
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen_names}");
-    if (!description.empty())
-        parser.doc("Description", description);
     parser.doc("Specimens", specimenNameDocumentation());
     parser.with(engineSwitches());
     parser.with(loaderSwitches());

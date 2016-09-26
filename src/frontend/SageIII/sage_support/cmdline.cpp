@@ -956,6 +956,19 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 #endif
           set_appendPID(true);
         }
+
+  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
+  //
+  // unparseTemplateDeclarationsFromAST
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","unparseTemplateDeclarationsFromAST",false) == true )
+        {
+#if 1
+          printf ("detected use of unparseTemplateDeclarationsFromAST mode \n");
+#endif
+          p_unparseTemplateDeclarationsFromAST = true;
+        }
+
   //
   // specify compilation only option (new style command line processing)
   //
@@ -3390,6 +3403,9 @@ SgFile::usage ( int status )
 "     -rose:appendPID\n"
 "                             append PID into the temporary output name. \n"
 "                             This can avoid issues in parallel compilation (default: false). \n"
+"     -rose:unparseTemplateDeclarationsFromAST\n"
+"                             (experimental) option to permit unparsing template declarations \n"
+"                             from the AST (default: false). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -5546,6 +5562,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
      optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
 
+  // DQ (9/7/2016): remove this from the backend compiler command line (adding more support for it's use).
+  // optionCount = sla(argv, "-rose:", "($)", "(unparse_headers)",1);
+
   // DQ (12/14/2015): Strip out the new option (so it will not be used on the backend compiler).
      optionCount = sla(argv, "-rose:", "($)", "(use_token_stream_to_improve_source_position_info)",1);
 
@@ -5725,6 +5744,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      optionCount = sla(argv, "-rose:", "($)", "appendPID",1);
+
+  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
+     optionCount = sla(argv, "-rose:", "($)", "unparseTemplateDeclarationsFromAST",1);
+
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {

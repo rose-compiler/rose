@@ -94,7 +94,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Switches for output
     SwitchGroup out("Output switches");
-    out.nameSpace("out");
+    out.name("out");
     out.doc("These switches control the various ways that this tool produces output. Switches related to GraphViz output "
             "are described in their own section.");
 
@@ -226,7 +226,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Switches controlling GraphViz output
     SwitchGroup dot("Graphviz switches");
-    dot.nameSpace("gv");
+    dot.name("gv");
     dot.doc("Switches that affect GraphViz output for control flow graphs (CFG) and function call graphs (CG).");
 
     dot.insert(Switch("basename")
@@ -312,7 +312,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(true, settings.gvInlineImports)
                .doc("When emitting a function call graph, inline imports into their callers and display the names of inlined "
                     "functions in the output.  This sometimes makes the output much cleaner.  Import functions are identified "
-                    "by their names only: any name ending with \".dll\" or \"@plt\" is considered an imported function. This "
+                    "by their names only: any name ending with \".dll\" or \"@@plt\" is considered an imported function. This "
                     "feature is disabled with the @s{no-inline-imports} switch.  The default is to " +
                     std::string(settings.gvInlineImports?"":"not ") + "perform this inlining."));
     dot.insert(Switch("no-inline-imports")
@@ -322,7 +322,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Switches for debugging
     SwitchGroup dbg("Debugging switches");
-    dbg.nameSpace("debug");
+    dbg.name("debug");
     dbg.doc("These debugging switches are intended mostly for ROSE developers and direct users of the ROSE library. "
             "Interpretation of the results often requires considerable knowledge of implementation details.");
 

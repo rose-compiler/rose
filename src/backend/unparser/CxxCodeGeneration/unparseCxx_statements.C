@@ -1303,6 +1303,14 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #endif
 
 #if 0
+     printf ("In unparseLanguageSpecificStatement(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseLanguageSpecificStatement(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
+#if 0
   // Debugging support
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
      if (declarationStatement != NULL)
@@ -1564,6 +1572,14 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
      printf ("In unparseLanguageSpecificStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
      curprint (string("/* Inside of unparseLanguageSpecificStatement() stmt = ") + stmt->class_name() + " */ \n");
 #endif
+
+#if 0
+     printf ("Leaving unparseLanguageSpecificStatement(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("Leaving unparseLanguageSpecificStatement(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
    }
 
 
@@ -7480,6 +7496,8 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving unparseClassDeclStmt \n");
+#endif
+#if 0
      curprint ("/* Leaving unparseClassDeclStmt */ \n");
 #endif
    }
@@ -7506,6 +7524,9 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      ninfo.set_SkipClassDefinition();
 
+  // DQ (9/9/2016): Added to conform to unifor testing that these are always equal.
+     ninfo.set_SkipEnumDefinition();
+               
   // DQ (10/13/2006): test2004_133.C demonstrates where we need to unparse qualified names for class definitions (defining declaration).
   // DQ (10/11/2006): Don't generate qualified names for the class name of a defining declaration
   // ninfo.set_SkipQualifiedNames();
@@ -7526,6 +7547,9 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      ninfo.unset_SkipClassDefinition();
 
+  // DQ (9/9/2016): Added to conform to unifor testing that these are always equal.
+     ninfo.unset_SkipEnumDefinition();
+               
 #if 0
   // DQ (1/2/2012): The name stored in SgClassDeclaration contains the template arguments (now that this is set we don't need this code).
   // DQ (1/2/2012): If this is the template instantiation then it could be marked as a specialization (supported by ROSE) 
@@ -9865,6 +9889,36 @@ Unparse_ExprStmt::unparseTemplateHeader(SgFunctionDeclaration* functionDeclarati
    }
 
 
+void
+Unparse_ExprStmt::unparseTemplateHeader(SgClassDeclaration* classDeclaration, SgUnparse_Info& info)
+   {
+  // DQ (9/11/2016): Ultimately we would want to generate the template header (for now I will 
+  // see if we can use the internal string representation, if it exists).
+
+  // DQ (9/11/2016): Support for unparsing of the template header within template declarations 
+  // (I think this only applies to template member and non-member functions).  If this applies
+  // to other declarations then we should make this a template function to refactor the support.
+
+#if 0
+     printf ("In unparseTemplateHeader(SgClassDeclaration): classDeclaration->get_name_qualification_length() = %d \n",classDeclaration->get_name_qualification_length());
+#endif
+
+#if 0
+  // SgName template_header = classDeclaration->get_template_header();
+     SgName template_header = "template < typename T>";
+
+#if 0
+     printf ("In unparseTemplateHeader(SgClassDeclaration): template_header = %s \n",template_header.str());
+#endif
+
+  // curprint("\n ");
+  // curprint(template_header.str());
+     curprint(string("\n\n") + template_header + "\n");
+  // curprint("\n");
+#endif
+   }
+
+
 std::string 
 replaceString(std::string subject, const std::string& search, const std::string& replace) 
    {
@@ -10000,7 +10054,11 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
                  // This is likely a SgTemplateClassDeclaration???
                     if (isSgTemplateClassDeclaration(stmt) == NULL)
                        {
-                         printf ("Note: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                      // DQ (9/12/2016): We want to know if this is something other than a SgTemplateClassDeclaration or SgTemplateTypedefDeclaration (C++11 feature).
+                         if (isSgTemplateTypedefDeclaration(stmt) == NULL)
+                            {
+                              printf ("Note: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                            }
                        }
                   }
              }
@@ -10187,10 +10245,53 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
         {
        // DQ (9/7/2014): This is the typical case.
 #if 0
-          printf ("Output the templateString = %s \n",templateString.c_str());
+          printf ("In unparseTemplateDeclarationStatment_support(): Output the templateString = %s \n",templateString.c_str());
 #endif
        // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
           curprint(string("\n") + templateString);
+
+#if 0
+       // DQ (9/11/2016): Adding support for unparsing the template declaration from the AST.
+
+          printf ("Unparsing the template declaration from the AST (case of class template declaration) \n");
+
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(stmt);
+          ROSE_ASSERT(classDeclaration != NULL);
+
+          printf ("In unparseTemplateDeclarationStatment_support(): calling unparseTemplateHeader() \n");
+
+       // unparseTemplateHeader(stmt,info);
+          unparseTemplateHeader(classDeclaration,info);
+
+          printf ("DONE: In unparseTemplateDeclarationStatment_support(): calling unparseTemplateHeader() \n");
+
+          SgUnparse_Info ninfox(info);
+#if 1
+          printf ("In unparseTemplateDeclarationStatment_support(): calling ninfox.unset_SkipSemiColon() \n");
+#endif
+          ninfox.unset_SkipSemiColon();
+
+       // DQ (6/13/2007): Set to null before resetting to non-null value 
+          ninfox.set_declstatement_ptr(NULL);
+          ninfox.set_declstatement_ptr(classDeclaration);
+
+       // DQ (9/11/2016): We want to unparse the definition.
+       // unparseClassDeclStmt(classDeclaration,info);
+       // unparseStatement(classDeclaration->get_definition(), ninfox);
+          unparseClassDefnStmt(classDeclaration->get_definition(), ninfox);
+
+          if (!info.SkipSemiColon())
+             {
+               curprint(";");
+             }
+
+          printf ("DONE: Unparsing the template declaration from the AST (case of class template declaration) \n");
+
+          curprint ("\n/* Exiting as a test! */\n\n");
+
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
 #if 0

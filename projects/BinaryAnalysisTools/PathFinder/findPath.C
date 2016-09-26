@@ -87,7 +87,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
     
     //--------------------------- 
     SwitchGroup cfg("Control flow graph switches");
-    cfg.nameSpace("cfg");
+    cfg.name("cfg");
 
     cfg.insert(Switch("begin")
                .argument("name_or_va", anyParser(settings.beginVertex))
@@ -195,7 +195,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 
     //---------------------------
     SwitchGroup pcond("Post-condition switches");
-    pcond.nameSpace("post");
+    pcond.name("post");
 
     pcond.insert(Switch("condition")
                  .argument("expression", anyParser(settings.postConditionsStr))
@@ -208,7 +208,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 
     //--------------------------- 
     SwitchGroup out("Output switches");
-    out.nameSpace("out");
+    out.name("out");
 
     out.insert(Switch("show-instructions")
                .intrinsicValue(true, settings.showInstructions)

@@ -44,7 +44,7 @@ parseCommandLine(int argc, char *argv[], Partitioner2::Engine &engine)
         .with(engine.disassemblerSwitches());
     
     SwitchGroup tool("Tool switches");
-    tool.nameSpace("tool");
+    tool.name("tool");
 
     tool.insert(Switch("start")
                 .argument("address", nonNegativeIntegerParser(settings.startVa))

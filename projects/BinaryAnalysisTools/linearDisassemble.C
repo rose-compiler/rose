@@ -63,7 +63,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         .with(engine.disassemblerSwitches());
 
     SwitchGroup switches("Tool-specific switches");
-    switches.nameSpace("tool");
+    switches.name("tool");
 
     switches.insert(Switch("start")
                     .argument("virtual-address", nonNegativeIntegerParser(settings.startVa))
