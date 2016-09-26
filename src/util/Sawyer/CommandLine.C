@@ -6,6 +6,8 @@
 
 
 #include <Sawyer/CommandLine.h>
+#include <Sawyer/DocumentPodMarkup.h>
+#include <Sawyer/DocumentTextMarkup.h>
 
 #include <algorithm>
 #include <boost/algorithm/string/case_conv.hpp>
@@ -23,7 +25,6 @@
 #include <ctime>
 #include <iostream>
 #include <Sawyer/Assert.h>
-#include <Sawyer/MarkupPod.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
@@ -571,8 +572,8 @@ ParsedValue::asString() const {
 SAWYER_EXPORT void
 ParsedValue::save() const {
     if (valueSaver_)
-        valueSaver_->save(value_);
-
+        valueSaver_->save(value_, switchKey_);
+    
     if (value_.type() == typeid(ListParser::ValueList)) {
         const ListParser::ValueList &values = boost::any_cast<ListParser::ValueList>(value_);
         BOOST_FOREACH (const ParsedValue &pval, values)
@@ -600,9 +601,9 @@ operator<<(std::ostream &o, const ParsedValue &x) {
 
 SAWYER_EXPORT std::string
 SwitchArgument::nameAsText() const {
-    std::ostringstream ss;
-    Markup::Parser().parse(name_).emit(ss, Markup::TextFormatter::instance());
-    return ss.str();
+    Document::TextMarkup grammar;
+    grammar.doingPageHeader(false).doingPageFooter(false);
+    return boost::trim_copy(grammar(name_));
 }
 
 /*******************************************************************************************************************************
@@ -615,12 +616,19 @@ ParsingProperties::inherit(const ParsingProperties &base) const {
     if (inheritLongPrefixes)
         retval.longPrefixes = base.longPrefixes;
     retval.longPrefixes.insert(retval.longPrefixes.end(), longPrefixes.begin(), longPrefixes.end());
+
     if (inheritShortPrefixes)
         retval.shortPrefixes = base.shortPrefixes;
     retval.shortPrefixes.insert(retval.shortPrefixes.end(), shortPrefixes.begin(), shortPrefixes.end());
+
     if (inheritValueSeparators)
         retval.valueSeparators = base.valueSeparators;
     retval.valueSeparators.insert(retval.valueSeparators.end(), valueSeparators.begin(), valueSeparators.end());
+
+    retval.showGroupName = SHOW_GROUP_INHERIT == showGroupName ? base.showGroupName : showGroupName;
+    if (SHOW_GROUP_INHERIT == retval.showGroupName)
+        retval.showGroupName = SHOW_GROUP_OPTIONAL;
+
     return retval;
 }
 
@@ -670,17 +678,29 @@ SAWYER_EXPORT std::string
 Switch::synopsis() const {
     if (!synopsis_.empty())
         return synopsis_;
-    return synopsis(NULL, "");
+    return synopsis(properties_, NULL, "");
 }
 
-std::string
-Switch::synopsis(const SwitchGroup *sg /*=NULL*/, const std::string &nameSpaceSeparator) const {
+SAWYER_EXPORT std::string
+Switch::synopsis(const ParsingProperties &swProps, const SwitchGroup *sg /*=NULL*/,
+                 const std::string &groupNameSeparator) const {
     if (!synopsis_.empty())
         return synopsis_;
 
     std::string optionalPart;
-    if (sg && !sg->nameSpace().empty())
-        optionalPart = "[" + sg->nameSpace() + nameSpaceSeparator + "]";
+    if (sg && !sg->name().empty()) {
+        switch (swProps.showGroupName) {
+            case SHOW_GROUP_OPTIONAL:
+            case SHOW_GROUP_INHERIT:
+                optionalPart = "[" + sg->name() + groupNameSeparator + "]";
+                break;
+            case SHOW_GROUP_REQUIRED:
+                optionalPart = sg->name() + groupNameSeparator;
+                break;
+            case SHOW_GROUP_NONE:
+                break;
+        }
+    }
     
     std::vector<std::string> perName;
     BOOST_FOREACH (const std::string &name, longNames_) {
@@ -1598,7 +1618,7 @@ static bool decreasingLength(const std::string &a, const std::string &b) {
 }
 
 // For long switches
-std::string
+SAWYER_EXPORT std::string
 Parser::ambiguityErrorMesg(const std::string &switchString, const std::string &optionalPart, const std::string &switchName,
                            const NamedSwitches &ambiguities) {
     // Find the prefix by erasing everything but it.
@@ -1611,8 +1631,8 @@ Parser::ambiguityErrorMesg(const std::string &switchString, const std::string &o
     std::string mesg = "switch \"" + switchString + "\" is ambiguous, declared in groups:";
     BOOST_FOREACH (const SwitchGroup *otherGroup, ambiguities[switchString].keys()) {
         mesg += "\n  \"" + otherGroup->title() + "\"";
-        if (!otherGroup->nameSpace().empty()) {
-            std::string otherCanonical = prefix + otherGroup->nameSpace() + nameSpaceSeparator_ + switchName;
+        if (!otherGroup->name().empty()) {
+            std::string otherCanonical = prefix + otherGroup->name() + groupNameSeparator_ + switchName;
             mesg += "; use " + otherCanonical;
         } else {
             mesg += "; cannot be accessed";
@@ -1622,7 +1642,7 @@ Parser::ambiguityErrorMesg(const std::string &switchString, const std::string &o
 }
 
 // For short switches
-std::string
+SAWYER_EXPORT std::string
 Parser::ambiguityErrorMesg(const std::string &switchString, const NamedSwitches &ambiguities) {
     ASSERT_require(!switchString.empty());
 
@@ -1639,14 +1659,14 @@ Parser::ambiguityErrorMesg(const std::string &switchString, const NamedSwitches 
             ParsingProperties swProps = sw->properties().inherit(sgProps);
             BOOST_FOREACH (const std::string &prefix, swProps.longPrefixes) {
                 BOOST_FOREACH (const std::string &name, sw->longNames()) {
-                    if (sg->nameSpace().empty()) {
+                    if (sg->name().empty()) {
                         std::string s = prefix + name;
                         if (!ambiguities.exists(s)) {
                             found = s;
                             goto found;
                         }
                     } else {
-                        std::string s = prefix + sg->nameSpace() + nameSpaceSeparator_ + name;
+                        std::string s = prefix + sg->name() + groupNameSeparator_ + name;
                         if (!ambiguities.exists(s)) {
                             found = s;
                             goto found;
@@ -1672,7 +1692,7 @@ Parser::parseLongSwitch(Cursor &cursor, ParsedValues &parsedValues, const NamedS
     ASSERT_require(cursor.atArgBegin());
     BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
         ParsingProperties sgProps = sg.properties().inherit(properties_);
-        std::string optionalPart = sg.nameSpace().empty() ? std::string("") : sg.nameSpace() + nameSpaceSeparator_;
+        std::string optionalPart = sg.name().empty() ? std::string("") : sg.name() + groupNameSeparator_;
         BOOST_FOREACH (const Switch &sw, sg.switches()) {
             ParsingProperties swProps = sw.properties().inherit(sgProps);
             std::vector<std::string> longNames = sw.longNames();
@@ -1688,6 +1708,7 @@ Parser::parseLongSwitch(Cursor &cursor, ParsedValues &parsedValues, const NamedS
                         std::string mesg = ambiguityErrorMesg(switchString, optionalPart, longName, ambiguities);
                         if (errorStream_) {
                             *errorStream_ <<mesg <<"\n";
+                            exit(1);
                         } else {
                             throw std::runtime_error(mesg);
                         }
@@ -1731,6 +1752,7 @@ Parser::parseShortSwitch(Cursor &cursor, ParsedValues &parsedValues, const Named
                     std::string mesg = ambiguityErrorMesg(switchString, ambiguities);
                     if (errorStream_) {
                         *errorStream_ <<mesg <<"\n";
+                        exit(1);
                     } else {
                         throw std::runtime_error(mesg);
                     }
@@ -1918,7 +1940,6 @@ Parser::chapter() const {
 
 SAWYER_EXPORT Parser&
 Parser::doc(const std::string &sectionName, const std::string &docKey, const std::string &text) {
-    checkMarkup(text);
     sectionOrder_.insert(docKey, sectionName);
     sectionDoc_.insert(boost::to_lower_copy(sectionName), text);
     return *this;
@@ -1935,108 +1956,108 @@ Parser::docSections() const {
 // @s{NAME} where NAME is either a long or short switch name without prefix.
 typedef Container::Map<std::string, std::string> PreferredPrefixes; // maps switch names to their best prefixes
 
-class SwitchTag: public Markup::Tag {
+class SwitchTag: public Document::Markup::Function {
     PreferredPrefixes preferredPrefixes_;
     std::string bestShortPrefix_;                       // short prefix if the switch name is not recognized
     std::string bestLongPrefix_;                        // long prefix if the switch name is not recognized
 protected:
-    SwitchTag(const PreferredPrefixes &known, const std::string &bestShort, const std::string &bestLong)
-        : Markup::Tag(Markup::SPANNING, "switch", Markup::SPANNING),
-          preferredPrefixes_(known), bestShortPrefix_(bestShort), bestLongPrefix_(bestLong) {}
+    SwitchTag(const std::string &name, const PreferredPrefixes &known,
+              const std::string &bestShort, const std::string &bestLong)
+        : Document::Markup::Function(name), preferredPrefixes_(known),
+          bestShortPrefix_(bestShort), bestLongPrefix_(bestLong) {}
 public:
     typedef SharedPointer<SwitchTag> Ptr;
-    static Ptr instance(const PreferredPrefixes &known, const std::string &bestShort, const std::string &bestLong) {
-        return Ptr(new SwitchTag(known, bestShort, bestLong));
+    static Ptr instance(const std::string &name, const PreferredPrefixes &known,
+                        const std::string &bestShort, const std::string &bestLong) {
+        Ptr self(new SwitchTag(name, known, bestShort, bestLong));
+        self->arg("name");
+        return self;
     }
-    virtual Markup::Content::Ptr eval(const Markup::TagArgs &args) /*override*/ {
-        using namespace Markup;
+    std::string eval(const Document::Markup::Grammar&, const std::vector<std::string> &args) /*override*/ {
         ASSERT_require(1==args.size());
-        std::string raw = args.front()->asText();
-        PreferredPrefixes::NodeIterator i = preferredPrefixes_.find(raw);
-        if (i==preferredPrefixes_.nodes().end()) {
-            if (1==raw.size()) {
-                raw = bestShortPrefix_ + raw;
+        std::string retval;
+        PreferredPrefixes::NodeIterator i = preferredPrefixes_.find(args[0]);
+        if (i == preferredPrefixes_.nodes().end()) {
+            if (args[0].size() == 1) {
+                retval = bestShortPrefix_ + args[0];
             } else {
-                raw = bestLongPrefix_ + raw;
+                retval = bestLongPrefix_ + args[0];
             }
         } else {
-            raw = i->value() + raw;
+            retval = i->value() + args[0];
         }
-        TagInstance::Ptr nulltag = TagInstance::instance(NullTag::instance(raw));
-        Content::Ptr retval = Content::instance();
-        retval->append(nulltag);
         return retval;
     }
 };
 
 // @seeAlso is replaced by the list @man references that have been processed so far.
-class SeeAlsoTag: public Markup::Tag {
+class SeeAlsoTag: public Document::Markup::Function {
 public:
     typedef SharedPointer<SeeAlsoTag> Ptr;
-    typedef Container::Map<std::string, Markup::Content::Ptr> SeeAlso;
+    typedef Container::Map<std::string, std::string> SeeAlso;
 private:
     SeeAlso seeAlso_;
 protected:
-    SeeAlsoTag(): Markup::Tag(Markup::DIVIDING, "seeAlso") {}
+    SeeAlsoTag(const std::string &name)
+        : Document::Markup::Function(name) {}
 public:
-    static Ptr instance() { return Ptr(new SeeAlsoTag); }
-    void insert(const std::string &name, const Markup::Content::Ptr &content) {
+    static Ptr instance(const std::string &name) {
+        return Ptr(new SeeAlsoTag(name));
+    }
+    void insert(const std::string &name, const std::string &content) {
         seeAlso_.insert(name, content);
     }
-    virtual Markup::Content::Ptr eval(const Markup::TagArgs &args) /*override*/ {
-        using namespace Markup;
-        ASSERT_require(0==args.size());
-        Content::Ptr retval = Content::instance();
-        for (SeeAlso::ValueIterator sai=seeAlso_.values().begin(); sai!=seeAlso_.values().end(); ++sai) {
-            if (sai!=seeAlso_.values().begin())
-                retval->append(", ");
-            retval->append(*sai);
-        }
-        return retval;
+    std::string eval(const Document::Markup::Grammar&, const std::vector<std::string> &args) /*override*/ {
+        ASSERT_require(args.empty());
+        std::vector<std::string> pages(seeAlso_.values().begin(), seeAlso_.values().end());
+        return boost::join(pages, ", ");
     }
 };
 
 // @man{PAGE}{CHAPTER} converted to @em{PAGE}(CHAPTER) to cite Unix manual pages.
-class ManTag: public Markup::Tag {
+class ManTag: public Document::Markup::Function {
     SeeAlsoTag::Ptr seeAlso_;
 protected:
-    ManTag(const SeeAlsoTag::Ptr &seeAlso)
-        : Markup::Tag(Markup::SPANNING, "man", Markup::SPANNING, Markup::SPANNING), seeAlso_(seeAlso) {}
+    ManTag(const std::string &name, const SeeAlsoTag::Ptr &seeAlso)
+        : Document::Markup::Function(name), seeAlso_(seeAlso) {}
 public:
     typedef SharedPointer<ManTag> Ptr;
-    static Ptr instance(const SeeAlsoTag::Ptr &seeAlso) { return Ptr(new ManTag(seeAlso)); }
-    virtual Markup::Content::Ptr eval(const Markup::TagArgs &args) /*override*/ {
-        using namespace Markup;
-        ASSERT_require(2==args.size());
-        Content::Ptr retval = Content::instance();
-        retval->append(TagInstance::instance(EmphasisTag::instance(), args[0]));
-        retval->append("(");
-        retval->append(args[1]);
-        retval->append(")");
-        seeAlso_->insert(args[0]->asText(), retval);
+    static Ptr instance(const std::string &name, const SeeAlsoTag::Ptr &seeAlso) {
+        Ptr self(new ManTag(name, seeAlso));
+        self->arg("page")->arg("chapter", "1");
+        return self;
+    }
+    std::string eval(const Document::Markup::Grammar &grammar, const std::vector<std::string> &args) /*override*/ {
+        ASSERT_require(args.size() == 2);
+        std::string retval = grammar("@b{" + args[0] + "}") + "(" + args[1] + ")";
+        seeAlso_->insert(args[0], retval);
         return retval;
     }
 };
 
 // @prop{KEY} is replaced with the property string stored for KEY
-class PropTag: public Markup::Tag {
+class PropTag: public Document::Markup::Function {
     Container::Map<std::string, std::string> values_;
 protected:
-    PropTag(): Markup::Tag(Markup::SPANNING, "prop", Markup::SPANNING) {}
+    PropTag(const std::string &name)
+        : Document::Markup::Function(name) {}
 public:
     typedef SharedPointer<PropTag> Ptr;
-    static Ptr instance() { return Ptr(new PropTag); }
+    static Ptr instance(const std::string &name) {
+        Ptr self(new PropTag(name));
+        self->arg("name");
+        return self;
+    }
     Ptr with(const std::string &key, const std::string &value) {
         values_.insert(key, value);
         return sharedFromThis().dynamicCast<PropTag>();
     }
-    virtual Markup::Content::Ptr eval(const Markup::TagArgs &args) /*overload*/ {
-        using namespace Markup;
-        ASSERT_require(1==args.size());
-        std::string key = args.front()->asText();
-        Content::Ptr retval = Content::instance();
-        retval->append(values_.getOrDefault(key));
-        return retval;
+    virtual std::string eval(const Document::Markup::Grammar&, const std::vector<std::string> &args) /*overload*/ {
+        ASSERT_require(args.size() == 1);
+        std::string retval;
+        if (values_.getOptional(args[0]).assignTo(retval))
+            return retval;
+        throw Document::Markup::SyntaxError("unknown property \"" + args[0] + "\"");
     }
 };
 
@@ -2075,6 +2096,7 @@ Parser::docForSwitches() const {
     std::string notDocumented = "Not documented.";
     std::vector<SwitchDoc> switchDocs;
     BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
+        ParsingProperties sgProps = sg.properties().inherit(properties_);
         std::string groupKey = sg.docKey().empty() ? boost::to_lower_copy(sg.title()) : sg.docKey();
         std::string sortMajor;
         switch (switchGroupOrder_) {
@@ -2096,14 +2118,15 @@ Parser::docForSwitches() const {
         BOOST_FOREACH (const Switch &sw, sg.switches()) {
             if (sw.hidden())
                 continue;
+            ParsingProperties swProps = sw.properties().inherit(sgProps);
             std::string switchKey = sw.docKey().empty() ? boost::to_lower_copy(sw.key()) : sw.docKey();
             std::string sortMinor;
             switch (sg.switchOrder()) {
                 case DOCKEY_ORDER:      sortMinor = switchKey;          break;
                 case INSERTION_ORDER:   sortMinor = nextSortKey();      break;
             }
-            std::string markup = "@named{" + sw.synopsis(&sg, nameSpaceSeparator_) + "}"
-                                 "{" + (sw.doc().empty() ? notDocumented : sw.doc()) + "}\n";
+            std::string swSynopsis = sw.synopsis(swProps, &sg, groupNameSeparator_);
+            std::string markup = "@named{" + swSynopsis + "}{" + (sw.doc().empty() ? notDocumented : sw.doc()) + "}\n";
             switchDocs.push_back(SwitchDoc(sortMajor, sortMinor, groupKey, markup));
         }
     }
@@ -2199,13 +2222,9 @@ Parser::documentationMarkup() const {
     return doc;
 }
 
-SAWYER_EXPORT Markup::ParserResult
-Parser::parseDocumentation() const {
-    return parseDocumentation(documentationMarkup());
-}
-
-SAWYER_EXPORT Markup::ParserResult
-Parser::parseDocumentation(const std::string &docstring) const {
+// Initialize a documentation grammar. The grammar is usually a subclass of Document::Grammar
+SAWYER_EXPORT void
+Parser::initDocGrammar(Document::Markup::Grammar &grammar /*in,out*/) const {
     // The @s tag for expanding switch names from "foo" to "--foo", or whatever is appropriate
     Container::Map<std::string, std::string> prefixes;
     preferredSwitchPrefixes(prefixes /*out*/);
@@ -2217,7 +2236,7 @@ Parser::parseDocumentation(const std::string &docstring) const {
                            properties_.longPrefixes.front();
 
     // Make some properties available in the markup
-    PropTag::Ptr properties = PropTag::instance();
+    PropTag::Ptr properties = PropTag::instance("prop");
     properties
         ->with("inclusionPrefix", inclusionPrefixes_.empty() ? std::string() : inclusionPrefixes_.front())
         ->with("terminationSwitch", terminationSwitches_.empty() ? std::string() : terminationSwitches_.front())
@@ -2228,55 +2247,42 @@ Parser::parseDocumentation(const std::string &docstring) const {
         ->with("chapterNumber", toString(chapter().first))
         ->with("chapterName", chapter().second);
 
-    // This tag decl will accumulate all the @man references
-    SeeAlsoTag::Ptr seeAlso = SeeAlsoTag::instance();
+    // This markup function will accumulate all the @man references
+    SeeAlsoTag::Ptr seeAlso = SeeAlsoTag::instance("seeAlso");
 
-    Markup::Parser mp;
-    mp.registerTag(SwitchTag::instance(prefixes, bestShort, bestLong), "s");
-    mp.registerTag(ManTag::instance(seeAlso), "man");
-    mp.registerTag(seeAlso, "seeAlso");
-    mp.registerTag(properties, "prop");
-
-    return mp.parse(docstring);
+    // Construct the grammar
+    grammar
+        .with(SwitchTag::instance("s", prefixes, bestShort, bestLong))
+        .with(ManTag::instance("man", seeAlso))
+        .with(seeAlso)
+        .with(properties);
 }
 
 SAWYER_EXPORT std::string
 Parser::podDocumentation() const {
-    Markup::ParserResult doc = parseDocumentation();
-    std::ostringstream ss;
-    doc.emit(ss, Markup::PodFormatter::instance());
-    return ss.str();
+    Document::PodMarkup grammar;
+    initDocGrammar(grammar);
+    return grammar(documentationMarkup());
 }
 
 SAWYER_EXPORT std::string
-Parser::manDocumentation() const {
-    Markup::PodFormatter::Ptr podder = Markup::PodFormatter::instance();
-    podder->title(programName(), toString(chapter().first), chapter().second);
-    podder->version(version().first, version().second);
-    return podder->toNroff(parseDocumentation());
+Parser::textDocumentation() const {
+    Document::TextMarkup grammar;
+    initDocGrammar(grammar);
+    return grammar(documentationMarkup());
 }
 
 SAWYER_EXPORT void
 Parser::emitDocumentationToPager() const {
-    Markup::PodFormatter::Ptr podder = Markup::PodFormatter::instance();
-    podder->title(programName(), toString(chapter().first), chapter().second);
-    podder->version(version().first, version().second);
-    podder->emit(parseDocumentation());
-}
-
-SAWYER_EXPORT void
-checkMarkup(const std::string &s) {
-    Markup::Parser mp;
-
-    // Same as for Parser::parseDocument except just stubbed out to test for syntax
-    Container::Map<std::string, std::string> prefixes;
-    mp.registerTag(SwitchTag::instance(prefixes, "-", "--"), "s");
-    SeeAlsoTag::Ptr seeAlso = SeeAlsoTag::instance();
-    mp.registerTag(ManTag::instance(seeAlso), "man");
-    mp.registerTag(seeAlso, "seeAlso");
-    mp.registerTag(PropTag::instance(), "prop");
-
-    mp.parse("@section{X}{"+s+"}");             // throws on error
+#if 1 // either one works fine, although the text version is about 10x faster
+    Document::PodMarkup grammar;
+#else
+    Document::TextMarkup grammar;
+#endif
+    initDocGrammar(grammar);
+    grammar.title(programName(), toString(chapter().first), chapter().second);
+    grammar.version(version().first, version().second);
+    grammar.emit(documentationMarkup());
 }
 
 SAWYER_EXPORT void
@@ -2289,16 +2295,16 @@ Parser::insertLongSwitchStrings(Canonical canonical, NamedSwitches &retval) cons
             // Long names
             BOOST_FOREACH (const std::string &name, sw.longNames()) {
                 BOOST_FOREACH (const std::string &prefix, swProps.longPrefixes) {
-                    bool hasNameSpace = !sg.nameSpace().empty();
+                    bool groupHasName = !sg.name().empty();
 
-                    // Strings with name spaces
-                    if (hasNameSpace && (canonical == ALL_STRINGS || canonical == CANONICAL)) {
-                        std::string fullName = prefix + sg.nameSpace() + nameSpaceSeparator() + name;
+                    // Strings with group names
+                    if (groupHasName && (canonical == ALL_STRINGS || canonical == CANONICAL)) {
+                        std::string fullName = prefix + sg.name() + groupNameSeparator() + name;
                         retval.insertMaybeDefault(fullName).insertMaybeDefault(&sg).insert(&sw);
                     }
 
-                    // Strings without name spaces
-                    if (canonical == ALL_STRINGS || canonical == NONCANONICAL || (canonical == CANONICAL && !hasNameSpace)) {
+                    // Strings without group names
+                    if (canonical == ALL_STRINGS || canonical == NONCANONICAL || (canonical == CANONICAL && !groupHasName)) {
                         std::string fullName = prefix + name;
                         retval.insertMaybeDefault(fullName).insertMaybeDefault(&sg).insert(&sw);
                     }
@@ -2336,8 +2342,8 @@ Parser::printIndex(std::ostream &out, const NamedSwitches &index, const std::str
         BOOST_FOREACH (const GroupedSwitches::Node &grouped, named.value().nodes()) {
             const SwitchGroup *sg = grouped.key();
             out <<linePrefix <<"  in group \"" <<sg->title() <<"\"";
-            if (!sg->nameSpace().empty())
-                out <<" namespace \"" <<sg->nameSpace() <<"\",";
+            if (!sg->name().empty())
+                out <<" name \"" <<sg->name() <<"\",";
             BOOST_FOREACH (const Switch *sw, grouped.value())
                 out <<" switch.key=" <<sw->key();
             out <<"\n";
@@ -2399,12 +2405,12 @@ Parser::findUnresolvableAmbiguities() const {
                 ParsingProperties swProps = sw->properties().inherit(sgProps);
                 BOOST_FOREACH (const std::string &prefix, swProps.longPrefixes) {
                     BOOST_FOREACH (const std::string &name, sw->longNames()) {
-                        if (sg->nameSpace().empty()) {
+                        if (sg->name().empty()) {
                             std::string s = prefix + name;
                             if (!retval.exists(s))
                                 goto found;
                         } else {
-                            std::string s = prefix + sg->nameSpace() + nameSpaceSeparator_ + name;
+                            std::string s = prefix + sg->name() + groupNameSeparator_ + name;
                             if (!retval.exists(s))
                                 goto found;
                         }
