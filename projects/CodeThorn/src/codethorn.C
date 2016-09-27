@@ -1414,9 +1414,9 @@ int main( int argc, char * argv[] ) {
 
   if(boolOptions["inf-paths-only"]) {
     assert (!boolOptions["keep-error-states"]);
-    cout << "STATUS: recursively removing all leaves."<<endl;
+    cout << "recursively removing all leaves (1)."<<endl;
     timer.start();
-    analyzer.pruneLeavesRec();
+    //analyzer.pruneLeavesRec();
     infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
 
     pstateSetSizeInf=analyzer.getPStateSet()->size();
@@ -1455,7 +1455,7 @@ int main( int argc, char * argv[] ) {
     string ltl_filename = args["check-ltl"].as<string>();
     if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
       if (!boolOptions["inf-paths-only"] && !boolOptions["keep-error-states"] &&!analyzer.getModeLTLDriven()) {
-        cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
+        cout << "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
         timer.start();
         analyzer.pruneLeavesRec();
         infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
@@ -1835,7 +1835,7 @@ int main( int argc, char * argv[] ) {
     // rers mode reduces the STG. In case of ltl-driven mode there is nothing to reduce.
     if(boolOptions["rersmode"] && !analyzer.getModeLTLDriven()) {  //reduce the graph accordingly, if not already done
       if (!boolOptions["inf-paths-only"]) {
-        cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
+        cout << "STATUS: recursively removing all leaves (due to RERS-mode (3))."<<endl;
         analyzer.pruneLeavesRec();
       }
       if (!boolOptions["std-io-only"]) {
@@ -1918,7 +1918,7 @@ int main( int argc, char * argv[] ) {
     cout << "generating spot IO STG file:"<<filename<<endl;
     if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
       if (!boolOptions["inf-paths-only"]) {
-        cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
+        cout << "STATUS: recursively removing all leaves (due to RERS-mode (4)."<<endl;
         analyzer.pruneLeavesRec();
       }
       if (!boolOptions["std-io-only"]) {
