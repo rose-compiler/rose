@@ -120,6 +120,10 @@ bool Analyzer::isPrecise() {
   return !(isActiveGlobalTopify()||variableValueMonitor.isActive());
 }
 
+bool Analyzer::isInExplicitStateMode() {
+  return isPrecise();
+}
+
 bool Analyzer::isIncompleteSTGReady() {
   if(_maxTransitions==-1 && _maxIterations==-1)
     return false;
@@ -1736,6 +1740,10 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       }
       cout<<endl;
     }
+  }
+
+  if(isInExplicitStateMode()) {
+    ROSE_ASSERT(!rhsIntVal.isTop());
   }
 
   if(newPState.varExists(lhsVar)) {
