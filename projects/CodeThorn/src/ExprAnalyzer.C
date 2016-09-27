@@ -426,7 +426,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
           if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
             // set result to top when index is top [imprecision]
-            cerr<<"DEBUG: arr-ref-exp: top!"<<endl;
+            //cerr<<"DEBUG: arr-ref-exp: top!"<<endl;
             res.result=AType::Top();
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
             resultList.push_back(res);
