@@ -28,22 +28,27 @@ struct Settings {
         : showOutlinerSettings(false), useOldParser(false) {}
 } settings;
 
-// Parse the tool's command-line. We want to use a Sawyer::CommandLine::Parser for various reasons, but this is currently a bit
-// of a kludge because most of ROSE doesn't yet support Sawyer. Therefore, since we have two command-line parsers (one for this
-// tool and the outliner analysis, and another for the rest of ROSE), we'll require that the Sawyer switches appear before the
-// non-Sawyer switches and if there are non-sawyer switches they must be introduced with a special "--" separator argument.
-//
-// Other approaches are possible, such as configuring the Sawyer parser to skip over anything it doesn't understand, but those
-// approaches all have problems with mis-parsing due to incomplete information in whichever parser is invoked first.
-static SgProject*
+// Parse the tool's command-line, processing only those switches recognized by Sawyer. Then return the non-parsed switches for
+// the next stage of parsing. We have three more stages that need to process the command-line: Outliner (the old approach),
+// frontend(), and the backend compiler. None of these except the backend compiler can issue error messages about misspelled
+// switches because the first three must assume that an unrecognized switch is intended for a later stage.
+static std::vector<std::string>
 parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
 
     // Use CommandlineProcessing to create a consistent parser among all tools.  If you want a tool's parser to be different
-    // then either create one yourself, or modify the parser properties after createParser returns.
-    Parser p = CommandlineProcessing::createEmptyParser(purpose, description);
-    p.errorStream(::mlog[FATAL]);                       // on error, show message and exit rather than throw exception
-    p.doc("Synopsis", "@prop{programName} [@v{outliner_switches}] [-- @v{rose_switches}] @v{files}");
+    // then either create one yourself, or modify the parser properties after createParser returns. The createEmptyParserStage
+    // creates a parser that assumes all unrecognized switches are intended for a later stage. If there are no later stages
+    // then use createEmptyParser instead or else users will never see error messages for misspelled switches.
+    Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+    p.doc("Synopsis", "@prop{programName} @v{switches}] @v{files}...");
+#if 1 // DEBUGGING [Robb P Matzke 2016-09-27]
+    p.longPrefix("-");
+#endif
+
+    // User errors (what few will be reported since this is only a first-stage parser) should be sent to standard error instead
+    // of raising an exception.  Programmer errors still cause exceptions.
+    p.errorStream(::mlog[FATAL]);
 
     // All ROSE tools have some switches in common, such as --version, -V, --help, -h, -?, --log, -L, --threads, etc. We
     // include them first so they appear near the top of the documentation.  The genericSwitches returns a
@@ -52,48 +57,58 @@ parseCommandLine(int argc, char *argv[]) {
     // simpler this way.
     p.with(CommandlineProcessing::genericSwitches());
 
+    // Eventually, if we change frontend so we can query what switches it knows about, we could insert them into our parser at
+    // this point.  The frontend could report all known switches (sort of how things are organized one) or we could query only
+    // those groups of frontend switches that this tool is interested in (e.g., I don't know if the outliner needs Fortran
+    // switches).
+#if 0 // [Robb P Matzke 2016-09-27]
+    p.with(CommandlineProcessing::frontendAllSwitches()); // or similar
+#endif
+
     // The Outliner has some switches of its own, so include them next.  These switches will automatically adjust the Outliner
     // settings. Since the outliner is implemented as a namespace rather than a class, it's essentially a singlton.  There can
     // be only one instance of an outliner per tool, whether the tool uses an outliner directly (like this one) or indirectly
     // as part of some other analysis.
     p.with(Outliner::commandLineSwitches());
 
-    // Finally, a tool sometimes has its own specific settings, so we demo that here.  We're also adding a "--rose:help" switch
-    // because Sawyer's parser only knows about switches declared with Sawyer and thus can only generate a manpage that
-    // contains those switches.  If we see "--rose:help" we'll add "--help" to the frontend() arguments (and just to change
-    // things up a bit, we'll use a local variable for this instead of the "settings" struct).
+    // Finally, a tool sometimes has its own specific settings, so we demo that here with a couple made-up switches.
     SwitchGroup tool("Tool-specific switches");
 
     tool.insert(Switch("dry-run", 'n')
                 .intrinsicValue(true, settings.showOutlinerSettings)
                 .doc("Instead of running the outliner, just display its settings."));
 
-    tool.insert(Switch("old-parser")
-                .intrinsicValue(true, settings.useOldParser)
-                .doc("Call the old command-line parser. This is in addition to the Sawyer parser."));
+    // Helper function that adds "--old-outliner" and "--no-old-outliner" to the tool switch group, and causes
+    // settings.useOldParser to be set to true or false. It also appends some additional documentation to say what the default
+    // value is. We could have done this by hand with Sawyer, but having a helper encourages consistency.
+    CommandlineProcessing::insertBooleanSwitch(tool, "old-outliner", settings.useOldParser, 
+                                               "Call the old Outliner parser in addition to its new Sawyer parser.");
 
-    bool showRoseHelp = false;
+    // We want the "--rose:help" switch to appear in the Sawyer documentation but we have to pass it to the next stage also. We
+    // could do this two different ways. The older way (that still works) is to have Sawyer process the switch and then we
+    // prepend it into the returned vector for processing by later stages.  The newer way is to set the switch's "skipping"
+    // property that causes Sawyer to treat it as a skipped (unrecognized) switch.  We'll use SKIP_STRONG, but SKIP_WEAK is
+    // sort of a cross between Sawyer recognizing it and not recognizing it.
     tool.insert(Switch("rose:help")
-                .intrinsicValue(true, showRoseHelp)
+                .skipping(SKIP_STRONG)                  // appears in documentation and is parsed, but treated as skipped
                 .doc("Show the non-Sawyer switch documentation."));
 
-    p.with(tool);                                       // the "tool" group is copied into the parser
+    // Copy this tool's switches into the parser.
+    p.with(tool);
 
-    // Parse the command-line, stopping at the first "--" or positional arugment.
-    std::vector<std::string> frontendArgs = p.parse(argc, argv).apply().unreachedArgs();
+    // Parse the command-line, stopping at the first "--" or positional arugment. Return the unparsed stuff so it can be passed
+    // to the next stage.  ROSE's frontend expects arg[0] to be the name of the command, which Sawyer has already processed, so
+    // we need to add it back again.
+    std::vector<std::string> remainingArgs = p.parse(argc, argv).apply().unparsedArgs(true);
+    remainingArgs.insert(remainingArgs.begin(), argv[0]);
 
-    // Pass the rest of the command-line to the other parser, frontend, which expects argv[0] at the beginning.
-    if (showRoseHelp)
-        frontendArgs.insert(frontendArgs.begin(), "--help");
-    frontendArgs.insert(frontendArgs.begin(), argv[0]);
-    if (settings.useOldParser)
-        Outliner::commandLineProcessing(frontendArgs);  // this is the old way
-    SgProject *project = frontend(frontendArgs);
+#if 1 // DEBUGGING [Robb P Matzke 2016-09-27]
+    std::cerr <<"These are the arguments after parsing with Sawyer:\n";
+    BOOST_FOREACH (const std::string &s, remainingArgs)
+        std::cerr <<"    \"" <<s <<"\"\n";
+#endif
 
-    // Binary analyses know to validate their user-defined settings before they do any analysis, but that's not true (yet) for
-    // Outliner, so I've created a function we can call explicitly.
-    Outliner::validateSettings();
-    return project;
+    return remainingArgs;
 }
 
 int
@@ -104,8 +119,15 @@ main (int argc, char* argv[])
   ::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
   Diagnostics::mfacilities.insertAndAdjust(::mlog);
 
-  SgProject *proj = parseCommandLine(argc, argv);
-  ASSERT_not_null(proj);
+  // Parse Sawyer-recognized switches and the rest we'll pass to Outliner and frontend like before.
+  std::vector<std::string> args = parseCommandLine(argc, argv);
+  if (settings.useOldParser)
+      Outliner::commandLineProcessing(args);  // this is the old way
+  SgProject *proj = frontend(args);
+
+  // Binary analyses know to validate their user-defined settings before they do any analysis, but that's not true (yet) for
+  // Outliner, so I've created a function we can call explicitly.
+  Outliner::validateSettings();
 
   if (settings.showOutlinerSettings) {
       std::cout <<"Outliner settings:\n";
