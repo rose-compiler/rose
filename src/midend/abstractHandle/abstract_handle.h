@@ -13,7 +13,7 @@
 #endif
 
 // DQ (4/17/2016): This appears to be needed for ROSE to emulate Clang
-// in compiling ROSE files in tests/CompileTests/RoseExample_tests.
+// in compiling ROSE files in tests/nonsmoke/functional/CompileTests/RoseExample_tests.
 #ifdef __clang__
 // Find value for PATH_MAX
 // Pei-hung (06/22/2016): OSX has limits.h in /usr/include
