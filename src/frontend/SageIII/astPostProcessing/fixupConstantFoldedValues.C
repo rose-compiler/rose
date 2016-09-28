@@ -412,12 +412,17 @@ RemoveConstantFoldedValue::handleTheSynthesizedAttribute( SgNode* node, const Re
              {
 #if 0
                printf ("Found an originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
+               printf ("   --- node = %p = %s \n",node,node->class_name().c_str());
 #endif
                if (node == value->get_parent())
                   {
                  // What kind of IR node are we at presently? Replace the expression representing the SgValueExp with the Expression representing the original subtree.
 #if 0
                     printf ("Current IR node with SgExpression child = %p = %s originalExpressionTree = %p = %s \n",node,node->class_name().c_str(),originalExpressionTree,originalExpressionTree->class_name().c_str());
+#endif
+#if 0
+                    node->get_startOfConstruct()->display("handleTheSynthesizedAttribute(): node source position: debug");
+                    value->get_startOfConstruct()->display("handleTheSynthesizedAttribute(): value source position: debug");
 #endif
                     bool traceReplacement = true;
                     ConstantFoldedValueReplacer r(traceReplacement, value);

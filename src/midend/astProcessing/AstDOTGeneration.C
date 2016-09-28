@@ -976,6 +976,17 @@ generateFileLineColumnString (Sg_File_Info* fileInfo)
      ss += StringUtility::numberToString(physical_line);
      ss += ")";
 
+#if 1
+  // DQ (12/21/2014): Adding the physical line number (used by the token mapping).
+     int raw_line    = fileInfo->get_raw_line();
+     int raw_column  = fileInfo->get_raw_col();
+     ss += " (raw line:col=";
+     ss += StringUtility::numberToString(raw_line);
+     ss += ":";
+     ss += StringUtility::numberToString(raw_column);
+     ss += ")";
+#endif
+
      ss += "\\n";
 
      return ss;
@@ -998,6 +1009,10 @@ sourcePositionInformation (SgNode* node)
                   {
                     ss += "compiler generated\\n";
                     hasSpecialMode = true;
+
+                 // DQ (9/7/2016): Add output of raw source position to check on EDG normalized ctor pre-initialization list in templates.
+                    ss += generateFileLineColumnString(locatedNode->get_startOfConstruct());
+                    ss += generateFileLineColumnString(locatedNode->get_endOfConstruct());
                   }
                  else
                   {

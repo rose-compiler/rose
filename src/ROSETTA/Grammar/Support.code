@@ -8304,10 +8304,26 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
                break;
              }
 
+       // DQ (9/12/2016): Providing better implementation for template typedef symbol support.
        // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
           case V_SgTemplateTypedefSymbol:
              {
+#if 0
                printf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateArgument>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+               SgTemplateTypedefSymbol* templateTypedefSymbol = isSgTemplateTypedefSymbol(symbol);
+               ROSE_ASSERT(templateTypedefSymbol != NULL);
+
+               ROSE_ASSERT(templateTypedefSymbol->get_declaration() != NULL);
+
+               SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(templateTypedefSymbol->get_declaration());
+            // ROSE_ASSERT(templateTypedefDeclaration != NULL);
+
+               if (templateTypedefDeclaration != NULL)
+                  {
+                 // returnList = templateTypedefDeclaration->get_templateArguments();
+                    returnList = templateTypedefDeclaration->get_templateSpecializationArguments();
+                  }
                break;
              }
 
@@ -9952,7 +9968,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
        // DQ (8/21/2013): This fails for the case of Fortran labels that are numeric and converted to a numeric 
        // value and thus loose leading 0's.  This function was not previously used for labels so this was not 
        // noticed.  An example is in:
-       //    --- tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/endfile_2.f90
+       //    --- tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/endfile_2.f90
        // where the numeric label "0023" is used but stored in the SgLabelDeclaration as a numeric value "23"
        // and thus the string "0023" fails to match with the string "23" in this assertion.  The fundamental
        // problem is that we ask the symbol for the name and this causes the name to be computed from the
@@ -15299,7 +15315,7 @@ SgFile::compileOutput ( int fileNameIndex )
         {
           if (get_Fortran_only() == true)
              {
-            // DQ (4/2/2011): some Fortran tests pass in tests/roseTests/astInterfaceTests pass in EDG options, we
+            // DQ (4/2/2011): some Fortran tests pass in tests/nonsmoke/functional/roseTests/astInterfaceTests pass in EDG options, we
             // might want to correct this (for now we will clean up the command line as part of command line handling).
                stripEdgCommandLineOptions( argv );
 
@@ -16377,6 +16393,9 @@ SgProject::initialization()
 
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      p_appendPID = false;
+
+  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
+     p_unparseTemplateDeclarationsFromAST = false;
    }
 
 
@@ -17305,8 +17324,12 @@ SgProject::display ( const std::string & label ) const
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      printf ("   p_noclobber_if_different_output_file = %s \n",(p_noclobber_if_different_output_file == true) ? "true" : "false");
+
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      printf ("   p_appendPID = %s \n",(p_appendPID == true) ? "true" : "false");
+
+  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
+     printf ("   p_unparseTemplateDeclarationsFromAST = %s \n",(p_unparseTemplateDeclarationsFromAST == true) ? "true" : "false");
 
      printf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)

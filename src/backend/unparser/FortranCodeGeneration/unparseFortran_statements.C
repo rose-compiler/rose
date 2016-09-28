@@ -3587,6 +3587,9 @@ FortranCodeGeneration_locatedNode::unparseExprStmt(SgStatement* stmt, SgUnparse_
   // Never unparse class definition in expression stmt
      ninfo.set_SkipClassDefinition();
 
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ninfo.set_SkipEnumDefinition();
+
   // curprint("!what line an I on?!");
 
   // printDebugInfo(getSgVariant(expr_stmt->get_expression()->variant()), true);
@@ -4931,6 +4934,9 @@ FortranCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdec
   // Using this C++ constraint avoids building a more complex mechanism to turn it off.
      ninfo2.set_SkipClassDefinition();
 
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ninfo2.set_SkipEnumDefinition();
+
      curprint("(");
 
      unparseFunctionArgs(funcdecl_stmt,ninfo2);
@@ -5209,6 +5215,9 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
 
      ninfo.set_SkipClassDefinition();
 
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ninfo.set_SkipEnumDefinition();
+
   // DQ (10/13/2006): test2004_133.C demonstrates where we need to unparse qualified names for class definitions (defining declaration).
   // DQ (10/11/2006): Don't generate qualified names for the class name of a defining declaration
   // ninfo.set_SkipQualifiedNames();
@@ -5238,6 +5247,9 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
   // ninfo.unset_SkipQualifiedNames();
 
      ninfo.unset_SkipClassDefinition();
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ninfo.unset_SkipEnumDefinition();
 
   // curprint ( string("/* END: Print out class declaration */ \n";
 

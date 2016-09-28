@@ -63,7 +63,7 @@ make-web-pages: $(TUTORIAL_NAME)
 #for ROSE turtorial: it needs sageInterface tests in addition to the examples from tutorial/
 $(TUTORIAL_NAME): tutorial.tex gettingStarted.tex $(latexFiles)
 	$(MAKE) -C$(top_builddir)/tutorial docs && \
-	$(MAKE) -C$(top_builddir)/tests/roseTests/astInterfaceTests check && \
+	$(MAKE) -C$(top_builddir)/tests/nonsmoke/functional/roseTests/astInterfaceTests check && \
 	$(PDFLATEX) tutorial.tex && \
 	$(PDFLATEX) tutorial.tex && \
 	$(PDFLATEX) tutorial.tex && \
