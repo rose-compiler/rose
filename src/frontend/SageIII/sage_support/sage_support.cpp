@@ -1724,7 +1724,7 @@ SgProject::parse(const vector<string>& argv)
         }
      ROSE_ASSERT(typeTable->get_parent() != NULL);
 
-  // DQ (7/30/2010): This test fails in tests/CompilerOptionsTests/testCpreprocessorOption
+  // DQ (7/30/2010): This test fails in tests/nonsmoke/functional/CompilerOptionsTests/testCpreprocessorOption
   // DQ (7/25/2010): Added new test.
   // printf ("typeTable->get_parent()->class_name() = %s \n",typeTable->get_parent()->class_name().c_str());
   // ROSE_ASSERT(isSgProject(typeTable->get_parent()) != NULL);

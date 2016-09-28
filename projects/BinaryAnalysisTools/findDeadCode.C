@@ -525,8 +525,7 @@ int main(int argc, char *argv[]) {
     // Initialization, parsing, disassembly, etc.
     //---------------------------------------------
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
     Diagnostics::Stream info(::mlog[INFO]);
 
     // Use a partitioning engine since this makes this tool much easier to write.

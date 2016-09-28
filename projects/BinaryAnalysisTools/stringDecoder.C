@@ -302,8 +302,7 @@ processSynthesizedCalls(const P2::Partitioner &partitioner, const Settings &sett
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
     Settings settings;
     P2::Engine engine;

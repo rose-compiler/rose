@@ -131,8 +131,7 @@ Application::main(int argc, char *argv[]) {
     Diagnostics::destination = Sawyer::Message::Multiplexer::instance()
                                ->to(Sawyer::Message::FileSink::instance(stderr));
     ROSE_INITIALIZE;
-    mlog = Sawyer::Message::Facility("bROwSE", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "bROwSE");
 
     // Parse the command-line
     Settings settings;

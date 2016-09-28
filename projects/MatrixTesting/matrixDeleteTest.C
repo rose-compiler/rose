@@ -52,8 +52,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 int
 main(int argc, char *argv[]) {
     Sawyer::initializeLibrary();
-    mlog = Sawyer::Message::Facility("tool");
-    Sawyer::Message::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "tool");
     mlog[INFO].enable();
 
     Settings settings;
