@@ -15,7 +15,13 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+
+#ifdef USE_SAWYER_COMMANDLINE
+#include "Sawyer/CommandLineBoost.h"
+#else
 #include <boost/program_options.hpp>
+#endif
+
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
@@ -53,7 +59,12 @@
 
 using namespace std;
 
+#ifdef USE_SAWYER_COMMANDLINE
+namespace po = Sawyer::CommandLine::Boost;
+#else
 namespace po = boost::program_options;
+#endif
+
 using namespace CodeThorn;
 using namespace SPRAY;
 using namespace boost;
