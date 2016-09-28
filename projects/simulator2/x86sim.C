@@ -192,8 +192,7 @@ int
 main(int argc, char *argv[], char *envp[]) {
     // Initialization
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
     // Command-line parsing
     Settings settings;

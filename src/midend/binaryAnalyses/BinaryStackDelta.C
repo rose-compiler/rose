@@ -25,8 +25,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::StackDelta", Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::StackDelta");
     }
 }
 

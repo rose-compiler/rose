@@ -1263,7 +1263,7 @@ globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnpar
 //! Sage_class_name:unparseToString()
 //   e.g: SgPntrArrRefExp:a[i]
 //   Don't change the output format since the returned string will be compared to pre-built results 
-//   when running tests/roseTests/programAnalysisTests/PtrAnalTest
+//   when running tests/nonsmoke/functional/roseTests/programAnalysisTests/PtrAnalTest
 string AstToString( const AstNodePtr& _s)
 {
   // jichi (9/20/2009): Refresh original codes, add fortran support.
@@ -1785,8 +1785,11 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       break;
   }  
   
-  default: 
-    return false;
+  default:
+    {
+//      cerr<<"Warning: unrecognized function declaration by AstInterface::IsFunctionDefinition() in AstInterface.C  "<<d->class_name()<<endl;
+      return false;
+    }
   }
   if (l != 0) {
     SgInitializedNamePtrList& names = l->get_args();

@@ -305,7 +305,7 @@ PodFormatter::beginTag(std::ostream &out, const Tag::Ptr &tag, const TagArgs &ar
 
     } else if (tag->name() == "named") {
         checkArgs(tag, 2, args);
-        out <<"=item ";
+        out <<"=item Z<>";                              // Z<> required to prevent numeric name from being a numbered item
         args[0]->emit(out, self());
         out <<"\n\n";
         atBeginningOfLine_ = true;

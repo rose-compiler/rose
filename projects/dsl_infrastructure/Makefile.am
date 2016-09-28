@@ -91,10 +91,10 @@ PASSING_REGRESSION_TEST_Output = ${TESTCODES_REQUIRED_TO_PASS:.C=.C.passing}
 
 # Generate DOT graphs of the kind of code we need to generate using ROSE.
 # generateDotOfTargetGeneratedCode: generated_dsl_attributes.C generated_dsl_attributes.h 
-#	$(top_builddir)/tests/testGraphGeneration -DSKIP_ROSE_HEADERS -I. $(srcdir)/nongenerated_dsl_attributes.C
-#	$(top_builddir)/tests/testGraphGeneration -std=c++11 $(ROSE_INCLUDES) -I. -I$(top_builddir) $(srcdir)/nongenerated_dsl_attributes.C
-#	$(top_builddir)/tests/testGraphGeneration -std=c++11 -DSKIP_ROSE_HEADERS -rose:skipfinalCompileStep -I. $(srcdir)/nongenerated_dsl_attributes.C
-#	$(top_builddir)/tests/testGraphGeneration -std=c++11 -DSKIP_ROSE_HEADERS -rose:skipfinalCompileStep -I. $(srcdir)/dsl_attributes.C
+#	$(top_builddir)/tests/nonsmoke/functional/testGraphGeneration -DSKIP_ROSE_HEADERS -I. $(srcdir)/nongenerated_dsl_attributes.C
+#	$(top_builddir)/tests/nonsmoke/functional/testGraphGeneration -std=c++11 $(ROSE_INCLUDES) -I. -I$(top_builddir) $(srcdir)/nongenerated_dsl_attributes.C
+#	$(top_builddir)/tests/nonsmoke/functional/testGraphGeneration -std=c++11 -DSKIP_ROSE_HEADERS -rose:skipfinalCompileStep -I. $(srcdir)/nongenerated_dsl_attributes.C
+#	$(top_builddir)/tests/nonsmoke/functional/testGraphGeneration -std=c++11 -DSKIP_ROSE_HEADERS -rose:skipfinalCompileStep -I. $(srcdir)/dsl_attributes.C
 
 # This is force to depend upon a single dependent file, even though dslSupport.o 
 # depends upon generated_dsl_attributes_header.C insted of generated_dsl_attributes.C.

@@ -1970,9 +1970,13 @@ AstNodeClass::buildProcessDataMemberReferenceToPointers ()
 
                     if ( (varTypeString == "$CLASSNAME *" ) || ( ( ( varTypeString.substr(0,15) == "$GRAMMAR_PREFIX" ) || ( varTypeString.substr(0,2) == "Sg" ) ) && typeIsStarPointer ) )
                        {
+                      // DQ (9/8/2016): Added assertion as part of debugging C++11 test2016_49.C
+                      // s += "     ROSE_ASSERT(p_" + varNameString + " != NULL);\n";
+                      // s += "     printf (\"ROSETTA varNameString generated debugging: p_" + varNameString + " = %p \\n\",p_" + varNameString + ");\n";
+
                       // AS Checks to see if the pointer is a data member. Because the mechanism for generating access to variables
                       // is the same as the one accessing access member functions. We do not want the last case to show up here.
-                         s += "          handler->apply(p_" + varNameString + ",SgName(\""+varNameString+"\"), " + BOOL2STR(traverse) + ");\n";
+                         s += "     handler->apply(p_" + varNameString + ",SgName(\""+varNameString+"\"), " + BOOL2STR(traverse) + ");\n";
                        }
                       else
                        {

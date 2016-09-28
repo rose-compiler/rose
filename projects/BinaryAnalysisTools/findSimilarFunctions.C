@@ -73,6 +73,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen1} [--] @v{specimen2}");
 
     SwitchGroup tool("Switches for this tool");
+    tool.name("tool");
 
     tool.insert(Switch("metric")
                 .argument("name", enumParser(settings.metric)
@@ -411,8 +412,7 @@ int
 main(int argc, char *argv[]) {
     // Initialization
     ROSE_INITIALIZE;
-    mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "tool");
     Stream info(mlog[INFO]);
 
     // Parse command-line

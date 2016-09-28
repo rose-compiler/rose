@@ -78,8 +78,7 @@ void initialize() {
 
         // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, but
         // insertAndAdjust will change that based on mfacilities' settings.
-        mlog = Sawyer::Message::Facility("rose", destination);
-        mfacilities.insertAndAdjust(mlog);
+        initAndRegister(mlog, "rose");
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];
@@ -88,10 +87,9 @@ void initialize() {
         Sawyer::ProgressBarSettings::initialDelay(12.0);
         Sawyer::ProgressBarSettings::minimumUpdateInterval(2.5);
 
-        // Register logging facilities from other software layers.  These facilities should already be in a usable, but
-        // default, state. They probably have all streams enabled (debug through fatal) and are emitting to standard error
-        // using the POSIX unbuffered output functions.  Calling these initializers should make all the streams point to the
-        // rose::Diagnostics::destination that we set above.
+        // Register logging facilities from other software layers.  Calling these initializers should make all the streams
+        // point to the rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
+        // disabled there should be a dummy initDiagnostics that does nothing so we don't need lots of #ifdefs here.
         BinaryLoader::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
@@ -108,8 +106,6 @@ void initialize() {
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         EditDistance::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
-
-     // DQ (3/24/2016): Added use of message logging mechanism to more locations in ROSE (to control output spew).
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
         EDG_ROSE_Translation::initDiagnostics();
 #endif
@@ -124,6 +120,12 @@ void initialize() {
 
 bool isInitialized() {
     return isInitialized_;
+}
+
+void
+initAndRegister(Facility &mlog, const std::string &name) {
+    mlog = Facility(name, destination);
+    mfacilities.insertAndAdjust(mlog);
 }
 
 StreamPrintf mfprintf(std::ostream &stream) {

@@ -87,6 +87,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
     
     //--------------------------- 
     SwitchGroup cfg("Control flow graph switches");
+    cfg.name("cfg");
+
     cfg.insert(Switch("begin")
                .argument("name_or_va", anyParser(settings.beginVertex))
                .doc("CFG vertex where paths will start.  If @v{name_or_va} is an integer (decimal, octal, or hexadecimal "
@@ -193,7 +195,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 
     //---------------------------
     SwitchGroup pcond("Post-condition switches");
-    pcond.insert(Switch("post-condition")
+    pcond.name("post");
+
+    pcond.insert(Switch("condition")
                  .argument("expression", anyParser(settings.postConditionsStr))
                  .whichValue(SAVE_ALL)
                  .doc("Specifies post conditions that must be met at the end of the path. This switch may appear "
@@ -204,6 +208,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 
     //--------------------------- 
     SwitchGroup out("Output switches");
+    out.name("out");
+
     out.insert(Switch("show-instructions")
                .intrinsicValue(true, settings.showInstructions)
                .doc("Cause instructions to be listed as part of each path. The @s{no-show-instructions} switch turns "
@@ -1933,8 +1939,7 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
 int main(int argc, char *argv[]) {
     // Initialization
     ROSE_INITIALIZE;
-    PathFinder::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(PathFinder::mlog);
+    Diagnostics::initAndRegister(PathFinder::mlog, "tool");
     Sawyer::Message::Stream info(PathFinder::mlog[INFO]);
 
     P2::Engine engine;

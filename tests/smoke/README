@@ -1,0 +1,13 @@
+This directory is the root of all "smoke" tests for the ROSE library.
+
+Smoke tests are always distributed as part of the main ROSE repository
+and are meant to lightly test the most basic features of software
+distributed as part of that repo.
+
+Smoke tests are run by "make check" or "make check-smoke" and are also
+a subset of the list of tests run by "make check-all".  In total, the
+smoke tests should take only a few minutes on average hardware.
+
+Think carefully about placing tests, checkers, or specimens under this
+directory. Most things should go into the nonsmoke sibling directory
+instead.

@@ -52,7 +52,7 @@ AMR_INCLUDES = -I$(srcdir)/AMRShift/Multigrid -I$(srcdir)/AMRShift/StencilTools 
 
 # Generate DOT graphs of the kind of code we need to generate using ROSE.
 generateDotOfTargetGeneratedCode: generated_dsl_attributes.C generated_dsl_attributes.h 
-	$(top_builddir)/tests/testGraphGeneration -std=c++11 -DSKIP_ROSE_HEADERS -rose:skipfinalCompileStep -I. $(srcdir)/dsl_attributes.C
+	$(top_builddir)/tests/nonsmoke/functional/testGraphGeneration -std=c++11 -DSKIP_ROSE_HEADERS -rose:skipfinalCompileStep -I. $(srcdir)/dsl_attributes.C
 
 
 generated_dsl_attributes.C: $(DSL_INFRASTRUCTURE_BIN)/attributeGenerator

@@ -197,6 +197,10 @@
   #define __imag__ 
   #define _Complex
 #endif
+
+/* DQ (9/13/2016): The GNU 4.2 compiler requires this to be turned off (fails for test2011_133.C). */
+#undef __SSE2__
+
 #endif
 
 /* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
@@ -224,15 +228,37 @@
 #endif
 
 /* Disable inclusion of complex.h on Linux */
-#define _COMPLEX_H
+/* #define _COMPLEX_H */
 /* Disable inclusion of complex.h on Mac OS X */
-#define __COMPLEX__
+/* #define __COMPLEX__ */
 
 /* Defined this to avoid warnings (e.g. test2001_11.C) from 3.4.6 systems header files. */
-/* DQ (9/6/2016): This is also required to support tests/CompileTests/mergeAST_tests/mergeTest_134.C */
+/* DQ (9/6/2016): This is also required to support tests/nonsmoke/functional/CompileTests/mergeAST_tests/mergeTest_134.C */
 #define __weakref__(NAME)
 
+/* For debugging use the separate generated header file of builtin functions. */
+#if __cplusplus >= 201103L
+#  define ROSE_CONSTEXPR constexpr
+// #warning "Set ROSE_CONSTEXPR to constexpr"
+#else
+#  define ROSE_CONSTEXPR
+// #warning "NOT setting ROSE_CONSTEXPR to constexpr"
+#endif
+
+
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
+
+
+/* DQ (9/12/2016): Added builtin functions (not yet supported in config/Builtins.def).
+   These are required to compile: tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2015_08.C 
+ */
+long long          __builtin_bswap64(long long __X);
+void               __builtin_ia32_fxsave(void *__P);
+void               __builtin_ia32_fxrstor(void *__P);
+void               __builtin_ia32_fxsave64(void *__P);
+void               __builtin_ia32_fxrstor64(void *__P);
+
+
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
@@ -381,6 +407,12 @@ long double __builtin_sqrtl  (long double __builtin__x);
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
+
+
+
+#if 0
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+
 /* DQ (11/6/2014): Use a different mechanism to handle these for the GNU 4.7 compiler and above (required form C++11) */
 #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
 
@@ -478,6 +510,11 @@ DQ (6/19/2007): These might required math.h to be included.
 
 /* #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) */
 #endif
+
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#endif
+
+
 
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
@@ -829,9 +866,9 @@ was just float or double for complex<float> or complex<double>.
 #endif
 
 /* Disable inclusion of complex.h on Linux */
-#define _COMPLEX_H
+/* #define _COMPLEX_H */
 /* Disable inclusion of complex.h on Mac OS X */
-#define __COMPLEX__
+/* #define __COMPLEX__ */
 
 /* DQ (8/25/2009): Added complex builtin functions as required to compile parts of ROSE with ROSE */
 /* #if _GLIBCXX_USE_C99_COMPLEX */
@@ -2060,6 +2097,12 @@ void prefetch (const __global float16 *p, size_t num_elements);
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
+
+
+
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#if 0
+
 /***************************************************************************************
   SSE and MMX support (declarations for builtin functions defined in GNU header files)
 ****************************************************************************************/
@@ -2412,6 +2455,11 @@ int __builtin_ia32_psrlqi(long long,int);
 // However, integer types such as int32_t are not defined here.
 int __builtin_bswap32 (int x);
 /* long int __builtin_bswap64 (long int x); */
+
+
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#endif
+
 
 
 /* DQ (9/6/2016): We need size_t to be defined, but we only want it defined so that the builtin functions 

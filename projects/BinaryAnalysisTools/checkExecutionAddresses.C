@@ -64,6 +64,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         .with(engine.loaderSwitches());
     
     SwitchGroup tool("Tool specific switches");
+    tool.name("tool");
     tool.insert(Switch("map")
                 .argument("how", enumParser(settings.mapSource)
                           ->with("native", MAP_NATIVE)
@@ -173,8 +174,7 @@ execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryD
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "tool");
     Sawyer::ProgressBarSettings::minimumUpdateInterval(0.2); // more fluid spinner
 
     // Parse command-line

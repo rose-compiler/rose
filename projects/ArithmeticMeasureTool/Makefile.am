@@ -88,6 +88,11 @@ $(C_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%)
 
 $(F_TESTCODE_RESULTS):measureTool $(srcdir)/test/fortran/$(@:rose_%=%) 
 	./measureTool -c -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/fortran/$(@:rose_%=%)
+
+# test for RAJA loop support, static counting mode
+rose_rajaloop.cpp:measureTool $(srcdir)/test/rajaloop.cpp 
+	./measureTool -c -static-counting-only -support_raja_loops -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/rajaloop.cpp
+
 # test for code instrumentor---------------------
 #Generate the loop count info. file , using the translator's loop_counting mode
 instrumentor_lib.o: $(srcdir)/src/instrumentor_lib.c
@@ -107,7 +112,7 @@ bt-iter-count.log:rose_bt_single.out
 	./rose_bt_single.out
 ftest: $(F_TESTCODE_RESULTS)
 
-check: $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS) $(C_Analysis_TESTCODE_RESULTS) bt-iter-count.log
+check: rose_rajaloop.cpp $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS) $(C_Analysis_TESTCODE_RESULTS) bt-iter-count.log
 clean:
 	rm -rf $(bin_PROGRAMS) $(builddir)/src/*.o *.o $(builddir)/src/*.a rose_* *.dot *.out *.log *.trs ai_tool_report.txt bt-loop-count.log bt-iter-count.log instrumentor_lib.a
 

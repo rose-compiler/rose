@@ -426,6 +426,10 @@ struct hash_nodeptr
    \brief Not sure the classifications right now
  */
 
+   //! Save AST into a pdf file. Start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
+   void saveToPDF(SgNode* node, std::string filename);
+   void saveToPDF(SgNode* node); // enable calling from gdb
+
  // DQ (2/12/2012): Added some diagnostic support.
 //! Diagnostic function for tracing back through the parent list to understand at runtime where in the AST a failure happened.
    void whereAmI(SgNode* node);
@@ -2543,7 +2547,7 @@ bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionD
   // generated (if not specializations) and so we want to include a template instantiation that is marked 
   // as compiler generated, but is from a template declaration that satisfyied a specific user defined filter.
   // The complexity of this detection is isolated here, but knowing that it must be called is more complex.
-  // This function is call in the CG.C file of tests/roseTests/programAnalysisTests/testCallGraphAnalysis.
+  // This function is call in the CG.C file of tests/nonsmoke/functional/roseTests/programAnalysisTests/testCallGraphAnalysis.
 
      bool retval = false;
 
