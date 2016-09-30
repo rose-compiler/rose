@@ -191,7 +191,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     out.insert(Switch("list-unused-addresses")
                .intrinsicValue(true, settings.doListUnused)
                .doc("Produce a listing of all specimen addresses that are not represented in the control flow graph. This "
-                    "listing can be disabled with @s{no-list-unused}."));
+                    "listing can be disabled with @s{no-list-unused-addresses}."));
     out.insert(Switch("no-list-unused-addresses")
                .key("list-unused-addresses")
                .intrinsicValue(false, settings.doListUnused)
@@ -249,7 +249,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(true, settings.gvShowInstructions)
                .doc("Show disassembled instructions in the GraphViz output rather than only starting addresses. Emitting "
                     "just addresses makes the GraphViz files much smaller but requires a separate assembly listing to "
-                    "interpret the graphs.  The @s{no-show-instructions} causes only addresses to be emitted.  The "
+                    "interpret the graphs.  The @s{no-show-insns} causes only addresses to be emitted.  The "
                     "default is to emit " + std::string(settings.gvShowInstructions?"instructions":"only addresses") + "."));
     dot.insert(Switch("no-show-insns")
                .key("show-insns")
