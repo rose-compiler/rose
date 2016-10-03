@@ -442,7 +442,7 @@ set_useDefaultIndexBasedTraversal(bool val)
     useDefaultIndexBasedTraversal = val;
 }
 
-// MS: 03/22/02ROSE/tests/roseTests/astProcessingTests/
+// MS: 03/22/02ROSE/tests/nonsmoke/functional/roseTests/astProcessingTests/
 // function to traverse all ASTs representing inputfiles (excluding include files), 
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 void

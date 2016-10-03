@@ -59,8 +59,7 @@ parseCommandLine(int argc, char *argv[], Partitioner2::Engine &engine)
 
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    ::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
     // Parse the command-line
     Partitioner2::Engine engine;

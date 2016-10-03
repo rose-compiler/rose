@@ -125,8 +125,7 @@ int
 main(int argc, char *argv[]) {
     // Initialize libraries
     ROSE_INITIALIZE;
-    mlog = Diagnostics::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "tool");
 
     // Parse command line
     Settings settings;

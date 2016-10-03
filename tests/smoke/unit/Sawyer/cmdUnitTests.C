@@ -26,35 +26,37 @@ static void showCommandLine(const std::vector<std::string> &args) {
     std::cout <<"\n";
 }
 
-static void mustParse(size_t nParsed, Parser &p, const std::vector<std::string> &args) {
+static ParserResult mustParse(size_t nParsed, Parser &p, const std::vector<std::string> &args) {
     showCommandLine(args);
     ParserResult pr = p.parse(args);
     ASSERT_require2(pr.parsedArgs().size()==nParsed,
                     "must have parsed exactly " + boost::lexical_cast<std::string>(nParsed) +
-                    " argument" + (1==nParsed?"":"s"));
+                    " argument" + (1==nParsed?"":"s") + ", but got " +
+                    boost::lexical_cast<std::string>(pr.parsedArgs().size()));
     pr.apply();
+    return pr;
 }
-static void mustParse(size_t nParsed, Parser &p) {
+static ParserResult mustParse(size_t nParsed, Parser &p) {
     std::vector<std::string> args;
-    mustParse(nParsed, p, args);
+    return mustParse(nParsed, p, args);
 }
-static void mustParse(size_t nParsed, Parser &p, const std::string &a1) {
+static ParserResult mustParse(size_t nParsed, Parser &p, const std::string &a1) {
     std::vector<std::string> args;
     args.push_back(a1);
-    mustParse(nParsed, p, args);
+    return mustParse(nParsed, p, args);
 }
-static void mustParse(size_t nParsed, Parser &p, const std::string &a1, const std::string &a2) {
+static ParserResult mustParse(size_t nParsed, Parser &p, const std::string &a1, const std::string &a2) {
     std::vector<std::string> args;
     args.push_back(a1);
     args.push_back(a2);
-    mustParse(nParsed, p, args);
+    return mustParse(nParsed, p, args);
 }
-static void mustParse(size_t nParsed, Parser &p, const std::string &a1, const std::string &a2, const std::string &a3) {
+static ParserResult mustParse(size_t nParsed, Parser &p, const std::string &a1, const std::string &a2, const std::string &a3) {
     std::vector<std::string> args;
     args.push_back(a1);
     args.push_back(a2);
     args.push_back(a3);
-    mustParse(nParsed, p, args);
+    return mustParse(nParsed, p, args);
 }
 
 static std::string mustNotParse(const std::string &errmesg, Parser &p, const std::vector<std::string> &args) {
@@ -1201,6 +1203,317 @@ static void test30() {
     ASSERT_always_require(*i++ == 2);
 }
 
+static void test31() {
+    std::cerr <<"test31: switch skipping\n";
+
+    SwitchGroup sg1;
+    int foe = 0, bar = 0;
+    sg1.insert(Switch("keep", 'k'));
+    sg1.insert(Switch("foo", 'f').skipping(SKIP_WEAK));
+    sg1.insert(Switch("foe", 'e').skipping(SKIP_WEAK).intrinsicValue(1, foe));
+    sg1.insert(Switch("bar", 'b').skipping(SKIP_WEAK).argument("x", integerParser(bar)));
+
+    SwitchGroup sg2;
+    sg2.insert(Switch("keep", 'k'));
+    sg2.insert(Switch("foo", 'f').skipping(SKIP_STRONG));
+    sg2.insert(Switch("foe", 'e').skipping(SKIP_STRONG).intrinsicValue(1, foe));
+    sg2.insert(Switch("bar", 'b').skipping(SKIP_STRONG).argument("x", integerParser(bar)));
+
+    Parser p1;
+    p1.with(sg1);
+
+    Parser p2;
+    p2.with(sg2);
+
+    ParserResult result;
+
+    //=========================================================================== 
+
+    // Weak skipping a long switch with no arguments
+    result = mustParse(3, p1, "--keep", "--foo", "--keep");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "--foo");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "--foo");
+
+    // Weak skipping a long switch with an intrinsic value
+    result = mustParse(3, p1, "--keep", "--foe", "--keep");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "--foe");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "--foe");
+    ASSERT_always_require(foe == 1);
+    foe = 0;
+
+    // Weak skipping a long switch with one argument separated by "="
+    result = mustParse(3, p1, "--keep", "--bar=1", "--keep");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "--bar=1");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "--bar=1");
+    ASSERT_always_require(bar == 1);
+    bar = 0;
+
+    // Weak skipping a long switch with one argument without "="
+    result = mustParse(3, p1, "--keep", "--bar", "2");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 2);
+    ASSERT_always_require(result.skippedArgs()[0] == "--bar");
+    ASSERT_always_require(result.skippedArgs()[1] == "2");
+    ASSERT_always_require(result.unparsedArgs().size() == 2);
+    ASSERT_always_require(result.unparsedArgs()[0] == "--bar");
+    ASSERT_always_require(result.unparsedArgs()[1] == "2");
+    ASSERT_always_require(bar == 2);
+    bar = 0;
+
+    //=========================================================================== 
+
+    // Strong skipping a long switch with no arguments
+    result = mustParse(2, p2, "--keep", "--foo", "--keep");
+    ASSERT_always_require(result.parsedArgs()[0] == "--keep");
+    ASSERT_always_require(result.parsedArgs()[1] == "--keep");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "--foo");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "--foo");
+
+    // Strong skipping a long switch with an intrinsic value
+    result = mustParse(2, p2, "--keep", "--foe", "--keep");
+    ASSERT_always_require(result.parsedArgs()[0] == "--keep");
+    ASSERT_always_require(result.parsedArgs()[1] == "--keep");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "--foe");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "--foe");
+    ASSERT_always_require(foe == 0);
+
+    // Strong skipping a long switch with one argument separated by "="
+    result = mustParse(2, p2, "--keep", "--bar=1", "--keep");
+    ASSERT_always_require(result.parsedArgs()[0] == "--keep");
+    ASSERT_always_require(result.parsedArgs()[1] == "--keep");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "--bar=1");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "--bar=1");
+    ASSERT_always_require(bar == 0);
+
+    // Strong skipping a long switch with one argument without "="
+    result = mustParse(1, p2, "--keep", "--bar", "2");
+    ASSERT_always_require(result.parsedArgs()[0] == "--keep");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 2);
+    ASSERT_always_require(result.skippedArgs()[0] == "--bar");
+    ASSERT_always_require(result.skippedArgs()[1] == "2");
+    ASSERT_always_require(result.unparsedArgs().size() == 2);
+    ASSERT_always_require(result.unparsedArgs()[0] == "--bar");
+    ASSERT_always_require(result.unparsedArgs()[1] == "2");
+    ASSERT_always_require(bar == 0);
+
+    //=========================================================================== 
+
+    // Weak skipping a short switch with no arguments, no nestling
+    result = mustParse(3, p1, "-k", "-f", "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-f");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-f");
+
+    // Weak skipping a short switch with an intrinsic value, no nestling
+    result = mustParse(3, p1, "-k", "-e", "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-e");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-e");
+    ASSERT_always_require(foe == 1);
+    foe = 0;
+
+    // Weak skipping a short switch with one conjoined argument, no nestling
+    result = mustParse(3, p1, "-k", "-b1", "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-b1");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-b1");
+    ASSERT_always_require(bar == 1);
+    bar = 0;
+
+    // Weak skipping a short switch with one separated argument, no nestling
+    result = mustParse(3, p1, "-k", "-b", "2");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 2);
+    ASSERT_always_require(result.skippedArgs()[0] == "-b");
+    ASSERT_always_require(result.skippedArgs()[1] == "2");
+    ASSERT_always_require(result.unparsedArgs().size() == 2);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-b");
+    ASSERT_always_require(result.unparsedArgs()[1] == "2");
+    ASSERT_always_require(bar == 2);
+    bar = 0;
+
+    //=========================================================================== 
+
+    // Strong skipping a short switch with no arguments, no nestling
+    result = mustParse(2, p2, "-k", "-f", "-k");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-f");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-f");
+
+    // Strong skipping a short switch with an intrinsic value, no nestling
+    result = mustParse(2, p2, "-k", "-e", "-k");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-e");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-e");
+    ASSERT_always_require(foe == 0);
+
+    // Strong skipping a short switch with one conjoined argument, no nestling
+    result = mustParse(2, p2, "-k", "-b1", "-k");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-b1");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-b1");
+    ASSERT_always_require(bar == 0);
+
+    // Strong skipping a short switch with one separated argument, no nestling
+    result = mustParse(1, p2, "-k", "-b", "2");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 2);
+    ASSERT_always_require(result.skippedArgs()[0] == "-b");
+    ASSERT_always_require(result.skippedArgs()[1] == "2");
+    ASSERT_always_require(result.unparsedArgs().size() == 2);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-b");
+    ASSERT_always_require(result.unparsedArgs()[1] == "2");
+    ASSERT_always_require(bar == 0);
+
+    //===========================================================================
+
+    Parser p3 = p1;
+    p3.shortMayNestle(true);
+
+    // The -kf is both parsed (-k) and skipped (-f)
+    result = mustParse(3, p3, "-k", "-kf", "-k");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-kf");
+    ASSERT_always_require(result.parsedArgs()[2] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-kf");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-kf");
+
+    // The -ek is both parsed (-k) and skipped (-e)
+    result = mustParse(3, p3, "-k", "-ek", "-k");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-ek");
+    ASSERT_always_require(result.parsedArgs()[2] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-ek");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-ek");
+    ASSERT_always_require(foe == 1);
+    foe = 0;
+
+    // The -b3e is both parsed (-k) and skipped (-b3)
+    result = mustParse(3, p3, "-k", "-b3k", "-k");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-b3k");
+    ASSERT_always_require(result.parsedArgs()[2] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-b3k");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-b3k");
+    ASSERT_always_require(bar == 3);
+    bar = 0;
+
+    // The -kb is both parsed (-k) and skipped (-b 3)
+    result = mustParse(3, p3, "-k", "-kb", "3");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-kb");
+    ASSERT_always_require(result.parsedArgs()[2] == "3");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 2);
+    ASSERT_always_require(result.skippedArgs()[0] == "-kb");
+    ASSERT_always_require(result.skippedArgs()[1] == "3");
+    ASSERT_always_require(result.unparsedArgs().size() == 2);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-kb");
+    ASSERT_always_require(result.unparsedArgs()[1] == "3");
+    ASSERT_always_require(bar == 3);
+    bar = 0;
+
+    //===========================================================================
+
+    Parser p4 = p2;
+    p4.shortMayNestle(true);
+
+    // The -kf is both parsed (-k) and skipped (-f)
+    result = mustParse(3, p4, "-k", "-kf", "-k");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-kf");
+    ASSERT_always_require(result.parsedArgs()[2] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-kf");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-kf");
+
+    // The -ek is both parsed (-k) and skipped (-e)
+    result = mustParse(3, p4, "-k", "-ek", "-k");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-ek");
+    ASSERT_always_require(result.parsedArgs()[2] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-ek");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-ek");
+    ASSERT_always_require(foe == 0);
+
+    // The -b3e is both parsed (-k) and skipped (-b3)
+    result = mustParse(3, p4, "-k", "-b3k", "-k");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-b3k");
+    ASSERT_always_require(result.parsedArgs()[2] == "-k");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 1);
+    ASSERT_always_require(result.skippedArgs()[0] == "-b3k");
+    ASSERT_always_require(result.unparsedArgs().size() == 1);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-b3k");
+    ASSERT_always_require(bar == 0);
+
+    // The -kb is both parsed (-k) and skipped (-b); the 3 is always skipped
+    result = mustParse(2, p4, "-k", "-kb", "3");
+    ASSERT_always_require(result.parsedArgs()[0] == "-k");
+    ASSERT_always_require(result.parsedArgs()[1] == "-kb");
+    ASSERT_always_require(result.unreachedArgs().size() == 0);
+    ASSERT_always_require(result.skippedArgs().size() == 2);
+    ASSERT_always_require(result.skippedArgs()[0] == "-kb");
+    ASSERT_always_require(result.skippedArgs()[1] == "3");
+    ASSERT_always_require(result.unparsedArgs().size() == 2);
+    ASSERT_always_require(result.unparsedArgs()[0] == "-kb");
+    ASSERT_always_require(result.unparsedArgs()[1] == "3");
+    ASSERT_always_require(bar == 0);
+}
+
 int main(int argc, char *argv[]) {
     test01();
     test02();
@@ -1233,6 +1546,7 @@ int main(int argc, char *argv[]) {
     test28();
     test29();
     test30();
+    test31();
     std::cout <<"All tests passed\n";
     return 0;
 }

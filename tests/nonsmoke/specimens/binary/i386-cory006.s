@@ -1,4 +1,4 @@
-;;; Specimen source code for tests/roseTests/binaryTests/cory006.C
+;;; Specimen source code for tests/nonsmoke/functional/roseTests/binaryTests/cory006.C
 ;;; Functions with code in between.
 
 _start:	push ebp

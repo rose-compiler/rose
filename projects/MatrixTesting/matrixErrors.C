@@ -363,8 +363,7 @@ parseIds(const std::vector<std::string> &strings, size_t startAt = 0) {
 int
 main(int argc, char *argv[]) {
     Sawyer::initializeLibrary();
-    mlog = Sawyer::Message::Facility("tool");
-    Sawyer::Message::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "tool");
 
     // Parse the command-line
     Settings settings;

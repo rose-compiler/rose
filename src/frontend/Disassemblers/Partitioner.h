@@ -115,8 +115,9 @@ namespace BinaryAnalysis {
  *
  *  A final complexity, is that the Disassembler and Partitioner classes are both designed to be useful in a general way, and
  *  independent of each other.  These two classes can be called even when the user doesn't have an AST.  For instance, the
- *  tests/roseTests/binaryTests/disassembleBuffer.C is an example of how the Disassembler and Partitioner classes can be used
- *  to disassemble and partition a buffer of instructions obtained outside of ROSE's binary file parsing mechanisms.
+ *  tests/nonsmoke/functional/roseTests/binaryTests/disassembleBuffer.C is an example of how the Disassembler and Partitioner
+ *  classes can be used to disassemble and partition a buffer of instructions obtained outside of ROSE's binary file parsing
+ *  mechanisms.
  */
 class Partitioner {
     /*************************************************************************************************************************

@@ -210,7 +210,7 @@ copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompilerTests/Pin_tests
 	cp $(srcdir)/*.C $(top_srcdir)/tests/CompilerTests/Pin_tests
 
-check-local:
+conditional-check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 #	@$(MAKE) $(PASSING_TEST_Objects)
@@ -221,7 +221,7 @@ check-local:
 	@$(MAKE) testDynamicStaticBinaryAnalysis
 
 else
-check-local:
+conditional-check-local:
 
 # endif of configuration for ROSE_USE_INTEL_PIN
 endif
@@ -230,6 +230,8 @@ EXTRA_DIST = CMakeLists.txt \
      README dynamicStaticBinaryAnalysis.C staticDynamicBinaryAnalysis.C dynamicBinaryInfo.C \
      graphTrace.C imageload.C input_testcode.C memcopy-elf.C staticBinaryAnalysis.C \
      commandlineHandling.C
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.[s] *.dot *.pdf *~ *.ps *.out *.new *.dump rose_performance_report_lockfile.lock *.so

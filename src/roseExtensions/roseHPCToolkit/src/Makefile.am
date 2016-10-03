@@ -21,12 +21,10 @@ librosehpct_la_LIBADD = \
 	gprof/libgprof.la \
 	profir2sage/libprofir2sage.la
 
+endif # ROSE_BUILD_ROSEHPCT
+
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
 
 distclean-local:
 	rm -rf Templates.DB
-
-endif # ROSE_BUILD_ROSEHPCT
-
-# eof
