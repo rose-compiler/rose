@@ -805,7 +805,7 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
                     printf ("In Graph_TokenMappingTraversal::visit(): child_index = %zu \n",child_index);
                     printf ("In Graph_TokenMappingTraversal::visit(): n->get_parent()->get_traversalSuccessorNamesContainer().size() = %zu \n",n->get_parent()->get_traversalSuccessorNamesContainer().size());
 #endif
-                 // DQ (1/4/2015): Handle strange case (demonstrated by tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_11.C).
+                 // DQ (1/4/2015): Handle strange case (demonstrated by tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_11.C).
                  // string edge_name   = n->get_parent()->get_traversalSuccessorNamesContainer()[child_index];
                     bool name_available = (child_index < n->get_parent()->get_traversalSuccessorNamesContainer().size());
                     string edge_name   = name_available ? n->get_parent()->get_traversalSuccessorNamesContainer()[child_index] : "unknown edge name";
@@ -1456,7 +1456,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               TokenStreamSequenceToNodeMapping* function_protytype_mappingInfo = tokenStreamSequenceMap[n];
                               ROSE_ASSERT(function_protytype_mappingInfo != NULL);
 
-                           // DQ (12/13/2015): This is required code and demonstrated in tests/roseTests/astTokenStreamTests/input_test2015_01.c
+                           // DQ (12/13/2015): This is required code and demonstrated in tests/nonsmoke/functional/roseTests/astTokenStreamTests/input_test2015_01.c
                            // DQ (12/12/2015): I am hoping we can avoid this fixup (we want to have as few as possible).
                            // Also this might not be required now that we have fixed the source position information in 
                            // the AST for secondary declarations (using the declaration_range where available).
@@ -1917,7 +1917,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                      {
                                                     // Examples failing this test are: "#pragma pack(1)" which does not compute the ending column 
                                                     // position correctly because EDG normalizes the pragma's string to be "pack ( 1 )".  
-                                                    // See tests/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
+                                                    // See tests/nonsmoke/functional/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
 
                                                        printf ("   --- WARNING: column numbers of IR node source position and token sequence don't match well enough (correction is the wrong sign) \n");
                                                        printf ("   --- --- IR node %p = %s : Need to fixup STARTING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
@@ -1968,7 +1968,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                      {
                                                     // Examples failing this test are: "#pragma pack(1)" which does not compute the ending column 
                                                     // position correctly because EDG normalizes the pragma's string to be "pack ( 1 )".  
-                                                    // See tests/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
+                                                    // See tests/nonsmoke/functional/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
 
                                                        printf ("   --- WARNING: column numbers of IR node source position and token sequence don't match well enough (correction is the wrong sign) \n");
                                                        printf ("   --- --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
@@ -2501,7 +2501,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                               if (i == 0)
                                  {
-                                // DQ (1/17/2015): Adding support for tests/roseTests/astInterface/*_test2015_47.C
+                                // DQ (1/17/2015): Adding support for tests/nonsmoke/functional/roseTests/astInterface/*_test2015_47.C
                                    TokenStreamSequenceToNodeMapping* previous_mappingInfo = NULL;
                                    if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
                                       {
