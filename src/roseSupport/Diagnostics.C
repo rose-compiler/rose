@@ -4,6 +4,7 @@
 #include "Sawyer/ProgressBar.h"
 #include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
+#include "BinaryBestMapAddress.h"                       // rose::BinaryAnalysis::BestMapAddress
 #include "BinaryCallingConvention.h"                    // rose::BinaryAnalysis::CallingConvention
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
 #include "BinaryFunctionSimilarity.h"                   // rose::BinaryAnalysis::FunctionSimilarity
@@ -91,6 +92,7 @@ void initialize() {
         // point to the rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
         // disabled there should be a dummy initDiagnostics that does nothing so we don't need lots of #ifdefs here.
         BinaryLoader::initDiagnostics();
+        BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
