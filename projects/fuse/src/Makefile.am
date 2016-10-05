@@ -142,7 +142,7 @@ $(FUSE_CPP_CHECKS): fuse_cpp_%.passed: $(FUSE_TESTS_DIR)/% $(TEST_EXIT_STATUS) $
 .PHONY: check-fuse
 check-fuse: $(FUSE_C_CHECKS) $(FUSE_CPP_CHECKS)
 
-CXX_TESTDIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+CXX_TESTDIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 CXX_TESTS_REQUIRED_TO_PASS = \
 test2001_01.C \
 test2001_02.C \
@@ -751,7 +751,7 @@ CXX_TESTS_HANGING = \
 #FUSE_CXX_TESTS_REQUIRED_TO_PASS = ${CXX_TESTS_REQUIRED_TO_PASS:.C=.C-o}
 
 #$(FUSE_CXX_TESTS_REQUIRED_TO_PASS): fuse $(CXX_TESTDIR)/$(@:.C=.C-o)
-#	./fuse -c --edg:no_warnings $(ROSE_FLAGS) $(FUSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(CXX_TESTDIR)/$(@:.C-o=.C)
+#	./fuse -c --edg:no_warnings $(ROSE_FLAGS) $(FUSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests $(CXX_TESTDIR)/$(@:.C-o=.C)
 
 
 # command to run fuse ./fuse -fuse:"lc(cp)"

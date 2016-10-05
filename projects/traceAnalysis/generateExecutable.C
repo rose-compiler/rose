@@ -1,4 +1,4 @@
-// This file is based on testElfConstruct.C and testPeConstruct.C in the tests/roseTests/binaryTests directory.
+// This file is based on testElfConstruct.C and testPeConstruct.C in the tests/nonsmoke/functional/roseTests/binaryTests directory.
 //#include "fileoffsetbits.h"
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h" /* for unparseInstruction() for debugging [RPM 2010-11-12] */
@@ -141,7 +141,7 @@ generateTextSections(HeaderType *fhdr, const Disassembler::InstructionMap &insns
 }
 
 /** Generates a PE file containing the supplied instructions.  Most of this was copied from testPeConstruct.C in the
- * tests/roseTests/binaryTests directory. */
+ * tests/nonsmoke/functional/roseTests/binaryTests directory. */
 SgAsmGenericFile *
 generatePeExecutable(const std::string &name, const Disassembler::InstructionMap &insns, rose_addr_t entry_va)
 {
@@ -245,7 +245,7 @@ generatePeExecutable(const std::string &name, const Disassembler::InstructionMap
 }
 
 /** Generates an ELF file containing the supplied instructions.  Most of this was copied from testElfConstruct.C in the
- *  tests/roseTests/binaryTests directory. */
+ *  tests/nonsmoke/functional/roseTests/binaryTests directory. */
 SgAsmGenericFile *
 generateElfExecutable(const std::string &name, const Disassembler::InstructionMap &insns, rose_addr_t entry_va)
 {

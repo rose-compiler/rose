@@ -25,7 +25,7 @@ parseCommandLine(int argc, char *argv[]) {
         .purpose("test symbolic simplification")
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
-        .doc("Synopsis", "@rop{programName} [@v{switches}]")
+        .doc("Synopsis", "@prop{programName} [@v{switches}]")
         .doc("Description",
              "Parses symbolic expressions from standard input and prints the resulting expression trees. These trees "
              "undergo basic simplifications in ROSE before they're printed.")

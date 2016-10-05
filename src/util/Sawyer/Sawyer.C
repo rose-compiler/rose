@@ -104,7 +104,7 @@ generateSequentialName(size_t length) {
     size_t sequence = ncalls++;
     std::string letters(length, 'a');
     for (size_t i=0; i<length && sequence; ++i, sequence/=26)
-        letters[length-(i+1)] += sequence % 26;
+        letters[length-(i+1)] += (char)(sequence % 26);
     return letters;
 }
 

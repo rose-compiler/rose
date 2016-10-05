@@ -42,7 +42,7 @@ TEST_Objects = ${TESTCODES:.C=.o}
 
 ROSE_FLAGS =
 
-APP_INCLUDES = $(top_srcdir)/tests/CompileTests/A++Code
+APP_INCLUDES = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 # This rule generates a dependency that forces the "make check" 
 # test to always compile the test code

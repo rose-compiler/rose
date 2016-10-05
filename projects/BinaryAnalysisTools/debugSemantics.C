@@ -645,8 +645,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
     // Parse the command-line to load, disassemble, and partition the specimen
     P2::Engine engine;

@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
+include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
 SUBDIRS =
 

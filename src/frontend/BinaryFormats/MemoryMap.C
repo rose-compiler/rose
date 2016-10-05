@@ -357,7 +357,7 @@ MemoryMap::insertProcessDocumentation() {
             "The @v{options} are a comma-separated list of words where the following are recognized:"
 
             "@bullet{\"noattach\" means do not attempt to attach or detach from the process. This is useful when the process "
-            "is already running under some debugger (it has the \"T\" state in @man(ps)(1) output).}"
+            "is already running under some debugger (it has the \"T\" state in @man{ps}{1} output).}"
 
             "The process will be momentarily stopped (unless the \"noattach\" option was specified, in which case it is assumed "
             "to already be stopped) while its readable memory is copied into ROSE and mapped at the same addresses and with "

@@ -41,12 +41,6 @@ runIDA_SOURCES = runIDA.C
 # AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 
-
-check-local:
-	@echo "************************************************************************************"
-	@echo "*** ROSE/projects/AstEquivalence: make check rule complete (terminated normally) ***"
-	@echo "************************************************************************************"
-
 CLEANFILES = 
 
 

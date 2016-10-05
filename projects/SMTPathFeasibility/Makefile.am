@@ -278,7 +278,6 @@ replaceExpressionsAndSimplifyExpressions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPAR
 
 
 
-	
 
 
 #smtSolvePragmaPath_SPECIMENS = $(C_PASSING_TESTS)
@@ -293,12 +292,15 @@ replaceExpressionsAndSimplifyExpressions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPAR
 #check-local: $(TEST_TARGETS)
 
 if USE_Z3
-check-local: $(TEST_TARGETS)
+conditional-check-local: $(TEST_TARGETS)
 	echo "using z3!";
 else
-check-local: $(TEST_TARGETS)
+conditional-check-local: $(TEST_TARGETS)
 	echo "not using z3!";
 endif
+
+check-local: conditional-check-local
+
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
 	rm -f *.dot
