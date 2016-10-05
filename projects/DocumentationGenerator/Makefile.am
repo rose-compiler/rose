@@ -63,7 +63,7 @@ sage_doxygen_documentation.h: prepareDocFiles docs/SgNode.docs
 	$(srcdir)/prepareDocFiles docs
 
 testHeaderFilesROSE: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	$(VALGRIND) $(top_builddir)/tests/testTranslator -H --edg:no_warnings   -c $(AM_CPPFLAGS) $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	$(VALGRIND) $(top_builddir)/tests/nonsmoke/functional/testTranslator -H --edg:no_warnings   -c $(AM_CPPFLAGS) $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 
 testDocsROSE: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 	$(VALGRIND) ./createDocumentationForROSE --edg:no_warnings   -rose:collectAllCommentsAndDirectives -rose:includeCommentsAndDirectives SageIII -rose:includeCommentsAndDirectives docs $(OPTIONS) $(AM_CPPFLAGS) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C

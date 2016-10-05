@@ -401,11 +401,6 @@ public:
      *  and it has an empty memory map. */
     bool isDefaultConstructed() const { return instructionProvider_ == NULL; }
 
-    /** Initialize partitioner diagnostic streams.
-     *
-     *  This is normally called as part of @ref rose::Diagnostics::initialize. */
-    static void initDiagnostics();
-
     /** Reset CFG/AUM to initial state. */
     void clear() /*final*/;
 

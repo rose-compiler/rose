@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/tests/input_codes/cxx/Makefile_variables
+include $(top_srcdir)/tests/nonsmoke/functional/input_codes/cxx/Makefile_variables
 
 ## Place generated object files (.o) into the same directory as their source
 ## files, in order to avoid collisions when non-recursive make is used.
@@ -43,11 +43,11 @@ $(RoseBlockLevelTracing_TOY_TARGETS): \
 
 
 
-RoseBlockLevelTracingCompileOnly_SPECIMENS_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+RoseBlockLevelTracingCompileOnly_SPECIMENS_DIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 RoseBlockLevelTracingCompileOnly_SPECIMENS = $(ROSE__CXX_TESTS)
 RoseBlockLevelTracingCompileOnly_TEST_TARGETS = $(addsuffix .passed, $(RoseBlockLevelTracingCompileOnly_SPECIMENS))
 RoseBlockLevelTracingCompileOnly_SWITCHES = \
-        -rose:projectSpecificDatabaseFile db.txt --edg:no_warnings -w -rose:verbose 0 -I$(RoseBlockLevelTracingCompileOnly_SPECIMENS_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
+        -rose:projectSpecificDatabaseFile db.txt --edg:no_warnings -w -rose:verbose 0 -I$(RoseBlockLevelTracingCompileOnly_SPECIMENS_DIR) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 $(RoseBlockLevelTracingCompileOnly_TEST_TARGETS): \
 	%.passed: $(ROSE__CXX_TESTS_DIR)/% RoseBlockLevelTracing $(TEST_EXIT_STATUS)
@@ -63,7 +63,6 @@ RoseBlockLevelTracing_PATH_PREFIX_TARGETS: ../tests/test_common_path.C RoseBlock
 	ROSE_TRACE_FULL_FILE_PATH=`pwd`/rose_test_common_path.3.rosetrace ./rose_test_common_path 30
 	./RoseMultiTraceCommonPathFinder `pwd`/rose_test_common_path.1.rosetrace `pwd`/rose_test_common_path.2.rosetrace `pwd`/rose_test_common_path.3.rosetrace -o `pwd`/rose_test_common_path.prefix.rosetrace
 	./RoseCommonPathToSgNodeMapper `pwd`/rose_test_common_path.prefix.rosetrace db.txt 
-	
 
 ### TODO: enable the line below once the bug on inlined class is fixed. I have reported it to Dan in an email on Sep/18/2013. 
 ### RoseBlockLevelTracing_TEST_TARGETS = $(RoseBlockLevelTracing_TOY_TARGETS)  $(RoseBlockLevelTracingCompileOnly_TEST_TARGETS)

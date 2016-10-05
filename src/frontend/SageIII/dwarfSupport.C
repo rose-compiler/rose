@@ -1842,6 +1842,10 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
             //      parentDwarfConstruct->set_children(new SgAsmDwarfConstructList());
 #if 1
             // When this work we know that we have the child support for Dwarf IR nodes in place (in all the right places).
+                 // According to Kewen Meng at uoregon.edu, this assertion fails when the input specimen is compiled with "gcc
+                 // -O1" (input and gcc version were unspecified by user), but works if -O1 is removed, or if C++ compiler
+                 // (vendor and version unspecified by user) is used with optimization flag (flag unspecified by user). [Robb
+                 // Matzke 2016-09-29]
                ROSE_ASSERT(parentDwarfConstruct->get_children() != NULL);
                parentDwarfConstruct->get_children()->get_list().push_back(astDwarfConstruct);
 #else

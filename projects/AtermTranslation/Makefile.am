@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # This includes a standard list of tests for C++ code.
-include $(top_srcdir)/tests/input_codes/cxx/Makefile_variables
+include $(top_srcdir)/tests/nonsmoke/functional/input_codes/cxx/Makefile_variables
 
 # DQ (10/23/2013): Disable so that we can try an approach modifiying the original ATerm library to be ROSE specific.
 # DQ (10/20/2013): Allow alternative support using ROSE ATerm library API.
@@ -1062,20 +1062,20 @@ PASSING_REGRESSION_TEST_AST_Output = $(addsuffix .passed, $(filter-out $(TESTS_T
 PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_Output = ${REGRESSION_C_SUBSET_OF_CXX_TESTCODES:.C=.C.dot}
 PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_ATerm_Output = ${REGRESSION_C_SUBSET_OF_CXX_TESTCODES:.C=.C.dot}
 
-# rose_%: $(srcdir)/tests/CompileTests/Cxx_tests/% ./termGraph_using_RoseAtermAPI
+# rose_%: $(srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/% ./termGraph_using_RoseAtermAPI
 #$(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
-#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) $(srcdir)/tests/CompileTests/Cxx_tests/$@
+#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) $(srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$@
 #$(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
-#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -c $(top_srcdir)/tests/CompileTests/Cxx_tests/test2001_01.C
+#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2001_01.C
 # $(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
 $(PASSING_REGRESSION_TEST_Output): 
-	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.dot=.C)
+	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.dot=.C)
 
 $(PASSING_REGRESSION_TEST_ATerm_Output): ./testTranslation_AST_to_ATerm
-	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.dot=.C)
+	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.dot=.C)
 
 $(PASSING_REGRESSION_TEST_AST_Output): ./testTranslation_ATerm_to_AST
-	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.passed=.C)
+	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passed=.C)
 #	./testTranslation_ATerm_to_AST $(@:.C.dot=.C_TAF.aterm)
 	@$(RTH_RUN) CMD="./testTranslation_ATerm_to_AST $(@:.C.passed=.C_TAF.aterm)" $(top_srcdir)/scripts/test_exit_status $@
 
@@ -1086,14 +1086,14 @@ $(PASSING_TEST_Output): ./testTranslation_ATerm_to_AST ./testTranslation_AST_to_
 
 # $(PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_Output): ./termGraph_using_RoseAtermAPI
 #	@echo "Part 1: Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
-#	cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.dot=.C) $(@:.C.dot=.c)
-#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.C.dot=.c)
+#	cp $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.dot=.C) $(@:.C.dot=.c)
+#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(@:.C.dot=.c)
 #	rm -f $(@:.C.dot=.c)
 
 # $(PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_ATerm_Output): ./termGraph_using_RoseAtermAPI
 #	@echo "Part 2: Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
-#	cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.dot=.C) $(@:.C.dot=.c)
-#	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.C.dot=.c)
+#	cp $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.dot=.C) $(@:.C.dot=.c)
+#	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(@:.C.dot=.c)
 #	rm -f $(@:.C.dot=.c)
 
 # $(TEST_Output): ../../testTranslator $(srcdir)/$(@:rose_%=%)
@@ -1103,8 +1103,8 @@ $(PASSING_TEST_Output): ./testTranslation_ATerm_to_AST ./testTranslation_AST_to_
 
 
 test1: testTranslation_AST_to_ATerm_to_AST
-#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
-	./testTranslation_AST_to_ATerm_to_AST $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
+#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
+	./testTranslation_AST_to_ATerm_to_AST $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
 
 test2: testTranslation_AST_to_ATerm_to_AST
 	@echo "Tests for ATerm C examples."

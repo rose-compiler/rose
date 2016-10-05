@@ -13,7 +13,7 @@
 using namespace std;
 
 // DQ (3/13/2007): This is a slow test and is tested separately in the 
-// tests of the AST (see directory ROSE/tests/CompileTests/unparseToString_tests
+// tests of the AST (see directory ROSE/tests/nonsmoke/functional/CompileTests/unparseToString_tests
 // so we would like to avoid mixing that testing with the attribute testing.
 #define UNPARSE_SOURCE_TEST 0
 

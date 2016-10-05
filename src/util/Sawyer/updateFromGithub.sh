@@ -30,12 +30,13 @@ fi
         
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
-for f in \
-    Access Assert AddressMap AddressSegment AllocatingBuffer Attribute BiMap BitVector BitVectorSupport Buffer Cached \
-    Callbacks CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet Exception DistinctList Graph GraphAlgorithm \
-    GraphBoost GraphTraversal IndexedList Interval IntervalMap IntervalSet IntervalSetMap Map MappedBuffer Markup MarkupPod \
-    Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack \
-    StaticBuffer Stopwatch Synchronization ThreadWorkers WarningsOff WarningsRestore
+for f in															\
+    Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitVector BitVectorSupport Buffer Cached		\
+    Callbacks CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet DistinctList DocumentBaseMarkup DocumentMarkup	\
+    DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphTraversal IndexedList	\
+    Interval IntervalMap IntervalSet IntervalSetMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional		\
+    PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StaticBuffer Stopwatch			\
+    Synchronization ThreadWorkers WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
@@ -51,22 +52,26 @@ do
 done
 
 # Copy some of Sawyer's unit tests into the ROSE source tree.
-for f in                                        \
-    Container/addressMapUnitTests.C             \
-    Container/attributeUnitTests.C              \
-    Container/bitvecTests.C                     \
-    Container/denseIntegerSetUnitTests.C        \
-    Container/distinctListUnitTests.C           \
-    Container/graphIsomorphismTests.C           \
-    Container/graphUnitTests.C                  \
-    Container/indexedGraphDemo.C                \
-    Container/intervalSetMapUnitTests.C         \
-    Container/intervalUnitTests.C               \
-    Container/lineVectorUnitTests.C             \
-    Container/listUnitTests.C                   \
-    Container/mapUnitTests.C                    \
-    Container/optionalUnitTests.C               \
-    Container/setUnitTests.C
+for f in					\
+    CommandLine/cmdUnitTests.C			\
+    Container/addressMapUnitTests.C		\
+    Container/attributeUnitTests.C		\
+    Container/bitvecTests.C			\
+    Container/denseIntegerSetUnitTests.C	\
+    Container/distinctListUnitTests.C		\
+    Container/graphIsomorphismTests.C		\
+    Container/graphUnitTests.C			\
+    Container/indexedGraphDemo.C		\
+    Container/intervalSetMapUnitTests.C		\
+    Container/intervalUnitTests.C		\
+    Container/lineVectorUnitTests.C		\
+    Container/listUnitTests.C			\
+    Container/mapUnitTests.C			\
+    Container/optionalUnitTests.C		\
+    Container/setUnitTests.C			\
+    Markup/markupUnitTests.C			\
+    Message/mesgUnitTests.C			\
+    Pointers/ptrUnitTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";
     ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/smoke/unit/Sawyer/$(basename "$f")

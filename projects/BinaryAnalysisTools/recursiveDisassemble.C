@@ -191,7 +191,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     out.insert(Switch("list-unused-addresses")
                .intrinsicValue(true, settings.doListUnused)
                .doc("Produce a listing of all specimen addresses that are not represented in the control flow graph. This "
-                    "listing can be disabled with @s{no-list-unused}."));
+                    "listing can be disabled with @s{no-list-unused-addresses}."));
     out.insert(Switch("no-list-unused-addresses")
                .key("list-unused-addresses")
                .intrinsicValue(false, settings.doListUnused)
@@ -249,7 +249,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(true, settings.gvShowInstructions)
                .doc("Show disassembled instructions in the GraphViz output rather than only starting addresses. Emitting "
                     "just addresses makes the GraphViz files much smaller but requires a separate assembly listing to "
-                    "interpret the graphs.  The @s{no-show-instructions} causes only addresses to be emitted.  The "
+                    "interpret the graphs.  The @s{no-show-insns} causes only addresses to be emitted.  The "
                     "default is to emit " + std::string(settings.gvShowInstructions?"instructions":"only addresses") + "."));
     dot.insert(Switch("no-show-insns")
                .key("show-insns")
@@ -312,7 +312,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(true, settings.gvInlineImports)
                .doc("When emitting a function call graph, inline imports into their callers and display the names of inlined "
                     "functions in the output.  This sometimes makes the output much cleaner.  Import functions are identified "
-                    "by their names only: any name ending with \".dll\" or \"@plt\" is considered an imported function. This "
+                    "by their names only: any name ending with \".dll\" or \"@@plt\" is considered an imported function. This "
                     "feature is disabled with the @s{no-inline-imports} switch.  The default is to " +
                     std::string(settings.gvInlineImports?"":"not ") + "perform this inlining."));
     dot.insert(Switch("no-inline-imports")

@@ -61,8 +61,6 @@ MOSTLYCLEANFILES += \
 	*.dump *.new *.dot rose_*.s \
 	object_names.txt testLibraryIdentification.db
 
-check-local: $(TEST_TARGETS)
-
 
 
 # ****************************************************
@@ -85,15 +83,7 @@ testProgram_2: $(srcdir)/testProgram.c
 	gcc -o testProgram_2 $(srcdir)/testProgram.c
 
 
-else
-check-local:
-	@echo "  TESTING (disabled: all tests disabled here; no SQLite)"
+endif
 endif
 
-else
-
-# Using --disable-binary-analysis-tests
-check-local:
-endif
-
-
+check-local: $(TEST_TARGETS)

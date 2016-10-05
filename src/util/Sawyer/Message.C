@@ -1045,7 +1045,7 @@ public:
         assert(stream_==NULL || stream_==s);
         stream_ = s;
     }
-    virtual std::streamsize xsputn(const char *s, std::streamsize &n) /*override*/;
+    virtual std::streamsize xsputn(const char *s, std::streamsize n) /*override*/;
     virtual int_type overflow(int_type c = traits_type::eof()) /*override*/;
 
     void completeMessage();                             // Complete and post message, then start a new one.
@@ -1103,7 +1103,7 @@ StreamBuf::bake() {
 
 // thread-safe
 std::streamsize
-StreamBuf::xsputn(const char *s, std::streamsize &n) {
+StreamBuf::xsputn(const char *s, std::streamsize n) {
     static const char termination_symbol = '\n';
 
     // This is called from std::ostream::operator<< (and possibly others), so we need to acquire a lock. Since this object is

@@ -13,7 +13,7 @@ namespace BinaryAnalysis {
 
 /** Various tools for performing tainted flow analysis.
  *
- *  Example usage can be found in tests/roseTests/binaryTests/taintedFlow.C */
+ *  Example usage can be found in tests/nonsmoke/functional/roseTests/binaryTests/taintedFlow.C */
 class TaintedFlow {
 public:
     /** Taint values.

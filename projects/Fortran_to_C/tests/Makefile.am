@@ -67,7 +67,7 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 Fortran_to_C:
 	$(MAKE) -C ../src Fortran_to_C
-	
+
 
 $(PASSING_BASIC_FORTRAN_TEST_OBJECTS): %.o: $(srcdir)/%.F Fortran_to_C 
 	../src/Fortran_to_C $(F2C_FLAGS) -c $<
@@ -77,19 +77,21 @@ $(PASSING_SENTINEL_FORTRAN_TEST_OBJECTS): %.o: $(srcdir)/%.f Fortran_to_C
 
 
 
-check-local:
+conditional-check-local:
 	@echo "Test for Fortran-to-C translator."	
 	@$(MAKE) $(PASSING_BASIC_FORTRAN_TEST_OBJECTS)
 	@$(MAKE) $(PASSING_SENTINEL_FORTRAN_TEST_OBJECTS)
 	@echo "======== make check rule for Fortran-to-C terminated normally ========"
 
 else
-check-local:
+conditional-check-local:
 	@echo "\nROSE Fortran development tests using the LANL POP code NOT run.  To run these reconfigure with:"
 	@echo "*********************************************************************************************"
 	@echo "******************* make check not run here: configure --with-fortran ***********************"
 	@echo "*********************************************************************************************"
 endif
+
+check-local: conditional-check-local
 
 clean-local:	
 	rm -f $(PASSING_BASIC_FORTRAN_TEST_OBJECTS) $(PASSING_SENTINEL_FORTRAN_TEST_OBJECTS) *.c *.f *.dot
