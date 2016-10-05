@@ -68,8 +68,7 @@ void NameQualificationTraversal::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          mlog = Sawyer::Message::Facility("NameQualificationTraversal", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+          rose::Diagnostics::initAndRegister(mlog, "rose::NameQualificationTraversal");
         }
    }
 
@@ -3029,7 +3028,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
             // DQ (7/22/2011): The a992-thrifty-mips-compiler Hudson test fails because it generates a 
             // typename that is even longer 5149, so we need an even larger upper bound.  This should be 
             // looked into later to see why some of these different platforms are generating such large 
-            // typenames. See testcode: tests/CompileTests/PythonExample_tests/test2004_92.C (on thrifty).
+            // typenames. See testcode: tests/nonsmoke/functional/CompileTests/PythonExample_tests/test2004_92.C (on thrifty).
             // if (typeNameString.length() > 10000)
             // if (typeNameString.length() > 40000)
                if (typeNameString.length() > 400000)
@@ -4251,7 +4250,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                 // DQ (6/22/2011): I think this is true.  This assertion fails for test2006_78.C (a template example code).
                                 // ROSE_ASSERT(declarationForReferencedNameSet == declaration);
 
-                                // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/roseTests/loopProcessingTests/mm.C
+                                // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/nonsmoke/functional/roseTests/loopProcessingTests/mm.C
                                 // ROSE_ASSERT(declarationForReferencedNameSet != NULL);
                                    if (declarationForReferencedNameSet == NULL)
                                       {
@@ -5058,7 +5057,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
           printf ("Case of SgVarRefExp: varRefExp = %p currentStatement = %p = %s \n",varRefExp,currentStatement,currentStatement != NULL ? currentStatement->class_name().c_str() : "null");
 #endif
-       // DQ (6/23/2011): This test fails for the new name qualification after a transformation in tests/roseTests/programTransformationTests/test1.C
+       // DQ (6/23/2011): This test fails for the new name qualification after a transformation in tests/nonsmoke/functional/roseTests/programTransformationTests/test1.C
        // ROSE_ASSERT(currentStatement != NULL);
           if (currentStatement != NULL)
              {
@@ -5353,7 +5352,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                printf ("Case of TransformationSupport::getStatement(varRefExp) == NULL explictlySpecifiedCurrentScope = %p \n",explictlySpecifiedCurrentScope);
 #endif
-            // DQ (7/24/2011): This fails for the tests/CompileTests/OpenMP_tests/objectLastprivate.cpp test code.
+            // DQ (7/24/2011): This fails for the tests/nonsmoke/functional/CompileTests/OpenMP_tests/objectLastprivate.cpp test code.
             // ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
                if (explictlySpecifiedCurrentScope != NULL)
                   {
@@ -5680,7 +5679,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (6/22/2011): I think this is true.  This assertion fails for test2006_78.C (a template example code).
             // ROSE_ASSERT(declarationForReferencedNameSet == declaration);
 
-            // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/roseTests/loopProcessingTests/mm.C
+            // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/nonsmoke/functional/roseTests/loopProcessingTests/mm.C
             // ROSE_ASSERT(declarationForReferencedNameSet != NULL);
                if (declarationForReferencedNameSet == NULL)
                   {

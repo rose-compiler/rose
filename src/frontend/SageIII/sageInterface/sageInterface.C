@@ -7761,7 +7761,7 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
   // If there are comments and/or CPP directives then those comments and/or CPP directives will
   // be moved to a new SgStatement.  The new SgStatement is selected using the findSurroundingStatementFromSameFile()
   // function and if there is not statement found then the SgGlobal IR node will be selected.
-  // this work is tested by the tests/roseTests/astInterfaceTests/removeStatementCommentRelocation.C
+  // this work is tested by the tests/nonsmoke/functional/roseTests/astInterfaceTests/removeStatementCommentRelocation.C
   // translator and a number of input codes that represent a range of contexts which exercise different
   // cases in the code below.
 
@@ -8425,7 +8425,7 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
 void
 SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root) 
    {
-  // DQ (8/18/2015): This function is called from the tests/testTemplates translator.
+  // DQ (8/18/2015): This function is called from the tests/nonsmoke/functional/testTemplates translator.
 
   // DQ (7/19/2015): This function can't use an iterator since it will be 
   // doing transformations on the AST and will cause iterator invalidation errors.
@@ -13313,7 +13313,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
                  // if (*j != func)
                     if (func_decl != func)
                        {
-                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/nonsmoke/functional/roseTests/astInterface_tests).
                       // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
                          if (func_decl->get_firstNondefiningDeclaration() == NULL)
                             {
@@ -13330,7 +13330,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
 #if 0
                printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Testing func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
 #endif
-            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/nonsmoke/functional/roseTests/astInterface_tests).
             // func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
                if (func->get_firstNondefiningDeclaration() == NULL)
                   {
@@ -16541,7 +16541,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   //   developersScratchSpace/Dan/translator_tests/reverseTraversal.C
 
   // To test this run: "rm moreTest2.o ; make moreTest2.o"
-  // in directory: tests/roseTests/astOutliningTests
+  // in directory: tests/nonsmoke/functional/roseTests/astOutliningTests
 
   // ***** Also move different loop IR nodes into a common base class *****
 
@@ -20683,7 +20683,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // DQ (11/28/2015): A better goal for this function should be to define it as a recursive function.
 
   // DQ (12/8/2015): We need to add support for SgMemberFunctionType as demonstrated by test2007_17.C.
-  // and for SgTemplateType as demonstrated by tests/CompileTests/RoseExample_tests/testRoseHeaders_03.C
+  // and for SgTemplateType as demonstrated by tests/nonsmoke/functional/CompileTests/RoseExample_tests/testRoseHeaders_03.C
   // Note that this is only required within the change to use this isEquivalentType() function in the
   // support to replace: 
   //    templateParameterOrArgumentLocal->get_initializedName()->get_type() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_type()

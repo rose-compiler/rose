@@ -688,7 +688,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
 
        // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the 
        // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and 
-       // for which the tests/testTokenGeneration.C translator uses this function to generate object files.
+       // for which the tests/nonsmoke/functional/testTokenGeneration.C translator uses this function to generate object files.
        // finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
           if (project->get_skipfinalCompileStep() == false)
              {
@@ -1386,7 +1386,7 @@ rose::getNextStatement ( SgStatement *currentStatement )
                break;
              }
 
-       // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
+       // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
           case V_SgLabelStatement:
             {
               SgLabelStatement* lableStatement = isSgLabelStatement(currentStatement);

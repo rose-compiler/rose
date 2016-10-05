@@ -171,7 +171,7 @@ docs:
 	@echo "Generated required documentation for tutorial/intelPin (make docs rule) ..."
 	@echo "***************************************************************************"
 
-check-local:
+conditional-check-local:
 	$(MAKE) docs
 	@echo "************************************************************************************"
 	@echo "****** ROSE/tutorial/intelPin: make check rule complete (terminated normally) ******"
@@ -186,7 +186,7 @@ docs:
 	@echo "*************** make check not run here: configure --with-IntelPin=<path to Intel Pin> ****************"
 	@echo "*******************************************************************************************************"
 
-check-local:
+conditional-check-local:
 	$(MAKE) docs
 
 # endif of configuration for ROSE_USE_INTEL_PIN
@@ -195,6 +195,8 @@ endif
 EXTRA_DIST = CMakeLists.txt \
      README dynamicStaticBinaryAnalysis.C staticDynamicBinaryAnalysis.C dynamicBinaryInfo.C \
      graphTrace.C imageload.C input_testcode.C commandlineHandling.C
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.[s] *.dot *.pdf *~ *.ps *.out *.new *.dump rose_performance_report_lockfile.lock *.so
