@@ -314,7 +314,7 @@ Engine::partitionerSwitches() {
     sg.insert(Switch("split-thunks")
               .intrinsicValue(true, settings_.partitioner.splittingThunks)
               .doc("Look for common thunk patterns at the start of existing functions and split off those thunk "
-                   "instructions to their own separate function.  The @s{no-detach-thunks} switch turns this feature "
+                   "instructions to their own separate function.  The @s{no-split-thunks} switch turns this feature "
                    "off.  The default is to " + std::string(settings_.partitioner.splittingThunks?"":"not ") +
                    "split thunks into their own functions."));
     sg.insert(Switch("no-split-thunks")
@@ -417,7 +417,7 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.doingPostAnalysis)
               .doc("Run all enabled post-partitioning analysis functions.  For instance, calculate stack deltas for each "
                    "instruction, and may-return analysis for each function.  The individual analyses are enabled and "
-                   "disabled separately with other @s{post-*} switches. Some of these analyses will only work if "
+                   "disabled separately with other @s{post-*}{noerror} switches. Some of these analyses will only work if "
                    "instruction semantics are enabled (see @s{use-semantics}).  The @s{no-post-analysis} switch turns "
                    "this off, although analysis will still be performed where it is needed for partitioning.  The "
                    "default is to " + std::string(settings_.partitioner.doingPostAnalysis?"":"not ") +
@@ -516,7 +516,7 @@ Engine::engineSwitches() {
                    "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
                    "function names and whose values are have a \"function.delta\" integer. The delta does not include "
                    "popping the return address from the stack in the final RET instruction.  Function names of the form "
-                   "\"lib:func\" are translated to the ROSE format \"func@lib\"."));
+                   "\"lib:func\" are translated to the ROSE format \"func@@lib\"."));
     return sg;
 }
 

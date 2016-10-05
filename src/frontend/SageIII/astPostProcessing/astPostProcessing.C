@@ -39,7 +39,7 @@ void AstPostProcessing (SgNode* node)
           printf ("Error: AstPostProcessing should only be called on SgProject (due to repeated memory pool traversals when multiple files are specified on the command line). node = %s \n",node->class_name().c_str());
         }
   // DQ (1/31/2014): This is a problem to enforce this for at least (this test program): 
-  //      tests/roseTests/astRewriteTests/testIncludeDirectiveInsertion.C
+  //      tests/nonsmoke/functional/roseTests/astRewriteTests/testIncludeDirectiveInsertion.C
   // ROSE_ASSERT(isSgProject(node) != NULL);
 
   // DQ (3/17/2007): This should be empty
@@ -464,7 +464,7 @@ void postProcessingSupport (SgNode* node)
             else
              {
             // DQ (1/31/2014): I don't think we can make this an error: called by some tests in: 
-            //      tests/roseTests/astRewriteTests/.libs/testIncludeDirectiveInsertion
+            //      tests/nonsmoke/functional/roseTests/astRewriteTests/.libs/testIncludeDirectiveInsertion
                printf ("Error: postProcessingSupport should not be called for non SgProject IR nodes \n");
             // ROSE_ASSERT(false);
              }

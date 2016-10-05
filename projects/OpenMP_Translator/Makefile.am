@@ -22,7 +22,7 @@ ompTranslator_SOURCES = ompTranslator.C
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 if ROSE_USE_OMNI_OPENMP
-check-local:
+conditional-check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -31,7 +31,7 @@ check-local:
 	@echo "****** ROSE/projects/OpenMP_Translator: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 else
-check-local:
+conditional-check-local:
 	@echo "\nOpenMP tests NOT run.  To run these reconfigure with:"
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "**********************************************************************************"
@@ -39,7 +39,9 @@ check-local:
 	@echo "**********************************************************************************"
 endif
 
-EXTRA_DIST = README 
+EXTRA_DIST = README
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o a.out rose_*.C

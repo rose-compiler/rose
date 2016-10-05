@@ -57,7 +57,7 @@ You will need to supply information to the maintainer on how to apply your patch
 
 You will need to create a Makefile.am which integrates with the ROSE build process.  The best way to learn about these is by looking at other Makefile.am files in sibling directories to yours.  Note the differences between a `\verb|project|' and a `\verb|src|' Makefile.am, e.g. only the latter will create shared libraries.  Remember to add your new directory to the \verb|SUBDIRS| list in the parent directory's Makefile.am, and your Makefile.am to the list of Makefiles in \verb|configure.in| in the root directory.
 
-If your project is in \verb|src|, your test cases should go into a subdirectory of \verb|tests/roseTests|, which mirrors the \verb|src| directory structure.  Otherwise they can go into your project directory.  Again, look at other Makefiles for information on how test cases work.
+If your project is in \verb|src|, your test cases should go into a subdirectory of \verb|tests/nonsmoke/functional/roseTests|, which mirrors the \verb|src| directory structure.  Otherwise they can go into your project directory.  Again, look at other Makefiles for information on how test cases work.
 
 While making these changes, keep track of all the new files you create within the ROSE tree.  These will typically be all the files in your new directory as well as your test codes and test input codes in the \verb|tests| directory, if applicable.  Once you are done, `\verb|tar|' up all these files and send them to the maintainer, along with patches to existing files, created using `\verb|diff|' or `\verb|cvs diff|' as described in step 2.
 \end{enumerate}

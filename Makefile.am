@@ -313,10 +313,10 @@ docs: FORCE_DOCS_TO_BE_MADE
 	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
 	   $(MAKE) -Ctutorial docs && \
-           $(MAKE) -Ctests/testSupport check && \
-	   $(MAKE) -Ctests/roseTests/astInterfaceTests check && \
-	   $(MAKE) -Ctests/roseTests/ompLoweringTests check && \
-	   $(MAKE) -Ctests/CompileTests/UPC_tests check && \
+           $(MAKE) -Ctests/nonsmoke/functional/testSupport check && \
+	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/astInterfaceTests check && \
+	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/ompLoweringTests check && \
+	   $(MAKE) -Ctests/nonsmoke/functional/CompileTests/UPC_tests check && \
 	   $(MAKE) -Cprojects/UpcTranslation/tests check && \
 	   $(MAKE) -Cprojects/autoParallelization/tests check && \
 	   $(MAKE) -Cdocs docs && \
@@ -508,8 +508,8 @@ ProblemAreas:
 
 
 # Report the version number of the ROSE translator built.
-PrintRoseTranslatorVersion: $(top_builddir)/tests/testAnalysis
-	$(top_builddir)/tests/testAnalysis --version
+PrintRoseTranslatorVersion: $(top_builddir)/tests/nonsmoke/functional/testAnalysis
+	$(top_builddir)/tests/nonsmoke/functional/testAnalysis --version
 
 release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
 

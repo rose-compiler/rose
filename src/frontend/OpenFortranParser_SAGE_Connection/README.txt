@@ -34,7 +34,7 @@ Dan
 #       modified:   src/frontend/OpenFortranParser_SAGE_Connection/jserver.C
 #       modified:   src/frontend/OpenFortranParser_SAGE_Connection/token.c
 #       modified:   src/frontend/SageIII/sageSupport.C
-#       modified:   tests/CompileTests/Fortran_tests/Makefile.am
+#       modified:   tests/nonsmoke/functional/CompileTests/Fortran_tests/Makefile.am
 
 We now use a jar file distributed by OFP, so we no longer need the
 OFP source code in src/3rdPartyLibraries/fortran-parser directory.

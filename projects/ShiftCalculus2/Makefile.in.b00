@@ -1522,7 +1522,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS
 @USE_ROSE_IN_BUILD_TREE_VAR_TRUE@export ROSE_IN_BUILD_TREE=$(top_builddir)
 
 $(PASSING_REGRESSION_TEST_Output): ./shiftCalculusCompiler
-	./shiftCalculusCompiler $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.passing=.C)
+	./shiftCalculusCompiler $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passing=.C)
 
 test1: shiftCalculusCompiler
 	./shiftCalculusCompiler -c $(srcdir)/identity.cpp

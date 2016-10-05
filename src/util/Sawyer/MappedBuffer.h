@@ -67,11 +67,11 @@ public:
      *
      *  The specified file, which must already exist, is mapped into memory and pointed to by this new buffer. */
     static typename Buffer<A, T>::Ptr
-    instance(const std::string &path,
+    instance(const boost::filesystem::path &path,
              boost::iostreams::mapped_file::mapmode mode=boost::iostreams::mapped_file::readonly,
              boost::intmax_t offset=0,
              boost::iostreams::mapped_file::size_type length=boost::iostreams::mapped_file::max_length) {
-        boost::iostreams::mapped_file_params params(path);
+        boost::iostreams::mapped_file_params params(path.string());
         params.flags = mode;
         params.length = length;
         params.offset = offset;

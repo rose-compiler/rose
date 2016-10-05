@@ -72,8 +72,7 @@ int
 main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool");
-    rose::Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    rose::Diagnostics::initAndRegister(::mlog, "tool");
 
     Settings settings;
     SgProject *project = buildAst(argc, argv, settings);

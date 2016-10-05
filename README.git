@@ -691,7 +691,7 @@ Pull the changes from the target of the test merge
    114  12:24   git pull origin andreas
 
 Resolve conflict by checking in (git add) the new changed file
-   122  12:25   git add tests/roseTests/binaryTests/Makefile.am
+   122  12:25   git add tests/nonsmoke/functional/roseTests/binaryTests/Makefile.am
 
 Commit the changes to the local repository
    123  12:26   git commit -a

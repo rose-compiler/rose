@@ -21,8 +21,7 @@ initDiagnostics(void) {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Strings", Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::Strings");
     }
 }
     

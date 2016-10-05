@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-TESTCODE_INCLUDES = 
+TESTCODE_INCLUDES =
+C_TESTS =
 
 ROSE2LLVM_FLAGS = --edg:no-warnings -rose:verbose 0
 
@@ -26,7 +27,7 @@ $(C_TESTCODES_CURRENTLY_FAILING)
 if ROSE_USE_LLVM
 
 # GENERATE Executables using rose2llvm
-C_TESTS = $(C_TESTCODES_REQUIRED_TO_PASS)
+C_TESTS += $(C_TESTCODES_REQUIRED_TO_PASS)
 
 ../src/rose2llvmAA:
 	$(MAKE) -C ../src rose2llvmAA
@@ -35,14 +36,12 @@ $(C_TESTS): ../src/rose2llvmAA
 	@cp $(srcdir)/$@ $@
 	../src/rose2llvmAA $@ > $@.out
 
-check-local:
-	@echo "Test for rose2llvm translator."	
-	@$(MAKE) $(C_TESTS)
-	@echo "======== make check rule for rose2llvmAA terminated normally ========"
+endif
+
+EXTRA_DIST = $(ALL_TESTCODES) 
+
+check-local: $(C_TESTS)
 
 clean-local:	
 	rm -f *.out *.c
 
-endif
-
-EXTRA_DIST = $(ALL_TESTCODES) 

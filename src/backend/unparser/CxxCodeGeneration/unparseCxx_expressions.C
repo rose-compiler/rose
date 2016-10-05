@@ -2357,8 +2357,8 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
         }
        else
         {
-       // DQ (6/23/2011): Make this a warning since the tests/CompileTests/OpenMP_tests/alignment.c fails in the tests/roseTests/ompLoweringTests directory.
-       // This also happens for the tests/roseTests/programAnalysisTests/testPtr1.C when run by the tests/roseTests/programAnalysisTests/PtrAnalTest tool.
+       // DQ (6/23/2011): Make this a warning since the tests/nonsmoke/functional/CompileTests/OpenMP_tests/alignment.c fails in the tests/nonsmoke/functional/roseTests/ompLoweringTests directory.
+       // This also happens for the tests/nonsmoke/functional/roseTests/programAnalysisTests/testPtr1.C when run by the tests/nonsmoke/functional/roseTests/programAnalysisTests/PtrAnalTest tool.
 
        // printf ("ERROR: In unparseType(): nodeReferenceToFunction = NULL \n");
        // printf ("WARNING: In unparseType(): nodeReferenceToFunction = NULL \n");
@@ -2921,8 +2921,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         }
        else
         {
-       // DQ (6/23/2011): Make this a warning since the tests/CompileTests/OpenMP_tests/alignment.c fails in the tests/roseTests/ompLoweringTests directory.
-       // This also happens for the tests/roseTests/programAnalysisTests/testPtr1.C when run by the tests/roseTests/programAnalysisTests/PtrAnalTest tool.
+       // DQ (6/23/2011): Make this a warning since the tests/nonsmoke/functional/CompileTests/OpenMP_tests/alignment.c fails in the tests/nonsmoke/functional/roseTests/ompLoweringTests directory.
+       // This also happens for the tests/nonsmoke/functional/roseTests/programAnalysisTests/testPtr1.C when run by the tests/nonsmoke/functional/roseTests/programAnalysisTests/PtrAnalTest tool.
 
        // printf ("ERROR: In unparseType(): nodeReferenceToFunction = NULL \n");
        // printf ("WARNING: In unparseType(): nodeReferenceToFunction = NULL \n");

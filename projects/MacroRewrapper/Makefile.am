@@ -83,14 +83,12 @@ test:
 	@echo "*** ROSE/projects/MacroRewrapper: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"
 
-check-local:
-
 CLEANFILES = 
+
+endif
 
 clean-local:
 	rm -rf *.out
-
-endif
 
 EXTRA_DIST = argumentFilterer.h  helpFunctions.h  macro.h  macroRewrapper.h  waveHelpers.h tests
 

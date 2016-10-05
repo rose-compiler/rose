@@ -233,7 +233,7 @@
 /* #define __COMPLEX__ */
 
 /* Defined this to avoid warnings (e.g. test2001_11.C) from 3.4.6 systems header files. */
-/* DQ (9/6/2016): This is also required to support tests/CompileTests/mergeAST_tests/mergeTest_134.C */
+/* DQ (9/6/2016): This is also required to support tests/nonsmoke/functional/CompileTests/mergeAST_tests/mergeTest_134.C */
 #define __weakref__(NAME)
 
 /* For debugging use the separate generated header file of builtin functions. */
@@ -250,7 +250,7 @@
 
 
 /* DQ (9/12/2016): Added builtin functions (not yet supported in config/Builtins.def).
-   These are required to compile: tests/CompileTests/Cxx11_tests/test2015_08.C 
+   These are required to compile: tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2015_08.C 
  */
 long long          __builtin_bswap64(long long __X);
 void               __builtin_ia32_fxsave(void *__P);

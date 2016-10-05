@@ -77,9 +77,12 @@ libroseSawyer_la_SOURCES =			\
 	Sawyer/Attribute.C			\
 	Sawyer/CommandLine.C			\
 	Sawyer/CommandLineBoost.C		\
+	Sawyer/DocumentBaseMarkup.C		\
+	Sawyer/DocumentMarkup.C			\
+	Sawyer/DocumentPodMarkup.C		\
+	Sawyer/DocumentTextMarkup.C		\
 	Sawyer/GraphTraversal.C			\
-	Sawyer/Markup.C				\
-	Sawyer/MarkupPod.C			\
+	Sawyer/LineVector.C			\
 	Sawyer/Message.C			\
 	Sawyer/ProgressBar.C			\
 	Sawyer/Sawyer.C				\
@@ -105,7 +108,12 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/DefaultAllocator.h		\
 	Sawyer/DenseIntegerSet.h		\
 	Sawyer/DistinctList.h			\
+	Sawyer/DocumentBaseMarkup.h		\
+	Sawyer/DocumentMarkup.h			\
+	Sawyer/DocumentPodMarkup.h		\
+	Sawyer/DocumentTextMarkup.h		\
 	Sawyer/Exception.h			\
+	Sawyer/FileSystem.h			\
 	Sawyer/Graph.h				\
 	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
@@ -115,10 +123,10 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/IntervalMap.h			\
 	Sawyer/IntervalSet.h			\
 	Sawyer/IntervalSetMap.h			\
+	Sawyer/Lexer.h				\
+	Sawyer/LineVector.h			\
 	Sawyer/Map.h				\
 	Sawyer/MappedBuffer.h			\
-	Sawyer/Markup.h				\
-	Sawyer/MarkupPod.h			\
 	Sawyer/Message.h			\
 	Sawyer/NullBuffer.h			\
 	Sawyer/Optional.h			\
