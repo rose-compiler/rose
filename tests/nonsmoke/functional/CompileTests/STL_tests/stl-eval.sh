@@ -11,8 +11,9 @@
 STL_CPP98_HEADERS_PASSING="algorithm deque exception functional limits list map memory new numeric queue set stack typeinfo utility valarray vector"
 STL_CPP98_HEADERS_FAILING="bitset complex fstream iomanip ios iosfwd iostream istream iterator locale ostream sstream stdexcept streambuf string"
 
-STL_CPP11_HEADERS_PASSING=""
-STL_CPP11_HEADERS_FAILING="algorithm bitset complex deque exception fstream functional iomanip ios iosfwd iostream istream iterator limits list locale map memory new numeric ostream queue set sstream stack stdexcept streambuf string typeinfo utility valarray vector"
+# C++11 TESTS only are expected to pass for frontend (T0_FAIL+T1_FAIL==0 (not yet for T2_FAIL))
+STL_CPP11_HEADERS_PASSING="algorithm bitset complex deque exception fstream functional iomanip ios iosfwd iostream istream iterator limits list locale map memory new numeric ostream queue set sstream stack stdexcept streambuf string typeinfo utility valarray vector"
+STL_CPP11_HEADERS_FAILING=""
 
 ###############################################################################
 
@@ -33,7 +34,7 @@ function cleanup {
 }
 
 function test_failed {
-  echo -e "${RED}SOME TESTS FAILED (${TOTAL_FAIL}). See above list for details.${COLOREND}"
+  echo -e "${RED}${TOTAL_FAIL} TESTS FAILED. See above list for details.${COLOREND}"
   exit 1
 }
 
@@ -49,6 +50,7 @@ T1_PASS=0
 T1_FAIL=0
 T2_PASS=0
 T2_FAIL=0
+TOTAL_FAIL=0
 
 for header in ${STL_HEADERS}; do
   printf "TESTING: %-17s: " "$header"
@@ -74,7 +76,7 @@ for header in ${STL_HEADERS}; do
           if [ -e rose_test_${header}.pp.C ]
           then
               echo -n "PASS" # 1
-              ((T1_PASS+=1))
+              ((T1_PASS+=1) )
               g++ -std=$LANG_STANDARD rose_test_${header}.pp.C -w -Wfatal-errors > /dev/null 2>&1
               if [ $? -eq 0 ]; then
                   echo -n " PASS : 100.00%" # 2
@@ -121,38 +123,54 @@ fi
 
 cleanup
 
-TOTAL_FAIL=0
+echo
 echo "-----------------------------------------------------------------"
-echo "STL C++98 CHECK"
+echo "Testing with COMP        : $TOOL1"
+echo "             FRONTEND(FE): $TOOL2"
+echo "             BACKEND (BE): $TOOL2"
+echo "-----------------------------------------------------------------"
+echo
+echo "-----------------------------------------------------------------"
+echo "STL C++98 FRONTEND+BACKEND CHECK         COMP FE   BE   : SUCCESS"
 echo "-----------------------------------------------------------------"
 # DQ: (comment out here to skip these tests).
 check "$STL_CPP98_HEADERS_PASSING" "c++98" ""
 if [ ${TOTAL_FAIL} -gt 0 ]; then
   test_failed
+else
+  echo "PASS (RESULT AS EXPECTED)."
 fi
 
 echo
 echo "-----------------------------------------------------------------"
-echo "STL C++98 CHECK (EXPECTED FAILS)"
+echo "STL C++98 FRONTEND CHECK (BE FAILS)      COMP FE   BE   : SUCCESS"
 echo "-----------------------------------------------------------------"
 # DQ: (comment out here to skip these tests).
-check "$STL_CPP98_HEADERS_FAILING" "c++98" "[expected fail]"
+check "$STL_CPP98_HEADERS_FAILING" "c++98" "[BE is known to fail]"
 
-TOTAL_FAIL=0
-echo
-echo "-----------------------------------------------------------------"
-echo "STL C++11 CHECK"
-echo "-----------------------------------------------------------------"
-check "$STL_CPP11_HEADERS_PASSING" "c++11" ""
-if [ $TOTAL_FAIL -gt 0 ]; then
+# for headers known to fail, only the generated code fails (T2_FAIL)
+# therefore we only check that the front end does not fail for any
+# of those C++ 98 headers.
+((CPP98_FAIL=T0_FAIL+T1_FAIL))
+if [ ${CPP98_FAIL} -gt 0 ]; then
   test_failed
+else
+  echo "PASS (RESULT AS EXPECTED)."
 fi
 
 echo
 echo "-----------------------------------------------------------------"
-echo "STL C++11 CHECK (EXPECTED FAILS)"
+echo "STL C++11 FRONTEND CHECK (BE FAILS)      COMP FE   BE   : SUCCESS"
 echo "-----------------------------------------------------------------"
-check "$STL_CPP11_HEADERS_FAILING" "c++11" "[expected fail]"
+check "$STL_CPP11_HEADERS_PASSING" "c++11" ""
+
+# code generation not correct for any C++11 header. We only check the front end.
+((CPP11_FAIL=T0_FAIL+T1_FAIL))
+if [ ${CPP11_FAIL} -gt 0 ]; then
+  test_failed
+else
+  echo "PASS (RESULT AS EXPECTED)."
+fi
 
 echo
 echo -e "${GREEN}-----------------------------------------------------------------${COLOREND}"
