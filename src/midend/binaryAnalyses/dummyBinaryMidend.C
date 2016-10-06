@@ -1,12 +1,6 @@
 #include "sage3basic.h"
 
-#include "BinaryBestMapAddress.h"
-#include "BinaryCallingConvention.h"
-#include "BinaryDataFlow.h"
-#include "BinaryFunctionSimilarity.h"
-#include "BinaryNoOperation.h"
 #include "BinaryString.h"
-#include "BinaryTaintedFlow.h"
 #include "GraphAlgorithms.h"
 #include "RoseBin_CallGraphAnalysis.h" 
 #include "RoseBin_FlowAnalysis.h"
@@ -15,21 +9,6 @@
 namespace rose {
 namespace BinaryAnalysis {
 
-void BestMapAddress::initDiagnostics() {}
-void DataFlow::initDiagnostics() {}
-void TaintedFlow::initDiagnostics() {}
-void InstructionSemantics2::initDiagnostics() {}
-void NoOperation::initDiagnostics() {}
-void CallingConvention::initDiagnostics() {}
-void FunctionSimilarity::initDiagnostics() {}
-
-namespace PointerDetection {
-    void initDiagnostics() {}
-}
-
-namespace StackDelta {
-    void initDiagnostics() {}
-}
 
 namespace Strings {
     void initDiagnostics() {}
