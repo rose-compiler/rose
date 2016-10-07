@@ -4,6 +4,7 @@
 #include "markLhsValues.h"
 #include "fixupNames.h"
 #include "FileUtility.h"
+#include "AstPDFGeneration.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -7760,7 +7761,7 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
   // If there are comments and/or CPP directives then those comments and/or CPP directives will
   // be moved to a new SgStatement.  The new SgStatement is selected using the findSurroundingStatementFromSameFile()
   // function and if there is not statement found then the SgGlobal IR node will be selected.
-  // this work is tested by the tests/roseTests/astInterfaceTests/removeStatementCommentRelocation.C
+  // this work is tested by the tests/nonsmoke/functional/roseTests/astInterfaceTests/removeStatementCommentRelocation.C
   // translator and a number of input codes that represent a range of contexts which exercise different
   // cases in the code below.
 
@@ -8424,7 +8425,7 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
 void
 SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root) 
    {
-  // DQ (8/18/2015): This function is called from the tests/testTemplates translator.
+  // DQ (8/18/2015): This function is called from the tests/nonsmoke/functional/testTemplates translator.
 
   // DQ (7/19/2015): This function can't use an iterator since it will be 
   // doing transformations on the AST and will cause iterator invalidation errors.
@@ -13312,7 +13313,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
                  // if (*j != func)
                     if (func_decl != func)
                        {
-                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/nonsmoke/functional/roseTests/astInterface_tests).
                       // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
                          if (func_decl->get_firstNondefiningDeclaration() == NULL)
                             {
@@ -13329,7 +13330,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
 #if 0
                printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Testing func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
 #endif
-            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/nonsmoke/functional/roseTests/astInterface_tests).
             // func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
                if (func->get_firstNondefiningDeclaration() == NULL)
                   {
@@ -16540,7 +16541,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   //   developersScratchSpace/Dan/translator_tests/reverseTraversal.C
 
   // To test this run: "rm moreTest2.o ; make moreTest2.o"
-  // in directory: tests/roseTests/astOutliningTests
+  // in directory: tests/nonsmoke/functional/roseTests/astOutliningTests
 
   // ***** Also move different loop IR nodes into a common base class *****
 
@@ -20638,6 +20639,18 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
    }
 
 
+void SageInterface:: saveToPDF(SgNode* node)
+{
+  saveToPDF(node, string("temp.pdf") );
+}
+//! Save AST into a pdf file, start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
+void SageInterface:: saveToPDF(SgNode* node, std::string filename)
+{
+  ROSE_ASSERT(node != NULL); 
+  AstPDFGeneration pdf;
+  pdf.generateWithinFile(filename, getEnclosingFileNode(node));
+}
+
 bool SageInterface::insideSystemHeader (SgLocatedNode* node)
 {
   bool rtval = false; 
@@ -20670,7 +20683,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // DQ (11/28/2015): A better goal for this function should be to define it as a recursive function.
 
   // DQ (12/8/2015): We need to add support for SgMemberFunctionType as demonstrated by test2007_17.C.
-  // and for SgTemplateType as demonstrated by tests/CompileTests/RoseExample_tests/testRoseHeaders_03.C
+  // and for SgTemplateType as demonstrated by tests/nonsmoke/functional/CompileTests/RoseExample_tests/testRoseHeaders_03.C
   // Note that this is only required within the change to use this isEquivalentType() function in the
   // support to replace: 
   //    templateParameterOrArgumentLocal->get_initializedName()->get_type() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_type()
@@ -21339,3 +21352,77 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
      return isSame;
    }
+
+
+#if 0
+// This is modified to be a template function and so must be moved to the header file.
+// DQ (8/30/2016): Added function to detect EDG AST normalization.
+bool
+SageInterface::isNormalizedTemplateInstantiation (SgFunctionDeclaration* function)
+   {
+  // This function is called in the Call graph generation to avoid filtering out EDG normalized 
+  // function template instnatiations (which come from normalized template functions and member functions).
+
+     bool retval = false;
+
+#if 1
+  // DQ (8/30/2016): We need to mark this as an EDG normalization so that we can detect it as an exception 
+  // to some simple attempts to filter the AST (e.g. for the Call Graph implementation which filters on only 
+  // functions in the current directory).  This explicit makring makes it much easier to get this test correct.
+  // But we still need to look at if the location of the parent template is something that we wnat to output.
+  // If tis is a template instantiation then it is not enough to look only at the non-defining declaration if 
+  // it is not compiler generated.
+     retval = function->get_marked_as_edg_normalization();
+#else
+  // Test for this to be a template instantation (in which case it was marked as 
+  // compiler generated but we may want to allow it to be used in the call graph, 
+  // if it's template was a part was defined in the current directory).
+     SgTemplateInstantiationFunctionDecl*       templateInstantiationFunction       = isSgTemplateInstantiationFunctionDecl(function);
+     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(function);
+
+     if (templateInstantiationFunction != NULL)
+        {
+       // When the defining function has been normalized by EDG, only the non-defining declaration will have a source position.
+          templateInstantiationFunction = isSgTemplateInstantiationFunctionDecl(templateInstantiationFunction->get_firstNondefiningDeclaration());
+          SgTemplateFunctionDeclaration* templateFunctionDeclaration = templateInstantiationFunction->get_templateDeclaration();
+          if (templateFunctionDeclaration != NULL)
+             {
+            // retval = operator()(templateFunctionDeclaration);
+               retval = (templateFunctionDeclaration->isCompilerGenerated() == false);
+             }
+            else
+             {
+             // Assume false.
+             }
+
+#if DEBUG_SELECTOR
+          printf ("   --- case of templateInstantiationFunction: retval = %s \n",retval ? "true" : "false");
+#endif
+        }
+       else
+        {
+          if (templateInstantiationMemberFunction != NULL)
+             {
+            // When the defining function has been normalized by EDG, only the non-defining declaration will have a source position.
+               templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(templateInstantiationMemberFunction->get_firstNondefiningDeclaration());
+               SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = templateInstantiationMemberFunction->get_templateDeclaration();
+               if (templateMemberFunctionDeclaration != NULL)
+                  {
+                 // retval = operator()(templateMemberFunctionDeclaration);
+                    retval = (templateMemberFunctionDeclaration->isCompilerGenerated() == false);
+                  }
+                 else
+                  {
+                 // Assume false.
+                  }
+
+#if DEBUG_SELECTOR
+               printf ("   --- case of templateInstantiationMemberFunction: retval = %s \n",retval ? "true" : "false");
+#endif
+             }
+        }
+#endif
+
+     return retval;
+   }
+#endif

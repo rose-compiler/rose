@@ -31,8 +31,8 @@ libRoseCommandlineUtil_la_SOURCES = $(libRoseCommandlineUtilSources)
 pkginclude_HEADERS = sla.h commandline_processing.h
 
 # DQ (2/28/2010): New binary AST merge tests.
-READ_TRANSLATOR = $(top_builddir)/tests/testAstFileRead
-# READ_TRANSLATOR = $(top_builddir)/tests/parallelASTMerge
+READ_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testAstFileRead
+# READ_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/parallelASTMerge
 
 testBinaryAstMerge:
 #	$(READ_TRANSLATOR) $(libRoseCommandlineUtilSources)

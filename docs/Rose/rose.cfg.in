@@ -753,6 +753,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
                          @top_srcdir@/src/frontend/BinaryFormats \
+                         @top_srcdir@/src/midend/abstractHandle \
                          @top_srcdir@/src/midend/binaryAnalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/dataflowanalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics \
@@ -893,7 +894,7 @@ EXCLUDE_SYMBOLS        =
 EXAMPLE_PATH           = @top_srcdir@ \
 			 @top_srcdir@/tutorial \
                          @top_srcdir@/src/util/Sawyer/docs/examples \
-			 @top_srcdir@/tests/roseTests/binaryTests
+			 @top_srcdir@/tests/nonsmoke/functional/roseTests/binaryTests
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp

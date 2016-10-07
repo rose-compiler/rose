@@ -1139,6 +1139,13 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ( "SgFunctionParameterScope*", "functionParameterScope", "= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/30/2016): Add a data member to detect specific EDG normalizations to functions defined in 
+  // templates and moved to be declarations outside of the template declarations (also effects the 
+  // associated template instantiations).
+     FunctionDeclaration.setDataPrototype ("bool", "marked_as_edg_normalization", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
 #if 0
@@ -1206,12 +1213,12 @@ Grammar::setUpStatements ()
   // MemberFunctionDeclaration.setDataPrototype ( "SgCtorInitializerList*", "CtorInitializerList", "= NULL",
   //                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #if 1
-  // DQ (7/20/2010): This at least does not fail our tests in the tests/CompileTests/copyAST_tests directory.
+  // DQ (7/20/2010): This at least does not fail our tests in the tests/nonsmoke/functional/CompileTests/copyAST_tests directory.
   // DQ (7/19/2010): This was a reported error, the copy function will not copy this even when specified using the deep copy.
      MemberFunctionDeclaration.setDataPrototype ( "SgCtorInitializerList*", "CtorInitializerList", "= NULL",
                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 #else
-  // DQ (7/20/2010): This appears to cause an error in tests/CompileTests/copyAST_tests/test2004_160.C.
+  // DQ (7/20/2010): This appears to cause an error in tests/nonsmoke/functional/CompileTests/copyAST_tests/test2004_160.C.
      MemberFunctionDeclaration.setDataPrototype ( "SgCtorInitializerList*", "CtorInitializerList", "= NULL",
                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 #endif

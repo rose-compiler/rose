@@ -8,18 +8,45 @@
 #include <Sawyer/CommandLine.h>
 
 //Rama (12/22/2006): changing the class to a namespace and removing the "static"ness of the "member" functions
-
+//! Command line processing utility functions
 namespace CommandlineProcessing
    {
+          /** Empty command-line parser.
+           *
+           *  Returns a command-line parser that has no switch declarations, but is set up consistently for ROSE tools. The @p
+           *  purpose should be an uncapitalized, short, single-line string that appears near the top of the man page. The @p
+           *  description can be much longer, multiple paragraphs, free-format, with Sawyer markup. It will appear under the
+           *  heading "Description" in the man page.
+           *
+           *  See also, @ref createEmptyParserStage. */
+          ROSE_UTIL_API Sawyer::CommandLine::Parser createEmptyParser(const std::string &purpose,
+                                                                      const std::string &description);
+
+          /** Empty command-line parser suitable for use with other parsers.
+           *
+           *  Returns a command-line parser that has no switch declarations, but is set up consistently for ROSE tools. The
+           *  parser is configured to skip over any program arguments it doesn't recognize, with the assumption that those
+           *  arguments will be passed to another parser.  This also means that this parser cannot report errors for misspelled
+           *  or misused switches because it cannot tell whether the switch is misspelled or simply intended for the next
+           *  parser.
+           *
+           *  The @p purpose should be an uncapitalized, short, single-line string that appears near the top of the man
+           *  page. The @p description can be much longer, multiple paragraphs, free-format, with Sawyer markup. It will appear
+           *  under the heading "Description" in the man page.
+           *
+           *  See also, @ref createEmptyParser. */
+          ROSE_UTIL_API Sawyer::CommandLine::Parser createEmptyParserStage(const std::string &purpose,
+                                                                           const std::string &description);
           /** Generic command-line components.
            *
            *  Returns a description of the switches that should be available for all ROSE tools. To make a command-line
-           *  parser that recognizes these switches, add the switches to the parser using its @c with method.  For example:
+           *  parser that recognizes these switches, add the switches to the parser using its @c with method.  For example,
+           *  here's how to construct a parser that recognizes only these switches:
            *
            * @code
            *  static Sawyer::CommandLine::ParserResult
            *  parseCommandLine(int argc, char *argv[]) {
-           *      Sawyer::CommandLine::Parser parser;
+           *      Sawyer::CommandLine::Parser parser = CommandlineProcessing::createEmptyParser(purpose, description);
            *      return parser
            *          .with(CommandlineProcessing::genericSwitches()) // these generic switches
            *          .with(mySwitches)                               // my own switches, etc.
@@ -47,7 +74,19 @@ namespace CommandlineProcessing
            *  settings are passed per command-line parsing request, but the interface in ROSE doesn't have that ability yet, so
            *  we use a global variable. */
           ROSE_UTIL_API extern GenericSwitchArgs genericSwitchArgs;
-              
+
+          /** Convenience for for adding Boolean switches.
+           *
+           *  Adds "--foo" (if @p switchName is "foo") and "--no-foo" to the specified switch group. The storage location's
+           *  lifetime must extend to the point where the command-line is parsed.  This function adds additional documentation
+           *  describing how to disable the switch using "--no-foo" and what the default is (current value of storage
+           *  location).
+           *
+           *  An alternative is to use a switch that takes a Boolean argument (e.g., "--foo=yes" or "--foo=no"), but this is
+           *  more difficult for users to remember and type than just "--foo" and "--no-foo". */
+          ROSE_UTIL_API void insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup&, const std::string &switchName,
+                                                 bool &storageLocation, const std::string &documentation);
+
       //! Separate a string into individual parameters and store them into a string vector
           ROSE_UTIL_API Rose_STL_Container<std::string> generateArgListFromString ( std::string commandline );
 

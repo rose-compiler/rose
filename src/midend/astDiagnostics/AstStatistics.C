@@ -150,7 +150,7 @@ AstNodeMemoryPoolStatistics::AstNodeMemoryPoolStatistics()
      printf ("Total memory used = %d \n",totalMemoryUsed);
      printf ("numberOfNodes = %" PRIuPTR " \n",numberOfNodes());
 
-  // DQ (5/6/2011): Insure++ reports this as an error in the tests/RunTests/AstDeleteTests
+  // DQ (5/6/2011): Insure++ reports this as an error in the tests/nonsmoke/functional/RunTests/AstDeleteTests
      counter = 0;
    }
 

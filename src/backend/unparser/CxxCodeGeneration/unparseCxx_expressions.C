@@ -43,6 +43,14 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
      curprint(string("\n /*    unparseLanguageSpecificExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
 #endif
 
+#if 0
+     printf ("In unparseLanguageSpecificExpression(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseLanguageSpecificExpression(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      switch (expr->variant())
         {
        // DQ (4/18/2013): I don't think this is ever called this way, IR node resolve to the derived classes not the base classes.
@@ -205,6 +213,15 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                break;
              }
         }
+
+#if 0
+     printf ("Leaving unparseLanguageSpecificExpression(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("Leaving unparseLanguageSpecificExpression(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
    }
 
 
@@ -229,17 +246,25 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      bool hasCaptureCharacter = false;
      int commaCounter = 0;
 
-     if (lambdaExp->get_capture_default() == true)
-        {
-          curprint("=");
-          hasCaptureCharacter = true; 
-        }
 
-     if (lambdaExp->get_default_is_by_reference() == true)
-        {
-          curprint("&");
-          hasCaptureCharacter = true;
-        }
+
+     // schroder3 (2016-08-23): Do not print "&" AND "=" (because "[&=](){}" is ill-formed):
+     if (lambdaExp->get_capture_default() == true) {
+       if (lambdaExp->get_default_is_by_reference() == true) {
+         curprint("&");
+       }
+       else {
+         curprint("=");
+       }
+       hasCaptureCharacter = true;
+     }
+     else {
+       // schroder3 (2016-08-23): Consistency check: If there is no capture default then there should be no
+       //  by-reference-capture default:
+       ROSE_ASSERT(!lambdaExp->get_default_is_by_reference());
+     }
+
+
 
      ROSE_ASSERT(lambdaExp->get_lambda_capture_list() != NULL);
      size_t bound = lambdaExp->get_lambda_capture_list()->get_capture_list().size();
@@ -248,8 +273,12 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
           SgLambdaCapture* lambdaCapture = lambdaExp->get_lambda_capture_list()->get_capture_list()[i];
           ROSE_ASSERT(lambdaCapture != NULL);
 
-
-          if (lambdaCapture->get_capture_variable() != NULL)
+          // schroder3 (2016-08-23): Do not print implicit captures because this generates ill-formed code if
+          //  there is a capture default (C++ standard section [expr.prim.lambda] point 8) (g++ allows this in
+          //  non-pedantic mode, clang++ does not). Example: do not transform "int i; [&](){i;};" to ill-formed
+          //  "int i; [&, &i](){i;}"). In addition, this change prevents the printing of "&this" (which is
+          //  ill-formed too) when "this" is implicitly captured.
+          if (!lambdaCapture->get_implicit() && lambdaCapture->get_capture_variable() != NULL)
              {
 
               // Liao 6/24/2016, we output ",item" when 
@@ -1201,6 +1230,14 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      ROSE_ASSERT(false);
 #endif
 
+#if 0
+     printf ("In unparseTemplateArgument(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      SgUnparse_Info newInfo(info);
 
   // DQ (8/6/2007): Turn this off now that we have a more sophisticated hidden declaration and hidden type list mechanism.
@@ -1630,6 +1667,15 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
      curprint("\n/* Bottom of unparseTemplateArgument */ \n");
 #endif
+
+#if 0
+     printf ("Leaving unparseTemplateArgument(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("Leaving unparseTemplateArgument(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
      unp->u_exprStmt->curprint ( string("\n/* Bottom of unparseTemplateArgument */ \n"));
@@ -2311,8 +2357,8 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
         }
        else
         {
-       // DQ (6/23/2011): Make this a warning since the tests/CompileTests/OpenMP_tests/alignment.c fails in the tests/roseTests/ompLoweringTests directory.
-       // This also happens for the tests/roseTests/programAnalysisTests/testPtr1.C when run by the tests/roseTests/programAnalysisTests/PtrAnalTest tool.
+       // DQ (6/23/2011): Make this a warning since the tests/nonsmoke/functional/CompileTests/OpenMP_tests/alignment.c fails in the tests/nonsmoke/functional/roseTests/ompLoweringTests directory.
+       // This also happens for the tests/nonsmoke/functional/roseTests/programAnalysisTests/testPtr1.C when run by the tests/nonsmoke/functional/roseTests/programAnalysisTests/PtrAnalTest tool.
 
        // printf ("ERROR: In unparseType(): nodeReferenceToFunction = NULL \n");
        // printf ("WARNING: In unparseType(): nodeReferenceToFunction = NULL \n");
@@ -2875,8 +2921,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         }
        else
         {
-       // DQ (6/23/2011): Make this a warning since the tests/CompileTests/OpenMP_tests/alignment.c fails in the tests/roseTests/ompLoweringTests directory.
-       // This also happens for the tests/roseTests/programAnalysisTests/testPtr1.C when run by the tests/roseTests/programAnalysisTests/PtrAnalTest tool.
+       // DQ (6/23/2011): Make this a warning since the tests/nonsmoke/functional/CompileTests/OpenMP_tests/alignment.c fails in the tests/nonsmoke/functional/roseTests/ompLoweringTests directory.
+       // This also happens for the tests/nonsmoke/functional/roseTests/programAnalysisTests/testPtr1.C when run by the tests/nonsmoke/functional/roseTests/programAnalysisTests/PtrAnalTest tool.
 
        // printf ("ERROR: In unparseType(): nodeReferenceToFunction = NULL \n");
        // printf ("WARNING: In unparseType(): nodeReferenceToFunction = NULL \n");
@@ -4955,7 +5001,14 @@ Unparse_ExprStmt::unparseAlignOfOp(SgExpression* expr, SgUnparse_Info & info)
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
+
           info2.set_SkipClassDefinition();
+#if 0
+          printf ("In unparseAlignOfOp(expr = %p): Added call to set_SkipEnumDefinition() for symetry with call to set_SkipClassDefinition() \n",expr);
+#endif
+       // DQ (9/9/2016): Added call to set_SkipEnumDefinition().
+          info2.set_SkipEnumDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
 
@@ -5048,7 +5101,15 @@ Unparse_ExprStmt::unparseUpcLocalSizeOfOp(SgExpression* expr, SgUnparse_Info & i
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
+
           info2.set_SkipClassDefinition();
+
+#if 0
+          printf ("In unparseUpcLocalSizeOfOp(expr = %p): Added call to set_SkipEnumDefinition() for symetry with call to set_SkipClassDefinition() \n",expr);
+#endif
+       // DQ (9/9/2016): Added call to set_SkipEnumDefinition().
+          info2.set_SkipEnumDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
           unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
@@ -5076,7 +5137,15 @@ Unparse_ExprStmt::unparseUpcBlockSizeOfOp(SgExpression* expr, SgUnparse_Info & i
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
+
           info2.set_SkipClassDefinition();
+
+#if 0
+          printf ("In unparseUpcBlockSizeOfOp(expr = %p): Added call to set_SkipEnumDefinition() for symetry with call to set_SkipClassDefinition() \n",expr);
+#endif
+       // DQ (9/9/2016): Added call to set_SkipEnumDefinition().
+          info2.set_SkipEnumDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
           unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
@@ -5104,7 +5173,14 @@ Unparse_ExprStmt::unparseUpcElemSizeOfOp(SgExpression* expr, SgUnparse_Info & in
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
+
           info2.set_SkipClassDefinition();
+#if 0
+          printf ("In unparseUpcElemSizeOfOp(expr = %p): Added call to set_SkipEnumDefinition() for symetry with call to set_SkipClassDefinition() \n",expr);
+#endif
+       // DQ (9/9/2016): Added call to set_SkipEnumDefinition().
+          info2.set_SkipEnumDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
           unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
