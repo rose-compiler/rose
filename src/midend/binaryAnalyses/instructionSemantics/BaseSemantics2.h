@@ -277,9 +277,9 @@ namespace BinaryAnalysis {
  *  @section instruction_semantics_example1 Example
  *
  *  See actual source code for examples since this interface is an active area of ROSE development (as of Jan-2013). The
- *  tests/roseTests/binaryTests/semanticSpeed.C has very simple examples for a variety of semantic domains. In order to use one
- *  of ROSE's predefined semantic domains you'll likely need to define some types and variables. Here's what the code would
- *  look like when using default components of the Symbolic domain:
+ *  tests/nonsmoke/functional/roseTests/binaryTests/semanticSpeed.C has very simple examples for a variety of semantic
+ *  domains. In order to use one of ROSE's predefined semantic domains you'll likely need to define some types and
+ *  variables. Here's what the code would look like when using default components of the Symbolic domain:
  *
  *  @code
  *   // New API 

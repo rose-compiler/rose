@@ -1,11 +1,13 @@
 if (enable-binary-analysis)
 add_library(midend_binary OBJECT
   AbstractLocation.C
+  BinaryBestMapAddress.C
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
   BinaryDominance.C
   BinaryFunctionCall.C
+  BinaryFunctionSimilarity.C
   BinaryMagic.C
   BinaryNoOperation.C
   BinaryPointerDetection.C
@@ -19,16 +21,16 @@ add_library(midend_binary OBJECT
   DwarfLineMapper.C
   GraphAlgorithms.C
   RoseBin_CallGraphAnalysis.cpp
-  RoseBin_FlowAnalysis.cpp
-  RoseBin_DataFlowAnalysis.cpp
   RoseBin_CompareAnalysis.cpp
-  RoseBin_printInstructions.cpp
   RoseBin_ControlFlowAnalysis.cpp
-  dataflowanalyses/RoseBin_Emulate.cpp
-  dataflowanalyses/RoseBin_DataFlowAbstract.cpp
-  dataflowanalyses/RoseBin_VariableAnalysis.cpp
+  RoseBin_DataFlowAnalysis.cpp
+  RoseBin_FlowAnalysis.cpp
+  RoseBin_printInstructions.cpp
   dataflowanalyses/InterruptAnalysis.cpp
+  dataflowanalyses/RoseBin_DataFlowAbstract.cpp
   dataflowanalyses/RoseBin_DefUseAnalysis.cpp
+  dataflowanalyses/RoseBin_Emulate.cpp
+  dataflowanalyses/RoseBin_VariableAnalysis.cpp
   instructionSemantics/BaseSemantics2.C
   instructionSemantics/ConcreteSemantics2.C
   instructionSemantics/DataFlowSemantics2.C
@@ -69,11 +71,13 @@ install(
   FILES
     AbstractLocation.h
     BinaryAnalysisUtils.h
+    BinaryBestMapAddress.h
     BinaryCallingConvention.h
     BinaryControlFlow.h
     BinaryDataFlow.h
     BinaryDominance.h
     BinaryFunctionCall.h
+    BinaryFunctionSimilarity.h
     BinaryMagic.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
@@ -84,54 +88,54 @@ install(
     BinarySymbolicExprParser.h
     BinaryTaintedFlow.h
     BinaryToSource.h
-    dataflowanalyses/InterruptAnalysis.h
-    dataflowanalyses/RoseBin_DataFlowAbstract.h
-    dataflowanalyses/RoseBin_DefUseAnalysis.h
-    dataflowanalyses/RoseBin_Emulate.h
-    dataflowanalyses/RoseBin_VariableAnalysis.h
     DwarfLineMapper.h
-    ether.h
     GraphAlgorithms.h
-    instructionSemantics/BaseSemantics2.h
-    instructionSemantics/BaseSemantics.h
-    instructionSemantics/ConcreteSemantics2.h
-    instructionSemantics/DataFlowSemantics2.h
-    instructionSemantics/DispatcherM68k.h
-    instructionSemantics/DispatcherPowerpc.h
-    instructionSemantics/DispatcherX86.h
-    instructionSemantics/FindRegisterDefs.h
-    instructionSemantics/flowEquations.h
-    instructionSemantics/InsnSemanticsExpr.h
-    instructionSemantics/IntervalSemantics2.h
-    instructionSemantics/IntervalSemantics.h
-    instructionSemantics/MemoryCell.h
-    instructionSemantics/MemoryCellList.h
-    instructionSemantics/MemoryCellMap.h
-    instructionSemantics/MemoryCellState.h
-    instructionSemantics/MultiSemantics2.h
-    instructionSemantics/MultiSemantics.h
-    instructionSemantics/NullSemantics2.h
-    instructionSemantics/NullSemantics.h
-    instructionSemantics/PartialSymbolicSemantics2.h
-    instructionSemantics/PartialSymbolicSemantics.h
-    instructionSemantics/ReadWriteRegisterFragment.h
-    instructionSemantics/RegisterStateGeneric.h
-    instructionSemantics/SMTSolver.h
-    instructionSemantics/SourceAstSemantics2.h
-    instructionSemantics/StaticSemantics2.h
-    instructionSemantics/SymbolicMemory2.h
-    instructionSemantics/SymbolicSemantics2.h
-    instructionSemantics/SymbolicSemantics.h
-    instructionSemantics/TestSemantics2.h
-    instructionSemantics/TraceSemantics2.h
-    instructionSemantics/x86InstructionSemantics.h
-    instructionSemantics/YicesSolver.h
-    libraryIdentification/functionIdentification.h
-    libraryIdentification/libraryIdentification.h
     RoseBin_CallGraphAnalysis.h
     RoseBin_CompareAnalysis.h
     RoseBin_ControlFlowAnalysis.h
     RoseBin_DataFlowAnalysis.h
     RoseBin_FlowAnalysis.h
     RoseBin_printInstructions.h
+    dataflowanalyses/InterruptAnalysis.h
+    dataflowanalyses/RoseBin_DataFlowAbstract.h
+    dataflowanalyses/RoseBin_DefUseAnalysis.h
+    dataflowanalyses/RoseBin_Emulate.h
+    dataflowanalyses/RoseBin_VariableAnalysis.h
+    ether.h
+    instructionSemantics/BaseSemantics.h
+    instructionSemantics/BaseSemantics2.h
+    instructionSemantics/ConcreteSemantics2.h
+    instructionSemantics/DataFlowSemantics2.h
+    instructionSemantics/DispatcherM68k.h
+    instructionSemantics/DispatcherPowerpc.h
+    instructionSemantics/DispatcherX86.h
+    instructionSemantics/FindRegisterDefs.h
+    instructionSemantics/InsnSemanticsExpr.h
+    instructionSemantics/IntervalSemantics.h
+    instructionSemantics/IntervalSemantics2.h
+    instructionSemantics/MemoryCell.h
+    instructionSemantics/MemoryCellList.h
+    instructionSemantics/MemoryCellMap.h
+    instructionSemantics/MemoryCellState.h
+    instructionSemantics/MultiSemantics.h
+    instructionSemantics/MultiSemantics2.h
+    instructionSemantics/NullSemantics.h
+    instructionSemantics/NullSemantics2.h
+    instructionSemantics/PartialSymbolicSemantics.h
+    instructionSemantics/PartialSymbolicSemantics2.h
+    instructionSemantics/ReadWriteRegisterFragment.h
+    instructionSemantics/RegisterStateGeneric.h
+    instructionSemantics/SMTSolver.h
+    instructionSemantics/SourceAstSemantics2.h
+    instructionSemantics/StaticSemantics2.h
+    instructionSemantics/SymbolicMemory2.h
+    instructionSemantics/SymbolicSemantics.h
+    instructionSemantics/SymbolicSemantics2.h
+    instructionSemantics/TestSemantics2.h
+    instructionSemantics/TraceSemantics2.h
+    instructionSemantics/YicesSolver.h
+    instructionSemantics/flowEquations.h
+    instructionSemantics/x86InstructionSemantics.h
+    libraryIdentification/functionIdentification.h
+    libraryIdentification/libraryIdentification.h
   DESTINATION include)

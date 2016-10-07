@@ -1,0 +1,2 @@
+DEF < int > ::foo ->
+main -> DEF < int > ::foo

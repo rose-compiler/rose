@@ -606,7 +606,7 @@ PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
@@ -615,8 +615,8 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 $(TEST_Objects): ../../compassMain ../../compass_parameters
 #	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 	echo "Copy the file to the local build tree so that the we can process it with compass (not required by compass) ..."
-	cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	env COMPASS_PARAMETERS=../../compass_parameters $(VALGRIND) ../../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -rose:includeFile $(@:.o=)  -c $(@:.o=.C) && touch $@
+	cp $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
+	env COMPASS_PARAMETERS=../../compass_parameters $(VALGRIND) ../../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -rose:includeFile $(@:.o=)  -c $(@:.o=.C) && touch $@
 
 ../../compass_parameters:
 	cd ../..; $(MAKE) compass_parameters

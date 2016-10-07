@@ -10,14 +10,33 @@ libbinaryMidend_la_DEPENDENCIES =
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libbinaryMidend_la_SOURCES =					\
     AbstractLocation.C						\
+    BinaryBestMapAddress.C					\
+    BinaryCallingConvention.C					\
+    BinaryControlFlow.C						\
+    BinaryDataFlow.C						\
+    BinaryDominance.C						\
+    BinaryFunctionCall.C					\
+    BinaryFunctionSimilarity.C					\
+    BinaryMagic.C						\
+    BinaryNoOperation.C						\
+    BinaryPointerDetection.C					\
+    BinaryReturnValueUsed.C					\
+    BinaryStackDelta.C						\
+    BinaryString.C						\
+    BinarySymbolicExpr.C					\
+    BinarySymbolicExprParser.C					\
+    BinaryTaintedFlow.C						\
+    BinaryToSource.C						\
+    DwarfLineMapper.C						\
+    GraphAlgorithms.C						\
+    RoseBin_CallGraphAnalysis.cpp RoseBin_FlowAnalysis.cpp	\
     RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp	\
     RoseBin_printInstructions.cpp RoseBin_DataFlowAnalysis.cpp	\
-    RoseBin_CallGraphAnalysis.cpp RoseBin_FlowAnalysis.cpp	\
-    dataflowanalyses/RoseBin_DefUseAnalysis.cpp			\
-    dataflowanalyses/RoseBin_VariableAnalysis.cpp		\
     dataflowanalyses/InterruptAnalysis.cpp			\
-    dataflowanalyses/RoseBin_Emulate.cpp			\
     dataflowanalyses/RoseBin_DataFlowAbstract.cpp		\
+    dataflowanalyses/RoseBin_DefUseAnalysis.cpp			\
+    dataflowanalyses/RoseBin_Emulate.cpp			\
+    dataflowanalyses/RoseBin_VariableAnalysis.cpp		\
     instructionSemantics/BaseSemantics2.C			\
     instructionSemantics/ConcreteSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
@@ -44,24 +63,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/SymbolicSemantics.C			\
     instructionSemantics/SymbolicSemantics2.C			\
     instructionSemantics/TraceSemantics2.C			\
-    instructionSemantics/YicesSolver.C				\
-    GraphAlgorithms.C						\
-    BinaryControlFlow.C						\
-    BinaryDataFlow.C						\
-    BinaryDominance.C						\
-    BinaryFunctionCall.C					\
-    BinaryCallingConvention.C					\
-    BinaryMagic.C						\
-    BinaryNoOperation.C						\
-    BinaryPointerDetection.C					\
-    BinaryReturnValueUsed.C					\
-    BinaryStackDelta.C						\
-    BinaryString.C						\
-    BinarySymbolicExpr.C					\
-    BinarySymbolicExprParser.C					\
-    BinaryTaintedFlow.C						\
-    BinaryToSource.C						\
-    DwarfLineMapper.C
+    instructionSemantics/YicesSolver.C
 else
 libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
 endif
@@ -75,6 +77,26 @@ endif
 
 pkginclude_HEADERS =					\
     AbstractLocation.h					\
+    BinaryAnalysisUtils.h				\
+    BinaryBestMapAddress.h				\
+    BinaryCallingConvention.h				\
+    BinaryControlFlow.h					\
+    BinaryDataFlow.h					\
+    BinaryDominance.h					\
+    BinaryFunctionCall.h				\
+    BinaryFunctionSimilarity.h				\
+    BinaryMagic.h					\
+    BinaryNoOperation.h					\
+    BinaryPointerDetection.h				\
+    BinaryReturnValueUsed.h				\
+    BinaryStackDelta.h					\
+    BinaryStackVariable.h				\
+    BinaryString.h					\
+    BinarySymbolicExpr.h				\
+    BinarySymbolicExprParser.h				\
+    BinaryTaintedFlow.h					\
+    BinaryToSource.h					\
+    DwarfLineMapper.h					\
     GraphAlgorithms.h					\
     RoseBin_CallGraphAnalysis.h				\
     RoseBin_CompareAnalysis.h				\
@@ -87,6 +109,7 @@ pkginclude_HEADERS =					\
     dataflowanalyses/RoseBin_DefUseAnalysis.h		\
     dataflowanalyses/RoseBin_Emulate.h			\
     dataflowanalyses/RoseBin_VariableAnalysis.h		\
+    ether.h						\
     instructionSemantics/BaseSemantics.h		\
     instructionSemantics/BaseSemantics2.h		\
     instructionSemantics/ConcreteSemantics2.h		\
@@ -123,26 +146,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/flowEquations.h		\
     instructionSemantics/x86InstructionSemantics.h	\
     libraryIdentification/functionIdentification.h	\
-    libraryIdentification/libraryIdentification.h	\
-    ether.h						\
-    BinaryControlFlow.h					\
-    BinaryDataFlow.h					\
-    BinaryDominance.h					\
-    BinaryFunctionCall.h				\
-    BinaryCallingConvention.h				\
-    BinaryMagic.h					\
-    BinaryNoOperation.h					\
-    BinaryPointerDetection.h				\
-    BinaryAnalysisUtils.h				\
-    BinaryReturnValueUsed.h				\
-    BinaryStackDelta.h					\
-    BinaryStackVariable.h				\
-    BinaryString.h					\
-    BinarySymbolicExpr.h				\
-    BinarySymbolicExprParser.h				\
-    BinaryTaintedFlow.h					\
-    BinaryToSource.h					\
-    DwarfLineMapper.h
+    libraryIdentification/libraryIdentification.h
 
 
 EXTRA_DIST = CMakeLists.txt dummyBinaryMidend.C

@@ -92,7 +92,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                      std::string(settings.performLink?"":"not ") + "perform the linking step.\n\n"
 
                      "Note that ROSE's internal dynamic linking algorithm doesn't usually produce the same memory map as "
-                     "the Linux loader/dynamic linker.  Even with @man(setarch)[8] the mappings are different.  The "
+                     "the Linux loader/dynamic linker.  Even with @man(setarch){8} the mappings are different.  The "
                      "result of using linking in ROSE is therefore twofold: (1) any random function or instruction address that "
                      "this tool chooses from a dynamic library is likely not the same address in the natively loaded "
                      "specimen and will likely result in an immediate segmentation fault, and (2) if the "
@@ -254,8 +254,7 @@ isUnnamed(const P2::Function::Ptr &function) {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "tool");
 
     // Parse command-line
     P2::Engine engine;

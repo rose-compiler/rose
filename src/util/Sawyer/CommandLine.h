@@ -10,11 +10,12 @@
 #define Sawyer_CommandLine_H
 
 #include <Sawyer/Assert.h>
+#include <Sawyer/DocumentMarkup.h>
 #include <Sawyer/Map.h>
-#include <Sawyer/Markup.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
+#include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
@@ -25,6 +26,8 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <cerrno>
 #include <ctype.h>
+#include <list>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -38,8 +41,8 @@ namespace Sawyer { // documented in Sawyer.h
  *  @li A <em>program command line</em> is the vector of strings passed to a program by the operating system or runtime.
  *  @li A <em>commmand line argument</em> is one element of the program command line vector.
  *  @li A <em>switch</em> is a named command line argument, usually introduced with a special character sequence followed
- *      by a name, such as <code>-\-color</code>. The "-\-" is the <em>switch prefix</em>, "color" is the <em>switch name</em>,
- *      and "-\-color" is the <em>switch string</em>.
+ *      by a name, such as <code>-\-color</code>. The "--" is the <em>switch prefix</em>, "color" is the <em>switch name</em>,
+ *      and "--color" is the <em>switch string</em>.
  *  @li A <em>switch argument</em> is an optional value specified on the program command line and associated with a switch,
  *      such as the word "grey" in <code>-\-color=grey</code> or <code>-\-color grey</code> (as two command-line arguments).
  *  @li A <em>switch value</em> is a switch argument that has been converted to a value within a program, such as the
@@ -92,8 +95,9 @@ namespace Sawyer { // documented in Sawyer.h
  *      push capabilities for the results: the user can query results or the library can write them directly into user-supplied
  *      variables.
  *  @li Documentation should appear next to the thing it documents, and it should not be necessary to have more than one
- *      source-level copy of documentation.  The library is able to generate complete Unix manual pages (TROFF format) which
- *      can be converted to to a variety of other formats with standard tools.
+ *      source-level copy of documentation.  The library is able to generate complete Unix manual pages as plain text or
+ *      [POD](https://en.wikipedia.org/wiki/Plain_Old_Documentation), the latter which can be converted to to a variety of
+ *      other formats with standard tools.
  *
  * @section sawyer_commandline_ex1 An example
  *
@@ -119,9 +123,9 @@ namespace Sawyer { // documented in Sawyer.h
  * @snippet commandLineEx1.C parseCommandLine helpversion
  *
  *  We place all the tool-specific switches in another switch group we call <code>tool</code>.  The <code>--isa</code> switch
- *  will accept an argument that can be anything and is stored in <code>std::string settings.isaName</code>.  If the arguent is
- *  the word "list" then the function that eventually parses it will generate a list (this function is part of the tool source
- *  code and is not part of %Sawyer).
+ *  will accept an argument that can be anything and is stored in <code>std::string settings.isaName</code>.  If the argument
+ *  is the word "list" then the function that eventually parses it will generate a list (this function is part of the tool
+ *  source code and is not part of %Sawyer).
  *
  * @snippet commandLineEx1.C parseCommandLine isa
  *
@@ -158,13 +162,9 @@ namespace CommandLine {
 
 SAWYER_EXPORT extern const std::string STR_NONE;
 class Switch;
+class SwitchGroup;
 class Parser;
 class ParserResult;
-
-/** Check that documentation markup is valid.
- *
- *  Tests the supplied markup string for validity, throwing an <code>std::runtime_error</code> if something is wrong. */
-SAWYER_EXPORT void checkMarkup(const std::string&);
 
 /** The order in which things are sorted in the documentation. */
 enum SortOrder {
@@ -177,6 +177,29 @@ enum SortOrder {
                                                          *   Documentation keys, which default to lower-case entity names, are
                                                          *   used to sort the entities within their container. This is the
                                                          *   default. */
+};
+
+/** Format of a switch string. */
+enum Canonical {
+    CANONICAL,                                          /**< Switch strings that are qualified with the switch group name
+                                                         *   or which belong to a group that has no name. */
+    NONCANONICAL,                                       /**< Switch strings that are not @ref CANONICAL. */
+    ALL_STRINGS                                         /**< The union of @ref CANONICAL and @ref NONCANONICAL. */
+};
+
+/** How to show group names in switch synopsis. */
+enum ShowGroupName {
+    SHOW_GROUP_OPTIONAL,                                /**< Show name as being optional, like "--[group-]switch". */
+    SHOW_GROUP_REQUIRED,                                /**< Show name as being required, like "--group-switch". */
+    SHOW_GROUP_NONE,                                    /**< Never show the group name. */
+    SHOW_GROUP_INHERIT                                  /**< Group inherits value from the parser. */
+};
+
+/** Whether to skip a switch. */
+enum SwitchSkipping {
+    SKIP_NEVER,                                         /**< Treat the switch normally. */
+    SKIP_WEAK,                                          /**< Process switch normally, but also add to skipped list. */
+    SKIP_STRONG                                         /**< Skip switch and its argument(s) without saving any value. */
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -239,6 +262,9 @@ public:
     /** Constructs a cursor for a single string.  The cursor's initial position is the first character of the string, or the
      *  end if the string is empty. */
     Cursor(const std::string &string): strings_(1, string) { location(Location()); }
+
+    /** Constructs a not-very-useful cursor to nothing. */
+    Cursor() {}
 
     /** All strings for the cursor. */
     const std::vector<std::string>& strings() const { return strings_; }
@@ -366,7 +392,7 @@ protected:
 public:
     typedef SharedPointer<ValueSaver> Ptr;
     virtual ~ValueSaver() {}
-    virtual void save(const boost::any&) const = 0;
+    virtual void save(const boost::any&, const std::string &switchKey) const = 0;
 };
 
 // used internally
@@ -378,41 +404,71 @@ protected:
 public:
     typedef SharedPointer<TypedSaver> Ptr;
     static Ptr instance(T &storage) { return Ptr(new TypedSaver(storage)); }
-    virtual void save(const boost::any &value) const /*override*/ {
+    virtual void save(const boost::any &value, const std::string &switchKey) const /*override*/ {
         storage_ = boost::any_cast<T>(value);
     }
 };
 
-// partial specialization for optional storage
-template<typename T>
-class TypedSaver<Optional<T> >: public ValueSaver {
-    Optional<T> &storage_;
-protected:
-    TypedSaver(Optional<T> &storage): storage_(storage) {}
-public:
-    typedef SharedPointer<TypedSaver> Ptr;
-    static Ptr instance(Optional<T> &storage) { return Ptr(new TypedSaver(storage)); }
-    virtual void save(const boost::any &value) const /*override*/ {
-        T typed = boost::any_cast<T>(value);
-        storage_ = typed;
+// Partial specialization of TypedSaver, saving a value of any type T into a container of type CONTAINER_TEMPLATE calling the
+// containers INSERT_METHOD with one argument: the value.  The CONTAINER_TEMPLATE is the name of a class template that
+// takes one argument: type type of value stored by the container.
+#define SAWYER_COMMANDLINE_SEQUENCE_SAVER(CONTAINER_TEMPLATE, INSERT_METHOD)                                                   \
+    template<typename T>                                                                                                       \
+    class TypedSaver<CONTAINER_TEMPLATE<T> >: public ValueSaver {                                                              \
+        CONTAINER_TEMPLATE<T> &storage_;                                                                                       \
+    protected:                                                                                                                 \
+        TypedSaver(CONTAINER_TEMPLATE<T> &storage): storage_(storage) {}                                                       \
+    public:                                                                                                                    \
+        static Ptr instance(CONTAINER_TEMPLATE<T> &storage) { return Ptr(new TypedSaver(storage)); }                           \
+        virtual void save(const boost::any &value, const std::string &switchKey) const /*override*/ {                          \
+            T typed = boost::any_cast<T>(value);                                                                               \
+            storage_.INSERT_METHOD(typed);                                                                                     \
+        }                                                                                                                      \
     }
-};
 
-// partial specialization for vector storage
-template<typename T>
-class TypedSaver<std::vector<T> >: public ValueSaver {
-    std::vector<T> &storage_;
-protected:
-    TypedSaver(std::vector<T> &storage): storage_(storage) {}
-public:
-    typedef SharedPointer<TypedSaver> Ptr;
-    static Ptr instance(std::vector<T> &storage) { return Ptr(new TypedSaver(storage)); }
-    virtual void save(const boost::any &value) const /*override*/ {
-        T typed = boost::any_cast<T>(value);
-        storage_.push_back(typed);
+// Partial specialization of TypedSaver for saving values into map-like containers. The CONTAINER_TEMPLATE should take two
+// parameters: the key type (always std::string) and the value type (not part of this specialization). The value is stored by
+// invoking the INSERT_METHOD with two arguments: the key string for the switch whose value is being saved, and the value to
+// save.
+#define SAWYER_COMMANDLINE_MAP_SAVER(CONTAINER_TEMPLATE, INSERT_METHOD)                                                        \
+    template<typename T>                                                                                                       \
+    class TypedSaver<CONTAINER_TEMPLATE<std::string, T> >: public ValueSaver {                                                 \
+        CONTAINER_TEMPLATE<std::string, T> &storage_;                                                                          \
+    protected:                                                                                                                 \
+        TypedSaver(CONTAINER_TEMPLATE<std::string, T> &storage): storage_(storage) {}                                          \
+    public:                                                                                                                    \
+        static Ptr instance(CONTAINER_TEMPLATE<std::string, T> &storage) { return Ptr(new TypedSaver(storage)); }              \
+        virtual void save(const boost::any &value, const std::string &switchKey) const /*override*/ {                          \
+            T typed = boost::any_cast<T>(value);                                                                               \
+            storage_.INSERT_METHOD(switchKey, typed);                                                                          \
+        }                                                                                                                      \
     }
-};
 
+// Partial specialization of TypedSaver for saving values into map-like containers using the STL approach where the insert
+// operator takes an std::pair(key,value) rather than two arguments. The CONTAINER_TEMPLATE should take two parameters: the key
+// type (always std::string) and the value type (not part of this specialization). The value is stored by invoking the
+// INSERT_METHOD with two arguments: the key string for the switch whose value is being saved, and the value to save.
+#define SAWYER_COMMANDLINE_MAP_PAIR_SAVER(CONTAINER_TEMPLATE, INSERT_METHOD)                                                   \
+    template<typename T>                                                                                                       \
+    class TypedSaver<CONTAINER_TEMPLATE<std::string, T> >: public ValueSaver {                                                 \
+        CONTAINER_TEMPLATE<std::string, T> &storage_;                                                                          \
+    protected:                                                                                                                 \
+        TypedSaver(CONTAINER_TEMPLATE<std::string, T> &storage): storage_(storage) {}                                          \
+    public:                                                                                                                    \
+        static Ptr instance(CONTAINER_TEMPLATE<std::string, T> &storage) { return Ptr(new TypedSaver(storage)); }              \
+        virtual void save(const boost::any &value, const std::string &switchKey) const /*override*/ {                          \
+            T typed = boost::any_cast<T>(value);                                                                               \
+            storage_.INSERT_METHOD(std::make_pair(switchKey, typed));                                                          \
+        }                                                                                                                      \
+    }
+
+SAWYER_COMMANDLINE_SEQUENCE_SAVER(std::vector, push_back);
+SAWYER_COMMANDLINE_SEQUENCE_SAVER(std::list, push_back);
+SAWYER_COMMANDLINE_SEQUENCE_SAVER(std::set, insert);
+SAWYER_COMMANDLINE_SEQUENCE_SAVER(Sawyer::Container::Set, insert);
+SAWYER_COMMANDLINE_SEQUENCE_SAVER(Optional, operator=);
+SAWYER_COMMANDLINE_MAP_PAIR_SAVER(std::map, insert);
+SAWYER_COMMANDLINE_MAP_SAVER(Sawyer::Container::Map, insert);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Parsed value
@@ -683,6 +739,13 @@ struct LexicalCast {
     }
 };
 
+template<>
+struct LexicalCast<boost::any> {
+    static boost::any convert(const std::string &src) {
+        return src;
+    }
+};
+
 template<typename T>
 struct LexicalCast<Optional<T> > {
     static T convert(const std::string &src) {
@@ -691,7 +754,42 @@ struct LexicalCast<Optional<T> > {
 };
 
 template<typename T>
+struct LexicalCast<Sawyer::Container::Set<T> > {
+    static T convert(const std::string &src) {
+        return LexicalCast<T>::convert(src);
+    }
+};
+
+template<typename T>
+struct LexicalCast<Sawyer::Container::Map<std::string, T> > {
+    static T convert(const std::string &src) {
+        return LexicalCast<T>::convert(src);
+    }
+};
+
+template<typename T>
 struct LexicalCast<std::vector<T> > {
+    static T convert(const std::string &src) {
+        return LexicalCast<T>::convert(src);
+    }
+};
+
+template<typename T>
+struct LexicalCast<std::set<T> > {
+    static T convert(const std::string &src) {
+        return LexicalCast<T>::convert(src);
+    }
+};
+
+template<typename T>
+struct LexicalCast<std::list<T> > {
+    static T convert(const std::string &src) {
+        return LexicalCast<T>::convert(src);
+    }
+};
+
+template<typename T>
+struct LexicalCast<std::map<std::string, T> > {
     static T convert(const std::string &src) {
         return LexicalCast<T>::convert(src);
     }
@@ -781,6 +879,46 @@ struct NumericCast<Optional<Target>, Source> {
 // partial specialization for std::vector<Target>
 template<typename Target, typename Source>
 struct NumericCast<std::vector<Target>, Source> {
+    static Target convert(Source from, const std::string &parsed) {
+        return NumericCast<Target, Source>::convert(from, parsed);
+    }
+};
+
+// partial specialization for std::list<Target>
+template<typename Target, typename Source>
+struct NumericCast<std::list<Target>, Source> {
+    static Target convert(Source from, const std::string &parsed) {
+        return NumericCast<Target, Source>::convert(from, parsed);
+    }
+};
+
+// partial specialization for std::set<Target>
+template<typename Target, typename Source>
+struct NumericCast<std::set<Target>, Source> {
+    static Target convert(Source from, const std::string &parsed) {
+        return NumericCast<Target, Source>::convert(from, parsed);
+    }
+};
+
+// partial specialization for Sawyer::Container::Set<Target>
+template<typename Target, typename Source>
+struct NumericCast<Sawyer::Container::Set<Target>, Source> {
+    static Target convert(Source from, const std::string &parsed) {
+        return NumericCast<Target, Source>::convert(from, parsed);
+    }
+};
+
+// partial specialization for std::map<std::string, Target>
+template<typename Target, typename Source>
+struct NumericCast<std::map<std::string, Target>, Source> {
+    static Target convert(Source from, const std::string &parsed) {
+        return NumericCast<Target, Source>::convert(from, parsed);
+    }
+};
+
+// partial specialization for Sawyer::Container::Map<std::string, Target>
+template<typename Target, typename Source>
+struct NumericCast<Sawyer::Container::Map<std::string, Target>, Source> {
     static Target convert(Source from, const std::string &parsed) {
         return NumericCast<Target, Source>::convert(from, parsed);
     }
@@ -1028,8 +1166,8 @@ private:
         for (size_t i=0; i<nchars; ++i) {
             if (!a[i] || !b[i])
                 return a[i] ? 1 : (b[i] ? -1 : 0);
-            char achar = tolower(a[i]);
-            char bchar = tolower(b[i]);
+            char achar = (char)tolower(a[i]);
+            char bchar = (char)tolower(b[i]);
             if (achar != bchar)
                 return achar < bchar ? -1 : 1;
         }
@@ -1779,9 +1917,11 @@ struct SAWYER_EXPORT ParsingProperties {
     bool inheritShortPrefixes;
     std::vector<std::string> valueSeparators;           // What separates a long switch from its value.
     bool inheritValueSeparators;
+    ShowGroupName showGroupName;                        // How to show group name in switch synopsis
 #include <Sawyer/WarningsRestore.h>
     ParsingProperties()
-        : inheritLongPrefixes(true), inheritShortPrefixes(true), inheritValueSeparators(true) {}
+        : inheritLongPrefixes(true), inheritShortPrefixes(true), inheritValueSeparators(true),
+          showGroupName(SHOW_GROUP_INHERIT) {}
     ParsingProperties inherit(const ParsingProperties &base) const;
 };
 
@@ -1820,20 +1960,21 @@ enum WhichValue {
 class SAWYER_EXPORT Switch {
 private:
 #include <Sawyer/WarningsOff.h>
-    std::vector<std::string> longNames_;                /**< Long name of switch, or empty string. */
-    std::string shortNames_;                            /**< %Optional short names for this switch. */
-    std::string key_;                                   /**< Unique key, usually the long name or the first short name. */
-    ParsingProperties properties_;                      /**< Properties valid at multiple levels of the hierarchy. */
-    std::string synopsis_;                              /**< User-defined synopsis or empty string. */
-    std::string documentation_;                         /**< Main documentation for the switch. */
-    std::string documentationKey_;                      /**< For sorting documentation. */
-    bool hidden_;                                       /**< Whether to hide documentation. */
-    std::vector<SwitchArgument> arguments_;             /**< Arguments with optional default values. */
-    SwitchAction::Ptr action_;                          /**< %Optional action to perform during ParserResult::apply. */
-    WhichValue whichValue_;                             /**< Which switch values should be saved. */
-    ValueAugmenter::Ptr valueAugmenter_;                /**< Used if <code>whichValue_==SAVE_AUGMENTED</code>. */
-    ParsedValue intrinsicValue_;                        /**< Value for switches that have no declared arguments. */
-    bool explosiveLists_;                               /**< Whether to expand ListParser::ValueList into separate values. */
+    std::vector<std::string> longNames_;                // Long name of switch, or empty string.
+    std::string shortNames_;                            // Optional short names for this switch.
+    std::string key_;                                   // Unique key, usually the long name or the first short name.
+    ParsingProperties properties_;                      // Properties valid at multiple levels of the hierarchy.
+    std::string synopsis_;                              // User-defined synopsis or empty string.
+    std::string documentation_;                         // Main documentation for the switch.
+    std::string documentationKey_;                      // For sorting documentation.
+    bool hidden_;                                       // Whether to hide documentation.
+    std::vector<SwitchArgument> arguments_;             // Arguments with optional default values.
+    SwitchAction::Ptr action_;                          // Optional action to perform during ParserResult::apply.
+    WhichValue whichValue_;                             // Which switch values should be saved.
+    ValueAugmenter::Ptr valueAugmenter_;                // Used if <code>whichValue_==SAVE_AUGMENTED</code>.
+    ParsedValue intrinsicValue_;                        // Value for switches that have no declared arguments.
+    bool explosiveLists_;                               // Whether to expand ListParser::ValueList into separate values.
+    SwitchSkipping skipping_;                           // Whether to skip over this switch without saving or acting.
 #include <Sawyer/WarningsRestore.h>
 
 public:
@@ -1851,7 +1992,7 @@ public:
      *  arguments or argument types. */
     explicit Switch(const std::string &longName, char shortName='\0')
         : hidden_(false), whichValue_(SAVE_LAST), intrinsicValue_(ParsedValue(true, NOWHERE, "true", ValueSaver::Ptr())),
-          explosiveLists_(false) {
+          explosiveLists_(false), skipping_(SKIP_NEVER) {
         init(longName, shortName);
     }
 
@@ -1921,7 +2062,7 @@ public:
      * @sa @ref doc
      *
      * @{ */
-    Switch& synopsis(const std::string &s) { checkMarkup(s); synopsis_ = s; return *this; }
+    Switch& synopsis(const std::string &s) { synopsis_ = s; return *this; }
     std::string synopsis() const;
     /** @} */
 
@@ -1929,25 +2070,23 @@ public:
      *
      *  Parts of the text can be marked by surrounding the text in curly braces and prepending a tag consisting of an "@"
      *  followed by a word.  For instance, <code>\@b{foo}</code> makes the word "foo" bold and <code>\@i{foo}</code> makes it
-     *  italic.  The tags <code>\@bold</code> and <code>\@italic</code> can be used instead of <code>\@b</code> and
-     *  <code>\@i</code>, but the longer names make the documentation less readable in the C++ source code.
+     *  italic.  The text between the curly braces can be any length, and if it contains curly braces they must either balance
+     *  or be escaped with a preceding "@". The curly braces that start an argument must not be preceded by white space.
      *
-     *  The text between the curly braces can be any length, and if it contains curly braces they must either balance or be
-     *  escaped with a preceding backslash (or two backslashes if they're inside a C++ string literal).  The delimiters (), [],
-     *  or <> may be used instead of curly braces. The delimiter must immediately follow the tag name with no intervening white
-     *  space: <code>\@b<foo> \@i(bar)</code>. Readability can be improved even more by substituting white space for the
-     *  delimiters: <code>the word \@b foo is in bold face.</code>
+     *  Besides describing the format of a piece of text, markup is also used to describe the intent of a piece of text.  The
+     *  following intents are supported:
      *
-     *  Besides describing the format of a piece of text, markup is also used to describe the intent of a piece of text--that a
-     *  word is a switch string (<code>\@s</code>), a variable (<code>\@v</code>), or a reference to a Unix man page
-     *  (<code>\@man</code>).  The <code>\@s</code> argument should be a single word or single letter without leading hyphens and
-     *  which is interpretted as a command-line switch. The library will add the correct prefix--probably "-\-" for long names
-     *  and "-" for short names, but whatever is specified in the switch declaration. Even switches that haven't been declared
-     *  can be marked with <code>\@s</code>.  The <code>\@v</code> tag marks a word as a variable, usually the name of a switch
-     *  argument.  The <code>\@man</code> tag takes two arguments: the name of a Unix man page and the section in which the page
-     *  appears: <code>the \@man(ls)(1) command lists contents of a directory.</code>
+     *  @li @c @@v{foo} specifies that "foo" is a variable. POD-based man pages will underline it, and text based documentation
+     *      will surround it with angle brackets.
+     *  @li @c @@s{foo} specifies that "foo" is a switch. The argument should be a single word or single letter without leading
+     *      hyphens, and the correct prefix (hyphens, etc.) will be added automatically based on the parser's
+     *      configuration. The documentation system also verifies that "foo" is spelled correctly and if not, it adds an error
+     *      to the "Documentation issues" section of the output.  To suppress these errors, supply a second argument whose
+     *      name is "noerror", as in "@s{foo}{noerror}".
+     *  @li @c @@man{foo}{n} means refer to the "foo" page in chapter "n" of the man pages. This also adds an entry to the "See
+     *      also" section of the output.
      *
-     *  The <code>\@prop</code> tag takes one argument which is a property name and evaluates to the property value as a string.
+     *  The <code>\@prop</code> tag takes one argument which is a property name and is replaced by the value of the property.
      *  The following properties are defined:
      *
      *  @li @c inclusionPrefix is the preferred (first) string returned by Parser::inclusionPrefixes.
@@ -1962,7 +2101,7 @@ public:
      *  Even switches with no documentation will show up in the generated documentation--they will be marked as "Not
      *  documented".  To suppress them entirely, set their @ref hidden property to true.
      * @{ */
-    Switch& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
+    Switch& doc(const std::string &s) { documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
     /** @} */
 
@@ -1980,6 +2119,21 @@ public:
      * @{ */
     Switch& hidden(bool b) { hidden_ = b; return *this; }
     bool hidden() const { return hidden_; }
+    /** @} */
+
+    /** Property: whether to skip over this switch.
+     *
+     *  The default is to not skip over anything, in which case if the switch appears on the command-line its actions are run
+     *  and its value are saved.  If skipping is set to @ref SKIP_WEAK or @ref SKIP_STRONG then the switch and its arguments
+     *  are also added to the skipped list returned by @ref ParserResult::skippedArgs and @ref ParserResult::unparsedArgs.  The
+     *  difference between weak and strong is that strong also skips any actions and value saving for the switch.
+     *
+     *  For short, nestled switches, a program argument is added to the skipped list if any of the short switches in that
+     *  argument are @ref SKIP_WEAK or @ref SKIP_STRONG.
+     *
+     * @{ */
+    Switch& skipping(SwitchSkipping how) { skipping_ = how; return *this; }
+    SwitchSkipping skipping() const { return skipping_; }
     /** @} */
 
     /** Property: prefixes for long names.  A long name prefix is the characters that introduce a long switch, usually "-\-"
@@ -2218,13 +2372,15 @@ public:
     ValueAugmenter::Ptr valueAugmenter() const { return valueAugmenter_; }
     /** @} */
 
+public:
+    // Used internally
+    const ParsingProperties& properties() const { return properties_; }
+
 private:
     friend class Parser;
     friend class ParserResult;
 
     void init(const std::string &longName, char shortName);
-
-    const ParsingProperties& properties() const { return properties_; }
 
     /** @internal Constructs an exception describing that there is no separator between the switch name and its value. */
     std::runtime_error noSeparator(const std::string &switchString, const Cursor&, const ParsingProperties&) const;
@@ -2248,11 +2404,13 @@ private:
                                          const SwitchArgument &sa, const std::string &reason) const;
 
     /** @internal Determines if this switch can match against the specified program argument when considering only the
-     *  specified long name.  If program argument starts with a valid long name prefix and then matches the switch name, this
-     *  this function returns true (the number of characters matched).  Switches that take no arguments must match to the end of
-     *  the string, but switches that have arguments (even if they're optional or wouldn't match the rest of the string) do not
-     *  have to match entirely as long as a value separator is found when they don't match entirely. */
-    size_t matchLongName(Cursor&/*in,out*/, const ParsingProperties &props, const std::string &name) const;
+     *  specified long name.  If program argument starts with a valid long name prefix and then optionally matches the
+     *  optionalPart (e.g., name space and name space separator) and then matches the required part (switch name), then this
+     *  this function returns true (the number of characters matched).  Switches that take no arguments must match to the end
+     *  of the string, but switches that have arguments (even if they're optional or wouldn't match the rest of the string) do
+     *  not have to match entirely as long as a value separator is found when they don't match entirely. */
+    size_t matchLongName(Cursor&/*in,out*/, const ParsingProperties &props,
+                         const std::string &optionalPart, const std::string &requiredPart) const;
 
     /** @internal Matches a short switch name.  Although the cursor need not be at the beginning of the program argument, this
      *  method first matches a short name prefix at the beginning of the argument.  If the prefix ends at or before the cursor
@@ -2290,6 +2448,9 @@ private:
 
     /** @internal Return synopsis markup for a single argument. */
     std::string synopsisForArgument(const SwitchArgument&) const;
+
+    // If the synopsis is empty, create one from an optional switch group and name space separator
+    std::string synopsis(const ParsingProperties &swProps, const SwitchGroup *sg, const std::string &nameSpaceSeparator) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2301,16 +2462,26 @@ private:
  *
  *  A switch group is an important concept in that it allows different software components to declare their own command lines,
  *  and those declarations can be used by some higher layer. The higher layer builds a parser from the various switch groups in
- *  order to simultaneously parse switches for all the software components.  Tools that are unable to simultaneously parse on
- *  behalf of multiple software components (presumably because they're not using this library), sometimes run into problems
- *  where the argument for a switch which is not part of the current parsing language looks like a valid switch in the current
- *  language.  Consider a tool that uses single-hyphen prefixes for its long switches and has a switch name "go" that takes an
- *  argument, and lets say that this tool must also accept all the switches for the find(1) command but it doesn't actually
- *  know them--it just passes along all command line arguments it doesn't recognize to the find-like software component.  If
- *  the command line contained <code>-perm -go=w -print</code> then the tool will extract the <code>-go=w</code> switch that it
- *  recognizes, and pass along <code>-perm -print</code> to the other component component. Unfortunately, the
- *  <code>-go=w</code> that it recognized as its own was actually the argument for the <code>-perm</code> switch that it didn't
- *  recognize.
+ *  order to simultaneously parse switches for all the software components.
+ *
+ *  In order to help avoid conflicting switches when inserting these parts (switch groups) into a parser, each switch group can
+ *  have a name. A switch group's name is an optional string that can be inserted at the beginning of long switches to
+ *  disambiguate them from switches with the same name in other groups.  For instance, if groups with the names "output" and
+ *  "input" both have a long switch "--tab-width" then the user will (by default) get an error if they specify "--tab-width" on
+ *  the command-line. The error message will indicate they should use either "--output-tab-width" or "--input-tab-width". The
+ *  documentation, typically generated by "--help", describes the switches like "--[output-]tab-width", but authors may
+ *  override the switch synopsis with their own string. Group names are only used to disambiguate long switches, not
+ *  single-letter switches. A switch group name is different than the switch group title or dockey.
+ *
+ *  Tools that are unable to simultaneously parse on behalf of multiple software components (presumably because they're not
+ *  using this library), sometimes run into problems where the argument for a switch which is not part of the current parsing
+ *  language looks like a valid switch in the current language.  Consider a tool that uses single-hyphen prefixes for its long
+ *  switches and has a switch name "go" that takes an argument, and lets say that this tool must also accept all the switches
+ *  for the find(1) command but it doesn't actually know them--it just passes along all command line arguments it doesn't
+ *  recognize to the find-like software component.  If the command line contained <code>-perm -go=w -print</code> then the tool
+ *  will extract the <code>-go=w</code> switch that it recognizes, and pass along <code>-perm -print</code> to the other
+ *  component component. Unfortunately, the <code>-go=w</code> that it recognized as its own was actually the argument for the
+ *  <code>-perm</code> switch that it didn't recognize.
  *
  *  When creating a switch group, switch declarations (@ref Switch) are copied into the switch group.  Eventually the switch
  *  group itself is copied into a parser. */
@@ -2318,28 +2489,43 @@ class SAWYER_EXPORT SwitchGroup {
 #include <Sawyer/WarningsOff.h>
     std::vector<Switch> switches_;
     ParsingProperties properties_;
-    std::string name_;
-    std::string docKey_;
+    std::string name_;                                  // name optionally prepended to all switches
+    std::string title_;                                 // title showing in documentation
+    std::string docKey_;                                // for sorting
     std::string documentation_;
     SortOrder switchOrder_;
 #include <Sawyer/WarningsRestore.h>
 public:
-    /** Construct an unnamed group. */
+    /** Construct an unnamed, untitled group. */
     SwitchGroup(): switchOrder_(DOCKEY_ORDER) { initializeLibrary(); }
 
-    /** Construct a named group.
+    /** Construct a titled group.
      *
-     *  Naming a group prevents its switches from being globally sorted with other groups when the documentation is produced.
-     *  The @p name will appear as the name of a subsection for the switches and should be capitalized like a title (initial
+     *  Titling a group prevents its switches from being globally sorted with other groups when the documentation is produced.
+     *  The @p title will appear as the title of a subsection for the switches and should be capitalized like a title (initial
      *  capital letters). The optional @p docKey is used to sort the groups in relation to each other (the default is to sort
-     *  by group name). */
-    explicit SwitchGroup(const std::string &name, const std::string &docKey="")
-        : name_(name), docKey_(docKey), switchOrder_(DOCKEY_ORDER) {}
+     *  by group title). */
+    explicit SwitchGroup(const std::string &title, const std::string &docKey="")
+        : title_(title), docKey_(docKey), switchOrder_(DOCKEY_ORDER) {}
 
-    /** Property: Name of the switch group.
+    /** Property: Title of the switch group.
      *
-     *  A switch group may have a subsection name for documentation.  The name should be capitalized like a title.  The name
+     *  A switch group may have a subsection title for documentation.  The title should be capitalized like a title.  The title
      *  may also be specified in the constructor.
+     * @{ */
+    const std::string& title() const { return title_; }
+    SwitchGroup& title(const std::string &title) { title_ = title; return *this; }
+    /** @} */
+
+    /** Property: Group name.
+     *
+     *  A switch group may have a name in order to disambiguate command-line switches that match more than one switch
+     *  declaration. This is useful if a user is constructing a parser from switch groups over which they have no control. For
+     *  example, if two groups have a "--foo" switch then the user can give one group a name of "alpha" and the other "beta" in
+     *  which case "--alpha:foo" matches one and "--beta:foo" matches the other.
+     *
+     *  Names can only resolve long switches, not short switches.
+     *
      * @{ */
     const std::string& name() const { return name_; }
     SwitchGroup& name(const std::string &name) { name_ = name; return *this; }
@@ -2350,10 +2536,10 @@ public:
      *  This key is used to order the switch groups with respect to one another in the documentation.  Switches that belong to
      *  groups having the same documentation key are treated as if they came from the same group for the purpose of sorting the
      *  switches within groups.  Any switch group that has no documentation key will use the lower-case group title (which may
-     *  also be the empty string).  If more than one switch group has the same documentation key but different names, then only
-     *  one of those names is arbitrarily chosen as the subsection name in the documentation.
+     *  also be the empty string).  If more than one switch group has the same documentation key but different titles, then
+     *  only one of those titles is arbitrarily chosen as the subsection title in the documentation.
      *
-     *  The documentation kay may also be specified in the constructor.
+     *  The documentation key may also be specified in the constructor.
      *
      * @sa SwitchGroup::switchOrder
      * @{ */
@@ -2361,11 +2547,11 @@ public:
     SwitchGroup& docKey(const std::string &key) { docKey_ = key; return *this; }
     /** @} */
 
-    /** Property: detailed description.
+    /** Property: Detailed description.
      *
      *  This is the description of the switch group in a simple markup language. See @ref Switch::doc for a description of the
      *  markup language.  Documentation for a switch group will appear prior to the switches within that group.  If multiple
-     *  groups are to appear in the same section of the manual page (by virtue of having the same @ref SwitchGroup::name then
+     *  groups are to appear in the same section of the manual page (by virtue of having the same @ref SwitchGroup::title then
      *  their documentation strings are appended as separate paragraphs in the order that the switch groups appear in the
      *  parser.
      *
@@ -2373,8 +2559,18 @@ public:
      *  within this group.
      *
      * @{ */
-    SwitchGroup& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
+    SwitchGroup& doc(const std::string &s) { documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
+    /** @} */
+
+    /** Property: How to show group name in switch synopsis.
+     *
+     *  A switch group can override how the group name appears in a switch synopsis. The default is to inherit the setting from
+     *  the parser containing the group at the time of documentation.
+     *
+     * @{ */
+    ShowGroupName showingGroupNames() const { return properties_.showGroupName; }
+    void showingGroupNames(ShowGroupName x) { properties_.showGroupName = x; }
     /** @} */
 
     /** @copydoc Switch::resetLongPrefixes
@@ -2442,7 +2638,7 @@ public:
      *  the property is @ref INSERTION_ORDER then switch documentation keys are ignored and switches are presented in the order
      *  they were added to the group.
      *
-     *  Since documentation will combine into a single subsection all the switches from groups having the same name, it is
+     *  Since documentation will combine into a single subsection all the switches from groups having the same title, it is
      *  possible that the subsection will have conflicting orderings.  When this happens, the last group to be inserted is
      *  the one whose value is used for the entire subsection.
      *
@@ -2452,11 +2648,19 @@ public:
     SwitchGroup& switchOrder(SortOrder order) { switchOrder_ = order; return *this; }
     /** @} */
 
+public:
+    // Used internally
+    const ParsingProperties& properties() const { return properties_; }
+
 private:
     friend class Parser;
-    const ParsingProperties& properties() const { return properties_; }
 };
 
+/** Subset of switches grouped by their switch groups. */
+typedef Container::Map<const SwitchGroup*, std::set<const Switch*> > GroupedSwitches;
+
+/** Subset of switches indexed by their command-line representation. */
+typedef Container::Map<std::string, GroupedSwitches> NamedSwitches;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Parser
@@ -2471,6 +2675,7 @@ class SAWYER_EXPORT Parser {
 #include <Sawyer/WarningsOff.h>
     std::vector<SwitchGroup> switchGroups_;             /**< Declarations for all recognized switches. */
     ParsingProperties properties_;                      /**< Some properties inherited by switch groups and switches. */
+    std::string groupNameSeparator_;                    /**< String that separates group name from switch name. */
     std::vector<std::string> terminationSwitches_;      /**< Special switch to terminate parsing; default is "-\-". */
     bool shortMayNestle_;                               /**< Whether "-ab" is the same as "-a -b". */
     std::vector<std::string> inclusionPrefixes_;        /**< Prefixes that mark command line file inclusion (e.g., "@"). */
@@ -2488,14 +2693,16 @@ class SAWYER_EXPORT Parser {
     Message::SProxy errorStream_;                       /**< Send errors here and exit instead of throwing runtime_error. */
     Optional<std::string> exitMessage_;                 /**< Additional message before exit when errorStream_ is not empty. */
     SortOrder switchGroupOrder_;                        /**< Order of switch groups in the documentation. */
+    bool reportingAmbiguities_;                         /**< Whether to report ambiguous switches. */
 #include <Sawyer/WarningsRestore.h>
     
 public:
     /** Default constructor.  The default constructor sets up a new parser with defaults suitable for the operating
      *  system. The switch declarations need to be added (via @ref with) before the parser is useful. */
     Parser()
-        : shortMayNestle_(true), skipNonSwitches_(false), skipUnknownSwitches_(false), versionString_("alpha"),
-          chapterNumber_(1), chapterName_("User Commands"), switchGroupOrder_(INSERTION_ORDER) {
+        : groupNameSeparator_("-"), shortMayNestle_(true), skipNonSwitches_(false), skipUnknownSwitches_(false),
+          versionString_("alpha"), chapterNumber_(1), chapterName_("User Commands"), switchGroupOrder_(INSERTION_ORDER),
+          reportingAmbiguities_(true) {
         init();
     }
 
@@ -2514,6 +2721,50 @@ public:
         switchGroups_.push_back(SwitchGroup().insert(sw));
         return *this;
     }
+    /** @} */
+
+    /** List of all switch groups. */
+    const std::vector<SwitchGroup>& switchGroups() const {
+        return switchGroups_;
+    }
+
+    /** Property: Whether to report ambiguities.
+     *
+     *  If true, report ambiguous switches. Switches that can not be disambiguated are reported regardless of whether the
+     *  switch is encountered on a commandline in order to help authors detect situations where it's impossible to control some
+     *  setting from the command line.  Switches that can be disambiguated are reported only when they occur on the
+     *  commandline, and include a message about how to disambiguate them.
+     *
+     *  If false, then no ambiguities are checked or reported. When encountering an ambiguous switch, the first matching
+     *  definition is used.
+     *
+     * @{ */
+    bool reportingAmbiguities() const { return reportingAmbiguities_; }
+    Parser& reportingAmbiguities(bool b) { reportingAmbiguities_ = b; return *this; }
+    /** @} */
+
+    /** Property: String separating group name from switch name.
+     *
+     *  If switch group names are present, this property holds the string that separates the group name from the
+     *  switch name.  For instance, if the group name is "group" and the switch name is "switch", the prefix is "--" and the
+     *  separator is "-", then the switch can be parsed as either "--switch" or as "--group-switch".
+     *
+     * @{ */
+    const std::string& groupNameSeparator() const { return groupNameSeparator_; }
+    Parser& groupNameSeparator(const std::string &s) { groupNameSeparator_ = s; return *this; }
+    /** @} */
+
+    /** Property: How to show group names in switch documentation.
+     *
+     *  When generating a switch synopsis and the group containing the switch has a non-empty name, the group name can be added
+     *  to the switch name.  The default is to add the group name as an optional part of the switch, like "--[group-]switch"
+     *  since the parser treats them as optional unless the abbreviated name is ambiguous.
+     *
+     *  See also, @ref groupNameSeparator, @ref SwitchGroup::name.
+     *
+     * @{ */
+    ShowGroupName showingGroupNames() const { return properties_.showGroupName; }
+    Parser& showingGroupNames(ShowGroupName x) { properties_.showGroupName = x; return *this; }
     /** @} */
 
     /** Prefixes to use for long command-line switches.  The @ref resetLongPrefixes clears the list (and adds prefixes) while
@@ -2593,7 +2844,7 @@ public:
      *
      * @sa ParserResult::skippedArgs ParserResult::unparsedArgs
      * @{ */
-    Parser& skipNonSwitches(bool b=true) { skipNonSwitches_ = b; return *this; }
+    Parser& skippingNonSwitches(bool b) { skipNonSwitches_ = b; return *this; }
     bool skippingNonSwitches() const { return skipNonSwitches_; }
     /** @} */
 
@@ -2603,8 +2854,8 @@ public:
      *
      * @sa ParserResult::skippedArgs ParserResult::unparsedArgs
      * @{ */
-    Parser& skipUnknownSwitches(bool b=true) { skipUnknownSwitches_ = b; return *this; }
-    bool skippingUnkownSwitches() const { return skipUnknownSwitches_; }
+    Parser& skippingUnknownSwitches(bool b) { skipUnknownSwitches_ = b; return *this; }
+    bool skippingUnknownSwitches() const { return skipUnknownSwitches_; }
     /** @} */
 
     /** Specifies a message stream to which errors are sent.  If non-null, when a parse method encounters an error it writes
@@ -2622,7 +2873,7 @@ public:
      *  parser.errorStream(Message::mlog[Message::FATAL]);
      * @endcode
      *
-     * @sa @ref skipNonSwitches @ref skipUnknownSwitches
+     * @sa @ref skippingNonSwitches @ref skippingUnknownSwitches
      * @{ */
     Parser& errorStream(const Message::SProxy &stream) { errorStream_ = stream; return *this; }
     const Message::SProxy& errorStream() const { return errorStream_; }
@@ -2714,12 +2965,41 @@ public:
 
     /** Documentation for a section of the manual.  The user may define any number of sections with any names. Names should
      *  be capitalized like titles (initial capital letter), although case is insensitive in the table that stores them. The
-     *  sections of a manual page are sorted according to lower-case versions of either the @p docKey or the @p sectionName.
-     *  The sections "Name", "Synopsis", "Description", and "Options" are always present in that order.  If text is given for
-     *  the "Options" section it will appear before the list of program switches, but text for the other sections replaces what
-     *  would be generated automatically.
+     *  sections of a manual page are sorted according to lower-case versions of either the @p docKey or the @p sectionName. If
+     *  a section's documentation is completely empty (no user specified documentation and no automatically generated
+     *  documentation) then it will not show up in the output.
+     *
+     *  Some sections have content that's generatated automatically. For these sections, setting the doc string will either
+     *  override the generated content or augment the content as described below.  Since setting the doc string to an empty
+     *  string only suppresses any user-defined content and not the auto-generated content, this doesn't delete the section
+     *  from the output. In order to delete the section, set its doc string to "delete" (this also works for sections that have
+     *  no auto-generated content).
+     *
+     *  The following sections are always present in this order unless explicitly deleted by setting their doc string to
+     *  "delete":
+     *
+     *  @li "Name" contains the program name and purpose separated from one another by a single hyphen. By convention, the
+     *      purpose should be a short string with no capitalization (except special words) and no terminating punctuation.  If
+     *      no user documentation is specified then this section is generated automatically from the parser's @ref purpose
+     *      property.
+     *
+     *  @li "Synopsis" contains information about how to invoke the program.  If the user does not provide documentation, then
+     *      an automatically generated value is used, which says to invoke the program by its name followed by zero or more
+     *      switches.
+     *
+     *  @li "Description" is the detailed description of the program. It has no automatically generated content.
+     *
+     *  @li "Switches" lists all the non-hidden switches organized by @ref SwitchGroup.
+     *
+     *  @li All user-defined sections are inserted next.
+     *
+     *  @li "See Also" lists other man pages that were referenced prior to this point in the documentation.
+     *
+     *  @li "Documentation Issues" lists any non-fatal problems found in the documentation up to this point, such as
+     *      switches that were referenced but not declared (e.g., misspelled).
      *
      *  The documentation is specified with a simple markup languge described by Switch::doc.
+     *
      * @{ */
     Parser& doc(const std::string &sectionName, const std::string &docKey, const std::string &text);
     Parser& doc(const std::string &sectionName, const std::string &text) { return doc(sectionName, sectionName, text); }
@@ -2734,37 +3014,69 @@ public:
      *  markup in the Sawyer::Markup language, with some extensions specific to command-line parsing. */
     std::string documentationMarkup() const;
 
-    /** Parsed documentation markup.
-     *
-     *  Parses the supplied documentation markup (or gets it via @ref documentationMarkup) and returns the result. An
-     *  <code>std::runtime_error</code> is thrown if there are any problems parsing the documentation string.
-     *
-     * @{ */
-    Markup::ParserResult parseDocumentation() const;
-    Markup::ParserResult parseDocumentation(const std::string&) const;
-    /** @} */
-
     /** Generate Perl POD documentation.
      *
      *  Generates a Perl POD string for this parser. */
     std::string podDocumentation() const;
 
-    /** Generate Unix man-page (nroff) documentation.
-     *
-     *  Generates NRoff source code for this parser. */
-    std::string manDocumentation() const;
+    /** Generate plain text documentation. */
+    std::string textDocumentation() const;
 
     /** Print documentation to standard output. Use a pager if possible. */
     void emitDocumentationToPager() const;
 
-    /** Property: How to order switch groups in documentation.  If the parser contains named switch groups then switches will
-     *  be organized into subsections based on the group names, and this property controls how those subsections are ordered
+    template<class Grammar>
+    void emitDocumentationToPager() const {
+        Grammar grammar;
+        initDocGrammar(grammar);
+        grammar.title(programName(), boost::lexical_cast<std::string>(chapter().first), chapter().second);
+        grammar.version(version().first, version().second);
+        grammar.emit(documentationMarkup());
+    }
+
+    /** Property: How to order switch groups in documentation.  If the parser contains titled switch groups then switches will
+     *  be organized into subsections based on the group titles, and this property controls how those subsections are ordered
      *  with respect to each other.  The subsections can be sorted according to the order they were inserted into the parser,
-     *  or alphabetically by their documentation keys or names.
+     *  or alphabetically by their documentation keys or titles.
      * @{ */
     SortOrder switchGroupOrder() const { return switchGroupOrder_; }
     Parser& switchGroupOrder(SortOrder order) { switchGroupOrder_ = order; return *this; }
     /** @} */
+
+    /** Insert records for long switch strings.
+     *
+     *  Inserts records into the @p index for long switch strings depending on whether the switch string is canonical. */
+    void insertLongSwitchStrings(Canonical, NamedSwitches &index /*in,out*/) const;
+
+    /** Insert records for short switch strings.
+     *
+     *  Insert records into the @p index for short switch strings. */
+    void insertShortSwitchStrings(NamedSwitches &index /*in,out*/) const;
+
+    /** Insert records for long and short switch strings.
+     *
+     *  Insert records into the @p index for both long and short switch strings. This is just a convenient way to invoke @ref
+     *  insertLongSwitchStrings and @ref insertShortSwitchStrings. */
+    void insertSwitchStrings(Canonical, NamedSwitches &index /*in,out*/) const;
+
+    /** Print a switch index.
+     *
+     *  This is mostly for debugging. It's quite easy to traverse the @ref NamedSwitches object and print them yourself. */
+    static void printIndex(std::ostream&, const NamedSwitches&, const std::string &linePrefix = "");
+
+    /** Find switch string ambiguities.
+     *
+     *  Return an index containing all switches that are ambiguous regardless of whether they're canonical. */
+    NamedSwitches findAmbiguities() const;
+
+    /** Find unresolvable switch string ambiguities.
+     *
+     *  Return an index containing all switches that are ambiguous and which cannot be made unambiguous by qualifying them. */
+    NamedSwitches findUnresolvableAmbiguities() const;
+
+public:
+    // Used internally
+    const ParsingProperties& properties() const { return properties_; }
 
 private:
     void init();
@@ -2777,7 +3089,7 @@ private:
     // termination switch (e.g., "--") then consume the terminator and return false.  If the switch name is valid but the
     // arguments cannot be parsed, then throw an error.  If the cursor is at what appears to be a switch but no matching switch
     // declaration can be found, then throw an error.  The cursor will not be modified when an error is thrown.
-    bool parseOneSwitch(Cursor&, ParserResult&/*out*/);
+    bool parseOneSwitch(Cursor&, const NamedSwitches &ambiguities, ParserResult&/*out*/);
 
     /** Parse one long switch.  Upon entry, the cursor should be positioned at the beginning of a program argument. On success,
      *  the cursor will be positioned at the beginning of a subsequent program argument, or at the end of input.  If a switch
@@ -2785,7 +3097,7 @@ private:
      *  pointer is valid only as long as this parser is allocated). If no switch is available for parsing then the null pointer
      *  is returned. If some other parsing error occurs then a null value is returned and the @p saved_error is updated to
      *  reflect the nature of the error.  This function does not throw <code>std::runtime_error</code> exceptions. */
-    const Switch* parseLongSwitch(Cursor&, ParsedValues&, Optional<std::runtime_error>&);
+    const Switch* parseLongSwitch(Cursor&, ParsedValues&, const NamedSwitches &ambiguities, Optional<std::runtime_error>&);
 
     /** Parse one short switch.  Upon entry, the cursor is either at the beginning of a program argument, or at the beginning
      *  of a (potential) short switch name. On success, for non-nestled switches the cursor will be positioned at the beginning
@@ -2795,15 +3107,25 @@ private:
      *  available for parsing then the null pointer is returned. If some other parsing error occurs then a null value is
      *  returned and the @p saved_error is updated to reflect the nature of the error.  This function does not throw
      *  <code>std::runtime_error</code> exceptions. */
-    const Switch* parseShortSwitch(Cursor&, ParsedValues&, Optional<std::runtime_error>&, bool mayNestle);
+    const Switch* parseShortSwitch(Cursor&, ParsedValues&, const NamedSwitches &ambiguities,
+                                   Optional<std::runtime_error>&, bool mayNestle);
 
     // Returns true if the program argument at the cursor looks like it might be a switch.  Apparent switches are any program
     // argument that starts with a long or short prefix.
     bool apparentSwitch(const Cursor&) const;
 
-
     // Returns the best prefix for each switch--the one used for documentation
     void preferredSwitchPrefixes(Container::Map<std::string, std::string> &prefixMap /*out*/) const;
+
+    // Construct an error message for an ambiguous switch, switchString, having an optional group name part (including the
+    // separator), and the required switch name.  The switchString must be present in the ambiguities table.
+    std::string ambiguityErrorMesg(const std::string &longSwitchString, const std::string &optionalPart,
+                                   const std::string &longSwitchName, const NamedSwitches &ambiguities);
+    std::string ambiguityErrorMesg(const std::string &shortSwitchString, const NamedSwitches &ambiguities);
+
+    // Initialize a documentation parser by registering things like @s, @man, etc.  The argument is a subclass such as
+    // Document::PodMarkup.
+    void initDocGrammar(Document::Markup::Grammar& /*in,out*/) const;
 
     // FIXME[Robb Matzke 2014-02-21]: Some way to parse command-lines from a config file, or to merge parsed command-lines with
     // a yaml config file, etc.
@@ -2867,6 +3189,8 @@ private:
     ParserResult(const Parser &parser, const std::vector<std::string> &argv): parser_(parser), cursor_(argv) {}
 
 public:
+    ParserResult() {}
+
     /** Saves parsed values in switch-specified locations.  This method implements the @e push paradigm mentioned in the class
      *  documentation (see @ref ParserResult). */
     const ParserResult& apply() const;
@@ -2901,9 +3225,9 @@ public:
 
     /** Program arguments that were skipped over during parsing.
      *
-     *  If the Parser::skipUnknownSwitches or Parser::skipNonSwitches properties are true, then this method returns those
-     *  command-line arguments that the parser skipped.  The library makes no distinction between these two classes of skipping
-     *  because in general, it is impossible to be accurate about it (see @ref SwitchGroup for an example).
+     *  If the Parser::skippingUnknownSwitches or Parser::skippingNonSwitches properties are true, then this method returns
+     *  those command-line arguments that the parser skipped.  The library makes no distinction between these two classes of
+     *  skipping because in general, it is impossible to be accurate about it (see @ref SwitchGroup for an example).
      *
      *  Program arguments inserted into the command line due to file inclusion will be returned in place of the file inclusion
      *  switch itself.

@@ -1,0 +1,4 @@
+A::A ->
+A::~A ->
+_Destroy < A >  -> A::~A
+foo -> _Destroy < A > 

@@ -19,6 +19,7 @@
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
 
+#include "Timer.h"
 #include "AstTerm.h"
 #include "Labeler.h"
 #include "CFAnalysis.h"
@@ -93,6 +94,7 @@ namespace CodeThorn {
     ~Analyzer();
     
     void initAstNodeInfo(SgNode* node);
+    bool isInExplicitStateMode();
     bool isActiveGlobalTopify();
     static std::string nodeToString(SgNode* node);
     void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
@@ -111,6 +113,7 @@ namespace CodeThorn {
     const EState* topWorkList();
     const EState* popWorkList();
     void swapWorkLists();
+    size_t memorySizeContentEStateWorkLists();
     
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
@@ -172,7 +175,6 @@ namespace CodeThorn {
     EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
     const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
     
-    EState createEStateFastTopifyMode(Label label, const PState* oldPStatePtr, const ConstraintSet* oldConstraintSetPtr);
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
@@ -334,7 +336,10 @@ namespace CodeThorn {
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
-    void setMaxBytesStg(long int maxBytes) { _maxBytesStg=maxBytes; }
+    void setMaxBytes(long int maxBytes) { _maxBytes=maxBytes; }
+    void setMaxBytesForcedTop(long int maxBytesForcedTop) { _maxBytesForcedTop=maxBytesForcedTop; }
+    void setMaxSeconds(long int maxSeconds) { _maxSeconds=maxSeconds; }
+    void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
     void setStartPState(PState startPState) { _startPState=startPState; }
     void setReconstructMaxInputDepth(size_t inputDepth) { _reconstructMaxInputDepth=inputDepth; }
     void setReconstructMaxRepetitions(size_t repetitions) { _reconstructMaxRepetitions=repetitions; }
@@ -393,6 +398,7 @@ namespace CodeThorn {
     bool isUsingExternalFunctionSemantics() { return _externalFunctionSemantics; }
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
+    long analysisRunTimeInSeconds(); 
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<VariableId> _compoundIncVarsSet;
@@ -423,9 +429,12 @@ namespace CodeThorn {
     set<const EState*> _newNodesToFold;
     long int _maxTransitions;
     long int _maxIterations;
+    long int _maxBytes;
+    long int _maxSeconds;
     long int _maxTransitionsForcedTop;
     long int _maxIterationsForcedTop;
-    long int _maxBytesStg;
+    long int _maxBytesForcedTop;
+    long int _maxSecondsForcedTop;
     PState _startPState;
     int _reconstructMaxInputDepth;
     int _reconstructMaxRepetitions;
@@ -453,6 +462,7 @@ namespace CodeThorn {
     string _externalNonDetIntFunctionName;
     string _externalNonDetLongFunctionName;
     string _externalExitFunctionName;
+    Timer _analysisTimer;
     //bool _modeLTLDriven;
   }; // end of class Analyzer
   

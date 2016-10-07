@@ -91,10 +91,10 @@ InstructionLister::switches(Settings &settings) {
 std::string
 InstructionLister::docString() {
     Settings settings;
-    return ("Lists all CFG-attached instructions overlapping the specified @s{select} address interval when a "
-            "basic block or placeholder whose address is in the specified @s{bblock} address interval is attached to the CFG. "
-            "The listing indicates address gaps and overlaps with \"+@v{n}\" and \"-@v{n}\" notation where @v{n} is the "
-            "number of bytes skipped forward or backward." +
+    return ("Lists all CFG-attached instructions overlapping the specified @s{select}{noerror} address interval when a "
+            "basic block or placeholder whose address is in the specified @s{bblock}{noerror} address interval is attached "
+            "to the CFG. The listing indicates address gaps and overlaps with \"+@v{n}\" and \"-@v{n}\" notation where "
+            "@v{n} is the number of bytes skipped forward or backward." +
             Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
 }
 
@@ -167,7 +167,7 @@ CfgGraphVizDumper::switches(Settings &settings) {
     switches.insert(Switch("neighbors")
                     .intrinsicValue("true", booleanParser(settings.showNeighbors))
                     .doc("If specified, then the graph will also contain the immediate neighbors of all selected "
-                         "vertices, and they will be shown in a different style.  The @s{no-neighbors} switch "
+                         "vertices, and they will be shown in a different style.  The @s{no-neighbors}{noerror} switch "
                          "can turn this off.  The default is to " +
                          std::string(settings.showNeighbors?"":"not ") + "show neighbors."));
     switches.insert(Switch("no-neighbors")
@@ -189,9 +189,9 @@ std::string
 CfgGraphVizDumper::docString() {
     Settings settings;
     return ("Dumps a GraphViz file representing a control flow sub-graph when a basic block or placeholder whose address "
-            "is in the specified @s{bblock} address interval is inserted into the CFG.  The graph will contain vertices whose "
-            "starting address fall within the @s{select} interval, and optionally neighbors of those vertices." +
-            Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
+            "is in the specified @s{bblock}{noerror} address interval is inserted into the CFG.  The graph will contain "
+            "vertices whose starting address fall within the @s{select}{noerror} interval, and optionally neighbors of "
+            "those vertices." + Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
 }
 
 // class method
@@ -259,8 +259,8 @@ HexDumper::switches(Settings &settings) {
     switches.insert(Switch("accent")
                     .intrinsicValue(true, settings.accentSpecialValues)
                     .doc("Causes zero bytes to be output as a single dot \".\" and 0xff bytes to be output as the "
-                         "string \"##\".  This emphasizes these two important values in the output.  The @s{no-accent} "
-                         "switch causes them to output as \"00\" and \"ff\". The default is to " +
+                         "string \"##\".  This emphasizes these two important values in the output.  The "
+                         "@s{no-accent}{noerror} switch causes them to output as \"00\" and \"ff\". The default is to " +
                          std::string(settings.accentSpecialValues?"":"not ") + "accent them."));
     switches.insert(Switch("no-accent")
                     .key("accent")
@@ -274,7 +274,7 @@ std::string
 HexDumper::docString() {
     Settings settings;
     return ("Lists virtual memory contents in standard hexdump format when a basic block or placeholder whose address is "
-            "in the specified @s{bblock} address interval is attached to the CFG." +
+            "in the specified @s{bblock}{noerror} address interval is attached to the CFG." +
             Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
 }
 
@@ -360,8 +360,8 @@ std::string
 Debugger::docString() {
     Settings settings;
     return ("Calls Debugger::debug, which is a convenient point to attach a debugger such as GDB.  The method is called "
-            "when a basic block or placeholder whose address is in the specified @s{bblock} address interval is attached "
-            "to the CFG." + Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
+            "when a basic block or placeholder whose address is in the specified @s{bblock}{noerror} address interval is "
+            "attached to the CFG." + Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
 }
 
 // class method

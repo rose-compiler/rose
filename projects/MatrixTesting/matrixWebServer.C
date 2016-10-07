@@ -3493,7 +3493,8 @@ class WDevelopersTab: public Wt::WContainerWidget {
 
 public:
     explicit WDevelopersTab(Session &session, Wt::WContainerWidget *parent = NULL)
-        : Wt::WContainerWidget(parent), session_(session) {
+        : Wt::WContainerWidget(parent), session_(session), wAuthentication_(NULL), wStack_(NULL), wUsers_(NULL),
+          wUserChoices_(NULL), wUserEdit_(NULL), wChangePassword_(NULL) {
 
         // User authentication: login/logout. In the logged-out state we show only the AuthWidget which is showing a login
         // form. In the logged in state we show the AuthWidget's logout button along with the stack widget.
@@ -3931,8 +3932,7 @@ int
 main(int argc, char *argv[]) {
     Sawyer::initializeLibrary();
     Sawyer::Message::mfacilities.control("none,>=info");
-    ::mlog = Sawyer::Message::Facility("tool");
-    Sawyer::Message::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
 #ifdef ROSE_USE_WT
     // Initialized global state shared by all serving threads.

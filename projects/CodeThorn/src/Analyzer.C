@@ -5,10 +5,8 @@
  *************************************************************/
 
 #include "sage3basic.h"
-
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
-#include <unistd.h>
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "AnalysisAbstractionLayer.h"
@@ -73,8 +71,12 @@ Analyzer::Analyzer():
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
   _maxIterations(-1),
+  _maxBytes(-1),
+  _maxSeconds(-1),
   _maxTransitionsForcedTop(-1),
   _maxIterationsForcedTop(-1),
+  _maxBytesForcedTop(-1),
+  _maxSecondsForcedTop(-1),
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
@@ -86,6 +88,8 @@ Analyzer::Analyzer():
   _next_iteration_cnt(0),
   _externalFunctionSemantics(false)
 {
+  _analysisTimer.start();
+  _analysisTimer.stop();
   variableIdMapping.setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
@@ -114,6 +118,10 @@ void Analyzer::setExternalErrorFunctionName(std::string externalErrorFunctionNam
 
 bool Analyzer::isPrecise() {
   return !(isActiveGlobalTopify()||variableValueMonitor.isActive());
+}
+
+bool Analyzer::isInExplicitStateMode() {
+  return isPrecise();
 }
 
 bool Analyzer::isIncompleteSTGReady() {
@@ -312,18 +320,24 @@ void Analyzer::addToWorkList(const EState* estate) {
 }
 
 bool Analyzer::isActiveGlobalTopify() {
-  if(_maxTransitionsForcedTop==-1 && _maxIterationsForcedTop==-1)
+  if(_maxTransitionsForcedTop==-1 && _maxIterationsForcedTop==-1 && _maxBytesForcedTop==-1 && _maxSecondsForcedTop==-1)
     return false;
-  if(_topifyModeActive) {
+  if(_topifyModeActive)
     return true;
-  } else {
-    if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop)
-        || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop) ) {
-      _topifyModeActive=true;
-      eventGlobalTopifyTurnedOn();
-      boolOptions.setOption("rers-binary",false);
-      return true;
+  // TODO: add a critical section that guards "transitionGraph.size()"
+  if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop) 
+      || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop)
+      || (_maxBytesForcedTop!=-1 && getPhysicalMemorySize() > _maxBytesForcedTop)
+      || (_maxSecondsForcedTop!=-1 && analysisRunTimeInSeconds() > _maxSecondsForcedTop) ) {
+#pragma omp critical(ACTIVATE_TOPIFY_MODE)
+    {
+      if (!_topifyModeActive) {
+	_topifyModeActive=true;
+	eventGlobalTopifyTurnedOn();
+	boolOptions.setOption("rers-binary",false);
+      }
     }
+    return true;
   }
   return false;
 }
@@ -422,13 +436,6 @@ void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId va
   //exit(1);
   pstate.setVariableToTop(varId);
   //cset.removeAllConstraintsOfVar(varId);
-}
-
-// PState and cset are assumed to exist. Pstate is assumed to be topified. Only for topify mode.
-EState Analyzer::createEStateFastTopifyMode(Label label, const PState* oldPStatePtr, const ConstraintSet* oldConstraintSetPtr) {
-  ROSE_ASSERT(isActiveGlobalTopify());
-  EState estate=EState(label,oldPStatePtr,oldConstraintSetPtr);
-  return estate;
 }
 
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
@@ -580,6 +587,20 @@ void Analyzer::swapWorkLists() {
   estateWorkListCurrent = estateWorkListNext;
   estateWorkListNext = tmp;
   incIterations();
+}
+
+size_t Analyzer::memorySizeContentEStateWorkLists() {
+  size_t mem = 0;
+#pragma omp critical(ESTATEWL) 
+  {
+    for (EStateWorkList::iterator i=estateWorkListOne.begin(); i!=estateWorkListOne.end(); ++i) {
+      mem+=sizeof(*i);
+    }
+    for (EStateWorkList::iterator i=estateWorkListTwo.begin(); i!=estateWorkListTwo.end(); ++i) {
+      mem+=sizeof(*i);
+    }
+  }
+  return mem;
 }
 
 #define PARALLELIZE_BRANCHES
@@ -1721,9 +1742,14 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     }
   }
 
+  if(isRhsIntVal && isInExplicitStateMode()) {
+    ROSE_ASSERT(!rhsIntVal.isTop());
+  }
+
   if(newPState.varExists(lhsVar)) {
     if(!isRhsIntVal && !isRhsVar) {
       rhsIntVal=AType::Top();
+      ROSE_ASSERT(!isInExplicitStateMode());
     }
     // we are using AValue here (and  operator== is overloaded for AValue==AValue)
     // for this comparison isTrue() is also false if any of the two operands is AType::Top()
@@ -2993,7 +3019,8 @@ void Analyzer::runSolver11() {
   cout << "analysis with solver 11 finished (worklist is empty)."<<endl;
 }
 
-void Analyzer::runSolver12() {
+void Analyzer::runSolver12() { 
+  _analysisTimer.start();
   if(isUsingExternalFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
@@ -3035,7 +3062,7 @@ void Analyzer::runSolver12() {
     while(!terminate) {
 #pragma omp critical(ESTATEWL)
       {
-        if (all_false(workVector)) {
+        if (threadNum == 0 && all_false(workVector)) {
           if ( (estateWorkListCurrent->empty() && estateWorkListNext->empty())) { 
             terminate = true;
 	  }
@@ -3064,33 +3091,52 @@ void Analyzer::runSolver12() {
         prevStateSetSizeDisplay=estateSetSize;
       }
 
-      if (args.count("max-memory-stg")) {
+      if (args.count("max-memory") || args.count("max-memory-forced-top")) {
 #pragma omp critical(HASHSET)
 	{
 	  estateSetSize = estateSet.size();
 	}
 	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  long totalMemoryStg = 0;
-#pragma omp critical(HASHSET)
-	  {
-	    totalMemoryStg+=getPStateSet()->memorySize(); // pstateSetBytes
-	    totalMemoryStg+=getEStateSet()->memorySize(); // eStateSetBytes
-	    long transitionGraphSize=getTransitionGraph()->size();
-	    totalMemoryStg+=transitionGraphSize*sizeof(Transition); // transitionGraphBytes
-	    totalMemoryStg+=getConstraintSetMaintainer()->memorySize(); // constraintSetsBytes
-	    //cout << "DEBUG: total memory stg:" << totalMemoryStg << "(" <<getPStateSet()->memorySize()<<"/"<<getEStateSet()->memorySize()<<"/"<<transitionGraphSize*sizeof(Transition)<<"/"<<getConstraintSetMaintainer()->memorySize()<<")"<< endl;
-	  }
-	  if (totalMemoryStg >= _maxBytesStg) {
+	  if (args.count("max-memory")) {
+	    if (getPhysicalMemorySize() >= _maxBytes) {
+#pragma omp critical(ESTATEWL)
+              {
+                terminate = true;
+	 	terminatedWithIncompleteStg = true;
+	      }
+            }
+	  } else if (args.count("max-memory-forced-top")){
 #pragma omp critical(ESTATEWL)
 	    {
-	      terminate = true;
-	      terminatedWithIncompleteStg = true;
+	      isActiveGlobalTopify();
 	    }
 	  }
 	  prevStateSetSizeResource=estateSetSize;
 	}
       }
-
+      if (args.count("max-time") || args.count("max-time-forced-top")) {
+#pragma omp critical(HASHSET)
+	{
+	  estateSetSize = estateSet.size();
+	}
+	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
+	  if (args.count("max-time")) {
+	    if (analysisRunTimeInSeconds() >= _maxSeconds) {
+#pragma omp critical(ESTATEWL)
+              {
+                terminate = true;
+	 	terminatedWithIncompleteStg = true;
+	      }
+            }
+	  } else if (args.count("max-time-forced-top")){
+#pragma omp critical(ESTATEWL)
+	    {
+	      isActiveGlobalTopify();
+	    }
+	  }
+	  prevStateSetSizeResource=estateSetSize;
+	}
+      }
       //perform reduction to I/O/worklist states only if specified threshold was reached
       if (ioReductionActive) {
 #pragma omp critical
@@ -3166,13 +3212,13 @@ void Analyzer::runSolver12() {
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)
                 addToWorkList(newEStatePtr);
-              recordTransition(currentEStatePtr,e,newEStatePtr);
+	      recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
               const EState* newEStatePtr;
               newEStatePtr=processNewOrExisting(newEState);
-              recordTransition(currentEStatePtr,e,newEStatePtr);        
+	      recordTransition(currentEStatePtr,e,newEStatePtr);        
               
               if(isVerificationErrorEState(&newEState)) {
 #pragma omp critical
@@ -3214,6 +3260,7 @@ void Analyzer::runSolver12() {
       } // conditional: test if work is available
     } // while
   } // omp parallel
+  _analysisTimer.stop();
   const bool isComplete=true;
   if (!isPrecise()) {
     _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
@@ -3960,3 +4007,13 @@ void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
  void Analyzer::setAssertCondVarsSet(set<VariableId> acVars) {
    _assertCondVarsSet=acVars;
  }
+
+
+long Analyzer::analysisRunTimeInSeconds() {
+  long result;
+#pragma omp critical(TIMER)
+  {
+    result = (long) (_analysisTimer.getElapsedTimeInMilliSec() / 1000);
+  }
+  return result;
+}

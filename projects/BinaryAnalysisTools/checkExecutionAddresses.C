@@ -45,8 +45,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         "address not expected.\n\n"
 
         "One method of obtaining a list of expected addresses is to use the @man{recursiveDisassemble}{--help} tool's "
-        "@s{list-instruction-addressses} switch. Although this produces output that contains instruction sizes as well as "
-        "addresses, @prop{programName} ignores the sizes.  This can be used to test whether a process executes any "
+        "@s{list-instruction-addressses}{noerror} switch. Although this produces output that contains instruction sizes "
+        "as well as addresses, @prop{programName} ignores the sizes.  This can be used to test whether a process executes any "
         "instructions that were not also disassembled, thereby testing some aspect of the disassembly quality.";
 
     // The parser is the same as that created by Engine::commandLineParser except we don't need any disassemler or partitioning
@@ -64,6 +64,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         .with(engine.loaderSwitches());
     
     SwitchGroup tool("Tool specific switches");
+    tool.name("tool");
     tool.insert(Switch("map")
                 .argument("how", enumParser(settings.mapSource)
                           ->with("native", MAP_NATIVE)
@@ -115,8 +116,12 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                 .intrinsicValue(true, settings.showUnmapped)
                 .doc("List addresses that were executed but are not present in the memory map.  These are probably instructions "
                      "that belong to the dynamic linker, dynamically-linked libraries, or virtual dynamic shared objects.  The "
-                     "@s{no-show-unampped} switch turns this listing off.  The default is to " +
+                     "@s{no-show-unmapped} switch turns this listing off.  The default is to " +
                      std::string(settings.showUnmapped?"":"not ") + "show this information."));
+    tool.insert(Switch("no-show-unmapped")
+                .key("show-unmapped")
+                .intrinsicValue(false, settings.showUnmapped)
+                .hidden(true));
 
     return parser.with(tool).parse(argc, argv).apply().unreachedArgs();
 }
@@ -173,8 +178,7 @@ execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryD
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "tool");
     Sawyer::ProgressBarSettings::minimumUpdateInterval(0.2); // more fluid spinner
 
     // Parse command-line

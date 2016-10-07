@@ -1,5 +1,5 @@
 // tps (01/14/2010) : Switching from rose.h to sage3
-// test cases are put into tests/roseTests/astInterfaceTests
+// test cases are put into tests/nonsmoke/functional/roseTests/astInterfaceTests
 // Last modified, by Liao, Jan 10, 2008
 
 // includes "sageBuilder.h"
@@ -60,8 +60,7 @@ initDiagnostics()
      if (!initialized)
         {
           initialized = true;
-          mlog = Sawyer::Message::Facility("SageBuilder", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+          rose::Diagnostics::initAndRegister(mlog, "rose::SageBuilder");
         }
    }
 
@@ -2161,6 +2160,11 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
      printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterTypeList) \n");
      printf ("Inside of SageBuilder::buildFunctionType() return_type = %s \n",return_type->get_mangled().str());
      printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %" PRIuPTR " \n",typeList->get_arguments().size());
+     for (size_t i=0; i < typeList->get_arguments().size(); i++)
+        {
+          ROSE_ASSERT(typeList->get_arguments()[i] != NULL);
+          printf ("   --- typeList->get_arguments()[%zu] = %p = %s \n",i,typeList->get_arguments()[i],typeList->get_arguments()[i]->class_name().c_str());
+        }
 #endif
 #if 0
   // DQ (1/21/2014): Activate this test to see how we are building SgFunctionType with return type as SgFunctionType (see test2014_53.c).
@@ -6030,6 +6034,23 @@ SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntVal_nfi(unsigned 
   return result;
 }
 
+SgTemplateType* SageBuilder::buildTemplateType(SgName name/* ="" */, int template_parameter_position/* = -1*/)
+{
+  SgTemplateType* result = new SgTemplateType (name, template_parameter_position);
+  ROSE_ASSERT (result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgTemplateParameter * SageBuilder::buildTemplateParameter (SgTemplateParameter::template_parameter_enum parameterType, SgType* t)
+{
+  ROSE_ASSERT (t);
+  SgTemplateParameter* result = new SgTemplateParameter(parameterType, t);
+  ROSE_ASSERT (result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgTemplateParameterVal* SageBuilder::buildTemplateParameterVal(int template_parameter_position)
 {
   SgTemplateParameterVal* templateParameterValue = new SgTemplateParameterVal(template_parameter_position,"");
@@ -9574,7 +9595,7 @@ SgTypeOfType* SageBuilder::buildTypeOfType(SgExpression *base_expression, SgType
 // Liao, 8/16/2010, This function is being phased out. Please don't call this!!
 SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
    {
-  // DQ (7/30/2010): Note that this is called by the outline test: tests/roseTests/astOutliningTests/moreTest3.cpp
+  // DQ (7/30/2010): Note that this is called by the outline test: tests/nonsmoke/functional/roseTests/astOutliningTests/moreTest3.cpp
   // DQ (7/28/2010): Now we want to make calling this function an error, the functions buildConst() will return SgModifierType objects instead.
      printf ("Error: this function SageBuilder::buildModifierType() should not be called! (call the buildConst() function (or whatever other function is required) directly \n");
    ROSE_ASSERT(false);
@@ -11127,7 +11148,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
      SgNamespaceDeclarationStatement* nondefdecl = NULL;
 
-  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
+  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/nonsmoke/functional/roseTests/astInterfaceTests test codes.
   // ROSE_ASSERT(scope != NULL);
      SgNamespaceSymbol* mysymbol = NULL;
      if (scope != NULL)
@@ -11350,7 +11371,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
   //   defdecl->set_parent(topScopeStack());
 
   // DQ (1/26/2009): I think we should assert this, but it breaks the interface as defined
-  // by the test code in tests/roseTests/astInterfaceTests.
+  // by the test code in tests/nonsmoke/functional/roseTests/astInterfaceTests.
   // ROSE_ASSERT(defdecl->get_parent() != NULL);
 
   // ROSE_ASSERT(nonDefiningDecl->get_parent() != NULL);
@@ -11466,7 +11487,7 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
      ROSE_ASSERT(false);
 #endif
 
-  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
+  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/nonsmoke/functional/roseTests/astInterfaceTests test codes.
   // ROSE_ASSERT(scope != NULL);
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
@@ -11742,7 +11763,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
   // This fails for test2005_35.C
   // ROSE_ASSERT(SageInterface::hasTemplateSyntax(nameWithoutTemplateArguments) == false);
 
-  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
+  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/nonsmoke/functional/roseTests/astInterfaceTests test codes.
   // ROSE_ASSERT(scope != NULL);
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
@@ -12474,7 +12495,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
 
   // DQ (1/26/2009): I think we should assert this, but it breaks the interface as defined
-  // by the test code in tests/roseTests/astInterfaceTests.
+  // by the test code in tests/nonsmoke/functional/roseTests/astInterfaceTests.
   // ROSE_ASSERT(defdecl->get_parent() != NULL);
 
   // ROSE_ASSERT(nonDefiningDecl->get_parent() != NULL);
@@ -12614,7 +12635,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
      SgTemplateClassDeclaration* nondefdecl = NULL;
 
-  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
+  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/nonsmoke/functional/roseTests/astInterfaceTests test codes.
   // ROSE_ASSERT(scope != NULL);
 
   // DQ (12/21/2011): We want to use a newer design that derives the SgTemplateClassDeclaration from the SgClassDeclaration.
@@ -13089,7 +13110,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
      SgTemplateClassDeclaration* nondefdecl = NULL;
 
-  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
+  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/nonsmoke/functional/roseTests/astInterfaceTests test codes.
   // ROSE_ASSERT(scope != NULL);
   // SgTemplateSymbol* mysymbol = NULL;
      SgClassSymbol* mysymbol = NULL;

@@ -22,11 +22,6 @@ compass_parameters:
 	cd .. && $(MAKE) compass_parameters
 	cp -f ../compass_parameters .
 
-check-local:
-	@echo "************************************************************************************"
-	@echo "*** ROSE/projects/compass/tools/compass/gui: make check rule complete (terminated normally) ***"
-	@echo "************************************************************************************"
-
 CLEANFILES = 
 
 

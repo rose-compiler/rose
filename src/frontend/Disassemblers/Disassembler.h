@@ -115,9 +115,9 @@ namespace BinaryAnalysis {
  *  Disassembler::register_subclass(new MyDisassembler(8)); // 64-bit
  *  @endcode
  *
- *  Additional examples are shown in the disassembleBuffer.C and disassemble.C sources in the tests/roseTests/binaryTests
- *  directory. They are examples of how a Disassembler object can be used to disassemble a buffer containing bare machine code
- *  when one doesn't have an associated executable file.
+ *  Additional examples are shown in the disassembleBuffer.C and disassemble.C sources in the
+ *  tests/nonsmoke/functional/roseTests/binaryTests directory. They are examples of how a Disassembler object can be used to
+ *  disassemble a buffer containing bare machine code when one doesn't have an associated executable file.
  */
 class Disassembler {
 public:

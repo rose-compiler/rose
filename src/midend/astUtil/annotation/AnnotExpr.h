@@ -6,6 +6,7 @@
 #include "FunctionObject.h"
 #include <stdlib.h>
 #include <vector>
+
 //! SymbolicVal with I/O interface
 class ROSE_DLL_API SymbolicValDescriptor
 {
@@ -42,10 +43,13 @@ class SymbolicDotExp : public SymbolicFunction
   public:
    SymbolicDotExp(const Arguments& v)
     : SymbolicFunction(AstInterface::BOP_DOT_ACCESS, ".", v)  { assert( v.size() == 2); }
+
    SymbolicDotExp( const SymbolicVal& obj, const SymbolicVal& field)
     : SymbolicFunction(AstInterface::BOP_DOT_ACCESS,".", obj, field) {}
+
    SymbolicDotExp( const SymbolicVal& obj, const std::string& fieldname)
     : SymbolicFunction(AstInterface::BOP_DOT_ACCESS,".", obj, SymbolicConst(fieldname, "field")) {}
+
    SymbolicDotExp( const SymbolicDotExp& that)
     : SymbolicFunction(that) {}
 
@@ -91,7 +95,7 @@ class SymbolicExtendVar : public SymbolicFunction
    static std::string get_varname( std::string var, int index);
 };
 
-//!  a parameter with a named range of values. parameter:range_name:lower_bound:upper_bound
+//!  A parameter with a named range of values. parameter:range_name:lower_bound:upper_bound
 // e.g:  _size:dim:1:dimension
 class ExtendibleParamDescriptor 
   : private SelectPair < SymbolicValDescriptor, // parameter itself 
@@ -134,6 +138,7 @@ class ExtendibleParamDescriptor
   void replace_var( const std::string& varname, const SymbolicVal& val);
   void replace_val(MapObject<SymbolicVal, SymbolicVal>& repl);
 };
+
 //! A list of parameter descriptors, separated by ',', enclosed in '(..)'
 // Each parameter has a range of values
 class SymbolicParamListDescriptor 
@@ -144,6 +149,7 @@ class SymbolicParamListDescriptor
   void replace_var( const std::string& varname, const SymbolicVal& val);
   void Dump() const;
 };
+
 //! A symbolic function declaration with 
 // a parameter list 'SymbolicParamListDescriptor' and a name (??) 'SymbolicValDescriptor',
 // separated by ':' in their string format
@@ -169,6 +175,7 @@ class SymbolicFunctionDeclaration
   void replace_var( const std::string& varname, const SymbolicVal& val);
   void replace_val(MapObject<SymbolicVal, SymbolicVal>& repl);
 };
+
 //! A list of symbolic function declarations, separated by ',', enclosed in '(..)'
 class SymbolicFunctionDeclarationGroup
   : public ContainerDescriptor< std::list<SymbolicFunctionDeclaration>, 
@@ -201,6 +208,7 @@ class DefineVariableDescriptor
   void replace_val( MapObject<SymbolicVal, SymbolicVal>& repl);
   void Dump() const;
 };
+
 // string_name(parameterList)=symbolicVal
 // e.g: elem(i:dim:1:dimension) = this(i$dim)
 class ReadSymbolicFunctionDeclaration 

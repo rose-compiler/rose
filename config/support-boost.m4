@@ -65,7 +65,7 @@ fi
 
 # DQ (10/22/2015): Added more tests (1.55 through 1.62)
 # Define macros for conditional compilation of parts of ROSE based on version of boost
-# (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
+# (this ONLY happens for the tests in tests/nonsmoke/functional/CompilerOptionsTests/testWave)
 #
 # !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
 #
@@ -132,6 +132,7 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_61, test $rose_boost_version -ge 10
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_62, test $rose_boost_version -ge 106200)
 
 # DQ (10/22/2015): Added acceptable case 1.54.
+# DQ (8/2/2016): Added acceptable case 1.55 through 1.61.
 if test \
       "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
@@ -143,12 +144,19 @@ if test \
    -o "x$rose_boost_version" = "x105100" -o "x$_version" = "x1.51" \
    -o "x$rose_boost_version" = "x105200" -o "x$_version" = "x1.52" \
    -o "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53" \
-   -o "x$rose_boost_version" = "x105400" -o "x$_version" = "x1.54"
+   -o "x$rose_boost_version" = "x105400" -o "x$_version" = "x1.54" \
+   -o "x$rose_boost_version" = "x105500" -o "x$_version" = "x1.55" \
+   -o "x$rose_boost_version" = "x105600" -o "x$_version" = "x1.56" \
+   -o "x$rose_boost_version" = "x105700" -o "x$_version" = "x1.57" \
+   -o "x$rose_boost_version" = "x105800" -o "x$_version" = "x1.58" \
+   -o "x$rose_boost_version" = "x105900" -o "x$_version" = "x1.59" \
+   -o "x$rose_boost_version" = "x106000" -o "x$_version" = "x1.60" \
+   -o "x$rose_boost_version" = "x106100" -o "x$_version" = "x1.61"
 then
     echo "Reasonable version of Boost found!"
 else
   if test "x$ROSE_ENABLE_BOOST_VERSION_CHECK" = "xyes"; then
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.45 to 1.54 is currently supported.])
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.45 to 1.61 is currently supported.])
   else
     AC_MSG_WARN([Unsupported version of Boost is being used])
   fi
@@ -164,6 +172,7 @@ AC_DEFINE_UNQUOTED([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location (unquoted) o
 
 AC_DEFINE_UNQUOTED([ROSE_BOOST_VERSION], $rose_boost_version, [Version of Boost specified on configure line.])
 
+AX_BOOST_SYSTEM
 AX_BOOST_THREAD
 AX_BOOST_DATE_TIME
 AX_BOOST_REGEX
@@ -172,7 +181,6 @@ AX_BOOST_PROGRAM_OPTIONS
 #AX_BOOST_ASIO
 #AX_BOOST_SIGNALS
 #AX_BOOST_TEST_EXEC_MONITOR
-AX_BOOST_SYSTEM
 AX_BOOST_FILESYSTEM
 AX_BOOST_WAVE
 

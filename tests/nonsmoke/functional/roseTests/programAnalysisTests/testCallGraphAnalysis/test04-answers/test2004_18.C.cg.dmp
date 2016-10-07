@@ -1,0 +1,3 @@
+TestClassArgument < int > ::foo ->
+TestIntegerArgument < 2 > ::foo ->
+main -> TestClassArgument < int > ::foo TestIntegerArgument < 2 > ::foo
