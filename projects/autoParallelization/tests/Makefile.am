@@ -78,7 +78,9 @@ iteratorloop.C \
 test20100223.C \
 Hydro_applyVelocityBC.C \
 Hydro_constructor_1.C \
-Hydro_max_min.C
+Hydro_max_min.C \
+DelVolBaseLoopAlgorithm_loopExecute.C \
+StressWork_setup.C
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet

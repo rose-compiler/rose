@@ -23,6 +23,116 @@
 using namespace std;
 using namespace AutoParallelization;
 using namespace SageInterface;
+
+void findCandidateFunctionDefinitions (SgProject* project, std::vector<SgFunctionDefinition* >& candidateFuncDefs)
+{
+  ROSE_ASSERT (project != NULL);
+  // For each source file in the project
+  SgFilePtrList & ptr_list = project->get_fileList();
+  for (SgFilePtrList::iterator iter = ptr_list.begin(); iter!=ptr_list.end();
+      iter++)
+  {
+    SgFile* sageFile = (*iter);
+    SgSourceFile * sfile = isSgSourceFile(sageFile);
+    ROSE_ASSERT(sfile);
+//    SgGlobal *root = sfile->get_globalScope();
+
+    if (enable_debug)
+      cout<<"Processing each function within the files "<< sfile->get_file_info()->get_filename() <<endl;
+    //      cout<<"\t loop at:"<< cur_loop->get_file_info()->get_line() <<endl;
+
+    // This is wrong, many functions in question are not top level declarations!!
+    //SgDeclarationStatementPtrList& declList = root->get_declarations ();
+    //VariantVector vv;
+    Rose_STL_Container<SgNode*> defList = NodeQuery::querySubTree(sfile, V_SgFunctionDefinition); 
+//    bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
+
+    //For each function body in the scope
+    //for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
+    for (Rose_STL_Container<SgNode*>::iterator p = defList.begin(); p != defList.end(); ++p) 
+    {
+      SgFunctionDefinition *defn = isSgFunctionDefinition(*p);
+      ROSE_ASSERT (defn != NULL);
+
+      SgFunctionDeclaration *func = defn->get_declaration();
+      ROSE_ASSERT (func != NULL);
+
+      if (enable_debug)
+        cout<<"\t considering function "<< func->get_name() << " at "<< func->get_file_info()->get_line()<<endl;
+      //ignore functions in system headers, Can keep them to test robustness
+      if (defn->get_file_info()->get_filename()!=sageFile->get_file_info()->get_filename())
+      {
+        if (enable_debug)
+          cout<<"\t Skipped since the function's associated file name does not match current file being considered. Mostly from a header. "<<endl;
+        continue;
+      }
+      candidateFuncDefs.push_back(defn);
+    } // end for def list
+  } // end for file list
+}
+
+// normalize all loops within candidate function defintions
+void normalizeLoops (std::vector<SgFunctionDefinition* > candidateFuncDefs)
+{
+  for (std::vector<SgFunctionDefinition* >::iterator iter = candidateFuncDefs.begin(); iter != candidateFuncDefs.end(); iter++)
+  {
+    SgFunctionDefinition* funcDef = *iter; 
+    ROSE_ASSERT (funcDef);
+    // This has to happen before analyses are called.
+    // For each loop 
+    VariantVector vv (V_SgForStatement); 
+    Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(funcDef, vv); 
+
+    if (enable_debug)
+      cout<<"Normalize loops queried from memory pool ...."<<endl;
+
+    // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
+    // Liao, 10/22/2009. Thank Jeff Keasler for spotting this bug
+    for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin();
+        iter!= loops.end(); iter++ )
+    {
+      SgForStatement* cur_loop = isSgForStatement(*iter);
+      ROSE_ASSERT(cur_loop);
+
+      if (enable_debug)
+        cout<<"\t loop at:"<< cur_loop->get_file_info()->get_line() <<endl;
+      // skip for (;;) , SgForStatement::get_test_expr() has a buggy assertion.
+      SgStatement* test_stmt = cur_loop->get_test();
+      if (test_stmt!=NULL && 
+          isSgNullStatement(test_stmt))
+      {
+        if (enable_debug)
+          cout<<"\t skipped due to empty loop header like for (;;)"<<endl;
+        continue;
+      }
+
+      // skip system header
+      if (insideSystemHeader (cur_loop) )
+      {
+        if (enable_debug)
+          cout<<"\t skipped since the loop is inside a system header "<<endl;
+        continue; 
+      }
+#if 0 // we now always normalize loops, then later undo some normalization 6/22/2016
+      // SageInterface::normalizeForLoopInitDeclaration(cur_loop);
+      if (keep_c99_loop_init) 
+      {
+        // 2/29/2016, disable for loop init declaration normalization
+        // This is not used . No longer used.
+        normalizeForLoopTest(cur_loop);
+        normalizeForLoopIncrement(cur_loop);
+        ensureBasicBlockAsBodyOfFor(cur_loop);
+        constantFolding(cur_loop->get_test());
+        constantFolding(cur_loop->get_increment());
+      }
+      else
+#endif
+        SageInterface::forLoopNormalization(cur_loop);
+    } // end for all loops
+  } // end for all function defs 
+  
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -36,51 +146,22 @@ main (int argc, char *argv[])
   SgProject *project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
 
- // This has to happen before analyses are called.
-  // For each loop 
-  VariantVector vv (V_SgForStatement); 
-  Rose_STL_Container<SgNode*> loops = NodeQuery::queryMemoryPool(vv); 
+  std::vector<SgFunctionDefinition* > candidateFuncDefs; 
 
-  // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
-  // Liao, 10/22/2009. Thank Jeff Keasler for spotting this bug
-  for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin();
-      iter!= loops.end(); iter++ )
-  {
-    SgForStatement* cur_loop = isSgForStatement(*iter);
-    ROSE_ASSERT(cur_loop);
-    // skip for (;;) , SgForStatement::get_test_expr() has a buggy assertion.
-    SgStatement* test_stmt = cur_loop->get_test();
-    if (test_stmt!=NULL && 
-        isSgNullStatement(test_stmt))
-      continue;
+  findCandidateFunctionDefinitions (project, candidateFuncDefs);
 
-    // skip system header
-    if (insideSystemHeader (cur_loop) )
-      continue; 
-#if 0 // we now always normalize loops, then later undo some normalization 6/22/2016
-    // SageInterface::normalizeForLoopInitDeclaration(cur_loop);
-    if (keep_c99_loop_init) 
-    {
-      // 2/29/2016, disable for loop init declaration normalization
-      // This is not used . No longer used.
-      normalizeForLoopTest(cur_loop);
-      normalizeForLoopIncrement(cur_loop);
-      ensureBasicBlockAsBodyOfFor(cur_loop);
-      constantFolding(cur_loop->get_test());
-      constantFolding(cur_loop->get_increment());
-    }
-    else
-#endif
-      SageInterface::forLoopNormalization(cur_loop);
-  }
+  normalizeLoops (candidateFuncDefs);
 
   //Prepare liveness analysis etc.
-  //TOO much output for analysis debugging info.
+  //Too much output for analysis debugging info.
   //initialize_analysis (project,enable_debug);   
   initialize_analysis (project, false);   
 
+  // This is a bit redundant with findCandidateFunctionDefinitions ()
+  // But we do need the per file control to decide if omp.h is needed for each file
+  //
   // For each source file in the project
-    SgFilePtrList & ptr_list = project->get_fileList();
+  SgFilePtrList & ptr_list = project->get_fileList();
     for (SgFilePtrList::iterator iter = ptr_list.begin(); iter!=ptr_list.end();
         iter++)
    {
@@ -88,23 +169,38 @@ main (int argc, char *argv[])
      SgSourceFile * sfile = isSgSourceFile(sageFile);
      ROSE_ASSERT(sfile);
      SgGlobal *root = sfile->get_globalScope();
-     SgDeclarationStatementPtrList& declList = root->get_declarations ();
+
+     Rose_STL_Container<SgNode*> defList = NodeQuery::querySubTree(sfile, V_SgFunctionDefinition); 
      bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
 
     //For each function body in the scope
-     for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
+     //for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
+     for (Rose_STL_Container<SgNode*>::iterator p = defList.begin(); p != defList.end(); ++p) 
      {
-        SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);
-        if (func == 0)  continue;
-        SgFunctionDefinition *defn = func->get_definition();
-        if (defn == 0)  continue;
+
+//      cout<<"\t loop at:"<< cur_loop->get_file_info()->get_line() <<endl;
+
+        SgFunctionDefinition *defn = isSgFunctionDefinition(*p);
+        ROSE_ASSERT (defn != NULL);
+
+        SgFunctionDeclaration *func = defn->get_declaration();
+        ROSE_ASSERT (func != NULL);
+        
          //ignore functions in system headers, Can keep them to test robustness
         if (defn->get_file_info()->get_filename()!=sageFile->get_file_info()->get_filename())
+        {
           continue;
+        }
+
         SgBasicBlock *body = defn->get_body();  
        // For each loop 
         Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(defn,V_SgForStatement); 
-        if (loops.size()==0) continue;
+        if (loops.size()==0) 
+        {
+          if (enable_debug)
+            cout<<"\t skipped since no for loops are found in this function"<<endl;
+          continue;
+        }
 
 #if 0 // Moved to be executed before running liveness analysis.
       // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
@@ -133,22 +229,16 @@ main (int argc, char *argv[])
 	//FR(06/07/2011): aliasinfo was not set which caused segfault
 	LoopTransformInterface::set_aliasInfo(&array_interface);
        
-        // X. Loop normalization for all loops within body
-        // Merged into SageInterface::forLoopNormalization()
-        //midend/programTransformation/loopProcessing/driver/LoopTransformInterface.h
-        /* normalize the forloops in C
-          i<x is normalized to i<= (x-1)
-          i>x is normalized to i>= (x+1)
-        
-          i++ is normalized to i=i+1
-          i-- is normalized to i=i-1
-        */
-//        NormalizeForLoop(fa_body, AstNodePtrImpl(body));
-
 	for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin(); 
 	    iter!= loops.end(); iter++ ) 
         {
           SgNode* current_loop = *iter;
+
+          if (enable_debug)
+          {
+            SgForStatement * fl = isSgForStatement(current_loop);
+            cout<<"\t\t Considering loop at "<< fl->get_file_info()->get_line()<<endl;
+          }
           //X. Parallelize loop one by one
           // getLoopInvariant() will actually check if the loop has canonical forms 
           // which can be handled by dependence analysis
@@ -168,6 +258,7 @@ main (int argc, char *argv[])
           }
         }// end for loops
       } // end for-loop for declarations
+
      // insert omp.h if needed
      if (hasOpenMP && !enable_diff)
      {
@@ -192,7 +283,10 @@ main (int argc, char *argv[])
   // Qing's loop normalization is not robust enough to pass all tests
   //AstTests::runAllTests(project);
   
+
+  // clean up resources for analyses
   release_analysis();
+
   //project->unparse();
   return backend (project);
 }
