@@ -239,6 +239,9 @@
 #cmakedefine SIZEOF_WCHAR_T_IS_2 1
 #cmakedefine SIZEOF_WCHAR_T_IS_4 1
 
+/* Is this a GNU compiler being used to compile ROSE generated code */
+#define BACKEND_CXX_IS_GNU_COMPILER "${BACKEND_CXX_IS_GNU_COMPILER}"
+
 /* Name of backend C++ compiler including path (may or may not explicit
    include path; used to call backend). */
 #define BACKEND_CXX_COMPILER_NAME_WITH_PATH "${CMAKE_CXX_COMPILER}"
