@@ -949,7 +949,7 @@ include(roseChooseBackendCompiler)
 include(roseGenerateBackendCompilerSpecificHeaders)
 
 # Install the directories within <bin>/include-staging
-install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include/edg)
 
 # --------- finish all fundamental tests, now set derivative variables
 # Liao 12/1/2009, This is essential to find the right include path from either build or installation tree
@@ -1192,13 +1192,11 @@ if(shell AND CMAKE_COMPILER_IS_GNUCXX)
     OUTPUT_VARIABLE C_includeString
   )
   string(STRIP "${C_includeString}" C_includeString)
-  set(C_INCLUDE_STRING "${C_INCLUDE_STRING} ${C_includeString}")
   execute_process(
     COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS"
     OUTPUT_VARIABLE CXX_includeString
   )
   string(STRIP "${CXX_includeString}" CXX_includeString)
-  set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING} ${CXX_includeString}")
   execute_process(
 # DQ (2/4/2016): Need additional parameters.
 #   COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs gcc
@@ -1218,11 +1216,13 @@ if(shell AND CMAKE_COMPILER_IS_GNUCXX)
     string(STRIP "${C_include_dir}" C_include_dir)
     set(C_INCLUDE_STRING "${C_INCLUDE_STRING}, \"${C_include_dir}\"")
   endforeach()
+  set(C_INCLUDE_STRING "${C_INCLUDE_STRING} ${C_includeString}, \"/usr/include\"")
 
   foreach(CXX_include_dir ${CXX_backend_includes})
     string(STRIP "${CXX_include_dir}" CXX_include_dir)
     set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}, \"${CXX_include_dir}\"")
   endforeach()
+  set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING} ${CXX_includeString}, \"/usr/include\"")
 
   # In the Autools build system, ROSE stores compiler specific headers in two
   # distinct locations:
