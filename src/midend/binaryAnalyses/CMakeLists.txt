@@ -5,6 +5,7 @@ add_library(midend_binary OBJECT
   BinaryControlFlow.C
   BinaryDataFlow.C
   BinaryDominance.C
+  BinaryFeasiblePath.C
   BinaryFunctionCall.C
   BinaryFunctionSimilarity.C
   BinaryMagic.C
@@ -74,6 +75,7 @@ install(
     BinaryControlFlow.h
     BinaryDataFlow.h
     BinaryDominance.h
+    BinaryFeasiblePath.h
     BinaryFunctionCall.h
     BinaryFunctionSimilarity.h
     BinaryMagic.h

@@ -14,6 +14,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
     BinaryDominance.C						\
+    BinaryFeasiblePath.C					\
     BinaryFunctionCall.C					\
     BinaryFunctionSimilarity.C					\
     BinaryMagic.C						\
@@ -81,6 +82,7 @@ pkginclude_HEADERS =					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
     BinaryDominance.h					\
+    BinaryFeasiblePath.h				\
     BinaryFunctionCall.h				\
     BinaryFunctionSimilarity.h				\
     BinaryMagic.h					\

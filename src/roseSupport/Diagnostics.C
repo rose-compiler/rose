@@ -2,10 +2,12 @@
 
 #include "Sawyer/Assert.h"
 #include "Sawyer/ProgressBar.h"
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
 #include "BinaryCallingConvention.h"                    // rose::BinaryAnalysis::CallingConvention
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
+#include "BinaryFeasiblePath.h"                         // rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryLoader.h"                               // BinaryLoader
 #include "BinaryNoOperation.h"                          // rose::BinaryAnalysis::NoOperation
@@ -13,10 +15,11 @@
 #include "BinaryStackDelta.h"                           // rose::BinaryAnalysis::StackDelta
 #include "BinaryString.h"                               // rose::BinaryAnalysis::String
 #include "BinaryTaintedFlow.h"                          // rose::BinaryAnalysis::TaintedFlow
-#include "Diagnostics.h"                                // rose::Diagnostics
 #include "Disassembler.h"                               // rose::BinaryAnalysis::Disassembler
 #include "Partitioner.h"                                // rose::BinaryAnalysis::Partitioner
 #include <Partitioner2/Utility.h>                       // rose::BinaryAnalysis::Partitioner2
+#endif
+#include "Diagnostics.h"                                // rose::Diagnostics
 #include <EditDistance/EditDistance.h>                  // rose::EditDistance
 
 // DQ (3/24/2016): Adding support for EDG/ROSE frontend message logging.
@@ -90,11 +93,13 @@ void initialize() {
         // Register logging facilities from other software layers.  Calling these initializers should make all the streams
         // point to the rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
         // disabled there should be a dummy initDiagnostics that does nothing so we don't need lots of #ifdefs here.
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
         BinaryLoader::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
+        BinaryAnalysis::FeasiblePath::initDiagnostics();
         BinaryAnalysis::FunctionSimilarity::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
         BinaryAnalysis::NoOperation::initDiagnostics();
@@ -104,8 +109,9 @@ void initialize() {
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
-        EditDistance::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
+#endif
+        EditDistance::initDiagnostics();
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
         EDG_ROSE_Translation::initDiagnostics();
 #endif
