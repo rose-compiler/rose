@@ -10,6 +10,7 @@ libbinaryMidend_la_DEPENDENCIES =
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libbinaryMidend_la_SOURCES =					\
     AbstractLocation.C						\
+    BinaryBestMapAddress.C					\
     BinaryCallingConvention.C					\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
@@ -77,6 +78,7 @@ endif
 pkginclude_HEADERS =					\
     AbstractLocation.h					\
     BinaryAnalysisUtils.h				\
+    BinaryBestMapAddress.h				\
     BinaryCallingConvention.h				\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\

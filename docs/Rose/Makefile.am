@@ -7,7 +7,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # When debugging latex documentation skip using the --interaction=batchmode option
 # PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
 # Liao 12/18/2009, use normal mode to ease finding bugs from hudson logs
-PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex -file-line-error -halt-on-error
+PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests/nonsmoke/functional:.: pdflatex -file-line-error -halt-on-error
 
 # Later we will add ROSETTA documentation here ...
 SUBDIRS = Tutorial 
