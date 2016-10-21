@@ -2747,52 +2747,63 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
   // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
      ROSE_ASSERT(mfunc_ref->get_parent() != NULL);
      SgNode* possibleFunctionCall = mfunc_ref->get_parent()->get_parent();
-     ROSE_ASSERT(possibleFunctionCall != NULL);
-     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
-     bool uses_operator_syntax = false;
-//   bool is_compiler_generated = false;
-     if (functionCallExp != NULL)
+
+     if (possibleFunctionCall == NULL)
         {
-          uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
-//        is_compiler_generated = functionCallExp->isCompilerGenerated();
+          printf ("In unparseMFuncRefSupport(): possibleFunctionCall == NULL: mfunc_ref = %p = %s \n",mfunc_ref,mfunc_ref->class_name().c_str());
+          SgNode* parent = mfunc_ref->get_parent();
+          printf ("  ---  parent = %p = %s \n",parent,parent->class_name().c_str());
+          ROSE_ASSERT(parent->get_parent() == NULL);
+        }
 
-#if 0
-       // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the non-operator syntax of a user-defined conversion operator.
-       // So we have to detect such operators and then detect if they are implicit then mark them to use the operator 
-       // syntax plus supress them from being output.  We might alternatively go directly to supressing them from being
-       // output, except that this is more complex for the non-operator syntax unparsing (I think).
-
-          SgFunctionSymbol* functionSymbol = mfunc_ref->get_symbol();
-          ROSE_ASSERT(functionSymbol != NULL);
-          SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
-          ROSE_ASSERT(functionDeclaration != NULL);
-          SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
-          ROSE_ASSERT(memberFunctionDeclaration != NULL);
-
-          if (functionDeclaration->get_specialFunctionModifier().isConversion() == true)
+  // DQ (10/16/2016): Fix for test2016_84.C and test2016_85.C (simpler code) specific to EDG 4.11 use.
+  // ROSE_ASSERT(possibleFunctionCall != NULL);
+     bool uses_operator_syntax = false;
+     if (possibleFunctionCall != NULL)
+        {
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
+       // bool is_compiler_generated = false;
+          if (functionCallExp != NULL)
              {
+               uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+            // is_compiler_generated = functionCallExp->isCompilerGenerated();
 #if 0
-               printf ("Detected a conversion operator! \n");
-#endif
-            // Force output of generated code using the operator syntax, plus supress the output if is_compiler_generated == true.
-               uses_operator_syntax = true;
-               if (is_compiler_generated == true)
+            // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the non-operator syntax of a user-defined conversion operator.
+            // So we have to detect such operators and then detect if they are implicit then mark them to use the operator 
+            // syntax plus supress them from being output.  We might alternatively go directly to supressing them from being
+            // output, except that this is more complex for the non-operator syntax unparsing (I think).
+
+               SgFunctionSymbol* functionSymbol = mfunc_ref->get_symbol();
+               ROSE_ASSERT(functionSymbol != NULL);
+               SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+               ROSE_ASSERT(functionDeclaration != NULL);
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+               ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+               if (functionDeclaration->get_specialFunctionModifier().isConversion() == true)
                   {
 #if 0
-                    printf ("Detected is_compiler_generated == true for conversion operator! \n");
+                    printf ("Detected a conversion operator! \n");
 #endif
+                 // Force output of generated code using the operator syntax, plus supress the output if is_compiler_generated == true.
+                    uses_operator_syntax = true;
+                    if (is_compiler_generated == true)
+                       {
+#if 0
+                         printf ("Detected is_compiler_generated == true for conversion operator! \n");
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
 #if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
                   }
-
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
 #endif
              }
-#endif
         }
 
      SgExpression* binary_op = isSgExpression(mfunc_ref->get_parent());

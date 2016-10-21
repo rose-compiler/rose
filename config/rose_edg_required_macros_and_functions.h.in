@@ -245,12 +245,13 @@
 // #warning "NOT setting ROSE_CONSTEXPR to constexpr"
 #endif
 
-
+/* Note that might not be using our builtin function mechanism for EDG 4.12 and later (at least while we sort it out) */
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
 
 
 /* DQ (9/12/2016): Added builtin functions (not yet supported in config/Builtins.def).
-   These are required to compile: tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2015_08.C 
+   These are required to compile: tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2015_08.C
+   Note that these are not in our ROSE specific table of builtin functions at present.
  */
 long long          __builtin_bswap64(long long __X);
 void               __builtin_ia32_fxsave(void *__P);
@@ -2101,7 +2102,8 @@ void prefetch (const __global float16 *p, size_t num_elements);
 
 
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
-#if 0
+/* DQ (10/18/2016): Turn this on for EDG 4.11 but not wanted for EDG 4.12 (we use our own mechanism for EDG versions before EDG 4.11) */
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
 
 /***************************************************************************************
   SSE and MMX support (declarations for builtin functions defined in GNU header files)
