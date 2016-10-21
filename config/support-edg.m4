@@ -49,14 +49,15 @@ if test "x$edg_major_version_number" = "x4"; then
             echo "Recognized an accepted minor version number."
             enable_edg_version411=yes
             AC_DEFINE([ROSE_USE_EDG_VERSION_4_11], [], [Whether to use the new EDG version 4.11])
-        else
-          if test "x$edg_minor_version_number" = "x12"; then
-            echo "Recognized an accepted minor version number."
-            enable_edg_version412=yes
-          AC_DEFINE([ROSE_USE_EDG_VERSION_4_12], [], [Whether to use the new EDG version 4.12])
           else
-            echo "ERROR: Could not identify the EDG minor version number."
-            exit 1
+            if test "x$edg_minor_version_number" = "x12"; then
+              echo "Recognized an accepted minor version number."
+              enable_edg_version412=yes
+              AC_DEFINE([ROSE_USE_EDG_VERSION_4_12], [], [Whether to use the new EDG version 4.12])
+            else
+              echo "ERROR: Could not identify the EDG minor version number."
+              exit 1
+            fi
           fi
         fi
       fi
