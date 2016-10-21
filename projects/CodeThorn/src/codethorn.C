@@ -367,7 +367,7 @@ int main( int argc, char * argv[] ) {
       ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
       ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
       ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
-      ("specialize-fun-param", po::value< vector<int> >(), "function parameter number to be specialized (starting at 1)")
+      ("specialize-fun-param", po::value< vector<int> >(), "function parameter number to be specialized (starting at 0)")
       ("specialize-fun-const", po::value< vector<int> >(), "constant [arg], the param is to be specialized to.")
       ("specialize-fun-varinit", po::value< vector<string> >(), "variable name of which the initialization is to be specialized (overrides any initializer expression)")
       ("specialize-fun-varinit-const", po::value< vector<int> >(), "constant [arg], the variable initialization is to be specialized to.")
