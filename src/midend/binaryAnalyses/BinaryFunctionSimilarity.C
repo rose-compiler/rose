@@ -634,8 +634,6 @@ FunctionSimilarity::measureCallGraphConnectivity(CategoryId id, const P2::Partit
             BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->outEdges()) {
                 P2::ControlFlowGraph::ConstVertexIterator callee = edge.target();
                 CartesianPoint point;
-                size_t nCallers = callee->nInEdges();
-                ASSERT_require(nCallers > 0);
                 if (callee->value().type() == P2::V_INDETERMINATE) {
                     point.push_back(1.0);
                 } else if (callee->nInEdges() <= partitioner.nFunctions()) {
