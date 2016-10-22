@@ -2783,8 +2783,21 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // output a warning for now.  And it applys more broadly to all declarations with secondary forms (defining 
             // and non-defining declarations).
 
-               const SgScopeStatement* definingDeclarationScope         = definingDeclaration->get_scope();
-               const SgScopeStatement* firstNondefiningDeclarationScope = firstNondefiningDeclaration->get_scope();
+               SgScopeStatement* definingDeclarationScope         = definingDeclaration->get_scope();
+               SgScopeStatement* firstNondefiningDeclarationScope = firstNondefiningDeclaration->get_scope();
+
+            // DQ (10/22/2016): If these are a namespace definition then we want to check the global definition.
+               SgNamespaceDefinitionStatement* namespaceDefinition_defining          = isSgNamespaceDefinitionStatement(definingDeclarationScope);
+               SgNamespaceDefinitionStatement* namespaceDefinition_firstNondefining  = isSgNamespaceDefinitionStatement(firstNondefiningDeclarationScope);
+               if (namespaceDefinition_defining != NULL && namespaceDefinition_firstNondefining != NULL)
+                  {
+                    definingDeclarationScope         = namespaceDefinition_defining->get_global_definition();
+                    firstNondefiningDeclarationScope = namespaceDefinition_firstNondefining->get_global_definition();
+
+                 // printf ("In TestAstForProperlySetDefiningAndNondefiningDeclarations::visit(): definingDeclarationScope = %p firstNondefiningDeclarationScope = %p \n",
+                 //      definingDeclarationScope,firstNondefiningDeclarationScope);
+                  }
+
                if (definingDeclarationScope != firstNondefiningDeclarationScope)
                   {
                  // DQ (5/10/2007): With a merged AST the primary and secondary declarations can be in different global scopes 
