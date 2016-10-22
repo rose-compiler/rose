@@ -115,7 +115,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_131.C \
      mergeTest_133.C \
      mergeTest_134.C \
-     mergeTest_135.C 
+     mergeTest_135.C \
+     mergeTest_138.C 
 
 # DQ (8/22/2013): Failing test:
 # This test code is a large complex test, it fails out-side of the debugger, 
@@ -258,9 +259,9 @@ EXTRA_DIST = $(ALL_TESTCODES) $(TESTCODES_TO_FIX)
 check-local:
 	@echo "Tests for AST merge mechanism."
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "****************************************************************************************************"
+	@echo "************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/mergeAST_tests: make check rule complete (terminated normally) ******"
-	@echo "****************************************************************************************************"
+	@echo "************************************************************************************************************************"
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot

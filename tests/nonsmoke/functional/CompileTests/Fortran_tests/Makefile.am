@@ -1,6 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = LANL_POP gfortranTestSuite
+# DQ (10/22/2016): Change order of tests (simple --> hardest).
+# SUBDIRS = LANL_POP gfortranTestSuite
+SUBDIRS = . gfortranTestSuite LANL_POP
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    SUBDIRS += experimental_frontend_tests
