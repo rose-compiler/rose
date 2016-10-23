@@ -7358,7 +7358,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      SgInitializer* initializer = di->get_memberInit();
 
      SgVarRefExp* varRefExp = isSgVarRefExp(designator);
-     SgValueExp*  valueExp  = isSgValueExp(designator);
+  // SgValueExp*  valueExp  = isSgValueExp(designator);
 
      bool isDataMemberDesignator   = (varRefExp != NULL);
      bool isArrayElementDesignator = (isSgUnsignedLongVal(designator) != NULL);
@@ -7370,7 +7370,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      bool isAssignInitializer      = (isSgAssignInitializer(initializer) != NULL);
 
   // DQ (3/15/2015): Look for nested SgDesignatedInitializer (so we can supress the unparsed "=" syntax) (this case is demonstrated in test2015_03.c).
-     bool isInitializer_AggregateInitializer   = (isSgAggregateInitializer(initializer) != NULL);
+  // bool isInitializer_AggregateInitializer   = (isSgAggregateInitializer(initializer) != NULL);
 
   // bool outputDesignatedInitializer                   = (isDataMemberDesignator == true && varRefExp->get_symbol() != NULL);
   // bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false && isCastDesignator == false);
@@ -7382,7 +7382,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 
   // DQ (4/11/2015): Aggregate initializers should also have an unparsed "=" syntax.
   // bool outputDesignatedInitializerAssignmentOperator = (isArrayElementDesignator == false) || (isAssignInitializer == true);
-     bool outputDesignatedInitializerAssignmentOperator = ( (isArrayElementDesignator == false) || (isAssignInitializer == true) || (isInitializer_AggregateInitializer == true) );
+  // bool outputDesignatedInitializerAssignmentOperator = ( (isArrayElementDesignator == false) || (isAssignInitializer == true) || (isInitializer_AggregateInitializer == true) );
 
 #if DEBUG_DESIGNATED_INITIALIZER
      printf ("--- isInitializer_AggregateInitializer = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
@@ -7556,7 +7556,8 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #if DEBUG_DESIGNATED_INITIALIZER
                printf ("Reset outputDesignatedInitializerAssignmentOperator = false \n");
 #endif
-               outputDesignatedInitializerAssignmentOperator = false;
+            // DQ (10/22/2016): This variable is not used.
+            // outputDesignatedInitializerAssignmentOperator = false;
              }
         }
        else
@@ -7610,8 +7611,20 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializer);
      bool need_explicit_braces_in_aggregateInitializer = (aggregateInitializer != NULL && aggregateInitializer->get_need_explicit_braces());
 
+#if 0
+     printf ("In unparseDesignatedInitializer: Changed default value of need_explicit_braces in unparser (must be set correctly in AST) \n");
+
+  // Variable used to control output of normalized syntax "={}".
+  // bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == false);
+     bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == true);
+#else
   // Variable used to control output of normalized syntax "={}".
      bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == false);
+#endif
+
+#if DEBUG_DESIGNATED_INITIALIZER
+     printf ("In unparseDesignatedInitializer: initial value from AST: need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
+#endif
 
   // DQ (5/11/2015): Supress output of normalized syntax "={}" for specific kinds of initializers (to avoid warnings in generated code).
      if (need_explicit_braces == true && isAssignInitializer == true)
@@ -7642,6 +7655,10 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                printf ("In unparseDesignatedInitializer: reset need_explicit_braces to false \n");
 #endif
                need_explicit_braces = false;
+
+#if DEBUG_DESIGNATED_INITIALIZER
+               printf ("In unparseDesignatedInitializer: reset based on kind of expression: need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
+#endif
              }
         }
 
