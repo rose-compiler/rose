@@ -238,7 +238,11 @@
 
 /* For debugging use the separate generated header file of builtin functions. */
 #if __cplusplus >= 201103L
-#  define ROSE_CONSTEXPR constexpr
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
+   #define ROSE_CONSTEXPR
+#else
+   #define ROSE_CONSTEXPR constexpr
+#endif
 // #warning "Set ROSE_CONSTEXPR to constexpr"
 #else
 #  define ROSE_CONSTEXPR
@@ -411,8 +415,10 @@ long double __builtin_sqrtl  (long double __builtin__x);
 
 
 
-#if 0
-/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. 
+   However, these are required for EDG 4.11 to handle C++11 test codes.
+ */
 
 /* DQ (11/6/2014): Use a different mechanism to handle these for the GNU 4.7 compiler and above (required form C++11) */
 #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
