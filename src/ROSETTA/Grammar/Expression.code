@@ -5579,8 +5579,9 @@ SgPointerDerefExp::get_type() const
 #endif
                ROSE_ASSERT(false);
 #else
+            // DQ (10/23/2016): Commented out message to avoid output spew.
             // DQ (12/31/2008): This is the new behavior for EDG version 4.x.
-               printf ("Warning: default reached in In SgPointerDerefExp::get_type() someType = %s \n",someType->class_name().c_str());
+            // printf ("Warning: default reached in In SgPointerDerefExp::get_type() someType = %s \n",someType->class_name().c_str());
                returnType = someType;
 #endif
              }
