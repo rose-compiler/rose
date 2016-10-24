@@ -4955,7 +4955,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     SgNode* parent = support->get_parent();
                     if (parent != NULL)
                        {
-                      // DQ (7/30/2010): Commented out this test that fails in tests/CompilerOptionsTests/testCpreprocessorOption
+                      // DQ (7/30/2010): Commented out this test that fails in tests/nonsmoke/functional/CompilerOptionsTests/testCpreprocessorOption
                       // ROSE_ASSERT( isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL);
                          if ( !(isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL) )
                             {
@@ -5015,8 +5015,7 @@ void TestChildPointersInMemoryPool::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          mlog = Sawyer::Message::Facility("TestChildPointersInMemoryPool", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+          rose::Diagnostics::initAndRegister(mlog, "rose::TestChildPointersInMemoryPool");
         }
    }
 
@@ -5086,7 +5085,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 #endif
 
 #if 0
-                 // DQ (6/5/2010): Turn this on to support debugging of the AST File I/O support for reading files (tests/testAstFileRead.C).
+                 // DQ (6/5/2010): Turn this on to support debugging of the AST File I/O support for reading files (tests/nonsmoke/functional/testAstFileRead.C).
 
                    /* DEBUGGING (RPM 2008-10-10)
                     * If the call to parent->returnDataMemberPointers() fails it could be due to the fact that the parent has been
@@ -5527,7 +5526,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                        }
                   }
 
-            // DQ (9/14/2006): This causes the ROSE/tests/roseTests/astMergeTests/testMerge.C test to fail!
+            // DQ (9/14/2006): This causes the ROSE/tests/nonsmoke/functional/roseTests/astMergeTests/testMerge.C test to fail!
             // cout << node->unparseToString() << endl;
             // cout << endl;
              }
@@ -5714,9 +5713,11 @@ TestLValueExpressions::visit ( SgNode* node )
                          SgExpression* lhs = binaryOperator->get_lhs_operand();
                          ROSE_ASSERT(lhs != NULL);
 
-                      // DQ (1/22/2008): Jeremiah has provided a patch for this.
-                      // This used to be violated by the ROSE/tests/roseTests/astInliningTests/pass16.C test code!
-                      // This is now violated by the ./preTest /home/dquinlan/ROSE/NEW_ROSE/tests/roseTests/programTransformationTests/pass1.C test code!
+                      // DQ (1/22/2008): Jeremiah has provided a patch for this.  This used to be violated by the
+                      // ROSE/tests/nonsmoke/functional/roseTests/astInliningTests/pass16.C test code!  This is now violated by
+                      // the ./preTest
+                      // /home/dquinlan/ROSE/NEW_ROSE/tests/nonsmoke/functional/roseTests/programTransformationTests/pass1.C
+                      // test code!
                          if (lhs->get_lvalue() == false)
                             {
                               printf ("ERROR (lvalue for Assign operator not marked): for lhs = %p = %s = %s in binary expression = %s \n",
@@ -5725,8 +5726,8 @@ TestLValueExpressions::visit ( SgNode* node )
                             }
 
                       // I don't want to comment this out, it is always set correctly except in the inlining transformation!
-                      // It now passes the inliner tests, but fails in the tests/roseTests/programTransformationTests, so I
-                      // have to comment it out again!
+                      // It now passes the inliner tests, but fails in the
+                      // tests/nonsmoke/functional/roseTests/programTransformationTests, so I have to comment it out again!
                          ROSE_ASSERT(lhs->get_lvalue() == true);
                          break;
                        }
@@ -5913,7 +5914,7 @@ TestMultiFileConsistancy::visit( SgNode* node)
                if (declarationScopeFile != firstDefiningDeclarationFile || declarationFile != firstDefiningDeclarationFile)
                   {
 #if 0
-                 // DQ (3/4/2009): Supporess the output here so we can pass the tests in tests/CompilerOptionsTests/testForSpuriousOutput
+                 // DQ (3/4/2009): Supporess the output here so we can pass the tests in tests/nonsmoke/functional/CompilerOptionsTests/testForSpuriousOutput
                     printf ("TestMultiFileConsistancy::visit(): declaration              = %p = %s = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
                     printf ("TestMultiFileConsistancy::visit(): declaration->get_scope() = %p = %s = %s \n",declaration->get_scope(),declaration->get_scope()->class_name().c_str(),SageInterface::get_name(declaration->get_scope()).c_str());
                     printf ("TestMultiFileConsistancy::visit(): firstDefiningDeclaration = %p = %s = %s \n",firstDefiningDeclaration,firstDefiningDeclaration->class_name().c_str(),SageInterface::get_name(firstDefiningDeclaration).c_str());

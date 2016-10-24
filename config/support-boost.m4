@@ -65,7 +65,7 @@ fi
 
 # DQ (10/22/2015): Added more tests (1.55 through 1.62)
 # Define macros for conditional compilation of parts of ROSE based on version of boost
-# (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
+# (this ONLY happens for the tests in tests/nonsmoke/functional/CompilerOptionsTests/testWave)
 #
 # !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
 #
@@ -172,6 +172,7 @@ AC_DEFINE_UNQUOTED([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location (unquoted) o
 
 AC_DEFINE_UNQUOTED([ROSE_BOOST_VERSION], $rose_boost_version, [Version of Boost specified on configure line.])
 
+AX_BOOST_SYSTEM
 AX_BOOST_THREAD
 AX_BOOST_DATE_TIME
 AX_BOOST_REGEX
@@ -180,7 +181,6 @@ AX_BOOST_PROGRAM_OPTIONS
 #AX_BOOST_ASIO
 #AX_BOOST_SIGNALS
 #AX_BOOST_TEST_EXEC_MONITOR
-AX_BOOST_SYSTEM
 AX_BOOST_FILESYSTEM
 AX_BOOST_WAVE
 

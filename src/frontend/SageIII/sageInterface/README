@@ -1,6 +1,6 @@
 high level AST builders & AST utility functions
 * 
 
-There are test code inside tests/roseTests/astInterface/
+There are test code inside tests/nonsmoke/functional/roseTests/astInterface/
 
 Liao, Jan. 9, 2008
