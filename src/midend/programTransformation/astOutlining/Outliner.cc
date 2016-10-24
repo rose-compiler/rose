@@ -174,9 +174,7 @@ Outliner::commandLineSwitches() {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup switches("Outliner switches");
-    switches.doc("These switches control ROSE's outliner. Outlining is the process of replacing a block of consecutive "
-                 "statements with a function call to a new function containing those statements. Conceptually, outlining "
-                 "is the inverse of inlining.");
+    switches.doc("These switches control ROSE's outliner. ");
     switches.name("rose:outline");
 
     switches.insert(Switch("enable_debug")
