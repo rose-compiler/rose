@@ -26,16 +26,6 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-// class method
-void Partitioner::initDiagnostics() {
-    static bool initialized = false;
-    if (!initialized) {
-        initialized = true;
-        mlog.initStreams(Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
-    }
-}
-
 void
 Partitioner::init(Disassembler *disassembler, const MemoryMap &map) {
     if (disassembler)

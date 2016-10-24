@@ -97,7 +97,7 @@ The attributes are attached to relevant AST nodes and serve as a light-weight re
 since they only incur minimum changes to existing ROSE AST.
 % and can be handy in some special occasions. 
 
-A set of C/C++/Fortran OpenMP tests is located in \textit{src/tests/CompileTests/OpenMP\_tests} to test the ROSE OpenMP parsers.
+A set of C/C++/Fortran OpenMP tests is located in \textit{src/tests/nonsmoke/functional/CompileTests/OpenMP\_tests} to test the ROSE OpenMP parsers.
 %-------------------------------------------------------------
 %-------------------------------------------------------------
 \section{Generating AST with OpenMP Nodes}
@@ -189,10 +189,10 @@ details are omitted here.
 \end{enumerate}
 
 Many translation tests (from
-\textit{ROSE\_SOURCE\_TREE/src/tests/CompileTests/OpenMP tests}) are
+\textit{ROSE\_SOURCE\_TREE/src/tests/nonsmoke/functional/CompileTests/OpenMP tests}) are
 provided within the ROSE release, you can type
 \textit{make check} under
-\textit{ROSE\_BUILD\_TREE/tests/roseTests/ompLoweringTests} to see the
+\textit{ROSE\_BUILD\_TREE/tests/nonsmoke/functional/roseTests/ompLoweringTests} to see the
 OpenMP translation in action.
 
 %-------------------------------------------------------------
@@ -232,10 +232,10 @@ Figure~\ref{Manual:omp:hello1}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/hello-1.c}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/hello-1.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/hello-1.c}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/hello-1.c}
     \end{htmlonly}
   }
 }
@@ -247,10 +247,10 @@ Figure~\ref{Manual:omp:hello1}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_hello-1.c}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_hello-1.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_hello-1.c}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_hello-1.c}
     \end{htmlonly}
   }
 }
@@ -269,10 +269,10 @@ Figure~\ref{Manual:omp:hello1-f}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/helloworld.f}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/helloworld.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/helloworld.f}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/helloworld.f}
     \end{htmlonly}
   }
 }
@@ -284,10 +284,10 @@ Figure~\ref{Manual:omp:hello1-f}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/fortran/rose_helloworld.f}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_helloworld.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_helloworld.f}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_helloworld.f}
     \end{htmlonly}
   }
 }
@@ -309,10 +309,10 @@ Note the handling of shared, and reduction variables during the translation.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/parallel-reduction.c}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/parallel-reduction.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/parallel-reduction.c}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/parallel-reduction.c}
     \end{htmlonly}
   }
 }
@@ -324,10 +324,10 @@ Note the handling of shared, and reduction variables during the translation.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_parallel-reduction.c}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_parallel-reduction.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_parallel-reduction.c}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_parallel-reduction.c}
     \end{htmlonly}
   }
 }
@@ -346,10 +346,10 @@ Figure~\ref{Manual:omp:shared-f}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/shared.f}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/shared.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/shared.f}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/shared.f}
     \end{htmlonly}
   }
 }
@@ -361,10 +361,10 @@ Figure~\ref{Manual:omp:shared-f}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/fortran/rose_shared.f}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_shared.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_shared.f}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_shared.f}
     \end{htmlonly}
   }
 }
@@ -385,10 +385,10 @@ declaration as a friend function within the original class.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/memberFunction.cpp}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/memberFunction.cpp}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/memberFunction.cpp}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/memberFunction.cpp}
     \end{htmlonly}
   }
 }
@@ -400,10 +400,10 @@ declaration as a friend function within the original class.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_memberFunction.cpp}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_memberFunction.cpp}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_memberFunction.cpp}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_memberFunction.cpp}
     \end{htmlonly}
   }
 }
@@ -428,10 +428,10 @@ We provide a runtime function in the XOMP runtime layer to simplify the translat
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor.c}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/ompfor.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor.c}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/ompfor.c}
     \end{htmlonly}
   }
 }
@@ -443,10 +443,10 @@ We provide a runtime function in the XOMP runtime layer to simplify the translat
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor.c}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompfor.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor.c}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompfor.c}
     \end{htmlonly}
   }
 }
@@ -466,10 +466,10 @@ Figure~\ref{Manual:omp:do-default-f}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/ompdo-default.f}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/ompdo-default.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/ompdo-default.f}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/ompdo-default.f}
     \end{htmlonly}
   }
 }
@@ -481,10 +481,10 @@ Figure~\ref{Manual:omp:do-default-f}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/fortran/rose_ompdo-default.f}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_ompdo-default.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompdo-default.f}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompdo-default.f}
     \end{htmlonly}
   }
 }
@@ -503,10 +503,10 @@ Figure~\ref{Manual:omp:ompfor5}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor5.c}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/ompfor5.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor5.c}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/ompfor5.c}
     \end{htmlonly}
   }
 }
@@ -518,10 +518,10 @@ Figure~\ref{Manual:omp:ompfor5}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor5.c}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompfor5.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor5.c}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompfor5.c}
     \end{htmlonly}
   }
 }
@@ -539,10 +539,10 @@ Figure~\ref{Manual:omp:ompfor4}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor4.c}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/ompfor4.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor4.c}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/ompfor4.c}
     \end{htmlonly}
   }
 }
@@ -554,10 +554,10 @@ Figure~\ref{Manual:omp:ompfor4}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor4.c}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompfor4.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor4.c}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompfor4.c}
     \end{htmlonly}
   }
 }
@@ -579,10 +579,10 @@ C or C++.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/ompdo-multiple.f}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/ompdo-multiple.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/ompdo-multiple.f}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/ompdo-multiple.f}
     \end{htmlonly}
   }
 }
@@ -594,10 +594,10 @@ C or C++.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/fortran/rose_ompdo-multiple.f}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_ompdo-multiple.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompdo-multiple.f}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompdo-multiple.f}
     \end{htmlonly}
   }
 }
@@ -620,10 +620,10 @@ Figure~\ref{Manual:omp:threadprivate-trans} shows the translation result for a t
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/threadprivate.c}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/threadprivate.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/threadprivate.c}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/threadprivate.c}
     \end{htmlonly}
   }
 }
@@ -635,10 +635,10 @@ Figure~\ref{Manual:omp:threadprivate-trans} shows the translation result for a t
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_threadprivate.c}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_threadprivate.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_threadprivate.c}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_threadprivate.c}
     \end{htmlonly}
   }
 }
@@ -662,10 +662,10 @@ Figure~\ref{Manual:omp:task_untied3}).
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/task_untied3.c}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/task_untied3.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/task_untied3.c}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/task_untied3.c}
     \end{htmlonly}
   }
 }
@@ -677,10 +677,10 @@ Figure~\ref{Manual:omp:task_untied3}).
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_task_untied3.c}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_task_untied3.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_task_untied3.c}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_task_untied3.c}
     \end{htmlonly}
   }
 }
@@ -696,10 +696,10 @@ Figure~\ref{Manual:omp:task_wait}).
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/task_wait.c}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/task_wait.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/task_wait.c}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/task_wait.c}
     \end{htmlonly}
   }
 }
@@ -711,10 +711,10 @@ Figure~\ref{Manual:omp:task_wait}).
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_task_wait.c}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_task_wait.c}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_task_wait.c}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_task_wait.c}
     \end{htmlonly}
   }
 }
@@ -734,10 +734,10 @@ Figure~\ref{Manual:omp:task-f}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/task_largenumber.f}
+    \lstinputlisting{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/task_largenumber.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/fortran/task_largenumber.f}
+    \verbatiminput{\TopSourceDirectory/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/task_largenumber.f}
     \end{htmlonly}
   }
 }
@@ -749,10 +749,10 @@ Figure~\ref{Manual:omp:task-f}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/fortran/rose_task_largenumber.f}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_task_largenumber.f}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_task_largenumber.f}
+    \verbatiminput{\TopBuildDirectory/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_task_largenumber.f}
     \end{htmlonly}
   }
 }

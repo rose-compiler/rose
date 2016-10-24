@@ -344,7 +344,7 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexIter
                         t.skipChildren();
                     } else if (isBlackListed) {
                         // Block is blacklisted by some owning function.
-                        SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<isWhiteListed->printableName() <<" is blacklisted\n";
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<isBlackListed->printableName() <<" is blacklisted\n";
                         vertexInfo[t.vertex()->id()].result = false;
                         t.skipChildren();
                     } else if (isDynamicLinked) {

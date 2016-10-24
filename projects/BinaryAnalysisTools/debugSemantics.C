@@ -348,8 +348,8 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
 }
 
 static BaseSemantics::MemoryStatePtr
-makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protoval, const BaseSemantics::SValuePtr &protoaddr,
-                const RegisterDictionary *regdict) {
+makeMemoryState(const Settings &settings, const P2::Engine &engine, const BaseSemantics::SValuePtr &protoval,
+                const BaseSemantics::SValuePtr &protoaddr, const RegisterDictionary *regdict) {
     const std::string &className = settings.mstateClassName;
     if (className == "list") {
         std::cout <<"memory state class names:\n"
@@ -379,9 +379,13 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
         BaseSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
         return ops->currentState()->memoryState();
     } else if (className == "p2-list" || className == "partitioner2") {
-        return P2::Semantics::MemoryListState::instance(protoval, protoaddr);
+        P2::Semantics::MemoryListStatePtr m = P2::Semantics::MemoryListState::instance(protoval, protoaddr);
+        m->memoryMap(new MemoryMap(engine.memoryMap()));
+        return m;
     } else if (className == "p2-map") {
-        return P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
+        P2::Semantics::MemoryMapStatePtr m = P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
+        m->memoryMap(new MemoryMap(engine.memoryMap()));
+        return m;
     } else if (className == "symbolic-list" || className == "symbolic") {
         return SymbolicSemantics::MemoryListState::instance(protoval, protoaddr);
     } else if (className == "symbolic-map") {
@@ -415,7 +419,7 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);
-    BaseSemantics::MemoryStatePtr mstate = makeMemoryState(settings, protoval, protoval, regdict);
+    BaseSemantics::MemoryStatePtr mstate = makeMemoryState(settings, engine, protoval, protoval, regdict);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(rstate, mstate);
 
     if (0) {
@@ -645,8 +649,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
     // Parse the command-line to load, disassemble, and partition the specimen
     P2::Engine engine;

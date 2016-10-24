@@ -34,8 +34,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
     // Parse command-line
     P2::Engine engine;

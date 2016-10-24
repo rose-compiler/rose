@@ -12,6 +12,7 @@ AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Sawyer unit tests. These are copied from the Sawyer release at https://github.com/matzke1/sawyer by
 # the script in $ROSE/src/util/Sawyer/updateFromGithub.sh
+# The order of this list should be from most basic to most advanced (dependencies checked before uses)
 sawyer_checkers =				\
 	attributeUnitTests			\
 	optionalUnitTests			\
@@ -26,7 +27,11 @@ sawyer_checkers =				\
         graphUnitTests				\
 	indexedGraphDemo			\
 	graphIsomorphismTests			\
-	intervalSetMapUnitTests
+	intervalSetMapUnitTests			\
+	ptrUnitTests				\
+	mesgUnitTests				\
+	markupUnitTests				\
+	cmdUnitTests
 
 # Unfortunately, automake doesn't let us use variables here, so we need to list them again.
 noinst_PROGRAMS +=				\
@@ -43,7 +48,11 @@ noinst_PROGRAMS +=				\
         graphUnitTests				\
         indexedGraphDemo			\
         graphIsomorphismTests			\
-        intervalSetMapUnitTests
+        intervalSetMapUnitTests			\
+	ptrUnitTests				\
+	mesgUnitTests				\
+	markupUnitTests				\
+	cmdUnitTests
 
 # Each checker depends on one source file, but automake doesn't let us use patterns so we list them yet again
 attributeUnitTests_SOURCES       = attributeUnitTests.C
@@ -60,6 +69,10 @@ graphUnitTests_SOURCES           = graphUnitTests.C
 indexedGraphDemo_SOURCES         = indexedGraphDemo.C
 graphIsomorphismTests_SOURCES    = graphIsomorphismTests.C
 intervalSetMapUnitTests_SOURCES  = intervalSetMapUnitTests.C
+ptrUnitTests_SOURCES		 = ptrUnitTests.C
+mesgUnitTests_SOURCES		 = mesgUnitTests.C
+markupUnitTests_SOURCES		 = markupUnitTests.C
+cmdUnitTests_SOURCES		 = cmdUnitTests.C
 
 # Test targets
 sawyer_targets = $(addsuffix .passed, $(sawyer_checkers))
@@ -81,14 +94,3 @@ check-sawyer: $(SAWYER_TEST_TARGETS)
 ###############################################################################################################################
 
 check-smoke-local: $(TEST_TARGETS)
-check-nonsmoke-local:
-
-check-local: check-smoke-local
-check-all-local: check-smoke-local check-nonsmoke-local
-
-clean-local:
-	rm -f $(MOSTLYCLEANFILES)
-	rm -f $(TEST_TARGETS)
-	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.out)
-	rm -f $(TEST_TARGETS:.passed=.err)

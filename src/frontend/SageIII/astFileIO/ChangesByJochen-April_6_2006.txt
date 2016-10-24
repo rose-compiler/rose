@@ -23,7 +23,7 @@ Files to copy:
    grammarStaticDataManagingClassSource.macro    (newly introduced)
 
 
-/tests/roseTests/astFileIOTests/
+/tests/nonsmoke/functional/roseTests/astFileIOTests/
    astFileIO.C
    astFileRead.C
 
