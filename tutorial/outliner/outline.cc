@@ -1,9 +1,10 @@
 // The "purpose" as it appears in the man page, uncapitalized and a single, short, line.
-static const char *purpose = "demonstrates the pragma-interface of the outliner";
+static const char *purpose = "This tool outlines code segments to functions";
 
 static const char *description =
-    "This is the full, multi-paragraph description of this tool with all relevant details. It needs to be written yet.";
-
+    "Outlining is the process of replacing a block of consecutive "
+    "statements with a function call to a new function containing those statements. "
+    "Conceptually, outlining is the inverse of inlining.";
 
 #include <rose.h>                                       // must be first ROSE include
 #include <Outliner.hh>                                  // from ROSE
@@ -41,7 +42,7 @@ parseCommandLine(int argc, char *argv[]) {
     // creates a parser that assumes all unrecognized switches are intended for a later stage. If there are no later stages
     // then use createEmptyParser instead or else users will never see error messages for misspelled switches.
     Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
-    p.doc("Synopsis", "@prop{programName} @v{switches}] @v{files}...");
+    p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
 #if 1 // DEBUGGING [Robb P Matzke 2016-09-27]
     p.longPrefix("-");
 #endif
