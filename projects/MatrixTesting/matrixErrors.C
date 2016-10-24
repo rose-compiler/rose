@@ -362,7 +362,7 @@ parseIds(const std::vector<std::string> &strings, size_t startAt = 0) {
 
 int
 main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
+    ROSE_INITIALIZE;
     Diagnostics::initAndRegister(mlog, "tool");
 
     // Parse the command-line
