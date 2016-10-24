@@ -22,7 +22,7 @@ operator<<(std::ostream &o, const DwarfLineMapper &x)
 void
 DwarfLineMapper::init()
 {
-#if !defined(ROSE_HAVE_DWARF_H) || !defined(ROSE_HAVE_LIBDWARF)
+#ifndef ROSE_HAVE_LIBDWARF
     static bool called = false;
     if (!called) {
         std::cerr <<"DwarfLineMapper::DwarfLineMapper: warning: DWARF support is not enabled in ROSE\n";
