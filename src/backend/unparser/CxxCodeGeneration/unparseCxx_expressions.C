@@ -5209,6 +5209,9 @@ void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
      if (typeid_op->get_operand_expr() != NULL)
         {
           ROSE_ASSERT(typeid_op->get_operand_expr() != NULL);
+#if 0
+          printf ("In unparseTypeIdOp(): typeid_op->get_operand_expr() = %p = %s \n",typeid_op->get_operand_expr(),typeid_op->get_operand_expr()->class_name().c_str());
+#endif
           unparseExpression(typeid_op->get_operand_expr(), info);
         }
        else
