@@ -504,11 +504,6 @@ if ROSE_WITH_ROSEQT
 else
 	@echo "Automake conditional ROSE_WITH_ROSEQT: NOT defined"
 endif
-if USE_BINARY_ANALYSIS_TESTS
-	@echo "Automake conditional USE_BINARY_ANALYSIS_TESTS: DEFINED"
-else
-	@echo "Automake conditional USE_BINARY_ANALYSIS_TESTS: NOT defined"
-endif
 if USE_GCJ
 	@echo "Automake conditional USE_GCJ: DEFINED"
 else
