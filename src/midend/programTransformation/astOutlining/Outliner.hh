@@ -23,6 +23,7 @@
 #include <string>
 #include <ASTtools.hh>
 #include <VarSym.hh>
+#include <Sawyer/CommandLine.h>
 //! \name Forward declarations to relevant Sage classes.
 //@{
 class SgProject;
@@ -97,6 +98,24 @@ namespace Outliner
     ~Result (void) {}; //! Shallow; does not delete fields.
     bool isValid (void) const; //! Returns true iff result is usable
   };
+
+  /** Description of outliner command-line.
+   *
+   *  This function creates a description of command-line switches that are recognized by the outliner. This description can be
+   *  incorporated into a @ref Sawyer::CommandLine::Parser by tools that need to create a parser that recognizes outliner
+   *  switches. When the command-line is parsed with these descriptions, various settings in this object are adjusted. */
+ROSE_DLL_API Sawyer::CommandLine::SwitchGroup commandLineSwitches();
+
+  /** Validate and adjust analysis settings.
+   *
+   *  This function should be called after changing analysis settings (directly or via command-line parsing) to ensure
+   *  they are all in a consistent state before any analysis is performed.
+   *
+   *  @todo Ideally this should happen automatically by those functions that perform analysis so the user doesn't have to
+   *  remember this, but I'm not familiar enough which the code to know which functions those are.  Originally, the outliner
+   *  only validated its settings when they were changed by its @ref commandLineProcessing function, which still happes. [Robb
+   *  P Matzke 2016-09-11] */
+  ROSE_DLL_API void validateSettings();
 
   //! Accept a set of command line options to adjust internal behaviors
   // Please use this function before calling the frontend() to set the internal flags

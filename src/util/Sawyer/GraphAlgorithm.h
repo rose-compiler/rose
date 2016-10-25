@@ -18,11 +18,8 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
-#include <list>
 #include <set>
 #include <vector>
-
-//#define SAWYER_VAM_DEBUG
 
 namespace Sawyer {
 namespace Container {
@@ -352,6 +349,8 @@ template<class Graph,
          class SolutionProcessor = CsiShowSolution<Graph>,
          class EquivalenceP = CsiEquivalence<Graph> >
 class CommonSubgraphIsomorphism {
+    typedef std::vector<size_t> IndexVector;
+
     const Graph &g1, &g2;                               // the two whole graphs being compared
     DenseIntegerSet<size_t> v, w;                       // available vertices of g1 and g2, respectively
     std::vector<size_t> x, y;                           // selected vertices of g1 and g2, which defines vertex mapping
@@ -364,211 +363,47 @@ class CommonSubgraphIsomorphism {
     bool monotonicallyIncreasing_;                      // size of solutions increases
     bool findingCommonSubgraphs_;                       // solutions are subgraphs of both graphs or only second graph?
 
-    // The Vam is a ragged 2d array, but using std::vector<std::vector<T>> is not efficient in a multithreaded environment
-    // because std::allocator<> and Boost pool allocators don't (yet) have a mode that allows each thread to be largely
-    // independent of other threads. The best we can do with std::allocator is about 30 threads running 100% on my box having
-    // 72 hardware threads.  But we can use the following facts about the Vam:
-    //
-    //   (1) VAMs are constructed and destroyed in a stack-like manner.
-    //   (2) We always know the exact size of the major axis (number or rows) before the VAM is created.
-    //   (3) The longest row of a new VAM will not be longer than the longest row of the VAM from which it is derived.
-    //   (4) The number of rows will never be more than the number of vertices in g1.
-    //   (5) The longest row will never be longer than the number of vertices in g2.
-    //   (6) VAMs are never shared between threads
-    class VamAllocator {
-        const size_t elmtsPerBlock_;                    // elements per large block of memory requested
-        std::list<size_t*> blocks_;                     // front() is the most recent block from which an element is allocated
-        size_t available_;                              // number of elements available in most recent block
-        std::list<size_t*> freeBlocks_;                 // blocks that aren't being used currently
-
-    public:
-        explicit VamAllocator(size_t elmtsPerBlock)
-            : elmtsPerBlock_(elmtsPerBlock), available_(0) {
-#ifdef SAWYER_VAM_DEBUG
-            status("constructed");
-#endif
-        }
-
-        ~VamAllocator() {
-            BOOST_FOREACH (size_t *ptr, blocks_)
-                delete[] ptr;
-            BOOST_FOREACH (size_t *ptr, freeBlocks_)
-                delete[] ptr;
-            blocks_.clear();
-            freeBlocks_.clear();
-            available_ = 0;
-#ifdef SAWYER_VAM_DEBUG
-            status("destroyed");
-#endif
-        }
-
-        // Reserve space for the next row and return its address.
-        size_t* reserveRow(size_t maxColumns) {
-            if (maxColumns > available_) {
-                ASSERT_require(maxColumns <= elmtsPerBlock_);
-                allocateBlock();
-            }
-#ifdef SAWYER_VAM_DEBUG
-            status("reserved row");
-#endif
-            return blocks_.front() + (elmtsPerBlock_ - available_);
-        }
-
-        // Allocate one more element. Space must have been previously reserved.
-        size_t* allocNext() {
-            ASSERT_require(available_ > 0);
-            size_t *ptr = blocks_.front() + (elmtsPerBlock_ - available_--);
-#ifdef SAWYER_VAM_DEBUG
-            status("allocated");
-#endif
-            return ptr;
-        }
-
-        // Free back to the specified address.
-        void revert(size_t *ptr) {
-            ASSERT_not_null(ptr);
-            while (!blocks_.empty() && !ptrInBlock(ptr, blocks_.front()))
-                freeBlock();
-            ASSERT_forbid(blocks_.empty());
-            available_ = elmtsPerBlock_ - (ptr - blocks_.front());
-#ifdef SAWYER_VAM_DEBUG
-            status("reverted");
-#endif
-        }
-
-        // One past most recent address allocated
-        size_t* end() const {
-            size_t *ptr = blocks_.empty() ? NULL : blocks_.front() + (elmtsPerBlock_ - available_);
-            return ptr;
-        }
-
-        void status(const char *action) {
-            std::cerr <<"allocator " <<action <<": "
-                      <<"nBlks=" <<blocks_.size() <<"+" <<freeBlocks_.size() <<", "
-                      <<"avail=" <<available_ <<"/" <<elmtsPerBlock_;
-            if (!blocks_.empty())
-                std::cerr <<", last=" <<end()-1;
-            std::cerr <<"\n";
-        }
-
-    private:
-        // Is pointer in this block?
-        bool ptrInBlock(size_t *ptr, size_t *block) const {
-            return ptr >= block && ptr < block + elmtsPerBlock_;
-        }
-
-        void allocateBlock() {
-            if (freeBlocks_.empty()) {
-                blocks_.insert(blocks_.begin(), new size_t[elmtsPerBlock_]);
-            } else {
-                blocks_.insert(blocks_.begin(), freeBlocks_.front());
-                freeBlocks_.erase(freeBlocks_.begin());
-            }
-            available_ = elmtsPerBlock_;
-        }
-
-        void freeBlock() {
-            ASSERT_forbid(blocks_.empty());
-            freeBlocks_.insert(freeBlocks_.begin(), blocks_.front());
-            blocks_.erase(blocks_.begin());
-            available_ = 0;
-        }
-    } vamAllocator_;
-
-    // Essentially a ragged array having a fixed number of rows and each row can be a different length.  The number of rows is
-    // known at construction time, and the rows are extended one at a time starting with the first and working toward the
-    // last. Accessing any element is a constant-time operation.
     class Vam {                                         // Vertex Availability Map
-        VamAllocator &allocator_;
-        std::vector<size_t*> rows_;
-        std::vector<size_t> rowSize_;
-        size_t *lowWater_;                              // first element allocated
-        size_t lastRowStarted_;
-#ifdef SAWYER_VAM_DEBUG
-        size_t maxRows_, maxCols_;
-#endif
-
+        typedef std::vector<IndexVector> Map;           // map from source vertex to available target vertices
+        const std::vector<size_t> empty_;
+        Map map_;
+        size_t nVerts2_;                                // for reserving space in IndexVectors
     public:
-        // Construct the VAM and reserve enough space for the indicated number of rows.
-        explicit Vam(VamAllocator &allocator)
-            : allocator_(allocator), lowWater_(NULL), lastRowStarted_((size_t)(-1)) {
-#ifdef SAWYER_VAM_DEBUG
-            std::cerr <<"ROBB: Vam::Vam() = " <<this <<"\n";
-#endif
+        Vam(size_t nVerts1, size_t nVerts2)
+            : nVerts2_(nVerts2) {
+            map_.reserve(nVerts1);
         }
 
-        // Destructor assumes this is the top VAM in the allocator stack.
-        ~Vam() {
-#ifdef SAWYER_VAM_DEBUG
-            std::cerr <<"ROBB: Vam::~Vam(" <<this <<")\n";
-#endif
-            if (lowWater_ != NULL) {
-                ASSERT_require(!rows_.empty());
-#ifdef SAWYER_VAM_DEBUG
-                std::cerr <<"*** nrows=[";
-                BOOST_FOREACH (size_t *x, rows_) std::cerr <<" " <<x;
-                std::cerr <<" ], size=[";
-                BOOST_FOREACH (size_t n, rowSize_) std::cerr <<" " <<n;
-                std::cerr <<" ]\n";
-#endif
-                allocator_.revert(lowWater_);
-            } else {
-                ASSERT_require((size_t)std::count(rowSize_.begin(), rowSize_.end(), 0) == rows_.size()); // all rows empty
+        // Set to initial emtpy state
+        void clear() {
+            map_.clear();
+        }
+
+        // Predicate to determine whether vam is empty. Since we never remove items from the VAM and we only add rows if we're
+        // adding a column, this is equivalent to checking whether the map has any rows.
+        bool isEmpty() const {
+            return map_.empty();
+        }
+
+        // Insert the pair (i,j) into the mapping. Assumes this pair isn't already present.
+        void insert(size_t i, size_t j) {
+            size_t oldSize = map_.size();
+            if (i >= oldSize) {
+                map_.resize(i+1);
+                for (size_t j=oldSize; j<=i; ++j)
+                    map_[j].reserve(nVerts2_);
             }
-        }
-
-        // Reserve space for specified number of rows.
-        void reserveRows(size_t nrows) {
-            rows_.reserve(nrows);
-            rowSize_.reserve(nrows);
-#ifdef SAWYER_VAM_DEBUG
-            maxRows_ = nrows;
-            maxCols_ = 0;
-#endif
-        }
-
-        // Start a new row.  You can only insert elements into the most recent row.
-        void startNewRow(size_t i, size_t maxColumns) {
-#ifdef SAWYER_VAM_DEBUG
-            ASSERT_require(i < maxRows_);
-            maxCols_ = maxColumns;
-#endif
-            if (i >= rows_.size()) {
-                rows_.resize(i+1, NULL);
-                rowSize_.resize(i+1, 0);
-            }
-            ASSERT_require(rows_[i] == NULL);           // row was already started
-            rows_[i] = allocator_.reserveRow(maxColumns);
-            lastRowStarted_ = i;
-        }
-
-        // Push a new element onto the end of the current row.
-        void push(size_t i, size_t x) {
-            ASSERT_require(i == lastRowStarted_);
-            ASSERT_require(i < rows_.size());
-            size_t *ptr = allocator_.allocNext();
-            if (lowWater_ == NULL)
-                lowWater_ = ptr;
-#ifdef SAWYER_VAM_DEBUG
-            ASSERT_require(rowSize_[i] < maxCols_);
-            ASSERT_require(ptr == rows_[i] + rowSize_[i]);
-            std::cerr <<"ROBB: Vam::push(" <<this <<", " <<x <<") at " <<ptr <<"\n";
-#endif
-            ++rowSize_[i];
-            *ptr = x;
+            map_[i].push_back(j);
         }
 
         // Given a vertex i in G1, return the number of vertices j in G2 where i and j can be equivalent.
         size_t size(size_t i) const {
-            return i < rows_.size() ? rowSize_[i] : size_t(0);
+            return i < map_.size() ? map_[i].size() : size_t(0);
         }
 
         // Given a vertex i in G1, return those vertices j in G2 where i and j can be equivalent.
-        boost::iterator_range<std::vector<size_t>::const_iterator> get(size_t i) const {
-            static const size_t empty = 911; /*arbitrary*/
-            if (i < rows_.size())
-                return boost::iterator_range<std::vector<size_t>::const_iterator>(rows_[i], rows_[i] + rowSize_[i]);
-            return boost::iterator_range<std::vector<size_t>::const_iterator>(&empty, &empty);
+        const IndexVector& get(size_t i) const {
+            return i < map_.size() ? map_[i] : empty_;
         }
     };
 
@@ -591,7 +426,7 @@ public:
                               EquivalenceP equivalenceP = EquivalenceP())
         : g1(g1), g2(g2), v(g1.nVertices()), w(g2.nVertices()), vNotX(g1.nVertices()), solutionProcessor_(solutionProcessor),
           equivalenceP_(equivalenceP), minimumSolutionSize_(1), maximumSolutionSize_(-1), monotonicallyIncreasing_(false),
-          findingCommonSubgraphs_(true), vamAllocator_(100/*arbitrary*/ * g2.nVertices()) {}
+          findingCommonSubgraphs_(true) {}
 
 private:
     CommonSubgraphIsomorphism(const CommonSubgraphIsomorphism&) {
@@ -707,7 +542,8 @@ public:
      *  necessary since the destructor does not leak memory. */
     void run() {
         reset();
-        Vam vam = initializeVam();
+        Vam vam(g1.nVertices(), g2.nVertices());        // this is the only per-recursion local state
+        initializeVam(vam);
         recurse(vam);
     }
 
@@ -724,25 +560,12 @@ public:
     }
     
 private:
-    // Maximum value+1 or zero.
-    template<typename Container>
-    static size_t maxPlusOneOrZero(const Container &container) {
-        if (container.isEmpty())
-            return 0;
-        size_t retval = 0;
-        BOOST_FOREACH (size_t val, container.values())
-            retval = std::max(retval, val);
-        return retval+1;
-    }
-    
     // Initialize VAM so to indicate which source vertices (v of g1) map to which target vertices (w of g2) based only on the
     // vertex comparator.  We also handle self edges here.
-    Vam initializeVam() {
-        Vam vam(vamAllocator_);
-        vam.reserveRows(maxPlusOneOrZero(v));
+    void initializeVam(Vam &vam) const {
+        vam.clear();
         BOOST_FOREACH (size_t i, v.values()) {
             typename Graph::ConstVertexIterator v1 = g1.findVertex(i);
-            vam.startNewRow(i, w.size());
             BOOST_FOREACH (size_t j, w.values()) {
                 typename Graph::ConstVertexIterator w1 = g2.findVertex(j);
                 std::vector<typename Graph::ConstEdgeIterator> selfEdges1, selfEdges2;
@@ -751,10 +574,9 @@ private:
                 if (selfEdges1.size() == selfEdges2.size() &&
                     equivalenceP_.mu(g1, g1.findVertex(i), g2, g2.findVertex(j)) &&
                     equivalenceP_.nu(g1, v1, v1, selfEdges1, g2, w1, w1, selfEdges2))
-                    vam.push(i, j);
+                    vam.insert(i, j);
             }
         }
-        return vam;
     }
 
     // Can the solution (stored in X and Y) be extended by adding another (i,j) pair of vertices where i is an element of the
@@ -860,14 +682,11 @@ private:
     }
 
     // Create a new VAM from an existing one. The (i,j) pairs of the new VAM will form a subset of the specified VAM.
-    void refine(const Vam &vam, Vam &refined /*out*/) {
-        refined.reserveRows(maxPlusOneOrZero(vNotX));
+    void refine(const Vam &vam, Vam &refined /*out*/) const {
         BOOST_FOREACH (size_t i, vNotX.values()) {
-            size_t rowLength = vam.size(i);
-            refined.startNewRow(i, rowLength);
             BOOST_FOREACH (size_t j, vam.get(i)) {
                 if (j != y.back() && edgesAreSuitable(x.back(), i, y.back(), j))
-                    refined.push(i, j);
+                    refined.insert(i, j);
             }
         }
     }
@@ -890,10 +709,11 @@ private:
         equivalenceP_.progress(level);
         if (isSolutionPossible(vam)) {
             size_t i = pickVertex(vam);
-            BOOST_FOREACH (size_t j, vam.get(i)) {
+            std::vector<size_t> jCandidates = vam.get(i);
+            BOOST_FOREACH (size_t j, jCandidates) {
                 extendSolution(i, j);
-                Vam refined(vamAllocator_);
-                refine(vam, refined);
+                Vam refined(g1.nVertices(), g2.nVertices());
+                refine(vam, refined /*out*/);
                 if (recurse(refined, level+1) == CSI_ABORT)
                     return CSI_ABORT;
                 retractSolution();
