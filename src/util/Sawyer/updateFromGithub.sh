@@ -35,7 +35,7 @@ for f in															\
     Callbacks CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet DistinctList DocumentBaseMarkup DocumentMarkup	\
     DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphTraversal IndexedList	\
     Interval IntervalMap IntervalSet IntervalSetMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional		\
-    PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StaticBuffer Stopwatch			\
+    PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch	\
     Synchronization ThreadWorkers WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
