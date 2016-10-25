@@ -87,8 +87,13 @@ endif()
 foreach(tutorial ${tutorials})
   add_executable(${tutorial}Tutorial "${tutorial}.C")
   target_link_libraries(${tutorial}Tutorial ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS ${tutorial}Tutorial DESTINATION bin)
+#  install(TARGETS ${tutorial}Tutorial DESTINATION bin)
 endforeach()
+
+install(TARGETS buildCallGraphTutorial DESTINATION bin)
+install(TARGETS livenessAnalysisTutorial DESTINATION bin)
+install(TARGETS interproceduralCFGTutorial DESTINATION bin)
+install(TARGETS virtualCFGTutorial DESTINATION bin)
 
 #if ROSE_HAVE_YICES
 #yicesTutorialExample yicesTutorialExample.C)

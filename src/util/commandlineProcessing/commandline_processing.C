@@ -104,7 +104,7 @@ CommandlineProcessing::genericSwitches() {
                .doc("Show this documentation.")
                .action(showHelpAndExit(0)));
 
-    gen.insert(Switch("log", 'L')
+    gen.insert(Switch("log")
                .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
                .argument("config")
                .whichValue(SAVE_ALL)
