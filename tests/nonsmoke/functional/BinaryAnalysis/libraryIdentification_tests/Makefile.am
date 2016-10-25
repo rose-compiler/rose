@@ -7,7 +7,7 @@ EXTRA_DIST=CMakeLists.txt testProgram.c
 MOSTLYCLEANFILES=
 
 
-if USE_BINARY_ANALYSIS_TESTS
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 # This work requires the SQLite support...
 if ROSE_USE_SQLITE_DATABASE
