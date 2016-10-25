@@ -871,7 +871,7 @@ public:
 
     template<typename T2, class Policy2>
     bool isOverlapping(const IntervalMap<Interval, T2, Policy2> &other) const {
-        return findFirstOverlap(other).first!=nodes().end();
+        return findFirstOverlap(nodes().begin(), other, other.nodes().begin()).first != nodes().end();
     }
 
     bool isDistinct(const Interval &interval) const {
