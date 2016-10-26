@@ -1004,7 +1004,7 @@ Switch::matchArguments(const std::string &switchString, const Location &endOfSwi
         }
     }
 
-    explode(result);
+    explode(parsedValues);
     guard.cancel();
     result.insert(result.end(), parsedValues.begin(), parsedValues.end());
     return nValuesParsed;
