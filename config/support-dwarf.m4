@@ -1,13 +1,12 @@
 # DWARF debugging-format library and it's location.
 AC_DEFUN([ROSE_SUPPORT_DWARF],
 [
-    AC_MSG_CHECKING(for dwarf)
     AC_ARG_WITH([dwarf],
 		[AC_HELP_STRING([--with-dwarf],
 				[Specify 'yes', 'no' (or --without-dwarf), or an installation path to enable or disable
 				 the use of libdwarf. If libdwarf is present then ROSE is able to read debugging symbols
-				 stored in DWARF format in ELF files.])]
-		[]
+				 stored in DWARF format in ELF files.])],
+		[],
 		[with_dwarf=no])
 
     # Find the dwarf library
