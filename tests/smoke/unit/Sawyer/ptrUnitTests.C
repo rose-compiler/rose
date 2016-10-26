@@ -296,7 +296,7 @@ static void implicit_bool() {
     {
         std::stringstream ss;
         ss <<ptr;
-        ASSERT_always_require2(ss.str()=="0", "ss.str()==" + ss.str());
+        ASSERT_always_require2(ss.str()=="0" || ss.str()=="0x0", "ss.str()==" + ss.str());
     }
     
     ObjectStats stats;

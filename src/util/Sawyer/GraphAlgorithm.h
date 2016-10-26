@@ -497,16 +497,18 @@ class CommonSubgraphIsomorphism {
         }
 
         // Given a vertex i in G1, return those vertices j in G2 where i and j can be equivalent.
-        boost::iterator_range<std::vector<size_t>::const_iterator> get(size_t i) const {
+        // This isn't really a proper iterator, but we can't return std::vector<size_t>::const_iterator on macOS because it's
+        // constructor-from-pointer is private.
+        boost::iterator_range<const size_t*> get(size_t i) const {
             static const size_t empty = 911; /*arbitrary*/
             if (i < rows_.size() && size(i) > 0) {
 #if SAWYER_VAM_STACK_ALLOCATOR
-                return boost::iterator_range<std::vector<size_t>::const_iterator>(rows_[i], rows_[i] + rowSize_[i]);
+                return boost::iterator_range<const size_t*>(rows_[i], rows_[i] + rowSize_[i]);
 #else
-                return boost::iterator_range<std::vector<size_t>::const_iterator>(rows_[i].begin(), rows_[i].end());
+                return boost::iterator_range<const size_t*>(&rows_[i][0], &rows_[i][0] + rows_[i].size());
 #endif
             }
-            return boost::iterator_range<std::vector<size_t>::const_iterator>(&empty, &empty);
+            return boost::iterator_range<const size_t*>(&empty, &empty);
         }
     };
 
