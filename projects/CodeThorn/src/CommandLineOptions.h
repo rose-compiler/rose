@@ -5,7 +5,12 @@
 #include <map>
 #include <cstdio>
 #include <cstring>
+
+#ifdef USE_SAWYER_COMMANDLINE
+#include "Sawyer/CommandLineBoost.h"
+#else
 #include <boost/program_options.hpp>
+#endif
 
 //namespace po = boost::program_options;
 
@@ -35,6 +40,12 @@ private:
 };
 
 extern BoolOptions boolOptions; // defined in CommandLineOptions.C
+
+#ifdef USE_SAWYER_COMMANDLINE
+extern Sawyer::CommandLine::Boost::variables_map args;
+#else
 extern boost::program_options::variables_map args; // defined in CommandLineOptions.C
+#endif
+
 extern int option_debug_mode;
 #endif

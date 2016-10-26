@@ -1,3 +1,4 @@
+#define USE_SAWYER_COMMANDLINE
 #include "CommandLineOptions.h"
 #include <sstream>
 #include <iostream>
@@ -6,7 +7,12 @@ using namespace std;
 /////////////////////////////////////////////////
 // Command line processing global options
 /////////////////////////////////////////////////
+#ifdef USE_SAWYER_COMMANDLINE
+Sawyer::CommandLine::Boost::variables_map args;
+#else
 boost::program_options::variables_map args;
+#endif
+
 BoolOptions boolOptions;
 
 /////////////////////////////////////////////////
