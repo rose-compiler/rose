@@ -359,7 +359,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   equivalenceCheckingOptions.add_options()
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
-    ("equivalence-check",po::value< std::vector<string> >()->multitoken(), "Check two programs for equivalence")
+    //    ("equivalence-check", "Check programs provided on the command line for equivalence")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
@@ -1004,8 +1004,12 @@ int main( int argc, char * argv[] ) {
     Timer timer;
     timer.start();
 
+    std::cout<<"DEBUG: P0a"<<std::endl;
+
     po::variables_map args = parseCommandLine(argc, argv);
+    std::cout<<"DEBUG: P0b"<<std::endl;
     BoolOptions boolOptions = parseBoolOptions(argc, argv);
+    std::cout<<"DEBUG: P0c"<<std::endl;
 
     // Start execution
 
@@ -1019,13 +1023,19 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
+    std::cout<<"DEBUG: P1"<<std::endl;
+
     Analyzer analyzer;
     global_analyzer=&analyzer;
+
+    std::cout<<"DEBUG: P2"<<std::endl;
 
     string option_pragma_name;
     if (args.count("limit-to-fragment")) {
       option_pragma_name = args["limit-to-fragment"].as<string>();
     }
+
+    std::cout<<"DEBUG: P3"<<std::endl;
 
     if (args.count("internal-checks")) {
       if(CodeThorn::internalChecks(argc,argv)==false)
@@ -1206,7 +1216,6 @@ int main( int argc, char * argv[] ) {
       pragmaHandler.handlePragmas(sageProject,&analyzer);
       // TODO: requires more refactoring
       option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
-      boolOptions.setOption("verify-update-sequence-race-conditions",true);
       // unparse specialized code
       //sageProject->unparse(0,0);
       cout <<"STATUS: handling pragmas finished."<<endl;
@@ -1214,7 +1223,6 @@ int main( int argc, char * argv[] ) {
       // do specialization and setup data structures
       analyzer.setSkipSelectedFunctionCalls(true);
       analyzer.setSkipArrayAccesses(true);
-      boolOptions.setOption("verify-update-sequence-race-conditions",true);
 
       //TODO1: refactor into separate function
       int numSubst=0;
@@ -1665,66 +1673,21 @@ int main( int argc, char * argv[] ) {
     int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
 
     if(args.count("equivalence-check")) {
+      // TODO: iterate over SgFile nodes, create vectors for each phase
+      // foreach file in SgFileList
+      // TODO: create analyzer for each SgFile program or specified function
       Specialization speci;
-      if (boolOptions["visualize-read-write-sets"]) {
-        speci.setVisualizeReadWriteAccesses(true);
-      }
       ArrayUpdatesSequence arrayUpdates;
-      cout<<"STATUS: performing array analysis on STG."<<endl;
-      cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
-
-      Label fragmentStartLabel=Labeler::NO_LABEL;
-      if(fragmentStartNode!=0) {
-        fragmentStartLabel=analyzer.getLabeler()->getLabel(fragmentStartNode);
-        cout<<"INFO: Fragment: start-node: "<<fragmentStartNode<<"  start-label: "<<fragmentStartLabel<<endl;
-        cout<<"INFO: Fragment: start-node: currently not supported."<<endl;
-      }
-
-      bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
-
-      timer.start();
-
       speci.extractArrayUpdateOperations(&analyzer,
-          arrayUpdates,
-          rewriteSystem,
-          useConstSubstitutionRule
-          );
-
-      arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
-
-      if(boolOptions["verify-update-sequence-race-conditions"]) {
-        SgNode* root=analyzer.startFunRoot;
-        VariableId parallelIterationVar;
-        LoopInfoSet loopInfoSet=EquivalenceChecking::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
-        cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
-        verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
-        verifyUpdateSequenceRaceConditionsParLoopNum=Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
-        timer.start();
-        verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
-        verifyUpdateSequenceRaceConditionRunTime=timer.getElapsedTimeInMilliSec();
-      }
-
-      if(boolOptions["print-update-infos"]) {
-        speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
-      }
-      cout<<"STATUS: establishing array-element SSA numbering."<<endl;
-      timer.start();
+                                         arrayUpdates,
+                                         rewriteSystem,
+                                         boolOptions["rule-const-subst"]
+                                         );
       speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
       arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
-
-      if(args.count("dump-non-sorted")) {
-        string filename=args["dump-non-sorted"].as<string>();
-        speci.writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
-      }
-      if(args.count("dump-sorted")) {
-        timer.start();
-        string filename=args["dump-sorted"].as<string>();
-        speci.writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
-        sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
-      }
-      totalRunTime+=arrayUpdateExtractionRunTime+verifyUpdateSequenceRaceConditionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
+      // TODO CHECK with first
+      // end foreach
     }
-
 
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
       Specialization speci;
@@ -1739,7 +1702,7 @@ int main( int argc, char * argv[] ) {
       if(fragmentStartNode!=0) {
         fragmentStartLabel=analyzer.getLabeler()->getLabel(fragmentStartNode);
         cout<<"INFO: Fragment: start-node: "<<fragmentStartNode<<"  start-label: "<<fragmentStartLabel<<endl;
-        cout<<"INFO: Fragment: start-node: currently not supported."<<endl;
+          cout<<"INFO: Fragment: start-node: currently not supported."<<endl;
       }
 
       bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
