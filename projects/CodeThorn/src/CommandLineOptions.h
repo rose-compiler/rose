@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <cstring>
 
+//preparation for using the Sawyer command line parser
+//#define USE_SAWYER_COMMANDLINE
 #ifdef USE_SAWYER_COMMANDLINE
 #include "Sawyer/CommandLineBoost.h"
 #else

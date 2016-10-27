@@ -16,6 +16,7 @@
 #include <cstring>
 #include <map>
 
+#include "CommandLineOptions.h"
 #ifdef USE_SAWYER_COMMANDLINE
 #include "Sawyer/CommandLineBoost.h"
 #else
@@ -272,7 +273,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("normalize",po::value< string >(),"normalize AST before analysis.")
     ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3,...).")
     ;
-
   cegpraOptions.add_options()
     ("csv-stats-cegpra",po::value< string >(),"output statistics regarding the counterexample-guided prefix refinement analysis (cegpra) into a CSV file [arg]")
     ("cegpra-ltl",po::value< int >(),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
@@ -359,7 +359,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   equivalenceCheckingOptions.add_options()
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
-    //    ("equivalence-check", "Check programs provided on the command line for equivalence")
+    ("equivalence-check", "Check programs provided on the command line for equivalence")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
@@ -414,7 +414,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
     ("version,v", "display the version")
     ;
-
   po::options_description all("All supported options");
   all.add(visibleOptions)
     .add(hiddenOptions)
@@ -466,7 +465,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
     exit(0);
   }
-
   return args;
 }
 
@@ -1004,12 +1002,8 @@ int main( int argc, char * argv[] ) {
     Timer timer;
     timer.start();
 
-    std::cout<<"DEBUG: P0a"<<std::endl;
-
     po::variables_map args = parseCommandLine(argc, argv);
-    std::cout<<"DEBUG: P0b"<<std::endl;
     BoolOptions boolOptions = parseBoolOptions(argc, argv);
-    std::cout<<"DEBUG: P0c"<<std::endl;
 
     // Start execution
 
@@ -1023,19 +1017,13 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    std::cout<<"DEBUG: P1"<<std::endl;
-
     Analyzer analyzer;
     global_analyzer=&analyzer;
-
-    std::cout<<"DEBUG: P2"<<std::endl;
 
     string option_pragma_name;
     if (args.count("limit-to-fragment")) {
       option_pragma_name = args["limit-to-fragment"].as<string>();
     }
-
-    std::cout<<"DEBUG: P3"<<std::endl;
 
     if (args.count("internal-checks")) {
       if(CodeThorn::internalChecks(argc,argv)==false)

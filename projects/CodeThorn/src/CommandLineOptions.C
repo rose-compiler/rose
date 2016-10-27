@@ -1,4 +1,3 @@
-#define USE_SAWYER_COMMANDLINE
 #include "CommandLineOptions.h"
 #include <sstream>
 #include <iostream>
