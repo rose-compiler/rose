@@ -1514,6 +1514,24 @@ static void test31() {
     ASSERT_always_require(bar == 0);
 }
 
+static void test32() {
+    std::cerr <<"test32: explosive lists\n";
+
+    SwitchGroup sg1;
+    sg1.insert(Switch("foo").argument("list", listParser(anyParser())));
+    sg1.insert(Switch("bar").argument("list", listParser(anyParser())).explosiveLists(true));
+
+    Parser p1;
+    p1.with(sg1);
+    ParserResult result;
+
+    result = mustParse(2, p1, "--foo", "a,b");
+    ASSERT_always_require(result.have("foo") == 1);
+
+    result = mustParse(2, p1, "--bar", "a,b");
+    ASSERT_always_require(result.have("bar") == 2);
+}
+
 int main(int argc, char *argv[]) {
     test01();
     test02();
@@ -1547,6 +1565,7 @@ int main(int argc, char *argv[]) {
     test29();
     test30();
     test31();
+    test32();
     std::cout <<"All tests passed\n";
     return 0;
 }

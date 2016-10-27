@@ -198,7 +198,7 @@ builtins.so: builtins-string.c builtins-stdio.c
 #-----------------------------------------------------------------------------------------------------------------------------
 MOSTLYCLEANFILES += CloneDetectionSchema.C
 CloneDetectionSchema.C: Schema.sql
-	@echo "  GEN    $@"
+	@echo "  GEN      $@"
 	@echo "namespace CloneDetection {" 			>$@
 	@echo "const char *schema =" 				>>$@
 	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
@@ -207,7 +207,7 @@ CloneDetectionSchema.C: Schema.sql
 
 MOSTLYCLEANFILES += FailureDetectionSchema.C
 FailureDetectionSchema.C: compute-pairwise-precision.sql
-	@echo "  GEN     $@"
+	@echo "  GEN       $@"
 	@echo "namespace FailureEvaluation {"  			>$@
 	@echo "const char *failure_schema =" 				>>$@
 	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@

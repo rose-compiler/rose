@@ -314,7 +314,7 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
         interp->get_headers()->get_headers().push_back(header);
     }
 
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef  ROSE_HAVE_LIBDWARF
     /* Parse Dwarf info and add it to the SgAsmGenericFile. */
     readDwarf(file); 
 #endif

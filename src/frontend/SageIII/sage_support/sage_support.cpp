@@ -4949,7 +4949,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
           interp->get_headers()->get_headers().push_back(headers[i]);
         }
 
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef ROSE_HAVE_LIBDWARF
   // DQ (3/14/2009): Dwarf support now works within ROSE when used with Intel Pin
   // (was a huge problem until everything (e.g. libdwarf) was dynamically linked).
   // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
