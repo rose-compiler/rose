@@ -24,12 +24,12 @@
 #include "rose_config.h"
 
 
-// Allow "string" and "pair" to be used (whether or not USE_ROSE_DWARF_SUPPORT id defined to be true).
+// Allow "string" and "pair" to be used (whether or not ROSE_HAVE_LIBDWARF id defined to be true).
 using namespace std;
 
 
 // This is controled by using the --with-dwarf configure command line option.
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef ROSE_HAVE_LIBDWARF
 
 #include "dwarf.h"
 #include "libdwarf.h"
@@ -2948,7 +2948,7 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
    }
 
 
-// endif for "if USE_ROSE_DWARF_SUPPORT" at top of file.
+// endif for "ifdef ROSE_HAVE_LIBDWARF" at top of file.
 #else
 
 // DQ (11/12/2008): Function defined so that java-port will not complain.
@@ -2975,7 +2975,7 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
 
 // ***********************************************************************************
 // ***********************************************************************************
-// This code is independent of the "if USE_ROSE_DWARF_SUPPORT" at the top of this file
+// This code is independent of the "ifdef ROSE_HAVE_LIBDWARF" at the top of this file
 // ***********************************************************************************
 // ***********************************************************************************
 
