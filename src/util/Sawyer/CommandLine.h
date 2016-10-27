@@ -2920,6 +2920,25 @@ public:
      *  the file. */
     std::vector<std::string> expandIncludedFiles(const std::vector<std::string> &args);
 
+    /** Bit flags for argument grouping. See @ref groupArguments. */
+    enum GroupingFlags {
+        DEFAULT_GROUPING        = 0,                    /**< Zero, all flags are clear. */
+        PROHIBIT_EMPTY_GROUPS   = 0x0001,               /**< Error if any group is empty. */
+        SPLIT_SINGLE_GROUP      = 0x0002                /**< Split single group into singleton groups. */
+    };
+
+    /** Group arguments by "--" separators.
+     *
+     *  Given a vector of command-line arguments, regroup them into sub-vectors by using the special "--" arguments to separate
+     *  the groups.  The @p flags is a bit vector that controls some of the finer aspects of grouping (see @ref
+     *  GroupingFlags). The number of returned groups (after flags are processed) must fall within the specified @p limits. If
+     *  any error is encountered then either print an error message and exit, or throw an <code>std::runtime_error</code>,
+     *  depending on whether an @ref errorStream is defined. */
+    std::vector<std::vector<std::string> >
+    regroupArgs(const std::vector<std::string> &args,
+                const Container::Interval<size_t> &limits = Container::Interval<size_t>::whole(),
+                unsigned flags = 0);
+
     /** Program name for documentation.  If no program name is given (or it is set to the empty string) then the name is
      *  obtained from the operating system.
      * @{ */
