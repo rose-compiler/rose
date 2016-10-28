@@ -138,6 +138,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/SharedPointer.h			\
 	Sawyer/SmallObject.h			\
 	Sawyer/Stack.h				\
+	Sawyer/StackAllocator.h			\
 	Sawyer/StaticBuffer.h			\
 	Sawyer/Stopwatch.h			\
 	Sawyer/Synchronization.h		\

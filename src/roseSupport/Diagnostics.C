@@ -2,9 +2,11 @@
 
 #include "Sawyer/Assert.h"
 #include "Sawyer/ProgressBar.h"
+
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
+#include "BinaryBestMapAddress.h"                       // rose::BinaryAnalysis::BestMapAddress
 #include "BinaryCallingConvention.h"                    // rose::BinaryAnalysis::CallingConvention
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
 #include "BinaryFeasiblePath.h"                         // rose::BinaryAnalysis::FeasiblePath
@@ -19,6 +21,7 @@
 #include "Partitioner.h"                                // rose::BinaryAnalysis::Partitioner
 #include <Partitioner2/Utility.h>                       // rose::BinaryAnalysis::Partitioner2
 #endif
+
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include <EditDistance/EditDistance.h>                  // rose::EditDistance
 
@@ -96,6 +99,7 @@ void initialize() {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
         BinaryLoader::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
+        BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();

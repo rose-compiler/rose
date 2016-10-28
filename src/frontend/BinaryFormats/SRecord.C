@@ -116,7 +116,8 @@ SRecord::parse(std::istream &input)
 
 // class method
 rose_addr_t
-SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegments, unsigned accessPerms)
+SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegments, unsigned accessPerms,
+              const std::string &newSegmentNames)
 {
     if (createSegments) {
         // We want to minimize the number of buffers in the map, so the first step is to discover what addresses are covered by
@@ -137,7 +138,7 @@ SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegm
         // Create buffers for the data and insert them into the memory map
         BOOST_FOREACH (const AddressInterval &interval, addressesUsed.intervals()) {
             ASSERT_forbid(interval.isWhole());              // not practically possible since S-Record file would be >2^65 bytes
-            map.insert(interval, MemoryMap::Segment::anonymousInstance(interval.size(), accessPerms, "S-Records"));
+            map.insert(interval, MemoryMap::Segment::anonymousInstance(interval.size(), accessPerms, newSegmentNames));
         }
     }
 

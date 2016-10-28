@@ -92,9 +92,6 @@ AM_CONDITIONAL(ROSE_USE_INTEL_PIN,test ! "$with_IntelPin" = no)
 # Call supporting macro to DWARF (libdwarf)
 ROSE_SUPPORT_DWARF
 
-# Setup Automake conditional in --- (not yet distributed)
-AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
-
 # Xen and Ether [RPM 2009-10-28]
 AC_ARG_WITH(ether,
         [  --with-ether=PATH   prefix of Xen/Ether installation
