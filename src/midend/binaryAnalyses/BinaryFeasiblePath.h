@@ -12,6 +12,9 @@ namespace BinaryAnalysis {
  *
  *  Determines whether CFG paths are feasible paths. */
 class FeasiblePath {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Types and public data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     enum SearchMode { SEARCH_SINGLE_DFS, SEARCH_SINGLE_BFS, SEARCH_MULTI };
 
@@ -26,6 +29,7 @@ public:
         std::vector<SymbolicExpr::Ptr> postConditions;  /**< Additional constraints to be satisifed at the end of a path. */
         std::vector<rose_addr_t> summarizeFunctions;    /**< Functions to always summarize. */
 
+        /** Default settings. */
         Settings()
             : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit(0), maxPathLength(0), maxCallDepth(0) {}
     };
@@ -76,6 +80,10 @@ public:
     /** Summaries for multiple functions. */
     typedef Sawyer::Container::Map<rose_addr_t, FunctionSummary> FunctionSummaries;
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Private data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     const Partitioner2::Partitioner *partitioner_;      // binary analysis context
     RegisterDictionary *registers_;                     // registers augmented with "path" pseudo-register
@@ -89,6 +97,10 @@ private:
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Construction, destruction
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Constructs a new feasible path analyzer. */
     FeasiblePath()
@@ -109,7 +121,15 @@ public:
         cfgAvoidEdges_.clear();
         cfgEndAvoidVertices_.clear();
     }
-    
+
+    /** Initialize diagnostic output. This is called automatically when ROSE is initialized. */
+    static void initDiagnostics();
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Settings affecting behavior
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Property: Settings used by this analysis.
      *
      * @{ */
@@ -117,9 +137,11 @@ public:
     void settings(const Settings &s) { settings_ = s; }
     /** @} */
 
-    /** Initialize diagnostic output. This is called automatically when ROSE is initialized. */
-    static void initDiagnostics();
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Overridable processing functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Create the virtual CPU.
      *
      *  Creates a new virtual CPU for each call.  The first call also makes a copy of the register dictionary from the
@@ -165,11 +187,26 @@ public:
     /** Process one vertex.
      *
      *  This is the general state transfer function, representing flow of control through any type of vertex. */
-    void
+    virtual void
     processVertex(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
                   const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
                   size_t &pathInsnIndex /*in,out*/);
 
+    /** Determines whether a function call should be summarized instead of inlined. */
+    virtual bool
+    shouldSummarizeCall(const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathVertex,
+                        const Partitioner2::ControlFlowGraph &cfg,
+                        const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget);
+
+    /** Determines whether a function call should be inlined. */
+    virtual bool
+    shouldInline(const Partitioner2::CfgPath &path, const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget);
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Utilities
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Convert path vertex to a CFG vertex. */
     Partitioner2::ControlFlowGraph::ConstVertexIterator
     pathToCfg(const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathVertex) const;
@@ -184,17 +221,6 @@ public:
     /** True if vertex is a function call. */
     bool isFunctionCall(const Partitioner2::ControlFlowGraph::ConstVertexIterator&) const;
 
-    /** Determines whether a function call should be summarized instead of inlined. */
-    virtual bool
-    shouldSummarizeCall(const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathVertex,
-                        const Partitioner2::ControlFlowGraph &cfg,
-                        const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget);
-
-    virtual bool
-    shouldInline(const Partitioner2::CfgPath &path, const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget);
-
-public:
-
     /** Determine whether a single path is feasible.
      *
      *  Returns true if the path is feasible, false if not feasible, or indeterminate if a conclusion cannot be reached.  The
@@ -204,6 +230,12 @@ public:
     isPathFeasible(const Partitioner2::CfgPath &path, const std::vector<SymbolicExpr::Ptr> &postConditions,
                    std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
                    InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu /*out*/);
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Functions for describing the search space
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 
     /** Specify search boundary.
      *
@@ -225,18 +257,28 @@ public:
                       const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
     /** @} */
 
-    /** Property: Partitioner currently in use.
-     *
-     *  Returns a reference to the partitioner that is currently in use, set by @ref setSearchBoundary.  It is a fatal error to
-     *  call this function if there is no partitioner. */
-    const Partitioner2::Partitioner& partitioner() const;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Functions for searching for paths
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Find all feasible paths.
      *
      *  Searches for paths and calls the @p pathProcessor each time a feasible path is found. The space explored using a depth
      *  first search, and the search can be limited with various @ref settings. */
     void depthFirstSearch(PathProcessor &pathProcessor);
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Functions for getting the results
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Property: Partitioner currently in use.
+     *
+     *  Returns a reference to the partitioner that is currently in use, set by @ref setSearchBoundary.  It is a fatal error to
+     *  call this function if there is no partitioner. */
+    const Partitioner2::Partitioner& partitioner() const;
+    
     /** Function summary information.
      *
      *  This is a map of functions that have been summarized, indexed by function entry address. */
@@ -250,6 +292,10 @@ public:
      *  default-constructed summary information object is returned. */
     const FunctionSummary& functionSummary(rose_addr_t entryVa) const;
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Private supporting functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     static rose_addr_t virtualAddress(const Partitioner2::ControlFlowGraph::ConstVertexIterator &vertex);
 
