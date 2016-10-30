@@ -23,19 +23,6 @@ namespace SymbolicExpr {
 // A mutex that's used by various methods in this namespace
 static boost::mutex symbolicExprMutex;
 
-// Returns the next name counter. If @p useThis is specified then return that value and make sure the next value to be
-// returned is larger.
-static uint64_t
-nextNameCounter(uint64_t useThis = (uint64_t)(-1)) {
-    static boost::mutex mutex;
-    static uint64_t counter = 0;
-    boost::lock_guard<boost::mutex> lock(mutex);
-    if (useThis == (uint64_t)(-1))
-        return ++counter;
-    counter = std::max(counter, useThis);
-    return useThis;
-}
-
 const uint64_t
 MAX_NNODES = UINT64_MAX;
 
@@ -2257,6 +2244,18 @@ Leaf::createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, 
     return retval;
 }
     
+// class method
+uint64_t
+Leaf::nextNameCounter(uint64_t useThis) {
+    static boost::mutex mutex;
+    static uint64_t counter = 0;
+    boost::lock_guard<boost::mutex> lock(mutex);
+    if (useThis == (uint64_t)(-1))
+        return ++counter;
+    counter = std::max(counter, useThis);
+    return useThis;
+}
+
 bool
 Leaf::isNumber() {
     return CONSTANT==leafType_;
