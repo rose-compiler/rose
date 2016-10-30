@@ -71,7 +71,8 @@ for f in					\
     Container/setUnitTests.C			\
     Markup/markupUnitTests.C			\
     Message/mesgUnitTests.C			\
-    Pointers/ptrUnitTests.C
+    Pointers/ptrUnitTests.C			\
+    Serialization/serializationUnitTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";
     ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/smoke/unit/Sawyer/$(basename "$f")
