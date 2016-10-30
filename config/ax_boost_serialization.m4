@@ -17,15 +17,13 @@
 #
 #   And sets:
 #
-#     HAVE_BOOST_SERIALIZATION
+#     HAVE_BOOST_SERIALIZATION if headers are available
+#     HAVE_BOOST_SERIALIZATION_LIB if the library is available
 #
-# LAST MODIFICATION
+# COPYRIGHT
 #
-#   2007-11-22
-#
-# COPYLEFT
-#
-#   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
+#   Original version copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
+#   Modifications copyright 2016 Lawrence Livermore National Security
 #
 #   Copying and distribution of this file, with or without
 #   modification, are permitted in any medium without royalty provided
@@ -49,9 +47,9 @@ AC_DEFUN([AX_BOOST_SERIALIZATION],
                     ax_boost_user_serialization_lib="$withval"
                 fi
             ],
-            [want_boost="yes"])
+            [want_boost="maybe"])
 
-    if test "x$want_boost" = "xyes"; then
+    if test "x$want_boost" = "xyes" -o "$want_boost" = "maybe"; then
         AC_REQUIRE([AC_PROG_CC])
         CPPFLAGS_SAVED="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
@@ -62,7 +60,7 @@ AC_DEFUN([AX_BOOST_SERIALIZATION],
         LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
         export LDFLAGS
 
-        AC_CACHE_CHECK(whether the Boost::Serialization library is available,
+        AC_CACHE_CHECK(whether the boost::serialization headers are available,
             ax_cv_boost_serialization,
             [   AC_LANG_PUSH([C++])
                 AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[@%:@include <fstream>
@@ -78,7 +76,7 @@ AC_DEFUN([AX_BOOST_SERIALIZATION],
             ])
 
         if test "x$ax_cv_boost_serialization" = "xyes"; then
-            AC_DEFINE(HAVE_BOOST_SERIALIZATION,,[define if the Boost::Serialization library is available])
+            AC_DEFINE(HAVE_BOOST_SERIALIZATION,,[define if the boost::serialization headers are available])
             BOOSTLIBDIR=`echo $BOOST_LDFLAGS | sed -e 's/@<:@^\/@:>@*//'`
             if test "x$ax_boost_user_serialization_lib" = "x"; then
                 for libextension in `ls $BOOSTLIBDIR/libboost_serialization*.{so,dylib,a}* 2>/dev/null |\
@@ -88,7 +86,10 @@ AC_DEFUN([AX_BOOST_SERIALIZATION],
                             -e 's;^lib\(boost_serialization.*\)\.dylib$;\1;'` ; do
                     ax_lib=${libextension}
                     AC_CHECK_LIB($ax_lib, toupper,
-                        [BOOST_SERIALIZATION_LIB="-l$ax_lib"; AC_SUBST(BOOST_SERIALIZATION_LIB) link_serialization="yes"; break],
+                        [   BOOST_SERIALIZATION_LIB="-l$ax_lib";
+                            AC_DEFINE(HAVE_BOOST_SERIALIZATION_LIB,,[define if the libboost_serialization is available])
+                            AC_SUBST(BOOST_SERIALIZATION_LIB) link_serialization="yes";
+                            break],
                         [link_serialization="no"])
                 done
                 if test "x$link_serialization" != "xyes"; then
@@ -98,7 +99,10 @@ AC_DEFUN([AX_BOOST_SERIALIZATION],
                                 -e 's;^\(boost_serialization.*\)\.a*$;\1;'` ; do
                         ax_lib=${libextension}
                         AC_CHECK_LIB($ax_lib, toupper,
-                            [BOOST_SERIALIZATION_LIB="-l$ax_lib"; AC_SUBST(BOOST_SERIALIZATION_LIB) link_serialization="yes"; break],
+                            [   BOOST_SERIALIZATION_LIB="-l$ax_lib";
+                                AC_DEFINE(HAVE_BOOST_SERIALIZATION_LIB,,[define if the libboost_serialization is available])
+                                AC_SUBST(BOOST_SERIALIZATION_LIB) link_serialization="yes";
+                                break],
                             [link_serialization="no"])
                     done
                 fi
@@ -106,12 +110,19 @@ AC_DEFUN([AX_BOOST_SERIALIZATION],
             else
                 for ax_lib in $ax_boost_user_serialization_lib boost_serialization-$ax_boost_user_serialization_lib; do
                     AC_CHECK_LIB($ax_lib, main,
-                        [BOOST_SERIALIZATION_LIB="-l$ax_lib"; AC_SUBST(BOOST_SERIALIZATION_LIB) link_serialization="yes"; break],
+                        [   BOOST_SERIALIZATION_LIB="-l$ax_lib";
+                            AC_DEFINE(HAVE_BOOST_SERIALIZATION_LIB,,[define if the libboost_serialization is available])
+                            AC_SUBST(BOOST_SERIALIZATION_LIB) link_serialization="yes";
+                            break],
                         [link_serialization="no"])
                 done
             fi
             if test "x$link_serialization" != "xyes"; then
-                AC_MSG_ERROR(Could not link against $ax_lib !)
+                if test "$want_boost" = "yes"; then
+                    AC_MSG_ERROR(Could not link against $ax_lib!)
+                else
+                    AC_MSG_NOTICE([library for boost::serialization was not found])
+                fi
             fi
         fi
 
