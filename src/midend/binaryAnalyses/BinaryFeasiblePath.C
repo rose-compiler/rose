@@ -7,6 +7,7 @@
 #include <SymbolicMemory2.h>
 #include <YicesSolver.h>
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/logic/tribool.hpp>
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
@@ -61,16 +62,16 @@ public:
     typedef BaseSemantics::State Super;
 
 private:
-    // Maps symbolic variable names to comments, e.g., "v801" => "eax read at path position #6 by 0x08040000 cmp eax, [esp]"
-    typedef Sawyer::Container::Map<std::string /*name*/, std::string /*comment*/> VarComments;
-    VarComments varComments_;
+    // Maps symbolic variable names to additional information about where the variable appears in the path. */
+    typedef Sawyer::Container::Map<std::string /*name*/, FeasiblePath::VarDetail> VarDetails;
+    VarDetails varDetails_;
 
 protected:
     State(const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::MemoryStatePtr &memory)
         : Super(registers, memory) {}
 
     State(const State &other)
-        : Super(other), varComments_(other.varComments_) {}
+        : Super(other), varDetails_(other.varDetails_) {}
 
 public:
     static BaseSemantics::StatePtr instance(const BaseSemantics::RegisterStatePtr &registers,
@@ -98,14 +99,14 @@ public:
         return retval;
     }
     
-    /** Set comment for variable name if none exists. */
-    void varComment(const std::string &varName, const std::string &comment) {
-        varComments_.insertMaybe(varName, comment);
+    /** Set detail for variable name if none exists. */
+    void varDetail(const std::string &varName, const FeasiblePath::VarDetail &vdetail) {
+        varDetails_.insertMaybe(varName, vdetail);
     }
 
-    /** Comment for variable name. */
-    std::string varComment(const std::string &varName) const {
-        return varComments_.getOrElse(varName, "");
+    /** Detail for variable name. */
+    const FeasiblePath::VarDetail& varDetail(const std::string &varName) const {
+        return varDetails_.getOrDefault(varName);
     }
 };
 
@@ -188,12 +189,12 @@ public:
     }
 
 public:
-    std::string varComment(const std::string &varName) const {
-        return State::promote(currentState())->varComment(varName);
+    const FeasiblePath::VarDetail& varDetail(const std::string &varName) const {
+        return State::promote(currentState())->varDetail(varName);
     }
 
-    void varComment(const std::string &varName, const std::string &comment) {
-        State::promote(currentState())->varComment(varName, comment);
+    void varDetail(const std::string &varName, const FeasiblePath::VarDetail &varDetail) {
+        State::promote(currentState())->varDetail(varName, varDetail);
     }
 
     size_t pathInsnIndex() const {
@@ -209,41 +210,40 @@ public:
     }
 
 private:
-    /** Create a comment to describe a variable stored in a register. */
-    std::string commentForVariable(const RegisterDescriptor &reg, const std::string &accessMode) const {
+    /** Description a variable stored in a register. */
+    FeasiblePath::VarDetail detailForVariable(const RegisterDescriptor &reg, const std::string &accessMode) const {
         const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
-        std::string varComment = RegisterNames(regs)(reg) + " first " + accessMode;
+        FeasiblePath::VarDetail retval;
+        retval.registerName = RegisterNames(regs)(reg);
+        retval.firstAccessMode = accessMode;
         if (pathInsnIndex_ == (size_t)(-1) && currentInstruction() == NULL) {
-            varComment += " by initialization";
+            // no path position (i.e., present in initial state)
         } else {
             if (pathInsnIndex_ != (size_t)(-1))
-                varComment += " at path position #" + StringUtility::numberToString(pathInsnIndex_);
-            if (SgAsmInstruction *insn = currentInstruction())
-                varComment += " by " + unparseInstructionWithAddress(insn);
+                retval.firstAccessIdx = pathInsnIndex_;
+            retval.firstAccessInsn = currentInstruction();
         }
-        return varComment;
+        return retval;
     }
 
-    /** Create a comment to describe a memory address if possible. The nBytes will be non-zero when we're describing
-     *  an address as opposed to a value stored across some addresses. */
-    std::string commentForVariable(const BaseSemantics::SValuePtr &addr,
-                                   const std::string &accessMode, size_t byteNumber=0, size_t nBytes=0) const {
-        std::string varComment = "first " + accessMode + " at ";
+    /** Describe a memory address if possible. The nBytes will be non-zero when we're describing an address as opposed to a
+     *  value stored across some addresses. */
+    FeasiblePath::VarDetail detailForVariable(const BaseSemantics::SValuePtr &addr,
+                                              const std::string &accessMode, size_t byteNumber=0, size_t nBytes=0) const {
+        FeasiblePath::VarDetail retval;
+        retval.firstAccessMode = accessMode;
         if (pathInsnIndex_ != (size_t)(-1))
-            varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_) + ", ";
-        varComment += "instruction " + unparseInstructionWithAddress(currentInstruction());
+            retval.firstAccessIdx = pathInsnIndex_;
+        retval.firstAccessInsn = currentInstruction();
 
         // Sometimes we can save useful information about the address.
         if (nBytes != 1) {
             SymbolicExpr::Ptr addrExpr = SValue::promote(addr)->get_expression();
             if (SymbolicExpr::LeafPtr addrLeaf = addrExpr->isLeafNode()) {
                 if (addrLeaf->isNumber()) {
-                    varComment += "\n";
-                    if (nBytes > 1) {
-                        varComment += StringUtility::numberToString(byteNumber) + " of " +
-                                      StringUtility::numberToString(nBytes) + " bytes starting ";
-                    }
-                    varComment += "at address " + addrLeaf->toString();
+                    retval.memSize = nBytes;
+                    retval.memByteNumber = byteNumber;
+                    retval.memAddress = addrExpr;
                 }
             } else if (SymbolicExpr::InteriorPtr addrINode = addrExpr->isInteriorNode()) {
                 if (addrINode->getOperator() == SymbolicExpr::OP_ADD && addrINode->nChildren() == 2 &&
@@ -251,27 +251,13 @@ private:
                     addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->isNumber()) {
                     SymbolicExpr::LeafPtr base = addrINode->child(0)->isLeafNode();
                     SymbolicExpr::LeafPtr offset = addrINode->child(1)->isLeafNode();
-                    varComment += "\n";
-                    if (nBytes > 1) {
-                        varComment += StringUtility::numberToString(byteNumber) + " of " +
-                                      StringUtility::numberToString(nBytes) + " bytes starting ";
-                    }
-                    varComment += "at address ";
-                    if (base->comment().empty()) {
-                        varComment = base->toString();
-                    } else {
-                        varComment += base->comment();
-                    }
-                    Sawyer::Container::BitVector tmp = offset->bits();
-                    if (tmp.get(tmp.size()-1)) {
-                        varComment += " - 0x" + tmp.negate().toHex();
-                    } else {
-                        varComment += " + 0x" + tmp.toHex();
-                    }
+                    retval.memSize = nBytes;
+                    retval.memByteNumber = byteNumber;
+                    retval.memAddress = addrExpr;
                 }
             }
         }
-        return varComment;
+        return retval;
     }
 
 public:
@@ -300,20 +286,16 @@ public:
                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
         SValuePtr retval = SValue::promote(Super::readRegister(reg, dflt));
         SymbolicExpr::Ptr expr = retval->get_expression();
-        if (expr->isLeafNode()) {
-            std::string comment = commentForVariable(reg, "read");
-            State::promote(currentState())->varComment(expr->isLeafNode()->toString(), comment);
-        }
+        if (expr->isLeafNode())
+            State::promote(currentState())->varDetail(expr->isLeafNode()->toString(), detailForVariable(reg, "read"));
         return retval;
     }
         
     virtual void writeRegister(const RegisterDescriptor &reg,
                   const BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
         SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
-        if (expr->isLeafNode()) {
-            std::string comment = commentForVariable(reg, "write");
-            State::promote(currentState())->varComment(expr->isLeafNode()->toString(), comment);
-        }
+        if (expr->isLeafNode())
+            State::promote(currentState())->varDetail(expr->isLeafNode()->toString(), detailForVariable(reg, "write"));
         Super::writeRegister(reg, value);
     }
         
@@ -347,17 +329,15 @@ public:
 
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SValue::promote(retval)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
-            std::string comment = commentForVariable(addr, "read");
-            State::promote(currentState())->varComment(valExpr->isLeafNode()->toString(), comment);
-        }
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable())
+            State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(addr, "read"));
 
         // Save a description for its addresses
         for (size_t i=0; i<nBytes; ++i) {
             SValuePtr va = SValue::promote(add(addr, number_(addr->get_width(), i)));
             if (va->get_expression()->isLeafNode()) {
-                std::string comment = commentForVariable(addr, "read", i, nBytes);
-                State::promote(currentState())->varComment(va->get_expression()->isLeafNode()->toString(), comment);
+                State::promote(currentState())->varDetail(va->get_expression()->isLeafNode()->toString(),
+                                                          detailForVariable(addr, "read", i, nBytes));
             }
         }
         return retval;
@@ -374,18 +354,16 @@ public:
 
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SValue::promote(value)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
-            std::string comment = commentForVariable(addr, "write");
-            State::promote(currentState())->varComment(valExpr->isLeafNode()->toString(), comment);
-        }
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable())
+            State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(addr, "write"));
 
         // Save a description for its addresses
         size_t nBytes = value->get_width() / 8;
         for (size_t i=0; i<nBytes; ++i) {
             SValuePtr va = SValue::promote(add(addr, number_(addr->get_width(), i)));
             if (va->get_expression()->isLeafNode()) {
-                std::string comment = commentForVariable(addr, "read", i, nBytes);
-                State::promote(currentState())->varComment(va->get_expression()->isLeafNode()->toString(), comment);
+                State::promote(currentState())->varDetail(va->get_expression()->isLeafNode()->toString(),
+                                                          detailForVariable(addr, "read", i, nBytes));
             }
         }
     }
@@ -549,9 +527,10 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
 
     // Make the function return an unknown value
     SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.get_nbits()));
-    std::string comment = "return value from " + summary.name + "\n" +
-                          "at path position #" + StringUtility::numberToString(ops->pathInsnIndex());
-    ops->varComment(retval->get_expression()->isLeafNode()->toString(), comment);
+    VarDetail varDetail;
+    varDetail.returnFrom = summary.address;
+    varDetail.firstAccessIdx = ops->pathInsnIndex();
+    ops->varDetail(retval->get_expression()->isLeafNode()->toString(), varDetail);
     ops->writeRegister(REG_RETURN_, retval);
 
     // Cause the function to return to the address stored at the top of the stack.
@@ -597,11 +576,10 @@ FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
 }
 
 boost::logic::tribool
-FeasiblePath::isPathFeasible(const P2::CfgPath &path, const std::vector<SymbolicExpr::Ptr> &endConstraints,
+FeasiblePath::isPathFeasible(const P2::CfgPath &path, SMTSolver &solver, const std::vector<SymbolicExpr::Ptr> &endConstraints,
                              std::vector<SymbolicExpr::Ptr> &pathConstraints /*in,out*/,
                              BaseSemantics::DispatcherPtr &cpu /*out*/) {
     ASSERT_not_null2(partitioner_, "analysis is not initialized");
-    YicesSolver solver;
     cpu = buildVirtualCpu(partitioner());
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
@@ -829,12 +807,14 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             if (atEndOfPath)
                 postConditions = settings_.postConditions;
             BaseSemantics::DispatcherPtr cpu;
-            boost::logic::tribool isFeasible = isPathFeasible(path, postConditions, pathConditions /*in,out*/, cpu /*out*/);
+            YicesSolver solver;
+            boost::logic::tribool isFeasible = isPathFeasible(path, solver, postConditions,
+                                                              pathConditions /*in,out*/, cpu /*out*/);
 
             // Invoke callback if path is found
             if (atEndOfPath) {
                 if (isFeasible) {
-                    switch (pathProcessor.found(*this, path, pathConditions, cpu)) {
+                    switch (pathProcessor.found(*this, path, pathConditions, cpu, solver)) {
                         case PathProcessor::BREAK: return;
                         case PathProcessor::CONTINUE: break;
                         default: ASSERT_not_reachable("invalid path processor action");
@@ -930,6 +910,35 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 const FeasiblePath::FunctionSummary&
 FeasiblePath::functionSummary(rose_addr_t entryVa) const {
     return functionSummaries_.getOrDefault(entryVa);
+}
+
+const FeasiblePath::VarDetail&
+FeasiblePath::varDetail(const BaseSemantics::StatePtr &state, const std::string &varName) const {
+    return State::promote(state)->varDetail(varName);
+}
+
+std::string
+FeasiblePath::VarDetail::toString() const {
+    std::ostringstream ss;
+    if (!registerName.empty())
+        ss <<" register \"" <<StringUtility::cEscape(registerName) <<"\"";
+    if (!firstAccessMode.empty())
+        ss <<" first " <<firstAccessMode;
+    if (firstAccessIdx || firstAccessInsn) {
+        ss <<" at instruction";
+        if (firstAccessIdx)
+            ss <<" #" <<*firstAccessIdx;
+        if (firstAccessInsn)
+            ss <<" " <<unparseInstructionWithAddress(firstAccessInsn);
+    }
+    if (memAddress)
+        ss <<" mem[" <<*memAddress <<"]";
+    if (memSize > 0)
+        ss <<" byte " <<memByteNumber <<" of " <<memSize;
+    if (returnFrom)
+        ss <<" return from function " <<StringUtility::addrToString(*returnFrom);
+
+    return boost::trim_copy(ss.str());
 }
 
 } // namespace

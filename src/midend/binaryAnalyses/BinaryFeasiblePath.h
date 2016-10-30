@@ -4,6 +4,7 @@
 #include <BaseSemantics2.h>
 #include <Partitioner2/CfgPath.h>
 #include <Sawyer/Message.h>
+#include <SMTSolver.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -46,6 +47,21 @@ public:
      *  changes to the architecture. */
      RegisterDescriptor REG_PATH;
 
+    /** Information about a variable seen on a path. */
+    struct VarDetail {
+        std::string registerName;
+        std::string firstAccessMode;                    /**< How was variable first accessed ("read" or "write"). */
+        SgAsmInstruction *firstAccessInsn;              /**< Instruction address where this var was first read. */
+        Sawyer::Optional<size_t> firstAccessIdx;        /**< Instruction position in path where this var was first read. */
+        SymbolicExpr::Ptr memAddress;                   /**< Address where variable is located. */
+        size_t memSize;                                 /**< Size of total memory access in bytes. */
+        size_t memByteNumber;                           /**< Byte number for memory access. */
+        Sawyer::Optional<rose_addr_t> returnFrom;       /**< This variable is the return value from the specified function. */
+
+        VarDetail(): firstAccessInsn(NULL), memSize(0), memByteNumber(0) {}
+        std::string toString() const;
+    };
+
     /** Path searching functor.
      *
      *  This is the base class for user-defined functors called when searching for feasible paths. */
@@ -59,7 +75,8 @@ public:
         virtual ~PathProcessor() {}
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const std::vector<SymbolicExpr::Ptr> &pathConditions,
-                             const InstructionSemantics2::BaseSemantics::DispatcherPtr&) = 0;
+                             const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
+                             SMTSolver &solver) = 0;
     };
 
     /** Information stored per V_USER_DEFINED path vertex.
@@ -227,7 +244,7 @@ public:
      *  @p postConditions are additional optional conditions that must be satisified at the end of the path.  The entire set of
      *  conditions is returned via @p pathConditions argument, which can also initially contain preconditions. */
     virtual boost::tribool
-    isPathFeasible(const Partitioner2::CfgPath &path, const std::vector<SymbolicExpr::Ptr> &postConditions,
+    isPathFeasible(const Partitioner2::CfgPath &path, SMTSolver&, const std::vector<SymbolicExpr::Ptr> &postConditions,
                    std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
                    InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu /*out*/);
 
@@ -291,6 +308,9 @@ public:
      *  This is the summary information for a single function. If the specified function is not summarized then a
      *  default-constructed summary information object is returned. */
     const FunctionSummary& functionSummary(rose_addr_t entryVa) const;
+
+    /** Details about a variable. */
+    const VarDetail& varDetail(const InstructionSemantics2::BaseSemantics::StatePtr &state, const std::string &varName) const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
