@@ -1246,7 +1246,7 @@ findCommonSubexpressions(InputIterator begin, InputIterator end) {
 } // namespace
 } // namespace
 
-BOOST_CLASS_EXPORT(rose::BinaryAnalysis::SymbolicExpr::Interior);
-BOOST_CLASS_EXPORT(rose::BinaryAnalysis::SymbolicExpr::Leaf);
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Interior);
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Leaf);
 
 #endif

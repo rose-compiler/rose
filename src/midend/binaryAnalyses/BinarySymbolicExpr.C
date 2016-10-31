@@ -12,6 +12,9 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::SymbolicExpr::Interior);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::SymbolicExpr::Leaf);
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace SymbolicExpr {
