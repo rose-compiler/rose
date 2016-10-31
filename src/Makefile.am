@@ -251,7 +251,7 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
 endif
 
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
-if ROSE_USE_DWARF
+if ROSE_HAVE_LIBDWARF
    librose_la_LIBADD += $(ROSE_DWARF_LIBS_WITH_PATH)
 endif
 

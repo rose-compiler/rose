@@ -1004,7 +1004,7 @@ Switch::matchArguments(const std::string &switchString, const Location &endOfSwi
         }
     }
 
-    explode(result);
+    explode(parsedValues);
     guard.cancel();
     result.insert(result.end(), parsedValues.begin(), parsedValues.end());
     return nValuesParsed;
@@ -1362,7 +1362,6 @@ ParserResult::parsedArgs() const {
         retval.push_back(cursor_.strings()[idx]);
     return retval;
 }
-
 
 /*******************************************************************************************************************************
  *                                      Parser
@@ -2600,6 +2599,61 @@ Parser::findUnresolvableAmbiguities() const {
 
     return retval;
 }
+
+SAWYER_EXPORT std::vector<std::vector<std::string> >
+Parser::regroupArgs(const std::vector<std::string> &args, const Container::Interval<size_t> &limit, unsigned flags) {
+    std::vector<std::vector<std::string> > retval(1);
+    BOOST_FOREACH (const std::string &arg, args) {
+        if (arg == "--") {
+            retval.push_back(std::vector<std::string>());
+        } else {
+            retval.back().push_back(arg);
+        }
+    }
+
+    if ((flags & PROHIBIT_EMPTY_GROUPS) != 0) {
+        BOOST_FOREACH (const std::vector<std::string> &group, retval) {
+            if (group.empty()) {
+                std::string mesg = "empty specimen specification on command-line";
+                if (errorStream_) {
+                    *errorStream_ <<mesg <<"\n";
+                    *errorStream_ <<exitMessage() <<"\n";
+                    exit(1);
+                } else {
+                    throw std::runtime_error(mesg);
+                }
+            }
+        }
+    }
+
+    if ((flags & SPLIT_SINGLE_GROUP) != 0 && retval.size() == 1) {
+        retval.clear();
+        BOOST_FOREACH (const std::string &arg, args)
+            retval.push_back(std::vector<std::string>(1, arg));
+    }
+
+    if (!limit.isContaining(retval.size())) {
+        std::ostringstream mesg;
+        mesg <<"wrong number of positional argument groups; got " <<retval.size() <<", expected ";
+        if (limit.isSingleton()) {
+            mesg <<limit.least();
+        } else if (limit.least() + 1 == limit.greatest()) {
+            mesg <<limit.least() <<" or " <<limit.greatest();
+        } else {
+            mesg <<"between " <<limit.least() <<" and " <<limit.greatest();
+        }
+        if (errorStream_) {
+            *errorStream_ <<mesg.str() <<"\n";
+            *errorStream_ <<exitMessage() <<"\n";
+            exit(1);
+        } else {
+            throw std::runtime_error(mesg.str());
+        }
+    }
+    
+    return retval;
+}
+
 
 } // namespace
 } // namespace
