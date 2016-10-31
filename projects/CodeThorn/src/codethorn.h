@@ -7,9 +7,6 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-//preparation for using the Sawyer command line parser
-//#define USE_SAWYER_COMMANDLINE
-
 #include <iostream>
 #include <fstream>
 #include <set>
