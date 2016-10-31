@@ -16,6 +16,7 @@ update test_results set enabled = false where id not in (
 	rmc_debug,
 	rmc_dlib,
 	rmc_doxygen,
+	rmc_dwarf,
 	rmc_edg,
 	rmc_languages,
 	rmc_magic,

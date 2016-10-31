@@ -143,6 +143,9 @@ insert into dependencies values ('doxygen',      '1.8.8',            0);
 insert into dependencies values ('doxygen',      '1.8.9',            0);
 insert into dependencies values ('doxygen',      '1.8.10',           1);
 
+-- libdwarf version numbers
+insert into dependencies values ('dwarf',        'ambivalent',       1);
+
 -- EDG version numbers.
 insert into dependencies values ('edg',          '4.4',              0);
 insert into dependencies values ('edg',          '4.7',              0);
