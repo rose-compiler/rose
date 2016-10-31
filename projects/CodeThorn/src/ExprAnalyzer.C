@@ -381,6 +381,24 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
+        case V_SgBitAndOp: {
+          res.result=(lhsResult.result&rhsResult.result);
+          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+          resultList.push_back(res);
+          break;
+        }
+        case V_SgBitOrOp: {
+          res.result=(lhsResult.result|rhsResult.result);
+          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+          resultList.push_back(res);
+          break;
+        }
+        case V_SgBitXorOp: {
+          res.result=(lhsResult.result^rhsResult.result);
+          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+          resultList.push_back(res);
+          break;
+        }
         case V_SgGreaterOrEqualOp: {
           res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
           if(boolOptions["relop-constraints"]) {

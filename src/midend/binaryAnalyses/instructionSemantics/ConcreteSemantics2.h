@@ -257,7 +257,7 @@ public:
 
     /** Set memory map.
      *
-     *  If the specified map's areas not not in units of pages then padding segments will be added to this memory state. The
+     *  If the specified map's areas are not in units of pages then padding segments will be added to this memory state. The
      *  padding segments will either have the accessibility specified by @p padAccess, or will have the same accessibility as
      *  the memory region being padded.  All padding segments will be named "padding". */
     void memoryMap(const MemoryMap&, Sawyer::Optional<unsigned> padAccess = Sawyer::Nothing());

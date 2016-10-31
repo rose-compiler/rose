@@ -1463,7 +1463,7 @@ public:
     // We'd like bool context to return a value that can't be used in arithmetic or comparison operators, but unfortunately
     // we need to also work with the super class (std::basic_ios) that has an implicit "void*" conversion which conflicts with
     // the way Sawyer normally handles this (see SharedPointer for an example).  We therefore override the super-class'
-    // void* conversion and "!" operator instead.
+    // void* conversion and "!" operator instead. We also need to override operator bool if there is one.
 
     /** Returns true if this stream is enabled.
      *
@@ -1488,6 +1488,11 @@ public:
     }
 #if __cplusplus >= 201103L
     explicit operator bool() const {
+        return enabled();
+    }
+#else
+    // Needed on macOS
+    operator bool() const {
         return enabled();
     }
 #endif

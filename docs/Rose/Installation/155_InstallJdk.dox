@@ -19,4 +19,9 @@
  *
  *  @section installing_jdk_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
  *
- *  A suitable JDK can be installed by running <code>apt-get install default-jdk</code> as the administrator. */
+ *  A suitable JDK can be installed by running <code>apt-get install default-jdk</code> as the administrator.
+ *
+ *  @section installing_jdk_ubuntu1604 Ubuntu 16.04 "Xenial Xerus"
+ *
+ *  A suitable JDK can be installed by running <code>apt-get install default-jdk</code> as the administrator.
+ */
