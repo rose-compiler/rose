@@ -1842,6 +1842,12 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // This should be fixed!
      StringUtility::FileWithLineNumbers editStringStart = GrammarString::copyEdit (headerBeforeInsertion,"$BASECLASS",derivedClassString);
 
+  // C preprocessor condition wrapping this entire class declaration.
+     string cppCondition = node.getCppCondition();
+     if (cppCondition.empty())
+         cppCondition = "1";
+     editStringStart = GrammarString::copyEdit(editStringStart, "$CPP_CONDITION", cppCondition);
+
   // calls to GrammarString::copyEdit() now centralized in editSubstitution()
   // BP : 10/24/2001, keep track of memory being freed
      editStringStart = GrammarString::copyEdit (editStringStart,"$CLASSNAME",className);
@@ -2505,10 +2511,7 @@ Grammar::extractStringFromFile (
 
   // If this is false then the MARKER_*_START strings were not located in the file
      if (found == false)
-        {
-          printf ("Error: could not locate startMarker = %s in file = %s \n",startMarker.c_str(),filename.c_str());
-        }
-     ROSE_ASSERT (found);
+         throw std::runtime_error("Error: could not locate startMarker = " + startMarker + " in file = " + filename);
 
      found = false;
      for (unsigned int i = 0; i < fileString.size(); ++i)
