@@ -219,6 +219,15 @@ public:
     void measureCfgConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
     /** @} */
 
+    /** Function calls.
+     *
+     *  This metric creates a point cloud with one Cartesian point for each function called from the specified function.
+     *
+     * @{ */
+    CategoryId declareCallGraphConnectivity(const std::string &categoryName);
+    void measureCallGraphConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
+    /** @} */
+
     /** Instruction mnemonic stream.
      *
      *  This metric creates an ordered list of instruction mnemonics for the entire function by ordering the function's basic
@@ -288,8 +297,10 @@ public:
      *  @em The distance between two categories containing Cartesian points is computed as follows: If one category has fewer
      *      points than the other then temporarily pad the smaller category with points at the origin. Compute the minimum cost
      *      1:1 mapping from points in one category to those in the other and use the total cost as the distance between the
-     *      categories. */
-    double compare(const Partitioner2::Function::Ptr&, const Partitioner2::Function::Ptr&) const;
+     *      categories.
+     *
+     *  If either function has not been analyzed, or has been analyzed but resulted in no data, then return the @p dflt value. */
+    double compare(const Partitioner2::Function::Ptr&, const Partitioner2::Function::Ptr&, double dflt = NAN) const;
 
     /** Compare one function with all others.
      *

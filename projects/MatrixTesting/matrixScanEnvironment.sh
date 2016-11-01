@@ -52,6 +52,7 @@ if [ "$RMC_RMC_VERSION" != "" ]; then
     append_rmc_record debug      RMC_DEBUG
     append_rmc_record dlib       RMC_DLIB_VERSION
     append_rmc_record doxygen    RMC_DOXYGEN_VERSION
+    append_rmc_record dwarf      RMC_DWARF_VERSION
     append_rmc_record edg        RMC_EDG_VERSION
     append_rmc_record java       RMC_JAVA_VERSION
     append_rmc_record languages  RMC_LANGUAGES
