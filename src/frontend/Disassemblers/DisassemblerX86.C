@@ -69,6 +69,7 @@ DisassemblerX86::init(size_t wordsize)
     size_t addrWidth=0;
     switch (wordsize) {
         case 2:
+            name("i286");
             addrWidth = 16;
             insnSize = x86_insnsize_16;
 #if 0 // [Robb P. Matzke 2015-06-23]
@@ -85,6 +86,7 @@ DisassemblerX86::init(size_t wordsize)
             REG_SS = *regdict->lookup("ss");
             break;
         case 4:
+            name("i386");
             addrWidth = 32;
             insnSize = x86_insnsize_32;
             regdict = RegisterDictionary::dictionary_pentium4();
@@ -93,6 +95,7 @@ DisassemblerX86::init(size_t wordsize)
             REG_SS = *regdict->lookup("ss");
             break;
         case 8:
+            name("amd64");
             addrWidth = 64;
             insnSize = x86_insnsize_64;
             regdict = RegisterDictionary::dictionary_amd64();

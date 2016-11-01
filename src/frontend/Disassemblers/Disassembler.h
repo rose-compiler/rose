@@ -253,6 +253,7 @@ protected:
     unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
     static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
     static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
+    std::string p_name;                                 /**< Name by which this dissassembler is registered. */
 
     /** Prototypical dispatcher for creating real dispatchers */
     InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
@@ -286,6 +287,17 @@ public:
      *  Thread safety: Multiple threads can call this class method simultaneously even when other threads are registering
      *  additional disassemblers. */
     static Disassembler *lookup(SgAsmGenericHeader*);
+
+    /** Property: Name by which disassembler is registered.
+     *
+     * @{ */
+    const std::string& name() const {
+        return p_name;
+    }
+    void name(const std::string &s) {
+        p_name = s;
+    }
+    /** @} */
 
     /** List of names recognized by @ref lookup.
      *

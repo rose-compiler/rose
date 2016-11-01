@@ -4796,8 +4796,10 @@ DisassemblerM68k::init()
     // Default register dictionary
     const RegisterDictionary *regdict = NULL;
     if ((family & m68k_freescale) != 0) {
+        name("coldfire");
         regdict = RegisterDictionary::dictionary_coldfire_emac();
     } else {
+        name("m68040");
         regdict = RegisterDictionary::dictionary_m68000();
     }
     set_registers(regdict);
