@@ -51,7 +51,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
 int
 main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
+    ROSE_INITIALIZE;
     Diagnostics::initAndRegister(mlog, "tool");
     mlog[INFO].enable();
 
