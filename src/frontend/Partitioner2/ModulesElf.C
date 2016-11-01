@@ -67,7 +67,7 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         return false;
     SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
     SgAsmExpression *addr = mref ? mref->get_address() : NULL;
-    if (SgAsmBinaryExpression *binExpr = isSgAsmBinaryExpression(addr)) {
+    if (SgAsmBinaryAdd *binExpr = isSgAsmBinaryAdd(addr)) {
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(binExpr->get_lhs());
         SgAsmIntegerValueExpression *offset = isSgAsmIntegerValueExpression(binExpr->get_rhs());
         if (rre && offset) {
@@ -112,7 +112,11 @@ findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, 
     size_t nInserted = 0;
     rose_addr_t pltOffset = 14; /* skip the first entry (PUSH ds:XXX; JMP ds:YYY; 0x00; 0x00)--the JMP is not a function*/
     while (pltOffset<plt->get_mapped_size()) {
+#if 0 // [Robb P Matzke 2016-10-14]: it seems the base address needs to be zero most of the time, at least for amd64 gcc
         PltEntryMatcher matcher(elfHeader->get_base_va() + gotplt->get_mapped_preferred_rva());
+#else
+        PltEntryMatcher matcher(elfHeader->get_base_va());
+#endif
         rose_addr_t pltEntryVa = plt->get_mapped_actual_va() + pltOffset;
         if (!matcher.match(partitioner, pltEntryVa)) {
             ++pltOffset;

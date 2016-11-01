@@ -209,6 +209,42 @@ RegisterDictionary::get_descriptors() const
     return retval;
 }
 
+// Returns lowest possible non-negative value not present in v
+static unsigned
+firstUnused(std::vector<unsigned> &v /*in,out*/) {
+    if (v.empty())
+        return 0;
+    std::sort(v.begin(), v.end());
+    v.erase(std::unique(v.begin(), v.end()), v.end());
+    if (v.back() + 1 == v.size())
+        return v.size();
+    for (size_t i=0; i<v.size(); ++i) {
+        if (v[i] != i)
+            return i;
+    }
+    ASSERT_not_reachable("should have returned by now");
+}
+
+unsigned
+RegisterDictionary::firstUnusedMajor() const {
+    std::vector<unsigned> used;
+    BOOST_FOREACH (const Entries::value_type &entry, forward) {
+        if (used.empty() || used.back()!=entry.second.get_major())
+            used.push_back(entry.second.get_major());
+    }
+    return firstUnused(used);
+}
+
+unsigned
+RegisterDictionary::firstUnusedMinor(unsigned majr) const {
+    std::vector<unsigned> used;
+    BOOST_FOREACH (const Entries::value_type &entry, forward) {
+        if (entry.second.get_major() == majr)
+            used.push_back(entry.second.get_minor());
+    }
+    return firstUnused(used);
+}
+
 RegisterDictionary::RegisterDescriptors
 RegisterDictionary::get_largest_registers() const
 {

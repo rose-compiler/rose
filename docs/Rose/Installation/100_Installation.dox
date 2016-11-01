@@ -87,7 +87,8 @@
  *      <td>Required</td>
  *      <td>GCC-4.2.4 through 4.8.4</td>
  *      <td>GCC-4.4.5</td>
- *      <td>To compile ROSE. The gcc, g++, and gfortran compilers are required. See @ref installing_gcc. </td>
+ *      <td>To compile ROSE. The gcc, g++, and gfortran compilers are required. Furthermore, all libraries on which ROSE
+ *      depends should be compiled with the same compiler for best results. See @ref installing_gcc. </td>
  *    </tr>
  *
  *    <tr>
