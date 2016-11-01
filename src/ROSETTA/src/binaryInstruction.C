@@ -395,6 +395,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmX86Instruction | AsmArmInstruction | AsmPowerpcInstruction | AsmMipsInstruction |
                           AsmM68kInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
+    AsmInstruction.setCppCondition("!defined(DOCUMENTATION)");
 
     DECLARE_HEADERS(AsmInstruction);
 #if defined(SgAsmInstruction_HEADERS) || defined(DOCUMENTATION)
@@ -898,6 +899,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmBinaryLsl               | AsmBinaryLsr           | AsmBinaryAsr                |
                           AsmBinaryRor,
                           "AsmBinaryExpression", "AsmBinaryExpressionTag", false);
+    AsmBinaryExpression.setCppCondition("!defined(DOCUMENTATION)");
 
 #ifdef DOCUMENTATION
     /** Base class for binary expressions. */
@@ -974,6 +976,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_NONTERMINAL_MACRO(AsmUnaryExpression,
                           AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryArmSpecialRegisterList,
                           "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
+    AsmUnaryExpression.setCppCondition("!defined(DOCUMENTATION)");
 
 #ifdef DOCUMENTATION
     /** Base class for unary expressions. */
@@ -1040,6 +1043,7 @@ void Grammar::setUpBinaryInstructions() {
 
     NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression, AsmDirectRegisterExpression|AsmIndirectRegisterExpression,
                           "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag", false);
+    AsmRegisterReferenceExpression.setCppCondition("!defined(DOCUMENTATION)");
 
 #ifdef DOCUMENTATION
     class SgAsmRegisterReferenceExpression: public SgAsmExpression {
@@ -1270,6 +1274,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_NONTERMINAL_MACRO(AsmConstantExpression,
                           AsmIntegerValueExpression | AsmFloatValueExpression,
                           "AsmConstantExpression", "AsmConstantExpressionTag", false);
+    AsmConstantExpression.setCppCondition("!defined(DOCUMENTATION)");
 
     DECLARE_HEADERS(AsmConstantExpression);
 #if defined(SgAsmConstantExpression_HEADERS) || defined(DOCUMENTATION)
@@ -1312,6 +1317,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_NONTERMINAL_MACRO(AsmValueExpression,
                           AsmConstantExpression,
                           "AsmValueExpression", "AsmValueExpressionTag", false);
+    AsmValueExpression.setCppCondition("!defined(DOCUMENTATION)");
 
 #ifdef DOCUMENTATION
     /** Base class for values.
@@ -1516,6 +1522,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmCommonSubExpression       | AsmExprListExp                 | AsmRegisterNames          |
                           AsmRiscOperation,
                           "AsmExpression", "AsmExpressionTag", false);
+    AsmExpression.setCppCondition("!defined(DOCUMENTATION)");
 
 #ifdef DOCUMENTATION
     /** Base class for expressions. */
@@ -1684,6 +1691,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_NONTERMINAL_MACRO(AsmScalarType,
                           AsmIntegerType | AsmFloatType,
                           "AsmScalarType", "AsmScalarTypeTag", false);
+    AsmScalarType.setCppCondition("!defined(DOCUMENTATION)");
 
 #ifdef DOCUMENTATION
     /** Base class for scalar types. */
@@ -1771,6 +1779,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     NEW_NONTERMINAL_MACRO(AsmType, AsmScalarType | AsmVectorType, "AsmType", "AsmTypeTag", false);
+    AsmType.setCppCondition("!defined(DOCUMENTATION)");
 
 #ifdef DOCUMENTATION
     /** Base class for binary types. */
