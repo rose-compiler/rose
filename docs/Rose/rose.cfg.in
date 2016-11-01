@@ -694,18 +694,10 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/Disassemblers/Expressions.C \
                          @top_srcdir@/src/frontend/Disassemblers/Partitioner.C \
                          @top_srcdir@/src/frontend/Disassemblers/Registers.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmArmInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmBlock.C \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmFloatValueExpression.C \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmFunction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmIntegerValueExpression.C \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmInterpretation.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmM68kInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmMipsInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmType.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmX86Instruction.C \
                          @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ElfErrorFrame.C \

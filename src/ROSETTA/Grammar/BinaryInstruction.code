@@ -8,26 +8,9 @@ HEADER_EXECUTABLE_FILE_FORMAT_PREDECLARATION_START
 #include <Sawyer/Message.h>
 HEADER_EXECUTABLE_FILE_FORMAT_PREDECLARATION_END
 
-HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_START
-#include "InstructionEnumsX86.h" /* register numbers, instruction size, etc. */
-class RegisterDictionary;
-HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_END
 
-HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION_START
-#include "armInstructionEnum.h"
-HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION_END
 
-HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_START
-#include "powerpcInstructionEnum.h"
-HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_END
 
-HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION_START
-#include "InstructionEnumsMips.h"
-HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION_END
-
-HEADER_BINARY_M68K_INSTRUCTION_PREDECLARATION_START
-#include "InstructionEnumsM68k.h"
-HEADER_BINARY_M68K_INSTRUCTION_PREDECLARATION_END
 
 HEADER_GENERIC_SECTION_PREDECLARATION_START
 #include "MemoryMap.h"
@@ -43,17 +26,8 @@ class MemoryMap;
 class RegisterDictionary;
 HEADER_INTERPRETATION_PREDECLARATION_END
 
-HEADER_CONSTANT_EXPRESSION_PREDECLARATION_START
-#include <Sawyer/BitVector.h>
-HEADER_CONSTANT_EXPRESSION_PREDECLARATION_END
 
-HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
-#include "MemoryMap.h"
-HEADER_BINARY_INSTRUCTION_PREDECLARATION_END
 
-HEADER_FLOAT_TYPE_PREDECLARATION_START
-#include <Sawyer/BitVector.h>
-HEADER_FLOAT_TYPE_PREDECLARATION_END
 
 HEADER_BINARY_FUNCTION_PREDECLARATION_START
 namespace rose {
@@ -116,38 +90,6 @@ HEADER_INTERPRETATION_END
 
 
 
-HEADER_BINARY_INSTRUCTION_START
-        public:
-                static const int64_t INVALID_STACK_DELTA;
-
-                SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
-                std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
-                std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
-                void appendSources( SgAsmInstruction* instruction );
-
-                // These are documented in SgAsmInstruction.C
-                virtual bool terminatesBasicBlock(); /*subclasses must redefine*/
-                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
-                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
-                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&);
-                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&);
-                bool isFirstInBlock();
-                bool isLastInBlock();
-                virtual bool getBranchTarget(rose_addr_t *target/*out*/);
-                virtual bool hasEffect();
-                virtual bool hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
-                                       bool relax_stack_semantics=false);
-                virtual std::vector<std::pair<size_t,size_t> >
-                    findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
-                                         bool relax_stack_semantics=false);
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete); /*subclasses must redefine*/
-                virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                            bool *complete,
-                                                            const MemoryMap *initial_memory=NULL);
-                virtual size_t get_size() const;
-                virtual bool isUnknown() const;
-                virtual unsigned get_anyKind() const;
-HEADER_BINARY_INSTRUCTION_END
 
 
 
@@ -164,134 +106,19 @@ HEADER_BINARY_FILE_END
 
 
 
-HEADER_CONSTANT_EXPRESSION_START
-        public:
-                const Sawyer::Container::BitVector& get_bitVector() const { return p_bitVector; }
-                Sawyer::Container::BitVector& get_bitVector() { return p_bitVector; }
-                void set_bitVector(const Sawyer::Container::BitVector &bv) { p_bitVector = bv; }
-HEADER_CONSTANT_EXPRESSION_END
-
-
-
-HEADER_INTEGER_VALUE_EXPRESSION_START
-        public:
-                SgAsmIntegerValueExpression(uint64_t n, SgAsmType *type);
-                SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type);
-                static uint64_t virtualAddress(SgNode*);
-                std::string get_label(bool quiet=false) const;
-                size_t get_significantBits() const;
-                void makeRelativeTo(SgNode *baseNode);
-                uint64_t get_baseAddress() const;
-                uint64_t get_absoluteValue(size_t nbits=0) const;
-                void set_absoluteValue(uint64_t);
-                int64_t get_signedValue() const;
-                int64_t get_relativeValue() const;
-                void set_relativeValue(int64_t v, size_t nbits=64);
-                uint64_t get_value() const { return get_absoluteValue(); }
-
-                // These are deprecated; use CamelCase versions instead [Robb P. Matzke 2014-07-21]
-                size_t get_significant_bits() const ROSE_DEPRECATED("use get_significantBits");
-                void make_relative_to(SgNode*) ROSE_DEPRECATED("use makeRelativeTo");
-                uint64_t get_base_address() const ROSE_DEPRECATED("use get_baseAddress");
-                uint64_t get_absolute_value(size_t nbits=0) const ROSE_DEPRECATED("use get_absoluteValue");
-                void set_absolute_value(uint64_t) ROSE_DEPRECATED("use set_absoluteValue");
-                int64_t get_signed_value() const ROSE_DEPRECATED("use set_signedValue");
-                int64_t get_relative_value() const ROSE_DEPRECATED("use get_relativeValue");
-                void set_relative_value(int64_t, size_t nbits=64) ROSE_DEPRECATED("use set_relativeValue");
-HEADER_INTEGER_VALUE_EXPRESSION_END
 
 
 
 
-HEADER_FLOAT_VALUE_EXPRESSION_START
-        private:
-                // This node stores its primary representation of the value in the p_bitVector of a parent class.  However,
-                // since we often access the value as a native "double", and since converting to/from a bit vector is costly,
-                // we want to cache the native double value whenever we compute it.  ROSETTA does not need to be aware of the
-                // cached value since it can be recomputed from the bit vector, and in fact, ROSETTA can't handle cache data
-                // members because it doesn't understand "mutable".
-                mutable double p_nativeValue;
-                mutable bool p_nativeValueIsValid;
-        public:
-                SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
-                SgAsmFloatValueExpression(double nativeValue, SgAsmType*);
-                SgAsmFloatValueExpression(const Sawyer::Container::BitVector&,SgAsmType*);
-                void set_nativeValue(double);
-                double get_nativeValue() const;
-                void updateBitVector();
-                void updateNativeValue() const;
-HEADER_FLOAT_VALUE_EXPRESSION_END
 
 
 
-HEADER_EXPRESSION_START
-        public:
-                size_t get_nBits() const;
-HEADER_EXPRESSION_END
 
 
 
-HEADER_RISC_OPERATION_START
-        public:
-                // One enum per RISC operator.  The names are the same as the RISC operator.  Note that some of these
-                // operators aren't normally part of the base set. For instance, "subtract" and comparison operations
-                // are usually implemented in terms of more basic operations like add_, invert, and equalToZero.
-                enum RiscOperator {
-                        OP_NONE,
-			OP_bottom,
-			OP_undefined,
-			OP_unspecified,
-                        OP_filterCallTarget,
-                        OP_filterReturnTarget,
-                        OP_filterIndirectJumpTarget,
-                        OP_hlt,
-                        OP_cpuid,
-                        OP_rdtsc,
-                        OP_and_,
-                        OP_or_,
-                        OP_xor_,
-                        OP_invert,
-                        OP_extract,
-                        OP_concat,
-                        OP_leastSignificantSetBit,
-                        OP_mostSignificantSetBit,
-                        OP_rotateLeft,
-                        OP_rotateRight,
-                        OP_shiftLeft,
-                        OP_shiftRight,
-                        OP_shiftRightArithmetic,
-                        OP_equalToZero,
-                        OP_ite,
-                        OP_isEqual,
-                        OP_isNotEqual,
-                        OP_isUnsignedLessThan,
-                        OP_isUnsignedLessThanOrEqual,
-                        OP_isUnsignedGreaterThan,
-                        OP_isUnsignedGreaterThanOrEqual,
-                        OP_isSignedLessThan,
-                        OP_isSignedLessThanOrEqual,
-                        OP_isSignedGreaterThan,
-                        OP_isSignedGreaterThanOrEqual,
-                        OP_unsignedExtend,
-                        OP_signExtend,
-                        OP_add,		// two args + optional carry bit
-                        OP_addCarries,  // carries from a 3-arg add operation
-                        OP_subtract,
-                        OP_negate,
-                        OP_signedDivide,
-                        OP_signedModulo,
-                        OP_signedMultiply,
-                        OP_unsignedDivide,
-                        OP_unsignedModulo,
-                        OP_unsignedMultiply,
-                        OP_interrupt,
-                        OP_readRegister,
-                        OP_writeRegister,
-                        OP_readMemory,  //  three or four args depending on whether segment register is present
-                        OP_writeMemory, //  ditto
-                        OP_N_OPERATORS  // must be last
-                };
-HEADER_RISC_OPERATION_END
+
+
+
 
 
 
@@ -3701,84 +3528,15 @@ HEADER_DOS_EXTENDED_HEADER_END
 
 
 
-HEADER_BINARY_X86_INSTRUCTION_START
-        public:
-                static X86InstructionSize instructionSizeForWidth(size_t);
-                static size_t widthForInstructionSize(X86InstructionSize);
-                static const RegisterDictionary* registersForInstructionSize(X86InstructionSize);
-                static const RegisterDictionary* registersForWidth(size_t);
-
-                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
-                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
-                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
-                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
-                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
-                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
-                virtual bool getBranchTarget(rose_addr_t *target/*out*/) ROSE_OVERRIDE;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
-                virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                            bool* complete,
-                                                            const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
-                virtual bool isUnknown() const;
-                virtual unsigned get_anyKind() const;
-HEADER_BINARY_X86_INSTRUCTION_END
 
 
 
-HEADER_BINARY_POWERPC_INSTRUCTION_START
-        public:
-                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
-                virtual bool isUnknown() const ROSE_OVERRIDE;
-                virtual unsigned get_anyKind() const;
-HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
 
-HEADER_BINARY_ARM_INSTRUCTION_START
-        public:
-                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
-                virtual bool isUnknown() const ROSE_OVERRIDE;
-                virtual unsigned get_anyKind() const ROSE_OVERRIDE;
-HEADER_BINARY_ARM_INSTRUCTION_END
 
 
 
-HEADER_BINARY_MIPS_INSTRUCTION_START
-        public:
-                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
-                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
-                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
-                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
-                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
-                virtual bool isUnknown() const ROSE_OVERRIDE;
-                virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
-                virtual unsigned get_anyKind() const ROSE_OVERRIDE;
-HEADER_BINARY_MIPS_INSTRUCTION_END
-
-
-HEADER_BINARY_M68K_INSTRUCTION_START
-        public:
-                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
-                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
-                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
-                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
-                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
-                virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
-                virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                            bool* complete,
-                                                            const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
-                virtual bool isUnknown() const ROSE_OVERRIDE;
-                virtual unsigned get_anyKind() const ROSE_OVERRIDE;
-HEADER_BINARY_M68K_INSTRUCTION_END
 
 
 
@@ -3841,9 +3599,6 @@ HEADER_BINARY_BLOCK_END
 
 
 
-HEADER_BINARY_OPERAND_LIST_START
-          void append_operand( SgAsmExpression* operand );
-HEADER_BINARY_OPERAND_LIST_END
 
 
 
@@ -4010,93 +3765,16 @@ HEADER_BINARY_DATA_STRUCTURE_END
 
 
 
-HEADER_TYPE_START
-        private:
-                static Sawyer::Container::Map<std::string, SgAsmType*> p_typeRegistry;
-
-        public:
-                virtual void check() const;
-                virtual std::string toString() const { abort(); return NULL; }       // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
-                virtual size_t get_nBits() const { abort(); return (size_t)-1; }           // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
-                virtual size_t get_nBytes() const;
-
-                template<class Type>                                    // Type is a subclass of SgAsmType
-                static Type* registerOrDelete(Type *toInsert) {
-                    ASSERT_not_null(toInsert);
-                    std::string key = toInsert->toString();
-                    Type *retval = dynamic_cast<Type*>(p_typeRegistry.insertMaybe(key, toInsert));
-                    ASSERT_not_null(retval);
-                    if (retval!=toInsert)
-                        delete toInsert;
-                    return retval;
-                }
-
-HEADER_TYPE_END
-
-
-HEADER_VECTOR_TYPE_START
-        public:
-                SgAsmVectorType(size_t nElmts, SgAsmType *elmtType);
-                size_t get_nElmts() const;
-                SgAsmType* get_elmtType() const;
-                virtual void check() const ROSE_OVERRIDE;
-                virtual std::string toString() const ROSE_OVERRIDE;
-                virtual size_t get_nBits() const ROSE_OVERRIDE;
-HEADER_VECTOR_TYPE_END
-
-
-HEADER_SCALAR_TYPE_START
-        protected:
-                SgAsmScalarType(ByteOrder::Endianness, size_t nBits);
-        public:
-                virtual void check() const;
-                virtual std::string toString() const;
-                virtual size_t get_nBits() const ROSE_OVERRIDE;
-                ByteOrder::Endianness get_minorOrder() const;
-                ByteOrder::Endianness get_majorOrder() const;
-                size_t get_majorNBytes() const;
-HEADER_SCALAR_TYPE_END
 
 
 
-HEADER_INTEGER_TYPE_START
-        public:
-                SgAsmIntegerType(ByteOrder::Endianness, size_t nBits, bool isSigned);
-                virtual void check() const;
-                virtual std::string toString() const;
-                bool get_isSigned() const;
-HEADER_INTEGER_TYPE_END
 
 
 
-HEADER_FLOAT_TYPE_START
-        public:
-                enum {
-                    GRADUAL_UNDERFLOW      = 0x00000001,
-                    NORMALIZED_SIGNIFICAND = 0x00000002
-                };
 
-                typedef Sawyer::Container::BitVector::BitRange BitRange;
 
-                SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
-                               const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
-                               uint64_t exponentBias, unsigned flags);
 
-                virtual void check() const;
-                virtual std::string toString() const;
-                
-                // These return the position of the significand, exponent, and sign bit fields.
-                BitRange significandBits() const;
-                BitRange exponentBits() const;
-                size_t signBit() const;
 
-		uint64_t exponentBias() const;
-
-                // Boolean properties (same names as their enum constants)
-                unsigned flags() const;
-                bool gradualUnderflow() const;
-                bool normalizedSignificand() const;
-HEADER_FLOAT_TYPE_END
 
 
 
@@ -4413,121 +4091,6 @@ SgAsmFunction::get_numberOfPathsNotReturningMetric() const
 SOURCE_BINARY_FUNCTION_DECLARATION_END
 
 
-SOURCE_BINARY_INSTRUCTION_START
-
-void
-SgAsmInstruction::appendSources( SgAsmInstruction* inst )
-   {
-     p_sources.push_back(inst);
-   }
-
-SgAsmInstruction*
-SgAsmInstruction::cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info)
-   {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     if (!isAsmUnconditionalBranch(this))
-        {
-          SgAsmInstruction* next = info->getInstructionAtAddress(this->get_address() + this->get_raw_bytes().size());
-          return next;
-        }
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-
-     return NULL;
-   }
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info)
-   {
-  // cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmX86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmX86Instruction(this) ? toString(isSgAsmX86Instruction(this)->get_kind()) : "") << endl;
-     std::vector<VirtualBinCFG::CFGEdge> result;
-
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     uint64_t nextAddr = this->get_address() + this->get_raw_bytes().size();
-
-     if (isAsmBranch(this))
-        {
-       // cout << "Found branch" << endl;
-          uint64_t addr = 0;
-          bool knownTarget = getBranchTarget(&addr);
-          if (knownTarget)
-             {
-            // cout << "Has known target " << std::hex << addr << endl;
-               SgAsmInstruction* tgt = info->getInstructionAtAddress(addr);
-               if (tgt)
-                  {
-                    makeEdge(this, tgt, info, result);
-                  }
-             }
-            else
-             {
-            // Unknown target
-            // cout << "Unknown target" << endl;
-               const std::set<uint64_t> successorAddrs = info->getPossibleSuccessors(this);
-               for (std::set<uint64_t>::const_iterator i = successorAddrs.begin(); i != successorAddrs.end(); ++i)
-                  {
-                 // cout << "Found succ address " << std::hex << *i << endl;
-                    SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
-                    if (tgt)
-                       {
-                         makeEdge(this, tgt, info, result);
-                       }
-                  }
-#if 0
-               if (successorAddrs.empty())
-                  {
-                 // FIXME: For bug-compatibility with old version
-                    SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
-                    if (next) 
-                         makeEdge(this, next, info, result);
-                  }
-#endif
-             } // else
-        } // if
-
-     if ((!isSgAsmX86Instruction(this) || (isSgAsmX86Instruction(this)->get_kind() != x86_ret && isSgAsmX86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmX86Instruction(this) && isSgAsmX86Instruction(this)->get_kind() == x86_call) */ )
-        {
-       // cout << "Next insn is at " << std::hex << nextAddr << endl;
-          SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
-       // ROSE_ASSERT (next);
-          if (next)
-               makeEdge(this, next, info, result);
-        }
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-
-     return result;
-   }
-
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info)
-   {
-     std::vector<VirtualBinCFG::CFGEdge> result;
-
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     const std::set<uint64_t>& preds = info->getPossiblePredecessors(this);
-     for (std::set<uint64_t>::const_iterator i = preds.begin(); i != preds.end(); ++i)
-        {
-          SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
-          if (tgt)
-             {
-               makeEdge(this, tgt, info, result);
-             }
-        }
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-
-     return result;
-   }
-
-SOURCE_BINARY_INSTRUCTION_END
 
 
 
