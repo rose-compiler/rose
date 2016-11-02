@@ -80,7 +80,7 @@ while (my $file = $files->next_file) {
 # Report failures
 my @remaining = map {@$_} values %index;
 
-# Lowered the number of unused headers by removing unused headers from: ./tests/CompileTests/OvertureCode
+# Lowered the number of unused headers by removing unused headers from: ./tests/nonsmoke/functional/CompileTests/OvertureCode
 # $warning = "" if @remaining > 281; # as of 2010-11-06 there are 281 violations; do not allow more!
 # $warning = "" if @remaining > 199;
 $warning = "" if @remaining > 205;

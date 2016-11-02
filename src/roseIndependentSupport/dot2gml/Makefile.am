@@ -16,13 +16,13 @@ DISTCLEANFILES = parseDotGrammar.h parseDotGrammar.cc parseDot.cc
 # Header files that need to be included in the distribution
 pkginclude_HEADERS = parse_header.h
 
-clean-local:
-	rm -f *.o *~ *.gml
-
 # DQ (9/10/2005): This should be moved to the tests directory
 #check:
 #	./dot2gml $(srcdir)/onefileonly.C.dot
 
 endif
+
+clean-local:
+	rm -f *.o *~ *.gml
 
 EXTRA_DIST = CMakeLists.txt parse_header.h parseDot.ll parseDotGrammar.yy README main.C PolicyControl.txt

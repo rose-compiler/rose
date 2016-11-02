@@ -109,7 +109,7 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
   // of the macro (from the AST), so the whole subtree must be unparsed.  NOTE: this case might be more complex if multiple statements
   // are associated with a macro (so that there is not a single root of the subtree.  I need to build an example of this to better 
   // understand if there is a problem and if so just what would be the best solution.  It will b at least an iterative refinement of
-  // this specific problem.  See tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_135.C for an example
+  // this specific problem.  See tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_135.C for an example
   // of this problem.
      if (n->get_containsTransformation() == true)
         {
@@ -176,7 +176,7 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
             // DQ (11/9/2015): Added support for specific scopes where we don't want them the be 
             // unparsed from the token stream when children of them are transformed.
             // DQ (11/8/2015): I think that this should not apply to a SgBasicBlock (for example see 
-            // tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_94.C).
+            // tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_94.C).
             // The reason is that a block is not the same sort for compound statement as a SgForStatement.
             // if (isSgBasicBlock(currentStatement) == NULL)
                bool current_statement_is_allowed_to_have_statements_with_unmapped_token_sequences = 

@@ -10,7 +10,7 @@ main(int argc, char** argv)
      ROSE_ASSERT (project != NULL);
 
 // This is controled by using the --with-dwarf configure command line option.
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef ROSE_HAVE_LIBDWARF
 
   // The input file is the binary file...
      int binary_file_id = project->get_fileList()[0]->get_file_info()->get_file_id();

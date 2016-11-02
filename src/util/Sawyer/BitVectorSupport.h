@@ -938,7 +938,7 @@ void fromInteger(Word *words, const BitRange &range, boost::uint64_t value) {
     size_t nTmpWords = numberOfWords<Word>(nbits);
     SAWYER_VARIABLE_LENGTH_ARRAY(Word, tmp, nTmpWords);
     for (size_t i=0; i<nTmpWords; ++i)
-        tmp[i] = (value >> (i * bitsPerWord<Word>::value)) & wordMask;
+        tmp[i] = (Word)((value >> (i * bitsPerWord<Word>::value)) & wordMask);
 
     // Copy the value's bit vector to the destination and zero-fill
     copy(tmp, BitRange::baseSize(0, nbits), words, BitRange::baseSize(range.least(), nbits));

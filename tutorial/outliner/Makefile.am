@@ -48,7 +48,7 @@ generatedFiles = inputCode_OutlineLoop$(EXEEXT) \
 # DQ (6/25/2011): This was the version that worked around a outliner and
 # name qualification bug (two bugs, I think).  The name qualification bug
 # is now fixed.  This is the same bug as for the moreTest3.C code in the
-# tests/roseTests/astOutliningTests directory.
+# tests/nonsmoke/functional/roseTests/astOutliningTests directory.
 OLD_generatedFiles = 	inputCode_OutlineNonLocalJumps$(EXEEXT) \
 	rose_inputCode_OutlineNonLocalJumps.cc \
 	inputCode_OutlineNonLocalJumps.out \

@@ -84,6 +84,11 @@ CommandlineProcessing::createEmptyParser(const std::string &purpose, const std::
     return parser;
 }
 
+Sawyer::CommandLine::Parser
+CommandlineProcessing::createEmptyParserStage(const std::string &purpose, const std::string &description) {
+    return createEmptyParser(purpose, description).skippingNonSwitches(true).skippingUnknownSwitches(true);
+}
+
 // Global place to store result of parsing genericSwitches.
 CommandlineProcessing::GenericSwitchArgs CommandlineProcessing::genericSwitchArgs;
 
@@ -99,7 +104,7 @@ CommandlineProcessing::genericSwitches() {
                .doc("Show this documentation.")
                .action(showHelpAndExit(0)));
 
-    gen.insert(Switch("log", 'L')
+    gen.insert(Switch("log")
                .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
                .argument("config")
                .whichValue(SAVE_ALL)
