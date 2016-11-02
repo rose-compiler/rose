@@ -6885,7 +6885,7 @@ SgAggregateInitializer::replace_expression(SgExpression* o, SgExpression* n)
 SgType*
 SgAggregateInitializer::get_type() const
    {
-#if 1
+#if 0
      printf ("In SgAggregateInitializer::get_type() \n");
 #endif
 
@@ -7048,7 +7048,7 @@ SgCompoundInitializer::replace_expression(SgExpression* o, SgExpression* n)
 SgType*
 SgCompoundInitializer::get_type() const
    {
-#if 1
+#if 0
      printf ("In SgCompoundInitializer::get_type() \n");
 #endif
 
@@ -8540,7 +8540,7 @@ SgDesignatedInitializer::get_type() const
    {
      ROSE_ASSERT(p_memberInit != NULL);
 
-#if 1
+#if 0
      printf ("In SgDesignatedInitializer::get_type() \n");
 #endif
 
