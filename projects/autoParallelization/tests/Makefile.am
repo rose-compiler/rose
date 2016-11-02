@@ -8,6 +8,7 @@ accumulateForce.c \
 anti_dep.c \
 array_scalar.c \
 c99loop.c \
+coefficientSubscript.c \
 complexCondition.c \
 dep_distance.c \
 doall.c \

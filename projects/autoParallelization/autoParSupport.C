@@ -1970,12 +1970,16 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       s = getSymbol(e->get_lhs_operand()); // recursive call here
     }
     else if (SgDotExp* e = isSgDotExp(exp))
-    { // a[i]
+    { 
       s = getSymbol(e->get_lhs_operand()); // recursive call here
     }
      else if (SgArrowExp* e = isSgArrowExp(exp))
-    { // a[i]
+    { 
       s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+     else if (SgCastExp* e = isSgCastExp(exp))
+    { 
+      s = getSymbol(e->get_operand_i()); // recursive call here
     }
     else if (SgFunctionCallExp* e = isSgFunctionCallExp(exp))
       s = e->getAssociatedFunctionSymbol();
@@ -1985,18 +1989,22 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       s = e->get_symbol_i();
     else if (SgLabelRefExp* e = isSgLabelRefExp(exp))
       s = e->get_symbol();
+    else if (isSgConstructorInitializer(exp)) // void reportAlgorithmStats(const std::string& err="");
+    { // temporary initializer on the right hand , assigned by value to left side, it has persistent no mem location is concerned.
+      s = NULL; 
+    }
     else
     {
       cerr<<"Error. getSymbol(SgExpression* exp) encounters unhandled exp:"<< exp->class_name()<<endl;
       ROSE_ASSERT (false);
     }  
-
-    ROSE_ASSERT (s!=NULL);
+// We allow NULL symbol here. Naturally eliminate some strange expressions in the dependence pair.
+//    ROSE_ASSERT (s!=NULL);
 
     return s; 
   }
   
-  //! Check if two expressions access different memory locations. If in double, return false (not certain).
+  //! Check if two expressions access different memory locations. If in double, return false (not certain, may alias to each other).
   //This is helpful to exclude some dependence relations involving two obvious different memory location accesses
   //TODO: move to SageInterface when ready
   bool differentMemoryLocation(SgExpression* e1, SgExpression* e2)
