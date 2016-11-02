@@ -1472,7 +1472,7 @@ void Grammar::setUpBinaryInstructions() {
             OP_isSignedGreaterThanOrEqual,
             OP_unsignedExtend,
             OP_signExtend,
-            OP_add,		                        /**< Two args + optional carry bit. */
+            OP_add,                                     /**< Two args + optional carry bit. */
             OP_addCarries,                              /**< Carries from a 3-arg add operation. */
             OP_subtract,
             OP_negate,
