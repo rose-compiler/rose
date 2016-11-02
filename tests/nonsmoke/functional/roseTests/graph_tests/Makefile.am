@@ -9,6 +9,7 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 #------------------------------------------------------------------------------------------------------------------------
+if !OS_MACOSX
 # hash_multimap
 
 noinst_PROGRAMS += hash_multimap
@@ -21,7 +22,7 @@ hash_multimap.passed: hash_multimap
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/hash_multimap" \
 		$(TEST_EXIT_STATUS) $@
-
+endif
 #------------------------------------------------------------------------------------------------------------------------
 # graph_test_1
 
