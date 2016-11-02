@@ -403,7 +403,14 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
         ASSERT_require(nBytes > 0);
         if (cell->get_address()->is_number() && cell->get_address()->get_width()<=64) {
             rose_addr_t va = cell->get_address()->get_number();
-            stackWriters.insert(AddressInterval::baseSize(va, nBytes), cell->latestWriter().orElse(0));
+
+            // There may have been many writers for an address. Rather than write an algorithm to find the largest sets of
+            // addresses written by the same writer, we'll just arbitrarily choose the least address.
+            const BaseSemantics::MemoryCell::AddressSet &allWriters = cell->getWriters();
+            rose_addr_t leastWriter = 0;
+            if (!allWriters.isEmpty())
+                leastWriter = allWriters.least();
+            stackWriters.insert(AddressInterval::baseSize(va, nBytes), leastWriter);
             symbolicAddrs.insert(va, cell->get_address());
         }
     }
