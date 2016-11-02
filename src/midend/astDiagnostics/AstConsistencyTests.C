@@ -3816,6 +3816,12 @@ TestAstAccessToDeclarations::test ( SgNode* node )
    }
 
 
+TestExpressionTypes::TestExpressionTypes()
+   {
+  // DQ (10/31/2016): Use this mechanism to make traversals transformation-safe (it works).
+  // myProcessingObject->set_useDefaultIndexBasedTraversal(false); 
+     set_useDefaultIndexBasedTraversal(false); 
+   }
 
 void
 TestExpressionTypes::visit ( SgNode* node )
@@ -3825,9 +3831,25 @@ TestExpressionTypes::visit ( SgNode* node )
      SgExpression* expression = isSgExpression(node);
      if (expression != NULL)
         {
-       // printf ("TestExpressionTypes::visit(): calling expression->get_type() on expression = %p = %s \n",expression,expression->class_name().c_str());
+#if 1
+       // DQ (10/31/2016): Testing to debug mergeTest_04.C and mergeTest_111.C.
+
+       // printf ("TestExpressionTypes::visit(): before calling expression->get_type() on expression = %p = %s call TestNodes::test() \n",expression,expression->class_name().c_str());
+
+       // DQ (10/25/2016): Testing IR node integrity. This test makes the traversla order (n^2).
+       // TestNodes::test();
+
+       // printf ("TestExpressionTypes::visit(): calling expression->get_type() on expression = %p = %s (after TestNodes::test()) \n",expression,expression->class_name().c_str());
+
           SgType* type = expression->get_type();
           ROSE_ASSERT(type != NULL);
+
+       // DQ (10/25/2016): Testing IR node integrity. This test makes the traversla order (n^2).
+       // TestNodes::test();
+#endif
+#if 1
+       // DQ (10/31/2016): Testing to debug mergeTest_04.C and mergeTest_111.C.
+
        // printf ("TestExpressionTypes::visit(): calling expression->get_type() on expression = %p = %s type = %s \n",expression,expression->class_name().c_str(),type->class_name().c_str());
        // PC (10/12/2009): The following test verifies that array types properly decay to pointer types
        //  From C99 6.3.2.1p3:
@@ -3880,7 +3902,11 @@ TestExpressionTypes::visit ( SgNode* node )
                        }
                   }
              }
+#endif
         }
+
+#if 1
+  // DQ (10/31/2016): Testing to debug mergeTest_04.C and mergeTest_111.C.
 
      SgType* type = NULL;
      switch (node->variantT())
@@ -4043,6 +4069,7 @@ TestExpressionTypes::visit ( SgNode* node )
                   }
              }
         }
+#endif
 
 #if 0
      SgFunctionType* namedType = isNamedType(type);
@@ -6621,3 +6648,39 @@ TestAstForCyclesInTypedefs::visit ( SgNode* node )
 #endif
    }
 
+
+#if 0
+void
+TestNodes::visit ( SgNode* node )
+   {
+  // DQ (10/25/2016): This test is to access each node in the memory pool to look for where an error occures.
+  // It is part of debugging an erro in mergeTest_04.C
+#if 0
+     printf ("TestNodes: node = %p \n",node);
+     if (node != NULL)
+        {
+          printf ("TestNodes: node = %p = %s \n",node,node->class_name().c_str());
+        }
+#else
+     if (node != NULL)
+        {
+       // node->get_parent();
+       // if (node->p_freepointer == IS_VALID_POINTER)
+       // if (AST_FileIO::IS_VALID_POINTER() == true)
+          if (node->get_freepointer() == AST_FileIO::IS_VALID_POINTER())
+             {
+               node->variantT();
+             }
+        }
+#endif
+
+   }
+
+void
+TestNodes::test()
+   {
+     TestNodes t;
+  // t.traverse(node,preorder);
+     t.traverseMemoryPool();
+   }
+#endif
