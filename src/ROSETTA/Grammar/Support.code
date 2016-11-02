@@ -20401,19 +20401,40 @@ SgTypeTable::insert_type(const SgFunctionDeclaration *fdecl)
 SgType*
 SgTypeTable::lookup_type(const SgName& n)
    {
-  // printf ("In SgTypeTable::lookup_function_type: Looking for %s \n",n.str());
+#if 0
+     printf ("In SgTypeTable::lookup_type: Looking for %s \n",n.str());
+#endif
+
      ROSE_ASSERT (p_type_table != NULL);
+
   // SgFunctionTypeSymbol *fsymb = isSgFunctionTypeSymbol(p_function_type_table->findfunctype(n));
+
+#if 0
+     printf ("Is this an error: shouldn't this be looking for any type, and not just a function Type? \n");
+#endif
+
      SgSymbol *symbol = p_type_table->find_function_type(n);
+
+#if 0
+     printf ("In SgTypeTable::lookup_type: symbol = %p \n",symbol);
+#endif
+
      SgFunctionTypeSymbol *fsymb = isSgFunctionTypeSymbol(symbol);
+
      SgType* returnType = NULL;
 
      if (fsymb != NULL)
         {
           returnType = fsymb->get_type();
           ROSE_ASSERT(returnType != NULL);
-       // printf ("In SgTypeTable::lookup_function_type(): found function type %s \n",returnType->class_name().c_str());
+#if 0
+          printf ("In SgTypeTable::lookup_type(): found function type %s \n",returnType->class_name().c_str());
+#endif
         }
+
+#if 0
+     printf ("In SgTypeTable::lookup_type: returnType = %p \n",returnType);
+#endif
 
      return returnType;
    }

@@ -239,6 +239,9 @@ class TestExpressionTypes : public AstSimpleProcessing
       //! static function to do test on any IR node
        // static void test(SgNode* node);
 
+       // DQ (10/31/2016): Added constructor so that we could test using set_useDefaultIndexBasedTraversal(false);
+          TestExpressionTypes();
+
       //! visit function required for traversal
           void visit ( SgNode* node );
    };
@@ -610,5 +613,16 @@ class TestAstForCyclesInTypedefs : public ROSE_VisitTraversal
    };
 
 
+#if 0
+// DQ (10/25/2016): Test traversal to check for basic IR node integrity.
+// This is being used to debug merge AST support where it failes on a
+// specific version of RH 7.2 OS (only one one machine, hudson-rose-26).
+class TestNodes : public ROSE_VisitTraversal
+   {
+     public:
+          void visit ( SgNode* node );
+          static void test();
+   };
+#endif
 
 #endif
