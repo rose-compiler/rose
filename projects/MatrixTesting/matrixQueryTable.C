@@ -101,9 +101,8 @@ displayTableHeader(const std::vector<std::string> &keysSelected, const std::vect
 
 int
 main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
-    mlog = Sawyer::Message::Facility("tool");
-    Sawyer::Message::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(mlog, "tool");
 
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);

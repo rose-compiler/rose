@@ -255,8 +255,7 @@ public:
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
     // Parse command-line
     P2::Engine engine;

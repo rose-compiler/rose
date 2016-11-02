@@ -101,7 +101,7 @@ check-local: $(ADDRESSTAKENANALYSIS_CHECKS)
 	@echo "****** defuse info/address taken info computation: make check rule complete (terminated normally) *******"
 	@echo "*********************************************************************************************************"
 
-CXX_TESTS_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+CXX_TESTS_DIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 CXX_TESTS = $(addprefix $(CXX_TESTS_DIR)/,\
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
@@ -1462,7 +1462,7 @@ testRoseHeaders_08.C
 #testRoseHeaders_03.C
 
 #TEST_OBJECTS = $(TESTCODES_REQUIRED_TO_PASS:.C=.o)
-#ROSE_EXAMPLE_TESTS_DIR=$(top_srcdir)/tests/CompileTests/RoseExample_tests
+#ROSE_EXAMPLE_TESTS_DIR=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/RoseExample_tests
 
 #ROSE_FLAGS = --edg:no_warnings -w --edg:restrict
 

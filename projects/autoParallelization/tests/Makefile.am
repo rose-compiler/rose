@@ -204,8 +204,8 @@ rose_doall_vector2.C: ../autoPar doall_vector2.C
 rose_Stress2.cc: ../autoPar Stress2.cc
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/clibfunc.annot $(srcdir)/Stress2.cc
 
-test_diff.out : ../autoPar $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:autopar:enable_diff -c $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c > test_diff.out
+test_diff.out : ../autoPar $(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests/jacobi.c
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:autopar:enable_diff -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests/jacobi.c > test_diff.out
 
 # Two files are singled out since their output will be put in tutorial text
 doall_2.out: ../autoPar doall_2.c 

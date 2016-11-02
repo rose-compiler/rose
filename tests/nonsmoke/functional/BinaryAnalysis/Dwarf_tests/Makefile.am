@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_USE_DWARF
+if ROSE_HAVE_LIBDWARF
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
@@ -81,20 +81,22 @@ TEST_Objects = ${ALL_TESTCODES}
 $(TEST_Objects): binaryReader
 	$(VALGRIND) ./binaryReader $(srcdir)/$@
 
-check-local:
+conditional-check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) test_dwarf
 	@$(MAKE) test_rose_dwarf
 else
-check-local:
+conditional-check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 endif
 
 EXTRA_DIST = CMakeLists.txt testProgram.C
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.[s] *.dot *.pdf *~ *.ps *.out *.new *.dump sqlite-database-name.* *.stderr *.stdout testProgram rose_performance_report_lockfile.lock

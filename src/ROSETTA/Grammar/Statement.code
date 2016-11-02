@@ -4213,7 +4213,7 @@ SgStatement::get_scope(void) const
                  // DQ (2/17/2014): We need to account for when we now can ask for the scope of a GNU statement expression 
                  // inside of an array bound defining an array type.
                  // JJW (10/10/2007) -- the non-NULL parent of a statement may not be a statement in the case of a statement
-                 // expression (test case is tests/CompileTests/Cxx_tests/test2006_148.C), so we need to skip over non-statements
+                 // expression (test case is tests/nonsmoke/functional/CompileTests/Cxx_tests/test2006_148.C), so we need to skip over non-statements
                     SgNode* stmtTemp = stmt;
                     do {
 #if 0

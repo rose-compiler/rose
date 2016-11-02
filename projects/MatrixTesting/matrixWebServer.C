@@ -3930,10 +3930,9 @@ createApplication(const Wt::WEnvironment &env) {
 
 int
 main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
+    ROSE_INITIALIZE;
     Sawyer::Message::mfacilities.control("none,>=info");
-    ::mlog = Sawyer::Message::Facility("tool");
-    Sawyer::Message::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
 #ifdef ROSE_USE_WT
     // Initialized global state shared by all serving threads.

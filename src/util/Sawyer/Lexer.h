@@ -176,7 +176,7 @@ public:
      *  The no-argument version returns the lexeme of the current token.
      *
      *  If you're trying to build a fast lexical analyzer, don't call this function to compare a lexeme against some known
-     *  string. Instead, use @ref matches, which doesn't require copying.
+     *  string. Instead, use @ref match, which doesn't require copying.
      *
      *  @{ */
     std::string lexeme(const Token &t) {

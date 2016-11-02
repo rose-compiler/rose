@@ -21,4 +21,13 @@
  *
  *  @code
  *  alias zgrviewer='/path/to/zgrviewer/run.sh'
- *  @endcode */
+ *  @endcode
+ *
+ *  @section installing_zgrviewer_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
+ *
+ *  Follow the Debian 8 instructions.
+ *
+ *  @section installing_zgrviewer_ubuntu1604 Ubuntu 16.04 "Xenial Xerus"
+ *
+ *  Follow the Debian 8 instructions
+ */

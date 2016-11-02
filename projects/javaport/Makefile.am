@@ -78,7 +78,7 @@ rose.jar: compile_java_files
 
 # TESTS=testjava.sh
 
-check-local: test
+conditional-check-local: test
 
 test: test.class rose.jar .libs/librose_wrap.so input.cc
 	env LD_LIBRARY_PATH="../.libs:.libs:${LD_LIBRARY_PATH}" \
@@ -89,13 +89,18 @@ test.class: test.java rose.jar
 
 CLEANFILES = rose_wrap.cxx rose_wrap.h compile_java_files rose.jar rose_input.cc casts.i Cxx_Grammar.i
 
-clean-local:
-	rm -rf gov class
-	rm -rf *.loT
-
 else
+
+conditional-check-local:
 
 # Put the source files into the distribution.
 EXTRA_DIST += testlink.cc frontendAndDump.cc
 
 endif
+
+check-local: conditional-check-local
+
+clean-local:
+	rm -rf gov class
+	rm -rf *.loT
+

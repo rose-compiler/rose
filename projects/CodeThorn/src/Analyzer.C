@@ -120,6 +120,10 @@ bool Analyzer::isPrecise() {
   return !(isActiveGlobalTopify()||variableValueMonitor.isActive());
 }
 
+bool Analyzer::isInExplicitStateMode() {
+  return isPrecise();
+}
+
 bool Analyzer::isIncompleteSTGReady() {
   if(_maxTransitions==-1 && _maxIterations==-1)
     return false;
@@ -1738,9 +1742,14 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     }
   }
 
+  if(isRhsIntVal && isInExplicitStateMode()) {
+    ROSE_ASSERT(!rhsIntVal.isTop());
+  }
+
   if(newPState.varExists(lhsVar)) {
     if(!isRhsIntVal && !isRhsVar) {
       rhsIntVal=AType::Top();
+      ROSE_ASSERT(!isInExplicitStateMode());
     }
     // we are using AValue here (and  operator== is overloaded for AValue==AValue)
     // for this comparison isTrue() is also false if any of the two operands is AType::Top()

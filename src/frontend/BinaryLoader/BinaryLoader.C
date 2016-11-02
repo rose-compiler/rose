@@ -45,8 +45,7 @@ void BinaryLoader::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::BinaryLoader", Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::BinaryLoader");
     }
 }
 
@@ -315,7 +314,7 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
         interp->get_headers()->get_headers().push_back(header);
     }
 
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef  ROSE_HAVE_LIBDWARF
     /* Parse Dwarf info and add it to the SgAsmGenericFile. */
     readDwarf(file); 
 #endif
