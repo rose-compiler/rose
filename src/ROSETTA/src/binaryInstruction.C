@@ -73,7 +73,7 @@
 //       class SgMyClass: public ...base-classes... {
 //       #endif
 //
-//   
+//
 //   DECLARE_HEADERS is used to indicate what header files need to be included. Note that due to limitations of ROSETTA
 //   (specifically, not having any portable regular expression library due to prohibition against using boost), the #ifdef and
 //   #endif lines must be *exactly* as written here -- they are sensitive to white space.
@@ -132,12 +132,22 @@ class SgAsmStatement;
 class SgAsmType;
 class SgAsmUnaryExpression;
 class SgAsmValueExpression;
+class SgNode;
 #endif
+
+// Print a diagnostic message just once (we cannot use Sawyer since it depends on boost and we have a policy that prohibits any
+// boost dependency in ROSETTA).
+static void printOnce(bool &printed /*in,out*/, const std::string &mesg) {
+    if (!printed) {
+        std::cerr <<mesg <<"\n";
+        printed = true;
+    }
+}
 
 #ifndef DOCUMENTATION
 void Grammar::setUpBinaryInstructions() {
 #endif
-    
+
     /**************************************************************************************************************************
      *                                  Instructions.
      * Base class (SgAsmInstruction) and various subclasses, one per architecture.
@@ -199,6 +209,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmArmInstruction);
 #if defined(SgAsmArmInstruction_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmInstruction>(*this);
+            s & p_kind & p_condition & p_positionOfConditionInMnemonic;
+        }
+
     public:
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
@@ -247,6 +266,16 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmX86Instruction);
 #if defined(SgAsmX86Instruction_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmInstruction>(*this);
+            s & p_kind & p_baseSize & p_operandSize & p_addressSize & p_lockPrefix & p_repeatPrefix & p_branchPrediction;
+            s & p_segmentOverride;
+        }
+
     public:
         static X86InstructionSize instructionSizeForWidth(size_t);
         static size_t widthForInstructionSize(X86InstructionSize);
@@ -298,6 +327,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmPowerpcInstruction);
 #if defined(SgAsmPowerpcInstruction_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmInstruction>(*this);
+            s & p_kind;
+        }
+
     public:
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
@@ -331,6 +369,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmMipsInstruction);
 #if defined(SgAsmMipsInstruction_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmInstruction>(*this);
+            s & p_kind;
+        }
+
     public:
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
@@ -369,6 +416,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmM68kInstruction);
 #if defined(SgAsmM68kInstruction_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmInstruction>(*this);
+            s & p_kind;
+        }
+
     public:
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
@@ -437,6 +493,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmInstruction);
 #if defined(SgAsmInstruction_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmStatement>(*this);
+            s & p_mnemonic & p_raw_bytes & p_operandList & p_sources;
+        }
+
     public:
         static const int64_t INVALID_STACK_DELTA;
 
@@ -474,7 +539,7 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  This instruction object is only used to select the appropriate virtual method; the basic block to be analyzed is
          *  the first argument to the function.
-         *  
+         *
          *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
          *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
          *
@@ -511,7 +576,7 @@ void Grammar::setUpBinaryInstructions() {
          *
          * @code
          *  Opcode bytes         Intel assembly syntax
-         *  -------------------- ---------------------- 
+         *  -------------------- ----------------------
          *  90                   nop
          *
          *  89c0                 mov eax,eax            Intel's old recommended two-byte no-op was to
@@ -539,7 +604,7 @@ void Grammar::setUpBinaryInstructions() {
          *  f0f090               lock nop               not materially affect the result. As before, they can occur repeatedly,
          *  f066f090             lock nop               and even in wacky combinations.
          *  f066f06666f0f066f090 lock nop
-         *  
+         *
          *  f290                 repne nop              Cory Cohen strongly suspects that the other instruction prefixes are
          *  f390                 rep nop                ignored as well, although to be complete, we might want to conduct a
          *  2690                 es nop                 few tests into the behavior of common processors.
@@ -549,21 +614,21 @@ void Grammar::setUpBinaryInstructions() {
          *  6490                 fs nop
          *  6590                 gs nop
          *  6790                 nop
-         *  
+         *
          *  8d00                 lea eax,[eax]          Intel's old recommendation for larger no-ops was to use the LEA
          *  8d09                 lea ecx,[ecx]          instruction in various dereferencing modes.
          *  8d12                 lea edx,[edx]
          *  8d1b                 lea ebx,[ebx]
          *  8d36                 lea esi,[esi]
          *  8d3f                 lea edi,[edi]
-         *  
+         *
          *  8d4000               lea eax,[eax+0x0]
          *  8d4900               lea ecx,[ecx+0x0]
          *  8d5200               lea edx,[edx+0x0]
          *  8d5b00               lea ebx,[ebx+0x0]
          *  8d7600               lea esi,[esi+0x0]
          *  8d7f00               lea edi,[edi+0x0]
-         *  
+         *
          *  8d8000000000         lea eax,[eax+0x0]      This last block is really the [reg*0x1+0x0] dereferencing mode.
          *  8d8900000000         lea ecx,[ecx+0x0]
          *  8d9200000000         lea edx,[edx+0x0]
@@ -578,7 +643,7 @@ void Grammar::setUpBinaryInstructions() {
          *  8d2424               lea esp,[esp]
          *  8d3426               lea esi,[esi]
          *  8d3c27               lea edi,[edi]
-         *  
+         *
          *  8d442000             lea eax,[eax+0x0]
          *  8d4c2100             lea ecx,[ecx+0x0]
          *  8d542200             lea edx,[edx+0x0]
@@ -586,7 +651,7 @@ void Grammar::setUpBinaryInstructions() {
          *  8d642400             lea esp,[esp+0x0]
          *  8d742600             lea esi,[esi+0x0]
          *  8d7c2700             lea edi,[edi+0x0]
-         *  
+         *
          *  8d842000000000       lea eax,[eax+0x0]
          *  8d8c2100000000       lea ecx,[ecx+0x0]
          *  8d942200000000       lea edx,[edx+0x0]
@@ -594,7 +659,7 @@ void Grammar::setUpBinaryInstructions() {
          *  8da42400000000       lea esp,[esp+0x0]
          *  8db42600000000       lea esi,[esi+0x0]
          *  8dbc2700000000       lea edi,[edi+0x0]
-         *  
+         *
          *  8d2c2d00000000       lea ebp,[ebp+0x0]      The EBP variants don't exactly follow the pattern above.
          *  8d6c2500             lea ebp,[ebp+0x0]
          *  8dac2500000000       lea ebp,[ebp+0x0]
@@ -609,7 +674,7 @@ void Grammar::setUpBinaryInstructions() {
          *                                              reserved for NOP, although I can find almost no references to it except
          *                                              in the latest instruction manual on page A-13 of volume 2B. It's also
          *                                              mentioned on x86asm.net. [CORY 2010-04]
-         *                                              
+         *
          *  d9d0                 fnop                   These aren't really no-ops on the chip, but are no-ops from the
          *  9b                   wait                   program's perspective. Most of these instructions are related to
          *  0f08                 invd                   improving cache efficiency and performance, but otherwise do not
@@ -628,7 +693,7 @@ void Grammar::setUpBinaryInstructions() {
          *  0f18xx through 0f1exx                       This opcode rante is officially undefined but is probably reserved
          *                                              for no-ops as well.  Any instructions encountered in this range are
          *                                              probably consequences of bad code and should be ingored.
-         *                                              
+         *
          *  JMP, Jcc, PUSH/RET, etc.                    Branches are considered no-ops if they can be proven to always branch
          *                                              to the fall-through address.
          * @endcode
@@ -753,7 +818,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmOperandList: public SgAsmNode {
     public:
 #endif
-        
+
 #ifndef DOCUMENTATION
         AsmOperandList.setDataPrototype("SgAsmExpressionPtrList", "operands", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -761,6 +826,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmOperandList);
 #if defined(SgAsmOperandList_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmNode>(*this);
+            s & p_operands;
+        }
+
     public:
         void append_operand(SgAsmExpression* operand);
 #endif // SgAsmOperandList_OTHERS
@@ -778,16 +852,48 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that adds two operands. */
-    class SgAsmBinaryAdd: public SgAsmBinaryExpression {};
+    class SgAsmBinaryAdd: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryAdd);
+#if defined(SgAsmBinaryAdd_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryAdd_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinarySubtract);
-    
+
 #ifdef DOCUMENTATION
     /** Expression that subtracts the second operand from the first. */
-    class SgAsmBinarySubtract: public SgAsmBinaryExpression {};
+    class SgAsmBinarySubtract: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinarySubtract);
+#if defined(SgAsmBinarySubtract_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinarySubtract_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -796,7 +902,23 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that multiplies two operands. */
-    class SgAsmBinaryMultiply: public SgAsmBinaryExpression {};
+    class SgAsmBinaryMultiply: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryMultiply);
+#if defined(SgAsmBinaryMultiply_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryMultiply_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -806,16 +928,48 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that divides the first operand by the second. */
-    class SgAsmBinaryDivide: public SgAsmBinaryExpression {};
+    class SgAsmBinaryDivide: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryDivide);
+#if defined(SgAsmBinaryDivide_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryDivide_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmBinaryMod);
 
 #ifdef DOCUMENTATION
     /** Expression that returns the remainder when dividing the first operand by the second. */
-    class SgAsmBinaryMod: public SgAsmBinaryExpression {};
+    class SgAsmBinaryMod: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryMod);
+#if defined(SgAsmBinaryMod_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryMod_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -824,7 +978,23 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that performs a pre-increment operation. */
-    class SgAsmBinaryAddPreupdate: public SgAsmBinaryExpression {};
+    class SgAsmBinaryAddPreupdate: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryAddPreupdate);
+#if defined(SgAsmBinaryAddPreupdate_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryAddPreupdate_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -833,16 +1003,48 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that performs a pre-decrement operation. */
-    class SgAsmBinarySubtractPreupdate: public SgAsmBinaryExpression {};
+    class SgAsmBinarySubtractPreupdate: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinarySubtractPreupdate);
+#if defined(SgAsmBinarySubtractPreupdate_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinarySubtractPreupdate_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmBinaryAddPostupdate);
 
 #ifdef DOCUMENTATION
     /** Expression that performs a post-increment operation. */
-    class SgAsmBinaryAddPostupdate: public SgAsmBinaryExpression {};
+    class SgAsmBinaryAddPostupdate: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryAddPostupdate);
+#if defined(SgAsmBinaryAddPostupdate_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryAddPostupdate_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -851,7 +1053,23 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that performs a post-decrement operation. */
-    class SgAsmBinarySubtractPostupdate: public SgAsmBinaryExpression {};
+    class SgAsmBinarySubtractPostupdate: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinarySubtractPostupdate);
+#if defined(SgAsmBinarySubtractPostupdate_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinarySubtractPostupdate_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -860,7 +1078,23 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that performs a logical left shift operation. */
-    class SgAsmBinaryLsl: public SgAsmBinaryExpression {};
+    class SgAsmBinaryLsl: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryLsl);
+#if defined(SgAsmBinaryLsl_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryLsl_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -869,7 +1103,23 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that performs a logical, sign-bit non-preserving right shift. */
-    class SgAsmBinaryLsr: public SgAsmBinaryExpression {};
+    class SgAsmBinaryLsr: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryLsr);
+#if defined(SgAsmBinaryLsr_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryLsr_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -878,7 +1128,23 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that performs an arithmetic, sign-bit preserving right shift. */
-    class SgAsmBinaryAsr: public SgAsmBinaryExpression {};
+    class SgAsmBinaryAsr: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryAsr);
+#if defined(SgAsmBinaryAsr_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryAsr_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -887,11 +1153,27 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression that performs a right rotate. */
-    class SgAsmBinaryRor: public SgAsmBinaryExpression {};
+    class SgAsmBinaryRor: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryRor);
+#if defined(SgAsmBinaryRor_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+        }
+#endif // SgAsmBinaryRor_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_NONTERMINAL_MACRO(AsmBinaryExpression,
                           AsmBinaryAdd               | AsmBinarySubtract      | AsmBinaryMultiply           |
                           AsmBinaryDivide            | AsmBinaryMod           | AsmBinaryAddPreupdate       |
@@ -931,6 +1213,18 @@ void Grammar::setUpBinaryInstructions() {
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+        DECLARE_OTHERS(AsmBinaryExpression);
+#if defined(SgAsmBinaryExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_lhs & p_rhs;
+        }
+#endif // SgAsmBinaryExpression_OTHERS
+
 #ifdef DOCUMENTATION
     };
 #endif
@@ -941,25 +1235,73 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Expression representing a (no-op) unary plus operation. */
-    class SgAsmUnaryPlus: public SgAsmUnaryExpression {};
+    class SgAsmUnaryPlus: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmUnaryPlus);
+#if defined(SgAsmUnaryPlus_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
+        }
+#endif // SgAsmUnaryPlus_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmUnaryMinus);
 
 #ifdef DOCUMENTATION
     /** Expression represting negation. */
-    class SgAsmUnaryMinus: public SgAsmUnaryExpression {};
+    class SgAsmUnaryMinus: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmUnaryMinus);
+#if defined(SgAsmUnaryMinus_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
+        }
+#endif // SgAsmUnaryMinus_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmUnaryRrx);
 
 #ifdef DOCUMENTATION
     // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
-    class SgAsmUnaryRrx: public SgAsmUnaryExpression {};
+    class SgAsmUnaryRrx: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmUnaryRrx);
+#if defined(SgAsmUnaryRrx_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
+        }
+#endif // SgAsmUnaryRrx_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -968,7 +1310,23 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
-    class SgAsmUnaryArmSpecialRegisterList: public SgAsmUnaryExpression {};
+    class SgAsmUnaryArmSpecialRegisterList: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmUnaryArmSpecialRegisterList);
+#if defined(SgAsmUnaryArmSpecialRegisterList_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
+        }
+#endif // SgAsmUnaryArmSpecialRegisterList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -989,6 +1347,18 @@ void Grammar::setUpBinaryInstructions() {
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+        DECLARE_OTHERS(AsmUnaryExpression);
+#if defined(SgAsmUnaryExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_operand;
+        }
+#endif // SgAsmUnaryExpression_OTHERS
+
 #ifdef DOCUMENTATION
     };
 #endif
@@ -1008,6 +1378,23 @@ void Grammar::setUpBinaryInstructions() {
                                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
                                                      NO_DELETE);
 #endif
+
+        DECLARE_OTHERS(AsmDirectRegisterExpression);
+#if defined(SgAsmDirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmRegisterReferenceExpression>(*this);
+            s & p_psr_mask;
+        }
+
+    private:
+        // Default c'tor needed for serialization
+        SgAsmDirectRegisterExpression()
+            : p_psr_mask(0) {}
+#endif // SgAsmDirectRegisterExpression_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1034,6 +1421,23 @@ void Grammar::setUpBinaryInstructions() {
         AsmIndirectRegisterExpression.setDataPrototype("size_t", "modulus", "",
                                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+        DECLARE_OTHERS(AsmIndirectRegisterExpression);
+#if defined(SgAsmIndirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmRegisterReferenceExpression>(*this);
+            s & p_stride & p_offset & p_index & p_modulus;
+        }
+
+    private:
+        // Default c'tor needed for serialization
+        SgAsmIndirectRegisterExpression()
+            : p_index(0), p_modulus(0) {}
+#endif // SgAsmIndirectRegisterExpression_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1075,12 +1479,29 @@ void Grammar::setUpBinaryInstructions() {
                                                         NO_DELETE);
 #endif
 
+        DECLARE_OTHERS(AsmRegisterReferenceExpression);
+#if defined(SgAsmRegisterReferenceExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_descriptor & p_adjustment;
+        }
+
+    protected:
+        // Default c'tor needed for serialization
+        SgAsmRegisterReferenceExpression()
+            : p_adjustment(0) {}
+#endif // SgAsmRegisterReferenceExpression_OTHERS
+
 #ifdef DOCUMENTATION
     };
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmRegisterNames);
 
 #ifdef DOCUMENTATION
@@ -1095,6 +1516,18 @@ void Grammar::setUpBinaryInstructions() {
         AsmRegisterNames.setDataPrototype("unsigned", "mask", "=0",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+        DECLARE_OTHERS(AsmRegisterNames);
+#if defined(SgAsmRegisterNames_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_registers & p_mask;
+        }
+#endif // SgAsmRegisterNames_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1143,6 +1576,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmIntegerValueExpression);
 #if defined(SgAsmIntegerValueExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmConstantExpression>(*this);
+            s & p_baseNode;
+        }
+
     public:
         SgAsmIntegerValueExpression(uint64_t n, SgAsmType *type);
         SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type);
@@ -1243,7 +1685,7 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-        AsmFloatValueExpression.setAutomaticGenerationOfConstructor(false); // so cache can be initialized
+        AsmFloatValueExpression.setAutomaticGenerationOfConstructor(false); // so p_nativeValue cache can be initialized
 
         DECLARE_OTHERS(AsmFloatValueExpression);
 #if defined(SgAsmFloatValueExpression_OTHERS) || defined(DOCUMENTATION)
@@ -1255,6 +1697,25 @@ void Grammar::setUpBinaryInstructions() {
         // understand "mutable".
         mutable double p_nativeValue;
         mutable bool p_nativeValueIsValid;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialization(S &s, const unsigned version) {
+#if 1 // DEBUGGING [Robb P Matzke 2016-11-02]
+            debugging();
+#endif
+            s & boost::serialization::base_object<SgAsmConstantExpression>(*this);
+            s & p_nativeValue & p_nativeValueIsValid;
+        }
+
+#if 1 // DEBUGGING [Robb P Matzke 2016-11-02]
+        void debugging() const {
+            std::cerr <<"ROBB: got here\n";
+        }
+#endif
+
     public:
         SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
         SgAsmFloatValueExpression(double nativeValue, SgAsmType*);
@@ -1284,10 +1745,10 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     /** Base class for constants.  Represents integer values, floating-point values, etc. This class holds the actual bits for
     // the constant value.  Subclasses provide the intepretation of those bits. */
-    class SgAsmConstantExrpression: public SgAsmValueExression {
+    class SgAsmConstantExpression: public SgAsmValueExpression {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: Bits for constant.
          *
@@ -1302,6 +1763,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmConstantExpression);
 #if defined(SgAsmConstantExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmValueExpression>(*this);
+            s & p_bitVector;
+        }
+
     public:
         const Sawyer::Container::BitVector& get_bitVector() const { return p_bitVector; }
         Sawyer::Container::BitVector& get_bitVector() { return p_bitVector; }
@@ -1339,6 +1809,23 @@ void Grammar::setUpBinaryInstructions() {
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+        DECLARE_OTHERS(AsmValueExpression);
+#if defined(SgAsmValueExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_unfolded_expression_tree & p_bit_offset & p_bit_size;
+#if 1
+            ASSERT_require2(p_symbol == NULL, "not implemented yet");
+#else
+            s & p_symbol;
+#endif
+        }
+#endif // SgAsmValueExpression_OTHERS
+
 #ifdef DOCUMENTATION
     };
 #endif
@@ -1352,13 +1839,26 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmMemoryReferenceExpression: public SgAsmExpression {
     public:
 #endif
-        
+
 #ifndef DOCUMENTATION
         AsmMemoryReferenceExpression.setDataPrototype("SgAsmExpression*", "address", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
         AsmMemoryReferenceExpression.setDataPrototype("SgAsmExpression*", "segment", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
+
+        DECLARE_OTHERS(AsmMemoryReferenceExpression);
+#if defined(SgAsmMemoryReferenceExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_address;
+            s & p_segment;
+        }
+#endif // SgAsmMemoryReferenceExpression_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1373,11 +1873,23 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmControlFlagsExpression: public SgAsmExpression {
     public:
 #endif
-        
+
 #ifndef DOCUMENTATION
         AsmControlFlagsExpression.setDataPrototype("unsigned long", "bit_flags", "= 0",
                                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+        DECLARE_OTHERS(AsmControlFlagsExpression);
+#if defined(SgAsmControlFlagsExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_bit_flags;
+        }
+#endif // SgAsmControlFlagsExpression_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1397,6 +1909,18 @@ void Grammar::setUpBinaryInstructions() {
         AsmCommonSubExpression.setDataPrototype("SgAsmExpression*", "subexpression", "= 0",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
+
+        DECLARE_OTHERS(AsmCommonSubExpression);
+#if defined(SgAsmCommonSubExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_subexpression;
+        }
+#endif // SgAsmCommonSubExpression_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1489,6 +2013,15 @@ void Grammar::setUpBinaryInstructions() {
             OP_writeMemory,                             /**< Three or four args depending on whether segment reg is present. */
             OP_N_OPERATORS                              /**< Number of operators in this enum. */ // MUST BE LAST!
         };
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_riscOperator & p_operands;
+        }
 #endif // SgAsmRiscOperation_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1504,11 +2037,23 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmExprListExp: public SgAsmExpression {
     public:
 #endif
-        
+
 #ifndef DOCUMENTATION
         AsmExprListExp.setDataPrototype("SgAsmExpressionPtrList", "expressions", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
+
+        DECLARE_OTHERS(AsmExprListExp);
+#if defined(SgAsmExprListExp_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmExpression>(*this);
+            s & p_expressions;
+        }
+#endif // SgAsmExprListExp_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1560,6 +2105,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmExpression);
 #if defined(SgAsmExpression_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmNode>(*this);
+            s & p_type;
+        }
+
     public:
         size_t get_nBits() const;
 #endif // SgAsmExpression_OTHERS
@@ -1570,7 +2124,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
-        
+
 
     /***************************************************************************************************************************
      *                                  Data Types (new interface 2014-07)
@@ -1599,6 +2153,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmIntegerType);
 #if defined(SgAsmIntegerType_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmScalarType>(*this);
+            s & p_isSigned;
+        }
+
     public:
         SgAsmIntegerType(ByteOrder::Endianness, size_t nBits, bool isSigned);
         virtual void check() const;
@@ -1644,6 +2207,16 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmFloatType);
 #if defined(SgAsmFloatType_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmScalarType>(*this);
+            s & p_significandOffset & p_significandNBits & p_signBitOffset & p_exponentOffset;
+            s & p_exponentNBits & p_exponentBias & p_flags;
+        }
+
     public:
         enum {
             GRADUAL_UNDERFLOW      = 0x00000001,
@@ -1659,7 +2232,7 @@ void Grammar::setUpBinaryInstructions() {
 
         virtual void check() const;
         virtual std::string toString() const;
-                
+
         /** Property: Offset to significand least significant bit. */
         BitRange significandBits() const;
 
@@ -1687,7 +2260,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        
+
     NEW_NONTERMINAL_MACRO(AsmScalarType,
                           AsmIntegerType | AsmFloatType,
                           "AsmScalarType", "AsmScalarTypeTag", false);
@@ -1698,7 +2271,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmScalarType: public SgAsmType {
     public:
 #endif
-        
+
 #ifndef DOCUMENTATION
         // Repeated below since these are read-only
         AsmScalarType.setDataPrototype("ByteOrder::Endianness", "minorOrder", "= ByteOrder::ORDER_UNSPECIFIED", // read-only
@@ -1713,6 +2286,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmScalarType);
 #if defined(SgAsmScalarType_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmType>(*this);
+            s & p_minorOrder & p_majorOrder & p_majorNBytes & p_nBits;
+        }
+
     protected:
         /** Construct a new scalar type.
          *
@@ -1761,6 +2343,15 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmVectorType);
 #if defined(SgAsmVectorType_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmType>(*this);
+            s & p_nElmts & p_elmtType;
+        }
+
     public:
         /** Construct a new vector type. */
         SgAsmVectorType(size_t nElmts, SgAsmType *elmtType);
@@ -1777,7 +2368,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+ 
     NEW_NONTERMINAL_MACRO(AsmType, AsmScalarType | AsmVectorType, "AsmType", "AsmTypeTag", false);
     AsmType.setCppCondition("!defined(DOCUMENTATION)");
 
@@ -1791,6 +2382,14 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmType_OTHERS) || defined(DOCUMENTATION)
     private:
         static Sawyer::Container::Map<std::string, SgAsmType*> p_typeRegistry;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgAsmNode>(*this);
+        }
 
     public:
         virtual void check() const;
@@ -4046,16 +4645,24 @@ void Grammar::setUpBinaryInstructions() {
                           AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
                           AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList,
                           "AsmNode", "AsmNodeTag", false);
-    AsmNode.setFunctionPrototype("HEADER_BINARY", "../Grammar/BinaryInstruction.code");
-    AsmNode.setFunctionSource("SOURCE_BINARY", "../Grammar/BinaryInstruction.code");
-    AsmNode.setDataPrototype("AttachedPreprocessingInfoType*", "attachedPreprocessingInfoPtr", "= NULL",
-                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, COPY_DATA);
-    AsmNode.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-    AsmNode.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-    AsmNode.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-    AsmNode.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-    AsmNode.setDataPrototype("AstAttributeMechanism*", "attributeMechanism", "= NULL",
-                             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+    AsmNode.setCppCondition("!defined(DOCUMENTATION)");
+
+#ifdef DOCUMENTATION
+    /** Base class for all binary analysis IR nodes. */
+    class SgAsmNode: public SgNode {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmNode);
+#if defined(SgAsmNode_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgNode>(*this);
+        }
+#endif // SgAsmNode_OTHERS
 
 #ifndef DOCUMENTATION
 }

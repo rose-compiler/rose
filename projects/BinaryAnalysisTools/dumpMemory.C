@@ -8,6 +8,10 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/filesystem.hpp>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
@@ -203,7 +207,6 @@ main(int argc, char *argv[]) {
                                      StringUtility::cEscape(settings.outputPrefix) + "load\"");
         }
     }
-
 
     // Dump the output
     if (settings.where.empty())

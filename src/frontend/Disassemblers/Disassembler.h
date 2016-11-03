@@ -9,6 +9,10 @@
 #include "Map.h"
 #include "BaseSemantics2.h"
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/string.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 
@@ -260,6 +264,27 @@ protected:
 
 public:
     static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        s & p_name;
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        std::string name;
+        s & name;
+        Disassembler *disassembler = lookup(name);
+        ASSERT_not_null(disassembler);
+        *this = disassembler;
+        delete disassembler;
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Registration and lookup methods

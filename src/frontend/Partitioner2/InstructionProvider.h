@@ -4,6 +4,7 @@
 #include "Disassembler.h"
 #include "BaseSemantics2.h"
 
+#include <boost/serialization/access.hpp>
 #include <Sawyer/Assert.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/SharedPointer.h>
@@ -37,7 +38,21 @@ private:
     mutable InsnMap insnMap_;                           // this is a cache
     bool useDisassembler_;
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned verion) {
+        s & disassembler_;
+        s & memMap_;
+        s & insnMap_;
+        s & useDisassembler_;
+    }
+
 protected:
+    InstructionProvider()
+        : disassembler_(NULL), useDisassembler_(false) {}
+
     InstructionProvider(Disassembler *disassembler, const MemoryMap &map)
         : disassembler_(disassembler), memMap_(map), useDisassembler_(true) {
         ASSERT_not_null(disassembler);
@@ -64,9 +79,16 @@ public:
      *  pointer is returned (and cached).
      *
      * @{ */
-    bool isDisassemblerEnabled() const { return useDisassembler_; }
-    void enableDisassembler(bool enable=true) { useDisassembler_ = enable; }
-    void disableDisassembler() { useDisassembler_ = false; }
+    bool isDisassemblerEnabled() const {
+        return useDisassembler_;
+    }
+    void enableDisassembler(bool enable=true) {
+        ASSERT_require(!enable || disassembler_);
+        useDisassembler_ = enable;
+    }
+    void disableDisassembler() {
+        useDisassembler_ = false;
+    }
     /** @} */
 
     /** Returns the instruction at the specified virtual address, or null.
