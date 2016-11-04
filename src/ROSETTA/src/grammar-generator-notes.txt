@@ -1,53 +1,51 @@
--------
-Marking
--------
-C
-C++
-Fortran
-UntypedNodes
-GNUExtension (StatementExpression)
+FILE: grammar.C
 
--------------------
-Remove data members
--------------------
+TOPIC: Marking of language construct (planned)
+  UntypedNodes (currently explicitly detected)
+  C (planned)
+  C++ (planned)
+  Fortran (planned)
+  GNUExtension (StatementExpression; planned)
 
-Reasoning: Only used by unparser with token-based unparsing:
-IGNORE: bool:isModified, bool:containsTransformation
+TOPIC: Non-essential data members (not required when reading in AST):
 
-Reasoning: Source position information:
-IGNORE: ListStarOfSg_File_Info:startOfConstruct
-IGNORE: ListStarOfSg_File_Info:endOfConstruct
-IGNORE: Sg_File_Info:operatorPosition
+  FEATURE: Token-based unparsing: only used by unparser
+    IGNORE: bool:isModified, bool:containsTransformation
 
-Reasoning: Use translation units as input/output:
-IGNORE: AttachedPreprocessingInfoType:attachedPreprocessingInfoPtr
+  FEATURE: Source position information:
+    IGNORE: ListStarOfSg_File_Info:startOfConstruct
+    IGNORE: ListStarOfSg_File_Info:endOfConstruct
+    IGNORE: Sg_File_Info:operatorPosition
 
-Reasoning: ?
-IGNORE: bool:uses_operator_syntax
+  FEATURE: Using translation units as input/output:
+    IGNORE: AttachedPreprocessingInfoType:attachedPreprocessingInfoPtr
 
-Reasoning: difficult to keep right in rewrite:
-IGNORE: bool:lvalue
+  FEATURE: source-to-source details
+    IGNORE: bool:uses_operator_syntax
 
----
+  FEATURE: language property flags (can be recomputed)
+    IGNORE: bool:lvalue
 
-Constructor generation:
-$CONSTRUCTOR_ALL_DATA_MEMBERS
-buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
-->buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node )
-  ->buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & node )
+TOPIC: Constructor generation:
+  $CONSTRUCTOR_ALL_DATA_MEMBERS
+  FUNCTION: Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
+            ->buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node )
+              ->buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & node )
 
-buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
-->buildConstructor (node);
-  ->constructorLoopBody(...,node,...)
-    ->node.buildConstructorBodyForAllDataMembers();
+  FUNCTION: buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
+            ->buildConstructor (node);
+              ->constructorLoopBody(...,node,...)
+                ->node.buildConstructorBodyForAllDataMembers();
 
----
+  FUNCTION: Grammar::isFilteredMemberVariable: 
+    function is shared in grammar generation and constructor generation. This enforces the matching of parameters.
 
-In function Grammar::editSubstitution all $variables in grammarConstructorDefinitionMacros.macro must be set as well (including $CONSTRUCTOR_ALL_DATA_MEMBERS).
+  FUNCTION: Grammar::editSubstitution:
+    all $variables in grammarConstructorDefinitionMacros.macro must be set as well (including $CONSTRUCTOR_ALL_DATA_MEMBERS).
 
-buildConstructorWithoutSourcePositionInformation.C: (copy&paste from grammar.C)
-one more case of CONSTRUCTOR_ALL_DATA_MEMBERS
+  FILE: buildConstructorWithoutSourcePositionInformation.C: (copy&paste from grammar.C)
+    one more case of CONSTRUCTOR_ALL_DATA_MEMBERS
 
----
+  OUTPUT:
+    generated C++ header with additional constructors: src/frontend/SageIII/Cxx_Grammar.C (ESSENTIAL DATA MEMBERS)
 
-isFilteredMemberVariable: function is shared in grammar generation and constructor generation. This enforces the matching of parameters.

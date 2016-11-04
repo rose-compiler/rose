@@ -33,4 +33,12 @@
  *  Run <code>apt-get install libsqlite3-dev</code> and/or <code>apt-get install libpqxx3-dev postgresql</code> as the
  *  administrator.
  *
- *  The "postgresql" package is required only if you wish to run the PostgreSQL server locally. */
+ *  The "postgresql" package is required only if you wish to run the PostgreSQL server locally.
+ *
+ *  @section installing_database_ubuntu1604 Ubuntu 16.04 "Xenial Xerus"
+ *
+ *  Run <code>apt-get install libsqlite3-dev</code> and/or <code>apt-get install libpqxx3-dev postgresql</code> as the
+ *  administrator.
+ *
+ *  The "postgresql" package is required only if you wish to run the PostgreSQL server locally.
+ */

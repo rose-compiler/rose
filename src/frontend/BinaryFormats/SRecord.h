@@ -103,10 +103,12 @@ public:
      *
      *  The specified S-Records are loaded into the memory map.  If @p createSegments is true then a minimal number of segments
      *  are created to hold the S-Record data, otherwise the destinations must already be mapped or a MemoryMap::NotMapped
-     *  exception is thrown.  When new segments are created they are given access permissions specified by @p
-     *  accessPerms. Access permissions are not consulted and do not cause errors when writing S-Record data into the map. */
+     *  exception is thrown.  When new segments are created they are given access permissions specified by @p accessPerms and
+     *  the name specified by @p newSegmentNames (or "S-Records"). Access permissions are not consulted and do not cause errors
+     *  when writing S-Record data into the map. */
     static rose_addr_t load(const std::vector<SRecord>&, MemoryMap&, bool createSegments=true,
-                            unsigned accessPerms=MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE);
+                            unsigned accessPerms=MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE,
+                            const std::string &newSegmentNames = "S-Records");
 
     /** Compute the checksum for the data.
      *

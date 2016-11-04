@@ -133,6 +133,12 @@ public:
      *  value is similar to get_registers() except only the RegisterDescriptor part is returned, not the names. */
     RegisterDescriptors get_descriptors() const;
 
+    /** Returns the first unused major register number. */
+    unsigned firstUnusedMajor() const;
+
+    /** Returns the first unused minor register number. */
+    unsigned firstUnusedMinor(unsigned majr) const;
+
     /** Compares number of bits in register descriptors. This comparator is used to sort register descriptors in either
      *  ascending or descending order depending on the number of significant bits in the register. The default constructor
      *  uses a descending sort order.
