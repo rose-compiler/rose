@@ -2508,7 +2508,10 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
                   }
                  else
                   {
+#if 0
+                 // DQ (11/3/2016): Comment out this output spew from the AST File I/O testing.
                     printf ("Note: found a shared IR node = %p = %s in the AST (OK if part of merged AST) \n",node,node->class_name().c_str());
+#endif
 #if 0
                     SgProject* project = TransformationSupport::getProject(locatedNode);
                     project->display("In TestAstForUniqueNodesInAST::visit()");
