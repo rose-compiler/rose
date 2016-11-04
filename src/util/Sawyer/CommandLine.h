@@ -2070,21 +2070,23 @@ public:
      *
      *  Parts of the text can be marked by surrounding the text in curly braces and prepending a tag consisting of an "@"
      *  followed by a word.  For instance, <code>\@b{foo}</code> makes the word "foo" bold and <code>\@i{foo}</code> makes it
-     *  italic.
+     *  italic.  The text between the curly braces can be any length, and if it contains curly braces they must either balance
+     *  or be escaped with a preceding "@". The curly braces that start an argument must not be preceded by white space.
      *
-     *  The text between the curly braces can be any length, and if it contains curly braces they must either balance or be
-     *  escaped with a preceding "@@". The curly braces that star and argument must not be preceded by white space.
+     *  Besides describing the format of a piece of text, markup is also used to describe the intent of a piece of text.  The
+     *  following intents are supported:
      *
-     *  Besides describing the format of a piece of text, markup is also used to describe the intent of a piece of text--that a
-     *  word is a switch string (<code>\@s</code>), a variable (<code>\@v</code>), or a reference to a Unix man page
-     *  (<code>\@man</code>).  The <code>\@s</code> argument should be a single word or single letter without leading hyphens and
-     *  which is interpretted as a command-line switch. The library will add the correct prefix--probably "-\-" for long names
-     *  and "-" for short names, but whatever is specified in the switch declaration. Even switches that haven't been declared
-     *  can be marked with <code>\@s</code>.  The <code>\@v</code> tag marks a word as a variable, usually the name of a switch
-     *  argument.  The <code>\@man</code> tag takes two arguments, the second of which is optional: the name of a Unix man page
-     *  and the section in which the page appears: <code>the \@man{ls}{1} command lists contents of a directory.</code>
+     *  @li @c @@v{foo} specifies that "foo" is a variable. POD-based man pages will underline it, and text based documentation
+     *      will surround it with angle brackets.
+     *  @li @c @@s{foo} specifies that "foo" is a switch. The argument should be a single word or single letter without leading
+     *      hyphens, and the correct prefix (hyphens, etc.) will be added automatically based on the parser's
+     *      configuration. The documentation system also verifies that "foo" is spelled correctly and if not, it adds an error
+     *      to the "Documentation issues" section of the output.  To suppress these errors, supply a second argument whose
+     *      name is "noerror", as in "@s{foo}{noerror}".
+     *  @li @c @@man{foo}{n} means refer to the "foo" page in chapter "n" of the man pages. This also adds an entry to the "See
+     *      also" section of the output.
      *
-     *  The <code>\@prop</code> tag takes one argument which is a property name and evaluates to the property value as a string.
+     *  The <code>\@prop</code> tag takes one argument which is a property name and is replaced by the value of the property.
      *  The following properties are defined:
      *
      *  @li @c inclusionPrefix is the preferred (first) string returned by Parser::inclusionPrefixes.
@@ -2123,8 +2125,8 @@ public:
      *
      *  The default is to not skip over anything, in which case if the switch appears on the command-line its actions are run
      *  and its value are saved.  If skipping is set to @ref SKIP_WEAK or @ref SKIP_STRONG then the switch and its arguments
-     *  are also added to the skipped list returned by @ref Parser::skippedArgs and @ref Parser::unparsedArgs.  The difference
-     *  between weak and strong is that strong also skips any actions and value saving for the switch.
+     *  are also added to the skipped list returned by @ref ParserResult::skippedArgs and @ref ParserResult::unparsedArgs.  The
+     *  difference between weak and strong is that strong also skips any actions and value saving for the switch.
      *
      *  For short, nestled switches, a program argument is added to the skipped list if any of the short switches in that
      *  argument are @ref SKIP_WEAK or @ref SKIP_STRONG.
@@ -2871,7 +2873,7 @@ public:
      *  parser.errorStream(Message::mlog[Message::FATAL]);
      * @endcode
      *
-     * @sa @ref skipingNonSwitches @ref skippingUnknownSwitches
+     * @sa @ref skippingNonSwitches @ref skippingUnknownSwitches
      * @{ */
     Parser& errorStream(const Message::SProxy &stream) { errorStream_ = stream; return *this; }
     const Message::SProxy& errorStream() const { return errorStream_; }
@@ -2917,6 +2919,25 @@ public:
      *  Scans the specified argument list looking for file inclusion switches and replacing those switches with the
      *  the file. */
     std::vector<std::string> expandIncludedFiles(const std::vector<std::string> &args);
+
+    /** Bit flags for argument grouping. See @ref groupArguments. */
+    enum GroupingFlags {
+        DEFAULT_GROUPING        = 0,                    /**< Zero, all flags are clear. */
+        PROHIBIT_EMPTY_GROUPS   = 0x0001,               /**< Error if any group is empty. */
+        SPLIT_SINGLE_GROUP      = 0x0002                /**< Split single group into singleton groups. */
+    };
+
+    /** Group arguments by "--" separators.
+     *
+     *  Given a vector of command-line arguments, regroup them into sub-vectors by using the special "--" arguments to separate
+     *  the groups.  The @p flags is a bit vector that controls some of the finer aspects of grouping (see @ref
+     *  GroupingFlags). The number of returned groups (after flags are processed) must fall within the specified @p limits. If
+     *  any error is encountered then either print an error message and exit, or throw an <code>std::runtime_error</code>,
+     *  depending on whether an @ref errorStream is defined. */
+    std::vector<std::vector<std::string> >
+    regroupArgs(const std::vector<std::string> &args,
+                const Container::Interval<size_t> &limits = Container::Interval<size_t>::whole(),
+                unsigned flags = 0);
 
     /** Program name for documentation.  If no program name is given (or it is set to the empty string) then the name is
      *  obtained from the operating system.
