@@ -959,7 +959,16 @@ ROSE_FLAGS = -rose:verbose 0 -rose:detect_dangling_pointers 2 -I$(srcdir)
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 PASSING_TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
 PASSING_TEST_F90_Sources = ${F90_TESTCODES:.f90=.f90.passed}
@@ -1245,14 +1254,25 @@ $(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.c)
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
 
+# DQ (11/5/2016): Fixed this to use the RTH script so that address sanitizer could be used consistantly for all tests.
 # DQ (11/11/2008): Module test copied from developersScratchSpace/Dan/Fortran_tests
 # This file declares a module used by module_B_file.f90
-module_A_file.o: testTranslator
-	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+# module_A_file.o: testTranslator
+# TEST_F90_Sources = ${ALL_F90_TESTCODES:.f90=.f90.passed}
+module_A_file.f90.passed: testTranslator
+# module_A_file.o: testTranslator
+#	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+#	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+#	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $(srcdir)/$(@:.o=.f90)
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+#	../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
 
 # Force representation of module dependency so that mod files are properly generated before use.
-module_B_file.o: testTranslator module_A_file.o
-	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+# module_B_file.o: testTranslator module_A_file.o
+module_B_file.f90.passed: testTranslator module_A_file.f90.passed
+#	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+#	../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
 
 test2010_01.o:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
@@ -1279,7 +1299,8 @@ problemTests:
 
 
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
-PASSING_MODULE_TEST_Objects = module_B_file.o
+# PASSING_MODULE_TEST_Objects = module_B_file.o
+PASSING_MODULE_TEST_Objects = module_B_file.f90.passed
 
 # DQ (10/4/2010): Test calling OFP directly and ROSE for different filename extensions.
 CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.2.jar fortran.ofp.FrontEnd

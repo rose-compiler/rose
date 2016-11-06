@@ -224,7 +224,17 @@ $(TESTCODE_CURRENTLY_FAILING)
 # VALGRIND_OPTIONS = --tool=memcheck -v --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --malloc-fill="0000" --free-fill="0000"
 VALGRIND_OPTIONS = --tool=memcheck --trace-children=yes
 # VALGRIND = /usr/bin/valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+# VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 ROSE_FLAGS = --edg:no_warnings -w --edg:restrict -rose:astMerge
