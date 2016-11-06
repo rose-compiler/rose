@@ -118,6 +118,13 @@ DOCUMENTATION_should_never_be_defined;
     CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", __FILE__)
 #endif
 
+#ifdef DOCUMENTATION
+#define IS_SERIALIZABLE() /*void*/
+#else
+#define IS_SERIALIZABLE(CLASS_WITHOUT_Sg) \
+    CLASS_WITHOUT_Sg.isBoostSerializable(true)
+#endif
+
 // Since ROSETTA builds classes from the leaves up to the base, and C++ builds classes from the base down to the leaves, we
 // need to make sure that doxygen sees the base classes before the derived classes. So just list all the non-leaf classes here.
 #ifdef DOCUMENTATION
@@ -156,6 +163,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmArmInstruction);
+    IS_SERIALIZABLE(AsmArmInstruction);
 
     DECLARE_HEADERS(AsmArmInstruction);
 #if defined(SgAsmArmInstruction_HEADERS) || defined(DOCUMENTATION)
@@ -232,6 +240,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmX86Instruction);
+    IS_SERIALIZABLE(AsmX86Instruction);
     DECLARE_HEADERS(AsmX86Instruction);
 #if defined(SgAsmX86Instruction_HEADERS) || defined(DOCUMENTATION)
     #include <InstructionEnumsX86.h>
@@ -307,6 +316,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmPowerpcInstruction);
+    IS_SERIALIZABLE(AsmPowerpcInstruction);
     DECLARE_HEADERS(AsmPowerpcInstruction);
 #if defined(SgAsmPowerpcInstruction_HEADERS) || defined(DOCUMENTATION)
     #include <powerpcInstructionEnum.h>
@@ -350,6 +360,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmMipsInstruction);
+    IS_SERIALIZABLE(AsmMipsInstruction);
     DECLARE_HEADERS(AsmMipsInstruction);
 #if defined(SgAsmMipsInstruction_HEADERS) || defined(DOCUMENTATION)
     #include <InstructionEnumsMips.h>
@@ -398,6 +409,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmM68kInstruction);
+    IS_SERIALIZABLE(AsmM68kInstruction);
     DECLARE_HEADERS(AsmM68kInstruction);
 #if defined(SgAsmM68kInstruction_HEADERS) || defined(DOCUMENTATION)
     #include "InstructionEnumsM68k.h"
@@ -452,6 +464,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmM68kInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmInstruction);
 
     DECLARE_HEADERS(AsmInstruction);
 #if defined(SgAsmInstruction_HEADERS) || defined(DOCUMENTATION)
@@ -812,6 +825,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmOperandList);
+    IS_SERIALIZABLE(AsmOperandList);
 
 #ifdef DOCUMENTATION
     /** List of operands for an instruction. */
@@ -849,6 +863,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryAdd);
+    IS_SERIALIZABLE(AsmBinaryAdd);
 
 #ifdef DOCUMENTATION
     /** Expression that adds two operands. */
@@ -874,6 +889,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinarySubtract);
+    IS_SERIALIZABLE(AsmBinarySubtract);
 
 #ifdef DOCUMENTATION
     /** Expression that subtracts the second operand from the first. */
@@ -899,6 +915,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryMultiply);
+    IS_SERIALIZABLE(AsmBinaryMultiply);
 
 #ifdef DOCUMENTATION
     /** Expression that multiplies two operands. */
@@ -924,7 +941,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryDivide);
-
+    IS_SERIALIZABLE(AsmBinaryDivide);
 
 #ifdef DOCUMENTATION
     /** Expression that divides the first operand by the second. */
@@ -950,6 +967,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryMod);
+    IS_SERIALIZABLE(AsmBinaryMod);
 
 #ifdef DOCUMENTATION
     /** Expression that returns the remainder when dividing the first operand by the second. */
@@ -975,6 +993,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryAddPreupdate);
+    IS_SERIALIZABLE(AsmBinaryAddPreupdate);
 
 #ifdef DOCUMENTATION
     /** Expression that performs a pre-increment operation. */
@@ -1000,6 +1019,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinarySubtractPreupdate);
+    IS_SERIALIZABLE(AsmBinarySubtractPreupdate);
 
 #ifdef DOCUMENTATION
     /** Expression that performs a pre-decrement operation. */
@@ -1025,6 +1045,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryAddPostupdate);
+    IS_SERIALIZABLE(AsmBinaryAddPostupdate);
 
 #ifdef DOCUMENTATION
     /** Expression that performs a post-increment operation. */
@@ -1050,6 +1071,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinarySubtractPostupdate);
+    IS_SERIALIZABLE(AsmBinarySubtractPostupdate);
 
 #ifdef DOCUMENTATION
     /** Expression that performs a post-decrement operation. */
@@ -1075,6 +1097,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryLsl);
+    IS_SERIALIZABLE(AsmBinaryLsl);
 
 #ifdef DOCUMENTATION
     /** Expression that performs a logical left shift operation. */
@@ -1100,6 +1123,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryLsr);
+    IS_SERIALIZABLE(AsmBinaryLsr);
 
 #ifdef DOCUMENTATION
     /** Expression that performs a logical, sign-bit non-preserving right shift. */
@@ -1125,6 +1149,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryAsr);
+    IS_SERIALIZABLE(AsmBinaryAsr);
 
 #ifdef DOCUMENTATION
     /** Expression that performs an arithmetic, sign-bit preserving right shift. */
@@ -1150,6 +1175,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBinaryRor);
+    IS_SERIALIZABLE(AsmBinaryRor);
 
 #ifdef DOCUMENTATION
     /** Expression that performs a right rotate. */
@@ -1182,6 +1208,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmBinaryRor,
                           "AsmBinaryExpression", "AsmBinaryExpressionTag", false);
     AsmBinaryExpression.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmBinaryExpression);
 
 #ifdef DOCUMENTATION
     /** Base class for binary expressions. */
@@ -1232,6 +1259,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmUnaryPlus);
+    IS_SERIALIZABLE(AsmUnaryPlus);
 
 #ifdef DOCUMENTATION
     /** Expression representing a (no-op) unary plus operation. */
@@ -1257,6 +1285,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmUnaryMinus);
+    IS_SERIALIZABLE(AsmUnaryMinus);
 
 #ifdef DOCUMENTATION
     /** Expression represting negation. */
@@ -1282,6 +1311,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmUnaryRrx);
+    IS_SERIALIZABLE(AsmUnaryRrx);
 
 #ifdef DOCUMENTATION
     // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
@@ -1307,6 +1337,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmUnaryArmSpecialRegisterList);
+    IS_SERIALIZABLE(AsmUnaryArmSpecialRegisterList);
 
 #ifdef DOCUMENTATION
     // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
@@ -1335,6 +1366,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryArmSpecialRegisterList,
                           "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
     AsmUnaryExpression.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmUnaryExpression);
 
 #ifdef DOCUMENTATION
     /** Base class for unary expressions. */
@@ -1366,6 +1398,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmDirectRegisterExpression);
+    IS_SERIALIZABLE(AsmDirectRegisterExpression);
 
 #ifdef DOCUMENTATION
     /** Expression representing a machine register. */
@@ -1403,6 +1436,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmIndirectRegisterExpression);
+    IS_SERIALIZABLE(AsmIndirectRegisterExpression);
 
 #ifdef DOCUMENTATION
     /** Registers accessed indirectly.  For instance, x86 ST(1) which has base register "st", stride={0,1,0,0}, and offset
@@ -1448,6 +1482,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression, AsmDirectRegisterExpression|AsmIndirectRegisterExpression,
                           "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag", false);
     AsmRegisterReferenceExpression.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmRegisterReferenceExpression);
 
 #ifdef DOCUMENTATION
     class SgAsmRegisterReferenceExpression: public SgAsmExpression {
@@ -1503,6 +1538,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmRegisterNames);
+    IS_SERIALIZABLE(AsmRegisterNames);
 
 #ifdef DOCUMENTATION
     /** An ordered list of registers. */
@@ -1536,6 +1572,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmIntegerValueExpression);
+    IS_SERIALIZABLE(AsmIntegerValueExpression);
 
 #ifdef DOCUMENTATION
     /**  Base class for integer values.
@@ -1675,6 +1712,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmFloatValueExpression);
+    IS_SERIALIZABLE(AsmFloatValueExpression);
 
 #ifdef DOCUMENTATION
     /** Floating-point value.
@@ -1728,6 +1766,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmIntegerValueExpression | AsmFloatValueExpression,
                           "AsmConstantExpression", "AsmConstantExpressionTag", false);
     AsmConstantExpression.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmConstantExpression);
 
     DECLARE_HEADERS(AsmConstantExpression);
 #if defined(SgAsmConstantExpression_HEADERS) || defined(DOCUMENTATION)
@@ -1780,6 +1819,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmConstantExpression,
                           "AsmValueExpression", "AsmValueExpressionTag", false);
     AsmValueExpression.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmValueExpression);
 
 #ifdef DOCUMENTATION
     /** Base class for values.
@@ -1825,6 +1865,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmMemoryReferenceExpression);
+    IS_SERIALIZABLE(AsmMemoryReferenceExpression);
 
 #ifdef DOCUMENTATION
     /** Reference to memory locations. */
@@ -1859,6 +1900,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmControlFlagsExpression);
+    IS_SERIALIZABLE(AsmControlFlagsExpression);
 
 #ifdef DOCUMENTATION
     // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
@@ -1890,6 +1932,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmCommonSubExpression);
+    IS_SERIALIZABLE(AsmCommonSubExpression);
 
 #ifdef DOCUMENTATION
     // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
@@ -1921,6 +1964,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmRiscOperation);
+    IS_SERIALIZABLE(AsmRiscOperation);
 
 #ifdef DOCUMENTATION
     /** Static representation of instruction semantics.
@@ -2023,6 +2067,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmExprListExp);
+    IS_SERIALIZABLE(AsmExprListExp);
 
 #ifdef DOCUMENTATION
     /** List of expression nodes. */
@@ -2060,6 +2105,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmRiscOperation,
                           "AsmExpression", "AsmExpressionTag", false);
     AsmExpression.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmExpression);
 
 #ifdef DOCUMENTATION
     /** Base class for expressions. */
@@ -2130,6 +2176,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmIntegerType);
+    IS_SERIALIZABLE(AsmIntegerType);
 
 #ifdef DOCUMENTATION
     /** Integer types. */
@@ -2168,6 +2215,8 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmFloatType);
+    IS_SERIALIZABLE(AsmFloatType);
+
     DECLARE_HEADERS(AsmFloatType);
 #if defined(SgAsmFloatType_HEADERS) || defined(DOCUMENTATION)
     #include <Sawyer/BitVector.h>
@@ -2262,6 +2311,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmIntegerType | AsmFloatType,
                           "AsmScalarType", "AsmScalarTypeTag", false);
     AsmScalarType.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmScalarType);
 
 #ifdef DOCUMENTATION
     /** Base class for scalar types. */
@@ -2323,6 +2373,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmVectorType);
+    IS_SERIALIZABLE(AsmVectorType);
 
 #ifdef DOCUMENTATION
     /** Base class for vector types. */
@@ -2368,6 +2419,7 @@ void Grammar::setUpBinaryInstructions() {
  
     NEW_NONTERMINAL_MACRO(AsmType, AsmScalarType | AsmVectorType, "AsmType", "AsmTypeTag", false);
     AsmType.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmType);
 
 #ifdef DOCUMENTATION
     /** Base class for binary types. */
@@ -4643,6 +4695,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList,
                           "AsmNode", "AsmNodeTag", false);
     AsmNode.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmNode);
 
 #ifdef DOCUMENTATION
     /** Base class for all binary analysis IR nodes. */

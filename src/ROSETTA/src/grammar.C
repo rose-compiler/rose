@@ -6,6 +6,7 @@
 #include "grammar.h"
 #include "AstNodeClass.h"
 #include "grammarString.h"
+#include <cctype>
 #include <sstream>
 #include <fstream>
 #include <map>
@@ -2614,6 +2615,7 @@ static void SetBitInClassHierarchyCastTable(size_t row, size_t col){
     classHierarchyCastTable[row][bytePosition] |=  (1 << bitPosition);
 }
 
+#if 0 // [Robb P Matzke 2016-11-06]: unused, so commenting out to avoid compiler warning
 // Get the correct bit value from classHierarchyCastTable correspinding to the given row and column
 static bool GetBitInClassHierarchyCastTable(size_t row, size_t col){
     size_t bytePosition = col  >> 3;
@@ -2621,6 +2623,7 @@ static bool GetBitInClassHierarchyCastTable(size_t row, size_t col){
     bool val = classHierarchyCastTable[row][bytePosition] &  bitMask;
     return val;
 }
+#endif
 
 // Gets the number of rows in classHierarchyCastTable
 size_t Grammar::getRowsInClassHierarchyCastTable(){
@@ -2815,6 +2818,63 @@ Grammar::buildVariantEnumNames() {
     first = false;
   }
   return s;
+}
+
+// Build the file for supporting boost::serialization
+void
+Grammar::buildSerializationSupport(std::ostream &declarations, std::ostream &definitions, const std::string &headerName) {
+
+    // Header prologue
+    std::string includeOnce = "ROSE_" + headerName;               // no boost
+    for (size_t i=0; i<includeOnce.size(); ++i) {
+        if (!isalnum(includeOnce[i]))
+            includeOnce[i] = '_';
+    }
+    if (includeOnce.size()>2 && includeOnce.substr(includeOnce.size()-2)=="_h")
+        includeOnce[includeOnce.size()-1] = 'H';
+    declarations <<"// Declarations and templates for supporting boost::serialization of Sage IR nodes.\n"
+                 <<"#ifndef " <<includeOnce <<"\n"
+                 <<"#define " <<includeOnce <<"\n"
+                 <<"\n"
+                 <<"// sage3basic.h or rose.h must be inlucded first from a .C file (don't do it here!)\n"
+                 <<"#include <boost/serialization/export.hpp>\n\n";
+
+    // BOOST_CLASS_EXPORT_KEY
+    declarations <<"// The declaration half of exporting polymorphic classes.\n";
+    for (size_t i=0; i<terminalList.size(); ++i) {
+        if (terminalList[i]->isBoostSerializable())
+            declarations <<"BOOST_CLASS_EXPORT_KEY(" <<terminalList[i]->name <<");\n";
+    }
+    declarations <<"\n\n";
+
+    // roseAstSerializationRegistration
+    declarations <<"/** Register all Sage IR node types for serialization.\n"
+                 <<" *\n"
+                 <<" *  This function should be called before any Sage IR nodes are serialized or deserialized. It\n"
+                 <<" *  registers all SgNode subclasses that might be serialized through a base pointer. Note that\n"
+                 <<" *  registration is required but not sufficient for serialization: the \"serialize\" member\n"
+                 <<" *  function template must also be defined. */\n"
+                 <<"template<class Archive>\n"
+                 <<"void roseAstSerializationRegistration(Archive &archive) {\n";
+    for (size_t i=0; i<terminalList.size(); ++i) {
+        if (terminalList[i]->isBoostSerializable())
+            declarations <<"    archive.template register_type<" <<terminalList[i]->name <<">();\n";
+    }
+    declarations <<"}\n";
+
+    // BOOST_CLASS_EXPORT_IMPLEMENT
+    definitions <<"#include <sage3basic.h>\n"
+                <<"#include <" <<headerName <<">\n"
+                <<"#include <boost/serialization/export.hpp>\n"
+                <<"\n\n"
+                <<"// Register SgNode and all subclasses so that subclasses can be serialized through a base class pointer.\n";
+    for (size_t i=0; i<terminalList.size(); ++i) {
+        if (terminalList[i]->isBoostSerializable())
+            definitions <<"BOOST_CLASS_EXPORT_IMPLEMENT(" <<terminalList[i]->name <<");\n";
+    }
+
+    // Header epilogue
+    declarations <<"#endif\n";
 }
 
 // PC: new implementation of ReferenceToPointerHandler.  This implementation
@@ -3425,6 +3485,19 @@ Grammar::buildCode ()
 
   // DQ (4/8/2004): Maybe we need a more obscure name to prevent global name space pollution?
      variantEnumNamesFile << "\n#include \"rosedll.h\"\n ROSE_DLL_API const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
+
+  // --------------------------------------------
+  // generate code for boost::serialization support
+  // --------------------------------------------
+     {
+         string declarationsFileName = string(getGrammarName()) + "Serialization.h";
+         string definitionsFileName = string(getGrammarName()) + "Serialization.C";
+         ofstream declarationsFile(string(target_directory+"/"+declarationsFileName).c_str());
+         ofstream definitionsFile(string(target_directory+"/"+definitionsFileName).c_str());
+         ROSE_ASSERT(declarationsFile.good());
+         ROSE_ASSERT(definitionsFile.good());
+         buildSerializationSupport(declarationsFile, definitionsFile, declarationsFileName);
+     }
 
   // --------------------------------------------
   // generate code for RTI support
