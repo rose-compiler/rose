@@ -3,6 +3,7 @@
 
 #include "Disassembler.h"
 #include "BaseSemantics2.h"
+#include "AstSerialization.h"
 
 #include <boost/serialization/access.hpp>
 #include <Sawyer/Assert.h>
@@ -42,12 +43,30 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned verion) {
-        s & disassembler_;
-        s & memMap_;
-        s & insnMap_;
-        s & useDisassembler_;
+    void save(S &s, const unsigned version) const {
+        roseAstSerializationRegistration(s);            // so we can save instructions through SgAsmInstruction base ptrs
+        bool hasDisassembler = disassembler_ != NULL;
+        s <<hasDisassembler <<useDisassembler_ <<memMap_ <<insnMap_;
+        if (hasDisassembler) {
+            std::string disName = disassembler_->name();
+            s <<disName;
+        }
     }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        roseAstSerializationRegistration(s);
+        bool hasDisassembler = false;
+        s >>hasDisassembler >>useDisassembler_ >>memMap_ >>insnMap_;
+        if (hasDisassembler) {
+            std::string disName;
+            s >>disName;
+            disassembler_ = Disassembler::lookup(disName);
+            ASSERT_not_null2(disassembler_, "disassembler name=" + disName);
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 
 protected:
     InstructionProvider()
