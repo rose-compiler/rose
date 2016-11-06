@@ -323,19 +323,6 @@ typedef SgAsmBlockPtrList*                  SgAsmBlockPtrListPtr;
 // JJW (8/28/2008): Added SgAsmInterpretation
 typedef Rose_STL_Container<SgAsmInterpretation*> SgAsmInterpretationPtrList;
 
-#if USE_OLD_BINARY_EXECUTABLE_IR_NODES
-
-#error "Dead Code!"
-
-// DQ (6/14/2008): This will be removed at some point.
-typedef Rose_STL_Container<SgAsmSectionHeader*> SgAsmSectionHeaderPtrList;
-typedef SgAsmSectionHeaderPtrList*              SgAsmSectionHeaderPtrListPtr;
-
-// DQ (6/14/2008): This will be removed at some point.
-typedef Rose_STL_Container<SgAsmProgramHeader*> SgAsmProgramHeaderPtrList;
-typedef SgAsmProgramHeaderPtrList*              SgAsmProgramHeaderPtrListPtr;
-#endif
-
 // DQ (6/14/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmGenericSection*> SgAsmGenericSectionPtrList;
 typedef SgAsmGenericSectionPtrList*              SgAsmGenericSectionPtrListPtr;
