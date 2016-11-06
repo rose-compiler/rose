@@ -122,6 +122,12 @@ if ROSE_HAVE_DLIB
   ROSE_DLIB_LIBS_WITH_PATH =
 endif
 
+# DQ (11/4/2016): Adding support for use of Address Sanitizer (for where the ROSE Test Handler (RTH) is used.
+# Note the quotes and escapes that are required:
+ADDRESS_SANITIZER_OPTIONS = "ASAN_OPTIONS=symbolize=1 ASAN_SYMBOLIZER_PATH=\`which llvm-symbolizer\`"
+
+# DQ(11/4/2016): Need a version when not using the ROSE Test Handler (RTH):
+NON_RTH_ADDRESS_SANITIZER_OPTIONS = ASAN_OPTIONS=symbolize=1 ASAN_SYMBOLIZER_PATH=`which llvm-symbolizer`
 
 GLUT_LIBS = ${glut_path}
 

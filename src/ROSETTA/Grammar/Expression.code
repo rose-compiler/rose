@@ -4242,7 +4242,7 @@ SgCallExpression::replace_expression(SgExpression *o, SgExpression *n)
 SgType*
 SgCallExpression::get_type() const
    {
-#if 1
+#if 0
      printf ("In SgCallExpression::get_type() \n");
 #endif
 
@@ -8122,7 +8122,7 @@ SgSubscriptExpression::get_type() const
 
      SgType* returnType = NULL;
 
-#if 1
+#if 0
      printf ("In SgSubscriptExpression::get_type() \n");
 #endif
 
@@ -8509,7 +8509,7 @@ SgActualArgumentExpression::get_type() const
    {
      ROSE_ASSERT(p_expression != NULL);
 
-#if 1
+#if 0
      printf ("In SgActualArgumentExpression::get_type() \n");
 #endif
 
@@ -8756,7 +8756,7 @@ SgCAFCoExpression::get_type() const
    {
      SgType* returnType = get_referData()->get_type();
 
-#if 1
+#if 0
      printf ("In SgCAFCoExpression::get_type() \n");
 #endif
 

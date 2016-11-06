@@ -120,7 +120,8 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // DQ (4/10/2016): Output a warning when this happens.
                if (firstNondefiningDeclaration == NULL)
                   {
-#if 1
+#if 0
+                 // DQ (11/5/2016): Comment this out to avoid output spew in Fortran test codes (see Fortran_tests/mpi_f08_interfaces_test.f03, I think).
                     printf ("Warning: declaration exists with firstNondefiningDeclaration == NULL: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
                   }

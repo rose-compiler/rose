@@ -378,6 +378,7 @@ echo "CFLAGS   = $CFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
 echo "CPPFLAGS = $CPPFLAGS"
 
+
 # *****************************************************************
 #    Option to define a uniform debug level for ROSE development
 # *****************************************************************
@@ -442,6 +443,14 @@ esac
 
 AC_DEFINE_UNQUOTED([ROSE_ASSERTION_BEHAVIOR], [$assertion_behavior], [Determines how failed assertions should behave.])
     
+# *****************************************************************
+
+# ********************************************************************************
+#    Option support for the Address Sanitizer and other related Sanitizer tools.
+# ********************************************************************************
+
+ROSE_SUPPORT_SANITIZER
+
 # *****************************************************************
 
 # ROSE_HOME should be relative to top_srcdir or top_builddir.
