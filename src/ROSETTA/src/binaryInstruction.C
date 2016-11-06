@@ -2599,14 +2599,43 @@ void Grammar::setUpBinaryInstructions() {
     AsmSynthesizedDeclaration.setFunctionPrototype("HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmStatement,
                           AsmSynthesizedDeclaration | AsmBlock | AsmInstruction | AsmStaticData,
                           "AsmStatement", "AsmStatementTag", false);
-    AsmStatement.setDataPrototype("rose_addr_t", "address", "= 0",
-                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    AsmStatement.setDataPrototype("std::string", "comment", "= \"\"",
-                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+    AsmStatement.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmStatement);
+
+#ifdef DOCUMENTATION
+    class SgAsmStatement: public SgAsmNode {
+    public:
+#endif
+
+#ifndef DOCUMENTATION
+        AsmStatement.setDataPrototype("rose_addr_t", "address", "= 0",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+        AsmStatement.setDataPrototype("std::string", "comment", "= \"\"",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+        DECLARE_OTHERS(AsmStatement);
+#if defined(SgAsmStatement_OTHERS) || defined(DOCUMENTATION)
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & boost::serialization::base_object<SgNode>(*this);
+            s & p_address & p_comment;
+        }
+#endif // SgAsmStatement_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
 
 
 
