@@ -1702,19 +1702,11 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialization(S &s, const unsigned version) {
-#if 1 // DEBUGGING [Robb P Matzke 2016-11-02]
-            debugging();
-#endif
+        void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmConstantExpression>(*this);
-            s & p_nativeValue & p_nativeValueIsValid;
+            s & p_nativeValue;
+            s & p_nativeValueIsValid;
         }
-
-#if 1 // DEBUGGING [Robb P Matzke 2016-11-02]
-        void debugging() const {
-            std::cerr <<"ROBB: got here\n";
-        }
-#endif
 
     public:
         SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
@@ -2213,8 +2205,13 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmScalarType>(*this);
-            s & p_significandOffset & p_significandNBits & p_signBitOffset & p_exponentOffset;
-            s & p_exponentNBits & p_exponentBias & p_flags;
+            s & p_significandOffset;
+            s & p_significandNBits;
+            s & p_signBitOffset;
+            s & p_exponentOffset;
+            s & p_exponentNBits;
+            s & p_exponentBias;
+            s & p_flags;
         }
 
     public:
