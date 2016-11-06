@@ -109,6 +109,7 @@ GENERATED_SOURCE = \
 	Cxx_GrammarTreeTraversalSuccessorContainer.C \
 	Cxx_GrammarTreeTraversalAccessEnums.h \
 	Cxx_GrammarVariantEnumNames.C \
+	Cxx_GrammarSerialization.C \
 	Cxx_GrammarNewAndDeleteOperators.C \
 	Cxx_GrammarCopyMemberFunctions.C \
 	Cxx_GrammarTraverseMemoryPool.C \
@@ -130,6 +131,7 @@ GENERATED_SOURCE = \
 	Cxx_GrammarTreeTraversalSuccessorContainer.C \
 	Cxx_GrammarTreeTraversalAccessEnums.h \
 	Cxx_GrammarVariantEnumNames.C \
+	Cxx_GrammarSerialization.C \
 	Cxx_GrammarNewAndDeleteOperators.C \
 	Cxx_GrammarCopyMemberFunctions.C \
 	Cxx_GrammarTraverseMemoryPool.C \
