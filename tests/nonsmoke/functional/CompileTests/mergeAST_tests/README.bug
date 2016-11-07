@@ -1,0 +1,17 @@
+DQ (11/6/2016): There is a bug that is unique to the mergeAST_tests 
+regression tests.  The problm is a memory error caused by some 
+error in the way that some IR nodes (likely SgStringType) are
+deleted within the mergeAST mechanism.
+
+The temporary fix is to no call SgStringVal::get_type() function after 
+the astMerge.  So this is suppressed where it occurse in the AST consistancy 
+tests (see the TestExpressionTypes::visit() function in ASTConsistancyTests.C).
+
+The problem can be demonstrated by setting the memory pool size to "1"
+and using the Address Sanitizer (see ROSE configure options).
+
+At a later date this will bug can be persued more agressively, currently
+we want to see if this fix will work and provide consistant results on
+all machines used in testing ROSE.  It might be that the bug is more complex,
+than the fix provided will support.  We will see!
+
