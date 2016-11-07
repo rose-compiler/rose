@@ -47,6 +47,10 @@ if test "$support_binaries_frontend" == "yes" -a "$link_iostreams" != "yes"; the
 ***           "-sNO_COMPRESSION=1" switch when configuring boost.])
 fi
 
+# Boost serialization library is optional -- used for save/restore of binary data structures
+# The headers must always be present.
+AX_BOOST_SERIALIZATION
+
 
 dnl  ==================================================================================
 dnl   Check for optional packages that binary analysis in librose can use if available
@@ -91,9 +95,6 @@ AM_CONDITIONAL(ROSE_USE_INTEL_PIN,test ! "$with_IntelPin" = no)
 
 # Call supporting macro to DWARF (libdwarf)
 ROSE_SUPPORT_DWARF
-
-# Setup Automake conditional in --- (not yet distributed)
-AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
 
 # Xen and Ether [RPM 2009-10-28]
 AC_ARG_WITH(ether,

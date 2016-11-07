@@ -9,6 +9,7 @@
 #include "BinaryBestMapAddress.h"                       // rose::BinaryAnalysis::BestMapAddress
 #include "BinaryCallingConvention.h"                    // rose::BinaryAnalysis::CallingConvention
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
+#include "BinaryFeasiblePath.h"                         // rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryLoader.h"                               // BinaryLoader
 #include "BinaryNoOperation.h"                          // rose::BinaryAnalysis::NoOperation
@@ -97,11 +98,12 @@ void initialize() {
         // disabled there should be a dummy initDiagnostics that does nothing so we don't need lots of #ifdefs here.
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
         BinaryLoader::initDiagnostics();
-        BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
+        BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
+        BinaryAnalysis::FeasiblePath::initDiagnostics();
         BinaryAnalysis::FunctionSimilarity::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
         BinaryAnalysis::NoOperation::initDiagnostics();

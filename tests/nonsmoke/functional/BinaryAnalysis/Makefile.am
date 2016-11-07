@@ -13,7 +13,7 @@ noinst_PROGRAMS=
 MOSTLYCLEANFILES=
 PHONIES=
 
-if USE_BINARY_ANALYSIS_TESTS
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 # Location of binary specimens
 SPECIMEN_DIR = $(nonsmoke_specimens_binary_directory)
