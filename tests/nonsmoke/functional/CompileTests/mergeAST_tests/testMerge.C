@@ -43,9 +43,11 @@ void commandLineProcessing (int & argc, char** & argv, bool & skipFrontendSpecif
 int
 main ( int argc, char** argv )
    {
+#if 0
   // DQ (11/1/2016): Use line buffering to force the capture of all output (stdout) when redirecting output to a file.
   // Note that this can significantly slow down the execution with output.
      setlinebuf(stdout);
+#endif
 
 #if 0
      printf ("Exiting at top of main() \n");
