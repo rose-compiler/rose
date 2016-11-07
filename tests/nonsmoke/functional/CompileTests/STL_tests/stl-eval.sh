@@ -4,14 +4,30 @@
 : ${TOOL1:=g++}
 : ${TOOL2:=identityTranslator}
 
+CLEANUP="yes"
+
+if [ "$#" -gt 1 ]; then
+    echo "Usage: $0 [no-cleanup]"
+    exit
+else
+  if [ $# == 1 ]; then
+    if [ "$1" == "no-cleanup" ]; then
+      CLEANUP="no"
+    else
+      echo "Error: unknown argument $1."
+      exit
+    fi
+  fi
+fi
+
 ###############################################################################
 # the following four lists control the behavior of the script
 ###############################################################################
 
-STL_CPP98_HEADERS_PASSING="algorithm deque exception functional limits list map memory new numeric queue set stack typeinfo utility valarray vector"
+STL_CPP98_HEADERS_PASSING="algorithm   deque exception functional limits list map memory new numeric queue set stack typeinfo utility valarray vector"
 STL_CPP98_HEADERS_FAILING="bitset complex fstream iomanip ios iosfwd iostream istream iterator locale ostream sstream stdexcept streambuf string"
 
-# C++11 TESTS only are expected to pass for frontend (T0_FAIL+T1_FAIL==0 (not yet for T2_FAIL))
+# C++11 TESTS are expected to pass for frontend (T0_FAIL+T1_FAIL==0 (but not for backend (T2_FAIL>0))
 STL_CPP11_HEADERS_PASSING="algorithm bitset complex deque exception fstream functional iomanip ios iosfwd iostream istream iterator limits list locale map memory new numeric ostream queue set sstream stack stdexcept streambuf string typeinfo utility valarray vector"
 STL_CPP11_HEADERS_FAILING=""
 
@@ -25,17 +41,18 @@ COLOREND="\033[0m"
 REDFAIL="${RED}FAIL${COLOREND}"
 
 BS_INCLUDE=-I.
-
+LOGFILE="stl-eval.log"
 TOOL2_BACKEND=-rose:skipfinalCompileStep
 
 function cleanup {
+    rm -f $LOGFILE
     rm -f *.o *.pp.C *.ti
     rm -f test_*.* rose_test*.* a.out
 }
 
 function test_failed {
-  echo -e "${RED}${TOTAL_FAIL} TESTS FAILED. See above list for details.${COLOREND}"
-  exit 1
+    echo -e "${RED}${TOTAL_FAIL} TESTS FAILED. See above list for details.${COLOREND}"
+    exit 1
 }
 
 function check {
@@ -53,58 +70,68 @@ T2_FAIL=0
 TOTAL_FAIL=0
 
 for header in ${STL_HEADERS}; do
-  printf "TESTING: %-17s: " "$header"
-  printf "#include <$header>\nint main(){ return 0; }\n" > test_$header.C
-  # option -P: inhibit generation of linemarkers
-  cpp -P -std=$LANG_STANDARD -x c++ test_${header}.C test_${header}.pp.C
-  LOC=`wc -l test_${header}.pp.C| cut -f1 -d' '`
-  printf "%6s LOC : " "$LOC"
 
-  # use a sub shell and redirect coredump output of subshell to /dev/null
-  {
-   $TOOL1 $BS_INCLUDE test_${header}.C -std=$LANG_STANDARD &> /dev/null
-  } > /dev/null 2>&1
+    TEST_HEADER="test_$header"
+    CPP_TEST_HEADER="test_$header.C"
+    PREP_TEST_HEADER="${CPP_TEST_HEADER}_${LANG_STANDARD}.pp.C"
+    FAIL1_TEST_HEADER="${CPP_TEST_HEADER}_${LANG_STANDARD}.t1.fail.C"
+    FAIL2_TEST_HEADER="${CPP_TEST_HEADER}_${LANG_STANDARD}.t2.fail.C"
 
-  if [ $? -eq 0 ]; then
-      echo -n "PASS " # 0
-      ((T0_PASS+=1))
-      {
-#         $TOOL2 $TOOL2_BACKEND $BS_INCLUDE test_${header}.pp.C -std=$LANG_STANDARD &> /dev/null
-          $TOOL2 $TOOL2_BACKEND $BS_INCLUDE test_${header}.pp.C -std=$LANG_STANDARD
-      } > /dev/null 2>&1
-      if [ $? -eq 0 ]; then
-          if [ -e rose_test_${header}.pp.C ]
-          then
-              echo -n "PASS" # 1
-              ((T1_PASS+=1) )
-              g++ -std=$LANG_STANDARD rose_test_${header}.pp.C -w -Wfatal-errors > /dev/null 2>&1
-              if [ $? -eq 0 ]; then
-                  echo -n " PASS : 100.00%" # 2
-                  ((T2_PASS+=1))
-              else
-                  # determine line number of error
-                  ERROR_LINE=`g++ -std=${LANG_STANDARD} rose_test_${header}.pp.C -w -Wfatal-errors 2>&1 | egrep rose_test_${header}.pp.C:[0-9] | cut -f2 -d:` 
-                  ERROR_PERCENTAGE=`echo "scale=2; ${ERROR_LINE}*100/${LOC}" | bc`
-                  echo -en " ${RED}FAIL${COLOREND}"
-                  printf " : %6s%% (LINE:%s)" "$ERROR_PERCENTAGE" "$ERROR_LINE" # 2
-                  cp rose_test_${header}.pp.C rose_test_$header.t2.fail.C
-                  ((T2_FAIL+=1))
-              fi            
-          else
-              echo -n " ${RED}FAIL${COLOREND} [no file generated!] "
-              ((T1_FAIL+=1))
-          fi
-      else
-          echo -en "${RED}FAIL ----${COLOREND}" # 1
-          ((T1_FAIL+=1))
-      fi
-  else
-      echo -en "${RED}FAIL ---- ----${COLOREND}" # 0
-      ((T0_FAIL+=1))
-  fi
-  # print end of line with (optional) comment
-  echo " $COMMENT"
-  ((INDEX+=1))
+    printf "TESTING: %-17s: " "$header"
+    printf "#include <$header>\nint main(){ return 0; }\n" > ${CPP_TEST_HEADER}
+    # option -P: inhibit generation of linemarkers
+    cpp -P -std=$LANG_STANDARD -x c++ test_${header}.C test_${header}.pp.C
+    LOC=`wc -l test_${header}.pp.C | cut -f1 -d' '`
+    printf "%6s LOC : " "$LOC"
+    
+    # use a sub shell and redirect coredump output of subshell to /dev/null
+    {
+        $TOOL1 $BS_INCLUDE test_${header}.C -std=$LANG_STANDARD &> /dev/null
+    } > /dev/null 2>&1
+    
+    if [ $? -eq 0 ]; then
+        echo -n "PASS " # 0
+        ((T0_PASS+=1))
+        echo "$TOOL2 $TOOL2_BACKEND $BS_INCLUDE test_${header}.pp.C -std=$LANG_STANDARD" >> $LOGFILE
+        {
+            $TOOL2 $TOOL2_BACKEND $BS_INCLUDE --edg:no_warnings test_${header}.pp.C -std=$LANG_STANDARD
+        } >> $LOGFILE 2>&1
+        if [ $? -eq 0 ]; then
+            if [ -e rose_test_${header}.pp.C ]
+            then
+                echo -n "PASS" # 1
+                ((T1_PASS+=1) )
+                echo "${TOOL1} -std=$LANG_STANDARD rose_test_${header}.pp.C -w -Wfatal-errors" >> $LOGFILE
+                ${TOOL1} -std=$LANG_STANDARD rose_test_${header}.pp.C -w -Wfatal-errors >> $LOGFILE 2>&1
+                if [ $? -eq 0 ]; then
+                    echo -n " PASS : 100.00%" # 2
+                    ((T2_PASS+=1))
+                else
+                    # determine line number of error
+                    ERROR_LINE=`${TOOL1} -std=${LANG_STANDARD} rose_test_${header}.pp.C -w -Wfatal-errors 2>&1 | egrep rose_test_${header}.pp.C:[0-9] | cut -f2 -d:` 
+                    ERROR_PERCENTAGE=`echo "scale=2; ${ERROR_LINE}*100/${LOC}" | bc`
+                    echo -en " ${RED}FAIL${COLOREND}"
+                    printf " : %6s%% (LINE:%s)" "$ERROR_PERCENTAGE" "$ERROR_LINE" # 2
+                    cp rose_test_${header}.pp.C rose_test_$header.t2.fail.C
+                    ((T2_FAIL+=1))
+                    echo -n " [ ${TOOL1} -std=$LANG_STANDARD rose_test_${header}.pp.C -w -Wfatal-errors ]"
+                fi            
+            else
+                echo -n " ${RED}FAIL${COLOREND} [no file generated!] "
+                ((T1_FAIL+=1))
+            fi
+        else
+            echo -en "${RED}FAIL ----${COLOREND}" # 1
+            ((T1_FAIL+=1))
+        fi
+    else
+        echo -en "${RED}FAIL ---- ----${COLOREND}" # 0
+        ((T0_FAIL+=1))
+        echo -n "[ $TOOL2 $TOOL2_BACKEND $BS_INCLUDE test_${header}.pp.C -std=$LANG_STANDARD ]"
+    fi
+    # print end of line with (optional) comment
+    echo " $COMMENT"
+    ((INDEX+=1))
 done
 
 if [ "x" == "x$1" ]; then
@@ -119,15 +146,16 @@ fi
 
 } # end of function check
 
-#main
+########################################################################
 
 cleanup
 
 echo
 echo "-----------------------------------------------------------------"
-echo "Testing with COMP        : $TOOL1"
-echo "             FRONTEND(FE): $TOOL2"
-echo "             BACKEND (BE): $TOOL2"
+echo "Testing with COMPILER (COMP): $TOOL1"
+echo "             FRONTEND (FE)  : $TOOL2"
+echo "             BACKEND (BE)   : $TOOL2"
+echo "             TEST CLEANUP   : $CLEANUP"
 echo "-----------------------------------------------------------------"
 echo
 echo "-----------------------------------------------------------------"
@@ -146,7 +174,7 @@ echo "-----------------------------------------------------------------"
 echo "STL C++98 FRONTEND CHECK (BE FAILS)      COMP FE   BE   : SUCCESS"
 echo "-----------------------------------------------------------------"
 # DQ: (comment out here to skip these tests).
-check "$STL_CPP98_HEADERS_FAILING" "c++98" "[BE is known to fail]"
+check "$STL_CPP98_HEADERS_FAILING" "c++98" ""
 
 # for headers known to fail, only the generated code fails (T2_FAIL)
 # therefore we only check that the front end does not fail for any
@@ -179,7 +207,9 @@ echo -e "${GREEN}---------------------------------------------------------------
 
 # clean up (remove all generated files. cleanup is only performed when all tests passed)
 # DQ: (comment out here to save generated files).
-cleanup
+if [ "$CLEANUP" == "yes" ]; then
+  cleanup
+fi
 
 # NOTES on cpp:
 # -fdirectives-only
