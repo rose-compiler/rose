@@ -28,7 +28,7 @@
 0x00400486: Outgoing stack delta: -8
 0x00400486: Successor blocks: unknown
 
-0x00400490: ================================== Function (function call, graph) unknown name
+0x00400490: ================================== Function (function call, import, graph) <__libc_start_main@plt>
 0x00400490: Function stack delta: +8
 
 0x00400490: Basic block reasons: entry point
@@ -36,7 +36,7 @@
 0x00400490: Outgoing stack delta: +0
 0x00400490: Successor blocks: unknown
 
-0x004004a0: ================================== Function (call instruction, graph) unknown name
+0x004004a0: ================================== Function (import, graph) <syscall@plt>
 0x004004a0: Function stack delta: +8
 
 0x004004a0: Basic block reasons: entry point, CFG head
@@ -44,7 +44,7 @@
 0x004004a0: Outgoing stack delta: +0
 0x004004a0: Successor blocks: unknown
 
-0x004004b0: ================================== Function (call instruction, graph) unknown name
+0x004004b0: ================================== Function (import, graph) <fprintf@plt>
 0x004004b0: Function stack delta: +8
 
 0x004004b0: Basic block reasons: entry point, CFG head
@@ -52,7 +52,7 @@
 0x004004b0: Outgoing stack delta: +0
 0x004004b0: Successor blocks: unknown
 
-0x004004c0: ================================== Function (call instruction, graph) unknown name
+0x004004c0: ================================== Function (import, graph) <perror@plt>
 0x004004c0: Function stack delta: +8
 
 0x004004c0: Basic block reasons: entry point, CFG head
@@ -74,9 +74,9 @@
 0x004004e0: 49 c7 c0 50 06 40 00    |I..P.@. |<sp-16>   mov    r8, 0x00400650
 0x004004e7: 48 c7 c1 f0 05 40 00    |H....@. |<sp-16>   mov    rcx, 0x004005f0
 0x004004ee: 48 c7 c7 90 05 40 00    |H....@. |<sp-16>   mov    rdi, 0x00400590
-0x004004f5: e8 96 ff ff ff          |.....   |<sp-16>   call   0x0000000000400490<<Func>>
+0x004004f5: e8 96 ff ff ff          |.....   |<sp-16>   call   0x0000000000400490<__libc_start_main@plt>
 0x004004f5: Outgoing stack delta: -24
-0x004004f5: Successor blocks: 0x00400490<<Func>>, 0x004004fa
+0x004004f5: Successor blocks: 0x00400490<__libc_start_main@plt>, 0x004004fa
 
 0x004004fa: Basic block reasons: 
 0x004004fa: f4                      |.       |          hlt    

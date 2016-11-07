@@ -71,7 +71,7 @@ var_val_pairs() {
 # Update the test_results table and echo the new test number
 update_test_results() {
     local kvpairs=$(var_val_pairs);
-    eval "run_matrix_command matrixTestResult -L 'tool(>=trace)' --database='$DATABASE' $kvpairs"
+    eval "run_matrix_command matrixTestResult --log='tool(>=trace)' --database='$DATABASE' $kvpairs"
 }
 
 # Attach commands to the test
