@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TEST_TRANSLATOR=$(top_builddir)/tests/nonsmoke/functional/testTranslator
 
 $(TEST_TRANSLATOR):
-	$(MAKE) -C $(top_builddir)/tests testTranslator
+	$(MAKE) -C $(top_builddir)/tests/nonsmoke/functional testTranslator
 
 if ROSE_USING_GCC_VERSION_LATER_4_8
 conditional-check-local: $(TEST_TRANSLATOR)
@@ -14,3 +14,6 @@ conditional-check-local:
 endif
 
 check-local: conditional-check-local
+
+check-no-cleanup: $(TEST_TRANSLATOR)
+	TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX)  $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh no-cleanup
