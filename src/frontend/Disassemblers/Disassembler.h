@@ -10,7 +10,6 @@
 #include "BaseSemantics2.h"
 
 #include <boost/serialization/access.hpp>
-#include <boost/serialization/split_member.hpp>
 #include <boost/serialization/string.hpp>
 
 namespace rose {
@@ -229,15 +228,6 @@ public:
      *  address. */
     typedef Map<rose_addr_t, Exception> BadMap;
 
-    Disassembler()
-        : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT),
-          p_wordsize(4), p_sex(ByteOrder::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
-          p_protection(MemoryMap::EXECUTABLE)
-        {ctor();}
-
-    virtual ~Disassembler() {}
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -265,25 +255,39 @@ protected:
 public:
     static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void serialize(S &s, const unsigned version) {
+        s & p_registers;
+        s & REG_IP & REG_SS;
+        //s & p_partitioner -- not serialized
+        s & p_search;
+        s & p_wordsize;
+        s & p_sex;
+        s & p_alignment;
+        s & p_ndisassembled;
+        s & p_protection;
         s & p_name;
     }
 
-    template<class S>
-    void load(S &s, const unsigned version) {
-        std::string name;
-        s & name;
-        Disassembler *disassembler = lookup(name);
-        ASSERT_not_null(disassembler);
-        *this = disassembler;
-        delete disassembler;
-    }
 
-    BOOST_SERIALIZATION_SPLIT_MEMBER();
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Constructors
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    Disassembler()
+        : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT),
+          p_wordsize(4), p_sex(ByteOrder::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
+          p_protection(MemoryMap::EXECUTABLE)
+        {ctor();}
+
+    virtual ~Disassembler() {}
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
