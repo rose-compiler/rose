@@ -14,6 +14,7 @@
 
 #include <boost/integer_traits.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/serialization/access.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -54,6 +55,15 @@ class IntervalSet {
     // We use an IntervalMap to do all our work, always storing int(0) as the value.
     typedef IntervalMap<I, int> Map;
     Map map_;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & map_;
+    }
+
 public:
     typedef I Interval;
     typedef typename I::Value Scalar;                   /**< Type of scalar values stored in this set. */
