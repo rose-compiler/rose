@@ -382,19 +382,19 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgBitAndOp: {
-          res.result=(lhsResult.result&rhsResult.result);
+          res.result=(lhsResult.result.operatorBitwiseAnd(rhsResult.result));
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           resultList.push_back(res);
           break;
         }
         case V_SgBitOrOp: {
-          res.result=(lhsResult.result|rhsResult.result);
+          res.result=(lhsResult.result.operatorBitwiseOr(rhsResult.result));
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           resultList.push_back(res);
           break;
         }
         case V_SgBitXorOp: {
-          res.result=(lhsResult.result^rhsResult.result);
+          res.result=(lhsResult.result.operatorBitwiseXor(rhsResult.result));
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           resultList.push_back(res);
           break;

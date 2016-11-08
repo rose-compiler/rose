@@ -131,6 +131,12 @@ class ConstIntLattice {
   ConstIntLattice operatorMoreOrEq(ConstIntLattice other) const;
   ConstIntLattice operatorMore(ConstIntLattice other) const;
 
+  ConstIntLattice operatorBitwiseOr(ConstIntLattice other) const;
+  ConstIntLattice operatorBitwiseXor(ConstIntLattice other) const;
+  ConstIntLattice operatorBitwiseAnd(ConstIntLattice other) const;
+  ConstIntLattice operatorBitwiseComplement() const;
+
+
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   bool operator==(AType::ConstIntLattice other) const;
