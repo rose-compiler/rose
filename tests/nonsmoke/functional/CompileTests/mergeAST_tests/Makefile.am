@@ -115,7 +115,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_131.C \
      mergeTest_133.C \
      mergeTest_134.C \
-     mergeTest_135.C 
+     mergeTest_135.C \
+     mergeTest_138.C 
 
 # DQ (8/22/2013): Failing test:
 # This test code is a large complex test, it fails out-side of the debugger, 
@@ -219,9 +220,21 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=80 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-VALGRIND_OPTIONS = --tool=memcheck -v --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
+# VALGRIND_OPTIONS = --tool=memcheck -v --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --free-fill=deadbeef
+# VALGRIND_OPTIONS = --tool=memcheck -v --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --malloc-fill="0000" --free-fill="0000"
+VALGRIND_OPTIONS = --tool=memcheck --trace-children=yes
 # VALGRIND = /usr/bin/valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+# VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 ROSE_FLAGS = --edg:no_warnings -w --edg:restrict -rose:astMerge
@@ -258,9 +271,9 @@ EXTRA_DIST = $(ALL_TESTCODES) $(TESTCODES_TO_FIX)
 check-local:
 	@echo "Tests for AST merge mechanism."
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "****************************************************************************************************"
+	@echo "************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/mergeAST_tests: make check rule complete (terminated normally) ******"
-	@echo "****************************************************************************************************"
+	@echo "************************************************************************************************************************"
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot

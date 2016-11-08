@@ -359,6 +359,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   equivalenceCheckingOptions.add_options()
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
+    ("rewrite-ssa", "rewrite SSA form (rewrite rules perform semantics preserving operations).")
     ("equivalence-check", "Check programs provided on the command line for equivalence")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
@@ -1678,6 +1679,10 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
+      SAR_MODE sarMode=SAR_SSA;
+      if(args.count("rewrite-ssa")>0) {
+        sarMode=SAR_SUBSTITUTE;
+      }
       Specialization speci;
       if (boolOptions["visualize-read-write-sets"]) {
         speci.setVisualizeReadWriteAccesses(true);
@@ -1690,19 +1695,18 @@ int main( int argc, char * argv[] ) {
       if(fragmentStartNode!=0) {
         fragmentStartLabel=analyzer.getLabeler()->getLabel(fragmentStartNode);
         cout<<"INFO: Fragment: start-node: "<<fragmentStartNode<<"  start-label: "<<fragmentStartLabel<<endl;
-          cout<<"INFO: Fragment: start-node: currently not supported."<<endl;
+        cout<<"INFO: Fragment: start-node: currently not supported."<<endl;
       }
-
+ 
       bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
 
       timer.start();
-#if 1
       speci.extractArrayUpdateOperations(&analyzer,
           arrayUpdates,
           rewriteSystem,
           useConstSubstitutionRule
           );
-#endif
+      speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode);
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 
       if(boolOptions["verify-update-sequence-race-conditions"]) {
@@ -1727,12 +1731,12 @@ int main( int argc, char * argv[] ) {
 
       if(args.count("dump-non-sorted")) {
         string filename=args["dump-non-sorted"].as<string>();
-        speci.writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
+        speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, false);
       }
       if(args.count("dump-sorted")) {
         timer.start();
         string filename=args["dump-sorted"].as<string>();
-        speci.writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
+        speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, true);
         sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
       }
       totalRunTime+=arrayUpdateExtractionRunTime+verifyUpdateSequenceRaceConditionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
