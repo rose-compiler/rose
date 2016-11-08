@@ -378,6 +378,7 @@ echo "CFLAGS   = $CFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
 echo "CPPFLAGS = $CPPFLAGS"
 
+
 # *****************************************************************
 #    Option to define a uniform debug level for ROSE development
 # *****************************************************************
@@ -442,6 +443,14 @@ esac
 
 AC_DEFINE_UNQUOTED([ROSE_ASSERTION_BEHAVIOR], [$assertion_behavior], [Determines how failed assertions should behave.])
     
+# *****************************************************************
+
+# ********************************************************************************
+#    Option support for the Address Sanitizer and other related Sanitizer tools.
+# ********************************************************************************
+
+ROSE_SUPPORT_SANITIZER
+
 # *****************************************************************
 
 # ROSE_HOME should be relative to top_srcdir or top_builddir.
@@ -1710,6 +1719,16 @@ src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
