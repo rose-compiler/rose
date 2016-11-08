@@ -4,6 +4,9 @@
 #include "rosePublicConfig.h"
 #include "SMTSolver.h"
 #include <Sawyer/Map.h>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
 
 #ifdef ROSE_HAVE_LIBYICES
 #  include <yices_c.h>
@@ -32,6 +35,33 @@ public:
     /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, std::string> TermNames;
 
+protected:
+    typedef std::map<std::string/*name or hex-addr*/, std::pair<size_t/*nbits*/, uint64_t/*value*/> > Evidence;
+
+private:
+    LinkMode linkage;
+    TermNames termNames;                                // only used by Yices executable translator; library uses termExprs
+#ifdef ROSE_HAVE_LIBYICES
+    yices_context context;
+#else
+    void *context; /*unused for now*/
+#endif
+protected:
+    Evidence evidence;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<SMTSolver>(*this);
+        s & linkage;
+        s & termNames;
+        s & evidence;
+        //s & context; -- not saved
+    }
+
+public:
     /** Constructor prefers to use the Yices executable interface. See set_linkage(). */
     YicesSolver(): linkage(LM_NONE), context(NULL) {
         init();
@@ -75,12 +105,8 @@ public:
 protected:
     virtual uint64_t parse_variable(const char *nptr, char **endptr, char first_char);
     virtual void parse_evidence();
-    typedef std::map<std::string/*name or hex-addr*/, std::pair<size_t/*nbits*/, uint64_t/*value*/> > Evidence;
-    Evidence evidence;
 
 private:
-    LinkMode linkage;
-    TermNames termNames;                                // only used by Yices executable translator; library uses termExprs
     void init();
 
     static std::string get_typename(const SymbolicExpr::Ptr&);
@@ -119,7 +145,6 @@ private:
     typedef yices_expr (*NaryAPI)(yices_context, yices_expr *operands, unsigned n_operands);
     typedef yices_expr (*ShiftAPI)(yices_context, yices_expr, unsigned amount);
 
-    yices_context context;
     void ctx_common_subexpressions(const std::vector<SymbolicExpr::Ptr>&);
     void ctx_define(const std::vector<SymbolicExpr::Ptr>&, Definitions*);
     void ctx_assert(const SymbolicExpr::Ptr&);
@@ -140,14 +165,13 @@ private:
     yices_expr ctx_mult(const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_read(const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_write(const SymbolicExpr::InteriorPtr&);
-    
-#else
-    void *context; /*unused for now*/
 #endif
 
 };
 
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::YicesSolver);
 
 #endif
