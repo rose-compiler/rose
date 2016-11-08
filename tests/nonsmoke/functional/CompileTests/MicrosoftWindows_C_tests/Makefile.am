@@ -8,8 +8,8 @@ override LIBS=
 
 # TOO (2/10/11): don't run these tests if they were cross-compiled, otherwise
 # they will just fail.
-check-TESTS:
-	@echo "Skipping execution of cross-compiled tests: $(TESTS)"
+# check-TESTS:
+# 	@echo "Skipping execution of cross-compiled tests: $(TESTS)"
 endif
 
 ##################################################################################
@@ -84,18 +84,18 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
-if !ROSE_USE_EDG_VERSION_4_4
-if !ROSE_USE_EDG_VERSION_4_7
-if !ROSE_USE_EDG_VERSION_4_8
-if !ROSE_USE_EDG_VERSION_4_9
-# any programs needed by your tests that does not need to be built by make all.
-check_PROGRAMS = $(PASSING_TEST_Executables)
-# a list of programs or scripts to run in order to do the testing 
-TESTS= $(check_PROGRAMS) caller.out 
-endif
-endif
-endif
-endif
+# if !ROSE_USE_EDG_VERSION_4_4
+# if !ROSE_USE_EDG_VERSION_4_7
+# if !ROSE_USE_EDG_VERSION_4_8
+# if !ROSE_USE_EDG_VERSION_4_9
+# # any programs needed by your tests that does not need to be built by make all.
+# check_PROGRAMS = $(PASSING_TEST_Executables)
+# # a list of programs or scripts to run in order to do the testing 
+# TESTS= $(check_PROGRAMS) caller.out 
+# endif
+# endif
+# endif
+# endif
 
 testTranslator = ../../testTranslator
 
