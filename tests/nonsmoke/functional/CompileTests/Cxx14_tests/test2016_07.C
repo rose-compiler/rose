@@ -1,6 +1,8 @@
 
 #include <string>
 
+using namespace std;
+
 string  lookup1();
 string& lookup2();
 

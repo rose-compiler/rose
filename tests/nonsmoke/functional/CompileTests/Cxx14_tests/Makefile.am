@@ -4,11 +4,37 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-test2016_01.C \
+test2016_02.C \
+test2016_03.C \
+test2016_04.C \
+test2016_05.C \
+test2016_06.C \
+test2016_10.C \
+test2016_11.C \
+test2016_14.C \
+test2016_19.C \
+test2016_24.C \
+test2016_25.C \
+test2016_26.C \
 last.C
 
 # These are incomplete non-compilable code fragments
-TESTCODE_CURRENTLY_FAILING = 
+TESTCODE_CURRENTLY_FAILING = \
+test2016_01.C \
+test2016_07.C \
+test2016_08.C \
+test2016_09.C \
+test2016_12.C \
+test2016_13.C \
+test2016_15.C \
+test2016_16.C \
+test2016_17.C \
+test2016_18.C \
+test2016_20.C \
+test2016_21.C \
+test2016_22.C \
+test2016_23.C \
+last.C
 
 # Note: last.C just simplifies the Makefile.am it
 # avoids common makefle errors in adding new files.
@@ -106,8 +132,8 @@ print_testcodes:
 	echo $(TESTCODES)
 
 check-local:
-if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "C++14 tests using GNU version 4.9 backend compiler."
+if ROSE_USING_GCC_VERSION_LATER_5_2
+	@echo "C++14 tests using GNU version 5.2 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
 else
 if USING_INTEL_COMPILER
@@ -120,7 +146,7 @@ if USING_CLANG_COMPILER
 endif
 endif
 else
-	@echo "C++14 tests require configuration with EDG version 4.11 and GNU version 4.9 or later backend compilers."
+	@echo "C++14 tests require configuration with EDG version 4.11 and GNU version 5.2 or later backend compilers."
 endif
 	@echo "*********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx14_tests: make check rule complete (terminated normally) ******"
