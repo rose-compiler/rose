@@ -362,7 +362,7 @@ private:
         s & memoryMap_;
         s & cfg_;
         // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
-        // s & aum_;                            -- FIXME[Robb P Matzke 2016-11-08]
+        s & aum_;
         s & solver_;
         s & progressTotal_;
         s & isReportingProgress_;
