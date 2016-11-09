@@ -16,24 +16,41 @@ LoopInfoSet EquivalenceChecking::determineLoopInfoSet(SgNode* root, VariableIdMa
   LoopInfoSet loopInfoSet;
   RoseAst ast(root);
   AstMatching m;
-  string matchexpression="SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp),..)";
+  // we simply (i) match all for-stmts and (ii) filter canonical ones
+  string matchexpression="$FORSTMT=SgForStatement(_,_,..)";
   MatchResult r=m.performMatching(matchexpression,root);
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
-    SgVarRefExp* node=isSgVarRefExp((*i)["$ITERVAR"]);
-    ROSE_ASSERT(node);
-    //cout<<"DEBUG: MATCH: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
     LoopInfo loopInfo;
+    SgNode* forNode=(*i)["$FORSTMT"];
+
+    //cout<<"DEBUG: MATCH: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
+    SgInitializedName* ivar=0;
+    SgExpression* lb=0;
+    SgExpression* ub=0;
+    SgExpression* step=0;
+    SgStatement* body=0;
+    bool hasIncrementalIterationSpace=false;
+    bool isInclusiveUpperBound=false;
+    bool isCanonicalOmpForLoop=SageInterface::isCanonicalForLoop(root, &ivar, &lb, &ub, &step, &body, &hasIncrementalIterationSpace, &isInclusiveUpperBound);
+
+    if(isCanonicalOmpForLoop) {
+      ROSE_ASSERT(ivar);
+      SgInitializedName* node=0;
+      if(isCanonicalOmpForLoop) {
+        node=ivar;
+      }
+      ROSE_ASSERT(node);
+      
+      // WORKAROUND 1
+      // TODO: investigate why the for pointer is not stored in the same match-result
+      if(forNode==0) {
+        forNode=node; // init
+        while(!isSgForStatement(forNode)||isSgProject(forNode))
+        forNode=forNode->get_parent();
+      }
+    ROSE_ASSERT(!isSgProject(forNode));
     loopInfo.iterationVarId=variableIdMapping->variableId(node);
     loopInfo.iterationVarType=isInsideOmpParallelFor(node,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ;
-    SgNode* forNode=0; //(*i)["$FORSTMT"];
-    // WORKAROUND 1
-    // TODO: investigate why the for pointer is not stored in the same match-result
-    if(forNode==0) {
-      forNode=node; // init
-      while(!isSgForStatement(forNode)||isSgProject(forNode))
-        forNode=forNode->get_parent();
-    }
-    ROSE_ASSERT(!isSgProject(forNode));
     loopInfo.forStmt=isSgForStatement(forNode);
     if(loopInfo.forStmt) {
       const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
@@ -51,6 +68,7 @@ LoopInfoSet EquivalenceChecking::determineLoopInfoSet(SgNode* root, VariableIdMa
       }
     }
     loopInfoSet.push_back(loopInfo);
+    }
   }
   cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
   cout<<"INFO: found "<<Specialization::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
