@@ -1,17 +1,20 @@
 #include <rangemap.h>
 #include <cmath>
 
-#ifdef _MSC_VER
-    #include <float.h>
-    #define isnan(x) _isnan(x)
-    #define INFINITY (DBL_MAX+DBL_MAX)
-    #define NAN (INFINITY-INFINITY)
-#elif __cplusplus >= 201103L
-    // isnan is already defined in this scope
-    // MS: added for g++ 5.4
-    using std::isnan;
+// MS 2016: isnan is available in C++11 std namespace, but not in C++98
+// std namespace. On *some* systems C++11 cmath puts it inside *and* outside the std
+// namespace.
+#if __cplusplus >= 201103L
+  #define MY_ISNAN(x) std::isnan(x)
 #else
-    using std::isnan;
+  #ifdef _MSC_VER
+  #include <float.h> // for _isnan
+  #define MY_ISNAN(x) _isnan(x)
+  #define INFINITY (DBL_MAX+DBL_MAX)
+  #define NAN (INFINITY-INFINITY)
+  #else
+    #define MY_ISNAN(x) isnan(x)
+  #endif
 #endif
 
 /******************************************************************************************************************************
@@ -24,7 +27,7 @@ Range<double>::Range(): r_first(0), r_last(NAN) {}
 template<>
 bool
 Range<double>::empty() const {
-    return isnan(r_last);
+    return MY_ISNAN(r_last);
 }
 
 template<>
@@ -102,7 +105,7 @@ Range<float>::Range(): r_first(0), r_last(NAN) {}
 template<>
 bool
 Range<float>::empty() const {
-    return isnan(r_last);
+    return MY_ISNAN(r_last);
 }
 
 template<>
