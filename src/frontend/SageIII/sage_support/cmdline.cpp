@@ -1633,9 +1633,22 @@ ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
       if (SgProject::get_verbose() >= 1)
           std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
 
+#if 0
+      printf ("detected -rose:keep_going option \n");
+#endif
+
       project->set_keep_going(true);
       Rose::KeepGoing::g_keep_going = true;
   }
+
+#if 0
+     printf ("In ProcessKeepGoing(): project->get_keep_going() = %s \n",project->get_keep_going() ? "true" : "false");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 }
 
 //------------------------------------------------------------------------------
