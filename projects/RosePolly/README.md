@@ -1,11 +1,16 @@
-## TODO
+# **RosePolly**
+A polyhedral compilation framework that is designed to be a modular and extensible API as opposed to a
+monolithic executable. As a result, users are encouraged to synthesize custom compilation, analysis and profiling flows and passes using the well-defined layered class hierarchy of RosePolly.
 
-1. Make the "detect_hyperplane_properties" a RosePolly member. Get h_types and l_types from the 
+## TODO
+1. Implement a Cloog-to-RoseIR pass
+
+2. Make the "detect_hyperplane_properties" a RosePolly member. Get h_types and l_types from the 
    sequential schedule as well.
 
-2. Propagate maps to symbol table entries using the pollyMath interface
+3. Propagate maps to symbol table entries using the pollyMath interface
 
-3. Remove "normalize_matrices" method from the permutability cst method -> it is isl_specific
+4. Remove "normalize_matrices" method from the permutability cst method -> it is isl_specific
 
 ## Dependencies
 
