@@ -11354,9 +11354,10 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
           ROSE_ASSERT(mysymbol);
           scope->insert_symbol(name, mysymbol);
 #endif
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-          printf ("@@@@@@@@@@@@@@ In buildNamespaceDeclaration_nfi(): setting scope of defining and non-defining declaration to scope = %s \n",scope->class_name().c_str());
-#endif
+
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+//      printf ("@@@@@@@@@@@@@@ In buildNamespaceDeclaration_nfi(): setting scope of defining and non-defining declaration to scope = %s \n",scope->class_name().c_str());
+// #endif
           // tps namespace has no scope
           //defdecl->set_scope(scope);
           //nondefdecl->set_scope(scope);

@@ -2747,52 +2747,63 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
   // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
      ROSE_ASSERT(mfunc_ref->get_parent() != NULL);
      SgNode* possibleFunctionCall = mfunc_ref->get_parent()->get_parent();
-     ROSE_ASSERT(possibleFunctionCall != NULL);
-     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
-     bool uses_operator_syntax = false;
-//   bool is_compiler_generated = false;
-     if (functionCallExp != NULL)
+
+     if (possibleFunctionCall == NULL)
         {
-          uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
-//        is_compiler_generated = functionCallExp->isCompilerGenerated();
+          printf ("In unparseMFuncRefSupport(): possibleFunctionCall == NULL: mfunc_ref = %p = %s \n",mfunc_ref,mfunc_ref->class_name().c_str());
+          SgNode* parent = mfunc_ref->get_parent();
+          printf ("  ---  parent = %p = %s \n",parent,parent->class_name().c_str());
+          ROSE_ASSERT(parent->get_parent() == NULL);
+        }
 
-#if 0
-       // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the non-operator syntax of a user-defined conversion operator.
-       // So we have to detect such operators and then detect if they are implicit then mark them to use the operator 
-       // syntax plus supress them from being output.  We might alternatively go directly to supressing them from being
-       // output, except that this is more complex for the non-operator syntax unparsing (I think).
-
-          SgFunctionSymbol* functionSymbol = mfunc_ref->get_symbol();
-          ROSE_ASSERT(functionSymbol != NULL);
-          SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
-          ROSE_ASSERT(functionDeclaration != NULL);
-          SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
-          ROSE_ASSERT(memberFunctionDeclaration != NULL);
-
-          if (functionDeclaration->get_specialFunctionModifier().isConversion() == true)
+  // DQ (10/16/2016): Fix for test2016_84.C and test2016_85.C (simpler code) specific to EDG 4.11 use.
+  // ROSE_ASSERT(possibleFunctionCall != NULL);
+     bool uses_operator_syntax = false;
+     if (possibleFunctionCall != NULL)
+        {
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
+       // bool is_compiler_generated = false;
+          if (functionCallExp != NULL)
              {
+               uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+            // is_compiler_generated = functionCallExp->isCompilerGenerated();
 #if 0
-               printf ("Detected a conversion operator! \n");
-#endif
-            // Force output of generated code using the operator syntax, plus supress the output if is_compiler_generated == true.
-               uses_operator_syntax = true;
-               if (is_compiler_generated == true)
+            // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the non-operator syntax of a user-defined conversion operator.
+            // So we have to detect such operators and then detect if they are implicit then mark them to use the operator 
+            // syntax plus supress them from being output.  We might alternatively go directly to supressing them from being
+            // output, except that this is more complex for the non-operator syntax unparsing (I think).
+
+               SgFunctionSymbol* functionSymbol = mfunc_ref->get_symbol();
+               ROSE_ASSERT(functionSymbol != NULL);
+               SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+               ROSE_ASSERT(functionDeclaration != NULL);
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+               ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+               if (functionDeclaration->get_specialFunctionModifier().isConversion() == true)
                   {
 #if 0
-                    printf ("Detected is_compiler_generated == true for conversion operator! \n");
+                    printf ("Detected a conversion operator! \n");
 #endif
+                 // Force output of generated code using the operator syntax, plus supress the output if is_compiler_generated == true.
+                    uses_operator_syntax = true;
+                    if (is_compiler_generated == true)
+                       {
+#if 0
+                         printf ("Detected is_compiler_generated == true for conversion operator! \n");
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
 #if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
                   }
-
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
 #endif
              }
-#endif
         }
 
      SgExpression* binary_op = isSgExpression(mfunc_ref->get_parent());
@@ -5198,6 +5209,9 @@ void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
      if (typeid_op->get_operand_expr() != NULL)
         {
           ROSE_ASSERT(typeid_op->get_operand_expr() != NULL);
+#if 0
+          printf ("In unparseTypeIdOp(): typeid_op->get_operand_expr() = %p = %s \n",typeid_op->get_operand_expr(),typeid_op->get_operand_expr()->class_name().c_str());
+#endif
           unparseExpression(typeid_op->get_operand_expr(), info);
         }
        else
@@ -7347,7 +7361,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      SgInitializer* initializer = di->get_memberInit();
 
      SgVarRefExp* varRefExp = isSgVarRefExp(designator);
-     SgValueExp*  valueExp  = isSgValueExp(designator);
+  // SgValueExp*  valueExp  = isSgValueExp(designator);
 
      bool isDataMemberDesignator   = (varRefExp != NULL);
      bool isArrayElementDesignator = (isSgUnsignedLongVal(designator) != NULL);
@@ -7359,7 +7373,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      bool isAssignInitializer      = (isSgAssignInitializer(initializer) != NULL);
 
   // DQ (3/15/2015): Look for nested SgDesignatedInitializer (so we can supress the unparsed "=" syntax) (this case is demonstrated in test2015_03.c).
-     bool isInitializer_AggregateInitializer   = (isSgAggregateInitializer(initializer) != NULL);
+  // bool isInitializer_AggregateInitializer   = (isSgAggregateInitializer(initializer) != NULL);
 
   // bool outputDesignatedInitializer                   = (isDataMemberDesignator == true && varRefExp->get_symbol() != NULL);
   // bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false && isCastDesignator == false);
@@ -7371,7 +7385,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 
   // DQ (4/11/2015): Aggregate initializers should also have an unparsed "=" syntax.
   // bool outputDesignatedInitializerAssignmentOperator = (isArrayElementDesignator == false) || (isAssignInitializer == true);
-     bool outputDesignatedInitializerAssignmentOperator = ( (isArrayElementDesignator == false) || (isAssignInitializer == true) || (isInitializer_AggregateInitializer == true) );
+  // bool outputDesignatedInitializerAssignmentOperator = ( (isArrayElementDesignator == false) || (isAssignInitializer == true) || (isInitializer_AggregateInitializer == true) );
 
 #if DEBUG_DESIGNATED_INITIALIZER
      printf ("--- isInitializer_AggregateInitializer = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
@@ -7545,7 +7559,8 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #if DEBUG_DESIGNATED_INITIALIZER
                printf ("Reset outputDesignatedInitializerAssignmentOperator = false \n");
 #endif
-               outputDesignatedInitializerAssignmentOperator = false;
+            // DQ (10/22/2016): This variable is not used.
+            // outputDesignatedInitializerAssignmentOperator = false;
              }
         }
        else
@@ -7599,8 +7614,20 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializer);
      bool need_explicit_braces_in_aggregateInitializer = (aggregateInitializer != NULL && aggregateInitializer->get_need_explicit_braces());
 
+#if 0
+     printf ("In unparseDesignatedInitializer: Changed default value of need_explicit_braces in unparser (must be set correctly in AST) \n");
+
+  // Variable used to control output of normalized syntax "={}".
+  // bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == false);
+     bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == true);
+#else
   // Variable used to control output of normalized syntax "={}".
      bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == false);
+#endif
+
+#if DEBUG_DESIGNATED_INITIALIZER
+     printf ("In unparseDesignatedInitializer: initial value from AST: need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
+#endif
 
   // DQ (5/11/2015): Supress output of normalized syntax "={}" for specific kinds of initializers (to avoid warnings in generated code).
      if (need_explicit_braces == true && isAssignInitializer == true)
@@ -7631,6 +7658,10 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                printf ("In unparseDesignatedInitializer: reset need_explicit_braces to false \n");
 #endif
                need_explicit_braces = false;
+
+#if DEBUG_DESIGNATED_INITIALIZER
+               printf ("In unparseDesignatedInitializer: reset based on kind of expression: need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
+#endif
              }
         }
 
