@@ -177,10 +177,34 @@ void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping*
 #endif
 }
 
- 
- // rewrites an AST
- // requirements: all variables have been replaced by constants
- // uses AstMatching to match patterns.
+void RewriteSystem::normalizeFloatingPointNumbersForUnparsing(SgNode*& root) {
+  RoseAst ast(root);
+  cout<<"DEBUG:FF:"<<root->unparseToString()<<endl;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    // due to lack of a common base class this testing has to be done for each class
+    if(SgFloatVal* val=isSgFloatVal(*i)) {
+      if(val->get_valueString()!="") {
+        cout<<"DEBUG:"<<val->get_valueString()<<endl;
+        val->set_valueString("");
+      }
+    } else if(SgDoubleVal* val=isSgDoubleVal(*i)) {
+      if(val->get_valueString()!="") {
+        cout<<"DEBUG:"<<val->get_valueString()<<endl;
+        val->set_valueString("");
+      }
+    } else if(SgLongDoubleVal* val=isSgLongDoubleVal(*i)) {
+      if(val->get_valueString()!="") {
+        cout<<"DEBUG:"<<val->get_valueString()<<endl;
+        val->set_valueString("");
+      }
+    }
+    
+  }
+}
+
+// rewrites an AST
+// requirements: all variables have been replaced by constants
+// uses AstMatching to match patterns.
 void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace, bool ruleAddReorder, bool performCompoundAssignmentsElimination) {
    //  cout<<"Rewriting AST:"<<endl;
    bool someTransformationApplied=false;
@@ -275,7 +299,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
      // Rewrite-rule 2: SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) => SgIntVal
      //                 where SgIntVal.val=$IntVal1.val+$IntVal2.val
      transformationApplied=false;
-     MatchResult res=m.performMatching(
+     MatchResult res=m.performMatching  (
                                        "$BinaryOp1=SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
                                        |$BinaryOp1=SgSubtractOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
                                        |$BinaryOp1=SgMultiplyOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
@@ -313,7 +337,11 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
          dump1_stats.numConstantFolding++;
        }
      }
-  } while(transformationApplied);
+ } while(transformationApplied);
+
+ normalizeFloatingPointNumbersForUnparsing(root);
+ //eliminateSuperfluousCasts(root);
+ 
  //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
    } while(someTransformationApplied);
 }

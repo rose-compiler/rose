@@ -541,6 +541,9 @@ endif
 # automake boilerplate
 
 check-local: $(Cxx_binaries) $(local_binaries) $(TEST_TARGETS)
+	@echo "*********************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/astFileIOTests: make check rule complete (terminated normally) ******"
+	@echo "*********************************************************************************************************************"
 
 clean-local:
 	rm -f $(TEST_TARGETS)

@@ -277,6 +277,16 @@ if [[ ! -e src/frontend/CxxFrontend/EDG/Makefile.am ]]; then
         src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.11/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.11/misc/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.11/src/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.11/src/disp/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.11/lib/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile.in \
         src/frontend/CxxFrontend/EDG/edgRose/Makefile.in
     do
         mkdir -p $(dirname $file)

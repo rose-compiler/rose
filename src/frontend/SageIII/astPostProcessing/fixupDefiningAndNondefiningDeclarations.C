@@ -120,7 +120,8 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // DQ (4/10/2016): Output a warning when this happens.
                if (firstNondefiningDeclaration == NULL)
                   {
-#if 1
+#if 0
+                 // DQ (11/5/2016): Comment this out to avoid output spew in Fortran test codes (see Fortran_tests/mpi_f08_interfaces_test.f03, I think).
                     printf ("Warning: declaration exists with firstNondefiningDeclaration == NULL: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
                   }
@@ -167,6 +168,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   }
              }
 
+       // DQ (10/22/2016): It might be that they don't match when using the ast merge mechanism, which is OK.
        // DQ (7/23/2005): The scopes should match!
           if (definingDeclaration != NULL && firstNondefiningDeclaration != NULL)
              {
@@ -315,20 +317,23 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                     SgScopeStatement* firstNondefiningDeclarationScope = isSgScopeStatement(firstNondefiningDeclaration->get_parent());
                     if (firstNondefiningDeclarationScope == NULL)
                        {
-                         printf ("Error: firstNondefiningDeclaration->get_parent() = %p \n",firstNondefiningDeclaration->get_parent());
-                         printf ("     firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-                         if (firstNondefiningDeclaration->get_parent() != NULL)
-                            {
-                              printf ("     firstNondefiningDeclaration->get_parent() = %s \n",firstNondefiningDeclaration->get_parent()->class_name().c_str());
-                            }
-                         firstNondefiningDeclaration->get_startOfConstruct()->display("firstNondefiningDeclarationScope == NULL: debug");
-                       }
+                         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(firstNondefiningDeclaration->get_parent());
 
-                 // DQ (3/4/2009): This test fails for the AST copy mechanism on test2005_163.C
-                    if (firstNondefiningDeclarationScope == NULL)
-                       {
-                         printf ("Warning: failing test: firstNondefiningDeclarationScope != NULL \n");
-                         printf ("This test fails for the AST copy mechanism on test2005_163.C \n");
+                      // Only report this if it is not someting defined in a typedef.
+                         if (typedefDeclaration == NULL)
+                            {
+                              printf ("Error: firstNondefiningDeclaration->get_parent() = %p \n",firstNondefiningDeclaration->get_parent());
+                              printf ("     firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                              if (firstNondefiningDeclaration->get_parent() != NULL)
+                                 {
+                                   printf ("     firstNondefiningDeclaration->get_parent() = %s \n",firstNondefiningDeclaration->get_parent()->class_name().c_str());
+                                 }
+                              firstNondefiningDeclaration->get_startOfConstruct()->display("firstNondefiningDeclarationScope == NULL: debug");
+
+                           // DQ (3/4/2009): This test fails for the AST copy mechanism on test2005_163.C
+                              printf ("Warning: failing test: firstNondefiningDeclarationScope != NULL \n");
+                              printf ("This test fails for the AST copy mechanism on test2005_163.C \n");
+                            }
                        }
                  // ROSE_ASSERT(firstNondefiningDeclarationScope != NULL);
 
@@ -367,6 +372,30 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
                               lookForDeclarationInAssociatedScope = false;
                             }
+                       }
+#if 0
+                 // DQ (10/22/2016): Added case to eliminate output spew in mergeAST support and testing.
+                    SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(firstNondefiningDeclaration);
+                    if (templateClassDeclaration != NULL)
+                       {
+                         lookForDeclarationInAssociatedScope = false;
+                       }
+#endif
+                 // DQ (10/22/2016): Added case to eliminate output spew in mergeAST support and testing.
+                    SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(firstNondefiningDeclarationScope);
+                    if (namespaceDefinitionStatement != NULL)
+                       {
+                      // In the case of a namespace definition the declaration can be in the global namespace 
+                      // definition instead and this is especially an issue for the AST merge mechanism.
+                         lookForDeclarationInAssociatedScope = false;
+                       }
+
+                 // DQ (10/22/2016): Added case to eliminate output spew in mergeAST support and testing.
+                    SgGlobal* globalScope = isSgGlobal(firstNondefiningDeclarationScope);
+                    if (globalScope != NULL)
+                       {
+                      // This is an issue for the ASTmerge (suppressing output spew from mergeAST_tests directory).
+                         lookForDeclarationInAssociatedScope = false;
                        }
 
                  // DQ (3/4/2009): Modified this test now that firstNondefiningDeclarationScope can maybe have a valid NULL value.

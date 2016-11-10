@@ -8,6 +8,8 @@
     #define NAN (INFINITY-INFINITY)
 #elif __cplusplus >= 201103L
     // isnan is already defined in this scope
+    // MS: added for g++ 5.4
+    using std::isnan;
 #else
     using std::isnan;
 #endif
