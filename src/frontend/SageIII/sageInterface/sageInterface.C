@@ -10308,9 +10308,37 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
       incr_var = isSgVarRefExp(SkipCasting(isSgUnaryOp(incr)->get_operand()));
       stepast = buildIntVal(1); // will this dangling SgNode cause any problem?
       break;
+    case V_SgAssignOp: { // cases : var + incr, var - incr, incr + var (not allowed: incr-var)
+      incr_var=isSgVarRefExp(SkipCasting(isSgBinaryOp(incr)->get_lhs_operand()));
+      if(incr_var == NULL)
+        return false;
+      SgAddOp* addOp=isSgAddOp(SkipCasting(isSgBinaryOp(incr)->get_rhs_operand()));
+      SgSubtractOp* subtractOp=isSgSubtractOp(SkipCasting(isSgBinaryOp(incr)->get_rhs_operand()));
+      SgBinaryOp* arithOp=0;
+      if(addOp)
+        arithOp=addOp;
+      else if(subtractOp)
+        arithOp=subtractOp;
+      else
+        return false;
+      ROSE_ASSERT(arithOp!=0);
+      if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_lhs_operand()))) {
+        // cases : var + incr, var - incr
+        incr_var=varRefExp;
+        stepast=isSgBinaryOp(incr)->get_rhs_operand();
+      } else if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_rhs_operand()))) {
+        if(isSgAddOp(arithOp)) {
+          // case : incr + var (not allowed: incr-var)
+          incr_var=varRefExp;
+          stepast=isSgBinaryOp(incr)->get_lhs_operand();
+        }
+      }
+      break;
+    } // end of V_AssignOp
     default:
       return false;
   }
+
   if (incr_var == NULL)
     return false;
   if (incr_var->get_symbol() != ivarname->get_symbol_from_symbol_table ())
