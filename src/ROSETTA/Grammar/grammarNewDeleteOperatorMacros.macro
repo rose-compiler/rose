@@ -55,8 +55,10 @@ unsigned char *$CLASSNAME::Memory_Block_List [MAX_NUMBER_OF_MEMORY_BLOCKS];
 // to the memory block of a pool
 std::vector<unsigned char*> $CLASSNAME_Memory_Block_List;
 
-
+// DQ (11/1/2016): This is redundant and repeated hundreds to times which is misleading.
+// This macro appears to be set within code within ROSETTA, but only for when _MSC_VER is true.
 #define USE_CPP_NEW_DELETE_OPERATORS FALSE
+// #define USE_CPP_NEW_DELETE_OPERATORS TRUE
 
 /*! \brief New operator for $CLASSNAME.
 
@@ -259,6 +261,35 @@ void *$CLASSNAME::operator new ( size_t Size )
 #if 0
   // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
      printf ("In $CLASSNAME::new(): this = %p \n",Forward_Link);
+
+  // DQ (11/1/2016): Since we have not called the constructor yet, this cast and calling of member functions is not possible.
+  // printf ("   --- Forward_Link->class_name() = %s \n",(($CLASSNAME*)Forward_Link)->class_name().c_str());
+#endif
+
+#if 0
+  // DQ (11/1/2016): Adding testing of the memory pool after allocation of IR node (this is expensive).
+     if ($CLASSNAME_Memory_Block_List.empty() == false)
+        {
+       // Generate an array of memory pools
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
+
+       // Build a local variable for better performance
+          const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
+
+       // Iterate over the memory pools
+          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
+             {
+            // objectArray[i] is a single memory pool
+               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
+                  {
+                    if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
+                       {
+                      // traversal.visit(&(objectArray[i][j]));
+                         objectArray[i][j].variantT();
+                       }
+                  }
+             }
+        }
 #endif
 
         return Forward_Link;
@@ -288,7 +319,8 @@ void $CLASSNAME::operator delete(void *Pointer, size_t sizeOfObject)
 
 #if 0
   // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
-     printf ("In $CLASSNAME::delete(): this = %p \n",Pointer);
+     printf ("In $CLASSNAME::delete(): Pointer = %p \n",Pointer);
+     printf ("   --- Pointer->class_name() = %s \n",(($CLASSNAME*)Pointer)->class_name().c_str());
 #endif
 
 #   if COMPILE_DEBUG_STATEMENTS
@@ -356,6 +388,33 @@ void $CLASSNAME::operator delete(void *Pointer, size_t sizeOfObject)
 #           endif
         }
     }
+
+
+#if 0
+  // DQ (11/1/2016): Adding testing of the memory pool after deletion of IR node (this is expensive).
+     if ($CLASSNAME_Memory_Block_List.empty() == false)
+        {
+       // Generate an array of memory pools
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
+
+       // Build a local variable for better performance
+          const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
+
+       // Iterate over the memory pools
+          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
+             {
+            // objectArray[i] is a single memory pool
+               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
+                  {
+                    if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
+                       {
+                      // traversal.visit(&(objectArray[i][j]));
+                         objectArray[i][j].variantT();
+                       }
+                  }
+             }
+        }
+#endif
 
 #   if COMPILE_DEBUG_STATEMENTS
     if (ROSE_DEBUG > 1)
