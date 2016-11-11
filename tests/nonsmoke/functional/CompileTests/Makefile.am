@@ -34,7 +34,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
-   SUBDIRS += C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests C11_tests Cxx11_tests UPC_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests
+   SUBDIRS += C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests C11_tests Cxx11_tests Cxx14_tests UPC_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests
 endif
 endif
 
