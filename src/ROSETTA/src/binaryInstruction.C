@@ -142,15 +142,6 @@ class SgAsmValueExpression;
 class SgNode;
 #endif
 
-// Print a diagnostic message just once (we cannot use Sawyer since it depends on boost and we have a policy that prohibits any
-// boost dependency in ROSETTA).
-static void printOnce(bool &printed /*in,out*/, const std::string &mesg) {
-    if (!printed) {
-        std::cerr <<mesg <<"\n";
-        printed = true;
-    }
-}
-
 #ifndef DOCUMENTATION
 void Grammar::setUpBinaryInstructions() {
 #endif
