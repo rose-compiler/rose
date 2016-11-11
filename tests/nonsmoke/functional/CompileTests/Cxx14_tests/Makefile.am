@@ -1,194 +1,39 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-noinst_PROGRAMS = globalVariablesInLambdas
-
-globalVariablesInLambdas_SOURCES = globalVariablesInLambdas.C
-
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-
-
-# globalVariablesInLambdas_TESTS = test_1.C
-
-
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-test2012_01.C \
-test2012_02.C \
-test2012_05.C \
-test2014_02.C \
-test2014_04.C \
-test2014_05.C \
-test2014_06.C \
-test2014_07.C \
-test2014_08.C \
-test2014_09.C \
-test2014_11.C \
-test2014_12.C \
-test2014_13.C \
-test2014_14.C \
-test2014_15.C \
-test2014_16.C \
-test2014_17.C \
-test2014_18.C \
-test2014_19.C \
-test2014_20.C \
-test2014_21.C \
-test2014_22.C \
-test2014_23.C \
-test2014_25.C \
-test2014_27.C \
-test2014_28.C \
-test2014_29.C \
-test2014_30.C \
-test2014_32.C \
-test2014_33.C \
-test2014_34.C \
-test2014_36.C \
-test2014_37.C \
-test2014_38.C \
-test2014_39.C \
-test2014_40.C \
-test2014_41.C \
-test2014_42.C \
-test2014_43.C \
-test2014_44.C \
-test2014_45.C \
-test2014_47.C \
-test2014_48.C \
-test2014_49.C \
-test2014_50.C \
-test2014_51.C \
-test2014_52.C \
-test2014_54.C \
-test2014_55.C \
-test2014_56.C \
-test2014_57.C \
-test2014_58.C \
-test2014_70.C \
-test2014_71.C \
-test2014_72.C \
-test2014_73.C \
-test2014_74.C \
-test2014_75.C \
-test2014_76.C \
-test2014_77.C \
-test2014_78.C \
-test2014_79.C \
-test2014_80.C \
-test2014_81.C \
-test2014_83.C \
-test2014_84.C \
-test2014_86.C \
-test2014_87.C \
-test2014_89.C \
-test2014_90.C \
-test2015_01.C \
-test2015_02.C \
-test2015_03.C \
-test2015_04.C \
-test2015_05.C \
-test2015_06.C \
-test2015_07.C \
-test2015_08.C \
-test2015_09.C \
-test2015_10.C \
-test2015_11.C \
-test2015_12.C \
-test2015_13.C \
-test2015_14.C \
-test2016_01.C \
+test2016_02.C \
 test2016_03.C \
 test2016_04.C \
+test2016_05.C \
 test2016_06.C \
-test2016_07.C \
 test2016_10.C \
 test2016_11.C \
+test2016_14.C \
+test2016_19.C \
+test2016_24.C \
+test2016_25.C \
+test2016_26.C \
+last.C
+
+# These are incomplete non-compilable code fragments
+TESTCODE_CURRENTLY_FAILING = \
+test2016_01.C \
+test2016_07.C \
+test2016_08.C \
+test2016_09.C \
 test2016_12.C \
 test2016_13.C \
-test2016_14.C \
 test2016_15.C \
 test2016_16.C \
 test2016_17.C \
 test2016_18.C \
-test2016_19.C \
 test2016_20.C \
 test2016_21.C \
 test2016_22.C \
 test2016_23.C \
-test2016_24.C \
-test2016_25.C \
-test2016_29.C \
-test2016_30.C \
-test2016_33.C \
-test2016_34.C \
-test2016_35.C \
-test2016_36.C \
-test2016_37.C \
-test2016_39.C \
-test2016_40.C \
-test2016_42.C \
-last.C
-
-# DQ (7/9/2016): This test is inconsistatn with what I understand to be the most recent fixes.
-# test2016_41.C (expression templates example)
-
-# DQ (5/8/2016): Demonstration of bug in GNU 4.9.2 header files (test2016_31.C)
-# test2016_26.C
-# test2016_27.C
-# test2016_28.C
-# test2016_31.C
-
-# New test codes not yet tested in regression tests.
-# test2015_15.C 
-# test2015_16.C 
-
-# Failing tests:
-# test2014_10.C
-# test2014_24.C
-# test2014_26.C
-# test2014_31.C 
-# test2014_35.C 
-# test2014_46.C 
-# test2014_53.C 
-
-# These are incomplete non-compilable code fragments
-TESTCODE_CURRENTLY_FAILING = \
-test2012_03.C \
-test2012_04.C \
-test2012_06.C \
-test2012_07.C \
-test2012_08.C \
-test2012_09.C \
-test2012_10.C \
-test2012_11.C \
-test2012_12.C \
-test2012_13.C \
-test2012_14.C \
-test2012_15.C \
-test2012_16.C \
-test2012_17.C \
-test2012_18.C \
-test2012_19.C \
-test2012_20.C \
-test2012_21.C \
-test2012_22.C \
-test2012_23.C \
-test2012_24.C \
-test2012_25.C \
-test2012_26.C \
-test2012_27.C \
-test2012_28.C \
-test2012_29.C \
-test2012_30.C \
-test2012_31.C \
-test2012_32.C \
-test2012_33.C \
-test2012_34.C \
-test2014_03.C \
-test2014_82.C \
-test2014_85.C \
-test2014_88.C \
 last.C
 
 # Note: last.C just simplifies the Makefile.am it
@@ -198,8 +43,7 @@ last.C
 TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS) 
+TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) 
 
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
@@ -208,9 +52,9 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 
-# Use options to turn on C++11 and process using just the frontend for now.
+# Use options to turn on C++14 and process using just the frontend for now.
 # CXX11_OPTIONS = -rose:Cxx11 -rose:skip_translation_from_edg_ast_to_rose_ast
-CXX11_OPTIONS = -rose:Cxx11 
+CXX11_OPTIONS = -rose:Cxx14
 
 # DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
 ROSE_FLAGS = $(CXX11_OPTIONS) --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
@@ -287,37 +131,26 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 print_testcodes:
 	echo $(TESTCODES)
 
-globalVariablesInLambdas_test: globalVariablesInLambdas
-	./globalVariablesInLambdas -std=c++11 --edg:no_warnings -c $(srcdir)/globalVariablesInLambdas_test_01.C
-
-
 check-local:
-if ROSE_USE_EDG_VERSION_4_9
-if ROSE_USING_GCC_VERSION_LATER_4_8
-	@echo "C++11 tests using GNU version 4.8 backend compiler."
-	@$(MAKE) $(PASSING_TEST_Objects)
-else
-if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "C++11 tests using GNU version 4.9 backend compiler."
+if ROSE_USING_GCC_VERSION_LATER_5_2
+	@echo "C++14 tests using GNU version 5.2 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
 else
 if USING_INTEL_COMPILER
-	@echo "C++11 tests using Intel backend compiler."
+	@echo "C++14 tests using Intel backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
 else
 if USING_CLANG_COMPILER
-	@echo "C++11 tests using Clang backend compiler."
+	@echo "C++14 tests using Clang backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
 endif
 endif
-endif
-endif
 else
-	@echo "C++11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
+	@echo "C++14 tests require configuration with EDG version 4.11 and GNU version 5.2 or later backend compilers."
 endif
-	@echo "*************************************************************************************************"
-	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx11_tests: make check rule complete (terminated normally) ******"
-	@echo "*************************************************************************************************"
+	@echo "*********************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx14_tests: make check rule complete (terminated normally) ******"
+	@echo "*********************************************************************************************************************"
 
 clean-local:
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
