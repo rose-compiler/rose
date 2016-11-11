@@ -8,10 +8,16 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests astSnippetTests \
               programTransformationTests \
               graph_tests mergeTraversal_tests \
-	      astLValueTests abstractMemoryObjectTests \
-              ROSETTA
+	      astLValueTests abstractMemoryObjectTests 
+
+# DQ (11/5/2016): Skip these tests when using the address sanitizer since they would 
+# take SO LONG (at least overr an hour for initial testing, I think).
+if !ROSE_USE_SANITIZER
+   SUBDIRS += ROSETTA
+endif
+
 if !ROSE_USE_INSURE
- SUBDIRS += roseHPCToolkitTests 
+   SUBDIRS += roseHPCToolkitTests 
 endif
 
 # TOO (2/16/2011): Errors with Thrifty (GCC 3.4.4) backend compiler. We can gradually

@@ -1633,9 +1633,22 @@ ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
       if (SgProject::get_verbose() >= 1)
           std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
 
+#if 0
+      printf ("detected -rose:keep_going option \n");
+#endif
+
       project->set_keep_going(true);
       Rose::KeepGoing::g_keep_going = true;
   }
+
+#if 0
+     printf ("In ProcessKeepGoing(): project->get_keep_going() = %s \n",project->get_keep_going() ? "true" : "false");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -4146,10 +4159,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                ROSE_ASSERT(get_Cxx11_gnu_only() == true);
              }
 
-          if (argv[i] == "-std=c++14")
+       // DQ (10/24/2016): GNU g++ versions before 5.2 use "-std=c++1y" instead of "-std=c++14", after that "-std=c++14" is available and "-std=c++1y" is depericated.
+       // if (argv[i] == "-std=c++14")
+          if (argv[i] == "-std=c++14" || argv[i] == "-std=c++1y")
              {
 #if 1
-               printf ("Identified -std=c++14 via more direct command line argument evaluation (not yet supported) \n");
+               printf ("Identified -std=c++14 via more direct command line argument evaluation (not yet fully supported) \n");
             // ROSE_ASSERT(false);
 #endif
                if ( SgProject::get_verbose() >= 1 )

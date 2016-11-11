@@ -181,6 +181,16 @@ Rose::KeepGoing::Backend::UseOriginalInputFile(SgFile* file)
 {
   ROSE_ASSERT(file != NULL);
 
+#if 0
+  // DQ (11/10/2016): Debugging information (detected that p_keep_going data member was uninitialized).
+     printf ("file->get_unparse_output_filename().empty() = %s \n",file->get_unparse_output_filename().empty() ? "true" : "false");
+     printf ("file->get_frontendErrorCode() != 0          = %s \n",(file->get_frontendErrorCode() != 0) ? "true" : "false");
+     printf ("file->get_project()->get_midendErrorCode()  = %s \n",(file->get_project()->get_midendErrorCode()) ? "true" : "false");
+     printf ("file->get_unparserErrorCode()               = %s \n",(file->get_unparserErrorCode()) ? "true" : "false");
+     printf ("file->get_backendCompilerErrorCode() != 0   = %s \n",(file->get_backendCompilerErrorCode() != 0) ? "true" : "false");
+     printf ("file->get_project()->get_keep_going()       = %s \n",file->get_project()->get_keep_going() ? "true" : "false");
+#endif
+
   return
     // (1) An ROSE unparsed file was not generated
     file->get_unparse_output_filename().empty() == true ||

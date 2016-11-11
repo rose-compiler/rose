@@ -316,7 +316,10 @@ if (WIN32)
   # /0s small files
   # /wd4716 to turn no return to a warning and not an error
   set( CMAKE_BUILD_TYPE Release )
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716" )
+# DQ (11/6/2016): Suggested fix by Pei-Hung for new branch including 
+# EDG 4.11 and EDG 4.12, plus fix for mergeAST_tests directory.
+# set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716 /bigobj" )
   set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   /wd4541 " )
   set( CMAKE_SHARED_LINKER_FLAGS_DEBUG " ${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
   set( CMAKE_SHARED_LINKER_FLAGS_RELEASE " ${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
