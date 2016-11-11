@@ -10,7 +10,9 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
 #include <boost/serialization/access.hpp>
+#ifndef USE_ROSE                                        // [Robb P Matzke 2016-11-11]: ROSE cannot compile this header
 #include <boost/serialization/shared_ptr.hpp>
+#endif
 #include <boost/serialization/string.hpp>
 #include <Sawyer/Assert.h>
 #include <Sawyer/IntervalMap.h>
