@@ -21,7 +21,6 @@ using namespace SPRAY;
 using namespace CodeThorn;
 
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;
-typedef vector< LoopInfo > LoopInfoSet;
 
 struct EStateExprInfo {
   const EState* first;

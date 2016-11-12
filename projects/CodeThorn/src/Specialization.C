@@ -8,17 +8,6 @@
 using namespace std;
 using namespace SPRAY;
 
-int Specialization::numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping) {
-  int checkParLoopNum=0;
-  for(LoopInfoSet::iterator i=loopInfoSet.begin();i!=loopInfoSet.end();++i) {
-    if((*i).iterationVarType==ITERVAR_PAR) {
-      checkParLoopNum++;
-      //cout<<"DEBUG: PAR-VAR:"<<variableIdMapping->variableName((*i).iterationVarId)<<endl;
-    }
-  }
-  return checkParLoopNum;
-}
-
 ConstReporter::~ConstReporter() {
 }
 
@@ -77,6 +66,17 @@ int PStateConstReporter::getConstInt() {
   ROSE_ASSERT(varVal.isConstInt());
   int varIntValue=varVal.getIntValue();
   return varIntValue;
+}
+
+int Specialization::numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping) {
+  int checkParLoopNum=0;
+  for(LoopInfoSet::iterator i=loopInfoSet.begin();i!=loopInfoSet.end();++i) {
+    if((*i).iterationVarType==ITERVAR_PAR) {
+      checkParLoopNum++;
+      //cout<<"DEBUG: PAR-VAR:"<<variableIdMapping->variableName((*i).iterationVarId)<<endl;
+    }
+  }
+  return checkParLoopNum;
 }
 
 Specialization::Specialization():

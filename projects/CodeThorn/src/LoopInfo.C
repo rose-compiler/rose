@@ -5,17 +5,49 @@
 
 #include <map>
 #include <sstream>
+#include <string>
 
 using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 
+LoopInfo::LoopInfo():
+  forStmt(0),
+  initStmt(0),
+  condExpr(0),
+  isOmpCanonical(false),
+  iterationVarType(ITERVAR_UNKNOWN)
+{
+}
+
+LoopInfo::~LoopInfo() {
+  // nothing to do
+}
+
+std::string iterVarTypeToString(IterVarType iterVarType) {
+  switch(iterVarType) {
+  case ITERVAR_SEQ: return "sequential";
+  case ITERVAR_PAR: return "parallel";
+  case ITERVAR_UNKNOWN: return "unknown";
+  default:
+    stringstream ss;
+    ss<<iterVarType;
+    throw CodeThorn::Exception("undefined iterVarType (enum value "+ss.str()+")");
+  }
+}
+
+std::string LoopInfo::toString() {
+  string s="SgForStatement: ";
+  s+=iterVarTypeToString(iterationVarType);
+  return s;
+}
+
 VariableId LoopInfo::iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping) {
   VariableId varId;
   AstMatching m;
   // operator '#' is used to ensure no nested loop is matched ('#' cuts off subtrees of 4th element (loop body)).
-  string matchexpression="SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp)|SgMinusMinusOp($ITERVAR=SgVarRefExp),..)";
-  MatchResult r=m.performMatching(matchexpression,forStmt);
+  string matchexpression="SgForStatement(_,_,SgAssignOp($ITERVAR=SgVarRefExp,_)|SgPlusPlusOp($ITERVAR=SgVarRefExp)|SgMinusMinusOp($ITERVAR=SgVarRefExp),..)";
+    MatchResult r=m.performMatching(matchexpression,forStmt);
   if(r.size()>1) {
     //ROSE_ASSERT(r.size()==1);
     for(MatchResult::iterator i=r.begin();i!=r.end();++i) {

@@ -5,20 +5,24 @@
 #include "VariableIdMapping.h"
 #include "StateRepresentations.h"
 
-enum IterVarType { ITERVAR_SEQ, ITERVAR_PAR };
+enum IterVarType { ITERVAR_SEQ, ITERVAR_PAR, ITERVAR_UNKNOWN };
 
 struct LoopInfo {
-  SPRAY::VariableId iterationVarId;
-  IterVarType iterationVarType;
+  LoopInfo();
+  ~LoopInfo();
+  SgForStatement* forStmt;
   SgStatement* initStmt;
   SgExpression* condExpr;
-  SgForStatement* forStmt;
+  bool isOmpCanonical;
+  IterVarType iterationVarType;
+  static SPRAY::VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
+  SPRAY::VariableId iterationVarId;
   SPRAY::VariableIdSet outerLoopsVarIds;
+  SPRAY::LabelSet loopLabelSet;
   void computeOuterLoopsVarIds(SPRAY::VariableIdMapping* variableIdMapping);
   void computeLoopLabelSet(SPRAY::Labeler* labeler);
   bool isInAssociatedLoop(const CodeThorn::EState* estate);
-  SPRAY::LabelSet loopLabelSet;
-  static SPRAY::VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
+  std::string toString();
 };
 
 typedef vector< LoopInfo > LoopInfoSet;
