@@ -4,20 +4,29 @@
 : ${TOOL1:=g++}
 : ${TOOL2:=identityTranslator}
 
-CLEANUP="yes"
+CLEANUP_ON_SUCCESS="yes"
+CLEANUP_AND_EXIT="no"
 
 if [ "$#" -gt 1 ]; then
-    echo "Usage: $0 [no-cleanup]"
+    echo "Usage: $0 [no-cleanup] [only-cleanup]"
     exit
 else
   if [ $# == 1 ]; then
     if [ "$1" == "no-cleanup" ]; then
-      CLEANUP="no"
+      CLEANUP_ON_SUCCESS="no"
+    elif [ "$1" == "only-cleanup" ]; then
+      CLEANUP_AND_EXIT="yes"
     else
       echo "Error: unknown argument $1."
       exit
     fi
   fi
+fi
+
+if hash bc 2>/dev/null; then
+    BC_AVAILABLE="yes"
+else
+    BC_AVAILABLE="no"
 fi
 
 ###############################################################################
@@ -75,8 +84,6 @@ for header in ${STL_HEADERS}; do
     LANG_STANDARD_NO_PLUS=`echo $LANG_STANDARD | tr + x ` 
     TEST_HEADER_PP_C="${TEST_HEADER}_${LANG_STANDARD_NO_PLUS}.pp.C"
     ROSE_TEST_HEADER_PP_C="rose_${TEST_HEADER}_${LANG_STANDARD_NO_PLUS}.pp.C"
-#    TEST_HEADER_FAIL1="${CPP_TEST_HEADER}_${LANG_STANDARD}.t1.fail.C"
-#    TEST_HEADER_FAIL2="${CPP_TEST_HEADER}_${LANG_STANDARD}.t2.fail.C"
 
     printf "TESTING: %-17s: " "$header"
     printf "#include <$header>\nint main(){ return 0; }\n" > ${TEST_HEADER_C}
@@ -106,12 +113,20 @@ for header in ${STL_HEADERS}; do
                 echo "${TOOL1} -std=$LANG_STANDARD ${ROSE_TEST_HEADER_PP_C} -w -Wfatal-errors" >> $LOGFILE
                 ${TOOL1} -std=$LANG_STANDARD ${ROSE_TEST_HEADER_PP_C} -w -Wfatal-errors >> $LOGFILE 2>&1
                 if [ $? -eq 0 ]; then
-                    echo -n " PASS : 100.00%" # 2
+                    if [ "$BC_AVAILABLE" == "yes" ]; then
+                        echo -n " PASS : 100.00%" # 2
+                    else
+                        echo -n " PASS :    100%" # 2
+                    fi
                     ((T2_PASS+=1))
                 else
                     # determine line number of error
                     ERROR_LINE=`${TOOL1} -std=${LANG_STANDARD} ${ROSE_TEST_HEADER_PP_C} -w -Wfatal-errors 2>&1 | egrep ${ROSE_TEST_HEADER_PP_C}:[0-9] | cut -f2 -d:` 
-                    ERROR_PERCENTAGE=`echo "scale=2; ${ERROR_LINE}*100/${LOC}" | bc`
+                    if [ "$BC_AVAILABLE" == "yes" ]; then
+                        ERROR_PERCENTAGE=`echo "scale=2; ${ERROR_LINE}*100/${LOC}" | bc`
+                    else
+                        ERROR_PERCENTAGE=$[ ERROR_LINE * 100 / LOC ] 
+                    fi
                     echo -en " ${RED}FAIL${COLOREND}"
                     printf " : %6s%% (LINE:%s)" "$ERROR_PERCENTAGE" "$ERROR_LINE" # 2
                     ((T2_FAIL+=1))
@@ -150,13 +165,17 @@ fi
 ########################################################################
 
 cleanup
+if [ $CLEANUP_AND_EXIT == "yes" ]; then
+    exit
+fi
 
 echo
 echo "-----------------------------------------------------------------"
-echo "Testing with COMPILER (COMP): $TOOL1"
-echo "             FRONTEND (FE)  : $TOOL2"
-echo "             BACKEND (BE)   : $TOOL2"
-echo "             TEST CLEANUP   : $CLEANUP"
+echo "Testing with COMPILER (COMP)      : $TOOL1"
+echo "             FRONTEND (FE)        : $TOOL2"
+echo "             BACKEND (BE)         : $TOOL2"
+echo "             CLEANUP ON SUCCESS   : $CLEANUP_ON_SUCCESS"
+echo "             BC AVAILABLE         : $BC_AVAILABLE"
 echo "-----------------------------------------------------------------"
 echo
 echo "-----------------------------------------------------------------"
@@ -208,7 +227,7 @@ echo -e "${GREEN}---------------------------------------------------------------
 
 # clean up -- remove all generated files. cleanup is only performed when all tests passed and option "cleanup" is not provided to the script.
 # for this option exists also a make target 'make check-no-cleanup'
-if [ "$CLEANUP" == "yes" ]; then
+if [ "$CLEANUP_ON_SUCCESS" == "yes" ]; then
   cleanup
 fi
 
