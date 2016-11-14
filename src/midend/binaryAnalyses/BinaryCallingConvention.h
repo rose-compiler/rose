@@ -5,6 +5,11 @@
 #include <BinaryStackVariable.h>
 #include <RegisterParts.h>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 
@@ -94,6 +99,20 @@ private:
         rose_addr_t va_;                            // Absolute address
     };
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & type_;
+        s & reg_;
+        if (STACK==type_) {
+            s & offset_;
+        } else {
+            s & va_;
+        }
+    }
+    
 public:
     /** Default constructed no-location.
      *
@@ -228,6 +247,28 @@ public:
     static Definition x86_fastcall(const RegisterDictionary*);
     /** @} */
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & name_;
+        s & comment_;
+        s & wordWidth_;
+        s & regDict_;
+        s & inputParameters_;
+        s & outputParameters_;
+        s & stackParameterOrder_;
+        s & stackPointerRegister_;
+        s & nonParameterStackSize_;
+        s & stackAlignment_;
+        s & stackDirection_;
+        s & stackCleanup_;
+        s & thisParameter_;
+        s & calleeSavedRegisters_;
+        s & scratchRegisters_;
+    }
+    
 public:
     /** Default constructor.
      *
@@ -735,7 +776,25 @@ private:
     StackVariables inputStackParameters_;               // Stack variables serving as function inputs
     StackVariables outputStackParameters_;              // Stack variables serving as possible return values
     Sawyer::Optional<int64_t> stackDelta_;              // Change in stack across entire function
-    // Don't forget to update clearResults() if you add more.
+    // Don't forget to update clearResults() and serialize() if you add more.
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & cpu_;
+        s & regDict_;
+        s & defaultCc_;
+        s & hasResults_;
+        s & didConverge_;
+        s & restoredRegisters_;
+        s & inputRegisters_;
+        s & outputRegisters_;
+        s & inputStackParameters_;
+        s & outputStackParameters_;
+        s & stackDelta_;
+    }
 
 public:
     /** Default constructor.
@@ -744,13 +803,13 @@ public:
      *  would be analyzing. This is mostly for use in situations where an analyzer must be constructed as a member of another
      *  class's default constructor, in containers that initialize their contents with a default constructor, etc. */
     Analysis()
-        : regDict_(NULL), hasResults_(false), didConverge_(false) {}
+        : regDict_(NULL), defaultCc_(NULL), hasResults_(false), didConverge_(false) {}
 
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
     explicit Analysis(Disassembler *d)
-        : regDict_(NULL), hasResults_(false), didConverge_(false) {
+        : regDict_(NULL), defaultCc_(NULL), hasResults_(false), didConverge_(false) {
         init(d);
     }
 
@@ -761,7 +820,7 @@ public:
      *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
      *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
     explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
+        : cpu_(cpu), regDict_(NULL), defaultCc_(NULL), hasResults_(false), didConverge_(false) {}
 
     /** Property: Default calling convention.
      *

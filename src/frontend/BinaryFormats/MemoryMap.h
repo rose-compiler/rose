@@ -5,8 +5,15 @@
 
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
+#include <Sawyer/AllocatingBuffer.h>
 #include <Sawyer/MappedBuffer.h>
+#include <Sawyer/NullBuffer.h>
 #include <Sawyer/Optional.h>
+#include <Sawyer/StaticBuffer.h>
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
 
 /** Align address downward to boundary.
  *
@@ -91,6 +98,19 @@ public:
 
 private:
     ByteOrder::Endianness endianness_;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s.template register_type<AllocatingBuffer>();
+        s.template register_type<MappedBuffer>();
+        s.template register_type<NullBuffer>();
+        s.template register_type<StaticBuffer>();
+        s & boost::serialization::base_object<Super>(*this);
+        s & endianness_;
+    }
 
 public:
 
@@ -361,5 +381,11 @@ public:
 
     friend std::ostream& operator<<(std::ostream&, const MemoryMap&);
 };
+
+// Register the types needed for serialization since some of them are derived from polymorphic class templates.
+BOOST_CLASS_EXPORT_KEY(MemoryMap::AllocatingBuffer);
+BOOST_CLASS_EXPORT_KEY(MemoryMap::MappedBuffer);
+BOOST_CLASS_EXPORT_KEY(MemoryMap::NullBuffer);
+BOOST_CLASS_EXPORT_KEY(MemoryMap::StaticBuffer);
 
 #endif

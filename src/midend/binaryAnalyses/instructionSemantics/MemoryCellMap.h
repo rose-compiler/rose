@@ -6,6 +6,10 @@
 #include <MemoryCellState.h>
 #include <Sawyer/Map.h>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -34,6 +38,18 @@ public:
 
 protected:
     CellMap cells;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<MemoryCellState>(*this);
+        s & cells;
+    }
+    
+protected:
+    MemoryCellMap() {}                                  // for serialization
 
     explicit MemoryCellMap(const MemoryCellPtr &protocell)
         : MemoryCellState(protocell) {}
@@ -99,5 +115,7 @@ public:
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellMap);
 
 #endif

@@ -24,6 +24,7 @@ DisassemblerArm::can_disassemble(SgAsmGenericHeader *header) const
 void
 DisassemblerArm::init()
 {
+    name("arm");
     decodeUnconditionalInstructions = true;
     set_wordsize(4);
     set_alignment(4);
