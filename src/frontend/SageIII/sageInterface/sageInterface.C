@@ -18990,6 +18990,10 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
     return *vardecl.get_variables().front();
   }
 
+#if 0
+  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
+  // option (-D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC).
+
   /// \brief  clones a function parameter list @params and uses the function
   ///         definition @fundef as new scope
   /// \return a copy of a function parameter list
@@ -19010,6 +19014,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     return copy;
   }
+#endif
 
   /// \brief swaps the "defining elements" of two function declarations
   static
@@ -19021,6 +19026,10 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     // \todo do we need to swap also exception spec, decorator_list, etc. ?
   }
+
+#if 0
+  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
+  // option (-D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC).
 
   std::pair<SgStatement*, SgInitializedName*>
   SageInterface::wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName)
@@ -19098,6 +19107,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     return std::make_pair(callStatement, resultName);
   }
+#endif
 
   //
   // flatten C/C++ array dimensions
