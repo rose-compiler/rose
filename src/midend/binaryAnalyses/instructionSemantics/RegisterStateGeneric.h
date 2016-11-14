@@ -3,6 +3,10 @@
 
 #include <BaseSemantics2.h>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -55,6 +59,18 @@ public:
      *  objects are implicitly constructed from @ref RegisterDescriptor. */
     struct RegStore {
         unsigned majr, minr;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & majr & minr;
+        }
+
+    public:
+        RegStore()                                      // for serialization
+            : majr(0), minr(0) {}
         RegStore(const RegisterDescriptor &d) // implicit
             : majr(d.get_major()), minr(d.get_minor()) {}
         bool operator<(const RegStore &other) const {
@@ -71,6 +87,19 @@ public:
     struct RegPair {
         RegisterDescriptor desc;
         SValuePtr value;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & desc & value;
+        }
+
+    protected:
+        RegPair() {}                                    // for serialization
+
+    public:
         RegPair(const RegisterDescriptor &desc, const SValuePtr &value): desc(desc), value(value) {}
         BitRange location() const { return BitRange::baseSize(desc.get_offset(), desc.get_nbits()); }
     };
@@ -133,13 +162,31 @@ protected:
      *  new register that would overlap, the registers with which it overlaps must be removed first. */
     Registers registers_;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    friend class boost::serialization::access;
 
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<RegisterState>(*this);
+        s & properties_;
+        s & writers_;
+        s & accessModifiesExistingLocations_;
+        s & accessCreatesLocations_;
+        s & registers_;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Normal constructors
     //
     // These are protected because objects of this class are reference counted and always allocated on the heap.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
+    RegisterStateGeneric()                              // for serialization
+        : accessModifiesExistingLocations_(true), accessCreatesLocations_(true) {}
+
     explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionary *regdict)
         : RegisterState(protoval, regdict), accessModifiesExistingLocations_(true), accessCreatesLocations_(true) {
         clear();
@@ -597,5 +644,7 @@ protected:
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric);
 
 #endif

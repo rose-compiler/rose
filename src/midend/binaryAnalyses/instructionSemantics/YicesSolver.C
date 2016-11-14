@@ -17,6 +17,7 @@ namespace BinaryAnalysis {
 void
 YicesSolver::init()
 {
+    name("yices");
     if (available_linkage() & LM_EXECUTABLE) {
         linkage = LM_EXECUTABLE;
     } else if (available_linkage() & LM_LIBRARY) {
@@ -1207,3 +1208,5 @@ YicesSolver::ctx_read(const SymbolicExpr::InteriorPtr &in)
 
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::YicesSolver);

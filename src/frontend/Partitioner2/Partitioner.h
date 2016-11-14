@@ -21,10 +21,18 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedPointer.h>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
+
 #include <ostream>
 #include <set>
 #include <string>
 #include <vector>
+
+// Derived classes needed for serialization
+#include <DispatcherM68k.h>
+#include <DispatcherX86.h>
+#include <YicesSolver.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -324,6 +332,72 @@ private:
     static const size_t nSpecialVertices = 3;
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //                                  Serialization
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serializeCommon(S &s, const unsigned version) {
+        s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
+        s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
+        s.template register_type<InstructionSemantics2::DispatcherX86>();
+        s.template register_type<InstructionSemantics2::DispatcherM68k>();
+        s.template register_type<SymbolicExpr::Interior>();
+        s.template register_type<SymbolicExpr::Leaf>();
+        s.template register_type<YicesSolver>();
+        s.template register_type<Semantics::SValue>();
+        s.template register_type<Semantics::MemoryListState>();
+        s.template register_type<Semantics::MemoryMapState>();
+        s.template register_type<Semantics::RegisterState>();
+        s.template register_type<Semantics::State>();
+        s.template register_type<Semantics::RiscOperators>();
+        // s & config_;                         -- FIXME[Robb P Matzke 2016-11-08]
+        s & instructionProvider_;
+        s & memoryMap_;
+        s & cfg_;
+        // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
+        s & aum_;
+        s & solver_;
+        s & progressTotal_;
+        s & isReportingProgress_;
+        s & functions_;
+        s & useSemantics_;
+        s & autoAddCallReturnEdges_;
+        s & assumeFunctionsReturn_;
+        s & stackDeltaInterproceduralLimit_;
+        s & addressNames_;
+        s & basicBlockSemanticsAutoDrop_;
+        s & semanticMemoryParadigm_;
+        // s & cfgAdjustmentCallbacks_;         -- not saved/restored
+        // s & basicBlockCallbacks_;            -- not saved/restored
+        // s & functionPrologueMatchers_;       -- not saved/restored
+        // s & functionPaddingMatchers_;        -- not saved/restored
+        // s & undiscoveredVertex_;             -- initialized by rebuildVertexIndices
+        // s & indeterminateVertex_;            -- initialized by rebuildVertexIndices
+        // s & nonexistingVertex_;              -- initialized by rebuildVertexIndices
+    }
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        const_cast<Partitioner*>(this)->serializeCommon(s, version);
+        throw std::runtime_error("[Robb P Matzke 2016-11-07]: work in progress");
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        serializeCommon(s, version);
+        rebuildVertexIndices();
+        throw std::runtime_error("[Robb P Matzke 2016-11-07]: work in progress");
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -413,8 +487,7 @@ public:
     const Configuration& configuration() const { return config_; }
     /** @} */
 
-
-
+        
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -2022,6 +2095,9 @@ private:
     // This method is called whenever a basic block is detached from the CFG/AUM or when a placeholder is erased from the CFG.
     // The call happens immediately after the CFG/AUM are updated.
     void bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &removedBlock);
+
+    // Rebuild the vertexIndex_ and other cache-like data members from the control flow graph
+    void rebuildVertexIndices();
 };
 
 } // namespace
