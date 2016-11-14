@@ -56,6 +56,7 @@ AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const st
      automaticGenerationOfDataAccessFunctions(true),
      automaticGenerationOfCopyFunction(true),
      associatedGrammar(&X),
+     p_isBoostSerializable(false),
      generateEssentialDataMembersConstructorImplementation(false),
      generateEnforcedDefaultConstructorImplementation(false)
    {
@@ -69,6 +70,26 @@ AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const st
      X.addGrammarElement(*this);
      ROSE_ASSERT(associatedGrammar != NULL);
    }
+
+const std::string&
+AstNodeClass::getCppCondition() const {
+    return cppCondition;
+}
+
+void
+AstNodeClass::setCppCondition(const std::string &s) {
+    cppCondition = s;
+}
+
+bool
+AstNodeClass::isBoostSerializable() const {
+    return p_isBoostSerializable;
+}
+
+void
+AstNodeClass::isBoostSerializable(bool b) {
+    p_isBoostSerializable = b;
+}
 
 void
 AstNodeClass::setBaseClass(AstNodeClass* bc) {baseClass = bc;}
@@ -653,26 +674,54 @@ AstNodeClass::setFunctionPrototype ( const GrammarString & inputMemberFunction )
           inputMemberFunction);
    }
 
-#define SETUP_MARKER_STRINGS_MACRO   \
-     string startSuffix = "_START";   \
-     string endSuffix   = "_END";     \
-     string startMarkerString = markerString + startSuffix; \
-     string endMarkerString   = markerString + endSuffix; \
-     string directory = "";                    \
-     string functionString = StringUtility::toString(Grammar::extractStringFromFile ( startMarkerString, endMarkerString, filename, directory )); \
-     GrammarString* codeString = new GrammarString(functionString);                  \
-     codeString->setVirtual(pureVirtual);
+// This was originally a CPP macro instead of a function! I'm not aware of the reason for that, so I'm leaving it. [Matzke]
+#define SETUP_MARKER_STRINGS_MACRO                                                                                             \
+    string functionString;                                                                                                     \
+    string errorMessage;                                                                                                       \
+    /* First try the new approach where we locate everything at one place instead of five places; the five being: */           \
+    /*   (1) The #include's located at the top of src/ROSETTA/Grammar/xxx.code files */                                        \
+    /*   (2) The class declaration and its properties in src/ROSETTA/src/xxx.C files */                                        \
+    /*   (3) Extra declarations that aren't needed by ROSETTA, in the middle src/ROSETTA/Grammar/xxx.code files */             \
+    /*   (4) Definitions for the extra members, at the end of src/ROSETTA/Grammar/xxx.code files */                            \
+    /*   (5) Documentation for the ROSETTA members in docs/testDoxygen/xxx.docs files. */                                      \
+    /* We have to use try/catch because Grammar::extractStringFromFile throws (used to abort) if it can't find the string. */  \
+    try {                                                                                                                      \
+        /* Can't use boost::regex here due to policy prohibition against boost dependencies in ROSETTA */                      \
+        string startMarkerString = "#if defined(" + markerString + ") || defined(DOCUMENTATION)";                              \
+        string endMarkerString = "#endif // " + markerString;                                                                  \
+        string directory;                                                                                                      \
+        functionString = StringUtility::toString(Grammar::extractStringFromFile(startMarkerString, endMarkerString,            \
+                                                                                filename, directory));                         \
+    } catch (const std::runtime_error &e) {                                                                                    \
+        if (strstr(e.what(), "could not locate startMarker") == NULL) {                                                        \
+            errorMessage = e.what();                                                                                           \
+        }                                                                                                                      \
+    }                                                                                                                          \
+    /* If new way didn't work, then try the old way, looking for START and END tags */                                         \
+    if (functionString.empty() && errorMessage.empty()) {                                                                      \
+        string startSuffix = "_START";                                                                                         \
+        string endSuffix   = "_END";                                                                                           \
+        string startMarkerString = markerString + startSuffix;                                                                 \
+        string endMarkerString = markerString + endSuffix;                                                                     \
+        string directory;                                                                                                      \
+        try {                                                                                                                  \
+            functionString = StringUtility::toString(Grammar::extractStringFromFile(startMarkerString, endMarkerString,        \
+                                                                                        filename, directory));                 \
+        } catch (const std::runtime_error &e) {                                                                                \
+            errorMessage = e.what();                                                                                           \
+        }                                                                                                                      \
+    }                                                                                                                          \
+    /* Print the error message that was originally emitted by extractStringFromFile just before it aborted. */                 \
+    if (!errorMessage.empty()) {                                                                                               \
+        fprintf(stderr, "%s\n", errorMessage.c_str());                                                                         \
+        ROSE_ASSERT(false);                                                                                                    \
+    }                                                                                                                          \
+    GrammarString* codeString = new GrammarString(functionString);                                                             \
+    codeString->setVirtual(pureVirtual);
 
 GrammarString* AstNodeClass::setupMarkerStrings(string markerString,string filename, bool pureVirtual) {
-  string startSuffix = "_START";
-  string endSuffix   = "_END";
-  string startMarkerString = markerString + startSuffix;
-  string endMarkerString   = markerString + endSuffix;
-  string directory = "";
-  string functionString = StringUtility::toString(Grammar::extractStringFromFile ( startMarkerString, endMarkerString, filename, directory ));
-  GrammarString* codeString = new GrammarString(functionString);
-  codeString->setVirtual(pureVirtual);
-  return codeString;
+    SETUP_MARKER_STRINGS_MACRO;
+    return codeString;
 }
 
 void
