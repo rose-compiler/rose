@@ -404,6 +404,46 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorMore(ConstIntLattice othe
   return getIntValue()>other.getIntValue();
 }
 
+AType::ConstIntLattice AType::ConstIntLattice::operatorBitwiseOr(ConstIntLattice other) const {
+  if(isTop()||other.isTop())
+    return Top();
+  if(isBot())
+    return other;
+  if(other.isBot())
+    return *this;
+  assert(isConstInt()&&other.isConstInt());
+  return getIntValue()|other.getIntValue();
+}
+
+AType::ConstIntLattice AType::ConstIntLattice::operatorBitwiseXor(ConstIntLattice other) const {
+  if(isTop()||other.isTop())
+    return Top();
+  if(isBot())
+    return other;
+  if(other.isBot())
+    return *this;
+  assert(isConstInt()&&other.isConstInt());
+  return getIntValue()^other.getIntValue();
+}
+
+AType::ConstIntLattice AType::ConstIntLattice::operatorBitwiseAnd(ConstIntLattice other) const {
+  if(isTop()||other.isTop())
+    return Top();
+  if(isBot())
+    return other;
+  if(other.isBot())
+    return *this;
+  assert(isConstInt()&&other.isConstInt());
+  return getIntValue()&other.getIntValue();
+}
+
+AType::ConstIntLattice AType::ConstIntLattice::operatorBitwiseComplement() const {
+  if(isTop()||isBot())
+    return *this;
+  assert(isConstInt());
+  return ~getIntValue();
+}
+
 string AType::ConstIntLattice::toString() const {
   switch(valueType) {
   case TOP: return "top";

@@ -292,7 +292,8 @@ globalVariablesInLambdas_test: globalVariablesInLambdas
 
 
 check-local:
-if ROSE_USE_EDG_VERSION_4_9
+# DQ (10/23/2016): We don't need this logic since we only use EDG 4.9 and later versions of EDG now.
+# if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "C++11 tests using GNU version 4.8 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
@@ -312,9 +313,9 @@ endif
 endif
 endif
 endif
-else
-	@echo "C++11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
-endif
+# else
+#	@echo "C++11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
+# endif
 	@echo "*************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx11_tests: make check rule complete (terminated normally) ******"
 	@echo "*************************************************************************************************"
