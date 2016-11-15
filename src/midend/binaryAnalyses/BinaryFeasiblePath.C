@@ -26,7 +26,7 @@ SymbolicSemantics::Formatter symbolicFormat(const std::string &prefix="") {
     //retval.expr_formatter.show_width = settings.showExprWidth;
     return retval;
 }
-    
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,7 +98,7 @@ public:
         ASSERT_not_null(retval);
         return retval;
     }
-    
+
     /** Set detail for variable name if none exists. */
     void varDetail(const std::string &varName, const FeasiblePath::VarDetail &vdetail) {
         varDetails_.insertMaybe(varName, vdetail);
@@ -290,7 +290,7 @@ public:
             State::promote(currentState())->varDetail(expr->isLeafNode()->toString(), detailForVariable(reg, "read"));
         return retval;
     }
-        
+
     virtual void writeRegister(const RegisterDescriptor &reg,
                   const BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
         SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
@@ -298,7 +298,7 @@ public:
             State::promote(currentState())->varDetail(expr->isLeafNode()->toString(), detailForVariable(reg, "write"));
         Super::writeRegister(reg, value);
     }
-        
+
     // If multi-path is enabled, then return a new memory expression that describes the process of reading a value from the
     // specified address; otherwise, actually read the value and return it.  In any case, record some information about the
     // address that's being read if we've never seen it before.
@@ -342,7 +342,7 @@ public:
         }
         return retval;
     }
-        
+
     // If multi-path is enabled, then return a new memory expression that updates memory with a new address/value pair;
     // otherwise update the memory directly.  In any case, record some information about the address that was written if we've
     // never seen it before.
@@ -485,7 +485,7 @@ void
 FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu,
                                 size_t pathInsnIndex) {
     ASSERT_not_null(bblock);
-    
+
     // Update the path constraint "register"
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     RegisterDescriptor IP = cpu->instructionPointerRegister();
@@ -575,6 +575,55 @@ FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
     }
 }
 
+void
+FeasiblePath::printPathVertex(std::ostream &out, const P2::ControlFlowGraph::Vertex &pathVertex, size_t &insnIdx) const {
+    switch (pathVertex.value().type()) {
+        case P2::V_BASIC_BLOCK: {
+            BOOST_FOREACH (SgAsmInstruction *insn, pathVertex.value().bblock()->instructions()) {
+                out <<"    #" <<std::setw(5) <<std::left <<insnIdx++
+                    <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+            }
+            break;
+        }
+
+        case P2::V_USER_DEFINED: {
+            ASSERT_require(functionSummaries().exists(pathVertex.value().address()));
+            const FeasiblePath::FunctionSummary &summary = functionSummary(pathVertex.value().address());
+            out <<"    #" <<std::setw(5) <<std::left <<insnIdx++ <<" summary for " <<summary.name <<"\n";
+            break;
+        }
+
+        case P2::V_INDETERMINATE: {
+            out <<"     " <<std::setw(5) <<std::left <<"n.a." <<" indeterminate\n";
+            break;
+        }
+
+        case P2::V_NONEXISTING: {
+            out <<"     " <<std::setw(5) <<std::left <<"n.a." <<" nonexisting\n";
+            break;
+        }
+
+        case P2::V_UNDISCOVERED: {
+            out <<"     " <<std::setw(5) <<std::left <<"n.a." <<" undiscovered\n";
+            break;
+        }
+    }
+}
+
+void
+FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
+    size_t pathIdx = 0, insnIdx = 0;
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &pathVertex, path.vertices()) {
+        if (0==pathIdx) {
+            out <<"  at path vertex " <<partitioner().vertexName(pathVertex) <<"\n";
+        } else {
+            out <<"  via path edge " <<partitioner().edgeName(path.edges()[pathIdx-1]) <<"\n";
+        }
+        printPathVertex(out, *pathVertex, insnIdx /*in,out*/);
+        ++pathIdx;
+    }
+}
+
 boost::logic::tribool
 FeasiblePath::isPathFeasible(const P2::CfgPath &path, SMTSolver &solver, const std::vector<SymbolicExpr::Ptr> &endConstraints,
                              std::vector<SymbolicExpr::Ptr> &pathConstraints /*in,out*/,
@@ -590,8 +639,12 @@ FeasiblePath::isPathFeasible(const P2::CfgPath &path, SMTSolver &solver, const s
         RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
         BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
         if (ip->is_number()) {
-            ASSERT_require(hasVirtualAddress(pathEdge->target()));
-            if (ip->get_number() != virtualAddress(pathEdge->target())) {
+            if (!hasVirtualAddress(pathEdge->target())) {
+                // If the IP register is pointing to an instruction but the path vertex is indeterminate (or undiscovered or
+                // nonexisting) then consider this path to be not-feasible. If the CFG is accurate then there's probably
+                // a sibling edge that points to the correct vertex.
+                return false;
+            } else if (ip->get_number() != virtualAddress(pathEdge->target())) {
                 // Executing the path forces us to go a different direction than where the path indicates we should go. We
                 // don't need an SMT solver to tell us that when the values are just integers.
                 return false;
@@ -786,7 +839,7 @@ FeasiblePath::insertCallSummary(const P2::ControlFlowGraph::ConstVertexIterator 
     summaryVertex->value().address(summary.address);
 }
 
-void 
+void
 FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     Stream info(mlog[INFO]);
     if (paths_.isEmpty())

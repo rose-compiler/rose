@@ -3,6 +3,7 @@
 
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Map.h>
+#include <boost/serialization/access.hpp>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -29,7 +30,18 @@ private:
 private:
     class MajorMinor {
         unsigned majr_, minr_;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & majr_ & minr_;
+        }
+
     public:
+        MajorMinor(): majr_(0), minr_(0) {}
+
         MajorMinor(const RegisterDescriptor &reg) /*implicit*/
             : majr_(reg.get_major()), minr_(reg.get_minor()) {}
 
@@ -45,6 +57,14 @@ private:
     typedef Sawyer::Container::Map<MajorMinor, BitSet> Map;
     Map map_;
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & map_;
+    }
+    
 public:
     /** Predicate checking whether this container is empty.
      *

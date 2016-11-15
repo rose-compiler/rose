@@ -198,6 +198,15 @@ astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 astTraversalTest_SPECIMENS    = input1.C
 astTraversalTest_TEST_TARGETS = $(addprefix att_, $(addsuffix .passed, $(astTraversalTest_SPECIMENS)))
 
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
+
 $(astTraversalTest_TEST_TARGETS): att_%.passed: % $(TEST_CONFIG) astTraversalTest
 	@$(RTH_RUN) CMD="./astTraversalTest -edg:w -c $<" $(TEST_CONFIG) $@
 

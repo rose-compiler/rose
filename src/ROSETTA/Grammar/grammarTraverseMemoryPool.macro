@@ -17,7 +17,7 @@ $CLASSNAME::traverseMemoryPoolNodes(ROSE_VisitTraversal & traversal)
 
        // Build a local variable for better performance
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
-
+#if 0
        // Iterate over the memory pools
           for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
              {
@@ -30,6 +30,42 @@ $CLASSNAME::traverseMemoryPoolNodes(ROSE_VisitTraversal & traversal)
                        }
                   }
              }
+#else
+       // DQ (10/26/2016): To avoid operations in the visit functions that might change the list, 
+       // compute the list first and then call the visit function on each list element.
+
+       // printf ("Inside of $CLASSNAME::traverseMemoryPoolNodes(ROSE_VisitTraversal & traversal) \n");
+
+          std::vector<$CLASSNAME*> nodeList;
+
+       // Iterate over the memory pools to build the saved list of IR nodes for this type.
+          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
+             {
+            // objectArray[i] is a single memory pool
+               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
+                  {
+                    if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
+                       {
+                         nodeList.push_back(&(objectArray[i][j]));
+                       }
+                  }
+             }
+
+       // Iterate over the saved list
+          size_t nodeListSize = nodeList.size();
+          for (size_t i=0; i < nodeListSize; i++)
+             {
+               ROSE_ASSERT(nodeList[i] != NULL);
+#if 0
+               traversal.visit(nodeList[i]);
+#else
+               if (nodeList[i]->p_freepointer == IS_VALID_POINTER)
+                  {
+                    traversal.visit(nodeList[i]);
+                  }
+#endif
+             }
+#endif
         }
 
   // This should not be required since all previously static data members are 

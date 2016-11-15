@@ -1,4 +1,16 @@
-The script stl-eval.sh is a bash script that generates programs for each STL header and performs then tests on these programs.
+This test can be invoked with
+
+* make check: to perform several STL checks and remove all test output
+  in case the tests all pass as expected
+
+* make check-no-cleanup: to perform several STL checks but do not remove
+  any output. 
+
+All operations are logged in a logfile called 'stl-eval.log'.
+
+The command 'make check' invokes the script stl-eval.sh. This script
+is a bash script that generates programs for each STL header and
+performs then tests on these programs.
 
 The form of the generated programs is:
 
@@ -9,8 +21,8 @@ int main() {
 }
 
 The HEADER is replaced with each STL header file. E.g. vector, queue,
-etc. The file is the pre-processed with cpp. The pre-processed file is
-the used for testing. With this test we check whether ROSE can operate
+etc. The file is the pre-processed with the c preprocessor 'cpp'. The pre-processed file is
+then used for testing. With this test we check whether ROSE can operate
 on complete translation units. Note that the pre-processed files can
 be very large, between 100 to 40.000 LOC (although the original file
 has only a few lines), because the translation unit includes all
@@ -110,15 +122,7 @@ Makefile.am.
 
 Notes on how to run the STL tests for debugging:
 
-1) To see generated files either uncomment the "cleanup" in the script 
-(a better solution using a command line option will come later).
+1) In case of an detected error the command line that allows to reproduce the error is printed in brackes [...] on the same line as the error is reported.
 
-2) C++98 files are generated first and then C++11 files are copied over 
-the same named files from the C++98 testing.
-
-3) To run the C++98 tests (example):
-../../testTranslator -c test_functional.pp.C
-
-4) To run the C++1 tests (example):
-../../testTranslator -std=c++11 -c test_functional.pp.C
+2) To see all generated files also in case no error occurs use 'make check-no-cleanup' (does not delete generated files)
 

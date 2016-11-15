@@ -73,7 +73,19 @@ GRAMMAR_SOURCE_FILES = \
 # VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+# DQ (11/9/2016): Use option to turn off the memory leak detection because we are not 
+# conserned with memory leaks in the ROSE code generator.
+# VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+VALGRIND = ASAN_OPTIONS=detect_leaks=0
+else
 VALGRIND =
+endif
 
 # Build the grammar for generating the C++ preprocessor.
 rosetta_generated: $(CXX_PREPROC_CODES)
@@ -81,6 +93,7 @@ $(CXX_PREPROC_CODES): CxxGrammarMetaProgram$(EXEEXT) $(GRAMMAR_SOURCE_FILES)
 #  Build a link so that the executable can find the *.code file in ../Grammar
 #	rm -f Grammar
 #	ln -s $(top_srcdir)/src/ROSETTA/Grammar Grammar
+	@echo "Running ROSETTA to generated ROSE IR code:"
 	$(AM_V_GEN) $(VALGRIND) ./CxxGrammarMetaProgram ${top_builddir}/src/frontend/SageIII/
 
 noinst_PROGRAMS = CxxGrammarMetaProgram

@@ -91,6 +91,12 @@ class AstNodeClass
   // Source code string lists (local and subtree definitions)
   std::vector<GrammarString *> memberFunctionSourceList[2][2];
 
+  // String representation of '#if' that surrounds the class. If empty, then emits "#if 1"
+  std::string cppCondition;
+
+  // Wher class supports boost::serialization
+  bool p_isBoostSerializable;
+
   enum locationInTree
   {
     LOCAL_LIST   = 0,
@@ -346,6 +352,16 @@ class AstNodeClass
   
   // DQ (10/12/2014): output the name associated with the TypeEvaluation enum values.
   std::string typeEvaluationName ( TypeEvaluation x );
+
+  /** C preprocessor condition for class declaration.
+   * @{ */
+  const std::string& getCppCondition() const;
+  void setCppCondition(const std::string&);
+  /** @} */
+
+  /** Whether node supports boost::serialization. */
+  bool isBoostSerializable() const;
+  void isBoostSerializable(bool b);
   
   /* JH (10/28/2005): declaration of the source building methods for the storage classes
      concenrning the ast file IO. More about them one can find in the AstNodeClass.C file. They

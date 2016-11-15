@@ -2093,12 +2093,16 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
                     isANumber = false;
                   }
             // printf ("cppIndentifier = %s integerValue = %ld \n",cppIndentifier.c_str(),integerValue);
-#if 1
+
             // Avoid memory leak!
-               delete original_buffer;
+
+            // DQ (11/4/2016): This needs to be an array delete (caught by Address Sanitizer).
+            // delete original_buffer;
+               delete [] original_buffer;
+
                original_buffer = NULL;
                buffer = NULL;
-#endif
+
             // This value will be a constant value used to identify a numerical value.
             // This value should be a macro defined in some centralized location.
                if (isANumber == true)

@@ -34,6 +34,8 @@ class RewriteSystem {
   RewriteStatistics getRewriteStatistics();
   RewriteStatistics* getRewriteStatisticsPtr() { return &dump1_stats; }
  private:
+  // sets valueString to empty string in SgFloatVal, SgDoubleVal, SgLongDoubleVal
+  void normalizeFloatingPointNumbersForUnparsing(SgNode*& root);
   RewriteStatistics dump1_stats;
 };
 

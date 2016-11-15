@@ -431,6 +431,10 @@ NEW_TESTCODES = \
    test2016_82.C \
    test2016_83.C 
 
+# DQ (11/14/2016): Test codes not yet passing.
+#  test2016_91.C 
+#  test2016_92.C 
+
 # DQ (/12/2016): We can't add this because it is a CPP-preprocessed file containing 
 # references to the __int128 type which is not portable to older versions of GNU compilers.
 #  test2016_39.C 
@@ -1312,10 +1316,21 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS_UNNORMALIZED = $(EXAMPLE_TESTCODES_REQUIRED_T
 
 TEST_Objects_unnormalized = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_UNNORMALIZED:.C=.unnormalized-o}
 
+# Note the quotes and escapes that are required:
+# ADDRESS_SANITIZER_OPTIONS = "ASAN_OPTIONS=symbolize=1 ASAN_SYMBOLIZER_PATH=\`which llvm-symbolizer\`"
 # VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 TEST_TRANSLATOR = ../../testTranslator
 

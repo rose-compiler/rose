@@ -75,6 +75,9 @@ TESTCODES_CURRENTLY_FAILING = \
     exampleA134f.f90 \
     ompdo-decremental-2.f 
 
+# DQ (11/4/2016): Uncomment to use Address Sanitizer.
+ADDRESS_SANITIZER = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+
 #ROSE_FLAGS = -rose:openmp
 ROSE_FLAGS = -rose:openmp:ast_only
 
@@ -84,10 +87,10 @@ PASSING_F77_TEST_OBJECTS = $(F77_TESTCODES_TO_PASS:.f=.o)
 PASSING_F90_TEST_OBJECTS = $(F90_TESTCODES_TO_PASS:.f90=.o)
 
 $(PASSING_F77_TEST_OBJECTS): %.o:$(srcdir)/%.f ../parseOmp
-	../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
+	$(ADDRESS_SANITIZER) ../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
 $(PASSING_F90_TEST_OBJECTS): %.o:$(srcdir)/%.f90 ../parseOmp
-	../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
+	$(ADDRESS_SANITIZER) ../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
 ../parseOmp:
 	$(MAKE) -C ../. parseOmp

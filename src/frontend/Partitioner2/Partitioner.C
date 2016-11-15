@@ -2186,6 +2186,30 @@ Partitioner::addressName(rose_addr_t va, const std::string &name) {
     }
 }
 
+void
+Partitioner::rebuildVertexIndices() {
+    vertexIndex_.clear();
+    for (ControlFlowGraph::VertexIterator vertex = cfg_.vertices().begin(); vertex != cfg_.vertices().end(); ++vertex) {
+        switch (vertex->value().type()) {
+            case V_BASIC_BLOCK:
+                ASSERT_forbid(vertexIndex_.exists(vertex->value().address()));
+                vertexIndex_.insert(vertex->value().address(), vertex);
+                break;
+            case V_INDETERMINATE:
+                indeterminateVertex_ = vertex;
+                break;
+            case V_NONEXISTING:
+                nonexistingVertex_ = vertex;
+                break;
+            case V_UNDISCOVERED:
+                undiscoveredVertex_ = vertex;
+                break;
+            case V_USER_DEFINED:
+                ASSERT_not_reachable("user-defined vertices cannot be saved or restored");
+        }
+    }
+}
+
 } // namespace
 } // namespace
 } // namespace

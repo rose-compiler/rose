@@ -108,14 +108,28 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
         exit 1
    fi
 
- # DQ (9/12/2016): Added use of new support to specify constexpr specific builtin functions (uses an additional file, support added by Robb).
- # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
-   echo "Now output the builtin generated file into build directory."
- # ${srcdir}/scripts/builtinLlvmFunctions.pl ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
-   ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+ # DQ (10/10/2016): Make the us of the ROSE generation of builtins dependent on the version of EDG.
+ # This is because EDG 4.12 introduces a new mechanism to handle builtin functions and is thus more 
+ # complete.  However, it is still missing __builtin_fxsave() functions, though this is not clear 
+ # why since they are present in EDG 4.12's tables.
+   if test "x$edg_major_version_number" = "x4"; then
+      if test "$edg_minor_version_number" -le "11"; then
+         # DQ (9/12/2016): Added use of new support to specify constexpr specific builtin functions (uses an additional file, support added by Robb).
+         # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
+           echo "Now output the builtin generated file into build directory."
+         # ${srcdir}/scripts/builtinLlvmFunctions.pl ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+           ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
 
-   echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions."
-   sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions."
+           sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+
+         # echo "ERROR: Could not identify the EDG minor version number."
+         # exit 1
+        else
+         # Note that we will likely want to use our mechanism (but with a smaller list of builtins that are still being missed).
+           echo "EDG 4.12 and later version builtins are determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)."
+      fi
+   fi
 
  # "./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h"
 
