@@ -694,18 +694,10 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/Disassemblers/Expressions.C \
                          @top_srcdir@/src/frontend/Disassemblers/Partitioner.C \
                          @top_srcdir@/src/frontend/Disassemblers/Registers.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmArmInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmBlock.C \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmFloatValueExpression.C \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmFunction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmIntegerValueExpression.C \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmInterpretation.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmM68kInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmMipsInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmType.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmX86Instruction.C \
                          @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ElfErrorFrame.C \
@@ -1659,7 +1651,7 @@ ENABLE_PREPROCESSING   = YES
 # compilation will be performed. Macro expansion can be done in a controlled
 # way by setting EXPAND_ONLY_PREDEF to YES.
 
-MACRO_EXPANSION        = NO
+MACRO_EXPANSION        = YES
 
 # If the EXPAND_ONLY_PREDEF and MACRO_EXPANSION tags are both set to YES
 # then the macro expansion is limited to the macros specified with the
@@ -1705,7 +1697,8 @@ INCLUDE_FILE_PATTERNS  =
 PREDEFINED             = HAVE_EXPLICIT_TEMPLATE_INSTANTIATION \
                          __EXTERN_C__ \
                          ROSE_HAVE_LIBYICES \
-                         ROSE_USE_NEW_GRAPH_NODES
+                         ROSE_USE_NEW_GRAPH_NODES \
+			 DOCUMENTATION
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.
@@ -1713,7 +1706,7 @@ PREDEFINED             = HAVE_EXPLICIT_TEMPLATE_INSTANTIATION \
 # Use the PREDEFINED tag if you want to use a different macro definition that
 # overrules the definition found in the source code.
 
-EXPAND_AS_DEFINED      =
+EXPAND_AS_DEFINED      = DECLARE_LEAF_CLASS DECLARE_HEADERS DECLARE_OTHERS IS_SERIALIZABLE
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES (the default) then
 # doxygen's preprocessor will remove all references to function-like macros

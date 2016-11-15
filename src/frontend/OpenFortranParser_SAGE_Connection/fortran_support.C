@@ -23,10 +23,15 @@ Token_t *create_token(int line, int col, int type, const char *text)
   {
          Token_t *tmp_token = NULL;
 
+      // DQ (11/5/2016): Can't use C++ "delete" in token.c file from OFP jar file since it is compiled using a C compiler (so use malloc here).
+      // DQ (11/5/2016): Updated the token.c file in the OFP jar file to fix this bug and make the new (here) consistant with the delete (there).
+      // DQ (11/4/2016): Since in the OFP this is deleted using free (token.c in the build tree), we want 
+      // to allocate it using the associated C style malloc (bug caught using address sanitizer).
       // DQ (9/11/2011): We want to use the C++ new and delete memory allocation 
       // and not mix C's malloc/free with C++'s new/delete mechanisms.
       // tmp_token = (Token_t*) malloc(sizeof(Token_t));
-         tmp_token = new Token_t();
+      // tmp_token = new Token_t();
+         tmp_token = (Token_t*) malloc(sizeof(Token_t));
 
          tmp_token->line = line;
          tmp_token->col = col;
@@ -1409,7 +1414,10 @@ buildLabelRefExp(SgExpression* expression)
           Token_t* format_label = create_token(1,0,0,name.str());
           SgLabelSymbol* labelSymbol = buildNumericLabelSymbol(format_label);
 
-          delete format_label;
+       // DQ (11/5/2016): The token support is using C style malloc, so we need to use C style free to be consistant.
+       // delete format_label;
+          free(format_label);
+
           format_label = NULL;
 
           labelSymbol->set_label_type(SgLabelSymbol::e_start_label_type);

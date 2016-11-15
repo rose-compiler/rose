@@ -11,6 +11,7 @@
 #include <Sawyer/Assert.h>
 #include <Sawyer/Sawyer.h>
 #include <boost/integer_traits.hpp>
+#include <boost/serialization/access.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -31,6 +32,15 @@ public:
     typedef T Value;
 private:
     T lo_, hi_;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & lo_ & hi_;
+    }
+
 public:
     /** Constructs an empty interval. */
     Interval(): lo_(1), hi_(0) {}
