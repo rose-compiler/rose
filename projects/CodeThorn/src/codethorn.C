@@ -68,7 +68,6 @@ namespace po = boost::program_options;
 using namespace CodeThorn;
 using namespace SPRAY;
 using namespace boost;
-
 using namespace Sawyer::Message;
 
 // experimental
@@ -550,7 +549,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   return boolOptions;
 }
 
-void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility mlog) {
+void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility logger) {
   if (args.count("seed")) {
     srand(args["seed"].as<int>());
   } else {
@@ -609,7 +608,7 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility m
         set<int> intSet=Parse::integerSet(setstring);
         explorer.setFixedComponentIds(intSet);
       } else {
-        mlog[ERROR] << "selected a fixed set of components but no were selected. Please use option \"--fixed-components=<csv-id-list>\".";
+        logger[ERROR] << "selected a fixed set of components but no were selected. Please use option \"--fixed-components=<csv-id-list>\".";
         ROSE_ASSERT(0);
       }
     } else if (componentSelection == "subset-random") {
@@ -637,7 +636,7 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility m
     if ( args.count("ltl-mode") ) {
       string ltlMode= args["ltl-mode"].as<string>();
       if (ltlMode == "check") {
-        mlog[ERROR] << "ltl mode \"check\" selected but option \"--check-ltl=<filename>\" not used. Please provide LTL property file." << endl;
+        logger[ERROR] << "ltl mode \"check\" selected but option \"--check-ltl=<filename>\" not used. Please provide LTL property file." << endl;
         ROSE_ASSERT(0);
       } else if (ltlMode == "mine") {
         explorer.setLtlMode(PAR_PRO_LTL_MODE_MINE);
@@ -746,7 +745,7 @@ void generateAutomata(const po::variables_map& args) {
   cout << "generated " << outputFilename <<"."<<endl;
 }
 
-void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Message::Facility mlog) {
+void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Message::Facility logger) {
   // this must be set early, as subsequent initialization depends on this flag
   if (args.count("ltl-driven")) {
     analyzer.setModeLTLDriven(true);
@@ -820,7 +819,7 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
     } else if(explorationMode=="random-mode1") {
       analyzer.setExplorationMode(Analyzer::EXPL_RANDOM_MODE1);
     } else {
-      mlog[ERROR] <<"unknown state space exploration mode specified with option --exploration-mode."<<endl;
+      logger[ERROR] <<"unknown state space exploration mode specified with option --exploration-mode."<<endl;
       exit(1);
     }
   } else {
@@ -981,13 +980,13 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
     int solver=args["solver"].as<int>();
     if(analyzer.getModeLTLDriven()) {
       if(solver!=ltlSolverNr) {
-        mlog[ERROR] <<"ltl-driven mode requires solver "<<ltlSolverNr<<", but solver "<<solver<<" was selected."<<endl;
+        logger[ERROR] <<"ltl-driven mode requires solver "<<ltlSolverNr<<", but solver "<<solver<<" was selected."<<endl;
         exit(1);
       }
     }
     if(analyzer.getExplorationMode() == Analyzer::EXPL_LOOP_AWARE_SYNC) {
       if(solver!=loopAwareSyncSolverNr) {
-        mlog[ERROR] <<"exploration mode loop-aware-sync requires solver "<<loopAwareSyncSolverNr<<", but solver "<<solver<<" was selected."<<endl;
+        logger[ERROR] <<"exploration mode loop-aware-sync requires solver "<<loopAwareSyncSolverNr<<", but solver "<<solver<<" was selected."<<endl;
         exit(1);
       }
     }
@@ -1002,7 +1001,12 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
 }
 
 int main( int argc, char * argv[] ) {
-  Sawyer::Message::Facility mlog("CodeThorn");
+  Sawyer::Message::Facility logger("CodeThorn");
+  mfacilities.insert(logger);
+
+  mfacilities.disable(DEBUG);
+  mfacilities.disable(TRACE);
+  mfacilities.disable(INFO);
 
   try {
     Timer timer;
@@ -1019,7 +1023,7 @@ int main( int argc, char * argv[] ) {
     }
 
     if (args.count("automata-dot-input")) {
-      automataDotInput(args, mlog);
+      automataDotInput(args, logger);
       exit(0);
     }
 
@@ -1038,7 +1042,7 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
-    analyzerSetup(analyzer, args, mlog);
+    analyzerSetup(analyzer, args, logger);
 
     int numberOfThreadsToUse=1;
     if(args.count("threads")) {
@@ -1053,9 +1057,9 @@ int main( int argc, char * argv[] ) {
     vector<int> option_specialize_fun_varinit_const_list;
     if(args.count("specialize-fun-name")) {
       option_specialize_fun_name = args["specialize-fun-name"].as<string>();
-      // mlog[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
+      // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
     } else {
-      // mlog[DEBUG] << "option_specialize_fun_name: NONE"<< option_specialize_fun_name<<endl;
+      // logger[DEBUG] << "option_specialize_fun_name: NONE"<< option_specialize_fun_name<<endl;
     }
 
     if(args.count("specialize-fun-param")) {
@@ -1068,17 +1072,17 @@ int main( int argc, char * argv[] ) {
       option_specialize_fun_varinit_const_list=args["specialize-fun-varinit-const"].as< vector<int> >();
     }
 
-    // mlog[DEBUG] << "specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
+    // logger[DEBUG] << "specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
 
     if(args.count("specialize-fun-name")) {
       if((args.count("specialize-fun-param")||args.count("specialize-fun-const"))
           && !(args.count("specialize-fun-name")&&args.count("specialize-fun-param")&&args.count("specialize-fun-param"))) {
-        mlog[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
+        logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
         exit(1);
       }
       if((args.count("specialize-fun-varinit")||args.count("specialize-fun-varinit-const"))
           && !(args.count("specialize-fun-varinit")&&args.count("specialize-fun-varinit-const"))) {
-        mlog[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-varinit=NAME --specialize-fun-const=NUM must be used together."<<endl;
+        logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-varinit=NAME --specialize-fun-const=NUM must be used together."<<endl;
         exit(1);
       }
     }
@@ -1128,7 +1132,7 @@ int main( int argc, char * argv[] ) {
     }
 
     if((args.count("print-update-infos")||args.count("verify-update-sequence-race-conditions")||args.count("equivalence-check"))&&(args.count("dump-sorted")==0 && args.count("dump-non-sorted")==0)) {
-      mlog[ERROR] <<"option print-update-infos/verify-update-sequence-race-conditions/equivalence-check must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
+      logger[ERROR] <<"option print-update-infos/verify-update-sequence-race-conditions/equivalence-check must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
       exit(1);
     }
     RewriteSystem rewriteSystem;
@@ -1136,17 +1140,17 @@ int main( int argc, char * argv[] ) {
       analyzer.setSkipSelectedFunctionCalls(true);
       analyzer.setSkipArrayAccesses(true);
       if(numberOfThreadsToUse>1) {
-        mlog[ERROR] << "multi threaded rewrite not supported yet."<<endl;
+        logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
         exit(1);
       }
     }
 
-    // mlog[DEBUG] <<"ignoring lhs-array accesses"<<endl;
+    // logger[DEBUG] <<"ignoring lhs-array accesses"<<endl;
     //analyzer.setSkipArrayAccesses(true);
 
     // handle RERS mode: reconfigure options
     if(boolOptions["rersmode"]||boolOptions["rers-mode"]) {
-      mlog[INFO] <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
+      logger[INFO] <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
       boolOptions.setOption("stderr-like-failed-assert",true);
     }
 
@@ -1168,31 +1172,31 @@ int main( int argc, char * argv[] ) {
     analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
 
     // Build the AST used by ROSE
-    mlog[TRACE] << "INIT: Parsing and creating AST: started."<<endl;
+    logger[TRACE] << "INIT: Parsing and creating AST: started."<<endl;
     timer.stop();
     timer.start();
     SgProject* sageProject = frontend(argc,argv);
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();
 
-    mlog[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
+    logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
 
     analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
 
     if(boolOptions["run-rose-tests"]) {
-      mlog[TRACE] << "INIT: Running ROSE AST tests."<<endl;
+      logger[TRACE] << "INIT: Running ROSE AST tests."<<endl;
       // Run internal consistency tests on AST
       AstTests::runAllTests(sageProject);
 
       // test: constant expressions
       {
-        mlog[TRACE] <<"STATUS: testing constant expressions."<<endl;
+        logger[TRACE] <<"STATUS: testing constant expressions."<<endl;
         CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
         list<SgExpression*> exprList=exprRootList(sageProject);
-        mlog[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
+        logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
         for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
           EvalResult r=evaluator->traverse(*i);
           if(r.isConst()) {
-            mlog[TRACE]<<"Found constant expression: "<<(*i)->unparseToString()<<" eq "<<r.constValue()<<endl;
+            logger[TRACE]<<"Found constant expression: "<<(*i)->unparseToString()<<" eq "<<r.constValue()<<endl;
           }
         }
         delete evaluator;
@@ -1205,7 +1209,7 @@ int main( int argc, char * argv[] ) {
 
     // only handle pragmas if fun_name is not set on the command line
     if(option_specialize_fun_name=="") {
-      mlog[TRACE]<<"STATUS: handling pragmas started."<<endl;
+      logger[TRACE]<<"STATUS: handling pragmas started."<<endl;
       PragmaHandler pragmaHandler;
       pragmaHandler.handlePragmas(sageProject,&analyzer);
       // TODO: requires more refactoring
@@ -1213,7 +1217,7 @@ int main( int argc, char * argv[] ) {
       boolOptions.setOption("verify-update-sequence-race-conditions",true);
       // unparse specialized code
       //sageProject->unparse(0,0);
-      mlog[TRACE]<<"STATUS: handling pragmas finished."<<endl;
+      logger[TRACE]<<"STATUS: handling pragmas finished."<<endl;
     } else {
       // do specialization and setup data structures
       analyzer.setSkipSelectedFunctionCalls(true);
@@ -1224,7 +1228,7 @@ int main( int argc, char * argv[] ) {
       int numSubst=0;
       if(option_specialize_fun_name!="") {
         Specialization speci;
-        mlog[TRACE]<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
+        logger[TRACE]<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
 
         string funNameToFind=option_specialize_fun_name;
 
@@ -1233,27 +1237,27 @@ int main( int argc, char * argv[] ) {
           int constInt=option_specialize_fun_const_list[i];
           numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
         }
-        mlog[TRACE]<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
+        logger[TRACE]<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
         int numInit=0;
-        //mlog[DEBUG]<<"var init spec: "<<endl;
+        //logger[DEBUG]<<"var init spec: "<<endl;
         for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
           string varInit=option_specialize_fun_varinit_list[i];
           int varInitConstInt=option_specialize_fun_varinit_const_list[i];
-          //mlog[DEBUG]<<"checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
+          //logger[DEBUG]<<"checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
           numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer.getVariableIdMapping());
         }
-        mlog[TRACE]<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
+        logger[TRACE]<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
       }
     }
 
     if(args.count("rewrite")) {
-      mlog[TRACE]<<"STATUS: rewrite started."<<endl;
+      logger[TRACE]<<"STATUS: rewrite started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.rewriteAst(root,analyzer.getVariableIdMapping() ,true,false,true);
       // TODO: Outputs statistics
       cout <<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
       sageProject->unparse(0,0);
-      mlog[TRACE]<<"STATUS: generated rewritten program."<<endl;
+      logger[TRACE]<<"STATUS: generated rewritten program."<<endl;
       exit(0);
     }
 
@@ -1261,17 +1265,17 @@ int main( int argc, char * argv[] ) {
       // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
       set<VariableId> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
       analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
-      mlog[TRACE]<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
+      logger[TRACE]<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
     }
     {
       VariableIdSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer.getVariableIdMapping());
-      mlog[TRACE]<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
+      logger[TRACE]<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
       analyzer.setAssertCondVarsSet(varsInAssertConditions);
     }
     // problematic? TODO: debug
 #if 0
     {
-      mlog[TRACE]<<"STATUS: performing flow-insensitive const analysis."<<endl;
+      logger[TRACE]<<"STATUS: performing flow-insensitive const analysis."<<endl;
       VarConstSetMap varConstSetMap;
       VariableIdSet variablesOfInterest1,variablesOfInterest2;
       FIConstAnalysis fiConstAnalysis(analyzer.getVariableIdMapping());
@@ -1284,29 +1288,29 @@ int main( int argc, char * argv[] ) {
         }
       }
       analyzer.setSmallActivityVarsSet(variablesOfInterest2);
-      mlog[INFO]<<"variables with number of values <=2:"<<variablesOfInterest2.size()<<endl;
+      logger[INFO]<<"variables with number of values <=2:"<<variablesOfInterest2.size()<<endl;
     }
 #endif
 
     if(boolOptions["normalize"]) {
-      mlog[TRACE]<<"STATUS: Normalization started."<<endl;
+      logger[TRACE]<<"STATUS: Normalization started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer.getVariableIdMapping());
-      mlog[TRACE]<<"STATUS: Normalization finished."<<endl;
+      logger[TRACE]<<"STATUS: Normalization finished."<<endl;
     }
-    mlog[TRACE]<< "INIT: Checking input program."<<endl;
+    logger[TRACE]<< "INIT: Checking input program."<<endl;
     CodeThornLanguageRestrictor lr;
     //lr.checkProgram(root);
     timer.start();
 
-    //mlog[TRACE]<< "INIT: Running variable<->symbol mapping check."<<endl;
+    //logger[TRACE]<< "INIT: Running variable<->symbol mapping check."<<endl;
     //VariableIdMapping varIdMap;
     //analyzer.getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
     //analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
-    //mlog[TRACE]<< "STATUS: Variable<->Symbol mapping created."<<endl;
+    //logger[TRACE]<< "STATUS: Variable<->Symbol mapping created."<<endl;
 #if 0
     if(!analyzer.getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
-      mlog[WARN] << "Variable<->Symbol mapping not bijective."<<endl;
+      logger[WARN] << "Variable<->Symbol mapping not bijective."<<endl;
       //varIdMap.reportUniqueVariableSymbolMappingViolations();
     }
 #endif
@@ -1319,14 +1323,14 @@ int main( int argc, char * argv[] ) {
     if(option_pragma_name!="") {
       list<SgPragmaDeclaration*> pragmaDeclList=EquivalenceChecking::findPragmaDeclarations(root, option_pragma_name);
       if(pragmaDeclList.size()==0) {
-        mlog[ERROR] << "pragma "<<option_pragma_name<<" marking the fragment not found."<<endl;
+        logger[ERROR] << "pragma "<<option_pragma_name<<" marking the fragment not found."<<endl;
         exit(1);
       }
       if(pragmaDeclList.size()>2) {
-        mlog[ERROR] << "pragma "<<option_pragma_name<<" : too many markers found ("<<pragmaDeclList.size()<<")"<<endl;
+        logger[ERROR] << "pragma "<<option_pragma_name<<" : too many markers found ("<<pragmaDeclList.size()<<")"<<endl;
         exit(1);
       }
-      mlog[TRACE]<<"STATUS: Fragment marked by "<<option_pragma_name<<": correctly identified."<<endl;
+      logger[TRACE]<<"STATUS: Fragment marked by "<<option_pragma_name<<": correctly identified."<<endl;
 
       ROSE_ASSERT(pragmaDeclList.size()==1);
       list<SgPragmaDeclaration*>::iterator i=pragmaDeclList.begin();
@@ -1341,7 +1345,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    mlog[TRACE]<< "INIT: creating solver."<<endl;
+    logger[TRACE]<< "INIT: creating solver."<<endl;
     if(option_specialize_fun_name!="") {
       analyzer.initializeSolver1(option_specialize_fun_name,root,true);
     } else {
@@ -1356,7 +1360,7 @@ int main( int argc, char * argv[] ) {
 
     if(args.count("pattern-search-max-depth") || args.count("pattern-search-max-suffix")
         || args.count("pattern-search-asserts") || args.count("pattern-search-max-exploration")) {
-      mlog[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
+      logger[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
       analyzer.setSolver(10);
       analyzer.setStartPState(*analyzer.popWorkList()->pstate());
     }
@@ -1382,21 +1386,21 @@ int main( int argc, char * argv[] ) {
     double extractAssertionTracesTime= 0;
     int maxOfShortestAssertInput = -1;
     if ( boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) {
-      mlog[TRACE] << "STATUS: extracting assertion traces (this may take some time)"<<endl;
+      logger[TRACE] << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
       maxOfShortestAssertInput = analyzer.extractAssertionTraces();
       extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
       if (maxOfShortestAssertInput > -1) {
-        mlog[TRACE] << "STATUS: maximum input sequence length of first assert occurences: " << maxOfShortestAssertInput << endl;
+        logger[TRACE] << "STATUS: maximum input sequence length of first assert occurences: " << maxOfShortestAssertInput << endl;
       } else {
-        mlog[TRACE] << "STATUS: determining maximum of shortest assert counterexamples not possible. " << endl;
+        logger[TRACE] << "STATUS: determining maximum of shortest assert counterexamples not possible. " << endl;
       }
     }
 
     double determinePrefixDepthTime= 0;
     int inputSeqLengthCovered = -1;
     if ( boolOptions["determine-prefix-depth"]) {
-      mlog[ERROR] << "option \"determine-prefix-depth\" currenlty deactivated." << endl;
+      logger[ERROR] << "option \"determine-prefix-depth\" currenlty deactivated." << endl;
       return 1;
     }
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
@@ -1417,7 +1421,7 @@ int main( int argc, char * argv[] ) {
     }
     if(boolOptions["eliminate-stg-back-edges"]) {
       int numElim=analyzer.getTransitionGraph()->eliminateBackEdges();
-      mlog[TRACE]<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
+      logger[TRACE]<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
     }
 
     analyzer.reachabilityResults.printResultsStatistics();
@@ -1478,17 +1482,17 @@ int main( int argc, char * argv[] ) {
     }
 
     if(boolOptions["std-in-only"]) {
-      mlog[TRACE] << "STATUS: reducing STG to Input-states."<<endl;
+      logger[TRACE] << "STATUS: reducing STG to Input-states."<<endl;
       analyzer.reduceGraphInOutWorklistOnly(true,false,boolOptions["keep-error-states"]);
     }
 
     if(boolOptions["std-out-only"]) {
-      mlog[TRACE] << "STATUS: reducing STG to output-states."<<endl;
+      logger[TRACE] << "STATUS: reducing STG to output-states."<<endl;
       analyzer.reduceGraphInOutWorklistOnly(false,true,boolOptions["keep-error-states"]);
     }
 
     if(boolOptions["std-io-only"]) {
-      mlog[TRACE] << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
+      logger[TRACE] << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
       //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
       analyzer.reduceGraphInOutWorklistOnly(true,true,boolOptions["keep-error-states"]);
@@ -1503,11 +1507,11 @@ int main( int argc, char * argv[] ) {
     stringstream statisticsCegpra;
 
     if (args.count("check-ltl")) {
-      mlog[INFO] <<"STG size: "<<analyzer.getTransitionGraph()->size()<<endl;
+      logger[INFO] <<"STG size: "<<analyzer.getTransitionGraph()->size()<<endl;
       string ltl_filename = args["check-ltl"].as<string>();
       if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
         if (!boolOptions["inf-paths-only"] && !boolOptions["keep-error-states"] &&!analyzer.getModeLTLDriven()) {
-          mlog[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
+          logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
           analyzer.pruneLeavesRec();
           infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
@@ -1518,7 +1522,7 @@ int main( int argc, char * argv[] ) {
           eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
         }
         if (!boolOptions["std-io-only"] &&!analyzer.getModeLTLDriven()) {
-          mlog[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
+          logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
           timer.start();
           analyzer.reduceGraphInOutWorklistOnly(true, true, boolOptions["keep-error-states"]);
           stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
@@ -1540,20 +1544,20 @@ int main( int argc, char * argv[] ) {
       if (args.count("ltl-in-alphabet")) {
         string setstring=args["ltl-in-alphabet"].as<string>();
         ltlInAlphabet=Parse::integerSet(setstring);
-        mlog[TRACE] << "STATUS: LTL input alphabet explicitly selected: "<< setstring << endl;
+        logger[TRACE] << "STATUS: LTL input alphabet explicitly selected: "<< setstring << endl;
       }
       //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
       std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
       if (args.count("ltl-out-alphabet")) {
         string setstring=args["ltl-out-alphabet"].as<string>();
         ltlOutAlphabet=Parse::integerSet(setstring);
-        mlog[TRACE] << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
+        logger[TRACE] << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
       }
       PropertyValueTable* ltlResults;
       SpotConnection spotConnection(ltl_filename);
       spotConnection.setModeLTLDriven(analyzer.getModeLTLDriven());
 
-      mlog[TRACE] << "STATUS: generating LTL results"<<endl;
+      logger[TRACE] << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
       if (boolOptions["check-ltl-counterexamples"]) {
         spuriousNoAnswers = true;
@@ -1583,7 +1587,7 @@ int main( int argc, char * argv[] ) {
       }
 
       if (boolOptions["check-ltl-counterexamples"]) {
-        mlog[TRACE]<< "STATUS: checking for spurious counterexamples..."<<endl;
+        logger[TRACE]<< "STATUS: checking for spurious counterexamples..."<<endl;
         CounterexampleAnalyzer ceAnalyzer(&analyzer);
         RefinementConstraints constraintManager(analyzer.getFlow(), analyzer.getLabeler(),
             analyzer.getExprAnalyzer(), analyzer.getCFAnalyzer(), analyzer.getVariableIdMapping());
@@ -1596,19 +1600,19 @@ int main( int argc, char * argv[] ) {
               //reset property to unknown
               ltlResults->setCounterexample(i, "");
               ltlResults->setPropertyValue(i, PROPERTY_VALUE_UNKNOWN);
-              mlog[INFO] << "property " << i << " was reset to unknown (spurious counterexample)." << endl;
+              logger[INFO] << "property " << i << " was reset to unknown (spurious counterexample)." << endl;
               if (boolOptions["refinement-constraints-demo"]) {
                 constraintManager.addConstraintsByLabel(ceAnalysisResult.spuriousTargetLabel);
               }
             } else if (ceAnalysisResult.analysisResult == CE_TYPE_REAL) {
-              //mlog[DEBUG] << "counterexample is a real counterexample! success" << endl;
+              //logger[DEBUG] << "counterexample is a real counterexample! success" << endl;
             }
           }
         }
-        mlog[TRACE] << "STATUS: counterexample check done."<<endl;
+        logger[TRACE] << "STATUS: counterexample check done."<<endl;
         if (boolOptions["refinement-constraints-demo"]) {
           cout << "=============================================================="<<endl;
-          mlog[TRACE] << "STATUS: refinement constraints collected from all LTL counterexamples: "<< endl;
+          logger[TRACE] << "STATUS: refinement constraints collected from all LTL counterexamples: "<< endl;
           VariableIdSet varIds = (analyzer.getVariableIdMapping())->getVariableIdSet();
           for (VariableIdSet::iterator i = varIds.begin(); i != varIds.end(); i++) {
             set<int> constraints = constraintManager.getConstraintsForVariable(*i);
@@ -1634,7 +1638,7 @@ int main( int argc, char * argv[] ) {
       cout << "=============================================================="<<endl;
       if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
         std::string csv_filename = args["csv-spot-ltl"].as<string>();
-        mlog[TRACE] << "STATUS: writing ltl results to file: " << csv_filename << endl;
+        logger[TRACE] << "STATUS: writing ltl results to file: " << csv_filename << endl;
         ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
       }
       if (args.count("csv-stats-size-and-ltl")) {
@@ -1658,7 +1662,7 @@ int main( int argc, char * argv[] ) {
       assertionExtractor.annotateAst();
       AstAnnotator ara(analyzer.getLabeler());
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
-      mlog[TRACE] << "STATUS: Generated assertions."<<endl;
+      logger[TRACE] << "STATUS: Generated assertions."<<endl;
     }
     double arrayUpdateExtractionRunTime=0.0;
     double arrayUpdateSsaNumberingRunTime=0.0;
@@ -1736,14 +1740,14 @@ int main( int argc, char * argv[] ) {
         speci.setVisualizeReadWriteAccesses(true);
       }
       ArrayUpdatesSequence arrayUpdates;
-      mlog[TRACE] <<"STATUS: performing array analysis on STG."<<endl;
-      mlog[TRACE] <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
+      logger[TRACE] <<"STATUS: performing array analysis on STG."<<endl;
+      logger[TRACE] <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 
       Label fragmentStartLabel=Labeler::NO_LABEL;
       if(fragmentStartNode!=0) {
         fragmentStartLabel=analyzer.getLabeler()->getLabel(fragmentStartNode);
-        mlog[INFO] <<"Fragment: start-node: "<<fragmentStartNode<<"  start-label: "<<fragmentStartLabel<<endl;
-        mlog[INFO] <<"Fragment: start-node: currently not supported."<<endl;
+        logger[INFO] <<"Fragment: start-node: "<<fragmentStartNode<<"  start-label: "<<fragmentStartLabel<<endl;
+        logger[INFO] <<"Fragment: start-node: currently not supported."<<endl;
       }
 
       bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
@@ -1762,7 +1766,7 @@ int main( int argc, char * argv[] ) {
         SgNode* root=analyzer.startFunRoot;
         VariableId parallelIterationVar;
         LoopInfoSet loopInfoSet=EquivalenceChecking::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
-        mlog[INFO] <<"number of iteration vars: "<<loopInfoSet.size()<<endl;
+        logger[INFO] <<"number of iteration vars: "<<loopInfoSet.size()<<endl;
         verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
         verifyUpdateSequenceRaceConditionsParLoopNum=Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
         timer.start();
@@ -1773,7 +1777,7 @@ int main( int argc, char * argv[] ) {
       if(boolOptions["print-update-infos"]) {
         speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
       }
-      mlog[TRACE] <<"STATUS: establishing array-element SSA numbering."<<endl;
+      logger[TRACE] <<"STATUS: establishing array-element SSA numbering."<<endl;
       timer.start();
       speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
       arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
@@ -1948,11 +1952,11 @@ int main( int argc, char * argv[] ) {
       // rers mode reduces the STG. In case of ltl-driven mode there is nothing to reduce.
       if(boolOptions["rersmode"] && !analyzer.getModeLTLDriven()) {  //reduce the graph accordingly, if not already done
         if (!boolOptions["inf-paths-only"]) {
-          mlog[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (3))."<<endl;
+          logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (3))."<<endl;
           analyzer.pruneLeavesRec();
         }
         if (!boolOptions["std-io-only"]) {
-          mlog[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode). (P3)"<<endl;
+          logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode). (P3)"<<endl;
           analyzer.removeNonIOStates();
         }
       }
@@ -1961,14 +1965,14 @@ int main( int argc, char * argv[] ) {
       if (args.count("ltl-in-alphabet")) {
         string setstring=args["ltl-in-alphabet"].as<string>();
         ltlInAlphabet=Parse::integerSet(setstring);
-        mlog[TRACE] << "STATUS: LTL input alphabet explicitly selected: "<< setstring << endl;
+        logger[TRACE] << "STATUS: LTL input alphabet explicitly selected: "<< setstring << endl;
       }
       //take ltl output alphabet if specifically described, otherwise the usual 21...26 (a.k.a. oU...oZ)
       std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
       if (args.count("ltl-out-alphabet")) {
         string setstring=args["ltl-out-alphabet"].as<string>();
         ltlOutAlphabet=Parse::integerSet(setstring);
-        mlog[TRACE] << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
+        logger[TRACE] << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
       }
       SpotConnection* spotConnection = new SpotConnection();
       spotConnection->setModeLTLDriven(analyzer.getModeLTLDriven());
@@ -2031,11 +2035,11 @@ int main( int argc, char * argv[] ) {
       cout << "generating spot IO STG file:"<<filename<<endl;
       if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
         if (!boolOptions["inf-paths-only"]) {
-          mlog[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (4)."<<endl;
+          logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (4)."<<endl;
           analyzer.pruneLeavesRec();
         }
         if (!boolOptions["std-io-only"]) {
-          mlog[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode). (P4)"<<endl;
+          logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode). (P4)"<<endl;
           analyzer.removeNonIOStates();
         }
       }
@@ -2052,24 +2056,24 @@ int main( int argc, char * argv[] ) {
         if(args.count("iseq-length")) {
           iseqLen=args["iseq-length"].as<int>();
         } else {
-          mlog[ERROR] <<"input-sequence file specified, but no sequence length."<<endl;
+          logger[ERROR] <<"input-sequence file specified, but no sequence length."<<endl;
           exit(1);
         }
         string fileName=args["iseq-file"].as<string>();
-        mlog[TRACE] <<"STATUS: computing input sequences of length "<<iseqLen<<endl;
+        logger[TRACE] <<"STATUS: computing input sequences of length "<<iseqLen<<endl;
         IOSequenceGenerator iosgen;
         if(args.count("iseq-random-num")) {
           int randomNum=args["iseq-random-num"].as<int>();
-          mlog[TRACE] <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
+          logger[TRACE] <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
           iosgen.computeRandomInputPathSet(iseqLen,*analyzer.getTransitionGraph(),randomNum);
         } else {
           iosgen.computeInputPathSet(iseqLen,*analyzer.getTransitionGraph());
         }
-        mlog[TRACE] <<"STATUS: generating input sequence file "<<fileName<<endl;
+        logger[TRACE] <<"STATUS: generating input sequence file "<<fileName<<endl;
         iosgen.generateFile(fileName);
       } else {
         if(args.count("iseq-length")) {
-          mlog[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
+          logger[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
           exit(1);
         }
       }
@@ -2089,14 +2093,14 @@ int main( int argc, char * argv[] ) {
 
     if (boolOptions["annotate-terms"]) {
       // TODO: it might be useful to be able to select certain analysis results to be only annotated
-      mlog[INFO] << "Annotating term representations."<<endl;
+      logger[INFO] << "Annotating term representations."<<endl;
       attachTermRepresentation(sageProject);
       AstAnnotator ara(analyzer.getLabeler());
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
     }
 
     if (boolOptions["annotate-terms"]||boolOptions["generate-assertions"]) {
-      mlog[INFO] << "Generating annotated program."<<endl;
+      logger[INFO] << "Generating annotated program."<<endl;
       //backend(sageProject);
       sageProject->unparse(0,0);
     }
@@ -2105,22 +2109,22 @@ int main( int argc, char * argv[] ) {
 
     // main function try-catch
   } catch(CodeThorn::Exception& e) {
-    mlog[FATAL] << "CodeThorn::Exception raised: " << e.what() << endl;
+    logger[FATAL] << "CodeThorn::Exception raised: " << e.what() << endl;
     return 1;
   } catch(SPRAY::Exception& e) {
-    mlog[FATAL]<< "Spray::Exception raised: " << e.what() << endl;
+    logger[FATAL]<< "Spray::Exception raised: " << e.what() << endl;
     return 1;
   } catch(std::exception& e) {
-    mlog[FATAL]<< "std::exception raised: " << e.what() << endl;
+    logger[FATAL]<< "std::exception raised: " << e.what() << endl;
     return 1;
   } catch(char const* str) {
-    mlog[FATAL]<< "*Exception raised: " << str << endl;
+    logger[FATAL]<< "*Exception raised: " << str << endl;
     return 1;
   } catch(string str) {
-    mlog[FATAL]<< "Exception raised: " << str << endl;
+    logger[FATAL]<< "Exception raised: " << str << endl;
     return 1;
   } catch(...) {
-    mlog[FATAL]<< "Unknown exception raised." << endl;
+    logger[FATAL]<< "Unknown exception raised." << endl;
     return 1;
   }
   return 0;

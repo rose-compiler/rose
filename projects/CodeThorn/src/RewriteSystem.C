@@ -4,6 +4,13 @@
 
 using namespace std;
 using namespace SPRAY;
+using namespace Sawyer::Message;
+
+Sawyer::Message::Facility RewriteSystem::logger = [](){
+  Facility log("RewriteSystem");
+  mfacilities.insert(log);
+  return log;
+}();
 
 RewriteStatistics RewriteSystem::getRewriteStatistics() {
   return dump1_stats;
@@ -21,7 +28,7 @@ void RewriteStatistics::init() {
   numArrayUpdates=0;
   numConstExprElim=0;
 }
-void RewriteStatistics::reset() { 
+void RewriteStatistics::reset() {
   init();
 }
 RewriteStatistics RewriteSystem::getStatistics() {
@@ -67,7 +74,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
     }
   }
   size_t assignOpNum=assignOpList.size();
-  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: started."<<endl;
+  logger[INFO] <<"transforming "<<assignOpNum<<" compound assignment expressions: started."<<endl;
   size_t assignOpNr=1;
   Timer timer;
   double buildTime=0.0, replaceTime=0.0;
@@ -83,11 +90,11 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
       replaceTime+=timer.getElapsedTimeInMilliSec();
       assignOpNr++;
     } else {
-      cout<<"WARNING: not an expression. transformation not applied: "<<(*i)->class_name()<<":"<<(*i)->unparseToString()<<endl;
+      logger[WARN]<<"not an expression. transformation not applied: "<<(*i)->class_name()<<":"<<(*i)->unparseToString()<<endl;
     }
     //cout<<"Buildtime: "<<buildTime<<" Replacetime: "<<replaceTime<<endl;
   }
-  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
+  logger[INFO]<<"transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
 }
 
 SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {
@@ -177,7 +184,7 @@ void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping*
 #endif
 }
 
- 
+
  // rewrites an AST
  // requirements: all variables have been replaced by constants
  // uses AstMatching to match patterns.
@@ -221,7 +228,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
            SgNodeHelper::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
            break;
          default:
-           cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
+           logger[ERROR]<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
            exit(1);
          }
          transformationApplied=true;
@@ -234,9 +241,9 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
  if(ruleAddReorder) {
    do {
      // the following rules guarantee convergence
-     
+
      // REWRITE: re-ordering (normalization) of expressions
-     // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
+     // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other)
      //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
      transformationApplied=false;
      MatchResult res=m.performMatching("$BinaryOp1=SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal)",root);
@@ -262,7 +269,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              if(rewriteTrace)
                cout<<((*i)["$BinaryOp1"])->unparseToString()<<endl;
              dump1_stats.numAddOpReordering++;
-           }       
+           }
          }
        }
      }
@@ -305,7 +312,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
            SgNodeHelper::replaceExpression(op1,SageBuilder::buildIntVal(rawval1/rawval2),false);
            break;
          default:
-           cerr<<"Error: rewrite phase: unsopported operator in matched expression. Bailing out."<<endl;
+           logger[ERROR]<<"rewrite phase: unsopported operator in matched expression. Bailing out."<<endl;
            exit(1);
          }
          transformationApplied=true;

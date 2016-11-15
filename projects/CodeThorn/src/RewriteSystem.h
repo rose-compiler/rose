@@ -34,6 +34,7 @@ class RewriteSystem {
   RewriteStatistics getRewriteStatistics();
   RewriteStatistics* getRewriteStatisticsPtr() { return &dump1_stats; }
  private:
+  static Sawyer::Message::Facility logger;
   RewriteStatistics dump1_stats;
 };
 
