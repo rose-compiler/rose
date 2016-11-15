@@ -17,11 +17,14 @@
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Sawyer.h>
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 #include <boost/integer_traits.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -518,6 +521,15 @@ public:
     typedef T Value;
     typedef AddressSegment<A, T> Segment;
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        // no data to serialize here
+    }
+
+public:
     bool merge(const Sawyer::Container::Interval<Address> &leftInterval, Segment &leftSegment,
                const Sawyer::Container::Interval<Address> &rightInterval, Segment &rightSegment) {
         ASSERT_forbid(leftInterval.isEmpty());
@@ -971,6 +983,15 @@ public:
     typedef typename Super::NodeIterator NodeIterator;  /**< Iterates over address interval, segment pairs in the map. */
     typedef typename Super::ConstNodeIterator ConstNodeIterator; /**< Iterates over address interval/segment pairs in the map. */
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<Super>(*this);
+    }
+
+public:
     /** Constructs an empty address map. */
     AddressMap() {}
 
