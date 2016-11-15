@@ -243,6 +243,7 @@ struct PartitionerSettings {
     SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
     bool namingConstants;                           /**< Give names to constants by calling @ref Modules::nameConstants. */
     bool namingStrings;                             /**< Give labels to constants that are string literal addresses. */
+    bool checkingCallBranch;                        /**< Check for situations where CALL is used as a branch. */
 
     PartitionerSettings()
         : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
@@ -250,7 +251,8 @@ struct PartitionerSettings {
           findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
           doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
           functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingThunks(true),
-          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true) {}
+          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true),
+          checkingCallBranch(false) {}
 };
 
 /** Settings for controling the engine behavior.

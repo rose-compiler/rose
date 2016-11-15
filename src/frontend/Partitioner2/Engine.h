@@ -1142,6 +1142,15 @@ public:
     virtual void findingDataFunctionPointers(bool b) { settings_.partitioner.findingDataFunctionPointers = b; }
     /** @} */
 
+    /** Property: Whether to look for function calls used as branches.
+     *
+     *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
+     *
+     * @{ */
+    bool checkingCallBranch() const /*final*/ { return settings_.partitioner.checkingCallBranch; }
+    virtual void checkingCallBranch(bool b) { settings_.partitioner.checkingCallBranch; }
+    /** @} */
+
     /** Property: Configuration files.
      *
      *  This property holds a list of configuration files or directories.

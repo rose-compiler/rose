@@ -318,6 +318,7 @@ private:
     AddressNameMap addressNames_;                       // Names for various addresses
     bool basicBlockSemanticsAutoDrop_;                  // Conserve memory by dropping semantics for attached basic blocks?
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
+    bool checkingCallBranch_;                           // Check whether function calls are actually just branches?
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -374,6 +375,7 @@ private:
         s & addressNames_;
         s & basicBlockSemanticsAutoDrop_;
         s & semanticMemoryParadigm_;
+        s & checkingCallBranch_;
         // s & cfgAdjustmentCallbacks_;         -- not saved/restored
         // s & basicBlockCallbacks_;            -- not saved/restored
         // s & functionPrologueMatchers_;       -- not saved/restored
@@ -414,7 +416,7 @@ public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
         : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY), checkingCallBranch_(false) {
         init(disassembler, map);
     }
 
@@ -425,7 +427,7 @@ public:
     Partitioner()
         : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY), checkingCallBranch_(false) {
         init(NULL, memoryMap_);
     }
 
@@ -438,7 +440,7 @@ public:
     Partitioner(const Partitioner &other)               // initialize just like default
         : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true),
-          semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+          semanticMemoryParadigm_(LIST_BASED_MEMORY), checkingCallBranch_(false) {
         init(NULL, memoryMap_);                         // initialize just like default
         *this = other;                                  // then delegate to the assignment operator
     }
@@ -465,6 +467,7 @@ public:
         functionPrologueMatchers_ = other.functionPrologueMatchers_;
         functionPaddingMatchers_ = other.functionPaddingMatchers_;
         semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
+        checkingCallBranch_ = other.checkingCallBranch_;
         init(other);                                    // copies graph iterators, etc.
         return *this;
     }
@@ -2012,6 +2015,14 @@ public:
     const AddressNameMap& addressNames() const /*final*/ { return addressNames_; }
     /** @} */
 
+    /** Property: Whether to look for function calls used as branches.
+     *
+     *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
+     *
+     * @{ */
+    bool checkingCallBranch() const /*final*/ { return checkingCallBranch_; }
+    virtual void checkingCallBranch(bool b) { checkingCallBranch_ = b; }
+    /** @} */
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
