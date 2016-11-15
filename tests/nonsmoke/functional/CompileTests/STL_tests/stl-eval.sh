@@ -9,7 +9,7 @@ CLEANUP_ON_SUCCESS="yes"
 CLEANUP_AND_EXIT="no"
 ASAN_USED="no"
 
-if [ "$ASAN_OPTIONS" = "" ]; then
+if [[ ! -z $ASAN_OPTIONS ]]; then
     ASAN_USED="yes"
 fi
 
@@ -192,6 +192,7 @@ echo "             FRONTEND (FE)        : $TOOL2"
 echo "             BACKEND (BE)         : $TOOL2"
 echo "             CLEANUP ON SUCCESS   : $CLEANUP_ON_SUCCESS"
 echo "             PERL AVAILABLE       : $PERL_AVAILABLE"
+echo "             ADDRESS SANITIZER    : $ASAN_USED"
 echo "-----------------------------------------------------------------"
 echo
 echo "-----------------------------------------------------------------"
@@ -236,7 +237,7 @@ if [ "$ASAN_USED" == "yes" ]; then
     if [ ${CPP11_FAIL} -gt $FAILING_FRONTEND_TESTS_WITH_ASAN ]; then
         test_failed
     else
-        echo "PASS (FRONTEND:known to fail for $FAILING_FRONTEND_WITH_ASAN (with asan), BACKEND: known to fail for all)."
+        echo "PASS (FRONTEND:known to fail for $FAILING_FRONTEND_TESTS_WITH_ASAN (with asan), BACKEND: known to fail for all)."
     fi
 else
     if [ ${CPP11_FAIL} -gt 0 ]; then
