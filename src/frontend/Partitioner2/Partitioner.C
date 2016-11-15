@@ -844,6 +844,11 @@ Partitioner::basicBlockContainingInstruction(rose_addr_t insnVa) const {
     return BasicBlock::Ptr();
 }
 
+AddressInterval
+Partitioner::instructionExtent(SgAsmInstruction *insn) const {
+    return insn ? AddressInterval::baseSize(insn->get_address(), insn->get_size()) : AddressInterval();
+}
+
 SgAsmInstruction *
 Partitioner::discoverInstruction(rose_addr_t startVa) const {
     return (*instructionProvider_)[startVa];
