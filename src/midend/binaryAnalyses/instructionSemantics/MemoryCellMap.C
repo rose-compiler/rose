@@ -177,3 +177,5 @@ MemoryCellMap::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscO
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellMap);

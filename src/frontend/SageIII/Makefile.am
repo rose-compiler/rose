@@ -109,6 +109,8 @@ GENERATED_SOURCE = \
 	Cxx_GrammarTreeTraversalSuccessorContainer.C \
 	Cxx_GrammarTreeTraversalAccessEnums.h \
 	Cxx_GrammarVariantEnumNames.C \
+	Cxx_GrammarSerialization.C \
+	Cxx_GrammarSerialization.h \
 	Cxx_GrammarNewAndDeleteOperators.C \
 	Cxx_GrammarCopyMemberFunctions.C \
 	Cxx_GrammarTraverseMemoryPool.C \
@@ -130,6 +132,8 @@ GENERATED_SOURCE = \
 	Cxx_GrammarTreeTraversalSuccessorContainer.C \
 	Cxx_GrammarTreeTraversalAccessEnums.h \
 	Cxx_GrammarVariantEnumNames.C \
+	Cxx_GrammarSerialization.C \
+	Cxx_GrammarSerialization.h \
 	Cxx_GrammarNewAndDeleteOperators.C \
 	Cxx_GrammarCopyMemberFunctions.C \
 	Cxx_GrammarTraverseMemoryPool.C \
@@ -322,6 +326,7 @@ pkginclude_HEADERS = \
    general_token_defs.h rtiHelpers.h \
    OmpAttribute.h omp.h dwarfSupport.h atermSupport.h \
    omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h \
+   Cxx_GrammarSerialization.h \
    $(fSageSupport_includeHeaders)
 
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).

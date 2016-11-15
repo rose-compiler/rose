@@ -10,6 +10,7 @@
 
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/Optional.h>
+#include <boost/serialization/access.hpp>
 
 namespace Sawyer {
 
@@ -41,8 +42,18 @@ class Cached {
 public:
     /** Type of stored value. */
     typedef T Value;
+
 private:
     mutable Sawyer::Optional<Value> value_;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & value_;
+    }
+    
 public:
     /** Cached state.
      *

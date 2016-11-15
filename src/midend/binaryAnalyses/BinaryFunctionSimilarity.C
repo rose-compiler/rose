@@ -319,7 +319,7 @@ typedef Sawyer::Container::Graph<ComparisonTask> ComparisonTasks;
 
 // How a worker thread processes one task
 struct ComparisonFunctor {
-    static const double dfltCompare;              // distance between functions when either has no data
+    static const double dfltCompare;                    // distance between functions when either has no data
     const FunctionSimilarity *self;
     Sawyer::ProgressBar<size_t> &progress;
 
