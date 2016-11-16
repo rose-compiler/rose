@@ -16295,6 +16295,10 @@ SgProject::initialization()
    {
   // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
 
+  // DQ (11/10/2016): Added initialization for keep_going data member and otehr data members that appear to be missing.
+     p_keep_going                   = false;
+     p_unparser__clobber_input_file = false;
+
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.clear();
 #else
@@ -16313,6 +16317,10 @@ SgProject::initialization()
      p_backendErrorCode                    = 0;
      p_outputFileName                      = "";
      p_compileOnly                         = false;
+
+  // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
+     p_wave                         = false;
+
      p_prelink                             = false;
      p_template_instantiation_mode         = e_unknown;
      p_astMerge                            = false;
@@ -16359,9 +16367,25 @@ SgProject::initialization()
   // DQ (10/3/2010): Added entries that had not be properly set previously.
      p_C_only                = false;
      p_Cxx_only              = false;
+
+  // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
+     p_C11_only              = false;
+     p_Cxx0x_only            = false;
+     p_Cxx11_only            = false;
+     p_C14_only              = false;
+     p_Cxx14_only            = false;
+
      p_Fortran_only          = false;
      p_addCppDirectivesToAST = false;
      p_Java_only             = false;
+
+  // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
+     p_X10_only              = false;
+     p_Java_batch_mode       = false;
+     p_Java_nowarn             = false;
+     p_Java_verbose            = false;
+     p_Java_deprecation        = false;
+     p_addCppDirectivesToAST   = false;
 
   // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
      p_frontendConstantFolding = false;
@@ -16381,21 +16405,21 @@ SgProject::initialization()
   // DQ (1/20/2014): This option "-m32" over-rides the 64-bit mode on 64-bit environments and is required for some build systems (e.g. valgrind).
      p_mode_32_bit = false;
 
-  // DQ (1/31/2014): Option to skip AST post-processing constant folding support. Currently required for OpenMP and C++, but not for C.
-  // This option only makes a perfromance difference on a handful of files in the (large) wireshark application (2.5 million line application).
-     p_suppressConstantFoldingPostProcessing = false;
-
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error.
      p_noclobber_output_file              = false;
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      p_noclobber_if_different_output_file = false;
 
-  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
-     p_appendPID = false;
+  // DQ (1/31/2014): Option to skip AST post-processing constant folding support. Currently required for OpenMP and C++, but not for C.
+  // This option only makes a perfromance difference on a handful of files in the (large) wireshark application (2.5 million line application).
+     p_suppressConstantFoldingPostProcessing = false;
 
   // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
      p_unparseTemplateDeclarationsFromAST = false;
+
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     p_appendPID = false;
    }
 
 

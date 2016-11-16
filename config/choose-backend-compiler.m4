@@ -223,6 +223,8 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.5+ of gfortran!"
         gfortran_version_later_4_5=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gfortran_version_later_4_5=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_LATER_4_5, [test "x$gfortran_version_later_4_5" = "xyes"])
 
@@ -233,6 +235,8 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.4+ of gfortran!"
         gfortran_version_later_4_4=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gfortran_version_later_4_4=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_LATER_4_4, [test "x$gfortran_version_later_4_4" = "xyes"])
 
@@ -243,6 +247,8 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.4+ of gcc!"
         gcc_version_later_4_4=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_4=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_4, [test "x$gcc_version_later_4_4" = "xyes"])
 
@@ -253,6 +259,8 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.5+ of gcc!"
         gcc_version_later_4_5=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_5=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_5, [test "x$gcc_version_later_4_5" = "xyes"])
 
@@ -263,18 +271,10 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.6+ of gcc!"
         gcc_version_later_4_6=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_6=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_6, [test "x$gcc_version_later_4_6" = "xyes"])
-
-# DQ (7/28/2014): GNU GCC 4.8 starts C11 support.
-  gcc_version_later_4_8=no
-  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
-     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "8"; then
-        echo "Note: we have identified version 4.8+ of gcc!"
-        gcc_version_later_4_8=yes
-     fi
-  fi
-  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_8, [test "x$gcc_version_later_4_8" = "xyes"])
 
 # DQ (8/15/2014): Added for more complete support of GNU GCC.
   gcc_version_later_4_7=no
@@ -283,18 +283,113 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.7+ of gcc!"
         gcc_version_later_4_7=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_7=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_7, [test "x$gcc_version_later_4_7" = "xyes"])
 
+# DQ (7/28/2014): GNU GCC 4.8 starts C11 support.
+  gcc_version_later_4_8=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "8"; then
+        echo "Note: we have identified version 4.8+ of gcc!"
+        gcc_version_later_4_8=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_8=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_8, [test "x$gcc_version_later_4_8" = "xyes"])
+
 # DQ (7/28/2014): GNU GCC 4.9 adds more C11 support (we need this to control what tests are run).
   gcc_version_later_4_9=no
+# if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
   if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
      if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "9"; then
         echo "Note: we have identified version 4.9+ of gcc!"
         gcc_version_later_4_9=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_9=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_9, [test "x$gcc_version_later_4_9" = "xyes"])
+
+# DQ (11/9/2016): GNU GCC 5.2 adds more C14 support (we need this to control what tests are run).
+  gcc_version_later_5_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x5; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+        echo "Note: we have identified version 5.1+ of gcc!"
+        gcc_version_later_5_1=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "5"; then
+        gcc_version_later_5_1=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_5_1, [test "x$gcc_version_later_5_1" = "xyes"])
+
+  gcc_version_later_5_2=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x5; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "2"; then
+        echo "Note: we have identified version 5.2+ of gcc!"
+        gcc_version_later_5_2=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "5"; then
+        gcc_version_later_5_2=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_5_2, [test "x$gcc_version_later_5_2" = "xyes"])
+
+  gcc_version_later_5_3=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x5; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "3"; then
+        echo "Note: we have identified version 5.3+ of gcc!"
+        gcc_version_later_5_3=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "5"; then
+        gcc_version_later_5_3=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_5_3, [test "x$gcc_version_later_5_3" = "xyes"])
+
+  gcc_version_later_6_0=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "0"; then
+        echo "Note: we have identified version 6.0+ of gcc!"
+        gcc_version_later_6_0=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_0=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_0, [test "x$gcc_version_later_6_0" = "xyes"])
+
+  gcc_version_later_6_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+        echo "Note: we have identified version 6.1+ of gcc!"
+        gcc_version_later_6_1=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_1=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_1, [test "x$gcc_version_later_6_1" = "xyes"])
+
+  gcc_version_later_6_2=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "2"; then
+        echo "Note: we have identified version 6.2+ of gcc!"
+        gcc_version_later_6_2=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_2=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_2, [test "x$gcc_version_later_6_2" = "xyes"])
+
+  gcc_version_later_6_3=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "3"; then
+        echo "Note: we have identified version 6.3+ of gcc!"
+        gcc_version_later_6_3=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_3=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_3, [test "x$gcc_version_later_6_3" = "xyes"])
 
 # echo "Exiting after test of backend version number support ..."
 # exit 1
