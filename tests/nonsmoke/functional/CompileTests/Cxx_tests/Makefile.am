@@ -431,6 +431,10 @@ NEW_TESTCODES = \
    test2016_82.C \
    test2016_83.C 
 
+# DQ (11/14/2016): Test codes not yet passing.
+#  test2016_91.C 
+#  test2016_92.C 
+
 # DQ (/12/2016): We can't add this because it is a CPP-preprocessed file containing 
 # references to the __int128 type which is not portable to older versions of GNU compilers.
 #  test2016_39.C 

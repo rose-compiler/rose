@@ -1,18 +1,21 @@
+   #include <cstdio>
 #include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <Color.h>
 #include <cmath>
-#include <cstdio>
 
-#ifdef _MSC_VER
-    #include <float.h>                              // for _isnan
-    #define isnan(x) _isnan(x)
-#elif __cplusplus >= 201103L
-    // isnan is already defined in this scope for c++11
-    // MS: added this use (g++ 5.4)
-    using std::isnan;
+// MS 2016: isnan is available in C++11 std namespace, but not in C++98
+// std namespace. On *some* systems C++11 cmath puts it inside *and* outside the std
+// namespace.
+#if __cplusplus >= 201103L
+  #define MY_ISNAN(x) std::isnan(x)
 #else
-    using std::isnan;
+  #ifdef _MSC_VER
+  #include <float.h> // for _isnan
+  #define MY_ISNAN(x) _isnan(x)
+  #else
+    #define MY_ISNAN(x) isnan(x)
+  #endif
 #endif
 
 namespace rose {
@@ -127,11 +130,11 @@ std::string toHtml(const RGB &rgb) {
 HSV
 Gradient::interpolate(double x) const {
     if (colors_.isEmpty()) {
-        return HSV();
-    } else if (isnan(x)) {
-        return nanColor_;
+      return HSV();
+    } else if(MY_ISNAN(x)) {
+      return nanColor_;
     } else if (x <= colors_.least()) {
-        return *colors_.values().begin();
+      return *colors_.values().begin();
     } else if (x >= colors_.greatest()) {
         ColorMap::ConstValueIterator iter = colors_.values().end();
         --iter;

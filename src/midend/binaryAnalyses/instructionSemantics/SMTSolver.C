@@ -2,6 +2,7 @@
 
 #include "rose_getline.h"
 #include "SMTSolver.h"
+#include "YicesSolver.h"
 
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -24,6 +25,16 @@ boost::mutex SMTSolver::class_stats_mutex;
 void
 SMTSolver::init()
 {}
+
+// class method
+SMTSolver*
+SMTSolver::instance(const std::string &name) {
+    if (name == "yices") {
+        return new YicesSolver;
+    } else {
+        ASSERT_not_reachable("invalid SMT solver name: \"" + StringUtility::cEscape(name) + "\"");
+    }
+}
 
 // class method
 SMTSolver::Stats

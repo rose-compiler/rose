@@ -10,11 +10,13 @@
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Optional.h>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <ostream>
 #include <string>
-#include <vector>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -29,6 +31,17 @@ class AddressUser {
     SgAsmInstruction *insn_;
     std::vector<BasicBlock::Ptr> bblocks_;
     OwnedDataBlock odblock_;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & insn_;
+        s & bblocks_;
+        s & odblock_;
+    }
+
 public:
     AddressUser(): insn_(NULL) {}                       // needed by std::vector<AddressUser>, but otherwise unused
 
@@ -145,6 +158,14 @@ public:
  *  duplicates. */
 class AddressUsers {
     std::vector<AddressUser> users_;                    // sorted
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & users_;
+    }
 
 public:
     /** Constructs an empty list. */
@@ -322,6 +343,15 @@ protected:
 class AddressUsageMap {
     typedef Sawyer::Container::IntervalMap<AddressInterval, AddressUsers> Map;
     Map map_;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & map_;
+    }
+
 public:
     /** Determines whether a map is empty.
      *
@@ -512,7 +542,6 @@ private:
     // Remove a data block from the map.  The specified data block is removed from the map.  If the pointer is null or the data
     // block does not exist in the map, then this is a no-op.
     void eraseDataBlock(const DataBlock::Ptr&);
-
 };
 
 } // namespace
