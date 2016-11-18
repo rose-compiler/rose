@@ -65,6 +65,30 @@ AM_CONFIG_HEADER([rose_config.h])
 #
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+dnl +--------------------------------------------------------------------------+
+dnl | Environment Variables - Compilers (CC, CXX, FC)
+dnl +--------------------------------------------------------------------------+
+AC_MSG_CHECKING([if \$CC environment variable is set])
+if test -z "${CC}"; then
+    AC_MSG_RESULT([no - will attempt to auto-detect the C compiler])
+else
+    AC_MSG_RESULT([$CC])
+fi
+
+AC_MSG_CHECKING([if \$CXX environment variable is set])
+if test -z "${CXX}"; then
+    AC_MSG_RESULT([no - will attempt to auto-detect the C++ compiler])
+else
+    AC_MSG_RESULT([$CXX])
+fi
+
+AC_MSG_CHECKING([if \$FC environment variable is set])
+if test -z "${FC}"; then
+    AC_MSG_RESULT([no - will attempt to auto-detect the Fortran compiler])
+else
+    AC_MSG_RESULT([$FC])
+fi
+
 AM_PROG_CC_C_O
 
 # JJW (10/8/2008): Make default CFLAGS, CXXFLAGS, and FFLAGS empty (from
