@@ -429,11 +429,21 @@ NEW_TESTCODES = \
    test2016_80.C \
    test2016_81.C \
    test2016_82.C \
-   test2016_83.C 
+   test2016_83.C \
+   test2016_85.C \
+   test2016_86.C \
+   test2016_87.C \
+   test2016_88.C \
+   test2016_89.C \
+   test2016_91.C \
+   test2016_93.C \
+   test2016_96.C 
 
 # DQ (11/14/2016): Test codes not yet passing.
 #  test2016_91.C 
-#  test2016_92.C 
+#  test2016_92.C (this does not compile with EDG 4.9, but works with EDG 4.11).
+#  test2016_94.C (this does not compile with EDG 4.9, but works with EDG 4.11).
+#  test2016_95.C (this does not compile with EDG 4.9, but works with EDG 4.11).
 
 # DQ (/12/2016): We can't add this because it is a CPP-preprocessed file containing 
 # references to the __int128 type which is not portable to older versions of GNU compilers.
