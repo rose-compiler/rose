@@ -9,7 +9,7 @@ bool EquivalenceChecking::isInsideOmpParallelFor(SgNode* node, ForStmtToOmpPragm
   while(!isSgForStatement(node)) {
     if(isSgProject(node))
       return false;
-    cout<<"node: "<<node->class_name()<<endl;
+    //cout<<"node: "<<node->class_name()<<endl;
     node=node->get_parent();
     ROSE_ASSERT(node);
   }
@@ -33,13 +33,13 @@ LoopInfoSet EquivalenceChecking::determineLoopInfoSet(SgNode* root, VariableIdMa
   // (i) match all for-stmts and (ii) filter canonical ones
   string matchexpression="$FORSTMT=SgForStatement(_,_,..)";
   MatchResult r=m.performMatching(matchexpression,root);
-  cout << "DEBUG: Matched for loops: "<<r.size()<<endl;
+  //cout << "DEBUG: Matched for loops: "<<r.size()<<endl;
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
     LoopInfo loopInfo;
     SgNode* forNode=(*i)["$FORSTMT"];
-    cout << "DEBUG: Detected for loops: "<<forNode->unparseToString()<<endl;
+    //cout << "DEBUG: Detected for loops: "<<forNode->unparseToString()<<endl;
 
-    cout<<"DEBUG: MATCH: "<<forNode->unparseToString()<<AstTerm::astTermWithNullValuesToString(forNode)<<endl;
+    //cout<<"DEBUG: MATCH: "<<forNode->unparseToString()<<AstTerm::astTermWithNullValuesToString(forNode)<<endl;
     ROSE_ASSERT(isSgForStatement(forNode));
     SgInitializedName* ivar=0;
     SgExpression* lb=0;

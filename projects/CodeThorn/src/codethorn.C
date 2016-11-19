@@ -43,6 +43,8 @@
 #include "SprayException.h"
 #include "CodeThornException.h"
 
+#include "DataRaceDetection.h"
+
 // test
 #include "Evaluator.h"
 #include "DotGraphCfgFrontend.h"
@@ -232,6 +234,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   po::options_description patternSearchOptions("RERS options");
   po::options_description equivalenceCheckingOptions("Equivalence checking options");
   po::options_description parallelProgramOptions("Analysis options for parallel programs");
+  po::options_description dataRaceOptions("Data race detection options");
   po::options_description experimentalOptions("Experimental options");
   po::options_description visualizationOptions("Visualization options");
 
@@ -380,6 +383,12 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("pattern-search-exploration", po::value< string >(), "exploration mode for the pattern search. Note: all suffixes will always be checked using depth-first search. [=depth-first|breadth-first]")
     ;
 
+  dataRaceOptions.add_options()
+    ("data-race","perform data race detection")
+    ("data-race-csv",po::value<string >(),"write data race detection results in specified csv file. Implicitly enables data race detection.")
+    ("data-race-fail","perform data race detection and fail on error (codethorn exit status 1). For use in regression verification. Implicitly enables data race detection.")
+    ;
+
   visibleOptions.add_options()
     ("csv-stats",po::value< string >(),"output statistics into a CSV file [arg]")
     ("colors",po::value< string >(),"use colors in output [=yes|no]")
@@ -395,6 +404,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("help-ltl", "show options for LTL verification")
     ("help-par", "show options for analyzing parallel programs")
     ("help-vis", "show options for visualization output files")
+    ("help-data-race", "show options for data race detection")
     ("no-reduce-cfg","Do not reduce CFG nodes that are irrelevant for the analysis.")
     ("internal-checks", "run internal consistency checks (without input program)")
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
@@ -426,6 +436,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     .add(patternSearchOptions)
     .add(rersOptions)
     .add(svcompOptions)
+    .add(dataRaceOptions)
     .add(visualizationOptions)
     ;
   po::store(po::command_line_parser(argc, argv).options(all).allow_unregistered().run(), args);
@@ -461,6 +472,9 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   } else if(args.count("help-vis")) {
     cout << visualizationOptions << "\n";
     exit(0);
+  } else if(args.count("help-data-race")) {
+    cout << dataRaceOptions << "\n";
+    exit(0);
   } else if (args.count("version")) {
     cout << "CodeThorn version 1.7.0\n";
     cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
@@ -490,7 +504,6 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("visualize-read-write-sets",false);
   boolOptions.registerOption("run-rose-tests",false);
-  boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled reduce-cfg by default
   boolOptions.registerOption("print-all-options",false);
   boolOptions.registerOption("annotate-terms",false);
   boolOptions.registerOption("generate-assertions",false);
@@ -513,7 +526,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("std-out-only",false);
   boolOptions.registerOption("keep-error-states",false);
   boolOptions.registerOption("no-input-input",false);
-
+ 
   boolOptions.registerOption("with-counterexamples",false);
   boolOptions.registerOption("with-assert-counterexamples",false);
   boolOptions.registerOption("with-ltl-counterexamples",false);
@@ -533,16 +546,21 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
 
   boolOptions.registerOption("normalize",true);
 
-  boolOptions.registerOption("svcomp-mode",false);
-
   boolOptions.processOptions();
 
   /* set booloptions for zero-argument options (does not require
      yes/no on command-line, but resolves it by checking for its
      existence on the command line to true or false)
      */
+  boolOptions.registerOption("svcomp-mode",false);
+  boolOptions.registerOption("data-race",false);
+  boolOptions.registerOption("data-race-fail",false);
+  boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled reduce-cfg by default
   boolOptions.processZeroArgumentsOption("svcomp-mode");
   boolOptions.processZeroArgumentsOption("reduce-cfg"); // this handles 'no-reduce-cfg'
+
+  boolOptions.processZeroArgumentsOption("data-race");
+  boolOptions.processZeroArgumentsOption("data-race-fail");
 
   return boolOptions;
 }
@@ -998,6 +1016,9 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args) {
   }
 }
 
+/* refactoring in progress */
+#include "DataRaceDetection.C"
+
 int main( int argc, char * argv[] ) {
   try {
     Timer timer;
@@ -1140,6 +1161,8 @@ int main( int argc, char * argv[] ) {
     //cout<<"DEBUG: ignoring lhs-array accesses"<<endl;
     //analyzer.setSkipArrayAccesses(true);
 
+    initDataRaceDetection(analyzer);
+
     // handle RERS mode: reconfigure options
     if(boolOptions["rersmode"]||boolOptions["rers-mode"]) {
       cout<<"INFO: RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
@@ -1242,6 +1265,7 @@ int main( int argc, char * argv[] ) {
     if(args.count("rewrite")) {
       cout <<"STATUS: rewrite started."<<endl;
       rewriteSystem.resetStatistics();
+      rewriteSystem.setRewriteCondStmt(false); // experimental: supposed to normalize conditions
       rewriteSystem.rewriteAst(root,analyzer.getVariableIdMapping() ,true,false,true);
       cout<<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
       sageProject->unparse(0,0);
@@ -1660,6 +1684,12 @@ int main( int argc, char * argv[] ) {
     int verifyUpdateSequenceRaceConditionsResult=-1;
     int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
     int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
+
+    /* refactoring in progress */ {
+      if(runDataRaceDetection(analyzer)) {
+        exit(0);
+      }
+    }
 
     if(args.count("equivalence-check")) {
       // TODO: iterate over SgFile nodes, create vectors for each phase
