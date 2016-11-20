@@ -43,6 +43,8 @@ dnl build using ROSE)
       echo "default back-end C compiler for generated translators to use: $BACKEND_C_COMPILER"
     ])
 
+echo "Testing value of FC = $FC"
+
 # DQ (10/3/2008): Added option to specify backend fortran compiler
   AC_ARG_WITH(alternate_backend_fortran_compiler,
     [  --with-alternate_backend_fortran_compiler=<compiler name>
