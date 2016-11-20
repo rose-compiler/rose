@@ -7248,6 +7248,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                break;
              }
 
+       // DQ (11/14/2016): Added support for SgBracedInitializer (see Cxx11_tests/test2016_82.C for an example).
+          case V_SgBracedInitializer:
+
        // DQ (8/29/2014): Added support for SgAggregateInitializer (failed in tutorial examples).
           case V_SgAggregateInitializer:
 

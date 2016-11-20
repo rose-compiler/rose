@@ -275,6 +275,7 @@ SgBitXorOp
 SgBlockDataStatement
 SgBoolValExp
 SgBreakStmt
+SgBracedInitializer
 SgC_PreprocessorDirectiveStatement
 SgCaseOptionStmt
 SgCastExp

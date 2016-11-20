@@ -746,6 +746,10 @@ ROSE_DLL_API SgCompoundInitializer * buildCompoundInitializer_nfi(SgExprListExp 
 ROSE_DLL_API SgConstructorInitializer * buildConstructorInitializer( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
 ROSE_DLL_API SgConstructorInitializer * buildConstructorInitializer_nfi( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
 
+//! Build an braced initializer
+ROSE_DLL_API SgBracedInitializer * buildBracedInitializer(SgExprListExp * initializers = NULL, SgType * expression_type = NULL);
+ROSE_DLL_API SgBracedInitializer * buildBracedInitializer_nfi(SgExprListExp * initializers = NULL, SgType * expression_type = NULL);
+
 //! Build sizeof() expression with an expression parameter
 ROSE_DLL_API SgSizeOfOp* buildSizeOfOp(SgExpression* exp = NULL);
 ROSE_DLL_API SgSizeOfOp* buildSizeOfOp_nfi(SgExpression* exp);

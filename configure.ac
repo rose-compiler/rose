@@ -82,11 +82,16 @@ dnl +--------------------------------------------------------------------------+
 dnl | ROSE Support
 dnl +--------------------------------------------------------------------------+
 
+echo "Testing 1 value of FC = $FC"
+
 dnl This macro calls all of the other macros that used to be in the body of
 dnl this configure.in file.  This permits other projects to call this same
 dnl macro and setup the variables and macros that an external project may
 dnl also require.
 ROSE_SUPPORT_ROSE_PART_1
+
+echo "Testing 3 value of FC = $FC"
+
 ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES
 CONFIGURE_POET
 ROSE_SUPPORT_ROSE_PART_2
