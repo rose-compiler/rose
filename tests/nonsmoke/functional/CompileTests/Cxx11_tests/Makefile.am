@@ -240,7 +240,7 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 # this, this implementation needs review).  It might be better to prepend the information to the 
 # CC and CXX variables. I think that the purify support uses this approach.
 if ROSE_USE_SANITIZER
-VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
 else
 VALGRIND =
 endif
