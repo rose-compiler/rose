@@ -3911,3 +3911,5 @@ DispatcherM68k::adjustFpConditionCodes(const SValuePtr &result, SgAsmFloatType *
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
