@@ -417,7 +417,8 @@ long double __builtin_sqrtl  (long double __builtin__x);
 
 
 
-#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
+/* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. 
    However, these are required for EDG 4.11 to handle C++11 test codes.
  */
@@ -2453,9 +2454,10 @@ void prefetch (const __global float16 *p, size_t num_elements);
 
 
 
+/* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
 /* DQ (10/18/2016): Turn this on for EDG 4.11 but not wanted for EDG 4.12 (we use our own mechanism for EDG versions before EDG 4.11) */
-#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
 
 /***************************************************************************************
   SSE and MMX support (declarations for builtin functions defined in GNU header files)
