@@ -436,8 +436,12 @@ NEW_TESTCODES = \
    test2016_88.C \
    test2016_89.C \
    test2016_91.C \
-   test2016_93.C \
-   test2016_96.C 
+   test2016_93.C
+
+# DQ (11/21/2016): This test code does not work on older versions of GNU g++.
+if ROSE_USING_GCC_VERSION_LATER_4_4
+NEW_TESTCODES += test2016_96.C
+end
 
 # DQ (11/14/2016): Test codes not yet passing.
 #  test2016_91.C 
