@@ -204,7 +204,6 @@ main(int argc, char *argv[]) {
         }
     }
 
-
     // Dump the output
     if (settings.where.empty())
         settings.where.push_back(AddressInterval::whole());

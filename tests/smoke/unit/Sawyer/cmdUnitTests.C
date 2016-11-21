@@ -1532,6 +1532,23 @@ static void test32() {
     ASSERT_always_require(result.have("bar") == 2);
 }
 
+static void test33() {
+    std::cerr <<"test33: switches without a prefix\n";
+
+    SwitchGroup sg1;
+    std::string x;
+    sg1.insert(Switch("foo")
+               .argument("x", anyParser(x))
+               .resetLongPrefixes("")
+               .resetValueSeparators("="));
+
+    Parser p1;
+    p1.with(sg1);
+
+    mustParse(1, p1, "foo=x");
+    ASSERT_always_require(x=="x");
+}
+
 int main(int argc, char *argv[]) {
     test01();
     test02();
@@ -1566,6 +1583,7 @@ int main(int argc, char *argv[]) {
     test30();
     test31();
     test32();
+    test33();
     std::cout <<"All tests passed\n";
     return 0;
 }
