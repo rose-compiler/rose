@@ -441,7 +441,7 @@ NEW_TESTCODES = \
 # DQ (11/21/2016): This test code does not work on older versions of GNU g++.
 if ROSE_USING_GCC_VERSION_LATER_4_4
 NEW_TESTCODES += test2016_96.C
-end
+endif
 
 # DQ (11/14/2016): Test codes not yet passing.
 #  test2016_91.C 
