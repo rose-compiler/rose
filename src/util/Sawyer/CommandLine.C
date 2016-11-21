@@ -726,11 +726,11 @@ Switch::resetLongPrefixes(const std::string &s1, const std::string &s2, const st
     properties_.longPrefixes.clear();
     if (0!=s1.compare(STR_NONE))
         properties_.longPrefixes.push_back(s1);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s2.compare(STR_NONE))
         properties_.longPrefixes.push_back(s2);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s3.compare(STR_NONE))
         properties_.longPrefixes.push_back(s3);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s4.compare(STR_NONE))
         properties_.longPrefixes.push_back(s4);
     return *this;
 }
@@ -742,11 +742,11 @@ Switch::resetShortPrefixes(const std::string &s1, const std::string &s2, const s
     properties_.shortPrefixes.clear();
     if (0!=s1.compare(STR_NONE))
         properties_.shortPrefixes.push_back(s1);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s2.compare(STR_NONE))
         properties_.shortPrefixes.push_back(s2);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s3.compare(STR_NONE))
         properties_.shortPrefixes.push_back(s3);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s4.compare(STR_NONE))
         properties_.shortPrefixes.push_back(s4);
     return *this;
 }
@@ -1811,11 +1811,11 @@ Parser::apparentSwitch(const Cursor &cursor) const {
         BOOST_FOREACH (const Switch &sw, sg.switches()) {
             ParsingProperties swProps = sw.properties().inherit(sgProps);
             BOOST_FOREACH (const std::string &prefix, swProps.longPrefixes) {
-                if (!prefix.empty() && boost::starts_with(cursor.arg(), prefix) && cursor.arg().size() > prefix.size())
+                if (boost::starts_with(cursor.arg(), prefix) && cursor.arg().size() > prefix.size())
                     return true;
             }
             BOOST_FOREACH (const std::string &prefix, swProps.shortPrefixes) {
-                if (!prefix.empty() && boost::starts_with(cursor.arg(), prefix) && cursor.arg().size() > prefix.size())
+                if (boost::starts_with(cursor.arg(), prefix) && cursor.arg().size() > prefix.size())
                     return true;
             }
         }
