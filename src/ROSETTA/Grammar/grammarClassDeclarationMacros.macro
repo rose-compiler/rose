@@ -12,6 +12,7 @@
 // predeclarations for $CLASSNAME
 $PREDECLARATIONS
 
+#if $CPP_CONDITION
 // Class Definition for $CLASSNAME
 class ROSE_DLL_API $CLASSNAME  $BASECLASS
    {
@@ -20,6 +21,7 @@ class ROSE_DLL_API $CLASSNAME  $BASECLASS
 MEMBER_FUNCTION_DECLARATIONS
 
    };
+#endif
 
 // postdeclarations for $CLASSNAME
 $POSTDECLARATIONS
