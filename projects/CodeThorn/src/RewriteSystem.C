@@ -4,6 +4,13 @@
 
 using namespace std;
 using namespace SPRAY;
+using namespace Sawyer::Message;
+
+Sawyer::Message::Facility RewriteSystem::logger = [](){
+  Facility log("RewriteSystem");
+  mfacilities.insert(log);
+  return log;
+}();
 
 RewriteSystem::RewriteSystem():_rewriteCondStmt(false) {
 }
@@ -24,7 +31,7 @@ void RewriteStatistics::init() {
   numArrayUpdates=0;
   numConstExprElim=0;
 }
-void RewriteStatistics::reset() { 
+void RewriteStatistics::reset() {
   init();
 }
 RewriteStatistics RewriteSystem::getStatistics() {
@@ -70,7 +77,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
     }
   }
   size_t assignOpNum=assignOpList.size();
-  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: started."<<endl;
+  logger[INFO] <<"transforming "<<assignOpNum<<" compound assignment expressions: started."<<endl;
   size_t assignOpNr=1;
   Timer timer;
   double buildTime=0.0, replaceTime=0.0;
@@ -86,11 +93,11 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
       replaceTime+=timer.getElapsedTimeInMilliSec();
       assignOpNr++;
     } else {
-      cout<<"WARNING: not an expression. transformation not applied: "<<(*i)->class_name()<<":"<<(*i)->unparseToString()<<endl;
+      logger[WARN]<<"not an expression. transformation not applied: "<<(*i)->class_name()<<":"<<(*i)->unparseToString()<<endl;
     }
     //cout<<"Buildtime: "<<buildTime<<" Replacetime: "<<replaceTime<<endl;
   }
-  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
+  logger[INFO]<<"transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
 }
 
 SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {
