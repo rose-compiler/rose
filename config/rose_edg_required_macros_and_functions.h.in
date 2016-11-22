@@ -415,7 +415,58 @@ long double __builtin_sqrtl  (long double __builtin__x);
 #endif
 
 
+/* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 412
+/* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
+#if (__GNUC__ >= 6)
+/* Test how many files of builtins we have to add */
+   #define _SMMINTRIN_H_INCLUDED
+   #define _AMMINTRIN_H_INCLUDED
+   #define _TMMINTRIN_H_INCLUDED
+   #define _PMMINTRIN_H_INCLUDED
 
+   #define _AVX2INTRIN_H_INCLUDED
+   #define _AVX512FINTRIN_H_INCLUDED
+   #define _AVX512CDINTRIN_H_INCLUDED
+   #define _AVX512VLINTRIN_H_INCLUDED
+   #define _AVX512BWINTRIN_H_INCLUDED
+   #define _AVX512DQINTRIN_H_INCLUDED
+   #define _AVX512VLBWINTRIN_H_INCLUDED
+   #define _AVX512VLDQINTRIN_H_INCLUDED
+   #define _AVX512IFMAINTRIN_H_INCLUDED
+   #define _AVX512IFMAVLINTRIN_H_INCLUDED
+   #define _AVX512VBMIINTRIN_H_INCLUDED
+   #define _AVX512VBMIVLINTRIN_H_INCLUDED
+   #define _SHAINTRIN_H_INCLUDED
+   #define _LZCNTINTRIN_H_INCLUDED
+   #define _BMIINTRIN_H_INCLUDED
+   #define _BMI2INTRIN_H_INCLUDED
+   #define _FMAINTRIN_H_INCLUDED
+   #define _F16CINTRIN_H_INCLUDED
+   #define _RTMINTRIN_H_INCLUDED
+   #define _XTESTINTRIN_H_INCLUDED
+
+/* This just includes a lot of other include files specific to AVX (partially addressed above) */
+/* #define _IMMINTRIN_H_INCLUDED */
+
+   #define _MM3DNOW_H_INCLUDED
+   #define _FMA4INTRIN_H_INCLUDED
+   #define _XOPMMINTRIN_H_INCLUDED
+   #define _LWPINTRIN_H_INCLUDED
+   #define _RDSEEDINTRIN_H_INCLUDED
+   #define _XSAVEINTRIN_H_INCLUDED
+   #define _XSAVEOPTINTRIN_H_INCLUDED
+   #define _ADXINTRIN_H_INCLUDED
+   #define _CLWBINTRIN_H_INCLUDED
+   #define _PCOMMITINTRIN_H_INCLUDED
+   #define _CLFLUSHOPTINTRIN_H_INCLUDED
+   #define _XSAVESINTRIN_H_INCLUDED
+   #define _XSAVECINTRIN_H_INCLUDED
+   #define _MWAITXINTRIN_H_INCLUDED
+   #define _CLZEROINTRIN_H_INCLUDED
+   #define _PKUINTRIN_H_INCLUDED
+#endif
+#endif
 
 /* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
 #if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411

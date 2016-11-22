@@ -106,6 +106,22 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
       fi
    fi
 
+ # DQ (11/21/2016): EDG 4.12 can't handle a specific line of the GNU 6.1 vector.h header file. So build a modified version for this case.
+ # The function calls: "_M_move_assign();" appear to be a problem for EDG 4.12 (seqfaults internally in il.c).
+   if test "x$edg_major_version_number" = "x4"; then
+      if test "$edg_minor_version_number" -eq "12"; then
+         if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+            if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+               mkdir -p ./include-staging/${compilerName}_HEADERS/bits
+               cp ${srcdir}/config/rose_specific_GNU_6_1_stl_vector.h ./include-staging/${compilerName}_HEADERS/bits/stl_vector.h
+               cp ${srcdir}/config/rose_specific_GNU_6_1_stl_list.h ./include-staging/${compilerName}_HEADERS/bits/stl_list.h
+               cp ${srcdir}/config/rose_specific_GNU_6_1_stl_deque.h ./include-staging/${compilerName}_HEADERS/bits/stl_deque.h
+               cp ${srcdir}/config/rose_specific_GNU_6_1_hashtable.h ./include-staging/${compilerName}_HEADERS/bits/hashtable.h
+            fi
+         fi
+      fi
+   fi
+
    error_code=$?
    echo "error_code = $error_code"
    if test $error_code != 0; then
