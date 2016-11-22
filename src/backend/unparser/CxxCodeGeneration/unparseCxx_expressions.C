@@ -161,6 +161,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case COMPOUND_INIT:           { unparseCompInit(expr, info); break; }
           case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }
           case ASSIGN_INIT:             { unparseAssnInit(expr, info); break; }
+
+       // DQ (11/15/2016): Adding support for braced initializer node.
+          case BRACED_INIT:             { unparseBracedInit(expr, info); break; }
+
           case THROW_OP:                { unparseThrowOp(expr, info); break; }
           case VA_START_OP:             { unparseVarArgStartOp(expr, info); break; }
           case VA_START_ONE_OPERAND_OP: { unparseVarArgStartOneOperandOp(expr, info); break; }
@@ -7090,6 +7094,53 @@ Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      curprint("/* Leaving unparseAssnInit() */ "); 
+#endif
+   }
+
+void
+Unparse_ExprStmt::unparseBracedInit(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgBracedInitializer* braced_init = isSgBracedInitializer(expr);
+     ROSE_ASSERT(braced_init != NULL);
+
+     SgUnparse_Info newinfo(info);
+
+#define DEBUG_BRACED_INITIALIZER 0
+
+#if DEBUG_BRACED_INITIALIZER
+     printf ("In unparseBracedInit(): braced_init = %p = %s \n",braced_init,braced_init->class_name().c_str());
+     curprint ("/* In unparseBracedInit() */ ");
+#endif
+
+#if DEBUG_BRACED_INITIALIZER
+     printf ("In unparseBracedInit(): after output of type: newinfo.SkipEnumDefinition()  = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseBracedInit(): after output of type: newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
+#endif
+
+     curprint("{");
+
+     SgExpressionPtrList& list = braced_init->get_initializers()->get_expressions();
+     size_t last_index = list.size()-1;
+
+#if DEBUG_BRACED_INITIALIZER
+     printf ("In unparseBracedInit(): list.size() = %zu \n",list.size());
+     curprint ("/* output list elements in unparseBracedInit() */ ");
+#endif
+
+     for (size_t index = 0; index < list.size(); index ++)
+        {
+          unparseExpression(list[index], newinfo);
+          if (index != last_index)
+               curprint ( ", ");
+        }
+
+     unparseAttachedPreprocessingInfo(braced_init, info, PreprocessingInfo::inside);
+
+     curprint("}");
+
+#if DEBUG_AGGREGATE_INITIALIZER
+     printf ("Leaving unparseBracedInit() \n");
+     curprint ("/* Leaving unparseBracedInit() */ ");
 #endif
    }
 

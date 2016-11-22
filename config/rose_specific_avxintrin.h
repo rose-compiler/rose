@@ -1163,27 +1163,34 @@ _mm256_movemask_ps (__m256 __A)
 static __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_setzero_pd (void)
 {
-  return __extension__ (__m256d){ 0.0, 0.0, 0.0, 0.0 };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256d){ 0.0, 0.0, 0.0, 0.0 }; */
+   return __extension__ (__m256d){ 0.0 };
 }
 
 static __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_setzero_ps (void)
 {
-  return __extension__ (__m256){ 0.0, 0.0, 0.0, 0.0,
-				 0.0, 0.0, 0.0, 0.0 };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256){ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }; */
+   return __extension__ (__m256){ 0.0 };
 }
 
 static __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_setzero_si256 (void)
 {
-  return __extension__ (__m256i)(__v4di){ 0, 0, 0, 0 };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256i)(__v4di){ 0, 0, 0, 0 }; */
+   return __extension__ (__m256i)(__v4di){ 0 };
 }
 
 /* Create the vector [A B C D].  */
 static __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_set_pd (double __A, double __B, double __C, double __D)
 {
-  return __extension__ (__m256d){ __D, __C, __B, __A };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256d){ __D, __C, __B, __A }; */
+   return __extension__ (__m256d){ __D };
 }
 
 /* Create the vector [A B C D E F G H].  */
@@ -1191,8 +1198,9 @@ static __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artif
 _mm256_set_ps (float __A, float __B, float __C, float __D,
 	       float __E, float __F, float __G, float __H)
 {
-  return __extension__ (__m256){ __H, __G, __F, __E,
-				 __D, __C, __B, __A };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256){ __H, __G, __F, __E, __D, __C, __B, __A }; */
+   return __extension__ (__m256){ __H };
 }
 
 /* Create the vector [A B C D E F G H].  */
@@ -1200,8 +1208,9 @@ static __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __arti
 _mm256_set_epi32 (int __A, int __B, int __C, int __D,
 		  int __E, int __F, int __G, int __H)
 {
-  return __extension__ (__m256i)(__v8si){ __H, __G, __F, __E,
-					  __D, __C, __B, __A };
+/* NOTE: EDG wants to see this expressed as a single value.
+  return __extension__ (__m256i)(__v8si){ __H, __G, __F, __E, __D, __C, __B, __A }; */
+  return __extension__ (__m256i)(__v8si){ __H };
 }
 
 static __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1210,10 +1219,9 @@ _mm256_set_epi16 (short __q15, short __q14, short __q13, short __q12,
 		  short __q07, short __q06, short __q05, short __q04,
 		  short __q03, short __q02, short __q01, short __q00)
 {
-  return __extension__ (__m256i)(__v16hi){
-    __q00, __q01, __q02, __q03, __q04, __q05, __q06, __q07,
-    __q08, __q09, __q10, __q11, __q12, __q13, __q14, __q15
-  };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256i)(__v16hi){ __q00, __q01, __q02, __q03, __q04, __q05, __q06, __q07, __q08, __q09, __q10, __q11, __q12, __q13, __q14, __q15 }; */
+   return __extension__ (__m256i)(__v16hi){ __q00 };
 }
 
 static __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1226,42 +1234,46 @@ _mm256_set_epi8  (char __q31, char __q30, char __q29, char __q28,
 		  char __q07, char __q06, char __q05, char __q04,
 		  char __q03, char __q02, char __q01, char __q00)
 {
-  return __extension__ (__m256i)(__v32qi){
-    __q00, __q01, __q02, __q03, __q04, __q05, __q06, __q07,
-    __q08, __q09, __q10, __q11, __q12, __q13, __q14, __q15,
-    __q16, __q17, __q18, __q19, __q20, __q21, __q22, __q23,
-    __q24, __q25, __q26, __q27, __q28, __q29, __q30, __q31
-  };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256i)(__v32qi){ __q00, __q01, __q02, __q03, __q04, __q05, __q06, __q07, __q08, __q09, __q10, __q11, __q12, __q13, __q14, __q15,
+                                            __q16, __q17, __q18, __q19, __q20, __q21, __q22, __q23, __q24, __q25, __q26, __q27, __q28, __q29, __q30, __q31 }; */
+  return __extension__ (__m256i)(__v32qi){ __q00 };
 }
 
 static __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_set_epi64x (long long __A, long long __B, long long __C,
 		   long long __D)
 {
-  return __extension__ (__m256i)(__v4di){ __D, __C, __B, __A };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256i)(__v4di){ __D, __C, __B, __A }; */
+   return __extension__ (__m256i)(__v4di){ __D };
 }
 
 /* Create a vector with all elements equal to A.  */
 static __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_set1_pd (double __A)
 {
-  return __extension__ (__m256d){ __A, __A, __A, __A };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256d){ __A, __A, __A, __A }; */
+   return __extension__ (__m256d){ __A };
 }
 
 /* Create a vector with all elements equal to A.  */
 static __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_set1_ps (float __A)
 {
-  return __extension__ (__m256){ __A, __A, __A, __A,
-				 __A, __A, __A, __A };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256){ __A, __A, __A, __A, __A, __A, __A, __A }; */
+   return __extension__ (__m256){ __A };
 }
 
 /* Create a vector with all elements equal to A.  */
 static __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_set1_epi32 (int __A)
 {
-  return __extension__ (__m256i)(__v8si){ __A, __A, __A, __A,
-					  __A, __A, __A, __A };
+/* NOTE: EDG wants to see this expressed as a single value.
+  return __extension__ (__m256i)(__v8si){ __A, __A, __A, __A,  __A, __A, __A, __A }; */
+  return __extension__ (__m256i)(__v8si){ __A };
 }
 
 static __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1283,7 +1295,9 @@ _mm256_set1_epi8 (char __A)
 static __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_set1_epi64x (long long __A)
 {
-  return __extension__ (__m256i)(__v4di){ __A, __A, __A, __A };
+/* NOTE: EDG wants to see this expressed as a single value.
+   return __extension__ (__m256i)(__v4di){ __A, __A, __A, __A }; */
+   return __extension__ (__m256i)(__v4di){ __A };
 }
 
 /* Create vectors of elements in the reversed order from the

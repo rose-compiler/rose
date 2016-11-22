@@ -417,13 +417,14 @@ long double __builtin_sqrtl  (long double __builtin__x);
 
 
 
+/* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
 #if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. 
    However, these are required for EDG 4.11 to handle C++11 test codes.
  */
 
 /* DQ (11/6/2014): Use a different mechanism to handle these for the GNU 4.7 compiler and above (required form C++11) */
-#if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
+#if (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) || (__GNUC__ > 4))
 
 #if 0
 /* DQ (11/10/2014): This was added to support the use of math.h header files for C++11, 
@@ -437,6 +438,7 @@ int __builtin_isgreater(double x, double y);
 int __builtin_isgreaterequal(double x, double y);
 int __builtin_isless(double x, double y);
 #endif
+
 int __builtin_ia32_bsrsi(int x);
 unsigned long long __builtin_ia32_rdpmc(int x);
 unsigned long long __builtin_ia32_rdtsc(void);
@@ -456,11 +458,351 @@ void               __builtin_ia32_fxrstor64(void *__P);
 unsigned char      __builtin_ia32_addcarryx_u32(unsigned char __CF, unsigned int __X, unsigned int __Y, unsigned int *__P);
 unsigned char      __builtin_ia32_addcarryx_u64(unsigned char __CF, unsigned long __X, unsigned long __Y, unsigned long long *__P);
 
+/* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
+unsigned int __builtin_ia32_crc32qi (unsigned int__C,unsigned char __V);
+unsigned int __builtin_ia32_crc32hi (unsigned int __C, unsigned short __V);
+unsigned int __builtin_ia32_crc32si (unsigned int __C, unsigned int __V);
+unsigned long long __builtin_ia32_crc32di (unsigned long long __C, unsigned long long __V);
+unsigned long long __builtin_ia32_readeflags_u64 (void);
+void __builtin_ia32_writeeflags_u64 (unsigned long long X);
+
+/* emmintrin.h */
+
+/* SSE3 builtin functions required for GNU 6.1 compiler */
+/* SSE2 */
+typedef double __v2df __attribute__ ((__vector_size__ (16)));
+typedef long long __v2di __attribute__ ((__vector_size__ (16)));
+typedef int __v4si __attribute__ ((__vector_size__ (16)));
+typedef short __v8hi __attribute__ ((__vector_size__ (16)));
+typedef char __v16qi __attribute__ ((__vector_size__ (16)));
+
+/* Internal data types for implementing the intrinsics.  */
+typedef int __v2si __attribute__ ((__vector_size__ (8)));
+typedef char __v8qi __attribute__ ((__vector_size__ (8)));
+
+/* The Intel API is flexible enough that we must allow aliasing with other
+   vector types, and their scalar components.  */
+typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef long long __m128i __attribute__ ((__vector_size__ (16), __may_alias__));
+typedef double __m128d __attribute__ ((__vector_size__ (16), __may_alias__));
+
+/* Not clear what these should be  */
+typedef int __m64 __attribute__ ((__vector_size__ (8), __may_alias__));
+typedef short __v4hi __attribute__ ((__vector_size__ (8)));
+// typedef long long __m64 __attribute__ ((__vector_size__ (16)));
+// typedef int __v4hi __attribute__ ((__vector_size__ (16)));
+typedef float __v2sf __attribute__ ((__vector_size__ (8)));
+typedef float __v4sf __attribute__ ((__vector_size__ (16)));
+
+/* pmmintrin.h */
+__m128 __builtin_ia32_addsubps (__m128 __X, __m128 __Y);
+__m128 __builtin_ia32_haddps (__m128 __X, __m128 __Y);
+__m128 __builtin_ia32_hsubps (__m128 __X, __m128 __Y);
+__m128 __builtin_ia32_movshdup (__m128 __X);
+__m128 __builtin_ia32_movsldup (__m128 __X);
+__m128d __builtin_ia32_addsubpd (__m128d __X, __m128d __Y);
+__m128d __builtin_ia32_haddpd (__m128d __X, __m128d __Y);
+__m128d __builtin_ia32_hsubpd (__m128d __X, __m128d __Y);
+
+/* __m128i __builtin_ia32_lddqu (__m128i const *__P); */
+__m128i __builtin_ia32_lddqu (char const *__P);
+
+/* tmmintrin.h */
+__m128i __builtin_ia32_phaddw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_phaddd128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_phaddsw128 (__v8hi __X, __v8hi __Y);
+__m64   __builtin_ia32_phaddw (__v4hi __X, __v4hi __Y);
+
+__m64 __builtin_ia32_phaddd (__v2si __X, __v2si __Y);
+__m64 __builtin_ia32_phaddsw (__v4hi __X, __v4hi __Y);
+__m128i __builtin_ia32_phsubw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_phsubd128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_phsubsw128 (__v8hi __X, __v8hi __Y);
+__m64 __builtin_ia32_phsubw (__v4hi __X, __v4hi __Y);
+__m64 __builtin_ia32_phsubd (__v2si __X, __v2si __Y);
+__m64 __builtin_ia32_phsubsw (__v4hi __X, __v4hi __Y);
+__m128i __builtin_ia32_pmaddubsw128 (__v16qi __X, __v16qi __Y);
+__m64 __builtin_ia32_pmaddubsw (__v8qi __X, __v8qi __Y);
+__m128i __builtin_ia32_pmulhrsw128 (__v8hi __X, __v8hi __Y);
+__m64 __builtin_ia32_pmulhrsw (__v4hi __X, __v4hi __Y);
+__m128i __builtin_ia32_pshufb128 (__v16qi __X, __v16qi __Y);
+__m64 __builtin_ia32_pshufb (__v8qi __X, __v8qi __Y);
+__m128i __builtin_ia32_psignb128 (__v16qi __X, __v16qi __Y);
+__m128i __builtin_ia32_psignw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_psignd128 (__v4si __X, __v4si __Y);
+__m64 __builtin_ia32_psignb (__v8qi __X, __v8qi __Y);
+__m64 __builtin_ia32_psignw (__v4hi __X, __v4hi __Y);
+__m64 __builtin_ia32_psignd (__v2si __X, __v2si __Y);
+
+__m128i __builtin_ia32_pabsb128 (__v16qi __X);
+__m128i __builtin_ia32_pabsw128 (__v8hi __X);
+__m128i __builtin_ia32_pabsd128 (__v4si __X);
+__m64 __builtin_ia32_pabsb (__v8qi __X);
+__m64 __builtin_ia32_pabsw (__v4hi __X);
+__m64 __builtin_ia32_pabsd (__v2si __X);
+
+void __builtin_ia32_movntsd (double *__P, __v2df __Y);
+void __builtin_ia32_movntss (float *__P, __v4sf __Y);
+__m128i __builtin_ia32_extrq (__v2di __X, __v16qi __Y);
+__m128i __builtin_ia32_insertq (__v2di __X, __v2di __Y);
+
+/* smmintrin.h */
+int __builtin_ia32_ptestz128 (__v2di __M, __v2di __V);
+int __builtin_ia32_ptestc128 (__v2di __M, __v2di __V);
+int __builtin_ia32_ptestnzc128 (__v2di __M, __v2di __V);
+__m128i __builtin_ia32_pblendvb128 (__v16qi __X, __v16qi __Y, __v16qi __M);
+__m128 __builtin_ia32_blendvps (__v4sf __X, __v4sf __Y, __v4sf __M);
+__m128d __builtin_ia32_blendvpd (__v2df __X, __v2df __Y, __v2df __M);
+__m128i __builtin_ia32_pcmpeqq (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_pminsb128 (__v16qi __X, __v16qi __Y);
+__m128i __builtin_ia32_pmaxsb128 (__v16qi __X, __v16qi __Y);
+__m128i __builtin_ia32_pminuw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_pmaxuw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_pminsd128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pmaxsd128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pminud128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pmaxud128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pmulld128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pmuldq128 (__v4si __X, __v4si __Y);
+
+__m128i __builtin_ia32_phminposuw128 (__v8hi __X);
+__m128i __builtin_ia32_pmovsxbd128 (__v16qi __X);
+__m128i __builtin_ia32_pmovsxwd128 (__v8hi __X);
+__m128i __builtin_ia32_pmovsxbq128 (__v16qi __X);
+__m128i __builtin_ia32_pmovsxdq128 (__v4si __X);
+__m128i __builtin_ia32_pmovsxwq128 (__v8hi __X);
+__m128i __builtin_ia32_pmovsxbw128 (__v16qi __X);
+__m128i __builtin_ia32_pmovzxbd128 (__v16qi __X);
+__m128i __builtin_ia32_pmovzxwd128 (__v8hi __X);
+
+
+__m128i __builtin_ia32_pmovzxbq128 (__v16qi __X);
+__m128i __builtin_ia32_pmovzxdq128 (__v4si __X);
+__m128i __builtin_ia32_pmovzxwq128 (__v8hi __X);
+__m128i __builtin_ia32_pmovzxbw128 (__v16qi __X);
+__m128i __builtin_ia32_packusdw128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_movntdqa (__v2di* __X);
+
+/* wmmintrin.h */
+__m128i __builtin_ia32_aesdec128 (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_aesdeclast128 (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_aesenc128 (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_aesenclast128 (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_aesimc128 (__v2di __X);
+
+/* avxintrin.h */
+/* Internal data types for implementing the intrinsics.  */
+typedef double __v4df __attribute__ ((__vector_size__ (32)));
+typedef float __v8sf __attribute__ ((__vector_size__ (32)));
+typedef long long __v4di __attribute__ ((__vector_size__ (32)));
+typedef unsigned long long __v4du __attribute__ ((__vector_size__ (32)));
+typedef int __v8si __attribute__ ((__vector_size__ (32)));
+typedef unsigned int __v8su __attribute__ ((__vector_size__ (32)));
+typedef short __v16hi __attribute__ ((__vector_size__ (32)));
+typedef unsigned short __v16hu __attribute__ ((__vector_size__ (32)));
+typedef char __v32qi __attribute__ ((__vector_size__ (32)));
+typedef unsigned char __v32qu __attribute__ ((__vector_size__ (32)));
+
+/* The Intel API is flexible enough that we must allow aliasing with other
+   vector types, and their scalar components.  */
+typedef float __m256 __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef long long __m256i __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef double __m256d __attribute__ ((__vector_size__ (32), __may_alias__));
+
+__m256d __builtin_ia32_addsubpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_addsubps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_andpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_andps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_andnpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_andnps256 (__v8sf __A, __v8sf __B);
+
+__m256d __builtin_ia32_blendvpd256 (__v4df __X, __v4df __Y, __v4df __M);
+__m256 __builtin_ia32_blendvps256 (__v8sf __X, __v8sf __Y, __v8sf __M);
+__m256d __builtin_ia32_haddpd256 (__v4df __X, __v4df __Y);
+__m256 __builtin_ia32_haddps256 (__v8sf __X, __v8sf __Y);
+__m256d __builtin_ia32_hsubpd256 (__v4df __X, __v4df __Y);
+__m256 __builtin_ia32_hsubps256 (__v8sf __X, __v8sf __Y);
+__m256d __builtin_ia32_maxpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_maxps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_minpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_minps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_orpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_orps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_xorpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_xorps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_cvtdq2pd256 (__v4si __A);
+__m256 __builtin_ia32_cvtdq2ps256 (__v8si __A);
+__m128 __builtin_ia32_cvtpd2ps256 (__v4df __A);
+__m256i __builtin_ia32_cvtps2dq256 (__v8sf __A);
+__m256d __builtin_ia32_cvtps2pd256 (__v4sf __A);
+__m128i __builtin_ia32_cvttpd2dq256 (__v4df __A);
+__m128i __builtin_ia32_cvtpd2dq256 (__v4df __A);
+__m256i __builtin_ia32_cvttps2dq256 (__v8sf __A);
+
+void __builtin_ia32_vzeroall();
+void __builtin_ia32_vzeroupper();
+
+__m128d __builtin_ia32_vpermilvarpd (__v2df __A, __v2di __C);
+__m256d __builtin_ia32_vpermilvarpd256 (__v4df __A, __v4di __C);
+__m128 __builtin_ia32_vpermilvarps (__v4sf __A, __v4si __C);
+__m256 __builtin_ia32_vpermilvarps256 (__v8sf __A, __v8si __C);
+__m128 __builtin_ia32_vbroadcastss (float const * __X);
+__m256d __builtin_ia32_vbroadcastsd256 (double const *__X);
+__m256 __builtin_ia32_vbroadcastss256 (float const *__X);
+__m256d __builtin_ia32_vbroadcastf128_pd256 (__m128d const *__X);
+__m256 __builtin_ia32_vbroadcastf128_ps256 (__m128 const *__X);
+
+__m256d __builtin_ia32_loadupd256 (double const *__P);
+void __builtin_ia32_storeupd256 (double *__P, __v4df __A);
+__m256 __builtin_ia32_loadups256 (float const *__P);
+void __builtin_ia32_storeups256 (float *__P, __v8sf __A);
+__m256i __builtin_ia32_loaddqu256 (char const * __P);
+void __builtin_ia32_storedqu256 (char *__P, __v32qi __A);
+__m128d __builtin_ia32_maskloadpd (const __v2df *__P, __v2di __M);
+void __builtin_ia32_maskstorepd (__v2df *__P, __v2di __M, __v2df __A);
+__m256d __builtin_ia32_maskloadpd256 (const __v4df *__P, __v4di __M);
+void __builtin_ia32_maskstorepd256 (__v4df *__P, __v4di __M, __v4df __A);
+__m128 __builtin_ia32_maskloadps (const __v4sf *__P, __v4si __M);
+void __builtin_ia32_maskstoreps (__v4sf * __P, __v4si __M, __v4sf __A);
+__m256 __builtin_ia32_maskloadps256 (const __v8sf *__P, __v8si __M);
+void __builtin_ia32_maskstoreps256 (__v8sf *__P, __v8si __M, __v8sf __A);
+__m256 __builtin_ia32_movshdup256 (__v8sf __X);
+__m256 __builtin_ia32_movsldup256 (__v8sf __X);
+__m256d __builtin_ia32_movddup256 (__v4df __X);
+__m256i __builtin_ia32_lddqu256 (char const *__P);
+void __builtin_ia32_movntdq256 (__v4di * __A, __v4di __B);
+void __builtin_ia32_movntpd256 (double *__A, __v4df __B);
+void __builtin_ia32_movntps256 (float *__P, __v8sf __A);
+__m256 __builtin_ia32_rcpps256 (__v8sf __A);
+__m256 __builtin_ia32_rsqrtps256 (__v8sf __A);
+__m256d __builtin_ia32_sqrtpd256 (__v4df __A);
+__m256 __builtin_ia32_sqrtps256 (__v8sf __A);
+
+// #define _mm256_ceil_pd(V)	_mm256_round_pd ((V), _MM_FROUND_CEIL)
+// #define _mm256_floor_pd(V)	_mm256_round_pd ((V), _MM_FROUND_FLOOR)
+// #define _mm256_ceil_ps(V)	_mm256_round_ps ((V), _MM_FROUND_CEIL)
+// #define _mm256_floor_ps(V)	_mm256_round_ps ((V), _MM_FROUND_FLOOR)
+
+__m256d __builtin_ia32_unpckhpd256 (__v4df __A, __v4df __B);
+__m256d __builtin_ia32_unpcklpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_unpckhps256 (__v8sf __A, __v8sf __B);
+__m256 _builtin_ia32_unpcklps256 (__v8sf __A, __v8sf __B);
+int __builtin_ia32_vtestzpd (__v2df __M, __v2df __V);
+int __builtin_ia32_vtestcpd (__v2df __M, __v2df __V);
+int __builtin_ia32_vtestnzcpd (__v2df __M, __v2df __V);
+int __builtin_ia32_vtestzps (__v4sf __M, __v4sf __V);
+int __builtin_ia32_vtestcps (__v4sf __M, __v4sf __V);
+int __builtin_ia32_vtestnzcps (__v4sf __M, __v4sf __V);
+int __builtin_ia32_vtestzpd256 (__v4df __M, __v4df __V);
+int __builtin_ia32_vtestcpd256 (__v4df __M, __v4df __V);
+int __builtin_ia32_vtestnzcpd256 (__v4df __M, __v4df __V);
+int __builtin_ia32_vtestzps256 (__v8sf __M, __v8sf __V);
+int __builtin_ia32_vtestcps256 (__v8sf __M, __v8sf __V);
+int __builtin_ia32_vtestnzcps256 (__v8sf __M, __v8sf __V);
+int __builtin_ia32_ptestz256 (__v4di __M, __v4di __V);
+int __builtin_ia32_ptestc256 (__v4di __M, __v4di __V);
+int __builtin_ia32_ptestnzc256 (__v4di __M, __v4di __V);
+int __builtin_ia32_movmskpd256 (__v4df __A);
+int __builtin_ia32_movmskps256 (__v8sf __A);
+
+__m128d __builtin_ia32_pd_pd256 (__v4df __A);
+__m128 __builtin_ia32_ps_ps256 (__v8sf __A);
+__m128i __builtin_ia32_si_si256 (__v8si __A);
+__m256d __builtin_ia32_pd256_pd (__v2df __A);
+__m256 __builtin_ia32_ps256_ps (__v4sf __A);
+__m256i __builtin_ia32_si256_si (__v4si __A);
+
+__m256 __builtin_ia32_unpcklps256 (__v8sf __A, __v8sf __B);
+
+void __builtin_ia32_monitor (void const * __P, unsigned int __E, unsigned int __H);
+void __builtin_ia32_mwait (unsigned int __E, unsigned int __H);
+
+
+/* New builtins (11/19/2016) */
+
+__m256d __builtin_ia32_addpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_addps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_divpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_divps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_mulpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_mulps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_subpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_subps256 (__v8sf __A, __v8sf __B);
+
+
+/* Test how many files of builtins we have to add */
+   #define _AVX2INTRIN_H_INCLUDED
+   #define _AVX512FINTRIN_H_INCLUDED
+   #define _AVX512CDINTRIN_H_INCLUDED
+   #define _AVX512VLINTRIN_H_INCLUDED
+   #define _AVX512BWINTRIN_H_INCLUDED
+   #define _AVX512DQINTRIN_H_INCLUDED
+   #define _AVX512VLBWINTRIN_H_INCLUDED
+   #define _AVX512VLDQINTRIN_H_INCLUDED
+   #define _AVX512IFMAINTRIN_H_INCLUDED
+   #define _AVX512IFMAVLINTRIN_H_INCLUDED
+   #define _AVX512VBMIINTRIN_H_INCLUDED
+   #define _AVX512VBMIVLINTRIN_H_INCLUDED
+   #define _SHAINTRIN_H_INCLUDED
+   #define _LZCNTINTRIN_H_INCLUDED
+   #define _BMIINTRIN_H_INCLUDED
+   #define _BMI2INTRIN_H_INCLUDED
+   #define _FMAINTRIN_H_INCLUDED
+   #define _F16CINTRIN_H_INCLUDED
+   #define _RTMINTRIN_H_INCLUDED
+   #define _XTESTINTRIN_H_INCLUDED
+
+/* This just includes a lot of other include files specific to AVX (partially addressed above) */
+/* #define _IMMINTRIN_H_INCLUDED */
+
+/* immintrin.h */
+int __builtin_ia32_rdrand16_step (unsigned short *__P);
+int __builtin_ia32_rdrand32_step (unsigned int *__P);
+unsigned int __builtin_ia32_rdfsbase32();
+unsigned long long __builtin_ia32_rdfsbase64();
+unsigned int __builtin_ia32_rdgsbase32();
+unsigned long long __builtin_ia32_rdgsbase64();
+void __builtin_ia32_wrfsbase32 (unsigned int __B);
+void __builtin_ia32_wrfsbase64 (unsigned long long __B);
+void __builtin_ia32_wrgsbase32 (unsigned int __B);
+void __builtin_ia32_wrgsbase64 (unsigned long long __B);
+int __builtin_ia32_rdrand64_step (unsigned long long *__P);
+
+
+   #define _MM3DNOW_H_INCLUDED
+   #define _FMA4INTRIN_H_INCLUDED
+   #define _XOPMMINTRIN_H_INCLUDED
+   #define _LWPINTRIN_H_INCLUDED
+   #define _RDSEEDINTRIN_H_INCLUDED
+   #define _XSAVEINTRIN_H_INCLUDED
+   #define _XSAVEOPTINTRIN_H_INCLUDED
+   #define _ADXINTRIN_H_INCLUDED
+   #define _CLWBINTRIN_H_INCLUDED
+   #define _PCOMMITINTRIN_H_INCLUDED
+   #define _CLFLUSHOPTINTRIN_H_INCLUDED
+   #define _XSAVESINTRIN_H_INCLUDED
+   #define _XSAVECINTRIN_H_INCLUDED
+   #define _MWAITXINTRIN_H_INCLUDED
+   #define _CLZEROINTRIN_H_INCLUDED
+   #define _PKUINTRIN_H_INCLUDED
+
+
+/* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
+#if (__GNUC__ >= 6)
+   #define __SSE3__
+   #define __SSE2__
+   #define __SSE4A__
+   #define __SSE4_1__
+#endif
+
 #else
 
 /* DQ (5/4/2010): Reported problem under Ubuntu 9.10 with GCC 4.4.1 and Boost 1.42.
 */
 int __builtin_fpclassify (int, int, int, int, int, ...);
+
+/* DQ (11/14/2016): For GNU 6.1 (at least) the isunordered() builtin is not available. */
+#if ((__GNUC__ < 6) && (__GNUC_MINOR__ >= 0))
 
 /* GCC provides built-in versions of the ISO C99 floating point comparison macros that
     avoid raising exceptions for unordered operands. They have the same names as the
@@ -516,6 +858,9 @@ DQ (6/19/2007): These might required math.h to be included.
    ({ __typeof__(u) __u = (u); __typeof__(v) __v = (v);			      \
       fpclassify (__u) == FP_NAN || fpclassify (__v) == FP_NAN; }))
 # endif
+
+/* DQ (11/14/2016): For GNU 6.1 (at least) the isunordered() builtin is not available. */
+#endif
 
 /* #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) */
 #endif
@@ -2109,6 +2454,7 @@ void prefetch (const __global float16 *p, size_t num_elements);
 
 
 
+/* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
 /* DQ (10/18/2016): Turn this on for EDG 4.11 but not wanted for EDG 4.12 (we use our own mechanism for EDG versions before EDG 4.11) */
 #if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411

@@ -96,8 +96,13 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # Phlin (6/18/2012): Added support for AVX.
  # Only GCC 4.6+ supports AVX instructions.
    if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+    # if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "6"; then
       if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "6"; then
-   cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
+         cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
+      fi
+   else
+      if test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -ge "5"; then
+         cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
       fi
    fi
 
