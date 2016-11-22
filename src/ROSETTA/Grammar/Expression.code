@@ -1391,19 +1391,19 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 #endif
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_requiresGlobalNameQualificationOnType() const;
           void set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           int get_name_qualification_length_for_type() const;
           void set_name_qualification_length_for_type(int name_qualification_length_for_type);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_type_elaboration_required_for_type() const;
           void set_type_elaboration_required_for_type(bool type_elaboration_required_for_type);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required_for_type() const;
           void set_global_qualification_required_for_type(bool global_qualification_required_for_type);
 
@@ -1436,15 +1436,15 @@ HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
        */
           SgClassDeclaration* get_class_decl () const;
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           int get_name_qualification_length() const;
           void set_name_qualification_length(int name_qualification_length);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_type_elaboration_required() const;
           void set_type_elaboration_required(bool type_elaboration_required);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required() const;
           void set_global_qualification_required(bool global_qualification_required);
 
@@ -1465,6 +1465,36 @@ HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_END
+
+HEADER_BRACED_INITIALIZER_EXPRESSION_START
+HEADER_LIST_DECLARATIONS
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+#if 0
+       // DQ (11/15/2016): I don' think that name qualification maes sense for a braced initializer.
+
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_requiresGlobalNameQualificationOnType() const;
+          void set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType);
+
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length_for_type() const;
+          void set_name_qualification_length_for_type(int name_qualification_length_for_type);
+
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required_for_type() const;
+          void set_type_elaboration_required_for_type(bool type_elaboration_required_for_type);
+
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required_for_type() const;
+          void set_global_qualification_required_for_type(bool global_qualification_required_for_type);
+#endif
+
+HEADER_BRACED_INITIALIZER_EXPRESSION_END
+
 
 HEADER_REPLACE_EXPRESSION_START
           int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
@@ -6814,7 +6844,6 @@ SgAggregateInitializer::post_construction_initialization()
           get_initializers()->set_parent(this);
    }
 
-#if 1
 // DQ: trying to remove the nested iterator class
 void
 SgAggregateInitializer::append_initializer(SgExpression* what)
@@ -6835,19 +6864,7 @@ SgAggregateInitializer::append_initializer(SgExpression* what)
   // insert_initializer(p_initializers->end(),what);
      p_initializers->append_expression(what);
    }
-#endif
 
-#if 0
-// DQ: trying to remove the nested iterator class
-// $CLASSNAME::insert_initializer(const SgExpression::iterator& where, SgExpression* what) 
-void
-SgAggregateInitializer::insert_initializer(const SgExpressionPtrList::iterator& where, SgExpression* what) 
-   {
-     p_initializers->insert_expression(where,what);
-   }
-#endif
-
-//#if 0
 SgExpression*
 SgAggregateInitializer::get_next(int& n) const
    {
@@ -6859,7 +6876,6 @@ SgAggregateInitializer::get_next(int& n) const
        else
           return 0;
    }
-//#endif
 
 int
 SgAggregateInitializer::replace_expression(SgExpression* o, SgExpression* n)
@@ -7410,6 +7426,173 @@ $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
    }
 
 SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION_END
+
+
+SOURCE_BRACED_INITIALIZER_EXPRESSION_START
+
+void
+SgBracedInitializer::post_construction_initialization() 
+   {
+     if (get_initializers())
+          get_initializers()->set_parent(this);
+   }
+
+// DQ: trying to remove the nested iterator class
+void
+SgBracedInitializer::append_initializer(SgExpression* what)
+   {
+     assert(this != NULL);
+
+  // DQ (11/15/2006): avoid setting newArgs this late in the process.
+     ROSE_ASSERT(p_initializers != NULL);
+     if(!p_initializers)
+        {
+       // set_initializers(new SgExprListExp(this->get_file_info()));
+          SgExprListExp* newArgs = new SgExprListExp ( this->get_file_info() );
+          assert(newArgs != NULL);
+          newArgs->set_endOfConstruct( this->get_file_info() );
+          set_initializers(newArgs);
+        }
+
+  // insert_initializer(p_initializers->end(),what);
+     p_initializers->append_expression(what);
+   }
+
+SgExpression*
+SgBracedInitializer::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_initializers();
+        }
+       else
+          return 0;
+   }
+
+int
+SgBracedInitializer::replace_expression(SgExpression* o, SgExpression* n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_initializers() == o)
+        {
+          set_initializers(isSgExprListExp(n));
+          n->set_parent(this);
+          return 1;
+        }
+       else
+        {
+          return 0;
+        }
+   }
+
+SgType*
+SgBracedInitializer::get_type() const
+   {
+#if 0
+     printf ("In SgAggregateInitializer::get_type() \n");
+#endif
+
+#if 0
+     printf ("In SgAggregateInitializer::get_type(): p_expression_type = %p \n",p_expression_type);
+#endif
+     if (p_expression_type != NULL)
+        {
+#if 0
+          printf ("SgAggregateInitializer::get_type(): p_expression_type != NULL: return p_expression_type = %p = %s \n",p_expression_type,p_expression_type->class_name().c_str());
+#endif
+          return p_expression_type;
+        }
+       else
+        {
+#if 0
+          printf ("SgAggregateInitializer::get_type(): default case: return SgTypeDefault::createType()\n");
+#endif
+          return SgTypeDefault::createType();
+        }
+   }
+
+#if 0
+// DQ (11/15/2016): I don' think that name qualification maes sense for a braced initializer.
+
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+bool 
+SgBracedInitializer::get_requiresGlobalNameQualificationOnType () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_requiresGlobalNameQualificationOnType;
+   }
+
+void
+SgBracedInitializer::set_requiresGlobalNameQualificationOnType ( bool requiresGlobalNameQualificationOnType )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_requiresGlobalNameQualificationOnType = requiresGlobalNameQualificationOnType;
+   }
+
+int 
+SgBracedInitializer::get_name_qualification_length_for_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length_for_type;
+   }
+
+void
+SgBracedInitializer::set_name_qualification_length_for_type ( int name_qualification_length_for_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length_for_type = name_qualification_length_for_type;
+   }
+
+bool 
+SgBracedInitializer::get_type_elaboration_required_for_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required_for_type;
+   }
+
+void
+SgBracedInitializer::set_type_elaboration_required_for_type ( bool type_elaboration_required_for_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required_for_type = type_elaboration_required_for_type;
+   }
+
+bool 
+SgBracedInitializer::get_global_qualification_required_for_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required_for_type;
+   }
+
+void
+SgBracedInitializer::set_global_qualification_required_for_type ( bool global_qualification_required_for_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required_for_type = global_qualification_required_for_type;
+   }
+#endif
+
+SOURCE_BRACED_INITIALIZER_EXPRESSION_END
 
 
 // ######################################################

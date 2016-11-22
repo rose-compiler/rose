@@ -4,7 +4,7 @@ dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 dnl The version number in the AC_INIT expression has been placed there automatically by the "build" script. We cannot
 dnl do the replacement here in the configure file because AC_INIT's second argument must be a literal string, not a
 dnl shell variable.
-AC_INIT([ROSE], [0.9.7.114])
+AC_INIT([ROSE], [0.9.7.119])
 AC_PREREQ([2.59])
 
 dnl +--------------------------------------------------------------------------+
@@ -65,6 +65,30 @@ AM_CONFIG_HEADER([rose_config.h])
 #
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+dnl +--------------------------------------------------------------------------+
+dnl | Environment Variables - Compilers (CC, CXX, FC)
+dnl +--------------------------------------------------------------------------+
+AC_MSG_CHECKING([if \$CC environment variable is set])
+if test -z "${CC}"; then
+    AC_MSG_RESULT([no - will attempt to auto-detect the C compiler])
+else
+    AC_MSG_RESULT([$CC])
+fi
+
+AC_MSG_CHECKING([if \$CXX environment variable is set])
+if test -z "${CXX}"; then
+    AC_MSG_RESULT([no - will attempt to auto-detect the C++ compiler])
+else
+    AC_MSG_RESULT([$CXX])
+fi
+
+AC_MSG_CHECKING([if \$FC environment variable is set])
+if test -z "${FC}"; then
+    AC_MSG_RESULT([no - will attempt to auto-detect the Fortran compiler])
+else
+    AC_MSG_RESULT([$FC])
+fi
+
 AM_PROG_CC_C_O
 
 # JJW (10/8/2008): Make default CFLAGS, CXXFLAGS, and FFLAGS empty (from
@@ -82,11 +106,16 @@ dnl +--------------------------------------------------------------------------+
 dnl | ROSE Support
 dnl +--------------------------------------------------------------------------+
 
+echo "Testing 1 value of FC = $FC"
+
 dnl This macro calls all of the other macros that used to be in the body of
 dnl this configure.in file.  This permits other projects to call this same
 dnl macro and setup the variables and macros that an external project may
 dnl also require.
 ROSE_SUPPORT_ROSE_PART_1
+
+echo "Testing 3 value of FC = $FC"
+
 ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES
 CONFIGURE_POET
 ROSE_SUPPORT_ROSE_PART_2

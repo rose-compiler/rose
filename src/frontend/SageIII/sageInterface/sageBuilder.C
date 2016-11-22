@@ -6722,6 +6722,32 @@ SageBuilder::buildConstructorInitializer_nfi(
      return result;
    }
 
+// DQ (11/15/2016):Adding support for braced initializer (required for template support).
+//! Build an braced initializer
+SgBracedInitializer* 
+SageBuilder::buildBracedInitializer(SgExprListExp * initializers, SgType * expression_type )
+   {
+     SgBracedInitializer* result = new SgBracedInitializer(initializers, expression_type);
+     ROSE_ASSERT(result);
+     if (initializers!=NULL)
+        {
+          initializers->set_parent(result);
+        }
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+SgBracedInitializer* SageBuilder::buildBracedInitializer_nfi(SgExprListExp * initializers, SgType * expression_type )
+   {
+     SgBracedInitializer* result = new SgBracedInitializer(initializers, expression_type);
+     ROSE_ASSERT(result);
+     if (initializers!=NULL)
+        {
+          initializers->set_parent(result);
+        }
+     setOneSourcePositionNull(result);
+     return result;
+   }
 
 
 //! Build sizeof() expression with an expression parameter

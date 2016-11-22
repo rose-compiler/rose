@@ -8,10 +8,13 @@ test2016_02.C \
 test2016_03.C \
 test2016_04.C \
 test2016_05.C \
-test2016_06.C \
+test2016_07.C \
+test2016_08.C \
+test2016_09.C \
 test2016_10.C \
 test2016_11.C \
 test2016_14.C \
+test2016_15.C \
 test2016_19.C \
 test2016_24.C \
 test2016_25.C \
@@ -21,12 +24,8 @@ last.C
 # These are incomplete non-compilable code fragments
 TESTCODE_CURRENTLY_FAILING = \
 test2016_01.C \
-test2016_07.C \
-test2016_08.C \
-test2016_09.C \
 test2016_12.C \
 test2016_13.C \
-test2016_15.C \
 test2016_16.C \
 test2016_17.C \
 test2016_18.C \
@@ -35,6 +34,13 @@ test2016_21.C \
 test2016_22.C \
 test2016_23.C \
 last.C
+
+# DQ (11/19/2016): This test is failing in the unparsed code (a RAJA example) at least for the GNU 6.1 compiler and using EDG 4.11).
+# test2016_40.C 
+if ROSE_USE_EDG_VERSION_4_9
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2016_06.C 
+endif
 
 # Note: last.C just simplifies the Makefile.am it
 # avoids common makefle errors in adding new files.
@@ -72,7 +78,16 @@ TEST_Objects_UnfoldedConstants = ${ALL_TESTCODES:.C=.unfoldedConstants-o}
 # VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
