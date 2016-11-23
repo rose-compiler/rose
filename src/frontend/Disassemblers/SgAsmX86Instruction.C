@@ -228,14 +228,12 @@ SgAsmX86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &
     return isFunctionReturnFast(insns);
 }
 
-/** Determines whether this instruction is the special x86 "unknown" instruction. */
 bool
 SgAsmX86Instruction::isUnknown() const
 {
     return x86_unknown_instruction == get_kind();
 }
 
-/** Return control flow successors. See base class for full documentation. */
 BinaryAnalysis::Disassembler::AddressSet
 SgAsmX86Instruction::getSuccessors(bool *complete) {
     BinaryAnalysis::Disassembler::AddressSet retval;
@@ -367,7 +365,6 @@ SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
     }
 }
 
-/** Return control flow successors. See base class for full documentation. */
 BinaryAnalysis::Disassembler::AddressSet
 SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
 {
