@@ -123,6 +123,8 @@ codethorn_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CTIOLabeler.h                    \
   CTIOLabeler.C                    \
+  DataRaceDetection.h \
+  DataRaceDetection.C \
   EqualityMaintainer.h             \
   ExprAnalyzer.C                   \
   ExprAnalyzer.h                   \

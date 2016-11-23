@@ -1,46 +1,77 @@
 /* data race detection - refactoring in progress */
 
-#include "Analyzer.h"
-#include "CommandLineOptions.h"
+#include "sage3basic.h"
 #include "DataRaceDetection.h"
+#include "Specialization.h"
+#include "EquivalenceChecking.h"
 
-void initDataRaceDetection(Analyzer& analyzer) {
+using namespace CodeThorn;
+
+DataRaceDetection::DataRaceDetection() {
+}
+
+DataRaceDetection::Options::Options():active(false),
+                                      dataRaceFail(false),
+                                      maxFloatingPointOperations(0),
+                                      useConstSubstitutionRule(false),
+                                      visualizeReadWriteSets(false),
+                                      printUpdateInfos(true)
+{
+}
+
+void DataRaceDetection::handleCommandLineOptions(Analyzer& analyzer, BoolOptions& boolOptions) {
   //cout<<"DEBUG: initializing data race detection"<<endl;
-  if(boolOptions["data-race-fail"]||args.count("data-race-csv")) {
+  if(boolOptions["data-race-fail"]) {
+    boolOptions.setOption("data-race",true);
+  }
+  if(args.count("data-race-csv")) {
+    options.dataRaceCsvFileName=args["data-race-csv"].as<string>();
     boolOptions.setOption("data-race",true);
   }
   if(boolOptions["data-race"]) {
-    cout<<"INFO: ignoring lhs-array accesses"<<endl;
+    options.active=true;
+    //cout<<"INFO: ignoring lhs-array accesses"<<endl;
     analyzer.setSkipArrayAccesses(true);
+    options.useConstSubstitutionRule=boolOptions["rule-const-subst"];
+    options.maxFloatingPointOperations=0; // not used yet
   }
+  if (boolOptions["visualize-read-write-sets"]) {
+    options.visualizeReadWriteSets=true;
+  }
+  if(boolOptions["print-update-infos"]) {
+    options.printUpdateInfos=true;
+  }
+  options.useConstSubstitutionRule=boolOptions["rule-const-subst"];
 }
 
-bool runDataRaceDetection(Analyzer& analyzer) {
-  SAR_MODE sarMode=SAR_SSA;
-  Specialization speci;
-  ArrayUpdatesSequence arrayUpdates;
-  RewriteSystem rewriteSystem;
-  bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
-  int verifyUpdateSequenceRaceConditionsResult=-1;
-  int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
-  int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
+void DataRaceDetection::setCsvFileName(string fileName) {
+  options.dataRaceCsvFileName=fileName;
+}
 
-  if(boolOptions["data-race"]) {
+bool DataRaceDetection::run(Analyzer& analyzer, BoolOptions& boolOptoins) {
+  if(options.active) {
+    SAR_MODE sarMode=SAR_SSA;
+    Specialization speci;
+    ArrayUpdatesSequence arrayUpdates;
+    RewriteSystem rewriteSystem;   
+    int verifyUpdateSequenceRaceConditionsResult=-1;
+    int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
+    int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
+
     analyzer.setSkipSelectedFunctionCalls(true);
     analyzer.setSkipArrayAccesses(true);
+
     // perform data race detection
-    if (boolOptions["visualize-read-write-sets"]) {
+    if (options.visualizeReadWriteSets) {
       speci.setVisualizeReadWriteAccesses(true);
     }
-    ArrayUpdatesSequence arrayUpdates;
     cout<<"STATUS: performing array analysis on STG."<<endl;
     cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
-    //bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
     
     speci.extractArrayUpdateOperations(&analyzer,
                                        arrayUpdates,
                                        rewriteSystem,
-                                       useConstSubstitutionRule
+                                       options.useConstSubstitutionRule
                                        );
     speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode);
 
@@ -51,7 +82,7 @@ bool runDataRaceDetection(Analyzer& analyzer) {
     verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
     verifyUpdateSequenceRaceConditionsParLoopNum=Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
     verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
-    if(boolOptions["print-update-infos"]) {
+    if(options.printUpdateInfos) {
       speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
     }
     speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
@@ -71,10 +102,8 @@ bool runDataRaceDetection(Analyzer& analyzer) {
     text<<endl;
 
     cout << text.str();
-    if(args.count("data-race-csv")) {
-      string fileName=args["data-race-csv"].as<string>();
-      string fileContent=text.str();
-      CodeThorn::write_file(fileName,fileContent);
+    if(options.dataRaceCsvFileName!="") {
+      CodeThorn::write_file(options.dataRaceCsvFileName,text.str());
     }
     return true;
   } else {

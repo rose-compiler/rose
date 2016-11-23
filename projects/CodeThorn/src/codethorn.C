@@ -1018,7 +1018,7 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
 }
 
 /* refactoring in progress */
-#include "DataRaceDetection.C"
+//#include "DataRaceDetection.C"
 
 int main( int argc, char * argv[] ) {
   Sawyer::Message::Facility logger("CodeThorn");
@@ -1165,10 +1165,8 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    // logger[DEBUG] <<"ignoring lhs-array accesses"<<endl;
-    //analyzer.setSkipArrayAccesses(true);
-
-    initDataRaceDetection(analyzer);
+    DataRaceDetection dataRaceDetection;
+    dataRaceDetection.handleCommandLineOptions(analyzer, boolOptions);
 
     // handle RERS mode: reconfigure options
     if(boolOptions["rersmode"]||boolOptions["rers-mode"]) {
@@ -1694,8 +1692,8 @@ int main( int argc, char * argv[] ) {
     int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
     int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
 
-    /* refactoring in progress */ {
-      if(runDataRaceDetection(analyzer)) {
+    /* Data race detection */ {
+      if(dataRaceDetection.run(analyzer,boolOptions)) {
         exit(0);
       }
     }
