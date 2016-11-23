@@ -139,6 +139,8 @@ codethorn_SOURCES = \
   LTLParser.y++                    \
   LanguageRestrictorCollection.C   \
   LanguageRestrictorCollection.h   \
+  LoopInfo.h                       \
+  LoopInfo.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   PragmaHandler.h \

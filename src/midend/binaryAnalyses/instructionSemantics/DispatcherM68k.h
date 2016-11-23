@@ -3,6 +3,11 @@
 
 #include "BaseSemantics2.h"
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/split_member.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -11,6 +16,43 @@ namespace InstructionSemantics2 {
 typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 
 class DispatcherM68k: public BaseSemantics::Dispatcher {
+public:
+    /** Cached register.
+     *
+     *  This register is cached so that there are not so many calls to Dispatcher::findRegister(). Changing the register
+     *  dictionary via set_register_dictionary() invalidates all entries of the cache.
+     *
+     * @{ */
+    RegisterDescriptor REG_D[8], REG_A[8], REG_FP[8], REG_PC, REG_CCR, REG_CCR_C, REG_CCR_V, REG_CCR_Z, REG_CCR_N, REG_CCR_X;
+    RegisterDescriptor REG_MACSR_SU, REG_MACSR_FI, REG_MACSR_N, REG_MACSR_Z, REG_MACSR_V, REG_MACSR_C, REG_MAC_MASK;
+    RegisterDescriptor REG_MACEXT0, REG_MACEXT1, REG_MACEXT2, REG_MACEXT3, REG_SSP, REG_SR_S, REG_SR, REG_VBR;
+    // Floating-point condition code bits
+    RegisterDescriptor REG_FPCC_NAN, REG_FPCC_I, REG_FPCC_Z, REG_FPCC_N;
+    // Floating-point status register exception bits
+    RegisterDescriptor REG_EXC_BSUN, REG_EXC_OPERR, REG_EXC_OVFL, REG_EXC_UNFL, REG_EXC_DZ, REG_EXC_INAN;
+    RegisterDescriptor REG_EXC_IDE, REG_EXC_INEX;
+    // Floating-point status register accrued exception bits
+    RegisterDescriptor REG_AEXC_IOP, REG_AEXC_OVFL, REG_AEXC_UNFL, REG_AEXC_DZ, REG_AEXC_INEX;
+    /** @} */
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
+    };
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
+        regcache_init();
+        iproc_init();
+        memory_init();
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+    
 protected:
     // prototypical constructor
     DispatcherM68k(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_coldfire_emac()) {}
@@ -33,24 +75,6 @@ protected:
     void memory_init();
 
 public:
-    /** Cached register.
-     *
-     *  This register is cached so that there are not so many calls to Dispatcher::findRegister(). Changing the register
-     *  dictionary via set_register_dictionary() invalidates all entries of the cache.
-     *
-     * @{ */
-    RegisterDescriptor REG_D[8], REG_A[8], REG_FP[8], REG_PC, REG_CCR, REG_CCR_C, REG_CCR_V, REG_CCR_Z, REG_CCR_N, REG_CCR_X;
-    RegisterDescriptor REG_MACSR_SU, REG_MACSR_FI, REG_MACSR_N, REG_MACSR_Z, REG_MACSR_V, REG_MACSR_C, REG_MAC_MASK;
-    RegisterDescriptor REG_MACEXT0, REG_MACEXT1, REG_MACEXT2, REG_MACEXT3, REG_SSP, REG_SR_S, REG_SR, REG_VBR;
-    // Floating-point condition code bits
-    RegisterDescriptor REG_FPCC_NAN, REG_FPCC_I, REG_FPCC_Z, REG_FPCC_N;
-    // Floating-point status register exception bits
-    RegisterDescriptor REG_EXC_BSUN, REG_EXC_OPERR, REG_EXC_OVFL, REG_EXC_UNFL, REG_EXC_DZ, REG_EXC_INAN;
-    RegisterDescriptor REG_EXC_IDE, REG_EXC_INEX;
-    // Floating-point status register accrued exception bits
-    RegisterDescriptor REG_AEXC_IOP, REG_AEXC_OVFL, REG_AEXC_UNFL, REG_AEXC_DZ, REG_AEXC_INEX;
-    /** @} */
-
     /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
      *  with the virtual @ref create method. */
     static DispatcherM68kPtr instance() {
@@ -107,5 +131,7 @@ public:
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
 
 #endif

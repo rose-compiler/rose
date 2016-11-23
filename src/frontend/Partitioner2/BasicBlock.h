@@ -11,9 +11,11 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedPointer.h>
 
-#include <set>
-#include <string>
-#include <vector>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -40,6 +42,20 @@ public:
         Semantics::SValuePtr expr_;
         EdgeType type_;
         Confidence confidence_;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & expr_ & type_ & confidence_;
+        }
+
+    protected:
+        // intentionally undocumented; needed for serialization
+        Successor()
+            : type_(E_USER_DEFINED), confidence_(ASSUMED) {}
+
     public:
         explicit Successor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED)
             : expr_(expr), type_(type), confidence_(confidence) {}
@@ -105,11 +121,43 @@ public:
         isFunctionReturn_ = other->isFunctionReturn_;
         mayReturn_ = other->mayReturn_;
     }
-    
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not saved
+        s & isFrozen_;
+        s & startVa_;
+        s & comment_;
+        s & insns_;
+        s & dispatcher_;                                // FIXME[Robb P Matzke 2016-11-07]
+        s & operators_;                                 // FIXME[Robb P Matzke 2016-11-07]
+        s & initialState_;
+        s & usingDispatcher_;
+        s & optionalPenultimateState_;
+        s & dblocks_;
+        s & insnAddrMap_;
+        s & successors_;
+        s & ghostSuccessors_;
+        s & isFunctionCall_;
+        s & isFunctionReturn_;
+        s & mayReturn_;
+    }
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
+    BasicBlock()                                        // needed for serialization
+        : isFrozen_(false), startVa_(0), usingDispatcher_(false) {}
+
     // use instance() instead
     BasicBlock(rose_addr_t startVa, const Partitioner *partitioner)
         : isFrozen_(false), startVa_(startVa), usingDispatcher_(true) { init(partitioner); }

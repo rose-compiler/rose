@@ -1,4 +1,5 @@
 #include <sage3basic.h>
+#include <rose_isnan.h>
 
 #include <BinaryFunctionSimilarity.h>
 #include <Diagnostics.h>
@@ -287,7 +288,7 @@ FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr
                 break;
             }
         }
-        ASSERT_require(!isnan(d));
+        ASSERT_require(!rose_isnan(d));
         categoryDistances.push_back(d * categories_[id].weight);
     }
     return combine(categoryAccumulatorType_, categoryDistances);
@@ -319,7 +320,7 @@ typedef Sawyer::Container::Graph<ComparisonTask> ComparisonTasks;
 
 // How a worker thread processes one task
 struct ComparisonFunctor {
-    static const double dfltCompare;              // distance between functions when either has no data
+    static const double dfltCompare;                    // distance between functions when either has no data
     const FunctionSimilarity *self;
     Sawyer::ProgressBar<size_t> &progress;
 

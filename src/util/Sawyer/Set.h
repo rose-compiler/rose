@@ -13,7 +13,9 @@
 
 #include <boost/foreach.hpp>
 #include <boost/range/iterator_range.hpp>
-#include <set>
+#include <boost/serialization/serialization.hpp>        // needed by <boost/serialization/set.hpp> in boost 1.58 - 1.60
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/set.hpp>
 #include <vector>
 
 namespace Sawyer {
@@ -49,6 +51,17 @@ public:
     typedef A Allocator;                                /**< How to allocate storge for new values. */
     typedef typename InternalSet::const_iterator ConstIterator;  /**< Iterator for traversing values stored in the set. */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & set_;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Construction
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
