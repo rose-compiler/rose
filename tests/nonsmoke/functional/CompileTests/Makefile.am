@@ -43,6 +43,7 @@ SUBDIRS += x10_tests
 
 SUBDIRS += OpenMP_tests FailSafe_tests
 
+if !ROSE_USE_SANITIZER
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # DQ (7/14/2013): Temporarily commented out this test to evaluate progress on tests/nonsmoke/functional/CompileTests directory.
@@ -50,6 +51,7 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += Fortran_tests
 #Pei-Hung (7/13/2015): Adding mixlanguage tests (patches from Stephen Guzik)
    SUBDIRS += mixLanguage_tests
+endif
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
