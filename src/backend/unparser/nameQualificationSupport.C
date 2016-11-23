@@ -5374,10 +5374,61 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
 
                          SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(initializedName->get_parent());
-                         ROSE_ASSERT(functionParameterList != NULL);
+
+
+                         SgTemplateClassDeclaration* templateClassDeclaration = NULL;
+
+                      // DQ (11/22/2016): Added debugging information to support test2013_63.C (using GNU g++ version 6.1, C++14 support).
+                         if (functionParameterList == NULL)
+                            {
+                              ROSE_ASSERT(initializedName->get_parent() != NULL);
+#if 0
+                              printf ("initializedName->get_parent() = %p = %s \n",initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
+#endif
+                              SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(initializedName->get_parent());
+                              if (templateClassDefinition != NULL)
+                                 {
+#if 0
+                                   printf ("templateClassDefinition = %p name = %s \n",templateClassDefinition,templateClassDefinition->class_name().c_str());
+                                   templateClassDefinition->get_file_info()->display("functionParameterList == NULL: templateClassDefinition: debug");
+#endif
+                                // SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
+                                   templateClassDeclaration = templateClassDefinition->get_declaration();
+#if 0
+                                   printf ("templateClassDeclaration = %p name = %s \n",templateClassDeclaration,templateClassDeclaration->get_templateName().str());
+                                   templateClassDeclaration->get_file_info()->display("functionParameterList == NULL: templateClassDeclaration: debug");
+
+                                   printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                                   initializedName->get_file_info()->display("functionParameterList == NULL: initializedName: debug");
+#endif
+                                 }
+                            }
+
+                      // DQ (11/22/2016): In test2013_63.C the parent of the SgInitializedName is set to a SgTemplateClassDefinition.
+                      // ROSE_ASSERT(functionParameterList != NULL);
 
                          int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
-                         setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
+
+                      // DQ (11/22/2016): Skip this case as part of testing.
+                      // setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
+                         if (functionParameterList != NULL)
+                            {
+                              setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
+                            }
+                           else
+                            {
+                           // DQ (11/22/2016): Added special handling for test2013_63.C (using GNU g++ version 6.1, C++14 support) as a test.
+                              if (templateClassDeclaration != NULL)
+                                 {
+                                   printf ("WARNING: name qualification special handling for initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                                   setNameQualification(varRefExp,templateClassDeclaration,amountOfNameQualificationRequired);
+                                 }
+                                else
+                                 {
+                                   printf ("ERROR: name qualification skipped for initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                                   ROSE_ASSERT(false);
+                                 }
+                            }
                        }
                       else
                        {
@@ -7464,6 +7515,9 @@ NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclaratio
 
   // DQ (6/4/2011): This should not be a SgConstructorInitializer since that uses the qualifiedNameMapForNames instead of the qualifiedNameMapForTypes.
      ROSE_ASSERT(isSgConstructorInitializer(exp) == NULL);
+
+  // DQ (11/22/2016): Added assertion.
+     ROSE_ASSERT(typeDeclaration != NULL);
 
      string qualifier = setNameQualificationSupport(typeDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
