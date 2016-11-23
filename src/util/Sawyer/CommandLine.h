@@ -2920,7 +2920,7 @@ public:
      *  the file. */
     std::vector<std::string> expandIncludedFiles(const std::vector<std::string> &args);
 
-    /** Bit flags for argument grouping. See @ref groupArguments. */
+    /** Bit flags for argument grouping. See @ref regroupArgs. */
     enum GroupingFlags {
         DEFAULT_GROUPING        = 0,                    /**< Zero, all flags are clear. */
         PROHIBIT_EMPTY_GROUPS   = 0x0001,               /**< Error if any group is empty. */
@@ -2937,7 +2937,7 @@ public:
     std::vector<std::vector<std::string> >
     regroupArgs(const std::vector<std::string> &args,
                 const Container::Interval<size_t> &limits = Container::Interval<size_t>::whole(),
-                unsigned flags = 0);
+                unsigned flags = 0 /*GroupingFlags*/);
 
     /** Program name for documentation.  If no program name is given (or it is set to the empty string) then the name is
      *  obtained from the operating system.
