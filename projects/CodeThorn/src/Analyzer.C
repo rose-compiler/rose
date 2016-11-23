@@ -305,7 +305,7 @@ void Analyzer::addToWorkList(const EState* estate) {
     case EXPL_LOOP_AWARE: {
       if(isLoopCondLabel(estate->label())) {
         estateWorkListCurrent->push_back(estate);
-        logger[DEBUG] << "push to WorkList: "<<_curr_iteration_cnt<<","<<_next_iteration_cnt<<":"<<_iterations<<endl;
+        // logger[DEBUG] << "push to WorkList: "<<_curr_iteration_cnt<<","<<_next_iteration_cnt<<":"<<_iterations<<endl;
         _next_iteration_cnt++;
       } else {
         estateWorkListCurrent->push_front(estate);
@@ -440,7 +440,7 @@ bool Analyzer::isTopified(EState& estate) {
 }
 
 void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId) {
-  logger[DEBUG] << "DEAD CODE (Analyzer::topifyVariale(..))." <<endl;
+  // logger[DEBUG] << "DEAD CODE (Analyzer::topifyVariale(..))." <<endl;
   //exit(1);
   pstate.setVariableToTop(varId);
   //cset.removeAllConstraintsOfVar(varId);
@@ -494,7 +494,7 @@ bool Analyzer::isLTLRelevantLabel(Label label) {
      || isStartLabel(label) // we keep the start state
          || isCppLabeledAssertLabel(label)
     ;
-  logger[TRACE] << "L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
+  // logger[TRACE] << "L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
 }
 
@@ -509,7 +509,7 @@ bool Analyzer::isStdIOLabel(Label label) {
     ||
     (getLabeler()->isStdOutLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
     ;
-  logger[TRACE] << "STATUS: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
+  // logger[TRACE] << "STATUS: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
 }
 
@@ -621,7 +621,7 @@ const EState* Analyzer::addToWorkListIfNew(EState estate) {
     addToWorkList(newEStatePtr);
     return newEStatePtr;
   } else {
-    logger[DEBUG] << "EState already exists. Not added:"<<estate.toString()<<endl;
+    // logger[DEBUG] << "EState already exists. Not added:"<<estate.toString()<<endl;
     const EState* existingEStatePtr=res.second;
     assert(existingEStatePtr);
     return existingEStatePtr;
@@ -649,7 +649,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         // in case of a constant array the array (and its members) are not added to the state.
         // they are considered to be determined from the initializer without representing them
         // in the state
-        logger[DEBUG] <<"not adding array to PState."<<endl;
+        // logger[DEBUG] <<"not adding array to PState."<<endl;
         PState newPState=*currentEState.pstate();
         ConstraintSet cset=*currentEState.constraints();
         return createEState(targetLabel,newPState,cset);
@@ -663,7 +663,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       ConstraintSet cset=*currentEState.constraints();
       SgAssignInitializer* assignInitializer=0;
       if(initializer && isSgAggregateInitializer(initializer)) {
-        logger[DEBUG] <<"array-initializer found:"<<initializer->unparseToString()<<endl;
+        // logger[DEBUG] <<"array-initializer found:"<<initializer->unparseToString()<<endl;
         PState newPState=*currentEState.pstate();
         int elemIndex=0;
         SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
@@ -674,23 +674,23 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           SgIntVal* intValNode=0;
           if(assignInit && (intValNode=isSgIntVal(assignInit->get_operand_i()))) {
             int intVal=intValNode->get_value();
-            logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+            // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
             newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
           } else {
-            logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+            // logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
             exit(1);
           }
           elemIndex++;
         }
         return createEState(targetLabel,newPState,cset);
       } else if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
-        logger[DEBUG] << "initializer found:"<<initializer->unparseToString()<<endl;
+        // logger[DEBUG] << "initializer found:"<<initializer->unparseToString()<<endl;
         SgExpression* rhs=assignInitializer->get_operand_i();
         assert(rhs);
         PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
         return createEState(targetLabel,newPState,cset);
       } else {
-        logger[INFO] << "no initializer (OK)."<<endl;
+        // logger[INFO] << "no initializer (OK)."<<endl;
         PState newPState=*currentEState.pstate();
         //newPState[initDeclVarId]=AType::Top();
         newPState.setVariableToTop(initDeclVarId);
@@ -903,7 +903,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   // we do not pass information on the local edge
   if(edge.isType(EDGE_LOCAL)) {
     if(boolOptions["rers-binary"]) {
-      logger[DEBUG]<<"ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
+      // logger[DEBUG]<<"ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
       SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
         assert(funCall);
@@ -929,7 +929,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  assert(index>=0 && index <=99);
 	  binaryBindingAssert[index]=true;
 	  //reachabilityResults.reachable(index); //previous location in code
-	  logger[DEBUG]<<"found assert Error "<<index<<endl;
+	  // logger[DEBUG]<<"found assert Error "<<index<<endl;
 	  ConstraintSet _cset=*estate->constraints();
 	  InputOutput _io;
 	  _io.recordFailedAssert();
@@ -949,7 +949,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  VariableId lhsVarId;
 	  bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
 	  assert(isLhsVar); // must hold
-	  logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
+	  // logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
 	  //_pstate[lhsVarId]=AType::ConstIntLattice(rers_result);
 	  _pstate.setVariableToValue(lhsVarId,AType::ConstIntLattice(rers_result));
 	  ConstraintSet _cset=*estate->constraints();
@@ -966,7 +966,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  exit(1);
 	  // _pstate now contains the current state obtained from the binary
         }
-	  logger[DEBUG]<< "@LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
+	  // logger[DEBUG]<< "@LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
 	}
 	}
 	  return elistify();
@@ -998,7 +998,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
       string funName=SgNodeHelper::getFunctionName(funCall);
       if(funName=="calculate_output") {
-        logger[DEBUG]<< "rers-binary mode: skipped static-analysis call."<<endl;
+        // logger[DEBUG]<< "rers-binary mode: skipped static-analysis call."<<endl;
         return elistify();
       }
     }
@@ -1214,7 +1214,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         newio.recordVariable(InputOutput::STDIN_VAR,varId);
         EState estate=createEState(edge.target(),newPState,newCSet,newio);
         resList.push_back(estate);
-        logger[DEBUG]<< "created "<<_inputVarValues.size()<<" input states."<<endl;
+        // logger[DEBUG]<< "created "<<_inputVarValues.size()<<" input states."<<endl;
         return resList;
       } else {
         if(_inputVarValues.size()>0) {
@@ -1241,7 +1241,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             EState estate=createEState(edge.target(),newPState,newCSet,newio);
             resList.push_back(estate);
           }
-          logger[DEBUG]<< "created "<<_inputVarValues.size()<<" input states."<<endl;
+          // logger[DEBUG]<< "created "<<_inputVarValues.size()<<" input states."<<endl;
           return resList;
         } else {
           // without specified input values (default mode: analysis performed for all possible input values)
@@ -1425,17 +1425,17 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           // only update integer variables. Ensure values of floating-point variables are not computed
           if(variableIdMapping.hasIntegerType(lhsVar)) {
             if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
-              logger[DEBUG]<<"Topifying hot variable :)"<<lhsVar.toString()<<endl;
+              // logger[DEBUG]<<"Topifying hot variable :)"<<lhsVar.toString()<<endl;
               newPState.setVariableToTop(lhsVar);
             } else {
               //newPState[lhsVar]=(*i).result;
-              logger[DEBUG]<<"assign lhs var:"<<lhsVar.toString()<<endl;
+              // logger[DEBUG]<<"assign lhs var:"<<lhsVar.toString()<<endl;
               newPState.setVariableToValue(lhsVar,(*i).result);
             }
           } else if(variableIdMapping.hasPointerType(lhsVar)) {
             // we assume here that only arrays (pointers to arrays) are assigned
             // see CODE-POINT-1 in ExprAnalyzer.C
-            logger[DEBUG]<<"pointer-assignment: "<<lhsVar.toString()<<"="<<(*i).result<<endl;
+            // logger[DEBUG]<<"pointer-assignment: "<<lhsVar.toString()<<"="<<(*i).result<<endl;
             //newPState[lhsVar]=(*i).result;
             if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
               newPState.setVariableToTop(lhsVar);
@@ -1470,7 +1470,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
                 // nothing to do
               } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
                 // in case it is a pointer retrieve pointer value
-                logger[DEBUG]<<"pointer-array access!"<<endl;
+                // logger[DEBUG]<<"pointer-array access!"<<endl;
                 if(pstate2.varExists(arrayVarId)) {
                   AValue aValuePtr=pstate2[arrayVarId];
                   // convert integer to VariableId
@@ -1481,9 +1481,9 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
                   }
                   int aValueInt=aValuePtr.getIntValue();
                   // change arrayVarId to refered array!
-                  logger[DEBUG]<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
+                  // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
                   arrayVarId=_variableIdMapping->variableIdFromCode(aValueInt);
-                  logger[DEBUG]<<" to "<<_variableIdMapping->variableName(arrayVarId)<<endl;//DEBUG
+                  // logger[DEBUG]<<" to "<<_variableIdMapping->variableName(arrayVarId)<<endl;//DEBUG
                 } else {
                   logger[ERROR] <<"lhs array access: pointer variable does not exist in PState."<<endl;
                   exit(1);
@@ -1498,7 +1498,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               if(aValue.isConstInt()) {
                 index=aValue.getIntValue();
                 arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
-                logger[DEBUG]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
+                // logger[DEBUG]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
               } else {
                 logger[ERROR] <<"lhs array index cannot be evaluated to a constant. Not supported yet."<<endl;
                 logger[ERROR] <<"expr: "<<varRefExp->unparseToString()<<endl;
@@ -1572,7 +1572,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
 
-  logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
+  // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   logger[TRACE]<< "INIT: Building CFGs."<<endl;
 
   if(oneFunctionOnly)
@@ -2008,10 +2008,10 @@ void Analyzer::reduceGraphInOutWorklistOnly(bool includeIn, bool includeOut, boo
     transitionGraph.eliminateEState(*i);
   }
   // 4.) add newTransitions
-  logger[DEBUG]<< "number of new shortcut transitions to be added: " << newTransitions.size() << endl;
+  // logger[DEBUG]<< "number of new shortcut transitions to be added: " << newTransitions.size() << endl;
   for(std::list<Transition*>::iterator i=newTransitions.begin();i!=newTransitions.end();++i) {
     transitionGraph.add(**i);
-    logger[DEBUG]<< "added " << (*i)->toString() << endl;
+    // logger[DEBUG]<< "added " << (*i)->toString() << endl;
   }
 }
 
@@ -2222,7 +2222,7 @@ void Analyzer::runSolver4() {
         assert(currentEStatePtr);
 
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        logger[DEBUG]<< "edgeSet size:"<<edgeSet.size()<<endl;
+        // logger[DEBUG]<< "edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
@@ -2232,7 +2232,7 @@ void Analyzer::runSolver4() {
             analyzedSemanticFoldingNode++;
           }
 
-          logger[DEBUG]<< "transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
+          // logger[DEBUG]<< "transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
           for(list<EState>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
@@ -2347,7 +2347,7 @@ void Analyzer::runSolver5() {
   {
     threadNum=omp_get_thread_num();
     while(!all_false(workVector)) {
-      logger[DEBUG]<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
+      // logger[DEBUG]<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
       if(threadNum==0 && _displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
         printStatusMessage(true);
         prevStateSetSize=estateSet.size();
@@ -2393,7 +2393,7 @@ void Analyzer::runSolver5() {
         }
 
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        logger[DEBUG] << "out-edgeSet size:"<<edgeSet.size()<<endl;
+        // logger[DEBUG] << "out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
@@ -2418,7 +2418,7 @@ void Analyzer::runSolver5() {
                 fout<<"==> "<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping);
                 fout<<endl;
                 fout.close();
-                logger[DEBUG] <<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
+                // logger[DEBUG] <<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
               }
             }
 
@@ -2504,7 +2504,7 @@ void Analyzer::runSolver8() {
   int workers = 1; //only one thread
   if(boolOptions["rers-binary"]) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
-    logger[DEBUG]<< "init of globals with arrays for "<< workers << " threads. " << endl;
+    // logger[DEBUG]<< "init of globals with arrays for "<< workers << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInit(workers);
   }
   while(!isEmptyWorkList()) {
@@ -2888,7 +2888,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
   EStateSet existingEStateSet;
   localWorkList.push_back(currentEStatePtr);
   while(!localWorkList.empty()) {
-    logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
+    // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
     const EState* currentEStatePtr=*localWorkList.begin();
     localWorkList.pop_front();
     if(isFailedAssertEState(currentEStatePtr)) {
@@ -3088,7 +3088,7 @@ void Analyzer::runSolver12() {
 	}
       }
 
-      logger[DEBUG]<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
+      // logger[DEBUG]<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
       unsigned long estateSetSize;
 #pragma omp critical(HASHSET)
       {
@@ -3186,7 +3186,7 @@ void Analyzer::runSolver12() {
         }
 
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        logger[DEBUG]<< "out-edgeSet size:"<<edgeSet.size()<<endl;
+        // logger[DEBUG]<< "out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
@@ -3211,7 +3211,7 @@ void Analyzer::runSolver12() {
                 fout<<"==> "<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping);
                 fout<<endl;
                 fout.close();
-                logger[DEBUG]<<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
+                // logger[DEBUG]<<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
               }
             }
 
@@ -3436,10 +3436,10 @@ bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<i
     } // while
   } // omp parallel
   if (foundTheAssertion) {
-    logger[TRACE]<< "analysis finished (found assertion #" << assertion_id <<")."<<endl;
+    // logger[TRACE]<< "analysis finished (found assertion #" << assertion_id <<")."<<endl;
     return true;
   } else {
-    logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
+    // logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
     return false;
   }
 }
@@ -3587,7 +3587,7 @@ bool Analyzer::searchPatternPath(int assertion_id, PState& pState, list<int>& in
         int index=((rers_result+100)*(-1));
         assert(index>=0 && index <=99);
         if(index == assertion_id) {
-          logger[DEBUG]<< "found assertion #" << assertion_id << " after " << i << " pattern iterations." << endl;
+          // logger[DEBUG]<< "found assertion #" << assertion_id << " after " << i << " pattern iterations." << endl;
           if (iOSequence) {
             iOSequence->splice(iOSequence->end(), iOSquenceStartingAtBranch); // append the new I/O symbols to the current trace
           }
@@ -3603,7 +3603,7 @@ bool Analyzer::searchPatternPath(int assertion_id, PState& pState, list<int>& in
     validPath = computePStateAfterInputs(pState, inputPattern, thread_id, iOSequence);
     i++;
   }
-  logger[DEBUG]<< "could NOT find assertion #" << assertion_id << " after " << _reconstructMaxRepetitions << " pattern iterations." << endl;
+  // logger[DEBUG]<< "could NOT find assertion #" << assertion_id << " after " << _reconstructMaxRepetitions << " pattern iterations." << endl;
   return false;
 }
 
@@ -3869,7 +3869,7 @@ int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
   }
   int ceRunLength = counterexampleRun.size();
   string counterexample = reversedInOutRunToString(counterexampleRun);
-  logger[DEBUG]<< "adding assert counterexample " << counterexample << endl;
+  // logger[DEBUG]<< "adding assert counterexample " << counterexample << endl;
   reachabilityResults.strictUpdateCounterexample(assertCode, counterexample);
   return ceRunLength;
 }
@@ -3925,7 +3925,7 @@ void Analyzer::removeInputInputTransitions() {
         const EState* succ = (*k)->target;
         if (succ->io.isStdInIO()) {
           transitionGraph.erase(**k);
-          logger[DEBUG]<< "erased an input -> input transition." << endl;
+          // logger[DEBUG]<< "erased an input -> input transition." << endl;
         }
       }
     }
