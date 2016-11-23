@@ -7,6 +7,7 @@ SgAsmFloatValueExpression::SgAsmFloatValueExpression(double value, SgAsmType *ty
     ASSERT_not_null(type);
     p_nativeValue = value;
     p_nativeValueIsValid = true;
+    p_type = type;
     updateBitVector();
 }
 

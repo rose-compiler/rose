@@ -3,6 +3,11 @@
 
 #include "BaseSemantics2.h"
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/split_member.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -18,36 +23,6 @@ typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 class DispatcherX86: public BaseSemantics::Dispatcher {
 protected:
     X86InstructionSize processorMode_;
-
-    // Prototypical constructor
-    DispatcherX86()
-        : BaseSemantics::Dispatcher(32, SgAsmX86Instruction::registersForInstructionSize(x86_insnsize_32)),
-          processorMode_(x86_insnsize_32) {}
-
-    // Prototypical constructor
-    DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
-        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
-          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
-
-    // Normal constructor
-    DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
-          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
-        regcache_init();
-        iproc_init();
-        memory_init();
-    }
-
-public:
-
-    /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
-    void iproc_init();
-
-    /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
-    void regcache_init();
-
-    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
-    void memory_init();
 
 public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
@@ -81,6 +56,57 @@ public:
     RegisterDescriptor REG_ST0, REG_FPSTATUS, REG_FPSTATUS_TOP, REG_FPCTL, REG_MXCSR;
     /** @}*/
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
+        s & processorMode_;
+    }
+    
+    template<class S>
+    void load(S &s, const unsigned version) {
+        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
+        s & processorMode_;
+        regcache_init();
+        iproc_init();
+        memory_init();
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+    
+protected:
+    // Prototypical constructor
+    DispatcherX86()
+        : BaseSemantics::Dispatcher(32, SgAsmX86Instruction::registersForInstructionSize(x86_insnsize_32)),
+          processorMode_(x86_insnsize_32) {}
+
+    // Prototypical constructor
+    DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
+        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
+          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
+
+    // Normal constructor
+    DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
+          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
+        regcache_init();
+        iproc_init();
+        memory_init();
+    }
+
+public:
+    /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
+    void iproc_init();
+
+    /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
+    void regcache_init();
+
+    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
+    void memory_init();
+
+public:
     /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
      *  with the virtual @ref create method. */
     static DispatcherX86Ptr instance() {
@@ -273,5 +299,7 @@ public:
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
 
 #endif

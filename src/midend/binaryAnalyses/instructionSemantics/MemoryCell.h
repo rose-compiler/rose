@@ -2,6 +2,9 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCell_H
 
 #include <BaseSemantics2.h>
+#include <Sawyer/Set.h>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/list.hpp>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -61,8 +64,23 @@ private:
     InputOutputPropertySet ioProperties_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & address_;
+        s & value_;
+        s & writers_;
+        s & ioProperties_;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    MemoryCell() {}                                     // for serialization
+
     MemoryCell(const SValuePtr &address, const SValuePtr &value)
         : address_(address), value_(value) {
         ASSERT_not_null(address);

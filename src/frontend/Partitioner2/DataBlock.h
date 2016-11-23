@@ -3,6 +3,7 @@
 
 #include <Partitioner2/BasicTypes.h>
 
+#include <boost/serialization/access.hpp>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/SharedPointer.h>
 
@@ -26,7 +27,19 @@ private:
     size_t size_;                                       // size in bytes; FIXME[Robb P. Matzke 2014-08-12]: replace with type
     size_t nAttachedOwners_;                            // number of attached basic blocks and functions that own this data
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        // s & boost::serialization::base_object<Sawyer::Attribute::Storage>(*this); -- not serialized
+        s & isFrozen_ & startVa_ & size_ & nAttachedOwners_;
+    }
+    
 protected:
+    // needed for serialization
+    DataBlock(): isFrozen_(false), startVa_(0), size_(0), nAttachedOwners_(0) {}
+
     // use instance() instead
     DataBlock(rose_addr_t startVa, size_t size): startVa_(startVa), size_(size), nAttachedOwners_(0) {
         ASSERT_require(size_ > 0);

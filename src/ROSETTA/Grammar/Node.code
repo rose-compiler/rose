@@ -1,4 +1,4 @@
-
+// -*- c++-mode -*-
 HEADER_NODE_PREDECLARATION_START
 
 #include <semaphore.h>
@@ -9,6 +9,11 @@ HEADER_NODE_PREDECLARATION_START
 #include "rangemap.h"
 #include "Map.h"
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/vector.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <Sawyer/Interval.h>
@@ -156,6 +161,21 @@ struct HexdumpFormat {
  *  The RegisterDescriptor type is part of a SgAsmRegisterReferenceExpression and also appears in the register dictionaries
  *  (RegisterDictionary) used in various places including the disassembler. */
 struct RegisterDescriptor {
+private:
+    /* Strange names "majr" and "minr" are to avoid a conflict with "major" and "minor" macros in some non-standard headers. */
+    unsigned majr;	                                // Major type of register, such as integer, floating point, flag, etc.
+    unsigned minr;	                                // Register number within major division.
+    unsigned offset;	                                // Low-bit offset within the physical register.
+    unsigned nbits;	                                // Number of bits referenced by this descriptor.
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & majr & minr & offset & nbits;
+    }
+
 public:
     RegisterDescriptor()
 	: majr(0), minr(0), offset(0), nbits(0) {}
@@ -199,12 +219,6 @@ public:
 	o <<"{" <<majr <<"," <<minr <<"," <<offset <<"," <<nbits <<"}";
     }
     friend std::ostream& operator<<(std::ostream&, const RegisterDescriptor&); /*in Register.C*/
-private:
-    /* Strange names "majr" and "minr" are to avoid a conflict with "major" and "minor" macros in some non-standard headers. */
-    unsigned majr;	/** Major type of register, such as integer, floating point, flag, etc. */
-    unsigned minr;	/** Register number within major division. */
-    unsigned offset;	/** Low-bit offset within the physical register. */
-    unsigned nbits;	/** Number of bits referenced by this descriptor. */
 };
 
 /** Mapping from instruction virtual address to instruction. */
@@ -308,19 +322,6 @@ typedef SgAsmBlockPtrList*                  SgAsmBlockPtrListPtr;
 
 // JJW (8/28/2008): Added SgAsmInterpretation
 typedef Rose_STL_Container<SgAsmInterpretation*> SgAsmInterpretationPtrList;
-
-#if USE_OLD_BINARY_EXECUTABLE_IR_NODES
-
-#error "Dead Code!"
-
-// DQ (6/14/2008): This will be removed at some point.
-typedef Rose_STL_Container<SgAsmSectionHeader*> SgAsmSectionHeaderPtrList;
-typedef SgAsmSectionHeaderPtrList*              SgAsmSectionHeaderPtrListPtr;
-
-// DQ (6/14/2008): This will be removed at some point.
-typedef Rose_STL_Container<SgAsmProgramHeader*> SgAsmProgramHeaderPtrList;
-typedef SgAsmProgramHeaderPtrList*              SgAsmProgramHeaderPtrListPtr;
-#endif
 
 // DQ (6/14/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmGenericSection*> SgAsmGenericSectionPtrList;

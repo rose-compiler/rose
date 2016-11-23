@@ -4,6 +4,10 @@
 #include <BaseSemantics2.h>
 #include <MemoryCellState.h>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -39,8 +43,23 @@ protected:
     bool occlusionsErased_;                             // prune away old cells that are occluded by newer ones.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<MemoryCellState>(*this);
+        s & cells;
+        s & occlusionsErased_;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    MemoryCellList()                                    // for serialization
+        : occlusionsErased_(false) {}
+
     explicit MemoryCellList(const MemoryCellPtr &protocell)
         : MemoryCellState(protocell), occlusionsErased_(false) {}
 
@@ -236,5 +255,7 @@ protected:
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellList);
 
 #endif
