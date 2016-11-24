@@ -47,6 +47,7 @@ class RewriteSystem {
   // applies rewriteConditionsInStmtExpression to entire AST
   void rewriteCondStmtInAst(SgNode* root);
  private:
+  static Sawyer::Message::Facility logger;
   bool _rewriteCondStmt;
   // sets valueString to empty string in SgFloatVal, SgDoubleVal, SgLongDoubleVal
   void normalizeFloatingPointNumbersForUnparsing(SgNode*& root);
