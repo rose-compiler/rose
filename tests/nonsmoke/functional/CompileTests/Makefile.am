@@ -71,7 +71,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
       UnparseHeadersTests 
 
 # DQ (11/5/2016): These tests fail when testing with Address Sanitizer, but I can't see the output. 
-# Need to work work with Markus to understand the resutls better, skip these tests for now is using
+# Need to work work with Markus to understand the results better, skip these tests for now is using
 # Address Sanitizer.
 if !ROSE_USE_SANITIZER
    SUBDIRS += STL_tests

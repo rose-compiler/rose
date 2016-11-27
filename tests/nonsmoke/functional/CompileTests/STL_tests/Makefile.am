@@ -23,6 +23,9 @@ conditional-check-local:
 endif
 
 check-local: conditional-check-local
+	@echo "*******************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/STL_tests: make check rule complete (terminated normally) ******"
+	@echo "*******************************************************************************************************************"
 
 check-no-cleanup: $(TEST_TRANSLATOR)
 	TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX)  $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh no-cleanup
