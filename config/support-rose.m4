@@ -2,6 +2,8 @@
 #-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 [
+echo "Testing 2 value of FC = $FC"
+
 # Begin macro ROSE_SUPPORT_ROSE_PART_1.
 
 # *********************************************************************
@@ -128,9 +130,15 @@ ROSE_CONFIGURE_SECTION([GNU Fortran])
 AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
 AC_SUBST(GFORTRAN_PATH)
 
-if test "x$GFORTRAN_PATH" != "x"; then
+# DQ (11/17/2016): We need to make sure that --without-gfortran does not set USE_GFORTRAN_IN_ROSE to true.
+# if test "x$GFORTRAN_PATH" != "x"; then
+if test "x$GFORTRAN_PATH" != "x" -a "$GFORTRAN_PATH" != "no"; then
    AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
+else
+   AC_DEFINE([USE_GFORTRAN_IN_ROSE], [0], [Mark that GFORTRAN is not available])
 fi
+
+echo "GFORTRAN_PATH = $GFORTRAN_PATH"
 
 # Call supporting macro for X10 language compiler path
 
@@ -139,6 +147,7 @@ fi
 ##
 
   ROSE_SUPPORT_X10()
+
   ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS
 
   ROSE_CONFIGURE_SECTION([])
@@ -444,6 +453,14 @@ AC_DEFINE_UNQUOTED([ROSE_ASSERTION_BEHAVIOR], [$assertion_behavior], [Determines
     
 # *****************************************************************
 
+# ********************************************************************************
+#    Option support for the Address Sanitizer and other related Sanitizer tools.
+# ********************************************************************************
+
+ROSE_SUPPORT_SANITIZER
+
+# *****************************************************************
+
 # ROSE_HOME should be relative to top_srcdir or top_builddir.
 ROSE_HOME=.
 # ROSE_HOME=`pwd`/$top_srcdir
@@ -639,8 +656,9 @@ AC_ARG_WITH(wave-default, [  --with-wave-default     Use Wave as the default pre
 
 # Add --disable-binary-analysis-tests flag to turn off tests that sometimes
 # sometimes break.
-AC_ARG_ENABLE(binary-analysis-tests, AS_HELP_STRING([--disable-binary-analysis-tests], [Disable tests of ROSE binary analysis code]), binary_analysis_tests="$withval", binary_analysis_tests=yes)
-AM_CONDITIONAL(USE_BINARY_ANALYSIS_TESTS, test "x$binary_analysis_tests" = "xyes")
+# Pei-Hung (10/24/2016) use only ROSE_BUILD_BINARY_ANALYSIS_SUPPORT to control binary analysis tests
+# AC_ARG_ENABLE(binary-analysis-tests, AS_HELP_STRING([--disable-binary-analysis-tests], [Disable tests of ROSE binary analysis code]), binary_analysis_tests="$withval", binary_analysis_tests=yes)
+# AM_CONDITIONAL(USE_BINARY_ANALYSIS_TESTS, test "x$binary_analysis_tests" = "xyes")
 
 # Figure out what version of lex we have available
 # flex works better than lex (this gives a preference to flex (flex is gnu))
@@ -1709,6 +1727,16 @@ src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.11/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
@@ -2174,14 +2202,15 @@ tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile
 tests/nonsmoke/functional/CompileTests/A++Code/Makefile
 tests/nonsmoke/functional/CompileTests/A++Tests/Makefile
-tests/nonsmoke/functional/CompileTests/C11_tests/Makefile
+tests/nonsmoke/functional/CompileTests/C_tests/Makefile
+tests/nonsmoke/functional/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/nonsmoke/functional/CompileTests/C89_std_c89_tests/Makefile
 tests/nonsmoke/functional/CompileTests/C99_tests/Makefile
-tests/nonsmoke/functional/CompileTests/C_subset_of_Cxx_tests/Makefile
-tests/nonsmoke/functional/CompileTests/C_tests/Makefile
+tests/nonsmoke/functional/CompileTests/C11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/CudaTests/Makefile
-tests/nonsmoke/functional/CompileTests/Cxx11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx_tests/Makefile
+tests/nonsmoke/functional/CompileTests/Cxx11_tests/Makefile
+tests/nonsmoke/functional/CompileTests/Cxx14_tests/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/ctests/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/gnu/Makefile

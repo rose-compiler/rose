@@ -62,10 +62,11 @@ namespace CommandlineProcessing
            *
            *  For instance, the "--threads=N" switch takes an integer that should be stored somewhere. */
           struct GenericSwitchArgs {
-              unsigned int threads;                     // The "--threads" switch. 0 means number of hardware threads
+              unsigned int threads;                     /**< Number of threads analyses should use. Zero means use the number
+                                                         *   of threads that the hardware provides. */
 
               GenericSwitchArgs()
-                  : threads(1) {}
+                  : threads(0) {}
           };
 
           /** Global location for parsed generic command-line switches.

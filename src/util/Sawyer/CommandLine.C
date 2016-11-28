@@ -726,11 +726,11 @@ Switch::resetLongPrefixes(const std::string &s1, const std::string &s2, const st
     properties_.longPrefixes.clear();
     if (0!=s1.compare(STR_NONE))
         properties_.longPrefixes.push_back(s1);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s2.compare(STR_NONE))
         properties_.longPrefixes.push_back(s2);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s3.compare(STR_NONE))
         properties_.longPrefixes.push_back(s3);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s4.compare(STR_NONE))
         properties_.longPrefixes.push_back(s4);
     return *this;
 }
@@ -742,11 +742,11 @@ Switch::resetShortPrefixes(const std::string &s1, const std::string &s2, const s
     properties_.shortPrefixes.clear();
     if (0!=s1.compare(STR_NONE))
         properties_.shortPrefixes.push_back(s1);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s2.compare(STR_NONE))
         properties_.shortPrefixes.push_back(s2);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s3.compare(STR_NONE))
         properties_.shortPrefixes.push_back(s3);
-    if (0!=s1.compare(STR_NONE))
+    if (0!=s4.compare(STR_NONE))
         properties_.shortPrefixes.push_back(s4);
     return *this;
 }
@@ -1004,7 +1004,7 @@ Switch::matchArguments(const std::string &switchString, const Location &endOfSwi
         }
     }
 
-    explode(result);
+    explode(parsedValues);
     guard.cancel();
     result.insert(result.end(), parsedValues.begin(), parsedValues.end());
     return nValuesParsed;
@@ -1362,7 +1362,6 @@ ParserResult::parsedArgs() const {
         retval.push_back(cursor_.strings()[idx]);
     return retval;
 }
-
 
 /*******************************************************************************************************************************
  *                                      Parser
@@ -1812,11 +1811,11 @@ Parser::apparentSwitch(const Cursor &cursor) const {
         BOOST_FOREACH (const Switch &sw, sg.switches()) {
             ParsingProperties swProps = sw.properties().inherit(sgProps);
             BOOST_FOREACH (const std::string &prefix, swProps.longPrefixes) {
-                if (!prefix.empty() && boost::starts_with(cursor.arg(), prefix) && cursor.arg().size() > prefix.size())
+                if (boost::starts_with(cursor.arg(), prefix) && cursor.arg().size() > prefix.size())
                     return true;
             }
             BOOST_FOREACH (const std::string &prefix, swProps.shortPrefixes) {
-                if (!prefix.empty() && boost::starts_with(cursor.arg(), prefix) && cursor.arg().size() > prefix.size())
+                if (boost::starts_with(cursor.arg(), prefix) && cursor.arg().size() > prefix.size())
                     return true;
             }
         }
@@ -2600,6 +2599,61 @@ Parser::findUnresolvableAmbiguities() const {
 
     return retval;
 }
+
+SAWYER_EXPORT std::vector<std::vector<std::string> >
+Parser::regroupArgs(const std::vector<std::string> &args, const Container::Interval<size_t> &limit, unsigned flags) {
+    std::vector<std::vector<std::string> > retval(1);
+    BOOST_FOREACH (const std::string &arg, args) {
+        if (arg == "--") {
+            retval.push_back(std::vector<std::string>());
+        } else {
+            retval.back().push_back(arg);
+        }
+    }
+
+    if ((flags & PROHIBIT_EMPTY_GROUPS) != 0) {
+        BOOST_FOREACH (const std::vector<std::string> &group, retval) {
+            if (group.empty()) {
+                std::string mesg = "empty specimen specification on command-line";
+                if (errorStream_) {
+                    *errorStream_ <<mesg <<"\n";
+                    *errorStream_ <<exitMessage() <<"\n";
+                    exit(1);
+                } else {
+                    throw std::runtime_error(mesg);
+                }
+            }
+        }
+    }
+
+    if ((flags & SPLIT_SINGLE_GROUP) != 0 && retval.size() == 1) {
+        retval.clear();
+        BOOST_FOREACH (const std::string &arg, args)
+            retval.push_back(std::vector<std::string>(1, arg));
+    }
+
+    if (!limit.isContaining(retval.size())) {
+        std::ostringstream mesg;
+        mesg <<"wrong number of positional argument groups; got " <<retval.size() <<", expected ";
+        if (limit.isSingleton()) {
+            mesg <<limit.least();
+        } else if (limit.least() + 1 == limit.greatest()) {
+            mesg <<limit.least() <<" or " <<limit.greatest();
+        } else {
+            mesg <<"between " <<limit.least() <<" and " <<limit.greatest();
+        }
+        if (errorStream_) {
+            *errorStream_ <<mesg.str() <<"\n";
+            *errorStream_ <<exitMessage() <<"\n";
+            exit(1);
+        } else {
+            throw std::runtime_error(mesg.str());
+        }
+    }
+    
+    return retval;
+}
+
 
 } // namespace
 } // namespace
