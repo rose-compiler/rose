@@ -14,6 +14,8 @@
 #include <Sawyer/Sawyer.h>
 
 #include <boost/range/iterator_range.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
 #include <iterator>
 #include <vector>
 
@@ -294,8 +296,48 @@ private:
     typedef std::vector<Node*> Index;                   // allocated with provided allocator
     Index index_;                                       // allocated with normal allocator
 
-public:
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    friend class boost::serialization::access;
 
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        size_t n = size();
+        s <<n;
+        for (const ProtoNode *pnode = head_->next; pnode != head_; pnode = pnode->next) {
+            ASSERT_require(n-- > 0);
+            size_t id = pnode->dereference().id();
+            const Value &value = pnode->dereference().value();
+            s <<id <<value;
+        }
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        clear();
+        size_t n = 0;
+        s >>n;
+        ASSERT_require(index_.empty());
+        index_.resize(n, NULL);
+        for (size_t i=0; i<n; ++i) {
+            size_t id = 0;
+            s >>id;
+            Node *node = new (allocator_.allocate(sizeof(Node))) Node(id, Value());
+            s >>node->value();
+
+            ASSERT_require(id < index_.size());
+            ASSERT_require(index_[id] == NULL);
+            index_[id] = node;
+
+            head_->insert(node->linkage_);              // append to end of node list
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+
+        
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Initialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

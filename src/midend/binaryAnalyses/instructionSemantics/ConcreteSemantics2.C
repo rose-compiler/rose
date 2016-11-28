@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include <rose_isnan.h>
 #include "ConcreteSemantics2.h"
 #include "integerOps.h"
 #include <Sawyer/BitVectorSupport.h>
@@ -647,7 +648,7 @@ RiscOperators::fpToInteger(const BaseSemantics::SValuePtr &a, SgAsmFloatType *aT
     size_t nBits = dflt->get_width();
     double minInt = -pow(2.0, nBits-1);
     double maxInt = pow(2.0, nBits-1);
-    if (isnan(ad) || ad < minInt || ad >= maxInt)
+    if (rose_isnan(ad) || ad < minInt || ad >= maxInt)
         return dflt;
     int64_t ai = ad;
     return number_(nBits, ai);

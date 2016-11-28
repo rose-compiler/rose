@@ -1,6 +1,7 @@
 /* Tests how well a graph performs at various operations. */
 #include "rose.h"
 #include "Graph3.h"
+#include <rose_isnan.h>
 
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
@@ -49,7 +50,7 @@ struct Totals {
         Totals retval;
         for (size_t i=0; i<nIters.size(); ++i) {
             double rate = nIters[i] / elapsed[i];
-            if (!isnan(rate))
+            if (!rose_isnan(rate))
                 retval += Totals(nIters[i], elapsed[i]);
         }
         return retval;
@@ -96,7 +97,7 @@ struct Totals {
         double best = 0.0;
         for (size_t i=0; i<size(); ++i) {
             double rate = nIters[i] / elapsed[i];
-            if (!isnan(rate))
+            if (!rose_isnan(rate))
                 best = std::max(best, rate);
         }
         return best;

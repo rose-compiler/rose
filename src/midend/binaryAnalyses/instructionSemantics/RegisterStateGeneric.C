@@ -830,3 +830,5 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric);

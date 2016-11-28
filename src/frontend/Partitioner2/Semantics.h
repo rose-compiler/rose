@@ -4,6 +4,11 @@
 #include <Partitioner2/BasicTypes.h>
 #include "SymbolicSemantics2.h"
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/vector.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -39,7 +44,21 @@ private:
     std::vector<SValuePtr> addressesRead_;
     bool enabled_;
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<Super>(*this);
+        s & map_;
+        s & addressesRead_;
+        s & enabled_;
+    }
+
 protected:
+    MemoryState()                                       // for serialization
+        : map_(NULL), enabled_(true) {}
+
     explicit MemoryState(const InstructionSemantics2::BaseSemantics::MemoryCellPtr &protocell)
         : Super(protocell), map_(NULL), enabled_(true) {}
     MemoryState(const InstructionSemantics2::BaseSemantics::SValuePtr &addrProtoval,
@@ -161,8 +180,20 @@ private:
     static const size_t TRIM_THRESHOLD_DFLT = 100;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<InstructionSemantics2::SymbolicSemantics::RiscOperators>(*this);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    RiscOperators() {}                                  // for serialization
+
     explicit RiscOperators(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(protoval, solver) {
         name("PartitionerSemantics");
@@ -302,5 +333,9 @@ MemoryState<Super>::writeMemory(const InstructionSemantics2::BaseSemantics::SVal
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
 
 #endif

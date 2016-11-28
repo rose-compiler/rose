@@ -238,6 +238,15 @@ public:
     /** True if vertex is a function call. */
     bool isFunctionCall(const Partitioner2::ControlFlowGraph::ConstVertexIterator&) const;
 
+    /** Print one vertex of a path for debugging. */
+    void printPathVertex(std::ostream &out, const Partitioner2::ControlFlowGraph::Vertex &pathVertex,
+                         size_t &insnIdx /*in,out*/) const;
+
+    /** Print the path to the specified output stream.
+     *
+     *  This is intended mainly for debugging. */
+    void printPath(std::ostream &out, const Partitioner2::CfgPath&) const;
+
     /** Determine whether a single path is feasible.
      *
      *  Returns true if the path is feasible, false if not feasible, or indeterminate if a conclusion cannot be reached.  The
