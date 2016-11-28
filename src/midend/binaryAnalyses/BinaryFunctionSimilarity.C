@@ -1,4 +1,5 @@
 #include <sage3basic.h>
+#include <rose_isnan.h>
 
 #include <BinaryFunctionSimilarity.h>
 #include <Diagnostics.h>
@@ -254,13 +255,13 @@ FunctionSimilarity::lists(const P2::Function::Ptr &function, CategoryId id) cons
 }
 
 double
-FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr &f2) const {
+FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr &f2, double dflt) const {
     ASSERT_require(f1 != NULL || f2 != NULL);
 
     if (f1 && !functions_.exists(f1))
-        throw Exception(f1->printableName() + " is not analyzed");
+        return dflt;
     if (f2 && !functions_.exists(f2))
-        throw Exception(f2->printableName() + " is not analyzed");
+        return dflt;
 
     // If only one function is supplied, then compare it against no-function (i.e., use the distance of the non-null function
     // from the origin).
@@ -287,7 +288,7 @@ FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr
                 break;
             }
         }
-        ASSERT_require(!isnan(d));
+        ASSERT_require(!rose_isnan(d));
         categoryDistances.push_back(d * categories_[id].weight);
     }
     return combine(categoryAccumulatorType_, categoryDistances);
@@ -319,6 +320,7 @@ typedef Sawyer::Container::Graph<ComparisonTask> ComparisonTasks;
 
 // How a worker thread processes one task
 struct ComparisonFunctor {
+    static const double dfltCompare;                    // distance between functions when either has no data
     const FunctionSimilarity *self;
     Sawyer::ProgressBar<size_t> &progress;
 
@@ -328,10 +330,12 @@ struct ComparisonFunctor {
     void operator()(size_t taskId, const ComparisonTask &task) {
         ASSERT_require(task.b.size() == task.results.size());
         for (size_t i=0; i<task.b.size(); ++i)
-            *task.results[i] = self->compare(task.a, task.b[i]);
+            *task.results[i] = self->compare(task.a, task.b[i], dfltCompare);
         ++progress;
     }
 };
+
+const double ComparisonFunctor::dfltCompare = 0.0;
 
 std::vector<FunctionSimilarity::FunctionDistancePair>
 FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std::vector<P2::Function::Ptr> &others) const {
@@ -613,6 +617,36 @@ FunctionSimilarity::measureCfgConnectivity(CategoryId id, const P2::Partitioner 
             point.push_back(vertex->nInEdges() ? totalReverse/vertex->nInEdges() : 0.0);
 
             insertPoint(function, id, point);
+        }
+    }
+}
+
+FunctionSimilarity::CategoryId
+FunctionSimilarity::declareCallGraphConnectivity(const std::string &categoryName) {
+    return declarePointCategory(categoryName, 1, false  /*error if exists*/);
+}
+
+void
+FunctionSimilarity::measureCallGraphConnectivity(CategoryId id, const P2::Partitioner &partitioner,
+                                                 const P2::Function::Ptr &function) {
+    ASSERT_require(partitioner.nFunctions() > 0);
+    BOOST_FOREACH (rose_addr_t bbva, function->basicBlockAddresses()) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bbva);
+        if (partitioner.cfg().isValidVertex(vertex) && vertex->value().type() == P2::V_BASIC_BLOCK &&
+            partitioner.basicBlockIsFunctionCall(vertex->value().bblock())) {
+            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->outEdges()) {
+                P2::ControlFlowGraph::ConstVertexIterator callee = edge.target();
+                CartesianPoint point;
+                if (callee->value().type() == P2::V_INDETERMINATE) {
+                    point.push_back(1.0);
+                } else if (callee->nInEdges() <= partitioner.nFunctions()) {
+                    double x = log(callee->nInEdges()) / log(partitioner.nFunctions());
+                    point.push_back(x);
+                } else {
+                    point.push_back(1.0);
+                }
+                insertPoint(function, id, point);
+            }
         }
     }
 }

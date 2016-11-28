@@ -398,7 +398,6 @@ V_SgAsmElfSegmentTable
 V_SgAsmGenericSection 	
 V_SgAsmGenericFile 	
 V_SgAsmGenericFormat 	
-V_SgAsmGenericArchitecture 	
 V_SgAsmGenericSectionList 	
 V_SgAsmGenericSegmentList 	
 V_SgAsmElfSegment 	
@@ -415,10 +414,6 @@ V_SgAsmPEFile
 V_SgAsmPESection 	
 V_SgAsmPESupport 	
 V_SgAsmExecutableFileFormat 	
-V_SgAsmProgramHeader 	
-V_SgAsmSectionHeader 	
-V_SgAsmProgramHeaderList 	
-V_SgAsmSectionHeaderList 	
 V_SgAsmNode 	
 V_SgToken 	
 V_SgLocatedNode 	

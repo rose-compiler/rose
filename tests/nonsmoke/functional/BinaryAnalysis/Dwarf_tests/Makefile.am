@@ -1,10 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_USE_DWARF
+if ROSE_HAVE_LIBDWARF
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
-noinst_PROGRAMS = dwarfReader roseDwarfReader dwarfDumpMinimal
+# Removd dwarfDumpMinimal from list of programs compiled by default because it is not part of libdwarf, but rather a
+# separate package and therefore shouldn't be tied to the --with-dwarf configuration switch.
+#noinst_PROGRAMS = dwarfReader roseDwarfReader dwarfDumpMinimal
+noinst_PROGRAMS = dwarfReader roseDwarfReader
 
 dwarfReader_SOURCES     = dwarfReader.C 
 dwarfReader_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)

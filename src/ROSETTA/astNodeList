@@ -159,7 +159,6 @@ SgAsmSynthesizedFieldDeclaration
 SgAsmFloatType
 SgAsmFloatValueExpression
 SgAsmFunction
-SgAsmGenericArchitecture
 SgAsmGenericDLL
 SgAsmGenericDLLList
 SgAsmGenericFile
@@ -190,7 +189,6 @@ SgAsmLESection
 SgAsmLESectionTable
 SgAsmLESectionTableEntry
 SgAsmM68kInstruction
-SgAsmM68kRegisterReferenceExpression
 SgAsmMemoryReferenceExpression
 SgAsmMipsInstruction
 SgAsmNEEntryPoint
@@ -198,7 +196,6 @@ SgAsmNEEntryTable
 SgAsmNEFileHeader
 SgAsmNEModuleTable
 SgAsmNENameTable
-SgAsmNERealocEntry
 SgAsmNERelocEntry
 SgAsmNERelocTable
 SgAsmNESection
@@ -225,14 +222,10 @@ SgAsmPESectionTable
 SgAsmPESectionTableEntry
 SgAsmPEStringSection
 SgAsmPowerpcInstruction
-SgAsmProgramHeader
-SgAsmProgramHeaderList
 SgAsmRegisterNames
 SgAsmRegisterReferenceExpression
 SgAsmRiscOperation
 SgAsmScalarType
-SgAsmSectionHeader
-SgAsmSectionHeaderList
 SgAsmStatement
 SgAsmStaticData
 SgAsmStmt
@@ -275,6 +268,7 @@ SgBitXorOp
 SgBlockDataStatement
 SgBoolValExp
 SgBreakStmt
+SgBracedInitializer
 SgC_PreprocessorDirectiveStatement
 SgCaseOptionStmt
 SgCastExp

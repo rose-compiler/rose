@@ -7,8 +7,14 @@
 
 #include "Map.h"
 
-#include <cassert>
 #include <boost/any.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <cassert>
 #include <inttypes.h>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
@@ -16,7 +22,6 @@
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/SmallObject.h>
 #include <set>
-#include <vector>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -208,6 +213,15 @@ protected:
     std::string comment_;             /**< Optional comment. Only for debugging; not significant for any calculation. */
     Hash hashval_;                    /**< Optional hash used as a quick way to indicate that two expressions are different. */
     boost::any userData_;             /**< Additional user-specified data. This is not part of the hash. */
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & nBits_ & domainWidth_ & flags_ & comment_ & hashval_;
+        // s & userData_;
+    }
 
 public:
     // Bit flags
@@ -696,11 +710,21 @@ private:
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
+    Interior(): op_(OP_ADD), nnodes_(1) {} // needed for serialization
     Interior(size_t nbits, Operator op, const Ptr &a, const std::string &comment="", unsigned flags=0);
     Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
     Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment="",
              unsigned flags=0);
     Interior(size_t nbits, Operator op, const Nodes &children, const std::string &comment="", unsigned flags=0);
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<Node>(*this);
+        s & op_ & children_ & nnodes_;
+    }
 
 public:
     /** Create a new expression node. Although we're creating interior nodes, the simplification process might replace it with
@@ -858,7 +882,26 @@ private:
     Sawyer::Container::BitVector bits_; /**< Value when 'known' is true */
     uint64_t name_;                     /**< Variable ID number when 'known' is false. */
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        s & boost::serialization::base_object<Node>(*this);
+        s & leafType_ & bits_ & name_;
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        s & boost::serialization::base_object<Node>(*this);
+        s & leafType_ & bits_ & name_;
+        nextNameCounter(name_);
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
+private:
     Leaf()
         : Node(""), leafType_(CONSTANT), name_(0) {}
     explicit Leaf(const std::string &comment, unsigned flags=0)
@@ -1003,6 +1046,10 @@ public:
     void print_as_unsigned(std::ostream &o, Formatter &f) ROSE_DEPRECATED("use printAsUnsigned instead") {
         printAsUnsigned(o, f);
     }
+
+private:
+    // Obtain or register a name ID
+    static uint64_t nextNameCounter(uint64_t useThis = (uint64_t)(-1));
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1198,5 +1245,8 @@ findCommonSubexpressions(InputIterator begin, InputIterator end) {
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Interior);
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Leaf);
 
 #endif

@@ -429,7 +429,25 @@ NEW_TESTCODES = \
    test2016_80.C \
    test2016_81.C \
    test2016_82.C \
-   test2016_83.C 
+   test2016_83.C \
+   test2016_85.C \
+   test2016_86.C \
+   test2016_87.C \
+   test2016_88.C \
+   test2016_89.C \
+   test2016_91.C \
+   test2016_93.C
+
+# DQ (11/21/2016): This test code does not work on older versions of GNU g++.
+if ROSE_USING_GCC_VERSION_LATER_4_4
+NEW_TESTCODES += test2016_96.C
+endif
+
+# DQ (11/14/2016): Test codes not yet passing.
+#  test2016_91.C 
+#  test2016_92.C (this does not compile with EDG 4.9, but works with EDG 4.11).
+#  test2016_94.C (this does not compile with EDG 4.9, but works with EDG 4.11).
+#  test2016_95.C (this does not compile with EDG 4.9, but works with EDG 4.11).
 
 # DQ (/12/2016): We can't add this because it is a CPP-preprocessed file containing 
 # references to the __int128 type which is not portable to older versions of GNU compilers.
@@ -1312,10 +1330,21 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS_UNNORMALIZED = $(EXAMPLE_TESTCODES_REQUIRED_T
 
 TEST_Objects_unnormalized = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_UNNORMALIZED:.C=.unnormalized-o}
 
+# Note the quotes and escapes that are required:
+# ADDRESS_SANITIZER_OPTIONS = "ASAN_OPTIONS=symbolize=1 ASAN_SYMBOLIZER_PATH=\`which llvm-symbolizer\`"
 # VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 TEST_TRANSLATOR = ../../testTranslator
 
@@ -1596,9 +1625,9 @@ check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 #	DQ (9/22/2013): I think this failes on later versions of GNU (e.g. gnu 4.4.5).
 #	@$(MAKE) test_common_configure_test_with_link_part_3
 	@$(MAKE) testTemplateExample
-	@echo "***********************************************************************************************"
+	@echo "*******************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************"
+	@echo "*******************************************************************************************************************"
 
 clean-local:
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti

@@ -44,6 +44,7 @@ DisassemblerPowerpc::can_disassemble(SgAsmGenericHeader *header) const
 void
 DisassemblerPowerpc::init()
 {
+    name("ppc");
     set_wordsize(4);
     set_alignment(4);
     set_sex(ByteOrder::ORDER_LSB);

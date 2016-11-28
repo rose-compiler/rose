@@ -115,6 +115,10 @@ F90_INCLUDED_MODULES = \
    xdisplay.F90 \
    $(NET_CDF_FILES)
 
+# DQ (11/5/2016): Mark this file as an issue for the address sanitizer (GNU 4.8.3 version fails to resolve issue).
+if ROSE_USE_SANITIZER
+# F90_INCLUDED_MODULES+=communicate.F90
+endif
 
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = 
 
@@ -190,7 +194,16 @@ ROSE_FLAGS = -rose:verbose 0
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 PASSING_TEST_F90_Objects = ${F90_TESTCODES:.F90=.o}
 PASSING_TEST_F90_Sources = ${F90_TESTCODES:.F90=.F90.passed}
@@ -392,7 +405,11 @@ conditional-check-local:
 if !ROSE_USING_GFORTRAN_VERSION_4_0
 #	@$(MAKE) check-parsing
 #	@$(MAKE) clean
+if !ROSE_USE_SANITIZER
 	@$(MAKE) check-analysis
+else
+	@echo "Skipping POP code tests when using the address sanitizer (address sanitizer crashs using GNU 4.8.3: need to test using better implementation: fails to compile POP code)."
+endif
 else
 	@echo "Skipping POP code tests when using the gfortran version 4.0.x compiler (fails to compile POP code)."
 endif

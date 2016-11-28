@@ -4949,7 +4949,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
           interp->get_headers()->get_headers().push_back(headers[i]);
         }
 
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef ROSE_HAVE_LIBDWARF
   // DQ (3/14/2009): Dwarf support now works within ROSE when used with Intel Pin
   // (was a huge problem until everything (e.g. libdwarf) was dynamically linked).
   // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
@@ -5327,6 +5327,10 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
     bool use_original_input_file = Rose::KeepGoing::Backend::UseOriginalInputFile(this);
 
+#if 0
+    printf ("In SgFile::compileOutput(): use_original_input_file = %s \n",use_original_input_file ? "true" : "false");
+#endif
+
   // TOO1 (05/14/2013): Handling for -rose:keep_going
   // Replace the unparsed file with the original input file.
      if (use_original_input_file)
@@ -5412,7 +5416,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        {
                          boost::filesystem::remove(unparsed_file);
                        }
-
+#if 1
+                    printf ("NOTE: keep_going option supporting direct copy of original input file to overwrite the unparsed file \n");
+#endif
                     rose::FileSystem::copyFile(original_file, unparsed_file);
                   }
              }

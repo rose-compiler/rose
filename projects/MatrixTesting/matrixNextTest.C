@@ -164,7 +164,7 @@ showRandomPoint(const Settings &settings, const Dependencies &dependencies) {
 
 int
 main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
+    ROSE_INITIALIZE;
     Diagnostics::initAndRegister(mlog, "tool");
 
     Settings settings;

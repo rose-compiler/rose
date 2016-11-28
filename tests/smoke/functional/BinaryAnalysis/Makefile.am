@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/tests/smoke/specimens/binary/Specimens.inc
 
-if USE_BINARY_ANALYSIS_TESTS
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 noinst_PROGRAMS =
 TEST_TARGETS =

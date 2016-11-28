@@ -330,7 +330,7 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // DQ (11/7/2008): Added Dwarf support to ROSE AST (applies only to binary executables generated with dwarf debugging information).
 #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
-   #if USE_ROSE_DWARF_SUPPORT
+   #ifdef ROSE_HAVE_LIBDWARF
       #include "dwarfSupport.h"
    #endif
 

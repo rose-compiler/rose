@@ -3930,7 +3930,7 @@ createApplication(const Wt::WEnvironment &env) {
 
 int
 main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
+    ROSE_INITIALIZE;
     Sawyer::Message::mfacilities.control("none,>=info");
     Diagnostics::initAndRegister(::mlog, "tool");
 

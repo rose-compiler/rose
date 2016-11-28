@@ -13,9 +13,10 @@
 #include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 
-#include <set>
-#include <string>
-#include <vector>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -66,8 +67,30 @@ private:
     void clearCache() {
         isNoop_.clear();
     }
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not stored
+        s & entryVa_;
+        s & name_;
+        s & comment_;
+        s & reasons_;
+        s & bblockVas_;
+        s & dblocks_;
+        s & isFrozen_;
+        s & ccAnalysis_;
+        s & stackDeltaAnalysis_;
+        s & stackDeltaOverride_;
+    }
     
 protected:
+    // Needed for serialization
+    Function()
+        : entryVa_(0), reasons_(0), isFrozen_(false) {}
+
     // Use instance() instead
     explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons)
         : entryVa_(entryVa), name_(name), reasons_(reasons), isFrozen_(false) {
