@@ -1010,6 +1010,9 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("bool","using_device_keyword","= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/14/2016): This is C++11 syntax for direct brace initalization (e.g. int n{} for EDG 4.11 and greater).
+     InitializedName.setDataPrototype     ( "bool", "is_braced_initialized", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
      JavaMemberValuePair.setFunctionPrototype     ( "HEADER_JAVA_MEMBER_VALUE_PAIR", "../Grammar/LocatedNode.code");

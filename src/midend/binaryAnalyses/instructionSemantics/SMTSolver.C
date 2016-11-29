@@ -7,6 +7,7 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <fcntl.h> /*for O_RDWR, etc.*/
+#include <Sawyer/FileSystem.h>
 #include <Sawyer/Stopwatch.h>
 
 namespace rose {
@@ -101,35 +102,12 @@ SMTSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
     output_text = "";
 
     /* Generate the input file for the solver. */
-    struct TempFile {
-        std::ofstream file;
-        char name[L_tmpnam];
-        TempFile() {
-            while (1) {
-                tmpnam(name);
-                int fd = open(name, O_RDWR|O_EXCL|O_CREAT, 0666);
-                if (fd>=0) {
-                    close(fd);
-                    break;
-                }
-            }
-            std::ofstream config(name);
-            file.open(name);
-        }
-        ~TempFile() {
-            unlink(name);
-        }
-    } tmpfile;
-
+    Sawyer::FileSystem::TemporaryFile tmpfile;
     Definitions defns;
-    generate_file(tmpfile.file, exprs, &defns);
-    tmpfile.file.close();
-#if 0 // DEBUGGING [Robb P. Matzke 2015-03-19]
-    std::cerr <<"ROBB: saving SMT file as 'x.smt'\n";
-    system((std::string("cp ") + tmpfile.name + " x.smt").c_str());
-#endif
+    generate_file(tmpfile.stream(), exprs, &defns);
+    tmpfile.stream().close();
     struct stat sb;
-    int status __attribute__((unused)) = stat(tmpfile.name, &sb);
+    int status __attribute__((unused)) = stat(tmpfile.name().string().c_str(), &sb);
     ASSERT_require(status>=0);
     stats.input_size += sb.st_size;
     {
@@ -139,9 +117,9 @@ SMTSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 
     /* Show solver input */
     if (debug) {
-        fprintf(debug, "SMT Solver input in %s:\n", tmpfile.name);
+        fprintf(debug, "SMT Solver input in %s:\n", tmpfile.name().string().c_str());
         size_t n=0;
-        std::ifstream f(tmpfile.name);
+        std::ifstream f(tmpfile.name().string().c_str());
         while (!f.eof()) {
             std::string line;
             std::getline(f, line);
@@ -152,7 +130,7 @@ SMTSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
     /* Run the solver and read its output. The first line should be the word "sat" or "unsat" */
     {
         Sawyer::Stopwatch stopwatch;
-        std::string cmd = get_command(tmpfile.name);
+        std::string cmd = get_command(tmpfile.name().string());
         FILE *output = popen(cmd.c_str(), "r");
         ASSERT_not_null(output);
         char *line = NULL;

@@ -1,22 +1,9 @@
-   #include <cstdio>
+#include <cstdio>
 #include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <Color.h>
 #include <cmath>
-
-// MS 2016: isnan is available in C++11 std namespace, but not in C++98
-// std namespace. On *some* systems C++11 cmath puts it inside *and* outside the std
-// namespace.
-#if __cplusplus >= 201103L
-  #define MY_ISNAN(x) std::isnan(x)
-#else
-  #ifdef _MSC_VER
-  #include <float.h> // for _isnan
-  #define MY_ISNAN(x) _isnan(x)
-  #else
-    #define MY_ISNAN(x) isnan(x)
-  #endif
-#endif
+#include <rose_isnan.h>
 
 namespace rose {
 namespace Color {
@@ -131,7 +118,7 @@ HSV
 Gradient::interpolate(double x) const {
     if (colors_.isEmpty()) {
       return HSV();
-    } else if(MY_ISNAN(x)) {
+    } else if(rose_isnan(x)) {
       return nanColor_;
     } else if (x <= colors_.least()) {
       return *colors_.values().begin();

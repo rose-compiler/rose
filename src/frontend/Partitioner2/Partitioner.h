@@ -386,14 +386,12 @@ private:
     template<class S>
     void save(S &s, const unsigned version) const {
         const_cast<Partitioner*>(this)->serializeCommon(s, version);
-        throw std::runtime_error("[Robb P Matzke 2016-11-07]: work in progress");
     }
 
     template<class S>
     void load(S &s, const unsigned version) {
         serializeCommon(s, version);
         rebuildVertexIndices();
-        throw std::runtime_error("[Robb P Matzke 2016-11-07]: work in progress");
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
