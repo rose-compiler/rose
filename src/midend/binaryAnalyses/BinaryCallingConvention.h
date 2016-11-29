@@ -99,6 +99,7 @@ private:
         rose_addr_t va_;                            // Absolute address
     };
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -112,6 +113,7 @@ private:
             s & va_;
         }
     }
+#endif
     
 public:
     /** Default constructed no-location.
@@ -247,6 +249,7 @@ public:
     static Definition x86_fastcall(const RegisterDictionary*);
     /** @} */
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -268,6 +271,7 @@ private:
         s & calleeSavedRegisters_;
         s & scratchRegisters_;
     }
+#endif
     
 public:
     /** Default constructor.
@@ -778,6 +782,7 @@ private:
     Sawyer::Optional<int64_t> stackDelta_;              // Change in stack across entire function
     // Don't forget to update clearResults() and serialize() if you add more.
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -795,6 +800,7 @@ private:
         s & outputStackParameters_;
         s & stackDelta_;
     }
+#endif
 
 public:
     /** Default constructor.

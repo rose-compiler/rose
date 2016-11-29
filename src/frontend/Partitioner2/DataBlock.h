@@ -27,6 +27,7 @@ private:
     size_t size_;                                       // size in bytes; FIXME[Robb P. Matzke 2014-08-12]: replace with type
     size_t nAttachedOwners_;                            // number of attached basic blocks and functions that own this data
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -35,6 +36,7 @@ private:
         // s & boost::serialization::base_object<Sawyer::Attribute::Storage>(*this); -- not serialized
         s & isFrozen_ & startVa_ & size_ & nAttachedOwners_;
     }
+#endif
     
 protected:
     // needed for serialization

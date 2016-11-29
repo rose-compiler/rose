@@ -214,6 +214,7 @@ protected:
     Hash hashval_;                    /**< Optional hash used as a quick way to indicate that two expressions are different. */
     boost::any userData_;             /**< Additional user-specified data. This is not part of the hash. */
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -222,6 +223,7 @@ private:
         s & nBits_ & domainWidth_ & flags_ & comment_ & hashval_;
         // s & userData_;
     }
+#endif
 
 public:
     // Bit flags
@@ -717,6 +719,7 @@ private:
              unsigned flags=0);
     Interior(size_t nbits, Operator op, const Nodes &children, const std::string &comment="", unsigned flags=0);
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -725,6 +728,7 @@ private:
         s & boost::serialization::base_object<Node>(*this);
         s & op_ & children_ & nnodes_;
     }
+#endif
 
 public:
     /** Create a new expression node. Although we're creating interior nodes, the simplification process might replace it with
@@ -882,6 +886,7 @@ private:
     Sawyer::Container::BitVector bits_; /**< Value when 'known' is true */
     uint64_t name_;                     /**< Variable ID number when 'known' is false. */
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -899,6 +904,7 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
 
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
 private:
@@ -1246,7 +1252,9 @@ findCommonSubexpressions(InputIterator begin, InputIterator end) {
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Interior);
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Leaf);
+#endif
 
 #endif

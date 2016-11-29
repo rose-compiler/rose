@@ -24,6 +24,7 @@ class CfgVertex {
     BasicBlock::Ptr bblock_;                            // basic block, or null if only a place holder
     FunctionSet owningFunctions_;                       // functions to which vertex belongs
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -34,6 +35,7 @@ private:
         s & bblock_;
         s & owningFunctions_;
     }
+#endif
 
 public:
     // intentionally undocumented. Necessary for serialization of Sawyer::Container::Graph
@@ -164,6 +166,7 @@ private:
     EdgeType type_;
     Confidence confidence_;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -171,6 +174,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & type_ & confidence_;
     }
+#endif
 
 public:
     CfgEdge(): type_(E_NORMAL), confidence_(ASSUMED) {}

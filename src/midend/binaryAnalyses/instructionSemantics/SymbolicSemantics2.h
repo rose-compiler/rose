@@ -195,6 +195,7 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -204,6 +205,7 @@ private:
         s & boost::serialization::base_object<BaseSemantics::SValue>(*this);
         s & expr & defs;
     }
+#endif
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -491,6 +493,7 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -498,6 +501,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & boost::serialization::base_object<BaseSemantics::MemoryCellList>(*this);
     }
+#endif
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -621,6 +625,7 @@ typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
 class MemoryMapState: public BaseSemantics::MemoryCellMap {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -628,6 +633,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & boost::serialization::base_object<BaseSemantics::MemoryCellMap>(*this);
     }
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -767,6 +773,7 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -779,6 +786,7 @@ private:
         s & computingRegisterWriters_;
         s & trimThreshold_;
     }
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1155,9 +1163,11 @@ public:
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue);
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState);
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState);
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators);
+#endif
 
 #endif

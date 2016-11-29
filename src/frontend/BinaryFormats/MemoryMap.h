@@ -99,6 +99,7 @@ public:
 private:
     ByteOrder::Endianness endianness_;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -111,6 +112,7 @@ private:
         s & boost::serialization::base_object<Super>(*this);
         s & endianness_;
     }
+#endif
 
 public:
 
@@ -383,9 +385,11 @@ public:
 };
 
 // Register the types needed for serialization since some of them are derived from polymorphic class templates.
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(MemoryMap::AllocatingBuffer);
 BOOST_CLASS_EXPORT_KEY(MemoryMap::MappedBuffer);
 BOOST_CLASS_EXPORT_KEY(MemoryMap::NullBuffer);
 BOOST_CLASS_EXPORT_KEY(MemoryMap::StaticBuffer);
+#endif
 
 #endif

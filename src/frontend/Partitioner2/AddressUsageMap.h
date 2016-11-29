@@ -32,6 +32,7 @@ class AddressUser {
     std::vector<BasicBlock::Ptr> bblocks_;
     OwnedDataBlock odblock_;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -41,6 +42,7 @@ private:
         s & bblocks_;
         s & odblock_;
     }
+#endif
 
 public:
     AddressUser(): insn_(NULL) {}                       // needed by std::vector<AddressUser>, but otherwise unused
@@ -159,6 +161,7 @@ public:
 class AddressUsers {
     std::vector<AddressUser> users_;                    // sorted
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -166,6 +169,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & users_;
     }
+#endif
 
 public:
     /** Constructs an empty list. */
@@ -344,6 +348,7 @@ class AddressUsageMap {
     typedef Sawyer::Container::IntervalMap<AddressInterval, AddressUsers> Map;
     Map map_;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -351,6 +356,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & map_;
     }
+#endif
 
 public:
     /** Determines whether a map is empty.

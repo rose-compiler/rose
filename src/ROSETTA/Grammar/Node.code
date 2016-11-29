@@ -168,6 +168,7 @@ private:
     unsigned offset;	                                // Low-bit offset within the physical register.
     unsigned nbits;	                                // Number of bits referenced by this descriptor.
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -175,6 +176,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & majr & minr & offset & nbits;
     }
+#endif
 
 public:
     RegisterDescriptor()
