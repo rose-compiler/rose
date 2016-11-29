@@ -208,6 +208,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmArmInstruction);
 #if defined(SgAsmArmInstruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -216,6 +217,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmInstruction>(*this);
             s & p_kind & p_condition & p_positionOfConditionInMnemonic;
         }
+#endif
 
     public:
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
@@ -266,6 +268,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmX86Instruction);
 #if defined(SgAsmX86Instruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -275,6 +278,7 @@ void Grammar::setUpBinaryInstructions() {
             s & p_kind & p_baseSize & p_operandSize & p_addressSize & p_lockPrefix & p_repeatPrefix & p_branchPrediction;
             s & p_segmentOverride;
         }
+#endif
 
     public:
         static X86InstructionSize instructionSizeForWidth(size_t);
@@ -328,6 +332,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmPowerpcInstruction);
 #if defined(SgAsmPowerpcInstruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -336,6 +341,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmInstruction>(*this);
             s & p_kind;
         }
+#endif
 
     public:
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
@@ -371,6 +377,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmMipsInstruction);
 #if defined(SgAsmMipsInstruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -379,6 +386,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmInstruction>(*this);
             s & p_kind;
         }
+#endif
 
     public:
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
@@ -419,6 +427,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmM68kInstruction);
 #if defined(SgAsmM68kInstruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -427,6 +436,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmInstruction>(*this);
             s & p_kind;
         }
+#endif
 
     public:
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
@@ -497,6 +507,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmInstruction);
 #if defined(SgAsmInstruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -505,6 +516,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmStatement>(*this);
             s & p_mnemonic & p_raw_bytes & p_operandList & p_sources;
         }
+#endif
 
     public:
         static const int64_t INVALID_STACK_DELTA;
@@ -831,6 +843,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmOperandList);
 #if defined(SgAsmOperandList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -839,6 +852,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmNode>(*this);
             s & p_operands;
         }
+#endif
 
     public:
         void append_operand(SgAsmExpression* operand);
@@ -864,6 +878,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryAdd);
 #if defined(SgAsmBinaryAdd_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -871,6 +886,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryAdd_OTHERS
 
 #ifdef DOCUMENTATION
@@ -890,6 +906,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinarySubtract);
 #if defined(SgAsmBinarySubtract_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -897,6 +914,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinarySubtract_OTHERS
 
 #ifdef DOCUMENTATION
@@ -916,6 +934,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryMultiply);
 #if defined(SgAsmBinaryMultiply_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -923,6 +942,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryMultiply_OTHERS
 
 #ifdef DOCUMENTATION
@@ -942,6 +962,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryDivide);
 #if defined(SgAsmBinaryDivide_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -949,6 +970,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryDivide_OTHERS
 
 #ifdef DOCUMENTATION
@@ -968,6 +990,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryMod);
 #if defined(SgAsmBinaryMod_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -975,6 +998,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryMod_OTHERS
 
 #ifdef DOCUMENTATION
@@ -994,6 +1018,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryAddPreupdate);
 #if defined(SgAsmBinaryAddPreupdate_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1001,6 +1026,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryAddPreupdate_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1020,6 +1046,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinarySubtractPreupdate);
 #if defined(SgAsmBinarySubtractPreupdate_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1027,6 +1054,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinarySubtractPreupdate_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1046,6 +1074,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryAddPostupdate);
 #if defined(SgAsmBinaryAddPostupdate_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1053,6 +1082,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryAddPostupdate_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1072,6 +1102,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinarySubtractPostupdate);
 #if defined(SgAsmBinarySubtractPostupdate_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1079,6 +1110,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinarySubtractPostupdate_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1098,6 +1130,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryLsl);
 #if defined(SgAsmBinaryLsl_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1105,6 +1138,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryLsl_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1124,6 +1158,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryLsr);
 #if defined(SgAsmBinaryLsr_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1131,6 +1166,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryLsr_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1150,6 +1186,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryAsr);
 #if defined(SgAsmBinaryAsr_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1157,6 +1194,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryAsr_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1176,6 +1214,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryRor);
 #if defined(SgAsmBinaryRor_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1183,6 +1222,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
         }
+#endif
 #endif // SgAsmBinaryRor_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1233,6 +1273,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmBinaryExpression);
 #if defined(SgAsmBinaryExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1241,6 +1282,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmExpression>(*this);
             s & p_lhs & p_rhs;
         }
+#endif
 #endif // SgAsmBinaryExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1260,6 +1302,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmUnaryPlus);
 #if defined(SgAsmUnaryPlus_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1267,6 +1310,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
         }
+#endif
 #endif // SgAsmUnaryPlus_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1286,6 +1330,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmUnaryMinus);
 #if defined(SgAsmUnaryMinus_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1293,6 +1338,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
         }
+#endif
 #endif // SgAsmUnaryMinus_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1312,6 +1358,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmUnaryRrx);
 #if defined(SgAsmUnaryRrx_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1319,6 +1366,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
         }
+#endif
 #endif // SgAsmUnaryRrx_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1338,6 +1386,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmUnaryArmSpecialRegisterList);
 #if defined(SgAsmUnaryArmSpecialRegisterList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1345,6 +1394,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
         }
+#endif
 #endif // SgAsmUnaryArmSpecialRegisterList_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1372,6 +1422,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmUnaryExpression);
 #if defined(SgAsmUnaryExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1380,6 +1431,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmExpression>(*this);
             s & p_operand;
         }
+#endif
 #endif // SgAsmUnaryExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1405,6 +1457,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmDirectRegisterExpression);
 #if defined(SgAsmDirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1413,6 +1466,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmRegisterReferenceExpression>(*this);
             s & p_psr_mask;
         }
+#endif
 
     private:
         // Default c'tor needed for serialization
@@ -1449,6 +1503,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmIndirectRegisterExpression);
 #if defined(SgAsmIndirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1457,6 +1512,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmRegisterReferenceExpression>(*this);
             s & p_stride & p_offset & p_index & p_modulus;
         }
+#endif
 
     private:
         // Default c'tor needed for serialization
@@ -1507,6 +1563,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmRegisterReferenceExpression);
 #if defined(SgAsmRegisterReferenceExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1515,6 +1572,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmExpression>(*this);
             s & p_descriptor & p_adjustment;
         }
+#endif
 
     protected:
         // Default c'tor needed for serialization
@@ -1546,6 +1604,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmRegisterNames);
 #if defined(SgAsmRegisterNames_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1554,6 +1613,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmExpression>(*this);
             s & p_registers & p_mask;
         }
+#endif
 #endif // SgAsmRegisterNames_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1604,6 +1664,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmIntegerValueExpression);
 #if defined(SgAsmIntegerValueExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1612,6 +1673,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmConstantExpression>(*this);
             s & p_baseNode;
         }
+#endif
 
     public:
         SgAsmIntegerValueExpression(uint64_t n, SgAsmType *type);
@@ -1727,6 +1789,7 @@ void Grammar::setUpBinaryInstructions() {
         mutable double p_nativeValue;
         mutable bool p_nativeValueIsValid;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1736,6 +1799,7 @@ void Grammar::setUpBinaryInstructions() {
             s & p_nativeValue;
             s & p_nativeValueIsValid;
         }
+#endif
 
     public:
         SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
@@ -1785,6 +1849,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmConstantExpression);
 #if defined(SgAsmConstantExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1793,6 +1858,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmValueExpression>(*this);
             s & p_bitVector;
         }
+#endif
 
     public:
         const Sawyer::Container::BitVector& get_bitVector() const { return p_bitVector; }
@@ -1834,6 +1900,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmValueExpression);
 #if defined(SgAsmValueExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1847,6 +1914,7 @@ void Grammar::setUpBinaryInstructions() {
             s & p_symbol;
 #endif
         }
+#endif
 #endif // SgAsmValueExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1873,6 +1941,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmMemoryReferenceExpression);
 #if defined(SgAsmMemoryReferenceExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1882,6 +1951,7 @@ void Grammar::setUpBinaryInstructions() {
             s & p_address;
             s & p_segment;
         }
+#endif
 #endif // SgAsmMemoryReferenceExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1906,6 +1976,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmControlFlagsExpression);
 #if defined(SgAsmControlFlagsExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1914,6 +1985,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmExpression>(*this);
             s & p_bit_flags;
         }
+#endif
 #endif // SgAsmControlFlagsExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1938,6 +2010,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmCommonSubExpression);
 #if defined(SgAsmCommonSubExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -1946,6 +2019,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmExpression>(*this);
             s & p_subexpression;
         }
+#endif
 #endif // SgAsmCommonSubExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2041,6 +2115,7 @@ void Grammar::setUpBinaryInstructions() {
             OP_N_OPERATORS                              /**< Number of operators in this enum. */ // MUST BE LAST!
         };
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -2049,6 +2124,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmExpression>(*this);
             s & p_riscOperator & p_operands;
         }
+#endif
 #endif // SgAsmRiscOperation_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2073,6 +2149,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmExprListExp);
 #if defined(SgAsmExprListExp_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -2081,6 +2158,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmExpression>(*this);
             s & p_expressions;
         }
+#endif
 #endif // SgAsmExprListExp_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2134,6 +2212,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmExpression);
 #if defined(SgAsmExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -2142,6 +2221,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmNode>(*this);
             s & p_type;
         }
+#endif
 
     public:
         size_t get_nBits() const;
@@ -2183,6 +2263,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmIntegerType);
 #if defined(SgAsmIntegerType_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -2191,6 +2272,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmScalarType>(*this);
             s & p_isSigned;
         }
+#endif
 
     public:
         SgAsmIntegerType(ByteOrder::Endianness, size_t nBits, bool isSigned);
@@ -2239,6 +2321,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmFloatType);
 #if defined(SgAsmFloatType_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -2253,6 +2336,7 @@ void Grammar::setUpBinaryInstructions() {
             s & p_exponentBias;
             s & p_flags;
         }
+#endif
 
     public:
         enum {
@@ -2324,6 +2408,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmScalarType);
 #if defined(SgAsmScalarType_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -2332,6 +2417,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmType>(*this);
             s & p_minorOrder & p_majorOrder & p_majorNBytes & p_nBits;
         }
+#endif
 
     protected:
         /** Construct a new scalar type.
@@ -2382,6 +2468,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmVectorType);
 #if defined(SgAsmVectorType_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -2390,6 +2477,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgAsmType>(*this);
             s & p_nElmts & p_elmtType;
         }
+#endif
 
     public:
         /** Construct a new vector type. */
@@ -2423,6 +2511,7 @@ void Grammar::setUpBinaryInstructions() {
     private:
         static Sawyer::Container::Map<std::string, SgAsmType*> p_typeRegistry;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -2430,6 +2519,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgAsmNode>(*this);
         }
+#endif
 
     public:
         virtual void check() const;
@@ -2612,6 +2702,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmStatement);
 #if defined(SgAsmStatement_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -2620,6 +2711,7 @@ void Grammar::setUpBinaryInstructions() {
             s & boost::serialization::base_object<SgNode>(*this);
             s & p_address & p_comment;
         }
+#endif
 #endif // SgAsmStatement_OTHERS
 
 #ifdef DOCUMENTATION
@@ -4725,6 +4817,7 @@ void Grammar::setUpBinaryInstructions() {
 
         DECLARE_OTHERS(AsmNode);
 #if defined(SgAsmNode_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -4732,6 +4825,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & boost::serialization::base_object<SgNode>(*this);
         }
+#endif
 #endif // SgAsmNode_OTHERS
 
 #ifndef DOCUMENTATION
