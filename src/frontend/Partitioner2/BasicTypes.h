@@ -1,6 +1,8 @@
 #ifndef ROSE_Partitioner2_BasicTypes_H
 #define ROSE_Partitioner2_BasicTypes_H
 
+#include <boost/serialization/access.hpp>
+
 // Define this as one if you want extra invariant checks that are quite expensive, or define as zero. This only makes a
 // difference if NDEBUG and SAWYER_NDEBUG are both undefined--if either one of them are defined then no expensive (or
 // inexpensive) checks are performed.
@@ -202,17 +204,42 @@ enum FunctionReturnAnalysis {
                                                      *   may-return analysis. */
 };
 
-/** Settings that control the partitioner.
+/** Settings that directly control a partitioner.
  *
- *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
-struct PartitionerSettings {
-    std::vector<rose_addr_t> startingVas;           /**< Addresses at which to start recursive disassembly. These
-                                                     *   addresses are in addition to entry addresses, addresses from
-                                                     *   symbols, addresses from configuration files, etc. */
+ *  These settings are specific to a @ref Partitioner object. */
+struct BasePartitionerSettings {
     bool usingSemantics;                            /**< Whether instruction semantics are used. If semantics are used,
                                                      *   then the partitioner will have more accurate reasoning about the
                                                      *   control flow graph.  For instance, semantics enable the detection
                                                      *   of certain kinds of opaque predicates. */
+    bool checkingCallBranch;                        /**< Check for situations where CALL is used as a branch. */
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & usingSemantics;
+        s & checkingCallBranch;
+    }
+
+public:
+    BasePartitionerSettings()
+        : usingSemantics(false), checkingCallBranch(false) {}
+};
+
+/** Settings that control the engine partitioning.
+ *
+ *  These switches are used by the engine to control how it partitions addresses into instructions and static data,
+ *  instructions into basic blocks, and basic blocks and static data into functions.  Some of these settings are copied into a
+ *  @ref Partitioner object while others affect the @ref Engine directly.
+ *
+ *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
+struct PartitionerSettings {
+    BasePartitionerSettings base;
+    std::vector<rose_addr_t> startingVas;           /**< Addresses at which to start recursive disassembly. These
+                                                     *   addresses are in addition to entry addresses, addresses from
+                                                     *   symbols, addresses from configuration files, etc. */
     bool followingGhostEdges;                       /**< Should ghost edges be followed during disassembly?  A ghost edge
                                                      *   is a CFG edge that is apparent from the instruction but which is
                                                      *   not taken according to semantics. For instance, a branch
@@ -243,16 +270,14 @@ struct PartitionerSettings {
     SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
     bool namingConstants;                           /**< Give names to constants by calling @ref Modules::nameConstants. */
     bool namingStrings;                             /**< Give labels to constants that are string literal addresses. */
-    bool checkingCallBranch;                        /**< Check for situations where CALL is used as a branch. */
 
     PartitionerSettings()
-        : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
+        : followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
           findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
           findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
           doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
           functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingThunks(true),
-          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true),
-          checkingCallBranch(false) {}
+          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true) {}
 };
 
 /** Settings for controling the engine behavior.

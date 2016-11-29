@@ -948,8 +948,8 @@ public:
      *  determining whether branch conditions are opaque.
      *
      * @{ */
-    bool usingSemantics() const /*final*/ { return settings_.partitioner.usingSemantics; }
-    virtual void usingSemantics(bool b) { settings_.partitioner.usingSemantics = b; }
+    bool usingSemantics() const /*final*/ { return settings_.partitioner.base.usingSemantics; }
+    virtual void usingSemantics(bool b) { settings_.partitioner.base.usingSemantics = b; }
     /** @} */
 
     /** Property: Type of container for semantic memory.
@@ -1147,8 +1147,8 @@ public:
      *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
      *
      * @{ */
-    bool checkingCallBranch() const /*final*/ { return settings_.partitioner.checkingCallBranch; }
-    virtual void checkingCallBranch(bool b) { settings_.partitioner.checkingCallBranch; }
+    bool checkingCallBranch() const /*final*/ { return settings_.partitioner.base.checkingCallBranch; }
+    virtual void checkingCallBranch(bool b) { settings_.partitioner.base.checkingCallBranch = b; }
     /** @} */
 
     /** Property: Configuration files.

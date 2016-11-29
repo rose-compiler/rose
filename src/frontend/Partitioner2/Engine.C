@@ -218,15 +218,15 @@ Engine::partitionerSwitches() {
                    "This switch may appear multiple times, each of which may have multiple comma-separated addresses."));
 
     sg.insert(Switch("use-semantics")
-              .intrinsicValue(true, settings_.partitioner.usingSemantics)
+              .intrinsicValue(true, settings_.partitioner.base.usingSemantics)
               .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
                    "it can use slower but more accurate methods, such as symbolic semantics.  This switch enables use of "
                    "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is "
                    "to " +
-                   std::string(settings_.partitioner.usingSemantics?"":"not ") + "use semantics."));
+                   std::string(settings_.partitioner.base.usingSemantics?"":"not ") + "use semantics."));
     sg.insert(Switch("no-use-semantics")
               .key("use-semantics")
-              .intrinsicValue(false, settings_.partitioner.usingSemantics)
+              .intrinsicValue(false, settings_.partitioner.base.usingSemantics)
               .hidden(true));
 
     sg.insert(Switch("semantic-memory")
@@ -499,14 +499,14 @@ Engine::partitionerSwitches() {
                    "@named{no}{Assume a function does not return if the may-return analysis cannot decide.}"));
 
     sg.insert(Switch("call-branch")
-              .intrinsicValue(true, settings_.partitioner.checkingCallBranch)
+              .intrinsicValue(true, settings_.partitioner.base.checkingCallBranch)
               .doc("When determining whether a basic block is a function call, also check whether the callee discards "
                    "the return address. If so, then the apparent call is perhaps not a true function call.  The "
                    "@s{no-call-branch} switch disables this analysis. The default is that this analysis is " +
-                   std::string(settings_.partitioner.checkingCallBranch ? "enabled" : "disabled") + "."));
+                   std::string(settings_.partitioner.base.checkingCallBranch ? "enabled" : "disabled") + "."));
     sg.insert(Switch("no-call-branch")
               .key("call-branch")
-              .intrinsicValue(false, settings_.partitioner.checkingCallBranch)
+              .intrinsicValue(false, settings_.partitioner.base.checkingCallBranch)
               .hidden(true));
     
     return sg;
@@ -923,6 +923,7 @@ Engine::createBarePartitioner() {
 
     checkCreatePartitionerPrerequisites();
     Partitioner p(disassembler_, map_);
+    p.settings(settings_.partitioner.base);
 
     // Load configuration files
     if (!settings_.engine.configurationNames.empty()) {
@@ -963,12 +964,10 @@ Engine::createBarePartitioner() {
     p.semanticMemoryParadigm(settings_.partitioner.semanticMemoryParadigm);
 
     // Miscellaneous settings
-    p.enableSymbolicSemantics(settings_.partitioner.usingSemantics);
     if (settings_.partitioner.followingGhostEdges)
         p.basicBlockCallbacks().append(Modules::AddGhostSuccessors::instance());
     if (!settings_.partitioner.discontiguousBlocks)
         p.basicBlockCallbacks().append(Modules::PreventDiscontiguousBlocks::instance());
-    p.checkingCallBranch(settings_.partitioner.checkingCallBranch);
 
     // PEScrambler descrambler
     if (settings_.partitioner.peScramblerDispatcherVa) {

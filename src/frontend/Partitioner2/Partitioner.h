@@ -301,6 +301,7 @@ public:
     typedef Sawyer::Container::Map<rose_addr_t, std::string> AddressNameMap;
     
 private:
+    BasePartitionerSettings settings_;                  // settings adjustable from the command-line
     Configuration config_;                              // configuration information about functions, blocks, etc.
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
@@ -311,14 +312,12 @@ private:
     mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
     bool isReportingProgress_;                          // Emit automatic progress reports?
     Functions functions_;                               // List of all attached functions by entry address
-    bool useSemantics_;                                 // If true, then use symbolic semantics to reason about things
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
     bool basicBlockSemanticsAutoDrop_;                  // Conserve memory by dropping semantics for attached basic blocks?
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
-    bool checkingCallBranch_;                           // Check whether function calls are actually just branches?
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -358,6 +357,7 @@ private:
         s.template register_type<Semantics::RegisterState>();
         s.template register_type<Semantics::State>();
         s.template register_type<Semantics::RiscOperators>();
+        s & settings_;
         // s & config_;                         -- FIXME[Robb P Matzke 2016-11-08]
         s & instructionProvider_;
         s & memoryMap_;
@@ -368,14 +368,12 @@ private:
         s & progressTotal_;
         s & isReportingProgress_;
         s & functions_;
-        s & useSemantics_;
         s & autoAddCallReturnEdges_;
         s & assumeFunctionsReturn_;
         s & stackDeltaInterproceduralLimit_;
         s & addressNames_;
         s & basicBlockSemanticsAutoDrop_;
         s & semanticMemoryParadigm_;
-        s & checkingCallBranch_;
         // s & cfgAdjustmentCallbacks_;         -- not saved/restored
         // s & basicBlockCallbacks_;            -- not saved/restored
         // s & functionPrologueMatchers_;       -- not saved/restored
@@ -414,9 +412,9 @@ public:
      *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY), checkingCallBranch_(false) {
+          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(disassembler, map);
     }
 
@@ -425,9 +423,9 @@ public:
      *  The default constructor does not produce a usable partitioner, but is convenient when one needs to pass a default
      *  partitioner by value or reference. */
     Partitioner()
-        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+        : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY), checkingCallBranch_(false) {
+          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(NULL, memoryMap_);
     }
 
@@ -438,14 +436,15 @@ public:
     // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
     // after a while.
     Partitioner(const Partitioner &other)               // initialize just like default
-        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+        : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true),
-          semanticMemoryParadigm_(LIST_BASED_MEMORY), checkingCallBranch_(false) {
+          semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(NULL, memoryMap_);                         // initialize just like default
         *this = other;                                  // then delegate to the assignment operator
     }
     Partitioner& operator=(const Partitioner &other) {
         Sawyer::Attribute::Storage<>::operator=(other);
+        settings_ = other.settings_;
         config_ = other.config_;
         instructionProvider_ = other.instructionProvider_;
         memoryMap_ = other.memoryMap_;
@@ -456,7 +455,6 @@ public:
         progressTotal_ = other.progressTotal_;
         isReportingProgress_ = other.isReportingProgress_;
         functions_ = other.functions_;
-        useSemantics_ = other.useSemantics_;
         autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
         assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
         stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
@@ -467,7 +465,6 @@ public:
         functionPrologueMatchers_ = other.functionPrologueMatchers_;
         functionPaddingMatchers_ = other.functionPaddingMatchers_;
         semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
-        checkingCallBranch_ = other.checkingCallBranch_;
         init(other);                                    // copies graph iterators, etc.
         return *this;
     }
@@ -1942,6 +1939,15 @@ public:
     /** Name of a function */
     static std::string functionName(const Function::Ptr&) /*final*/;
 
+    /** Partitioner settings.
+     *
+     *  These are settings that are typically controlled from the command-line.
+     *
+     * @{ */
+    const BasePartitionerSettings& settings() const /*final*/ { return settings_; }
+    virtual void settings(const BasePartitionerSettings &s) { settings_ = s; }
+    /** @} */
+
     /** Enable or disable progress reports.
      *
      *  This controls the automatic progress reports, but the @ref reportProgress method can still be invoked explicitly by the
@@ -1959,9 +1965,9 @@ public:
      *  basic block.  When false, more naive but faster methods are used.
      *
      *  @{ */
-    void enableSymbolicSemantics(bool b=true) /*final*/ { useSemantics_ = b; }
-    void disableSymbolicSemantics() /*final*/ { useSemantics_ = false; }
-    bool usingSymbolicSemantics() const /*final*/ { return useSemantics_; }
+    void enableSymbolicSemantics(bool b=true) /*final*/ { settings_.usingSemantics = b; }
+    void disableSymbolicSemantics() /*final*/ { settings_.usingSemantics = false; }
+    bool usingSymbolicSemantics() const /*final*/ { return settings_.usingSemantics; }
     /** @} */
 
     /** Property: Insert (or not) function call return edges.
@@ -2020,8 +2026,8 @@ public:
      *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
      *
      * @{ */
-    bool checkingCallBranch() const /*final*/ { return checkingCallBranch_; }
-    virtual void checkingCallBranch(bool b) { checkingCallBranch_ = b; }
+    bool checkingCallBranch() const /*final*/ { return settings_.checkingCallBranch; }
+    virtual void checkingCallBranch(bool b) { settings_.checkingCallBranch = b; }
     /** @} */
 
 
