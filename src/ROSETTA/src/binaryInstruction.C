@@ -4828,6 +4828,10 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 #endif // SgAsmNode_OTHERS
 
+#ifdef DOCUMENTATION
+    };
+#endif
+
 #ifndef DOCUMENTATION
 }
 #endif
