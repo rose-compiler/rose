@@ -17,6 +17,14 @@
 # include <unistd.h>                                    // for access()
 #endif
 
+// This is the other half of the BOOST_CLASS_EXPORT_KEY from the header file.
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::AllocatingBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::MappedBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::NullBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::StaticBuffer);
+#endif
+
 using namespace rose;
 using namespace rose::Diagnostics;
 

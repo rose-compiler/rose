@@ -592,7 +592,13 @@ check-f03: $(F03_FILES) $(F03_INTER_FILES)
 
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+
+# DQ (11/5/2016): Skip the Fortran testing when using the Address Sanitizer (does not play well with the JVM).
+if !ROSE_USE_SANITIZER
 check-fortran: check-f90 check-f77 check-f03
+else
+check-fortran:
+endif
 else
 check-fortran:
 endif

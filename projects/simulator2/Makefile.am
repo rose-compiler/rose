@@ -12,6 +12,9 @@ bin_PROGRAMS=
 noinst_PROGRAMS=
 TEST_TARGETS = 
 
+warn_no_tests:
+	@echo "  NOTE    simulator testing is disabled (no i386 support)"
+
 ###############################################################################################################################
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
@@ -1249,7 +1252,7 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
 .PHONY: run-tests
-run-tests: check-syscalls check-pthread check-internal test_types_1
+run-tests: check-syscalls check-pthread
 	@$(RTH_STATS)
 
 check-local: run-tests

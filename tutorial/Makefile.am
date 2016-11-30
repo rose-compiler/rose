@@ -769,7 +769,7 @@ testSeedBugsExample_arrayIndexing: seedBugsExample_arrayIndexing
 testVolatileTypeModifier: volatileTypeModifier
 	./volatileTypeModifier -rose:verbose 0 -c $(srcdir)/inputCode_volatileTypeModifier.C
 
-if ROSE_USE_DWARF
+if ROSE_HAVE_LIBDWARF
 # This should only be tested if Dwarf is in use, and it should not 
 # be used on the Mac OSX system because we build the executable and
 # ROSE does not yet handle the Mach-O executable i386 binary file format.

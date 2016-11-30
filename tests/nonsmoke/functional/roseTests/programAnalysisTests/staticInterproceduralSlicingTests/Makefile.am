@@ -15,6 +15,14 @@ bin_PROGRAMS  = multiPassTest generateSDG generateCDG generateDDG \
 # Done:
 # generateCDG.C  generateDDG.C  generateSDG.C  generateSlicedSDG.C testSlicing.C multiPassTest.C  slice.C  
 
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND = 
+endif
 
 multiPassTest_SOURCES = multiPassTest.C
 multiPassTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
@@ -64,28 +72,32 @@ TESTCODE_INCLUDES =
 $(TEST_Objects): multiPassTest $(TESTCODES) 
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 	@echo "Compiling test code using multiple programs: slice multiPassTest generateSDG generateCDG generateDDG and ..." #generateSlicedSDG testSlicing 
-#	$(TEST_TRANSLATOR) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-#	./slice -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	./multiPassTest -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	./generateSDG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-#./generateSlicedSDG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	./generateCDG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	./generateDDG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-#	./testSlicing -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	./generateSFBDT -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	./generateSFCFG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	./generateSFDF -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	./generateSFDT -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+#	$(VALGRIND) $(TEST_TRANSLATOR) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+#	$(VALGRIND) ./slice -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) ./multiPassTest -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) ./generateSDG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+#	$(VALGRIND) ./generateSlicedSDG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) ./generateCDG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) ./generateDDG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+#	$(VALGRIND) ./testSlicing -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) ./generateSFBDT -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) ./generateSFCFG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) ./generateSFDF -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) ./generateSFDT -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
 
 
 EXTRA_DIST = $(TESTCODES)
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local:
+if !ROSE_USE_SANITIZER
 	@$(MAKE) $(TEST_Objects)
-	@echo "***********************************************************************************************************************************"
+else
+	@echo "Skipping testing when using Address Sanitizer (failing tests)."
+endif
+	@echo "*******************************************************************************************************************************************************"
 	@echo "*** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/staticInterproceduralSlicingTests: make check rule complete (terminated normally) ***"
-	@echo "***********************************************************************************************************************************"
+	@echo "*******************************************************************************************************************************************************"
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) testSlicing *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot

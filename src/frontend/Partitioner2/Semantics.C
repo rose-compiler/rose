@@ -31,3 +31,9 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
 } // namespace
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
+#endif

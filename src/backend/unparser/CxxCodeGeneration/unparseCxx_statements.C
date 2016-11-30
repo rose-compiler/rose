@@ -10090,9 +10090,11 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #endif
         }
 
+  // DQ (10/23/2016): Allow C++14 support to behave the same as C++11 support below.
   // We only do this denormalization if we are not using C++11 or later version of C++.
   // if (sourcefile->get_Cxx11_only() == false)
-     if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false)
+  // if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false)
+     if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false && sourcefile->get_Cxx14_only() == false)
         {
           ROSE_ASSERT(sourcefile->get_Cxx14_only() == false);
 #if 0

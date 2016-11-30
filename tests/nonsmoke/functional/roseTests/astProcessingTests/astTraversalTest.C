@@ -191,19 +191,28 @@ void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceRe
     std::cout << std::endl;
 #endif
     std::cout << "approximate time (seconds): " << timeDifference(endTime, beginTime) << std::endl;
+
     delete simpleList;
+
+ // DQ (11/5/2016): Bug caught by address sanitizer (reset to NULL to avoid possible use below, also fixed below).
+    simpleList = NULL;
 
     std::cout << "simple sequential using NEW index based access mechanism" << std::endl;
     std::vector<NodeCountSimple *> *simpleList2 = buildTraversalList<NodeCountSimple>();
     std::vector<NodeCountSimple *>::iterator s2;
     beginTime = getCPUTime();
-    for (s2 = simpleList2->begin(); s2 != simpleList->end(); ++s2)
+
+ // DQ (11/5/2016): Bug caught by address sanitizer (simpleList deleted above).
+ // for (s2 = simpleList2->begin(); s2 != simpleList->end(); ++s2)
+    for (s2 = simpleList2->begin(); s2 != simpleList2->end(); ++s2)
     {
         (*s2)->traverse(root, preorder);
     }
     endTime = getCPUTime();
     i = 0;
-    for (s2 = simpleList->begin(); s2 != simpleList->end(); ++s2)
+ // DQ (11/5/2016): Bug caught by address sanitizer (simpleList deleted above).
+ // for (s2 = simpleList->begin(); s2 != simpleList->end(); ++s2)
+    for (s2 = simpleList2->begin(); s2 != simpleList2->end(); ++s2)
     {
 #if OUTPUT_RESULTS
         std::cout << (*s2)->variantCount << ' ';
@@ -214,7 +223,10 @@ void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceRe
     std::cout << std::endl;
 #endif
     std::cout << "approximate time (seconds): " << timeDifference(endTime, beginTime) << std::endl;
-    delete simpleList;
+
+ // DQ (11/5/2016): Bug caught by address sanitizer (simpleList deleted above).
+ // delete simpleList;
+    delete simpleList2;
 
     std::cout << "pre-post sequential" << std::endl;
     std::vector<NodeCountPrePost *> *prePostList = buildTraversalList<NodeCountPrePost>();
