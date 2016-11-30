@@ -156,10 +156,10 @@ int omp_test_nest_lock(omp_nest_lock_t *lock);
 double omp_get_wtime(void);
 double omp_get_wtick(void);
 
-void * omp_target_alloc(size_t size, int device_num);
-void omp_target_free(void * device_ptr, int device_num);
-int omp_target_is_present(void * ptr, int device_num);
-int omp_target_memcpy(void *dst, void *src, size_t length,
+void * omp_target_alloc(size_t _size, int _device_num);
+void omp_target_free(void * device_ptr, int _device_num);
+int omp_target_is_present(void * ptr, int _device_num);
+int omp_target_memcpy(void *dst, void *src, size_t _length,
                       size_t dst_offset, size_t src_offset,
                       int dst_device_num, int src_device_num);
 
@@ -176,7 +176,7 @@ int omp_target_memcpy_rect(
 
 int omp_target_associate_ptr(void * host_ptr,
                              void * device_ptr,
-                             size_t size,
+                             size_t _size,
                              size_t device_offset,
                              int device_num);
 
