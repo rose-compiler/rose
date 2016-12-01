@@ -9539,6 +9539,13 @@ SgDeclarationStatement::get_template_name() const
                break;
              }
 
+       // DQ (11/22/2016): Added case to support C++11 specific SgTemplateTypedefDeclaration IR node.
+          case V_SgTemplateTypedefDeclaration:
+             {
+               templateDeclarationName = isSgTemplateTypedefDeclaration(this)->get_name();
+               break;
+             }
+
           default:
              {
                printf ("Error: default reached templateDeclaration = %p = %s (not a template declaration for class, function, member function, or variable) \n",this,this->class_name().c_str());

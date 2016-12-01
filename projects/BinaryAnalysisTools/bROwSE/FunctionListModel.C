@@ -1,4 +1,5 @@
 #include <rose.h>
+#include <rose_isnan.h>
 #include <bROwSE/FunctionListModel.h>
 #include <bROwSE/FunctionUtil.h>
 #include <boost/bind.hpp>
@@ -92,7 +93,7 @@ FunctionListModel::sort(int column, Wt::SortOrder order) {
     BOOST_FOREACH (const P2::Function::Ptr &function, functions_) {
         double d = analyzers_[column]->heatValue(ctx_.partitioner, function);
         function->setAttribute(ATTR_Heat, d);
-        if (!isnan(d)) {
+        if (!rose_isnan(d)) {
             heatStats_.insert(d);
             dv.push_back(d);
         }
