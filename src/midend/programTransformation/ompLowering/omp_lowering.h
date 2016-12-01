@@ -3,6 +3,9 @@
 
 #ifndef OMP_LOWERING_H
 #define OMP_LOWERING_H 
+
+#include "OmpAttribute.h"
+
 /*!
  * Translation (directive lowering) support for OpenMP 3.0 C/C++
  *
@@ -209,6 +212,13 @@ namespace OmpSupport
 
   //! Check if a variable is in the clause's variable list
   ROSE_DLL_API bool isInClauseVariableList(SgOmpClause* cls, SgSymbol* var);
+
+  //! Check if a variable is a threadprivate variable. It will search for all threadprivate directives to find the answer.
+  ROSE_DLL_API bool isThreadprivate(SgSymbol* var);
+
+  //! Return the data sharing attribute type of a variable within a context node (anchor_stmt indicates the start search location within AST)
+  //! Possible values include: e_shared, e_private,  e_firstprivate,  e_lastprivate,  e_reduction, e_threadprivate, e_copyin, and e_copyprivate.
+  ROSE_DLL_API omp_construct_enum getDataSharingAttribute (SgSymbol* var, SgStatement* anchor_stmt);
 
   //! Extract map clause information
   void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses,
