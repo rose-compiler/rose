@@ -13,6 +13,10 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# if you are building ROSE translators, remember to set include path and libraries.
+#AM_CPPFLAGS = $(ROSE_INCLUDES)
+#LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 # Forward declarations so we can use make's "+=" operator.  We use "noinst_PROGRAMS" instead of "bin_PROGRAMS" because
 # we generally don't want checkers used in testing to be installed by "make install".  The "TEST_TARGETS" variable
 # will be a list of all the make targets that should be run: one for each test where a "test" is some "checker" run
