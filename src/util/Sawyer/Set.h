@@ -13,6 +13,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/serialization/serialization.hpp>        // needed by <boost/serialization/set.hpp> in boost 1.58 - 1.60
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/set.hpp>
 #include <vector>

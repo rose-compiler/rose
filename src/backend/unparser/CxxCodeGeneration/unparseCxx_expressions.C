@@ -161,6 +161,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case COMPOUND_INIT:           { unparseCompInit(expr, info); break; }
           case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }
           case ASSIGN_INIT:             { unparseAssnInit(expr, info); break; }
+
+       // DQ (11/15/2016): Adding support for braced initializer node.
+          case BRACED_INIT:             { unparseBracedInit(expr, info); break; }
+
           case THROW_OP:                { unparseThrowOp(expr, info); break; }
           case VA_START_OP:             { unparseVarArgStartOp(expr, info); break; }
           case VA_START_ONE_OPERAND_OP: { unparseVarArgStartOneOperandOp(expr, info); break; }
@@ -532,38 +536,8 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
   // ROSE_ASSERT(info.isTypeFirstPart()  == false);
      ROSE_ASSERT(info.isTypeSecondPart() == false);
 
-#if 1
   // DQ (6/21/2011): Refactored this code to generate more then templated class names.
      unparseTemplateArgumentList(templateInstantiationDeclaration->get_templateArguments(),info);
-#else
-     const SgTemplateArgumentPtrList& templateArgListPtr = templateInstantiationDeclaration->get_templateArguments();
-     if (!templateArgListPtr.empty())
-        {
-       // printf ("templateArgListPtr->size() = %" PRIuPTR " \n",templateArgListPtr->size());
-
-       // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
-          ROSE_ASSERT(templateArgListPtr.size() > 0);
-
-#error "DEAD CODE!"
-
-          unp->u_exprStmt->curprint ( "< ");
-          SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
-          while (i != templateArgListPtr.end())
-             {
-            // printf ("templateArgList element *i = %s \n",(*i)->sage_class_name());
-#if 0
-               unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + 
-                      (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
-#endif
-
-               unparseTemplateArgument(*i,info);
-               i++;
-               if (i != templateArgListPtr.end())
-                    unp->u_exprStmt->curprint ( " , ");
-             }
-          unp->u_exprStmt->curprint ( " > ");
-        }
-#endif
    }
 
 
@@ -749,7 +723,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                printf ("In unparseTemplateArgumentList(): templateArgList element *i = %s explicitlySpecified = %s \n",(*i)->class_name().c_str(),((*i)->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 #if 0
-               unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
+               unp->u_exprStmt->curprint ( string("/* unparseTemplateArgumentList(): templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
            // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
@@ -1223,7 +1197,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #endif
 
 #if 0
-     unp->u_exprStmt->curprint(string("/* templateArgument is explicitlySpecified = ") + ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + " */");
+     unp->u_exprStmt->curprint(string("/* unparseTemplateArgument(): templateArgument is explicitlySpecified = ") + ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
 #if 0
      printf ("Exiting as a test! \n");
@@ -7090,6 +7064,53 @@ Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      curprint("/* Leaving unparseAssnInit() */ "); 
+#endif
+   }
+
+void
+Unparse_ExprStmt::unparseBracedInit(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgBracedInitializer* braced_init = isSgBracedInitializer(expr);
+     ROSE_ASSERT(braced_init != NULL);
+
+     SgUnparse_Info newinfo(info);
+
+#define DEBUG_BRACED_INITIALIZER 0
+
+#if DEBUG_BRACED_INITIALIZER
+     printf ("In unparseBracedInit(): braced_init = %p = %s \n",braced_init,braced_init->class_name().c_str());
+     curprint ("/* In unparseBracedInit() */ ");
+#endif
+
+#if DEBUG_BRACED_INITIALIZER
+     printf ("In unparseBracedInit(): after output of type: newinfo.SkipEnumDefinition()  = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseBracedInit(): after output of type: newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
+#endif
+
+     curprint("{");
+
+     SgExpressionPtrList& list = braced_init->get_initializers()->get_expressions();
+     size_t last_index = list.size()-1;
+
+#if DEBUG_BRACED_INITIALIZER
+     printf ("In unparseBracedInit(): list.size() = %zu \n",list.size());
+     curprint ("/* output list elements in unparseBracedInit() */ ");
+#endif
+
+     for (size_t index = 0; index < list.size(); index ++)
+        {
+          unparseExpression(list[index], newinfo);
+          if (index != last_index)
+               curprint ( ", ");
+        }
+
+     unparseAttachedPreprocessingInfo(braced_init, info, PreprocessingInfo::inside);
+
+     curprint("}");
+
+#if DEBUG_AGGREGATE_INITIALIZER
+     printf ("Leaving unparseBracedInit() \n");
+     curprint ("/* Leaving unparseBracedInit() */ ");
 #endif
    }
 

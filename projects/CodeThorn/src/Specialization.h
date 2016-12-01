@@ -9,6 +9,7 @@
 #include "RewriteSystem.h"
 #include "ReadWriteData.h"
 #include "Visualizer.h"
+#include "LoopInfo.h"
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -19,23 +20,7 @@ using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 
-enum IterVarType { ITERVAR_SEQ, ITERVAR_PAR };
-struct LoopInfo {
-  VariableId iterationVarId;
-  IterVarType iterationVarType;
-  SgStatement* initStmt;
-  SgExpression* condExpr;
-  SgForStatement* forStmt;
-  VariableIdSet outerLoopsVarIds;
-  void computeOuterLoopsVarIds(VariableIdMapping* variableIdMapping);
-  void computeLoopLabelSet(Labeler* labeler);
-  bool isInAssociatedLoop(const EState* estate);
-  LabelSet loopLabelSet;
-  static VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
-};
-
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;
-typedef vector< LoopInfo > LoopInfoSet;
 
 struct EStateExprInfo {
   const EState* first;

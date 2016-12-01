@@ -24,6 +24,7 @@ protected:
     MemoryCellPtr protocell;                            // prototypical memory cell used for its virtual constructors
     MemoryCellPtr latestWrittenCell_;                   // the cell whose value was most recently written to, if any
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -33,6 +34,7 @@ private:
         s & protocell;
         s & latestWrittenCell_;
     }
+#endif
 
 protected:
     MemoryCellState() {}                                // for serialization
@@ -132,6 +134,8 @@ public:
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellState);
+#endif
 
 #endif

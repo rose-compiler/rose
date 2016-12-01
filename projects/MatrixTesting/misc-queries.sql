@@ -29,3 +29,16 @@ update test_results set enabled = false where id not in (
 	rmc_yaml,
 	rmc_yices,
 	rmc_java);
+
+
+-- ########################################################################################################################
+--					Delete tests that reported "No space left on device"
+-- ########################################################################################################################
+
+create table bad_tests (test_id int);
+insert into bad_tests (select test_id from attachments where content ~ 'No space left on device');
+
+delete from attachments where test_id in (select test_id from bad_tests);
+delete from test_results where id in (select test_id from bad_tests);
+
+drop table bad_tests;

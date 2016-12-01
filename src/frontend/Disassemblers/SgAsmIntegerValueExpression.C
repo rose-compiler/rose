@@ -11,7 +11,7 @@ using namespace rose;
 SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(uint64_t value, SgAsmType *type)
     : p_baseNode(NULL) {
     ASSERT_not_null(type);
-    ASSERT_require2(type->get_nBits() <= 8*sizeof(value), "ambiguous signed/unsigned interpretation");
+    ASSERT_require2(0 == value || type->get_nBits() <= 8*sizeof(value), "ambiguous signed/unsigned interpretation");
     set_type(type);
     p_bitVector.resize(type->get_nBits()).fromInteger(value);
 }

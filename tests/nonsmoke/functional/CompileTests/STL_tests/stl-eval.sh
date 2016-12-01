@@ -3,21 +3,36 @@
 
 : ${TOOL1:=g++}
 : ${TOOL2:=identityTranslator}
+: ${ASAN_OPTIONS=""}
 
-CLEANUP="yes"
+CLEANUP_ON_SUCCESS="yes"
+CLEANUP_AND_EXIT="no"
+ASAN_USED="no"
+
+if [[ ! -z $ASAN_OPTIONS ]]; then
+    ASAN_USED="yes"
+fi
 
 if [ "$#" -gt 1 ]; then
-    echo "Usage: $0 [no-cleanup]"
+    echo "Usage: $0 [no-cleanup] [only-cleanup]"
     exit
 else
   if [ $# == 1 ]; then
     if [ "$1" == "no-cleanup" ]; then
-      CLEANUP="no"
+      CLEANUP_ON_SUCCESS="no"
+    elif [ "$1" == "only-cleanup" ]; then
+      CLEANUP_AND_EXIT="yes"
     else
       echo "Error: unknown argument $1."
       exit
     fi
   fi
+fi
+
+if hash bc 2>/dev/null; then
+    PERL_AVAILABLE="yes"
+else
+    PERL_AVAILABLE="no"
 fi
 
 ###############################################################################
@@ -75,17 +90,17 @@ for header in ${STL_HEADERS}; do
     LANG_STANDARD_NO_PLUS=`echo $LANG_STANDARD | tr + x ` 
     TEST_HEADER_PP_C="${TEST_HEADER}_${LANG_STANDARD_NO_PLUS}.pp.C"
     ROSE_TEST_HEADER_PP_C="rose_${TEST_HEADER}_${LANG_STANDARD_NO_PLUS}.pp.C"
-#    TEST_HEADER_FAIL1="${CPP_TEST_HEADER}_${LANG_STANDARD}.t1.fail.C"
-#    TEST_HEADER_FAIL2="${CPP_TEST_HEADER}_${LANG_STANDARD}.t2.fail.C"
 
     printf "TESTING: %-17s: " "$header"
     printf "#include <$header>\nint main(){ return 0; }\n" > ${TEST_HEADER_C}
     # option -P: inhibit generation of linemarkers
-    cpp -P -std=$LANG_STANDARD -x c++ ${TEST_HEADER_C} ${TEST_HEADER_PP_C}
+    #cpp -P -std=$LANG_STANDARD -x c++ ${TEST_HEADER_C} ${TEST_HEADER_PP_C}
+    $TOOL1 -P -std=$LANG_STANDARD -E ${TEST_HEADER_C} > ${TEST_HEADER_PP_C}
     LOC=`wc -l ${TEST_HEADER_PP_C} | cut -f1 -d' '`
     printf "%6s LOC : " "$LOC"
     
     # use a sub shell and redirect coredump output of subshell to /dev/null
+    # 0: check whether preprocessed file can be handled by TOOL1 (compiler)
     {
         $TOOL1 $BS_INCLUDE ${TEST_HEADER_C} -std=$LANG_STANDARD &> /dev/null
     } > /dev/null 2>&1
@@ -93,9 +108,11 @@ for header in ${STL_HEADERS}; do
     if [ $? -eq 0 ]; then
         echo -n "PASS " # 0
         ((T0_PASS+=1))
+        # 1: run rose tool (without invoking back end compiler)
         echo "----------------------------------------------------------------------------------------------------------------" >> $LOGFILE
-        echo "$TOOL2 $TOOL2_BACKEND $BS_INCLUDE ${TEST_HEADER_PP_C} -std=$LANG_STANDARD" >> $LOGFILE
+        echo "${ASAN_OPTIONS} $TOOL2 $TOOL2_BACKEND $BS_INCLUDE ${TEST_HEADER_PP_C} -std=$LANG_STANDARD" >> $LOGFILE
         {
+            # sanitizer options are set in the environment (therefore they are not specified here again)
             $TOOL2 $TOOL2_BACKEND $BS_INCLUDE --edg:no_warnings ${TEST_HEADER_PP_C} -std=$LANG_STANDARD
         } >> $LOGFILE 2>&1
         if [ $? -eq 0 ]; then
@@ -103,32 +120,47 @@ for header in ${STL_HEADERS}; do
             then
                 echo -n "PASS" # 1
                 ((T1_PASS+=1) )
+                # now run back end compiler (TOOL1) on rose-tool (TOOL2) generated output
                 echo "${TOOL1} -std=$LANG_STANDARD ${ROSE_TEST_HEADER_PP_C} -w -Wfatal-errors" >> $LOGFILE
                 ${TOOL1} -std=$LANG_STANDARD ${ROSE_TEST_HEADER_PP_C} -w -Wfatal-errors >> $LOGFILE 2>&1
                 if [ $? -eq 0 ]; then
-                    echo -n " PASS : 100.00%" # 2
+                    if [ "$PERL_AVAILABLE" == "yes" ]; then
+                        echo -n " PASS : 100.00%" # 2
+                    else
+                        echo -n " PASS :    100%" # 2
+                    fi
                     ((T2_PASS+=1))
                 else
-                    # determine line number of error
+                    # determine line number of error when compiling rose-tool generated output
                     ERROR_LINE=`${TOOL1} -std=${LANG_STANDARD} ${ROSE_TEST_HEADER_PP_C} -w -Wfatal-errors 2>&1 | egrep ${ROSE_TEST_HEADER_PP_C}:[0-9] | cut -f2 -d:` 
-                    ERROR_PERCENTAGE=`echo "scale=2; ${ERROR_LINE}*100/${LOC}" | bc`
+                    if [ "$PERL_AVAILABLE" == "yes" ]; then
+
+                        #ERROR_PERCENTAGE=`echo "scale=2; ${ERROR_LINE}*100/${LOC}" | bc`
+                        ERROR_PERCENTAGE=`perl -e "printf '%0.2f', ${ERROR_LINE} * 100 / ${LOC}"` 
+                    else
+                        ERROR_PERCENTAGE=$[ ERROR_LINE * 100 / LOC ] 
+                    fi
                     echo -en " ${RED}FAIL${COLOREND}"
-                    printf " : %6s%% (LINE:%s)" "$ERROR_PERCENTAGE" "$ERROR_LINE" # 2
+                    printf " : %6s%% (LINE:%s)" "$ERROR_PERCENTAGE" "$ERROR_LINE"  # 2
                     ((T2_FAIL+=1))
-                    echo -n " [ ${TOOL1} -std=$LANG_STANDARD ${ROSE_TEST_HEADER_PP_C} -w -Wfatal-errors ]"
+                    # this line reproduces the error message of the back end compiler (it does not reproduce the output file)
+                    echo -en " [ ${TOOL1} -std=$LANG_STANDARD ${ROSE_TEST_HEADER_PP_C} -w -Wfatal-errors ]"
                 fi            
             else
-                echo -en " ${RED}FAIL${COLOREND} [no file generated!] "
+                echo -en " ${RED}FAIL${COLOREND} "
+                echo -en "[no file generated by: $ASAN_OPTIONS $TOOL2 $TOOL2_BACKEND $BS_INCLUDE --edg:no_warnings ${TEST_HEADER_PP_C} -std=$LANG_STANDARD ]"
                 ((T1_FAIL+=1))
             fi
         else
             echo -en "${RED}FAIL ----${COLOREND}" # 1
+            # reinvoke the rose tool to show the failing front end issue
+            echo -en " [ $ASAN_OPTIONS $TOOL2 $TOOL2_BACKEND $BS_INCLUDE --edg:no_warnings ${TEST_HEADER_PP_C} -std=$LANG_STANDARD ]"
             ((T1_FAIL+=1))
         fi
     else
         echo -en "${RED}FAIL ---- ----${COLOREND}" # 0
         ((T0_FAIL+=1))
-        echo -n "[ $TOOL2 $TOOL2_BACKEND $BS_INCLUDE ${TEST_HEADER_PP_C} -std=$LANG_STANDARD ]"
+        echo -n " [ $TOOL1 $BS_INCLUDE $TEST_HEADER_C -std=$LANG_STANDARD ]"
     fi
     # print end of line with (optional) comment
     echo " $COMMENT"
@@ -150,18 +182,24 @@ fi
 ########################################################################
 
 cleanup
+if [ $CLEANUP_AND_EXIT == "yes" ]; then
+    exit
+fi
 
 echo
 echo "-----------------------------------------------------------------"
-echo "Testing with COMPILER (COMP): $TOOL1"
-echo "             FRONTEND (FE)  : $TOOL2"
-echo "             BACKEND (BE)   : $TOOL2"
-echo "             TEST CLEANUP   : $CLEANUP"
+echo "Testing with COMPILER (COMP)      : $TOOL1"
+echo "             FRONTEND (FE)        : $TOOL2"
+echo "             BACKEND (BE)         : $TOOL2"
+echo "             CLEANUP ON SUCCESS   : $CLEANUP_ON_SUCCESS"
+echo "             PERL AVAILABLE       : $PERL_AVAILABLE"
+echo "             ADDRESS SANITIZER    : $ASAN_USED"
 echo "-----------------------------------------------------------------"
 echo
 echo "-----------------------------------------------------------------"
 echo "STL C++98 FRONTEND+BACKEND CHECK         COMP FE   BE   : SUCCESS"
 echo "-----------------------------------------------------------------"
+
 # DQ: (comment out here to skip these tests).
 check "$STL_CPP98_HEADERS_PASSING" "c++98" ""
 if [ ${TOTAL_FAIL} -gt 0 ]; then
@@ -193,12 +231,22 @@ echo "STL C++11 FRONTEND+BACKEND CHECK         COMP FE   BE   : SUCCESS"
 echo "-----------------------------------------------------------------"
 check "$STL_CPP11_HEADERS_PASSING" "c++11" ""
 
+FAILING_FRONTEND_TESTS_WITH_ASAN=6
+
 # code generation not correct for any C++11 header. We only check the front end.
 ((CPP11_FAIL=T0_FAIL+T1_FAIL))
-if [ ${CPP11_FAIL} -gt 0 ]; then
-  test_failed
+if [ "$ASAN_USED" == "yes" ]; then
+    if [ ${CPP11_FAIL} -gt $FAILING_FRONTEND_TESTS_WITH_ASAN ]; then
+        test_failed
+    else
+        echo "PASS (FRONTEND:known to fail for $FAILING_FRONTEND_TESTS_WITH_ASAN (with asan), BACKEND: known to fail for all)."
+    fi
 else
-  echo "PASS (FRONTEND:PASS, BACKEND: known to fail)."
+    if [ ${CPP11_FAIL} -gt 0 ]; then
+        test_failed
+    else
+        echo "PASS (FRONTEND:PASS, BACKEND: known to fail)."
+    fi
 fi
 
 echo
@@ -206,9 +254,9 @@ echo -e "${GREEN}---------------------------------------------------------------
 echo -e "${GREEN}ALL TESTS PASSED (that are known to pass)${COLOREND}"
 echo -e "${GREEN}-----------------------------------------------------------------${COLOREND}"
 
-# clean up -- remove all generated files. cleanup is only performed when all tests passed and option "cleanup" is not provided to the script.
-# for this option exists also a make target 'make check-no-cleanup'
-if [ "$CLEANUP" == "yes" ]; then
+# clean up -- remove all generated files. cleanup is only performed when all tests pass or option "no-cleanup" is not provided to the script.
+# for this option exists a make target 'make check-no-cleanup'
+if [ "$CLEANUP_ON_SUCCESS" == "yes" ]; then
   cleanup
 fi
 

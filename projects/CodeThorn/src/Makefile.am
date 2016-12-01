@@ -123,6 +123,8 @@ codethorn_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CTIOLabeler.h                    \
   CTIOLabeler.C                    \
+  DataRaceDetection.h \
+  DataRaceDetection.C \
   EqualityMaintainer.h             \
   ExprAnalyzer.C                   \
   ExprAnalyzer.h                   \
@@ -139,6 +141,8 @@ codethorn_SOURCES = \
   LTLParser.y++                    \
   LanguageRestrictorCollection.C   \
   LanguageRestrictorCollection.h   \
+  LoopInfo.h                       \
+  LoopInfo.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   PragmaHandler.h \

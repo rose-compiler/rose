@@ -69,5 +69,21 @@ void ExtensionSet::foobar()
    {
   // Error unparses as:
   // std::pair< _Rb_tree< _Key,_Val,_Compare,_Alloc> ::iterator  , bool  > insert_result;
+
+  // Note (g++ 4.8.3): unparses as: std::pair< std::_Rb_tree< std::map< int ,Extension ,class std::less< int  > ,class std::allocator< class std::pair< const int  , Extension  >  > > ::key_type ,std::map< int ,Extension ,class std::less< int  > ,class std::allocator< class std::pair< const int  , Extension  >  > > ::value_type ,std::map< int ,Extension ,class std::less< int  > ,class std::allocator< class std::pair< const int  , Extension  >  > > ::key_compare ,std::map< int ,Extension ,class std::less< int  > ,class std::allocator< class std::pair< const int  , Extension  >  > > ::_Pair_alloc_type > ::iterator  , bool  > insert_result;
+
+  // Error (g++ 6.1): unparses as: std::pair< std::_Rb_tree< std::map< int ,Extension ,class std::less< int  > ,class std::allocator< class std::pair< const int  , Extension  >  > > ::key_type ,std::map< int ,Extension ,class std::less< int  > ,class std::allocator< class std::pair< const int  , Extension  >  > > ::value_type ,std::map< int ,Extension ,class std::less< int  > ,class std::allocator< class std::pair< const int  , Extension  >  > > ::key_compare ,std::map< int ,Extension ,class std::less< int  > ,class std::allocator< class std::pair< const int  , Extension  >  > > ::_Pair_alloc_type > ::iterator  , bool  > insert_result;
+
+  // Better organized: unparses as: 
+  //      std::pair< 
+  //                 std::_Rb_tree< 
+  //                                std::map< int ,Extension ,class std::less< int  > , class std::allocator< class std::pair< const int  , Extension  >  >  > ::key_type ,
+  //                                std::map< int ,Extension ,class std::less< int  > , class std::allocator< class std::pair< const int  , Extension  >  >  > ::value_type ,
+  //                                std::map< int ,Extension ,class std::less< int  > , class std::allocator< class std::pair< const int  , Extension  >  >  > ::key_compare ,
+  //                                std::map< int ,Extension ,class std::less< int  > , class std::allocator< class std::pair< const int  , Extension  >  > > ::_Pair_alloc_type 
+  //                              > ::iterator , 
+  //                 bool  > 
+  //      insert_result;
+
      pair<map<int, Extension>::iterator, bool> insert_result; 
    }

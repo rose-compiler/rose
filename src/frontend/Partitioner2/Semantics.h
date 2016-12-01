@@ -44,6 +44,7 @@ private:
     std::vector<SValuePtr> addressesRead_;
     bool enabled_;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -54,6 +55,7 @@ private:
         s & addressesRead_;
         s & enabled_;
     }
+#endif
 
 protected:
     MemoryState()                                       // for serialization
@@ -181,6 +183,7 @@ private:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -188,6 +191,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & boost::serialization::base_object<InstructionSemantics2::SymbolicSemantics::RiscOperators>(*this);
     }
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -334,8 +338,10 @@ MemoryState<Super>::writeMemory(const InstructionSemantics2::BaseSemantics::SVal
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
+#endif
 
 #endif

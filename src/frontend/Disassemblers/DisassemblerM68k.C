@@ -5029,4 +5029,6 @@ DisassemblerM68k::init()
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::DisassemblerM68k);
+#endif
