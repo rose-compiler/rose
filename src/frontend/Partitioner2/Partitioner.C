@@ -814,6 +814,13 @@ Partitioner::instructionsOverlapping(const AddressInterval &interval) const {
     return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).instructions();
 }
 
+AddressInterval
+Partitioner::instructionExtent(SgAsmInstruction *insn) const {
+    if (insn)
+        return AddressInterval::baseSize(insn->get_address(), insn->get_size());
+    return AddressInterval();
+}
+
 std::vector<BasicBlock::Ptr>
 Partitioner::basicBlocks() const {
     std::vector<BasicBlock::Ptr> bblocks;
