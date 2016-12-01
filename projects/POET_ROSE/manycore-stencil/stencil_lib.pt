@@ -43,16 +43,12 @@ include OptHighLevel.pi
   for (p = dimsizes; p != NULL; (p = cdr(p),index=index+1)) { 
      <* current dimension information *>
      CODE.StencilDim#(i,lo,hi,_,par) = car p; 
-     foreach n=Nest#(Loop#(i,_,_,_)|CODE.For#(VarDecl#(_,VarInit#(i,_)),_,_),b1=_) \in body do break; enddo
-     init = LocalIndexInit#(i,index)::init;
      if (par == "D") <* current dimension is parallelized *>
      {
         <*replace global loop with local loop *>
-        body = REPLACE( n,CODE.LocalStencil#(p, index,b1), body);
-     }
-     else if (n : Nest#(CODE.For#((r=VarDecl#(_,VarInit#(i,v=_))),_,_),_)) {
-        n1 = REPLACE(r, ExpStmt#(Assign#(i,v)), n);
-        body = REPLACE(n,n1,body);
+       foreach n=Nest#(Loop#(i,_,_,_)|CODE.For#(VarDecl#(_,VarInit#(i,_)),_,_),b1=_) \in body do break; enddo
+       body = REPLACE( n,CODE.LocalStencil#(p, index,b1), body);
+       init = LocalIndexInit#(i,index)::init;
      }
   }
   if (hallo != "") {
@@ -241,7 +237,7 @@ include OptHighLevel.pi
         else { tocopy =FALSE; break; }
      }
      else if (GLOBAL.STENCIL_HALLO : CODE.HalloDim#(i=_,lo=_,hi=_,dist=_)) {
-       dims = CopyDim#(i,lo,hi,dist) :: dims;
+       dims = CopyDim#(i,lo,REBUILD(hi-lo),dist) :: dims;
      }
      else  { dims = CopyDim#(i,ivar,1, 1)::dims; }
    }
@@ -263,10 +259,11 @@ include OptHighLevel.pi
   trace_decl=GLOBAL.TRACE_DECL
   > 
   <*3.5-D Blocking Optimization for Stencil Computations on Modern CPUs and GPUs.  by Anthony Nguyen et al. Intel Corporation*>
-  origbody=body;
-  if (body : CODE.Pragma#(p1=_,body1=_)) {
-           body = body1;
-  }
+
+   origbody=body;
+   if (body : CODE.Pragma#(p1=_,body1=_)) {
+            body = body1;
+   }
 
   if (params : CODE.ParamDeclList#p) params=p;
   switch (extra) {
@@ -274,11 +271,10 @@ include OptHighLevel.pi
          if (rep_lo : ID) params = TypeInfo#(CODE.IntType#"int", rep_lo, "") :: params;
          if (rep_hi : ID) params = TypeInfo#(CODE.IntType#"int", rep_hi, "") :: params;
          StencilDim#(outer_i,_, _,_,_) = car(dimsizes);
-         foreach (ERASE(body) : (inner_stencil=Nest#(Loop#(outer_i,_,_,_)|CODE.For#(VarDecl#(_,VarInit#(outer_i,_)),_,_),_)) : TRUE);
+         foreach (ERASE(body) : (inner_stencil=Nest#(Loop#(outer_i,_,_,_),_)) : TRUE);
 
   case "" | CODE.StencilExtra#"manycore": inner_stencil=body;
   }
-
   (init,local)=gen_manycore_stencil_local(type,dimsizes,inner_stencil);
   boundary = gen_stencil_boundaries(dimsizes,local);
 

@@ -4,6 +4,7 @@ include Loops.incl
 <define EXP_BASE INT|ID/>
 <define EXP_BOP (("+" "-") ("*" "/"))/>
 <define EXP_UOP ("-")/>
+<define BUILD_BOP XFORM.RebuildBop />
 
 <parameter add_timing type=0|1 default=0 message="whether to insert timing information" />
 
@@ -61,7 +62,7 @@ stencil-manycore(@type@, @oldarray@, @array@) @dimsizes@ @hallo@
 <code StencilDim pars=(i:ID,lo:INT|ID,hi:ID|INT,dist:ID|INT,par:"S"|"D") >
 @par@(@i@,@lo@,@hi@,@dist@) </code>
 
-<code HalloDim pars=(i:ID,lo:INT|ID,hi:ID|INT,dist:ID|INT)>
+<code HalloDim pars=(i:ID,lo:INT|ID,hi:EXP,dist:ID|INT)>
 H(@i@,@lo@,@hi@,@dist@)
 </code>
 

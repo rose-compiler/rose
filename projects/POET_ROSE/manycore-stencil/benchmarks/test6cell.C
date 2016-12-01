@@ -143,7 +143,7 @@ high_level_relax ( MulticoreArray<T> & array, MulticoreArray<T> & old_array, int
 
   // Use pragma to trigger compiler transformations, such as:
   // #pragma manycore
-#pragma stencil-manycore(T, old_array, array)  D(k,0,arraySizeZ,dist) D(j,0,arraySizeY,dist) D(i,0,arraySizeX,dist) H(d,1,dist,1)
+#pragma stencil-manycore(T, old_array, array)  D(k,0,arraySizeZ,dist) D(j,0,arraySizeY,dist) D(i,0,arraySizeX,dist) H(d,1,dist+1,1)
      for (int k = dist; k < arraySizeZ-dist; k++)
         {
           for (int j = dist; j < arraySizeY-dist; j++)

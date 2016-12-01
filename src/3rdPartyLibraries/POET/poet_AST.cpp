@@ -941,16 +941,18 @@ POETInputList :: POETInputList(POETCode* f) : POETList(f, 0)
     { tail = this; line_end=(f==LINE_BREAK)?this : 0;}
 
 void POETInputList ::append(POETInputList* next) {
-    assert(next!=0);
-    assert(tail->rest == 0);
-    reset_next(next);
+  assert(next!=0);
+  assert(tail->rest == 0);
+  tail->rest = next; 
+  tail = next->tail;
+  if (tail->line_end != 0) line_end=tail->line_end;
 }
 
 void POETInputList ::reset_next(POETInputList* next) {
   if (next == 0) { tail = this; rest = 0; 
         if (first==LINE_BREAK) line_end = this; else line_end=0; }
   else { 
-    tail->rest = next; 
+    rest = next; 
     tail = next->tail;
     if (tail->line_end != 0) line_end=tail->line_end;
   }

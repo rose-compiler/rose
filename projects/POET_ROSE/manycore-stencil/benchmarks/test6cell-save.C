@@ -97,7 +97,7 @@ high_level_relax ( MulticoreArray < T > & array, MulticoreArray < T > & old_arra
      const int arraySizeX = array . get_arraySize ( 0 );
      const int arraySizeY = array . get_arraySize ( 1 );
      const int arraySizeZ = array . get_arraySize ( 2 );
-#pragma stencil-manycore(T, old_array, array) D(k,0,arraySizeZ,dist) D(j,0,arraySizeY,dist) D(i,0,arraySizeX,dist) H(d,1,dist,1)
+#pragma stencil-manycore(T, old_array, array) D(k,0,arraySizeZ,dist) D(j,0,arraySizeY,dist) D(i,0,arraySizeX,dist) H(d,1,dist+1,1)
      for ( int k = dist; k < arraySizeZ - dist; k ++ )
         {
           for ( int j = dist; j < arraySizeY - dist; j ++ )
@@ -117,7 +117,7 @@ template<> void high_level_relax(class MulticoreArray< double  > &array,class Mu
     const int arraySizeX = array . get_arraySize(0);
     const int arraySizeY = array . get_arraySize(1);
     const int arraySizeZ = array . get_arraySize(2);
-    #pragma stencil-manycore(double, old_array, array) D(k,0,arraySizeZ,dist) D(j,0,arraySizeY,dist) D(i,0,arraySizeX,dist) H(d,1,dist,1) 
+    #pragma stencil-manycore(double, old_array, array) D(k,0,arraySizeZ,dist) D(j,0,arraySizeY,dist) D(i,0,arraySizeX,dist) H(d,1,dist+1,1) 
     int d;
     int i;
     int j;

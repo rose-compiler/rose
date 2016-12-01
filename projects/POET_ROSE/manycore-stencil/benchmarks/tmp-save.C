@@ -26,7 +26,6 @@ void high_level_relax(class MulticoreArray< int  > &array,class MulticoreArray< 
     const int arraySizeY = array . get_arraySize(1);
     const int arraySizeZ = array . get_arraySize(2);
     #pragma stencil-manycore(int, old_array, array) D(i,0,arraySizeX,1) D(j,0,arraySizeY,1) S(k,0,arraySizeZ,1) 
-    int k;
     int j;
     int i;
     
@@ -126,7 +125,7 @@ void high_level_relax(class MulticoreArray< int  > &array,class MulticoreArray< 
              int locallocallocal_size1 = cur_core->coreArrayNeighborhoodSizes_3D[1][1][1][1]; 
              int locallocallocal_size0 = cur_core->coreArrayNeighborhoodSizes_3D[1][1][1][0]; 
     
-             for (k = 1;k<arraySizeZ-1;k++) 
+             for (int k = 1;k<arraySizeZ-1;k++) 
                for (j=1; j<locallocallocal_size1-1; j=j+1)
                {
                  for (i=1; i<locallocallocal_size2-1; i=i+1)
@@ -141,14 +140,14 @@ void high_level_relax(class MulticoreArray< int  > &array,class MulticoreArray< 
                if (locallocallocal_size1>1) 
                  {
                    if (localleftlocal_size1>0&&!cur_core->boundaryCore_3D[1][0]) 
-                     for (k = 1;k<arraySizeZ-1;k++) 
+                     for (int k = 1;k<arraySizeZ-1;k++) 
                        for (i=1; i<locallocallocal_size2-1; i=i+1)
                        {
                          old_arraySection[local_index3D(i,0,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(i-1,-1+localleftlocal_size1,k-1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(i+1,-1+localleftlocal_size1,k-1,localleftlocal_size0,localleftlocal_size1)]+arraySection[local_index3D(i-1,0+1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySection[local_index3D(i+1,0+1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(i-1,-1+localleftlocal_size1,k+1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(i+1,-1+localleftlocal_size1,k+1,localleftlocal_size0,localleftlocal_size1)]+arraySection[local_index3D(i-1,0+1,k+1,locallocallocal_size0,locallocallocal_size1)]+arraySection[local_index3D(i+1,0+1,k+1,locallocallocal_size0,locallocallocal_size1)])/8.0;
                        }
                    if (localrightlocal_size1>0&&!cur_core->boundaryCore_3D[1][1]) 
                      {
-                       for (k = 1;k<arraySizeZ-1;k++) 
+                       for (int k = 1;k<arraySizeZ-1;k++) 
                          for (i=1; i<locallocallocal_size2-1; i=i+1)
                          {
                            old_arraySection[local_index3D(i,-1+locallocallocal_size1,k,locallocallocal_size0,locallocallocal_size1)] = (arraySection[local_index3D(i-1,-1+locallocallocal_size1-1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySection[local_index3D(i+1,-1+locallocallocal_size1-1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(i-1,0,k-1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(i+1,0,k-1,localrightlocal_size0,localrightlocal_size1)]+arraySection[local_index3D(i-1,-1+locallocallocal_size1-1,k+1,locallocallocal_size0,locallocallocal_size1)]+arraySection[local_index3D(i+1,-1+locallocallocal_size1-1,k+1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(i-1,0,k+1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(i+1,0,k+1,localrightlocal_size0,localrightlocal_size1)])/8.0;
@@ -158,7 +157,7 @@ void high_level_relax(class MulticoreArray< int  > &array,class MulticoreArray< 
                else 
                  if ((localleftlocal_size1>0&&!cur_core->boundaryCore_3D[1][0])&&(localrightlocal_size1>0&&!cur_core->boundaryCore_3D[1][1])) 
                    {
-                     for (k = 1;k<arraySizeZ-1;k++) 
+                     for (int k = 1;k<arraySizeZ-1;k++) 
                        for (i=1; i<locallocallocal_size2-1; i=i+1)
                        {
                          old_arraySection[local_index3D(i,0,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(i-1,-1+localleftlocal_size1,k-1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(i+1,-1+localleftlocal_size1,k-1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(i-1,0,k-1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(i+1,0,k-1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(i-1,-1+localleftlocal_size1,k+1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(i+1,-1+localleftlocal_size1,k+1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(i-1,0,k+1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(i+1,0,k+1,localrightlocal_size0,localrightlocal_size1)])/8.0;
@@ -168,7 +167,7 @@ void high_level_relax(class MulticoreArray< int  > &array,class MulticoreArray< 
                  {
                    if (leftlocallocal_size2>0&&!cur_core->boundaryCore_3D[2][0]) 
                      {
-                       for (k = 1;k<arraySizeZ-1;k++) 
+                       for (int k = 1;k<arraySizeZ-1;k++) 
                          for (j=1; j<locallocallocal_size1-1; j=j+1)
                          {
                            old_arraySection[local_index3D(0,j,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,j-1,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySection[local_index3D(0+1,j-1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,j+1,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySection[local_index3D(0+1,j+1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,j-1,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySection[local_index3D(0+1,j-1,k+1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,j+1,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySection[local_index3D(0+1,j+1,k+1,locallocallocal_size0,locallocallocal_size1)])/8.0;
@@ -177,25 +176,25 @@ void high_level_relax(class MulticoreArray< int  > &array,class MulticoreArray< 
                          {
                            if (localleftlocal_size1>0&&!cur_core->boundaryCore_3D[1][0]) 
                              {
-                               for (k = 1;k<arraySizeZ-1;k++) 
+                               for (int k = 1;k<arraySizeZ-1;k++) 
                                  old_arraySection[local_index3D(0,0,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][0][1]][otherCore_index3D(-1+leftleftlocal_size2,-1+leftleftlocal_size1,k-1,leftleftlocal_size0,leftleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(0+1,-1+localleftlocal_size1,k-1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,0+1,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySection[local_index3D(0+1,0+1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][0][1]][otherCore_index3D(-1+leftleftlocal_size2,-1+leftleftlocal_size1,k+1,leftleftlocal_size0,leftleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(0+1,-1+localleftlocal_size1,k+1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,0+1,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySection[local_index3D(0+1,0+1,k+1,locallocallocal_size0,locallocallocal_size1)])/8.0;
                              }
                            if (localrightlocal_size1>0&&!cur_core->boundaryCore_3D[1][1]) 
                              {
-                               for (k = 1;k<arraySizeZ-1;k++) 
+                               for (int k = 1;k<arraySizeZ-1;k++) 
                                  old_arraySection[local_index3D(0,-1+locallocallocal_size1,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,-1+locallocallocal_size1-1,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySection[local_index3D(0+1,-1+locallocallocal_size1-1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][2][1]][otherCore_index3D(-1+leftrightlocal_size2,0,k-1,leftrightlocal_size0,leftrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(0+1,0,k-1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,-1+locallocallocal_size1-1,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySection[local_index3D(0+1,-1+locallocallocal_size1-1,k+1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][2][1]][otherCore_index3D(-1+leftrightlocal_size2,0,k+1,leftrightlocal_size0,leftrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(0+1,0,k+1,localrightlocal_size0,localrightlocal_size1)])/8.0;
                              }
                          }
                        else 
                          if ((localleftlocal_size1>0&&!cur_core->boundaryCore_3D[1][0])&&(localrightlocal_size1>0&&!cur_core->boundaryCore_3D[1][1])) 
                            {
-                             for (k = 1;k<arraySizeZ-1;k++) 
+                             for (int k = 1;k<arraySizeZ-1;k++) 
                                old_arraySection[local_index3D(0,0,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][0][1]][otherCore_index3D(-1+leftleftlocal_size2,-1+leftleftlocal_size1,k-1,leftleftlocal_size0,leftleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(0+1,-1+localleftlocal_size1,k-1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][2][1]][otherCore_index3D(-1+leftrightlocal_size2,0,k-1,leftrightlocal_size0,leftrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(0+1,0,k-1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][0][1]][otherCore_index3D(-1+leftleftlocal_size2,-1+leftleftlocal_size1,k+1,leftleftlocal_size0,leftleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(0+1,-1+localleftlocal_size1,k+1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][2][1]][otherCore_index3D(-1+leftrightlocal_size2,0,k+1,leftrightlocal_size0,leftrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(0+1,0,k+1,localrightlocal_size0,localrightlocal_size1)])/8.0;
                            }
                      }
                    if (rightlocallocal_size2>0&&!cur_core->boundaryCore_3D[2][1]) 
                      {
-                       for (k = 1;k<arraySizeZ-1;k++) 
+                       for (int k = 1;k<arraySizeZ-1;k++) 
                          for (j=1; j<locallocallocal_size1-1; j=j+1)
                          {
                            old_arraySection[local_index3D(-1+locallocallocal_size2,j,k,locallocallocal_size0,locallocallocal_size1)] = (arraySection[local_index3D(-1+locallocallocal_size2-1,j-1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,j-1,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySection[local_index3D(-1+locallocallocal_size2-1,j+1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,j+1,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySection[local_index3D(-1+locallocallocal_size2-1,j-1,k+1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,j-1,k+1,rightlocallocal_size0,rightlocallocal_size1)]+arraySection[local_index3D(-1+locallocallocal_size2-1,j+1,k+1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,j+1,k+1,rightlocallocal_size0,rightlocallocal_size1)])/8.0;
@@ -204,19 +203,19 @@ void high_level_relax(class MulticoreArray< int  > &array,class MulticoreArray< 
                          {
                            if (localleftlocal_size1>0&&!cur_core->boundaryCore_3D[1][0]) 
                              {
-                               for (k = 1;k<arraySizeZ-1;k++) 
+                               for (int k = 1;k<arraySizeZ-1;k++) 
                                  old_arraySection[local_index3D(-1+locallocallocal_size2,0,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(-1+locallocallocal_size2-1,-1+localleftlocal_size1,k-1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][0][1]][otherCore_index3D(0,-1+rightleftlocal_size1,k-1,rightleftlocal_size0,rightleftlocal_size1)]+arraySection[local_index3D(-1+locallocallocal_size2-1,0+1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,0+1,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(-1+locallocallocal_size2-1,-1+localleftlocal_size1,k+1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][0][1]][otherCore_index3D(0,-1+rightleftlocal_size1,k+1,rightleftlocal_size0,rightleftlocal_size1)]+arraySection[local_index3D(-1+locallocallocal_size2-1,0+1,k+1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,0+1,k+1,rightlocallocal_size0,rightlocallocal_size1)])/8.0;
                              }
                            if (localrightlocal_size1>0&&!cur_core->boundaryCore_3D[1][1]) 
                              {
-                               for (k = 1;k<arraySizeZ-1;k++) 
+                               for (int k = 1;k<arraySizeZ-1;k++) 
                                  old_arraySection[local_index3D(-1+locallocallocal_size2,-1+locallocallocal_size1,k,locallocallocal_size0,locallocallocal_size1)] = (arraySection[local_index3D(-1+locallocallocal_size2-1,-1+locallocallocal_size1-1,k-1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,-1+locallocallocal_size1-1,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(-1+locallocallocal_size2-1,0,k-1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][2][1]][otherCore_index3D(0,0,k-1,rightrightlocal_size0,rightrightlocal_size1)]+arraySection[local_index3D(-1+locallocallocal_size2-1,-1+locallocallocal_size1-1,k+1,locallocallocal_size0,locallocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,-1+locallocallocal_size1-1,k+1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(-1+locallocallocal_size2-1,0,k+1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][2][1]][otherCore_index3D(0,0,k+1,rightrightlocal_size0,rightrightlocal_size1)])/8.0;
                              }
                          }
                        else 
                          if ((localleftlocal_size1>0&&!cur_core->boundaryCore_3D[1][0])&&(localrightlocal_size1>0&&!cur_core->boundaryCore_3D[1][1])) 
                            {
-                             for (k = 1;k<arraySizeZ-1;k++) 
+                             for (int k = 1;k<arraySizeZ-1;k++) 
                                old_arraySection[local_index3D(-1+locallocallocal_size2,0,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(-1+locallocallocal_size2-1,-1+localleftlocal_size1,k-1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][0][1]][otherCore_index3D(0,-1+rightleftlocal_size1,k-1,rightleftlocal_size0,rightleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(-1+locallocallocal_size2-1,0,k-1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][2][1]][otherCore_index3D(0,0,k-1,rightrightlocal_size0,rightrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][0][1]][otherCore_index3D(-1+locallocallocal_size2-1,-1+localleftlocal_size1,k+1,localleftlocal_size0,localleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][0][1]][otherCore_index3D(0,-1+rightleftlocal_size1,k+1,rightleftlocal_size0,rightleftlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[1][2][1]][otherCore_index3D(-1+locallocallocal_size2-1,0,k+1,localrightlocal_size0,localrightlocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][2][1]][otherCore_index3D(0,0,k+1,rightrightlocal_size0,rightrightlocal_size1)])/8.0;
                            }
                      }
@@ -224,7 +223,7 @@ void high_level_relax(class MulticoreArray< int  > &array,class MulticoreArray< 
                else 
                  if ((leftlocallocal_size2>0&&!cur_core->boundaryCore_3D[2][0])&&(rightlocallocal_size2>0&&!cur_core->boundaryCore_3D[2][1])) 
                    {
-                     for (k = 1;k<arraySizeZ-1;k++) 
+                     for (int k = 1;k<arraySizeZ-1;k++) 
                        for (j=1; j<locallocallocal_size1-1; j=j+1)
                        {
                          old_arraySection[local_index3D(0,j,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,j-1,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,j-1,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,j+1,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,j+1,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,j-1,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,j-1,k+1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,j+1,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,j+1,k+1,rightlocallocal_size0,rightlocallocal_size1)])/8.0;
@@ -233,19 +232,19 @@ void high_level_relax(class MulticoreArray< int  > &array,class MulticoreArray< 
                        {
                          if (leftlocallocal_size2>0&&!cur_core->boundaryCore_3D[2][0]) 
                            {
-                             for (k = 1;k<arraySizeZ-1;k++) 
+                             for (int k = 1;k<arraySizeZ-1;k++) 
                                old_arraySection[local_index3D(0,0,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,-1+leftlocallocal_size2,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(0,-1+leftlocallocal_size2,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,0+1,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,0+1,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,-1+leftlocallocal_size2,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(0,-1+leftlocallocal_size2,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,0+1,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,0+1,k+1,rightlocallocal_size0,rightlocallocal_size1)])/8.0;
                            }
                          if (rightlocallocal_size2>0&&!cur_core->boundaryCore_3D[2][1]) 
                            {
-                             for (k = 1;k<arraySizeZ-1;k++) 
+                             for (int k = 1;k<arraySizeZ-1;k++) 
                                old_arraySection[local_index3D(0,-1+locallocallocal_size2,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,-1+locallocallocal_size2-1,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,-1+locallocallocal_size2-1,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(-1+rightlocallocal_size2,0,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,0,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,-1+locallocallocal_size2-1,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,-1+locallocallocal_size2-1,k+1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(-1+rightlocallocal_size2,0,k+1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,0,k+1,rightlocallocal_size0,rightlocallocal_size1)])/8.0;
                            }
                        }
                      else 
                        if ((leftlocallocal_size2>0&&!cur_core->boundaryCore_3D[2][0])&&(rightlocallocal_size2>0&&!cur_core->boundaryCore_3D[2][1])) 
                          {
-                           for (k = 1;k<arraySizeZ-1;k++) 
+                           for (int k = 1;k<arraySizeZ-1;k++) 
                              old_arraySection[local_index3D(0,0,k,locallocallocal_size0,locallocallocal_size1)] = (arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,-1+leftlocallocal_size2,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(0,-1+leftlocallocal_size2,k-1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(-1+rightlocallocal_size2,0,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,0,k-1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(-1+leftlocallocal_size2,-1+leftlocallocal_size2,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[0][1][1]][otherCore_index3D(0,-1+leftlocallocal_size2,k+1,leftlocallocal_size0,leftlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(-1+rightlocallocal_size2,0,k+1,rightlocallocal_size0,rightlocallocal_size1)]+arraySectionPointers[cur_core->coreArrayNeighborhoodLinearized_3D[2][1][1]][otherCore_index3D(0,0,k+1,rightlocallocal_size0,rightlocallocal_size1)])/8.0;
                          }
                    }
