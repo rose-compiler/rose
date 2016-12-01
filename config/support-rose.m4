@@ -2,6 +2,8 @@
 #-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 [
+echo "Testing 2 value of FC = $FC"
+
 # Begin macro ROSE_SUPPORT_ROSE_PART_1.
 
 # *********************************************************************
@@ -128,9 +130,15 @@ ROSE_CONFIGURE_SECTION([GNU Fortran])
 AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
 AC_SUBST(GFORTRAN_PATH)
 
-if test "x$GFORTRAN_PATH" != "x"; then
+# DQ (11/17/2016): We need to make sure that --without-gfortran does not set USE_GFORTRAN_IN_ROSE to true.
+# if test "x$GFORTRAN_PATH" != "x"; then
+if test "x$GFORTRAN_PATH" != "x" -a "$GFORTRAN_PATH" != "no"; then
    AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
+else
+   AC_DEFINE([USE_GFORTRAN_IN_ROSE], [0], [Mark that GFORTRAN is not available])
 fi
+
+echo "GFORTRAN_PATH = $GFORTRAN_PATH"
 
 # Call supporting macro for X10 language compiler path
 
@@ -139,6 +147,7 @@ fi
 ##
 
   ROSE_SUPPORT_X10()
+
   ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS
 
   ROSE_CONFIGURE_SECTION([])
@@ -377,7 +386,6 @@ fi
 echo "CFLAGS   = $CFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
 echo "CPPFLAGS = $CPPFLAGS"
-
 
 # *****************************************************************
 #    Option to define a uniform debug level for ROSE development

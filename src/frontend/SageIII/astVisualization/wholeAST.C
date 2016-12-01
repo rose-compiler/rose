@@ -36,14 +36,30 @@ CustomAstDOTGenerationEdgeType::CustomAstDOTGenerationEdgeType (SgNode* n1, SgNo
 bool
 CustomAstDOTGenerationEdgeType::operator!=(const CustomAstDOTGenerationEdgeType & edge) const
    {
-     return (edge.start != start) || (edge.end != end) || (edge.labelString != labelString);
+  // return (edge.start != start) || (edge.end != end) || (edge.labelString != labelString);
+     bool returnValue = (edge.start != start) || (edge.end != end) || (edge.labelString != labelString);
+
+#if 1
+     printf ("In CustomAstDOTGenerationEdgeType::operator!=(): edge.start = %p start = %p edge.end = %p end = %p edge.labelString = %s labelString = %s returnValue = %s \n",
+             edge.start,start,edge.end,end,edge.labelString.c_str(),labelString.c_str(),returnValue ? "true" : "false");
+#endif
+
+     return returnValue;
    }
 
 // DQ (4/8/2011): Moved this from the header file...
 bool
 CustomAstDOTGenerationEdgeType::operator==(const CustomAstDOTGenerationEdgeType & edge) const
    {
-     return (edge.start == start) && (edge.end == end) && (edge.labelString == labelString);
+  // return (edge.start == start) && (edge.end == end) && (edge.labelString == labelString);
+     bool returnValue = (edge.start == start) && (edge.end == end) && (edge.labelString == labelString);
+
+#if 1
+     printf ("In CustomAstDOTGenerationEdgeType::operator==(): edge.start = %p start = %p edge.end = %p end = %p edge.labelString = %s labelString = %s returnValue = %s \n",
+             edge.start,start,edge.end,end,edge.labelString.c_str(),labelString.c_str(),returnValue ? "true" : "false");
+#endif
+
+     return returnValue;
    }
 
 // DQ (4/8/2011): Moved this from the header file... This is an issue reported by Insure++.
@@ -57,21 +73,21 @@ CustomAstDOTGenerationEdgeType::operator< (const CustomAstDOTGenerationEdgeType 
      size_t edge_end_size_t   = (size_t) edge.start;
      size_t end_size_t        = (size_t) start;
 
+  // DQ (11/26/2016): This is a required bug fix to permit the std::set::find() function to work properly.
   // return (edge.start < start) || (((edge.start == start) && (edge.labelString == labelString)) && (edge.end < end)); 
-     return (edge_start_size_t < start_size_t) || (((edge_start_size_t == start_size_t) && (edge.labelString == labelString)) && (edge_end_size_t < end_size_t)); 
+  // return (edge_start_size_t < start_size_t) || (((edge_start_size_t == start_size_t) && (edge.labelString == labelString)) && (edge_end_size_t < end_size_t)); 
+  // bool returnValue = (edge_start_size_t < start_size_t) || (((edge_start_size_t == start_size_t) && (edge.labelString == labelString)) && (edge_end_size_t < end_size_t)); 
+     bool returnValue = (edge_start_size_t < start_size_t) || 
+                        ((edge_start_size_t == start_size_t) && (edge_end_size_t < end_size_t)) || 
+                        ((edge_start_size_t == start_size_t) && (edge_end_size_t == end_size_t) && (edge.labelString < labelString) ); 
+
+#if 0
+     printf ("In CustomAstDOTGenerationEdgeType::operator<(): edge.start = %p start = %p edge.end = %p end = %p edge.labelString = %s labelString = %s returnValue = %s \n",
+             edge.start,start,edge.end,end,edge.labelString.c_str(),labelString.c_str(),returnValue ? "true" : "false");
+#endif
+
+     return returnValue;
    }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -349,7 +365,40 @@ CustomMemoryPoolDOTGenerationData::skipNode(SgNode* n)
 void
 CustomMemoryPoolDOTGenerationData::skipEdge(EdgeType e)
    {
-     skipEdgeSet.insert(e);
+#if 0
+     printf ("In CustomMemoryPoolDOTGenerationData::skipEdge(): START: e.labelString = %s skipEdgeSet.size() = %zu \n",e.labelString.c_str(),skipEdgeSet.size());
+#endif
+
+  // skipEdgeSet.insert(e);
+     if (skipEdgeSet.find(e) == skipEdgeSet.end())
+        {
+          skipEdgeSet.insert(e);
+        }
+       else
+        {
+          printf ("ERROR: In CustomMemoryPoolDOTGenerationData::skipEdge(): edge is already present in set \n");
+          ROSE_ASSERT(false);
+        }
+
+#if 0
+     printf ("In CustomMemoryPoolDOTGenerationData::skipEdge(): END: e.labelString = %s skipEdgeSet.size() = %zu \n",e.labelString.c_str(),skipEdgeSet.size());
+#endif
+
+  // DQ (11/26/2016): Adding test for find() operator on edge set.
+     EdgeType edge(e.start,e.end,e.labelString);
+     ROSE_ASSERT(skipEdgeSet.find(edge) != skipEdgeSet.end());
+     ROSE_ASSERT(! (skipEdgeSet.find(edge) == skipEdgeSet.end()) );
+
+  // DQ (11/26/2016): Adding test for find() operator on edge set.
+     std::set<EdgeType>::iterator element = skipEdgeSet.find(edge);
+
+     ROSE_ASSERT(e.start == edge.start);
+     ROSE_ASSERT(e.end == edge.end);
+     ROSE_ASSERT(e.labelString == edge.labelString);
+
+     ROSE_ASSERT(e.start == element->start);
+     ROSE_ASSERT(e.end == element->end);
+     ROSE_ASSERT(e.labelString == element->labelString);
    }
 
 void 
@@ -655,7 +704,7 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
                SgNode* n             = (*i).first;
                std::string edgelabel = (*i).second;
 #if 0
-               printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: node->variantT() = %d \n",(int)(node->variantT()));
+               printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: node = %p = %s node->variantT() = %d \n",node,node->class_name().c_str(),(int)(node->variantT()));
                printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: n = %p \n",n);
                printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: edgelabel = %s \n",edgelabel.c_str());
                if (n != NULL)
@@ -678,10 +727,26 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
 #endif
                if ( n == NULL)
                   {
+#if 1
+                 // DQ (11/26/2016): Added to support debugging of how we ignore edges.
+                 // This is the only way I have been able to eliminate these edges.
                     if ( skipNodeList.find(node) == skipNodeList.end() )
                        {
-                         dotrep.addNullValue(node,"",edgelabel,"");
+                      // dotrep.addNullValue(node,"",edgelabel,"");
+                      // DQ (11/26/2016): Adding support to ignore specific edges.
+                         EdgeType edge(node,n,edgelabel);
+
+                      // DQ (11/26/2016): Could the logic is flipped here, should it be NOT EQUALS instead?
+                         bool ignoreEdge = skipEdgeSet.find(edge) != skipEdgeSet.end();
+#if 0
+                         printf ("ignoreEdge = %s \n",ignoreEdge ? "true" : "false");
+#endif
+                         if (ignoreEdge == false)
+                            {
+                              dotrep.addNullValue(node,"",edgelabel,"");
+                            }
                        }
+#endif
                   }
                  else
                   {
@@ -691,7 +756,9 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
                  // if ( skipNodeList.find(n) == skipNodeList.end() )
                     if ( skipNodeList.find(n) == skipNodeList.end() )
                        {
-                      // printf ("Edge is being output \n");
+#if 0
+                         printf ("Edge is being output \n");
+#endif
                          bool ignoreEdge = false;
 #if 0
                          Sg_File_Info* fileInfo = n->get_file_info();
@@ -713,9 +780,63 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
                               printf ("node = %p n = %p edgelabel = %s ignoreEdge = %s \n",node,n,edgelabel.c_str(),ignoreEdge ? "true" : "false");
                       //    }
 #endif
+
+                      // DQ (11/26/2016): Adding support to ignore specific edges.
+                         EdgeType edge(node,n,edgelabel);
+
+                      // DQ (11/26/2016): Could the logic is flipped here, should it be NOT EQUALS instead?
+                      // This appears to always be false.
+                      // ignoreEdge = (skipEdgeSet.find(edge) == skipEdgeSet.end());
+                      // ignoreEdge = (skipEdgeSet.find(edge) != skipEdgeSet.end());
+                      // ignoreEdge = (std::set<EdgeType>::find(skipEdgeSet,edge) != skipEdgeSet.end());
+                         ignoreEdge = skipEdgeSet.find(edge) != skipEdgeSet.end();
+#if 0
+                         printf ("ignoreEdge = %s \n",ignoreEdge ? "true" : "false");
+#endif
+                         if (ignoreEdge == true)
+                            {
+                              EdgeSetType::iterator example_iterator = skipEdgeSet.find(edge);
+#if 0
+                              printf ("example_iterator->start = %p = %s \n",example_iterator->start,example_iterator->start->class_name().c_str());
+                              if (example_iterator->end != NULL)
+                                 {
+                                   printf ("example_iterator->end   = %p = %s \n",example_iterator->end,example_iterator->end->class_name().c_str());
+                                 }
+                                else
+                                 {
+                                   printf ("example_iterator->end   = NULL \n");
+                                 }
+                              printf ("example_iterator->labelString = %s \n",example_iterator->labelString.c_str());
+#endif
+                           // DQ (11/26/2016): These should be the same.
+                              ROSE_ASSERT(edgelabel == example_iterator->labelString);
+                            }
+
+#if 0
+                         printf ("In CustomMemoryPoolDOTGenerationData::visit(): node = %p = %s n = %p = %s edgelabel = %s ignoreEdge = %s skipEdgeSet.size() = %zu \n",
+                                 node,node->class_name().c_str(),n,n->class_name().c_str(),edgelabel.c_str(),ignoreEdge ? "true" : "false",skipEdgeSet.size());
+#endif
+#if 0
+                      // DQ (11/26/2016): Added to support debugging of how we ignore edges.
+                      // This is the only way I have been able to eliminate these edges.
+                         if (edgelabel == "parent")
+                            {
+                              ignoreEdge = true;
+                            }
+#endif
+#if 0
+                      // DQ (11/26/2016): Added to support debugging of how we ignore edges.
+                      // This is the only way I have been able to eliminate these edges.
+                         if (edgelabel == "scope")
+                            {
+                              ignoreEdge = true;
+                            }
+#endif
 #if 0
                          if (edgelabel == "header")
+                            {
                               ignoreEdge = true;
+                            }
 #endif
 
                          if (ignoreEdge == false)
@@ -813,18 +934,55 @@ CustomMemoryPoolDOTGeneration::internalGenerateGraph( std::string filename )
 void
 CustomMemoryPoolDOTGeneration::edgeFilter(SgNode* nodeSource, SgNode* nodeSink, std::string edgeName )
    {
+#if 0
+     printf ("TOP of edgeFilter(): edgeName = %s \n",edgeName.c_str());
+#endif
+
   // This function skips the representation of edges
      if (edgeName == "parent")
         {
+          ROSE_ASSERT(nodeSource != NULL);
+#if 0
+       // ROSE_ASSERT(nodeSink != NULL);
+          if (nodeSink != NULL)
+             {
+               printf ("In edgeFilter(): Skipping parent edge! nodeSource = %p = %s nodeSink = %p = %s DOTgraph.skipEdgeSet.size() = %zu \n",
+                    nodeSource,nodeSource->class_name().c_str(),nodeSink,nodeSink->class_name().c_str(),DOTgraph.skipEdgeSet.size());
+             }
+#endif
           EdgeType edge(nodeSource,nodeSink,edgeName);
           skipEdge(edge);
+#if 0
+          printf ("In edgeFilter(): Skipped parent edge! DOTgraph.skipEdgeSet.size() = %zu \n",DOTgraph.skipEdgeSet.size());
+#endif
+        }
+       else
+        {
+          ROSE_ASSERT(nodeSource != NULL);
+       // ROSE_ASSERT(nodeSink != NULL);
+          if (nodeSink != NULL)
+             {
+#if 0
+               printf ("Edge not skipped: nodeSource = %p = %s nodeSink = %p = %s DOTgraph.skipEdgeSet.size() = %zu \n",
+                    nodeSource,nodeSource->class_name().c_str(),nodeSink,nodeSink->class_name().c_str(),DOTgraph.skipEdgeSet.size());
+#endif
+             }
+            else
+             {
+            // DQ (11/26/2016): Filter the null pointer edges.
+               EdgeType edge(nodeSource,nodeSink,edgeName);
+               skipEdge(edge);
+             }
         }
 
+#if 1
+  // DQ (11/26/2016): Debugging edge filtering.
      if (edgeName == "scope")
         {
           EdgeType edge(nodeSource,nodeSink,edgeName);
           skipEdge(edge);
         }
+#endif
 #if 0
   // DQ (8/15/2008): This does not appear to be working, I don't know why.
 
@@ -1307,29 +1465,31 @@ CustomMemoryPoolDOTGeneration::defaultFilter(SgNode* node)
 #if 0
      frontendCompatibilityFilter(node);
 #endif
-   if (filterFlags->m_commentAndDirective == 1)
-     commentAndDirectiveFilter(node);
+     if (filterFlags->m_commentAndDirective == 1)
+          commentAndDirectiveFilter(node);
 
-   if (filterFlags->m_binaryExecutableFormat == 1)
-     binaryExecutableFormatFilter(node);
+     if (filterFlags->m_binaryExecutableFormat == 1)
+          binaryExecutableFormatFilter(node);
 
-   if (filterFlags->m_edge== 1)
-    {
-       std::vector<std::pair<SgNode*,std::string> > listOfIRnodes = node->returnDataMemberPointers();
-       std::vector<std::pair<SgNode*,std::string> >::iterator i = listOfIRnodes.begin();
-       while (i != listOfIRnodes.end())
-          {
-         // Might we want to test if this is node previously ignored (a gnu compatibility IR node)
-         // and do something like include that IR node in the AST?
-            SgNode* n             = (*i).first;
-            std::string edgelabel = (*i).second;
+     if (filterFlags->m_edge == 1)
+        {
+          std::vector<std::pair<SgNode*,std::string> > listOfIRnodes = node->returnDataMemberPointers();
+          std::vector<std::pair<SgNode*,std::string> >::iterator i = listOfIRnodes.begin();
+          while (i != listOfIRnodes.end())
+             {
+            // Might we want to test if this is node previously ignored (a gnu compatibility IR node)
+            // and do something like include that IR node in the AST?
+               SgNode* n             = (*i).first;
+               std::string edgelabel = (*i).second;
+#if 0
+               printf ("In defaultFilter(): calling edgeFilter() \n");
+#endif
+            // Run all the edges through the filter (the filter will single out the ones to be skipped)
+               edgeFilter(node,n,edgelabel);
   
-         // Run all the edges through the filter (the filter will single out the ones to be skipped)
-            edgeFilter(node,n,edgelabel);
-  
-            i++;
-          }
-      }
+               i++;
+             }
+        }
    }
 
 void
@@ -2513,6 +2673,11 @@ SimpleColorMemoryPoolTraversal::generateGraph(string filename, const set<SgNode*
      std::string label =  "SimpleColorMemoryPoolTraversal::generateGraph(" + filename + "):";
      TimingPerformance timer (label);
 
+#if 0
+     printf ("In SimpleColorMemoryPoolTraversal::generateGraph(): exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // Custom control over the coloring of the "whole" AST for a memory pool traversal
      SimpleColorMemoryPoolTraversal traversal(firstAST, flags);
      traversal.traverseMemoryPool();
@@ -2595,68 +2760,110 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
      ROSE_ASSERT(false);
 #endif
 
+  // DQ (11/26/2016): Debugging.
+  // printf ("SimpleColorMemoryPoolTraversal::visit(): filterFlags->m_noFilter = %d \n",filterFlags->m_noFilter);
+
   // DQ (3/2/2010): Test if we have turned off all filtering of the AST.
      if ( filterFlags->m_noFilter == 0) 
         {
        // We allow filitering of the AST.
 #if 1
-          if ( filterFlags->m_default== 1) 
+       // DQ (11/26/2016): Debugging.
+       // printf ("SimpleColorMemoryPoolTraversal::visit(): filterFlags->m_default = %d \n",filterFlags->m_default);
+
+          if ( filterFlags->m_default== 1)
+             {
+#if 0
+            // DQ (11/26/2016): Debugging.
+               printf ("SimpleColorMemoryPoolTraversal::visit(): calling defaultFilter() \n");
+#endif
                defaultFilter(node);
+             }
 #endif
 
 #if 1
        // DQ (3/1/2009): Uncommented to allow filtering of types.
           if ( filterFlags->m_type == 1) 
+             {
                typeFilter(node);
+             }
 #endif
 
 #if 1
        // DQ (3/2/2009): Remove some more nodes to make the graphs more clear.
           if ( filterFlags->m_expression == 1) 
+             {
                expressionFilter(node);
+             }
 #endif
 
 #if 1
           if ( filterFlags->m_emptySymbolTable == 1) 
+             {
                emptySymbolTableFilter(node);
+             }
 
        // DQ (7/22/2012): Added support to ignore some empty IR nodes.
           if ( filterFlags->m_emptyBasicBlock == 1) 
+             {
                emptyBasicBlockFilter(node);
+             }
+
           if ( filterFlags->m_emptyFunctionParameterList == 1) 
+             {
                emptyFunctionParameterListFilter(node);
+             }
 #endif
 #if 1
           if ( filterFlags->m_variableDefinition == 1) 
+             {
                variableDefinitionFilter(node);
+             }
+
           if ( filterFlags->m_variableDeclaration == 1) 
+             {
                variableDeclarationFilter(node);
+             }
+
           if ( filterFlags->m_ctorInitializer == 1) 
+             {
                ctorInitializerListFilter(node);
+             }
 #endif
 #if 1
           if ( filterFlags->m_symbol == 1) 
+             {
                symbolFilter(node);
+             }
 #endif
 
 #if 1
   // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
           if ( filterFlags->m_asmFileFormat == 1) 
+             {
                asmFileFormatFilter(node);
+             }
+
           if ( filterFlags->m_asmType == 1) 
+             {
                asmTypeFilter(node);
+             }
 #endif
 
 #if 0 // this is included inside default filter already
        // Ignore Sg_File_Info objects associated with comments and CPP directives
           if ( filterFlags->m_commentAndDirective == 1) 
+             {
                commentAndDirectiveFilter(node);
+             }
 #endif
 
 #if 1
        // Control output of Sg_File_Info object in graph of whole AST.
           if ( filterFlags->m_fileInfo == 1) 
+             {
                fileInfoFilter(node);
+             }
 #endif
 
 #if 0
@@ -2692,7 +2899,9 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
 
 #if 1
      if ( filterFlags->m_defaultColor == 1) 
+        {
           defaultColorFilter(node);
+        }
 #endif
 
   // Color this IR node differently if it in NOT in the original AST
@@ -2903,6 +3112,7 @@ SimpleColorFilesTraversal::generateGraph(SgProject* project, string filename, se
 
 
 #include "wholeAST_API.h"
+
 void generateWholeGraphOfAST( std::string filename, std::set<SgNode*> & skippedNodeSet, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags)
 {
   SimpleColorMemoryPoolTraversal::generateGraph(filename, skippedNodeSet, flags);
@@ -2914,6 +3124,7 @@ generateWholeGraphOfAST( string filename, set<SgNode*> & skippedNodeSet )
    {
      SimpleColorMemoryPoolTraversal::generateGraph(filename,skippedNodeSet);
    }
+
 void   
 generateWholeGraphOfAST( string filename)
 {
@@ -2938,8 +3149,21 @@ generateWholeGraphOfAST( string filename, CustomMemoryPoolDOTGeneration::s_Filte
   // CustomMemoryPoolDOTGeneration::print_filter_flags();
 
   // Make this the default type of graph that we produce (filtering frontend specific IR nodes)
-     if (flags == NULL ) 
-        flags = new CustomMemoryPoolDOTGeneration::s_Filter_Flags();
+     if (flags == NULL )
+        {
+          flags = new CustomMemoryPoolDOTGeneration::s_Filter_Flags();
+        }
+
+#if 0
+     printf ("Calling CustomMemoryPoolDOTGeneration::print_filter_flags() \n");
+     flags->print_filter_flags();
+#endif
+
+#if 0
+     printf ("DONE: Calling CustomMemoryPoolDOTGeneration::print_filter_flags(): exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      generateWholeGraphOfAST_filteredFrontendSpecificNodes(filename, flags);
    }
 
@@ -2990,6 +3214,7 @@ generateGraphOfAST( SgProject* project, string filename )
      set<SgNode*> emptyNodeSet;
      SimpleColorFilesTraversal::generateGraph(project,filename,emptyNodeSet);
    }
+
 #if 0
 void generateGraphOfAST_initFilters (std::vector <std::string>& argvList)
 {
