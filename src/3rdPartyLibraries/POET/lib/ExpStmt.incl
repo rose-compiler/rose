@@ -522,16 +522,16 @@ else { exp }
 <xform Build_listExp pars=(op, list1, list2)>
 (list1 : (first1 rest1))? (
   (list2 : (first2 rest2))? 
-     RebuildExp(Bop#(op,first1,first2)) :: Build_listExp(op,rest1, rest2)
-  :  RebuildExp(Bop#(op,first1,list2)) :: rest1
+     RebuildExp(BUILD_BOP(op,first1,first2)) :: Build_listExp(op,rest1, rest2)
+  :  RebuildExp(BUILD_BOP(op,first1,list2)) :: rest1
 )
-: (RebuildExp(Bop#(op,list1,list2)))
+: (RebuildExp(BUILD_BOP(op,list1,list2)))
 </xform>
 
 <xform Reduce_listExp pars=(op, opds) >
 res = car opds;
 for (p_opds = cdr opds; p_opds != NULL; p_opds = cdr p_opds)
-  res = RebuildExp(Bop#(op, res, car p_opds));
+  res = RebuildExp(BUILD_BOP(op, res, car p_opds));
 res
 </xform>
 
