@@ -681,6 +681,28 @@ MemoryMap::findSequence(const AddressInterval &interval, const std::vector<uint8
     return Sawyer::Nothing();
 }
 
+bool
+MemoryMap::shrinkUnshare() {
+    bool success = true;
+    BOOST_FOREACH (MemoryMap::Node &node, nodes()) {
+        const AddressInterval &interval = node.key();
+        MemoryMap::Segment &segment = node.value();
+        if (const uint8_t *data = segment.buffer()->data()) {
+            // Create a new buffer for this segment, copying the old data
+            Buffer::Ptr buf = AllocatingBuffer::instance(interval.size());
+            if (buf->write(data, 0, interval.size()) != interval.size()) {
+                success = false;
+            } else {
+                segment.offset(0);
+                segment.buffer(buf);
+            }
+        } else {
+            success = false;
+        }
+    }
+    return success;
+}
+
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {

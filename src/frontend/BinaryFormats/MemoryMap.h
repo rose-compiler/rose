@@ -320,6 +320,18 @@ public:
     /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
     void eraseZeros(size_t minsize);
 
+    /** Shrink buffers and remove sharing.
+     *
+     *  Creates a new buffer per segment and copies the data for that segment into the new buffer.  The new buffers are
+     *  allocated to be just large enough to hold the data for the segment's interval.  Segments that shared the same
+     *  underlying data no longer share data.
+     *
+     *  Returns true if new buffers could be allocated for all segments, and false otherwise.  A false return value could occur
+     *  if a buffer does not support the @ref Sawyer::Container::Buffer::data. As of this writing (Nov 2016) the only buffer
+     *  type that doesn't support @c data is @ref Sawyer::Container::NullBuffer "NullBuffer", which doesn't appear in
+     *  memory maps created by ROSE's binary specimen mappers. */
+    bool shrinkUnshare();
+
     /** Read data into buffer. */
     size_t readQuick(void *buf, rose_addr_t startVa, size_t desired) const {
         return at(startVa).limit(desired).require(READABLE).read((uint8_t*)buf).size();
