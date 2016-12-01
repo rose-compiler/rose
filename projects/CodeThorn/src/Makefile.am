@@ -503,11 +503,15 @@ analyterix_SOURCES = \
 
 check-local:
 	@echo ================================================================
+	@echo RUNNING CODETHORN INTERNAL CHECKS
+	@echo ================================================================
+	@./codethorn --internal-checks	
+
+	@echo ================================================================
 	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
 	@echo ================================================================
 	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
 
-	./codethorn --internal-checks	
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@echo ================================================================
 	@echo RUNNING VERIFICATION ERROR TESTS
