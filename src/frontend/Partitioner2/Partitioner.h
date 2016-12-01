@@ -1452,11 +1452,26 @@ public:
 
     /** Returns the addresses used by a function.
      *
-     *  Returns an interval set which is the union of the addresses of the function's basic blocks and data blocks.  Most
+     *  Returns an interval set which is the union of the addresses of the function's basic blocks and/or data blocks.  Most
      *  functions are contiguous in memory and can be represented by a single address interval, but this is not a
-     *  requirement in ROSE. */
+     *  requirement in ROSE.
+     *
+     *  The versions of these functions that take an AddressIntervalSet argument simply insert additional address intervals
+     *  into that set without clearing it first.
+     *
+     *  @li @ref functionExtent -- addresses of all instructions and static data
+     *  @li @ref functionBasicBlockExtent -- addresses of instructions
+     *  @li @ref functionDataBlockExtent -- addresses of static data
+     *
+     * @{ */
     AddressIntervalSet functionExtent(const Function::Ptr&) const /*final*/;
-    
+    void functionExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const /*final*/;
+    AddressIntervalSet functionBasicBlockExtent(const Function::Ptr &function) const /*final*/;
+    void functionBasicBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const /*final*/;
+    AddressIntervalSet functionDataBlockExtent(const Function::Ptr &function) const /*final*/;
+    void functionDataBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const /*final*/;
+    /** @} */
+
     /** Attaches a function to the CFG/AUM.
      *
      *  The indicated function(s) is inserted into the control flow graph.  Basic blocks (or at least placeholders) are

@@ -1066,12 +1066,9 @@ Partitioner::functionsOverlapping(const AddressInterval &interval) const {
     return functions;
 }
 
-AddressIntervalSet
-Partitioner::functionExtent(const Function::Ptr &function) const {
+void
+Partitioner::functionBasicBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
     ASSERT_not_null(function);
-    AddressIntervalSet retval;
-
-    // Basic blocks and their data
     BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
         ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblockVa);
         if (placeholder != cfg_.vertices().end()) {
@@ -1083,11 +1080,38 @@ Partitioner::functionExtent(const Function::Ptr &function) const {
             }
         }
     }
+}
 
-    // Data blocks owned by the function
+AddressIntervalSet
+Partitioner::functionBasicBlockExtent(const Function::Ptr &function) const {
+    AddressIntervalSet retval;
+    functionBasicBlockExtent(function, retval);
+    return retval;
+}
+
+void
+Partitioner::functionDataBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
     BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks())
         retval.insert(dataBlockExtent(dblock));
+}
 
+AddressIntervalSet
+Partitioner::functionDataBlockExtent(const Function::Ptr &function) const {
+    AddressIntervalSet retval;
+    functionDataBlockExtent(function, retval);
+    return retval;
+}
+
+void
+Partitioner::functionExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
+    functionBasicBlockExtent(function, retval);
+    functionDataBlockExtent(function, retval);
+}
+
+AddressIntervalSet
+Partitioner::functionExtent(const Function::Ptr &function) const {
+    AddressIntervalSet retval;
+    functionExtent(function, retval);
     return retval;
 }
 
