@@ -1822,6 +1822,8 @@ public:
         // Combo box to choose what to display as the X axis for the test status chart
         majorAxisChoices_ = new Wt::WComboBox;
         minorAxisChoices_ = new Wt::WComboBox;
+        majorAxisChoices_->setToolTip("Values to use for the major axis of tables and charts.");
+        minorAxisChoices_->setToolTip("Values to use for the minor axis of tables and charts.");
         int i = 0;
         BOOST_FOREACH (const std::string &depName, gstate.dependencyNames.keys()) {
             majorAxisChoices_->addItem(depName);
@@ -1839,6 +1841,7 @@ public:
         // Combo box to choose which chart to show.
         chartSettingsBox->addWidget(new Wt::WLabel("&nbsp;Chart type:"));
         chartSettingsBox->addWidget(chartChoice_ = new Wt::WComboBox);
+        chartChoice_->setToolTip("Type of chart or table to show.");
         chartChoice_->addItem("bars");
         chartChoice_->addItem("lines");
         chartChoice_->addItem("table");
@@ -1847,6 +1850,7 @@ public:
 
         // Combo box to choose whether the model stores percents or counts
         chartSettingsBox->addWidget(absoluteRelative_ = new Wt::WComboBox);
+        absoluteRelative_->setToolTip("Type of data to show within the chart or table.");
         absoluteRelative_->addItem("runs (#)");
         absoluteRelative_->addItem("runs (%)");
         absoluteRelative_->addItem("pass / runs (%)");
@@ -1858,16 +1862,21 @@ public:
         // Combo box to choose a baseline for delta or conjunction
         chartSettingsBox->addWidget(new Wt::WLabel("&nbsp;&nbsp;Baseline:"));
         chartSettingsBox->addWidget(chartBaselineType_ = new Wt::WComboBox);
+        chartBaselineType_->setToolTip("How to compare with another ROSE version. \"Difference\" means each table datum "
+                                       "is a delta from the baseline, and \"conjunction\" means show only those values "
+                                       "that are also present in the baseline.");
         chartBaselineType_->addItem("difference");
         chartBaselineType_->addItem("conjunction");
         chartBaselineType_->activated().connect(this, &WResultsConstraintsTab::switchBaselineType);
 
         chartSettingsBox->addWidget(chartBaselineChoices_ = new WComboBoxWithData<ComboBoxVersion>);
+        chartBaselineChoices_->setToolTip("ROSE version to use as the baseline.");
         chartBaselineChoices_->addItem("None");
         fillVersionComboBox(chartBaselineChoices_);
 
         // Update button to reload data from the database
-        Wt::WPushButton *updateButton = new Wt::WPushButton("&nbsp;&nbsp;Update");
+        chartSettingsBox->addWidget(new Wt::WLabel("&nbsp;&nbsp;"));
+        Wt::WPushButton *updateButton = new Wt::WPushButton("Update");
         updateButton->setToolTip("Update chart with latest database changes.");
         updateButton->clicked().connect(this, &WResultsConstraintsTab::updateStatusCounts);
         chartSettingsBox->addWidget(updateButton);
@@ -1994,6 +2003,7 @@ public:
             Wt::WContainerWidget *c = new Wt::WContainerWidget;
             c->addWidget(new Wt::WLabel("Configuration "));
             testIdChoices_ = new Wt::WComboBox;
+            testIdChoices_->setToolTip("Test whose details are shown below, and its status.");
             testIdChoices_->activated().connect(this, &WDetails::selectTestId);
             c->addWidget(testIdChoices_);
             addWidget(c);
@@ -2015,6 +2025,7 @@ public:
                                     "by ROSE due to possible bugs in ROSE's \"configure\" or \"cmake\" system or in the "
                                     "scripts used to run these tests.</p>"));
             Wt::WComboBox *configChoice = new Wt::WComboBox;
+            configChoice->setToolTip("Type of configuration details to show below.");
             addWidget(configChoice);
             Wt::WStackedWidget *configStack = new Wt::WStackedWidget;
             addWidget(configStack);
@@ -2416,6 +2427,7 @@ public:
             // details for that test.
             Wt::WComboBox *wTestIds = new Wt::WComboBox;
             wTestIds->activated().connect(boost::bind(&WErrors::emitTestIdChanged, this, wTestIds));
+            wTestIds->setToolTip("Tests that failed with this error. Choose one to see its details.");
             wTestIds->addItem("View details");
             args.clear();
             SqlDatabase::StatementPtr q4 = gstate.tx->statement("select test.id" + sqlFromClause() +
@@ -2503,6 +2515,9 @@ public:
 
                     // User-defined commentary within the database
                     Wt::WInPlaceEdit *wCommentary = new Wt::WInPlaceEdit(commentary);
+                    wCommentary->setToolTip("Click to edit. To update the JIRA issue without affecting the comment text, "
+                                            "replace the comment text with the JIRA issue name, like \"ROSE-588\"; to "
+                                            "delete the JIRA link, replace the comment text with \"no issue\".");
                     wCommentary->setPlaceholderText("No comment (click to add).");
                     wCommentary->lineEdit()->setTextSize(80);
                     wCommentary->valueChanged().connect(boost::bind(&WErrors::setComment, this, status, message,
