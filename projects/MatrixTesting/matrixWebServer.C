@@ -1,4 +1,4 @@
-#include <rosePublicConfig.h>
+#include <rose.h>
 
 #include <Sawyer/Message.h>
 
@@ -60,7 +60,8 @@ static const char* WILD_CARD_STR = "*";
 enum ChartType { BAR_CHART, LINE_CHART };
 enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, CVT_DURATION_AVE };
 enum HumanFormat { HUMAN_TERSE, HUMAN_VERBOSE };
-static int END_STATUS_POSITION = 999;                   // test_names.position where name = 'end'
+enum BaselineType { BASELINE_DIFFERENCE, BASELINE_CONJUNCTION };
+static int END_STATUS_POSITION = 999;                   // tnames.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
 typedef Sawyer::Container::Map<std::string, std::string> StringString;
@@ -641,10 +642,12 @@ static GlobalState gstate;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::string
-sqlFromClause() {
-    return (" from test_results as test"
-            " join auth_identities as auth_user on test.reporting_user = auth_user.id"
-            " left outer join test_names on test.status = test_names.name ");
+sqlFromClause(const std::string &aliasPrefix = "") {
+    return (" from test_results as " + aliasPrefix + "test"
+            " join auth_identities as " + aliasPrefix + "auth_user"
+            " on " + aliasPrefix +"test.reporting_user = " + aliasPrefix + "auth_user.id"
+            " left outer join test_names as " + aliasPrefix + "tnames"
+            " on " + aliasPrefix + "test.status = " + aliasPrefix + "tnames.name ");
 }
 
 static std::string
@@ -689,6 +692,24 @@ sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
         }
     }
     return where + " ";
+}
+
+// Adds more "where" clauses when comparing with a baseline
+static std::string
+sqlConjunctionClause(BaselineType baselineType, const std::string &baselineVersion) {
+    if (baselineType != BASELINE_CONJUNCTION || baselineVersion.empty())
+        return "";                                      // handled elsewhere
+
+    std::string retval;
+    std::string aliasPrefix = "sq_";
+    BOOST_FOREACH (const DependencyNames::Node &node, gstate.dependencyNames.nodes()) {
+        if (boost::starts_with(node.value(), "test.rmc_") || node.value() == "test.os") {
+            retval += " and " + node.value() + " in" +
+                      " (select distinct " + aliasPrefix + node.value() + sqlFromClause(aliasPrefix) +
+                      "where " + aliasPrefix + "test.rose = '" + baselineVersion + "') ";
+        }
+    }
+    return retval;
 }
 
 static void
@@ -746,13 +767,13 @@ sortedHumanValues(const Dependency &dep) {
 // What does it mean to "pass"?  The special virtual dependency "pass/fail" returns the word "pass" or "fail" depending
 // on our current definition of pass/fail.  The default definition is that any test whose status = "end" is considered to have
 // passed and any other status is a failure.  However, we can change the definition to be any test whose status is greater than
-// or equal to some specified value is a pass. By "greater than or equal" we mean the result position from teh "test_names"
-// table.
+// or equal to some specified value is a pass. By "greater than or equal" we mean the result position from the "tnames"
+// (test_names) table.
 static void
 setPassDefinition(const std::string &minimumPassStatus) {
     int position = gstate.testNameIndex.getOrElse(minimumPassStatus, END_STATUS_POSITION);
     std::string passDefinition = "case"
-                                 " when test_names.position >= " + StringUtility::numberToString(position) +
+                                 " when tnames.position >= " + StringUtility::numberToString(position) +
                                  " then 'pass' else 'fail' end";
     gstate.dependencyNames.insert("pass/fail", passDefinition);
 }
@@ -980,6 +1001,7 @@ private:
         double minAveDuration, maxAveDuration;          // min/max value in aveDuration_
     };
 
+    BaselineType baselineType_;                         // whether to compute a difference or a conjunction
     std::string baselineVersion_;                       // software version to use as the baseline, or empty for none
     DataSet baseline_;                                  // data for baseline version if there is one
     DataSet current_;                                   // the non-baseline data
@@ -1002,8 +1024,9 @@ private:
     
 public:
     explicit StatusModel(Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), chartValueType_(CVT_PERCENT), roundToInteger_(false), humanReadable_(false),
-          depMajorName_("rose_date"), depMajorIsData_(false), depMinorName_("pass/fail"), depMinorIsData_(false) {}
+        : Wt::WAbstractTableModel(parent), baselineType_(BASELINE_DIFFERENCE), chartValueType_(CVT_PERCENT),
+          roundToInteger_(false), humanReadable_(false), depMajorName_("rose_date"), depMajorIsData_(false),
+          depMinorName_("pass/fail"), depMinorIsData_(false) {}
 
     const std::string& depMajorName() const {
         return depMajorName_;
@@ -1061,6 +1084,14 @@ public:
         humanReadable_ = b;
     }
 
+    BaselineType baselineType() const {
+        return baselineType_;
+    }
+
+    void setBaselineType(BaselineType t) {
+        baselineType_ = t;
+    }
+    
     const std::string& baselineVersion() const {
         return baselineVersion_;
     }
@@ -1069,8 +1100,8 @@ public:
         baselineVersion_ = version;
     }
 
-    bool hasBaseline() const {
-        return !baselineVersion_.empty();
+    bool hasDifferenceBaseline() const {
+        return BASELINE_DIFFERENCE == baselineType_ && !baselineVersion_.empty();
     }
     
     const std::string depMajorValue(size_t modelRow) {
@@ -1096,7 +1127,7 @@ public:
 
         loadDataset(deps, current_, "");
 
-        if (hasBaseline()) {
+        if (hasDifferenceBaseline()) {
             Dependencies limited = deps;
             limited.erase("rose");
             limited.erase("rose_date");
@@ -1150,9 +1181,9 @@ public:
                 ASSERT_require(j >= 0 && (size_t)j < depMinorValues_.size());
                 return depMinorValues_[j];
             } else {
-                double value = hasBaseline() ? delta_[i][j] : getDataValue(current_, i, j);
+                double value = hasDifferenceBaseline() ? delta_[i][j] : getDataValue(current_, i, j);
                 int nSamples = current_.counts[i][j];
-                if (hasBaseline())
+                if (hasDifferenceBaseline())
                     nSamples = std::min(nSamples, (int)baseline_.counts[i][j]);
                 if (roundToInteger_)
                     value = round(value);
@@ -1161,7 +1192,7 @@ public:
                     switch (chartValueType_) {
                         case CVT_COUNT:
                         case CVT_WARNINGS_AVE:
-                            if (hasBaseline() && value > 0)
+                            if (hasDifferenceBaseline() && value > 0)
                                 humanValue = "+";
                             humanValue += boost::lexical_cast<std::string>(value);
                             break;
@@ -1170,13 +1201,13 @@ public:
                             if (0 == nSamples) {
                                 humanValue = "n/a";
                             } else {
-                                if (hasBaseline() && value > 0)
+                                if (hasDifferenceBaseline() && value > 0)
                                     humanValue = "+";
                                 humanValue += boost::lexical_cast<std::string>(value) + "%";
                             }
                             break;
                         case CVT_DURATION_AVE:
-                            if (hasBaseline() && value > 0)
+                            if (hasDifferenceBaseline() && value > 0)
                                 humanValue = "+";
                             humanValue += humanDuration(value, HUMAN_TERSE);
                             break;
@@ -1188,10 +1219,10 @@ public:
 
         } else if (Wt::StyleClassRole == role) {
             if (i >= 0 && j >= 0) {
-                double value = hasBaseline() ? delta_[i][j] : getDataValue(current_, i, j);
+                double value = hasDifferenceBaseline() ? delta_[i][j] : getDataValue(current_, i, j);
                 std::pair<double, double> mm = getDataMinMax(current_, i, j);
                 int nSamples = current_.counts[i][j];
-                if (hasBaseline()) {
+                if (hasDifferenceBaseline()) {
                     nSamples = std::min(nSamples, (int)baseline_.counts[i][j]);
                     mm = std::make_pair(minDelta_, maxDelta_);
                 }
@@ -1201,7 +1232,7 @@ public:
                         return redToGreen(value, mm.first, mm.second, value?5:0);
                     case CVT_PERCENT:
                     case CVT_PASS_RATIO:
-                        if (hasBaseline())
+                        if (hasDifferenceBaseline())
                             mm = std::make_pair(-100.0, 100.0);
                         return redToGreen(value, mm.first, mm.second, nSamples);
                     case CVT_WARNINGS_AVE:
@@ -1267,7 +1298,7 @@ private:
                           "sum(test.nwarnings)," +      // 4
                           "sum(test.duration)" +        // 5
                           sqlFromClause() +
-                          sqlWhereClause(deps, args /*out*/) +
+                          sqlWhereClause(deps, args /*out*/) + sqlConjunctionClause(baselineType_, baselineVersion_) +
                           (version.empty() ? "" : "and rose = ?") +
                           " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
         if (!version.empty())
@@ -1393,7 +1424,7 @@ private:
                 return std::make_pair(ds.minCounts, ds.maxCounts);
             case CVT_PERCENT:
             case CVT_PASS_RATIO:
-                if (hasBaseline()) {
+                if (hasDifferenceBaseline()) {
                     return std::make_pair(-100.0, 100.0);
                 } else {
                     return std::make_pair(0.0, 100.0);
@@ -1607,7 +1638,7 @@ public:
                 case CVT_COUNT:
                 case CVT_WARNINGS_AVE:
                 case CVT_DURATION_AVE:
-                    if (model_->hasBaseline()) {
+                    if (model_->hasDifferenceBaseline()) {
                         axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MinimumValue | Wt::Chart::MaximumValue);
                     } else {
                         axis(Wt::Chart::YAxis).setMinimum(0);
@@ -1616,7 +1647,7 @@ public:
                     break;
                 case CVT_PERCENT:
                 case CVT_PASS_RATIO:
-                    if (model_->hasBaseline()) {
+                    if (model_->hasDifferenceBaseline()) {
                         axis(Wt::Chart::YAxis).setMinimum(-100);
                     } else {
                         axis(Wt::Chart::YAxis).setMinimum(0);
@@ -1733,6 +1764,7 @@ class WResultsConstraintsTab: public Wt::WContainerWidget {
     Wt::WComboBox *majorAxisChoices_, *minorAxisChoices_;
     Wt::WComboBox *chartChoice_;
     Wt::WComboBox *absoluteRelative_;                   // whether to show percents or counts
+    Wt::WComboBox *chartBaselineType_;
     WComboBoxWithData<ComboBoxVersion> *chartBaselineChoices_;
 
 public:
@@ -1823,15 +1855,19 @@ public:
         absoluteRelative_->setCurrentIndex(1);
         absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
 
-        // Combo box to choose a baseline
-        chartBaselineChoices_ = new WComboBoxWithData<ComboBoxVersion>;
+        // Combo box to choose a baseline for delta or conjunction
+        chartSettingsBox->addWidget(new Wt::WLabel("&nbsp;&nbsp;Baseline:"));
+        chartSettingsBox->addWidget(chartBaselineType_ = new Wt::WComboBox);
+        chartBaselineType_->addItem("difference");
+        chartBaselineType_->addItem("conjunction");
+        chartBaselineType_->activated().connect(this, &WResultsConstraintsTab::switchBaselineType);
+
+        chartSettingsBox->addWidget(chartBaselineChoices_ = new WComboBoxWithData<ComboBoxVersion>);
         chartBaselineChoices_->addItem("None");
         fillVersionComboBox(chartBaselineChoices_);
-        chartSettingsBox->addWidget(new Wt::WLabel("&nbsp;Baseline:"));
-        chartSettingsBox->addWidget(chartBaselineChoices_);
 
         // Update button to reload data from the database
-        Wt::WPushButton *updateButton = new Wt::WPushButton("Update");
+        Wt::WPushButton *updateButton = new Wt::WPushButton("&nbsp;&nbsp;Update");
         updateButton->setToolTip("Update chart with latest database changes.");
         updateButton->clicked().connect(this, &WResultsConstraintsTab::updateStatusCounts);
         chartSettingsBox->addWidget(updateButton);
@@ -1906,7 +1942,26 @@ private:
         tableModel_->updateModel(constraints_->dependencies());
     }
 
+    // Switch between baseline calculation modes: delta and conjoin
+    void switchBaselineType() {
+        baselineTypeOrVersionChanged();
+    }
+    
     void switchBaselineVersion(int idx) {
+        baselineTypeOrVersionChanged();
+    }
+
+    void baselineTypeOrVersionChanged() {
+        if (chartBaselineType_->currentText() == "difference") {
+            chartModel_->setBaselineType(BASELINE_DIFFERENCE);
+            tableModel_->setBaselineType(BASELINE_DIFFERENCE);
+        } else if (chartBaselineType_->currentText() == "conjunction") {
+            chartModel_->setBaselineType(BASELINE_CONJUNCTION);
+            tableModel_->setBaselineType(BASELINE_CONJUNCTION);
+        } else {
+            ASSERT_not_reachable("invalid baseline type: " + chartBaselineType_->currentText().narrow());
+        }
+            
         chartModel_->setBaselineVersion(chartBaselineChoices_->currentData().version);
         chartModel_->updateModel(constraints_->dependencies());
 
@@ -2320,7 +2375,7 @@ public:
                           sqlFromClause() +
                           sqlWhereClause(deps, args) +
                           " and " + passFailExpr + " = 'fail'"
-                          " group by status, coalesce(first_error,''), test_names.position"
+                          " group by status, coalesce(first_error,''), tnames.position"
                           " order by n desc"
                           " limit 15";
         SqlDatabase::StatementPtr q1 = gstate.tx->statement(sql);
@@ -2723,7 +2778,7 @@ public:
     void setPassCriteria(const std::string &reachedTestName) {
         int position = gstate.testNameIndex.getOrElse(reachedTestName, END_STATUS_POSITION);
         passDefinition_ = "case"
-                          " when test_names.position >= " + StringUtility::numberToString(position) +
+                          " when tnames.position >= " + StringUtility::numberToString(position) +
                           " then 'pass' else 'fail' end";
         if (reachedTestName == "end") {
             wPassDefinition_->setText("");
@@ -3887,7 +3942,7 @@ loadTestNames() {
     for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
         gstate.testNames.push_back(row.get<std::string>(0));
 
-    q = gstate.tx->statement("select name, position from test_names");
+    q = gstate.tx->statement("select name, position from test_names as tnames ");
     for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
         std::string statusName = row.get<std::string>(0);
         int position = row.get<int>(1);
