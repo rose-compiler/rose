@@ -60,7 +60,7 @@ static const char* WILD_CARD_STR = "*";
 enum ChartType { BAR_CHART, LINE_CHART };
 enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, CVT_DURATION_AVE };
 enum HumanFormat { HUMAN_TERSE, HUMAN_VERBOSE };
-enum BaselineType { BASELINE_DIFFERENCE, BASELINE_CONJUNCTION };
+enum BaselineType { BASELINE_NONE, BASELINE_DIFFERENCE, BASELINE_CONJUNCTION, BASELINE_SWAP };
 static int END_STATUS_POSITION = 999;                   // tnames.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
@@ -672,23 +672,29 @@ static std::string
 sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
     std::string where = " where test.enabled";
     BOOST_FOREACH (const Dependency &dep, deps.values()) {
-        // Get the human value from the combo box. Sometimes a combo box will display (Wt::DisplayRole) a different value than
-        // what should be used as the human value. In this case, the underlying model will support Wt::UserRole to return the
-        // human value.
-        std::string humanValue = dep.comboBox->currentBaseText().narrow();
+        if (dep.comboBox != NULL) {
+            // Get the human value from the combo box. Sometimes a combo box will display (Wt::DisplayRole) a different value
+            // than what should be used as the human value. In this case, the underlying model will support Wt::UserRole to
+            // return the human value.
+            std::string humanValue = dep.comboBox->currentBaseText().narrow();
 
-        Bucket<std::string> bucket;
-        if (humanValue.compare(WILD_CARD_STR) != 0 && dep.humanValues.getOptional(humanValue).assignTo(bucket)) {
-            std::string depColumn = sqlDependencyExpression(dep, dep.name);
-            where += " and ";
-            if (bucket.minValue() == bucket.maxValue()) {
-                where += depColumn + " = ?";
-                args.push_back(bucket.minValue());
-            } else {
-                where += depColumn + " >= ? and " + depColumn + " <= ?";
-                args.push_back(bucket.minValue());
-                args.push_back(bucket.maxValue());
+            Bucket<std::string> bucket;
+            if (humanValue.compare(WILD_CARD_STR) != 0 && dep.humanValues.getOptional(humanValue).assignTo(bucket)) {
+                std::string depColumn = sqlDependencyExpression(dep, dep.name);
+                where += " and ";
+                if (bucket.minValue() == bucket.maxValue()) {
+                    where += depColumn + " = ?";
+                    args.push_back(bucket.minValue());
+                } else {
+                    where += depColumn + " >= ? and " + depColumn + " <= ?";
+                    args.push_back(bucket.minValue());
+                    args.push_back(bucket.maxValue());
+                }
             }
+        } else if (!dep.sqlExpression.empty()) {
+            where += " and " + dep.sqlExpression;
+        } else {
+            ASSERT_not_reachable("dependency has no widget or SQL expression");
         }
     }
     return where + " ";
@@ -1024,7 +1030,7 @@ private:
     
 public:
     explicit StatusModel(Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), baselineType_(BASELINE_DIFFERENCE), chartValueType_(CVT_PERCENT),
+        : Wt::WAbstractTableModel(parent), baselineType_(BASELINE_NONE), chartValueType_(CVT_PERCENT),
           roundToInteger_(false), humanReadable_(false), depMajorName_("rose_date"), depMajorIsData_(false),
           depMinorName_("pass/fail"), depMinorIsData_(false) {}
 
@@ -1100,6 +1106,10 @@ public:
         baselineVersion_ = version;
     }
 
+    bool hasSwapBaseline() const {
+        return BASELINE_SWAP == baselineType_ && !baselineVersion_.empty();
+    }
+    
     bool hasDifferenceBaseline() const {
         return BASELINE_DIFFERENCE == baselineType_ && !baselineVersion_.empty();
     }
@@ -1125,7 +1135,14 @@ public:
         if (current_.counts.empty())
             return modelReset().emit();
 
-        loadDataset(deps, current_, "");
+        if (hasSwapBaseline()) {
+            Dependencies tmpDeps = deps;
+            tmpDeps.erase("rose");
+            tmpDeps.erase("rose_date");
+            loadDataset(tmpDeps, current_, baselineVersion_);
+        } else {
+            loadDataset(deps, current_, "");
+        }
 
         if (hasDifferenceBaseline()) {
             Dependencies limited = deps;
@@ -1864,14 +1881,19 @@ public:
         chartSettingsBox->addWidget(chartBaselineType_ = new Wt::WComboBox);
         chartBaselineType_->setToolTip("How to compare with another ROSE version. \"Difference\" means each table datum "
                                        "is a delta from the baseline, and \"conjunction\" means show only those values "
-                                       "that are also present in the baseline.");
+                                       "that are also present in the baseline. The \"swap\" type means use the constraints "
+                                       "as usual to create table cells, but fill those cells with data from the baseline "
+                                       "(this is useful when trying to figure out why the \"conjunction\" method results "
+                                       "in empty table cells.");
+        chartBaselineType_->addItem("none");
         chartBaselineType_->addItem("difference");
         chartBaselineType_->addItem("conjunction");
+        chartBaselineType_->addItem("swap");
         chartBaselineType_->activated().connect(this, &WResultsConstraintsTab::switchBaselineType);
 
         chartSettingsBox->addWidget(chartBaselineChoices_ = new WComboBoxWithData<ComboBoxVersion>);
         chartBaselineChoices_->setToolTip("ROSE version to use as the baseline.");
-        chartBaselineChoices_->addItem("None");
+        chartBaselineChoices_->addItem("none");
         fillVersionComboBox(chartBaselineChoices_);
 
         // Update button to reload data from the database
@@ -1961,12 +1983,18 @@ private:
     }
 
     void baselineTypeOrVersionChanged() {
-        if (chartBaselineType_->currentText() == "difference") {
+        if (chartBaselineType_->currentText() == "none") {
+            chartModel_->setBaselineType(BASELINE_NONE);
+            tableModel_->setBaselineType(BASELINE_NONE);
+        } else if (chartBaselineType_->currentText() == "difference") {
             chartModel_->setBaselineType(BASELINE_DIFFERENCE);
             tableModel_->setBaselineType(BASELINE_DIFFERENCE);
         } else if (chartBaselineType_->currentText() == "conjunction") {
             chartModel_->setBaselineType(BASELINE_CONJUNCTION);
             tableModel_->setBaselineType(BASELINE_CONJUNCTION);
+        } else if (chartBaselineType_->currentText() == "swap") {
+            chartModel_->setBaselineType(BASELINE_SWAP);
+            tableModel_->setBaselineType(BASELINE_SWAP);
         } else {
             ASSERT_not_reachable("invalid baseline type: " + chartBaselineType_->currentText().narrow());
         }
