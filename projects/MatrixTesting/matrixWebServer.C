@@ -1884,7 +1884,7 @@ public:
                                        "that are also present in the baseline. The \"swap\" type means use the constraints "
                                        "as usual to create table cells, but fill those cells with data from the baseline "
                                        "(this is useful when trying to figure out why the \"conjunction\" method results "
-                                       "in empty table cells.");
+                                       "in empty table cells).");
         chartBaselineType_->addItem("none");
         chartBaselineType_->addItem("difference");
         chartBaselineType_->addItem("conjunction");
