@@ -769,6 +769,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/midend/programAnalysis/EditDistance \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs \
                          @top_srcdir@/src/midend/programTransformation/extractFunctionArgumentsNormalization \
+                         @top_srcdir@/src/midend/programTransformation/ompLowering/omp_lowering.h \
                          @top_srcdir@/src/midend/astProcessing \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \
                          @top_srcdir@/src/backend/backend.docs \
