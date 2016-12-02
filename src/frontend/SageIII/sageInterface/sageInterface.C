@@ -8900,7 +8900,9 @@ SgOmpClauseBodyStatement* SageInterface::findEnclosingOmpClauseBodyStatement(SgS
   while (s && !isSgOmpClauseBodyStatement(s)) {
     s = isSgStatement(s->get_parent());
   }
-  ROSE_ASSERT (s);
+  // ROSE_ASSERT (s); // s is allowed to be NULL.
+  if (s==NULL)
+    return NULL; 
   return isSgOmpClauseBodyStatement(s);
 }
 
