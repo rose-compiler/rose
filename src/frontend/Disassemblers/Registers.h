@@ -59,6 +59,7 @@ private:
     Entries forward;
     Reverse reverse;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -66,6 +67,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & name & forward & reverse;
     }
+#endif
 
 protected:
     // needed for serialization

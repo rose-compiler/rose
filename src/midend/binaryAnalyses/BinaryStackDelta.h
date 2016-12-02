@@ -58,6 +58,7 @@ private:
     SValuePairPerAddress insnStackPtrs_;                // Per-instruction initial and final stack pointers
     DeltasPerAddress insnDeltas_;                       // Stack delta per instruction (net effect of insn on stack ptr)
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -74,6 +75,7 @@ private:
         s & insnStackPtrs_;
         s & insnDeltas_;
     }
+#endif
     
 public:
     /** Default constructor.

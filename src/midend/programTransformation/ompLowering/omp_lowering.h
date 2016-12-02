@@ -1,6 +1,8 @@
 #include "astQuery.h"
 //#include "sage3basic.h"
 
+#ifndef OMP_LOWERING_H
+#define OMP_LOWERING_H 
 /*!
  * Translation (directive lowering) support for OpenMP 3.0 C/C++
  *
@@ -8,8 +10,6 @@
  *  all things go to the OmpSupport namespace to avoid conflicts
  * Liao, 8/10/2009
  */
-#ifndef OMP_LOWERING_H
-#define OMP_LOWERING_H 
 namespace OmpSupport
 {
   // OpenMP version info.

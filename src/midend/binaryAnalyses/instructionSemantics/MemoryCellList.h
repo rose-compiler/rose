@@ -44,6 +44,7 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -53,6 +54,7 @@ private:
         s & cells;
         s & occlusionsErased_;
     }
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -256,6 +258,8 @@ protected:
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellList);
+#endif
 
 #endif

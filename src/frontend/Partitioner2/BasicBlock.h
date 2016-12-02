@@ -43,6 +43,7 @@ public:
         EdgeType type_;
         Confidence confidence_;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -50,6 +51,7 @@ public:
         void serialize(S &s, const unsigned version) {
             s & expr_ & type_ & confidence_;
         }
+#endif
 
     protected:
         // intentionally undocumented; needed for serialization
@@ -126,6 +128,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -149,6 +152,7 @@ private:
         s & isFunctionReturn_;
         s & mayReturn_;
     }
+#endif
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

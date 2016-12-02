@@ -15,6 +15,7 @@ struct StackVariableLocation {
     size_t nBytes;                                      /**< Size of variable in bytes. */
     InstructionSemantics2::BaseSemantics::SValuePtr address; /**< Complete address, not just the stack offset. */
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -22,6 +23,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & offset & nBytes & address;
     }
+#endif
 
 public:
     StackVariableLocation()
@@ -37,6 +39,7 @@ struct StackVariableMeta {
     InstructionSemantics2::BaseSemantics::MemoryCellList::AddressSet writers; /**< Instructions that wrote to a location. */
     InstructionSemantics2::BaseSemantics::InputOutputPropertySet ioProperties; /**< Properties of a location. */
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -45,6 +48,7 @@ private:
         s & writers;
         s & ioProperties;
     }
+#endif
 
 public:
     StackVariableMeta() {}
@@ -61,6 +65,7 @@ struct StackVariable {
     StackVariableLocation location;                     /**< Location of the stack variable. */
     StackVariableMeta meta;                             /**< Meta-data for the stack variable. */
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -68,6 +73,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & location & meta;
     }
+#endif
 
 public:
     StackVariable() {}
