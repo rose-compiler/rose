@@ -205,19 +205,27 @@ namespace OmpSupport
     return rt_val;
   }
 
+  omp_construct_enum getDataSharingAttribute (SgVarRefExp* varRef)
+  {
+    ROSE_ASSERT (varRef != NULL);
+    SgSymbol* s = varRef ->get_symbol();
+    return getDataSharingAttribute(s, varRef);
+  }
+
   //! Return the data sharing attribute type of a variable within a context node (anchor_stmt indicates the start search location within AST)
   //! Possible values include: e_shared, e_private,  e_firstprivate,  e_lastprivate,  e_reduction, e_threadprivate, e_copyin, and e_copyprivate.
   // The rules are defined in OpenMP 4.5 specification,  page 179, 
   //    2.15.1 Data-sharing Attribute Rules
-  omp_construct_enum getDataSharingAttribute (SgSymbol* sym, SgStatement* anchor_stmt)
+  omp_construct_enum getDataSharingAttribute (SgSymbol* sym, SgNode* anchor_node)
   {
     omp_construct_enum rt_val = e_shared; // shared by default for now  TODO: if default() is present, we have to change this. 
     ROSE_ASSERT (sym != NULL);
+    ROSE_ASSERT (anchor_node!= NULL);
+    SgStatement* anchor_stmt = getEnclosingStatement (anchor_node);
     ROSE_ASSERT (anchor_stmt != NULL);
 
     SgVariableSymbol * var_sym = isSgVariableSymbol (sym);
     ROSE_ASSERT (var_sym!= NULL);
-
 
     SgInitializedName* iname = isSgInitializedName( var_sym->get_declaration() );                                                  
     // obtain the enclosing OpenMP clause body statement: SgOmpForStatement, parallel, sections, single, target, target data, task, etc. 
@@ -225,22 +233,64 @@ namespace OmpSupport
 
     if (omp_clause_body_stmt != NULL)
     {
-      rt_val = getExplicitDataSharingAttribute (iname, omp_clause_body_stmt);
-      if (rt_val == e_unknown) // not explicitly specified
+      omp_construct_enum temp_val = getExplicitDataSharingAttribute (iname, omp_clause_body_stmt);
+      // We assume the input code is correct. So all predetermined variables listed in clauses are conforming to the spec. 
+      if (temp_val != e_unknown) 
+      {
+        rt_val = temp_val ;
+        return rt_val;  // use direct return to avoid messy if-else logic
+      }
+      // not explicitly specified, using the rules for predetermined and implicitly determined
+      else
       {
         //Not in explicit clause at this level, 
         // Apply implicit rules : 
         // check if it is locally declared  (the declaration is inside of the omp_clause_body_stmt )
         SgVariableDeclaration* var_decl = isSgVariableDeclaration(iname->get_declaration()); 
-        ROSE_ASSERT (var_decl != NULL);
-        if (isAncestor (omp_clause_body_stmt, var_decl))
+         // ROSE_ASSERT (var_decl != NULL); 
+         // it could also be SgFunctionParameterList or other declarations
+         // if declared at function parameters, the scope is outside, it should be shared by default if no other rules apply.
+        if (var_decl && isAncestor (omp_clause_body_stmt, var_decl))
         {
-          rt_val = e_private;
+          // Variables with automatic storage duration that are declared in a scope inside the construct are private
+          // Variables with static storage duration that are declared in a scope inside the construct are shared.
+          if (isStatic (var_decl))
+            rt_val = e_shared;
+          else
+            rt_val = e_private;
+          return rt_val;   
         }
-        else if (isThreadprivate (sym))
+
+        if (isThreadprivate (sym))
+    // Variables appearing in threadprivate directives are threadprivate.
         {
           rt_val = e_threadprivate;
-        } 
+          return rt_val;
+        }
+
+        if (isLoopIndexVariable (iname, anchor_stmt)) // TODO: need more work here
+        {
+          /*  loop iteration variable
+            TODO: The loop iteration variable(s) in the associated for-loop(s) of a for, parallel for,
+            taskloop, or distribute construct is (are) private.
+
+            TODO linear: The loop iteration variable in the associated for-loop of a simd construct with just one
+            associated for-loop is linear with a linear-step that is the increment of the associated for-loop.
+            
+            TODO lastprivate: The loop iteration variables in the associated for-loops of a simd construct with multiple
+            associated for-loops are lastprivate.
+          */  
+          if (isSgOmpForStatement(omp_clause_body_stmt))  // TODO: check other types of constructs here: taskloop, distribute construct
+          {
+            rt_val = e_private;
+            return rt_val;
+          }
+          else
+          {
+            //cerr<<"found a loop index, but enclosing body statement is not omp for. "<<endl;
+          }
+        }
+#if 0 // no this logic in the specification, but I split the combined parallel for into two constructs, need to double check this
         else 
         // If implicit rules do not apply, Go to find higher level: most omp parallel
         if  (SgOmpClauseBodyStatement * parent_clause_body_stmt = findEnclosingOmpClauseBodyStatement (getEnclosingStatement(omp_clause_body_stmt->get_parent())))
@@ -249,13 +299,41 @@ namespace OmpSupport
           if (parent_rt_val != e_unknown) // TODO: what if there are multiple levels??
             rt_val = parent_rt_val; 
         } 
-      } // end explicit unknown
+#endif
+/*
+
+TODO: If an array section is a list item in a map clause on the target construct and the array section is
+derived from a variable for which the type is pointer then that variable is firstprivate.
+*/
+     } // end explicit unknown
+    // the rest is shared by default  
+    // TODO Objects with dynamic storage duration are shared.
+    // TODO Static data members are shared. 
+       
     } // end of has an OpenMP enclosing clause body statement
     else //orphaned code segments
     {
-      //
+/*
+  //TODO: handle more cases as needed. 
+  Variables with static storage duration that are declared in called routines in the region are shared.
+
+  File-scope or namespace-scope variables referenced in called routines in the region are shared
+   unless they appear in a threadprivate directive.
+
+   Objects with dynamic storage duration are shared.
+
+   Static data members are shared unless they appear in a threadprivate directive.
+
+   In C++, formal arguments of called routines in the region that are passed by reference have the
+    same data-sharing attributes as the associated actual arguments.
+
+   Other variables declared in called routines in the region are private. 
+*/
       if (isThreadprivate (sym))
+      {
         rt_val = e_threadprivate;
+        return rt_val;
+      }
       else
       {
         //find locally declared variables
@@ -265,6 +343,7 @@ namespace OmpSupport
         if (isAncestor (func_def, var_decl))
         {
           rt_val = e_private;
+          return rt_val;
         }
       }
     } // end of orphaned code segments

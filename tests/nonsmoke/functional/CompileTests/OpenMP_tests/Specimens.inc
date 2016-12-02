@@ -1,5 +1,6 @@
 # we define various list of files to be used for testing OpenMP support
 
+
 # this is the all set of OpenMP C input tests
 # all other C test lists can be a subset of this one
 nonsmoke_specimens_openmp_c = \
@@ -143,3 +144,8 @@ nonsmoke_specimens_openmp_c = \
     twoRegions.c \
     upperCase.c \
     variables.c
+
+
+# add all
+nonsmoke_getDataSharingAttribute_c = \
+   $(nonsmoke_specimens_openmp_c) 

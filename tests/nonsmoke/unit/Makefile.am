@@ -22,22 +22,33 @@ include $(nonsmoke_specimens_openmp_path)/Specimens.inc
 
 noinst_PROGRAMS += getDataSharingAttribute
 getDataSharingAttribute_SOURCES = getDataSharingAttribute.C
+# nonsmoke_getDataSharingAttribute_c defines the set of c files to test getDataSharingAttribute
 
+# unparsed file results, optional for this test
+rose_nonsmoke_getDataSharingAttribute_c = $(addprefix rose_, ${nonsmoke_getDataSharingAttribute_c})
+# screen output of the tests, redirect to .output file
+nonsmoke_getDataSharingAttribute_c_output = $(addsuffix .output, ${nonsmoke_getDataSharingAttribute_c})
 
-# unparsed file results
-nonsmoke_specimens_openmp_c_results = $(addprefix rose_, ${nonsmoke_specimens_openmp_c})
-# screen output of the tests
-nonsmoke_specimens_openmp_c_output = $(addsuffix .output, ${nonsmoke_specimens_openmp_c})
-
-$(nonsmoke_specimens_openmp_c_results): $(nonsmoke_specimens_openmp_path)/$(@:rose_%=%) getDataSharingAttribute
+$(rose_nonsmoke_getDataSharingAttribute_c): $(nonsmoke_specimens_openmp_path)/$(@:rose_%=%) getDataSharingAttribute
 	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:rose_%=%) > $(@:rose_%=%).output
+# similar to the previous one
+$(nonsmoke_getDataSharingAttribute_c_output): $(nonsmoke_specimens_openmp_path)/$(@:%.output=%) getDataSharingAttribute
+	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:%.output=%) > $@
 
-$(nonsmoke_specimens_openmp_c_output): $(nonsmoke_specimens_openmp_c_results)
+# the diff files .output.diff
+nonsmoke_getDataSharingAttribute_c_output_diff = $(addsuffix .diff, ${nonsmoke_getDataSharingAttribute_c_output})
 
-# TODO add diff results
-check-local: $(nonsmoke_specimens_openmp_c_results)
+REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/unit/referenceOutput
 
+$(nonsmoke_getDataSharingAttribute_c_output_diff): $(nonsmoke_getDataSharingAttribute_c_output)
+	echo "Verifying getDataSharingAttribute by diff ..."; \
+	if diff $(@:.output.diff=.output) $(REFERENCE_PATH)/$(@:.output.diff=.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+
+getDataSharingAttribute_diff_check: $(nonsmoke_getDataSharingAttribute_c_output_diff)
+
+#  generate the diff files
+check-local: getDataSharingAttribute_diff_check 
 
 clean-local:
-	rm -rf $(nonsmoke_specimens_openmp_c_results)
+	rm -rf $(rose_nonsmoke_getDataSharingAttribute_c) $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff)
 

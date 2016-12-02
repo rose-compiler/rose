@@ -2,8 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "OmpAttribute.h"
-#include "omp_lowering.h" //TODO: put all OpenMP stuff into one header OmpSupport.h ?
+#include "OmpSupport.h"
 using namespace std;
 using namespace OmpSupport;
 using namespace SageInterface;
@@ -24,12 +23,14 @@ void visitorTraversal::visit(SgNode* node)
 
     if (SgForStatement* forloop= isSgForStatement(node))
     {
+      cout<<"for loop at line "<< forloop->get_file_info()->get_line() <<endl; 
       std::vector< SgVarRefExp * > ref_vec; 
       collectVarRefs (forloop, ref_vec);
       for (std::vector< SgVarRefExp * >::iterator iter = ref_vec.begin(); iter!= ref_vec.end(); iter ++) 
       {
         SgSymbol* s = (*iter)->get_symbol();
-        omp_construct_enum atr = getDataSharingAttribute (s, forloop);
+        omp_construct_enum atr = getDataSharingAttribute (*iter);
+        // will redirect to a .output file to enable diff-based correctness checking
         cout<<s->get_name()<<"\t"<<toString(atr) <<endl; 
       }
     }
