@@ -290,18 +290,34 @@ namespace OmpSupport
             //cerr<<"found a loop index, but enclosing body statement is not omp for. "<<endl;
           }
         }
-#if 0 // no this logic in the specification, but I split the combined parallel for into two constructs, need to double check this
-        else 
-        // If implicit rules do not apply, Go to find higher level: most omp parallel
+#if 1 // no this logic in the specification, but I split the combined parallel for into two constructs, need to double check this
+        // another case is parallel region + single region, we need to get the parallel region's attribute 
+        /*
+#pragma omp parallel private(i,j)
+  {
+    for (i = 0; i < LOOPCOUNT; i++)
+      {
+#pragma omp single copyprivate(j)
+        {
+          nr_iterations++;
+          j = i;   // i should be private, based on enclosing parallel region's info.
+        }
+   }   
+         */
+        // If implicit rules do not apply at this level (worksharing regions like single), Go to find higher level: most omp parallel
         if  (SgOmpClauseBodyStatement * parent_clause_body_stmt = findEnclosingOmpClauseBodyStatement (getEnclosingStatement(omp_clause_body_stmt->get_parent())))
         { 
-          omp_construct_enum parent_rt_val = getExplicitDataSharingAttribute (iname, parent_clause_body_stmt);
-          if (parent_rt_val != e_unknown) // TODO: what if there are multiple levels??
-            rt_val = parent_rt_val; 
+          // this cause infinite recursion, skip it for now: TODO
+          //if (isSgOmpParallelStatement (parent_clause_body_stmt) && ( isSgOmpForStatement(omp_clause_body_stmt)|| isSgOmpSingleStatement(omp_clause_body_stmt)  ) )
+          if (isSgOmpParallelStatement (parent_clause_body_stmt) && ( isSgOmpSingleStatement(omp_clause_body_stmt)  ) )
+          {
+            // we need to consider the variable's data sharing attribute in the new context   
+            rt_val = getDataSharingAttribute (sym, parent_clause_body_stmt->get_body());
+            return rt_val;
+          }
         } 
 #endif
 /*
-
 TODO: If an array section is a list item in a map clause on the target construct and the array section is
 derived from a variable for which the type is pointer then that variable is firstprivate.
 */
@@ -341,6 +357,12 @@ derived from a variable for which the type is pointer then that variable is firs
         SgFunctionDefinition* func_def = getEnclosingFunctionDefinition (anchor_stmt);
         ROSE_ASSERT (func_def != NULL);
         if (isAncestor (func_def, var_decl))
+        {
+          rt_val = e_private;
+          return rt_val;
+        }
+        // if it is within a main function, it should be private no matter what. Single sequential region, not shared with others. 
+        if (isMain (func_def->get_declaration()))
         {
           rt_val = e_private;
           return rt_val;
