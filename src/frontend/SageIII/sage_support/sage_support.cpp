@@ -6896,37 +6896,35 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
      bool isAlwaysResolvedStatically = false;
 
      SgExpression* functionExp = this->get_function();
+
+     // schroder3 (2016-08-16): Moved the handling of SgPointerDerefExp and SgAddressOfOp above the switch. Due to this
+     //  all pointer dereferences and address-ofs are removed from the function expression before it is analyzed.
+     //  Member functions that are an operand of a pointer dereference or address-of are supported due to this now.
+     //
+     // schroder3 (2016-06-28): Added SgAddressOp (for example "(&f)()", "(*&***&**&*&f)()" or "(&***&**&*&f)()")
+     //
+     // EDG3 removes all SgPointerDerefExp nodes from an expression like this
+     //    void f() { (***f)(); }
+     // EDG4 does not.  Therefore, if the thing to which the pointers ultimately point is a SgFunctionRefExp then we
+     // know the function, otherwise Liao's comment below applies. [Robb Matzke 2012-12-28]
+     //
+     // Liao, 5/19/2009
+     // A pointer to function can be associated to any functions with a matching function type
+     // There is no single function declaration which is associated with it.
+     // In this case return NULL should be allowed and the caller has to handle it accordingly
+     //
+     while (isSgPointerDerefExp(functionExp) || isSgAddressOfOp(functionExp)) {
+       functionExp = isSgUnaryOp(functionExp)->get_operand();
+     }
+
      switch (functionExp->variantT())
         {
-       // schroder3 (2016-06-28): Added SgAddressOp (for example "(&f)()", "(*&***&**&*&f)()" or "(&***&**&*&f)()")
-       //
-       // EDG3 removes all SgPointerDerefExp nodes from an expression like this
-       //    void f() { (***f)(); }
-       // EDG4 does not.  Therefore, if the thing to which the pointers ultimately point is a SgFunctionRefExp then we
-       // know the function, otherwise Liao's comment below applies. [Robb Matzke 2012-12-28]
-       // 
-       // Liao, 5/19/2009
-       // A pointer to function can be associated to any functions with a matching function type
-       // There is no single function declaration which is associated with it.
-       // In this case return NULL should be allowed and the caller has to handle it accordingly
-       //
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
              {
-               SgExpression *exp = functionExp;
-               while (isSgPointerDerefExp(exp) || isSgAddressOfOp(exp)) {
-                 exp = isSgUnaryOp(exp)->get_operand();
-               }
-
-               if (!isSgFunctionRefExp(exp)) {
-                 // Unable to find associated function symbol: return 0:
-                 break;
-               }
-
-               functionExp = exp;
+               ROSE_ASSERT(false);
+               break;
              }
-       // fall through
-
           case V_SgFunctionRefExp:
              {
                SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
