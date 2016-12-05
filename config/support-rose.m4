@@ -2274,6 +2274,7 @@ tests/nonsmoke/functional/CompilerOptionsTests/testOutputFileOption/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testWave/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/nonsmoke/functional/Makefile
+tests/nonsmoke/functional/moveDeclarationTool/Makefile
 tests/nonsmoke/functional/PerformanceTests/Makefile
 tests/nonsmoke/functional/RunTests/A++Tests/Makefile
 tests/nonsmoke/functional/RunTests/AstDeleteTests/Makefile
