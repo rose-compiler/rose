@@ -120,30 +120,57 @@ echo "Testing value of FC = $FC"
       # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
       # of Clang version number, or take it directly from the XCode version number if that is a better solution.
 
-      # Note "build_os" is a variable determined by autoconf.
-        case $build_os in
-            darwin13*)
-              # This is Mac OSX version 10.9 (not clear on what version of clang this maps to via XCode)
-                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=6
-                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-                ;;
-            darwin14*)
-              # This is Mac OSX version 10.10 (not clear on what version of clang this maps to via XCode)
-                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
-                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-                ;;
-            darwin15*)
-              # This is Mac OSX version 10.11
-                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
-                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-                ;;
-            *)
-                echo "Error: Apple Mac OSX version not recognized as either darwin13, 14, or darwin15 ... (build_os = $build_os)";
-                exit 1;
-        esac
+        XCODE_VERSION_MAJOR=$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER
+        XCODE_VERSION_MINOR=$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
+        XCODE_VERSION_PATCH=$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER
+
+      # I think the clange versions all have patch level equal to zero.
+        BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+
+        if test $XCODE_VERSION_MAJOR -eq 7; then
+
+          # The versions of Clang all depend upon the minor version number of XCode (for major version number equal to 7).
+            BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+            case "$XCODE_VERSION_MINOR" in
+                0)
+                    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=7
+                    ;;
+                3)
+                    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+                    ;;
+                *)
+                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
+                    ;;
+            esac
+        else
+            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR."
+            exit 1
+        fi
+
+#      # Note "build_os" is a variable determined by autoconf.
+#        case $build_os in
+#            darwin13*)
+#              # This is Mac OSX version 10.9 (not clear on what version of clang this maps to via XCode)
+#                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+#                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=6
+#                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+#                ;;
+#            darwin14*)
+#              # This is Mac OSX version 10.10 (not clear on what version of clang this maps to via XCode)
+#                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+#                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+#                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+#                ;;
+#            darwin15*)
+#              # This is Mac OSX version 10.11
+#                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+#                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+#                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+#                ;;
+#            *)
+#                echo "Error: Apple Mac OSX version not recognized as either darwin13, 14, or darwin15 ... (build_os = $build_os)";
+#                exit 1;
+#        esac
 
       # DQ (12/3/2016): Added debugging for LLVM on MACOSX.
         echo "compilerVendorName = $compilerVendorName"
