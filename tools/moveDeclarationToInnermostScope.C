@@ -675,7 +675,8 @@ static std::vector<std::string> parseCommandLine(std::vector< std::string > & ar
   // sort of a cross between Sawyer recognizing it and not recognizing it.
   tool.insert(Switch("rose:help")
       .skipping(SKIP_STRONG)                  // appears in documentation and is parsed, but treated as skipped
-      .doc("Show the ROSE switch documentation."));
+      .doc("Show the ROSE switch documentation.")
+      .action(showHelpAndExit(0)) );
 
   // Copy this tool's switches into the parser.
   p.with(tool);
@@ -683,12 +684,12 @@ static std::vector<std::string> parseCommandLine(std::vector< std::string > & ar
   // Parse the command-line, stopping at the first "--" or positional argument. Return the unparsed stuff so it can be passed
   // to the next stage.  ROSE's frontend expects arg[0] to be the name of the command, which Sawyer has already processed, so
   // we need to add it back again.
-  //std::vector<std::string> remainingArgs = p.parse(argc, argv).apply().unparsedArgs(true);
+//  std::vector<std::string> remainingArgs = p.parse(argc, argv).apply().unparsedArgs(true);
+//  remainingArgs.insert(remainingArgs.begin(), argv[0]);
   std::vector<std::string> remainingArgs = p.parse(argvList).apply().unparsedArgs(true);
-  //remainingArgs.insert(remainingArgs.begin(), argv[0]);
-  remainingArgs.insert(remainingArgs.begin(), argvList[0]);
+//  remainingArgs.insert(remainingArgs.begin(), argvList[0]); // somehow this is not needed if I use the vector argument version of parse()
 
-#if 1 // DEBUGGING [Robb P Matzke 2016-09-27]
+#if 0 // DEBUGGING [Robb P Matzke 2016-09-27]
   std::cerr <<"These are the arguments after parsing with Sawyer:\n";
   BOOST_FOREACH (const std::string &s, remainingArgs)
     std::cerr <<"    \"" <<s <<"\"\n";
@@ -701,7 +702,7 @@ int main(int argc, char * argv[])
 {
 
   //! Command line process begin --------------------------
-  vector <string> argvList; 
+  vector <string> argvList (argv, argv+argc)  ; 
   //argvList =  parseCommandLine (argc, argv);
   argvList =  parseCommandLine (argvList);
   // TOO1 (2014/12/05): Temporarily added this to support keep-going in rose-sh.
