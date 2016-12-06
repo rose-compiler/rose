@@ -301,6 +301,7 @@ public:
     typedef Sawyer::Container::Map<rose_addr_t, std::string> AddressNameMap;
     
 private:
+    BasePartitionerSettings settings_;                  // settings adjustable from the command-line
     Configuration config_;                              // configuration information about functions, blocks, etc.
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
@@ -311,7 +312,6 @@ private:
     mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
     bool isReportingProgress_;                          // Emit automatic progress reports?
     Functions functions_;                               // List of all attached functions by entry address
-    bool useSemantics_;                                 // If true, then use symbolic semantics to reason about things
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
@@ -358,6 +358,7 @@ private:
         s.template register_type<Semantics::RegisterState>();
         s.template register_type<Semantics::State>();
         s.template register_type<Semantics::RiscOperators>();
+        s & settings_;
         // s & config_;                         -- FIXME[Robb P Matzke 2016-11-08]
         s & instructionProvider_;
         s & memoryMap_;
@@ -368,7 +369,6 @@ private:
         s & progressTotal_;
         s & isReportingProgress_;
         s & functions_;
-        s & useSemantics_;
         s & autoAddCallReturnEdges_;
         s & assumeFunctionsReturn_;
         s & stackDeltaInterproceduralLimit_;
@@ -412,7 +412,7 @@ public:
      *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
           basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(disassembler, map);
@@ -423,7 +423,7 @@ public:
      *  The default constructor does not produce a usable partitioner, but is convenient when one needs to pass a default
      *  partitioner by value or reference. */
     Partitioner()
-        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+        : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
           basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(NULL, memoryMap_);
@@ -436,7 +436,7 @@ public:
     // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
     // after a while.
     Partitioner(const Partitioner &other)               // initialize just like default
-        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+        : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true),
           semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(NULL, memoryMap_);                         // initialize just like default
@@ -444,6 +444,7 @@ public:
     }
     Partitioner& operator=(const Partitioner &other) {
         Sawyer::Attribute::Storage<>::operator=(other);
+        settings_ = other.settings_;
         config_ = other.config_;
         instructionProvider_ = other.instructionProvider_;
         memoryMap_ = other.memoryMap_;
@@ -454,7 +455,6 @@ public:
         progressTotal_ = other.progressTotal_;
         isReportingProgress_ = other.isReportingProgress_;
         functions_ = other.functions_;
-        useSemantics_ = other.useSemantics_;
         autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
         assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
         stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
@@ -1452,11 +1452,26 @@ public:
 
     /** Returns the addresses used by a function.
      *
-     *  Returns an interval set which is the union of the addresses of the function's basic blocks and data blocks.  Most
+     *  Returns an interval set which is the union of the addresses of the function's basic blocks and/or data blocks.  Most
      *  functions are contiguous in memory and can be represented by a single address interval, but this is not a
-     *  requirement in ROSE. */
+     *  requirement in ROSE.
+     *
+     *  The versions of these functions that take an AddressIntervalSet argument simply insert additional address intervals
+     *  into that set without clearing it first.
+     *
+     *  @li @ref functionExtent -- addresses of all instructions and static data
+     *  @li @ref functionBasicBlockExtent -- addresses of instructions
+     *  @li @ref functionDataBlockExtent -- addresses of static data
+     *
+     * @{ */
     AddressIntervalSet functionExtent(const Function::Ptr&) const /*final*/;
-    
+    void functionExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const /*final*/;
+    AddressIntervalSet functionBasicBlockExtent(const Function::Ptr &function) const /*final*/;
+    void functionBasicBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const /*final*/;
+    AddressIntervalSet functionDataBlockExtent(const Function::Ptr &function) const /*final*/;
+    void functionDataBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const /*final*/;
+    /** @} */
+
     /** Attaches a function to the CFG/AUM.
      *
      *  The indicated function(s) is inserted into the control flow graph.  Basic blocks (or at least placeholders) are
@@ -1939,6 +1954,15 @@ public:
     /** Name of a function */
     static std::string functionName(const Function::Ptr&) /*final*/;
 
+    /** Partitioner settings.
+     *
+     *  These are settings that are typically controlled from the command-line.
+     *
+     * @{ */
+    const BasePartitionerSettings& settings() const /*final*/ { return settings_; }
+    void settings(const BasePartitionerSettings &s) /*final*/ { settings_ = s; }
+    /** @} */
+
     /** Enable or disable progress reports.
      *
      *  This controls the automatic progress reports, but the @ref reportProgress method can still be invoked explicitly by the
@@ -1956,9 +1980,9 @@ public:
      *  basic block.  When false, more naive but faster methods are used.
      *
      *  @{ */
-    void enableSymbolicSemantics(bool b=true) /*final*/ { useSemantics_ = b; }
-    void disableSymbolicSemantics() /*final*/ { useSemantics_ = false; }
-    bool usingSymbolicSemantics() const /*final*/ { return useSemantics_; }
+    void enableSymbolicSemantics(bool b=true) /*final*/ { settings_.usingSemantics = b; }
+    void disableSymbolicSemantics() /*final*/ { settings_.usingSemantics = false; }
+    bool usingSymbolicSemantics() const /*final*/ { return settings_.usingSemantics; }
     /** @} */
 
     /** Property: Insert (or not) function call return edges.
@@ -2012,6 +2036,14 @@ public:
     const AddressNameMap& addressNames() const /*final*/ { return addressNames_; }
     /** @} */
 
+    /** Property: Whether to look for function calls used as branches.
+     *
+     *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
+     *
+     * @{ */
+    bool checkingCallBranch() const /*final*/ { return settings_.checkingCallBranch; }
+    void checkingCallBranch(bool b) /*final*/ { settings_.checkingCallBranch = b; }
+    /** @} */
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1396,6 +1396,23 @@ PHONIES += check_specimens
 check_specimens: check_parse_container check_disassemble check_unparse check_assemble check_astio
 
 
+#############################################################################################
+# Serialization of IR nodes related to binary analysis
+#############################################################################################
+
+noinst_PROGRAMS += testSageSerialization
+testSageSerialization_SOURCES = testSageSerialization.C
+testSageSerialization_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testSageSerialization.passed
+
+testSageSerialization.passed: testSageSerialization
+	@$(RTH_RUN)								\
+		TITLE="serialization of Sage binary analysis nodes [$@]"	\
+		CMD="$$(pwd)/testSageSerialization"				\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################

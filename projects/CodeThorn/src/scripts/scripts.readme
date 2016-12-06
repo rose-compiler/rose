@@ -1,0 +1,24 @@
+ALL scripts in this directory provide a command line interface that conforms
+to the GNU standard. For every tool --help gives you a brief description
+of the command line parameters and available options.
+
+* Translation Scripts
+
+Several of the scripts use example translators built with ROSE to
+translate input from language A to output in language
+B. The naming scheme is always: <InputLanguage>2<OutputLanguage>
+similar to scripts like ps2pdf or ps2ps.
+
+The 4 available scripts are:
+cpp2cpp (uses exampleTranslator/defaultTranslator)
+cpp2ps (uses exampleTranslator/DOTGenerator and dot2ps)
+cpp2pdf (uses exampleTranslator/PDFGenerator)
+dot2ps (uses dot)
+
+The abrivations used stand for:
+cpp : CPlusPlus, 
+ps  : PostScript, 
+pdf : (Adobe's) Portable Document Format
+dot : dot is a tool for hierarchical layout (part of AT&T's graphviz package)
+    : the language accepted by dot is the DOT language
+    : http://www.research.att.com/~erg/graphviz/info/lang.html

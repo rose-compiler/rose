@@ -200,7 +200,8 @@ protected:
 
     RegisterStateGeneric(const RegisterStateGeneric &other)
         : RegisterState(other), properties_(other.properties_), writers_(other.writers_),
-          accessModifiesExistingLocations_(true), accessCreatesLocations_(true), registers_(other.registers_) {
+          accessModifiesExistingLocations_(other.accessModifiesExistingLocations_),
+          accessCreatesLocations_(other.accessCreatesLocations_), registers_(other.registers_) {
         deep_copy_values();
     }
 
