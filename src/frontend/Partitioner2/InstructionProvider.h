@@ -39,6 +39,7 @@ private:
     mutable InsnMap insnMap_;                           // this is a cache
     bool useDisassembler_;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -67,6 +68,7 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
 
 protected:
     InstructionProvider()

@@ -94,7 +94,8 @@ for header in ${STL_HEADERS}; do
     printf "TESTING: %-17s: " "$header"
     printf "#include <$header>\nint main(){ return 0; }\n" > ${TEST_HEADER_C}
     # option -P: inhibit generation of linemarkers
-    cpp -P -std=$LANG_STANDARD -x c++ ${TEST_HEADER_C} ${TEST_HEADER_PP_C}
+    #cpp -P -std=$LANG_STANDARD -x c++ ${TEST_HEADER_C} ${TEST_HEADER_PP_C}
+    $TOOL1 -P -std=$LANG_STANDARD -E ${TEST_HEADER_C} > ${TEST_HEADER_PP_C}
     LOC=`wc -l ${TEST_HEADER_PP_C} | cut -f1 -d' '`
     printf "%6s LOC : " "$LOC"
     
@@ -198,6 +199,7 @@ echo
 echo "-----------------------------------------------------------------"
 echo "STL C++98 FRONTEND+BACKEND CHECK         COMP FE   BE   : SUCCESS"
 echo "-----------------------------------------------------------------"
+
 # DQ: (comment out here to skip these tests).
 check "$STL_CPP98_HEADERS_PASSING" "c++98" ""
 if [ ${TOTAL_FAIL} -gt 0 ]; then

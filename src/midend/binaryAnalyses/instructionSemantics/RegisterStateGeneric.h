@@ -60,6 +60,7 @@ public:
     struct RegStore {
         unsigned majr, minr;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -67,6 +68,7 @@ public:
         void serialize(S &s, const unsigned version) {
             s & majr & minr;
         }
+#endif
 
     public:
         RegStore()                                      // for serialization
@@ -88,6 +90,7 @@ public:
         RegisterDescriptor desc;
         SValuePtr value;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -95,6 +98,7 @@ public:
         void serialize(S &s, const unsigned version) {
             s & desc & value;
         }
+#endif
 
     protected:
         RegPair() {}                                    // for serialization
@@ -165,6 +169,7 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -177,6 +182,7 @@ private:
         s & accessCreatesLocations_;
         s & registers_;
     }
+#endif
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Normal constructors
@@ -194,7 +200,8 @@ protected:
 
     RegisterStateGeneric(const RegisterStateGeneric &other)
         : RegisterState(other), properties_(other.properties_), writers_(other.writers_),
-          accessModifiesExistingLocations_(true), accessCreatesLocations_(true), registers_(other.registers_) {
+          accessModifiesExistingLocations_(other.accessModifiesExistingLocations_),
+          accessCreatesLocations_(other.accessCreatesLocations_), registers_(other.registers_) {
         deep_copy_values();
     }
 
@@ -645,6 +652,8 @@ protected:
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric);
+#endif
 
 #endif

@@ -1585,6 +1585,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   //! Find the closest switch outside a given statement (normally used for case and default statements)
   ROSE_DLL_API SgSwitchStatement* findEnclosingSwitch(SgStatement* s);
 
+  //! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly. 
+  ROSE_DLL_API SgOmpClauseBodyStatement* findEnclosingOmpClauseBodyStatement(SgStatement* s);
+
   //! Find the closest loop outside the given statement; if fortranLabel is not empty, the Fortran label of the loop must be equal to it
   ROSE_DLL_API SgScopeStatement* findEnclosingLoop(SgStatement* s, const std::string& fortranLabel = "", bool stopOnSwitches = false);
 

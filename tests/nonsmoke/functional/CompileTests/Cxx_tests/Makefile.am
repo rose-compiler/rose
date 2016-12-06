@@ -1625,9 +1625,9 @@ check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 #	DQ (9/22/2013): I think this failes on later versions of GNU (e.g. gnu 4.4.5).
 #	@$(MAKE) test_common_configure_test_with_link_part_3
 	@$(MAKE) testTemplateExample
-	@echo "***********************************************************************************************"
+	@echo "*******************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************"
+	@echo "*******************************************************************************************************************"
 
 clean-local:
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti

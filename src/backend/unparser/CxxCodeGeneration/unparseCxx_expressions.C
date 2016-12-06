@@ -536,38 +536,8 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
   // ROSE_ASSERT(info.isTypeFirstPart()  == false);
      ROSE_ASSERT(info.isTypeSecondPart() == false);
 
-#if 1
   // DQ (6/21/2011): Refactored this code to generate more then templated class names.
      unparseTemplateArgumentList(templateInstantiationDeclaration->get_templateArguments(),info);
-#else
-     const SgTemplateArgumentPtrList& templateArgListPtr = templateInstantiationDeclaration->get_templateArguments();
-     if (!templateArgListPtr.empty())
-        {
-       // printf ("templateArgListPtr->size() = %" PRIuPTR " \n",templateArgListPtr->size());
-
-       // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
-          ROSE_ASSERT(templateArgListPtr.size() > 0);
-
-#error "DEAD CODE!"
-
-          unp->u_exprStmt->curprint ( "< ");
-          SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
-          while (i != templateArgListPtr.end())
-             {
-            // printf ("templateArgList element *i = %s \n",(*i)->sage_class_name());
-#if 0
-               unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + 
-                      (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
-#endif
-
-               unparseTemplateArgument(*i,info);
-               i++;
-               if (i != templateArgListPtr.end())
-                    unp->u_exprStmt->curprint ( " , ");
-             }
-          unp->u_exprStmt->curprint ( " > ");
-        }
-#endif
    }
 
 
@@ -753,7 +723,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                printf ("In unparseTemplateArgumentList(): templateArgList element *i = %s explicitlySpecified = %s \n",(*i)->class_name().c_str(),((*i)->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 #if 0
-               unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
+               unp->u_exprStmt->curprint ( string("/* unparseTemplateArgumentList(): templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
            // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
@@ -1227,7 +1197,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #endif
 
 #if 0
-     unp->u_exprStmt->curprint(string("/* templateArgument is explicitlySpecified = ") + ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + " */");
+     unp->u_exprStmt->curprint(string("/* unparseTemplateArgument(): templateArgument is explicitlySpecified = ") + ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
 #if 0
      printf ("Exiting as a test! \n");

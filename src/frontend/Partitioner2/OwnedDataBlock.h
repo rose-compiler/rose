@@ -28,6 +28,7 @@ class OwnedDataBlock {
     std::vector<Function::Ptr> functions_;              // functions that own this data block, sorted
     std::vector<BasicBlock::Ptr> bblocks_;              // basic blocks that own this data block, sorted
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -37,6 +38,7 @@ private:
         s & functions_;
         s & bblocks_;
     }
+#endif
 
 public:
     /** Default constructed null ownership.

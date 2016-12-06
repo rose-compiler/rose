@@ -43,6 +43,7 @@ SUBDIRS += x10_tests
 
 SUBDIRS += OpenMP_tests FailSafe_tests
 
+if !ROSE_USE_SANITIZER
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # DQ (7/14/2013): Temporarily commented out this test to evaluate progress on tests/nonsmoke/functional/CompileTests directory.
@@ -50,6 +51,7 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += Fortran_tests
 #Pei-Hung (7/13/2015): Adding mixlanguage tests (patches from Stephen Guzik)
    SUBDIRS += mixLanguage_tests
+endif
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -71,7 +73,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
       UnparseHeadersTests 
 
 # DQ (11/5/2016): These tests fail when testing with Address Sanitizer, but I can't see the output. 
-# Need to work work with Markus to understand the resutls better, skip these tests for now is using
+# Need to work work with Markus to understand the results better, skip these tests for now is using
 # Address Sanitizer.
 if !ROSE_USE_SANITIZER
    SUBDIRS += STL_tests
