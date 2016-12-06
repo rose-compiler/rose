@@ -101,12 +101,67 @@ echo "Testing value of FC = $FC"
 
    # exit 1
   else
-    echo "Else case not using Clang (choose backend compiler)"
-    BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
-    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
 
-    echo "     (non-clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
-    echo "     (non-clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+  # DQ (12/3/2016): Note that even if the bckend compiler is specified to be GNU, on a Mac OSX system this will be clang.
+  # So we can trigger behavior based on the backend compiler name direcltly when on an OSX system.
+    if test "x$OS_vendor" = xapple; then
+
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getClangMajorVersionNumber.sh`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getClangMinorVersionNumber.sh`
+
+        echo "     (g++ but really clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+        echo "     (g++ but really clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+
+      # On an OSX system, the version of Clang is not clear since the "--version" option will report the 
+      # version number of XCode (not clang).  So either we map from the version of the OS to the version 
+      # of Clang used in it's version of XCode, or we map from the version of XCode (defined by the current 
+      # values of (CXX_VERSION_MAJOR,CXX_VERSION_MINOR, and CXX_VERSION_PATCH).  Below I have used the 
+      # version of the OS, but I'm not certain that is the best solution.  Perhaps we can asset that
+      # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
+      # of Clang version number, or take it directly from the XCode version number if that is a better solution.
+
+      # Note "build_os" is a variable determined by autoconf.
+        case $build_os in
+            darwin13*)
+              # This is Mac OSX version 10.9 (not clear on what version of clang this maps to via XCode)
+                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=6
+                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+                ;;
+            darwin14*)
+              # This is Mac OSX version 10.10 (not clear on what version of clang this maps to via XCode)
+                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+                ;;
+            darwin15*)
+              # This is Mac OSX version 10.11
+                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+                ;;
+            *)
+                echo "Error: Apple Mac OSX version not recognized as either darwin13, 14, or darwin15 ... (build_os = $build_os)";
+                exit 1;
+        esac
+
+      # DQ (12/3/2016): Added debugging for LLVM on MACOSX.
+        echo "compilerVendorName = $compilerVendorName"
+        echo "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+        echo "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+        echo "BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER = $BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER"
+
+      # echo "Detected use of GNU backend compiler name on Mac OSX system"
+      # exit 1
+
+    else
+        echo "Else case not using Clang (choose backend compiler)"
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+
+        echo "     (non-clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+        echo "     (non-clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+    fi
   # exit 1
   fi
 
