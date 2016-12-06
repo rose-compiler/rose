@@ -1,0 +1,49 @@
+for loop at line 22
+"i"	private
+"i"	private
+"n"	shared
+"i"	private
+"A"	shared
+"i"	private
+for loop at line 31
+"i"	private
+"i"	private
+"n"	shared
+"i"	private
+"A"	shared
+"i"	private
+for loop at line 40
+"i"	private
+"i"	private
+"n"	shared
+"i"	private
+"diffsum"	private
+"A"	shared
+"i"	private
+"B"	shared
+"i"	private
+"sum"	private
+"B"	shared
+"i"	private
+for loop at line 51
+"i"	private
+"i"	private
+"n"	shared
+"i"	private
+"y"	shared
+"i"	private
+"a"	shared
+"x"	shared
+"i"	private
+for loop at line 115
+"j"	private
+"offset"	shared
+"j"	private
+"offset"	shared
+"size"	shared
+"j"	private
+"y_ompacc"	shared
+"j"	private
+"a"	shared
+"x"	shared
+"j"	private

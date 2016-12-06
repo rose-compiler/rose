@@ -1960,7 +1960,7 @@ public:
      *
      * @{ */
     const BasePartitionerSettings& settings() const /*final*/ { return settings_; }
-    virtual void settings(const BasePartitionerSettings &s) { settings_ = s; }
+    void settings(const BasePartitionerSettings &s) /*final*/ { settings_ = s; }
     /** @} */
 
     /** Enable or disable progress reports.
@@ -2042,7 +2042,7 @@ public:
      *
      * @{ */
     bool checkingCallBranch() const /*final*/ { return settings_.checkingCallBranch; }
-    virtual void checkingCallBranch(bool b) { settings_.checkingCallBranch = b; }
+    void checkingCallBranch(bool b) /*final*/ { settings_.checkingCallBranch = b; }
     /** @} */
 
 
