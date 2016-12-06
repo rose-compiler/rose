@@ -13,6 +13,11 @@
 #include <Sawyer/Buffer.h>
 #include <Sawyer/Sawyer.h>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/array.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/split_member.hpp>
+
 namespace Sawyer {
 namespace Container {
 
@@ -23,19 +28,47 @@ namespace Container {
 template<class A, class T>
 class StaticBuffer: public Buffer<A, T> {
 public:
-    typedef A Address;
-    typedef T Value;
+    typedef A Address;                                  /**< Type of addresses. */
+    typedef T Value;                                    /**< Type of values. */
+    typedef Buffer<A, T> Super;                         /**< Type of base class. */
 
 private:
     Value *values_;
     Address size_;
     bool rdonly_;
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        s & boost::serialization::base_object<Super>(*this);
+        s & size_ & rdonly_;
+        s & boost::serialization::make_array(values_, size_);
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        s & boost::serialization::base_object<Super>(*this);
+        s & size_ & rdonly_;
+        values_ = new Value[size_];
+        s & boost::serialization::make_array(values_, size_);
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+
+private:
+    // For serialization only
+    StaticBuffer()
+        : values_(NULL), size_(0), rdonly_(false) {}
+
 protected:
-    StaticBuffer(Value *values, Address size): values_(values), size_(size), rdonly_(false) {
+    StaticBuffer(Value *values, Address size)
+        : Super(".StaticBuffer"), values_(values), size_(size), rdonly_(false) {
         ASSERT_require(size==0 || values!=NULL);
     }
-    StaticBuffer(const Value *values, Address size): values_(const_cast<Value*>(values)), size_(size), rdonly_(true) {
+    StaticBuffer(const Value *values, Address size)
+        : Super(".StaticBuffer"), values_(const_cast<Value*>(values)), size_(size), rdonly_(true) {
         ASSERT_require(size==0 || values!=NULL);
     }
 

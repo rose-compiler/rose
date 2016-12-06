@@ -953,7 +953,10 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
           return;
         }
      ROSE_ASSERT(leading_whitespace_start >= 0);
-     ROSE_ASSERT(leading_whitespace_start < tokenStream.size());
+
+  // DQ (12/5/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+  // ROSE_ASSERT(leading_whitespace_start < tokenStream.size());
+     ROSE_ASSERT((size_t)leading_whitespace_start < tokenStream.size());
 
   // DQ (12/26/2014): Modify to only adjust the white space if there exists some whitespace to start with.
      if ( tokenStream[leading_whitespace_start]->p_tok_elem->token_id == C_CXX_WHITESPACE ||
@@ -1026,7 +1029,10 @@ TokenMappingTraversal::trimTrailingWhiteSpaceFromRight(TokenStreamSequenceToNode
   // DQ (1/2/2015): There is no trailing white space at the end of the token sequence (by definition).
   // This case happends for the trivial case of SgGlobal.
   // if (original_end_of_token_subsequence == tokenStream.size()-1)
-     if (trailing_whitespace_end > tokenStream.size()-1)
+
+  // DQ (12/5/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+  // if (trailing_whitespace_end > tokenStream.size()-1)
+     if ((size_t)trailing_whitespace_end >= tokenStream.size())
         {
 #if 0
           printf ("Note: In trimTrailingWhiteSpaceFromRight(): trailing_whitespace_end > tokenStream.size()-1: returning without modification to mappingInfo \n");
@@ -1034,7 +1040,10 @@ TokenMappingTraversal::trimTrailingWhiteSpaceFromRight(TokenStreamSequenceToNode
           return;
         }
      ROSE_ASSERT(trailing_whitespace_end >= 0);
-     ROSE_ASSERT(trailing_whitespace_end < tokenStream.size());
+
+  // DQ (12/5/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+  // ROSE_ASSERT(trailing_whitespace_end < tokenStream.size());
+     ROSE_ASSERT((size_t)trailing_whitespace_end < tokenStream.size());
 
   // DQ (12/26/2014): Modify to only adjust the white space if there exists some whitespace to start with.
      if ( tokenStream[trailing_whitespace_end]->p_tok_elem->token_id == C_CXX_WHITESPACE ||

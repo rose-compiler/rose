@@ -59,6 +59,7 @@ pkginclude_HEADERS =				\
 	Map.h					\
 	ParallelSort.h				\
 	processSupport.h			\
+	rose_isnan.h				\
 	rose_getline.h				\
 	rose_override.h				\
 	rose_paths.h				\

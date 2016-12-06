@@ -283,7 +283,19 @@
 // #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
 // #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1
 // #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 2
-#define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 3
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
+
+// DQ (11/3/2016): This size causes the AST File I/O to fail.  It is likely that
+// since the INITIAL_SIZE_OF_MEMORY_BLOCKS is set to 10000, the DEFAULT_CLASS_ALLOCATION_POOL_SIZE
+// should apparently be significantly less that the INITIAL_SIZE_OF_MEMORY_BLOCKS.
+// It is not clear what the rule should be for this.
+// When it fails the error is: 
+//      static const string& Sg_File_Info::getFilenameFromID(int): Assertion `failure == false' failed.
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 10000 (fails)
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 2000 (passes)
+#define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 2000
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 4000 (fails)
 
 // DQ (3/7/2010):Added error checking.
 #if DEFAULT_CLASS_ALLOCATION_POOL_SIZE < 1
@@ -450,6 +462,12 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 #ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "transformationSupport.h"
 #endif
+
+// DQ (10/26/2016): Adding mechanism to suppress use of delete in SgType IR nodes, so 
+// that the memory pool will not be changing while we are traversing it.  I think this
+// is perhaps a fundamental problem in the memory pool traversal if operations are done
+// that modify the memory pools during the traversal.
+#define ALLOW_DELETE_OF_EXPLORATORY_NODE 1
 
 // endif for ifndef ROSE_USE_SWIG_SUPPORT
 // #endif

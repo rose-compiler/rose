@@ -4763,7 +4763,6 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
         {
-#if 1
        // DQ (5/16/2013): Build an alias symbol for the 
           SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
 
@@ -4793,25 +4792,10 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
 
           ROSE_ASSERT(namespaceDefinitionStatement != globalNamespaceDefinitionStatement);
 #if 0
-          printf ("In SgScopeStatement::insert_symbol(): name = %s s = %p aliasSymbol = %p this = %p = %s globalNamespaceDefinitionStatement = %p \n",n.str(),s,aliasSymbol,this,this->class_name().c_str(),globalNamespaceDefinitionStatement);
+          printf ("In SgScopeStatement::insert_symbol(): name = %s s = %p aliasSymbol = %p this = %p = %s globalNamespaceDefinitionStatement = %p \n",
+               n.str(),s,aliasSymbol,this,this->class_name().c_str(),globalNamespaceDefinitionStatement);
 #endif
           globalNamespaceDefinitionStatement->get_symbol_table()->insert(n,aliasSymbol);
-#else
-       // Alias symbol can be inserted into any namespace definition scope, but non-alias symbols 
-       // should only be put into the defined namespace definition setaside for this purpose.
-          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(s);
-          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
-          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-
-#error "DEAD CODE!"
-
-          if (namespaceDefinitionStatement != globalNamespaceDefinitionStatement && aliasSymbol == NULL)
-             {
-               printf ("ERROR: SgScopeStatement::insert_symbol(n=%s,s=%p=%s): being called on SgNamespaceDefinitionStatement = %p instead of %p (not using the correct namespace definition) \n",
-                    n.str(),s,s->class_name().c_str(),namespaceDefinitionStatement,globalNamespaceDefinitionStatement);
-             }
-          ROSE_ASSERT(namespaceDefinitionStatement == globalNamespaceDefinitionStatement || aliasSymbol != NULL);
-#endif
         }
 
   // DQ (2/27/2015): This is the problem that is causing test2014_83.C, test2014_88.C, test2014_89.C, and test2014_90.C to fail in the development branch.
@@ -4909,7 +4893,32 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
         {
           SgClassDeclaration* class_declaration = isSgClassDeclaration(class_symbol->get_declaration());
           ROSE_ASSERT(class_declaration != NULL);
-          if (class_declaration->get_scope() != this)
+
+       // DQ (10/22/2016): If this is a namespace definition then only compare to the global_definition.
+          SgScopeStatement* classScope = class_declaration->get_scope();
+          SgScopeStatement* thisScope = this;
+
+          SgNamespaceDefinitionStatement* namespaceDefinition_class = isSgNamespaceDefinitionStatement(classScope);
+          SgNamespaceDefinitionStatement* namespaceDefinition_this  = isSgNamespaceDefinitionStatement(this);
+          if (namespaceDefinition_class != NULL && namespaceDefinition_this != NULL)
+             {
+               classScope = namespaceDefinition_class->get_global_definition();
+               thisScope  = namespaceDefinition_this->get_global_definition();
+
+            // printf ("In SgScopeStatement::insert_symbol(): classScope = %p thisScope = %p \n",classScope,thisScope);
+             }
+
+       // DQ (10/22/2016): If this is global scope then suppress the output below (this is only an issue for the astMerge option (feature) in ROSE.
+          SgGlobal* globalScope_class = isSgGlobal(classScope);
+          SgGlobal* globalScope_this  = isSgGlobal(this);
+          if (globalScope_class != NULL && globalScope_this != NULL)
+             {
+               classScope = globalScope_this;
+
+            // printf ("In SgScopeStatement::insert_symbol(): classScope = %p thisScope = %p \n",classScope,thisScope);
+             }
+
+          if (classScope != thisScope)
              {
                printf ("Warning: SgScopeStatement::insert_symbol(): class_declaration->get_scope() != this \n");
                printf ("   --- scope = %p = %s \n",this,this->class_name().c_str());
@@ -9527,6 +9536,13 @@ SgDeclarationStatement::get_template_name() const
           case V_SgTemplateDeclaration:
              {
                templateDeclarationName = isSgTemplateDeclaration(this)->get_name();
+               break;
+             }
+
+       // DQ (11/22/2016): Added case to support C++11 specific SgTemplateTypedefDeclaration IR node.
+          case V_SgTemplateTypedefDeclaration:
+             {
+               templateDeclarationName = isSgTemplateTypedefDeclaration(this)->get_name();
                break;
              }
 
