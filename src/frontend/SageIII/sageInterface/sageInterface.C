@@ -8895,6 +8895,18 @@ SgSwitchStatement* SageInterface::findEnclosingSwitch(SgStatement* s) {
   return isSgSwitchStatement(s);
 }
 
+//! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly. 
+SgOmpClauseBodyStatement* SageInterface::findEnclosingOmpClauseBodyStatement(SgStatement* s) {
+  while (s && !isSgOmpClauseBodyStatement(s)) {
+    s = isSgStatement(s->get_parent());
+  }
+  // ROSE_ASSERT (s); // s is allowed to be NULL.
+  if (s==NULL)
+    return NULL; 
+  return isSgOmpClauseBodyStatement(s);
+}
+
+
 SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::string& label, bool stopOnSwitches) {
   /* label can represent a fortran label or a java label provided as a label in a continue/break statement */
   for (; s; s = isSgStatement(s->get_parent())) {
@@ -9940,7 +9952,13 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   // C/C++ case ------------------------------
   SgForStatement* fs = isSgForStatement(loop);
-  ROSE_ASSERT (fs != NULL);
+  if (fs == NULL)
+  {
+    return NULL;  
+  }
+  // we only handle C/C++ for loops and Fortran Do loops.
+  // Any other kinds of loops (while, do-while,etc.) are skipped and return NULL; 
+  // ROSE_ASSERT (fs != NULL);
 
   //Check initialization statement is something like i=xx;
   SgStatementPtrList & init = fs->get_init_stmt();
