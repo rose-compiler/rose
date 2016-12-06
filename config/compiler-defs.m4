@@ -27,7 +27,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f1 |\
                 cut -d\( -f1)
-            CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
+             CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f2 |\
                 cut -d\( -f1)
@@ -35,6 +35,83 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f3 |\
                 cut -d\( -f1)
+
+          # DQ (12/3/2016): These variables were previously set in the ROSE configuration.
+            echo "Get CXX Version info: OS_vendor = $OS_vendor"
+            echo "Get CXX Version info: OS_release = $OS_release"
+
+          # DQ (12/3/2016): If we are on a Linux OS then we have the version number of Clang 
+          # directly, but if this is on a MAC (OSX) system then this is the version of 
+          # XCode and we have to map it to the clang version number.
+          # if test "x$build_vendor" = xapple; then
+            if test "x$OS_vendor" = xapple; then
+
+              # On an OSX system, the version of Clang is not clear since the "--version" option will report the 
+              # version number of XCode (not clang).  So either we map from the version of the OS to the version 
+              # of Clang used in it's version of XCode, or we map from the version of XCode (defined by the current 
+              # values of (CXX_VERSION_MAJOR,CXX_VERSION_MINOR, and CXX_VERSION_PATCH).  Below I have used the 
+              # version of the OS, but I'm not certain that is the best solution.  Perhaps we can asset that
+              # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
+              # of Clang version number, or take it directly from the XCode version number if that is a better solution.
+
+                XCODE_VERSION_MAJOR=$CXX_VERSION_MAJOR
+                XCODE_VERSION_MINOR=$CXX_VERSION_MINOR
+                XCODE_VERSION_PATCH=$CXX_VERSION_PATCH
+
+              # I think the clange versions all have patch level equal to zero.
+                CXX_VERSION_PATCH=0
+
+                if test $XCODE_VERSION_MAJOR -eq 7; then
+
+                  # The versions of Clang all depend upon the minor version number of XCode (for major version number equal to 7).
+                    CXX_VERSION_MAJOR=3
+                    case "$XCODE_VERSION_MINOR" in
+                        0)
+                            CXX_VERSION_MINOR=7
+                            ;;
+                        3)
+                            CXX_VERSION_MINOR=8
+                            ;;
+                        *)
+                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
+                            ;;
+                    esac
+                else
+                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR."
+                    exit 1
+                fi
+
+#              # Note "build_os" is a variable determined by autoconf.
+#                case $build_os in
+#                    darwin13*)
+#                      # This is Mac OSX version 10.9 (not clear on what version of clang this maps to via XCode)
+#                        CXX_VERSION_MAJOR=3
+#                        CXX_VERSION_MINOR=6
+#                        CXX_VERSION_PATCH=0
+#                        ;;
+#                    darwin14*)
+#                      # This is Mac OSX version 10.10 (not clear on what version of clang this maps to via XCode)
+#                        CXX_VERSION_MAJOR=3
+#                        CXX_VERSION_MINOR=7
+#                        CXX_VERSION_PATCH=0
+#                        ;;
+#                    darwin15*)
+#                      # This is Mac OSX version 10.11
+#                        CXX_VERSION_MAJOR=3
+#                        CXX_VERSION_MINOR=8
+#                        CXX_VERSION_PATCH=0
+#                        ;;
+#                    *)
+#                        echo "Error: Apple Mac OSX version not recognized as either darwin13, 14, or darwin15 ... (build_os = $build_os)";
+#                        exit 1;
+#                esac
+
+              # DQ (12/3/2016): Added debugging for LLVM on MACOSX.
+                echo "compilerVendorName = $compilerVendorName"
+                echo "CXX_VERSION_MAJOR = $CXX_VERSION_MAJOR"
+                echo "CXX_VERSION_MINOR = $CXX_VERSION_MINOR"
+                echo "CXX_VERSION_PATCH = $CXX_VERSION_PATCH"
+            fi
             ;;
 
         gnu)
@@ -65,6 +142,9 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
     fi
 
     CXX_VERSION_TRIPLET="$CXX_VERSION_MAJOR.$CXX_VERSION_MINOR.$CXX_VERSION_PATCH"
+
+  # echo "Exiting at base of CXX_VERSION_TRIPLET = $CXX_VERSION_TRIPLET"
+  # exit 1
 
     AC_LANG_POP(C++)
 ])
