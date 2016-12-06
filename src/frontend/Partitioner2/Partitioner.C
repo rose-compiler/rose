@@ -708,6 +708,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
 
     // Use our own semantics if we have them.
     if (BaseSemantics::StatePtr state = bb->finalState()) {
+        // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
         // Is the block fall-through address equal to the value on the top of the stack?
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
@@ -735,6 +736,66 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
             return false;
         }
 
+        // If all callee blocks pop the return address without returning, then this perhaps isn't a function call after all.
+        if (checkingCallBranch()) {
+            bool allCalleesPopWithoutReturning = true;   // all callees pop return address but don't return?
+            BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
+                // Find callee basic block
+                if (!successor.expr() || !successor.expr()->is_number() || successor.expr()->get_width() > 64) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+                rose_addr_t calleeVa = successor.expr()->get_number();
+                BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
+                if (!calleeBb)
+                    calleeBb = discoverBasicBlock(calleeVa);
+                if (!calleeBb) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+
+                // Get callee block's initial and final states
+                BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
+                BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
+                if (!calleeState0 || !calleeStateN) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+
+                // Did the callee block pop the return value from the stack?  This impossible to determine unless we assume
+                // that the stack has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll
+                // substitute a concrete value for the stack pointer.
+                BaseSemantics::SValuePtr sp0 =
+                    calleeState0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+                BaseSemantics::SValuePtr spN =
+                    calleeStateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+
+                SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
+                SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
+                SymbolicExpr::Ptr spNExpr =
+                    Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew);
+                SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew);
+
+                // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
+                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false), NULL)) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+
+                // Did the callee return to somewhere other than caller's return address?
+                BaseSemantics::SValuePtr ipN =
+                    calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
+                if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+            }
+            if (allCalleesPopWithoutReturning) {
+                bb->isFunctionCall() = false;
+                return false;
+            }
+        }
+        
         // This appears to be a function call
         bb->isFunctionCall() = true;
         return true;
@@ -842,6 +903,11 @@ Partitioner::basicBlockContainingInstruction(rose_addr_t insnVa) const {
         }
     }
     return BasicBlock::Ptr();
+}
+
+AddressInterval
+Partitioner::instructionExtent(SgAsmInstruction *insn) const {
+    return insn ? AddressInterval::baseSize(insn->get_address(), insn->get_size()) : AddressInterval();
 }
 
 SgAsmInstruction *
@@ -1066,12 +1132,9 @@ Partitioner::functionsOverlapping(const AddressInterval &interval) const {
     return functions;
 }
 
-AddressIntervalSet
-Partitioner::functionExtent(const Function::Ptr &function) const {
+void
+Partitioner::functionBasicBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
     ASSERT_not_null(function);
-    AddressIntervalSet retval;
-
-    // Basic blocks and their data
     BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
         ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblockVa);
         if (placeholder != cfg_.vertices().end()) {
@@ -1083,11 +1146,38 @@ Partitioner::functionExtent(const Function::Ptr &function) const {
             }
         }
     }
+}
 
-    // Data blocks owned by the function
+AddressIntervalSet
+Partitioner::functionBasicBlockExtent(const Function::Ptr &function) const {
+    AddressIntervalSet retval;
+    functionBasicBlockExtent(function, retval);
+    return retval;
+}
+
+void
+Partitioner::functionDataBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
     BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks())
         retval.insert(dataBlockExtent(dblock));
+}
 
+AddressIntervalSet
+Partitioner::functionDataBlockExtent(const Function::Ptr &function) const {
+    AddressIntervalSet retval;
+    functionDataBlockExtent(function, retval);
+    return retval;
+}
+
+void
+Partitioner::functionExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
+    functionBasicBlockExtent(function, retval);
+    functionDataBlockExtent(function, retval);
+}
+
+AddressIntervalSet
+Partitioner::functionExtent(const Function::Ptr &function) const {
+    AddressIntervalSet retval;
+    functionExtent(function, retval);
     return retval;
 }
 
@@ -2178,6 +2268,30 @@ Partitioner::addressName(rose_addr_t va, const std::string &name) {
         addressNames_.erase(va);
     } else {
         addressNames_.insert(va, name);
+    }
+}
+
+void
+Partitioner::rebuildVertexIndices() {
+    vertexIndex_.clear();
+    for (ControlFlowGraph::VertexIterator vertex = cfg_.vertices().begin(); vertex != cfg_.vertices().end(); ++vertex) {
+        switch (vertex->value().type()) {
+            case V_BASIC_BLOCK:
+                ASSERT_forbid(vertexIndex_.exists(vertex->value().address()));
+                vertexIndex_.insert(vertex->value().address(), vertex);
+                break;
+            case V_INDETERMINATE:
+                indeterminateVertex_ = vertex;
+                break;
+            case V_NONEXISTING:
+                nonexistingVertex_ = vertex;
+                break;
+            case V_UNDISCOVERED:
+                undiscoveredVertex_ = vertex;
+                break;
+            case V_USER_DEFINED:
+                ASSERT_not_reachable("user-defined vertices cannot be saved or restored");
+        }
     }
 }
 

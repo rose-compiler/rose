@@ -157,6 +157,7 @@ namespace CodeThorn {
     // determines whether lab is a function call label of a function call of the form 'x=f(...)' and returns the varible-id of the lhs, if it exists.
     bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
   private:
+    static Sawyer::Message::Facility logger;
 
     // only used in LTL-driven mode
     void setStartEState(const EState* estate);
@@ -465,7 +466,7 @@ namespace CodeThorn {
     Timer _analysisTimer;
     //bool _modeLTLDriven;
   }; // end of class Analyzer
-  
+
 } // end of namespace CodeThorn
 
 #include "RersSpecialization.h"

@@ -32,4 +32,6 @@ void foobar()
   // pair< _Rb_tree< _Key> ::iterator  , bool  > insert_result;
   // pair<map<int>::iterator, bool > insert_result; 
      pair<map<int>::iterator_map, bool > insert_result; 
+
+     int x;
    }

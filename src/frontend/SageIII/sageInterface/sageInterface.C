@@ -8895,6 +8895,18 @@ SgSwitchStatement* SageInterface::findEnclosingSwitch(SgStatement* s) {
   return isSgSwitchStatement(s);
 }
 
+//! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly. 
+SgOmpClauseBodyStatement* SageInterface::findEnclosingOmpClauseBodyStatement(SgStatement* s) {
+  while (s && !isSgOmpClauseBodyStatement(s)) {
+    s = isSgStatement(s->get_parent());
+  }
+  // ROSE_ASSERT (s); // s is allowed to be NULL.
+  if (s==NULL)
+    return NULL; 
+  return isSgOmpClauseBodyStatement(s);
+}
+
+
 SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::string& label, bool stopOnSwitches) {
   /* label can represent a fortran label or a java label provided as a label in a continue/break statement */
   for (; s; s = isSgStatement(s->get_parent())) {
@@ -9940,7 +9952,13 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   // C/C++ case ------------------------------
   SgForStatement* fs = isSgForStatement(loop);
-  ROSE_ASSERT (fs != NULL);
+  if (fs == NULL)
+  {
+    return NULL;  
+  }
+  // we only handle C/C++ for loops and Fortran Do loops.
+  // Any other kinds of loops (while, do-while,etc.) are skipped and return NULL; 
+  // ROSE_ASSERT (fs != NULL);
 
   //Check initialization statement is something like i=xx;
   SgStatementPtrList & init = fs->get_init_stmt();
@@ -10308,9 +10326,37 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
       incr_var = isSgVarRefExp(SkipCasting(isSgUnaryOp(incr)->get_operand()));
       stepast = buildIntVal(1); // will this dangling SgNode cause any problem?
       break;
+    case V_SgAssignOp: { // cases : var + incr, var - incr, incr + var (not allowed: incr-var)
+      incr_var=isSgVarRefExp(SkipCasting(isSgBinaryOp(incr)->get_lhs_operand()));
+      if(incr_var == NULL)
+        return false;
+      SgAddOp* addOp=isSgAddOp(SkipCasting(isSgBinaryOp(incr)->get_rhs_operand()));
+      SgSubtractOp* subtractOp=isSgSubtractOp(SkipCasting(isSgBinaryOp(incr)->get_rhs_operand()));
+      SgBinaryOp* arithOp=0;
+      if(addOp)
+        arithOp=addOp;
+      else if(subtractOp)
+        arithOp=subtractOp;
+      else
+        return false;
+      ROSE_ASSERT(arithOp!=0);
+      if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_lhs_operand()))) {
+        // cases : var + incr, var - incr
+        incr_var=varRefExp;
+        stepast=isSgBinaryOp(incr)->get_rhs_operand();
+      } else if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_rhs_operand()))) {
+        if(isSgAddOp(arithOp)) {
+          // case : incr + var (not allowed: incr-var)
+          incr_var=varRefExp;
+          stepast=isSgBinaryOp(incr)->get_lhs_operand();
+        }
+      }
+      break;
+    } // end of V_AssignOp
     default:
       return false;
   }
+
   if (incr_var == NULL)
     return false;
   if (incr_var->get_symbol() != ivarname->get_symbol_from_symbol_table ())
@@ -19143,6 +19189,10 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
     return *vardecl.get_variables().front();
   }
 
+#if 0
+  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
+  // option (-D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC).
+
   /// \brief  clones a function parameter list @params and uses the function
   ///         definition @fundef as new scope
   /// \return a copy of a function parameter list
@@ -19163,6 +19213,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     return copy;
   }
+#endif
 
   /// \brief swaps the "defining elements" of two function declarations
   static
@@ -19174,6 +19225,10 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     // \todo do we need to swap also exception spec, decorator_list, etc. ?
   }
+
+#if 0
+  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
+  // option (-D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC).
 
   std::pair<SgStatement*, SgInitializedName*>
   SageInterface::wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName)
@@ -19251,6 +19306,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     return std::make_pair(callStatement, resultName);
   }
+#endif
 
   //
   // flatten C/C++ array dimensions

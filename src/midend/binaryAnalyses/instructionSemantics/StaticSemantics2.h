@@ -42,7 +42,7 @@ namespace StaticSemantics {
 /** Build and attach static semantics to all instructions.
  *
  *  Traverses the specified AST to find instructions that have no static semantics yet. For each such instruction, static
- *  semantics are calculated and the instructions @ref SgAsmInstruction::get_semantics "semantics" property is set to
+ *  semantics are calculated and the instruction's @ref SgAsmInstruction::get_semantics "semantics" property is set to
  *  non-null and will contain a list of instruction side effects.
  *
  *  If processing lots of unrelated instructions, it is best to use the version of this function that takes a dispatcher, or

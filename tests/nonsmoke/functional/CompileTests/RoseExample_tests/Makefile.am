@@ -44,6 +44,15 @@ TEST_Sources = ${ALL_TESTCODES:.C=.C.passed}
 
 TEST_TRANSLATOR = ../../testTranslator
 
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
+
 # DQ (2/10/2013): Make all of the tests codes
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) test

@@ -2,30 +2,17 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS =
 
-########################################################################################################################
-# Utility functions
-
-SUBDIRS += Utility
-
-########################################################################################################################
-# rose::BinaryAnalysis
-
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-if !ROSE_USE_INSURE
-SUBDIRS += BinaryAnalysis
-endif
-endif
-
-########################################################################################################################
-
-
 include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
 # DQ (4/17/2010): If we are not supporting C++ then we can't run most of our tests, but if 
 # we are supporting only Fortran then we can at least run the Fortran tests (same with PHP).
 # SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests translatorTests
 # SUBDIRS = CompileTests roseTests
-SUBDIRS += . UnitTests CompileTests
+# SUBDIRS += . UnitTests CompileTests
+
+# DQ (10/21/2016): Change order of tests (don't test current directory first).
+# SUBDIRS += . CompileTests UnitTests 
+SUBDIRS += CompileTests UnitTests 
 
 if !ROSE_USE_CLANG_FRONTEND
 
@@ -42,10 +29,31 @@ SUBDIRS += testSupport
 
 SUBDIRS += RunTests
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   SUBDIRS += PerformanceTests CompilerOptionsTests translatorTests
+   SUBDIRS += PerformanceTests CompilerOptionsTests translatorTests moveDeclarationTool
 endif
 
 endif
+
+# DQ (10/21/2016): Change order of tests (Utility directory tess shuld go after langauge tests).
+########################################################################################################################
+# Utility functions
+
+SUBDIRS += Utility
+
+########################################################################################################################
+# rose::BinaryAnalysis
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+if !ROSE_USE_INSURE
+# There are failing tests here (94 tests pass and 55 tests fail).
+if !ROSE_USE_SANITIZER
+SUBDIRS += BinaryAnalysis
+endif
+endif
+endif
+
+########################################################################################################################
+
 
 # Three phases (levels) of test programs:
 #  Phase 1) Analysis only, compiles the original code

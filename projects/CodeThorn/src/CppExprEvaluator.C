@@ -25,6 +25,26 @@ SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY
 {
 }
 
+int SPRAY::CppExprEvaluator::determineSizeOf(SgNode* node) {
+  if(SgExpression* exp=isSgExpression(node)) {
+    SgType* type=exp->get_type();
+    if(SgNodeHelper::isPointerType(type)) {
+      return sizeof(void*);
+    } else {
+      // TODO
+      if(_showWarnings) {
+        cout<<"WARNING: SgSizeOfOp: size 0 assumed: "<<(type->unparseToString())<<":"<<(node->unparseToString())<<endl;
+      }
+      return 0;
+    }
+  } else {
+    if(_showWarnings) {
+      cout<<"WARNING: SgSizeOfOp: size assumed 0 (not an expression): "<<(node->unparseToString())<<endl;
+    }
+    return 0;
+  }
+}
+
 void SPRAY::CppExprEvaluator::setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface) {
   _pointerAnalysisInterface=pointerAnalysisInterface;
 }
@@ -48,6 +68,12 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     SgNode* lhs=SgNodeHelper::getLhs(node);
     SgNode* rhs=SgNodeHelper::getRhs(node);
     switch(node->variantT()) {
+    case V_SgBitOrOp:
+      return domain->bitwiseOr(evaluate(lhs),evaluate(rhs));
+    case V_SgBitAndOp:
+      return domain->bitwiseAnd(evaluate(lhs),evaluate(rhs));
+    case V_SgCommaOpExp:
+      return (evaluate(lhs), evaluate(rhs));
     case V_SgDotExp:
     case V_SgArrowExp:
       evaluate(rhs);
@@ -293,6 +319,13 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   }
 
   switch(node->variantT()) {
+  case V_SgSizeOfOp: {
+    int size=determineSizeOf(SgNodeHelper::getFirstChild(node));
+    if(_showWarnings && size==0) {
+      cout<<"WARNING: SgSizeOfOp: size assumed 0: "<<(node->unparseToString())<<endl;
+    }
+    return NumberIntervalLattice(Number(size));
+  }
   case V_SgIntVal: return NumberIntervalLattice(Number(isSgIntVal(node)->get_value()));
   case V_SgDoubleVal: {
     // schroder3 (2016-08-22): Create smallest integer interval that contains the double value:

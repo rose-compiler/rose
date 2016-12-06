@@ -28,6 +28,14 @@ AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/library
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
 
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
 
 ###############################################################################################################################
 # Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
@@ -1386,6 +1394,23 @@ check_astio: $(astio_Targets)
 #--------------------------------------------------------------------------------
 PHONIES += check_specimens
 check_specimens: check_parse_container check_disassemble check_unparse check_assemble check_astio
+
+
+#############################################################################################
+# Serialization of IR nodes related to binary analysis
+#############################################################################################
+
+noinst_PROGRAMS += testSageSerialization
+testSageSerialization_SOURCES = testSageSerialization.C
+testSageSerialization_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testSageSerialization.passed
+
+testSageSerialization.passed: testSageSerialization
+	@$(RTH_RUN)								\
+		TITLE="serialization of Sage binary analysis nodes [$@]"	\
+		CMD="$$(pwd)/testSageSerialization"				\
+		$(top_srcdir)/scripts/test_exit_status $@
 
 
 ###############################################################################################################################

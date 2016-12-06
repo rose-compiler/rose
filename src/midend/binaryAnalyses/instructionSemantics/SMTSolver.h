@@ -6,6 +6,7 @@
 #endif
 
 #include <BinarySymbolicExpr.h>
+#include <boost/serialization/access.hpp>
 #include <boost/thread/mutex.hpp>
 #include <inttypes.h>
 
@@ -39,9 +40,35 @@ public:
 
     typedef std::set<uint64_t> Definitions;     /**< Free variables that have been defined. */
 
+private:
+    std::string name_;
+    FILE *debug;
+    void init();
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & name_;
+    }
+#endif
+
+public:
     SMTSolver(): debug(NULL) { init(); }
 
     virtual ~SMTSolver() {}
+
+    /** Property: Name of solver for debugging.
+     *
+     * @{ */
+    const std::string& name() const { return name_; }
+    void name(const std::string &s) { name_ = s; }
+    /** @} */
+
+    /** Create a solver by name. */
+    SMTSolver* instance(const std::string &name);
 
     /** Determines if expressions are trivially satisfiable or unsatisfiable.  If all expressions are known 1-bit values that
      *  are true, then this function returns SAT_YES.  If any expression is a known 1-bit value that is false, then this
@@ -134,10 +161,6 @@ protected:
     static boost::mutex class_stats_mutex;
     static Stats class_stats;                   // all access must be protected by class_stats_mutex
     Stats stats;
-
-private:
-    FILE *debug;
-    void init();
 };
 
 } // namespace
