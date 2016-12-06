@@ -51,10 +51,6 @@ MOVE_DECLS_TESTCODES_FAILING = \
   inputmoveDeclarationToInnermostScope_test2014_18.C \
   inputmoveDeclarationToInnermostScope_test2014_22.C
 
-#MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
-#  $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
-#  $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED)
-
 MOVE_DECLS_TESTCODES_CURRENTLY_FAILING =
 
 MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
@@ -64,7 +60,7 @@ MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOV
 #MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
 
 MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v3_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
-iSSING_MOVE_DECLS_TESTCODES_RESULTS = \                                                                                                                                                                                                       
+iSSING_MOVE_DECLS_TESTCODES_RESULTS = \
    $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)                                                                                                                                                                                             
 #   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)                                                                                                                                                                                        
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.                                                                                                                                                        
@@ -289,7 +285,8 @@ FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_140.C \
   inputmoveDeclarationToInnermostScope_test2015_141.C \
   inputmoveDeclarationToInnermostScope_test2015_142.C
-MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED})
+# I add _tokenunparsing- into the names to avoid name collision of targets used by other rules.   
+MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS = $(addprefix rose_tokenunparsing_, ${MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED})
 
 PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS = \
    $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS)
@@ -319,11 +316,11 @@ $(MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES):$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCO
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
 
 # DQ (6/28/2015): Added additional test using new option: -rose:merge_decl_assign
-$(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) $(MOVE_TOOL) 
+$(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_tokenunparsing_%=%) $(MOVE_TOOL) 
 	echo "Test without new option: -rose:merge_decl_assign"
-	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
+	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_tokenunparsing_%=%)
 	echo "Test using new option: -rose:merge_decl_assign"
-	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -rose:unparse_tokens -rose:merge_decl_assign -c -rose:debug $(srcdir)/$(@:rose_%=%)
+	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -rose:unparse_tokens -rose:merge_decl_assign -c -rose:debug $(srcdir)/$(@:rose_tokenunparsing_%=%)
 
 # Without new option fails for test2015_04.C?
 # With new option fails for test2014_12.C
@@ -360,7 +357,6 @@ move_merge_decls_no_var_norm_diff_check: $(MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FIL
 $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) $(MOVE_TOOL) 
 	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking $(srcdir)/$(@:rose_%=%)
 
-
 $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2_%=%) $(MOVE_TOOL) 
 	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
 
@@ -381,5 +377,5 @@ clean-local:
 	rm -f $(addsuffix .passed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
 	rm -f $(addsuffix .failed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
 	rm -f $(addsuffix .diff, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
-	rm -rf rose_*.C             
+	rm -rf rose_*.C *.o
 

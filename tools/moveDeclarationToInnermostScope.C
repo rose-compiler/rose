@@ -96,28 +96,62 @@
 #include <stack> // used for a worklist of declarations to be moved , first found, last processing
 #include <boost/foreach.hpp>
 #include <map> // used to store special var reference's scope
+#include <Sawyer/CommandLine.h>
 
 // another level of control over transformation tracking code
 #define ENABLE_TRANS_TRACKING 1
 
+
+static const char *purpose = "This tool moves variable declarations to their innermost possible scopes";
+static const char *description =
+    "This tool is designed to help parallelizing code by moving variable declarations "
+    "into their innermost possible scopes (essentially making many of them private)."
+    "As a result, less variables need to be shared.";
+
 using namespace std;
 using namespace rose;
 using namespace SageInterface;
-bool debug = false;
 
 class Scope_Node;
 
-// We now use improved algorithm v2
+
+//---  a set of internal flags ----------------------
+//! Enable debugging mode or not
+bool debug = false;
+
+//! Acting as an identity translator or not
+bool isIdentity = false;
+
+//! We now use improved algorithm v2, not exposed to users now
 bool useAlgorithmV2 = true; 
 
-//! An internal flag to control moveDeclarationToInnermostScope
-// Users want to see the tool working by default
-extern bool tool_keep_going;
-// Users want to see conservative and aggressive moving
-extern bool decl_mover_conservative;
 
-bool transTracking = false;  // if we keep track of transformation, mapping nodes back to original input nodes
+//! If we keep track of transformation, mapping nodes back to original input nodes
+bool transTracking = false;  
 
+//! Users want to see the tool working by default
+//! By default ASSERT should block the execution to find issues.
+//! But some users want to keep the tool going even when some assertion fails. 
+//!This is only supported by moveDeclarationToInnermostScope() and associated functions for now
+bool tool_keep_going = false;
+
+//! Users want to see conservative and aggressive moving
+// Like any other compiler-based tools. We do things conservatively by default.
+// Declarations with initializers will not be moved
+// if it is set to false.  Declaration with initializers will be moved, 
+// sends out warning if it crosses a loop boundaries in between. 
+bool decl_mover_conservative = true;
+
+//! If we further merge a naked variable declaration (without initialization) with a followed variable assignment within the same scope
+bool merge_decl_assign = false; 
+
+//! This function creates a description of command-line switches that are recognized by the too. 
+Sawyer::CommandLine::SwitchGroup commandLineSwitches();
+
+//--------------end of internal flags ----------------
+
+// a global variable storing inserted declaration per input file processed
+static  std::vector <SgVariableDeclaration* > inserted_decls; 
 //! Move a declaration to a scope which is the closest to the declaration's use places. It may generate new declarations to be considered later on so worklist is used.
 bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::stack<SgVariableDeclaration *> &worklist, bool debug/*= false */);
 
@@ -128,22 +162,6 @@ bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::stack<
 // return the final scopes accepting the moved declarations.
 //std::vector <SgVariableDeclaration*> 
 void moveDeclarationToInnermostScope_v2(SgVariableDeclaration* decl, std::vector <SgVariableDeclaration*>& my_inserted_decls, bool debug/*= false */);
-
-//By default ASSERT should block the execution to find issues.
-//But some users want to keep the tool going even when some assertion fails. 
-//This is only supported by moveDeclarationToInnermostScope() and associated functions for now
-bool tool_keep_going = false;
-
-// Like any other compiler-based tools. We do things conservatively by default.
-// Declarations with initializers will not be moved
-// if it is set to false.  Declaration with initializers will be moved, 
-// sends out warning if it crosses a loop boundaries in between. 
-bool decl_mover_conservative = true;
-
-// a global variable storing inserted declaration per input file processed
-static  std::vector <SgVariableDeclaration* > inserted_decls; 
-//! If we further merge a naked variable declaration (without initialization) with a followed variable assignment within the same scope
-bool merge_decl_assign = false; 
 
 // store scope of var ref used in array types. There is no easy way to find it by AST traversal.
 //  e.g. double *buffer = new double[numItems] ; // numItems is referenced. But cannot get its scope. We store SgConstructorInitialzer for it to establish its scope info.
@@ -175,6 +193,8 @@ static bool isAssignmentStmtOf(SgStatement * stmt, SgInitializedName* init_name)
   }
   return rt; 
 }
+
+#if 0
 /*
 We cannot simply merge a declaration at a location A with an assignment at a location B.
 This is essentially moving one statement across some code region so liveness or side effect analysis info. is needed for safety.
@@ -286,6 +306,7 @@ static  bool isUpwardMergeable (SgVariableDeclaration* decl, SgExprStatement* as
  
   return rt; 
 }
+#endif
 
 // Check if a decl can be moved downwards to an assignment
 /*
@@ -592,18 +613,118 @@ GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv)
   return filenames;
 }
 
+//! Initialize the switch group and its switches.
+Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
+  using namespace Sawyer::CommandLine;
+
+  SwitchGroup switches("The move tool switches");
+  switches.doc("These switches control the move tool. ");
+  switches.name("rose"); // be backwards compatible with -rose:optionX 
+
+  switches.insert(Switch("debug")
+      .intrinsicValue(true, debug)
+      .doc("Enable the debugging mode."));
+
+  switches.insert(Switch("identity")
+      .intrinsicValue(true, isIdentity)
+      .doc("Enable acting like an identity translator, not doing any transformation at all."));
+
+  switches.insert(Switch("trans-tracking")
+      .intrinsicValue(true, transTracking)
+      .doc("Enable tracking of transformation steps."));
+
+  switches.insert(Switch("keep_going")   //TODO: how to keep this option to be used by later phases?
+      .intrinsicValue(true, tool_keep_going)
+      .doc("Allow the tool to proceed without being stopped by assertions."));
+
+  switches.insert(Switch("aggressive")
+      .intrinsicValue(true, decl_mover_conservative)
+      .doc("Enable aggressive mode: declarations with initializers will be moved."));
+
+  switches.insert(Switch("merge_decl_assign")
+      .intrinsicValue(true, merge_decl_assign)
+      .doc("After the move, further merge the moved naked variable declaration (without initialization) with a followed variable assignment."));
+
+  return switches;
+}
+
+//! Command line processing
+static std::vector<std::string> parseCommandLine(std::vector< std::string > & argvList) // this will cause trouble, not sure why.
+//static std::vector<std::string> parseCommandLine(int argc, char* argv[]) 
+{
+  using namespace Sawyer::CommandLine;
+  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+  p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
+  p.longPrefix("-");
+
+// initialize generic Sawyer switches: assertion, logging, threads, etc.
+  p.with(CommandlineProcessing::genericSwitches()); 
+
+// initialize tool switches
+  p.with(commandLineSwitches());  
+
+// switches to be passed to ROSE, somehow not working yet. TODO
+  SwitchGroup tool("ROSE's built-in switches");
+  // We want the "--rose:help" switch to appear in the Sawyer documentation but we have to pass it to the next stage also. We
+  // could do this two different ways. 
+  // 1. The older way (that still works) is to have Sawyer process the switch and then we
+  // prepend it into the returned vector for processing by later stages.  
+
+  // 2. The newer way is to set the switch's "skipping"
+  // property that causes Sawyer to treat it as a skipped (unrecognized) switch.  We'll use SKIP_STRONG, but SKIP_WEAK is
+  // sort of a cross between Sawyer recognizing it and not recognizing it.
+  tool.insert(Switch("rose:help")
+      .skipping(SKIP_STRONG)                  // appears in documentation and is parsed, but treated as skipped
+      .doc("Show the ROSE switch documentation."));
+
+  // Copy this tool's switches into the parser.
+  p.with(tool);
+
+  // Parse the command-line, stopping at the first "--" or positional argument. Return the unparsed stuff so it can be passed
+  // to the next stage.  ROSE's frontend expects arg[0] to be the name of the command, which Sawyer has already processed, so
+  // we need to add it back again.
+  //std::vector<std::string> remainingArgs = p.parse(argc, argv).apply().unparsedArgs(true);
+  std::vector<std::string> remainingArgs = p.parse(argvList).apply().unparsedArgs(true);
+  //remainingArgs.insert(remainingArgs.begin(), argv[0]);
+  remainingArgs.insert(remainingArgs.begin(), argvList[0]);
+
+#if 1 // DEBUGGING [Robb P Matzke 2016-09-27]
+  std::cerr <<"These are the arguments after parsing with Sawyer:\n";
+  BOOST_FOREACH (const std::string &s, remainingArgs)
+    std::cerr <<"    \"" <<s <<"\"\n";
+#endif
+
+  return remainingArgs;
+}
+
 int main(int argc, char * argv[])
 {
-  bool isIdentity = false;
 
-  vector <string> argvList (argv, argv + argc);
+  //! Command line process begin --------------------------
+  vector <string> argvList; 
+  //argvList =  parseCommandLine (argc, argv);
+  argvList =  parseCommandLine (argvList);
+  // TOO1 (2014/12/05): Temporarily added this to support keep-going in rose-sh.
+  if (CommandlineProcessing::isOption (argvList,"--list-filenames","",true))
+  {
+    std::vector<std::string> filenames =
+      GetSourceFilenamesFromCommandline(
+          std::vector<std::string>(argv, argv + argc));
+    BOOST_FOREACH(std::string filename, filenames)
+    {
+      std::cout << filename << std::endl;
+    }
+    return 0;
+  }
+
+#if 0
   // acting like an identity translator, used for debugging
   if (CommandlineProcessing::isOption (argvList,"-rose:identity","",true))
   {
     isIdentity = true;
     cout<<"Acting as an identity translator ..."<<endl;
   }
- 
+
   // pass -rose:debug to turn on debugging mode
   if (CommandlineProcessing::isOption (argvList,"-rose:debug","",true))
   {
@@ -615,20 +736,6 @@ int main(int argc, char * argv[])
   {
     transTracking = true;
     cout<<"Turing on transformation tracking model..."<<endl;
-  }
-
-
-  // TOO1 (2014/12/05): Temporarily added this to support keep-going in rose-sh.
-  if (CommandlineProcessing::isOption (argvList,"--list-filenames","",true))
-  {
-      std::vector<std::string> filenames =
-          GetSourceFilenamesFromCommandline(
-    	  std::vector<std::string>(argv, argv + argc));
-      BOOST_FOREACH(std::string filename, filenames)
-      {
-          std::cout << filename << std::endl;
-      }
-      return 0;
   }
 
   // We don't remove this option since it is used later by other logic
@@ -650,6 +757,8 @@ int main(int argc, char * argv[])
     decl_mover_conservative = false;
     cout<<"Turing on the aggressive model, allowing moving declarations with initializers and cross loop boundaries, but will send out warnings..."<<endl;
   }
+#endif 
+  // -------------end of command line processing -------------------
 
   SgProject *project = frontend (argvList);
 
@@ -662,74 +771,74 @@ int main(int argc, char * argv[])
   if (transTracking)
     TransformationTracking::registerAstSubtreeIds (project);  
 #endif
-// DQ (12/11/2014): Added output of graph after transformations.
-   if (SgProject::get_verbose() > 0)
-      {
+  // DQ (12/11/2014): Added output of graph after transformations.
+  if (SgProject::get_verbose() > 0)
+  {
 #if 0
-        printf ("Generating a DOT graph of the AST \n");
-        generateDOTforMultipleFile(*project);
+    printf ("Generating a DOT graph of the AST \n");
+    generateDOTforMultipleFile(*project);
 #endif
-      }
+  }
 
 #if 0
-// DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
+  // DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
   printf ("NOTE: Setting verbose to value 3 to trigger debugging after the AST is built \n");
   SgProject::set_verbose(3);
 #endif
 
 #if 1
-// DQ (10/6/2015): Remove transformation for debugging token-unparsing.
+  // DQ (10/6/2015): Remove transformation for debugging token-unparsing.
   if (!isIdentity)
-     {
-         SgFilePtrList file_ptr_list = project->get_fileList();
-         visitorTraversal exampleTraversal;
-         for (size_t i = 0; i<file_ptr_list.size(); i++)
-               {
-                 SgFile* cur_file = file_ptr_list[i];
-                 SgSourceFile* s_file = isSgSourceFile(cur_file);
-                 if (s_file != NULL)
-                 {
-                   inserted_decls.clear(); // For each file, reset this.
-                   // exampleTraversal.traverseInputFiles(project,preorder);
-                   exampleTraversal.traverseWithinFile(s_file, preorder);
-                   if (inserted_decls.size()>0 && merge_decl_assign)
-                   { 
-                     if (transTracking)
-                        cout<<"Begin merging declarations # "<<inserted_decls.size()<<endl;
-                     collectiveMergeDeclarationAndAssignment (inserted_decls);
-                   }
-                 }
-               }
-            string filename= SageInterface::generateProjectName(project);
+  {
+    SgFilePtrList file_ptr_list = project->get_fileList();
+    visitorTraversal exampleTraversal;
+    for (size_t i = 0; i<file_ptr_list.size(); i++)
+    {
+      SgFile* cur_file = file_ptr_list[i];
+      SgSourceFile* s_file = isSgSourceFile(cur_file);
+      if (s_file != NULL)
+      {
+        inserted_decls.clear(); // For each file, reset this.
+        // exampleTraversal.traverseInputFiles(project,preorder);
+        exampleTraversal.traverseWithinFile(s_file, preorder);
+        if (inserted_decls.size()>0 && merge_decl_assign)
+        { 
+          if (transTracking)
+            cout<<"Begin merging declarations # "<<inserted_decls.size()<<endl;
+          collectiveMergeDeclarationAndAssignment (inserted_decls);
+        }
+      }
+    }
+    string filename= SageInterface::generateProjectName(project);
 #if 0
-         // DQ (1/14/2015): This is a problem since it causes us to run out of disk space on large projects.
-            generateDOTforMultipleFile(*project);
+    // DQ (1/14/2015): This is a problem since it causes us to run out of disk space on large projects.
+    generateDOTforMultipleFile(*project);
 #endif
-     }
+  }
 #endif
 
   // string filename= SageInterface::generateProjectName(project);
   // generateDOTforMultipleFile(*project);
 
-   if (SgProject::get_verbose() > 0)
-      {
+  if (SgProject::get_verbose() > 0)
+  {
 #if 1
-        printf ("Generating a WHOLE AST DOT graph \n");
-        generateDOTforMultipleFile(*project);
+    printf ("Generating a WHOLE AST DOT graph \n");
+    generateDOTforMultipleFile(*project);
 #endif
-     // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
-        const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
-        generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
-      }
+    // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+    const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+    generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
+  }
 
 #if 0
-// DQ (10/6/2015): Remove transformation for debugging token-unparsing.
-   printf ("Calling cleanupNontransformedBasicBlockNode() \n");
+  // DQ (10/6/2015): Remove transformation for debugging token-unparsing.
+  printf ("Calling cleanupNontransformedBasicBlockNode() \n");
 #endif
 #if 1
-// DQ (1/18/2015): Denormalize some specific normalized bodies as a test.
-   SageInterface::cleanupNontransformedBasicBlockNode();
-// printf ("DONE: Calling cleanupNontransformedBasicBlockNode() \n");
+  // DQ (1/18/2015): Denormalize some specific normalized bodies as a test.
+  SageInterface::cleanupNontransformedBasicBlockNode();
+  // printf ("DONE: Calling cleanupNontransformedBasicBlockNode() \n");
 #endif
 
 #if ENABLE_TRANS_TRACKING
@@ -745,7 +854,7 @@ int main(int argc, char * argv[])
         cout<<"Found a node with IR mapping info"<<endl;
         SgNode* affected_node = TransformationTracking::getNode((*iter).first);
 #if 0
-     // DQ (11/2/2015): Save and set to high value to trigger the verbose level to control tracking of isModified flag.
+        // DQ (11/2/2015): Save and set to high value to trigger the verbose level to control tracking of isModified flag.
         int verbose_level = SgProject::get_verbose();
         SgProject::set_verbose(3);
 #endif
@@ -754,37 +863,37 @@ int main(int argc, char * argv[])
         std::set<AST_NODE_ID>::iterator iditer;
         for(iditer = ids.begin(); iditer != ids.end(); iditer ++)
         {
-           SgNode* input_node = TransformationTracking::getNode((*iditer));
-           SgLocatedNode* lnode = isSgLocatedNode(input_node); 
-           cout<<lnode->unparseToString()<<endl;  //TODO this function has unexpected side effects impacting token-based unparsing
-           cout<<"//Transformation generated based on line #"<< lnode->get_file_info()->get_line() <<endl;
-           src_comment += " line # " + StringUtility::numberToString(lnode->get_file_info()->get_line());
+          SgNode* input_node = TransformationTracking::getNode((*iditer));
+          SgLocatedNode* lnode = isSgLocatedNode(input_node); 
+          cout<<lnode->unparseToString()<<endl;  //TODO this function has unexpected side effects impacting token-based unparsing
+          cout<<"//Transformation generated based on line #"<< lnode->get_file_info()->get_line() <<endl;
+          src_comment += " line # " + StringUtility::numberToString(lnode->get_file_info()->get_line());
         }
 #if 0
-      // DQ (11/2/2015): Reset the verbose level to trigger tracking of isModified flag.
-         SgProject::set_verbose(verbose_level);
+        // DQ (11/2/2015): Reset the verbose level to trigger tracking of isModified flag.
+        SgProject::set_verbose(verbose_level);
 #endif
         src_comment +="\n";
-//        SgStatement* enclosing_stmt = getEnclosingStatement(affected_node);
+        //        SgStatement* enclosing_stmt = getEnclosingStatement(affected_node);
         cout<<src_comment<<endl;
-//TODO: turn this on and update the reference results
-//        attachComment (enclosing_stmt, src_comment);
+        //TODO: turn this on and update the reference results
+        //        attachComment (enclosing_stmt, src_comment);
       } // end if ids.size() >0
     }  // end for inputIDs
   } // end if transTracking 
 #endif
 
 #if 0
-// DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
+  // DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
   printf ("NOTE: Setting verbose to value 3 to trigger debugging after the AST is built and before running AstTests::runAllTests() \n");
   SgProject::set_verbose(3);
 #endif
 
- // run all tests
+  // run all tests
   AstTests::runAllTests(project);
 
 #if 0
-// DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
+  // DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
   printf ("NOTE: Setting verbose to value 3 to trigger debugging before unparsing of AST \n");
   SgProject::set_verbose(3);
 #endif
