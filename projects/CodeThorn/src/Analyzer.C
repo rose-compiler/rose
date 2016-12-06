@@ -556,7 +556,7 @@ const EState* Analyzer::topWorkList() {
 }
 const EState* Analyzer::popWorkList() {
   const EState* estate=0;
-  #pragma omp critical(ESTATEWL)
+#pragma omp critical(ESTATEWL)
   {
     if(!estateWorkListCurrent->empty())
       estate=*estateWorkListCurrent->begin();
@@ -581,10 +581,10 @@ const EState* Analyzer::takeFromWorkList() {
   const EState* co=0;
 #pragma omp critical(ESTATEWL)
   {
-  if(estateWorkListCurrent->size()>0) {
-    co=*estateWorkListCurrent->begin();
-    estateWorkListCurrent->pop_front();
-  }
+    if(estateWorkListCurrent->size()>0) {
+      co=*estateWorkListCurrent->begin();
+      estateWorkListCurrent->pop_front();
+    }
   }
   return co;
 }
@@ -636,7 +636,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
       assert(initDeclVar);
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
-
+      
       // not possible to support yet. getIntValue must succeed on declarations.
       if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
         PState newPState=*currentEState.pstate();
@@ -707,7 +707,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
 }
 
 // this function has been moved to VariableIdMapping: TODO eliminate this function here
-VariableIdMapping::VariableIdSet Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
+ VariableIdMapping::VariableIdSet Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
   VariableIdMapping::VariableIdSet resultSet;
   for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
     SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
@@ -886,14 +886,15 @@ EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, Constr
   throw CodeThorn::Exception("Error: Analyzer::processNewOrExisting: programmatic error.");
 }
 
-list<EState> elistify() {
-  list<EState> resList;
+std::list<EState> Analyzer::elistify() {
+  std::list<EState> resList;
   return resList;
 }
-list<EState> elistify(EState res) {
+
+std::list<EState> Analyzer::elistify(EState res) {
   //assert(res.state);
   //assert(res.constraints());
-  list<EState> resList;
+  std::list<EState> resList;
   resList.push_back(res);
   return resList;
 }
@@ -920,7 +921,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  (void) RERS_Problem::calculate_output( omp_get_thread_num() );
 	  int rers_result=RERS_Problem::output[omp_get_thread_num()];
 #endif
-	  //logger[DEBUG]<< "Called calculate_output("<<argument<<")"<<" :: result="<<rers_result<<endl;
+  	  //logger[DEBUG]<< "Called calculate_output("<<argument<<")"<<" :: result="<<rers_result<<endl;
 	  if(rers_result<=-100) {
 	  // we found a failing assert
 	  // = rers_result*(-1)-100 : rers error-number
@@ -940,7 +941,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	    CodeThorn::AType::ConstIntLattice(rers_result));
 	  EState _eState=createEState(edge.target(),newPstate,_cset,_io);
 	  return elistify(_eState);
-	}
+          }
 	  RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
 	  // TODO: _pstate[VariableId(output)]=rers_result;
 	  // matches special case of function call with return value, otherwise handles call without return value (function call is matched above)
@@ -966,11 +967,11 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  exit(1);
 	  // _pstate now contains the current state obtained from the binary
         }
-	  // logger[DEBUG]<< "@LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
-	}
-	}
-	  return elistify();
-	}
+        // logger[DEBUG]<< "@LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
+      }
+    }
+    return elistify();
+  }
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
@@ -983,72 +984,9 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   }
 
   if(edge.isType(EDGE_CALL)) {
-    // 1) obtain actual parameters from source
-    // 2) obtain formal parameters from target
-    // 3) eval each actual parameter and assign result to formal parameter in state
-    // 4) create new estate
-
-    // ad 1)
-    SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
-    assert(funCall);
-    string funName=SgNodeHelper::getFunctionName(funCall);
-    // handling of error function (TODO: generate dedicated state (not failedAssert))
-
-    if(boolOptions["rers-binary"]) {
-      // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
-      string funName=SgNodeHelper::getFunctionName(funCall);
-      if(funName=="calculate_output") {
-        // logger[DEBUG]<< "rers-binary mode: skipped static-analysis call."<<endl;
-        return elistify();
-      }
-    }
-
-    SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-    // ad 2)
-    SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
-    SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-    assert(funDef);
-    // ad 3)
-    PState newPState=currentPState;
-    SgInitializedNamePtrList::iterator i=formalParameters.begin();
-    SgExpressionPtrList::iterator j=actualParameters.begin();
-    while(i!=formalParameters.end() || j!=actualParameters.end()) {
-      SgInitializedName* formalParameterName=*i;
-      assert(formalParameterName);
-      VariableId formalParameterVarId=variableIdMapping.variableId(formalParameterName);
-      // VariableName varNameString=name->get_name();
-      SgExpression* actualParameterExpr=*j;
-      assert(actualParameterExpr);
-      // check whether the actualy parameter is a single variable: In this case we can propagate the constraints of that variable to the formal parameter.
-      // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
-      VariableId actualParameterVarId;
-      assert(actualParameterExpr);
-      if(exprAnalyzer.variable(actualParameterExpr,actualParameterVarId)) {
-        // propagate constraint from actualParamterVarId to formalParameterVarId
-        cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
-      }
-      // general case: the actual argument is an arbitrary expression (including a single variable)
-      // we use for the third parameter "false": do not use constraints when extracting values.
-      // Consequently, formalparam=actualparam remains top, even if constraints are available, which
-      // would allow to extract a constant value (or a range (when relational constraints are added)).
-      list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,false, true);
-      assert(evalResultList.size()>0);
-      list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
-      SingleEvalResultConstInt evalResult=*resultListIter;
-      if(evalResultList.size()>1) {
-        logger[ERROR] <<"multi-state generating operators in function call parameters not supported."<<endl;
-        exit(1);
-      }
-      // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars (which is what we want here)
-      //newPState[formalParameterVarId]=evalResult.value();
-      newPState.setVariableToValue(formalParameterVarId,evalResult.value());
-      ++i;++j;
-    }
-    // assert must hold if #formal-params==#actual-params (TODO: default values)
-    assert(i==formalParameters.end() && j==actualParameters.end());
-    // ad 4
-    return elistify(createEState(edge.target(),newPState,cset));
+    return transferFunctionCall(edge,estate); // xxx
   }
+
   // "return x;": add $return=eval() [but not for "return f();"]
   if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
 
@@ -3999,7 +3937,7 @@ void Analyzer::continueAnalysisFrom(EState * newStartEState) {
   runSolver();
 }
 
-void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
+ void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
   mapGlobalVarAddress[name]=addr;
   mapAddressGlobalVar[addr]=name;
 }
@@ -4017,11 +3955,82 @@ void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
  }
 
 
-long Analyzer::analysisRunTimeInSeconds() {
-  long result;
+ long Analyzer::analysisRunTimeInSeconds() {
+   long result;
 #pragma omp critical(TIMER)
-  {
-    result = (long) (_analysisTimer.getElapsedTimeInMilliSec() / 1000);
+   {
+     result = (long) (_analysisTimer.getElapsedTimeInMilliSec() / 1000);
+   }
+   return result;
+ }
+
+ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate) {
+   // 1) obtain actual parameters from source
+   // 2) obtain formal parameters from target
+   // 3) eval each actual parameter and assign result to formal parameter in state
+   // 4) create new estate
+  EState currentEState=*estate;
+  PState currentPState=*currentEState.pstate();
+  ConstraintSet cset=*currentEState.constraints();
+
+  // ad 1)
+  SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
+  assert(funCall);
+  string funName=SgNodeHelper::getFunctionName(funCall);
+  // handling of error function (TODO: generate dedicated state (not failedAssert))
+  
+  if(boolOptions["rers-binary"]) {
+    // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
+    string funName=SgNodeHelper::getFunctionName(funCall);
+    if(funName=="calculate_output") {
+      // logger[DEBUG]<< "rers-binary mode: skipped static-analysis call."<<endl;
+      return elistify();
+    }
   }
-  return result;
+  
+  SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  // ad 2)
+  SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
+  SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+  assert(funDef);
+  // ad 3)
+  PState newPState=currentPState;
+  SgInitializedNamePtrList::iterator i=formalParameters.begin();
+  SgExpressionPtrList::iterator j=actualParameters.begin();
+  while(i!=formalParameters.end() || j!=actualParameters.end()) {
+    SgInitializedName* formalParameterName=*i;
+    assert(formalParameterName);
+    VariableId formalParameterVarId=variableIdMapping.variableId(formalParameterName);
+    // VariableName varNameString=name->get_name();
+    SgExpression* actualParameterExpr=*j;
+    assert(actualParameterExpr);
+    // check whether the actualy parameter is a single variable: In this case we can propagate the constraints of that variable to the formal parameter.
+    // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
+    VariableId actualParameterVarId;
+    assert(actualParameterExpr);
+    if(exprAnalyzer.variable(actualParameterExpr,actualParameterVarId)) {
+      // propagate constraint from actualParamterVarId to formalParameterVarId
+      cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
+    }
+    // general case: the actual argument is an arbitrary expression (including a single variable)
+    // we use for the third parameter "false": do not use constraints when extracting values.
+    // Consequently, formalparam=actualparam remains top, even if constraints are available, which
+    // would allow to extract a constant value (or a range (when relational constraints are added)).
+    list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,false, true);
+    assert(evalResultList.size()>0);
+    list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
+    SingleEvalResultConstInt evalResult=*resultListIter;
+    if(evalResultList.size()>1) {
+      logger[ERROR] <<"multi-state generating operators in function call parameters not supported."<<endl;
+      exit(1);
+    }
+    // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars (which is what we want here)
+    //newPState[formalParameterVarId]=evalResult.value();
+    newPState.setVariableToValue(formalParameterVarId,evalResult.value());
+    ++i;++j;
+  }
+  // assert must hold if #formal-params==#actual-params (TODO: default values)
+  assert(i==formalParameters.end() && j==actualParameters.end());
+  // ad 4
+  return elistify(createEState(edge.target(),newPState,cset));
 }

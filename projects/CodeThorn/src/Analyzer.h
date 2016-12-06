@@ -103,7 +103,6 @@ namespace CodeThorn {
     
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
-    std::list<EState> transferFunction(Edge edge, const EState* estate);
     
     void addToWorkList(const EState* estate);
     const EState* addToWorkListIfNew(EState estate);
@@ -156,7 +155,15 @@ namespace CodeThorn {
 
     // determines whether lab is a function call label of a function call of the form 'x=f(...)' and returns the varible-id of the lhs, if it exists.
     bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
+
+    std::list<EState> transferFunction(Edge edge, const EState* estate);
+    std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
+
+    
   private:
+    std::list<EState> elistify();
+    std::list<EState> elistify(EState res);
+
     static Sawyer::Message::Facility logger;
 
     // only used in LTL-driven mode
