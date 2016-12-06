@@ -373,8 +373,18 @@ AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
 
 AC_CANONICAL_HOST
 
+# *****************************************************************
+
+# DQ (12/3/2016): Added support for specification of specific warnings a for those specific warnings to be treated as errors.
+ROSE_SUPPORT_FATAL_WARNINGS
+
+# *****************************************************************
+
+# Setup default options for C and C++ compilers compiling ROSE source code.
 ROSE_FLAG_C_OPTIONS
 ROSE_FLAG_CXX_OPTIONS
+
+# *****************************************************************
 
 # DQ (11/14/2011): This is defined here since it must be seen before any processing of the rose_config.h file.
 if test "x$enable_internalFrontendDevelopment" = "xyes"; then
@@ -419,6 +429,11 @@ echo "After processing --enable-advanced-warnings: C_WARNINGS   = ${C_WARNINGS}"
 echo "CFLAGS   = $CFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
 echo "CPPFLAGS = $CPPFLAGS"
+
+# echo "Exiting in support after enabled advanced warnings"
+# exit 1
+
+# *****************************************************************
 
 # DQ: added here to see if it would be defined for the template tests and avoid placing 
 # a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
@@ -2274,6 +2289,7 @@ tests/nonsmoke/functional/CompilerOptionsTests/testOutputFileOption/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testWave/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/nonsmoke/functional/Makefile
+tests/nonsmoke/functional/moveDeclarationTool/Makefile
 tests/nonsmoke/functional/PerformanceTests/Makefile
 tests/nonsmoke/functional/RunTests/A++Tests/Makefile
 tests/nonsmoke/functional/RunTests/AstDeleteTests/Makefile

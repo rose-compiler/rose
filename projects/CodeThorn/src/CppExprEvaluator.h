@@ -20,6 +20,8 @@ class CppExprEvaluator {
   void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface);
   void setSoundness(bool s);
  private:
+  // takes the expression of SgSizeOfOp(Exp) and determines its size
+  int determineSizeOf(SgNode* node);
   bool isExprRootNode(SgNode* node);
   SgNode* findExprRootNode(SgNode* node);
   NumberIntervalLattice* domain;
