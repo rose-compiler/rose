@@ -670,6 +670,7 @@ static std::vector<std::string> parseCommandLine(std::vector< std::string > & ar
   // 1. The older way (that still works) is to have Sawyer process the switch and then we
   // prepend it into the returned vector for processing by later stages.  
 
+#if 0
   // 2. The newer way is to set the switch's "skipping"
   // property that causes Sawyer to treat it as a skipped (unrecognized) switch.  We'll use SKIP_STRONG, but SKIP_WEAK is
   // sort of a cross between Sawyer recognizing it and not recognizing it.
@@ -677,6 +678,15 @@ static std::vector<std::string> parseCommandLine(std::vector< std::string > & ar
       .skipping(SKIP_STRONG)                  // appears in documentation and is parsed, but treated as skipped
       .doc("Show the ROSE switch documentation.")
       .action(showHelpAndExit(0)) );
+#else
+  bool showRoseHelp = false;
+  tool.insert(Switch("rose:help")
+             .longPrefix("-")
+             .intrinsicValue(true, showRoseHelp)
+             .doc("Show the old-style ROSE help.")); 
+
+#endif
+
 
   // Copy this tool's switches into the parser.
   p.with(tool);
@@ -688,6 +698,9 @@ static std::vector<std::string> parseCommandLine(std::vector< std::string > & ar
 //  remainingArgs.insert(remainingArgs.begin(), argv[0]);
   std::vector<std::string> remainingArgs = p.parse(argvList).apply().unparsedArgs(true);
 //  remainingArgs.insert(remainingArgs.begin(), argvList[0]); // somehow this is not needed if I use the vector argument version of parse()
+
+  if (showRoseHelp)
+    SgFile::usage(0); 
 
 #if 0 // DEBUGGING [Robb P Matzke 2016-09-27]
   std::cerr <<"These are the arguments after parsing with Sawyer:\n";
@@ -718,47 +731,6 @@ int main(int argc, char * argv[])
     return 0;
   }
 
-#if 0
-  // acting like an identity translator, used for debugging
-  if (CommandlineProcessing::isOption (argvList,"-rose:identity","",true))
-  {
-    isIdentity = true;
-    cout<<"Acting as an identity translator ..."<<endl;
-  }
-
-  // pass -rose:debug to turn on debugging mode
-  if (CommandlineProcessing::isOption (argvList,"-rose:debug","",true))
-  {
-    debug = true;
-    cout<<"Turing on debugging model..."<<endl;
-  }
-
-  if (CommandlineProcessing::isOption (argvList,"-rose:trans-tracking","",true))
-  {
-    transTracking = true;
-    cout<<"Turing on transformation tracking model..."<<endl;
-  }
-
-  // We don't remove this option since it is used later by other logic
-  if (CommandlineProcessing::isOption (argvList,"-rose:keep_going","",false))
-  {
-    tool_keep_going = true;
-    cout<<"Turing on the keep going model, ignore assertions as much as possible..."<<endl;
-  }
-
-  if (CommandlineProcessing::isOption (argvList,"-rose:merge_decl_assign","",true))
-  {
-    merge_decl_assign = true;
-    cout<<"Turing on the merge feature, merge decl with assign when possible ..."<<endl;
-  }
-
-  // ROSE base does not use this option. remove it after use.
-  if (CommandlineProcessing::isOption (argvList,"-rose:aggressive","",true)) 
-  {
-    decl_mover_conservative = false;
-    cout<<"Turing on the aggressive model, allowing moving declarations with initializers and cross loop boundaries, but will send out warnings..."<<endl;
-  }
-#endif 
   // -------------end of command line processing -------------------
 
   SgProject *project = frontend (argvList);
