@@ -78,10 +78,16 @@ iterator2.C \
 iteratorloop.C \
 test20100223.C \
 Hydro_applyVelocityBC.C \
-Hydro_constructor_1.C \
 Hydro_max_min.C \
 DelVolBaseLoopAlgorithm_loopExecute.C \
 StressWork_setup.C
+
+# name qualification of constructor is wrongly unparsed for 4.2 and 4.4 testing
+if ROSE_USING_GCC_VERSION_LATER_4_8
+CXX_TESTCODES_REQUIRED_TO_PASS += \
+Hydro_constructor_1.C
+
+endif
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
