@@ -160,7 +160,7 @@ PodMarkup::emit(const std::string &doc) {
     tmpFile.stream() <<(*this)(doc);
     tmpFile.stream().close();
 
-    std::string cmd = "perldoc"
+    std::string cmd = "env LESSCHARSET=utf-8 perldoc"
                       " -o man"
                       " -w 'center:" + escapeSingleQuoted(chapterTitleOrDefault()) + "'"
                       " -w 'date:" + escapeSingleQuoted(versionDateOrDefault()) + "'"
