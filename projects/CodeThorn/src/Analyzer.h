@@ -116,42 +116,7 @@ namespace CodeThorn {
     
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
-    bool isLTLRelevantEState(const EState* estate);
-    bool isLTLRelevantLabel(Label label);
-    bool isStdIOLabel(Label label);
     bool isStartLabel(Label label);
-    std::set<const EState*> nonLTLRelevantEStates();
-    bool isTerminationRelevantLabel(Label label);
-    
-    // 6 experimental functions
-    // reduces all states different to stdin and stdout.
-    void stdIOFoldingOfTransitionGraph();
-    void semanticFoldingOfTransitionGraph();
-    // requires semantically reduced STG
-    bool checkEStateSet();
-    bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
-    bool checkTransitionGraph();
-
-    // bypasses and removes all states that are not standard I/O states
-    // (old version, works correctly, but has a long execution time)
-    void removeNonIOStates();
-    // bypasses and removes all states that are not stdIn/stdOut/stdErr/failedAssert states
-    void reduceToObservableBehavior();
-    // erases transitions that lead directly from one output state to another output state
-    void removeOutputOutputTransitions();
-    // erases transitions that lead directly from one input state to another input state
-    void removeInputInputTransitions();
-    // cuts off all paths in the transition graph that lead to leaves 
-    // (recursively until only paths of infinite length remain)
-    void pruneLeavesRec();
-    // connects start, input, output and worklist states according to possible paths in the transition graph. 
-    // removes all states and transitions that are not necessary for the graph that only consists of these new transitions. The two parameters allow to select input and/or output states to remain in the STG.
-    void reduceGraphInOutWorklistOnly(bool includeIn=true, bool includeOut=true, bool includeErr=false);
-    // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
-    // stores results in PropertyValueTable "reachabilityResults".
-    // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
-    // shortest ones leading to the individual failing assertion (returns -1 otherwise).
-    int extractAssertionTraces();
 
     // determines whether lab is a function call label of a function call of the form 'x=f(...)' and returns the varible-id of the lhs, if it exists.
     bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
@@ -169,6 +134,45 @@ namespace CodeThorn {
     std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
+
+    SgNode* getCond(SgNode* node);
+    void generateAstNodeInfo(SgNode* node);
+    bool checkEStateSet();
+    bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
+    bool checkTransitionGraph();
+
+    //! requires init
+    void runSolver4();
+    void runSolver5();
+    void runSolver8();
+    void runSolver9();
+    void runSolver10();
+    void runSolver11();
+    void runSolver12();
+    void runSolver();
+    //! The analyzer requires a CFAnalysis to obtain the ICFG.
+    void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
+    CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
+    
+    //void initializeVariableIdMapping(SgProject* project) { variableIdMapping.computeVariableSymbolMapping(project); }
+
+    // access  functions for computed information
+    VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
+    CTIOLabeler* getLabeler() const {
+      CTIOLabeler* ioLabeler=dynamic_cast<CTIOLabeler*>(cfanalyzer->getLabeler());
+      ROSE_ASSERT(ioLabeler);
+      return ioLabeler;
+    }
+    Flow* getFlow() { return &flow; }
+    PStateSet* getPStateSet() { return &pstateSet; }
+    EStateSet* getEStateSet() { return &estateSet; }
+    TransitionGraph* getTransitionGraph() { return &transitionGraph; }
+    ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
+    
+    //private: TODO
+    Flow flow;
+    SgNode* startFunRoot;
+    CFAnalysis* cfanalyzer;
 
   private:
     std::list<EState> elistify();
@@ -196,13 +200,54 @@ namespace CodeThorn {
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
+    // LTLAnalyzer
+  public:
+    bool isTerminationRelevantLabel(Label label);
+    bool isLTLRelevantEState(const EState* estate);
+    bool isLTLRelevantLabel(Label label);
+    bool isStdIOLabel(Label label);
+    std::set<const EState*> nonLTLRelevantEStates();
+
+    std::string generateSpotSTG();
+
+    // reduces all states different to stdin and stdout.
+    void stdIOFoldingOfTransitionGraph();
+    void semanticFoldingOfTransitionGraph();
+
+    // bypasses and removes all states that are not standard I/O states
+    // (old version, works correctly, but has a long execution time)
+    void removeNonIOStates();
+    // bypasses and removes all states that are not stdIn/stdOut/stdErr/failedAssert states
+    void reduceToObservableBehavior();
+    // erases transitions that lead directly from one output state to another output state
+    void removeOutputOutputTransitions();
+    // erases transitions that lead directly from one input state to another input state
+    void removeInputInputTransitions();
+    // cuts off all paths in the transition graph that lead to leaves 
+    // (recursively until only paths of infinite length remain)
+    void pruneLeavesRec();
+    // connects start, input, output and worklist states according to possible paths in the transition graph. 
+    // removes all states and transitions that are not necessary for the graph that only consists of these new transitions. The two parameters allow to select input and/or output states to remain in the STG.
+    void reduceGraphInOutWorklistOnly(bool includeIn=true, bool includeOut=true, bool includeErr=false);
+    // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
+    // stores results in PropertyValueTable "reachabilityResults".
+    // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
+    // shortest ones leading to the individual failing assertion (returns -1 otherwise).
+    int extractAssertionTraces();
+
+    // LTLAnalyzer
+  private:
     //returns a list of transitions representing existing paths from "startState" to all possible input/output/error states (no output -> output)
     // collection of transitions to worklist states currently disabled. the returned set has to be deleted by the calling function.
     boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* startState, 
-								      bool includeIn, bool includeOut, bool includeErr);                                                          
-    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* currentState, const EState* startState, 
-                                                            	      boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited,
-								      bool includeIn, bool includeOut, bool includeErr);
+                                                                         bool includeIn, 
+                                                                         bool includeOut, 
+                                                                         bool includeErr);                                                          
+    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* currentState, 
+                                                                         const EState* startState, 
+                                                                         boost::unordered_set<Transition*>* results,
+                                                                         boost::unordered_set<const EState*>* visited,
+                                                                         bool includeIn, bool includeOut, bool includeErr);
     // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults. returns the length of the 
     // counterexample input sequence.
     int addCounterexample(int assertCode, const EState* assertEState);
@@ -215,7 +260,8 @@ namespace CodeThorn {
     std::string reversedInOutRunToString(std::list<const EState*>& run);
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
-    // the following functions are used by solver 9
+
+    // begin of solver 9 functions
     bool searchForIOPatterns(PState* startPState, int assertion_id, std::list<int>& inputSuffix, std::list<int>* partialTrace = NULL, int* inputPatternLength=NULL);
     bool containsPatternTwoRepetitions(std::list<int>& sequence);
     bool containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex);
@@ -225,15 +271,12 @@ namespace CodeThorn {
     std::list<int> inputsFromPatternTwoRepetitions(std::list<int> pattern2r);
     string convertToCeString(std::list<int>& ceAsIntegers, int maxInputVal);
     int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, std::list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
+    // end of solver 9 functions
 
-  public:
-    SgNode* getCond(SgNode* node);
-    void generateAstNodeInfo(SgNode* node);
-    std::string generateSpotSTG();
-  private:
     void generateSpotTransition(std::stringstream& ss, const Transition& t);
     //less than comarisions on two states according to (#input transitions * #output transitions)
     bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
+
   public:
     //stores a backup of the created transitionGraph
     void storeStgBackup();
@@ -241,43 +284,15 @@ namespace CodeThorn {
     void swapStgWithBackup();
     //solver 8 becomes the active solver used by the analyzer. Deletion of previous data iff "resetAnalyzerData" is set to true.
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
-    //! requires init
-    void runSolver4();
-    void runSolver5();
-    void runSolver8();
-    void runSolver9();
-    void runSolver10();
-    void runSolver11();
-    void runSolver12();
-    void runSolver();
+
     // first: list of new states (worklist), second: set of found existing states
     typedef pair<EStateWorkList,EStateSet> SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
-    //! The analyzer requires a CFAnalysis to obtain the ICFG.
-    void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
-    CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
-    
-    //void initializeVariableIdMapping(SgProject* project) { variableIdMapping.computeVariableSymbolMapping(project); }
 
-    // access  functions for computed information
-    VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    CTIOLabeler* getLabeler() const {
-      CTIOLabeler* ioLabeler=dynamic_cast<CTIOLabeler*>(cfanalyzer->getLabeler());
-      ROSE_ASSERT(ioLabeler);
-      return ioLabeler;
-    }
-    Flow* getFlow() { return &flow; }
-    PStateSet* getPStateSet() { return &pstateSet; }
-    EStateSet* getEStateSet() { return &estateSet; }
-    TransitionGraph* getTransitionGraph() { return &transitionGraph; }
-    ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
-    
-    //private: TODO
-    Flow flow;
-    SgNode* startFunRoot;
-    CFAnalysis* cfanalyzer;
+
     VariableValueMonitor variableValueMonitor;
     void setVariableValueThreshold(int threshold) { variableValueMonitor.setThreshold(threshold); }
+
   public:
     //! compute the VariableIds of variable declarations
     VariableIdMapping::VariableIdSet determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> decls);
