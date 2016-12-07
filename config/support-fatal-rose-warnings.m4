@@ -40,6 +40,10 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
   CXX_WARNINGS=""
   C_WARNINGS=""
 
+# Set default value to -Wall.
+  CXX_WARNINGS="-Wall -Wextra "
+  C_WARNINGS="-Wall -Wextra "
+
 # Suggested C++ specific warnings (turning them on explicitly as errors).
 # See documentation for suggested list in https://rosecompiler.atlassian.net/wiki/display/~matzke/Warnings+that+should+be+fixed
   CXX_WARNINGS+="-Werror=maybe-uninitialized "
@@ -96,6 +100,14 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
 
   CXX_WARNINGS+="-Wno-error=return-type "
   C_WARNINGS+="-Wno-error=return-type "
+
+# DQ (12/6/2016): Disable this warning since it comes from Boost and we can't do anythng about it.
+  CXX_WARNINGS+="-Wno-c++11-extensions "
+  C_WARNINGS+="-Wno-c++11-extensions "
+
+# DQ (12/6/2016): Disable this warning since it too frequent and a result of using the -Wextras option (not clear what to do about it).
+  CXX_WARNINGS+="-Wno-unused-parameter "
+  C_WARNINGS+="-Wno-unused-parameter "
 
 # Experimenting with making some warnings non-fatal.
 # CXX_WARNINGS+="-Wno-error=return-type  -Wno-error=#warnings "
