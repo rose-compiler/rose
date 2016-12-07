@@ -4981,7 +4981,11 @@ HEADER_QUALIFIED_NAME_END
 HEADER_ATTRIBUTE_START
        // SgAttribute(char* str);
           int isSame(const std::string& str);
-          virtual bool isPragma() { return 0; } // MS02/22/02
+
+       // DQ (12/6/2016): This needs to match being const as in the derived class (this also eliminates a compiler warning).
+       // virtual bool isPragma() { return 0; } // MS02/22/02
+          virtual bool isPragma() const { return 0; }
+
        // char *get_name() const;
 
       protected:
