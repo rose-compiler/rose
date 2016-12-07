@@ -628,7 +628,8 @@ bool ConstrGraphAnalysis::incorporateConditionalsInfo(const Function& func, cons
 
 // Incorporates the current node's divisibility information into the current node's constraint graph
 // returns true if this causes the constraint graph to change and false otherwise
-/*bool ConstrGraphAnalysis::incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent)
+/*
+bool ConstrGraphAnalysis::incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent)
 {
         bool modified = false;
         ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
@@ -646,24 +647,25 @@ bool ConstrGraphAnalysis::incorporateConditionalsInfo(const Function& func, cons
                 // we would not be able to capture this change.
                 cg->addDivVar(var, true, indent+"    ");
                 
-                /* // create the divisibility variable for the current variable 
-                varID divVar = ConstrGraph::getDivScalar(var);* /
+                // create the divisibility variable for the current variable 
+                // varID divVar = ConstrGraph::getDivScalar(var);
                 
-                /*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
+                // DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
                 
-                // incorporate this variable's divisibility information (if any)
-                if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
-                {
-                        modified = cg->addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
-                }
-                else if(varDivL->getLevel() != DivLattice::bottom)
-                {
-                        modified = cg->addDivVar(var, 1, 0) || modified;
-                }* /
+             // incorporate this variable's divisibility information (if any)
+             // if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
+             // {
+             //         modified = cg->addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
+             // }
+             // else if(varDivL->getLevel() != DivLattice::bottom)
+             // {
+             //         modified = cg->addDivVar(var, 1, 0) || modified;
+             // }
         }
         
         return modified;
-}*/
+}
+*/
 
 // For any variable for which we have divisibility info, remove its constraints to other variables (other than its
 // divisibility variable)
