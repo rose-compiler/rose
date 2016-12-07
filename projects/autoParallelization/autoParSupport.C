@@ -20,10 +20,13 @@ namespace AutoParallelization
   bool b_unique_indirect_index;
   bool enable_distance;
   bool keep_c99_loop_init = false; // no longer in use. 
+  std::vector<std::string> annot_filenames; 
+  bool dump_annot_file=false;
 
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
+  //! Command line processing
   void autopar_command_processing(vector<string>&argvList)
   {
     if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_debug",true))
@@ -89,6 +92,7 @@ namespace AutoParallelization
       annot->Dump();
     //Strip off custom options and their values to enable backend compiler 
     CommandlineProcessing::removeArgsWithParameters(argvList,"-annot");
+
     // keep --help option after processing, let other modules respond also
     if ((CommandlineProcessing::isOption (argvList,"--help","",false)) ||
         (CommandlineProcessing::isOption (argvList,"-help","",false)))
@@ -103,7 +107,7 @@ namespace AutoParallelization
       cout <<"---------------------------------------------------------------"<<endl;
     }
 
-  }
+  } // end of processing command line
 
   bool initialize_analysis(SgProject* project/*=NULL*/,bool debug/*=false*/)
   {

@@ -20,6 +20,15 @@
 #include "rose.h"
 // all kinds of analyses needed
 #include "autoParSupport.h" 
+#include <string> 
+#include <Sawyer/CommandLine.h>
+static const char* purpose = "This tool automatically inserts OpenMP directives into sequential codes.";
+static const char* description =
+     "This tool is an implementation of automatic parallelization using OpenMP. "
+     "It can automatically insert OpenMP directives into input serial C/C++ codes. "
+     "For input programs with existing OpenMP directives, the tool will double check "
+     "the correctness when requested.";
+
 using namespace std;
 using namespace AutoParallelization;
 using namespace SageInterface;
@@ -133,12 +142,110 @@ void normalizeLoops (std::vector<SgFunctionDefinition* > candidateFuncDefs)
   
 }
 
+//! Initialize the switch group and its switches.
+Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
+  using namespace Sawyer::CommandLine;
+
+  SwitchGroup switches("autoPar's switches");
+  switches.doc("These switches control the autoPar tool. ");
+  switches.name("rose:autopar"); 
+
+  switches.insert(Switch("enable_debug")
+      .intrinsicValue(true, AutoParallelization::enable_debug)
+      .doc("Enable the debugging mode."));
+
+  switches.insert(Switch("enable_patch")
+      .intrinsicValue(true, AutoParallelization::enable_patch)
+      .doc("Enable generating patch files for auto parallelization"));
+
+  switches.insert(Switch("unique_indirect_index")
+      .intrinsicValue(true, AutoParallelization::b_unique_indirect_index)
+      .doc("Assuming all arrays used as indirect indices have unique elements (no overlapping)"));
+
+  switches.insert(Switch("enable_diff")   
+      .intrinsicValue(true, AutoParallelization::enable_diff)
+      .doc("Compare user defined OpenMP pragmas to auto parallelization generated ones."));
+
+  switches.insert(Switch("enable_distance")
+      .intrinsicValue(true, AutoParallelization::enable_distance)
+      .doc("Report the absolute dependence distance of a dependence relation preventing parallelization."));
+
+  switches.insert(Switch("annot")
+      .argument("string", anyParser(AutoParallelization::annot_filenames))
+//      .shortPrefix("-") // this option allows short prefix
+      .whichValue(SAVE_ALL)               // if switch appears more than once, save all values not just last
+      .doc("Specify annotation file for semantics of abstractions"));
+
+  switches.insert(Switch("dumpannot")
+      .intrinsicValue(true, AutoParallelization::dump_annot_file)
+      .doc("Dump annotation file content for debugging purposes."));
+
+  return switches;
+}
+
+// New version of command line processing using Sawyer library
+static std::vector<std::string> commandline_processing(std::vector< std::string > & argvList)
+{
+  using namespace Sawyer::CommandLine;
+  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+  p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
+  p.longPrefix("-");
+
+// initialize generic Sawyer switches: assertion, logging, threads, etc.
+  p.with(CommandlineProcessing::genericSwitches()); 
+
+// initialize this tool's switches
+  p.with(commandLineSwitches());  
+
+// --rose:help for more ROSE switches
+  SwitchGroup tool("ROSE builtin switches");
+  bool showRoseHelp = false;
+  tool.insert(Switch("rose:help")
+             .longPrefix("-")
+             .intrinsicValue(true, showRoseHelp)
+             .doc("Show the old-style ROSE help.")); 
+  p.with(tool);
+
+  std::vector<std::string> remainingArgs = p.parse(argvList).apply().unparsedArgs(true);
+
+  // add back -annot file TODO: how about multiple appearances?
+  for (int i=0; i<AutoParallelization::annot_filenames.size(); i++)
+  {
+    remainingArgs.push_back("-annot");
+    remainingArgs.push_back(AutoParallelization::annot_filenames[i]);
+  }
+
+// AFTER parse the command-line, you can do this:
+ if (showRoseHelp)
+    SgFile::usage(0);
+
+ // work with the parser of the ArrayAbstraction module
+ //Read in annotation files after -annot 
+ CmdOptions::GetInstance()->SetOptions(remainingArgs);
+ ArrayAnnotation* annot = ArrayAnnotation::get_inst();
+ annot->register_annot();
+ ReadAnnotation::get_inst()->read();
+ if (AutoParallelization::dump_annot_file)  
+   annot->Dump();
+ //Strip off custom options and their values to enable backend compiler 
+ CommandlineProcessing::removeArgsWithParameters(remainingArgs,"-annot");      
+
+#if 0 // DEBUGGING [Robb P Matzke 2016-09-27]
+  std::cerr <<"These are the arguments after parsing with Sawyer:\n";
+  BOOST_FOREACH (const std::string &s, remainingArgs)
+    std::cerr <<"    \"" <<s <<"\"\n";
+#endif
+
+  return remainingArgs;
+}
+
 int
 main (int argc, char *argv[])
 {
   vector<string> argvList(argv, argv+argc);
   //Processing debugging and annotation options
-  autopar_command_processing(argvList);
+//  autopar_command_processing(argvList);
+  argvList = commandline_processing (argvList);
   // enable parsing user-defined pragma if enable_diff is true
   // -rose:openmp:parse_only
   if (enable_diff)
