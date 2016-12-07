@@ -1293,6 +1293,7 @@ T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* sc
             else // Liao 2/9/2010. We should allow NULL scope
              {
 #if 0
+            // DQ (12/6/2016): Include this into the debugging code to aboid compiler warning about unused variable.
                SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
                printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table() = %p \n",symbol);
                printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table()->get_name() = %s \n",symbol->get_name().str());
