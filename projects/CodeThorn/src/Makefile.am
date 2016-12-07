@@ -106,6 +106,7 @@ codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
+  AnalyzerSolvers.C                \
   CodeThornException.h \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
