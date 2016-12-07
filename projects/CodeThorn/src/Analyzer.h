@@ -158,8 +158,18 @@ namespace CodeThorn {
 
     std::list<EState> transferFunction(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
+    std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
+    std::list<EState> transferFunctionCallReturn(Edge edge, const EState* estate);
+    std::list<EState> transferFunctionExit(Edge edge, const EState* estate);
+    std::list<EState> transferReturnStmt(Edge edge, const EState* estate);
+    std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
+    std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, const EState* estate);
+    std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
+    std::list<EState> transferIdentity(Edge edge, const EState* estate);
+    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
+    std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
+    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
 
-    
   private:
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
