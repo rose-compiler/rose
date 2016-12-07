@@ -19,12 +19,11 @@
 #include "boost/lexical_cast.hpp"
 
 #include "Timer.h"
+#include "CollectionOperators.h"
 
 using namespace CodeThorn;
 using namespace std;
 using namespace Sawyer::Message;
-
-#include "CollectionOperators.h"
 
 Sawyer::Message::Facility Analyzer::logger = [](){
   Facility log("Analyzer");

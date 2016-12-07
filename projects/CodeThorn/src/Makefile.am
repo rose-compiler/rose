@@ -107,6 +107,8 @@ codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
   AnalyzerSolvers.C                \
+  AstNodeInfo.h \
+  AstNodeInfo.C \
   CodeThornException.h \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
