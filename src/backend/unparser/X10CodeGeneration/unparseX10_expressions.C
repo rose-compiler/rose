@@ -1004,7 +1004,7 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
-         for (int i = 0; i < args.size(); i++) {
+         for (size_t i = 0; i < args.size(); i++) {
 //             curprint ("[");
              curprint ("(");
              if (! has_aggregate_initializer) {
@@ -1052,7 +1052,7 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
-         for (int i = 0; i < args.size(); i++) {
+         for (size_t i = 0; i < args.size(); i++) {
              unparseExpression(args[i], info);
              if (i + 1 < args.size())
                  curprint(", ");
@@ -1261,8 +1261,8 @@ Unparse_X10::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        return;
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ROSE_ASSERT(aggr_init != NULL);
-  /* code inserted from specification */
-/*
+  // code inserted from specification
+
      SgUnparse_Info newinfo(info);
      if (aggr_init->get_need_explicit_braces())
       curprint ( "{");
@@ -1308,7 +1308,7 @@ Unparse_X10::unparseConInit(SgExpression *expr, SgUnparse_Info& info)
     SgConstructorInitializer *init = isSgConstructorInitializer(expr);
     ROSE_ASSERT(init);
     vector<SgExpression *> args = init -> get_args() -> get_expressions();
-    for (int i = 0; i < args.size(); i++) {
+    for (size_t i = 0; i < args.size(); i++) {
         unparseExpression(args[i], info);
         if (i + 1 < args.size())
             curprint(", ");
@@ -1618,7 +1618,7 @@ Unparse_X10::unparseX10NormalAnnotation(SgExpression *expr, SgUnparse_Info& info
 
     SgJavaMemberValuePairPtrList &pair_list = normal_annotation -> get_value_pair_list();
     curprint("(");
-    for (int k = 0; k < pair_list.size(); k++) {
+    for (size_t k = 0; k < pair_list.size(); k++) {
         SgJavaMemberValuePair *pair = pair_list[k];
         if (k > 0) {
             curprint(", ");
