@@ -58,6 +58,12 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 #include <poet_config.h>
 #include <assert.h>
 
+/* DQ (12/6/2016): Eliminate use of implicit function declaration, making warning into an error for warning: -Wdelete-non-virtual-dtor. */
+int yylex();
+
+/* DQ (12/6/2016): Eliminate use of implicit function declaration, making warning into an error for warning: -Wdelete-non-virtual-dtor. */
+int yyerror (char* yymsg);
+
 YaccState yaccState;
 
 extern void* insert_input();

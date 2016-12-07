@@ -13,6 +13,9 @@ class LoopPar
                                       LoopTreeDepComp& comp, 
                                       DependenceHoisting &op, 
                                       LoopTreeNode *&top)=0;
+
+// DQ (12/6/2016): Added explicit virtual destructor to eliminate warning we want to be an error: -Wdelete-non-virtual-dtor.
+   virtual ~LoopPar() {}
 };
 
 class ParallelizeBlocking : public LoopPar
@@ -22,6 +25,11 @@ class ParallelizeBlocking : public LoopPar
                                       DependenceHoisting &op, 
                                       LoopTreeNode *&top);
   virtual LoopTransformOptions::OptType GetOptimizationType() { return LoopTransformOptions::PAR_LOOP_OPT; }
+
+
+// DQ (12/6/2016): Added explicit virtual destructor to eliminate warning we want to be an error: -Wdelete-non-virtual-dtor.
+  public:
+       virtual ~ParallelizeBlocking() {}
 };
 
 #endif
