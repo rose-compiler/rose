@@ -29,7 +29,7 @@ SUBDIRS += testSupport
 
 SUBDIRS += RunTests
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   SUBDIRS += PerformanceTests CompilerOptionsTests translatorTests
+   SUBDIRS += PerformanceTests CompilerOptionsTests translatorTests moveDeclarationTool
 endif
 
 endif

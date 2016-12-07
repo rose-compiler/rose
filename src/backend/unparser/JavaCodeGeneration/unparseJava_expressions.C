@@ -950,8 +950,12 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
              else {
                  SgType *type = new_op -> get_specified_type();
                  do {
-                     SgType *type = isSgArrayType(type) -> get_base_type();
-                 } while (isSgArrayType(type));
+                  // DQ (12/6/2016): I think this is a bug and not intended to be a second nested declaration.
+                  // SgType *type = isSgArrayType(type) -> get_base_type();
+                     ROSE_ASSERT(isSgArrayType(type) != NULL);
+                     type = isSgArrayType(type) -> get_base_type();
+                    } 
+                 while (isSgArrayType(type));
                  unparseType(type, info);
              }
 //         }
@@ -960,7 +964,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
-         for (int i = 0; i < args.size(); i++) {
+         for (size_t i = 0; i < args.size(); i++) {
              curprint ("[");
              if (! has_aggregate_initializer) {
                  unparseExpression(args[i], info);
@@ -1006,7 +1010,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
-         for (int i = 0; i < args.size(); i++) {
+         for (size_t i = 0; i < args.size(); i++) {
              unparseExpression(args[i], info);
              if (i + 1 < args.size())
                  curprint(", ");
@@ -1215,8 +1219,8 @@ Unparse_Java::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        return;
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ROSE_ASSERT(aggr_init != NULL);
-  /* code inserted from specification */
-/*
+  // code inserted from specification
+
      SgUnparse_Info newinfo(info);
      if (aggr_init->get_need_explicit_braces())
       curprint ( "{");
@@ -1262,7 +1266,7 @@ Unparse_Java::unparseConInit(SgExpression *expr, SgUnparse_Info& info)
     SgConstructorInitializer *init = isSgConstructorInitializer(expr);
     ROSE_ASSERT(init);
     vector<SgExpression *> args = init -> get_args() -> get_expressions();
-    for (int i = 0; i < args.size(); i++) {
+    for (size_t i = 0; i < args.size(); i++) {
         unparseExpression(args[i], info);
         if (i + 1 < args.size())
             curprint(", ");
@@ -1565,7 +1569,7 @@ Unparse_Java::unparseJavaNormalAnnotation(SgExpression *expr, SgUnparse_Info& in
 
     SgJavaMemberValuePairPtrList &pair_list = normal_annotation -> get_value_pair_list();
     curprint("(");
-    for (int k = 0; k < pair_list.size(); k++) {
+    for (size_t k = 0; k < pair_list.size(); k++) {
         SgJavaMemberValuePair *pair = pair_list[k];
         if (k > 0) {
             curprint(", ");
