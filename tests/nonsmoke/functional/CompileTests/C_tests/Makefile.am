@@ -114,10 +114,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_06.c \
      test2012_07.c \
      test2012_08.c \
-     test2012_09.c \
-     test2012_10.c \
      test2012_11.c \
-     test2012_12.c \
      test2012_13.c \
      test2012_14.c \
      test2012_15.c \
@@ -166,7 +163,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_61.c \
      test2012_62.c \
      test2012_63.c \
-     test2012_64.c \
      test2012_65.c \
      test2012_66.c \
      test2012_67.c \
@@ -174,9 +170,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_69.c \
      test2012_70.c \
      test2012_71.c \
-     test2012_72.c \
-     test2012_73.c \
-     test2012_74.c \
      test2012_75.c \
      test2012_76.c \
      test2012_77.c \
@@ -248,8 +241,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_148.c \
      test2012_149.c \
      test2012_150.c \
-     test2012_151.c \
-     test2012_152.c \
      test2012_153.c \
      test2012_154.c \
      test2012_156.c \
@@ -288,7 +279,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_18.c \
      test2013_19.c \
      test2013_20.c \
-     test2013_21.c \
      test2013_22.c \
      test2013_23.c \
      test2013_24.c \
@@ -299,7 +289,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_29.c \
      test2013_30.c \
      test2013_31.c \
-     test2013_32.c \
      test2013_33.c \
      test2013_34.c \
      test2013_35.c \
@@ -371,7 +360,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_101.c \
      test2013_102.c \
      test2013_103.c \
-     test2013_104.c \
      test2013_105.c \
      test2013_106.c \
      test2013_107.c \
@@ -380,7 +368,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_110.c \
      test2013_111.c \
      test2013_112.c \
-     test2013_113.c \
      test2014_01.c \
      test2014_02.c \
      test2014_04.c \
@@ -389,8 +376,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_07.c \
      test2014_08.c \
      test2014_09.c \
-     test2014_12.c \
-     test2014_13.c \
      test2014_14.c \
      test2014_15.c \
      test2014_16.c \
@@ -512,7 +497,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_31.c \
      test2015_32.c \
      test2015_33.c \
-     test2015_34.c \
      test2015_35.c \
      test2015_36.c \
      test2015_37.c \
@@ -841,11 +825,34 @@ endif
 endif
 endif
 
+# DQ (12/3/2016): Moved test2012_09.c to not be tested withon Mac OSX OS.
+# Note that these might just be an issue specific to Clang version 3.8
+# or we don't have the correct emulation of the clang compiler since on Mac
+# we are detecting clang as GNU 4.2, where as on Linux we can correctly 
+# detect it as clang 3.8 (with some trouble).
+# Also, the only file previously in the list below was test2009_19.c.
 # DQ (9/26/2009): Conditionally compile this file (fails in OSX due to lack of OSX
 # support for thread local storage). Liao know more about the details of this test.
 # test2009_19.c
 if !OS_MACOSX
-   TESTCODES_REQUIRED_TO_PASS += test2009_19.c
+   TESTCODES_REQUIRED_TO_PASS += \
+      test2009_19.c \
+      test2012_10.c \
+      test2012_12.c \
+      test2012_64.c \
+      test2012_72.c \
+      test2012_73.c \
+      test2012_74.c \
+      test2012_151.c \
+      test2012_152.c \
+      test2013_21.c \
+      test2013_32.c \
+      test2013_104.c \
+      test2013_113.c \
+      test2014_12.c \
+      test2014_13.c \
+      test2015_34.c \
+      test2012_09.c
 endif
 
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 

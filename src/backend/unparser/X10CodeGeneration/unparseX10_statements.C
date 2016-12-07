@@ -104,7 +104,7 @@ cout.flush();
     //
     if (sourcefile -> get_import_list()) {
         vector<SgJavaImportStatement *> &import_list = sourcefile -> get_import_list() -> get_java_import_list();
-        for (int i = 0; i < import_list.size(); i++) {
+        for (size_t i = 0; i < import_list.size(); i++) {
             SgJavaImportStatement *import_declaration = import_list[i];
 // TODO: Remove this !
 /*
@@ -127,7 +127,7 @@ cout.flush();
     //
     if (sourcefile -> get_class_list()) {
         vector<SgClassDeclaration *> &type_list = sourcefile -> get_class_list() -> get_java_class_list();
-        for (int i = 0; i < type_list.size(); i++) {
+        for (size_t i = 0; i < type_list.size(); i++) {
             SgClassDeclaration *type_declaration = type_list[i];
 // TODO: Remove this !
 /*
@@ -279,18 +279,21 @@ cout.flush();
           default:
              {
 //               printf("Unparse_X10::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
-                                if (stmt->sage_class_name() == "SgFinishStmt") {
+                             // if (stmt->sage_class_name() == "SgFinishStmt") {
+                                if (stmt->class_name() == "SgFinishStmt") {
 //                                      cout << "SgFinishStmt found" << endl;
                                         SgFinishStmt *finish = (SgFinishStmt *) stmt;
                                 curprint_indented("finish ", info);
                                 unparseStatement(finish->get_body(), info);
                                 }
-                                else if (stmt->sage_class_name() == "SgAsyncStmt") {
+                             // else if (stmt->sage_class_name() == "SgAsyncStmt") {
+                                else if (stmt->class_name() == "SgAsyncStmt") {
                                         SgAsyncStmt *async = (SgAsyncStmt *) stmt;
                                 curprint_indented("async ", info);
                                 unparseStatement(async->get_body(), info);
                                 }
-                                else if (stmt->sage_class_name() == "SgAtStmt") {
+                             // else if (stmt->sage_class_name() == "SgAtStmt") {
+                                else if (stmt->class_name() == "SgAtStmt") {
                                         cout << "SgAtStmt found" << endl;
                                         SgAtStmt *at = (SgAtStmt *) stmt;
                                 curprint_indented("at (", info);
@@ -1444,7 +1447,7 @@ cout.flush();
      SgClassDefinition *class_def = classdecl_stmt -> get_definition();
      ROSE_ASSERT(class_def != NULL);
 
-     SgBaseClassPtrList& bases = class_def -> get_inheritances();
+     // SgBaseClassPtrList& bases = class_def -> get_inheritances();
 
      //
      // TODO: This can't work for type parameters as an SgJavaParameterizedType is not mapped one-to-one and onto
@@ -1916,7 +1919,7 @@ Unparse_X10::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Info
     // If an Enum type contains enum constants, they must appear first in the body.
     //
     int last_enum_constant_index = members.size(); // assume all the members are enum-constants or a compiler-generated member
-    for (int i = 0; i < members.size(); i++) {
+    for (size_t i = 0; i < members.size(); i++) {
         SgDeclarationStatement *member = members[i];
 
         //
@@ -1972,7 +1975,7 @@ Unparse_X10::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Info
                 vector<SgExpression *> args = init -> get_args() -> get_expressions();
                 if (args.size() > 0) {
                     curprint(" (");
-                    for (int i = 0; i < args.size(); i++) {
+                    for (size_t i = 0; i < args.size(); i++) {
                         unparseExpression(args[i], info);
                         if (i + 1 < args.size())
                             curprint(", ");
@@ -2008,7 +2011,7 @@ Unparse_X10::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Info
     // Now, process the remaining members of the Enum body following the Enum constants.
     //
     info.inc_nestingLevel();
-    for (int i = last_enum_constant_index; i < members.size(); i++) {
+    for (size_t i = last_enum_constant_index; i < members.size(); i++) {
         SgDeclarationStatement *member = members[i];
         unparseStatement(member, info);
     }

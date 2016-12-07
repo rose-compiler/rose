@@ -155,7 +155,7 @@ Unparse_X10::unparseX10WildcardType(SgJavaWildcardType* wildcard_type, SgUnparse
 void 
 Unparse_X10::unparseX10UnionType(SgJavaUnionType *union_type, SgUnparse_Info& info) {
     SgTypePtrList type_list = union_type -> get_type_list();
-    for (int i = 0; i < type_list.size(); i++) {
+    for (size_t i = 0; i < type_list.size(); i++) {
         if (i > 0) {
             curprint(" | ");
         }
