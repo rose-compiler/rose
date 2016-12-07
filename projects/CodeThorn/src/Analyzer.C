@@ -899,7 +899,7 @@ std::list<EState> Analyzer::elistify(EState res) {
   return resList;
 }
 
-list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
+list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
   ROSE_ASSERT(edge.source()==estate->label());
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
@@ -1630,7 +1630,7 @@ void Analyzer::runSolver4() {
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
-          newEStateList=transferFunction(e,currentEStatePtr);
+          newEStateList=transferEdgeEState(e,currentEStatePtr);
           if(isTerminationRelevantLabel(e.source())) {
             #pragma omp atomic
             analyzedSemanticFoldingNode++;
@@ -1801,7 +1801,7 @@ void Analyzer::runSolver5() {
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
-          newEStateList=transferFunction(e,currentEStatePtr);
+          newEStateList=transferEdgeEState(e,currentEStatePtr);
           for(list<EState>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
@@ -1930,7 +1930,7 @@ void Analyzer::runSolver8() {
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
       list<EState> newEStateList;
-      newEStateList=transferFunction(e,currentEStatePtr);
+      newEStateList=transferEdgeEState(e,currentEStatePtr);
       // solver 8: keep track of the input state where the input sequence ran out of elements (where solver8 stops)
       if (newEStateList.size()== 0) {
         if(e.isType(EDGE_EXTERNAL)) {
@@ -2303,7 +2303,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
       list<EState> newEStateList;
-      newEStateList=transferFunction(e,currentEStatePtr);
+      newEStateList=transferEdgeEState(e,currentEStatePtr);
       for(list<EState>::iterator nesListIter=newEStateList.begin();
 	  nesListIter!=newEStateList.end();
 	  ++nesListIter) {
@@ -2594,7 +2594,7 @@ void Analyzer::runSolver12() {
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
-          newEStateList=transferFunction(e,currentEStatePtr);
+          newEStateList=transferEdgeEState(e,currentEStatePtr);
           for(list<EState>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {

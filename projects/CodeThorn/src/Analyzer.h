@@ -156,7 +156,7 @@ namespace CodeThorn {
     // determines whether lab is a function call label of a function call of the form 'x=f(...)' and returns the varible-id of the lhs, if it exists.
     bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
 
-    std::list<EState> transferFunction(Edge edge, const EState* estate);
+    std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallReturn(Edge edge, const EState* estate);
