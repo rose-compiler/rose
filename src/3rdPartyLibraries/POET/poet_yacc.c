@@ -2072,7 +2072,13 @@ while (YYID (0))
 # define YYLEX yylex (YYLEX_PARAM)
 #else
 # define YYLEX yylex ()
+
+/* DQ (12/6/2016): Eliminate use of implicit function declaration, making warning into an error for warning: -Wdelete-non-virtual-dtor. */
+int yylex();
 #endif
+
+/* DQ (12/6/2016): Eliminate use of implicit function declaration, making warning into an error for warning: -Wdelete-non-virtual-dtor. */
+int yyerror (char* yymsg);
 
 /* Enable debugging if requested.  */
 #if YYDEBUG

@@ -1741,7 +1741,8 @@ int BlockCopyArraySpec:: compute_fdConfig
           int minLoop=get_loopLevel(cur);
           if (minLoop < 0) continue;
           if (minLoop < outermostLevel) outermostLevel = minLoop;
-          int permuteIndex = placeVec[minLoop];
+       // int permuteIndex = placeVec[minLoop];
+          unsigned int permuteIndex = placeVec[minLoop];
           POETCode* curdist = 0, *curdist2=0;
           if (selsize > 1 && !scalar) {
              if (permuteIndex + 1 == selsize) 

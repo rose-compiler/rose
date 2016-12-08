@@ -575,9 +575,14 @@ LiveVarsLattice* getLiveOutVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigne
 
 // Minimal constructor that initializes just the portions of the object required to make an 
 // initial blank VarsExprsProductLattice
-VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const NodeState& state, bool (*filter) (CFGNode cfgn)) : n(n), state(state), filter(filter)
-{ 
-}                       
+VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const NodeState& state, bool (*filter) (CFGNode cfgn)) 
+// DQ (12/6/2016): Fixed compiler warning: -Wreorder.
+// : n(n), state(state), filter(filter)
+   : filter(filter), 
+     n(n), 
+     state(state)
+   {
+   }
 
 //Collect all expressions, not just variable reference expression, in the AST
 // The reason is that the temp expressions are often useful to propagate data flow information (lattices)
