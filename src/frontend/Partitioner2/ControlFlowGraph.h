@@ -9,6 +9,7 @@
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
+#include <boost/serialization/access.hpp>
 #include <list>
 #include <ostream>
 
@@ -23,6 +24,24 @@ class CfgVertex {
     BasicBlock::Ptr bblock_;                            // basic block, or null if only a place holder
     FunctionSet owningFunctions_;                       // functions to which vertex belongs
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & type_;
+        s & startVa_;
+        s & bblock_;
+        s & owningFunctions_;
+    }
+#endif
+
+public:
+    // intentionally undocumented. Necessary for serialization of Sawyer::Container::Graph
+    CfgVertex()
+        : type_(V_USER_DEFINED), startVa_(0) {}
+    
 public:
     /** Construct a basic block placeholder vertex. */
     explicit CfgVertex(rose_addr_t startVa): type_(V_BASIC_BLOCK), startVa_(startVa) {}
@@ -146,6 +165,17 @@ class CfgEdge {
 private:
     EdgeType type_;
     Confidence confidence_;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & type_ & confidence_;
+    }
+#endif
+
 public:
     CfgEdge(): type_(E_NORMAL), confidence_(ASSUMED) {}
     /*implicit*/ CfgEdge(EdgeType type, Confidence confidence=ASSUMED): type_(type), confidence_(confidence) {}

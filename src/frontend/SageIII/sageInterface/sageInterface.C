@@ -8895,6 +8895,18 @@ SgSwitchStatement* SageInterface::findEnclosingSwitch(SgStatement* s) {
   return isSgSwitchStatement(s);
 }
 
+//! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly. 
+SgOmpClauseBodyStatement* SageInterface::findEnclosingOmpClauseBodyStatement(SgStatement* s) {
+  while (s && !isSgOmpClauseBodyStatement(s)) {
+    s = isSgStatement(s->get_parent());
+  }
+  // ROSE_ASSERT (s); // s is allowed to be NULL.
+  if (s==NULL)
+    return NULL; 
+  return isSgOmpClauseBodyStatement(s);
+}
+
+
 SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::string& label, bool stopOnSwitches) {
   /* label can represent a fortran label or a java label provided as a label in a continue/break statement */
   for (; s; s = isSgStatement(s->get_parent())) {
@@ -9940,7 +9952,13 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   // C/C++ case ------------------------------
   SgForStatement* fs = isSgForStatement(loop);
-  ROSE_ASSERT (fs != NULL);
+  if (fs == NULL)
+  {
+    return NULL;  
+  }
+  // we only handle C/C++ for loops and Fortran Do loops.
+  // Any other kinds of loops (while, do-while,etc.) are skipped and return NULL; 
+  // ROSE_ASSERT (fs != NULL);
 
   //Check initialization statement is something like i=xx;
   SgStatementPtrList & init = fs->get_init_stmt();
@@ -10308,9 +10326,37 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
       incr_var = isSgVarRefExp(SkipCasting(isSgUnaryOp(incr)->get_operand()));
       stepast = buildIntVal(1); // will this dangling SgNode cause any problem?
       break;
+    case V_SgAssignOp: { // cases : var + incr, var - incr, incr + var (not allowed: incr-var)
+      incr_var=isSgVarRefExp(SkipCasting(isSgBinaryOp(incr)->get_lhs_operand()));
+      if(incr_var == NULL)
+        return false;
+      SgAddOp* addOp=isSgAddOp(SkipCasting(isSgBinaryOp(incr)->get_rhs_operand()));
+      SgSubtractOp* subtractOp=isSgSubtractOp(SkipCasting(isSgBinaryOp(incr)->get_rhs_operand()));
+      SgBinaryOp* arithOp=0;
+      if(addOp)
+        arithOp=addOp;
+      else if(subtractOp)
+        arithOp=subtractOp;
+      else
+        return false;
+      ROSE_ASSERT(arithOp!=0);
+      if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_lhs_operand()))) {
+        // cases : var + incr, var - incr
+        incr_var=varRefExp;
+        stepast=isSgBinaryOp(incr)->get_rhs_operand();
+      } else if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_rhs_operand()))) {
+        if(isSgAddOp(arithOp)) {
+          // case : incr + var (not allowed: incr-var)
+          incr_var=varRefExp;
+          stepast=isSgBinaryOp(incr)->get_lhs_operand();
+        }
+      }
+      break;
+    } // end of V_AssignOp
     default:
       return false;
   }
+
   if (incr_var == NULL)
     return false;
   if (incr_var->get_symbol() != ivarname->get_symbol_from_symbol_table ())

@@ -17,6 +17,14 @@
 # include <unistd.h>                                    // for access()
 #endif
 
+// This is the other half of the BOOST_CLASS_EXPORT_KEY from the header file.
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::AllocatingBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::MappedBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::NullBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::StaticBuffer);
+#endif
+
 using namespace rose;
 using namespace rose::Diagnostics;
 
@@ -673,6 +681,28 @@ MemoryMap::findSequence(const AddressInterval &interval, const std::vector<uint8
         }
     }
     return Sawyer::Nothing();
+}
+
+bool
+MemoryMap::shrinkUnshare() {
+    bool success = true;
+    BOOST_FOREACH (MemoryMap::Node &node, nodes()) {
+        const AddressInterval &interval = node.key();
+        MemoryMap::Segment &segment = node.value();
+        if (const uint8_t *data = segment.buffer()->data()) {
+            // Create a new buffer for this segment, copying the old data
+            Buffer::Ptr buf = AllocatingBuffer::instance(interval.size());
+            if (buf->write(data, 0, interval.size()) != interval.size()) {
+                success = false;
+            } else {
+                segment.offset(0);
+                segment.buffer(buf);
+            }
+        } else {
+            success = false;
+        }
+    }
+    return success;
 }
 
 void

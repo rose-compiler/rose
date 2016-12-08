@@ -34,6 +34,10 @@ public:
       _op(op)
   {}
 
+// DQ (12/6/2016): Added explicit virtual destructor to eliminate warning: -Wdelete-non-virtual-dtor
+  /** @brief destructor */
+   virtual ~exprAnn() {}
+
   /** @brief Operator */
 
   inline Broadway::Operator op() const { return _op; }

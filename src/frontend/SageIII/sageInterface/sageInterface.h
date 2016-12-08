@@ -1291,8 +1291,9 @@ T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* sc
              }
             else // Liao 2/9/2010. We should allow NULL scope
              {
-               SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
 #if 0
+            // DQ (12/6/2016): Include this into the debugging code to aboid compiler warning about unused variable.
+               SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
                printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table() = %p \n",symbol);
                printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table()->get_name() = %s \n",symbol->get_name().str());
 #endif
@@ -1584,6 +1585,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 
   //! Find the closest switch outside a given statement (normally used for case and default statements)
   ROSE_DLL_API SgSwitchStatement* findEnclosingSwitch(SgStatement* s);
+
+  //! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly. 
+  ROSE_DLL_API SgOmpClauseBodyStatement* findEnclosingOmpClauseBodyStatement(SgStatement* s);
 
   //! Find the closest loop outside the given statement; if fortranLabel is not empty, the Fortran label of the loop must be equal to it
   ROSE_DLL_API SgScopeStatement* findEnclosingLoop(SgStatement* s, const std::string& fortranLabel = "", bool stopOnSwitches = false);

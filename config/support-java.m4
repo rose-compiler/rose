@@ -212,6 +212,22 @@ if test "x$USE_JAVA" = x1; then
   AC_DEFINE([USE_ROSE_INTERNAL_JAVA_SUPPORT],[],[Controls use of ROSE support for Java.])
 fi
 
+# DQ (12/6/2016): In MAC OSX set the LDFLAGS to include the rpath.
+# LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/jre/lib/server"
+# AC_SUBST([SWI_PROLOG_LDADD], ["-L'$PLBASE/lib/$PLARCH' -Wl,-rpath '$PLBASE/lib/$PLARCH' $PLLIB $PLLIBS"])
+# MAPLE_LIBS="-Wl,-rpath,/usr/lib -lmaplec $MAPLE_EXTRA_LIBS"
+# LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/jre/lib/server $LDFLAGS"
+
+# AM_COND_IF([OS_MACOSX],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/darwin"],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"])
+AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/jre/lib/server $LDFLAGS"],[])
+
+echo "In support-java: build_os = $build_os"
+echo "In support-java: LDFLAGS = $LDFLAGS"
+echo "In support-java: OS_MACOSX = $OS_MACOSX"
+
+# echo "In support-java: Exiting as a test!"
+# exit 1
+
 # DQ (11/3/2010): added test for if jni is available by default.  If this passes then 
 # it is because it is in the compiler's include directly and so it is most likely the
 # wrong jni.h (e.g. from GNU's Java, instead of the Java in $JAVA_PATH.  So if this

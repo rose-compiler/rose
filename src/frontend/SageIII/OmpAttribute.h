@@ -1,3 +1,5 @@
+#ifndef OmpAttribute_h
+#define OmpAttribute_h 
 /*!
  * ROSE persistent attribute to represent OpenMP 3.0 C/C++/Fortran directives
  * in the OpenMP parser 
@@ -16,6 +18,9 @@
 #include <cassert>
 #include <vector>
 class SgNode;
+/** Types and functions to support OpenMP
+*
+*  OpenMP specific data types and functions are put into this namespace */
 namespace OmpSupport
 {
   // OpenMP construct name list
@@ -268,7 +273,7 @@ namespace OmpSupport
       }
   };                      
 
-  // One attribute object stores all information within an OpenMP pragma (directive and clauses)
+  //! One attribute object stores all information within an OpenMP pragma (directive and clauses)
   class ROSE_DLL_API OmpAttribute
   {
     public:
@@ -504,3 +509,5 @@ namespace OmpSupport
 
 
 } //end namespace OmpSupport
+
+#endif

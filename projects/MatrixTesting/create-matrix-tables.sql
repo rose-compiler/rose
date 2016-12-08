@@ -151,8 +151,8 @@ insert into dependencies values ('edg',          '4.4',              0);
 insert into dependencies values ('edg',          '4.7',              0);
 insert into dependencies values ('edg',          '4.8',              0);
 insert into dependencies values ('edg',          '4.9',              1);
-insert into dependencies values ('edg',		 '4.11',	     1);
-insert into dependencies values ('edg', 	 '4.12'		     1);
+insert into dependencies values ('edg',          '4.11',             1);
+insert into dependencies values ('edg',          '4.12'              1);
 
 -- libmagic version numbers or "system" or "none"
 insert into dependencies values ('magic',        'none',             1);
@@ -237,6 +237,7 @@ create table test_results (
     rmc_debug           varchar(64) default 'unknown',
     rmc_dlib            varchar(64) default 'unknown',
     rmc_doxygen         varchar(64) default 'unknown',
+    rmc_dwarf           varchar(64) default 'unknown',
     rmc_edg             varchar(64) default 'unknown',
     rmc_java            varchar(64) default 'unknown',
     rmc_languages       varchar(64) default 'unknown',
