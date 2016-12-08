@@ -1976,7 +1976,14 @@ private:
  *
  *  This namespace exists so that users can say <code>using namespace Sawyer::Message::Common</code> to be able to use the most
  *  important message types without name qualification and without also bringing in all the things that are less frequently
- *  used.  In particular, this does not include Sawyer::Message::mlog since users often name their own facilities "mlog". */
+ *  used.
+ *
+ *  @li The message importance levels: @ref Message::DEBUG "DEBUG", @ref Message::TRACE "TRACE", @ref Message::WHERE "WHERE",
+ *      @ref Message::MARCH "MARCH", @ref Message::INFO "INFO", @ref Message::WARN "WARN", @ref Message::ERROR "ERROR",
+ *      and @ref Message::FATAL "FATAL".
+ *  @li The types @ref Message::Stream "Stream", @ref Message::Facility "Facility", and @ref Message::Facilities "Facilities".
+ *
+ *  In particular, this does not include @ref Sawyer::Message::mlog since users often name their own facilities "mlog". */
 namespace Common {
 
 using Message::DEBUG;

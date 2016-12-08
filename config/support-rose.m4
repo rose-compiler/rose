@@ -180,6 +180,9 @@ fi
 GCC_VERSION=`gcc -dumpversion | cut -d\. -f1`
 GCC_MINOR_VERSION=`gcc -dumpversion | cut -d\. -f2`
 
+echo "Initial compiler version test: GCC_VERSION = $GCC_VERSION"
+echo "Initial compiler version test: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+
 AC_SUBST(GCC_VERSION)
 AC_SUBST(GCC_MINOR_VERSION)
 
@@ -276,9 +279,12 @@ if test "x$enable_internalFrontendDevelopment" = "xyes"; then
 # AC_DEFINE([ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT], [], [Whether to use internal reduced mode to support integration of the new EDG version 4.x])
 fi
 
+# This is the support for using EDG as the frontend in ROSE.
 ROSE_SUPPORT_EDG
 
+# This is the support for using Clang as a frontend in ROSE not the support for Clang as a compiler to compile ROSE source code.
 ROSE_SUPPORT_CLANG
+
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -376,7 +382,7 @@ AC_CANONICAL_HOST
 # *****************************************************************
 
 # DQ (12/3/2016): Added support for specification of specific warnings a for those specific warnings to be treated as errors.
-ROSE_SUPPORT_FATAL_WARNINGS
+# ROSE_SUPPORT_FATAL_WARNINGS
 
 # *****************************************************************
 
@@ -540,6 +546,15 @@ unset ax_cv_cxx_compiler_vendor
 
   CXX=$saved_compiler_name
   echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
+
+echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+
+# *****************************************************************
+
+# DQ (12/7/2016): Added support for specification of specific warnings a for those specific warnings to be treated as errors.
+ROSE_SUPPORT_FATAL_WARNINGS
+
+# *****************************************************************
 
 # echo "Exiting in support-rose after computing the compiler vendor name for the C and C++ compilers."
 # exit 1
