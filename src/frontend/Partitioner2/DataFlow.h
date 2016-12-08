@@ -203,7 +203,9 @@ public:
     BaseSemantics::StatePtr operator()(const DfCfg&, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const;
 };
 
-/** Computes the meet of two states, merging the source state into the destination state and returning true iff the destination
+/** Data-flow merge function.
+ *
+ *  Computes the meet of two states, merging the source state into the destination state and returning true iff the destination
  *  state changed. */
 typedef rose::BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
 
