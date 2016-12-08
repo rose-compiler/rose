@@ -314,6 +314,9 @@ namespace CodeThorn {
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     bool _topifyModeActive;
+    bool _explicitArrays;
+
+    // loop-aware mode
     int _swapWorkListsCount; // currently only used for debugging purposes
 
     int _iterations;

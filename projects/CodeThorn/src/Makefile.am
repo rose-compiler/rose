@@ -547,6 +547,10 @@ check-local:
 	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results
 	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
 
+check-arrays:
+	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+
+
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 	./ast_demo $(srcdir)/tests/basictest5.C

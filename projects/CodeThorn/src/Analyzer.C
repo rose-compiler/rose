@@ -645,7 +645,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         return createEState(targetLabel,newPState,cset);
       }
 
-      if(variableIdMapping.isConstantArray(initDeclVarId) && boolOptions["rersmode"]) {
+      if(variableIdMapping.hasArrayType(initDeclVarId) && boolOptions["explicit-arrays"]==false) {
         // in case of a constant array the array (and its members) are not added to the state.
         // they are considered to be determined from the initializer without representing them
         // in the state
@@ -677,7 +677,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
             newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
           } else {
-            // logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+            logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
             exit(1);
           }
           elemIndex++;
@@ -914,7 +914,7 @@ list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
     // handle assert(0)
     return elistify(createFailedAssertEState(currentEState,edge.target()));
   } else if(edge.isType(EDGE_CALL)) {
-    return transferFunctionCall(edge,estate); // xxx
+    return transferFunctionCall(edge,estate);
   } else if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
     // "return x;": add $return=eval() [but not for "return f();"]
     return transferReturnStmt(edge,estate);
@@ -3283,9 +3283,10 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         // TODO: remove constraints on array-element(s) [currently no constraints are computed for arrays]
         estateList.push_back(createEState(edge.target(),oldPState,oldcset));
       } else {
-        logger[ERROR] <<"lhs array-access not supported yet."<<endl;
-        exit(1);
-        if(SgVarRefExp* varRefExp=isSgVarRefExp(lhs)) {
+        //logger[TRACE] <<"lhs array-access ... "<<AstTerm::astTermWithNullValuesToString(lhs)<<endl;
+        SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(lhs));
+        SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(lhs));
+        if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
           PState pstate2=oldPState;
           VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
           // two cases
@@ -3317,12 +3318,16 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             exit(1);
           }
           VariableId arrayElementId;
-          AValue aValue=(*i).value();
+          //AValue aValue=(*i).value();
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true,true);
+          ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
+          AValue aValue=(*(res.begin())).value();
+
           int index=-1;
           if(aValue.isConstInt()) {
             index=aValue.getIntValue();
             arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
-            // logger[DEBUG]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
+            //logger[TRACE]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
           } else {
             logger[ERROR] <<"lhs array index cannot be evaluated to a constant. Not supported yet."<<endl;
             logger[ERROR] <<"expr: "<<varRefExp->unparseToString()<<endl;
@@ -3334,6 +3339,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           if(pstate2.varExists(arrayElementId)) {
             // TODO: handle constraints
             pstate2[arrayElementId]=(*i).value(); // *i is assignment-rhs evaluation result
+            estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           } else {
             // check that array is constant array (it is therefore ok that it is not in the state)
             logger[ERROR] <<"Error: lhs array-access index does not exist in state."<<endl;
