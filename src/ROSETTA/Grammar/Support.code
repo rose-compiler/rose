@@ -4981,7 +4981,11 @@ HEADER_QUALIFIED_NAME_END
 HEADER_ATTRIBUTE_START
        // SgAttribute(char* str);
           int isSame(const std::string& str);
-          virtual bool isPragma() { return 0; } // MS02/22/02
+
+       // DQ (12/6/2016): This needs to match being const as in the derived class (this also eliminates a compiler warning).
+       // virtual bool isPragma() { return 0; } // MS02/22/02
+          virtual bool isPragma() const { return 0; }
+
        // char *get_name() const;
 
       protected:
@@ -15243,6 +15247,11 @@ X aggressive
 
   // DQ (12/23/2015): Suppress variable declaration normalizations
      p_suppress_variable_declaration_normalization = false;
+
+  // Matzke (12/05/2016): Added missing initialization
+     p_frontendErrorCode = 0;
+     p_unparserErrorCode = 0;
+     p_backendCompilerErrorCode = 0;
    }
 
 #if 0
@@ -16294,6 +16303,12 @@ void
 SgProject::initialization()
    {
   // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
+
+  // Matzke (12/06/2016): Added missing initializations identified by valgrind and code inspection
+     p_javacErrorCode = 0;
+     p_ecjErrorCode = 0;
+     p_midendErrorCode = 0;
+     p_openmp_linking = false;
 
   // DQ (11/10/2016): Added initialization for keep_going data member and otehr data members that appear to be missing.
      p_keep_going                   = false;
