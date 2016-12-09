@@ -192,8 +192,9 @@ endif
 
 # Cleanup
 MOSTLYCLEANFILES += EDG/libroseEDG.la
+endif
+
 clean-local:
 	rm -rf EDG/.libs $(EDGBIN_NAME_PREFIX)-*.tar.gz
-endif
 
 .PHONY: $(PHONIES)

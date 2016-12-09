@@ -545,6 +545,9 @@ class Grammar
        // MS: build Variants for use in tree traversal (access with getVariantT())
           std::string buildVariantEnums();
 
+       // Build functions for boost::serialization support
+          void buildSerializationSupport(std::ostream &decls, std::ostream &defns, const std::string &headerName);
+
        // PC: build ReferenceToPointerHandler and related classes
           std::string buildReferenceToPointerHandlerCode();
 

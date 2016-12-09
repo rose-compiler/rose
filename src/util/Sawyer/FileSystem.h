@@ -31,22 +31,30 @@ private:
     TemporaryFile& operator=(const TemporaryFile&) { ASSERT_not_reachable("no assignment operator"); }
 
 public:
+    /** Create a temporary file in the system temp directory. */
     TemporaryFile() {
         name_ = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
         stream_.open(name_.native().c_str());
     }
 
+    /** Create a temporary file with the specified name. */
     explicit TemporaryFile(const boost::filesystem::path &name) {
         name_ = name;
         stream_.open(name.native().c_str());
     }
 
+    /** Unlink the temporary file from the filesystem.
+     *
+     *  This also closes the stream if it's open. */
     ~TemporaryFile() {
         stream_.close();
         boost::filesystem::remove(name_);
     }
 
+    /** Path of temporary file. */
     const boost::filesystem::path& name() const { return name_; }
+
+    /** Output stream for temporary file. */
     std::ofstream& stream() { return stream_; }
 };
 
@@ -63,17 +71,41 @@ private:
     TemporaryDirectory& operator=(const TemporaryDirectory&) { ASSERT_not_reachable("no assignment operator"); }
 
 public:
-    explicit TemporaryDirectory(const boost::filesystem::path &name =
-                                boost::filesystem::temp_directory_path() / boost::filesystem::unique_path())
-        : name_(name) {
-        boost::filesystem::create_directory(name_);
+    /** Create a temporary subdirectory in the system's temp directory.
+     *
+     *  The directory is recursively unlinked from the filesystem when this object is destroyed. */
+    TemporaryDirectory()
+        : name_(boost::filesystem::temp_directory_path() / boost::filesystem::unique_path()) {
+        createOrThrow();
     }
 
+    /** Create a temporary directory with the specified name.
+     *
+     *  Creates the specified directory. Parent directories must already exist. The directory is recursively unlinked from the
+     *  filesystem when this object is destroyed. */
+    explicit TemporaryDirectory(const boost::filesystem::path &name)
+        : name_(name) {
+        createOrThrow();
+    }
+
+    /** Recursively unlink the temporary directory.
+     *
+     *  This destructor recursively unlinks the directory and its contents from the filesystem, but does not remove any parent
+     *  directories even if they would become empty. */
     ~TemporaryDirectory() {
         boost::filesystem::remove_all(name_);
     }
 
+    /** Path of temporary directory. */
     const boost::filesystem::path& name() const { return name_; }
+
+private:
+    // Create directory or throw exception
+    void createOrThrow() {
+        boost::system::error_code ec;
+        if (!boost::filesystem::create_directory(name_, ec))
+            throw boost::filesystem::filesystem_error("cannot create directory", name_, ec);
+    }
 };
 
 } // namespace

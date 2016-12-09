@@ -26,8 +26,6 @@ SgAsmType::get_nBytes() const {
 //                                      SgAsmScalarType
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Construct a new scalar type.  Since scalar types are base classes, one normally does not construct just a scalar type but
- *  rather one of the base classes. */
 SgAsmScalarType::SgAsmScalarType(ByteOrder::Endianness sex, size_t nBits)
     : p_minorOrder(sex), p_majorOrder(ByteOrder::ORDER_UNSPECIFIED), p_majorNBytes(0), p_nBits(nBits) {
     check();
@@ -120,7 +118,6 @@ SgAsmIntegerType::get_isSigned() const {
 //                                      SgAsmFloatType
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Construct a new floating-point type. */
 SgAsmFloatType::SgAsmFloatType(ByteOrder::Endianness sex, size_t nBits,
                                const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
                                uint64_t exponentBias, unsigned flags)
@@ -203,7 +200,6 @@ SgAsmFloatType::normalizedSignificand() const {
 //                                      SgAsmVectorType
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Construct a new vector type. */
 SgAsmVectorType::SgAsmVectorType(size_t nElmts, SgAsmType *elmtType): p_nElmts(nElmts), p_elmtType(elmtType) {
     check();
 }

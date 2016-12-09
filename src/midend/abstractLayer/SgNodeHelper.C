@@ -1125,7 +1125,7 @@ SgNode* SgNodeHelper::getParent(SgNode* node) {
  */
 bool SgNodeHelper::isLoopCond(SgNode* node) {
   SgNode* parent=node->get_parent();
-  if(isSgWhileStmt(parent)||isSgDoWhileStmt(parent)||isSgForStatement(parent))
+  if(isLoopStmt(parent))
     return SgNodeHelper::getCond(parent)==node && node!=0;
   else
     return false;
@@ -1135,14 +1135,37 @@ bool SgNodeHelper::isLoopCond(SgNode* node) {
   * \author Markus Schordan
   * \date 2012.
  */
+bool SgNodeHelper::isLoopStmt(SgNode* node) {
+  return isSgWhileStmt(node)||isSgDoWhileStmt(node)||isSgForStatement(node);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool SgNodeHelper::isCond(SgNode* node) {
   SgNode* parent=node->get_parent();
-  if(isSgIfStmt(parent)||isSgWhileStmt(parent)||isSgDoWhileStmt(parent)||isSgForStatement(parent)||isSgConditionalExp(parent)||isSgSwitchStatement(parent))
+  if(isCondStmtOrExpr(parent))
     return SgNodeHelper::getCond(parent)==node && node!=0;
   else
     return false;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2016.
+ */
+bool SgNodeHelper::isCondStmt(SgNode* node) {
+  return isSgIfStmt(node)||isSgWhileStmt(node)||isSgDoWhileStmt(node)||isSgForStatement(node)||isSgSwitchStatement(node);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2016.
+ */
+bool SgNodeHelper::isCondStmtOrExpr(SgNode* node) {
+  return isCondStmt(node)||isSgConditionalExp(node);
+}
 
 /*! 
   * \author Markus Schordan
@@ -1215,24 +1238,44 @@ bool SgNodeHelper::isForIncExpr(SgNode* node) {
 SgNode* SgNodeHelper::getCond(SgNode* node) {
   if(SgConditionalExp*  condexp=isSgConditionalExp(node)) {
     return condexp->get_conditional_exp();
-  }
-  if(SgIfStmt* ifstmt=isSgIfStmt(node)) {
+  } else if(SgIfStmt* ifstmt=isSgIfStmt(node)) {
     return ifstmt->get_conditional();
-  }
-  if(SgWhileStmt* whilestmt=isSgWhileStmt(node)) {
+  } else if(SgWhileStmt* whilestmt=isSgWhileStmt(node)) {
     return whilestmt->get_condition();
-  }
-  if(SgDoWhileStmt* dowhilestmt=isSgDoWhileStmt(node)) {
+  } else if(SgDoWhileStmt* dowhilestmt=isSgDoWhileStmt(node)) {
     return dowhilestmt->get_condition();
-  }
-  if(SgForStatement* forstmt=isSgForStatement(node)) {
+  } else if(SgForStatement* forstmt=isSgForStatement(node)) {
     return forstmt->get_test();
-  }
-  if(SgSwitchStatement* switchstmt=isSgSwitchStatement(node)) {
+  } else if(SgSwitchStatement* switchstmt=isSgSwitchStatement(node)) {
     return switchstmt->get_item_selector();
+  } else {
+    throw SPRAY::Exception("SgNodeHelper::getCond: improper node operation.");
   }
+}
 
-  throw SPRAY::Exception("SgNodeHelper::getCond: improper node operation.");
+/*! 
+  * \author Markus Schordan
+  * \date 2016.
+ */
+void SgNodeHelper::setCond(SgStatement* stmt, SgNode* cond) {
+  if(SgStatement* stmtCond=isSgStatement(cond)) {
+    if(SgIfStmt* ifstmt=isSgIfStmt(stmt)) {
+      return ifstmt->set_conditional(stmtCond);
+    } else if(SgWhileStmt* whilestmt=isSgWhileStmt(stmt)) {
+      return whilestmt->set_condition(stmtCond);
+    } else if(SgDoWhileStmt* dowhilestmt=isSgDoWhileStmt(stmt)) {
+      return dowhilestmt->set_condition(stmtCond);
+    } else if(SgForStatement* forstmt=isSgForStatement(stmt)) {
+      return forstmt->set_test(stmtCond);
+    } else if(SgSwitchStatement* switchstmt=isSgSwitchStatement(stmt)) {
+      return switchstmt->set_item_selector(stmtCond);
+    } else {
+      throw SPRAY::Exception("SgNodeHelper::setCond: improper node operation (unknown branching construct).");
+    }
+  } else {
+    cerr<<"Error: ConditionType: node type: "<<cond->class_name()<<endl;
+    throw SPRAY::Exception("SgNodeHelper::setCond: improper node operation (wrong condition type).");
+  }
 }
 
 string SgNodeHelper::unparseCond(SgNode* cond) {

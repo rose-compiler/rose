@@ -190,7 +190,11 @@ namespace RoseHPCT
     virtual std::string toString() const;
    protected:
     IRNode (void): hasMatchedSgNode(false) {}
-    IRNode (const std::string& name) : hasMatchedSgNode (false), Named (name)  { }
+
+ // DQ (12/6/2016): Eliminate warning we want to consider as error: -Wreorder.
+ // IRNode (const std::string& name) : hasMatchedSgNode (false), Named (name)  { }
+    IRNode (const std::string& name) : Named (name), hasMatchedSgNode (false)  { }
+
     virtual ~IRNode (void) {}
   };
 

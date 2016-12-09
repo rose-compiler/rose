@@ -51,8 +51,7 @@ void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          mlog = Sawyer::Message::Facility("FixupAstSymbolTablesToSupportAliasedSymbols", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+          rose::Diagnostics::initAndRegister(mlog, "rose::FixupAstSymbolTablesToSupportAliasedSymbols");
         }
    }
 
@@ -628,7 +627,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                  else
                   {
                  // DQ (7/24/2011): get_nextNamespaceDefinition() == NULL is false in the case of the AST copy tests 
-                 // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
+                 // (see tests/nonsmoke/functional/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
                  // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
                     namespaceDefinition->set_nextNamespaceDefinition(NULL);
                     namespaceDefinition->set_previousNamespaceDefinition(NULL);
@@ -638,7 +637,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                   }
 #else
             // DQ (7/24/2011): get_nextNamespaceDefinition() == NULL is false in the case of the AST copy tests 
-            // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
+            // (see tests/nonsmoke/functional/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
             // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
                namespaceDefinition->set_nextNamespaceDefinition(NULL);
                namespaceDefinition->set_previousNamespaceDefinition(NULL);

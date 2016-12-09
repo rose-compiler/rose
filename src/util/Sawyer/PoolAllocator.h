@@ -163,7 +163,9 @@ private:
         Pool(const Pool&);                              // nonsense
 
     public:
-        Pool(): cellSize_(0) {}
+        Pool(): cellSize_(0) {
+            memset(freeLists_, 0, sizeof freeLists_);
+        }
 
         void init(size_t cellSize) {
             assert(cellSize_ == 0);

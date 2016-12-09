@@ -1463,7 +1463,7 @@ public:
     // We'd like bool context to return a value that can't be used in arithmetic or comparison operators, but unfortunately
     // we need to also work with the super class (std::basic_ios) that has an implicit "void*" conversion which conflicts with
     // the way Sawyer normally handles this (see SharedPointer for an example).  We therefore override the super-class'
-    // void* conversion and "!" operator instead.
+    // void* conversion and "!" operator instead. We also need to override operator bool if there is one.
 
     /** Returns true if this stream is enabled.
      *
@@ -1488,6 +1488,11 @@ public:
     }
 #if __cplusplus >= 201103L
     explicit operator bool() const {
+        return enabled();
+    }
+#else
+    // Needed on macOS
+    operator bool() const {
         return enabled();
     }
 #endif
@@ -1971,7 +1976,14 @@ private:
  *
  *  This namespace exists so that users can say <code>using namespace Sawyer::Message::Common</code> to be able to use the most
  *  important message types without name qualification and without also bringing in all the things that are less frequently
- *  used.  In particular, this does not include Sawyer::Message::mlog since users often name their own facilities "mlog". */
+ *  used.
+ *
+ *  @li The message importance levels: @ref Message::DEBUG "DEBUG", @ref Message::TRACE "TRACE", @ref Message::WHERE "WHERE",
+ *      @ref Message::MARCH "MARCH", @ref Message::INFO "INFO", @ref Message::WARN "WARN", @ref Message::ERROR "ERROR",
+ *      and @ref Message::FATAL "FATAL".
+ *  @li The types @ref Message::Stream "Stream", @ref Message::Facility "Facility", and @ref Message::Facilities "Facilities".
+ *
+ *  In particular, this does not include @ref Sawyer::Message::mlog since users often name their own facilities "mlog". */
 namespace Common {
 
 using Message::DEBUG;

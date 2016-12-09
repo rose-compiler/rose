@@ -89,6 +89,13 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
              OS_release="";;
           esac
       fi
+
+    # DQ (12/3/2016): Added debugging info for Mac OSX support.
+      echo "OS_vendor = $OS_vendor"
+      echo "OS_release = $OS_release"
+    # echo "Exiting after getting the OS_release."
+    # exit 1;
+
   else
       OS_vendor=`lsb_release -is`
       OS_release=`lsb_release -rs`

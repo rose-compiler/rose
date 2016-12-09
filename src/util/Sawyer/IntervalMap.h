@@ -14,6 +14,8 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
 
+#include <boost/serialization/access.hpp>
+
 namespace Sawyer {
 namespace Container {
 
@@ -42,6 +44,15 @@ public:
     typedef I Interval;
     typedef T Value;
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        // nothing to serialize in this class
+    }
+
+public:
     /** Merge two values if possible.
      *
      *  The @p rightValue is merged into the @p leftValue if possible, or this method returns false without changing either
@@ -203,6 +214,16 @@ private:
     Map map_;
     Policy policy_;
     typename Interval::Value size_;                     // number of values (map_.size is number of intervals)
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & map_;
+        s & policy_;
+        s & size_;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -871,7 +892,7 @@ public:
 
     template<typename T2, class Policy2>
     bool isOverlapping(const IntervalMap<Interval, T2, Policy2> &other) const {
-        return findFirstOverlap(other).first!=nodes().end();
+        return findFirstOverlap(nodes().begin(), other, other.nodes().begin()).first != nodes().end();
     }
 
     bool isDistinct(const Interval &interval) const {

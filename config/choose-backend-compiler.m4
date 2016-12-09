@@ -43,6 +43,8 @@ dnl build using ROSE)
       echo "default back-end C compiler for generated translators to use: $BACKEND_C_COMPILER"
     ])
 
+echo "Testing value of FC = $FC"
+
 # DQ (10/3/2008): Added option to specify backend fortran compiler
   AC_ARG_WITH(alternate_backend_fortran_compiler,
     [  --with-alternate_backend_fortran_compiler=<compiler name>
@@ -99,12 +101,94 @@ dnl build using ROSE)
 
    # exit 1
   else
-    echo "Else case not using Clang (choose backend compiler)"
-    BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
-    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
 
-    echo "     (non-clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
-    echo "     (non-clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+  # DQ (12/3/2016): Note that even if the bckend compiler is specified to be GNU, on a Mac OSX system this will be clang.
+  # So we can trigger behavior based on the backend compiler name direcltly when on an OSX system.
+    if test "x$OS_vendor" = xapple; then
+
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getClangMajorVersionNumber.sh`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getClangMinorVersionNumber.sh`
+
+        echo "     (g++ but really clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+        echo "     (g++ but really clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+
+      # On an OSX system, the version of Clang is not clear since the "--version" option will report the 
+      # version number of XCode (not clang).  So either we map from the version of the OS to the version 
+      # of Clang used in it's version of XCode, or we map from the version of XCode (defined by the current 
+      # values of (CXX_VERSION_MAJOR,CXX_VERSION_MINOR, and CXX_VERSION_PATCH).  Below I have used the 
+      # version of the OS, but I'm not certain that is the best solution.  Perhaps we can asset that
+      # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
+      # of Clang version number, or take it directly from the XCode version number if that is a better solution.
+
+        XCODE_VERSION_MAJOR=$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER
+        XCODE_VERSION_MINOR=$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
+        XCODE_VERSION_PATCH=$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER
+
+      # I think the clange versions all have patch level equal to zero.
+        BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+
+        if test $XCODE_VERSION_MAJOR -eq 7; then
+
+          # The versions of Clang all depend upon the minor version number of XCode (for major version number equal to 7).
+            BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+            case "$XCODE_VERSION_MINOR" in
+                0)
+                    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=7
+                    ;;
+                3)
+                    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+                    ;;
+                *)
+                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
+                    ;;
+            esac
+        else
+            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR."
+            exit 1
+        fi
+
+#      # Note "build_os" is a variable determined by autoconf.
+#        case $build_os in
+#            darwin13*)
+#              # This is Mac OSX version 10.9 (not clear on what version of clang this maps to via XCode)
+#                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+#                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=6
+#                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+#                ;;
+#            darwin14*)
+#              # This is Mac OSX version 10.10 (not clear on what version of clang this maps to via XCode)
+#                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+#                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+#                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+#                ;;
+#            darwin15*)
+#              # This is Mac OSX version 10.11
+#                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+#                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+#                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+#                ;;
+#            *)
+#                echo "Error: Apple Mac OSX version not recognized as either darwin13, 14, or darwin15 ... (build_os = $build_os)";
+#                exit 1;
+#        esac
+
+      # DQ (12/3/2016): Added debugging for LLVM on MACOSX.
+        echo "compilerVendorName = $compilerVendorName"
+        echo "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+        echo "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+        echo "BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER = $BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER"
+
+      # echo "Detected use of GNU backend compiler name on Mac OSX system"
+      # exit 1
+
+    else
+        echo "Else case not using Clang (choose backend compiler)"
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+
+        echo "     (non-clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+        echo "     (non-clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+    fi
   # exit 1
   fi
 
@@ -223,6 +307,8 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.5+ of gfortran!"
         gfortran_version_later_4_5=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gfortran_version_later_4_5=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_LATER_4_5, [test "x$gfortran_version_later_4_5" = "xyes"])
 
@@ -233,6 +319,8 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.4+ of gfortran!"
         gfortran_version_later_4_4=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gfortran_version_later_4_4=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_LATER_4_4, [test "x$gfortran_version_later_4_4" = "xyes"])
 
@@ -243,6 +331,8 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.4+ of gcc!"
         gcc_version_later_4_4=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_4=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_4, [test "x$gcc_version_later_4_4" = "xyes"])
 
@@ -253,6 +343,8 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.5+ of gcc!"
         gcc_version_later_4_5=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_5=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_5, [test "x$gcc_version_later_4_5" = "xyes"])
 
@@ -263,18 +355,10 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.6+ of gcc!"
         gcc_version_later_4_6=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_6=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_6, [test "x$gcc_version_later_4_6" = "xyes"])
-
-# DQ (7/28/2014): GNU GCC 4.8 starts C11 support.
-  gcc_version_later_4_8=no
-  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
-     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "8"; then
-        echo "Note: we have identified version 4.8+ of gcc!"
-        gcc_version_later_4_8=yes
-     fi
-  fi
-  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_8, [test "x$gcc_version_later_4_8" = "xyes"])
 
 # DQ (8/15/2014): Added for more complete support of GNU GCC.
   gcc_version_later_4_7=no
@@ -283,18 +367,113 @@ dnl build using ROSE)
         echo "Note: we have identified version 4.7+ of gcc!"
         gcc_version_later_4_7=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_7=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_7, [test "x$gcc_version_later_4_7" = "xyes"])
 
+# DQ (7/28/2014): GNU GCC 4.8 starts C11 support.
+  gcc_version_later_4_8=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "8"; then
+        echo "Note: we have identified version 4.8+ of gcc!"
+        gcc_version_later_4_8=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_8=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_8, [test "x$gcc_version_later_4_8" = "xyes"])
+
 # DQ (7/28/2014): GNU GCC 4.9 adds more C11 support (we need this to control what tests are run).
   gcc_version_later_4_9=no
+# if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
   if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
      if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "9"; then
         echo "Note: we have identified version 4.9+ of gcc!"
         gcc_version_later_4_9=yes
      fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "4"; then
+        gcc_version_later_4_9=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_9, [test "x$gcc_version_later_4_9" = "xyes"])
+
+# DQ (11/9/2016): GNU GCC 5.2 adds more C14 support (we need this to control what tests are run).
+  gcc_version_later_5_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x5; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+        echo "Note: we have identified version 5.1+ of gcc!"
+        gcc_version_later_5_1=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "5"; then
+        gcc_version_later_5_1=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_5_1, [test "x$gcc_version_later_5_1" = "xyes"])
+
+  gcc_version_later_5_2=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x5; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "2"; then
+        echo "Note: we have identified version 5.2+ of gcc!"
+        gcc_version_later_5_2=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "5"; then
+        gcc_version_later_5_2=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_5_2, [test "x$gcc_version_later_5_2" = "xyes"])
+
+  gcc_version_later_5_3=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x5; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "3"; then
+        echo "Note: we have identified version 5.3+ of gcc!"
+        gcc_version_later_5_3=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "5"; then
+        gcc_version_later_5_3=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_5_3, [test "x$gcc_version_later_5_3" = "xyes"])
+
+  gcc_version_later_6_0=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "0"; then
+        echo "Note: we have identified version 6.0+ of gcc!"
+        gcc_version_later_6_0=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_0=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_0, [test "x$gcc_version_later_6_0" = "xyes"])
+
+  gcc_version_later_6_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+        echo "Note: we have identified version 6.1+ of gcc!"
+        gcc_version_later_6_1=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_1=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_1, [test "x$gcc_version_later_6_1" = "xyes"])
+
+  gcc_version_later_6_2=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "2"; then
+        echo "Note: we have identified version 6.2+ of gcc!"
+        gcc_version_later_6_2=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_2=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_2, [test "x$gcc_version_later_6_2" = "xyes"])
+
+  gcc_version_later_6_3=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "3"; then
+        echo "Note: we have identified version 6.3+ of gcc!"
+        gcc_version_later_6_3=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_3=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_3, [test "x$gcc_version_later_6_3" = "xyes"])
 
 # echo "Exiting after test of backend version number support ..."
 # exit 1

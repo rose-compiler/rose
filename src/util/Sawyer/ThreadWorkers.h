@@ -55,7 +55,7 @@ public:
      *  This constructor creates up to the specified number of worker threads to run the work described in the @p dependencies
      *  (at least one thread, but not more than the number of vertices in the graph). If @p nWorkers is zero then the system's
      *  hadware concurrency is used. If the dependency graph contains a cycle then as much work as possible is performed
-     *  and then a @ref ContainsCycle exception is thrown.
+     *  and then a @ref Exception::ContainsCycle "ContainsCycle" exception is thrown.
      *
      *  The dependency graph is copied into this class so that the class can modify it as tasks are completed.  The @p functor
      *  can be a class with @c operator(), a function pointer, or a lambda expression.  If a class is used, it must be copyable
@@ -132,8 +132,8 @@ public:
     /** Synchronously processes tasks.
      *
      *  This is simply a wrapper around @ref start and @ref wait.  It performs work synchronously, returning only after all
-     *  possible work has completed. If the dependency graph contained cycles then a @ref ContainsCycle exception is thrown
-     *  after all possible non-cyclic work is finished. */
+     *  possible work has completed. If the dependency graph contained cycles then a @ref Exception::ContainsCycle
+     *  "ContainsCycle" exception is thrown after all possible non-cyclic work is finished. */
     void run(const DependencyGraph &dependencies, size_t nWorkers, Functor functor) {
         start(dependencies, nWorkers, functor);
         wait();
@@ -249,11 +249,12 @@ private:
 
 /** Performs work in parallel.
  *
- *  Creates up to the specified number of worker threads to run the tasks described in the @p dependencies graph
- *  (at least one thread, but not more than the number of items on which to work).  The dependencies is a graph whose vertices
- *  represent individual tasks to be performed by worker threads, and whose edges represent dependencies between the task. An
- *  edge from task @em a to task @em b means that task @em b must complete before task @em a can begin.  If the dependencies
- *  graph contains cycles then as much work as possible is performed and then a @ref ContainsCycle exception is thrown.
+ *  Creates up to the specified number of worker threads to run the tasks described in the @p dependencies graph (at least one
+ *  thread, but not more than the number of items on which to work).  The dependencies is a graph whose vertices represent
+ *  individual tasks to be performed by worker threads, and whose edges represent dependencies between the task. An edge from
+ *  task @em a to task @em b means that task @em b must complete before task @em a can begin.  If the dependencies graph
+ *  contains cycles then as much work as possible is performed and then a @ref Exception::ContainsCycle "ContainsCycle"
+ *  exception is thrown.
  *
  *  The @p functor can be a class with @c operator(), a function pointer, or a lambda expression.  If a class is used, it must
  *  be copyable and each worker thread will be given its own copy.  The functor is invoked with two arguments: the ID number of
