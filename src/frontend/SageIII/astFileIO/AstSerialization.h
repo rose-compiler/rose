@@ -1,6 +1,8 @@
 #ifndef ROSE_AstSerialization_H
 #define ROSE_AstSerialization_H
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
 #include <Cxx_GrammarSerialization.h>                   // the compile-time generated support
 
 namespace rose {
@@ -19,6 +21,7 @@ namespace rose {
  *  second, a @c serialize function template needs to be defined. The @c serialize function always looks the same, namely:
  *
  *  @code
+ *  #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
  *  private:
  *      friend class boost::serialization::access;
  *
@@ -27,13 +30,18 @@ namespace rose {
  *          archive & boost::serialization::base_object<TheBaseClass>(*this);
  *          archive & p_member1 & p_member2 & ... ;
  *      }
+ *  #endif
  *  @endcode
  *
  *  where @c TheBaseClass is the Sage node class from which this node class is derived, and @c p_member1 etc. are the data
  *  members that should be saved and restored.
  *
  *  Also, the class must have a default constructor, although that constructor may be protected if it's not suitable for end
- *  users. */
+ *  users.
+ *
+ *  The ROSE_HAVE_BOOST_SERIALIZATION_LIB protection is because some serialization templates might reference symbols from the
+ *  optional boost_serialization library in a way that causes them to be required even if the template is never
+ *  instantiated. This was seen only with Boost version 1.61, so it may have been a boost bug. */
 template<class Archive>
 void saveAst(Archive &archive, SgNode *ast) {
     struct T1 {                                         // for exception safe clearing and restoring the root's parent
@@ -101,4 +109,5 @@ inline void serialize(Archive &archive, SgNode &node, const unsigned version) {
 } // namespace
 } // namespace
 
+#endif
 #endif

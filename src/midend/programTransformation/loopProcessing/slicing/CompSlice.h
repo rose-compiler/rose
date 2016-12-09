@@ -26,7 +26,9 @@ class CompSlice
  public:
   CompSlice( int level);
   CompSlice( const CompSlice& that);
-  ~CompSlice();
+
+// DQ (12/6/2016): Added virtual keyword to eliminate warning: -Wdelete-non-virtual-dtor
+  virtual ~CompSlice();
 
   virtual void Dump() const { std::cerr << toString() << std::endl;}
   std::string toString() const;
@@ -186,10 +188,15 @@ class CompSliceNest
   CompSliceNest(unsigned _maxsize = 0);
   ~CompSliceNest();
   int NumberOfEntries() const { return size; }
-  const CompSlice* Entry(int index) const 
+
+// DQ (12/6/2016): Make this an unsigned int.
+// const CompSlice* Entry(int index) const 
+  const CompSlice* Entry(unsigned index) const 
             { assert(index < size); return sliceVec[index]; }
-  const CompSlice* operator [] (int index) const 
+// const CompSlice* operator [] (int index) const 
+  const CompSlice* operator [] (unsigned index) const 
             { assert(index < size); return sliceVec[index]; }
+
   virtual void Dump() const  { std::cerr << toString() << std::endl; }
   std::string toString() const ;
 

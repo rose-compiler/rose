@@ -339,14 +339,20 @@ if [ ! -e "$srcdir/$SOME_ROSE_FILE" ]; then
     echo $ROSE_DISTRIBUTION >$srcdir/config/ROSE_SOURCES 2>/dev/null
 fi
 
-cat <<X
+cat <<EOF
 
-+-----------------------------------+
-| \$ROSE/build Terminated Normally!  |
-+-----------------------------------+
++---------------------------------------+
+| \$ROSE_BLD/build terminated normally.  |
++---------------------------------------+
 
-Now run \$ROSE/configure to generate a compilation directory with Makefiles.
+Now, create an empty build directory and within that
+directory run \$ROSE_SRC/configure to initialize your new
+build directory for "make". \$ROSE_SRC is the absolute
+path of your ROSE source tree.
+
+Full installation instructions can be found here:
+http://rosecompiler.org/ROSE_HTML_Reference/installation.html
 
 Thank you for using ROSE.
 
-X
+EOF
