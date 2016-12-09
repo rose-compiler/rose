@@ -9,6 +9,9 @@
 #include "AType.h"
 #include "SprayException.h"
 
+// log2
+#include <cmath> 
+
 // Author: Markus Schordan, 2014.
 
 /* represents one interval
@@ -256,6 +259,16 @@ class GenericIntervalLattice {
   static GenericIntervalLattice bitwiseShiftRight(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     GenericIntervalLattice l3=l1;
     l3.bitwiseShiftRight(l2);
+    return l3;
+  }
+  static GenericIntervalLattice bitwiseOr(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
+    l3.bitwiseOr(l2);
+    return l3;
+  }
+  static GenericIntervalLattice bitwiseAnd(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
+    l3.bitwiseAnd(l2);
     return l3;
   }
 
@@ -637,7 +650,7 @@ class GenericIntervalLattice {
   }
 
   // TODO: not finished for top/bot
-// [a,b]<<[c,d]= same as multiply but with '<<' (no neg. shift)
+  // [a,b]<<[c,d]= same as multiply but with '<<' (no neg. shift)
   void bitwiseShiftLeft(GenericIntervalLattice other) {
     if(binaryOperationOnBot(other)) {
       return;
@@ -677,6 +690,56 @@ class GenericIntervalLattice {
       setFiniteInterval(nmin, nmax);
       return;
     } else {
+      setIsLowInf(true);
+      setIsHighInf(true);
+    }
+  }
+
+  void bitwiseOr(GenericIntervalLattice other) {
+    if(binaryOperationOnBot(other)) {
+      return;
+    } else if(!isLowInf() 
+              && !other.isLowInf() 
+              && !isHighInf() 
+              && !other.isHighInf()) {
+      Type n1=_low;
+      Type n2=_high;
+      Type n3=other._low;
+      Type n4=other._high;
+      // set to to smallest lower bound
+      Type nmin=std::min(n1,n3);
+      // set to smaller highest bound
+      Type nmax=std::max(n2,n4);
+      //nmax=1<<std::log2(std::max(n2,n4)); // TODO
+      setFiniteInterval(nmin, nmax);
+      return;
+    } else {
+      // MS: lowinf,highinf can be made more precise
+      setIsLowInf(true);
+      setIsHighInf(true);
+    }
+  }
+
+  void bitwiseAnd(GenericIntervalLattice other) {
+    if(binaryOperationOnBot(other)) {
+      return;
+    } else if(!isLowInf() 
+              && !other.isLowInf() 
+              && !isHighInf() 
+              && !other.isHighInf()) {
+      Type n1=_low;
+      Type n2=_high;
+      Type n3=other._low;
+      Type n4=other._high;
+      // set to to smallest negative lower bound or 0
+      //Type nmin=std::min(0,std::min(n1,n3)); TODO
+      Type nmin=std::min(n1,n3);
+      // set to smaller highest bound
+      Type nmax=std::min(n2,n4);
+      setFiniteInterval(nmin, nmax);
+      return;
+    } else {
+      // MS: lowinf,highinf can be made more precise
       setIsLowInf(true);
       setIsHighInf(true);
     }

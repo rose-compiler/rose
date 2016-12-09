@@ -41,8 +41,7 @@ UnparseLanguageIndependentConstructs::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          mlog = Sawyer::Message::Facility("UnparseLanguageIndependentConstructs", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+          rose::Diagnostics::initAndRegister(mlog, "rose::UnparseLanguageIndependentConstructs");
         }
    }
 
@@ -2507,7 +2506,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                if (scope != NULL)
                   {
                  // DQ (1/12/2015): The call to lastStatementOfScopeWithTokenInfo() can fail when the scope is a SgIfStmt 
-                 // (this happens in the tests/CompileTests/Cxx_tests test codes).
+                 // (this happens in the tests/nonsmoke/functional/CompileTests/Cxx_tests test codes).
                  // lastStatement = SageInterface::lastStatementOfScopeWithTokenInfo (scope, tokenStreamSequenceMap);
                     if (sourceFile->get_unparse_tokens() == true)
                        {
@@ -3713,7 +3712,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                printf ("DONE: Calling unp->cur.format(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
             // DQ (7/19/2008): If we can assert this, then we can simpleify the code below!
-            // It is turned on in the tests/roseTests/programTransformationTests/implicitCodeGenerationTest.C
+            // It is turned on in the tests/nonsmoke/functional/roseTests/programTransformationTests/implicitCodeGenerationTest.C
             // But I still don't know what it does.
             // ROSE_ASSERT(unp->opt.get_unparse_includes_opt() == false);
 
@@ -7248,6 +7247,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
             // return 0;
                break;
              }
+
+       // DQ (11/14/2016): Added support for SgBracedInitializer (see Cxx11_tests/test2016_82.C for an example).
+          case V_SgBracedInitializer:
 
        // DQ (8/29/2014): Added support for SgAggregateInitializer (failed in tutorial examples).
           case V_SgAggregateInitializer:

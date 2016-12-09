@@ -12,6 +12,11 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::SymbolicExpr::Interior);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::SymbolicExpr::Leaf);
+#endif
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace SymbolicExpr {
@@ -22,19 +27,6 @@ namespace SymbolicExpr {
 
 // A mutex that's used by various methods in this namespace
 static boost::mutex symbolicExprMutex;
-
-// Returns the next name counter. If @p useThis is specified then return that value and make sure the next value to be
-// returned is larger.
-static uint64_t
-nextNameCounter(uint64_t useThis = (uint64_t)(-1)) {
-    static boost::mutex mutex;
-    static uint64_t counter = 0;
-    boost::lock_guard<boost::mutex> lock(mutex);
-    if (useThis == (uint64_t)(-1))
-        return ++counter;
-    counter = std::max(counter, useThis);
-    return useThis;
-}
 
 const uint64_t
 MAX_NNODES = UINT64_MAX;
@@ -1323,27 +1315,56 @@ ConcatSimplifier::rewrite(Interior *inode) const {
     //       (extract[8] 0[32] 8[32] v2[32]))
     // can be simplified to
     //   v2
-    Ptr retval;
-    size_t offset = 0;
-    for (size_t i=inode->nChildren(); i>0; --i) { // process args in little endian order
-        InteriorPtr extract = inode->child(i-1)->isInteriorNode();
-        if (!extract || OP_EXTRACT!=extract->getOperator())
-            break;
-        LeafPtr from_node = extract->child(0)->isLeafNode();
-        ASSERT_require(from_node->nBits() <= 8*sizeof offset);
-        if (!from_node || !from_node->isNumber() || from_node->toInt()!=offset ||
-            extract->child(2)->nBits()!=inode->nBits())
-            break;
-        if (inode->nChildren()==i) {
-            retval = extract->child(2);
-        } else if (!extract->child(2)->mustEqual(retval, solver)) {
-            break;
+    //
+    // What follows is an even better implementation that looks at subsequences of arguments instead of all arguments at
+    // once. For instance:
+    //   (concat[32]
+    //       0x00[5]
+    //       (extract[19] 0x0d[32] 0x20[32] v2[32])
+    //       (extract[8] 0x05[32] 0x0d[32] v2[32]))
+    // can be simplified to:
+    //   (concat[32]
+    //       0x00[5]
+    //       (extract[27] 0x05[32] 0x20[32] v2[32]))
+    Nodes newArgs;
+    InteriorPtr isPrevExtract;                          // is newArgs.back a suitable (extract X Y X)?
+    rose_addr_t prevLoOffset = 0;                          // valid only if isPrevExtract non-null
+    for (size_t argno=0; argno<inode->nChildren(); ++argno) {
+
+        // Does the argument have the form (extract X Y EXPR) where X and Y are known integers. If so, make isExtract point to
+        // this argument.
+        InteriorPtr isCurExtract = inode->child(argno)->isInteriorNode();
+        rose_addr_t curLoOffset=0, curHiOffset=0;
+        if (isCurExtract!=NULL && isCurExtract->getOperator()==OP_EXTRACT &&
+            isCurExtract->child(0)->nBits() <= 8*sizeof(prevLoOffset) &&
+            isCurExtract->child(1)->nBits() <= 8*sizeof(prevLoOffset) &&
+            isCurExtract->child(0)->isLeafNode() && isCurExtract->child(0)->isLeafNode()->isNumber() &&
+            isCurExtract->child(1)->isLeafNode() && isCurExtract->child(1)->isLeafNode()->isNumber()) {
+            curLoOffset = isCurExtract->child(0)->isLeafNode()->toInt();
+            curHiOffset = isCurExtract->child(1)->isLeafNode()->toInt();
+            ASSERT_require(curLoOffset < curHiOffset);
+        } else {
+            isCurExtract = InteriorPtr();
         }
-        offset += extract->nBits();
+
+        // Can this argument be joined with the previous one?
+        if (isPrevExtract && isCurExtract && curHiOffset==prevLoOffset &&
+            isPrevExtract->child(2)->mustEqual(isCurExtract->child(2), solver)) {
+            newArgs.back() = makeExtract(isCurExtract->child(0), isPrevExtract->child(1), isCurExtract->child(2));
+            isPrevExtract = newArgs.back()->isInteriorNode(); // merged arg is still a valid extract expression
+        } else {
+            newArgs.push_back(inode->child(argno));
+            isPrevExtract = isCurExtract;
+        }
+        prevLoOffset = curLoOffset;                     // valid only if isPrevExtract is non-null
     }
-    if (offset==inode->nBits())
-        return retval;
-    return Ptr();
+
+    // Construct a new, simplified expression
+    if (newArgs.size() == 1)
+        return newArgs[0]->newFlags(inode->flags());    // (concat X) => X, flags from both
+    if (newArgs.size() == inode->nChildren())
+        return Ptr();                                   // no simplification possible
+    return Interior::create(inode->nBits(), inode->getOperator(), newArgs, inode->comment(), inode->flags());
 }
 
 Ptr
@@ -2257,6 +2278,18 @@ Leaf::createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, 
     return retval;
 }
     
+// class method
+uint64_t
+Leaf::nextNameCounter(uint64_t useThis) {
+    static boost::mutex mutex;
+    static uint64_t counter = 0;
+    boost::lock_guard<boost::mutex> lock(mutex);
+    if (useThis == (uint64_t)(-1))
+        return ++counter;
+    counter = std::max(counter, useThis);
+    return useThis;
+}
+
 bool
 Leaf::isNumber() {
     return CONSTANT==leafType_;

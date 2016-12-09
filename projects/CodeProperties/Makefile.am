@@ -105,12 +105,12 @@ PHONIES += clean-findSharedMemory
 clean-findSharedMemory:
 	rm -f $(findSharedMemory_TESTS) $(findSharedMemory_TESTS:.passed=.failed)
 
+endif
+
 #------------------------------------------------------------------------------------------------------------------------
 # automake check and clean rules
 check-local: $(CHECK_TARGETS)
 clean-local: $(CLEAN_TARGETS)
 	rm -f $(MOSTLYCLEANFILES)
-
-endif
 
 .PHONY: $(PHONIES)

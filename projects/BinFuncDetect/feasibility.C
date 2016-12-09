@@ -1,6 +1,7 @@
 /* Functions for determining how feasible it is that a region of memory is code rather than data. */
 #include "rose.h"
 #include "stringify.h"
+#include <rose_isnan.h>
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -102,7 +103,7 @@ main(int argc, char *argv[])
     
     double vote;
     cc->satisfied_by(stats, &vote, &std::cout);
-    if (std::isnan(vote)) {
+    if (rose_isnan(vote)) {
         std::cout <<"Code probability could not be determined.\n";
     } else {
         std::cout <<"There is a " <<floor(100.0*vote+0.5) <<"% probability that this file is x86 code.\n";

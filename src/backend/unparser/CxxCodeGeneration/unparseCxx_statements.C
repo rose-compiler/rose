@@ -752,7 +752,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
    // Liao 11/9/2010, moved to upper callers since this is called when unparsing both old-style and new-style function parameter lists
    // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
    // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
-   // See example code: tests/CompileTests/C_tests/test2010_10.c
+   // See example code: tests/nonsmoke/functional/CompileTests/C_tests/test2010_10.c
     if (oldStyleDefinition == false )
        unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
 #endif
@@ -1058,7 +1058,7 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
         // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
         // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
         // are outside of the parameter list
-        // See example code: tests/CompileTests/C_tests/test2010_10.c
+        // See example code: tests/nonsmoke/functional/CompileTests/C_tests/test2010_10.c
           if (funcdecl_stmt->get_oldStyleDefinition() == false)
              {
                unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
@@ -2919,7 +2919,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
        else
         {
        // DQ (1/14/2015): We need to unparse syntax instead of the initial token, because this can be a macro expansion
-       // (see tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_57.C).
+       // (see tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_57.C).
        // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
        // unparseStatementFromTokenStream (stmt, e_token_subsequence_start, e_token_subsequence_start);
           curprint("{");
@@ -3196,7 +3196,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ("/* unparse last token in SgBasicBlock */");
 #endif
        // DQ (1/14/2015): We need to unparse syntax instead of the initial token, becasue this can be a macro expansion
-       // (see tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_57.C).
+       // (see tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_57.C).
        // unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
           curprint("}");
         }
@@ -3637,7 +3637,7 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
             // ROSE_ASSERT(variableDeclaration != NULL);
                if (variableDeclaration != NULL)
                   {
-                 // DQ (8/31/2014): This fails for one of the transformation tests: tests/roseTests/programTransformationTests/pass1.C
+                 // DQ (8/31/2014): This fails for one of the transformation tests: tests/nonsmoke/functional/roseTests/programTransformationTests/pass1.C
                  // This is likely an error in the implementation of the transformation (all other tests of the AST without transformations pass).
                     if (variableDeclaration->get_isAssociatedWithDeclarationList() == false)
                        {
@@ -7967,7 +7967,7 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // Liao, 5/14/2009
             // enumerators may come from another included file
             // have to tell if it matches the current declaration's file before unparsing it!!
-            // See test case: tests/CompileTests/C_test/test2009_05.c
+            // See test case: tests/nonsmoke/functional/CompileTests/C_test/test2009_05.c
             // TODO: still need work on mixed cases: part of elements are in the original file and others are from a header
             SgInitializedName* field = *p;
             ROSE_ASSERT(field !=NULL);
@@ -10090,9 +10090,11 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #endif
         }
 
+  // DQ (10/23/2016): Allow C++14 support to behave the same as C++11 support below.
   // We only do this denormalization if we are not using C++11 or later version of C++.
   // if (sourcefile->get_Cxx11_only() == false)
-     if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false)
+  // if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false)
+     if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false && sourcefile->get_Cxx14_only() == false)
         {
           ROSE_ASSERT(sourcefile->get_Cxx14_only() == false);
 #if 0

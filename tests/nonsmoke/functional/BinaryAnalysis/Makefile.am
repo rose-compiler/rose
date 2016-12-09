@@ -13,7 +13,7 @@ noinst_PROGRAMS=
 MOSTLYCLEANFILES=
 PHONIES=
 
-if USE_BINARY_ANALYSIS_TESTS
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 # Location of binary specimens
 SPECIMEN_DIR = $(nonsmoke_specimens_binary_directory)
@@ -28,6 +28,14 @@ AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/library
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
 
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
 
 ###############################################################################################################################
 # Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
@@ -1388,6 +1396,23 @@ PHONIES += check_specimens
 check_specimens: check_parse_container check_disassemble check_unparse check_assemble check_astio
 
 
+#############################################################################################
+# Serialization of IR nodes related to binary analysis
+#############################################################################################
+
+noinst_PROGRAMS += testSageSerialization
+testSageSerialization_SOURCES = testSageSerialization.C
+testSageSerialization_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testSageSerialization.passed
+
+testSageSerialization.passed: testSageSerialization
+	@$(RTH_RUN)								\
+		TITLE="serialization of Sage binary analysis nodes [$@]"	\
+		CMD="$$(pwd)/testSageSerialization"				\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################
@@ -1407,22 +1432,9 @@ check-nonsmoke-local:
 	@echo "  TESTING (disabled: binary frontend is not enabled)"
 endif
 
-
-check-smoke-local:
-
-# FIXME: check-local temporarily runs non-smoke tests as well until Jenkins and the matrix are fixed [Matzke, 2016-09-07]
-#check-local: check-smoke-local
-check-local: check-smoke-local check-nonsmoke-local
-
-check-all-local: check-smoke-local check-nonsmoke-local
-
 # Don't delete things indiscriminately--sometimes developers have other related files that should not be touched!
 # Rather than use one big MOSTLYCLEANFILES, split things into smaller parts so we don't get command lines that are too big.
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
-	rm -f $(TEST_TARGETS)
-	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.out)
-	rm -f $(TEST_TARGETS:.passed=.err)
 
 .PHONY: $(PHONIES)

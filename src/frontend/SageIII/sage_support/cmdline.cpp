@@ -1555,12 +1555,12 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
                         << "'" << arg << "'"
                         << std::endl;
           }
-          #ifdef _MSC_VER
+#ifdef _MSC_VER
           // ensure that the path is quoted on Windows.
           r_argv.push_back("-I\"" + arg + "\"");
-          #else
+#else
           r_argv.push_back("-I" + arg + "");
-          #endif
+#endif
       }
       else if ((arg.size() >= 2) && (arg[0] == '-') && (arg[1] == 'I'))
       {
@@ -1578,13 +1578,13 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
           {
               // no normalization required for -I<path>, but ensure
               // that the path is quoted on Windows.
-              #ifdef _MSC_VER
+#ifdef _MSC_VER
               if (arg[2] != '"')
               {
                   arg.insert(2, "\"");
                   arg.append("\"");
               }
-              #endif
+#endif
               r_argv.push_back(arg);
           }
       }
@@ -1633,9 +1633,22 @@ ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
       if (SgProject::get_verbose() >= 1)
           std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
 
+#if 0
+      printf ("detected -rose:keep_going option \n");
+#endif
+
       project->set_keep_going(true);
       Rose::KeepGoing::g_keep_going = true;
   }
+
+#if 0
+     printf ("In ProcessKeepGoing(): project->get_keep_going() = %s \n",project->get_keep_going() ? "true" : "false");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1955,17 +1968,17 @@ ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv
       if (SgProject::get_verbose() > 1)
           std::cout << "[INFO] Processing Fortran remote debugging option" << std::endl;
 
-      #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
           Cmdline::Fortran::Ofp::jvm_options.push_back(
               "-agentlib:jdwp=transport=dt_socket,server=y,address=8000");
-      #else
+#else
           std::cout
               << "[FATAL] "
               << "JVM remote debugging cannot be enabled since ROSE-Fortran "
               << "support is turned off"
               << std::endl;
           ROSE_ASSERT(false);
-      #endif
+#endif
   }// has_fortran_remote_debug
 }// Cmdline::Fortran::Ofp::ProcessEnableRemoteDebugging
 
@@ -2756,11 +2769,11 @@ Rose::Cmdline::Java::Ecj::
 GetRoseClasspath ()
 {
   
-  #ifdef _MSC_VER
+#ifdef _MSC_VER
   std::string separator = ";";
-  #else
+#else
   std::string separator = ":";
-  #endif
+#endif
   
   std::string classpath = "-Djava.class.path=";
 
@@ -2884,17 +2897,17 @@ ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv
       if (SgProject::get_verbose() > 1)
           std::cout << "[INFO] Processing Java remote debugging option" << std::endl;
 
-      #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
           Cmdline::Java::Ecj::jvm_options.push_back(
               "-agentlib:jdwp=transport=dt_socket,server=y,address=8000");
-      #else
+#else
           std::cout
               << "[FATAL] "
               << "JVM remote debugging cannot be enabled since ROSE-Java "
               << "support is turned off"
               << std::endl;
           ROSE_ASSERT(false);
-      #endif
+#endif
   }// has_java_remote_debug
 }// Cmdline::Java::Ecj::ProcessEnableRemoteDebugging
 
@@ -4146,10 +4159,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                ROSE_ASSERT(get_Cxx11_gnu_only() == true);
              }
 
-          if (argv[i] == "-std=c++14")
+       // DQ (10/24/2016): GNU g++ versions before 5.2 use "-std=c++1y" instead of "-std=c++14", after that "-std=c++14" is available and "-std=c++1y" is depericated.
+       // if (argv[i] == "-std=c++14")
+          if (argv[i] == "-std=c++14" || argv[i] == "-std=c++1y")
              {
 #if 1
-               printf ("Identified -std=c++14 via more direct command line argument evaluation (not yet supported) \n");
+               printf ("Identified -std=c++14 via more direct command line argument evaluation (not yet fully supported) \n");
             // ROSE_ASSERT(false);
 #endif
                if ( SgProject::get_verbose() >= 1 )
@@ -7565,14 +7580,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                 // compilerNameString += "-ffree-form ";
                 // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
                 // compilerNameString.push_back("-ffree-line-length-none");
-                #if USE_GFORTRAN_IN_ROSE
+#if USE_GFORTRAN_IN_ROSE
                 // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
                 if ((BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) &&
                     (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1))
                 {
                     compilerNameString.push_back("-ffree-line-length-none");
                 }
-                #endif
+#endif
             }
             else
             {

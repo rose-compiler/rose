@@ -7,11 +7,17 @@
 #include <inttypes.h>
 
 #include "BaseSemantics2.h"
+#include "Cxx_GrammarSerialization.h"
 #include "SMTSolver.h"
 #include "BinarySymbolicExpr.h"
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
 #include "MemoryCellMap.h"
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/set.hpp>
 
 #include <map>
 #include <vector>
@@ -188,8 +194,23 @@ protected:
     InsnSet defs;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        roseAstSerializationRegistration(s);            // "defs" has SgAsmInstruction ASTs
+        s & boost::serialization::base_object<BaseSemantics::SValue>(*this);
+        s & expr & defs;
+    }
+#endif
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    SValue() {}                                         // needed for serialization
     explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
         expr = SymbolicExpr::makeVariable(nbits);
     }
@@ -253,7 +274,8 @@ public:
         return retval;
     }
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
+                        SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -470,8 +492,24 @@ protected:
     static CellCompressorChoice cc_choice;      /**< The default cell compressor. Static because we use its address. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<BaseSemantics::MemoryCellList>(*this);
+    }
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    MemoryListState()                                   // for serialization
+        : cell_compressor(&cc_choice) {}
+
     explicit MemoryListState(const BaseSemantics::MemoryCellPtr &protocell)
         : BaseSemantics::MemoryCellList(protocell), cell_compressor(&cc_choice) {}
 
@@ -586,8 +624,22 @@ typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
  *  @sa MemoryListState */
 class MemoryMapState: public BaseSemantics::MemoryCellMap {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<BaseSemantics::MemoryCellMap>(*this);
+    }
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    MemoryMapState() {}                                 // for serialization
+
     explicit MemoryMapState(const BaseSemantics::MemoryCellPtr &protocell)
         : BaseSemantics::MemoryCellMap(protocell) {}
 
@@ -712,9 +764,37 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  * @endcode
  */
 class RiscOperators: public BaseSemantics::RiscOperators {
+protected:
+    bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer
+    DefinersMode computingDefiners_;                    // whether to track definers (instruction VAs) of SValues
+    WritersMode computingMemoryWriters_;                // whether to track writers (instruction VAs) to memory.
+    WritersMode computingRegisterWriters_;              // whether to track writers (instruction VAs) to registers.
+    size_t trimThreshold_;                              // max size of expressions (zero means no maximimum)
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & boost::serialization::base_object<BaseSemantics::RiscOperators>(*this);
+        s & omit_cur_insn;
+        s & computingDefiners_;
+        s & computingMemoryWriters_;
+        s & computingRegisterWriters_;
+        s & trimThreshold_;
+    }
+#endif
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    RiscOperators()                                     // for serialization
+        : omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS), computingMemoryWriters_(TRACK_LATEST_WRITER),
+          computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {}
+
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
@@ -828,13 +908,6 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration properties
-protected:
-    bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer
-    DefinersMode computingDefiners_;                    // whether to track definers (instruction VAs) of SValues
-    WritersMode computingMemoryWriters_;                // whether to track writers (instruction VAs) to memory.
-    WritersMode computingRegisterWriters_;              // whether to track writers (instruction VAs) to registers.
-    size_t trimThreshold_;                              // max size of expressions (zero means no maximimum)
-
 public:
 
     // [Robb P. Matzke 2015-09-17] deprecated API
@@ -1089,5 +1162,12 @@ public:
 } // namespace
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue);
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState);
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState);
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators);
+#endif
 
 #endif

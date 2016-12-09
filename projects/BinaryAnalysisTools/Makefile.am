@@ -298,14 +298,13 @@ testAdaptiveRegisters.passed: $(srcdir)/specimens/x86-64-adaptiveRegs		\
 
 
 
+endif
 
 #------------------------------------------------------------------------------------------------------------------------
 # Makefile boilerplate
 
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
-	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
 
-check-local check-smoke check-nonsmoke check-all: $(TEST_TARGETS)
+check-nonsmoke: $(TEST_TARGETS)
 
-endif

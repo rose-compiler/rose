@@ -1,4 +1,5 @@
 #include <rose.h>
+#include <rose_isnan.h>
 #include <bROwSE/WAddressSpace.h>
 #include <bROwSE/WFunctionList.h>
 
@@ -188,7 +189,7 @@ WFunctionList::updateFunctionHeatMaps() {
         double p5  = model_->heatStats().p5();
         double p50 = model_->heatStats().p50();
         double p95 = model_->heatStats().p95();
-        ASSERT_forbid(isnan(p5) || isnan(p50) || isnan(p95));
+        ASSERT_forbid(rose_isnan(p5) || rose_isnan(p50) || rose_isnan(p95));
 
         // Inserted in increasing order of importance in case some values overlap
         wAddressSpace_->gradient(functionIdx).insert(p5,      g(0.05));

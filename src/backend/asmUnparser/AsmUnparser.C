@@ -73,8 +73,7 @@ void AsmUnparser::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::AsmUnparser", Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::AsmUnparser");
     }
 }
 
@@ -930,7 +929,8 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
 
         SgAsmExecutableFileFormat::hexdump(args.output, start_address, &(args.data->get_raw_bytes()[0]),
                                            args.data->get_size(), tmp_fmt);
-        delete addr_fmt;
+        if (addr_fmt != NULL)
+            free(addr_fmt);
     }
     return enabled;
 }

@@ -169,6 +169,8 @@ for currTestDir in "${TEST_ROOT_DIR}"*; do
   if [ ! -f ${currTestDir}/${INPUT_FILE} ]; then 
    echo -e "${TEST_ERROR_MSG_PREFIX}Subject/Input \"${currTestDir}/${INPUT_FILE}\" not found."
    exit 1
+  else
+   echo -e "TESTING: ${currTestDir}/${INPUT_FILE}:"
   fi
 
   # Does this test have to fail?

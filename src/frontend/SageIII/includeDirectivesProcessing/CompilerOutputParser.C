@@ -185,7 +185,7 @@ void CompilerOutputParser::processFile(SgFile* inputFile, bool isVerbose) {
         inputFile -> stripEdgCommandLineOptions(argv);
     } else {
         if (inputFile -> get_Fortran_only() == true) {
-            // DQ (4/2/2011): some Fortran tests pass in tests/roseTests/astInterfaceTests pass in EDG options, we
+            // DQ (4/2/2011): some Fortran tests pass in tests/nonsmoke/functional/roseTests/astInterfaceTests pass in EDG options, we
             // might want to correct this (for now we will clean up the command line as part of command line handling).
             inputFile -> stripEdgCommandLineOptions(argv);
             inputFile -> stripFortranCommandLineOptions(argv);

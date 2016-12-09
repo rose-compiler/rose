@@ -164,9 +164,8 @@ showRandomPoint(const Settings &settings, const Dependencies &dependencies) {
 
 int
 main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
-    mlog = Sawyer::Message::Facility("tool");
-    Sawyer::Message::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(mlog, "tool");
 
     Settings settings;
     parseCommandLine(argc, argv, settings);

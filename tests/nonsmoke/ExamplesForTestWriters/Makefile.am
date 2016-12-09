@@ -13,6 +13,10 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# if you are building ROSE translators, remember to set include path and libraries.
+#AM_CPPFLAGS = $(ROSE_INCLUDES)
+#LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 # Forward declarations so we can use make's "+=" operator.  We use "noinst_PROGRAMS" instead of "bin_PROGRAMS" because
 # we generally don't want checkers used in testing to be installed by "make install".  The "TEST_TARGETS" variable
 # will be a list of all the make targets that should be run: one for each test where a "test" is some "checker" run
@@ -249,30 +253,3 @@ check-runAlgorithm: $(runAlgorithm_targets)
 # check-nonsmoke-local rules.
 
 check-nonsmoke-local: $(TEST_TARGETS)
-
-# We also need targets that define what "make check" and "make check-all" do.  These will be the same in every
-# makefile but we have to list them each time because some old testing makefiles and some projects do special things
-# for these targets.
-#
-# TEMPORARY: As a temporary workaround for the fact that Jenkins and the matrix testing only run "make check", the
-# check-local should run all tests, not just smoke tests. Eventaully this line should read:
-#        check-local: check-smoke-local
-
-check-local: check-smoke-local check-nonsmoke-local
-check-all-local: check-smoke-local check-nonsmoke-local
-
-# Rule for cleaning up. In particular, don't use wildcards here! Some developers, especially those doing binary analysis,
-# will have various object files, executables, libraries, core dumps, etc. that they might be working with and having
-# "make clean" delete things it didn't create is just impolite. Sometimes automake/autoconf generate indiscriminate
-# rules like this and there's nothing you can do about it.
-#
-# We could have done this all in a single "rm" command, but there are some makefiles where these lists are so long
-# that the commands exceed some OS-specific limit.  For really, really long lists you might even need to use make's
-# "foreach" function to split them further.
-
-clean-local:
-	rm -f $(MOSTLYCLEANFILES)
-	rm -f $(TEST_TARGETS)
-	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.out)
-	rm -f $(TEST_TARGETS:.passed=.err)

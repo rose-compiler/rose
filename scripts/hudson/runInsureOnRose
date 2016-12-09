@@ -42,12 +42,12 @@ fi
 
 
 if test "x$ROSE_TEST_BUILD_STEP" = "xanalyze" ; then
-  if test \! \( "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Cxx_tests" -o \
-                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests" -o \
-                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests/LANL_POP" -o \
-                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests/gfortranTestSuite" -o \
-                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/roseTests/astFileIOTests" -o \
-                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/RunTests/AstDeleteTests" \) ; then
+  if test \! \( "$ROSE_TEST_BUILD_DIRECTORY" = "tests/nonsmoke/functional/CompileTests/Cxx_tests" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/nonsmoke/functional/CompileTests/Fortran_tests" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/nonsmoke/functional/CompileTests/Fortran_tests/LANL_POP" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/nonsmoke/functional/roseTests/astFileIOTests" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/nonsmoke/functional/RunTests/AstDeleteTests" \) ; then
     echo "Error: This hudson script has not been configured to support this build directory for Insure++ analysis: $ROSE_TEST_BUILD_DIRECTORY"
     exit 1
   fi
@@ -364,9 +364,9 @@ case "$ROSE_TEST_BUILD_STEP" in
     fi
 
     BUILD_TARGET=check
-    if test "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests" ; then
+    if test "$ROSE_TEST_BUILD_DIRECTORY" = "tests/nonsmoke/functional/CompileTests/Fortran_tests" ; then
       BUILD_TARGET=tests
-    elif test "$ROSE_TEST_BUILD_DIRECTORY" = "tests/roseTests/astFileIOTests" ; then
+    elif test "$ROSE_TEST_BUILD_DIRECTORY" = "tests/nonsmoke/functional/roseTests/astFileIOTests" ; then
       # TOO (5/6/2011): Just testing how long this would take
       BUILD_TARGET=check
     fi

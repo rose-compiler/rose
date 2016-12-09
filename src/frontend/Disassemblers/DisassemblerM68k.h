@@ -6,31 +6,17 @@
 #include "InstructionEnumsM68k.h"
 #include "BitPattern.h"
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/split_member.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for Motorola M68k-based instruction set architectures. */
 class DisassemblerM68k: public Disassembler {
 public:
-    /** Constructor for a specific family.
-     *
-     *  The @p family argument selectively activates certain features of the generic m68k disassembler.  For instance, to get a
-     *  disassembler specific to the FreeScale ColdFire series using "ISA_B", invoke as:
-     *
-     * @code
-     *  Disassembler *disassembler = new DisassemblerM68k(m68k_freescale_isab);
-     * @endcode */
-    explicit DisassemblerM68k(M68kFamily family)
-        : family(family), map(NULL), insn_va(0), niwords(0), niwords_used(0) {
-        init();
-    }
-    virtual DisassemblerM68k *clone() const ROSE_OVERRIDE { return new DisassemblerM68k(*this); }
-    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) ROSE_OVERRIDE;
-    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) ROSE_OVERRIDE;
-
-    typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
-
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related
      *  instructions) will define a subclass whose operator() unparses a single instruction and returns a
      *  SgAsmM68kInstruction. These functors are allocated and inserted into a list. When an instruction is to be
@@ -50,6 +36,78 @@ public:
         typedef DisassemblerM68k D;
         virtual SgAsmM68kInstruction *operator()(D *d, unsigned w0) = 0;
     };
+
+private:
+    M68kFamily  family;                         /**< Specific family being disassembled. */
+    const MemoryMap *map;                       /**< Map from which to read instruction words. */
+    rose_addr_t insn_va;                        /**< Address of instruction. */
+    uint16_t    iwords[11];                     /**< Instruction words. */
+    size_t      niwords;                        /**< Number of instruction words read. */
+    size_t      niwords_used;                   /**< High water number of instruction words used by instructionWord(). */
+
+    // The instruction disassembly table is an array indexed by the high-order nybble of the first 16-bit word of the
+    // instruction's pattern, the so-called "operator" bits. Since most instruction disassembler have invariant operator
+    // bits, we can divide the table into 16 entries for these invariant bits, and another entry (index 16) for the cases
+    // with a variable operator byte.  Each of these 17 buckets is an unordered list of instruction disassemblers whose
+    // patterns we attempt to match one at a time (the insertion function checks that there are no ambiguities).
+    typedef std::list<M68k*> IdisList;
+    typedef std::vector<IdisList> IdisTable;
+    IdisTable idis_table;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize_common(S &s, const unsigned version) {
+        s & boost::serialization::base_object<Disassembler>(*this);
+        s & family;
+        s & map;
+        s & insn_va;
+        s & iwords;
+        s & niwords;
+        s & niwords_used;
+        //s & idis_table; -- not saved
+    }
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        serialize_common(s, version);
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        serialize_common(s, version);
+        init();
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
+protected:
+    // undocumented constructor for serialization. The init() will be called by the serialization.
+    DisassemblerM68k()
+        : family(m68k_freescale_cpu32), map(NULL), insn_va(0), niwords(0), niwords_used(0) {}
+        
+public:
+    /** Constructor for a specific family.
+     *
+     *  The @p family argument selectively activates certain features of the generic m68k disassembler.  For instance, to get a
+     *  disassembler specific to the FreeScale ColdFire series using "ISA_B", invoke as:
+     *
+     * @code
+     *  Disassembler *disassembler = new DisassemblerM68k(m68k_freescale_isab);
+     * @endcode */
+    explicit DisassemblerM68k(M68kFamily family)
+        : family(family), map(NULL), insn_va(0), niwords(0), niwords_used(0) {
+        init();
+    }
+    virtual DisassemblerM68k *clone() const ROSE_OVERRIDE { return new DisassemblerM68k(*this); }
+    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) ROSE_OVERRIDE;
+
+    typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
 
     /** Find an instruction-specific disassembler.  Using the specified instruction bits, search for and return an
      *  instruction-specific disassembler.  Returns null if no appropriate disassembler can be found.  Instruction-specific
@@ -175,24 +233,13 @@ public:
 
 private:
     void init();
-    M68kFamily  family;                         /**< Specific family being disassembled. */
-    const MemoryMap *map;                       /**< Map from which to read instruction words. */
-    rose_addr_t insn_va;                        /**< Address of instruction. */
-    uint16_t    iwords[11];                     /**< Instruction words. */
-    size_t      niwords;                        /**< Number of instruction words read. */
-    size_t      niwords_used;                   /**< High water number of instruction words used by instructionWord(). */
-
-    // The instruction disassembly table is an array indexed by the high-order nybble of the first 16-bit word of the
-    // instruction's pattern, the so-called "operator" bits. Since most instruction disassembler have invariant operator
-    // bits, we can divide the table into 16 entries for these invariant bits, and another entry (index 16) for the cases
-    // with a variable operator byte.  Each of these 17 buckets is an unordered list of instruction disassemblers whose
-    // patterns we attempt to match one at a time (the insertion function checks that there are no ambiguities).
-    typedef std::list<M68k*> IdisList;
-    typedef std::vector<IdisList> IdisTable;
-    IdisTable idis_table;
 };
 
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::DisassemblerM68k);
+#endif
 
 #endif

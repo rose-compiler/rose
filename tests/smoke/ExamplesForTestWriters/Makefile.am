@@ -43,13 +43,3 @@ check-runAlgorithm: $(runAlgorithm_targets)
 # Boilerplate.
 
 check-smoke-local: $(TEST_TARGETS)
-
-check-local: check-smoke-local
-check-all-local: check-smoke-local check-nonsmoke-local
-
-clean-local:
-	rm -f $(MOSTLYCLEANFILES)
-	rm -f $(TEST_TARGETS)
-	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.out)
-	rm -f $(TEST_TARGETS:.passed=.err)

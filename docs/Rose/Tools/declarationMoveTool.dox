@@ -9,8 +9,8 @@
  * @li  For a single use place, move to the innermost scope.
  * @li  For the case of multiple uses, we may need to duplicate the declarations and move to two scopes if there is no variable reuse in between, otherwise, we move the declaration into the innermost common scope of the multiple uses.
  *
- * @li source code: https://github.com/rose-compiler/rose-develop/blob/master/tests/roseTests/astInterfaceTests/moveDeclarationToInnermostScope.C
- * @li tests: make move_diff_check defined in https://github.com/rose-compiler/rose-develop/blob/master/tests/roseTests/astInterfaceTests/Makefile.am
+ * @li source code: https://github.com/rose-compiler/rose-develop/blob/master/tests/nonsmoke/functional/roseTests/astInterfaceTests/moveDeclarationToInnermostScope.C
+ * @li tests: make move_diff_check defined in https://github.com/rose-compiler/rose-develop/blob/master/tests/nonsmoke/functional/roseTests/astInterfaceTests/Makefile.am
  * 
  * @section sec_instructions User Instructions
  * The translator, moveDeclarationToInnermostScope, accepts the following options:

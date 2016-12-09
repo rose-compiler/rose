@@ -41,8 +41,7 @@ void Disassembler::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Disassembler", Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::Disassembler");
     }
 }
     
@@ -233,30 +232,34 @@ Disassembler::isaNames() {
 Disassembler *
 Disassembler::lookup(const std::string &name)
 {
+    Disassembler *retval = NULL;
     if (0==name.compare("list")) {
         std::cout <<"The following ISAs are supported:\n";
         BOOST_FOREACH (const std::string &name, isaNames())
             std::cout <<"  " <<name <<"\n";
         exit(0);
     } else if (0==name.compare("arm")) {
-        return new DisassemblerArm();
+        retval = new DisassemblerArm();
     } else if (0==name.compare("ppc")) {
-        return new DisassemblerPowerpc();
+        retval = new DisassemblerPowerpc();
     } else if (0==name.compare("mips-be")) {
-        return new DisassemblerMips(ByteOrder::ORDER_MSB);
+        retval = new DisassemblerMips(ByteOrder::ORDER_MSB);
     } else if (0==name.compare("mips-le")) {
-        return new DisassemblerMips(ByteOrder::ORDER_LSB);
+        retval = new DisassemblerMips(ByteOrder::ORDER_LSB);
     } else if (0==name.compare("i386")) {
-        return new DisassemblerX86(4);
+        retval = new DisassemblerX86(4);
     } else if (0==name.compare("amd64")) {
-        return new DisassemblerX86(8);
+        retval = new DisassemblerX86(8);
     } else if (0==name.compare("m68040")) {
-        return new DisassemblerM68k(m68k_68040);
+        retval = new DisassemblerM68k(m68k_68040);
     } else if (0==name.compare("coldfire")) {
-        return new DisassemblerM68k(m68k_freescale_emacb);
+        retval = new DisassemblerM68k(m68k_freescale_emacb);
     } else {
         throw std::runtime_error("invalid ISA name \""+name+"\"; use --isa=list");
     }
+    ASSERT_not_null(retval);
+    retval->name(name);
+    return retval;
 }
 
 /* High-level function for disassembling a whole interpretation. */

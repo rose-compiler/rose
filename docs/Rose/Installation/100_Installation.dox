@@ -87,7 +87,8 @@
  *      <td>Required</td>
  *      <td>GCC-4.2.4 through 4.8.4</td>
  *      <td>GCC-4.4.5</td>
- *      <td>To compile ROSE. The gcc, g++, and gfortran compilers are required. See @ref installing_gcc. </td>
+ *      <td>To compile ROSE. The gcc, g++, and gfortran compilers are required. Furthermore, all libraries on which ROSE
+ *      depends should be compiled with the same compiler for best results. See @ref installing_gcc. </td>
  *    </tr>
  *
  *    <tr>
@@ -147,8 +148,8 @@
  *    <tr>
  *      <td><a href="http://www.boost.org">Boost</a></td>
  *      <td>Required</td>
- *      <td>1.47 through 1.60, except 1.48 and 1.54</td>
- *      <td>1.48 through 1.60, except 1.54</td>
+ *      <td>1.49 through 1.61, except 1.54</td>
+ *      <td>1.49 through 1.61, except 1.54</td>
  *      <td>C++ portable runtime features. ROSE and/or software used by ROSE requires the following Boost libraries: chrono,
  *      date_time, filesystem, iostreams, program_options, random, regex, signals, system, thread, and wave. See @ref
  *      installing_boost. More info [here](http://theboostcpplibraries.com/).</td>

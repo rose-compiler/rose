@@ -59,6 +59,7 @@ pkginclude_HEADERS =				\
 	Map.h					\
 	ParallelSort.h				\
 	processSupport.h			\
+	rose_isnan.h				\
 	rose_getline.h				\
 	rose_override.h				\
 	rose_paths.h				\
@@ -138,6 +139,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/SharedPointer.h			\
 	Sawyer/SmallObject.h			\
 	Sawyer/Stack.h				\
+	Sawyer/StackAllocator.h			\
 	Sawyer/StaticBuffer.h			\
 	Sawyer/Stopwatch.h			\
 	Sawyer/Synchronization.h		\

@@ -24,12 +24,12 @@
 #include "rose_config.h"
 
 
-// Allow "string" and "pair" to be used (whether or not USE_ROSE_DWARF_SUPPORT id defined to be true).
+// Allow "string" and "pair" to be used (whether or not ROSE_HAVE_LIBDWARF id defined to be true).
 using namespace std;
 
 
 // This is controled by using the --with-dwarf configure command line option.
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef ROSE_HAVE_LIBDWARF
 
 #include "dwarf.h"
 #include "libdwarf.h"
@@ -1842,6 +1842,10 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
             //      parentDwarfConstruct->set_children(new SgAsmDwarfConstructList());
 #if 1
             // When this work we know that we have the child support for Dwarf IR nodes in place (in all the right places).
+                 // According to Kewen Meng at uoregon.edu, this assertion fails when the input specimen is compiled with "gcc
+                 // -O1" (input and gcc version were unspecified by user), but works if -O1 is removed, or if C++ compiler
+                 // (vendor and version unspecified by user) is used with optimization flag (flag unspecified by user). [Robb
+                 // Matzke 2016-09-29]
                ROSE_ASSERT(parentDwarfConstruct->get_children() != NULL);
                parentDwarfConstruct->get_children()->get_list().push_back(astDwarfConstruct);
 #else
@@ -2944,7 +2948,7 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
    }
 
 
-// endif for "if USE_ROSE_DWARF_SUPPORT" at top of file.
+// endif for "ifdef ROSE_HAVE_LIBDWARF" at top of file.
 #else
 
 // DQ (11/12/2008): Function defined so that java-port will not complain.
@@ -2971,7 +2975,7 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
 
 // ***********************************************************************************
 // ***********************************************************************************
-// This code is independent of the "if USE_ROSE_DWARF_SUPPORT" at the top of this file
+// This code is independent of the "ifdef ROSE_HAVE_LIBDWARF" at the top of this file
 // ***********************************************************************************
 // ***********************************************************************************
 

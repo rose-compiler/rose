@@ -16,10 +16,27 @@ namespace CommandlineProcessing
            *  Returns a command-line parser that has no switch declarations, but is set up consistently for ROSE tools. The @p
            *  purpose should be an uncapitalized, short, single-line string that appears near the top of the man page. The @p
            *  description can be much longer, multiple paragraphs, free-format, with Sawyer markup. It will appear under the
-           *  heading "Description" in the man page. */
+           *  heading "Description" in the man page.
+           *
+           *  See also, @ref createEmptyParserStage. */
           ROSE_UTIL_API Sawyer::CommandLine::Parser createEmptyParser(const std::string &purpose,
                                                                       const std::string &description);
 
+          /** Empty command-line parser suitable for use with other parsers.
+           *
+           *  Returns a command-line parser that has no switch declarations, but is set up consistently for ROSE tools. The
+           *  parser is configured to skip over any program arguments it doesn't recognize, with the assumption that those
+           *  arguments will be passed to another parser.  This also means that this parser cannot report errors for misspelled
+           *  or misused switches because it cannot tell whether the switch is misspelled or simply intended for the next
+           *  parser.
+           *
+           *  The @p purpose should be an uncapitalized, short, single-line string that appears near the top of the man
+           *  page. The @p description can be much longer, multiple paragraphs, free-format, with Sawyer markup. It will appear
+           *  under the heading "Description" in the man page.
+           *
+           *  See also, @ref createEmptyParser. */
+          ROSE_UTIL_API Sawyer::CommandLine::Parser createEmptyParserStage(const std::string &purpose,
+                                                                           const std::string &description);
           /** Generic command-line components.
            *
            *  Returns a description of the switches that should be available for all ROSE tools. To make a command-line
@@ -45,10 +62,11 @@ namespace CommandlineProcessing
            *
            *  For instance, the "--threads=N" switch takes an integer that should be stored somewhere. */
           struct GenericSwitchArgs {
-              unsigned int threads;                     // The "--threads" switch. 0 means number of hardware threads
+              unsigned int threads;                     /**< Number of threads analyses should use. Zero means use the number
+                                                         *   of threads that the hardware provides. */
 
               GenericSwitchArgs()
-                  : threads(1) {}
+                  : threads(0) {}
           };
 
           /** Global location for parsed generic command-line switches.

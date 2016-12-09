@@ -9,6 +9,11 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
+#include <boost/serialization/access.hpp>
+#ifndef USE_ROSE                                        // [Robb P Matzke 2016-11-11]: ROSE cannot compile this header
+#include <boost/serialization/shared_ptr.hpp>
+#endif
+#include <boost/serialization/string.hpp>
 #include <Sawyer/Assert.h>
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/IntervalSetMap.h>
@@ -277,9 +282,9 @@ namespace BinaryAnalysis {
  *  @section instruction_semantics_example1 Example
  *
  *  See actual source code for examples since this interface is an active area of ROSE development (as of Jan-2013). The
- *  tests/roseTests/binaryTests/semanticSpeed.C has very simple examples for a variety of semantic domains. In order to use one
- *  of ROSE's predefined semantic domains you'll likely need to define some types and variables. Here's what the code would
- *  look like when using default components of the Symbolic domain:
+ *  tests/nonsmoke/functional/roseTests/binaryTests/semanticSpeed.C has very simple examples for a variety of semantic
+ *  domains. In order to use one of ROSE's predefined semantic domains you'll likely need to define some types and
+ *  variables. Here's what the code would look like when using default components of the Symbolic domain:
  *
  *  @code
  *   // New API 
@@ -535,9 +540,22 @@ protected:
     size_t width;                               /** Width of the value in bits. Typically (not always) a power of two. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & width;
+    }
+#endif
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
 protected:
-    explicit SValue(size_t nbits): width(nbits) {}  // hot
+    SValue(): width(0) {}                               // needed for serialization
+    explicit SValue(size_t nbits): width(nbits) {}      // hot
     SValue(const SValue &other): width(other.width) {}
 
 public:
@@ -746,8 +764,24 @@ protected:
     const RegisterDictionary *regdict;                  /**< Registers that are able to be stored by this state. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        //s & merger_; -- not saved
+        s & protoval_;
+    }
+#endif
+
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    RegisterState() {}                                  // for serialization
+
     RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
         : protoval_(protoval), regdict(regdict) {
         ASSERT_not_null(protoval_);
@@ -920,7 +954,8 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit RegisterStateX86(const SValuePtr &protoval, const RegisterDictionary *regdict): RegisterState(protoval, regdict) {
+    explicit RegisterStateX86(const SValuePtr &protoval, const RegisterDictionary *regdict)
+        : RegisterState(protoval, regdict) {
         clear();
     }
 
@@ -1031,8 +1066,28 @@ class MemoryState: public boost::enable_shared_from_this<MemoryState> {
     bool byteRestricted_;                               // are cell values all exactly one byte wide?
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & addrProtoval_;
+        s & valProtoval_;
+        s & byteOrder_;
+        //s & merger_ -- not saved
+        s & byteRestricted_;
+    }
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    MemoryState()                                       // for serialization
+        : byteOrder_(ByteOrder::ORDER_UNSPECIFIED), byteRestricted_(true) {}
+
     explicit MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : addrProtoval_(addrProtoval), valProtoval_(valProtoval), byteOrder_(ByteOrder::ORDER_UNSPECIFIED),
           byteRestricted_(true) {
@@ -1227,10 +1282,27 @@ class State: public boost::enable_shared_from_this<State> {
     RegisterStatePtr registers_;                        // All machine register values for this semantic state.
     MemoryStatePtr memory_;                             // All memory for this semantic state.
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & protoval_;
+        s & registers_;
+        s & memory_;
+    }
+#endif
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    // needed for serialization
+    State() {}
+
     State(const RegisterStatePtr &registers, const MemoryStatePtr &memory)
         : registers_(registers), memory_(memory) {
         ASSERT_not_null(registers);
@@ -1474,8 +1546,30 @@ class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     std::string name_;                                  // Name to use for debugging
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & protoval_;
+        s & currentState_;
+        s & initialState_;
+        s & solver_;
+        s & currentInsn_;
+        s & nInsns_;
+        s & name_;
+    }
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    // for serialization
+    RiscOperators()
+        : solver_(NULL), currentInsn_(NULL), nInsns_(0) {}
+
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
         : protoval_(protoval), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(protoval_);
@@ -2160,6 +2254,20 @@ protected:
     typedef std::vector<InsnProcessor*> InsnProcessors;
     InsnProcessors iproc_table;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & operators;
+        s & regdict;
+        s & addrWidth_;
+        s & autoResetInstructionPointer_;
+        //s & iproc_table; -- not saved
+    }
+#endif
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:

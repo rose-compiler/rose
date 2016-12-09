@@ -203,17 +203,14 @@ public:
     BaseSemantics::StatePtr operator()(const DfCfg&, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const;
 };
 
-/** Data-Flow engine. */
-typedef rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction> Engine;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Merge function
-//
-// Computes the meet of two states, merging the source state into the destination state and returning true iff the destination
-// state changed.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/** Data-flow merge function.
+ *
+ *  Computes the meet of two states, merging the source state into the destination state and returning true iff the destination
+ *  state changed. */
 typedef rose::BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
+
+/** Data-Flow engine. */
+typedef rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction, MergeFunction> Engine;
 
 /** Returns the list of all known stack variables.
  *

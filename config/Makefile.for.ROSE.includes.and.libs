@@ -122,12 +122,18 @@ if ROSE_HAVE_DLIB
   ROSE_DLIB_LIBS_WITH_PATH =
 endif
 
+# DQ (11/4/2016): Adding support for use of Address Sanitizer (for where the ROSE Test Handler (RTH) is used.
+# Note the quotes and escapes that are required:
+ADDRESS_SANITIZER_OPTIONS = "ASAN_OPTIONS=symbolize=1:detect_leaks=0 ASAN_SYMBOLIZER_PATH=\`which llvm-symbolizer\`"
+
+# DQ(11/4/2016): Need a version when not using the ROSE Test Handler (RTH):
+NON_RTH_ADDRESS_SANITIZER_OPTIONS = ASAN_OPTIONS=symbolize=1:detect_leaks=0 ASAN_SYMBOLIZER_PATH=`which llvm-symbolizer`
 
 GLUT_LIBS = ${glut_path}
 
 # ROSE-DWARF libdwarf support
-if ROSE_USE_DWARF
-  ROSE_DWARF_INCLUDES = -I$(dwarf_path)
+if ROSE_HAVE_LIBDWARF
+  ROSE_DWARF_INCLUDES = $(LIBDWARF_CPPFLAGS)
 
 # DQ (3/13/2009): These do not appear to be used anywhere.
 # ROSE_DWARF_LIBS = -ldwarf
@@ -151,10 +157,10 @@ if ROSE_USE_INTEL_PIN
 else
 # DQ (3/15/2009): Use the usual static linking when not using Intel Pin (what we used to do).
 # DQ (3/13/2009): Fixup libdwarf support in ROSE to always use the dynamic (shared) library.
-# ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(dwarf_path) -L$(dwarf_path) -ldwarf -lelf
+# ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(LIBDWARF_PREFIX/lib) -L$(LIBDWARF_PREFIX/lib) -ldwarf -lelf
 # DQ (6/5/2010): Fixed to use the value set in the configure step (requires the dynamic library).
-# ROSE_DWARF_LIBS_WITH_PATH = $(dwarf_path)/libdwarf.a -lelf
-  ROSE_DWARF_LIBS_WITH_PATH = @DWARF_LINK@
+# ROSE_DWARF_LIBS_WITH_PATH = $(LIBDWARF_PREFIX)/lib/libdwarf.a -lelf
+  ROSE_DWARF_LIBS_WITH_PATH = @LIBDWARF_LDFLAGS@
 endif
 endif
 
@@ -198,7 +204,7 @@ if ROSE_USE_INTEL_PIN
 
 # Do we want to handle this differently when Dwarf is used optionally with ROSE.
   INTEL_PIN_LIBS          = -lpin -lxed -ldwarf -lelf -ldl
-#if ROSE_USE_DWARF
+#if ROSE_HAVE_LIBDWARF
 #  INTEL_PIN_LIBS          = -lpin -lxed -lelf -ldl
 #else
 #  INTEL_PIN_LIBS          = -lpin -lxed -ldwarf -lelf -ldl
@@ -574,6 +580,19 @@ check-smoke check-nonsmoke check-all:
 	done
 	$(MAKE) $(AM_MAKEFLAGS) $@-local
 
-check-smoke-local check-nonsmoke-local check-all-local:
+check-smoke-local check-nonsmoke-local:
+check-all-local: check-smoke-local check-nonsmoke-local
 
-.PHONY: check-smoke check-nonsmoke check-all check-smoke-local check-nonsmoke-local check-all-local
+# Temporary until Jenkins and the Matrix are fixed to run "make check-all" isntead of "make check".  The correct version
+# should be that check-local depends only on check-smoke-local. [Matzke, 2016-09-21].
+check-local: check-smoke-local check-nonsmoke-local
+
+clean-test-targets:
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)
+	rm -f $(TEST_TARGETS:.passed=.out)
+	rm -f $(TEST_TARGETS:.passed=.err)
+
+clean-local: clean-test-targets
+
+.PHONY: check-smoke check-nonsmoke check-all check-smoke-local check-nonsmoke-local check-all-local clean-test-targets

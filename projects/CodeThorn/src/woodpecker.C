@@ -35,6 +35,7 @@
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
+using namespace Sawyer::Message;
 
 #include "PropertyValueTable.h"
 #include "DeadCodeElimination.h"
@@ -120,9 +121,16 @@ void printCodeStatistics(SgNode* root) {
 }
 
 int main(int argc, char* argv[]) {
+  Sawyer::Message::Facility logger("Woodpecker");
+  mfacilities.insert(logger);
+
+  mfacilities.disable(DEBUG);
+  mfacilities.disable(TRACE);
+  mfacilities.disable(INFO);
+
   try {
     if(argc==1) {
-      cout << "Error: wrong command line options."<<endl;
+      logger[ERROR] << "wrong command line options."<<endl;
       exit(1);
     }
 #if 0
@@ -138,7 +146,7 @@ int main(int argc, char* argv[]) {
     ("Woodpecker V0.1\n"
      "Written by Markus Schordan\n"
      "Supported options");
-  
+
   desc.add_options()
     ("help,h", "produce this help message.")
     ("rose-help", "show help for compiler frontend options.")
@@ -184,7 +192,7 @@ int main(int argc, char* argv[]) {
   if (args.count("csv-const-result")) {
     csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
   }
-  
+
   boolOptions.init(argc,argv);
   // temporary fake optinos
   boolOptions.registerOption("arith-top",false); // temporary
@@ -206,7 +214,7 @@ int main(int argc, char* argv[]) {
 
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
-    if (string(argv[i]) == "--csv-assert" 
+    if (string(argv[i]) == "--csv-assert"
         || string(argv[i]) == "--csv-const-result"
         ) {
       // do not confuse ROSE frontend
@@ -225,11 +233,11 @@ int main(int argc, char* argv[]) {
   }
 #endif
 
-  cout << "INIT: Parsing and creating AST started."<<endl;
+  logger[TRACE] << "INIT: Parsing and creating AST started."<<endl;
   SgProject* root = frontend(argc,argv);
   //  AstTests::runAllTests(root);
   // inline all functions
-  cout << "INIT: Parsing and creating AST finished."<<endl;
+  logger[TRACE] << "INIT: Parsing and creating AST finished."<<endl;
 
   if(args.count("stats")) {
     printCodeStatistics(root);
@@ -244,13 +252,13 @@ int main(int argc, char* argv[]) {
     threadTransformation->transform(root);
     root->unparse(0,0);
     delete threadTransformation;
-    cout<<"STATUS: generated program with introduced thread-variable."<<endl;
+    logger[TRACE] <<"STATUS: generated program with introduced thread-variable."<<endl;
     exit(0);
   }
 
   SgFunctionDefinition* mainFunctionRoot=0;
   if(boolOptions["inline"]) {
-    cout<<"STATUS: eliminating non-called trivial functions."<<endl;
+    logger[TRACE] <<"STATUS: eliminating non-called trivial functions."<<endl;
     // inline functions
     TrivialInlining tin;
     tin.setDetailedOutput(detailedOutput);
@@ -258,39 +266,39 @@ int main(int argc, char* argv[]) {
     DeadCodeElimination dce;
     // eliminate non called functions
     int numEliminatedFunctions=dce.eliminateNonCalledTrivialFunctions(root);
-    cout<<"STATUS: eliminated "<<numEliminatedFunctions<<" functions."<<endl;
+    logger[TRACE] <<"STATUS: eliminated "<<numEliminatedFunctions<<" functions."<<endl;
   } else {
-    cout<<"INFO: Inlining: turned off."<<endl;
+    logger[INFO] <<"Inlining: turned off."<<endl;
   }
 
   if(boolOptions["eliminate-empty-if"]) {
     DeadCodeElimination dce;
-    cout<<"STATUS: Eliminating empty if-statements."<<endl;
+    logger[TRACE] <<"STATUS: Eliminating empty if-statements."<<endl;
     size_t num=0;
     size_t numTotal=num;
     do {
       num=dce.eliminateEmptyIfStmts(root);
-      cout<<"INFO: Number of if-statements eliminated: "<<num<<endl;
+      logger[INFO] <<"Number of if-statements eliminated: "<<num<<endl;
       numTotal+=num;
     } while(num>0);
-    cout<<"STATUS: Total number of empty if-statements eliminated: "<<numTotal<<endl;
+    logger[TRACE] <<"STATUS: Total number of empty if-statements eliminated: "<<numTotal<<endl;
   }
 
   if(boolOptions["normalize"]) {
-    cout <<"STATUS: Normalization started."<<endl;
+    logger[TRACE] <<"STATUS: Normalization started."<<endl;
     RewriteSystem rewriteSystem;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
-    cout <<"STATUS: Normalization finished."<<endl;
-  }
- 
-  if(boolOptions["normalize2"]) {
-    cout <<"STATUS: Normalization started."<<endl;
-    SPRAY::Normalization::normalizeAst(root);
-    cout <<"STATUS: Normalization finished."<<endl;
+    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
   }
 
-  cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
+  if(boolOptions["normalize2"]) {
+    logger[TRACE] <<"STATUS: Normalization started."<<endl;
+    SPRAY::Normalization::normalizeAst(root);
+    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
+  }
+
+  logger[TRACE] <<"STATUS: performing flow-insensitive const analysis."<<endl;
   VarConstSetMap varConstSetMap;
   VariableIdSet variablesOfInterest;
   FIConstAnalysis fiConstAnalysis(&variableIdMapping);
@@ -298,7 +306,7 @@ int main(int argc, char* argv[]) {
   fiConstAnalysis.setDetailedOutput(detailedOutput);
   fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
   variablesOfInterest=fiConstAnalysis.determinedConstantVariables();
-  cout<<"INFO: variables of interest: "<<variablesOfInterest.size()<<endl;
+  logger[INFO] <<"variables of interest: "<<variablesOfInterest.size()<<endl;
   if(detailedOutput)
     printResult(variableIdMapping,varConstSetMap);
 
@@ -307,9 +315,9 @@ int main(int argc, char* argv[]) {
     VariableIdSet setOfUsedVarsGlobalInit=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
     VariableIdSet setOfAllUsedVars = setOfUsedVarsInFunctions;
     setOfAllUsedVars.insert(setOfUsedVarsGlobalInit.begin(), setOfUsedVarsGlobalInit.end());
-    cout<<"INFO: number of used vars inside functions: "<<setOfUsedVarsInFunctions.size()<<endl;
-    cout<<"INFO: number of used vars in global initializations: "<<setOfUsedVarsGlobalInit.size()<<endl;
-    cout<<"INFO: number of vars inside functions or in global inititializations: "<<setOfAllUsedVars.size()<<endl;
+    logger[INFO]<<"number of used vars inside functions: "<<setOfUsedVarsInFunctions.size()<<endl;
+    logger[INFO]<<"number of used vars in global initializations: "<<setOfUsedVarsGlobalInit.size()<<endl;
+    logger[INFO]<<"number of vars inside functions or in global inititializations: "<<setOfAllUsedVars.size()<<endl;
     fiConstAnalysis.filterVariables(setOfAllUsedVars);
     fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
   }
@@ -340,43 +348,43 @@ int main(int argc, char* argv[]) {
   VariableConstInfo vci=*(fiConstAnalysis.getVariableConstInfo());
   DeadCodeElimination dce;
   if(boolOptions["eliminate-dead-code"]) {
-    cout<<"STATUS: performing dead code elimination."<<endl;
+    logger[TRACE]<<"STATUS: performing dead code elimination."<<endl;
     dce.setDetailedOutput(detailedOutput);
     dce.setVariablesOfInterest(variablesOfInterest);
     dce.eliminateDeadCodePhase1(root,&variableIdMapping,vci);
-    cout<<"STATUS: Eliminated "<<dce.numElimVars()<<" variable declarations."<<endl;
-    cout<<"STATUS: Eliminated "<<dce.numElimAssignments()<<" variable assignments."<<endl;
-    cout<<"STATUS: Replaced "<<dce.numElimVarUses()<<" uses of variables with constant."<<endl;
-    cout<<"STATUS: Eliminated "<<dce.numElimVars()<<" dead variables."<<endl;
-    cout<<"STATUS: Dead code elimination phase 1: finished."<<endl;
-    cout<<"STATUS: Performing condition const analysis."<<endl;
+    logger[TRACE]<<"STATUS: Eliminated "<<dce.numElimVars()<<" variable declarations."<<endl;
+    logger[TRACE]<<"STATUS: Eliminated "<<dce.numElimAssignments()<<" variable assignments."<<endl;
+    logger[TRACE]<<"STATUS: Replaced "<<dce.numElimVarUses()<<" uses of variables with constant."<<endl;
+    logger[TRACE]<<"STATUS: Eliminated "<<dce.numElimVars()<<" dead variables."<<endl;
+    logger[TRACE]<<"STATUS: Dead code elimination phase 1: finished."<<endl;
+    logger[TRACE]<<"STATUS: Performing condition const analysis."<<endl;
   } else {
-    cout<<"STATUS: Dead code elimination: turned off."<<endl;
+    logger[TRACE]<<"STATUS: Dead code elimination: turned off."<<endl;
   }
   if(csvAssertFileName) {
-    cout<<"STATUS: performing flow-insensensitive condition-const analysis."<<endl;
+    logger[TRACE]<<"STATUS: performing flow-insensensitive condition-const analysis."<<endl;
     Labeler labeler(root);
     fiConstAnalysis.performConditionConstAnalysis(&labeler);
-    cout<<"INFO: Number of true-conditions     : "<<fiConstAnalysis.getTrueConditions().size()<<endl;
-    cout<<"INFO: Number of false-conditions    : "<<fiConstAnalysis.getFalseConditions().size()<<endl;
-    cout<<"INFO: Number of non-const-conditions: "<<fiConstAnalysis.getNonConstConditions().size()<<endl;
-    cout<<"STATUS: performing flow-insensensitive reachability analysis."<<endl;
+    logger[INFO]<<"Number of true-conditions     : "<<fiConstAnalysis.getTrueConditions().size()<<endl;
+    logger[INFO]<<"Number of false-conditions    : "<<fiConstAnalysis.getFalseConditions().size()<<endl;
+    logger[INFO]<<"Number of non-const-conditions: "<<fiConstAnalysis.getNonConstConditions().size()<<endl;
+    logger[TRACE]<<"STATUS: performing flow-insensensitive reachability analysis."<<endl;
     ReachabilityAnalysis ra;
     PropertyValueTable reachabilityResults=ra.fiReachabilityAnalysis(labeler, fiConstAnalysis);
-    cout<<"STATUS: generating file "<<csvAssertFileName<<endl;
+    logger[TRACE]<<"STATUS: generating file "<<csvAssertFileName<<endl;
     reachabilityResults.writeFile(csvAssertFileName,true);
   }
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
 #endif
-  cout << "INFO: Remaining functions in program: "<<numberOfFunctions(root)<<endl;
+  logger[INFO]<< "Remaining functions in program: "<<numberOfFunctions(root)<<endl;
   if(boolOptions["generate-transformed-code"]) {
-    cout << "STATUS: generating transformed source code."<<endl;
+    logger[TRACE]<< "STATUS: generating transformed source code."<<endl;
     root->unparse(0,0);
   }
 
-  cout<< "STATUS: finished."<<endl;
+  logger[TRACE]<< "STATUS: finished."<<endl;
 
   // main function try-catch
   } catch(CodeThorn::Exception& e) {

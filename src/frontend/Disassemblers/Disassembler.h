@@ -9,6 +9,9 @@
 #include "Map.h"
 #include "BaseSemantics2.h"
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/string.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 
@@ -115,9 +118,9 @@ namespace BinaryAnalysis {
  *  Disassembler::register_subclass(new MyDisassembler(8)); // 64-bit
  *  @endcode
  *
- *  Additional examples are shown in the disassembleBuffer.C and disassemble.C sources in the tests/roseTests/binaryTests
- *  directory. They are examples of how a Disassembler object can be used to disassemble a buffer containing bare machine code
- *  when one doesn't have an associated executable file.
+ *  Additional examples are shown in the disassembleBuffer.C and disassemble.C sources in the
+ *  tests/nonsmoke/functional/roseTests/binaryTests directory. They are examples of how a Disassembler object can be used to
+ *  disassemble a buffer containing bare machine code when one doesn't have an associated executable file.
  */
 class Disassembler {
 public:
@@ -225,15 +228,6 @@ public:
      *  address. */
     typedef Map<rose_addr_t, Exception> BadMap;
 
-    Disassembler()
-        : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT),
-          p_wordsize(4), p_sex(ByteOrder::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
-          p_protection(MemoryMap::EXECUTABLE)
-        {ctor();}
-
-    virtual ~Disassembler() {}
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -253,12 +247,50 @@ protected:
     unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
     static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
     static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
+    std::string p_name;                                 /**< Name by which this dissassembler is registered. */
 
     /** Prototypical dispatcher for creating real dispatchers */
     InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
 
 public:
     static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & p_registers;
+        s & REG_IP & REG_SS;
+        //s & p_partitioner -- not serialized
+        s & p_search;
+        s & p_wordsize;
+        s & p_sex;
+        s & p_alignment;
+        s & p_ndisassembled;
+        s & p_protection;
+        s & p_name;
+    }
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Constructors
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    Disassembler()
+        : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT),
+          p_wordsize(4), p_sex(ByteOrder::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
+          p_protection(MemoryMap::EXECUTABLE)
+        {ctor();}
+
+    virtual ~Disassembler() {}
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Registration and lookup methods
@@ -286,6 +318,17 @@ public:
      *  Thread safety: Multiple threads can call this class method simultaneously even when other threads are registering
      *  additional disassemblers. */
     static Disassembler *lookup(SgAsmGenericHeader*);
+
+    /** Property: Name by which disassembler is registered.
+     *
+     * @{ */
+    const std::string& name() const {
+        return p_name;
+    }
+    void name(const std::string &s) {
+        p_name = s;
+    }
+    /** @} */
 
     /** List of names recognized by @ref lookup.
      *

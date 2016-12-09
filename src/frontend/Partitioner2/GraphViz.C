@@ -240,9 +240,10 @@ CfgEmitter::selectWholeGraph() {
     if (useFunctionSubgraphs())
         assignFunctionSubgraphs();
 
-    deselectUnusedVertex(partitioner_.undiscoveredVertex());
-    deselectUnusedVertex(partitioner_.indeterminateVertex());
-    deselectUnusedVertex(partitioner_.nonexistingVertex());
+    // We can't deselect these if the graph isn't a patritioner.cfg() because they might not be present.
+    deselectUnusedVertexType(V_UNDISCOVERED);
+    deselectUnusedVertexType(V_INDETERMINATE);
+    deselectUnusedVertexType(V_NONEXISTING);
 
     return *this;
 }
@@ -451,6 +452,14 @@ CfgEmitter::deselectReturnEdges() {
             if (0==nSelectedIncomingEdges)
                 vertexOrganization(edge.target()).select(false);
         }
+    }
+}
+
+void
+CfgEmitter::deselectUnusedVertexType(VertexType type) {
+    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+        if (vertex.value().type() == type)
+            deselectUnusedVertex(graph_.findVertex(vertex.id()));
     }
 }
 

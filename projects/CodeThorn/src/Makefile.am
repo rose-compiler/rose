@@ -106,6 +106,9 @@ codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
+  AnalyzerSolvers.C                \
+  AstNodeInfo.h \
+  AstNodeInfo.C \
   CodeThornException.h \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
@@ -123,6 +126,8 @@ codethorn_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CTIOLabeler.h                    \
   CTIOLabeler.C                    \
+  DataRaceDetection.h \
+  DataRaceDetection.C \
   EqualityMaintainer.h             \
   ExprAnalyzer.C                   \
   ExprAnalyzer.h                   \
@@ -139,6 +144,8 @@ codethorn_SOURCES = \
   LTLParser.y++                    \
   LanguageRestrictorCollection.C   \
   LanguageRestrictorCollection.h   \
+  LoopInfo.h                       \
+  LoopInfo.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   PragmaHandler.h \
@@ -499,11 +506,15 @@ analyterix_SOURCES = \
 
 check-local:
 	@echo ================================================================
+	@echo RUNNING CODETHORN INTERNAL CHECKS
+	@echo ================================================================
+	@./codethorn --internal-checks	
+
+	@echo ================================================================
 	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
 	@echo ================================================================
-#	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
+	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
 
-	./codethorn --internal-checks	
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@echo ================================================================
 	@echo RUNNING VERIFICATION ERROR TESTS
@@ -535,6 +546,10 @@ check-local:
 	@$(srcdir)/scripts/runLtlRegressionTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS examples in several versions and compare to previous results
 	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results
 	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
+
+check-arrays:
+	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat

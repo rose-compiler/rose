@@ -5,8 +5,8 @@ using namespace std;
 #include "maxExtents.h"
 
 MaxSourceExtents::InheritedAttribute::InheritedAttribute(SgSourceFile* input_sourceFile, int input_start_line, int input_start_column, int input_end_line, int input_end_column, bool processed) 
-   : sourceFile(input_sourceFile),
-     processChildNodes(processed)
+   : processChildNodes(processed),
+     sourceFile(input_sourceFile)
    {
      start_line   = input_start_line;
      start_column = input_start_column;
@@ -19,8 +19,8 @@ MaxSourceExtents::InheritedAttribute::InheritedAttribute(SgSourceFile* input_sou
    }
 
 MaxSourceExtents::InheritedAttribute::InheritedAttribute ( const InheritedAttribute & X ) 
-   : sourceFile(X.sourceFile),
-     processChildNodes(X.processChildNodes)
+   : processChildNodes(X.processChildNodes),
+     sourceFile(X.sourceFile)
    {
      start_line   = X.start_line;
      start_column = X.start_column;
@@ -145,7 +145,7 @@ MaxSourceExtents::SourceExtentsTraversal::evaluateSynthesizedAttribute (SgNode* 
                SgLocatedNode* child_locatedNode = isSgLocatedNode(childAttributes[i].node);
                ROSE_ASSERT(child_locatedNode != NULL);
 
-               bool child_isCompilerGenerated = child_locatedNode->isCompilerGenerated();
+            // bool child_isCompilerGenerated = child_locatedNode->isCompilerGenerated();
 
             // Get the child values from the child attribute (not the asociated IR node.
                int child_start_line   = childAttributes[i].start_line;

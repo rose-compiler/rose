@@ -119,7 +119,11 @@ ReadFiles(POETCode* files, std::list<POETProgram*>& resultFiles)
 class InsertTraceInside : public VisitNestedTraceVars, public ReplInfoVisitor
 {
   std::vector<LocalVar*> traceVars;
-  int curVar;
+
+// DQ (12/6/2016): Fixing warnings we want to be errors: -Wsign-compare.
+// int curVar;
+  size_t curVar;
+
   virtual void preVisitTraceVar(LocalVar* v) 
   {
      POETCode* content = v->get_entry().get_code() ;
@@ -129,7 +133,8 @@ class InsertTraceInside : public VisitNestedTraceVars, public ReplInfoVisitor
 
   virtual void defaultVisit(POETCode* val) 
    {
-     int size = traceVars.size();
+  // DQ (12/6/2016): Fixing warnings we want to be errors: -Wsign-compare.
+     size_t size = traceVars.size();
      LocalVar *v = traceVars[curVar];
      if (curVar >= size || EvalTrace(v) != val) { return; }
      res = v;
@@ -279,7 +284,7 @@ eval_tuple_access(POETCode* tuple, int i)
   if (tuple1==0)
      { if (i == 0) return tuple; }
   else {
-     if (i >= 0 && i < tuple1->size()) 
+     if (i >= 0 && (size_t)i < tuple1->size()) 
         return tuple1->get_entry(i);
   }
   return 0;
@@ -345,7 +350,7 @@ class XformEvalVisitor : public ReplInfoVisitor
            res = eval_tuple_access(cv->get_args(), e.get_code()); 
            break;
        case LVAR_ATTR:
-          for (int i = 0; i < cv_e.attr_size(); ++i) {
+          for (size_t i = 0; i < cv_e.attr_size(); ++i) {
              if (cv_e.get_attr(i) == lv) { 
                 POETCode* tuple = cv->get_attr();
                 if (tuple == 0) res = e.get_code();
@@ -381,7 +386,7 @@ class XformEvalVisitor : public ReplInfoVisitor
      POETOperator* op = static_cast<POETOperator*>(access);
      if (op->get_op() == TYPE_TOR) {
         cv->get_entry().get_symTable()->pop_table();
-        for (int i = 0; i < op->numOfArgs(); ++i) {
+        for (size_t i = 0; i < op->numOfArgs(); ++i) {
             POETCode* cur = apply(op->get_arg(i));
             LocalVar* lv = dynamic_cast<LocalVar*>(cur);
             if (lv == 0) { CVAR_ACC_MISMATCH( cv,access); }
@@ -668,7 +673,7 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
            std:: vector<POETCode*> targets;
            if (orig.size() < config.size()) 
               INCORRECT_TUPLE_SIZE(r1,orig.size());
-           for (int i = 0; i < config.size();  ++i) {
+           for (size_t i = 0; i < config.size();  ++i) {
               POETCode* cur=orig[i], *c = config[i]; 
               if (c->get_enum() != SRC_ICONST) XFORM_CONFIG_INCORRECT("PERMUTE", c->toString());
               int j = static_cast<POETIconst*>(c)->get_val();
@@ -811,7 +816,7 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
        POETTuple* v2 = dynamic_cast<POETTuple*>(r2);
        if (v2 == 0) v2 = ASTFactory::inst()->append_tuple(0, r2);
        bool succ=false;
-       for (int i = 0; i < v2->size(); ++i) {
+       for (size_t i = 0; i < v2->size(); ++i) {
           POETList* cur = dynamic_cast<POETList*>(v2->get_entry(i));
           if (cur == 0) {
              std::cerr << "v2[i]=" << v2->get_entry(i)->toString() << "\n";
@@ -1003,7 +1008,7 @@ void POETProgram::clear_syntax()
             case SRC_TUPLE:
             {
                POETTuple* pars = static_cast<POETTuple*>(_pars);
-               for (int i = 0; i < pars->size(); ++i) {
+               for (size_t i = 0; i < pars->size(); ++i) {
                   LocalVar* cur_par = static_cast<LocalVar*>(pars->get_entry(i));
                   cur.second.par_type.push_back(LocalVarSave(cur_par,cur_par->get_entry().get_restr())); 
                }
@@ -1199,7 +1204,7 @@ match_parameters(POETCode* _pars, POETCode* _args, MatchParameterConfig modpar)
     if (pars->size() != args->size())
       return false;
     if (modpar) {
-       for (int i = 0; i < pars->size(); ++i) {
+       for (size_t i = 0; i < pars->size(); ++i) {
           assert(pars->get_entry(i)->get_enum() == SRC_LVAR);
           ModifyParameter(static_cast<LocalVar*>(pars->get_entry(i)), args->get_entry(i), modpar);
       }

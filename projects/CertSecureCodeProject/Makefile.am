@@ -630,7 +630,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 ROSE_FLAGS = 
 
 ## Include the path to A++ and the transformation specification
-# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
@@ -642,7 +642,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
 $(TEST_Objects): certTests $(srcdir)/$(@:.o=.C)
-	$(VALGRIND) ./certTests $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C)
+	$(VALGRIND) ./certTests $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.o=.C)
 
 test: certTests
 	$(VALGRIND) ./certTests -rose:verbose 0 $(srcdir)/input_test_01.C
