@@ -75,6 +75,11 @@ AC_DEFUN([AX_BOOST_THREAD],
                 case "$build_os" in
                     solaris ) CXXFLAGS="-pthreads $CXXFLAGS" ;;
                     ming32 ) CXXFLAGS="-mthreads $CXXFLAGS" ;;
+                  # DQ (12/6/2016): Added pthread option since it appears that the default installation of Boost used pthread library.
+                  # Note that their is no "s" on the -pthread option for Clang or GNU g++.
+                  # Note that since boost appears to not be compiled on OSX with threading enabled, we don't want to specify -pthread option to the compiler.
+                  # darwin* ) CXXFLAGS="$CXXFLAGS" ;;
+                  # darwin* ) CXXFLAGS="-pthread $CXXFLAGS" ;;
                     darwin* ) CXXFLAGS="$CXXFLAGS" ;;
                     * ) CXXFLAGS="-pthread $CXXFLAGS" ;;
                 esac

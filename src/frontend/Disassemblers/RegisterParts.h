@@ -31,6 +31,7 @@ private:
     class MajorMinor {
         unsigned majr_, minr_;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
@@ -38,6 +39,7 @@ private:
         void serialize(S &s, const unsigned version) {
             s & majr_ & minr_;
         }
+#endif
 
     public:
         MajorMinor(): majr_(0), minr_(0) {}
@@ -57,6 +59,7 @@ private:
     typedef Sawyer::Container::Map<MajorMinor, BitSet> Map;
     Map map_;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -64,6 +67,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & map_;
     }
+#endif
     
 public:
     /** Predicate checking whether this container is empty.

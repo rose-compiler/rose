@@ -113,9 +113,6 @@ checkIsModifiedFlag(SgNode *node)
                   {
                     if (node->get_isModified() == true)
                        {
-#if 1
-                         printf ("checkIsModifiedFlag(): node = %p = %s \n",node,node->class_name().c_str());
-#endif
                          isSubtreeModifiedFlag = true;
 
                       // Note that the set_isModified() functions is the only set_* access function that will not set the isModified flag.

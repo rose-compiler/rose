@@ -54,6 +54,7 @@ private:
     typedef std::vector<IdisList> IdisTable;
     IdisTable idis_table;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -81,6 +82,7 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
 
 protected:
     // undocumented constructor for serialization. The init() will be called by the serialization.
@@ -236,6 +238,8 @@ private:
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::DisassemblerM68k);
+#endif
 
 #endif

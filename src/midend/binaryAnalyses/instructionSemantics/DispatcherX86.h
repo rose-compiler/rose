@@ -56,6 +56,7 @@ public:
     RegisterDescriptor REG_ST0, REG_FPSTATUS, REG_FPSTATUS_TOP, REG_FPCTL, REG_MXCSR;
     /** @}*/
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -75,6 +76,7 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
     
 protected:
     // Prototypical constructor
@@ -300,6 +302,8 @@ public:
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
+#endif
 
 #endif

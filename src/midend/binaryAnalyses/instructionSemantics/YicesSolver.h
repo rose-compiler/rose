@@ -49,6 +49,7 @@ private:
 protected:
     Evidence evidence;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -60,6 +61,7 @@ private:
         s & evidence;
         //s & context; -- not saved
     }
+#endif
 
 public:
     /** Constructor prefers to use the Yices executable interface. See set_linkage(). */
@@ -172,6 +174,8 @@ private:
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::YicesSolver);
+#endif
 
 #endif

@@ -5934,4 +5934,6 @@ DisassemblerX86::decodeGroupP()
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::DisassemblerX86);
+#endif

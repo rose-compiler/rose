@@ -2836,6 +2836,8 @@ Grammar::buildSerializationSupport(std::ostream &declarations, std::ostream &def
                  <<"#ifndef " <<includeOnce <<"\n"
                  <<"#define " <<includeOnce <<"\n"
                  <<"\n"
+                 <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
+                 <<"\n"
                  <<"// sage3basic.h or rose.h must be inlucded first from a .C file (don't do it here!)\n"
                  <<"#include <boost/serialization/export.hpp>\n\n";
 
@@ -2865,6 +2867,9 @@ Grammar::buildSerializationSupport(std::ostream &declarations, std::ostream &def
     // BOOST_CLASS_EXPORT_IMPLEMENT
     definitions <<"#include <sage3basic.h>\n"
                 <<"#include <" <<headerName <<">\n"
+                <<"\n"
+                <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
+                <<"\n"
                 <<"#include <boost/serialization/export.hpp>\n"
                 <<"\n\n"
                 <<"// Register SgNode and all subclasses so that subclasses can be serialized through a base class pointer.\n";
@@ -2872,9 +2877,13 @@ Grammar::buildSerializationSupport(std::ostream &declarations, std::ostream &def
         if (terminalList[i]->isBoostSerializable())
             definitions <<"BOOST_CLASS_EXPORT_IMPLEMENT(" <<terminalList[i]->name <<");\n";
     }
+    definitions <<"\n"
+                <<"#endif\n";
 
     // Header epilogue
-    declarations <<"#endif\n";
+    declarations <<"\n"
+                 <<"#endif\n"
+                 <<"#endif\n";
 }
 
 // PC: new implementation of ReferenceToPointerHandler.  This implementation

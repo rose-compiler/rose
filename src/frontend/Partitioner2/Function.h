@@ -68,6 +68,7 @@ private:
         isNoop_.clear();
     }
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -85,6 +86,7 @@ private:
         s & stackDeltaAnalysis_;
         s & stackDeltaOverride_;
     }
+#endif
     
 protected:
     // Needed for serialization

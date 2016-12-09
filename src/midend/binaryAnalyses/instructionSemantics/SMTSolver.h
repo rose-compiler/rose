@@ -45,6 +45,7 @@ private:
     FILE *debug;
     void init();
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -52,6 +53,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & name_;
     }
+#endif
 
 public:
     SMTSolver(): debug(NULL) { init(); }

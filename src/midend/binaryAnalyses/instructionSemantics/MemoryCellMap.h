@@ -39,6 +39,7 @@ public:
 protected:
     CellMap cells;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
@@ -47,6 +48,7 @@ private:
         s & boost::serialization::base_object<MemoryCellState>(*this);
         s & cells;
     }
+#endif
     
 protected:
     MemoryCellMap() {}                                  // for serialization
@@ -116,6 +118,8 @@ public:
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellMap);
+#endif
 
 #endif
