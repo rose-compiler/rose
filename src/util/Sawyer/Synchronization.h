@@ -44,20 +44,36 @@ struct MultiThreadedTag {};
  *  callers coordinate to serialize calls to the algorithm or API. */
 struct SingleThreadedTag {};
 
-// Used internally as a mutex in a single-threaded environment.
+// Used internally as a mutex in a single-threaded environment. Although it doesn't make sense to be able lock or unlock a
+// mutex in a single-threaded environment, incrementing a data member for each unlock might be useful and it works in
+// conjunction with NullLockGuard to prevent compilers from warning about unused variables which, at least in the
+// multi-threaded environment, are used only for their RAII side effects.
 class NullMutex {
+    size_t n;
 public:
+    NullMutex(): n(0) {}
     void lock() {}
-    void unlock() {}
+    void unlock() { ++n; }
     bool try_lock() { return true; }
 };
 
 // Used internally as a lock guard in a single-threaded environment.
 class NullLockGuard {
+    NullMutex &mutex_;
 public:
-    NullLockGuard(NullMutex) {}
-    void lock() {}
-    void unlock() {}
+    NullLockGuard(NullMutex &m)
+        : mutex_(m) {
+        lock();
+    }
+    ~NullLockGuard() {
+        unlock();
+    }
+    void lock() {
+        mutex_.lock();
+    }
+    void unlock() {
+        mutex_.unlock();
+    }
 };
 
 // Used internally as a barrier in a single-threaded environment.
