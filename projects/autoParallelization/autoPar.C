@@ -158,6 +158,10 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
       .intrinsicValue(true, AutoParallelization::enable_patch)
       .doc("Enable generating patch files for auto parallelization"));
 
+  switches.insert(Switch("no_aliasing")
+      .intrinsicValue(true, AutoParallelization::no_aliasing)
+      .doc("Assuming no pointer aliasing exists."));
+
   switches.insert(Switch("unique_indirect_index")
       .intrinsicValue(true, AutoParallelization::b_unique_indirect_index)
       .doc("Assuming all arrays used as indirect indices have unique elements (no overlapping)"));
