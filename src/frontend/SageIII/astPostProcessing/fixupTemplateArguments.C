@@ -121,11 +121,15 @@ bool contains_private_type (SgType* type)
           SgFunctionType*        functionType        = isSgFunctionType(type);
           SgDeclType*            declType            = isSgDeclType(type);
 
-          if (type != NULL && templateType == NULL && classType == NULL && voidType == NULL && rvalueReferenceType == NULL && functionType == NULL && declType == NULL)
+       // DQ (12/7/2016): An enum type needs to be handled since the declaration might be private (but still debugging this for now).
+          SgEnumType*            enumType            = isSgEnumType(type);
+
+          if (type != NULL && templateType == NULL && classType == NULL && voidType == NULL && rvalueReferenceType == NULL && functionType == NULL && declType == NULL && enumType == NULL)
              {
 #if 1
                printf ("found unwrapped type = %p = %s = %s (not a template class instantiaton) \n",type,type->class_name().c_str(),type->unparseToString().c_str());
 #endif
+            // if (type->isIntegerType() == false && type->isFloatType() == false)
                if (type->isIntegerType() == false && type->isFloatType() == false)
                   {
 #if 1
@@ -142,6 +146,10 @@ bool contains_private_type (SgType* type)
 #endif
                     returnValue = false;
                   }
+             }
+            else
+             {
+            // This is where we need to resolve is any types that are associated with declarations might be private (e.g. SgEnumType).
              }
         }
 
@@ -273,7 +281,8 @@ void fixupTemplateArguments()
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance fixupTemplateArguments_timer ("Add reference to non-private template arguments (for unparsing):");
 
-  // D (11/27/2016): We only want to support calling this fixup where I am testing it with the GNU 6.x compilers.
+#if 0
+  // DQ (11/27/2016): We only want to support calling this fixup where I am testing it with the GNU 6.x compilers.
 #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)
      printf ("Inside of fixupTemplateArguments() \n");
 
@@ -282,6 +291,7 @@ void fixupTemplateArguments()
      SgTemplateArgument::traverseMemoryPoolNodes(t);
 
      printf ("DONE: Inside of fixupTemplateArguments() \n");
+#endif
 #endif
 
 #if 0
