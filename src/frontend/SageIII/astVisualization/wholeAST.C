@@ -217,15 +217,19 @@ CustomAstDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* to, std:
      return returnString;
    }
 
-std::string
+string
 CustomAstDOTGenerationData::unparseToCompleteStringForDOT( SgNode* astNode )
    {
   // Generate the std::string (pass a SgUnparse_Info object)
      SgUnparse_Info* inputUnparseInfoPointer = new SgUnparse_Info();
      inputUnparseInfoPointer->unset_SkipComments();    // generate comments
      inputUnparseInfoPointer->unset_SkipWhitespaces(); // generate all whitespaces to format the code
-     std::string outputString = globalUnparseToString(astNode,inputUnparseInfoPointer);
-     std::string returnString = StringUtility::escapeNewLineCharaters(outputString);
+     string outputString = globalUnparseToString(astNode,inputUnparseInfoPointer);
+
+  // DQ (12/8/2016): Implemented new function to address most of Robb's points about this depreicated function.
+  // This is part of eliminating a warning that we want to be an error: -Werror=deprecated-declarations.
+  // std::string returnString = StringUtility::escapeNewLineCharaters(outputString);
+     string returnString = StringUtility::escapeNewlineAndDoubleQuoteCharacters(outputString);
 
      delete inputUnparseInfoPointer;
 

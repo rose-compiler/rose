@@ -5510,7 +5510,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // Strip out the rose specific commandline options
   // the assume all other arguments are to be passed onto the C or C++ compiler
 
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      int optionCount = 0;
+
   // int i = 0;
 
 // #if ROSE_INTERNAL_DEBUG
@@ -5763,6 +5765,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
      optionCount = sla(argv, "-rose:", "($)", "unparseTemplateDeclarationsFromAST",1);
 
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     ROSE_ASSERT(optionCount >= 0);
+
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
@@ -5794,8 +5799,14 @@ SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
      CommandlineProcessing::removeArgsWithParameters (argv,"--edg_parameter:");
 
   // DQ (2/20/2010): Remove this option when building the command line for the vendor compiler.
+
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      int optionCount = 0;
+
      optionCount = sla(argv, "--edg:", "($)", "(no_warnings)",1);
+
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     ROSE_ASSERT(optionCount >= 0);
 
 #if 0
      Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);

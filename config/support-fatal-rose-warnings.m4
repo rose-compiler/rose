@@ -83,6 +83,28 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
 
       CXX_WARNINGS+="-Werror=implicit-function-declaration "
       C_WARNINGS+="-Werror=implicit-function-declaration "
+
+    # DQ (12/9/2016): Adding null pointer defererence.
+      CXX_WARNINGS+="-Wnull-dereference "
+      C_WARNINGS+="-Wnull-dereference "
+
+    # DQ (12/8/2016): Turn off this GNU specific warning which does not work on large files.
+      CXX_WARNINGS+=-Wno-misleading-indentation "
+      C_WARNINGS+=-Wno-misleading-indentation "
+
+    # Except for a few specific warnings that should not be an error (unclear how widely available this option is).
+    # These are specific to Sawyer and we want to get past that code plus the ROSETTA code so that anyone can
+    # debug specific warnings in there code more directly (by compiling any subdirectory).
+      CXX_WARNINGS+="-Wno-error=unused-variable "
+      C_WARNINGS+="-Wno-error=unused-variable "
+
+    # Skip output of this warnings because it happends too much at this point.
+      CXX_WARNINGS+="-Wno-unused-variable "
+      C_WARNINGS+="-Wno-unused-variable "
+
+    # DQ (12/6/2016): Disable this warning since it too frequent and a result of using the -Wextras option (not clear what to do about it).
+      CXX_WARNINGS+="-Wno-unused-parameter "
+      C_WARNINGS+="-Wno-unused-parameter "
     ;;
 
     clang)
