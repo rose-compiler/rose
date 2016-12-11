@@ -74,6 +74,13 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
   default:
     assert(false);
   }
+
+// DQ (12/10/2016): Added return statement, but because this was not specified, we want to make it an error to preserve the previous semantics.
+   printf ("Exiting at a previously undefined function return location. \n");
+   assert(false);
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
+   return r;
 }
 
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2)

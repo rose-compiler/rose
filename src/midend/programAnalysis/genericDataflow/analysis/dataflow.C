@@ -13,7 +13,9 @@ using boost::mem_fn;
 
 NodeState* IntraBWDataflow::initializeFunctionNodeState(const Function &func, NodeState *fState)
 {
-  DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+// DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
+
   DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
   
   //Dbg::dbg << "funcCFGStart="<<funcCFGStart.getNode()<<" = ["<<Dbg::escape(funcCFGStart.getNode()->unparseToString())<<" | "<<funcCFGStart.getNode()->class_name()<<" | "<<funcCFGStart.getIndex()<<"]"<<endl;
@@ -30,7 +32,9 @@ NodeState* IntraBWDataflow::initializeFunctionNodeState(const Function &func, No
 NodeState* IntraFWDataflow::initializeFunctionNodeState(const Function &func, NodeState *fState)
 {
   DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(), filter);
-  DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+// DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
   
   //Dbg::dbg << "funcCFGStart="<<funcCFGStart.getNode()<<" = ["<<Dbg::escape(funcCFGStart.getNode()->unparseToString())<<" | "<<funcCFGStart.getNode()->class_name()<<" | "<<funcCFGStart.getIndex()<<"]"<<endl;
   //Dbg::dbg << "funcCFGEnd="<<funcCFGEnd.getNode()<<" = ["<<Dbg::escape(funcCFGEnd.getNode()->unparseToString())<<" | "<<funcCFGEnd.getNode()->class_name()<<" | "<<funcCFGEnd.getIndex()<<"]"<<endl;
@@ -212,6 +216,11 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
         
         //printf("IntraFWDataflow::runAnalysis() function %s()\n", func.get_name().getString());
         
+     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=deprecated-declarations.
+     // DQ (12/10/2016): This is a technique to suppress warnings in generated code that we want to be an error elsewhere in ROSE. 
+     // See https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html for more detail.
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
         auto_ptr<VirtualCFG::dataflow> workList(getInitialWorklist(func, firstVisit, analyzeDueToCallers, calleesUpdated, fState));
 
         VirtualCFG::dataflow &it = *workList;

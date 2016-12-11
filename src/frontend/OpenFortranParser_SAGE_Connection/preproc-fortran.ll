@@ -55,6 +55,11 @@ functions/variables.
 
 
 
+/* DQ (12/10/2016): This is a technique to suppress warnings in generated code that we want to be an error elsewhere in ROSE. 
+   See https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html for more detail.
+ */
+#pragma GCC diagnostic ignored "-Wsign-compare"
+
 
 #include "sage3basic.h"
 
@@ -248,9 +253,15 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
 %{
 #undef Rose_Fortran_Free_Format_wrap
           int line_no = 1;
-          int start_line_no = line_no;
+
+       /* DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable. */
+       /* int start_line_no = line_no; */
+
           int column_no = 1;
-          int start_column_no = column_no;
+
+       /* DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable. */
+       /* int start_column_no = column_no; */
+
           BEGIN NORMAL;
 %}
 
@@ -264,8 +275,9 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
                                     pushbracestack(braces_no); 
                    }
 <NORMAL>"!"    {
-                    start_line_no=line_no; 
-                    start_column_no=column_no; 
+                 /* DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable. */
+                 /* start_line_no=line_no; */
+                 /* start_column_no=column_no; */
                     curr_beginning.line_num = line_no;
                     curr_beginning.column_num = column_no;
                     column_no+=1; 
@@ -273,9 +285,10 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
                     BEGIN FORT_COMMENT; 
                }
 <NORMAL>"'"    {
-                    /*This begins a STRING LITERAL*/
-                    start_line_no=line_no; 
-                    start_column_no=column_no; 
+                 /* DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable. */
+                 /* This begins a STRING LITERAL */
+                 /* start_line_no=line_no; */
+                 /* start_column_no=column_no; */
                     curr_beginning.line_num = line_no;
                     curr_beginning.column_num = column_no;
                     column_no+=1; 

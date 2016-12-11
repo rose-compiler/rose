@@ -502,12 +502,17 @@ CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrap
 
     // We need the inclass declaration so we can determine if it is a virtual function
     if (functionDeclarationInClass->get_functionModifier().isVirtual() && polymorphic) {
-        SgFunctionDefinition *functionDefinition = NULL;
+
+     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     // SgFunctionDefinition *functionDefinition = NULL;
+
         SgMemberFunctionDeclaration* memberFunctionDefDeclaration = 
             isSgMemberFunctionDeclaration(memberFunctionDeclaration->get_definingDeclaration());
-        if (memberFunctionDefDeclaration != NULL) {
-            functionDefinition = memberFunctionDefDeclaration->get_definition();
-        }
+
+     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     // if (memberFunctionDefDeclaration != NULL) {
+     //     functionDefinition = memberFunctionDefDeclaration->get_definition();
+     // }
 
         // If it's not pure virtual then the current function declaration is a candidate function to be called
         if (includePureVirtualFunc || !functionDeclarationInClass->get_functionModifier().isPureVirtual())

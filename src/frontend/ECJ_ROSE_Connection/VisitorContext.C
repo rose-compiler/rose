@@ -19,11 +19,13 @@ CallVisitorContext::CallVisitorContext(unsigned int nb_args) : VisitorContext(nb
 CallVisitorContext::~CallVisitorContext() {
 }
 
-ForVisitorContext::ForVisitorContext(unsigned int nb_init__,
-                                                                         bool has_cond__,
-                                                                         unsigned int nb_incr__) :
-                                                                         VisitorContext(0), nb_init(nb_init__),
-                                                                         has_cond(has_cond__), nb_incr(nb_incr__)  {
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=reorder.
+ForVisitorContext::ForVisitorContext(unsigned int nb_init__, bool has_cond__, unsigned int nb_incr__) 
+  : VisitorContext(0),
+    has_cond(has_cond__), 
+    nb_init(nb_init__),
+    nb_incr(nb_incr__)
+{
 }
 
 ForVisitorContext::~ForVisitorContext() {
