@@ -219,8 +219,9 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=deprecated-declarations.
      // DQ (12/10/2016): This is a technique to suppress warnings in generated code that we want to be an error elsewhere in ROSE. 
      // See https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html for more detail.
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
+#endif
         auto_ptr<VirtualCFG::dataflow> workList(getInitialWorklist(func, firstVisit, analyzeDueToCallers, calleesUpdated, fState));
 
         VirtualCFG::dataflow &it = *workList;
