@@ -8,7 +8,9 @@
 /* DQ (12/10/2016): This is a technique to suppress warnings in generated code that we want to be an error elsewhere in ROSE. 
    See https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html for more detail.
  */
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
 #pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
 
 /* lex requires me to use extern "C" here */
 extern "C" int omp_wrap() { return 1; }
