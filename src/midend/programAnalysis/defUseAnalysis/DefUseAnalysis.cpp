@@ -499,8 +499,13 @@ DefUseAnalysis::start_traversal_of_one_function(SgFunctionDefinition* proc) {
   nrOfNodesVisited = 0;
   bool abortme=false;
   DefUseAnalysisPF*  defuse_perfunc = new DefUseAnalysisPF(false, this);
-  FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc,abortme);
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+// FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc,abortme);
+   defuse_perfunc->run(proc,abortme);
+
   nrOfNodesVisited = defuse_perfunc->getNumberOfNodesVisited();
+
   //cout << " nodes visited: " << nrOfNodesVisited << " ......... function " << proc->get_declaration()->get_name().str() << endl; 
   
   return nrOfNodesVisited;

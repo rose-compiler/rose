@@ -37,8 +37,13 @@ InterProceduralAnalysis::~InterProceduralAnalysis() {}
 bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState* state)
 {
         DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
-        DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
-        
+
+     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     // DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
+
+     // DQ (12/10/2016): If this function does not have side-effects then we can eliminate it as well.
+        cfgUtils::getFuncEndCFG(func.get_definition(), filter);
+
         if(analysisDebugLevel>=2)
                 Dbg::dbg << "UnstructuredPassIntraAnalysis::runAnalysis() function "<<func.get_name().getString()<<"()\n";
         
