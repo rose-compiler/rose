@@ -1194,7 +1194,7 @@ Stream::operator=(const Stream &other) {
 // thread-safe: locks other, but no need to lock this
 SAWYER_EXPORT
 Stream::Stream(const std::ostream &other_)
-    : std::ios(rdbuf()), std::ostream(rdbuf()), nrefs_(0), streambuf_(NULL) {
+    : std::ios(new StreamBuf(this)), std::ostream(std::ios::rdbuf()), nrefs_(0), streambuf_(NULL) {
     const Stream *other = dynamic_cast<const Stream*>(&other_);
     if (!other)
         throw "Sawyer::Message::Stream initializer is not a Sawyer::Message::Stream (only a std::ostream)";
