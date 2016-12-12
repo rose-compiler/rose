@@ -62,14 +62,14 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         s <<isEmpty_;
         if (!isEmpty_)
             s <<get();
     }
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         *this = Nothing();
         bool skip = false;
         s >>skip;

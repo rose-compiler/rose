@@ -29,6 +29,7 @@ sawyer_checkers =				\
 	graphIsomorphismTests			\
 	intervalSetMapUnitTests			\
 	ptrUnitTests				\
+	traceUnitTests				\
 	mesgUnitTests				\
 	markupUnitTests				\
 	cmdUnitTests
@@ -50,6 +51,7 @@ noinst_PROGRAMS +=				\
         graphIsomorphismTests			\
         intervalSetMapUnitTests			\
 	ptrUnitTests				\
+	traceUnitTests				\
 	mesgUnitTests				\
 	markupUnitTests				\
 	cmdUnitTests
@@ -69,6 +71,7 @@ graphUnitTests_SOURCES           = graphUnitTests.C
 indexedGraphDemo_SOURCES         = indexedGraphDemo.C
 graphIsomorphismTests_SOURCES    = graphIsomorphismTests.C
 intervalSetMapUnitTests_SOURCES  = intervalSetMapUnitTests.C
+traceUnitTests_SOURCES		 = traceUnitTests.C
 ptrUnitTests_SOURCES		 = ptrUnitTests.C
 mesgUnitTests_SOURCES		 = mesgUnitTests.C
 markupUnitTests_SOURCES		 = markupUnitTests.C

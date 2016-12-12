@@ -45,12 +45,12 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         s << pointee_;
     }
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         if (pointee_!=NULL && 0==releaseOwnership(pointee_))
             delete pointee_;
         pointee_ = NULL;

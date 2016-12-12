@@ -72,7 +72,7 @@ private:
 private:
     friend class boost::serialization::access;
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & size_ & words_;
     }
     
@@ -1311,7 +1311,7 @@ public:
      *  Asserts that the specified range is valid for this vector. This is intended mostly for internal use and does nothing
      *  when assertions are disabled. */
     void checkRange(const BitRange &range) const {
-        ASSERT_require(hull().isContaining(range));
+        ASSERT_always_require(hull().isContaining(range)); // so range is always used
     }
 
     /** Raw data for vector.

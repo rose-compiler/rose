@@ -25,10 +25,10 @@ namespace Container {
  *
  *  This container holds an ordered set of values. This container differs from std::set in the following ways:
  *
- *  @li The interface uses the Sawyer CamelCase naming scheme where types start with an upper-case letter and lack a "_type" or
- *      "_t" suffix and methods start with a lower-case letter.
+ *  @li The interface uses the %Sawyer CamelCase naming scheme where types start with an upper-case letter and lack a "_type"
+ *      or "_t" suffix and methods start with a lower-case letter.
  *
- *  @li Like other Sawyer containers, iterators are returned as a range rather than individual begin and end iterators.
+ *  @li Like other %Sawyer containers, iterators are returned as a range rather than individual begin and end iterators.
  *
  *  @li Only const iterators are supported since it should not be possible to change the value pointed to by the iterator.
  *
@@ -58,7 +58,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & set_;
     }
     
@@ -96,7 +96,7 @@ public:
 
     template<class InputIterator>
     explicit Set(const boost::iterator_range<InputIterator> &range,
-                 const Comparator &comparator = Comparator(), const Allocator &allocator = Allocator())
+                 const Comparator &/*comparator*/ = Comparator(), const Allocator &/*allocator*/ = Allocator())
         : set_(range.begin(), range.end()) {}
     /** @} */
 

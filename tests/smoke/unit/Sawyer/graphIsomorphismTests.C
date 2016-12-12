@@ -668,8 +668,8 @@ struct SolutionCounter {
 
     SolutionCounter(): nSolutions(0), largestSolution(0) {}
 
-    CsiNextAction operator()(const Graph &g1, const std::vector<size_t> &g1VertIds,
-                    const Graph &g2, const std::vector<size_t> &g2VertIds) {
+    CsiNextAction operator()(const Graph &/*g1*/, const std::vector<size_t> &g1VertIds,
+                             const Graph &/*g2*/, const std::vector<size_t> &/*g2VertIds*/) {
         ++nSolutions;
         largestSolution = std::max(largestSolution, g1VertIds.size());
         return CSI_CONTINUE;
