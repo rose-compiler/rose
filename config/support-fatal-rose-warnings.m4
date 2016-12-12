@@ -44,9 +44,15 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
   echo "CXX_COMPILER_VENDOR = $CXX_COMPILER_VENDOR"
   echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
 
+  echo "FRONTEND_CXX_VERSION_MAJOR = $FRONTEND_CXX_VERSION_MAJOR"
+  echo "FRONTEND_CXX_VERSION_MINOR = $FRONTEND_CXX_VERSION_MINOR"
+
   case "$FRONTEND_CXX_COMPILER_VENDOR" in
     gnu)
       echo "Setup fatal warnings specific to GNU compiler use."
+
+      echo "GNU compiler version: GCC_VERSION = $GCC_VERSION"
+      echo "GNU compiler version: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
 
       CXX_WARNINGS="-Wall -Wextra "
       C_WARNINGS="-Wall -Wextra "
@@ -84,9 +90,17 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
       CXX_WARNINGS+="-Werror=implicit-function-declaration "
       C_WARNINGS+="-Werror=implicit-function-declaration "
 
-    # DQ (12/9/2016): Adding null pointer defererence.
-      CXX_WARNINGS+="-Wnull-dereference "
-      C_WARNINGS+="-Wnull-dereference "
+    # DQ (12/11/2016): Make this GNU g++ version specific.
+      if test $GCC_VERSION -ge 6; then
+         if test $GCC_MINOR_VERSION -ge 1; then
+          # DQ (12/9/2016): Adding null pointer defererence.
+            CXX_WARNINGS+="-Wnull-dereference "
+            C_WARNINGS+="-Wnull-dereference "
+
+          # echo "Setup use of -Wnull-dereference (required later version GNU compiler)"
+          # exit 1
+         fi
+      fi
 
     # DQ (12/8/2016): Turn off this GNU specific warning which does not work on large files.
       CXX_WARNINGS+=-Wno-misleading-indentation "
@@ -182,95 +196,6 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
     ;;
   esac
 
-
-# Set default value to -Wall.
-# CXX_WARNINGS="-Wall -Wextra "
-# C_WARNINGS="-Wall -Wextra "
-
-# Suggested C++ specific warnings (turning them on explicitly as errors).
-# See documentation for suggested list in https://rosecompiler.atlassian.net/wiki/display/~matzke/Warnings+that+should+be+fixed
-
-# This is not available on Clang 3.8
-# CXX_WARNINGS+="-Werror=maybe-uninitialized "
-# C_WARNINGS+="-Werror=maybe-uninitialized "
-
-# This is not available on Clang 3.8
-# CXX_WARNINGS+="-Werror=unused-but-set-variable "
-# C_WARNINGS+="-Werror=unused-but-set-variable "
-
-# CXX_WARNINGS+="-Werror=unused-variable "
-# C_WARNINGS+="-Werror=unused-variable "
-
-# CXX_WARNINGS+="-Werror=sign-compare "
-# C_WARNINGS+="-Werror=sign-compare "
-
-# CXX_WARNINGS+="-Werror=reorder "
-# C_WARNINGS+="-Werror=reorder "
-
-# CXX_WARNINGS+="-Werror=delete-non-virtual-dtor "
-# C_WARNINGS+="-Werror=delete-non-virtual-dtor "
-
-# CXX_WARNINGS+="-Werror=deprecated-declarations "
-# C_WARNINGS+="-Werror=deprecated-declarations "
-
-# CXX_WARNINGS+="-Werror=return-type "
-# C_WARNINGS+="-Werror=return-type "
-
-# CXX_WARNINGS+="-Werror=comment "
-# C_WARNINGS+="-Werror=comment "
-
-# CXX_WARNINGS+="-Werror=sequence-point "
-# C_WARNINGS+="-Werror=sequence-point "
-
-# CXX_WARNINGS+="-Werror=implicit-function-declaration "
-# C_WARNINGS+="-Werror=implicit-function-declaration "
-
-# Suggested C++ specific warnings.
-# CXX_WARNINGS+="-Wunused-variable "
-# C_WARNINGS+="-Wunused-variable "
-
-# DQ (12/3/2016): Some examples of warnings noticed in clang 3.8 use on ROSE source code.
-# CXX_WARNINGS+=" -Wc++11-extensions -Wunused-private-field -Woverloaded-virtual -Wtautological-compare -Wvarargs -Wuninitialized -Wimplicit-function-declaration -Wdelete-non-virtual-dtor -Wparentheses"
-# CXX_WARNINGS+=" -Wsometimes-uninitialized -Wreorder -Wunneeded-internal-declaration -Wunused-function -Wmissing-declarations -Wcomment -Wempty-body -Wlogical-op-parentheses -Wreturn-type"
-# CXX_WARNINGS+=" -Wmismatched-tags -Wint-to-pointer-cast -Wformat -W#warnings -Wparentheses-equality"
-
-# Make all warnings an error (turne this off until we get a proper list of warnings to make errors.
-# CXX_WARNINGS+="-Werror "
-# C_WARNINGS+="-Werror "
-
-# Except for a few specific warnings that should not be an error (unclear how widely available this option is).
-# These are specific to Sawyer and we want to get past that code plus the ROSETTA code so that anyone can
-# debug specific warnings in there code more directly (by compiling any subdirectory).
-# CXX_WARNINGS+="-Wno-error=unused-variable "
-# C_WARNINGS+="-Wno-error=unused-variable "
-# CXX_WARNINGS+="-Wno-unused-variable "
-# C_WARNINGS+="-Wno-unused-variable "
-
-# CXX_WARNINGS+="-Wno-error=return-type "
-# C_WARNINGS+="-Wno-error=return-type "
-
-# DQ (12/6/2016): Disable this warning since it comes from Boost and we can't do anythng about it.
-# CXX_WARNINGS+="-Wno-c++11-extensions "
-# C_WARNINGS+="-Wno-c++11-extensions "
-
-# DQ (12/6/2016): Disable this warning since it too frequent and a result of using the -Wextras option (not clear what to do about it).
-# CXX_WARNINGS+="-Wno-unused-parameter "
-# C_WARNINGS+="-Wno-unused-parameter "
-
-# Experimenting with making some warnings non-fatal.
-# CXX_WARNINGS+="-Wno-error=return-type  -Wno-error=#warnings "
-# C_WARNINGS+="-Wno-error=return-type  -Wno-error=#warnings "
-# CXX_WARNINGS+="-Wno-error=return-type "
-# C_WARNINGS+="-Wno-error=return-type "
-
-# DQ (12/3/2016): These show up as blank because we need to escape the "#" (something to figure out later).
-# Note that use of "\#" to escape the "#" character causes the boost configure tests to fail.
-# Currently a #warning in Saywer can not be eliminated as an error if -Werror is used.
-# CXX_WARNINGS+="-Wno-error=\#warnings "
-# C_WARNINGS+="-Wno-error=\#warnings "
-
-# Incrementally add the advanced options
-# if test "$CXX_ADVANCED_WARNINGS"; then CXXFLAGS="$CXXFLAGS $CXX_ADVANCED_WARNINGS"; fi
 fi
 
 # ROSE_USE_UNIFORM_DEBUG_SUPPORT=7

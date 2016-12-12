@@ -8,8 +8,12 @@ class alignas(32) DepGraphNode32 {};
 class alignas(64) DepGraphNode64 {};
 class alignas(128) DepGraphNode128 {};
 
+// DQ (12/10/2016): We only want to test this when using EDG 4.12 and later 
+// (since ROSE did not extend this support in the earlier EDG versions).
 // Newly added range of alignment attributes added to EDG (required for RAJA code).
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 412
 class alignas(256) DepGraphNode256 {};
+#endif
 
 #if ( (__GNUC__ == 6) && (__GNUC_MINOR__ >= 1) )
 // Initially, let's not expect this to pass on the full range of compilers where we test.

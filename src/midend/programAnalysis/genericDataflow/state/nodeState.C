@@ -815,7 +815,12 @@ void NodeState::initNodeStateMap(bool (*filter) (CFGNode cfgn))
         {
                 const Function& func = (*it)->func;
                 DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
-                DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
+
+             // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+             // DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
+
+             // DQ (12/10/2016): If this function has not side-effects then we could also eliminate the function call as well.
+                cfgUtils::getFuncEndCFG(func.get_definition(), filter);
                 
                 // Iterate over all the dataflow nodes in this function
                 for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::dataflow::end(); it++)

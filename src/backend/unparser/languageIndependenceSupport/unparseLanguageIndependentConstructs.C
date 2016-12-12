@@ -3311,8 +3311,9 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 #endif
              }
 
+       // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
        // DQ (12/10/2014): This is used to support the token-based unparsing.
-          SgStatement* last_statement = NULL;
+       // SgStatement* last_statement = NULL;
 
        // Setup an iterator to go through all the statements in the top scope of the file.
           SgDeclarationStatementPtrList & globalStatementList = globalScope->get_declarations();
@@ -3362,7 +3363,8 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 #endif
                     if (found_token_data == true)
                        {
-                         last_statement = currentStatement;
+                      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+                      // last_statement = currentStatement;
 #if 0
                          TokenStreamSequenceToNodeMapping* tokenStreamSequence = tokenStreamSequenceMap[currentStatement];
                          ROSE_ASSERT(tokenStreamSequence != NULL);
