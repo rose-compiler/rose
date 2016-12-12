@@ -250,10 +250,10 @@ extern void xomp_freeArrayPointer (void* array, int * dimensions, size_t dimensi
 #if 0
 // No linker support for device code. We have to put implementation of these device functions into the header
 // TODO: wait until nvcc supports linker for device code.
-//#define XOMP_INNER_BLOCK_REDUCTION_DECL(dtype) \
+//#define XOMP_INNER_BLOCK_REDUCTION_DECL(dtype) 
 //__device__ void xomp_inner_block_reduction_##dtype(dtype local_value, dtype * grid_level_results, int reduction_op);
 //
-///*TODO declare more prototypes */
+// TODO declare more prototypes 
 //XOMP_INNER_BLOCK_REDUCTION_DECL(int)
 //XOMP_INNER_BLOCK_REDUCTION_DECL(float)
 //XOMP_INNER_BLOCK_REDUCTION_DECL(double)

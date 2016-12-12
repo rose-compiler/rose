@@ -19103,7 +19103,10 @@ void c_action_label(Token_t * lbl)
                 hasScalarIntExpr ? "true" : "false");
 
         SgExpression* returnValue = NULL;
-        bool returningFromFunctionUsingAlternativeReturnArguments = false;
+
+     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     // bool returningFromFunctionUsingAlternativeReturnArguments = false;
+
         if (hasScalarIntExpr == true)
         {
 #if 0
@@ -19169,7 +19172,9 @@ void c_action_label(Token_t * lbl)
 
                 if (argumentInitializedName != NULL)
                 {
-                    returningFromFunctionUsingAlternativeReturnArguments = true;
+                 // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+                 // returningFromFunctionUsingAlternativeReturnArguments = true;
+
                     SgSymbol
                     * tempSymbol =
                     argumentInitializedName->search_for_symbol_from_symbol_table();

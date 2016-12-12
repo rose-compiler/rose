@@ -815,6 +815,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
      ROSE_ASSERT(positionStatement != NULL);
 
      int  qualificationDepth        = 0;
+
      bool typeElaborationIsRequired = false;
   // bool globalQualifierIsRequired = false;
 
@@ -2348,6 +2349,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
              }
+        }
+
+  // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+  // DQ (12/10/2016): Debugging information that makes sure that typeElaborationIsRequired is used and so will not generate a warning.
+  // This is a variable that is essential for internal debugging so we certainly don't want to eliminate it.
+     if (typeElaborationIsRequired == true)
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Note that typeElaborationIsRequired == true \n");
+#endif
         }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
