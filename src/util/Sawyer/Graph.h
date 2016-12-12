@@ -1295,7 +1295,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         size_t nv = nVertices();
         s <<nv;
         for (size_t i=0; i<nv; ++i)
@@ -1311,7 +1311,7 @@ private:
     }
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         clear();
         size_t nv = 0;
         s >>nv;

@@ -11,6 +11,7 @@
 #include <Sawyer/Assert.h>
 #include <Sawyer/Sawyer.h>
 #include <boost/integer_traits.hpp>
+#include <boost/range/iterator_range.hpp>
 #include <boost/serialization/access.hpp>
 
 namespace Sawyer {
@@ -37,10 +38,136 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & lo_ & hi_;
     }
 
+public:
+    /** Bidirectional forward iterator.
+     *
+     *  This iterator can be incremented, decremented, or dereferenced unless it is already at the end, as determined by its
+     *  @ref atEnd predicate or by comparison with any other iterator whose @ref atEnd is true, including a default-constructed
+     *  iterator.  An iterator is considered to be at its end if it has been incremented past the interval's greatest value or
+     *  decremented past the interval's least value. Iterators will operate safely even when the least or greatest value of the
+     *  range is the least or greatest possible value that can be represented in type T and incrementing or decrementing would
+     *  cause an overflow. This is acheived by pretending that there's an extra value one less than the interval's least value
+     *  and one greater than the intervals greatest value, regardless of whether such values exist for type T. Incrementing
+     *  an iterator that's positioned one past the interval's greatest is a no-op, as is decrementing an iterator positioned
+     *  one prior to the interval's least end.  On the other hand, decrementing an iterator positioned one past the interval's
+     *  greatest end positions the iterator at greatest and clears its @ref atEnd property; similarly, incrementing an iterator
+     *  positioned one prior to the interval's least end positions the iterator at the least value. */
+    class ConstIterator: public std::iterator<std::bidirectional_iterator_tag, const T> {
+        friend class Interval;
+        T first_, cur_, last_;
+        bool atEnd_;
+        ConstIterator(T first, T last, T cur): first_(first), cur_(cur), last_(last), atEnd_(false) {}
+    public:
+        /** Create an empty iterator.
+         *
+         *  All increment and decrement operators are no-ops and @ref atEnd always returns true. It is illegal to attempt to
+         *  dereference such an iterator.  A default-constructed iterator compares equal to all other default-constructed
+         *  iterators and equal to all iterators positioned at one of their ends. */
+        ConstIterator(): first_(0), cur_(0), last_(0), atEnd_(true) {}
+
+        /** Predicate to determine if an iterator is at one of its end positions.
+         *
+         *  Returns true if this iterator is positioned one prior to the interval's least end, or one after the interval's
+         *  greatest end. These two positions are virtual and exist even if type T is unable to represent them. Since intervals
+         *  are immutable, their iterators' end-points are defined when the iterator is created and are constant. */
+        bool atEnd() const {
+            return atEnd_;
+        }
+
+        /** Iterator equality.
+         *
+         *  Any two iterators positioned at their ends (as determined by the @ref atEnd predicate) are considered equal
+         *  regardless of whether they're positioned at the least end or greatest end. An iterator positioned at its end is
+         *  unequal to any other iterator not positioned at its end. Two iterators, neither of which are positioned at their
+         *  ends, are equal if and only if dereferencing them gives equal values. */
+        bool operator==(const ConstIterator &other) const {
+            if (atEnd() || other.atEnd())
+                return atEnd() && other.atEnd();
+            return cur_ == other.cur_;
+        }
+
+        /** Iterator inequality.
+         *
+         *  Complement of <code>==</code>. */
+        bool operator!=(const ConstIterator &other) const {
+            return !(*this == other);
+        }
+
+        /** Increment.
+         *
+         *  Incrementing an iterator associated with an empty interval is a no-op, and such an interval's @ref atEnd always
+         *  returns true. Otherwise, incrementing an iterator positioned one past the interval's greatest end is a
+         *  no-op. Otherwise, incrementing an iterator positioned one prior to the interval's least end returns the iterator to
+         *  the interval's least value. Otherwise the iterator derefences to a value one greater than before this call.
+         *
+         *  @{ */
+        ConstIterator& operator++() {
+            if (cur_ == last_) {                        // avoid overflow
+                atEnd_ = true;
+            } else if (atEnd_) {
+                ASSERT_require(cur_ == first_);
+                atEnd_ = false;
+            } else {
+                ++cur_;
+            }
+            return *this;
+        }
+        ConstIterator operator++(int) {
+            ConstIterator retval = *this;
+            ++*this;
+            return retval;
+        }
+        /** @} */
+
+        /** Decrement.
+         *
+         *  Decrementing an iterator associated with an empty interval is a no-op, and such an interval's @ref atEnd always
+         *  returns true.  Otherwise, decrementing an iterator positioned one prior to the interval's least end is a
+         *  no-op. Otherwise, decrementing an iterator positioned one past the interval's greatest end returns the iterator to
+         *  the interval's greatest value. Otherwise the iterator dereferences to a value one less than before this call.
+         *
+         *  @{ */
+        ConstIterator& operator--() {
+            if (cur_ == first_) {                       // avoid overflow
+                atEnd_ = true;
+            } else if (atEnd_) {
+                ASSERT_require(cur_ == last_);
+                atEnd_ = false;
+            } else {
+                --cur_;
+            }
+            return *this;
+        }
+        ConstIterator operator--(int) {
+            ConstIterator retval = *this;
+            --*this;
+            return retval;
+        }
+        /** @} */
+
+        /** Dereference.
+         *
+         *  Returns the value of the interval to which the iterator points.  It is illegal to dereference an iterator whose
+         *  @ref atEnd predicate returns true. */
+        const T& operator*() const {
+            ASSERT_forbid(atEnd());
+            return cur_;
+        }
+
+        /** Dereference.
+         *
+         *  Returns a pointer to the value of interval at which the iterator points.  It is illegal to dereference an iterator
+         *  whose @ref atEnd predicate returns true. */
+        const T* operator->() const {
+            ASSERT_forbid(atEnd());
+            return &cur_;
+        }
+    };
+    
 public:
     /** Constructs an empty interval. */
     Interval(): lo_(1), hi_(0) {}
@@ -264,6 +391,46 @@ public:
         }
     }
 
+    // These types are needed for BOOST_FOREACH but are not advertised as part of this interface.
+    typedef ConstIterator const_iterator;
+    typedef ConstIterator iterator;
+    typedef ConstIterator const_reverse_iterator;
+    typedef ConstIterator reverse_iterator;
+
+    /** Iterator positioned at the least value.
+     *
+     *  Returns an iterator positioned at this interval's least value. If this interval is empty then the returned iterator's
+     *  @ref ConstIterator::atEnd "atEnd" predicate will always return true.  Iterators are useful for accessing the values of
+     *  an interval because they have special logic to avoid arithmetic overflows which can happen if the interval's least
+     *  and/or greatest value happens to also be the least or greatest value representable by type T. See @ref ConstIterator
+     *  for details. */
+    ConstIterator begin() const {
+        return isEmpty() ? ConstIterator() : ConstIterator(least(), greatest(), least());
+    }
+
+    /** Iterator positioned one past the greatest value.
+     *
+     *  Returns an iterator positioned one past this interval's least value even if such a value cannot be represented by type
+     *  T. If this interval is empty then the returned iterator's @ref ConstIterator::atEnd "atEnd" predicate will always
+     *  return true.  Iterators are useful for accessing the values of an interval because they have special logic to avoid
+     *  arithmetic overflows which can happen if the interval's least and/or greatest value happens to also be the least or
+     *  greatest value representable by type T. See @ref ConstIterator for details. */
+    ConstIterator end() const {
+        return isEmpty() ? ConstIterator() : ++ConstIterator(least(), greatest(), greatest());
+    }
+
+    ConstIterator rbegin() const {
+        return isEmpty() ? ConstIterator() : ConstIterator(least(), greatest(), greatest());
+    }
+    ConstIterator rend() const {
+        return isEmpty() ? ConstIterator() : --ConstIterator(least(), greatest(), least());
+    }
+    
+    /** Iterator range for values. */
+    boost::iterator_range<ConstIterator> values() const {
+        return boost::iterator_range<ConstIterator>(begin(), end());
+    }
+    
     // The following trickery is to allow things like "if (x)" to work but without having an implicit
     // conversion to bool which would cause no end of other problems.  This is fixed in C++11
 private:
