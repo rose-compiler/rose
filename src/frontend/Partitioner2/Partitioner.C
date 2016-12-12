@@ -550,7 +550,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
         dblock->incrementOwnerCount();
     }
 
-    if (basicBlockSemanticsAutoDrop_)
+    if (basicBlockSemanticsAutoDrop())
         bblock->dropSemantics();
 
     bblockAttached(placeholder);

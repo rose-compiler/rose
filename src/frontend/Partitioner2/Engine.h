@@ -1151,6 +1151,21 @@ public:
     virtual void checkingCallBranch(bool b) { settings_.partitioner.base.checkingCallBranch = b; }
     /** @} */
 
+    /** Property: Automatically drop semantics for attached basic blocks.
+     *
+     *  Basic blocks normally cache their semantic state as they're being discovered so that the state does not need to be
+     *  recomputed from the beginning of the block each time a new instruction is appended.  However, caching this information
+     *  can consume a large number of symbolic expression nodes which are seldom needed once the basic block is fully
+     *  discovered.  Therefore, setting this property to true will cause a basic block's semantic information to be forgotten
+     *  as soon as the basic block is attached to the CFG.
+     *
+     *  @sa Partitioner::basicBlockDropSemantics
+     *
+     * @{ */
+    bool basicBlockSemanticsAutoDrop() const /*final*/ { return settings_.partitioner.base.basicBlockSemanticsAutoDrop; }
+    void basicBlockSemanticsAutoDrop(bool b) { settings_.partitioner.base.basicBlockSemanticsAutoDrop = b; }
+    /** @} */
+
     /** Property: Configuration files.
      *
      *  This property holds a list of configuration files or directories.

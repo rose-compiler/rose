@@ -213,6 +213,7 @@ struct BasePartitionerSettings {
                                                      *   control flow graph.  For instance, semantics enable the detection
                                                      *   of certain kinds of opaque predicates. */
     bool checkingCallBranch;                        /**< Check for situations where CALL is used as a branch. */
+    bool basicBlockSemanticsAutoDrop;               /**< Conserve memory by dropping semantics for attached basic blocks. */
 
 private:
     friend class boost::serialization::access;
@@ -221,11 +222,12 @@ private:
     void serialize(S &s, const unsigned version) {
         s & usingSemantics;
         s & checkingCallBranch;
+        s & basicBlockSemanticsAutoDrop;
     }
 
 public:
     BasePartitionerSettings()
-        : usingSemantics(false), checkingCallBranch(false) {}
+        : usingSemantics(false), checkingCallBranch(false), basicBlockSemanticsAutoDrop(true) {}
 };
 
 /** Settings that control the engine partitioning.
