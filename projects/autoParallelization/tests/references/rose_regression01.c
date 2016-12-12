@@ -23,6 +23,8 @@ void foo(real8 *a,real8 *b,real8 *c,real8 *d,int len)
     for (icol = 0; icol <= 7; icol += 1) {
       tmp[icol] = e * c[(icol + l8) * 4 + 1] + f * c[(icol + l8) * 4 + 2] + g * c[(icol + l8) * 4 + 3];
     }
+    
+#pragma omp parallel for private (icol,jrow) firstprivate (l8,h)
     for (jrow = 0; jrow <= 7; jrow += 1) {
       real8 hj1 = h * c[(jrow + l8) * 4];
       
