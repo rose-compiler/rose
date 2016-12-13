@@ -6275,6 +6275,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                               declStmt = namedType->get_declaration();
                             }
                          ROSE_ASSERT(declStmt != NULL);
+                      // DQ (12/12/2016): Added debugging information.
+                         if (declStmt->isForward() == true)
+                            {
+                              printf ("In unparseVarDeclStmt(): Detecting a forward declaration \n");
+                              declStmt->get_file_info()->display("ERROR: This should be a forward declaration: debug");
+                            }
                          ROSE_ASSERT(declStmt->isForward() == false);
 
                       // DQ (10/9/2006): Don't output the qualified name of a defining declaration.
