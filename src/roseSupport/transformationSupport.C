@@ -1224,7 +1224,8 @@ TransformationSupport::getTransformationOptions (
                SgSymbolTable* symbolTable = isSgSymbolTable(astNode);
                ROSE_ASSERT (symbolTable != NULL);
 
-               bool foundTransformationOptimizationSpecifier = false;
+            // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+            // bool foundTransformationOptimizationSpecifier = false;
 
             // printf ("Now print out the information in the symbol table for this scope: \n");
             // symbolTable->print();
@@ -1291,7 +1292,8 @@ TransformationSupport::getTransformationOptions (
 
                                         getTransformationOptionsFromVariableDeclarationConstructorArguments(variableDeclaration,generatedList);
 
-                                        foundTransformationOptimizationSpecifier = true;
+                                      // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+                                     // foundTransformationOptimizationSpecifier = true;
 
                                      // printf ("Exiting after saving the constructor arguments! \n");
                                      // ROSE_ABORT();

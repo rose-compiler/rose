@@ -2363,6 +2363,15 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype     ( "SgType*", "type", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/27/2016): Adding an optional (and more suitable reference to a type alias that can be unparsed).
+  // This type was evaluated to no reference internal private types that are marked as private access.  Due 
+  // to a normalization by EDG, we can sometimes have teamplate arguments referencing types that would result 
+  // in an error with newer compilers (e.g. GNU 6.1) if they were unparsed in the generated code.  This pointer
+  // is available as an alternative type that can be unparsed (used by the unparser, and the name qualification).
+  // This type does not have any priviate access typedefs contained within it.
+     TemplateArgument.setDataPrototype     ( "SgType*", "uparsable_type_alias", "= NULL",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Could be an array bound (integer) or some unknown type
      TemplateArgument.setDataPrototype     ( "SgExpression*", "expression", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

@@ -60,8 +60,12 @@ mProgramTransformationPath=programTransformation#
 SUBDIRS = \
 	binaryAnalyses \
 	programTransformation/extractFunctionArgumentsNormalization \
-	programTransformation/singleStatementToBlockNormalization \
-        MFB MDCG KLT
+	programTransformation/singleStatementToBlockNormalization 
+
+# DQ (12/2/2016): These directories have poorly formated Makefile.am files have
+# and are a source of portability problem on Ubuntu systems (because they overload 
+# the CXXFLAGS makefile variable).
+#       MFB MDCG KLT
 
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += \

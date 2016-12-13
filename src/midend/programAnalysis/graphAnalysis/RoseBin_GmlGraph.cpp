@@ -43,7 +43,10 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
   for (; itn2!=nodes.end();++itn2) {
     counter++;
     count++;
-    pair<int, SgGraphNode*> nt = *itn2;
+
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // pair<int, SgGraphNode*> nt = *itn2;
+
     //    string hex_address = itn2->first;
     SgGraphNode* node = isSgGraphNode(itn2->second);
     string hex_address =node->get_name();
@@ -460,9 +463,11 @@ void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bo
         // dest_list is used for a static cfg image
         vector<VirtualBinCFG::CFGEdge> outEdges = contrl->cfgBinOutEdges(info);
         SgAsmX86Instruction* dest = isSgAsmX86Instruction(outEdges.empty() ? NULL : outEdges.back().target().getNode());
-        bool dest_list_empty = true;
-        if (contrl->get_kind() == x86_ret)
-          dest_list_empty = outEdges.empty();
+
+     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     // bool dest_list_empty = true;
+     // if (contrl->get_kind() == x86_ret)
+     //   dest_list_empty = outEdges.empty();
 
         SgAsmInstruction* nextNode = isSgAsmInstruction(target->get_SgNode());
         ROSE_ASSERT(nextNode);
