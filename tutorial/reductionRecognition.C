@@ -22,16 +22,18 @@ int main(int argc, char * argv[])
   ROSE_ASSERT(loop != NULL);
 
   //Collect reduction variables and operations
-  std::set<  std::pair <SgInitializedName*, VariantT> > reductions;
-  std::set<  std::pair <SgInitializedName*, VariantT> >::const_iterator iter;
+//  std::set<  std::pair <SgInitializedName*, VariantT> > reductions;
+//  std::set<  std::pair <SgInitializedName*, VariantT> >::const_iterator iter;
+  std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum> > reductions; 
+  std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum> >::const_iterator iter;
   SageInterface::ReductionRecognition(loop, reductions);
 
   // Show the results
   cout<<"Reduction recognition results:"<<endl;
   for (iter=reductions.begin(); iter!=reductions.end(); iter++)
   {
-    std::pair <SgInitializedName*, VariantT> item = *iter;
-    cout<<"\t variable: "<<item.first->unparseToString()<<"\t operation:"<<getVariantName(item.second)<<endl;;
+    std::pair <SgInitializedName*, OmpSupport::omp_construct_enum> item = *iter;
+    cout<<"\t variable: "<<item.first->unparseToString()<<"\t operation:"<<OmpSupport::toString(item.second)<<endl;;
   }
 
   return backend(project);
