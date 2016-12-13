@@ -1105,7 +1105,8 @@ namespace AstFromString
    * */
   bool afs_match_multiplicative_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression * lhs = NULL;
@@ -1113,8 +1114,10 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      // c_parsed_node = lhs; 
-      result = true; // sufficient enough
+   // c_parsed_node = lhs; 
+
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else // immediate return if the first term match fails
     {
@@ -1161,11 +1164,13 @@ namespace AstFromString
           printf("error. afs_match_multiplicative_expression() illegal branch reached.\n");
           assert (0);
         }
-        result = true;
+     // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     // result = true;
       }
       else 
       {
-        result = false;
+     // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     // result = false;
         c_char = old_char; // this round failed, restore to the lastes rollback point
         //printf("error. afs_match_multiplicative_expression() expects cast_expression after matching * / or percentage character\n");
         //assert (0);
@@ -1204,7 +1209,8 @@ namespace AstFromString
    * */
   bool afs_match_additive_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression * lhs = NULL;
@@ -1212,8 +1218,10 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      // c_parsed_node = lhs; 
-      result = true; // sufficient enough
+   // c_parsed_node = lhs; 
+
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else
     { // immediate return if first term match fails
@@ -1301,12 +1309,14 @@ namespace AstFromString
     else
       return false;
 #endif
-    bool result = false;    
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;    
     const char* old_char = c_char;
     // match the required first term
     if (afs_match_logical_or_expression())
     {
-      result = true;
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true;
     }
     else 
     {
@@ -1356,7 +1366,8 @@ namespace AstFromString
 */
   bool afs_match_logical_or_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression* lhs = NULL;
@@ -1364,7 +1375,9 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      result = true; // sufficient enough
+
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else
     { // immediate return if first term match fails
@@ -1405,7 +1418,8 @@ namespace AstFromString
      */
   bool afs_match_logical_and_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression* lhs = NULL;
@@ -1413,7 +1427,8 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      result = true; // sufficient enough
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else
     { // immediate return if first term match fails
@@ -1454,7 +1469,8 @@ namespace AstFromString
      */
   bool afs_match_inclusive_or_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression* lhs = NULL;
@@ -1462,7 +1478,9 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      result = true; // sufficient enough
+
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else
     { // immediate return if first term match fails
@@ -1503,7 +1521,8 @@ namespace AstFromString
      */
   bool afs_match_exclusive_or_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression* lhs = NULL;
@@ -1511,7 +1530,8 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      result = true; // sufficient enough
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else
     { // immediate return if first term match fails
@@ -1552,7 +1572,8 @@ namespace AstFromString
      */
   bool afs_match_and_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression* lhs = NULL;
@@ -1560,7 +1581,8 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      result = true; // sufficient enough
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else
     { // immediate return if first term match fails
@@ -1601,7 +1623,8 @@ namespace AstFromString
      */
   bool afs_match_equality_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression * lhs = NULL;
@@ -1609,8 +1632,9 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      // c_parsed_node = lhs;
-      result = true; // sufficient enough
+   // c_parsed_node = lhs;
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else
     { // immediate return if first term match fails
@@ -1678,7 +1702,8 @@ namespace AstFromString
      */
   bool afs_match_relational_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression * lhs = NULL;
@@ -1686,8 +1711,9 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      // c_parsed_node = lhs;
-      result = true; // sufficient enough
+   // c_parsed_node = lhs;
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else
     { // immediate return if first term match fails
@@ -1779,7 +1805,8 @@ namespace AstFromString
      */
   bool afs_match_shift_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression * lhs = NULL;
@@ -1787,8 +1814,9 @@ namespace AstFromString
     {
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      // c_parsed_node = lhs;
-      result = true; // sufficient enough
+   // c_parsed_node = lhs;
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // sufficient enough
     }
     else
     { // immediate return if first term match fails
@@ -2004,8 +2032,8 @@ namespace AstFromString
 */
   bool afs_match_argument_expression_list()
   {
-
-    bool result =false; 
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result =false; 
     const char* old_char = c_char;
 
     SgExprListExp* parameters = NULL;
@@ -2015,7 +2043,8 @@ namespace AstFromString
       assert (arg1 != NULL);
       parameters = buildExprListExp(arg1);
       c_parsed_node = parameters;
-      result = true;
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true;
     }
     else
     { // immediate return false when first required term is not matched
@@ -2096,13 +2125,15 @@ postfix_operator
    * */
   bool afs_match_postfix_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression * post_exp = NULL; // previous postfix expression,
     if (afs_match_primary_expression()) 
     {
-      result = true; // match rule1 , but don't stop or branch out here. Need to match max length rules
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true; // match rule1 , but don't stop or branch out here. Need to match max length rules
       assert (c_parsed_node != NULL);
       post_exp = isSgExpression(c_parsed_node);
       assert (post_exp != NULL);
@@ -2178,7 +2209,9 @@ postfix_operator
             assert (post_exp != NULL);
             c_parsed_node = buildFunctionCallExp (post_exp, parameters);
             post_exp = isSgExpression(c_parsed_node);  
-            result =true;
+
+         // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+         // result =true;
           }
           else 
           {
@@ -2293,7 +2326,8 @@ postfix_operator
    * */
   bool afs_match_expression()
   {
-    bool result = false;
+ // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool result = false;
     const char* old_char = c_char;
 
     SgExpression* lhs = NULL;
@@ -2302,11 +2336,14 @@ postfix_operator
       assert (c_parsed_node!= NULL);
       lhs = isSgExpression(c_parsed_node);
       assert (lhs != NULL);
-      result = true;
+
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = true;
     }
     else
     { // immediate return if first term is not matched
-      result = false;
+   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // result = false;
       c_char = old_char;
       return false;
     }

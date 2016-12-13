@@ -1123,10 +1123,15 @@ commentAndCppInformation (SgNode* node)
      if (locatedNode != NULL)
         {
           AttachedPreprocessingInfoType* commentsAndCppDirectives = locatedNode->getAttachedPreprocessingInfo();
-          size_t numberofCommentsAndCppDirectives = 0;
+
+       // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+       // size_t numberofCommentsAndCppDirectives = 0;
+
           if (commentsAndCppDirectives != NULL)
              {
-               numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
+            // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+            // numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
+
                // MS 11/12/2015: disabled this test as size_t is unsigned;
                // this test is always true and compilers issue a
                // warning

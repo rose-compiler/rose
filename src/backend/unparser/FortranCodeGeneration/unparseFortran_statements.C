@@ -1981,13 +1981,17 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
 
   // FIXME: we may need to do something analagous for modules?
   // Check to see if this is an object defined within a class
-     int inClass = false;
+
+  // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+  // int inClass = false;
+
      SgName inCname;
      ROSE_ASSERT(vardecl->get_parent());
      SgClassDefinition *cdefn = isSgClassDefinition(vardecl->get_parent());
      if (cdefn)
         {
-          inClass = true;
+       // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+       // inClass = true;
           inCname = cdefn->get_declaration()->get_name();
           if (cdefn->get_declaration()->get_class_type()        == SgClassDeclaration::e_class)
                ninfo.set_CheckAccess();
