@@ -1,5 +1,5 @@
-#ifndef OmpAttribute_h
-#define OmpAttribute_h 
+#ifndef Omp_Attribute_h_INCLUDED
+#define Omp_Attribute_h_INCLUDED
 /*!
  * ROSE persistent attribute to represent OpenMP 3.0 C/C++/Fortran directives
  * in the OpenMP parser 
@@ -510,4 +510,5 @@ namespace OmpSupport
 
 } //end namespace OmpSupport
 
-#endif
+#endif //Omp_Attribute_h_INCLUDED
+

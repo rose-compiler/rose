@@ -569,8 +569,20 @@ class SplitFraction : public SymbolicVisitor
   SymbolicVal *inp, *frp;
   bool hasfrac;
  public:
-  virtual void Default0(const SymbolicVal& v)
+  virtual void Default(const SymbolicVal& v)
    { if (inp != 0) *inp = v; }
+  virtual void VisitConst( const SymbolicConst &v) 
+   {
+     std::string t = v.GetTypeName();
+     if (t == "int") { 
+          if (inp != 0) *inp = v; 
+          hasfrac=false; 
+     }
+     else if (t == "fraction") {
+        if (frp != 0) *frp = v; 
+        hasfrac = true;
+     } 
+   }
   virtual void VisitFunction( const SymbolicFunction &v)  
    {
      bool _hasfrac = hasfrac;
