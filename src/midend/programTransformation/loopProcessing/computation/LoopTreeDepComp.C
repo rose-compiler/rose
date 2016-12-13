@@ -256,12 +256,16 @@ class BuildLoopDepGraphCreate : public BuildLoopDepGraphEdges
   virtual GraphAccessInterface::Node* CreateNodeImpl(AstNodePtr start, const DomainCond& c)
   {
     LoopTreeNode *cur = iter.Current();
+    assert (cur != NULL); // Liao 10/12/2016
     for ( ; (!cur->IncreaseLoopLevel() && cur->GetOrigStmt()==0);
-         iter.Advance(), cur = iter.Current());
+            iter.Advance(), cur = iter.Current());
+
     if (!( cur->GetOrigStmt() == 0 || cur->GetOrigStmt() == start))
-       { std::cerr << "problem stmt: " << cur->toString() << "\n"; 
-         std::cerr << "start : " << AstToString(start) << "\n";
-         assert(0);}
+    { 
+      std::cerr << "problem stmt: " << cur->toString() << "\n"; 
+      std::cerr << "start : " << AstToString(start) << "\n";
+      assert(0);
+    }
     iter.Advance();
     LoopTreeDepGraphNode *d = graph.CreateNode(cur, c);
     return d;

@@ -54,6 +54,6 @@ bool operator<(std::set<T> const& s1, std::set<T> const& s2) {
   return true;
 }
 
-} // end of namespace CodeThorn
+} // end of namespace SPRAY
 
 #endif

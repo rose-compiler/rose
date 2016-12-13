@@ -42,6 +42,8 @@ namespace AutoParallelization
   extern bool enable_diff; // an option to compare user-defined OpenMP pragmas to compiler generated ones.
   extern bool b_unique_indirect_index; // assume all arrays used as indirect indices has unique elements(no overlapping)
   extern bool enable_distance; // print out absolute dependence distance for a dependence relation preventing from parallelization
+  extern bool dump_annot_file; // print out annotation file's content
+  extern std::vector<std::string> annot_filenames;
 
   extern bool keep_c99_loop_init; // avoid normalize C99 style loop init statement: for (int i=0; ...)
   // Conduct necessary analyses on the project, can be called multiple times during program transformations. 
@@ -73,7 +75,8 @@ namespace AutoParallelization
   void AutoScoping(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, LoopTreeDepGraph* depgraph);
 
   // Recognize reduction variables for a loop
-  std::vector<SgInitializedName*> RecognizeReduction(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& candidateVars); 
+  // Refactored into SageInterface
+ // std::vector<SgInitializedName*> RecognizeReduction(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& candidateVars); 
 
   // Collect all classified variables from an OmpAttribute attached to a loop node,regardless their omp type
   void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& result);
