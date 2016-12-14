@@ -46,9 +46,12 @@ NormalizeTypedefSequenceLists::key_t::hash(const std::string & s) const
   // Compute hash based on sum over all characters in the string. Not a good hash!
      for (size_t i=0; i < s.length(); i++)
         {
+#if 0
+       // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
           size_t multiplier = 2;
           if (i < 10)
                multiplier = (1 << i);
+#endif
           returnValue += size_t(s[i]);
         }
 

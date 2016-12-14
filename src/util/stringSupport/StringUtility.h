@@ -57,6 +57,9 @@ ROSE_UTIL_API std::string cEscape(const std::string&);
 ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&)
     SAWYER_DEPRECATED("tell us if you use this");       // ROSE_DEPRECATED is not defined here; lack of sage3basic.h
 
+// DQ (12/8/2016): This is ued in the generation of dot files.
+ROSE_UTIL_API std::string escapeNewlineAndDoubleQuoteCharacters(const std::string&);
+
 
 
 

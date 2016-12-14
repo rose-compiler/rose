@@ -176,7 +176,6 @@ if test "x$with_CXX_WARNINGS" = "xyes"; then
 # DQ (12/3/2016): Add these options to what may have been specified using enable_fatal_rose_warnings.
 # CXX_WARNINGS was activated but not specified, so set it.
   echo "Using default options for maximal warnings (true case)"
-  if test "x$enable_fatal_rose_warnings" = "xno"; then
   case $CXX in
     g++)
     # cc1plus: warning: command line option "-Wstrict-prototypes" is valid for Ada/C/ObjC but not for C++
@@ -202,13 +201,8 @@ if test "x$with_CXX_WARNINGS" = "xyes"; then
     esac
     ;;
   esac
-  else
-     echo "Using options taken from enable_fatal_rose_warnings instead of default options in CXX_WARNINGS."
-  fi
 elif test "x$with_CXX_WARNINGS" = "xno"; then
 
-  echo "enable_fatal_rose_warnings = $enable_fatal_rose_warnings"
-  if test "x$enable_fatal_rose_warnings" = "xno"; then
   CXX_WARNINGS=''
 # DQ (1/15/2007): turn on warnings by default.
   echo "Using at least some default (minimal) options for warnings (false case)"
@@ -231,9 +225,6 @@ elif test "x$with_CXX_WARNINGS" = "xno"; then
     esac
     ;;
   esac
-  else
-     echo "Using options defined by enable_fatal_rose_warnings option..." 
-  fi
 else
 # Settings specified explicitly by the user.
   echo "Adding explicitly specified warnings to be used for CXX_WARNINGS...."
@@ -434,7 +425,6 @@ fi
 echo "After initialization: with_C_WARNINGS = $with_C_WARNINGS"
 
 if test "x$with_C_WARNINGS" = "xyes"; then
-  if test "x$enable_fatal_rose_warnings" = "xno"; then
   # C_WARNINGS was activated but not specified, so set it.
   case $CC in
     gcc)
@@ -458,12 +448,8 @@ if test "x$with_C_WARNINGS" = "xyes"; then
     esac
     ;;
   esac
-  else
-     echo "Using options taken from enable_fatal_rose_warnings instead of default options in C_WARNINGS."
-  fi
 elif test "x$with_C_WARNINGS" = "xno"; then
 # DQ (12/3/2016): Ony use default warning when enable_fatal_rose_warnings is not used.
-  if test "x$enable_fatal_rose_warnings" = "xno"; then
   C_WARNINGS=''
 # DQ (1/15/2007): turn on warnings by default.
   case $CC in
@@ -485,9 +471,6 @@ elif test "x$with_C_WARNINGS" = "xno"; then
     esac
     ;;
   esac
-  else
-     echo "Using options defined by enable_fatal_rose_warnings option instead of default warnings..." 
-  fi
 else
   echo "Adding explicitly specified warnings to be used."
   C_WARNINGS+=$with_C_WARNINGS

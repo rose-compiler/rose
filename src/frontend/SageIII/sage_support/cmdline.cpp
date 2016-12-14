@@ -404,8 +404,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // DQ (1/30/2014): Support for usage such as -rose:unparse_tokens_testing 4
           argument == "-rose:unparse_tokens_testing" ||
 
+       // DQ (12/10/2016): This does not take a parameter on any later version compiler that I know of.
        // DQ (1/26/2014): Support for make dependence option -MM <file name for dependence info>
-          argument == "-MM" ||
+       // argument == "-MM" ||
 
        // DQ (3/25/2014): We need the icpc/icc ‘-fp-model <arg>’  command-line compiler option to be
        // passed to the backend compiler properly.  The ‘-fp-model’ option always has a single argument.
@@ -867,6 +868,8 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 #endif
         }
 
+#if 0
+  // DQ (12/10/2016): This does not take a parameter on any later version compiler that I know of.
   // DQ (1/26/2014): Adding support for gnu -MM option to ROSE command line.
      string stringOptionForMakeDepenenceFile;
      if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(MM)",stringOptionForMakeDepenenceFile,true) == true )
@@ -882,6 +885,16 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           ROSE_ASSERT(false);
 #endif
         }
+#else
+  // DQ (12/10/2016): Areas build system appears to use the "-MM" option on the command line and this is a problem for ROSE when not specified using a parameter.
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(MM)",false) == true )
+        {
+       // The support for this should just be to call the backend compiler with the "-MM" option.
+          printf ("NOTE: The use of the -MM option to ROSE is not recoreded internally (simple call to backend compiler using -MM option not implemented). \n");
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("-MM dependence file specification specified on command line (for SgFile)\n");
+        }
+#endif
 
   // DQ (1/26/2014): Adding support for gnu -version-info option to ROSE command line.
      string stringOptionForVersionSpecification;
@@ -5510,7 +5523,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // Strip out the rose specific commandline options
   // the assume all other arguments are to be passed onto the C or C++ compiler
 
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      int optionCount = 0;
+
   // int i = 0;
 
 // #if ROSE_INTERNAL_DEBUG
@@ -5763,6 +5778,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
      optionCount = sla(argv, "-rose:", "($)", "unparseTemplateDeclarationsFromAST",1);
 
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     ROSE_ASSERT(optionCount >= 0);
+
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
@@ -5794,8 +5812,14 @@ SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
      CommandlineProcessing::removeArgsWithParameters (argv,"--edg_parameter:");
 
   // DQ (2/20/2010): Remove this option when building the command line for the vendor compiler.
+
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      int optionCount = 0;
+
      optionCount = sla(argv, "--edg:", "($)", "(no_warnings)",1);
+
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     ROSE_ASSERT(optionCount >= 0);
 
 #if 0
      Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);

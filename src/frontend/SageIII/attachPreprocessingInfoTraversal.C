@@ -1158,7 +1158,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        {
           SgLocatedNode* currentLocNodePtr = NULL;
           int line = 0;
-          int col  = 0;
+
+       // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+       // int col  = 0;
 
        // The following should always work since each statement is a located node
           currentLocNodePtr = dynamic_cast<SgLocatedNode*>(n);
@@ -1239,7 +1241,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                  // on the command line
                  // line = currentLocNodePtr->get_file_info()->get_line();
                     line = currentLocNodePtr->get_file_info()->get_physical_line();
-                    col  = currentLocNodePtr->get_file_info()->get_col();
+
+                 // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+                 // col  = currentLocNodePtr->get_file_info()->get_col();
 #if 0
                     printf ("Insert any comment before %p = %s = %s (compilerGenerate=%s) at line = %d col = %d \n",
                           currentLocNodePtr,currentLocNodePtr->class_name().c_str(),SageInterface::get_name(currentLocNodePtr).c_str(),

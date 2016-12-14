@@ -37,20 +37,3 @@ void foo()
     bcVelocity[i] = VectorXY(0xdeadbeef, 0xdeadbeef);
 }
 
-/*
-
-Assuming all arrays used as indirect indices have unique elements (no overlapping) ...
-
-Unparallelizable loop at line:24 due to the following dependencies:
-0x7fff2904c960 Distance Matrix size:1*1 IO_DEP; commonlevel = 1 CarryLevel = (0,0)  Not precise
-        SgExprStatement:(this) -> bcVelocity[i] = VectorXY(0xdeadbeef,0xdeadbeef);@25:7->
-        SgExprStatement:(this) -> bcVelocity[i] = VectorXY(0xdeadbeef,0xdeadbeef);@25:7
-* 0;||::
-
-Unparallelizable loop at line:31 due to the following dependencies:
-0x7fff2904c960 Distance Matrix size:1*1 IO_DEP; commonlevel = 1 CarryLevel = (0,0)  Not precise
-        SgExprStatement:bcVelocity[i] = VectorXY(0xdeadbeef,0xdeadbeef);@32:5->
-        SgExprStatement:bcVelocity[i] = VectorXY(0xdeadbeef,0xdeadbeef);@32:5
-* 0;||::
-
- * */

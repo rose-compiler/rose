@@ -1965,27 +1965,43 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
         }
 
   // The character "!" starts a comment if only blanks are in the leading white space.
+
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
      int positionofHashCharacter = -1;
+#endif
+
      if (firstNonBlankCharacter == '#')
         {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
        // printf ("This is a CPP directive: i = %d lineCounter = %d line = %s length = %" PRIuPTR " \n",i,lineCounter,line.c_str(),line.length());
 #endif
           isLikelyCppDirective = true;
+
+       // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
           positionofHashCharacter = i;
+#endif
         }
 
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
      printf ("i = %" PRIuPTR " positionofHashCharacter = %d \n",i,positionofHashCharacter);
 #endif
+
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
      bool hasLineContinuation = false;
+#endif
 
   // DQ (4/21/2009): Fixed possible buffer underflow...
   // char lastCharacter = line[lineLength-1];
      char lastCharacter = (lineLength > 0) ? line[lineLength-1] : '\0';
      if (lastCharacter == '\\')
         {
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+       // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
           hasLineContinuation = true;
+#endif
         }
 
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
@@ -2051,7 +2067,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
           string cppIndentifier = line.substr(positionOfFirstCharacterOfCppIdentifier,cppIdentifierLength);
 
        // Some names will convert to integer values
-          long integerValue = -1;
+       // long integerValue = -1;
           if (spaceAfterHash == true)
              {
             // This is likely going to be a number but test2005_92.C demonstrates a case where this is not true.
@@ -2077,8 +2093,12 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
 
             // strtol will put the string into buffer if str is not a number and 2nd parameter is not NULL.
                errno = 0;
+
             // integerValue = strtol(str,NULL,10);
-               integerValue = strtol(str,&buffer,10);
+
+            // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+            // integerValue = strtol(str,&buffer,10);
+               strtol(str,&buffer,10);
 
             // Setting and checking errno does not appear to work for the detection of errors in the use of strtol
                if (errno != 0)

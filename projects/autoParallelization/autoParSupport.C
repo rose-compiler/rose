@@ -19,11 +19,15 @@ namespace AutoParallelization
   bool enable_diff;
   bool b_unique_indirect_index;
   bool enable_distance;
+  bool no_aliasing=false; // assuming no pointer aliasing
   bool keep_c99_loop_init = false; // no longer in use. 
+  std::vector<std::string> annot_filenames; 
+  bool dump_annot_file=false;
 
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
+  //! Command line processing
   void autopar_command_processing(vector<string>&argvList)
   {
     if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_debug",true))
@@ -89,6 +93,7 @@ namespace AutoParallelization
       annot->Dump();
     //Strip off custom options and their values to enable backend compiler 
     CommandlineProcessing::removeArgsWithParameters(argvList,"-annot");
+
     // keep --help option after processing, let other modules respond also
     if ((CommandlineProcessing::isOption (argvList,"--help","",false)) ||
         (CommandlineProcessing::isOption (argvList,"-help","",false)))
@@ -103,7 +108,7 @@ namespace AutoParallelization
       cout <<"---------------------------------------------------------------"<<endl;
     }
 
-  }
+  } // end of processing command line
 
   bool initialize_analysis(SgProject* project/*=NULL*/,bool debug/*=false*/)
   {
@@ -592,7 +597,7 @@ namespace AutoParallelization
     remove(liveOuts0.begin(),liveOuts0.end(),invarname);
 
     std::vector<SgInitializedName*> allVars,depVars, invariantVars, privateVars,lastprivateVars, 
-      firstprivateVars,reductionVars, reductionResults;
+      firstprivateVars,reductionVars; // reductionResults;
     // Only consider scalars for now
     CollectVisibleVaribles(sg_node,allVars,invariantVars,true);
     sort(allVars.begin(), allVars.end());
@@ -712,7 +717,23 @@ namespace AutoParallelization
         inserter(reductionVars, reductionVars.begin()));
     RecognizeReduction(sg_node,attribute, reductionVars);
 #else
-    reductionResults = RecognizeReduction(sg_node,attribute, liveIns);
+   
+    //reductionResults = RecognizeReduction(sg_node,attribute, liveIns);
+    // Using the better SageInterface version , Liao 9/14/2016
+    std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum > > reductionResults;
+    SageInterface::ReductionRecognition ( isSgForStatement (sg_node), reductionResults);
+    if(enable_debug)
+      cout<<"Debug dump reduction:"<<endl;
+    for (std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum > > ::iterator 
+            iter = reductionResults.begin(); iter!= reductionResults.end();iter++) 
+    {
+       SgInitializedName* iname = (*iter).first;
+       OmpSupport::omp_construct_enum optype = (*iter).second;
+       attribute->addVariable (optype,iname->get_name().getString(), iname); 
+       if(enable_debug)
+        cout<< iname->get_qualified_name().getString()<<endl;
+    }
+
 #endif   
 
 #if 0
@@ -756,6 +777,8 @@ namespace AutoParallelization
     }
   } // end AutoScoping()
 
+
+#if 0 // refactored into SageInterface ReductionRecognition ()
   // Recognize reduction variables for a loop
   /* 
    * Algorithms:
@@ -779,11 +802,15 @@ namespace AutoParallelization
     {
       std::vector<SgInitializedName*> *resultVars = new std::vector<SgInitializedName*>;
       ROSE_ASSERT(loop && isSgForStatement(loop)&& attribute);
+      // No candidate variables, return
+      // TODO: this is not necessary, if a reduction idiom is matched, the variable should be a candidate
+      // Depending on liveness analysis is not a good idea.
       if (candidateVars.size()==0) 
         return *resultVars;
+
       //Store the times of references for each variable
       std::map <SgInitializedName*, vector<SgVarRefExp* > > var_references;
-
+      // have to consider the entire loop, including loop header
       Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(loop, V_SgVarRefExp);
       Rose_STL_Container<SgNode*>::iterator iter = reflist.begin();
       for (; iter!=reflist.end(); iter++)
@@ -797,13 +824,14 @@ namespace AutoParallelization
           var_references[initname].push_back(ref_exp);
         }
       }
-      //Consider variables referenced at most twice
+      // Iterate through all candidates
       std::vector<SgInitializedName*>::iterator niter=candidateVars.begin();
       for (; niter!=candidateVars.end(); niter++)
       {
         SgInitializedName* initname = *niter;
         bool isReduction = false;
-        // referenced once only
+        //Consider variables referenced at most twice
+        // 1. Referenced once only
         if (var_references[initname].size()==1) 
         {
           if(enable_debug)
@@ -883,7 +911,7 @@ namespace AutoParallelization
             }// end if on left side  
           } 
         } 
-        // referenced twice within a same statement
+        //2. Referenced twice within a same statement
         else if (var_references[initname].size()==2)
         {
           if(enable_debug)
@@ -892,6 +920,7 @@ namespace AutoParallelization
           SgVarRefExp* ref_exp2 = *(++var_references[initname].begin());
           SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp1);
           SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref_exp2);
+
           if (stmt != stmt2) 
             continue;
           // must be assignment statement using 
@@ -989,8 +1018,8 @@ namespace AutoParallelization
                   default:
                     break;
                 }  
-              } // end matching associative operations
-            }  
+              } // end matching binary operations
+            } // end if showing up in both sides  
           } // end if assignop  
         }// end referenced twice
         if (isReduction)
@@ -998,7 +1027,7 @@ namespace AutoParallelization
       }// end for ()  
       return *resultVars;
     } // end RecognizeReduction()
-
+#endif 
   // Collect all classified variables from an OmpAttribute attached to a loop node
   void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& result)
   {
@@ -1144,13 +1173,14 @@ namespace AutoParallelization
             continue;
           }
 
+#if 1
           //x. Eliminate a dependence if scalar type dependence involving array references.
           // -----------------------------------------------
           // At least one of the source and sink variables are array references (not scalar) 
           // But the dependence type is scalar type
           //   * array-to-array, but scalar type dependence
           //   * scalar-to-array dependence.  
-          //    We essentially assume no aliasing between arrays and scalars here!!
+          // RISKY!!   We essentially assume no aliasing between arrays and scalars here!!
           //    I cannot think of a case in which a scalar and array element can access the same memory location otherwise.
           // According to Qing:  
           //   A scalar dep is simply the dependence between two scalar variables.
@@ -1176,20 +1206,24 @@ namespace AutoParallelization
             isArray1= fa.IsArrayAccess(info.SrcRef());
             isArray2= fa.IsArrayAccess(info.SnkRef());
           }
-          //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
-          if (isArray1 || isArray2)
+
+          if (AutoParallelization::no_aliasing) 
           {
-            if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
+            //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
+            if (isArray1 || isArray2)
             {
-              if (enable_debug)
+              if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
               {
-                cout<<"Eliminating a dep relation due to scalar dep type for at least one array variable"<<endl; 
-                info.Dump();
+                if (enable_debug)
+                {
+                  cout<<"Eliminating a dep relation due to scalar dep type for at least one array variable"<<endl; 
+                  info.Dump();
+                }
+                continue;
               }
-              continue;
             }
           }
-
+#endif
           //x. Eliminate dependencies caused by autoscoped variables
           // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
@@ -1598,6 +1632,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     if (remainingDependences.size()>0)
     {
       isParallelizable = false;
+      cout<<"====================================================="<<endl;
       cout<<"\nUnparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
         " due to the following dependencies:"<<endl;
       for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
@@ -1620,6 +1655,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     }
     else
     {
+      cout<<"====================================================="<<endl;
       cout<<"\nAutomatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
     }
 
@@ -1946,12 +1982,24 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       s = getSymbol(e->get_lhs_operand()); // recursive call here
     }
     else if (SgDotExp* e = isSgDotExp(exp))
-    { // a[i]
+    { 
       s = getSymbol(e->get_lhs_operand()); // recursive call here
     }
      else if (SgArrowExp* e = isSgArrowExp(exp))
-    { // a[i]
+    { 
       s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+     else if (SgPointerDerefExp* e = isSgPointerDerefExp(exp))
+    { 
+      s = getSymbol(e->get_operand_i()); // recursive call here
+    }
+     else if (SgAddOp* e = isSgAddOp(exp)) // * (address + offset) //TODO better handling here
+    { 
+      s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+     else if (SgCastExp* e = isSgCastExp(exp))
+    { 
+      s = getSymbol(e->get_operand_i()); // recursive call here
     }
     else if (SgFunctionCallExp* e = isSgFunctionCallExp(exp))
       s = e->getAssociatedFunctionSymbol();
@@ -1961,18 +2009,22 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       s = e->get_symbol_i();
     else if (SgLabelRefExp* e = isSgLabelRefExp(exp))
       s = e->get_symbol();
+    else if (isSgConstructorInitializer(exp)) // void reportAlgorithmStats(const std::string& err="");
+    { // temporary initializer on the right hand , assigned by value to left side, it has persistent no mem location is concerned.
+      s = NULL; 
+    }
     else
     {
       cerr<<"Error. getSymbol(SgExpression* exp) encounters unhandled exp:"<< exp->class_name()<<endl;
       ROSE_ASSERT (false);
     }  
-
-    ROSE_ASSERT (s!=NULL);
+// We allow NULL symbol here. Naturally eliminate some strange expressions in the dependence pair.
+//    ROSE_ASSERT (s!=NULL);
 
     return s; 
   }
   
-  //! Check if two expressions access different memory locations. If in double, return false (not certain).
+  //! Check if two expressions access different memory locations. If in double, return false (not certain, may alias to each other).
   //This is helpful to exclude some dependence relations involving two obvious different memory location accesses
   //TODO: move to SageInterface when ready
   bool differentMemoryLocation(SgExpression* e1, SgExpression* e2)
