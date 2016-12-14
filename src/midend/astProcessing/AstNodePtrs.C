@@ -27,10 +27,12 @@ AstNodePtrs::evaluateSynthesizedAttribute(SgNode* node,SynthesizedAttributesList
 
   string s=string(node->sage_class_name())+"(";
   
-  bool nullValueExists=false;
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+// bool nullValueExists=false;
   for(SynthesizedAttributesList::iterator i=l.begin(); i!=l.end();i++) {
     if((*i).node==NULL) {
-      nullValueExists=true;
+   // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // nullValueExists=true;
       s+=", NULL";
     } else {
       s+=string(", ")+(*i).node->sage_class_name();
