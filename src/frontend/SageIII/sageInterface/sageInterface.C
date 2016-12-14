@@ -20960,7 +20960,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         }
 #endif
 
-  // Increment the static variable to control the recursive d3epth while we debug this.
+  // Increment the static variable to control the recursive depth while we debug this.
      counter++;
 
   // DQ (11/28/2015): exit with debug output instead of infinte recursion.
@@ -20968,7 +20968,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // if (counter >= 500)
      if (counter >= 280) 
         {
-          printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+       // printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+          printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s = %p Y_element_type = %s = %p \n",counter,X.class_name().c_str(),lhs,Y.class_name().c_str(),rhs);
         }
 
   // DQ (12/23/2015): ASC application code requires this to be increased to over 122 (selected 300 for extra margin of safety).
@@ -20976,7 +20977,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // if (counter > 300)
   // if (counter > 600)
   // if (counter > 5000)
-     if (counter > 300)
+  // if (counter > 300)
+     if (counter > 350)
         {
        // DQ (11/28/2015): I think this is a reasonable limit.
           printf ("ERROR: In SageInterface::isEquivalentType(): recursive limit exceeded for : counter = %d \n",counter);
@@ -21059,6 +21061,10 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          string str2 = Y_array_index_expression->unparseToString();
                          printf ("   --- array index expressions: str1 = %s str2 = %s \n",str1.c_str(),str2.c_str());
 #endif
+                      // DQ (12/9/2016): Need to decriment the counter as part of recursive function call.
+                         counter--;
+
+                      // Recursive call.
                          return isEquivalentType(X_element_type,Y_element_type);
                        }
                   }

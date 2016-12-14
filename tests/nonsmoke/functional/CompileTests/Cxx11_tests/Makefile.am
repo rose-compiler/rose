@@ -124,6 +124,10 @@ test2016_36.C \
 test2016_37.C \
 test2016_39.C \
 test2016_42.C \
+test2016_90.C \
+test2016_91.C \
+test2016_92.C \
+test2016_93.C \
 last.C
 
 # DQ (11/19/2016): This test is failing in the unparsed code (a RAJA example) at least for the GNU 6.1 compiler and using EDG 4.11).

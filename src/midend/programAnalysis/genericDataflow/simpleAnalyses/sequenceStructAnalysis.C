@@ -198,7 +198,11 @@ bool SeqStructLattice::meetUpdate(Lattice* that_arg)
                                 modified = setToTop() || modified;
                 // If the application must execute the current node before the predecessor in a loop
                 } else if(dominates(this->n, that->n)) {
-                        int a, b, c;
+
+                     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=maybe-uninitialized.
+                     // int a, b, c;
+                        int a = 0, b = 0, c = 0;
+
                         // If the current state is a constant and the state carried by the predecessor from around the loop is a different constant
                         if(level==startKnown && that->level==startKnown && 
                               cg->eqVars(this->vInit, that->vInit, indent+"    ") && 

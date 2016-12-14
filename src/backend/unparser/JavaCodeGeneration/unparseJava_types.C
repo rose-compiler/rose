@@ -183,11 +183,12 @@ Unparse_Java::unparseEnumType(SgEnumType* type, SgUnparse_Info& info)
 
           curprint ( "enum ");
 
-          SgNamedType *ptype = NULL;
-          if (cdefn != NULL)
-             {
-               ptype = isSgNamedType(cdefn->get_declaration()->get_type());
-             }
+       // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+       // SgNamedType *ptype = NULL;
+       // if (cdefn != NULL)
+       //    {
+       //      ptype = isSgNamedType(cdefn->get_declaration()->get_type());
+       //    }
 
           if (SageInterface::is_C_language() == true || SageInterface::is_C99_language() == true)
              {
