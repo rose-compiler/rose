@@ -890,7 +890,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(MM)",false) == true )
         {
        // The support for this should just be to call the backend compiler with the "-MM" option.
-	  printf ("NOTE: The use of the -MM option to ROSE is not recoreded internally (simple call to backend compiler using -MM option not implemented). \n");
+          printf ("NOTE: The use of the -MM option to ROSE is not recoreded internally (simple call to backend compiler using -MM option not implemented). \n");
           if ( SgProject::get_verbose() >= 0 )
                printf ("-MM dependence file specification specified on command line (for SgFile)\n");
         }
