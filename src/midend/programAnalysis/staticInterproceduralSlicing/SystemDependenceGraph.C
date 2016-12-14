@@ -38,7 +38,11 @@ void SystemDependenceGraph::createConnectionsForLibaryFunction(SgFunctionDeclara
   }
   SgName fName=fDec->get_mangled_name();
   InterproceduralInfo * ii=getInterproceduralInformation(fDec);
-  DependenceNode * formalIn,*formalOut,*entry,*formalReturn;
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+// DependenceNode * formalIn,*formalOut,*entry,*formalReturn;
+   DependenceNode * formalIn,*entry,*formalReturn;
+
   entry=getNode(DependenceNode::ENTRY,ii->getFunctionEntry());
   formalReturn=getNode(DependenceNode::FORMALRETURN,ii->getFormalReturn());
   if (fName.getString()==string("printf___Fb_i_Gb_RST__Pb__Cc__Pe____sep__e_Fe_")
@@ -51,7 +55,11 @@ void SystemDependenceGraph::createConnectionsForLibaryFunction(SgFunctionDeclara
     for (int i=0;i<ii->getFormalCount();i++)
     {
       formalIn=getNode(DependenceNode::FORMALIN,ii->getFormal(i));
-      formalOut=getNode(DependenceNode::FORMALOUT,ii->getFormal(i));
+
+   // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // formalOut=getNode(DependenceNode::FORMALOUT,ii->getFormal(i));
+      getNode(DependenceNode::FORMALOUT,ii->getFormal(i));
+
       establishEdge(formalIn,entry,DATA);     
       establishEdge(formalIn,formalReturn,DATA);
     }

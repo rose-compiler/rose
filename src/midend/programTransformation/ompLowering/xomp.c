@@ -1220,10 +1220,17 @@ bool xomp_loop_ordered_runtime_start(int* start, int* end, int* incr, int *istar
   return rt;
 
 }
+
+
 bool XOMP_loop_ordered_runtime_start (long start, long end, long incr,long *istart, long *iend)
 {
-  bool rt ;
-  long lend;
+// DQ (12/10/2016): We should discuss this since it is not initialized when USE_ROSE_GOMP_OPENMP_LIBRARY is not defined.
+// bool rt ;
+  bool rt = false;
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=maybe-uninitialized.
+// long lend;
+  long lend = 0;
 
 // convert inclusive bounds of XOMP to non-inclusive upper bound from GOMP/OMNI
   if (incr>0 )
