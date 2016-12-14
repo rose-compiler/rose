@@ -492,7 +492,10 @@ Grammar::build_source_AST_FILE_IO_CLASS()
              {
             // readASTFromFile += "     std::cout << \" reading " + nodeNameString + " \" << std::endl; \n" ;
                readASTFromFile += "     sizeOfActualPool = getPoolSizeOfNewAst(V_" + nodeNameString + " ); \n" ;
-               readASTFromFile += "     storageClassIndex = 0 ;\n" ;
+
+            // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+            // readASTFromFile += "     storageClassIndex = 0 ;\n" ;
+
                readASTFromFile += "     " + nodeNameString + "StorageClass* storageArray" + nodeNameString + " = NULL;\n" ;
                readASTFromFile += "     if ( 0 < sizeOfActualPool ) \n" ;
                readASTFromFile += "        {  \n" ;

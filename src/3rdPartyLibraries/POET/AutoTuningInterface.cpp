@@ -1233,6 +1233,13 @@ POETCode* BlockSpec::gen_xformEval(POETProgram& poet, LocalVar* top,
       lineNo ++;
       return INVOKE(cleanup, ASSIGN(cleanup_trace,top), HandleMap::GetTraceCleanup(top));
   }
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
+   printf ("Exiting from a location that should not be reachable in the function. \n");
+   assert(false);
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
+   return NULL;
 }
 
 /***********************************************************************/
