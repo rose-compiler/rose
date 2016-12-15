@@ -38,6 +38,7 @@ namespace AutoParallelization
   extern DFAnalysis * defuse;
   extern LivenessAnalysis* liv;
   extern bool enable_debug; 
+  extern bool no_aliasing;  // assuming aliasing or not
   extern bool enable_patch; // an option to control the generation of patch files
   extern bool enable_diff; // an option to compare user-defined OpenMP pragmas to compiler generated ones.
   extern bool b_unique_indirect_index; // assume all arrays used as indirect indices has unique elements(no overlapping)
