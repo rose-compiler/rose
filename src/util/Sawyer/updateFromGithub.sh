@@ -36,7 +36,7 @@ for f in															\
     DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphTraversal IndexedList	\
     Interval IntervalMap IntervalSet IntervalSetMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional		\
     PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch	\
-    Synchronization ThreadWorkers WarningsOff WarningsRestore
+    Synchronization ThreadWorkers Trace WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
@@ -69,6 +69,7 @@ for f in					\
     Container/mapUnitTests.C			\
     Container/optionalUnitTests.C		\
     Container/setUnitTests.C			\
+    Container/traceUnitTests.C			\
     Markup/markupUnitTests.C			\
     Message/mesgUnitTests.C			\
     Pointers/ptrUnitTests.C			\
