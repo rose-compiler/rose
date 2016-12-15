@@ -18,6 +18,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # "make" commands.  To disable your project, just rename its rose.config file and rerun "build" and "configure".
 
 SUBDIRS = \
+	ArithmeticMeasureTool \
 	AstEquivalence \
 	BabelPreprocessor \
 	BinQ \
@@ -63,6 +64,7 @@ SUBDIRS = \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	LineDeleter \
+	xgenTranslator \
 	$(OPTIONAL_PROJECTS)
 
 # DQ (4/20/2016): Clang has a problem within compiling POET, which is used in the StencilManyCore project.
