@@ -1,5 +1,20 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# the code which can not yet be parallelized now
+# Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
+TESTCODE_CURRENTLY_FAILING = \
+multiReduction.c \
+iterator1.C \
+iterator_const1.C \
+list1.C \
+pointer.c \
+tricky_1.c \
+tricky_2.c \
+vectorize_1.c \
+vector_1.C \
+vector_2.C
+
+
 # This list is now copied to C_TESTCODES_REQUIRED_TO_VERIFY, Liao 3/9/2016
 # the code which can be parallelized or confirmed as not parallelizable now
 #null_for_test.c  TODO Liao 6/9/2016
@@ -70,38 +85,30 @@ Stress-1.c
 endif
 endif
 
-
+# current failing if no aliasing cannot be assumed.
+# StressWork_setup.C // need to assume no pointer aliasing
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 class_member.C \
 ifstmt.C \
+indirectIndex_transfered.C \
 iterator2.C \
 iteratorloop.C \
+newOperator.C \
 test20100223.C \
 Hydro_applyVelocityBC.C \
 Hydro_max_min.C \
+pointer_dereference.C \
 DelVolBaseLoopAlgorithm_loopExecute.C \
-StressWork_setup.C
+ofstream.C \
+pointer_noaliasing.C
 
+# current failing if no aliasing cannot be assumed.
 # name qualification of constructor is wrongly unparsed for 4.2 and 4.4 testing
 if ROSE_USING_GCC_VERSION_LATER_4_8
 CXX_TESTCODES_REQUIRED_TO_PASS += \
 Hydro_constructor_1.C
 
 endif
-
-# the code which can not yet be parallelized now
-# Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
-TESTCODE_CURRENTLY_FAILING = \
-multiReduction.c \
-iterator1.C \
-iterator_const1.C \
-list1.C \
-pointer.c \
-tricky_1.c \
-tricky_2.c \
-vectorize_1.c \
-vector_1.C \
-vector_2.C
 
 ALL_TESTCODES = \
 $(C_TESTCODES_REQUIRED_TO_PASS) \
@@ -111,10 +118,15 @@ $(TESTCODE_CURRENTLY_FAILING)
 # used to find omp.h, added it as one of  rose headers
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
-# ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # Turned of the debug flag to have a cleaner screen output, Liao, 9/16/2009
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:unique_indirect_index #-rose:autopar:enable_distance #-rose:autopar:enable_debug
-ROSE_CFLAGS = -rose:C99 --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:unique_indirect_index -rose:autopar:enable_patch #-rose:autopar:enable_distance #-rose:autopar:enable_debug
+#-rose:autopar:enable_distance
+#-rose:autopar:enable_debug 
+ROSE_COMMON_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:unique_indirect_index -rose:autopar:enable_patch -rose:autopar:no_aliasing
+# For C input codes
+
+ROSE_CFLAGS = $(ROSE_COMMON_FLAGS) -rose:C99 
+# for C++ input codes
+ROSE_CXXFLAGS = $(ROSE_COMMON_FLAGS)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
@@ -197,21 +209,21 @@ $(C_TEST_Objects): ../autoPar $(@:.o=.c)
 #$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out) # pipeline buries return code
 
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/../annot/tinyHydro.annot $(srcdir)/$(@:.o=.C) >> $(@).out
+	$(VALGRIND) ../autoPar $(ROSE_CXXFLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/../annot/tinyHydro.annot $(srcdir)/$(@:.o=.C) >> $(@).out
 
 rose_interp1_elem.C: ../autoPar interp1_elem.C
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
+	$(VALGRIND) ../autoPar $(ROSE_CXXFLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
 rose_doall_vector.C: ../autoPar doall_vector.C
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector.C
+	$(VALGRIND) ../autoPar $(ROSE_CXXFLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector.C
 
 rose_doall_vector2.C: ../autoPar doall_vector2.C
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector2.C
+	$(VALGRIND) ../autoPar $(ROSE_CXXFLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector2.C
 
 rose_Stress2.cc: ../autoPar Stress2.cc
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/clibfunc.annot $(srcdir)/Stress2.cc
+	$(VALGRIND) ../autoPar $(ROSE_CXXFLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/clibfunc.annot $(srcdir)/Stress2.cc
 
 test_diff.out : ../autoPar $(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests/jacobi.c
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:autopar:enable_diff -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests/jacobi.c > test_diff.out
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -rose:autopar:enable_diff -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests/jacobi.c > test_diff.out
 
 # Two files are singled out since their output will be put in tutorial text
 doall_2.out: ../autoPar doall_2.c 
