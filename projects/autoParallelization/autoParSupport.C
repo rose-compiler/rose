@@ -19,6 +19,7 @@ namespace AutoParallelization
   bool enable_diff;
   bool b_unique_indirect_index;
   bool enable_distance;
+  bool no_aliasing=false; // assuming no pointer aliasing
   bool keep_c99_loop_init = false; // no longer in use. 
   std::vector<std::string> annot_filenames; 
   bool dump_annot_file=false;
@@ -1172,13 +1173,14 @@ namespace AutoParallelization
             continue;
           }
 
+#if 1
           //x. Eliminate a dependence if scalar type dependence involving array references.
           // -----------------------------------------------
           // At least one of the source and sink variables are array references (not scalar) 
           // But the dependence type is scalar type
           //   * array-to-array, but scalar type dependence
           //   * scalar-to-array dependence.  
-          //    We essentially assume no aliasing between arrays and scalars here!!
+          // RISKY!!   We essentially assume no aliasing between arrays and scalars here!!
           //    I cannot think of a case in which a scalar and array element can access the same memory location otherwise.
           // According to Qing:  
           //   A scalar dep is simply the dependence between two scalar variables.
@@ -1204,20 +1206,24 @@ namespace AutoParallelization
             isArray1= fa.IsArrayAccess(info.SrcRef());
             isArray2= fa.IsArrayAccess(info.SnkRef());
           }
-          //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
-          if (isArray1 || isArray2)
+
+          if (AutoParallelization::no_aliasing) 
           {
-            if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
+            //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
+            if (isArray1 || isArray2)
             {
-              if (enable_debug)
+              if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
               {
-                cout<<"Eliminating a dep relation due to scalar dep type for at least one array variable"<<endl; 
-                info.Dump();
+                if (enable_debug)
+                {
+                  cout<<"Eliminating a dep relation due to scalar dep type for at least one array variable"<<endl; 
+                  info.Dump();
+                }
+                continue;
               }
-              continue;
             }
           }
-
+#endif
           //x. Eliminate dependencies caused by autoscoped variables
           // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
@@ -1626,6 +1632,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     if (remainingDependences.size()>0)
     {
       isParallelizable = false;
+      cout<<"====================================================="<<endl;
       cout<<"\nUnparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
         " due to the following dependencies:"<<endl;
       for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
@@ -1648,6 +1655,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     }
     else
     {
+      cout<<"====================================================="<<endl;
       cout<<"\nAutomatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
     }
 
@@ -1978,6 +1986,14 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       s = getSymbol(e->get_lhs_operand()); // recursive call here
     }
      else if (SgArrowExp* e = isSgArrowExp(exp))
+    { 
+      s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+     else if (SgPointerDerefExp* e = isSgPointerDerefExp(exp))
+    { 
+      s = getSymbol(e->get_operand_i()); // recursive call here
+    }
+     else if (SgAddOp* e = isSgAddOp(exp)) // * (address + offset) //TODO better handling here
     { 
       s = getSymbol(e->get_lhs_operand()); // recursive call here
     }

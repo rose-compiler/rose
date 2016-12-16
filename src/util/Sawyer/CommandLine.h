@@ -404,7 +404,7 @@ protected:
 public:
     typedef SharedPointer<TypedSaver> Ptr;
     static Ptr instance(T &storage) { return Ptr(new TypedSaver(storage)); }
-    virtual void save(const boost::any &value, const std::string &switchKey) const /*override*/ {
+    virtual void save(const boost::any &value, const std::string &/*switchKey*/) const /*override*/ {
         storage_ = boost::any_cast<T>(value);
     }
 };
@@ -420,7 +420,7 @@ public:
         TypedSaver(CONTAINER_TEMPLATE<T> &storage): storage_(storage) {}                                                       \
     public:                                                                                                                    \
         static Ptr instance(CONTAINER_TEMPLATE<T> &storage) { return Ptr(new TypedSaver(storage)); }                           \
-        virtual void save(const boost::any &value, const std::string &switchKey) const /*override*/ {                          \
+        virtual void save(const boost::any &value, const std::string &/*switchKey*/) const /*override*/ {                      \
             T typed = boost::any_cast<T>(value);                                                                               \
             storage_.INSERT_METHOD(typed);                                                                                     \
         }                                                                                                                      \

@@ -316,7 +316,6 @@ private:
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
-    bool basicBlockSemanticsAutoDrop_;                  // Conserve memory by dropping semantics for attached basic blocks?
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
 
     // Callback lists
@@ -373,7 +372,6 @@ private:
         s & assumeFunctionsReturn_;
         s & stackDeltaInterproceduralLimit_;
         s & addressNames_;
-        s & basicBlockSemanticsAutoDrop_;
         s & semanticMemoryParadigm_;
         // s & cfgAdjustmentCallbacks_;         -- not saved/restored
         // s & basicBlockCallbacks_;            -- not saved/restored
@@ -414,7 +412,7 @@ public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
         : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+          semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(disassembler, map);
     }
 
@@ -425,7 +423,7 @@ public:
     Partitioner()
         : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+          semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(NULL, memoryMap_);
     }
 
@@ -436,9 +434,8 @@ public:
     // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
     // after a while.
     Partitioner(const Partitioner &other)               // initialize just like default
-        : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true),
-          semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), autoAddCallReturnEdges_(false),
+        assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(NULL, memoryMap_);                         // initialize just like default
         *this = other;                                  // then delegate to the assignment operator
     }
@@ -459,7 +456,6 @@ public:
         assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
         stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
         addressNames_ = other.addressNames_;
-        basicBlockSemanticsAutoDrop_ = other.basicBlockSemanticsAutoDrop_;
         cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
         basicBlockCallbacks_ = other.basicBlockCallbacks_;
         functionPrologueMatchers_ = other.functionPrologueMatchers_;
@@ -844,8 +840,8 @@ public:
      *  @sa basicBlockDropSemantics
      *
      * @{ */
-    bool basicBlockSemanticsAutoDrop() const /*final*/ { return basicBlockSemanticsAutoDrop_; }
-    void basicBlockSemanticsAutoDrop(bool b) { basicBlockSemanticsAutoDrop_ = b; }
+    bool basicBlockSemanticsAutoDrop() const /*final*/ { return settings_.basicBlockSemanticsAutoDrop; }
+    void basicBlockSemanticsAutoDrop(bool b) { settings_.basicBlockSemanticsAutoDrop = b; }
     /** @} */
 
     /** Immediately drop semantic information for all attached basic blocks.

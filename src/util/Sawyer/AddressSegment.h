@@ -50,7 +50,7 @@ private:
     // BOOST_CLASS_REGISTER(Sawyer::Container::AddressSegment<size_t,uint8_t>);
     // You'll also need to register the most-derived buffer type.
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & buffer_;
         s & offset_;
         s & accessibility_;
