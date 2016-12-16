@@ -303,7 +303,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         size_t n = size();
         s <<n;
         for (const ProtoNode *pnode = head_->next; pnode != head_; pnode = pnode->next) {
@@ -315,7 +315,7 @@ private:
     }
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         clear();
         size_t n = 0;
         s >>n;
@@ -360,7 +360,7 @@ public:
 
     /** Copy constructor. */
     template<class T2, class Alloc2>
-    IndexedList(const IndexedList<T2, Alloc2> &other, const Allocator &allocator = Allocator())
+    IndexedList(const IndexedList<T2, Alloc2> &other, const Allocator &/*allocator*/ = Allocator())
         : allocator_(Allocator()), head_(new ProtoNode) {
         typedef typename IndexedList<T2>::ConstValueIterator OtherIter;
         for (OtherIter otherIter=other.values().begin(); otherIter!=other.values().end(); ++otherIter)

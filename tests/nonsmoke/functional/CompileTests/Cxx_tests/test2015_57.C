@@ -7,7 +7,8 @@
   #include "xmmintrin.h"
 #else
 // A declaration of __m128 can only appear in xmmintrin.h (enforced by Intel compiler).
-  typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
+// typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
+  typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
 #endif
 // Intel backend compiler requires __inline to be only on the function 
 // declaration, not the defining function (EDG does not require this).
@@ -15,7 +16,8 @@
 #else
 // Debugging to make sure we are using the Intel compiler macro.
 // #error "Intel compiler not being used"
-  typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
+// typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
+  typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
 #endif
 
 // DQ (8/29/2015): __inline is not supported in the Intel compiler.
