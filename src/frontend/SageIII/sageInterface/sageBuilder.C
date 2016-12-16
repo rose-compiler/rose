@@ -5817,6 +5817,16 @@ SgLongLongIntVal* SageBuilder::buildLongLongIntVal_nfi(long long value, const st
   return intValue;
 }
 
+SgEnumVal* SageBuilder::buildEnumVal(int value, SgEnumDeclaration* decl, SgName name)
+   {
+     SgEnumVal* enumVal= new SgEnumVal(value,decl,name);
+     ROSE_ASSERT(enumVal != NULL);
+
+     setOneSourcePositionForTransformation(enumVal);
+     return enumVal;
+   }
+
+
 SgEnumVal* SageBuilder::buildEnumVal_nfi(int value, SgEnumDeclaration* decl, SgName name)
    {
      SgEnumVal* enumVal= new SgEnumVal(value,decl,name);
