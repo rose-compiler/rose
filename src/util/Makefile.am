@@ -144,6 +144,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Stopwatch.h			\
 	Sawyer/Synchronization.h		\
 	Sawyer/ThreadWorkers.h			\
+	Sawyer/Trace.h				\
 	Sawyer/WarningsOff.h			\
 	Sawyer/WarningsRestore.h
 

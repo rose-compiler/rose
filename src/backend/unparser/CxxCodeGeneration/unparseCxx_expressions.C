@@ -878,7 +878,8 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 #if 0
                     printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
 #endif
-                 // unp->u_exprStmt->curprint(" typename ");
+                    // Liao 12/15/2016, we need explicit typename here
+                    unp->u_exprStmt->curprint(" typename ");
                     curprint(name);
                   }
 

@@ -186,8 +186,56 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
 
     intel)
       echo "Setup fatal warnings specific to Intel compiler use: no Intel specific warnings are setup as errors."
-     CXX_WARNINGS="-Wall -Wextra "
-     C_WARNINGS="-Wall -Wextra "
+      CXX_WARNINGS="-Wall -Wextra "
+      C_WARNINGS="-Wall -Wextra "
+
+      CXX_WARNINGS+="-Werror=maybe-uninitialized "
+      C_WARNINGS+="-Werror=maybe-uninitialized "
+
+      CXX_WARNINGS+="-Werror=unused-but-set-variable "
+      C_WARNINGS+="-Werror=unused-but-set-variable "
+
+      CXX_WARNINGS+="-Werror=unused-variable "
+      C_WARNINGS+="-Werror=unused-variable "
+
+      CXX_WARNINGS+="-Werror=sign-compare "
+      C_WARNINGS+="-Werror=sign-compare "
+
+      CXX_WARNINGS+="-Werror=reorder "
+      C_WARNINGS+="-Werror=reorder "
+
+      CXX_WARNINGS+="-Werror=delete-non-virtual-dtor "
+      C_WARNINGS+="-Werror=delete-non-virtual-dtor "
+
+      CXX_WARNINGS+="-Werror=deprecated-declarations "
+      C_WARNINGS+="-Werror=deprecated-declarations "
+
+      CXX_WARNINGS+="-Werror=return-type "
+      C_WARNINGS+="-Werror=return-type "
+
+      CXX_WARNINGS+="-Werror=comment "
+      C_WARNINGS+="-Werror=comment "
+
+      CXX_WARNINGS+="-Werror=sequence-point "
+      C_WARNINGS+="-Werror=sequence-point "
+
+      CXX_WARNINGS+="-Werror=implicit-function-declaration "
+      C_WARNINGS+="-Werror=implicit-function-declaration "
+
+    # Except for a few specific warnings that should not be an error (unclear how widely available this option is).
+    # These are specific to Sawyer and we want to get past that code plus the ROSETTA code so that anyone can
+    # debug specific warnings in there code more directly (by compiling any subdirectory).
+    # CXX_WARNINGS+="-Wno-error=unused-variable "
+    # C_WARNINGS+="-Wno-error=unused-variable "
+
+    # Skip output of this warnings because it happends too much at this point.
+    # CXX_WARNINGS+="-Wno-unused-variable "
+    # C_WARNINGS+="-Wno-unused-variable "
+
+    # DQ (12/6/2016): Disable this warning since it too frequent and a result of using the -Wextras option (not clear what to do about it).
+    # CXX_WARNINGS+="-Wno-unused-parameter "
+    # C_WARNINGS+="-Wno-unused-parameter "
+
     ;;
 
     *)

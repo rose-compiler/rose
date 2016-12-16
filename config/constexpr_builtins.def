@@ -86,7 +86,7 @@ __builtin_exp2f
 __builtin_exp2l
 __builtin_exp2
 
-# DQ (/12/2016): 2nd iteration.
+# DQ (10/12/2016): 2nd iteration.
 __builtin_expm1
 __builtin_expm1f
 __builtin_expm1l
@@ -156,6 +156,17 @@ __builtin_truncl
 __builtin_trunc
 
 
+# DQ (12/14/2016): 3rd iteration.
+__builtin_fabs
+__builtin_fabsf
+__builtin_fabsl
+__builtin_powf
+__builtin_powl
+__builtin_fpclassify
+__builtin_isfinite
+__builtin_isinf
+__builtin_isnan
+__builtin_isnormal
 
 
 

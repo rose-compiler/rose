@@ -381,7 +381,9 @@ BUILTIN(__builtin_popcountll, "iULLi", "nc")
 // FIXME: These type signatures are not correct for targets with int != 32-bits
 // or with ULL != 64-bits.
 BUILTIN(__builtin_bswap32, "UiUi", "nc")
-BUILTIN(__builtin_bswap64, "ULLiULLi", "nc")
+
+// DQ (12/16/2016): This is defined differently within EDG 4.9 builtins, but required for later versions of EDG where we turn off their builtin function support.
+// BUILTIN(__builtin_bswap64, "ULLiULLi", "nc")
 
 // Random GCC builtins
 BUILTIN(__builtin_constant_p, "i.", "nct")
