@@ -206,8 +206,14 @@ std::string version_message()
      string backend_C_compiler_without_path   = BACKEND_C_COMPILER_NAME_WITH_PATH;
      string backend_C_compiler_with_path      = BACKEND_C_COMPILER_NAME_WITH_PATH;
      string backend_Cxx_compiler_version      = StringUtility::numberToString(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+
+#ifdef USE_CMAKE
+     string build_tree_path                   = "CMake does not set: ROSE_COMPILE_TREE_PATH";
+     string install_path                      = "CMake does not set: ROSE_INSTALLATION_PATH";
+#else
      string build_tree_path                   = ROSE_COMPILE_TREE_PATH;
      string install_path                      = ROSE_INSTALLATION_PATH;
+#endif
 
      return
        // "ROSE (pre-release beta version: " + version_number() + ")" +
