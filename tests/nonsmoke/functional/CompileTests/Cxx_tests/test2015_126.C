@@ -1,9 +1,9 @@
- 
+#if 0
+// DQ (12/15/2016): These are from an older version of the rose_edg_required_macros_and_functions.h.in file
+
 double      __builtin_copysign  (double __builtin__x, double __builtin__y);
 float       __builtin_copysignf (float __builtin__x, float __builtin__y);
 long double __builtin_copysignl (long double __builtin__x, long double __builtin__y);
-
-
  
 float       __builtin_acosf  (float __builtin__x);
 long double __builtin_acosl  (long double __builtin__x);
@@ -42,30 +42,6 @@ long double __builtin_tanhl  (long double __builtin__x);
 long double __builtin_powil  (long double __builtin__x, int __builtin__i);
 double      __builtin_powi   (double __builtin__x, int __builtin__i);
 float       __builtin_powif  (float __builtin__x, int __builtin__i);
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
  
 char *      __builtin_strchr (const char *__builtin__s, int __builtin__c);
 char *      __builtin_strrchr(const char *__builtin__s, int __builtin__c);
@@ -110,52 +86,9 @@ void               __builtin_ia32_fxsave64(void *__P);
 void               __builtin_ia32_fxrstor64(void *__P);
 unsigned char      __builtin_ia32_addcarryx_u32(unsigned char __CF, unsigned int __X, unsigned int __Y, unsigned int *__P);
 unsigned char      __builtin_ia32_addcarryx_u64(unsigned char __CF, unsigned long __X, unsigned long __Y, unsigned long long *__P);
-
-
-
-
-
-
-
-
- 
-
  
 void * __builtin_return_address (unsigned int level);
 void * __builtin_frame_address (unsigned int level);
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
- 
- 
-
-
- 
-
- 
-
-
-
-
- 
-
-
-
-
- 
 
 long        __builtin_expect (long __builtin__exp, long __builtin__c);
 void        __builtin_prefetch (const void *__builtin__addr, ...);
@@ -193,213 +126,9 @@ float       __builtin_powif (float __builtin__x, int __builtin__y);
 long double __builtin_powil (long double __builtin__x, int __builtin__y);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
-
- 
- 
- 
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
 int __builtin_abs (int __builtin__x);
 
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
- 
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
- 
- 
- 
- 
-
-
- 
-
-
-
- 
- 
-
-
- 
-
- 
- 
-
- 
- 
- 
-
- 
-
-
- 
-
-
- 
- 
-
-
-
-
-
-
-
- 
- 
- 
-
-
-
- 
-
-
-
- 
-
-
-
-
-
+#endif
 
 
  
