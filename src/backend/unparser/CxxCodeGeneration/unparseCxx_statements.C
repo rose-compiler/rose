@@ -4663,10 +4663,11 @@ Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_
      assert(stmt!=NULL);
      SgStatement *declstmt = isSgTemplateFunctionDeclaration(stmt->get_declaration());
      assert(declstmt!=NULL);
+      
+     //unparseTemplateFunctionDeclStmt(declstmt, info); // we should not go back to parent declaration and unparse it. bad logic and cause recursion.
+
      SgSourceFile* sourcefile = info.get_current_source_file();
-     if (sourcefile->get_unparse_template_ast() == false)
-       unparseTemplateFunctionDeclStmt(declstmt, info); // not sure why this statement exists here. Just keep it here for now.
-     else
+     if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
      {
        //Liao, 12/15/2016
        // We should only unparse the definition, not going back to parent node to unparse the entire declaration including the header.
@@ -10045,7 +10046,7 @@ Unparse_ExprStmt::unparseTemplateHeader(SgFunctionDeclaration* functionDeclarati
      printf ("In unparseTemplateHeader(): template_header = %s \n",template_header.str());
 #endif
      SgSourceFile* sourcefile = info.get_current_source_file();
-     if (sourcefile->get_unparse_template_ast())
+     if (sourcefile != NULL && sourcefile->get_unparse_template_ast())
      {
        // Liao 12/15/2016, unparse from AST if no header string is saved in advance.
        // TODO: new function Unparse_ExprStmt::unparseTemplateHeader (SgTemplateFunctionDeclaration* tfunc, ...)
@@ -10443,7 +10444,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
           curprint(string("\n") + templateString);
 
-         if (sourcefile->get_unparse_template_ast())
+         if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
          {
            // Liao 12/15/2016, experimental support to unparse transformation-generated template function declarations from AST
            // templateString is NULL for transformation-generated one.
