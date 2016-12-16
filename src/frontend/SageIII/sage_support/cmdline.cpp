@@ -6148,7 +6148,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 // #ifdef __INTEL_COMPILER
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
   // DQ (9/6/2015): Reset to specific version of GNU for Intel v14 compiler.
-     emulate_backend_compiler_version_number = 4*10000 + 8*100 + 3;
+  // emulate_backend_compiler_version_number = 4*10000 + 8*100 + 3;
+
+  // DQ (12/13/2016): Test tis for Intel v16.
+     emulate_backend_compiler_version_number = 6*10000 + 1*100 + 0;
 #endif
 
   // DQ (7/3/2014): Testing if we emulate a different version of GNU g++.
