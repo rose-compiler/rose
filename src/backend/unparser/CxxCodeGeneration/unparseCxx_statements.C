@@ -4663,7 +4663,171 @@ Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_
      assert(stmt!=NULL);
      SgStatement *declstmt = isSgTemplateFunctionDeclaration(stmt->get_declaration());
      assert(declstmt!=NULL);
-     unparseTemplateFunctionDeclStmt(declstmt, info);
+      
+     //unparseTemplateFunctionDeclStmt(declstmt, info); // we should not go back to parent declaration and unparse it. bad logic and cause recursion.
+
+     SgSourceFile* sourcefile = info.get_current_source_file();
+     if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
+     {
+       //Liao, 12/15/2016
+       // We should only unparse the definition, not going back to parent node to unparse the entire declaration including the header.
+       SgFunctionDefinition* funcdefn_stmt = stmt;
+       ROSE_ASSERT(funcdefn_stmt != NULL);
+
+#if OUTPUT_HIDDEN_LIST_DATA
+       outputHiddenListData (funcdefn_stmt);
+#endif
+
+       // Unparse any comments of directives attached to the SgFunctionParameterList
+       ROSE_ASSERT (funcdefn_stmt->get_declaration() != NULL);
+#if 0
+       printf ("Unparse comments and CCP directives at funcdefn_stmt->get_declaration()->get_parameterList() \n");
+#endif
+       if (funcdefn_stmt->get_declaration()->get_parameterList() != NULL)
+       {
+#if 0
+         printf ("Output the comments and CCP directives for the SgFunctionDefinition funcdefn_stmt = %p \n",funcdefn_stmt);
+
+         printf ("funcdefn_stmt->get_declaration()                                    = %p \n",funcdefn_stmt->get_declaration());
+         printf ("funcdefn_stmt->get_declaration()->get_firstNondefiningDeclaration() = %p \n",funcdefn_stmt->get_declaration()->get_firstNondefiningDeclaration());
+         printf ("funcdefn_stmt->get_declaration()->get_definingDeclaration()         = %p \n",funcdefn_stmt->get_declaration()->get_definingDeclaration());
+         printf ("funcdefn_stmt->get_declaration()->get_parameterList()               = %p \n",funcdefn_stmt->get_declaration()->get_parameterList());
+#endif
+#if 0
+         curprint("/* Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: calling unparseAttachedPreprocessingInfo() */ ");
+#endif
+         unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::before);
+#if 0
+         printf ("DONE: Output the comments and CCP directives for the SgFunctionDefinition funcdefn_stmt = %p \n",funcdefn_stmt);
+#endif
+       }
+
+       info.set_SkipFunctionDefinition();
+       //     SgStatement *declstmt = funcdefn_stmt->get_declaration();
+
+       // DQ (1/19/2014): Adding gnu attribute prefix support.
+       ROSE_ASSERT(funcdefn_stmt->get_declaration() != NULL);
+
+#if 0
+       // DQ (6/23/2015): Added output of type attributes for defining function declaration (see test2015_164.c).
+       // Within GNU the attribute can appear before or after the return type, here it is before the return type.
+       SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(funcdefn_stmt->get_declaration());
+       ROSE_ASSERT(funcdecl_stmt != NULL);
+       unp->u_sage->printAttributes(funcdecl_stmt,info);
+#endif
+
+       unp->u_sage->printPrefixAttributes(funcdefn_stmt->get_declaration(),info);
+
+       // DQ (3/24/2004): Need to permit SgMemberFunctionDecl and SgTemplateInstantiationMemberFunctionDecl
+       // if (declstmt->variant() == MFUNC_DECL_STMT)
+
+       // DQ (5/8/2004): Any generated specialization needed to use the 
+       // C++ syntax for explicit specification of specializations.
+       // if (isSgTemplateInstantiationMemberFunctionDecl(declstmt) != NULL)
+       //      curprint ( string("template<> ";
+
+#if 0
+       printf ("Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: calling unparseMFuncDeclStmt or unparseFuncDeclStmt \n");
+       curprint ("/* Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: calling unparseMFuncDeclStmt or unparseFuncDeclStmt */");
+#endif
+
+       // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
+       // info.set_SkipQualifiedNames();
+
+       // DQ (10/15/2006): Mark that we are unparsing a function declaration (or member function declaration)
+       // this will help us know when to trim the "::" prefix from the name qualiciation.  The "::" global scope
+       // qualifier is not used in function declarations, but is used for function calls.
+       info.set_declstatement_ptr(NULL);
+       info.set_declstatement_ptr(funcdefn_stmt->get_declaration());
+
+#if 0 // Liao, 12/15/2016  avoid duplicated unparsing of function header
+       // DQ (12/5/2014): Test for if we have unparsed partially using the token stream.
+       // If so then we don't want to unparse this syntax, if not then we require this syntax.
+       // if (info.unparsedPartiallyUsingTokenStream() == false)
+       bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
+       if (saved_unparsedPartiallyUsingTokenStream == false)
+       {
+         if (isSgMemberFunctionDeclaration(declstmt)) 
+         {
+           unparseMFuncDeclStmt( declstmt, info);
+         }
+         else 
+         {
+           unparseFuncDeclStmt( declstmt, info);
+         }
+       }
+       else
+       {
+         // DQ (12/6/2014): Unparse the equivalent tokens instead.
+
+#if 0
+         curprint ("/* Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: unparse partially from tokens START */");
+#endif
+         // unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start)
+         // unparseStatementFromTokenStream (declstmt, e_leading_whitespace_start, e_token_subsequence_start);
+         // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
+         // unparseStatementFromTokenStream (declstmt, stmt, e_token_subsequence_start, e_leading_whitespace_end);
+         unparseStatementFromTokenStream (declstmt, stmt, e_token_subsequence_start, e_token_subsequence_start);
+#if 0
+         curprint ("/* Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: unparse partially from tokens END */");
+#endif
+       }
+
+#endif
+       // curprint ("/* Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: DONE calling unparseMFuncDeclStmt or unparseFuncDeclStmt */ ");
+
+       // DQ (10/15/2006): Also un-mark that we are unparsing a function declaration (or member function declaration)
+       info.set_declstatement_ptr(NULL);
+
+       // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
+       // info.unset_SkipQualifiedNames();
+
+#if 0
+       printf ("Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: comments before the output of the function body \n");
+       curprint ("/* Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: comments before the output of the function body */");
+#endif
+
+       info.unset_SkipFunctionDefinition();
+       SgUnparse_Info ninfo(info);
+
+       // DQ (10/20/2012): Ouput the comments and CPP directives on the function definition.
+       // Note must be outside of SkipFunctionDefinition to be output.
+       unparseAttachedPreprocessingInfo(funcdefn_stmt, info, PreprocessingInfo::before);
+
+#if 0
+       printf ("Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: output the function body \n");
+       curprint ("/* Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: output the function body */");
+#endif
+
+       // now the body of the function
+       if (funcdefn_stmt->get_body())
+       {
+         unparseStatement(funcdefn_stmt->get_body(), ninfo);
+       }
+       else
+       {
+         curprint ("{}");
+
+         // DQ (9/22/2004): I think this is an error!
+         printf ("Error: Should be an error to not have a function body in the AST \n");
+         ROSE_ASSERT(false);
+       }
+
+#if 0
+       curprint("/* Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: calling unparseAttachedPreprocessingInfo() */ ");
+#endif
+       // DQ (10/20/2012): Not clear if this is in the correct location (shouldn't it be BEFORE the function body?).
+       // Unparse any comments of directives attached to the SgFunctionParameterList
+       unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::after);
+
+       // DQ (10/20/2012): Ouput the comments and CPP directives on the function definition.
+       unparseAttachedPreprocessingInfo(funcdefn_stmt, info, PreprocessingInfo::after);
+
+#if 0
+       curprint("/* Leaving Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: calling unparseAttachedPreprocessingInfo() */ ");
+#endif
+     }
+
    }
 
 
@@ -9887,7 +10051,35 @@ Unparse_ExprStmt::unparseTemplateHeader(SgFunctionDeclaration* functionDeclarati
 #if 0
      printf ("In unparseTemplateHeader(): template_header = %s \n",template_header.str());
 #endif
+     SgSourceFile* sourcefile = info.get_current_source_file();
+     if (sourcefile != NULL && sourcefile->get_unparse_template_ast())
+     {
+       // Liao 12/15/2016, unparse from AST if no header string is saved in advance.
+       // TODO: new function Unparse_ExprStmt::unparseTemplateHeader (SgTemplateFunctionDeclaration* tfunc, ...)
+       SgTemplateFunctionDeclaration* tfunc_decl = isSgTemplateFunctionDeclaration(functionDeclaration);
+       if (template_header.getString().empty() && tfunc_decl != NULL)
+       {
+         // template <typename LOOP_BODY>
+         curprint("template ");
+         SgTemplateParameterPtrList tlist =  tfunc_decl->get_templateParameters ();
+         Unparse_ExprStmt::unparseTemplateParameterList (tlist, info);
+         curprint("\n");
 
+         // unparse return type
+         SgFunctionType* ftype = tfunc_decl->get_type();
+         ROSE_ASSERT (ftype != NULL);
+         SgType* rtype = ftype->get_return_type();
+         ROSE_ASSERT (rtype != NULL);
+         //Unparse_Type::unparseType (rtype, info);
+         // unp->u_type->unparseType (rtype, info);
+         unparseReturnType (functionDeclaration,rtype,info);
+
+         // unparse function name, I have to comment out this line to avoid unparsing function name twice
+         //unp->u_exprStmt->curprint(tfunc_decl->get_name().str());
+         // unparse function parameter list
+         unp->u_exprStmt->unparse_helper (functionDeclaration, info);
+       }
+     }
   // curprint("\n ");
   // curprint(template_header.str());
      curprint(string("\n\n") + template_header + "\n");
@@ -10258,6 +10450,20 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
           curprint(string("\n") + templateString);
 
+         if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
+         {
+           // Liao 12/15/2016, experimental support to unparse transformation-generated template function declarations from AST
+           // templateString is NULL for transformation-generated one.
+           if  (templateFunctionDeclaration && templateString.empty())
+           {
+             //printf ("Unparsing the template declaration from the AST (case of template function declaration) \n");
+             unparseTemplateHeader (templateFunctionDeclaration, info); 
+             if (templateFunctionDeclaration->get_definition()) // we may encounter prototype template (member) functions
+             {
+               unparseStatement(templateFunctionDeclaration->get_definition(), info); 
+             }
+           }
+         }
 #if 0
        // DQ (9/11/2016): Adding support for unparsing the template declaration from the AST.
 

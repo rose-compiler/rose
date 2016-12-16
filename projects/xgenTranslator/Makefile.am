@@ -15,7 +15,7 @@ CXX_TESTCODE= \
 CXX_TESTCODE_RESULTS = $(addprefix rose_, ${CXX_TESTCODE})
 
 $(CXX_TESTCODE_RESULTS): xgenTranslator
-	./xgenTranslator -c -rose:Cxx11_only $(srcdir)/$(@:rose_%=%)
+	./xgenTranslator -c -rose:Cxx11_only -rose:unparse_template_ast $(srcdir)/$(@:rose_%=%)
 
 check: $(CXX_TESTCODE_RESULTS) 
 clean:

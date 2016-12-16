@@ -17,7 +17,7 @@ namespace XGEN
 
   // generate and return a specialized template function, from an input template func, default scope is the same scope as the original one
   // caller provides the name of the type used for specialize the template function , like struct switcher_exec {};
-  SgTemplateFunctionDeclaration* specializeTemplateFunction(SgTemplateFunctionDeclaration* input_func, std::string special_type_name, SgScopeStatement* scope = NULL);
+  SgTemplateFunctionDeclaration* specializeTemplateFunction(SgTemplateFunctionDeclaration* input_func, std::string special_type_name);
 
 
   // Find the first declaration of a named namespace, start the search from a given scope for efficiency.
@@ -42,9 +42,8 @@ int main (int argc, char** argv)
 //  ROSE_ASSERT (templates.size() ==1); // TODO remove later
   SgTemplateFunctionDeclaration* tfunc = templates[0];
 
-// build and insert the specialized function
-  SgTemplateFunctionDeclaration* sfunc = specializeTemplateFunction (tfunc, "switcher_exec");
-  insertStatementAfter (tfunc, sfunc);
+  // build and insert the specialized function
+  specializeTemplateFunction (tfunc, "switcher_exec");
 
   // Generate source code from AST and invoke your
   // desired backend compiler
@@ -76,15 +75,21 @@ SgNamespaceDeclarationStatement* XGEN::findFirstNamespace(std::string name, SgSc
        }                                                                                                                     
      }
  */
-SgTemplateFunctionDeclaration* XGEN::specializeTemplateFunction(SgTemplateFunctionDeclaration* input_func, std::string special_type_name, SgScopeStatement* scope /*= NULL*/)
+// Generate and insert a specialized template function
+// We should insert after the switcher {} namespace so used types are declared first.
+// Right now, we insert the new func as the last one in the parent scope of the original template function
+SgTemplateFunctionDeclaration* XGEN::specializeTemplateFunction(SgTemplateFunctionDeclaration* input_func, std::string special_type_name)
 {
   ROSE_ASSERT (input_func != NULL);
-  if (scope==NULL)
-    scope = input_func->get_scope();
+  SgScopeStatement* scope = input_func->get_scope();
+  ROSE_ASSERT (scope!= NULL);
 
   // Create the special type used for specialization
   SgClassDeclaration * s_struct = buildStructDeclaration (special_type_name, scope);
-  insertStatementAfter (input_func, s_struct);
+  //insertStatementAfter (input_func, s_struct);
+  // Not immediately after the original template function
+  // Inserting as the last one to ensure all types are declared in advance.
+  appendStatement(s_struct, scope);
   
   SgTemplateType * ttype = buildTemplateType (SgName("LOOP_BODY"));
   SgTemplateParameter * tparameter = buildTemplateParameter (SgTemplateParameter::type_parameter, ttype);
@@ -98,9 +103,11 @@ SgTemplateFunctionDeclaration* XGEN::specializeTemplateFunction(SgTemplateFuncti
   SgTemplateParameterPtrList * tplist = new SgTemplateParameterPtrList();
   tplist->push_back (tparameter);
   SgName sname("forall");
+  // nondefining declaration
   SgTemplateFunctionDeclaration* sfunc = buildNondefiningTemplateFunctionDeclaration (sname, buildVoidType(), parlist, scope, NULL,  tplist);
   ROSE_ASSERT (sfunc != NULL);
   // deepCopy (input_func);
+  // Defining declaration
   SgTemplateFunctionDeclaration* sfunc2 = buildDefiningTemplateFunctionDeclaration (sname, buildVoidType(), parlist, scope, NULL, sfunc );
   ROSE_ASSERT (sfunc2 != NULL);
 
@@ -198,11 +205,13 @@ SgTemplateFunctionDeclaration* XGEN::specializeTemplateFunction(SgTemplateFuncti
 //    cout<< cst->unparseToString()<<endl;
   } // end of the loop
 
+#if 0
   //debugging 
   cout<<"debugging here ..."<<endl;
    cout<<sfunc2->unparseToString()<<endl;
   // body should be unparsable. 
   cout<<func_body->unparseToString()<<endl;
+#endif  
   return sfunc2;
 }
 

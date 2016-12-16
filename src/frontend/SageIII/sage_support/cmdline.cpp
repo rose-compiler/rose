@@ -3273,6 +3273,8 @@ SgFile::usage ( int status )
 "                             statements, where as the token_trailing_* file uses the mapping \n"
 "                             and the trailing whitespace mapping between statements.  Both \n"
 "                             files should be identical, and the same as the input file. \n"
+"     -rose:unparse_template_ast\n"
+"                             unparse C++ templates from their AST, not from strings stored by EDG. \n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
@@ -3752,6 +3754,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("unparse_using_leading_and_trailing_token_mappings mode ON \n");
           set_unparse_using_leading_and_trailing_token_mappings(true);
+        }
+   // Liao 12/15/2016,  support unparsing template AST
+     set_unparse_template_ast (false);
+     ROSE_ASSERT (get_unparse_template_ast() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","unparse_template_ast",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("unparse template AST mode ON \n");
+          set_unparse_template_ast(true);
         }
 
   //
@@ -5598,6 +5609,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (12/14/2015): Strip out the new option (so it will not be used on the backend compiler).
      optionCount = sla(argv, "-rose:", "($)", "(use_token_stream_to_improve_source_position_info)",1);
 
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_template_ast)",1);
   // DQ (12/23/2015): Suppress variable declaration normalizations
      optionCount = sla(argv, "-rose:", "($)", "(suppress_variable_declaration_normalization)",1);
 
