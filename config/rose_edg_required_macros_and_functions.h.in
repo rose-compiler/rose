@@ -240,7 +240,7 @@
 
 /* For debugging use the separate generated header file of builtin functions. */
 #if __cplusplus >= 201103L
-#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
    #define ROSE_CONSTEXPR
 #else
    #define ROSE_CONSTEXPR constexpr
@@ -251,25 +251,43 @@
 // #warning "NOT setting ROSE_CONSTEXPR to constexpr"
 #endif
 
+
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 409
+
 /* Note that might not be using our builtin function mechanism for EDG 4.12 and later (at least while we sort it out) */
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
+
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#endif
 
 
 /* DQ (9/12/2016): Added builtin functions (not yet supported in config/Builtins.def).
    These are required to compile: tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2015_08.C
    Note that these are not in our ROSE specific table of builtin functions at present.
  */
-#if 0
-long long          __builtin_bswap64(long long __X);
+// #if 0
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
+  // long long          __builtin_bswap64(long long __X);
 void               __builtin_ia32_fxsave(void *__P);
 void               __builtin_ia32_fxrstor(void *__P);
 void               __builtin_ia32_fxsave64(void *__P);
 void               __builtin_ia32_fxrstor64(void *__P);
 #endif
 
+// DQ (12/16/2016): This is incorrect for EDG 4.9, but required for later versions of EDG.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
+unsigned long long int __builtin_bswap64(unsigned long long int) __attribute__((nothrow, const));
+#endif
+
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
-#if 0
+// #if 0
+
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
+
 /* DQ (4/12/2015): Removing this mapping for __builtin_va_start to __builtin_stdarg_start
    since EDG now supports __builtin_va_start directly.
  */
