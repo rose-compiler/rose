@@ -371,8 +371,10 @@ BUILTIN(__builtin_isinf_sign, "i.", "nc")
 
 // FP signbit builtins
 BUILTIN(__builtin_signbit, "id", "nc")
-BUILTIN(__builtin_signbitf, "if", "nc")
-BUILTIN(__builtin_signbitl, "iLd", "nc")
+
+// DQ (12/16/2016): These must be represented as constexpr only for EDG versions strictly greater than 4.9.
+// BUILTIN(__builtin_signbitf, "if", "nc")
+// BUILTIN(__builtin_signbitl, "iLd", "nc")
 
 // DQ (12/16/2016): These must be represented as constexpr only for EDG versions strictly greater than 4.9.
 // Builtins for arithmetic.
