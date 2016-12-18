@@ -169,4 +169,7 @@ __builtin_isnan
 __builtin_isnormal
 
 
-
+# DQ (12/16/2016): These must be represented as constexpr only for EDG versions strictly greater than 4.9.
+# DQ (12/17/2016): 4th iteration.
+# __builtin_signbitf
+# __builtin_signbitl
