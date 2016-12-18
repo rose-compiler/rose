@@ -7156,12 +7156,22 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                break;
              }
 
-       // DQ (2/22/2013): added case to support someing reported in test2013_68.C, but not yet verified.
+       // DQ (2/22/2013): added case to support something reported in test2013_68.C, but not yet verified.
           case V_SgVarRefExp:
              {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgVarRefExp: returning NULL \n");
 #endif
+#if 0
+               printf ("I would like to verify that I can trap this case \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+       // DQ (12/17/2016): added case to support reducing output spew from C++11 tests and applications.
+          case V_SgThisExp:
+             {
 #if 0
                printf ("I would like to verify that I can trap this case \n");
                ROSE_ASSERT(false);
