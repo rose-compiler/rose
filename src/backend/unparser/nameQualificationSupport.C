@@ -4827,14 +4827,21 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("Found a SgTemplateInstantiationFunctionDecl that will have template arguments that might require qualification. name = %s \n",templateInstantiationFunctionDeclaration->get_name().str());
 #endif
+            // DQ (12/18/2016): When this is a function call in an array type index expression we can't identify an associated statement.
                SgStatement* currentStatement = TransformationSupport::getStatement(functionRefExp);
-               ROSE_ASSERT(currentStatement != NULL);
+            // ROSE_ASSERT(currentStatement != NULL);
+               if (currentStatement != NULL)
+                  {
+                    SgScopeStatement* currentScope = currentStatement->get_scope();
+                    ROSE_ASSERT(currentScope != NULL);
 
-               SgScopeStatement* currentScope = currentStatement->get_scope();
-               ROSE_ASSERT(currentScope != NULL);
-
-            // traverseTemplatedFunction(functionRefExp,templateInstantiationFunctionDeclaration,currentScope,currentStatement);
-               traverseTemplatedFunction(functionRefExp,functionRefExp,currentScope,currentStatement);
+                 // traverseTemplatedFunction(functionRefExp,templateInstantiationFunctionDeclaration,currentScope,currentStatement);
+                    traverseTemplatedFunction(functionRefExp,functionRefExp,currentScope,currentStatement);
+                  }
+                 else
+                  {
+                    printf ("Note: Name qualification: parent statement could not be identified (may be hidden in array type index) for functionRefExp = %p = %s \n",functionRefExp,functionRefExp->class_name().c_str());
+                  }
              }
         }
 
@@ -5233,7 +5240,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                                      // It might be better to resolve this to a SgNamedType instead of SgClassType.
                                         classType = isSgClassType(baseType);
-                                        ROSE_ASSERT(classType != NULL);
+                                        if (classType == NULL)
+                                           {
+                                          // DQ (12/18/2016): In the case of Cxx11_tests/test2016_97.C the baseType is a SgTemplateType (though the variable is declared with "auto").
+                                             printf ("Note: Name qualification: case of SgVarRefExp: type is not a SgClassType --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#if 0
+                                             lhs->get_file_info()->display("classType == NULL: debug");
+#endif
+                                           }
+                                     // ROSE_ASSERT(classType != NULL);
                                       }
                                      else
                                       {

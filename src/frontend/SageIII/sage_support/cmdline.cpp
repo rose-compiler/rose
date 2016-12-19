@@ -834,7 +834,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // if ( CommandlineProcessing::isOption(argc,argv,"-","(E)",false) == true )
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(E)",false) == true )
         {
-       // printf ("/* option -E found (just run backend compiler with -E to call CPP) */ \n");
+#if 0
+          printf ("/* In SgProject::processCommandLine(): option -E found (just run backend compiler with -E to call CPP) */ \n");
+#endif
           p_C_PreprocessorOnly = true;
         }
 
@@ -5432,7 +5434,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      if ( CommandlineProcessing::isOption(argv,"-","(E)",true) == true )
         {
-       // printf ("/* option -E found (just run backend compiler with -E to call CPP) */ \n");
+#if 0
+          printf ("/* In SgFile::processRoseCommandLineOptions() option -E found (just run backend compiler with -E to call CPP) */ \n");
+#endif
           p_useBackendOnly = true;
        // p_skip_buildHigherLevelGrammars  = true;
           p_disable_edg_backend  = true; // This variable should be called frontend NOT backend???
@@ -7069,6 +7073,39 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (7/3/2013): Where are we in the command line.
   // inputCommandLine.push_back("--AAA");
 
+  // DQ (12/18/2016): Add support to use the EDG frontend within ROSE to process the inout file and output the preprocessed version.
+  // However, we want to suppress the output of declarations from our ROSE preinclude file, so that the output can be processed by ROSE.
+  // In the case of the Intel comiler, we also want to include "-D__INTEL_CLANG_COMPILER" so that we take the simple trip through the 
+  // Intel comiler's header files that avoids complex builtin function handling (builtin functions that reference types defined in the
+  // header files and which we could not define in our ROSE preinclude file).
+     Rose_STL_Container<string>::iterator j = edgOptionList.begin();
+     while (j != edgOptionList.end())
+        {
+          if (*j == "E")
+             {
+            // This is the EDG option "-E" obtained from the ROSE "-edg:E" option
+
+            // We want to add the USE_ROSE_CPP_PROCESSING
+            // CommandlineProcessing::addListToCommandLine(inputCommandLine,"-",edgOptionList);
+
+            // Specify that we are using ROSE to process the input file using CPP (so that in our preinclude file we can skip all ROSE specific declarations.
+               inputCommandLine.push_back("-DUSE_ROSE_CPP_PROCESSING");
+
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+            // DQ (12/18/2016): In the case of using "-E" with the Intel backend compiler we need to 
+            // add -D__INTEL_CLANG_COMPILER so that we can take a path through the Intel header files 
+            // that avoids editing header Intel specific header files to handle builtin functions that 
+            // use types defined in the header files.
+               inputCommandLine.push_back("-D__INTEL_CLANG_COMPILER");
+#endif
+#if 0
+               printf ("Detected use of -edg:E option to enable the EDG CPP mode \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+          j++;
+        }
+
   // *******************************************************************
   // Handle general edg options (--xxx)
   // *******************************************************************
@@ -7376,6 +7413,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        }
 
   // Debugging (verbose) output
+  // if ( (get_verbose() >= 0) )
      if ( (get_verbose() > 1) )
         {
           std::string argString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
