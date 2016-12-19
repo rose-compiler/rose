@@ -3,7 +3,11 @@
 /* DQ (11/1/2011): I think we do need this for at least C++ code (e.g. __CHAR_BIT__ must
    be defined along with lots of other Common Predefined Macros.
 */
-#if 1
+// DQ (12/18/2018): Adding support to ignore output of declarations in this file when using
+// EDG frontend for CPP processing with the "-edg:E" option.  Note that "-E" can be specified
+// but that causes the backend compiler to be called directly and this file of preinclude 
+// declarations is not used in that case.
+#ifndef USE_ROSE_CPP_PROCESSING
 
 /* DQ (6/12/2005): Permit this to be optionally commented out because it makes it hard to
     look at the AST merging graphs. The ROSE-IR graphs will now filter nodes associated
