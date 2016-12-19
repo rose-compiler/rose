@@ -6439,13 +6439,30 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                               declStmt = namedType->get_declaration();
                             }
                          ROSE_ASSERT(declStmt != NULL);
+#if 0
                       // DQ (12/12/2016): Added debugging information.
                          if (declStmt->isForward() == true)
                             {
                               printf ("In unparseVarDeclStmt(): Detecting a forward declaration \n");
+                              printf ("In unparseVarDeclStmt(): vardecl_stmt = %p = %s \n",vardecl_stmt,vardecl_stmt->class_name().c_str());
+                              printf ("In unparseVarDeclStmt(): decl_item = %p = %s \n",decl_item,decl_item->class_name().c_str());
+                              printf ("In unparseVarDeclStmt(): cname = decl_item->get_name() = %s \n",decl_item->get_name().str());
+                              printf ("In unparseVarDeclStmt(): tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+
+                              printf ("Calling unp->u_sage->printSpecifier2 \n");
+                              curprint ("\n/* Calling unp->u_sage->printSpecifier2() */ \n");
+#if 0
                               declStmt->get_file_info()->display("ERROR: This should be a forward declaration: debug");
+#endif
+#if 0
+                           // Put a marker into the generated code so that I can better understand where this appears.
+                              curprint("\n/* Note: declStmt->isForward() == true */\n ");
+#endif
                             }
-                         ROSE_ASSERT(declStmt->isForward() == false);
+#endif
+                      // DQ (12/18/2016): We can't enforce this in the case of C++11 lambda functions passed into functions as variables.
+                      // See Cxx11_tests/test2016_95.C for an example of this.
+                      // ROSE_ASSERT(declStmt->isForward() == false);
 
                       // DQ (10/9/2006): Don't output the qualified name of a defining declaration.
                       // ninfo.unset_forceQualifiedNames();
@@ -6463,6 +6480,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
                       else
                        {
+#if 0
+                         printf ("In unparseVarDeclStmt(): outputTypeDefinition == false \n");
+                         curprint("\n/* Note: outputTypeDefinition == false */\n ");
+#endif
                       // printf ("Use what is surely a non-defining declaration as a basis for the variable declaration \n");
                          declStmt = namedType->get_declaration();
                          ROSE_ASSERT(declStmt != NULL);
