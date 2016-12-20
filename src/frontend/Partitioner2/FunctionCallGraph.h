@@ -64,6 +64,14 @@ public:
             index_.insert(iter->value()->address(), iter);
     }
 
+    /** Assignment operator. */
+    FunctionCallGraph& operator=(const FunctionCallGraph &other) {
+        graph_ = other.graph_;
+        for (Graph::VertexIterator iter=graph_.vertices().begin(); iter!=graph_.vertices().end(); ++iter)
+            index_.insert(iter->value()->address(), iter);
+        return *this;
+    }
+
     /** Return all functions in the call graph. */
     boost::iterator_range<Graph::ConstVertexValueIterator> functions() {
         return graph_.vertexValues();
