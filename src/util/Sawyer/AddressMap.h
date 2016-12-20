@@ -525,7 +525,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S&, const unsigned /*version*/) {
         // no data to serialize here
     }
 
@@ -533,7 +533,7 @@ public:
     bool merge(const Sawyer::Container::Interval<Address> &leftInterval, Segment &leftSegment,
                const Sawyer::Container::Interval<Address> &rightInterval, Segment &rightSegment) {
         ASSERT_forbid(leftInterval.isEmpty());
-        ASSERT_forbid(rightInterval.isEmpty());
+        ASSERT_always_forbid(rightInterval.isEmpty()); // so rightInterval is always used
         ASSERT_require(leftInterval.greatest() + 1 == rightInterval.least());
         return (leftSegment.accessibility() == rightSegment.accessibility() &&
                 leftSegment.name() == rightSegment.name() &&
@@ -549,9 +549,9 @@ public:
         return right;
     }
 
-    void truncate(const Sawyer::Container::Interval<Address> &interval, Segment &segment, Address splitPoint) {
-        ASSERT_forbid(interval.isEmpty());
-        ASSERT_require(interval.isContaining(splitPoint));
+    void truncate(const Sawyer::Container::Interval<Address> &interval, Segment &/*segment*/, Address splitPoint) {
+        ASSERT_always_forbid(interval.isEmpty()); // so interval is always used
+        ASSERT_always_require(interval.isContaining(splitPoint)); // ditto for splitPoint
     }
 };
 
@@ -987,7 +987,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & boost::serialization::base_object<Super>(*this);
     }
 

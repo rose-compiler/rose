@@ -107,7 +107,7 @@ namespace RAJA {
           RAJA::forall( RAJA::omp_parallel_for_exec(), begin, end, loop_body ); break;                                      
       }                                                                                                                     
     }
-} // end namespace
+} // end namespace RAJA
 
 int main()
 {

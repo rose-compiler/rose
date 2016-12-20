@@ -2,15 +2,16 @@
 // Simplest input code for as example
 #include <stdlib.h>
 
-namespace RAJA {
+namespace RAJA 
+{
   typedef int Index_type;
 
-// input code , template 1
-// Using pragma to specify which template to specialize for now
+  // input code , template 1
+  // Using pragma to specify which template to specialize for now
 #pragma xgen specialize_template
   template <typename EXEC_POLICY_T,
            typename LOOP_BODY>
-//             inline __attribute__((always_inline))
+             //             inline __attribute__((always_inline))
              void forall(Index_type begin, Index_type end,  //SgTemplateFunctionDeclaration
                  LOOP_BODY loop_body)
              {
@@ -18,7 +19,7 @@ namespace RAJA {
                    begin, end,
                    loop_body );
              }
-// We can assume this sub namespace is provided as input , including a list of execution policies
+  // We can assume this sub namespace is provided as input , including a list of execution policies
   namespace switcher {
     enum POLICY_TYPE {
       seq_exec = 0,
@@ -38,12 +39,12 @@ namespace RAJA {
       }
   } // end switcher namespace
 
-// the underneath basic specialization should be provided in the input code
+  // the underneath basic specialization should be provided in the input code
   struct seq_exec {};  // the type for specialization
   struct omp_parallel_for_exec {};  // the type for specialization
 
   template <typename LOOP_BODY>
-//    inline __attribute__((always_inline))
+    //    inline __attribute__((always_inline))
     void forall(seq_exec,                     // SgTemplateFunctionDeclaration
         Index_type begin, Index_type end,                                                                                         
         LOOP_BODY loop_body)                                                                                                      
@@ -70,25 +71,23 @@ namespace RAJA {
       ;
     }
 
-// output code, template 1 specialization  
-
+  // output code, template 1 specialization  
 #if 0 // This is the specialization we want to create
-   template <typename LOOP_BODY>
- //    inline __attribute__((always_inline))
-     void forall(switcher_exec,
-         Index_type begin, Index_type end,
-         LOOP_BODY loop_body)                                                                                                
-     {                                                                                                                       
-       switch(switcher::getRandomPolicy()) {                                                                                 
-         case switcher::seq_exec:                                                                                            
-           RAJA::forall( RAJA::seq_exec(), begin, end, loop_body ); break;                                                   
-         case switcher::omp_parallel_for_exec:                                                                               
-           RAJA::forall( RAJA::omp_parallel_for_exec(), begin, end, loop_body ); break;                                      
-       }                                                                                                                     
-     }                                                                                                                       
- } 
+  template <typename LOOP_BODY>
+    void forall(switcher_exec,
+        Index_type begin, Index_type end,
+        LOOP_BODY loop_body)                                                                                                
+    {                                                                                                                       
+      switch(switcher::getRandomPolicy()) {                                                                                 
+        case switcher::seq_exec:                                                                                            
+          RAJA::forall( RAJA::seq_exec(), begin, end, loop_body ); break;                                                   
+        case switcher::omp_parallel_for_exec:                                                                               
+          RAJA::forall( RAJA::omp_parallel_for_exec(), begin, end, loop_body ); break;                                      
+      }                                                                                                                     
+    }                                                                                                                       
 #endif
-} // end namespace
+
+} // end namespace of RAJA
 
 #if 1
 int main()

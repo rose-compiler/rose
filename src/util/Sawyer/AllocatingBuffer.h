@@ -42,7 +42,7 @@ private:
     // Users: You'll need to register the subclass once you know its type, such as
     // BOOST_CLASS_REGISTER(Sawyer::Container::AllocatingBuffer<size_t,uint8_t>);
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & boost::serialization::base_object<Super>(*this);
         s & size_ & values_;
     }

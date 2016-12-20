@@ -265,6 +265,10 @@ public:
      *  common subgraph isomorphism algorithms.  This default implementation always returns true. */
     bool mu(const Graph &g1, const typename Graph::ConstVertexIterator &v1,
             const Graph &g2, const typename Graph::ConstVertexIterator &v2) const {
+        SAWYER_ARGUSED(g1);                             // Leave formal arg names in declaration because they're important
+        SAWYER_ARGUSED(v1);                             // documentation for this function.
+        SAWYER_ARGUSED(g2);
+        SAWYER_ARGUSED(v2);
         return true;
     }
 
@@ -281,6 +285,14 @@ public:
             const std::vector<typename Graph::ConstEdgeIterator> &edges1,
             const Graph &g2, typename Graph::ConstVertexIterator j1, typename Graph::ConstVertexIterator j2,
             const std::vector<typename Graph::ConstEdgeIterator> &edges2) const {
+        SAWYER_ARGUSED(g1);                             // Leave formal argument names in declaration because they're
+        SAWYER_ARGUSED(i1);                             // important documentation for this function.
+        SAWYER_ARGUSED(i2);
+        SAWYER_ARGUSED(edges1);
+        SAWYER_ARGUSED(g2);
+        SAWYER_ARGUSED(j1);
+        SAWYER_ARGUSED(j2);
+        SAWYER_ARGUSED(edges2);
         return true;
     }
 
@@ -289,7 +301,7 @@ public:
      *  This method is called each time the algorithm tests a potential solution. It can be used to report progress or
      *  terminate the search after some number of iterations.  The argument is the number of vertices in the potential
      *  solution. */
-    void progress(size_t size) {}
+    void progress(size_t /*size*/) {}
 };
 
 /** How the CSI algorith should proceed. */
@@ -899,7 +911,8 @@ template<class Graph>
 class FirstIsomorphicSubgraph {
     std::pair<std::vector<size_t>, std::vector<size_t> > solution_;
 public:
-    CsiNextAction operator()(const Graph &g1, const std::vector<size_t> &x, const Graph &g2, const std::vector<size_t> &y) {
+    CsiNextAction operator()(const Graph &/*g1*/, const std::vector<size_t> &x,
+                             const Graph &/*g2*/, const std::vector<size_t> &y) {
         solution_ = std::make_pair(x, y);
         return CSI_ABORT;
     }
@@ -976,7 +989,8 @@ template<class Graph>
 class MaximumIsomorphicSubgraphs {
     std::vector<std::pair<std::vector<size_t>, std::vector<size_t> > > solutions_;
 public:
-    CsiNextAction operator()(const Graph &g1, const std::vector<size_t> &x, const Graph &g2, const std::vector<size_t> &y) {
+    CsiNextAction operator()(const Graph &/*g1*/, const std::vector<size_t> &x,
+                             const Graph &/*g2*/, const std::vector<size_t> &y) {
         if (!solutions_.empty() && x.size() > solutions_.front().first.size())
             solutions_.clear();
         solutions_.push_back(std::make_pair(x, y));

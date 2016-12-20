@@ -834,7 +834,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // if ( CommandlineProcessing::isOption(argc,argv,"-","(E)",false) == true )
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(E)",false) == true )
         {
-       // printf ("/* option -E found (just run backend compiler with -E to call CPP) */ \n");
+#if 0
+          printf ("/* In SgProject::processCommandLine(): option -E found (just run backend compiler with -E to call CPP) */ \n");
+#endif
           p_C_PreprocessorOnly = true;
         }
 
@@ -3273,6 +3275,8 @@ SgFile::usage ( int status )
 "                             statements, where as the token_trailing_* file uses the mapping \n"
 "                             and the trailing whitespace mapping between statements.  Both \n"
 "                             files should be identical, and the same as the input file. \n"
+"     -rose:unparse_template_ast\n"
+"                             unparse C++ templates from their AST, not from strings stored by EDG. \n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
@@ -3752,6 +3756,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("unparse_using_leading_and_trailing_token_mappings mode ON \n");
           set_unparse_using_leading_and_trailing_token_mappings(true);
+        }
+   // Liao 12/15/2016,  support unparsing template AST
+     set_unparse_template_ast (false);
+     ROSE_ASSERT (get_unparse_template_ast() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","unparse_template_ast",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("unparse template AST mode ON \n");
+          set_unparse_template_ast(true);
         }
 
   //
@@ -5421,7 +5434,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      if ( CommandlineProcessing::isOption(argv,"-","(E)",true) == true )
         {
-       // printf ("/* option -E found (just run backend compiler with -E to call CPP) */ \n");
+#if 0
+          printf ("/* In SgFile::processRoseCommandLineOptions() option -E found (just run backend compiler with -E to call CPP) */ \n");
+#endif
           p_useBackendOnly = true;
        // p_skip_buildHigherLevelGrammars  = true;
           p_disable_edg_backend  = true; // This variable should be called frontend NOT backend???
@@ -5598,6 +5613,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (12/14/2015): Strip out the new option (so it will not be used on the backend compiler).
      optionCount = sla(argv, "-rose:", "($)", "(use_token_stream_to_improve_source_position_info)",1);
 
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_template_ast)",1);
   // DQ (12/23/2015): Suppress variable declaration normalizations
      optionCount = sla(argv, "-rose:", "($)", "(suppress_variable_declaration_normalization)",1);
 
@@ -6148,7 +6164,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 // #ifdef __INTEL_COMPILER
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
   // DQ (9/6/2015): Reset to specific version of GNU for Intel v14 compiler.
-     emulate_backend_compiler_version_number = 4*10000 + 8*100 + 3;
+  // emulate_backend_compiler_version_number = 4*10000 + 8*100 + 3;
+
+  // DQ (12/13/2016): Test tis for Intel v16.
+     emulate_backend_compiler_version_number = 6*10000 + 1*100 + 0;
 #endif
 
   // DQ (7/3/2014): Testing if we emulate a different version of GNU g++.
@@ -7057,6 +7076,39 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (7/3/2013): Where are we in the command line.
   // inputCommandLine.push_back("--AAA");
 
+  // DQ (12/18/2016): Add support to use the EDG frontend within ROSE to process the inout file and output the preprocessed version.
+  // However, we want to suppress the output of declarations from our ROSE preinclude file, so that the output can be processed by ROSE.
+  // In the case of the Intel comiler, we also want to include "-D__INTEL_CLANG_COMPILER" so that we take the simple trip through the 
+  // Intel comiler's header files that avoids complex builtin function handling (builtin functions that reference types defined in the
+  // header files and which we could not define in our ROSE preinclude file).
+     Rose_STL_Container<string>::iterator j = edgOptionList.begin();
+     while (j != edgOptionList.end())
+        {
+          if (*j == "E")
+             {
+            // This is the EDG option "-E" obtained from the ROSE "-edg:E" option
+
+            // We want to add the USE_ROSE_CPP_PROCESSING
+            // CommandlineProcessing::addListToCommandLine(inputCommandLine,"-",edgOptionList);
+
+            // Specify that we are using ROSE to process the input file using CPP (so that in our preinclude file we can skip all ROSE specific declarations.
+               inputCommandLine.push_back("-DUSE_ROSE_CPP_PROCESSING");
+
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+            // DQ (12/18/2016): In the case of using "-E" with the Intel backend compiler we need to 
+            // add -D__INTEL_CLANG_COMPILER so that we can take a path through the Intel header files 
+            // that avoids editing header Intel specific header files to handle builtin functions that 
+            // use types defined in the header files.
+               inputCommandLine.push_back("-D__INTEL_CLANG_COMPILER");
+#endif
+#if 0
+               printf ("Detected use of -edg:E option to enable the EDG CPP mode \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+          j++;
+        }
+
   // *******************************************************************
   // Handle general edg options (--xxx)
   // *******************************************************************
@@ -7364,6 +7416,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        }
 
   // Debugging (verbose) output
+  // if ( (get_verbose() >= 0) )
      if ( (get_verbose() > 1) )
         {
           std::string argString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);

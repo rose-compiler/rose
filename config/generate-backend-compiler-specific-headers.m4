@@ -129,12 +129,15 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
         exit 1
    fi
 
+ # DQ (12/14/2016): We now want this to apply to EDG 4.12 because it does not handle C++11 constexpr 
+ # return type of builtin functions properly. Note that this is only an issue when processing file 
+ # generated via CPP (or using -E flags to the compiler) header files.
  # DQ (10/10/2016): Make the us of the ROSE generation of builtins dependent on the version of EDG.
  # This is because EDG 4.12 introduces a new mechanism to handle builtin functions and is thus more 
  # complete.  However, it is still missing __builtin_fxsave() functions, though this is not clear 
  # why since they are present in EDG 4.12's tables.
    if test "x$edg_major_version_number" = "x4"; then
-      if test "$edg_minor_version_number" -le "11"; then
+#     if test "$edg_minor_version_number" -le "11"; then
          # DQ (9/12/2016): Added use of new support to specify constexpr specific builtin functions (uses an additional file, support added by Robb).
          # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
            echo "Now output the builtin generated file into build directory."
@@ -149,7 +152,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
         else
          # Note that we will likely want to use our mechanism (but with a smaller list of builtins that are still being missed).
            echo "EDG 4.12 and later version builtins are determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)."
-      fi
+#     fi
    fi
 
  # "./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h"

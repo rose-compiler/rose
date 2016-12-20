@@ -29,10 +29,10 @@ static void showCommandLine(const std::vector<std::string> &args) {
 static ParserResult mustParse(size_t nParsed, Parser &p, const std::vector<std::string> &args) {
     showCommandLine(args);
     ParserResult pr = p.parse(args);
-    ASSERT_require2(pr.parsedArgs().size()==nParsed,
-                    "must have parsed exactly " + boost::lexical_cast<std::string>(nParsed) +
-                    " argument" + (1==nParsed?"":"s") + ", but got " +
-                    boost::lexical_cast<std::string>(pr.parsedArgs().size()));
+    ASSERT_always_require2(pr.parsedArgs().size()==nParsed,
+                           "must have parsed exactly " + boost::lexical_cast<std::string>(nParsed) +
+                           " argument" + (1==nParsed?"":"s") + ", but got " +
+                           boost::lexical_cast<std::string>(pr.parsedArgs().size()));
     pr.apply();
     return pr;
 }
@@ -190,27 +190,27 @@ static void test07a() {
 
     d = i = b = 0;
     mustParse(1, p, "--bool");
-    ASSERT_require(b==true);
-    ASSERT_require(i==0);
-    ASSERT_require(d==0);
+    ASSERT_always_require(b==true);
+    ASSERT_always_require(i==0);
+    ASSERT_always_require(d==0);
 
     d = i = b = 0;
     mustParse(1, p, "--int");
-    ASSERT_require(b==false);
-    ASSERT_require(i==1);
-    ASSERT_require(d==0);
+    ASSERT_always_require(b==false);
+    ASSERT_always_require(i==1);
+    ASSERT_always_require(d==0);
 
     d = i = b = 0;
     mustParse(1, p, "--dbl");
-    ASSERT_require(b==false);
-    ASSERT_require(i==0);
-    ASSERT_require(d!=0);
+    ASSERT_always_require(b==false);
+    ASSERT_always_require(i==0);
+    ASSERT_always_require(d!=0);
 
     d = i = b = 0;
     mustParse(3, p, "--int", "--bool", "--dbl");
-    ASSERT_require(b==true);
-    ASSERT_require(i==1);
-    ASSERT_require(d!=0);
+    ASSERT_always_require(b==true);
+    ASSERT_always_require(i==1);
+    ASSERT_always_require(d!=0);
 }
 
 // Saving intrinsic values without a parser
@@ -232,31 +232,31 @@ static void test07b() {
 
     d = i = b = 0;
     mustParse(1, p, "--bool");
-    ASSERT_require(b==true);
-    ASSERT_require(i==0);
-    ASSERT_require(d==0);
+    ASSERT_always_require(b==true);
+    ASSERT_always_require(i==0);
+    ASSERT_always_require(d==0);
 
     d = i = b = 0;
     mustParse(1, p, "--int");
-    ASSERT_require(b==false);
-    ASSERT_require(i==1);
-    ASSERT_require(d==0);
+    ASSERT_always_require(b==false);
+    ASSERT_always_require(i==1);
+    ASSERT_always_require(d==0);
 
     d = i = b = 0;
     mustParse(1, p, "--dbl");
-    ASSERT_require(b==false);
-    ASSERT_require(i==0);
-    ASSERT_require(d!=0);
+    ASSERT_always_require(b==false);
+    ASSERT_always_require(i==0);
+    ASSERT_always_require(d!=0);
 
     s = "";
     mustParse(1, p, "--str");
-    ASSERT_require(s=="hello");
+    ASSERT_always_require(s=="hello");
 
     d = i = b = 0;
     mustParse(3, p, "--int", "--bool", "--dbl");
-    ASSERT_require(b==true);
-    ASSERT_require(i==1);
-    ASSERT_require(d!=0);
+    ASSERT_always_require(b==true);
+    ASSERT_always_require(i==1);
+    ASSERT_always_require(d!=0);
 }
 
 // Required argument
@@ -282,19 +282,19 @@ static void test09() {
            .argument("arg1", anyParser(arg)));
 
     mustParse(1, p, "--any=aaa", "bbb");
-    ASSERT_require(arg=="aaa");
+    ASSERT_always_require(arg=="aaa");
 
     mustParse(2, p, "--any", "ccc", "ddd");
-    ASSERT_require(arg=="ccc");
+    ASSERT_always_require(arg=="ccc");
 
     mustParse(1, p, "-aeee", "fff");
-    ASSERT_require(arg=="eee");
+    ASSERT_always_require(arg=="eee");
 
     mustParse(2, p, "-a", "ggg", "hhh");
-    ASSERT_require(arg=="ggg");
+    ASSERT_always_require(arg=="ggg");
 
     mustParse(1, p, "-aaa", "bbb");
-    ASSERT_require(arg=="aa");
+    ASSERT_always_require(arg=="aa");
 }
 
 // Integer parser
@@ -316,44 +316,44 @@ static void test10() {
 
     // signed int
     mustParse(1, p, "--si=123", "0");
-    ASSERT_require(si==123);
+    ASSERT_always_require(si==123);
 
     mustParse(2, p, "--si", "456", "0");
-    ASSERT_require(si==456);
+    ASSERT_always_require(si==456);
 
     mustParse(1, p, "--si=-123", "0");
-    ASSERT_require(si==-123);
+    ASSERT_always_require(si==-123);
 
     mustParse(2, p, "--si", "-456", "0");
-    ASSERT_require(si==-456);
+    ASSERT_always_require(si==-456);
 
     mustParse(1, p, "-a123", "0");
-    ASSERT_require(si==123);
+    ASSERT_always_require(si==123);
     
     mustParse(2, p, "-a", "456", "0");
-    ASSERT_require(si==456);
+    ASSERT_always_require(si==456);
 
     mustParse(1, p, "-a-123", "0");
-    ASSERT_require(si==-123);
+    ASSERT_always_require(si==-123);
 
     mustParse(2, p, "-a", "-456", "0");
-    ASSERT_require(si==-456);
+    ASSERT_always_require(si==-456);
 
     mustNotParse("is greater than 2147483647", p, "--si=5000000000", "0");
     mustNotParse("is less than -2147483648", p, "--si=-5000000000", "0");
 
     // unsigned int
     mustParse(1, p, "--ui=123", "0");
-    ASSERT_require(ui==123);
+    ASSERT_always_require(ui==123);
 
     mustParse(2, p, "--ui", "456", "0");
-    ASSERT_require(ui==456);
+    ASSERT_always_require(ui==456);
 
     mustParse(1, p, "-b123", "0");
-    ASSERT_require(ui==123);
+    ASSERT_always_require(ui==123);
     
     mustParse(2, p, "-b", "456", "0");
-    ASSERT_require(ui==456);
+    ASSERT_always_require(ui==456);
 
     mustNotParse("is less than 0", p, "--ui=-123", "0");
     mustNotParse("is less than 0", p, "--ui", "-456", "0");
@@ -366,44 +366,44 @@ static void test10() {
 
     // signed short
     mustParse(1, p, "--ss=123", "0");
-    ASSERT_require(ss==123);
+    ASSERT_always_require(ss==123);
 
     mustParse(2, p, "--ss", "456", "0");
-    ASSERT_require(ss==456);
+    ASSERT_always_require(ss==456);
 
     mustParse(1, p, "--ss=-123", "0");
-    ASSERT_require(ss==-123);
+    ASSERT_always_require(ss==-123);
 
     mustParse(2, p, "--ss", "-456", "0");
-    ASSERT_require(ss==-456);
+    ASSERT_always_require(ss==-456);
 
     mustParse(1, p, "-c123", "0");
-    ASSERT_require(ss==123);
+    ASSERT_always_require(ss==123);
     
     mustParse(2, p, "-c", "456", "0");
-    ASSERT_require(ss==456);
+    ASSERT_always_require(ss==456);
 
     mustParse(1, p, "-c-123", "0");
-    ASSERT_require(ss==-123);
+    ASSERT_always_require(ss==-123);
 
     mustParse(2, p, "-c", "-456", "0");
-    ASSERT_require(ss==-456);
+    ASSERT_always_require(ss==-456);
 
     mustNotParse("is greater than 32767", p, "--ss=5000000000", "0");
     mustNotParse("is less than -32768", p, "--ss=-5000000000", "0");
 
     // unsigned short
     mustParse(1, p, "--us=123", "0");
-    ASSERT_require(us==123);
+    ASSERT_always_require(us==123);
 
     mustParse(2, p, "--us", "456", "0");
-    ASSERT_require(us==456);
+    ASSERT_always_require(us==456);
 
     mustParse(1, p, "-d123", "0");
-    ASSERT_require(us==123);
+    ASSERT_always_require(us==123);
     
     mustParse(2, p, "-d", "456", "0");
-    ASSERT_require(us==456);
+    ASSERT_always_require(us==456);
 
     mustNotParse("is less than 0", p, "--us=-123", "0");
     mustNotParse("is less than 0", p, "--us", "-456", "0");
@@ -444,19 +444,19 @@ static void test11() {
 
     // signed int
     mustParse(1, p, "--si=123", "0");
-    ASSERT_require(si==123);
+    ASSERT_always_require(si==123);
 
     mustParse(2, p, "--si", "456", "0");
-    ASSERT_require(si==456);
+    ASSERT_always_require(si==456);
 
     mustNotParse("unsigned integer expected", p, "--si=-123", "0");
     mustNotParse("unsigned integer expected", p, "--si", "-456", "0");
 
     mustParse(1, p, "-a123", "0");
-    ASSERT_require(si==123);
+    ASSERT_always_require(si==123);
     
     mustParse(2, p, "-a", "456", "0");
-    ASSERT_require(si==456);
+    ASSERT_always_require(si==456);
 
     oss = Sawyer::Nothing();
     mustParse(1, p, "--oss=123", "0");
@@ -470,16 +470,16 @@ static void test11() {
 
     // unsigned int
     mustParse(1, p, "--ui=123", "0");
-    ASSERT_require(ui==123);
+    ASSERT_always_require(ui==123);
 
     mustParse(2, p, "--ui", "456", "0");
-    ASSERT_require(ui==456);
+    ASSERT_always_require(ui==456);
 
     mustParse(1, p, "-b123", "0");
-    ASSERT_require(ui==123);
+    ASSERT_always_require(ui==123);
     
     mustParse(2, p, "-b", "456", "0");
-    ASSERT_require(ui==456);
+    ASSERT_always_require(ui==456);
 
     mustNotParse("unsigned integer expected", p, "--ui=-123", "0");
     mustNotParse("unsigned integer expected", p, "--ui", "-456", "0");
@@ -490,19 +490,19 @@ static void test11() {
 
     // signed short
     mustParse(1, p, "--ss=123", "0");
-    ASSERT_require(ss==123);
+    ASSERT_always_require(ss==123);
 
     mustParse(2, p, "--ss", "456", "0");
-    ASSERT_require(ss==456);
+    ASSERT_always_require(ss==456);
 
     mustNotParse("unsigned integer expected", p, "--ss=-123", "0");
     mustNotParse("unsigned integer expected", p, "--ss", "-456", "0");
 
     mustParse(1, p, "-c123", "0");
-    ASSERT_require(ss==123);
+    ASSERT_always_require(ss==123);
     
     mustParse(2, p, "-c", "456", "0");
-    ASSERT_require(ss==456);
+    ASSERT_always_require(ss==456);
 
     mustNotParse("unsigned integer expected", p, "-c-123", "0");
     mustNotParse("unsigned integer expected", p, "-c", "-456", "0");
@@ -511,16 +511,16 @@ static void test11() {
 
     // unsigned short
     mustParse(1, p, "--us=123", "0");
-    ASSERT_require(us==123);
+    ASSERT_always_require(us==123);
 
     mustParse(2, p, "--us", "456", "0");
-    ASSERT_require(us==456);
+    ASSERT_always_require(us==456);
 
     mustParse(1, p, "-d123", "0");
-    ASSERT_require(us==123);
+    ASSERT_always_require(us==123);
     
     mustParse(2, p, "-d", "456", "0");
-    ASSERT_require(us==456);
+    ASSERT_always_require(us==456);
 
     mustNotParse("unsigned integer expected", p, "--us=-123", "0");
     mustNotParse("unsigned integer expected", p, "--us", "-456", "0");
@@ -549,29 +549,29 @@ static void test12() {
     p.with(Switch("third").argument("boolean", booleanParser(b3)));
 
     mustParse(1, p, "--first=yes", "no");
-    ASSERT_require(b1==true);
+    ASSERT_always_require(b1==true);
     mustParse(1, p, "--first=no", "yes");
-    ASSERT_require(b1==false);
+    ASSERT_always_require(b1==false);
     mustParse(1, p, "--first=y", "n");
-    ASSERT_require(b1==true);
+    ASSERT_always_require(b1==true);
     mustParse(1, p, "--first=n", "y");
-    ASSERT_require(b1==false);
+    ASSERT_always_require(b1==false);
     mustParse(1, p, "--first=true", "false");
-    ASSERT_require(b1==true);
+    ASSERT_always_require(b1==true);
     mustParse(1, p, "--first=false", "true");
-    ASSERT_require(b1==false);
+    ASSERT_always_require(b1==false);
     mustParse(1, p, "--first=t", "f");
-    ASSERT_require(b1==true);
+    ASSERT_always_require(b1==true);
     mustParse(1, p, "--first=f", "t");
-    ASSERT_require(b1==false);
+    ASSERT_always_require(b1==false);
     mustParse(1, p, "--first=on", "off");
-    ASSERT_require(b1==true);
+    ASSERT_always_require(b1==true);
     mustParse(1, p, "--first=off", "on");
-    ASSERT_require(b1==false);
+    ASSERT_always_require(b1==false);
     mustParse(1, p, "--first=1", "0");
-    ASSERT_require(b1==true);
+    ASSERT_always_require(b1==true);
     mustParse(1, p, "--first=0", "1");
-    ASSERT_require(b1==false);
+    ASSERT_always_require(b1==false);
 
     b3 = Sawyer::Nothing();
     mustParse(1, p, "--third=false", "1");
@@ -584,16 +584,16 @@ static void test12() {
     ASSERT_always_require(*b3);
 
     mustParse(1, p, "-ftrt");
-    ASSERT_require(b1==true);
-    ASSERT_require(b2==true);
+    ASSERT_always_require(b1==true);
+    ASSERT_always_require(b2==true);
     mustParse(1, p, "-ffrf");
-    ASSERT_require(b1==false);
-    ASSERT_require(b2==false);
+    ASSERT_always_require(b1==false);
+    ASSERT_always_require(b2==false);
     mustParse(1, p, "-ftrue");
-    ASSERT_require(b1==true);
+    ASSERT_always_require(b1==true);
     mustParse(1, p, "-ftruery");
-    ASSERT_require(b1==true);
-    ASSERT_require(b2==true);
+    ASSERT_always_require(b1==true);
+    ASSERT_always_require(b2==true);
     mustNotParse("required argument for -r is missing", p, "-ftru");
 }
 
@@ -609,16 +609,16 @@ static void test13() {
                      ->with("reddish")
                      ->with("ish")));
     mustParse(1, p, "--bkg=reddish");
-    ASSERT_require(s=="reddish");
+    ASSERT_always_require(s=="reddish");
 
     mustParse(1, p, "--bkg=red");
-    ASSERT_require(s=="red");
+    ASSERT_always_require(s=="red");
 
     mustParse(2, p, "-dred", "-dish");
-    ASSERT_require(s=="ish");
+    ASSERT_always_require(s=="ish");
 
     mustParse(1, p, "-dreddish");
-    ASSERT_require(s=="reddish");                       // i.e., not "-d red -d ish"
+    ASSERT_always_require(s=="reddish");                       // i.e., not "-d red -d ish"
 
     mustNotParse("specific word expected", p, "-dread");
     mustNotParse("specific word expected", p, "--bkg=blue");
@@ -637,16 +637,16 @@ static void test14() {
                      ->with("reddish", REDDISH)
                      ->with("ish", ISH)));
     mustParse(1, p, "--bkg=reddish");
-    ASSERT_require(s==REDDISH);
+    ASSERT_always_require(s==REDDISH);
 
     mustParse(1, p, "--bkg=red");
-    ASSERT_require(s==RED);
+    ASSERT_always_require(s==RED);
 
     mustParse(2, p, "-dred", "-dish");
-    ASSERT_require(s==ISH);
+    ASSERT_always_require(s==ISH);
 
     mustParse(1, p, "-dreddish");
-    ASSERT_require(s==REDDISH);                         // i.e., not "-d red -d ish"
+    ASSERT_always_require(s==REDDISH);                         // i.e., not "-d red -d ish"
 
     mustNotParse("specific word expected", p, "-dread");
     mustNotParse("specific word expected", p, "--bkg=blue");
@@ -666,19 +666,19 @@ static void test15() {
                      listParser(anyParser(s1), "-")->nextMember(anyParser(s2))));
 
     mustParse(1, p, "--ints=1,2", "3");
-    ASSERT_require(v1==1);
-    ASSERT_require(v2==2);
+    ASSERT_always_require(v1==1);
+    ASSERT_always_require(v2==2);
 
     mustParse(1, p, "-I10;20,30:40", "50");
-    ASSERT_require(v1==10);
-    ASSERT_require(v2==40);
+    ASSERT_always_require(v1==10);
+    ASSERT_always_require(v2==40);
 
     mustParse(2, p, "-I", "1", "2");
-    ASSERT_require(v1==1);
+    ASSERT_always_require(v1==1);
 
     mustParse(1, p, "--strs=aa,a-b,cc");
-    ASSERT_require(s1=="aa,a");
-    ASSERT_require(s2=="cc");
+    ASSERT_always_require(s1=="aa,a");
+    ASSERT_always_require(s2=="cc");
 }
 
 // Optional argument
@@ -690,33 +690,33 @@ static void test16() {
            .argument("n", nonNegativeIntegerParser(width), "80"));
 
     mustParse(1, p, "--width", "aaa");
-    ASSERT_require(width==80);
+    ASSERT_always_require(width==80);
 
     mustParse(2, p, "--width", "90", "aaa");
-    ASSERT_require(width==90);
+    ASSERT_always_require(width==90);
 
     mustParse(2, p, "--width", "100", "101");
-    ASSERT_require(width==100);
+    ASSERT_always_require(width==100);
 
     mustParse(1, p, "--width=10", "20");
-    ASSERT_require(width==10);
+    ASSERT_always_require(width==10);
 
     mustParse(1, p, "-w", "aaa");
-    ASSERT_require(width==80);
+    ASSERT_always_require(width==80);
 
     mustParse(1, p, "-w20", "21");
-    ASSERT_require(width==20);
+    ASSERT_always_require(width==20);
 
     mustParse(1, p, "-w30w40", "41");
-    ASSERT_require(width==40);
+    ASSERT_always_require(width==40);
 
     width = 0;
     mustNotParse("unexpected empty-string argument after --width default argument", p, "--width=");
-    ASSERT_require(width==0);
+    ASSERT_always_require(width==0);
 
     width = 0;
     mustNotParse("unrecognized switch: -w80x", p, "-w80x");
-    ASSERT_require(width==0);
+    ASSERT_always_require(width==0);
 }
 
 // Value separators
@@ -729,19 +729,19 @@ static void test17() {
            .valueSeparator("->"));
 
     mustParse(1, p, "--height->50", "0");
-    ASSERT_require(height==50);
+    ASSERT_always_require(height==50);
 
     mustParse(2, p, "--height", "60", "0");
-    ASSERT_require(height==60);
+    ASSERT_always_require(height==60);
 
     mustParse(1, p, "--height->-50");
-    ASSERT_require(height==-50);
+    ASSERT_always_require(height==-50);
 
     mustParse(1, p, "-170");
-    ASSERT_require(height==70);
+    ASSERT_always_require(height==70);
 
     mustParse(2, p, "-1", "-1", "100");
-    ASSERT_require(height==-1);
+    ASSERT_always_require(height==-1);
 }
 
 // Multiple arguments
@@ -754,12 +754,12 @@ static void test18() {
            .argument("second", integerParser(v2)));
 
     mustParse(3, p, "--swap", "1", "2");
-    ASSERT_require(v1==1);
-    ASSERT_require(v2==2);
+    ASSERT_always_require(v1==1);
+    ASSERT_always_require(v2==2);
 
     mustParse(2, p, "--swap=3", "4", "5");
-    ASSERT_require(v1==3);
-    ASSERT_require(v2==4);
+    ASSERT_always_require(v1==3);
+    ASSERT_always_require(v2==4);
 
     mustNotParse("unexpectedly followed by", p, "--swap=6,7", "8");
     mustNotParse("second: integer expected", p, "--swap", "1", "aaa");
@@ -792,24 +792,24 @@ static void test19() {
 
     v1.clear();
     mustParse(2, p, "--first=1", "--first=2");
-    ASSERT_require(v1.size()==1);
-    ASSERT_require(v1[0]==1);
+    ASSERT_always_require(v1.size()==1);
+    ASSERT_always_require(v1[0]==1);
 
     v1.clear();
     mustParse(2, p, "--last=3", "--last=4");
-    ASSERT_require(v1.size()==1);
-    ASSERT_require(v1[0]==4);
+    ASSERT_always_require(v1.size()==1);
+    ASSERT_always_require(v1[0]==4);
 
     v1.clear();
     mustParse(2, p, "--all=5", "--all=6");
-    ASSERT_require(v1.size()==2);
-    ASSERT_require(v1[0]==5);
-    ASSERT_require(v1[1]==6);
+    ASSERT_always_require(v1.size()==2);
+    ASSERT_always_require(v1[0]==5);
+    ASSERT_always_require(v1[1]==6);
 
     v1.clear();
     mustParse(2, p, "--sum=7", "--sum=8");
-    ASSERT_require(v1.size()==1);
-    ASSERT_require(v1[0]==15);
+    ASSERT_always_require(v1.size()==1);
+    ASSERT_always_require(v1[0]==15);
 
     mustNotParse("cannot appear multiple times", p, "--one=1", "--one=2");
     mustNotParse("--none is illegal here", p, "--none=1");
@@ -831,26 +831,26 @@ static void test20() {
     mustParse(0, p, "");
 
     mustParse(1, p, "--str=", "aaa");
-    ASSERT_require(s=="");
+    ASSERT_always_require(s=="");
 
     mustParse(2, p, "--str", "", "aaa");
-    ASSERT_require(s=="");
+    ASSERT_always_require(s=="");
 
     mustParse(2, p, "--str", "--", "aaa");
-    ASSERT_require(s=="--");
+    ASSERT_always_require(s=="--");
 
     mustParse(2, p, "-s", "", "aaa");
-    ASSERT_require(s=="");
+    ASSERT_always_require(s=="");
 
     mustParse(2, p, "-s", "--", "aaa");
-    ASSERT_require(s=="--");
+    ASSERT_always_require(s=="--");
 
     v.clear();
     mustParse(1, p, "--vec=a,,b", "aaa");
-    ASSERT_require(3==v.size());
-    ASSERT_require(v[0]=="a");
-    ASSERT_require(v[1]=="");
-    ASSERT_require(v[2]=="b");
+    ASSERT_always_require(3==v.size());
+    ASSERT_always_require(v[0]=="a");
+    ASSERT_always_require(v[1]=="");
+    ASSERT_always_require(v[2]=="b");
 
     os = Sawyer::Nothing();
     mustParse(1, p, "--opt=", "aaa");
@@ -869,7 +869,7 @@ static void test21() {
     p.with(Switch("int", 'i').argument("arg1", anyParser(i)));
 
     mustParse(1, p, "--int=123", "aaa");
-    ASSERT_require(i==123);
+    ASSERT_always_require(i==123);
 
     mustNotParse("bad lexical cast", p, "--int=123x", "aaa");
 }
@@ -899,16 +899,16 @@ static void test22() {
     p.with(Switch("v2")
            .intrinsicValue(UserDef1(2, "two"), v2));
 
-    ASSERT_require(v1==UserDef1());
-    ASSERT_require(v2==UserDef1());
+    ASSERT_always_require(v1==UserDef1());
+    ASSERT_always_require(v2==UserDef1());
 
     mustParse(1, p, "--v1", "aaa");
-    ASSERT_require(v1==UserDef1(1, "one"));
-    ASSERT_require(v2==UserDef1());
+    ASSERT_always_require(v1==UserDef1(1, "one"));
+    ASSERT_always_require(v2==UserDef1());
 
     mustParse(2, p, "--v1", "--v2");
-    ASSERT_require(v1==UserDef1(1, "one"));
-    ASSERT_require(v2==UserDef1(2, "two"));
+    ASSERT_always_require(v1==UserDef1(1, "one"));
+    ASSERT_always_require(v2==UserDef1(2, "two"));
 }
 
 enum Test23Enum { T23_RED, T23_BLUE, T23_GREEN };
@@ -1549,7 +1549,7 @@ static void test33() {
     ASSERT_always_require(x=="x");
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     test01();
     test02();
     test03();

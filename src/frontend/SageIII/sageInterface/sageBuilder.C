@@ -677,7 +677,20 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
                templateArgumentsList = &(isSgTemplateInstantiationTypedefDeclaration(decl)->get_templateArguments());
                break;
              }
+#if 0
+     // DQ (12/14/2016): Added new case
+        case V_SgFunctionDeclaration:
+             {
+               SgFunctionDeclaration* function_declaration = isSgFunctionDeclaration(decl);
+               printf ("In SageBuilder::getTemplateArgumentList(): function name = %s \n",function_declaration->get_name().str());
 
+               function_declaration->get_file_info()->display("Not clear that we should need this case since there would not be any template arguments: debug");
+
+               printf ("Error: Not clear that we should need this case since there would not be any template arguments \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+#endif
           default:
              {
                printf ("setTemplateArgumentParents(): Default reched in switch: decl = %p = %s \n",decl,decl->class_name().c_str());

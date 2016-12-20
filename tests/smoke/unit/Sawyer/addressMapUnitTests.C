@@ -1483,7 +1483,7 @@ static void test00() {
     // basic test: {10-14, 20-24, 30-34, 40-44}
     AMap m1;
     for (size_t i=0; i<4; ++i) {
-        unsigned access = (i<2?Access::READABLE:0) | (i%2?Access::WRITABLE:0);
+        unsigned access = (i<2?(unsigned)Access::READABLE:0) | (i%2?(unsigned)Access::WRITABLE:0);
         m1.insert(AInterval::baseSize(10*(i+1), 5), AMap::Segment::anonymousInstance(5, access));
     }
     ASSERT_always_require(m1.nIntervals()==4);
@@ -1706,7 +1706,7 @@ struct Traversal {
 
     void insert(const Interval<unsigned> &interval) { expected.push_back(interval); }
 
-    bool operator()(const AddressMap<unsigned, int> &map, const Interval<unsigned> &interval) {
+    bool operator()(const AddressMap<unsigned, int> &/*map*/, const Interval<unsigned> &interval) {
         std::cout <<"    processing interval #" <<index <<": [" <<interval.least() <<", " <<interval.greatest() <<"]\n";
         ASSERT_always_require2(index < expected.size(),
                                "expected only " + boost::lexical_cast<std::string>(expected.size()) +

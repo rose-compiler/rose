@@ -189,7 +189,7 @@ Function::maxArgs() const {
 }
 
 SAWYER_EXPORT void
-Function::validateArgs(std::vector<std::string> &actuals /*in,out*/, TokenStream &tokens) const {
+Function::validateArgs(std::vector<std::string> &actuals /*in,out*/, TokenStream &/*tokens*/) const {
     if (actuals.size() < nRequiredArgs()) {
         throw SyntaxError("not enough arguments for \"" + name() + "\""
                           "; got " + boost::lexical_cast<std::string>(actuals.size()) +
@@ -213,7 +213,7 @@ Function::validateArgs(std::vector<std::string> &actuals /*in,out*/, TokenStream
 
 SAWYER_EXPORT std::string
 StaticContent::eval(const Grammar&, const std::vector<std::string> &args) {
-    ASSERT_require(args.empty());
+    ASSERT_always_require(args.empty());                // so args is always used
     return resultString_;
 }
 
@@ -243,7 +243,7 @@ IfEq::eval(const Grammar &grammar, const std::vector<std::string> &args) {
 }
 
 SAWYER_EXPORT std::string
-Concat::eval(const Grammar &grammar, const std::vector<std::string> &args) {
+Concat::eval(const Grammar &/*grammar*/, const std::vector<std::string> &args) {
     return boost::join(args, "");
 }
 
@@ -412,7 +412,7 @@ Grammar::escape(const std::string &s) {
 }
 
 SAWYER_EXPORT std::string
-Grammar::readArgument(TokenStream &tokens, ErrorLocation &eloc, bool requireRight) const {
+Grammar::readArgument(TokenStream &tokens, ErrorLocation &/*eloc*/, bool requireRight) const {
     std::string retval;
     size_t depth = 0;
     for (/*void*/; !tokens.atEof(); tokens.consume()) {

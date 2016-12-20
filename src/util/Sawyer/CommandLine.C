@@ -201,7 +201,7 @@ ValueParser::operator()(Cursor &cursor) {
 
 // only called by ValueParser::operator()(Cursor&)
 SAWYER_EXPORT ParsedValue
-ValueParser::operator()(const char *s, const char **rest, const Location &loc) {
+ValueParser::operator()(const char * /*s*/, const char ** /*rest*/, const Location & /*loc*/) {
     throw std::runtime_error("subclass must implement an operator() with a cursor or C strings");
 }
 
@@ -788,7 +788,7 @@ Switch::nRequiredArguments() const {
 }
 
 SAWYER_EXPORT std::runtime_error
-Switch::notEnoughArguments(const std::string &switchString, const Cursor &cursor, size_t nargs) const {
+Switch::notEnoughArguments(const std::string &switchString, const Cursor&, size_t nargs) const {
     std::ostringstream ss;
     ss <<"not enough arguments for " <<switchString <<" (found " <<nargs <<" but expected ";
     if (arguments_.size() != nRequiredArguments())
@@ -847,7 +847,7 @@ Switch::extraTextAfterArgument(const Cursor &cursor, const ParsedValue &value) c
 }
     
 SAWYER_EXPORT std::runtime_error
-Switch::missingArgument(const std::string &switchString, const Cursor &cursor,
+Switch::missingArgument(const std::string &switchString, const Cursor&,
                         const SwitchArgument &sa, const std::string &reason) const {
     std::string str = "required argument for " + switchString + " is missing; for " + sa.nameAsText();
     if (!reason.empty())
@@ -856,7 +856,7 @@ Switch::missingArgument(const std::string &switchString, const Cursor &cursor,
 }
 
 SAWYER_EXPORT std::runtime_error
-Switch::malformedArgument(const std::string &switchString, const Cursor &cursor,
+Switch::malformedArgument(const std::string &switchString, const Cursor&,
                           const SwitchArgument &sa, const std::string &reason) const {
     std::string str = "argument for " + switchString + " is invalid; for " + sa.nameAsText();
     if (!reason.empty())
@@ -1194,7 +1194,7 @@ SwitchGroup::getByKey(const std::string &s) {
 // Do not save the 'sw' pointer because we have no control over when the user will destroy the object.
 // This should be called for at most one switch occurrence at a time.
 SAWYER_EXPORT void
-ParserResult::insertValuesForSwitch(const ParsedValues &pvals, const Parser *parser, const Switch *sw) {
+ParserResult::insertValuesForSwitch(const ParsedValues &pvals, const Parser*, const Switch *sw) {
     ASSERT_not_null(sw);
     ASSERT_forbid(sw->skipping() == SKIP_STRONG);
     std::string key = sw->key();
@@ -2065,7 +2065,7 @@ public:
             ASSERT_not_reachable("no matching switch, although the GroupedSwitches has an entry");
         }
     }
-    std::string switchIssues(unsigned flags) {
+    std::string switchIssues(unsigned /*flags*/) {
         std::string retval;
         typedef Container::Map<std::string /*problem*/, std::vector<std::string> /*args*/> IssueArgs;
         IssueArgs issueArgs;
@@ -2186,7 +2186,7 @@ public:
         seeAlso_.insert(name, content);
     }
     std::string eval(const Document::Markup::Grammar&, const std::vector<std::string> &args) /*override*/ {
-        ASSERT_require(args.empty());
+        ASSERT_always_require(args.empty()); // so args is always used
         std::vector<std::string> pages(seeAlso_.values().begin(), seeAlso_.values().end());
         return boost::join(pages, ", ");
     }
