@@ -320,6 +320,7 @@ private:
     AddressNameMap addressNames_;                       // Names for various addresses
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
     Unparser::UnparserBasePtr unparser_;                // For unparsing things to pseudo-assembly
+    Unparser::UnparserBasePtr insnUnparser_;            // For unparsing single instructions in diagnostics
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -713,6 +714,10 @@ public:
      *  constants back to the instructions.  Only constants present in the @p restriction set are considered. */
     CrossReferences instructionCrossReferences(const AddressIntervalSet &restriction) const /*final*/;
 
+    /** Unparse instruction to string.
+     *
+     *  Creates a string representation of an instruction which is suitable for use in diagnostic messages. */
+    std::string instructionString(SgAsmInstruction*) const /*final*/;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

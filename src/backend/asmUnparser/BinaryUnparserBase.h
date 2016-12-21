@@ -22,6 +22,8 @@ protected:
     struct State {
         Partitioner2::FunctionPtr currentFunction;
         Partitioner2::BasicBlockPtr currentBasicBlock;
+        typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrString;
+        AddrString basicBlockLabels;
     };
 
     class FunctionGuard {

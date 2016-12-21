@@ -78,33 +78,9 @@ struct SettingsBase {
         } comment;                                      /**< Settings for instruction comments. */
     } insn;                                             /**< Settings for instructions. */
 
-    SettingsBase() {
-        function.showingReasons = true;
-        function.cg.showing = true;
-        function.stackDelta.showing = true;
-        function.stackDelta.concrete = true;
-        function.callconv.showing = true;
-        function.noop.showing = true;
-        function.mayReturn.showing = true;
-
-        bblock.cfg.showingPredecessors = true;
-        bblock.cfg.showingSuccessors = true;
-        bblock.cfg.showingSharing = true;
-
-        insn.address.showing = true;
-        insn.address.fieldWidth = 10;
-        insn.bytes.showing = true;
-        insn.bytes.perLine = 8;
-        insn.bytes.fieldWidth = 25;
-        insn.stackDelta.showing = true;
-        insn.stackDelta.fieldWidth = 2;
-        insn.mnemonic.fieldWidth = 1;
-        insn.operands.separator = ", ";
-        insn.operands.fieldWidth = 40;
-        insn.comment.showing = true;
-        insn.comment.pre = "; ";
-        insn.comment.fieldWidth = 1;
-    }
+    SettingsBase();
+    static SettingsBase full();
+    static SettingsBase minimal();
 };
 
 // Forward declarations.

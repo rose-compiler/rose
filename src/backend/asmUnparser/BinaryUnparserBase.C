@@ -98,6 +98,65 @@ UnparserBase::juxtaposeColumns(const std::vector<std::string> &parts, const std:
 //                                      Settings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SettingsBase::SettingsBase() {
+    function.showingReasons = true;
+    function.cg.showing = true;
+    function.stackDelta.showing = true;
+    function.stackDelta.concrete = true;
+    function.callconv.showing = true;
+    function.noop.showing = true;
+    function.mayReturn.showing = true;
+
+    bblock.cfg.showingPredecessors = true;
+    bblock.cfg.showingSuccessors = true;
+    bblock.cfg.showingSharing = true;
+
+    insn.address.showing = true;
+    insn.address.fieldWidth = 10;
+    insn.bytes.showing = true;
+    insn.bytes.perLine = 8;
+    insn.bytes.fieldWidth = 25;
+    insn.stackDelta.showing = true;
+    insn.stackDelta.fieldWidth = 2;
+    insn.mnemonic.fieldWidth = 1;
+    insn.operands.separator = ", ";
+    insn.operands.fieldWidth = 40;
+    insn.comment.showing = true;
+    insn.comment.pre = "; ";
+    insn.comment.fieldWidth = 1;
+}
+
+// class method
+SettingsBase
+SettingsBase::full() {
+    return SettingsBase();
+}
+
+// class method
+SettingsBase
+SettingsBase::minimal() {
+    SettingsBase s = full();
+    s.function.showingReasons = false;
+    s.function.cg.showing = false;
+    s.function.stackDelta.showing = false;
+    s.function.callconv.showing = false;
+    s.function.noop.showing = false;
+    s.function.mayReturn.showing = false;
+
+    s.bblock.cfg.showingPredecessors = false;
+    s.bblock.cfg.showingSuccessors = false;
+    s.bblock.cfg.showingSharing = false;
+
+    s.insn.address.showing = true;
+    s.insn.bytes.showing = false;
+    s.insn.stackDelta.showing = false;
+    s.insn.mnemonic.fieldWidth = 1;
+    s.insn.operands.fieldWidth = 1;
+    s.insn.comment.showing = false;
+
+    return s;
+}
+
 Sawyer::CommandLine::SwitchGroup
 commandLineSwitches(SettingsBase &settings) {
     using namespace Sawyer::CommandLine;
@@ -320,6 +379,13 @@ UnparserBase::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &f
 
 void
 UnparserBase::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
+    // If we're not emitting instruction addresses then we need some other way to identify basic blocks for branch targets.
+    if (!settings().insn.address.showing) {
+        state.basicBlockLabels.clear();
+        BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses())
+            state.basicBlockLabels.insertMaybe(bbVa, "L" + boost::lexical_cast<std::string>(state.basicBlockLabels.size()+1));
+    }
+
     rose_addr_t nextBlockVa = 0;
     BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
         out <<"\n";
@@ -680,7 +746,7 @@ UnparserBase::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, Sta
     std::vector<std::string> parts;
     std::vector<size_t> fieldWidths;
 
-    // Address
+    // Address or label
     if (settings().insn.address.showing) {
         if (insn) {
             std::ostringstream ss;
@@ -690,8 +756,17 @@ UnparserBase::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, Sta
             parts.push_back("");
         }
         fieldWidths.push_back(settings().insn.address.fieldWidth);
+    } else {
+        if (state.currentBasicBlock && state.currentBasicBlock->address() == insn->get_address()) {
+            parts.push_back(state.basicBlockLabels.getOrElse(insn->get_address(), ""));
+            if (!parts.back().empty())
+                parts.back() += ":";
+        } else {
+            parts.push_back("");
+        }
+        fieldWidths.push_back(settings().insn.address.fieldWidth);
     }
-
+    
     // Raw bytes
     if (settings().insn.bytes.showing) {
         if (insn) {
@@ -751,7 +826,7 @@ UnparserBase::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, Sta
 void
 UnparserBase::emitInstructionAddress(std::ostream &out, SgAsmInstruction *insn, State&) const {
     ASSERT_not_null(insn);
-    out <<StringUtility::addrToString(insn->get_address());
+    out <<StringUtility::addrToString(insn->get_address()) <<":";
 }
 
 void
@@ -834,8 +909,11 @@ UnparserBase::emitOperand(std::ostream &out, SgAsmExpression *expr, State &state
 }
 
 void
-UnparserBase::emitAddress(std::ostream &out, rose_addr_t va, State&) const {
-    if (P2::Function::Ptr f = partitioner().functionExists(va)) {
+UnparserBase::emitAddress(std::ostream &out, rose_addr_t va, State &state) const {
+    std::string label;
+    if (state.basicBlockLabels.getOptional(va).assignTo(label)) {
+        out <<"basic block " <<label;
+    } else if (P2::Function::Ptr f = partitioner().functionExists(va)) {
         out <<f->printableName();
     } else if (P2::BasicBlock::Ptr bb = partitioner().basicBlockExists(va)) {
         out <<bb->printableName();

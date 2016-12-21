@@ -73,6 +73,7 @@ Partitioner::operator=(const Partitioner &other) {
     stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
     addressNames_ = other.addressNames_;
     unparser_ = other.unparser_;
+    insnUnparser_ = other.insnUnparser_;
     cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
     basicBlockCallbacks_ = other.basicBlockCallbacks_;
     functionPrologueMatchers_ = other.functionPrologueMatchers_;
@@ -89,6 +90,8 @@ Partitioner::init(Disassembler *disassembler, const MemoryMap &map) {
     if (disassembler) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
         unparser_ = disassembler->protoUnparser()->create(*this);
+        insnUnparser_ = disassembler->protoUnparser()->create(*this);
+        insnUnparser_->settings() = Unparser::SettingsBase::minimal();
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
@@ -979,6 +982,15 @@ Partitioner::basicBlockContainingInstruction(rose_addr_t insnVa) const {
 AddressInterval
 Partitioner::instructionExtent(SgAsmInstruction *insn) const {
     return insn ? AddressInterval::baseSize(insn->get_address(), insn->get_size()) : AddressInterval();
+}
+
+std::string
+Partitioner::instructionString(SgAsmInstruction *insn) const {
+    if (!insn)
+        return "no instruction";
+    std::ostringstream ss;
+    (*insnUnparser_)(ss, insn);
+    return ss.str();
 }
 
 SgAsmInstruction *
@@ -2365,6 +2377,8 @@ Partitioner::rebuildVertexIndices() {
         }
     }
     unparser_ = instructionProvider().disassembler()->protoUnparser()->create(*this);
+    insnUnparser_ = instructionProvider().disassembler()->protoUnparser()->create(*this);
+    insnUnparser_->settings() = Unparser::SettingsBase::minimal();
 }
 
 } // namespace
