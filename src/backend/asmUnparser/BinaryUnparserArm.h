@@ -11,9 +11,26 @@ struct SettingsArm: public SettingsBase {};
 
 class UnparserArm: public UnparserBase {
     SettingsArm settings_;
+
+protected:
+    UnparserArm();
+
+    UnparserArm(const Partitioner2::Partitioner &p, const SettingsArm &settings);
+
 public:
-    UnparserArm(const Partitioner2::Partitioner &p, const SettingsArm &settings)
-        : UnparserBase(p), settings_(settings) {}
+    ~UnparserArm();
+
+    static Ptr instance() {
+        return Ptr(new UnparserArm);
+    }
+
+    static Ptr instance(const Partitioner2::Partitioner &p, const SettingsArm &settings = SettingsArm()) {
+        return Ptr(new UnparserArm(p, settings));
+    }
+
+    Ptr create(const Partitioner2::Partitioner &p) const ROSE_OVERRIDE {
+        return instance(p);
+    }
 
     const SettingsArm& settings() const { return settings_; }
     SettingsArm& settings() { return settings_; }

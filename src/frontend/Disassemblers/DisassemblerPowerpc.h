@@ -17,6 +17,7 @@ public:
     virtual ~DisassemblerPowerpc() {}
     virtual DisassemblerPowerpc *clone() const { return new DisassemblerPowerpc(*this); }
     virtual bool can_disassemble(SgAsmGenericHeader*) const;
+    virtual Unparser::UnparserBasePtr protoUnparser() const;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&);

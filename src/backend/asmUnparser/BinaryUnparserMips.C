@@ -6,6 +6,13 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 void
+UnparserMips::emitInstruction(std::ostream &out, SgAsmInstruction *insn_, State &state) const {
+    SgAsmMipsInstruction *insn = isSgAsmMipsInstruction(insn_);
+    ASSERT_not_null2(insn, "not a MIPS instruction");
+    UnparserBase::emitInstruction(out, insn_, state);
+}
+
+void
 UnparserMips::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;

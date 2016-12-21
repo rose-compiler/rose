@@ -12,7 +12,7 @@ namespace Unparser {
 void
 UnparserX86::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
-    ASSERT_not_null(insn);
+    ASSERT_not_null2(insn, "not an x86 instruction");
     if (insn->get_lockPrefix())
         out <<"lock ";
     out <<insn->get_mnemonic();

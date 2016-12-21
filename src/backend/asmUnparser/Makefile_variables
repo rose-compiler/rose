@@ -22,6 +22,7 @@ endif
 
 
 asmUnparser_distIncludeHeaders=				\
+	$(asmUnparserPath)/BinaryUnparser.h		\
 	$(asmUnparserPath)/BinaryUnparserArm.h		\
 	$(asmUnparserPath)/BinaryUnparserBase.h		\
 	$(asmUnparserPath)/BinaryUnparserM68k.h		\

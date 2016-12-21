@@ -3,6 +3,7 @@
 #include "DisassemblerMips.h"
 #include "integerOps.h"
 #include "Diagnostics.h"
+#include "BinaryUnparserMips.h"
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -81,6 +82,11 @@ DisassemblerMips::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_MIPS_Family;
+}
+
+Unparser::UnparserBase::Ptr
+DisassemblerMips::protoUnparser() const {
+    return Unparser::UnparserMips::instance();
 }
 
 // see base class

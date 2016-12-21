@@ -6,6 +6,13 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 void
+UnparserPowerpc::emitInstruction(std::ostream &out, SgAsmInstruction *insn_, State &state) const {
+    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
+    ASSERT_not_null2(insn, "not a PowerPC instruction");
+    UnparserBase::emitInstruction(out, insn_, state);
+}
+
+void
 UnparserPowerpc::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;

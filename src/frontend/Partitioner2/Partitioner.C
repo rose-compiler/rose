@@ -7,6 +7,7 @@
 #include <Partitioner2/Utility.h>
 
 #include "AsmUnparser_compat.h"
+#include "BinaryUnparserBase.h"
 #include "SymbolicSemantics2.h"
 #include "Diagnostics.h"
 
@@ -26,10 +27,69 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+Partitioner::Partitioner()
+    : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
+      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+      semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    init(NULL, memoryMap_);
+}
+
+Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap &map)
+    : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true),
+      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+      semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    init(disassembler, map);
+}
+
+// FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
+// partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
+// things are reference counted, but the paradigm of locked/unlocked blocks and functions breaks down somewhat -- does
+// unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
+// FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
+// after a while.
+Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
+    : solver_(NULL), progressTotal_(0), isReportingProgress_(true), autoAddCallReturnEdges_(false),
+      assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    init(NULL, memoryMap_);                             // initialize just like default
+    *this = other;                                      // then delegate to the assignment operator
+}
+
+Partitioner&
+Partitioner::operator=(const Partitioner &other) {
+    Sawyer::Attribute::Storage<>::operator=(other);
+    settings_ = other.settings_;
+    config_ = other.config_;
+    instructionProvider_ = other.instructionProvider_;
+    memoryMap_ = other.memoryMap_;
+    cfg_ = other.cfg_;
+    vertexIndex_.clear();                               // initialized by init(other)
+    aum_ = other.aum_;
+    solver_ = other.solver_;
+    progressTotal_ = other.progressTotal_;
+    isReportingProgress_ = other.isReportingProgress_;
+    functions_ = other.functions_;
+    autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
+    assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
+    stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
+    addressNames_ = other.addressNames_;
+    unparser_ = other.unparser_;
+    cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
+    basicBlockCallbacks_ = other.basicBlockCallbacks_;
+    functionPrologueMatchers_ = other.functionPrologueMatchers_;
+    functionPaddingMatchers_ = other.functionPaddingMatchers_;
+    semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
+    init(other);                                        // copies graph iterators, etc.
+    return *this;
+}
+
+Partitioner::~Partitioner() {}
+
 void
 Partitioner::init(Disassembler *disassembler, const MemoryMap &map) {
-    if (disassembler)
+    if (disassembler) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
+        unparser_ = disassembler->protoUnparser()->create(*this);
+    }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
     nonexistingVertex_ = cfg_.insertVertex(CfgVertex(V_NONEXISTING));
@@ -60,6 +120,17 @@ Partitioner::convertFrom(const Partitioner &other, ControlFlowGraph::ConstVertex
     ControlFlowGraph::VertexIterator thisIter = cfg_.findVertex(otherIter->id());
     ASSERT_forbid(thisIter == cfg_.vertices().end());
     return thisIter;
+}
+
+Unparser::UnparserBasePtr
+Partitioner::unparser() const {
+    return unparser_;
+}
+
+const Unparser::UnparserBase&
+Partitioner::unparse() const {
+    ASSERT_not_null2(unparser_, "default constructed partitioner has no unparser");
+    return *unparser_;
 }
 
 // Label the progress report and also show some other statistics.  It is okay for this to be slightly expensive since its only
@@ -2293,6 +2364,7 @@ Partitioner::rebuildVertexIndices() {
                 ASSERT_not_reachable("user-defined vertices cannot be saved or restored");
         }
     }
+    unparser_ = instructionProvider().disassembler()->protoUnparser()->create(*this);
 }
 
 } // namespace

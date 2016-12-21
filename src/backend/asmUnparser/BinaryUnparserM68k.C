@@ -6,6 +6,13 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 void
+UnparserM68k::emitInstruction(std::ostream &out, SgAsmInstruction *insn_, State &state) const {
+    SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
+    ASSERT_not_null2(insn, "not an m68k instruction");
+    UnparserBase::emitInstruction(out, insn_, state);
+}
+
+void
 UnparserM68k::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;

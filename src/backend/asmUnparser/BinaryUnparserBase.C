@@ -4,6 +4,7 @@
 #include <Partitioner2/Partitioner.h>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/lexical_cast.hpp>
 #include <sstream>
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
@@ -17,10 +18,40 @@ namespace Unparser {
 //                                      Supporting functionality
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+UnparserBase::FunctionGuard::FunctionGuard(State &state, const Partitioner2::Function::Ptr &f)
+    : state(state) {
+    prev = state.currentFunction;
+    state.currentFunction = f;
+}
+
+UnparserBase::FunctionGuard::~FunctionGuard() {
+    state.currentFunction = prev;
+}
+    
+UnparserBase::BasicBlockGuard::BasicBlockGuard(State &state, const Partitioner2::BasicBlockPtr &bb)
+    : state(state) {
+    prev = state.currentBasicBlock;
+    state.currentBasicBlock = bb;
+}
+
+UnparserBase::BasicBlockGuard::~BasicBlockGuard() {
+    state.currentBasicBlock = prev;
+}
+
+UnparserBase::UnparserBase()
+    : partitioner_(NULL) {}
+
+UnparserBase::UnparserBase(const Partitioner2::Partitioner &p)
+    : partitioner_(&p) {
+    init();
+}
+
+UnparserBase::~UnparserBase() {}
+
 void
 UnparserBase::init() {
-    registerNames_ = RegisterNames(partitioner_.instructionProvider().registerDictionary());
-    cg_ = partitioner_.functionCallGraph(false /*compress parallel edges*/);
+    registerNames_ = RegisterNames(partitioner().instructionProvider().registerDictionary());
+    cg_ = partitioner().functionCallGraph(false /*compress parallel edges*/);
 }
 
 // class method
@@ -60,6 +91,128 @@ UnparserBase::juxtaposeColumns(const std::vector<std::string> &parts, const std:
         retval += boost::trim_right_copy(ss.str());
     }
     return retval;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Settings
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Sawyer::CommandLine::SwitchGroup
+commandLineSwitches(SettingsBase &settings) {
+    using namespace Sawyer::CommandLine;
+    using namespace CommandlineProcessing;
+
+    SwitchGroup sg("Unparsing switches");
+    sg.name("out");
+    sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "
+           "blocks, data blocks, and functions to a textual representation.");
+
+    //-----  Functions -----
+
+    insertBooleanSwitch(sg, "function-reasons", settings.function.showingReasons,
+                        "Show the list of reasons why a function was created.");
+
+    insertBooleanSwitch(sg, "function-cg", settings.function.cg.showing,
+                        "Show the function call graph. That is, for each function show the functions that call the said "
+                        "function, and those functions that the said function calls.");
+
+    insertBooleanSwitch(sg, "function-stack-delta", settings.function.stackDelta.showing,
+                        "Show function stack deltas. The stack delta is the net effect that the function has on the "
+                        "stack pointer. The output is only produced if a stack delta analysis has been performed; this "
+                        "switch itself is not sufficient to cause that analysis to happen. See also, "
+                        "@s{function-stack-delta-domain}.");
+
+    sg.insert(Switch("function-stack-delta-domain")
+              .argument("domain", enumParser(settings.function.stackDelta.concrete)
+                        ->with("concrete", true)
+                        ->with("symbolic", false))
+              .doc("Whether to show stack deltas in a concrete domain or a symbolic domain.  This output is produced only "
+                   "if stack deltas are enabled; see @s{function-stack-delta}. The default is " +
+                   std::string(settings.function.stackDelta.concrete ? "concrete" : "symbolic") + "."));
+
+    insertBooleanSwitch(sg, "function-callconv", settings.function.callconv.showing,
+                        "Show function calling convention.  This output is only produced if a calling convention analysis "
+                        "has been performed; this switch itself is not sufficient to cause that analysis to happen.");
+
+    insertBooleanSwitch(sg, "function-noop", settings.function.noop.showing,
+                        "Add a comment to indicate that a function has no effect on the machine state.  This output is only "
+                        "produced if a no-op analysis has been performed; this switch itself is not sufficient to cause "
+                        "that analysis to happen.");
+
+    insertBooleanSwitch(sg, "function-may-return", settings.function.mayReturn.showing,
+                        "Add a comment to indicate when a function cannot return to its caller. This output is only "
+                        "produced if a may-return analysis has been performed; this switch itself is not sufficient to "
+                        "cause that analysis to happen.");
+
+    //----- Basic blocks -----
+
+    insertBooleanSwitch(sg, "bb-cfg-predecessors", settings.bblock.cfg.showingPredecessors,
+                        "For each basic block, show its control flow graph predecessors.");
+
+    insertBooleanSwitch(sg, "bb-cfg-successors", settings.bblock.cfg.showingSuccessors,
+                        "For each basic block, show its control flow graph successors.");
+
+    insertBooleanSwitch(sg, "bb-sharing", settings.bblock.cfg.showingSharing,
+                        "For each basic block, emit the list of functions that own the block in addition to the function "
+                        "in which the block is listed.");
+
+    //----- Data blocks -----
+
+    //----- Instructions -----
+
+    insertBooleanSwitch(sg, "insn-address", settings.insn.address.showing,
+                        "Show the address of each instruction.");
+
+    sg.insert(Switch("insn-address-width")
+              .argument("nchars", positiveIntegerParser(settings.insn.address.fieldWidth))
+              .doc("Minimum size of the address field in characters if addresses are enabled with @s{insn-address}. The "
+                   "default is " + boost::lexical_cast<std::string>(settings.insn.address.fieldWidth) + "."));
+
+    insertBooleanSwitch(sg, "insn-bytes", settings.insn.bytes.showing,
+                        "Show the raw bytes that make up each instruction. See also, @s{insn-bytes-per-line}.");
+
+    sg.insert(Switch("insn-bytes-per-line")
+              .argument("n", positiveIntegerParser(settings.insn.bytes.perLine))
+              .doc("Maximum number of bytes to show per line if raw bytes are enabled with @s{insn-bytes}. Additional bytes "
+                   "will be shown on subsequent lines. The default is " +
+                   boost::lexical_cast<std::string>(settings.insn.bytes.perLine) + "."));
+
+    sg.insert(Switch("insn-bytes-width")
+              .argument("nchars", positiveIntegerParser(settings.insn.bytes.fieldWidth))
+              .doc("Minimum size of the raw bytes field in characters if raw bytes are enabled with @s{insn-bytes}. The "
+                   "default is " + boost::lexical_cast<std::string>(settings.insn.bytes.fieldWidth) + "."));
+
+    insertBooleanSwitch(sg, "insn-stack-delta", settings.insn.stackDelta.showing,
+                        "For each instruction, show the stack delta. This is the value of the stack pointer relative to "
+                        "the stack pointer at the beginning of the function. The value shown is the delta before the "
+                        "said instruction executes.");
+
+    sg.insert(Switch("insn-stack-delta-width")
+              .argument("nchars", positiveIntegerParser(settings.insn.stackDelta.fieldWidth))
+              .doc("Minimum size of the stack delta field in characters if stack deltas are enabled with @s{insn-stack-delta}. "
+                   "The default is " + boost::lexical_cast<std::string>(settings.insn.stackDelta.fieldWidth) + "."));
+
+    sg.insert(Switch("insn-mnemonic-width")
+              .argument("nchars", positiveIntegerParser(settings.insn.mnemonic.fieldWidth))
+              .doc("Minimum size of the instruction mnemonic field in characters. The default is " +
+                   boost::lexical_cast<std::string>(settings.insn.mnemonic.fieldWidth) + "."));
+              
+    sg.insert(Switch("insn-operand-separator")
+              .argument("string", anyParser(settings.insn.operands.separator))
+              .doc("The string that will separate one instruction operand from another. The default is \"" +
+                   StringUtility::cEscape(settings.insn.operands.separator) + "\"."));
+
+    sg.insert(Switch("insn-operand-width")
+              .argument("nchars", positiveIntegerParser(settings.insn.operands.fieldWidth))
+              .doc("Minimum size of the instruction operands field in characters. The default is " +
+                   boost::lexical_cast<std::string>(settings.insn.operands.fieldWidth) + "."));
+
+    insertBooleanSwitch(sg, "insn-comment", settings.insn.comment.showing,
+                        "Show comments for instructions that have them. The comments are shown to the right of each "
+                        "instruction.");
+
+    return sg;
 }
 
 
@@ -121,6 +274,18 @@ UnparserBase::operator()(const Partitioner2::Function::Ptr &f) const {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Properties
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const Partitioner2::Partitioner&
+UnparserBase::partitioner() const {
+    ASSERT_not_null2(partitioner_, "this is a prototypical unparser not usable for real work");
+    return *partitioner_;
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -158,7 +323,7 @@ UnparserBase::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &funct
     rose_addr_t nextBlockVa = 0;
     BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
         out <<"\n";
-        if (P2::BasicBlock::Ptr bb = partitioner_.basicBlockExists(bbVa)) {
+        if (P2::BasicBlock::Ptr bb = partitioner().basicBlockExists(bbVa)) {
             if (bbVa != *function->basicBlockAddresses().begin()) {
                 if (bbVa > nextBlockVa) {
                     out <<";;; skip forward " <<StringUtility::plural(bbVa - nextBlockVa, "bytes") <<"\n";
@@ -392,7 +557,8 @@ UnparserBase::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock
             case P2::V_BASIC_BLOCK:
                 if (pred->value().bblock()->nInstructions() > 1) {
                     rose_addr_t insnVa = pred->value().bblock()->instructions().back()->get_address();
-                    std::string s = "instruction " + StringUtility::addrToString(insnVa) + " from " + bb->printableName();
+                    std::string s = "instruction " + StringUtility::addrToString(insnVa) +
+                                    " from " + pred->value().bblock()->printableName();
                     preds.insert(insnVa, s);
                 } else {
                     std::ostringstream ss;
@@ -739,7 +905,10 @@ UnparserBase::emitCommentBlock(std::ostream &out, const std::string &comment, St
 
 void
 UnparserBase::emitTypeName(std::ostream &out, SgAsmType *type, State&) const {
-    ASSERT_not_null(type);
+    if (NULL == type) {
+        out <<"<typeless>";
+        return;
+    }
 
     if (SgAsmIntegerType *it = isSgAsmIntegerType(type)) {
         switch (it->get_nBits()) {
@@ -749,6 +918,7 @@ UnparserBase::emitTypeName(std::ostream &out, SgAsmType *type, State&) const {
             case 64: out <<"int64_t"; return;
         }
     }
+
     ASSERT_not_implemented(type->toString());
 }
 

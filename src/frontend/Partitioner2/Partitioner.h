@@ -21,6 +21,8 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedPointer.h>
 
+#include <BinaryUnparser.h>
+
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
 
@@ -317,6 +319,7 @@ private:
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
+    Unparser::UnparserBasePtr unparser_;                // For unparsing things to pseudo-assembly
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -373,6 +376,7 @@ private:
         s & stackDeltaInterproceduralLimit_;
         s & addressNames_;
         s & semanticMemoryParadigm_;
+        // s & unparser_;                       -- not saved; restored from disassembler
         // s & cfgAdjustmentCallbacks_;         -- not saved/restored
         // s & basicBlockCallbacks_;            -- not saved/restored
         // s & functionPrologueMatchers_;       -- not saved/restored
@@ -405,27 +409,17 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Construct a partitioner.
-     *
-     *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
-     *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
-    Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          semanticMemoryParadigm_(LIST_BASED_MEMORY) {
-        init(disassembler, map);
-    }
-
     /** Default constructor.
      *
      *  The default constructor does not produce a usable partitioner, but is convenient when one needs to pass a default
      *  partitioner by value or reference. */
-    Partitioner()
-        : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          semanticMemoryParadigm_(LIST_BASED_MEMORY) {
-        init(NULL, memoryMap_);
-    }
+    Partitioner();
+
+    /** Construct a partitioner.
+     *
+     *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
+     *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
+    Partitioner(Disassembler *disassembler, const MemoryMap &map);
 
     // FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
     // partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
@@ -433,37 +427,10 @@ public:
     // unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
     // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
     // after a while.
-    Partitioner(const Partitioner &other)               // initialize just like default
-        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), autoAddCallReturnEdges_(false),
-        assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
-        init(NULL, memoryMap_);                         // initialize just like default
-        *this = other;                                  // then delegate to the assignment operator
-    }
-    Partitioner& operator=(const Partitioner &other) {
-        Sawyer::Attribute::Storage<>::operator=(other);
-        settings_ = other.settings_;
-        config_ = other.config_;
-        instructionProvider_ = other.instructionProvider_;
-        memoryMap_ = other.memoryMap_;
-        cfg_ = other.cfg_;
-        vertexIndex_.clear();                           // initialized by init(other)
-        aum_ = other.aum_;
-        solver_ = other.solver_;
-        progressTotal_ = other.progressTotal_;
-        isReportingProgress_ = other.isReportingProgress_;
-        functions_ = other.functions_;
-        autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
-        assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
-        stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
-        addressNames_ = other.addressNames_;
-        cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
-        basicBlockCallbacks_ = other.basicBlockCallbacks_;
-        functionPrologueMatchers_ = other.functionPrologueMatchers_;
-        functionPaddingMatchers_ = other.functionPaddingMatchers_;
-        semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
-        init(other);                                    // copies graph iterators, etc.
-        return *this;
-    }
+    Partitioner(const Partitioner &other);
+    Partitioner& operator=(const Partitioner &other);
+
+    ~Partitioner();
 
     /** Return true if this is a default constructed partitioner.
      *
@@ -482,16 +449,7 @@ public:
     Configuration& configuration() { return config_; }
     const Configuration& configuration() const { return config_; }
     /** @} */
-
         
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //                                  Partitioner CFG queries
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
     /** Returns the instruction provider.
      *  @{ */
     InstructionProvider& instructionProvider() /*final*/ { return *instructionProvider_; }
@@ -514,6 +472,20 @@ public:
         return memoryMap_.at(va).require(MemoryMap::EXECUTABLE).exists();
     }
 
+    /** Returns an unparser. */
+    Unparser::UnparserBasePtr unparser() const;
+
+    /** Unparser reference. */
+    const Unparser::UnparserBase& unparse() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //                                  Partitioner CFG queries
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
     size_t nBytes() const /*final*/ { return aum_.size(); }
 

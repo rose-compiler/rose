@@ -6,6 +6,13 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
+UnparserArm::UnparserArm() {}
+
+UnparserArm::UnparserArm(const Partitioner2::Partitioner &p, const SettingsArm &settings)
+    : UnparserBase(p), settings_(settings) {}
+
+UnparserArm::~UnparserArm() {}
+
 // class method
 std::string
 UnparserArm::unparseArmCondition(ArmInstructionCondition cond) {
@@ -192,7 +199,7 @@ UnparserArm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, st
 void
 UnparserArm::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
     SgAsmArmInstruction *insn = isSgAsmArmInstruction(insn_);
-    ASSERT_not_null(insn);
+    ASSERT_not_null2(insn, "not an ARM instruction");
     std::string result = insn->get_mnemonic();
     std::string cond = unparseArmCondition(insn->get_condition());
     ASSERT_require(insn->get_positionOfConditionInMnemonic() >= 0);

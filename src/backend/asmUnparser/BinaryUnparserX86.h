@@ -12,9 +12,24 @@ struct SettingsX86: public SettingsBase {};
 class UnparserX86: public UnparserBase {
     SettingsX86 settings_;
 
-public:
+protected:
+    UnparserX86() {}
+    
     UnparserX86(const Partitioner2::Partitioner &p, const SettingsX86 &settings)
         : UnparserBase(p), settings_(settings) {}
+
+public:
+    static Ptr instance() {
+        return Ptr(new UnparserX86);
+    }
+
+    static Ptr instance(const Partitioner2::Partitioner &p, const SettingsX86 &settings = SettingsX86()) {
+        return Ptr(new UnparserX86(p, settings));
+    }
+
+    Ptr create(const Partitioner2::Partitioner &p) const ROSE_OVERRIDE {
+        return instance(p);
+    }
 
     const SettingsX86& settings() const { return settings_; }
     SettingsX86& settings() { return settings_; }
