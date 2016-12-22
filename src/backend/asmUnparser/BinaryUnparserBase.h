@@ -12,76 +12,105 @@ namespace BinaryAnalysis {
 
 namespace Unparser {
 
-
-/** Unparses binary functions, blocks, and instructions. */
-class UnparserBase: public Sawyer::SharedObject {
+/** State for unparsing.
+ *
+ *  This object stores the current state for unparsing. The state is kept separate from the unparser class so that (1) the
+ *  unparser can be a const reference, and (2) multiple threads can be unparsing with the same unparser object. */
+class State {
 public:
-    typedef Sawyer::SharedPointer<UnparserBase> Ptr;
-
-protected:
-    struct State {
-        Partitioner2::FunctionPtr currentFunction;
-        Partitioner2::BasicBlockPtr currentBasicBlock;
-        typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrString;
-        AddrString basicBlockLabels;
-    };
-
-    class FunctionGuard {
-        UnparserBase::State &state;
-        Partitioner2::FunctionPtr prev;
-    public:
-        FunctionGuard(State &state, const Partitioner2::FunctionPtr &f);
-        ~FunctionGuard();
-    };
-
-    class BasicBlockGuard {
-        UnparserBase::State &state;
-        Partitioner2::BasicBlockPtr prev;
-    public:
-        BasicBlockGuard(State &state, const Partitioner2::BasicBlockPtr &bb);
-        ~BasicBlockGuard();
-    };
+    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrString;/**< Map from address to string. */
 
 private:
-    const Partitioner2::Partitioner *partitioner_;
+    const Partitioner2::Partitioner &partitioner_;
     Partitioner2::FunctionCallGraph cg_;
+    Partitioner2::FunctionPtr currentFunction_;
+    Partitioner2::BasicBlockPtr currentBasicBlock_;
+    AddrString basicBlockLabels_;
     RegisterNames registerNames_;
 
-protected:
-    UnparserBase();
-    explicit UnparserBase(const Partitioner2::Partitioner &p);
-
 public:
-    virtual Ptr create(const Partitioner2::Partitioner &p) const = 0;
-
-    virtual ~UnparserBase();
+    State(const Partitioner2::Partitioner&, const Settings&);
+    virtual ~State();
 
     const Partitioner2::Partitioner& partitioner() const;
-    const Partitioner2::FunctionCallGraph& cg() const { return cg_; }
+    const Partitioner2::FunctionCallGraph& cg() const;
+    Partitioner2::FunctionPtr currentFunction() const;
+    void currentFunction(const Partitioner2::FunctionPtr&);
+    Partitioner2::BasicBlockPtr currentBasicBlock() const;
+    void currentBasicBlock(const Partitioner2::BasicBlockPtr&);
+    const RegisterNames& registerNames() const;
+    void registerNames(const RegisterNames &r);
+    const AddrString& basicBlockLabels() const;
+    AddrString& basicBlockLabels();
+};
+    
+/** Abstract base class for unparsers.
+ *
+ *  This defines the interface only. All data that's used during unparsing is provided to each function so that this interface
+ *  is thread-safe. Only the configuration settings are stored in the unparser itself. */
+class Base: public Sawyer::SharedObject {
+public:
+    typedef Sawyer::SharedPointer<Base> Ptr;
 
-    virtual const SettingsBase& settings() const = 0;
-    virtual SettingsBase& settings() = 0;
+protected:
+    Base();
 
-    const RegisterNames& registerNames() const /*final*/ { return registerNames_; }
-    void registerNames(const RegisterNames &r) /*final*/ { registerNames_ = r; }
+public:
+    virtual Ptr copy() const = 0;
+    virtual ~Base();
 
-    void operator()(std::ostream &out, SgAsmInstruction *insn) const /*final*/ { unparse(out, insn); }
-    void operator()(std::ostream &out, const Partitioner2::BasicBlockPtr &bb) const /*final*/ { unparse(out, bb); }
-    void operator()(std::ostream &out, const Partitioner2::DataBlockPtr &db) const /*final*/ { unparse(out, db); }
-    void operator()(std::ostream &out, const Partitioner2::FunctionPtr &f) const /*final*/ { unparse(out, f); }
+    virtual const Settings& settings() const = 0;
+    virtual Settings& settings() = 0;
 
-    std::string operator()(SgAsmInstruction *insn) const /*final*/;
-    std::string operator()(const Partitioner2::BasicBlockPtr &bb) const /*final*/;
-    std::string operator()(const Partitioner2::DataBlockPtr &db) const /*final*/;
-    std::string operator()(const Partitioner2::FunctionPtr &f) const /*final*/;
+    /** Emit the entity to an output stream.
+     *
+     *  Renders the third argument as text and sends it to the stream indicated by the first argument.  The @p partitioner
+     *  argument provides additional details about the thing being printed.  The version of this function that takes only two
+     *  arguments causes all functions to be emitted.
+     *
+     *  @{ */
+    void operator()(std::ostream &out, const Partitioner2::Partitioner &p) const /*final*/ {
+        unparse(out, p);
+    }
+    void operator()(std::ostream &out, const Partitioner2::Partitioner &p,
+                    SgAsmInstruction *insn) const /*final*/ {
+        unparse(out, p, insn);
+    }
+    void operator()(std::ostream &out, const Partitioner2::Partitioner &p,
+                    const Partitioner2::BasicBlockPtr &bb) const /*final*/{
+        unparse(out, p, bb);
+    }
+    void operator()(std::ostream &out, const Partitioner2::Partitioner &p,
+                    const Partitioner2::DataBlockPtr &db) const /*final*/ {
+        unparse(out, p, db);
+    }
+    void operator()(std::ostream &out, const Partitioner2::Partitioner &p,
+                    const Partitioner2::FunctionPtr &f) const /*final*/ {
+        unparse(out, p, f);
+    }
+    /** @} */
+
+    /** Emit the entity to a string.
+     *
+     *  This is just a convenience wrapper around the three-argument form.
+     *
+     * @{ */
+    std::string operator()(const Partitioner2::Partitioner &p) const /*final*/;
+    std::string operator()(const Partitioner2::Partitioner &p, SgAsmInstruction *insn) const /*final*/;
+    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::BasicBlockPtr &bb) const /*final*/;
+    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::DataBlockPtr &db) const /*final*/;
+    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::FunctionPtr &f) const /*final*/;
+    /** @} */
+
 
     
 
 protected:
-    virtual void unparse(std::ostream&, SgAsmInstruction*) const;
-    virtual void unparse(std::ostream&, const Partitioner2::BasicBlockPtr&) const;
-    virtual void unparse(std::ostream&, const Partitioner2::DataBlockPtr&) const;
-    virtual void unparse(std::ostream&, const Partitioner2::FunctionPtr&) const;
+    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&) const;
+    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, SgAsmInstruction*) const;
+    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const;
+    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const;
+    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const;
 
     virtual void emitFunction(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
     virtual void emitFunctionPrologue(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
@@ -132,7 +161,8 @@ protected:
     virtual void emitRegister(std::ostream&, const RegisterDescriptor&, State&) const;
     virtual std::vector<std::string> emitUnsignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
     virtual std::vector<std::string> emitSignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
-    virtual std::vector<std::string> emitInteger(std::ostream&, const Sawyer::Container::BitVector&, State&, bool isSigned) const;
+    virtual std::vector<std::string> emitInteger(std::ostream&, const Sawyer::Container::BitVector&, State&,
+                                                 bool isSigned) const;
     virtual void emitAddress(std::ostream&, rose_addr_t, State&) const;
     virtual void emitAddress(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
     virtual void emitCommentBlock(std::ostream&, const std::string&, State&, const std::string &prefix = ";;; ") const;
@@ -144,9 +174,6 @@ public:
 
     static std::string juxtaposeColumns(const std::vector<std::string> &content, const std::vector<size_t> &minWidths,
                                         const std::string &columnSeparator = " ");
-
-private:
-    void init();
 };
 
 

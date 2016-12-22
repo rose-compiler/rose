@@ -13,8 +13,8 @@ namespace Unparser {
  *  This struct holds all settings that control the output of the binary instruction unparser.  Particular subclasses of the
  *  basic unparser may have settings that derive from these base settings. The @ref commandLineSwitches function can be used to
  *  control these settings from a command-line. */
-struct SettingsBase {
-    virtual ~SettingsBase() {}
+struct Settings {
+    virtual ~Settings() {}
 
     struct {
         bool showingReasons;                            /**< Show reasons for function existing. */
@@ -78,17 +78,17 @@ struct SettingsBase {
         } comment;                                      /**< Settings for instruction comments. */
     } insn;                                             /**< Settings for instructions. */
 
-    SettingsBase();
-    static SettingsBase full();
-    static SettingsBase minimal();
+    Settings();
+    static Settings full();
+    static Settings minimal();
 };
 
 // Forward declarations.
-class UnparserBase;
-typedef Sawyer::SharedPointer<UnparserBase> UnparserBasePtr;
+class Base;
+typedef Sawyer::SharedPointer<Base> BasePtr;
 
 /** Command-line switches for unparser settings. */
-Sawyer::CommandLine::SwitchGroup commandLineSwitches(SettingsBase &settings);
+Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings &settings);
 
 } // namespace
 } // namespace

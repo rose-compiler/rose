@@ -6,23 +6,16 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
-UnparserArm::UnparserArm() {}
-
-UnparserArm::UnparserArm(const Partitioner2::Partitioner &p, const SettingsArm &settings)
-    : UnparserBase(p), settings_(settings) {}
-
-UnparserArm::~UnparserArm() {}
-
 // class method
 std::string
-UnparserArm::unparseArmCondition(ArmInstructionCondition cond) {
+Arm::unparseArmCondition(ArmInstructionCondition cond) {
     std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
     ASSERT_require(!retval.empty() && retval[0]!='(');
     return retval;
 }
 
 void
-UnparserArm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::string sign, std::string *suffix) const {
+Arm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::string sign, std::string *suffix) const {
     std::ostringstream extra;
     SgAsmUnaryExpression *uno = isSgAsmUnaryExpression(expr);
     SgAsmBinaryExpression *dos = isSgAsmBinaryExpression(expr);
@@ -197,7 +190,7 @@ UnparserArm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, st
 }
 
 void
-UnparserArm::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
+Arm::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
     SgAsmArmInstruction *insn = isSgAsmArmInstruction(insn_);
     ASSERT_not_null2(insn, "not an ARM instruction");
     std::string result = insn->get_mnemonic();
@@ -209,7 +202,7 @@ UnparserArm::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_,
 }
 
 void
-UnparserArm::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
+Arm::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
     SgAsmArmInstruction *insn = SageInterface::getEnclosingNode<SgAsmArmInstruction>(expr);
     ASSERT_not_null(insn);
 

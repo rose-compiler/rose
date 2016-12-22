@@ -10,7 +10,7 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 void
-UnparserX86::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
+X86::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
     ASSERT_not_null2(insn, "not an x86 instruction");
     if (insn->get_lockPrefix())
@@ -26,7 +26,7 @@ UnparserX86::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_,
 }
 
 void
-UnparserX86::emitTypeName(std::ostream &out, SgAsmType *type, State &state) const {
+X86::emitTypeName(std::ostream &out, SgAsmType *type, State &state) const {
     if (!type)
         return;
 
@@ -54,7 +54,7 @@ UnparserX86::emitTypeName(std::ostream &out, SgAsmType *type, State &state) cons
 }
 
 void
-UnparserX86::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
+X86::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;
 

@@ -7,32 +7,26 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
-struct SettingsMips: public SettingsBase {};
+struct MipsSettings: public Settings {};
 
-class UnparserMips: public UnparserBase {
-    SettingsMips settings_;
+class Mips: public Base {
+    MipsSettings settings_;
 
 protected:
-    UnparserMips() {}
-
-    UnparserMips(const Partitioner2::Partitioner &p, const SettingsMips &settings)
-        : UnparserBase(p), settings_(settings) {}
+    explicit Mips(const MipsSettings &settings)
+        : settings_(settings) {}
 
 public:
-    static Ptr instance() {
-        return Ptr(new UnparserMips);
+    static Ptr instance(const MipsSettings &settings = MipsSettings()) {
+        return Ptr(new Mips(settings));
     }
 
-    static Ptr instance(const Partitioner2::Partitioner &p, const SettingsMips &settings = SettingsMips()) {
-        return Ptr(new UnparserMips(p, settings));
-    }
-
-    Ptr create(const Partitioner2::Partitioner &p) const ROSE_OVERRIDE {
-        return instance(p);
+    Ptr copy() const ROSE_OVERRIDE {
+        return instance(settings());
     }
     
-    const SettingsMips& settings() const { return settings_; }
-    SettingsMips& settings() { return settings_; }
+    const MipsSettings& settings() const { return settings_; }
+    MipsSettings& settings() { return settings_; }
 
 protected:
     void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;

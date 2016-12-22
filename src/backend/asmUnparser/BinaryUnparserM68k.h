@@ -7,32 +7,26 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
-struct SettingsM68k: public SettingsBase {};
+struct M68kSettings: public Settings {};
 
-class UnparserM68k: public UnparserBase {
-    SettingsM68k settings_;
+class M68k: public Base {
+    M68kSettings settings_;
 
 protected:
-    UnparserM68k() {}
-
-    UnparserM68k(const Partitioner2::Partitioner &p, const SettingsM68k &settings)
-        : UnparserBase(p), settings_(settings) {}
+    explicit M68k(const M68kSettings &settings)
+        : settings_(settings) {}
 
 public:
-    static Ptr instance() {
-        return Ptr(new UnparserM68k);
+    static Ptr instance(const M68kSettings &settings = M68kSettings()) {
+        return Ptr(new M68k(settings));
     }
 
-    static Ptr instance(const Partitioner2::Partitioner &p, const SettingsM68k &settings = SettingsM68k()) {
-        return Ptr(new UnparserM68k(p, settings));
-    }
-
-    Ptr create(const Partitioner2::Partitioner &p) const ROSE_OVERRIDE {
-        return instance(p);
+    Ptr copy() const ROSE_OVERRIDE {
+        return instance(settings());
     }
     
-    const SettingsM68k& settings() const { return settings_; }
-    SettingsM68k& settings() { return settings_; }
+    const M68kSettings& settings() const { return settings_; }
+    M68kSettings& settings() { return settings_; }
 
 protected:
     void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;

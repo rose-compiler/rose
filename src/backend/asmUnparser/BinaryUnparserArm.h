@@ -7,33 +7,28 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
-struct SettingsArm: public SettingsBase {};
+struct ArmSettings: public Settings {};
 
-class UnparserArm: public UnparserBase {
-    SettingsArm settings_;
+class Arm: public Base {
+    ArmSettings settings_;
 
 protected:
-    UnparserArm();
-
-    UnparserArm(const Partitioner2::Partitioner &p, const SettingsArm &settings);
+    explicit Arm(const ArmSettings &settings)
+        : settings_(settings) {}
 
 public:
-    ~UnparserArm();
+    ~Arm() {}
 
-    static Ptr instance() {
-        return Ptr(new UnparserArm);
+    static Ptr instance(const ArmSettings &settings = ArmSettings()) {
+        return Ptr(new Arm(settings));
     }
 
-    static Ptr instance(const Partitioner2::Partitioner &p, const SettingsArm &settings = SettingsArm()) {
-        return Ptr(new UnparserArm(p, settings));
+    Ptr copy() const ROSE_OVERRIDE {
+        return instance(settings());
     }
-
-    Ptr create(const Partitioner2::Partitioner &p) const ROSE_OVERRIDE {
-        return instance(p);
-    }
-
-    const SettingsArm& settings() const { return settings_; }
-    SettingsArm& settings() { return settings_; }
+    
+    const ArmSettings& settings() const { return settings_; }
+    ArmSettings& settings() { return settings_; }
 
 protected:
     void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;

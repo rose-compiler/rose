@@ -395,8 +395,11 @@ public:
      *                                          Disassembler properties and settings
      ***************************************************************************************************************************/
 public:
-    /** Prototypical unparser. */
-    virtual Unparser::UnparserBasePtr protoUnparser() const = 0;
+    /** Unparser.
+     *
+     *  Returns an unparser suitable for unparsing the same instruction set architecture as recognized and produced by this
+     *  disassembler. */
+    virtual Unparser::BasePtr unparser() const = 0;
 
     /** Specifies the registers available on this architecture.  Rather than using hard-coded class, number, and position
      *  constants, the disassembler should perform a name lookup in this supplied register dictionary and use the values found

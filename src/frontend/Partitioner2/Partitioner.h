@@ -319,8 +319,8 @@ private:
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
-    Unparser::UnparserBasePtr unparser_;                // For unparsing things to pseudo-assembly
-    Unparser::UnparserBasePtr insnUnparser_;            // For unparsing single instructions in diagnostics
+    Unparser::BasePtr unparser_;                        // For unparsing things to pseudo-assembly
+    Unparser::BasePtr insnUnparser_;                    // For unparsing single instructions in diagnostics
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -473,11 +473,41 @@ public:
         return memoryMap_.at(va).require(MemoryMap::EXECUTABLE).exists();
     }
 
-    /** Returns an unparser. */
-    Unparser::UnparserBasePtr unparser() const;
+    /** Returns an unparser.
+     *
+     *  This unparser is initiallly a copy of the one provided by the disassembler, but it can be reset to something else if
+     *  desired. This is the unparser used by the @ref unparse method for the partitioner as a whole, functions, basic blocks,
+     *  and data blocks.  Instructions use the @ref insnUnparser instead.
+     *
+     *  @{ */
+    Unparser::BasePtr unparser() const /*final*/;
+    void unparser(const Unparser::BasePtr&) /*final*/;
+    /** @} */
 
-    /** Unparser reference. */
-    const Unparser::UnparserBase& unparse() const;
+    /** Returns an unparser.
+     *
+     *  This unparser is initially a copy of the one provided by the disassembler, and adjusted to be most useful for printing
+     *  single instructions. By default, it prints the instruction address, mnemonic, and operands but not raw bytes, stack
+     *  deltas, comments, or anything else.
+     *
+     * @{ */
+    Unparser::BasePtr insnUnparser() const /*final*/;
+    void insnUnparser(const Unparser::BasePtr&) /*final*/;
+    /** @} */
+
+    /** Unparse some entity.
+     *
+     *  Unparses an instruction, basic block, data block, function, or all functions using the unparser returned by @ref
+     *  unparser (except for instructions, which use the unparser returned by @ref insnUnparser).
+     *
+     *  @{ */
+    std::string unparse(SgAsmInstruction*) const;
+    void unparse(std::ostream&, SgAsmInstruction*) const;
+    void unparse(std::ostream&, const BasicBlock::Ptr&) const;
+    void unparse(std::ostream&, const DataBlock::Ptr&) const;
+    void unparse(std::ostream&, const Function::Ptr&) const;
+    void unparse(std::ostream&) const;
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -713,11 +743,6 @@ public:
      *  Scans all attached instructions looking for constants mentioned in the instructions and builds a mapping from those
      *  constants back to the instructions.  Only constants present in the @p restriction set are considered. */
     CrossReferences instructionCrossReferences(const AddressIntervalSet &restriction) const /*final*/;
-
-    /** Unparse instruction to string.
-     *
-     *  Creates a string representation of an instruction which is suitable for use in diagnostic messages. */
-    std::string instructionString(SgAsmInstruction*) const /*final*/;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

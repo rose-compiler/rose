@@ -61,9 +61,9 @@ DisassemblerX86::can_disassemble(SgAsmGenericHeader *header) const
     return false;
 }
 
-Unparser::UnparserBase::Ptr
-DisassemblerX86::protoUnparser() const {
-    return Unparser::UnparserX86::instance();
+Unparser::BasePtr
+DisassemblerX86::unparser() const {
+    return Unparser::X86::instance();
 }
 
 void

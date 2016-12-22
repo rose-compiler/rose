@@ -315,9 +315,9 @@ DisassemblerM68k::can_disassemble(SgAsmGenericHeader *header) const
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_M68K_Family;
 }
 
-Unparser::UnparserBase::Ptr
-DisassemblerM68k::protoUnparser() const {
-    return Unparser::UnparserM68k::instance();
+Unparser::BasePtr
+DisassemblerM68k::unparser() const {
+    return Unparser::M68k::instance();
 }
 
 SgAsmType *

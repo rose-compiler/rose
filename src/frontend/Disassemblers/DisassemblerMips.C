@@ -84,9 +84,9 @@ DisassemblerMips::can_disassemble(SgAsmGenericHeader *header) const
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_MIPS_Family;
 }
 
-Unparser::UnparserBase::Ptr
-DisassemblerMips::protoUnparser() const {
-    return Unparser::UnparserMips::instance();
+Unparser::BasePtr
+DisassemblerMips::unparser() const {
+    return Unparser::Mips::instance();
 }
 
 // see base class

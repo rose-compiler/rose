@@ -42,9 +42,9 @@ DisassemblerPowerpc::can_disassemble(SgAsmGenericHeader *header) const
     return isa == SgAsmExecutableFileFormat::ISA_PowerPC;
 }
 
-Unparser::UnparserBase::Ptr
-DisassemblerPowerpc::protoUnparser() const {
-    return Unparser::UnparserPowerpc::instance();
+Unparser::BasePtr
+DisassemblerPowerpc::unparser() const {
+    return Unparser::Powerpc::instance();
 }
 
 void

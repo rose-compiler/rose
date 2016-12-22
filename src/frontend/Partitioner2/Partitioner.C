@@ -89,9 +89,9 @@ void
 Partitioner::init(Disassembler *disassembler, const MemoryMap &map) {
     if (disassembler) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
-        unparser_ = disassembler->protoUnparser()->create(*this);
-        insnUnparser_ = disassembler->protoUnparser()->create(*this);
-        insnUnparser_->settings() = Unparser::SettingsBase::minimal();
+        unparser_ = disassembler->unparser()->copy();
+        insnUnparser_ = disassembler->unparser()->copy();
+        insnUnparser_->settings() = Unparser::Settings::minimal();
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
@@ -125,15 +125,77 @@ Partitioner::convertFrom(const Partitioner &other, ControlFlowGraph::ConstVertex
     return thisIter;
 }
 
-Unparser::UnparserBasePtr
+Unparser::BasePtr
 Partitioner::unparser() const {
     return unparser_;
 }
 
-const Unparser::UnparserBase&
-Partitioner::unparse() const {
-    ASSERT_not_null2(unparser_, "default constructed partitioner has no unparser");
-    return *unparser_;
+void
+Partitioner::unparser(const Unparser::BasePtr &u) {
+    unparser_ = u;
+}
+
+Unparser::BasePtr
+Partitioner::insnUnparser() const {
+    return insnUnparser_;
+}
+
+void
+Partitioner::insnUnparser(const Unparser::BasePtr &u) {
+    insnUnparser_ = u;
+}
+
+std::string
+Partitioner::unparse(SgAsmInstruction *insn) const {
+    std::ostringstream ss;
+    unparse(ss, insn);
+    return ss.str();
+}
+
+void
+Partitioner::unparse(std::ostream &out, SgAsmInstruction *insn) const {
+    if (!insn) {
+        out <<"null instruction";
+    } else {
+        ASSERT_not_null(insnUnparser());
+        (*insnUnparser())(out, *this, insn);
+    }
+}
+
+void
+Partitioner::unparse(std::ostream &out, const BasicBlock::Ptr &bb) const {
+    if (!bb) {
+        out <<"null basic block";
+    } else {
+        ASSERT_not_null(unparser());
+        (*unparser())(out, *this, bb);
+    }
+}
+
+void
+Partitioner::unparse(std::ostream &out, const DataBlock::Ptr &db) const {
+    if (!db) {
+        out <<"null data block";
+    } else {
+        ASSERT_not_null(unparser());
+        (*unparser())(out, *this, db);
+    }
+}
+
+void
+Partitioner::unparse(std::ostream &out, const Function::Ptr &f) const {
+    if (!f) {
+        out <<"null function";
+    } else {
+        ASSERT_not_null(unparser());
+        (*unparser())(out, *this, f);
+    }
+}
+
+void
+Partitioner::unparse(std::ostream &out) const {
+    ASSERT_not_null(unparser());
+    (*unparser())(out, *this);
 }
 
 // Label the progress report and also show some other statistics.  It is okay for this to be slightly expensive since its only
@@ -982,15 +1044,6 @@ Partitioner::basicBlockContainingInstruction(rose_addr_t insnVa) const {
 AddressInterval
 Partitioner::instructionExtent(SgAsmInstruction *insn) const {
     return insn ? AddressInterval::baseSize(insn->get_address(), insn->get_size()) : AddressInterval();
-}
-
-std::string
-Partitioner::instructionString(SgAsmInstruction *insn) const {
-    if (!insn)
-        return "no instruction";
-    std::ostringstream ss;
-    (*insnUnparser_)(ss, insn);
-    return ss.str();
 }
 
 SgAsmInstruction *
@@ -2376,9 +2429,9 @@ Partitioner::rebuildVertexIndices() {
                 ASSERT_not_reachable("user-defined vertices cannot be saved or restored");
         }
     }
-    unparser_ = instructionProvider().disassembler()->protoUnparser()->create(*this);
-    insnUnparser_ = instructionProvider().disassembler()->protoUnparser()->create(*this);
-    insnUnparser_->settings() = Unparser::SettingsBase::minimal();
+    unparser_ = instructionProvider().disassembler()->unparser()->copy();
+    insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
+    insnUnparser_->settings() = Unparser::Settings::minimal();
 }
 
 } // namespace

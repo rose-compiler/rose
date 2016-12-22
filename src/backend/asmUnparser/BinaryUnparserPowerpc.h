@@ -7,32 +7,26 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
-struct SettingsPowerpc: public SettingsBase {};
+struct PowerpcSettings: public Settings {};
 
-class UnparserPowerpc: public UnparserBase {
-    SettingsPowerpc settings_;
+class Powerpc: public Base {
+    PowerpcSettings settings_;
 
 protected:
-    UnparserPowerpc() {}
-
-    UnparserPowerpc(const Partitioner2::Partitioner &p, const SettingsPowerpc &settings)
-        : UnparserBase(p), settings_(settings) {}
+    explicit Powerpc(const PowerpcSettings &settings)
+        : settings_(settings) {}
 
 public:
-    static Ptr instance() {
-        return Ptr(new UnparserPowerpc);
+    static Ptr instance(const PowerpcSettings &settings = PowerpcSettings()) {
+        return Ptr(new Powerpc(settings));
     }
 
-    static Ptr instance(const Partitioner2::Partitioner &p, const SettingsPowerpc &settings = SettingsPowerpc()) {
-        return Ptr(new UnparserPowerpc(p, settings));
-    }
-
-    Ptr create(const Partitioner2::Partitioner &p) const ROSE_OVERRIDE {
-        return instance(p);
+    Ptr copy() const ROSE_OVERRIDE {
+        return instance(settings());
     }
     
-    const SettingsPowerpc& settings() const { return settings_; }
-    SettingsPowerpc& settings() { return settings_; }
+    const PowerpcSettings& settings() const { return settings_; }
+    PowerpcSettings& settings() { return settings_; }
 
 protected:
     void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;

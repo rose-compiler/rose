@@ -15,48 +15,114 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Supporting functionality
+//                                      State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-UnparserBase::FunctionGuard::FunctionGuard(State &state, const Partitioner2::Function::Ptr &f)
-    : state(state) {
-    prev = state.currentFunction;
-    state.currentFunction = f;
+State::State(const P2::Partitioner &p, const Settings &settings)
+    : partitioner_(p), registerNames_(p.instructionProvider().registerDictionary()) {
+    if (settings.function.cg.showing)
+        cg_ = p.functionCallGraph(false);
 }
 
-UnparserBase::FunctionGuard::~FunctionGuard() {
-    state.currentFunction = prev;
-}
-    
-UnparserBase::BasicBlockGuard::BasicBlockGuard(State &state, const Partitioner2::BasicBlockPtr &bb)
-    : state(state) {
-    prev = state.currentBasicBlock;
-    state.currentBasicBlock = bb;
+State::~State() {}
+
+const P2::Partitioner&
+State::partitioner() const {
+    return partitioner_;
 }
 
-UnparserBase::BasicBlockGuard::~BasicBlockGuard() {
-    state.currentBasicBlock = prev;
+const P2::FunctionCallGraph&
+State::cg() const {
+    return cg_;
 }
 
-UnparserBase::UnparserBase()
-    : partitioner_(NULL) {}
-
-UnparserBase::UnparserBase(const Partitioner2::Partitioner &p)
-    : partitioner_(&p) {
-    init();
+P2::Function::Ptr
+State::currentFunction() const {
+    return currentFunction_;
 }
-
-UnparserBase::~UnparserBase() {}
 
 void
-UnparserBase::init() {
-    registerNames_ = RegisterNames(partitioner().instructionProvider().registerDictionary());
-    cg_ = partitioner().functionCallGraph(false /*compress parallel edges*/);
+State::currentFunction(const P2::Function::Ptr &f) {
+    currentFunction_ = f;
 }
+
+Partitioner2::BasicBlock::Ptr
+State::currentBasicBlock() const {
+    return currentBasicBlock_;
+}
+
+void
+State::currentBasicBlock(const Partitioner2::BasicBlockPtr &bb) {
+    currentBasicBlock_ = bb;
+}
+
+const RegisterNames&
+State::registerNames() const {
+    return registerNames_;
+}
+
+void
+State::registerNames(const RegisterNames &r) {
+    registerNames_ = r;
+}
+
+const State::AddrString&
+State::basicBlockLabels() const {
+    return basicBlockLabels_;
+}
+
+State::AddrString&
+State::basicBlockLabels() {
+    return basicBlockLabels_;
+}
+
+class FunctionGuard {
+    State &state;
+    Partitioner2::FunctionPtr prev;
+public:
+    FunctionGuard(State &state, const Partitioner2::FunctionPtr &f)
+        : state(state) {
+        prev = state.currentFunction();
+        state.currentFunction(f);
+    }
+    
+    ~FunctionGuard() {
+        state.currentFunction(prev);
+    }
+};
+
+class BasicBlockGuard {
+    State &state;
+    Partitioner2::BasicBlockPtr prev;
+public:
+    BasicBlockGuard(State &state, const Partitioner2::BasicBlockPtr &bb)
+        : state(state) {
+        prev = state.currentBasicBlock();
+        state.currentBasicBlock(bb);
+    }
+    ~BasicBlockGuard() {
+        state.currentBasicBlock(prev);
+    }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Constructors, etc.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Base::Base() {}
+
+Base::~Base() {}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Supporting functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // class method
 std::string
-UnparserBase::leftJustify(const std::string &s, size_t width) {
+Base::leftJustify(const std::string &s, size_t width) {
     if (s.size() > width)
         return s;
     return s + std::string(width-s.size(), ' ');
@@ -64,8 +130,8 @@ UnparserBase::leftJustify(const std::string &s, size_t width) {
 
 // class method
 std::string
-UnparserBase::juxtaposeColumns(const std::vector<std::string> &parts, const std::vector<size_t> &minWidths,
-                               const std::string &columnSeparator) {
+Base::juxtaposeColumns(const std::vector<std::string> &parts, const std::vector<size_t> &minWidths,
+                       const std::string &columnSeparator) {
     std::string retval;
 
     // Split each part into separate lines
@@ -98,10 +164,10 @@ UnparserBase::juxtaposeColumns(const std::vector<std::string> &parts, const std:
 //                                      Settings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SettingsBase::SettingsBase() {
+Settings::Settings() {
     function.showingReasons = true;
     function.cg.showing = true;
-    function.stackDelta.showing = true;
+    function.stackDelta.showing = false;                // very slow for some reason
     function.stackDelta.concrete = true;
     function.callconv.showing = true;
     function.noop.showing = true;
@@ -127,15 +193,15 @@ SettingsBase::SettingsBase() {
 }
 
 // class method
-SettingsBase
-SettingsBase::full() {
-    return SettingsBase();
+Settings
+Settings::full() {
+    return Settings();
 }
 
 // class method
-SettingsBase
-SettingsBase::minimal() {
-    SettingsBase s = full();
+Settings
+Settings::minimal() {
+    Settings s = full();
     s.function.showingReasons = false;
     s.function.cg.showing = false;
     s.function.stackDelta.showing = false;
@@ -158,7 +224,7 @@ SettingsBase::minimal() {
 }
 
 Sawyer::CommandLine::SwitchGroup
-commandLineSwitches(SettingsBase &settings) {
+commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     using namespace CommandlineProcessing;
 
@@ -212,7 +278,7 @@ commandLineSwitches(SettingsBase &settings) {
     insertBooleanSwitch(sg, "bb-cfg-successors", settings.bblock.cfg.showingSuccessors,
                         "For each basic block, show its control flow graph successors.");
 
-    insertBooleanSwitch(sg, "bb-sharing", settings.bblock.cfg.showingSharing,
+    insertBooleanSwitch(sg, "bb-cfg-sharing", settings.bblock.cfg.showingSharing,
                         "For each basic block, emit the list of functions that own the block in addition to the function "
                         "in which the block is listed.");
 
@@ -279,69 +345,71 @@ commandLineSwitches(SettingsBase &settings) {
 //                                      Top-level
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::string
+Base::operator()(const P2::Partitioner &p) const {
+    std::ostringstream ss;
+    unparse(ss, p);
+    return ss.str();
+}
+
+std::string
+Base::operator()(const P2::Partitioner &p, SgAsmInstruction *insn) const {
+    std::ostringstream ss;
+    unparse(ss, p, insn);
+    return ss.str();
+}
+
+std::string
+Base::operator()(const P2::Partitioner &p, const Partitioner2::BasicBlock::Ptr &bb) const {
+    std::ostringstream ss;
+    unparse(ss, p, bb);
+    return ss.str();
+}
+
+std::string
+Base::operator()(const P2::Partitioner &p, const Partitioner2::DataBlock::Ptr &db) const {
+    std::ostringstream ss;
+    unparse(ss, p, db);
+    return ss.str();
+}
+
+std::string
+Base::operator()(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) const {
+    std::ostringstream ss;
+    unparse(ss, p, f);
+    return ss.str();
+}
+
 void
-UnparserBase::unparse(std::ostream &out, SgAsmInstruction *insn) const {
-    State state;
+Base::unparse(std::ostream &out, const Partitioner2::Partitioner &p) const {
+    State state(p, settings());
+    BOOST_FOREACH (P2::Function::Ptr f, p.functions())
+        emitFunction(out, f, state);
+}
+
+void
+Base::unparse(std::ostream &out, const P2::Partitioner &p, SgAsmInstruction *insn) const {
+    State state(p, settings());
     emitInstruction(out, insn, state);
 }
 
 void
-UnparserBase::unparse(std::ostream &out, const P2::BasicBlock::Ptr &bb) const {
-    State state;
+Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::BasicBlock::Ptr &bb) const {
+    State state(p, settings());
     emitBasicBlock(out, bb, state);
 }
 
 void
-UnparserBase::unparse(std::ostream &out, const P2::DataBlock::Ptr &db) const {
-    State state;
+Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::DataBlock::Ptr &db) const {
+    State state(p, settings());
     emitDataBlock(out, db, state);
 }
 
 void
-UnparserBase::unparse(std::ostream &out, const P2::Function::Ptr &f) const {
-    State state;
+Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::Function::Ptr &f) const {
+    State state(p, settings());
     emitFunction(out, f, state);
 }
-
-std::string
-UnparserBase::operator()(SgAsmInstruction *insn) const {
-    std::ostringstream ss;
-    unparse(ss, insn);
-    return ss.str();
-}
-
-std::string
-UnparserBase::operator()(const Partitioner2::BasicBlock::Ptr &bb) const {
-    std::ostringstream ss;
-    unparse(ss, bb);
-    return ss.str();
-}
-
-std::string
-UnparserBase::operator()(const Partitioner2::DataBlock::Ptr &db) const {
-    std::ostringstream ss;
-    unparse(ss, db);
-    return ss.str();
-}
-
-std::string
-UnparserBase::operator()(const Partitioner2::Function::Ptr &f) const {
-    std::ostringstream ss;
-    unparse(ss, f);
-    return ss.str();
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Properties
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const Partitioner2::Partitioner&
-UnparserBase::partitioner() const {
-    ASSERT_not_null2(partitioner_, "this is a prototypical unparser not usable for real work");
-    return *partitioner_;
-}
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -349,7 +417,7 @@ UnparserBase::partitioner() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-UnparserBase::emitFunction(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
+Base::emitFunction(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     FunctionGuard push(state, function);
     emitFunctionPrologue(out, function, state);
     emitFunctionBody(out, function, state);
@@ -357,7 +425,7 @@ UnparserBase::emitFunction(std::ostream &out, const P2::Function::Ptr &function,
 }
 
 void
-UnparserBase::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
+Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     out <<std::string(120, ';') <<"\n"
         <<";;; " <<function->printableName() <<"\n";
     emitFunctionComment(out, function, state);
@@ -378,18 +446,20 @@ UnparserBase::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &f
 }
 
 void
-UnparserBase::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
+Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     // If we're not emitting instruction addresses then we need some other way to identify basic blocks for branch targets.
     if (!settings().insn.address.showing) {
-        state.basicBlockLabels.clear();
-        BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses())
-            state.basicBlockLabels.insertMaybe(bbVa, "L" + boost::lexical_cast<std::string>(state.basicBlockLabels.size()+1));
+        state.basicBlockLabels().clear();
+        BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+            std::string label = "L" + boost::lexical_cast<std::string>(state.basicBlockLabels().size()+1);
+            state.basicBlockLabels().insertMaybe(bbVa, label);
+        }
     }
 
     rose_addr_t nextBlockVa = 0;
     BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
         out <<"\n";
-        if (P2::BasicBlock::Ptr bb = partitioner().basicBlockExists(bbVa)) {
+        if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
             if (bbVa != *function->basicBlockAddresses().begin()) {
                 if (bbVa > nextBlockVa) {
                     out <<";;; skip forward " <<StringUtility::plural(bbVa - nextBlockVa, "bytes") <<"\n";
@@ -398,7 +468,11 @@ UnparserBase::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &funct
                 }
             }
             emitBasicBlock(out, bb, state);
-            nextBlockVa = bb->fallthroughVa();
+            if (bb->nInstructions() > 0) {
+                nextBlockVa = bb->fallthroughVa();
+            } else {
+                nextBlockVa = bb->address();
+            }
         }
     }
     BOOST_FOREACH (P2::DataBlock::Ptr db, function->dataBlocks()) {
@@ -408,7 +482,7 @@ UnparserBase::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &funct
 }
 
 void
-UnparserBase::emitFunctionEpilogue(std::ostream &out, const P2::Function::Ptr&, State&) const {
+Base::emitFunctionEpilogue(std::ostream &out, const P2::Function::Ptr&, State&) const {
     out <<"\n\n";
 }
 
@@ -422,7 +496,7 @@ addFunctionReason(std::vector<std::string> &strings /*in,out*/, unsigned &flags 
 }
 
 void
-UnparserBase::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, State&) const {
+Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, State&) const {
     unsigned flags = function->reasons();
     std::vector<std::string> strings;
     addFunctionReason(strings, flags, SgAsmFunction::FUNC_ENTRY_POINT,  "program entry point");
@@ -452,9 +526,9 @@ UnparserBase::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &fu
 }
 
 void
-UnparserBase::emitFunctionCallers(std::ostream &out, const P2::Function::Ptr &function, State&) const {
-    P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = cg().findFunction(function);
-    if (cg().graph().isValidVertex(vertex)) {
+Base::emitFunctionCallers(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
+    P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = state.cg().findFunction(function);
+    if (state.cg().graph().isValidVertex(vertex)) {
         BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Edge &edge, vertex->inEdges()) {
             out <<";;; ";
             switch (edge.value().type()) {
@@ -477,9 +551,9 @@ UnparserBase::emitFunctionCallers(std::ostream &out, const P2::Function::Ptr &fu
 }
 
 void
-UnparserBase::emitFunctionCallees(std::ostream &out, const P2::Function::Ptr &function, State&) const {
-    P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = cg().findFunction(function);
-    if (cg().graph().isValidVertex(vertex)) {
+Base::emitFunctionCallees(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
+    P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = state.cg().findFunction(function);
+    if (state.cg().graph().isValidVertex(vertex)) {
         BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Edge &edge, vertex->outEdges()) {
             out <<";;; ";
             switch (edge.value().type()) {
@@ -502,7 +576,7 @@ UnparserBase::emitFunctionCallees(std::ostream &out, const P2::Function::Ptr &fu
 }
 
 void
-UnparserBase::emitFunctionComment(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
+Base::emitFunctionComment(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     std::string s = boost::trim_copy(function->comment());
     if (!s.empty()) {
         out <<";;;\n";
@@ -512,7 +586,7 @@ UnparserBase::emitFunctionComment(std::ostream &out, const P2::Function::Ptr &fu
 }
 
 void
-UnparserBase::emitFunctionStackDelta(std::ostream &out, const P2::Function::Ptr &function, State&) const {
+Base::emitFunctionStackDelta(std::ostream &out, const P2::Function::Ptr &function, State&) const {
     if (settings().function.stackDelta.concrete) {
         int64_t delta = function->stackDeltaConcrete();
         if (delta != SgAsmInstruction::INVALID_STACK_DELTA)
@@ -523,7 +597,7 @@ UnparserBase::emitFunctionStackDelta(std::ostream &out, const P2::Function::Ptr 
 }
 
 void
-UnparserBase::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
+Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     const CallingConvention::Analysis &analyzer = function->callingConventionAnalysis();
     if (analyzer.hasResults()) {
         if (analyzer.didConverge()) {
@@ -538,14 +612,14 @@ UnparserBase::emitFunctionCallingConvention(std::ostream &out, const P2::Functio
 }
 
 void
-UnparserBase::emitFunctionNoopAnalysis(std::ostream &out, const P2::Function::Ptr &function, State&) const {
+Base::emitFunctionNoopAnalysis(std::ostream &out, const P2::Function::Ptr &function, State&) const {
     if (function->isNoop().getOptional().orElse(false))
         out <<";;; this function is a no-op\n";
 }
 
 void
-UnparserBase::emitFunctionMayReturn(std::ostream &out, const P2::Function::Ptr &function, State&) const {
-    if (!partitioner().functionOptionalMayReturn(function).orElse(true))
+Base::emitFunctionMayReturn(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
+    if (!state.partitioner().functionOptionalMayReturn(function).orElse(true))
         out <<";;; this function does not return to its caller\n";
 }
 
@@ -555,7 +629,7 @@ UnparserBase::emitFunctionMayReturn(std::ostream &out, const P2::Function::Ptr &
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-UnparserBase::emitBasicBlock(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+Base::emitBasicBlock(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     BasicBlockGuard push(state, bb);
     emitBasicBlockPrologue(out, bb, state);
     emitBasicBlockBody(out, bb, state);
@@ -563,7 +637,7 @@ UnparserBase::emitBasicBlock(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
 }
 
 void
-UnparserBase::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+Base::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     emitBasicBlockComment(out, bb, state);
     if (settings().bblock.cfg.showingSharing)
         emitBasicBlockSharing(out, bb, state);
@@ -572,7 +646,7 @@ UnparserBase::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Pt
 }
 
 void
-UnparserBase::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     ASSERT_not_null(bb);
     if (0 == bb->nInstructions()) {
         out <<"no instructions";
@@ -585,7 +659,7 @@ UnparserBase::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &b
 }
 
 void
-UnparserBase::emitBasicBlockEpilogue(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+Base::emitBasicBlockEpilogue(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     BOOST_FOREACH (P2::DataBlock::Ptr db, bb->dataBlocks())
         emitDataBlock(out, db, state);
     if (settings().bblock.cfg.showingSuccessors)
@@ -593,17 +667,17 @@ UnparserBase::emitBasicBlockEpilogue(std::ostream &out, const P2::BasicBlock::Pt
 }
 
 void
-UnparserBase::emitBasicBlockComment(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+Base::emitBasicBlockComment(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     std::string s = boost::trim_copy(bb->comment());
     if (!s.empty())
         emitCommentBlock(out, s, state, "\t;; ");
 }
 
 void
-UnparserBase::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     ASSERT_not_null(bb);
-    std::vector<P2::Function::Ptr> functions = partitioner().functionsOwningBasicBlock(bb);
-    std::vector<P2::Function::Ptr>::iterator current = std::find(functions.begin(), functions.end(), state.currentFunction);
+    std::vector<P2::Function::Ptr> functions = state.partitioner().functionsOwningBasicBlock(bb);
+    std::vector<P2::Function::Ptr>::iterator current = std::find(functions.begin(), functions.end(), state.currentFunction());
     if (current != functions.end())
         functions.erase(current);
     BOOST_FOREACH (P2::Function::Ptr function, functions)
@@ -611,10 +685,10 @@ UnparserBase::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr
 }
 
 void
-UnparserBase::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     ASSERT_not_null(bb);
-    P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner().findPlaceholder(bb->address());
-    ASSERT_require(partitioner().cfg().isValidVertex(vertex));
+    P2::ControlFlowGraph::ConstVertexIterator vertex = state.partitioner().findPlaceholder(bb->address());
+    ASSERT_require(state.partitioner().cfg().isValidVertex(vertex));
 
     Sawyer::Container::Map<rose_addr_t, std::string> preds;
     BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->inEdges()) {
@@ -652,8 +726,8 @@ UnparserBase::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock
 }
 
 void
-UnparserBase::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
-    const P2::BasicBlock::Successors &succs = partitioner().basicBlockSuccessors(bb);
+Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+    const P2::BasicBlock::Successors &succs = state.partitioner().basicBlockSuccessors(bb);
     std::vector<std::string> strings;
 
     // Real successors
@@ -711,22 +785,22 @@ UnparserBase::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-UnparserBase::emitDataBlock(std::ostream &out, const P2::DataBlock::Ptr &db, State &state) const {
+Base::emitDataBlock(std::ostream &out, const P2::DataBlock::Ptr &db, State &state) const {
     emitDataBlockPrologue(out, db, state);
     emitDataBlockBody(out, db, state);
     emitDataBlockEpilogue(out, db, state);
 }
 
 void
-UnparserBase::emitDataBlockPrologue(std::ostream&, const P2::DataBlock::Ptr&, State&) const {}
+Base::emitDataBlockPrologue(std::ostream&, const P2::DataBlock::Ptr&, State&) const {}
 
 void
-UnparserBase::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr&, State&) const {
+Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr&, State&) const {
     out <<"data blocks not implemented yet";
 }
 
 void
-UnparserBase::emitDataBlockEpilogue(std::ostream&, const P2::DataBlock::Ptr&, State&) const {}
+Base::emitDataBlockEpilogue(std::ostream&, const P2::DataBlock::Ptr&, State&) const {}
 
 
 
@@ -735,14 +809,14 @@ UnparserBase::emitDataBlockEpilogue(std::ostream&, const P2::DataBlock::Ptr&, St
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-UnparserBase::emitInstruction(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+Base::emitInstruction(std::ostream &out, SgAsmInstruction *insn, State &state) const {
     emitInstructionPrologue(out, insn, state);
     emitInstructionBody(out, insn, state);
     emitInstructionEpilogue(out, insn, state);
 }
 
 void
-UnparserBase::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &state) const {
     std::vector<std::string> parts;
     std::vector<size_t> fieldWidths;
 
@@ -757,8 +831,8 @@ UnparserBase::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, Sta
         }
         fieldWidths.push_back(settings().insn.address.fieldWidth);
     } else {
-        if (state.currentBasicBlock && state.currentBasicBlock->address() == insn->get_address()) {
-            parts.push_back(state.basicBlockLabels.getOrElse(insn->get_address(), ""));
+        if (state.currentBasicBlock() && state.currentBasicBlock()->address() == insn->get_address()) {
+            parts.push_back(state.basicBlockLabels().getOrElse(insn->get_address(), ""));
             if (!parts.back().empty())
                 parts.back() += ":";
         } else {
@@ -824,13 +898,13 @@ UnparserBase::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, Sta
 }
 
 void
-UnparserBase::emitInstructionAddress(std::ostream &out, SgAsmInstruction *insn, State&) const {
+Base::emitInstructionAddress(std::ostream &out, SgAsmInstruction *insn, State&) const {
     ASSERT_not_null(insn);
     out <<StringUtility::addrToString(insn->get_address()) <<":";
 }
 
 void
-UnparserBase::emitInstructionBytes(std::ostream &out, SgAsmInstruction *insn, State&) const {
+Base::emitInstructionBytes(std::ostream &out, SgAsmInstruction *insn, State&) const {
     ASSERT_not_null(insn);
     const SgUnsignedCharList &bytes = insn->get_raw_bytes();
     for (size_t i = 0; i < bytes.size(); ++i) {
@@ -846,13 +920,13 @@ UnparserBase::emitInstructionBytes(std::ostream &out, SgAsmInstruction *insn, St
 }
 
 void
-UnparserBase::emitInstructionStackDelta(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+Base::emitInstructionStackDelta(std::ostream &out, SgAsmInstruction *insn, State &state) const {
     // Although SgAsmInstruction has stackDeltaIn and stackDelta out data members, they're not initialized or used when the
     // instruction only exists inside a Partitioner2 object -- they're only initialized when a complete AST is created from the
     // Partitioner2. Instead, we need to look at the enclosing function's stack delta analysis.  Since basic blocks can be
     // shared among functions, this method prints the stack deltas from the perspective of the function we're emitting.
     ASSERT_not_null(insn);
-    if (P2::Function::Ptr function = state.currentFunction) {
+    if (P2::Function::Ptr function = state.currentFunction()) {
         const StackDelta::Analysis &sdAnalysis = function->stackDeltaAnalysis();
         if (sdAnalysis.hasResults()) {
             int64_t delta = sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn));
@@ -872,13 +946,13 @@ UnparserBase::emitInstructionStackDelta(std::ostream &out, SgAsmInstruction *ins
 }
 
 void
-UnparserBase::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn, State&) const {
+Base::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn, State&) const {
     ASSERT_not_null(insn);
     out <<insn->get_mnemonic();
 }
 
 void
-UnparserBase::emitInstructionOperands(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+Base::emitInstructionOperands(std::ostream &out, SgAsmInstruction *insn, State &state) const {
     ASSERT_not_null(insn);
     const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
     for (size_t i=0; i<operands.size(); ++i) {
@@ -889,7 +963,7 @@ UnparserBase::emitInstructionOperands(std::ostream &out, SgAsmInstruction *insn,
 }
 
 void
-UnparserBase::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State&) const {
+Base::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State&) const {
     ASSERT_not_null(insn);
     std::string comment = insn->get_comment();
     boost::trim(comment);
@@ -902,20 +976,20 @@ UnparserBase::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-UnparserBase::emitOperand(std::ostream &out, SgAsmExpression *expr, State &state) const {
+Base::emitOperand(std::ostream &out, SgAsmExpression *expr, State &state) const {
     emitOperandPrologue(out, expr, state);
     emitOperandBody(out, expr, state);
     emitOperandEpilogue(out, expr, state);
 }
 
 void
-UnparserBase::emitAddress(std::ostream &out, rose_addr_t va, State &state) const {
+Base::emitAddress(std::ostream &out, rose_addr_t va, State &state) const {
     std::string label;
-    if (state.basicBlockLabels.getOptional(va).assignTo(label)) {
+    if (state.basicBlockLabels().getOptional(va).assignTo(label)) {
         out <<"basic block " <<label;
-    } else if (P2::Function::Ptr f = partitioner().functionExists(va)) {
+    } else if (P2::Function::Ptr f = state.partitioner().functionExists(va)) {
         out <<f->printableName();
-    } else if (P2::BasicBlock::Ptr bb = partitioner().basicBlockExists(va)) {
+    } else if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(va)) {
         out <<bb->printableName();
     } else {
         out <<StringUtility::addrToString(va);
@@ -923,7 +997,7 @@ UnparserBase::emitAddress(std::ostream &out, rose_addr_t va, State &state) const
 }
 
 void
-UnparserBase::emitAddress(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state) const {
+Base::emitAddress(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state) const {
     if (bv.size() > 64) {
         out <<"0x" <<bv.toHex();
     } else {
@@ -932,7 +1006,7 @@ UnparserBase::emitAddress(std::ostream &out, const Sawyer::Container::BitVector 
 }
 
 std::vector<std::string>
-UnparserBase::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state, bool isSigned) const {
+Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state, bool isSigned) const {
     std::vector<std::string> comments;
 
     if (bv.isEqualToZero()) {
@@ -960,44 +1034,46 @@ UnparserBase::emitInteger(std::ostream &out, const Sawyer::Container::BitVector 
 }
 
 std::vector<std::string>
-UnparserBase::emitSignedInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state) const {
+Base::emitSignedInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state) const {
     return emitInteger(out, bv, state, true /*signed*/);
 }
 
 std::vector<std::string>
-UnparserBase::emitUnsignedInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state) const {
+Base::emitUnsignedInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state) const {
     return emitInteger(out, bv, state, false /*unsigned*/);
 }
 
 void
-UnparserBase::emitRegister(std::ostream &out, const RegisterDescriptor &reg, State&) const {
-    out <<registerNames()(reg);
+Base::emitRegister(std::ostream &out, const RegisterDescriptor &reg, State &state) const {
+    out <<state.registerNames()(reg);
 }
 
 void
-UnparserBase::emitCommentBlock(std::ostream &out, const std::string &comment, State&, const std::string &prefix) const {
+Base::emitCommentBlock(std::ostream &out, const std::string &comment, State&, const std::string &prefix) const {
     std::vector<std::string> lines = StringUtility::split('\n', comment);
     BOOST_FOREACH (const std::string &line, lines)
         out <<prefix <<line <<"\n";
 }
 
 void
-UnparserBase::emitTypeName(std::ostream &out, SgAsmType *type, State&) const {
+Base::emitTypeName(std::ostream &out, SgAsmType *type, State&) const {
     if (NULL == type) {
-        out <<"<typeless>";
-        return;
-    }
+        out <<"notype";
 
-    if (SgAsmIntegerType *it = isSgAsmIntegerType(type)) {
-        switch (it->get_nBits()) {
-            case 8: out <<"int8_t"; return;
-            case 16: out <<"int16_t"; return;
-            case 32: out <<"int32_t"; return;
-            case 64: out <<"int64_t"; return;
+    } else if (SgAsmIntegerType *it = isSgAsmIntegerType(type)) {
+        if (it->get_isSigned()) {
+            out <<"i";
+        } else {
+            out <<"u";
         }
-    }
+        out <<it->get_nBits();
 
-    ASSERT_not_implemented(type->toString());
+    } else if (SgAsmFloatType *ft = isSgAsmFloatType(type)) {
+        out <<"f" <<ft->get_nBits();
+
+    } else {
+        ASSERT_not_implemented(type->toString());
+    }
 }
 
 
