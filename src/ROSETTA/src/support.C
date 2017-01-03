@@ -1364,6 +1364,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype ("bool", "unparse_using_leading_and_trailing_token_mappings", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Liao (12/15/2016): Unparse template from its AST.
+  // By default, the original string stored by EDG is used to output template AST
+     File.setDataPrototype ("bool", "unparse_template_ast", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 1
   // DQ (2/17/2013): Added support to skip AST consistancy testing AstTests::runAllTests(SgProject*)
   // This testing is useful but interferes with performance testing using HPCToolKit.

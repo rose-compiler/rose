@@ -4,7 +4,8 @@
   #include "xmmintrin.h"
   #define __inline inline
 #else
-  typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
+// typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
+  typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
 #endif
 
 #ifdef __INTEL_COMPILER

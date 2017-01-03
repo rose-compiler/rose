@@ -2070,6 +2070,7 @@ projects/taintcheck/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
+projects/xgenTranslator/Makefile
 scripts/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile

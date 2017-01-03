@@ -5862,8 +5862,10 @@ SgProject::compileOutput()
        // exit(1);
         }
 
-  // printf ("In SgProject::compileOutput(): get_C_PreprocessorOnly() = %s \n",get_C_PreprocessorOnly() ? "true" : "false");
-
+  // NOTE: that get_C_PreprocessorOnly() is true only if using the "-E" option and not for the "-edg:E" option.
+#if 0
+     printf ("In SgProject::compileOutput(): get_C_PreprocessorOnly() = %s \n",get_C_PreprocessorOnly() ? "true" : "false");
+#endif
   // case 1: preprocessing only
      if (get_C_PreprocessorOnly() == true)
         {
@@ -5926,19 +5928,34 @@ SgProject::compileOutput()
 
        // printf ("originalCommandLine = %s \n",originalCommandLine.c_str());
 
-#if 0
-          printf ("Support for \"-E\" not implemented yet. \n");
-          ROSE_ASSERT(false);
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+       // DQ (12/18/2016): In the case of using "-E" with the Intel backend compiler we need to 
+       // add -D__INTEL_CLANG_COMPILER so that we can take a path through the Intel header files 
+       // that avoids editing header Intel specific header files to handle builtin functions that 
+       // use types defined in the header files.
+          originalCommandLine.push_back("-D__INTEL_CLANG_COMPILER");
 #endif
 
-          // Debug: Output commandline arguments before actually executing
+       // DQ (12/18/2016): Add a ROSE specific macro definition that will permit our ROSE specific 
+       // preinclude header file to skip over the ROSE specific macros and builting functions.  This 
+       // will allow ROSE to be use to generate CPP output that ROSE could then use as input (without 
+       // specific declarations being defined twice).  Markus had also requested this behavior.
+          originalCommandLine.push_back("-DUSE_ROSE_CPP_PROCESSING");
+
+       // Debug: Output commandline arguments before actually executing
           if (SgProject::get_verbose() > 0)
+       // if (SgProject::get_verbose() >= 0)
              {
                for (unsigned int i=0; i < originalCommandLine.size(); ++i)
                   {
                     printf ("originalCommandLine[%u] = %s \n", i, originalCommandLine[i].c_str());
                   }
              }
+
+#if 0
+          printf ("Support for \"-E\" being tested \n");
+          ROSE_ASSERT(false);
+#endif
 
           errorCode = systemFromVector(originalCommandLine);
 
@@ -7156,12 +7173,22 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                break;
              }
 
-       // DQ (2/22/2013): added case to support someing reported in test2013_68.C, but not yet verified.
+       // DQ (2/22/2013): added case to support something reported in test2013_68.C, but not yet verified.
           case V_SgVarRefExp:
              {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgVarRefExp: returning NULL \n");
 #endif
+#if 0
+               printf ("I would like to verify that I can trap this case \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+       // DQ (12/17/2016): added case to support reducing output spew from C++11 tests and applications.
+          case V_SgThisExp:
+             {
 #if 0
                printf ("I would like to verify that I can trap this case \n");
                ROSE_ASSERT(false);
