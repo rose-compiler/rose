@@ -163,8 +163,8 @@ protected:
     virtual std::vector<std::string> emitSignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
     virtual std::vector<std::string> emitInteger(std::ostream&, const Sawyer::Container::BitVector&, State&,
                                                  bool isSigned) const;
-    virtual void emitAddress(std::ostream&, rose_addr_t, State&) const;
-    virtual void emitAddress(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
+    virtual bool emitAddress(std::ostream&, rose_addr_t, State&, bool always=true) const;
+    virtual bool emitAddress(std::ostream&, const Sawyer::Container::BitVector&, State&, bool always=true) const;
     virtual void emitCommentBlock(std::ostream&, const std::string&, State&, const std::string &prefix = ";;; ") const;
     virtual void emitTypeName(std::ostream&, SgAsmType*, State&) const;
 

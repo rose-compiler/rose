@@ -213,7 +213,8 @@ Settings::minimal() {
     s.bblock.cfg.showingSuccessors = false;
     s.bblock.cfg.showingSharing = false;
 
-    s.insn.address.showing = true;
+    s.insn.address.showing = false;
+    s.insn.address.fieldWidth = 8;
     s.insn.bytes.showing = false;
     s.insn.stackDelta.showing = false;
     s.insn.mnemonic.fieldWidth = 1;
@@ -982,34 +983,49 @@ Base::emitOperand(std::ostream &out, SgAsmExpression *expr, State &state) const 
     emitOperandEpilogue(out, expr, state);
 }
 
-void
-Base::emitAddress(std::ostream &out, rose_addr_t va, State &state) const {
+bool
+Base::emitAddress(std::ostream &out, rose_addr_t va, State &state, bool always) const {
     std::string label;
     if (state.basicBlockLabels().getOptional(va).assignTo(label)) {
         out <<"basic block " <<label;
-    } else if (P2::Function::Ptr f = state.partitioner().functionExists(va)) {
-        out <<f->printableName();
-    } else if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(va)) {
-        out <<bb->printableName();
-    } else {
-        out <<StringUtility::addrToString(va);
+        return true;
     }
+    if (P2::Function::Ptr f = state.partitioner().functionExists(va)) {
+        out <<f->printableName();
+        return true;
+    }
+    if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(va)) {
+        out <<bb->printableName();
+        return true;
+    }
+    if (always) {
+        out <<StringUtility::addrToString(va);
+        return false;
+    }
+    return false;
 }
 
-void
-Base::emitAddress(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state) const {
-    if (bv.size() > 64) {
+bool
+Base::emitAddress(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state, bool always) const {
+    if (bv.size() <= 64) {
+        return emitAddress(out, bv.toInteger(), state, always);
+    } else if (always) {
         out <<"0x" <<bv.toHex();
+        return false;
     } else {
-        emitAddress(out, bv.toInteger(), state);
+        return false;
     }
 }
 
 std::vector<std::string>
 Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, State &state, bool isSigned) const {
     std::vector<std::string> comments;
+    std::string label;
 
-    if (bv.isEqualToZero()) {
+    if (bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().get_nbits() &&
+        emitAddress(out, bv, state, false)) {
+        // address with a label, existing basic block, or existing function.
+    } else if (bv.isEqualToZero()) {
         out <<"0";
     } else if (bv.size() <= 64 && bv.toInteger() < 16) {
         out <<bv.toInteger();
