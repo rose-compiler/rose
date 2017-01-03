@@ -187,7 +187,8 @@ if test "x$with_CXX_WARNINGS" = "xyes"; then
     icpc)
     # For Intel turn on 64bit migration/portability warnings
     # CXX_WARNINGS="-w1 -Wall -Wcheck -Wp64"
-      CXX_WARNINGS+="-w1 -Wall -Wcheck -Wp64"
+    # CXX_WARNINGS+="-w1 -Wall -Wcheck -Wp64"
+      CXX_WARNINGS+="-Wall"
       ;;
     KCC | mpKCC)
     # CXX_WARNINGS="--for_init_diff_warning --new_for_init -w"

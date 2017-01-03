@@ -387,8 +387,10 @@ ROSE_DLL_API SgLongIntVal* buildLongIntVal_nfi(long value, const std::string& st
 ROSE_DLL_API SgLongLongIntVal* buildLongLongIntVal(long long value = 0);
 ROSE_DLL_API SgLongLongIntVal* buildLongLongIntValHex(long long value = 0);
 ROSE_DLL_API SgLongLongIntVal* buildLongLongIntVal_nfi(long long value, const std::string& str);
-
+// !Build enum val without file info: nfi
 ROSE_DLL_API SgEnumVal* buildEnumVal_nfi(int value, SgEnumDeclaration* decl, SgName name);
+// !Build enum val with transformation file info
+ROSE_DLL_API SgEnumVal* buildEnumVal(int value, SgEnumDeclaration* decl, SgName name);
 ROSE_DLL_API SgEnumVal* buildEnumVal(SgEnumFieldSymbol * sym);
 
 ROSE_DLL_API SgLongDoubleVal* buildLongDoubleVal(long double value = 0.0);
