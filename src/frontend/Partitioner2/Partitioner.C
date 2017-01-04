@@ -937,6 +937,24 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
         return true;
     }
 
+    // An x86 idiom is two consecutive instructions "call next: pop ebx" where "next" is the address of the POP instruction
+    // that immediately follows the CALL instruction.
+    if (SgAsmX86Instruction *i1 = isSgAsmX86Instruction(lastInsn)) {
+        if (i1->get_kind() == x86_call) {
+            rose_addr_t callFallThroughVa = i1->get_address() + i1->get_size();
+            bool complete = true;
+            std::set<rose_addr_t> callSuccVas = i1->getSuccessors(&complete);
+            if (callSuccVas.size() == 1 && *callSuccVas.begin() == callFallThroughVa) {
+                if (SgAsmX86Instruction *i2 = isSgAsmX86Instruction(discoverInstruction(callFallThroughVa))) {
+                    if (i2->get_kind() == x86_pop) {
+                        bb->isFunctionCall() = false;
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    
     // We don't have semantics, so delegate to the SgAsmInstruction subclass.
     retval = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
     bb->isFunctionCall() = retval;
