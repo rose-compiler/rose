@@ -54,7 +54,7 @@ private:
     // Users: You'll need to register the subclass once you know its type, such as
     // BOOST_CLASS_REGISTER(Sawyer::Container::MappedBuffer<size_t,uint8_t>);
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         s & boost::serialization::base_object<Super>(*this);
         s & params_.path & params_.flags & params_.mode & params_.offset & params_.length & params_.new_file_size;
 
@@ -67,7 +67,7 @@ private:
     // Users: You'll need to register the subclass once you know its type, such as
     // BOOST_CLASS_REGISTER(Sawyer::Container::MappedBuffer<size_t,uint8_t>);
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         s & boost::serialization::base_object<Super>(*this);
         s & params_.path & params_.flags & params_.mode & params_.offset & params_.length & params_.new_file_size;
 

@@ -419,6 +419,10 @@ SAWYER_EXPORT std::string thisExecutableName();
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Suppress warnings about unused function formal arguments. Most of the time you can simply omit the argument name, but that's
+// not possible if the argument is integral to the documentation. In those cases, mention the argument with this macro.
+# define SAWYER_ARGUSED(X) (void)(X)
+
 #ifdef _MSC_VER
 //--------------------------
 // Microsoft Windows

@@ -430,7 +430,10 @@ string getWildcardTypeName(SgJavaWildcardType *wild_type) {
 string getUnionTypeName(SgJavaUnionType *union_type) {
     string name = "";
     SgTypePtrList type_list = union_type -> get_type_list();
-    for (int i = 0; i < type_list.size(); i++) {
+
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+ // for (int i = 0; i < type_list.size(); i++) {
+    for (size_t i = 0; i < type_list.size(); i++) {
         if (i > 0) {
             name += " | ";
         }
@@ -738,7 +741,10 @@ string getParameters(SgJavaParameterizedType *parm_type) {
     if (parm_type -> get_type_list()) {
         result += "<";
         SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
-        for (int i = 0; i < arg_list.size(); i++) {
+
+     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+     // for (int i = 0; i < arg_list.size(); i++) {
+        for (size_t i = 0; i < arg_list.size(); i++) {
             if (i > 0) {
                 result += ", ";
             }
@@ -827,7 +833,10 @@ string getUnqualifiedTypeName(SgType *type) {
          SgTypePtrList type_list = union_type -> get_type_list();
          ROSE_ASSERT(type_list.size());
          result = getUnqualifiedTypeName(type_list[0]);
-         for (int i = 1; i < type_list.size(); i++) {
+
+      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+      // for (int i = 1; i < type_list.size(); i++) {
+         for (size_t i = 1; i < type_list.size(); i++) {
              result += " | ";
              result += getUnqualifiedTypeName(type_list[i]);
          }
@@ -855,7 +864,9 @@ string getFullyQualifiedTypeName(SgType *type) {
         if (param_type -> get_type_list()) {
             result += "<";
             SgTemplateParameterPtrList arg_list = param_type -> get_type_list() -> get_args();
-            for (int i = 0; i < arg_list.size(); i++) {
+ 
+         // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+            for (size_t i = 0; i < arg_list.size(); i++) {
                 if (i > 0) {
                     result += ", ";
                 }
@@ -900,7 +911,9 @@ string getFullyQualifiedTypeName(SgType *type) {
          SgTypePtrList type_list = union_type -> get_type_list();
          ROSE_ASSERT(type_list.size());
          result = getFullyQualifiedTypeName(type_list[0]);
-         for (int i = 1; i < type_list.size(); i++) {
+
+      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+         for (size_t i = 1; i < type_list.size(); i++) {
              result += " | ";
              result += getFullyQualifiedTypeName(type_list[i]);
          }

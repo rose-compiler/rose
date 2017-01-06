@@ -201,7 +201,7 @@ void conditionalCopy(const Src *src, const BitRange &srcRange, Dst *dst, const B
     nonoverlappingCopy(src, srcRange, dst, dstRange);
 }
 template<class Src, class Dst>
-void conditionalCopy(const Src *src, const BitRange &srcRange, const Dst *dst, const BitRange &dstRange) {
+void conditionalCopy(const Src */*src*/, const BitRange &/*srcRange*/, const Dst */*dst*/, const BitRange &/*dstRange*/) {
     // do not copy when dst is const
 }
 

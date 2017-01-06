@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#include "OmpAttribute.h"
 
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
@@ -1044,6 +1045,11 @@ ROSE_DLL_API bool templateArgumentListEquivalence(const SgTemplateArgumentPtrLis
 //! Test for equivalence of types independent of access permissions (private or protected modes for members of classes).
 ROSE_DLL_API bool isEquivalentType (const SgType* lhs, const SgType* rhs);
 
+
+//! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
+//! They may differ in one SgTemplateType pointer but identical otherwise. 
+ROSE_DLL_API bool isEquivalentFunctionType (const SgFunctionType* lhs, const SgFunctionType* rhs);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -2021,7 +2027,7 @@ ROSE_DLL_API void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop,
 #endif
 
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
-ROSE_DLL_API void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results);
+ROSE_DLL_API void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum> > & results);
 
 //! Constant folding an AST subtree rooted at 'r' (replacing its children with their constant values, if applicable). Please be advised that constant folding on floating point computation may decrease the accuracy of floating point computations!
 /*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression. */

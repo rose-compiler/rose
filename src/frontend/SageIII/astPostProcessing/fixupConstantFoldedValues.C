@@ -493,7 +493,13 @@ RemoveConstantFoldedValue::evaluateSynthesizedAttribute ( SgNode* node, SubTreeS
 #endif
             // Make sure that the traversal will see the nested subtrees of any originalExpressionTree (since they may have constant folded subexpresions).
                RemoveConstantFoldedValue nestedOriginalExpressionTreeTraversal;
-               RemoveConstantFoldedValueSynthesizedAttribute nestedSynthesizedAttribute = nestedOriginalExpressionTreeTraversal.traverse(originalExpressionTree);
+
+            // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+            // RemoveConstantFoldedValueSynthesizedAttribute nestedSynthesizedAttribute = nestedOriginalExpressionTreeTraversal.traverse(originalExpressionTree);
+
+            // DQ (12/8/2016): Note return value is not used.
+               nestedOriginalExpressionTreeTraversal.traverse(originalExpressionTree);
+
 #if 0
             // DQ (10/8/2011): We should not handl this here, I think.
                handleTheSynthesizedAttribute(node,nestedSynthesizedAttribute);
