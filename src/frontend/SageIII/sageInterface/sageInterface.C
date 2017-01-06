@@ -9980,7 +9980,7 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
     SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
     ivarname = decl->get_variables().front();
     ROSE_ASSERT(ivarname != NULL);
-    SgInitializer * initor = ivarname->get_initializer();
+    //SgInitializer * initor = ivarname->get_initializer();
    // if (isSgAssignInitializer(initor))
    //   isCase1 = true;
   }// other regular case: for (i=0;..)
@@ -18199,7 +18199,7 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
   } // The following expression types are usually introduced by left hand operands of DotExp, ArrowExp
   else if (isSgThisExp(current))
   {
-    SgThisExp* texp = isSgThisExp(current);
+    //SgThisExp* texp = isSgThisExp(current);
     name = NULL; // inside a class, there is no initialized name at all!! what to do??
   }
   else if (isSgPointerDerefExp(current))
@@ -18750,6 +18750,309 @@ void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loo
 }
 #endif
 
+//Check if two references form an idiom like:  x= x op expr,  x = expr op x (except for subtraction)
+static bool isAssignReduction (SgVarRefExp* ref_exp1, SgVarRefExp* ref_exp2, OmpSupport::omp_construct_enum& optype)
+{
+  bool isReduction = false; 
+  // Sanity check
+  ROSE_ASSERT (ref_exp1!= NULL);
+  ROSE_ASSERT (ref_exp2!= NULL);
+  ROSE_ASSERT (ref_exp1-> get_symbol() == ref_exp2-> get_symbol());
+  // must be scalar type
+  ROSE_ASSERT (SageInterface::isScalarType(ref_exp1-> get_symbol()->get_type() ) );
+
+  SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp1);
+  SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref_exp2);
+  if (stmt != stmt2) return false; // early return false;
+
+  // must be assignment statement using
+  //  x= x op expr,  x = expr op x (except for subtraction)
+  // one reference on left hand, the other on the right hand of assignment expression
+  // the right hand uses associative operators +, *, -, &, ^ ,|, &&, ||
+  SgExprStatement* exp_stmt =  isSgExprStatement(stmt);
+  if (exp_stmt && isSgAssignOp(exp_stmt->get_expression()))
+  {
+    SgExpression* assign_lhs=NULL, * assign_rhs =NULL;
+    assign_lhs = isSgAssignOp(exp_stmt->get_expression())->get_lhs_operand();
+    assign_rhs = isSgAssignOp(exp_stmt->get_expression())->get_rhs_operand();
+    ROSE_ASSERT(assign_lhs && assign_rhs);
+    // x must show up in both lhs and rhs in any order:
+    //  e.g.: ref1 = ref2 op exp or ref2 = ref1 op exp
+    if (((assign_lhs==ref_exp1)&&SageInterface::isAncestor(assign_rhs,ref_exp2))
+        ||((assign_lhs==ref_exp2)&&SageInterface::isAncestor(assign_rhs,ref_exp1)))
+    {
+      // assignment's rhs must match the associative binary operations
+      // +, *, -, &, ^ ,|, &&, ||
+      SgBinaryOp * binop = isSgBinaryOp(assign_rhs);
+      if (binop!=NULL){
+        SgExpression* op_lhs = binop->get_lhs_operand();
+        SgExpression* op_rhs = binop->get_rhs_operand();
+
+        // double check that the binary expression has either ref1 or ref2 as one operand
+        if( !((op_lhs==ref_exp1)||(op_lhs==ref_exp2))
+            && !((op_rhs==ref_exp1)||(op_rhs==ref_exp2)))
+          return false;  // early return false;
+
+        bool isOnLeft = false; // true if it has form (refx op exp), instead (exp or refx)
+        if ((op_lhs==ref_exp1)||   // TODO might have in between !!
+            (op_lhs==ref_exp2))
+          isOnLeft = true;
+        switch (binop->variantT())
+        {
+          case V_SgAddOp:
+            {
+              optype = OmpSupport::e_reduction_plus;
+              isReduction = true;
+              break;
+            }
+          case V_SgMultiplyOp:
+            {
+              optype = OmpSupport::e_reduction_mul;
+              isReduction = true;
+              break;
+            }
+          case V_SgSubtractOp: // special handle here!!
+            {
+              optype = OmpSupport::e_reduction_minus;
+              if (isOnLeft) // cannot allow (exp - x)a
+              {
+                isReduction = true;
+              }
+              break;
+            }
+          case V_SgBitAndOp:
+            {
+              optype = OmpSupport::e_reduction_bitand ;
+              isReduction = true;
+              break;
+            }
+          case V_SgBitXorOp:
+            {
+              optype = OmpSupport::e_reduction_bitxor;
+              isReduction = true;
+              break;
+            }
+          case V_SgBitOrOp:
+            {
+              optype = OmpSupport::e_reduction_bitor;
+              isReduction = true;
+              break;
+            }
+          case V_SgAndOp:
+            {
+              optype = OmpSupport::e_reduction_logand;
+              isReduction = true;
+              break;
+            }
+          case V_SgOrOp:
+            {
+              optype = OmpSupport::e_reduction_logor;
+              isReduction = true;
+              break;
+            }
+          default:
+            break;
+        }
+      } // end matching associative operations
+    }
+  } // end if assignop
+  return isReduction; 
+}
+// A helper function for reduction recognition
+// check if two references to the same variable form a reduction idiom using if-statement
+// example 1: if (array[i]> maxV) maxV = array[i]
+// example 2: if (array[i]< minV) minV = array[i]
+// If it matches, return true and the reduction operator type 
+static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp_construct_enum& optype)
+{
+  bool matchStmt1 = false;
+  bool matchStmt2 = false;
+
+  //TODO: ensure ref1, ref2 are ordered as pre-order manner in AST
+  //   SgExpression* reduction_var_ref = NULL; 
+  //   SgExpression* source_var_ref = NULL;  //array[i] is the source var ref
+
+  // Sanity check
+  ROSE_ASSERT (ref1 != NULL);
+  ROSE_ASSERT (ref2 != NULL);
+  ROSE_ASSERT (ref1-> get_symbol() == ref2-> get_symbol());
+  // must be scalar type
+  ROSE_ASSERT (SageInterface::isScalarType(ref1-> get_symbol()->get_type() ) );
+
+  SgStatement* stmt1 = SageInterface::getEnclosingStatement(ref1);                                                               
+  SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref2);                                                              
+
+  //early return if the same stmt
+  if (stmt1 == stmt2) return false;
+
+  // check stmt2 first. It is easier.
+  // stmt2 should be an assignment stmt like: 
+  //    reduction_variable = else; 
+  //    minV = array[i];
+  SgExpression* lhs2 = NULL;
+  SgExpression* rhs2 = NULL;
+  if (SageInterface::isAssignmentStatement (stmt2, &lhs2, &rhs2 ))
+  {
+    // lhs2 must be ref2 
+    if (lhs2 == ref2 ) 
+    {
+      matchStmt2 = true; 
+      //     reduction_var_ref = lhs2; 
+      //     source_var_ref= rhs2; 
+    }
+  } // end assignment stmt
+
+  // stmt1 should be a if-stmt's conditional expression stmt
+  // and its body should be stmt2
+  if (SgExprStatement* if_cond_stmt = isSgExprStatement(stmt1))
+  {
+    bool matchBody = false;
+    bool matchCondition= false;
+    if (SgIfStmt * if_stmt = isSgIfStmt (if_cond_stmt->get_parent()) )
+    {
+      if (SgStatement* body = if_stmt->get_true_body())
+      {
+        if (SgBasicBlock* block = isSgBasicBlock (body))
+        {
+          // stmt2 must be the only child of the if true body
+          if ( ((block->get_statements()).size() == 1) && stmt2->get_scope() == block )
+            matchBody = true;
+        }
+        else
+        {
+          if (body == stmt2)
+            matchBody = true;
+        }
+      } // body match test
+
+      // match condition   SgExprStatement  ref1 SgLessThanOp source_var
+      if (SgExprStatement* cond_exp_stmt = isSgExprStatement (if_stmt->get_conditional()) )
+      {
+        SgExpression* cond_exp = cond_exp_stmt->get_expression();
+        if (SgBinaryOp * binop = isSgBinaryOp (cond_exp))
+        {
+          if (ref1 == binop->get_lhs_operand_i())
+          {
+            // minV > array[i] ;
+            if (isSgLessThanOp (binop))
+            {
+              optype = OmpSupport::e_reduction_max;
+              matchCondition= true;
+            }
+            else if (isSgGreaterThanOp(binop))  
+            {
+              optype = OmpSupport::e_reduction_min;
+              matchCondition= true;
+            }
+          }
+          else if ( ref1 == binop->get_rhs_operand_i() )
+          {
+            // array[i] < minV
+            if (isSgLessThanOp (binop))
+            {
+              optype = OmpSupport::e_reduction_min;
+              matchCondition= true;
+            }
+            else if (isSgGreaterThanOp(binop))  
+            {
+              optype = OmpSupport::e_reduction_max;
+              matchCondition= true;
+            }
+          }
+        } // end if binary op
+        // TODO the source_var should match the source_var from stmt2
+      }
+    }
+    matchStmt1 = matchBody && matchCondition;
+  } // end if-stmt
+
+
+  return (matchStmt2 && matchStmt1);   
+}
+
+// check if a var ref is a form of
+//  --x, x--, ++x, x++
+//  x+= .., x-= ..., etc.
+// The reduction variable appears only once in the reduction idiom.
+static bool isSingleAppearanceReduction(SgVarRefExp* ref1, OmpSupport::omp_construct_enum& optype )
+{
+  bool isReduction = false; 
+
+  ROSE_ASSERT (ref1 != NULL);
+  // must be scalar type
+  ROSE_ASSERT (SageInterface::isScalarType(ref1-> get_symbol()->get_type() ) );
+
+  SgStatement* stmt = SageInterface::getEnclosingStatement(ref1);
+
+  if (isSgExprStatement(stmt))
+  {
+    SgExpression* exp = isSgExprStatement(stmt)->get_expression();
+    SgExpression* binop = isSgBinaryOp(exp);
+    if (isSgPlusPlusOp(exp)) // x++ or ++x
+    { // Could have multiple reduction clause with different operators!!
+      // So the variable list is associated with each kind of operator
+      optype = OmpSupport::e_reduction_plus;
+      isReduction = true;
+    }
+    else if (isSgMinusMinusOp(exp)) // x-- or --x
+    {
+      optype = OmpSupport::e_reduction_minus;
+      isReduction = true;
+    }
+    else
+      // x binop= expr where binop is one of + * - & ^ |
+      // x must be on the left hand side
+      if (binop!=NULL) {
+        SgExpression* lhs= isSgBinaryOp(exp)->get_lhs_operand ();
+        if (lhs==ref1)
+        {
+          switch (exp->variantT())
+          {
+            case V_SgPlusAssignOp:
+              {
+                optype = OmpSupport::e_reduction_plus;
+                isReduction = true;
+                break;
+              }
+            case V_SgMultAssignOp:
+              {
+                optype = OmpSupport::e_reduction_mul;
+                isReduction = true;
+                break;
+              }
+            case V_SgMinusAssignOp:
+              {
+                optype = OmpSupport::e_reduction_minus;
+                isReduction = true;
+                break;
+              }
+            case V_SgAndAssignOp:
+              {
+                optype = OmpSupport::e_reduction_bitand;
+                isReduction = true;
+                break;
+              }
+            case V_SgXorAssignOp:
+              {
+                optype = OmpSupport::e_reduction_bitxor;
+                isReduction = true;
+                break;
+              }
+            case V_SgIorAssignOp:
+              {
+                optype = OmpSupport::e_reduction_bitor;
+                isReduction = true;
+                break;
+              }
+            default:
+              break;
+          } // end
+        }// end if on left side
+      }
+  }
+  return isReduction;
+}
+
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
 /* This code is refactored from project/autoParallelization/autoParSupport.C
   std::vector<SgInitializedName*>
@@ -18770,13 +19073,13 @@ void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loo
    *  op is not an overloaded operator, but +, *, -, &, ^ ,|, &&, ||
    *  binop is not an overloaded operator, but: +, *, -, &, ^ ,|
   */
-void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results)
+void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum > > & results)
 {
   //x. Collect variable references of scalar types as candidates, excluding loop index
   SgInitializedName* loopindex;
   if (!(isCanonicalForLoop(loop, &loopindex)))
   {
-    cerr<<"Skip reduction recognition for non-canonical for loop"<<endl;
+//    cerr<<"Skip reduction recognition for non-canonical for loop"<<endl;
     return;
   }
   std::set<SgInitializedName*> candidateVars; // scalar variables used within the loop
@@ -18804,87 +19107,22 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
       var_references[initname].push_back(ref_exp);
     }
   }
-  //
+
   //Consider variables referenced at most twice
   std::set<SgInitializedName*>::iterator niter=candidateVars.begin();
   for (; niter!=candidateVars.end(); niter++)
   {
     SgInitializedName* initname = *niter;
     bool isReduction = false;
-    VariantT optype;
+    OmpSupport::omp_construct_enum optype;
     // referenced once only
     if (var_references[initname].size()==1)
     {
-      if(getProject()->get_verbose()>1)
+      if(getProject()->get_verbose()>1) //TODO: a new parameter to control this
         cout<<"Debug: SageInterface::ReductionRecognition() A candidate used once:"<<initname->get_name().getString()<<endl;
       SgVarRefExp* ref_exp = *(var_references[initname].begin());
-      SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp);
-      if (isSgExprStatement(stmt))
-      {
-        SgExpression* exp = isSgExprStatement(stmt)->get_expression();
-        SgExpression* binop = isSgBinaryOp(exp);
-        if (isSgPlusPlusOp(exp)) // x++ or ++x
-        { // Could have multiple reduction clause with different operators!!
-          // So the variable list is associated with each kind of operator
-          optype = V_SgPlusPlusOp;
-          isReduction = true;
-        }
-        else if (isSgMinusMinusOp(exp)) // x-- or --x
-        {
-          optype = V_SgMinusMinusOp;
-          isReduction = true;
-        }
-        else
-        // x binop= expr where binop is one of + * - & ^ |
-        // x must be on the left hand side
-        if (binop!=NULL) {
-          SgExpression* lhs= isSgBinaryOp(exp)->get_lhs_operand ();
-          if (lhs==ref_exp)
-          {
-            switch (exp->variantT())
-            {
-              case V_SgPlusAssignOp:
-                {
-                  optype = V_SgPlusAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgMultAssignOp:
-                {
-                  optype = V_SgMultAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgMinusAssignOp:
-                {
-                  optype = V_SgMinusAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgAndAssignOp:
-                {
-                  optype = V_SgAndAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgXorAssignOp:
-                {
-                  optype = V_SgXorAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgIorAssignOp:
-                {
-                  optype = V_SgIorAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              default:
-                break;
-            } // end
-          }// end if on left side
-        }
-      }
+      if (isSingleAppearanceReduction (ref_exp, optype))
+        isReduction = true; 
     }
     // referenced twice within a same statement
     else if (var_references[initname].size()==2)
@@ -18893,100 +19131,15 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
         cout<<"Debug: A candidate used twice:"<<initname->get_name().getString()<<endl;
       SgVarRefExp* ref_exp1 = *(var_references[initname].begin());
       SgVarRefExp* ref_exp2 = *(++var_references[initname].begin());
-      SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp1);
-      SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref_exp2);
-      if (stmt != stmt2)
-        continue;
-      // must be assignment statement using
-      //  x= x op expr,  x = expr op x (except for subtraction)
-      // one reference on left hand, the other on the right hand of assignment expression
-      // the right hand uses associative operators +, *, -, &, ^ ,|, &&, ||
-      SgExprStatement* exp_stmt =  isSgExprStatement(stmt);
-      if (exp_stmt && isSgAssignOp(exp_stmt->get_expression()))
+      // TODO: recognize  maxV = array[i]>maxV? array[i]:maxV // this can be normalized to if () stmt
+      // TODO: recognize  maxV = max (maxV, array[i])
+      if (isAssignReduction (ref_exp1, ref_exp2, optype) || isIfReduction (ref_exp1, ref_exp2, optype) )
       {
-        SgExpression* assign_lhs=NULL, * assign_rhs =NULL;
-        assign_lhs = isSgAssignOp(exp_stmt->get_expression())->get_lhs_operand();
-        assign_rhs = isSgAssignOp(exp_stmt->get_expression())->get_rhs_operand();
-        ROSE_ASSERT(assign_lhs && assign_rhs);
-        // x must show up in both lhs and rhs in any order:
-        //  e.g.: ref1 = ref2 op exp or ref2 = ref1 op exp
-        if (((assign_lhs==ref_exp1)&&SageInterface::isAncestor(assign_rhs,ref_exp2))
-            ||((assign_lhs==ref_exp2)&&SageInterface::isAncestor(assign_rhs,ref_exp1)))
-        {
-          // assignment's rhs must match the associative binary operations
-          // +, *, -, &, ^ ,|, &&, ||
-          SgBinaryOp * binop = isSgBinaryOp(assign_rhs);
-          if (binop!=NULL){
-            SgExpression* op_lhs = binop->get_lhs_operand();
-            SgExpression* op_rhs = binop->get_rhs_operand();
-            // double check that the binary expression has either ref1 or ref2 as one operand
-            if( !((op_lhs==ref_exp1)||(op_lhs==ref_exp2))
-                && !((op_rhs==ref_exp1)||(op_rhs==ref_exp2)))
-              continue;
-            bool isOnLeft = false; // true if it has form (refx op exp), instead (exp or refx)
-            if ((op_lhs==ref_exp1)||   // TODO might have in between !!
-                (op_lhs==ref_exp2))
-              isOnLeft = true;
-            switch (binop->variantT())
-            {
-              case V_SgAddOp:
-                {
-                  optype = V_SgAddOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgMultiplyOp:
-                {
-                  optype = V_SgMultiplyOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgSubtractOp: // special handle here!!
-                {
-                  optype = V_SgSubtractOp;
-                  if (isOnLeft) // cannot allow (exp - x)a
-                  {
-                    isReduction = true;
-                  }
-                  break;
-                }
-              case V_SgBitAndOp:
-                {
-                  optype = V_SgBitAndOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgBitXorOp:
-                {
-                  optype = V_SgBitXorOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgBitOrOp:
-                {
-                  optype = V_SgBitOrOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgAndOp:
-                {
-                  optype = V_SgAndOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgOrOp:
-                {
-                  optype = V_SgOrOp;
-                  isReduction = true;
-                  break;
-                }
-              default:
-                break;
-            }
-          } // end matching associative operations
-        }
-      } // end if assignop
+        isReduction = true; 
+      }
+
     }// end referenced twice
+
     if (isReduction)
       results.insert(make_pair(initname,optype));
   }// end for ()
@@ -20730,6 +20883,44 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
   return rtval;  
 }
 
+//! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
+//! They may differ in one SgTemplateType pointer but identical otherwise. 
+//! The algorithm is to compare return type and all argument types
+bool SageInterface::isEquivalentFunctionType (const SgFunctionType* lhs, const SgFunctionType* rhs)
+{
+  ROSE_ASSERT (lhs != NULL);
+  ROSE_ASSERT (rhs != NULL);
+  if (lhs == rhs)
+    return true;
+    
+  bool rt = false;
+  SgType* rt1 = lhs->get_return_type();
+  SgType* rt2 = rhs->get_return_type();
+
+  if (isEquivalentType (rt1, rt2))
+  {
+    SgTypePtrList f1_arg_types = lhs->get_arguments();
+    SgTypePtrList f2_arg_types = rhs->get_arguments();
+    // Must have same number of argument types
+    if (f1_arg_types.size() == f2_arg_types.size())
+    {
+      int counter = 0; 
+      //iterate through all argument types
+      for (int i=0; i< f1_arg_types.size(); i++)
+      {
+        if (isEquivalentType (f1_arg_types[i], f2_arg_types[i]) )
+           counter ++;  // count the number of equal arguments 
+        else
+          break; // found different type? jump out the loop
+      }
+      // all arguments are equivalent, set to true
+      if (counter == f1_arg_types.size())
+        rt = true;
+    }
+  } // end if equivalent return types
+
+  return rt; 
+}
 
 bool
 SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
@@ -20807,7 +20998,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         }
 #endif
 
-  // Increment the static variable to control the recursive d3epth while we debug this.
+  // Increment the static variable to control the recursive depth while we debug this.
      counter++;
 
   // DQ (11/28/2015): exit with debug output instead of infinte recursion.
@@ -20815,7 +21006,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // if (counter >= 500)
      if (counter >= 280) 
         {
-          printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+       // printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+          printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s = %p Y_element_type = %s = %p \n",counter,X.class_name().c_str(),lhs,Y.class_name().c_str(),rhs);
         }
 
   // DQ (12/23/2015): ASC application code requires this to be increased to over 122 (selected 300 for extra margin of safety).
@@ -20823,7 +21015,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // if (counter > 300)
   // if (counter > 600)
   // if (counter > 5000)
-     if (counter > 300)
+  // if (counter > 300)
+     if (counter > 350)
         {
        // DQ (11/28/2015): I think this is a reasonable limit.
           printf ("ERROR: In SageInterface::isEquivalentType(): recursive limit exceeded for : counter = %d \n",counter);
@@ -20906,6 +21099,10 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          string str2 = Y_array_index_expression->unparseToString();
                          printf ("   --- array index expressions: str1 = %s str2 = %s \n",str1.c_str(),str2.c_str());
 #endif
+                      // DQ (12/9/2016): Need to decriment the counter as part of recursive function call.
+                         counter--;
+
+                      // Recursive call.
                          return isEquivalentType(X_element_type,Y_element_type);
                        }
                   }
@@ -20939,7 +21136,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                        }
                   }
              }
-        }
+        } // end if reference type, pointer type, array type, and template type
 
      SgModifierType* X_modifierType = isSgModifierType(X_element_type);
      SgModifierType* Y_modifierType = isSgModifierType(Y_element_type);
@@ -21260,6 +21457,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                                    if (X_functionType != NULL || Y_functionType != NULL)
                                       {
                                         bool value = ( (X_functionType != NULL && Y_functionType != NULL) && (X_functionType == Y_functionType) );
+                                        //TODO: Liao, 9/15/2016, better comparison of function types
+                                        //bool value = ( (X_functionType != NULL && Y_functionType != NULL) && (isEquivalentFunctionType(X_functionType, Y_functionType)) );
 #if DEBUG_TYPE_EQUIVALENCE || 0
                                         printf ("In SageInterface::isEquivalentType(): loop: Process case of SgFunctionType: value = %s \n",value ? "true" : "false");
 #endif

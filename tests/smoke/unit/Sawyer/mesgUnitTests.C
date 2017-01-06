@@ -54,6 +54,42 @@ showMessages(const std::vector<std::string> &messages) {
 }
 
 static void
+testConstructors() {
+    PrefixPtr prefix = Prefix::instance();
+    std::ostringstream output;
+    std::ostringstream empty;
+
+    // Main constructor
+    Stream s1("testConstructors", ERROR, StreamSink::instance(output, prefix));
+    s1 <<"pattern 1\n";
+    ASSERT_always_require(output.str().find("pattern 1") != std::string::npos);
+
+    // Main copy constructor
+    Stream s2(s1);
+    s2 <<"pattern 2\n";
+    ASSERT_always_require(output.str().find("pattern 2") != std::string::npos);
+
+    // Copy from std::ostring that is really a Sawyer::Message::Stream
+    Stream s3(s1 <<"");
+    s3 <<"pattern 3\n";
+    ASSERT_always_require(output.str().find("pattern 3") != std::string::npos);
+
+    // Main assignment operator
+    Stream s4("nothing", ERROR, StreamSink::instance(empty, prefix));
+    s4 = s1;
+    s4 <<"pattern 4\n";
+    ASSERT_always_require(empty.str().empty());
+    ASSERT_always_require(output.str().find("pattern 4") != std::string::npos);
+
+    // Assignment from std::ostream that's really a Sawyer::Message::Stream
+    Stream s5("nothing", ERROR, StreamSink::instance(empty, prefix));
+    s5 = (s1 <<"blank\n");
+    s5 <<"pattern 5\n";
+    ASSERT_always_require(empty.str().empty());
+    ASSERT_always_require(output.str().find("pattern 5") != std::string::npos);
+}
+
+static void
 controlImportanceCase() {
     std::cout <<"testing case insensitive importance names in Facilities::control...\n";
 
@@ -192,6 +228,7 @@ facilitiesRename() {
 int
 main() {
     initializeLibrary();
+    testConstructors();
     controlImportanceCase();
     streamRename();
     facilityRename();

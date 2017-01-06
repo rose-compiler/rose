@@ -434,7 +434,7 @@ Engine::partitionerSwitches() {
                    "Functions that are no-ops are given names (if they don't already have one) that's indicative of "
                    "being a no-op. The @s{no-post-function-noop} switch disables this analysis. The default is that "
                    "this analysis is " +
-                   std::string(settings_.partitioner.doingPostFunctionNoop?"enable":"disable") + "."));
+                   std::string(settings_.partitioner.doingPostFunctionNoop?"enabled":"disabled") + "."));
     sg.insert(Switch("no-post-function-noop")
               .key("post-function-noop")
               .intrinsicValue(false, settings_.partitioner.doingPostFunctionNoop)

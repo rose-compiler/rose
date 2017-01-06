@@ -4981,7 +4981,11 @@ HEADER_QUALIFIED_NAME_END
 HEADER_ATTRIBUTE_START
        // SgAttribute(char* str);
           int isSame(const std::string& str);
-          virtual bool isPragma() { return 0; } // MS02/22/02
+
+       // DQ (12/6/2016): This needs to match being const as in the derived class (this also eliminates a compiler warning).
+       // virtual bool isPragma() { return 0; } // MS02/22/02
+          virtual bool isPragma() const { return 0; }
+
        // char *get_name() const;
 
       protected:
@@ -10101,11 +10105,21 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
             // DQ (10/10/2008): The current problem is that this is NULL when the base of an aliased symbol is a SgRenameSymbol.
             // assert(functionSymbol != NULL);
 
+            // Liao 9/15/2016
+            // Allow template function type match. They may have arguments of template types
+            SgFunctionType* f1 = NULL; 
+            if (original_aliased_symbol != NULL && isSgFunctionSymbol(original_aliased_symbol))
+              f1= isSgFunctionType(isSgFunctionSymbol(original_aliased_symbol)->get_declaration()->get_type());
+            SgFunctionType* f2 = NULL; 
+            if (type != NULL)
+              f2 = isSgFunctionType (const_cast <SgType*> (type));
+            bool equavilentFunctionType= ( (f1!= NULL && f2!= NULL) && (SageInterface::isEquivalentFunctionType(f1, f2)) );
+
             // if ( functionSymbol != NULL )
             // if ( original_aliased_symbol != NULL )
             // if ( (original_aliased_symbol != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type))
             // if ( (original_aliased_symbol != NULL) && ( (type == NULL) || (type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type) ) )
-               if ( (original_aliased_symbol != NULL) && ( (type == NULL) || ((type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type)) ) )
+               if ( (original_aliased_symbol != NULL) && ( (type == NULL) || ((type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type || equavilentFunctionType)) ) )
                   {
                  // printf ("Found a valid functionSymbol = %p = %s \n",functionSymbol,functionSymbol->get_name().str());
                     p_name    = nm;

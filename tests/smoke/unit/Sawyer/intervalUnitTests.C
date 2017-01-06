@@ -8,6 +8,7 @@
 #include <Sawyer/Interval.h>
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Optional.h>
+#include <Sawyer/Stopwatch.h>
 #include <boost/foreach.hpp>
 #include <iostream>
 
@@ -934,8 +935,144 @@ static void set_intersection_tests() {
     ASSERT_always_require(*ai==Interval::hull(15, 18));
 }
 
+template<class Interval>
+static void iterator_tests(typename Interval::Value low) {
+    ASSERT_always_require2(low+2 > low, "overflow");
+    std::cerr <<"  empty interval iterators\n";
+
+    Interval empty;
+    ASSERT_always_require(empty.begin() == empty.begin());
+    ASSERT_always_require(empty.end() == empty.end());
+    ASSERT_always_require(empty.begin() == empty.end());
+
+    std::cerr <<"  non-empty interval iterators: hull(" <<low <<", " <<low+3 <<")\n";
+    Interval a = Interval::hull(low, low+2);
+    typename Interval::ConstIterator ai = a.begin();
+    ASSERT_always_require(ai == a.begin());
+    ASSERT_always_require(ai != a.end());
+    ASSERT_always_require(*ai == low+0);
+    ++ai;
+    ASSERT_always_require(ai != a.begin());
+    ASSERT_always_require(ai != a.end());
+    ASSERT_always_require(*ai == low+1);
+    ++ai;
+    ASSERT_always_require(ai != a.begin());
+    ASSERT_always_require(ai != a.end());
+    ASSERT_always_require(*ai == low+2);
+    ++ai;
+    ASSERT_always_require(ai != a.begin());
+    ASSERT_always_require(ai == a.end());
+    --ai;
+    ASSERT_always_require(ai != a.begin());
+    ASSERT_always_require(ai != a.end());
+    ASSERT_always_require(*ai == low+2);
+    --ai;
+    ASSERT_always_require(ai != a.begin());
+    ASSERT_always_require(ai != a.end());
+    ASSERT_always_require(*ai == low+1);
+    --ai;
+    ASSERT_always_require(ai == a.begin());
+    ASSERT_always_require(ai != a.end());
+    ASSERT_always_require(*ai == low+0);
+    --ai;
+    ASSERT_always_require(ai != a.begin());
+    ASSERT_always_require(ai == a.end());
+    ++ai;
+    ASSERT_always_require(ai == a.begin());
+    ASSERT_always_require(ai != a.end());
+    ASSERT_always_require(*ai == low+0);
+
+    std::cerr <<"  BOOST_FOREACH over non-const intervals\n";
+    typename Interval::Value i = low;
+    BOOST_FOREACH (typename Interval::Value j, a.values()) {
+        ASSERT_always_require(i == j);
+        ++i;
+    }
+    i = low;
+    BOOST_FOREACH (typename Interval::Value j, a) {
+        ASSERT_always_require(i == j);
+        ++i;
+    }
+
+    std::cerr <<"  BOOST_FOREACH over const intervals\n";
+    const Interval b = a;
+    i = low;
+    BOOST_FOREACH (typename Interval::Value j, b.values()) {
+        ASSERT_always_require(i == j);
+        ++i;
+    }
+    i = low;
+    BOOST_FOREACH (typename Interval::Value j, b) {
+        ASSERT_always_require(i == j);
+        ++i;
+    }
+
+    std::cerr <<"  BOOST_REVERSE_FOREACH over non-const intervals\n";
+    i = low + 2;
+    BOOST_REVERSE_FOREACH (typename Interval::Value j, a.values()) {
+        ASSERT_always_require(i == j);
+        --i;
+    }
+    i = low + 2;
+    BOOST_REVERSE_FOREACH (typename Interval::Value j, a) {
+        ASSERT_always_require(i == j);
+        --i;
+    }
+
+    std::cerr <<"  BOOST_REVERSE_FOREACH over const intervals\n";
+    i = low + 2;
+    BOOST_REVERSE_FOREACH (typename Interval::Value j, b.values()) {
+        ASSERT_always_require(i == j);
+        --i;
+    }
+    i = low + 2;
+    BOOST_REVERSE_FOREACH (typename Interval::Value j, b) {
+        ASSERT_always_require(i == j);
+        --i;
+    }
+}
+
+unsigned do_something(unsigned i) {
+    static volatile unsigned total = 1;
+    if (1 == i) {
+        total = 1;
+    } else if (i != 0) {
+        total += i;
+    }
+    return total;
+}
+
+#if 0 // [Robb Matzke 2016-12-08]
+static void
+iterator_performance_test() {
+    Sawyer::Container::Interval<unsigned> interval = Sawyer::Container::Interval<unsigned>::baseSize(0, 10000000000);
+    //Sawyer::Container::Interval<unsigned> interval = Sawyer::Container::Interval<unsigned>::baseSize(0, 1000);
+
+    Sawyer::Stopwatch timer;
+    for (unsigned i=interval.least(); i<=interval.greatest(); ++i) {
+        do_something(i);
+        if (i == interval.greatest())
+            break;
+    }
+    timer.stop();
+    std::cout <<"old-style overflow-safe interval loop: total=" <<do_something(0) <<" in " <<timer <<" seconds\n";
+
+    do_something(0);
+    timer.restart();
+    BOOST_FOREACH (unsigned i, interval)
+        do_something(i);
+    timer.stop();
+    std::cout <<"new-style overflow-safe interval loop: total=" <<do_something(0) <<" in " <<timer <<" seconds\n";
+}
+#endif
+
 int main() {
     Sawyer::initializeLibrary();
+
+#if 0 // DEBUGGING [Robb Matzke 2016-12-08]
+    iterator_performance_test();
+    exit(1);
+#endif
 
     // Basic interval tests
     std::cerr <<"=== Basic interval tests for 'unsigned' ===\n";
@@ -949,6 +1086,21 @@ int main() {
     std::cerr <<"=== Basic interval tests for 'boost::uint8_t' ===\n";
     interval_tests<Sawyer::Container::Interval<boost::uint8_t> >();
 
+    // Interval Iterators
+    std::cerr <<"=== Interval iterator tests for 'unsigned' ===\n";
+    iterator_tests<Sawyer::Container::Interval<unsigned> >(3);
+    iterator_tests<Sawyer::Container::Interval<unsigned> >(0); // tests decrement overflow
+    std::cerr <<"=== Interval iterator tests for 'boost::uint8_t' ===\n";
+    iterator_tests<Sawyer::Container::Interval<boost::uint8_t> >(3);
+    iterator_tests<Sawyer::Container::Interval<boost::uint8_t> >(0); // tests decrement overflow
+    iterator_tests<Sawyer::Container::Interval<boost::uint8_t> >(255-3); // tests increment overflow
+    std::cerr <<"=== Interval iterator tests for 'int' ===\n";
+    iterator_tests<Sawyer::Container::Interval<int> >(1);
+    iterator_tests<Sawyer::Container::Interval<int> >(0);
+    iterator_tests<Sawyer::Container::Interval<int> >(-1);
+    iterator_tests<Sawyer::Container::Interval<int> >(-3);
+    iterator_tests<Sawyer::Container::Interval<int> >(-4);
+    
     // Test that Interval can be used in an IntervalMap
     std::cerr <<"=== Interval map tests for 'unsigned' ===\n";
     imap_tests<Sawyer::Container::Interval<unsigned>, int>(1, 2);

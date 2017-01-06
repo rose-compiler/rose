@@ -31,7 +31,7 @@ public:
      *
      *  Shared objects are not typically copy-constructed, but we must support it anyway in case the user wants to
      *  copy-construct some shared object.  The new object has a ref-count of zero. */
-    SharedObject(const SharedObject &other): nrefs_(0) {}
+    SharedObject(const SharedObject&): nrefs_(0) {}
 
     /** Virtual destructor. Verifies that the reference count is zero. */
     virtual ~SharedObject() {
@@ -41,7 +41,7 @@ public:
     /** Assignment.
      *
      *  Assigning one object to another doesn't change the reference count or mutex of either object. */
-    SharedObject& operator=(const SharedObject &other) {
+    SharedObject& operator=(const SharedObject&) {
         return *this;
     }
 };

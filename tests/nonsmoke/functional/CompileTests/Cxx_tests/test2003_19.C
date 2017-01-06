@@ -13,7 +13,14 @@ void foo_int(int i, ...) {
    int arg;
    va_list ap;
    va_start(ap, i);
+
+// arg = va_arg(ap, int);
+   arg = (int)(sizeof(int));
+
+// #define rose_va_arg(a,b) (b)(sizeof(b))
    arg = va_arg(ap, int);
+
+
    va_end(ap);  // use of va_end does not appear to be critical
    printf("given arguments: %d %d\n", i, arg);
 }

@@ -499,7 +499,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   }
                ROSE_ASSERT(declaration == definingDeclaration);
 
-               SgScopeStatement* declarationScope = NULL;
+            // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+            // SgScopeStatement* declarationScope = NULL;
+
                SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(declaration);
                if (memberFunctionDeclaration != NULL)
                   {
@@ -520,8 +522,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          ROSE_ASSERT(declarationScope != NULL);
                        }
 #else
+                 // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
                  // DQ (10/12/2007): This should be a better implementation! Will be NULL if the class definition does not exist.
-                    declarationScope = memberFunctionDeclaration->get_class_scope();
+                 // declarationScope = memberFunctionDeclaration->get_class_scope();
 #endif
                   }
                  else
@@ -529,10 +532,13 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // printf ("Calling declaration->get_startOfConstruct()->display() declaration = %p = %s \n",declaration,declaration->class_name().c_str());
                  // declaration->get_startOfConstruct()->display("declaration location: debug");
                  // declarationScope = declaration->get_scope();
+#if 0
+                 // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
                     if (declaration->hasExplicitScope() == true)
                        {
                          declarationScope = declaration->get_scope();
                        }
+#endif
                   }
 #if 0
                printf ("declaration = %p definingDeclaration = %p \n",declaration,definingDeclaration);
