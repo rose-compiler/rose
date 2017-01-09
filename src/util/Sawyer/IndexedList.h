@@ -15,6 +15,7 @@
 
 #include <boost/range/iterator_range.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <iterator>
 #include <vector>
@@ -305,12 +306,13 @@ private:
     template<class S>
     void save(S &s, const unsigned /*version*/) const {
         size_t n = size();
-        s <<n;
+        s <<BOOST_SERIALIZATION_NVP(n);
         for (const ProtoNode *pnode = head_->next; pnode != head_; pnode = pnode->next) {
             ASSERT_require(n-- > 0);
             size_t id = pnode->dereference().id();
             const Value &value = pnode->dereference().value();
-            s <<id <<value;
+            s <<BOOST_SERIALIZATION_NVP(id);
+            s <<BOOST_SERIALIZATION_NVP(value);
         }
     }
 
