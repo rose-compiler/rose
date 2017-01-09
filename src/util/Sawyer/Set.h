@@ -15,6 +15,7 @@
 #include <boost/range/iterator_range.hpp>
 #include <boost/serialization/serialization.hpp>        // needed by <boost/serialization/set.hpp> in boost 1.58 - 1.60
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/set.hpp>
 #include <vector>
 
@@ -59,7 +60,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & set_;
+        s & BOOST_SERIALIZATION_NVP(set_);
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
