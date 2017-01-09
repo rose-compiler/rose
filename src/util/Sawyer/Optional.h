@@ -10,6 +10,7 @@
 
 #include <Sawyer/Sawyer.h>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <boost/type_traits/aligned_storage.hpp>
 #include <boost/type_traits/type_with_alignment.hpp>
@@ -63,9 +64,9 @@ private:
 
     template<class S>
     void save(S &s, const unsigned /*version*/) const {
-        s <<isEmpty_;
+        s <<BOOST_SERIALIZATION_NVP(isEmpty_);
         if (!isEmpty_)
-            s <<get();
+            s <<boost::serialization::make_nvp("value", get());
     }
 
     template<class S>
