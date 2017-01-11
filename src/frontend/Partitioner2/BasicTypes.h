@@ -292,6 +292,12 @@ struct EngineSettings {
 
 // Additional declarations w/out definitions yet.
 class Partitioner;
+class Function;
+typedef Sawyer::SharedPointer<Function> FunctionPtr;
+class BasicBlock;
+typedef Sawyer::SharedPointer<BasicBlock> BasicBlockPtr;
+class DataBlock;
+typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
 
 } // namespace
 } // namespace

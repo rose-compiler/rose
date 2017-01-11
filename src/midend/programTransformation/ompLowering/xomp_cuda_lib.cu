@@ -10,6 +10,9 @@ Liao 4/11/2012
 //----------------------------------------------------
 // Device xomp_cuda_property retrieving functions
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 DDE** DDE_head;
 DDE** DDE_tail;
 
@@ -17,6 +20,10 @@ int xomp_num_devices = -1;
 int xomp_max_num_devices =  -1; // -1 means un-initialized
 
 void** xomp_cuda_prop; 
+#ifdef __cplusplus
+}
+#endif
+
 bool xomp_verbose = false;
 
 /* Set the device id to be used by the current task */
