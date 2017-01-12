@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo varwatch
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo varwatch
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo
 
 CLEANFILES = 
 
@@ -379,38 +379,6 @@ REGRESSION_DATA_DIR=regressiondata
 
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
-# MS: matcher_demo
-matcher_demo_DEPENDENCIES=libspray.la
-matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-matcher_demo_SOURCES = Timer.cpp matcher_demo.C
-BUILT_SOURCES = 
-AM_YFLAGS =
-AM_LFLAGS =
-
-varwatch_DEPENDENCIES=libspray.la
-varwatch_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
-
-#rdmain_LDADD = -lrose
-#rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
-  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
-  DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  UDAstAttribute.h                 \
-  UDAstAttribute.C                 \
-  Miscellaneous.C                  \
-  Miscellaneous.h                  \
-  ProgramStats.h                 \
-  ProgramStats.C                 \
-  Flow.h \
-  Flow.C \
-  DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  PropertyState.h \
-  PropertyState.C \
-  FIPointerAnalysis.h \
-  FIPointerAnalysis.C \
-  rdmain.C 
-
 woodpecker_DEPENDENCIES=libspray.la
 woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize
@@ -494,6 +462,15 @@ analyterix_SOURCES = \
 #	cat lex.yy.c y.tab.c > matcherparser.C
 #	rm lex.yy.c y.tab.c
 
+# MS: matcher_demo
+matcher_demo_DEPENDENCIES=libspray.la
+matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+matcher_demo_SOURCES = Timer.cpp matcher_demo.C
+BUILT_SOURCES = 
+AM_YFLAGS =
+AM_LFLAGS =
+
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
 #iterator_test_LDADD = -lrose libmatcher.la
@@ -502,7 +479,6 @@ analyterix_SOURCES = \
 #ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
-
 
 check-local:
 	@echo ================================================================
