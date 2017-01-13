@@ -2,6 +2,7 @@
 // This avoids requiring the user to use rose_config.h and follows 
 // the automake manual request that we use <> instead of ""
 #include <rose_config.h>
+#include <rosePublicConfig.h>
 // #endif
 
 #include "StringUtility.h"
@@ -115,7 +116,11 @@ CommandlineProcessing::genericSwitches() {
     // Therefore we'll have to use our own version string function.
     gen.insert(Switch("version", 'V')
                .action(showVersionAndExit(utilVersionString(), 0))
-               .doc("Shows version information for various ROSE components and then exits."));
+               .doc("Shows version information for various ROSE components and then exits. The shorter @s{vers} switch "
+                    "shows only the dotted quad of the ROSE library itself."));
+    gen.insert(Switch("vers")
+               .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
+               .hidden(true));
 
     // Control how a failing assertion acts. It could abort, exit with non-zero, or throw rose::Diagnostics::FailedAssertion.
     gen.insert(Switch("assert")
