@@ -5,6 +5,11 @@
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
+#ifdef ROSE_HAVE_DLIB
+    #include <dlib/matrix.h>
+    #include <dlib/optimization.h>
+#endif
+
 namespace rose {
 namespace BinaryAnalysis {
 
@@ -86,6 +91,34 @@ public:
 
     /** Diagnostic streams */
     static Sawyer::Message::Facility mlog;
+
+    /** Square matrix representing distances. */
+    class DistanceMatrix {
+#ifdef ROSE_HAVE_DLIB
+    private:
+        dlib::matrix<double> data_;
+    public:
+        explicit DistanceMatrix(size_t n): data_(n, n) {}
+        long nr() const { return data_.nr(); }
+        long nc() const { return data_.nc(); }
+        double& operator()(long i, long j) { return data_(i, j); }
+        double operator()(long i, long j) const { return data_(i, j); }
+        const dlib::matrix<double>& dlib() const { return data_; }
+#else
+    private:
+        std::vector<std::vector<double> > data_;
+    public:
+        explicit DistanceMatrix(size_t n): data_(n, std::vector<double>(n, 0.0)) {}
+        long nr() const { return data_.size(); }
+        long nc() const { return data_.empty() ? (size_t)0 : data_[0].size(); }
+        double& operator()(long i, long j) { return data_[i][j]; }
+        double operator()(long i, long j) const { return data_[i][j]; }
+        // dlib::matrix<double> &dlib() -- cannot do this here since there's no dlib
+#endif
+    public:
+        long size() const { return nr()*nc(); }
+    };
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Private types and data members
@@ -388,6 +421,27 @@ public:
      *
      *  This is a multi-line output intended for debugging. */
     void printCharacteristicValues(std::ostream&) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Utility functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Cartesian distance between two points. */
+    static double cartesianDistance(const FunctionSimilarity::CartesianPoint&, const FunctionSimilarity::CartesianPoint&);
+
+    /** Find minimum mapping from rows to columns.
+     *
+     *  Finds a 1:1 mapping from rows to columns of the specified square matrix such that the total cost is minimized. Returns
+     *  a vector V such that V[i] = j maps rows i to columns j.
+     *
+     *  This function will only work if ROSE has been compiled with dlib support. */
+    static std::vector<long> findMinimumAssignment(const DistanceMatrix&);
+
+    /** Total cost of a mapping.
+     *
+     *  Given a square matrix and a 1:1 mapping from rows to columns, return the total cost of the mapping. The @p assignment
+     *  is like the value returned by @ref findMinimumAssignment. */
+    static double totalAssignmentCost(const DistanceMatrix&, const std::vector<long> &assignment);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Internal functions
