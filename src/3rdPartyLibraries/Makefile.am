@@ -24,14 +24,7 @@ else
 SUBDIRS += MSTL libharu-2.1.0 antlr-jars qrose
 endif
 
-# DQ (12/18/2016): Disable use of POET on DEBIAN and UBUNTU systems because 
-# its built system is not sufficently general to avoid linking issues.
-# SUBDIRS += POET
-if !OS_VENDOR_UBUNTU
-if !OS_VENDOR_DEBIAN
-   SUBDIRS += POET
-endif
-endif
+SUBDIRS += POET
 
 # Pei-Hung (12/17/2014): installing POCC
 if ROSE_WITH_POCC
