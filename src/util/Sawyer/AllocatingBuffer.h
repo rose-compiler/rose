@@ -12,9 +12,11 @@
 #include <Sawyer/Sawyer.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/vector.hpp>
 #include <cstring>                                      // memcpy
 #include <string>
-#include <vector>
 
 namespace Sawyer {
 namespace Container {
@@ -26,15 +28,27 @@ namespace Container {
 template<class A, class T>
 class AllocatingBuffer: public Buffer<A, T> {
 public:
-    typedef A Address;                                  /** Type of addresses used to index the stored data. */
-    typedef T Value;                                    /** Type of data that is stored. */
+    typedef A Address;                                  /**< Type of addresses used to index the stored data. */
+    typedef T Value;                                    /**< Type of data that is stored. */
+    typedef Buffer<A, T> Super;                         /**< Type of base class. */
 
 private:
     Address size_;
     std::vector<Value> values_;
 
+private:
+    friend class boost::serialization::access;
+
+    // Users: You'll need to register the subclass once you know its type, such as
+    // BOOST_CLASS_REGISTER(Sawyer::Container::AllocatingBuffer<size_t,uint8_t>);
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & boost::serialization::base_object<Super>(*this);
+        s & size_ & values_;
+    }
+
 protected:
-    AllocatingBuffer(Address size): size_(size), values_(size) {}
+    explicit AllocatingBuffer(Address size = 0): Super(".AllocatingBuffer"), size_(size), values_(size) {}
 
 public:
     /** Allocating constructor.
@@ -45,6 +59,15 @@ public:
         return typename Buffer<A, T>::Ptr(new AllocatingBuffer(size));
     }
 
+    /** Allocating constructor.
+     *
+     *  Allocates a new buffer that points to a copy of the specified string. */
+    static typename Buffer<A, T>::Ptr instance(const std::string &s) {
+        typename Buffer<A, T>::Ptr retval(new AllocatingBuffer(s.size()));
+        retval->write(s.c_str(), 0, s.size());
+        return retval;
+    }
+    
     typename Buffer<A, T>::Ptr copy() const /*override*/ {
         typename Buffer<A, T>::Ptr newBuffer = instance(this->size());
         Address nWritten = newBuffer->write(&values_[0], 0, this->size());

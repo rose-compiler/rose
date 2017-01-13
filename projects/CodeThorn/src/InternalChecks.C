@@ -18,8 +18,13 @@
 #include "Timer.h"
 #include <cstdio>
 #include <cstring>
-#include <boost/program_options.hpp>
 #include <map>
+
+#ifdef USE_SAWYER_COMMANDLINE
+#include "Sawyer/CommandLineBoost.h"
+#else
+#include <boost/program_options.hpp>
+#endif
 
 #ifndef EXCLUDE_RDANALYSIS
 #include "RDLattice.h"
@@ -67,7 +72,11 @@ bool CodeThorn::internalChecks(int argc, char *argv[]) {
   return checkresult;
 }
 
+#ifdef USE_SAWYER_COMMANDLINE
+
+#else
 namespace po = boost::program_options;
+#endif
 
 // this function reports the results of checks
 // if the passed argument is true the check is PASS, otherwise FAIL.

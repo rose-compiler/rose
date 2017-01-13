@@ -14,6 +14,8 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
 
+#include <boost/serialization/access.hpp>
+
 namespace Sawyer {
 namespace Container {
 
@@ -42,11 +44,22 @@ public:
     typedef I Interval;
     typedef T Value;
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S&, const unsigned /*version*/) {
+        // nothing to serialize in this class
+    }
+
+public:
     /** Merge two values if possible.
      *
      *  The @p rightValue is merged into the @p leftValue if possible, or this method returns false without changing either
      *  value.  After a successful merge, the @p rightValue will be removed from the IntervalMap and its destructor called. */
     bool merge(const Interval &leftInterval, Value &leftValue, const Interval &rightInterval, Value &rightValue) {
+        SAWYER_ARGUSED(leftInterval);
+        SAWYER_ARGUSED(rightInterval);
         return leftValue == rightValue;
     }
 
@@ -56,13 +69,21 @@ public:
      *  splitPoint argument is the split point and becomes the least value of the right interval. The @p value argument is
      *  modified in place to become the left value, and the right value is returned. This method is only invoked when the
      *  result would be two non-empty intervals. */
-    Value split(const Interval &interval, Value &value, const typename Interval::Value &splitPoint) { return value; }
+    Value split(const Interval &interval, Value &value, const typename Interval::Value &splitPoint) {
+        SAWYER_ARGUSED(interval);
+        SAWYER_ARGUSED(splitPoint);
+        return value;
+    }
 
     /** Discard the right part of a value.
      *
      *  This method is the same as @ref split except the right part of the resulting value is discarded.  This is sometimes
      *  more efficient than calling @ref split and then destroying the return value. */
-    void truncate(const Interval &interval, Value &value, const typename Interval::Value &splitPoint) {}
+    void truncate(const Interval &interval, Value &value, const typename Interval::Value &splitPoint) {
+        SAWYER_ARGUSED(interval);
+        SAWYER_ARGUSED(value);
+        SAWYER_ARGUSED(splitPoint);
+    }
 };
 
 /** An associative container whose keys are non-overlapping intervals.
@@ -203,6 +224,16 @@ private:
     Map map_;
     Policy policy_;
     typename Interval::Value size_;                     // number of values (map_.size is number of intervals)
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & map_;
+        s & policy_;
+        s & size_;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -871,7 +902,7 @@ public:
 
     template<typename T2, class Policy2>
     bool isOverlapping(const IntervalMap<Interval, T2, Policy2> &other) const {
-        return findFirstOverlap(other).first!=nodes().end();
+        return findFirstOverlap(nodes().begin(), other, other.nodes().begin()).first != nodes().end();
     }
 
     bool isDistinct(const Interval &interval) const {

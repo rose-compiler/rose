@@ -122,12 +122,18 @@ if ROSE_HAVE_DLIB
   ROSE_DLIB_LIBS_WITH_PATH =
 endif
 
+# DQ (11/4/2016): Adding support for use of Address Sanitizer (for where the ROSE Test Handler (RTH) is used.
+# Note the quotes and escapes that are required:
+ADDRESS_SANITIZER_OPTIONS = "ASAN_OPTIONS=symbolize=1:detect_leaks=0 ASAN_SYMBOLIZER_PATH=\`which llvm-symbolizer\`"
+
+# DQ(11/4/2016): Need a version when not using the ROSE Test Handler (RTH):
+NON_RTH_ADDRESS_SANITIZER_OPTIONS = ASAN_OPTIONS=symbolize=1:detect_leaks=0 ASAN_SYMBOLIZER_PATH=`which llvm-symbolizer`
 
 GLUT_LIBS = ${glut_path}
 
 # ROSE-DWARF libdwarf support
-if ROSE_USE_DWARF
-  ROSE_DWARF_INCLUDES = -I$(dwarf_path)
+if ROSE_HAVE_LIBDWARF
+  ROSE_DWARF_INCLUDES = $(LIBDWARF_CPPFLAGS)
 
 # DQ (3/13/2009): These do not appear to be used anywhere.
 # ROSE_DWARF_LIBS = -ldwarf
@@ -151,10 +157,10 @@ if ROSE_USE_INTEL_PIN
 else
 # DQ (3/15/2009): Use the usual static linking when not using Intel Pin (what we used to do).
 # DQ (3/13/2009): Fixup libdwarf support in ROSE to always use the dynamic (shared) library.
-# ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(dwarf_path) -L$(dwarf_path) -ldwarf -lelf
+# ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(LIBDWARF_PREFIX/lib) -L$(LIBDWARF_PREFIX/lib) -ldwarf -lelf
 # DQ (6/5/2010): Fixed to use the value set in the configure step (requires the dynamic library).
-# ROSE_DWARF_LIBS_WITH_PATH = $(dwarf_path)/libdwarf.a -lelf
-  ROSE_DWARF_LIBS_WITH_PATH = @DWARF_LINK@
+# ROSE_DWARF_LIBS_WITH_PATH = $(LIBDWARF_PREFIX)/lib/libdwarf.a -lelf
+  ROSE_DWARF_LIBS_WITH_PATH = @LIBDWARF_LDFLAGS@
 endif
 endif
 
@@ -198,7 +204,7 @@ if ROSE_USE_INTEL_PIN
 
 # Do we want to handle this differently when Dwarf is used optionally with ROSE.
   INTEL_PIN_LIBS          = -lpin -lxed -ldwarf -lelf -ldl
-#if ROSE_USE_DWARF
+#if ROSE_HAVE_LIBDWARF
 #  INTEL_PIN_LIBS          = -lpin -lxed -lelf -ldl
 #else
 #  INTEL_PIN_LIBS          = -lpin -lxed -ldwarf -lelf -ldl
@@ -530,10 +536,6 @@ ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 # with make distcheck rule 
 # -lannotationLanguageParser(appears after -lvaluePropagation)
 
-# Location of sample binary files (executables, libraries, etc) that serve as input to
-# some of the binary analysis tests.
-BINARY_SAMPLES = $(top_srcdir)/binaries/samples
-
 # Test harness variables. See "rth_run.pl --help" for more info.  The RTH_RUN_FLAGS is meant to be set on the
 # "make" command-line, but the default depends on the value of the verbosity $(V) flag.
 
@@ -545,7 +547,7 @@ RTH_RUN_FLAGS = $(RTH_RUN_FLAGS_V_$(V))
 RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	srcdir=$(abspath $(srcdir)) top_srcdir=$(abspath $(top_srcdir)) \
 	blddir=$$(pwd) top_blddir=$(abspath $(top_builddir)) \
-	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
+	VALGRIND=$(VALGRIND)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 
@@ -553,3 +555,44 @@ RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 # (depreicated in automake and for which many warnings are generated).
 CPPFLAGS = $(AM_CPPFLAGS)
 
+# Temporary workaround for lack of AM_EXTRA_RECURSIVE_TARGETS in automake 1.11 and 1.12 [Matzke, 2016-09-14]
+# The check for "." is because $ROSE/tests adds "." to SUBDIRS which would otherwise result in infinite recursion.
+# The checks for other names are because we don't want to recurse into some directories that don't include this
+# file and therefore don't have this rule (but that means these names can't be test subdirecties elsewhere either).
+check-smoke check-nonsmoke check-all:
+	@for subdir in $(SUBDIRS); do						\
+		if [ "$$subdir" != .						\
+			-a "$$subdir" != libltdl				\
+			-a "$$subdir" != config					\
+			-a "$$subdir" != EDG					\
+			-a "$$subdir" != DLX					\
+			-a "$$subdir" != MFB					\
+			-a "$$subdir" != MDCG					\
+			-a "$$subdir" != KLT					\
+			-a "$$subdir" != 3rdPartyLibraries			\
+			-a "$$subdir" != roseHPCToolkit				\
+			-a "$$subdir" != projects				\
+			-a "$$subdir" != docs					\
+			-a "$$subdir" != tools ]; then				\
+			echo "Making $@ in $$subdir";				\
+			$(MAKE) $(AM_MAKEFLAGS) -C "$$subdir" $@ || exit 1;	\
+		fi;								\
+	done
+	$(MAKE) $(AM_MAKEFLAGS) $@-local
+
+check-smoke-local check-nonsmoke-local:
+check-all-local: check-smoke-local check-nonsmoke-local
+
+# Temporary until Jenkins and the Matrix are fixed to run "make check-all" isntead of "make check".  The correct version
+# should be that check-local depends only on check-smoke-local. [Matzke, 2016-09-21].
+check-local: check-smoke-local check-nonsmoke-local
+
+clean-test-targets:
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)
+	rm -f $(TEST_TARGETS:.passed=.out)
+	rm -f $(TEST_TARGETS:.passed=.err)
+
+clean-local: clean-test-targets
+
+.PHONY: check-smoke check-nonsmoke check-all check-smoke-local check-nonsmoke-local check-all-local clean-test-targets

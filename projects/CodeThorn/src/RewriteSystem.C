@@ -4,6 +4,16 @@
 
 using namespace std;
 using namespace SPRAY;
+using namespace Sawyer::Message;
+
+Sawyer::Message::Facility RewriteSystem::logger = [](){
+  Facility log("RewriteSystem");
+  mfacilities.insert(log);
+  return log;
+}();
+
+RewriteSystem::RewriteSystem():_rewriteCondStmt(false) {
+}
 
 RewriteStatistics RewriteSystem::getRewriteStatistics() {
   return dump1_stats;
@@ -21,7 +31,7 @@ void RewriteStatistics::init() {
   numArrayUpdates=0;
   numConstExprElim=0;
 }
-void RewriteStatistics::reset() { 
+void RewriteStatistics::reset() {
   init();
 }
 RewriteStatistics RewriteSystem::getStatistics() {
@@ -67,7 +77,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
     }
   }
   size_t assignOpNum=assignOpList.size();
-  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: started."<<endl;
+  logger[INFO] <<"transforming "<<assignOpNum<<" compound assignment expressions: started."<<endl;
   size_t assignOpNr=1;
   Timer timer;
   double buildTime=0.0, replaceTime=0.0;
@@ -83,11 +93,11 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
       replaceTime+=timer.getElapsedTimeInMilliSec();
       assignOpNr++;
     } else {
-      cout<<"WARNING: not an expression. transformation not applied: "<<(*i)->class_name()<<":"<<(*i)->unparseToString()<<endl;
+      logger[WARN]<<"not an expression. transformation not applied: "<<(*i)->class_name()<<":"<<(*i)->unparseToString()<<endl;
     }
     //cout<<"Buildtime: "<<buildTime<<" Replacetime: "<<replaceTime<<endl;
   }
-  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
+  logger[INFO]<<"transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
 }
 
 SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {
@@ -177,10 +187,63 @@ void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping*
 #endif
 }
 
- 
- // rewrites an AST
- // requirements: all variables have been replaced by constants
- // uses AstMatching to match patterns.
+void RewriteSystem::rewriteCondStmtInAst(SgNode* root) {
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgNodeHelper::isCondStmt(*i)) {
+      rewriteCondStmt(*i);
+    }
+  }
+}
+
+void RewriteSystem::rewriteCondStmt(SgNode* condStmt) {
+  if(SgNodeHelper::isCondStmt(condStmt) /*&& !isSgSwitchStatement(condStmt)*/) {
+    ROSE_ASSERT(isSgStatement(condStmt));
+    SgNode* cond=SgNodeHelper::getCond(condStmt);
+    cout<<"DEBUG: cond:"<<cond->unparseToString()<<endl;
+    //SgStatementExpression* normalizedCond=SageBuilder::buildStatementExpression(isSgStatement(cond));
+    SgStatement* normalizedCond=SageBuilder::buildBasicBlock(isSgStatement(cond));
+    cout<<"DEBUG: condStmt:"<<condStmt->unparseToString()<<":"<<condStmt->class_name()<<endl;
+    //cout<<"DEBUG: gnu     :"<<gnuStmtExpr->unparseToString()<<endl;
+    SgNodeHelper::setCond(isSgStatement(condStmt),normalizedCond);
+  }
+}
+
+void RewriteSystem::setRewriteCondStmt(bool flag) {
+  _rewriteCondStmt=flag;
+}
+
+bool RewriteSystem::getRewriteCondStmt() {
+  return _rewriteCondStmt;
+}
+
+void RewriteSystem::normalizeFloatingPointNumbersForUnparsing(SgNode*& root) {
+  RoseAst ast(root);
+  //cout<<"DEBUG:FF:"<<root->unparseToString()<<endl;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    // due to lack of a common base class this testing has to be done for each class
+    if(SgFloatVal* val=isSgFloatVal(*i)) {
+      if(val->get_valueString()!="") {
+        //cout<<"DEBUG:"<<val->get_valueString()<<endl;
+        val->set_valueString("");
+      }
+    } else if(SgDoubleVal* val=isSgDoubleVal(*i)) {
+      if(val->get_valueString()!="") {
+        //cout<<"DEBUG:"<<val->get_valueString()<<endl;
+        val->set_valueString("");
+      }
+    } else if(SgLongDoubleVal* val=isSgLongDoubleVal(*i)) {
+      if(val->get_valueString()!="") {
+        //cout<<"DEBUG:"<<val->get_valueString()<<endl;
+        val->set_valueString("");
+      }
+    }
+  }
+}
+
+// rewrites an AST
+// requirements: all variables have been replaced by constants
+// uses AstMatching to match patterns.
 void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace, bool ruleAddReorder, bool performCompoundAssignmentsElimination) {
    //  cout<<"Rewriting AST:"<<endl;
    bool someTransformationApplied=false;
@@ -193,128 +256,131 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
       3) constant folding (leave nodes)
    */
 
-   if(performCompoundAssignmentsElimination)
-   {
+   if(getRewriteCondStmt()) {
+     rewriteCondStmtInAst(root);
+   }
+
+   if(performCompoundAssignmentsElimination) {
      rewriteCompoundAssignments(root,variableIdMapping);
    }
 
-   do{
-     someTransformationApplied=false;
-
-
- do {
-     // Rewrite-rule 1: $UnaryOpSg=MinusOp($IntVal1=SgIntVal) => SgIntVal.val=-$Intval.val
-     transformationApplied=false;
-     MatchResult res=m.performMatching(
-                                       "$UnaryOp=SgMinusOp($IntVal=SgIntVal)\
-                                       ",root);
-     if(res.size()>0) {
-       for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
-         // match found
-         SgExpression* op=isSgExpression((*i)["$UnaryOp"]);
-         SgIntVal* val=isSgIntVal((*i)["$IntVal"]);
-         //cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
-         int rawval=val->get_value();
-         // replace with folded value (using integer semantics)
-         switch(op->variantT()) {
-         case V_SgMinusOp:
-           SgNodeHelper::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
-           break;
-         default:
-           cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
-           exit(1);
-         }
-         transformationApplied=true;
-         someTransformationApplied=true;
-         dump1_stats.numElimMinusOperator++;
-       }
-     }
-  } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
-
- if(ruleAddReorder) {
    do {
-     // the following rules guarantee convergence
+     someTransformationApplied=false;
+     do {
+       // Rewrite-rule 1: $UnaryOpSg=MinusOp($IntVal1=SgIntVal) => SgIntVal.val=-$Intval.val
+       transformationApplied=false;
+       MatchResult res=m.performMatching("$UnaryOp=SgMinusOp($IntVal=SgIntVal)",root);
+       if(res.size()>0) {
+         for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+           // match found
+           SgExpression* op=isSgExpression((*i)["$UnaryOp"]);
+           SgIntVal* val=isSgIntVal((*i)["$IntVal"]);
+           //cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
+           int rawval=val->get_value();
+           // replace with folded value (using integer semantics)
+           switch(op->variantT()) {
+           case V_SgMinusOp:
+             SgNodeHelper::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
+             break;
+           default:
+             cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
+             exit(1);
+           }
+           transformationApplied=true;
+           someTransformationApplied=true;
+           dump1_stats.numElimMinusOperator++;
+         }
+       }
+     } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
      
-     // REWRITE: re-ordering (normalization) of expressions
-     // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
-     //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
-     transformationApplied=false;
-     MatchResult res=m.performMatching("$BinaryOp1=SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal)",root);
-     if(res.size()>0) {
-       for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
-         // match found
-         SgExpression* other=isSgExpression((*i)["$Other"]);
-         if(other) {
-           if(!isSgIntVal(other) && !isSgFloatVal(other) && !isSgDoubleVal(other)) {
-             //SgNode* op1=(*i)["$BinaryOp1"];
-             SgExpression* val=isSgExpression((*i)["$IntVal"]);
-             //cout<<"FOUND: "<<op1->unparseToString()<<endl;
-             if(rewriteTrace)
-               cout<<"Rule AddOpReorder: "<<((*i)["$BinaryOp1"])->unparseToString()<<" => ";
-             // replace op1-rhs with op2-rhs
-             SgExpression* other_copy=SageInterface::copyExpression(other);
-             SgExpression* val_copy=SageInterface::copyExpression(val);
-             SgNodeHelper::replaceExpression(other,val_copy,false);
-             SgNodeHelper::replaceExpression(val,other_copy,false);
-             //cout<<"REPLACED: "<<op1->unparseToString()<<endl;
-             transformationApplied=true;
-             someTransformationApplied=true;
-             if(rewriteTrace)
-               cout<<((*i)["$BinaryOp1"])->unparseToString()<<endl;
-             dump1_stats.numAddOpReordering++;
-           }       
+     if(ruleAddReorder) {
+       do {
+         // the following rules guarantee convergence
+         
+         // REWRITE: re-ordering (normalization) of expressions
+         // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
+         //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
+         transformationApplied=false;
+         MatchResult res=m.performMatching("$BinaryOp1=SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal)",root);
+         if(res.size()>0) {
+           for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+             // match found
+             SgExpression* other=isSgExpression((*i)["$Other"]);
+             if(other) {
+               if(!isSgIntVal(other) && !isSgFloatVal(other) && !isSgDoubleVal(other)) {
+                 //SgNode* op1=(*i)["$BinaryOp1"];
+                 SgExpression* val=isSgExpression((*i)["$IntVal"]);
+                 //cout<<"FOUND: "<<op1->unparseToString()<<endl;
+                 if(rewriteTrace) {
+                   cout<<"Rule AddOpReorder: "<<((*i)["$BinaryOp1"])->unparseToString()<<" => ";
+                 }
+                 // replace op1-rhs with op2-rhs
+                 SgExpression* other_copy=SageInterface::copyExpression(other);
+                 SgExpression* val_copy=SageInterface::copyExpression(val);
+                 SgNodeHelper::replaceExpression(other,val_copy,false);
+                 SgNodeHelper::replaceExpression(val,other_copy,false);
+                 //cout<<"REPLACED: "<<op1->unparseToString()<<endl;
+                 transformationApplied=true;
+                 someTransformationApplied=true;
+                 if(rewriteTrace)
+                   cout<<((*i)["$BinaryOp1"])->unparseToString()<<endl;
+                 dump1_stats.numAddOpReordering++;
+               }       
+             }
+           }
          }
-       }
+       } while(transformationApplied);
      }
-   } while(transformationApplied);
- }
-
-   // REWRITE: constant folding of constant integer (!) expressions
-   // we intentionally avoid folding of float values
- do {
-     // Rewrite-rule 2: SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) => SgIntVal
-     //                 where SgIntVal.val=$IntVal1.val+$IntVal2.val
-     transformationApplied=false;
-     MatchResult res=m.performMatching(
-                                       "$BinaryOp1=SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
-                                       |$BinaryOp1=SgSubtractOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
-                                       |$BinaryOp1=SgMultiplyOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
-                                       |$BinaryOp1=SgDivideOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
-                                       ",root);
-     if(res.size()>0) {
-       for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
-         // match found
-         SgExpression* op1=isSgExpression((*i)["$BinaryOp1"]);
-         SgIntVal* val1=isSgIntVal((*i)["$IntVal1"]);
-         SgIntVal* val2=isSgIntVal((*i)["$IntVal2"]);
-         //cout<<"FOUND CONST: "<<op1->unparseToString()<<endl;
-         int rawval1=val1->get_value();
-         int rawval2=val2->get_value();
+     
+     // REWRITE: constant folding of constant integer (!) expressions
+     // we intentionally avoid folding of float values
+     do {
+       // Rewrite-rule 2: SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) => SgIntVal
+       //                 where SgIntVal.val=$IntVal1.val+$IntVal2.val
+       transformationApplied=false;
+       MatchResult res=m.performMatching(
+                                         "$BinaryOp1=SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
+                                       | $BinaryOp1=SgSubtractOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) \
+                                       | $BinaryOp1=SgMultiplyOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) \
+                                       | $BinaryOp1=SgDivideOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) \
+                                         ",root);
+       if(res.size()>0) {
+         for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+           // match found
+           SgExpression* op1=isSgExpression((*i)["$BinaryOp1"]);
+           SgIntVal* val1=isSgIntVal((*i)["$IntVal1"]);
+           SgIntVal* val2=isSgIntVal((*i)["$IntVal2"]);
+           //cout<<"FOUND CONST: "<<op1->unparseToString()<<endl;
+           int rawval1=val1->get_value();
+           int rawval2=val2->get_value();
          // replace with folded value (using integer semantics)
-         switch(op1->variantT()) {
-         case V_SgAddOp:
-           SgNodeHelper::replaceExpression(op1,SageBuilder::buildIntVal(rawval1+rawval2),false);
+           switch(op1->variantT()) {
+           case V_SgAddOp:
+             SgNodeHelper::replaceExpression(op1,SageBuilder::buildIntVal(rawval1+rawval2),false);
+             break;
+           case V_SgSubtractOp:
+             SgNodeHelper::replaceExpression(op1,SageBuilder::buildIntVal(rawval1-rawval2),false);
            break;
-         case V_SgSubtractOp:
-           SgNodeHelper::replaceExpression(op1,SageBuilder::buildIntVal(rawval1-rawval2),false);
-           break;
-         case V_SgMultiplyOp:
-           SgNodeHelper::replaceExpression(op1,SageBuilder::buildIntVal(rawval1*rawval2),false);
-           break;
-         case V_SgDivideOp:
-           SgNodeHelper::replaceExpression(op1,SageBuilder::buildIntVal(rawval1/rawval2),false);
-           break;
-         default:
-           cerr<<"Error: rewrite phase: unsopported operator in matched expression. Bailing out."<<endl;
-           exit(1);
+           case V_SgMultiplyOp:
+             SgNodeHelper::replaceExpression(op1,SageBuilder::buildIntVal(rawval1*rawval2),false);
+             break;
+           case V_SgDivideOp:
+             SgNodeHelper::replaceExpression(op1,SageBuilder::buildIntVal(rawval1/rawval2),false);
+             break;
+           default:
+             cerr<<"Error: rewrite phase: unsopported operator in matched expression. Bailing out."<<endl;
+             exit(1);
+           }
+           transformationApplied=true;
+           someTransformationApplied=true;
+           dump1_stats.numConstantFolding++;
          }
-         transformationApplied=true;
-         someTransformationApplied=true;
-         dump1_stats.numConstantFolding++;
        }
-     }
-  } while(transformationApplied);
- //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
+     } while(transformationApplied);
+     
+     normalizeFloatingPointNumbersForUnparsing(root);
+     //eliminateSuperfluousCasts(root);
+     
+     //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
    } while(someTransformationApplied);
 }
-

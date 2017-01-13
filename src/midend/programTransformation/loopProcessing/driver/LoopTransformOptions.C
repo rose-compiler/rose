@@ -198,7 +198,9 @@ class ReuseDistOpt : public LoopTransformOptions::OptRegistryType
 };
                                                                                                                                                                                                      
 LoopTransformOptions:: LoopTransformOptions()
-       : cpOp(0), parOp(0), cacheline(16), reuseDist(8), splitlimit(20)
+// DQ (12/6/2016): Fixed order to eliminate warning we want to be an error: -Wreorder.
+// : cpOp(0), parOp(0), cacheline(16), reuseDist(8), splitlimit(20)
+   : parOp(0), cpOp(0), cacheline(16), reuseDist(8), splitlimit(20)
 {
    icOp =  new ArrangeOrigNestingOrder() ;
    fsOp = new SameLevelFusion( new OrigLoopFusionAnal() );
@@ -207,7 +209,8 @@ LoopTransformOptions:: LoopTransformOptions()
 
 LoopTransformOptions::~LoopTransformOptions() 
 { 
-  delete icOp; delete fsOp; 
+  delete icOp; 
+  delete fsOp; 
   if (bkOp != 0) 
      delete bkOp; 
   if (cpOp != 0)

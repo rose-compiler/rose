@@ -295,6 +295,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseCompInit                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseConInit                 (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseAssnInit                (SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (11/15/2016): Adding support for braced initializer node.
+          virtual void unparseBracedInit              (SgExpression* expr, SgUnparse_Info& info);
+
           virtual void unparseThrowOp                 (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseVarArgStartOp           (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseVarArgStartOneOperandOp (SgExpression* expr, SgUnparse_Info& info);
@@ -387,6 +391,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
        // DQ (9/7/2014): Support for unparsing of the template header within template declarations (I think this only applies to template member and non-member functions).
           virtual void unparseTemplateHeader(SgFunctionDeclaration* functionDeclaration, SgUnparse_Info& info);
+
+       // DQ (9/11/2016): Adding symetric support for template class declarations.
+          virtual void unparseTemplateHeader(SgClassDeclaration* classDeclaration, SgUnparse_Info& info);
 
        // DQ (12/26/2011): Supporting function for all template declarations (initially at least).
           template<class T> void unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info);

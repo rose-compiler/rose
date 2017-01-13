@@ -6,6 +6,7 @@
 #include "stringify.h"
 #include "sageBuilderAsm.h"
 #include "DispatcherM68k.h"
+#include "BinaryUnparserM68k.h"
 
 #include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
 
@@ -312,6 +313,11 @@ DisassemblerM68k::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_M68K_Family;
+}
+
+Unparser::BasePtr
+DisassemblerM68k::unparser() const {
+    return Unparser::M68k::instance();
 }
 
 SgAsmType *
@@ -4796,8 +4802,10 @@ DisassemblerM68k::init()
     // Default register dictionary
     const RegisterDictionary *regdict = NULL;
     if ((family & m68k_freescale) != 0) {
+        name("coldfire");
         regdict = RegisterDictionary::dictionary_coldfire_emac();
     } else {
+        name("m68040");
         regdict = RegisterDictionary::dictionary_m68000();
     }
     set_registers(regdict);
@@ -5026,3 +5034,7 @@ DisassemblerM68k::init()
 
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::DisassemblerM68k);
+#endif

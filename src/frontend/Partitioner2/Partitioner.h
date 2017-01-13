@@ -21,10 +21,20 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedPointer.h>
 
+#include <BinaryUnparser.h>
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
+
 #include <ostream>
 #include <set>
 #include <string>
 #include <vector>
+
+// Derived classes needed for serialization
+#include <DispatcherM68k.h>
+#include <DispatcherX86.h>
+#include <YicesSolver.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -293,6 +303,7 @@ public:
     typedef Sawyer::Container::Map<rose_addr_t, std::string> AddressNameMap;
     
 private:
+    BasePartitionerSettings settings_;                  // settings adjustable from the command-line
     Configuration config_;                              // configuration information about functions, blocks, etc.
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
@@ -303,13 +314,13 @@ private:
     mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
     bool isReportingProgress_;                          // Emit automatic progress reports?
     Functions functions_;                               // List of all attached functions by entry address
-    bool useSemantics_;                                 // If true, then use symbolic semantics to reason about things
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
-    bool basicBlockSemanticsAutoDrop_;                  // Conserve memory by dropping semantics for attached basic blocks?
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
+    Unparser::BasePtr unparser_;                        // For unparsing things to pseudo-assembly
+    Unparser::BasePtr insnUnparser_;                    // For unparsing single instructions in diagnostics
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -324,6 +335,72 @@ private:
     static const size_t nSpecialVertices = 3;
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //                                  Serialization
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serializeCommon(S &s, const unsigned version) {
+        s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
+        s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
+        s.template register_type<InstructionSemantics2::DispatcherX86>();
+        s.template register_type<InstructionSemantics2::DispatcherM68k>();
+        s.template register_type<SymbolicExpr::Interior>();
+        s.template register_type<SymbolicExpr::Leaf>();
+        s.template register_type<YicesSolver>();
+        s.template register_type<Semantics::SValue>();
+        s.template register_type<Semantics::MemoryListState>();
+        s.template register_type<Semantics::MemoryMapState>();
+        s.template register_type<Semantics::RegisterState>();
+        s.template register_type<Semantics::State>();
+        s.template register_type<Semantics::RiscOperators>();
+        s & settings_;
+        // s & config_;                         -- FIXME[Robb P Matzke 2016-11-08]
+        s & instructionProvider_;
+        s & memoryMap_;
+        s & cfg_;
+        // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
+        s & aum_;
+        s & solver_;
+        s & progressTotal_;
+        s & isReportingProgress_;
+        s & functions_;
+        s & autoAddCallReturnEdges_;
+        s & assumeFunctionsReturn_;
+        s & stackDeltaInterproceduralLimit_;
+        s & addressNames_;
+        s & semanticMemoryParadigm_;
+        // s & unparser_;                       -- not saved; restored from disassembler
+        // s & cfgAdjustmentCallbacks_;         -- not saved/restored
+        // s & basicBlockCallbacks_;            -- not saved/restored
+        // s & functionPrologueMatchers_;       -- not saved/restored
+        // s & functionPaddingMatchers_;        -- not saved/restored
+        // s & undiscoveredVertex_;             -- initialized by rebuildVertexIndices
+        // s & indeterminateVertex_;            -- initialized by rebuildVertexIndices
+        // s & nonexistingVertex_;              -- initialized by rebuildVertexIndices
+    }
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        const_cast<Partitioner*>(this)->serializeCommon(s, version);
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        serializeCommon(s, version);
+        rebuildVertexIndices();
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -333,27 +410,17 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Construct a partitioner.
-     *
-     *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
-     *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
-    Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
-        init(disassembler, map);
-    }
-
     /** Default constructor.
      *
      *  The default constructor does not produce a usable partitioner, but is convenient when one needs to pass a default
      *  partitioner by value or reference. */
-    Partitioner()
-        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
-        init(NULL, memoryMap_);
-    }
+    Partitioner();
+
+    /** Construct a partitioner.
+     *
+     *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
+     *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
+    Partitioner(Disassembler *disassembler, const MemoryMap &map);
 
     // FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
     // partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
@@ -361,50 +428,16 @@ public:
     // unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
     // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
     // after a while.
-    Partitioner(const Partitioner &other)               // initialize just like default
-        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true),
-          semanticMemoryParadigm_(LIST_BASED_MEMORY) {
-        init(NULL, memoryMap_);                         // initialize just like default
-        *this = other;                                  // then delegate to the assignment operator
-    }
-    Partitioner& operator=(const Partitioner &other) {
-        Sawyer::Attribute::Storage<>::operator=(other);
-        config_ = other.config_;
-        instructionProvider_ = other.instructionProvider_;
-        memoryMap_ = other.memoryMap_;
-        cfg_ = other.cfg_;
-        vertexIndex_.clear();                           // initialized by init(other)
-        aum_ = other.aum_;
-        solver_ = other.solver_;
-        progressTotal_ = other.progressTotal_;
-        isReportingProgress_ = other.isReportingProgress_;
-        functions_ = other.functions_;
-        useSemantics_ = other.useSemantics_;
-        autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
-        assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
-        stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
-        addressNames_ = other.addressNames_;
-        basicBlockSemanticsAutoDrop_ = other.basicBlockSemanticsAutoDrop_;
-        cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
-        basicBlockCallbacks_ = other.basicBlockCallbacks_;
-        functionPrologueMatchers_ = other.functionPrologueMatchers_;
-        functionPaddingMatchers_ = other.functionPaddingMatchers_;
-        semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
-        init(other);                                    // copies graph iterators, etc.
-        return *this;
-    }
+    Partitioner(const Partitioner &other);
+    Partitioner& operator=(const Partitioner &other);
+
+    ~Partitioner();
 
     /** Return true if this is a default constructed partitioner.
      *
      *  Most methods won't work when applied to a default-constructed partitioner since it has no way to obtain instructions
      *  and it has an empty memory map. */
     bool isDefaultConstructed() const { return instructionProvider_ == NULL; }
-
-    /** Initialize partitioner diagnostic streams.
-     *
-     *  This is normally called as part of @ref rose::Diagnostics::initialize. */
-    static void initDiagnostics();
 
     /** Reset CFG/AUM to initial state. */
     void clear() /*final*/;
@@ -417,17 +450,7 @@ public:
     Configuration& configuration() { return config_; }
     const Configuration& configuration() const { return config_; }
     /** @} */
-
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //                                  Partitioner CFG queries
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
+        
     /** Returns the instruction provider.
      *  @{ */
     InstructionProvider& instructionProvider() /*final*/ { return *instructionProvider_; }
@@ -450,6 +473,50 @@ public:
         return memoryMap_.at(va).require(MemoryMap::EXECUTABLE).exists();
     }
 
+    /** Returns an unparser.
+     *
+     *  This unparser is initiallly a copy of the one provided by the disassembler, but it can be reset to something else if
+     *  desired. This is the unparser used by the @ref unparse method for the partitioner as a whole, functions, basic blocks,
+     *  and data blocks.  Instructions use the @ref insnUnparser instead.
+     *
+     *  @{ */
+    Unparser::BasePtr unparser() const /*final*/;
+    void unparser(const Unparser::BasePtr&) /*final*/;
+    /** @} */
+
+    /** Returns an unparser.
+     *
+     *  This unparser is initially a copy of the one provided by the disassembler, and adjusted to be most useful for printing
+     *  single instructions. By default, it prints the instruction address, mnemonic, and operands but not raw bytes, stack
+     *  deltas, comments, or anything else.
+     *
+     * @{ */
+    Unparser::BasePtr insnUnparser() const /*final*/;
+    void insnUnparser(const Unparser::BasePtr&) /*final*/;
+    /** @} */
+
+    /** Unparse some entity.
+     *
+     *  Unparses an instruction, basic block, data block, function, or all functions using the unparser returned by @ref
+     *  unparser (except for instructions, which use the unparser returned by @ref insnUnparser).
+     *
+     *  @{ */
+    std::string unparse(SgAsmInstruction*) const;
+    void unparse(std::ostream&, SgAsmInstruction*) const;
+    void unparse(std::ostream&, const BasicBlock::Ptr&) const;
+    void unparse(std::ostream&, const DataBlock::Ptr&) const;
+    void unparse(std::ostream&, const Function::Ptr&) const;
+    void unparse(std::ostream&) const;
+    /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //                                  Partitioner CFG queries
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
     size_t nBytes() const /*final*/ { return aum_.size(); }
 
@@ -678,7 +745,6 @@ public:
     CrossReferences instructionCrossReferences(const AddressIntervalSet &restriction) const /*final*/;
 
 
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -776,8 +842,8 @@ public:
      *  @sa basicBlockDropSemantics
      *
      * @{ */
-    bool basicBlockSemanticsAutoDrop() const /*final*/ { return basicBlockSemanticsAutoDrop_; }
-    void basicBlockSemanticsAutoDrop(bool b) { basicBlockSemanticsAutoDrop_ = b; }
+    bool basicBlockSemanticsAutoDrop() const /*final*/ { return settings_.basicBlockSemanticsAutoDrop; }
+    void basicBlockSemanticsAutoDrop(bool b) { settings_.basicBlockSemanticsAutoDrop = b; }
     /** @} */
 
     /** Immediately drop semantic information for all attached basic blocks.
@@ -1384,11 +1450,26 @@ public:
 
     /** Returns the addresses used by a function.
      *
-     *  Returns an interval set which is the union of the addresses of the function's basic blocks and data blocks.  Most
+     *  Returns an interval set which is the union of the addresses of the function's basic blocks and/or data blocks.  Most
      *  functions are contiguous in memory and can be represented by a single address interval, but this is not a
-     *  requirement in ROSE. */
+     *  requirement in ROSE.
+     *
+     *  The versions of these functions that take an AddressIntervalSet argument simply insert additional address intervals
+     *  into that set without clearing it first.
+     *
+     *  @li @ref functionExtent -- addresses of all instructions and static data
+     *  @li @ref functionBasicBlockExtent -- addresses of instructions
+     *  @li @ref functionDataBlockExtent -- addresses of static data
+     *
+     * @{ */
     AddressIntervalSet functionExtent(const Function::Ptr&) const /*final*/;
-    
+    void functionExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const /*final*/;
+    AddressIntervalSet functionBasicBlockExtent(const Function::Ptr &function) const /*final*/;
+    void functionBasicBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const /*final*/;
+    AddressIntervalSet functionDataBlockExtent(const Function::Ptr &function) const /*final*/;
+    void functionDataBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const /*final*/;
+    /** @} */
+
     /** Attaches a function to the CFG/AUM.
      *
      *  The indicated function(s) is inserted into the control flow graph.  Basic blocks (or at least placeholders) are
@@ -1871,6 +1952,15 @@ public:
     /** Name of a function */
     static std::string functionName(const Function::Ptr&) /*final*/;
 
+    /** Partitioner settings.
+     *
+     *  These are settings that are typically controlled from the command-line.
+     *
+     * @{ */
+    const BasePartitionerSettings& settings() const /*final*/ { return settings_; }
+    void settings(const BasePartitionerSettings &s) /*final*/ { settings_ = s; }
+    /** @} */
+
     /** Enable or disable progress reports.
      *
      *  This controls the automatic progress reports, but the @ref reportProgress method can still be invoked explicitly by the
@@ -1888,9 +1978,9 @@ public:
      *  basic block.  When false, more naive but faster methods are used.
      *
      *  @{ */
-    void enableSymbolicSemantics(bool b=true) /*final*/ { useSemantics_ = b; }
-    void disableSymbolicSemantics() /*final*/ { useSemantics_ = false; }
-    bool usingSymbolicSemantics() const /*final*/ { return useSemantics_; }
+    void enableSymbolicSemantics(bool b=true) /*final*/ { settings_.usingSemantics = b; }
+    void disableSymbolicSemantics() /*final*/ { settings_.usingSemantics = false; }
+    bool usingSymbolicSemantics() const /*final*/ { return settings_.usingSemantics; }
     /** @} */
 
     /** Property: Insert (or not) function call return edges.
@@ -1944,6 +2034,14 @@ public:
     const AddressNameMap& addressNames() const /*final*/ { return addressNames_; }
     /** @} */
 
+    /** Property: Whether to look for function calls used as branches.
+     *
+     *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
+     *
+     * @{ */
+    bool checkingCallBranch() const /*final*/ { return settings_.checkingCallBranch; }
+    void checkingCallBranch(bool b) /*final*/ { settings_.checkingCallBranch = b; }
+    /** @} */
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2027,6 +2125,9 @@ private:
     // This method is called whenever a basic block is detached from the CFG/AUM or when a placeholder is erased from the CFG.
     // The call happens immediately after the CFG/AUM are updated.
     void bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &removedBlock);
+
+    // Rebuild the vertexIndex_ and other cache-like data members from the control flow graph
+    void rebuildVertexIndices();
 };
 
 } // namespace

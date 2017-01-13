@@ -70,7 +70,7 @@ MarkLhsValues::visit(SgNode* node)
                          SgExpression* rhs = binaryOperator->get_rhs_operand();
                          ROSE_ASSERT(rhs != NULL);
 
-                      // This is violated by the ROSE/tests/roseTests/astInliningTests/pass16.C test code!
+                      // This is violated by the ROSE/tests/nonsmoke/functional/roseTests/astInliningTests/pass16.C test code!
                       // ROSE_ASSERT(lhs->get_lvalue() == true);
 
                       // This is a value that I know has to be set, the AST generation in EDG/Sage and OFP/Sage

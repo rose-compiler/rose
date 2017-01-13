@@ -68,8 +68,7 @@ int
 main(int argc, char *argv[]) {
     // Initialize
     ROSE_INITIALIZE;
-    mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "tool");
 
     // Parse command-line (see --help for usage)
     Partitioner2::Engine engine;

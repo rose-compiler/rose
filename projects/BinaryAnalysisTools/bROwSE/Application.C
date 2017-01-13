@@ -63,7 +63,7 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
                     "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
                     "function names and whose values are have a \"function.delta\" integer. The delta does not include "
                     "popping the return address from the stack in the final RET instruction.  Function names of the form "
-                    "\"lib:func\" are translated to the ROSE format \"func@lib\"."));
+                    "\"lib:func\" are translated to the ROSE format \"func@@lib\"."));
 
     // Switches for disassembly
     SwitchGroup dis("Disassembly switches");
@@ -131,8 +131,7 @@ Application::main(int argc, char *argv[]) {
     Diagnostics::destination = Sawyer::Message::Multiplexer::instance()
                                ->to(Sawyer::Message::FileSink::instance(stderr));
     ROSE_INITIALIZE;
-    mlog = Sawyer::Message::Facility("bROwSE", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "bROwSE");
 
     // Parse the command-line
     Settings settings;

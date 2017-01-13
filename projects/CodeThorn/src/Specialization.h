@@ -9,6 +9,7 @@
 #include "RewriteSystem.h"
 #include "ReadWriteData.h"
 #include "Visualizer.h"
+#include "LoopInfo.h"
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -19,23 +20,7 @@ using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 
-enum IterVarType { ITERVAR_SEQ, ITERVAR_PAR };
-struct LoopInfo {
-  VariableId iterationVarId;
-  IterVarType iterationVarType;
-  SgStatement* initStmt;
-  SgExpression* condExpr;
-  SgForStatement* forStmt;
-  VariableIdSet outerLoopsVarIds;
-  void computeOuterLoopsVarIds(VariableIdMapping* variableIdMapping);
-  void computeLoopLabelSet(Labeler* labeler);
-  bool isInAssociatedLoop(const EState* estate);
-  LabelSet loopLabelSet;
-  static VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
-};
-
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;
-typedef vector< LoopInfo > LoopInfoSet;
 
 struct EStateExprInfo {
   const EState* first;
@@ -126,6 +111,7 @@ class Specialization {
   void setCheckAllLoops(bool val);
   void setCheckAllDataRaces(bool val);
   void setVisualizeReadWriteAccesses(bool val);
+  void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode);
  private:
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
   int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root);
@@ -145,7 +131,6 @@ class Specialization {
   SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping);
   SgNode* findDefAssignOfUse(SgVarRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping);
   void attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
-  void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode);
   //SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar, VariableIdMapping* variableIdMapping);
   string flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* variableIdMapping);
   void transformArrayAccess(SgNode* node, VariableIdMapping* variableIdMapping);

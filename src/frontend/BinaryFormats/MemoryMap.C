@@ -17,6 +17,14 @@
 # include <unistd.h>                                    // for access()
 #endif
 
+// This is the other half of the BOOST_CLASS_EXPORT_KEY from the header file.
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::AllocatingBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::MappedBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::NullBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::StaticBuffer);
+#endif
+
 using namespace rose;
 using namespace rose::Diagnostics;
 
@@ -357,7 +365,7 @@ MemoryMap::insertProcessDocumentation() {
             "The @v{options} are a comma-separated list of words where the following are recognized:"
 
             "@bullet{\"noattach\" means do not attempt to attach or detach from the process. This is useful when the process "
-            "is already running under some debugger (it has the \"T\" state in @man(ps)(1) output).}"
+            "is already running under some debugger (it has the \"T\" state in @man{ps}{1} output).}"
 
             "The process will be momentarily stopped (unless the \"noattach\" option was specified, in which case it is assumed "
             "to already be stopped) while its readable memory is copied into ROSE and mapped at the same addresses and with "
@@ -673,6 +681,28 @@ MemoryMap::findSequence(const AddressInterval &interval, const std::vector<uint8
         }
     }
     return Sawyer::Nothing();
+}
+
+bool
+MemoryMap::shrinkUnshare() {
+    bool success = true;
+    BOOST_FOREACH (MemoryMap::Node &node, nodes()) {
+        const AddressInterval &interval = node.key();
+        MemoryMap::Segment &segment = node.value();
+        if (const uint8_t *data = segment.buffer()->data()) {
+            // Create a new buffer for this segment, copying the old data
+            Buffer::Ptr buf = AllocatingBuffer::instance(interval.size());
+            if (buf->write(data, 0, interval.size()) != interval.size()) {
+                success = false;
+            } else {
+                segment.offset(0);
+                segment.buffer(buf);
+            }
+        } else {
+            success = false;
+        }
+    }
+    return success;
 }
 
 void

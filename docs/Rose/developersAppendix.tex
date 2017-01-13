@@ -1113,7 +1113,7 @@ we have to maintain your code after you leave, so there are a few rules:
          Explain every function and use variable names that clearly indicate the purpose of
          the variable. Explain what the tests are in your code (and where they are located).
    \item Write test codes to test your code (these are assembled in the {\tt ROSE/tests}
-         directory (or subdirectories of {\tt ROSE/tests/roseTests}).
+         directory (or subdirectories of {\tt ROSE/tests/nonsmoke/functional/roseTests}).
    \item Use assertions liberally, use boolean values arguments to 
          {\tt ROSE\_ASSERT(<expression>)}. Use of {\tt ROSE\_ASSERT(true/false)} for
          error branches is preferred.
@@ -3972,7 +3972,7 @@ the backend; thus is has a simple API.
 
    \item {\bf int backendUsingOriginalInputFile ( SgProject* project );} \\
    This is useful as a test code for testing ROSE for use on projects that target Compass or any
-   other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
+   other analysis only tool using ROSE. Called in tests/nonsmoke/functional/testAnalysis.C for example.
 
    \item Assembler \\
    Generating machine code from SgAsmInstruction nodes. The

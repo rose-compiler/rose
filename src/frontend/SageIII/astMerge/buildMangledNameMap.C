@@ -369,7 +369,7 @@ MangledNameMapTraversal::visit ( SgNode* node)
              {
             // Since we abstract out the generation of the key we can simplify this code!
 #if 1
-            // DQ (7/11/2010): This fails for tests/CompileTests/mergeAST_tests/mergeTest_06.C, I don't know why!
+            // DQ (7/11/2010): This fails for tests/nonsmoke/functional/CompileTests/mergeAST_tests/mergeTest_06.C, I don't know why!
                case V_SgFunctionDeclaration:
 #endif
 #if 1

@@ -948,8 +948,8 @@ public:
      *  determining whether branch conditions are opaque.
      *
      * @{ */
-    bool usingSemantics() const /*final*/ { return settings_.partitioner.usingSemantics; }
-    virtual void usingSemantics(bool b) { settings_.partitioner.usingSemantics = b; }
+    bool usingSemantics() const /*final*/ { return settings_.partitioner.base.usingSemantics; }
+    virtual void usingSemantics(bool b) { settings_.partitioner.base.usingSemantics = b; }
     /** @} */
 
     /** Property: Type of container for semantic memory.
@@ -1140,6 +1140,30 @@ public:
      * @{ */
     bool findingDataFunctionPointers() const /*final*/ { return settings_.partitioner.findingDataFunctionPointers; }
     virtual void findingDataFunctionPointers(bool b) { settings_.partitioner.findingDataFunctionPointers = b; }
+    /** @} */
+
+    /** Property: Whether to look for function calls used as branches.
+     *
+     *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
+     *
+     * @{ */
+    bool checkingCallBranch() const /*final*/ { return settings_.partitioner.base.checkingCallBranch; }
+    virtual void checkingCallBranch(bool b) { settings_.partitioner.base.checkingCallBranch = b; }
+    /** @} */
+
+    /** Property: Automatically drop semantics for attached basic blocks.
+     *
+     *  Basic blocks normally cache their semantic state as they're being discovered so that the state does not need to be
+     *  recomputed from the beginning of the block each time a new instruction is appended.  However, caching this information
+     *  can consume a large number of symbolic expression nodes which are seldom needed once the basic block is fully
+     *  discovered.  Therefore, setting this property to true will cause a basic block's semantic information to be forgotten
+     *  as soon as the basic block is attached to the CFG.
+     *
+     *  @sa Partitioner::basicBlockDropSemantics
+     *
+     * @{ */
+    bool basicBlockSemanticsAutoDrop() const /*final*/ { return settings_.partitioner.base.basicBlockSemanticsAutoDrop; }
+    void basicBlockSemanticsAutoDrop(bool b) { settings_.partitioner.base.basicBlockSemanticsAutoDrop = b; }
     /** @} */
 
     /** Property: Configuration files.

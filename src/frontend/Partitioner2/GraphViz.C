@@ -240,9 +240,10 @@ CfgEmitter::selectWholeGraph() {
     if (useFunctionSubgraphs())
         assignFunctionSubgraphs();
 
-    deselectUnusedVertex(partitioner_.undiscoveredVertex());
-    deselectUnusedVertex(partitioner_.indeterminateVertex());
-    deselectUnusedVertex(partitioner_.nonexistingVertex());
+    // We can't deselect these if the graph isn't a patritioner.cfg() because they might not be present.
+    deselectUnusedVertexType(V_UNDISCOVERED);
+    deselectUnusedVertexType(V_INDETERMINATE);
+    deselectUnusedVertexType(V_NONEXISTING);
 
     return *this;
 }
@@ -455,6 +456,14 @@ CfgEmitter::deselectReturnEdges() {
 }
 
 void
+CfgEmitter::deselectUnusedVertexType(VertexType type) {
+    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+        if (vertex.value().type() == type)
+            deselectUnusedVertex(graph_.findVertex(vertex.id()));
+    }
+}
+
+void
 CfgEmitter::deselectUnusedVertex(ControlFlowGraph::ConstVertexIterator vertex) {
     bool isUsed = false;
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex->inEdges()) {
@@ -589,18 +598,27 @@ CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexIterator &vertex) con
         srcLoc = htmlEscape(srcLoc) + "<br align=\"left\"/>";
     switch (vertex->value().type()) {
         case V_BASIC_BLOCK: {
+            // If this basic block is the entry point to at least one function, show the function name as the basic block's
+            // label.
+            bool foundEntryPoint = false;
             FunctionSet functions = owningFunctions(vertex);
             if (!functions.isEmpty()) {
                 BOOST_FOREACH (const Function::Ptr &function, functions.values()) {
-                    if (function->address() == vertex->value().address())
+                    if (function->address() == vertex->value().address()) {
                         srcLoc += htmlEscape(function->printableName()) + "<br align=\"left\"/>";
+                        foundEntryPoint = true;
+                    }
                 }
-                return "<" + srcLoc + ">";
-            } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-                return "<" + srcLoc + htmlEscape(bb->printableName()) + ">";
-            } else {
-                return "<" + srcLoc + StringUtility::addrToString(vertex->value().address()) + ">";
+                if (foundEntryPoint)
+                    return "<" + srcLoc + ">";
             }
+
+            // If this basic block has a name (i.e., an address) then use it as the label.
+            if (BasicBlock::Ptr bb = vertex->value().bblock())
+                return "<" + srcLoc + htmlEscape(bb->printableName()) + ">";
+
+            // Last resort, use the address stored in the CFG (not sure if this code is even reachable)
+            return "<" + srcLoc + StringUtility::addrToString(vertex->value().address()) + ">";
         }
         case V_NONEXISTING:
             return "\"nonexisting\"";

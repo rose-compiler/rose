@@ -173,6 +173,7 @@ echo "After initialization: with_CXX_WARNINGS = $with_CXX_WARNINGS"
 # with_CXX_WARNINGS=$withval
 
 if test "x$with_CXX_WARNINGS" = "xyes"; then
+# DQ (12/3/2016): Add these options to what may have been specified using enable_fatal_rose_warnings.
 # CXX_WARNINGS was activated but not specified, so set it.
   echo "Using default options for maximal warnings (true case)"
   case $CXX in
@@ -180,23 +181,29 @@ if test "x$with_CXX_WARNINGS" = "xyes"; then
     # cc1plus: warning: command line option "-Wstrict-prototypes" is valid for Ada/C/ObjC but not for C++
     # cc1plus: warning: command line option "-Wmissing-prototypes" is valid for Ada/C/ObjC but not for C++
     # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      CXX_WARNINGS="-Wall"
+    #  CXX_WARNINGS="-Wall"
+      CXX_WARNINGS+="-Wall"
       ;;
     icpc)
     # For Intel turn on 64bit migration/portability warnings
-      CXX_WARNINGS="-w1 -Wall -Wcheck -Wp64"
+    # CXX_WARNINGS="-w1 -Wall -Wcheck -Wp64"
+    # CXX_WARNINGS+="-w1 -Wall -Wcheck -Wp64"
+      CXX_WARNINGS+="-Wall"
       ;;
     KCC | mpKCC)
-      CXX_WARNINGS="--for_init_diff_warning --new_for_init -w"
+    # CXX_WARNINGS="--for_init_diff_warning --new_for_init -w"
+      CXX_WARNINGS+="--for_init_diff_warning --new_for_init -w"
       ;;
     CC)
       case $host_os in
         solaris*| sun4*)
-          CXX_WARNINGS=""
+        # CXX_WARNINGS=""
+          CXX_WARNINGS+=""
     esac
     ;;
   esac
 elif test "x$with_CXX_WARNINGS" = "xno"; then
+
   CXX_WARNINGS=''
 # DQ (1/15/2007): turn on warnings by default.
   echo "Using at least some default (minimal) options for warnings (false case)"
@@ -221,8 +228,8 @@ elif test "x$with_CXX_WARNINGS" = "xno"; then
   esac
 else
 # Settings specified explicitly by the user.
-  echo "Using user provided options for CXX_WARNINGS..."
-  CXX_WARNINGS=$with_CXX_WARNINGS
+  echo "Adding explicitly specified warnings to be used for CXX_WARNINGS...."
+  CXX_WARNINGS+=$with_CXX_WARNINGS
 fi
 
 AC_SUBST(CXX_WARNINGS)
@@ -422,23 +429,28 @@ if test "x$with_C_WARNINGS" = "xyes"; then
   # C_WARNINGS was activated but not specified, so set it.
   case $CC in
     gcc)
-      C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
+    # C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
+      C_WARNINGS+="-Wall -Wstrict-prototypes -Wmissing-prototypes"
       ;;
     icc)
     # For Intel turn on 64bit migration/portability warnings
-      C_WARNINGS="-w -Wall -Wcheck -Wp64"
+    # C_WARNINGS="-w -Wall -Wcheck -Wp64"
+      C_WARNINGS+="-w -Wall -Wcheck -Wp64"
       ;;
     "KCC --c" | mpKCC)
-      C_WARNINGS="--for_init_diff_warning --new_for_init -w"
+    # C_WARNINGS="--for_init_diff_warning --new_for_init -w"
+      C_WARNINGS+="--for_init_diff_warning --new_for_init -w"
       ;;
     cc)
       case $host_os in
         solaris*| sun4*)
-          C_WARNINGS=""
+        # C_WARNINGS=""
+          C_WARNINGS+=""
     esac
     ;;
   esac
 elif test "x$with_C_WARNINGS" = "xno"; then
+# DQ (12/3/2016): Ony use default warning when enable_fatal_rose_warnings is not used.
   C_WARNINGS=''
 # DQ (1/15/2007): turn on warnings by default.
   case $CC in
@@ -461,7 +473,8 @@ elif test "x$with_C_WARNINGS" = "xno"; then
     ;;
   esac
 else
-  C_WARNINGS=$with_C_WARNINGS
+  echo "Adding explicitly specified warnings to be used."
+  C_WARNINGS+=$with_C_WARNINGS
 fi
 
 AC_SUBST(C_WARNINGS)

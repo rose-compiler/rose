@@ -14,6 +14,7 @@
 #include "integerOps.h"
 #include "stringify.h"
 #include "DispatcherX86.h"
+#include "BinaryUnparserX86.h"
 
 #include <sstream>
 
@@ -60,6 +61,11 @@ DisassemblerX86::can_disassemble(SgAsmGenericHeader *header) const
     return false;
 }
 
+Unparser::BasePtr
+DisassemblerX86::unparser() const {
+    return Unparser::X86::instance();
+}
+
 void
 DisassemblerX86::init(size_t wordsize)
 {
@@ -69,6 +75,7 @@ DisassemblerX86::init(size_t wordsize)
     size_t addrWidth=0;
     switch (wordsize) {
         case 2:
+            name("i286");
             addrWidth = 16;
             insnSize = x86_insnsize_16;
 #if 0 // [Robb P. Matzke 2015-06-23]
@@ -85,6 +92,7 @@ DisassemblerX86::init(size_t wordsize)
             REG_SS = *regdict->lookup("ss");
             break;
         case 4:
+            name("i386");
             addrWidth = 32;
             insnSize = x86_insnsize_32;
             regdict = RegisterDictionary::dictionary_pentium4();
@@ -93,6 +101,7 @@ DisassemblerX86::init(size_t wordsize)
             REG_SS = *regdict->lookup("ss");
             break;
         case 8:
+            name("amd64");
             addrWidth = 64;
             insnSize = x86_insnsize_64;
             regdict = RegisterDictionary::dictionary_amd64();
@@ -5930,3 +5939,7 @@ DisassemblerX86::decodeGroupP()
 
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::DisassemblerX86);
+#endif

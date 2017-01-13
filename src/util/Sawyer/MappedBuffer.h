@@ -17,7 +17,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/lexical_cast.hpp>
-#include <string>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/string.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -39,11 +42,50 @@ template<class A, class T>
 class MappedBuffer: public Buffer<A, T> {
     boost::iostreams::mapped_file_params params_;
     boost::iostreams::mapped_file device_;
+
 public:
-    typedef A Address;
-    typedef T Value;
+    typedef A Address;                                  /**< Type of addresses. */
+    typedef T Value;                                    /**< Type of values. */
+    typedef Buffer<A, T> Super;                         /**< Type of base class. */
+
+private:
+    friend class boost::serialization::access;
+
+    // Users: You'll need to register the subclass once you know its type, such as
+    // BOOST_CLASS_REGISTER(Sawyer::Container::MappedBuffer<size_t,uint8_t>);
+    template<class S>
+    void save(S &s, const unsigned /*version*/) const {
+        s & boost::serialization::base_object<Super>(*this);
+        s & params_.path & params_.flags & params_.mode & params_.offset & params_.length & params_.new_file_size;
+
+        boost::uint64_t hint;
+        BOOST_STATIC_ASSERT(sizeof hint >= sizeof params_.hint);
+        hint = (boost::uint64_t)(params_.hint);
+        s & hint;
+    }
+
+    // Users: You'll need to register the subclass once you know its type, such as
+    // BOOST_CLASS_REGISTER(Sawyer::Container::MappedBuffer<size_t,uint8_t>);
+    template<class S>
+    void load(S &s, const unsigned /*version*/) {
+        s & boost::serialization::base_object<Super>(*this);
+        s & params_.path & params_.flags & params_.mode & params_.offset & params_.length & params_.new_file_size;
+
+        boost::uint64_t hint;
+        BOOST_STATIC_ASSERT(sizeof hint >= sizeof params_.hint);
+        s & hint;
+        params_.hint = (const char*)hint;
+
+        device_.open(params_);
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+
 protected:
-    MappedBuffer(const boost::iostreams::mapped_file_params &params): params_(params), device_(params) {}
+    MappedBuffer()
+        : Super(".MappedBuffer") {}           // needed for de-serialization
+    explicit MappedBuffer(const boost::iostreams::mapped_file_params &params)
+        : Super(".MappedBuffer"), params_(params), device_(params) {}
 
 public:
     /** Map a file according to boost parameters.
@@ -67,11 +109,11 @@ public:
      *
      *  The specified file, which must already exist, is mapped into memory and pointed to by this new buffer. */
     static typename Buffer<A, T>::Ptr
-    instance(const std::string &path,
+    instance(const boost::filesystem::path &path,
              boost::iostreams::mapped_file::mapmode mode=boost::iostreams::mapped_file::readonly,
              boost::intmax_t offset=0,
              boost::iostreams::mapped_file::size_type length=boost::iostreams::mapped_file::max_length) {
-        boost::iostreams::mapped_file_params params(path);
+        boost::iostreams::mapped_file_params params(path.string());
         params.flags = mode;
         params.length = length;
         params.offset = offset;

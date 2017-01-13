@@ -119,6 +119,10 @@ Sawyer::CommandLine::SwitchGroup
 Engine::loaderSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Loader switches");
+    sg.name("loader");
+    sg.doc("The loader is responsible for mapping a specimen into the address space used for disassembling and analysis. "
+           "ROSE uses a virtualized address space (the MemoryMap class) to isolate the address space of a specimen from "
+           "the address space of ROSE itself.");
 
     sg.insert(Switch("remove-zeros")
               .argument("size", nonNegativeIntegerParser(settings_.loader.deExecuteZerosThreshold), "128")
@@ -183,6 +187,10 @@ Sawyer::CommandLine::SwitchGroup
 Engine::disassemblerSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Disassembler switches");
+    sg.name("disassemble");
+    sg.doc("These switches affect the disassembler proper, which is the software responsible for decoding machine "
+           "instruction bytes into ROSE internal representations.  The disassembler only decodes instructions at "
+           "given addresses and is not responsible for determining what addresses of the virtual address space are decoded.");
 
     sg.insert(Switch("isa")
               .argument("architecture", anyParser(settings_.disassembler.isaName))
@@ -197,6 +205,9 @@ Sawyer::CommandLine::SwitchGroup
 Engine::partitionerSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Partitioner switches");
+    sg.name("partition");
+    sg.doc("The partitioner is the part of ROSE that drives a disassembler. While the disassembler knows how to decode "
+           "a machine instruction to an internal representation, the partitioner knows where to decode.");
 
     sg.insert(Switch("start")
               .argument("addresses", listParser(nonNegativeIntegerParser(settings_.partitioner.startingVas)))
@@ -207,15 +218,15 @@ Engine::partitionerSwitches() {
                    "This switch may appear multiple times, each of which may have multiple comma-separated addresses."));
 
     sg.insert(Switch("use-semantics")
-              .intrinsicValue(true, settings_.partitioner.usingSemantics)
+              .intrinsicValue(true, settings_.partitioner.base.usingSemantics)
               .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
                    "it can use slower but more accurate methods, such as symbolic semantics.  This switch enables use of "
                    "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is "
                    "to " +
-                   std::string(settings_.partitioner.usingSemantics?"":"not ") + "use semantics."));
+                   std::string(settings_.partitioner.base.usingSemantics?"":"not ") + "use semantics."));
     sg.insert(Switch("no-use-semantics")
               .key("use-semantics")
-              .intrinsicValue(false, settings_.partitioner.usingSemantics)
+              .intrinsicValue(false, settings_.partitioner.base.usingSemantics)
               .hidden(true));
 
     sg.insert(Switch("semantic-memory")
@@ -303,7 +314,7 @@ Engine::partitionerSwitches() {
     sg.insert(Switch("split-thunks")
               .intrinsicValue(true, settings_.partitioner.splittingThunks)
               .doc("Look for common thunk patterns at the start of existing functions and split off those thunk "
-                   "instructions to their own separate function.  The @s{no-detach-thunks} switch turns this feature "
+                   "instructions to their own separate function.  The @s{no-split-thunks} switch turns this feature "
                    "off.  The default is to " + std::string(settings_.partitioner.splittingThunks?"":"not ") +
                    "split thunks into their own functions."));
     sg.insert(Switch("no-split-thunks")
@@ -406,7 +417,7 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.doingPostAnalysis)
               .doc("Run all enabled post-partitioning analysis functions.  For instance, calculate stack deltas for each "
                    "instruction, and may-return analysis for each function.  The individual analyses are enabled and "
-                   "disabled separately with other @s{post-*} switches. Some of these analyses will only work if "
+                   "disabled separately with other @s{post-*}{noerror} switches. Some of these analyses will only work if "
                    "instruction semantics are enabled (see @s{use-semantics}).  The @s{no-post-analysis} switch turns "
                    "this off, although analysis will still be performed where it is needed for partitioning.  The "
                    "default is to " + std::string(settings_.partitioner.doingPostAnalysis?"":"not ") +
@@ -423,7 +434,7 @@ Engine::partitionerSwitches() {
                    "Functions that are no-ops are given names (if they don't already have one) that's indicative of "
                    "being a no-op. The @s{no-post-function-noop} switch disables this analysis. The default is that "
                    "this analysis is " +
-                   std::string(settings_.partitioner.doingPostFunctionNoop?"enable":"disable") + "."));
+                   std::string(settings_.partitioner.doingPostFunctionNoop?"enabled":"disabled") + "."));
     sg.insert(Switch("no-post-function-noop")
               .key("post-function-noop")
               .intrinsicValue(false, settings_.partitioner.doingPostFunctionNoop)
@@ -487,6 +498,17 @@ Engine::partitionerSwitches() {
                    "@named{yes}{Assume a function returns if the may-return analysis cannot decide. This is the default.}"
                    "@named{no}{Assume a function does not return if the may-return analysis cannot decide.}"));
 
+    sg.insert(Switch("call-branch")
+              .intrinsicValue(true, settings_.partitioner.base.checkingCallBranch)
+              .doc("When determining whether a basic block is a function call, also check whether the callee discards "
+                   "the return address. If so, then the apparent call is perhaps not a true function call.  The "
+                   "@s{no-call-branch} switch disables this analysis. The default is that this analysis is " +
+                   std::string(settings_.partitioner.base.checkingCallBranch ? "enabled" : "disabled") + "."));
+    sg.insert(Switch("no-call-branch")
+              .key("call-branch")
+              .intrinsicValue(false, settings_.partitioner.base.checkingCallBranch)
+              .hidden(true));
+    
     return sg;
 }
 
@@ -505,7 +527,7 @@ Engine::engineSwitches() {
                    "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
                    "function names and whose values are have a \"function.delta\" integer. The delta does not include "
                    "popping the return address from the stack in the final RET instruction.  Function names of the form "
-                   "\"lib:func\" are translated to the ROSE format \"func@lib\"."));
+                   "\"lib:func\" are translated to the ROSE format \"func@@lib\"."));
     return sg;
 }
 
@@ -513,50 +535,52 @@ Sawyer::CommandLine::SwitchGroup
 Engine::astConstructionSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("AST construction switches");
+    sg.name("ast");
+    sg.doc("These switches control how an abstract syntax tree (AST) is generated from partitioner results.");
 
-    sg.insert(Switch("ast-allow-empty-global-block")
+    sg.insert(Switch("allow-empty-global-block")
               .intrinsicValue(true, settings_.astConstruction.allowEmptyGlobalBlock)
               .doc("Allows creation of an empty AST if the partitioner does not find any functions. The "
-                   "@s{no-ast-allow-empty-global-block} switch causes a null AST to be returned instead. The default is to " +
+                   "@s{no-allow-empty-global-block} switch causes a null AST to be returned instead. The default is to " +
                    std::string(settings_.astConstruction.allowEmptyGlobalBlock ? "create an empty " : "not create an ") +
                    "AST."));
-    sg.insert(Switch("no-ast-allow-empty-global-block")
-              .key("ast-allow-empty-global-block")
+    sg.insert(Switch("no-allow-empty-global-block")
+              .key("allow-empty-global-block")
               .intrinsicValue(false, settings_.astConstruction.allowEmptyGlobalBlock)
               .hidden(true));
 
-    sg.insert(Switch("ast-allow-empty-functions")
+    sg.insert(Switch("allow-empty-functions")
               .intrinsicValue(true, settings_.astConstruction.allowFunctionWithNoBasicBlocks)
               .doc("Allows creation of an AST that has functions with no instructions. This can happen, for instance, when "
                    "an analysis indicated that a particular virtual address is the start of a function but no memory is "
                    "mapped at that address. This is common for things like functions from shared libraries that have not "
-                   "been linked in before the analysis starts.  The @s{no-ast-allow-empty-functions} will instead elide all "
+                   "been linked in before the analysis starts.  The @s{no-allow-empty-functions} will instead elide all "
                    "empty functions from the AST. The default is to " +
                    std::string(settings_.astConstruction.allowFunctionWithNoBasicBlocks ? "allow " : "elide ") +
                    "empty functions."));
-    sg.insert(Switch("no-ast-allow-empty-functions")
-              .key("ast-allow-empty-functions")
+    sg.insert(Switch("no-allow-empty-functions")
+              .key("allow-empty-functions")
               .intrinsicValue(false, settings_.astConstruction.allowFunctionWithNoBasicBlocks)
               .hidden(true));
 
-    sg.insert(Switch("ast-allow-empty-basic-blocks")
+    sg.insert(Switch("allow-empty-basic-blocks")
               .intrinsicValue(true, settings_.astConstruction.allowEmptyBasicBlocks)
               .doc("Allows creation of an AST that has basic blocks with no instructions. This can happen when an analysis "
                    "indicates that a basic block exists at a particular virtual address but no memory is mapped at that "
-                   "address. The @s{no-ast-allow-empty-basic-blocks} will instead elide all empty blocks from the AST. The "
+                   "address. The @s{no-allow-empty-basic-blocks} will instead elide all empty blocks from the AST. The "
                    "default is to " + std::string(settings_.astConstruction.allowEmptyBasicBlocks ? "allow " : "elide ") +
                    "empty blocks."));
-    sg.insert(Switch("no-ast-allow-empty-basic-blocks")
-              .key("ast-allow-empty-basic-blocks")
+    sg.insert(Switch("no-allow-empty-basic-blocks")
+              .key("allow-empty-basic-blocks")
               .intrinsicValue(false, settings_.astConstruction.allowEmptyBasicBlocks)
               .hidden(true));
 
-    sg.insert(Switch("ast-copy-instructions")
+    sg.insert(Switch("copy-instructions")
               .intrinsicValue(true, settings_.astConstruction.copyAllInstructions)
               .doc("Causes all instructions to be deep-copied from the partitioner's instruction provider into the AST. "
                    "Although this slows down AST construction and increases memory since SageIII nodes are not garbage "
                    "collected, copying instructions ensures that the AST is a tree. Turning off the copying with the "
-                   "@s{no-ast-copy-instructions} switch will result in the AST being a lattice if the partitioner has "
+                   "@s{no-copy-instructions} switch will result in the AST being a lattice if the partitioner has "
                    "determined that two or more functions contain the same basic block, and therefore the same instructions. "
                    "The default is to " + std::string(settings_.astConstruction.copyAllInstructions ? "" : "not ") +
                    "copy instructions.\n\n"
@@ -568,8 +592,8 @@ Engine::astConstructionSwitches() {
                    "the block level would break those programs. Users that store analysis results by attaching them to "
                    "partitioner basic blocks (Partitioner2::BasicBlock) should be aware that those blocks can be shared "
                    "among functions."));
-    sg.insert(Switch("no-ast-copy-instructions")
-              .key("ast-copy-instructions")
+    sg.insert(Switch("no-copy-instructions")
+              .key("copy-instructions")
               .intrinsicValue(false, settings_.astConstruction.copyAllInstructions)
               .hidden(true));
 
@@ -614,13 +638,11 @@ Engine::specimenNameDocumentation() {
 Sawyer::CommandLine::Parser
 Engine::commandLineParser(const std::string &purpose, const std::string &description) {
     using namespace Sawyer::CommandLine;
-    Parser parser;
-    parser.purpose(purpose.empty() ? std::string("analyze binary specimen") : purpose);
-    parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
-    parser.chapter(1, "ROSE Command-line Tools");
+    Parser parser =
+        CommandlineProcessing::createEmptyParser(purpose.empty() ? std::string("analyze binary specimen") : purpose,
+                                                 description);
+    parser.groupNameSeparator("-");                     // ROSE defaults to ":", which is sort of ugly
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen_names}");
-    if (!description.empty())
-        parser.doc("Description", description);
     parser.doc("Specimens", specimenNameDocumentation());
     parser.with(engineSwitches());
     parser.with(loaderSwitches());
@@ -901,6 +923,7 @@ Engine::createBarePartitioner() {
 
     checkCreatePartitionerPrerequisites();
     Partitioner p(disassembler_, map_);
+    p.settings(settings_.partitioner.base);
 
     // Load configuration files
     if (!settings_.engine.configurationNames.empty()) {
@@ -941,7 +964,6 @@ Engine::createBarePartitioner() {
     p.semanticMemoryParadigm(settings_.partitioner.semanticMemoryParadigm);
 
     // Miscellaneous settings
-    p.enableSymbolicSemantics(settings_.partitioner.usingSemantics);
     if (settings_.partitioner.followingGhostEdges)
         p.basicBlockCallbacks().append(Modules::AddGhostSuccessors::instance());
     if (!settings_.partitioner.discontiguousBlocks)

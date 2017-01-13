@@ -16,6 +16,8 @@
 #include <Sawyer/Optional.h>                            // for Sawyer::Nothing
 #include <Sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
 #include <boost/unordered_map.hpp>
 #include <ostream>
 #if 1 /*DEBUGGING [Robb Matzke 2014-04-21]*/
@@ -1285,6 +1287,52 @@ private:
     VertexList vertices_;                               // all vertices with integer ID numbers and O(1) insert/erase
     EdgeIndex edgeIndex_;                               // optional mapping between EdgeValue and ConstEdgeIterator
     VertexIndex vertexIndex_;                           // optional mapping between VertexValue and ConstVertexIterator
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned /*version*/) const {
+        size_t nv = nVertices();
+        s <<nv;
+        for (size_t i=0; i<nv; ++i)
+            s <<findVertex(i)->value();
+
+        size_t ne = nEdges();
+        s <<ne;
+        for (size_t i=0; i<ne; ++i) {
+            ConstEdgeIterator edge = findEdge(i);
+            size_t srcId = edge->source()->id(), tgtId = edge->target()->id();
+            s <<findEdge(i)->value() <<srcId <<tgtId;
+        }
+    }
+
+    template<class S>
+    void load(S &s, const unsigned /*version*/) {
+        clear();
+        size_t nv = 0;
+        s >>nv;
+        for (size_t i=0; i<nv; ++i) {
+            VertexValue vv;
+            s >>vv;
+            insertVertex(vv);
+        }
+
+        size_t ne = 0;
+        s >>ne;
+        for (size_t i=0; i<ne; ++i) {
+            EdgeValue ev;
+            size_t srcId = 0, tgtId = 0;
+            s >> ev >>srcId >>tgtId;
+            ASSERT_require(srcId < nv && tgtId < nv);
+            insertEdge(findVertex(srcId), findVertex(tgtId), ev);
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

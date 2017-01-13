@@ -25,9 +25,9 @@ struct Settings {
     bool showAsBinary;                                  // show memory as raw bytes (output prefix required)
     bool showMap;                                       // show memory mapping information
     std::string outputPrefix;                           // file name prefix for output, or send it to standard output
-    AddressInterval where;                              // addresses that should be dumped
+    std::vector<AddressInterval> where;                 // addresses that should be dumped
     Settings()
-        : showAsHex(false), showAsSRecords(false), showAsBinary(false), showMap(false), where(AddressInterval::whole()) {}
+        : showAsHex(false), showAsSRecords(false), showAsBinary(false), showMap(false) {}
 };
 
 static std::vector<std::string>
@@ -55,9 +55,11 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
         .errorStream(mlog[FATAL]);
 
     SwitchGroup fmt("Format switches");
+    fmt.name("fmt");
+
     fmt.insert(Switch("hexdump")
                .intrinsicValue(true, settings.showAsHex)
-               .doc("Dump the specimen memory as ASCII text using an output format similar to the @man{hexdump}(1) command."));
+               .doc("Dump the specimen memory as ASCII text using an output format similar to the @man{hexdump}{1} command."));
 
     fmt.insert(Switch("srecords")
                .intrinsicValue(true, settings.showAsSRecords)
@@ -70,9 +72,11 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                     "will be output to a file ending with \"<@v{prefix}><@v{address}>.raw\", where @v{prefix} is specified with "
                     "the @s{prefix} switch and @v{address} is the starting address for the segment.  An additional "
                     "\"<@v{prefix}>.load\" file is created that can be used to load the raw files back into another ROSE "
-                    "command, usualyl by specifying \"@@v{prefix}.load\" at the end of its command-line."));
+                    "command, usualyl by specifying \"@v{prefix}.load\" at the end of its command-line."));
 
     SwitchGroup out("Output switches");
+    out.name("out");
+
     out.insert(Switch("map")
                .intrinsicValue(true, settings.showMap)
                .doc("Show information about the memory map on standard output.  If no output formats are specified then the "
@@ -85,11 +89,14 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                     "not all output formats permit standard output."));
 
     SwitchGroup misc("Other switches");
+    misc.name("misc");
+
     misc.insert(Switch("where")
                 .argument("interval", P2::addressIntervalParser(settings.where))
+                .whichValue(SAVE_ALL)
                 .doc("Specifies the addresses that should be dumped. The default is to dump all mapped addresses. " +
                      P2::AddressIntervalParser::docString() + "  The specified interval may include addresses "
-                     "that aren't mapped and which are silently ignored."));
+                     "that aren't mapped and which are silently ignored. This switch may appear more than once."));
 
     return parser.with(fmt).with(out).with(misc).parse(argc, argv).apply().unreachedArgs();
 }
@@ -170,8 +177,7 @@ int
 main(int argc, char *argv[]) {
     // Initialization
     ROSE_INITIALIZE;
-    mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Diagnostics::initAndRegister(mlog, "tool");
 
     // Parse command-line
     P2::Engine engine;
@@ -199,10 +205,12 @@ main(int argc, char *argv[]) {
     }
 
     // Dump the output
-    if (!settings.where.isEmpty()) {
-        rose_addr_t va = settings.where.least();
+    if (settings.where.empty())
+        settings.where.push_back(AddressInterval::whole());
+    BOOST_FOREACH (AddressInterval where, settings.where) {
+        rose_addr_t va = where.least();
         while (AddressInterval interval = map.atOrAfter(va).singleSegment().available()) {
-            interval = interval.intersection(settings.where);
+            interval = interval.intersection(where);
             ASSERT_forbid(interval.isEmpty());
             MemoryMap::ConstNodeIterator inode = map.at(interval.least()).nodes().begin();
             const AddressInterval &segmentInterval = inode->key();
@@ -240,10 +248,10 @@ main(int argc, char *argv[]) {
                                 <<"=" <<(0!=(segment.accessibility() & MemoryMap::READABLE) ? "r" : "")
                                 <<(0!=(segment.accessibility() & MemoryMap::WRITABLE) ? "w" : "")
                                 <<(0!=(segment.accessibility() & MemoryMap::EXECUTABLE) ? "x" : "")
-                                <<"::" <<outputName <<".raw\n";
+                                <<"::" <<outputName <<".raw\n\n";
                 }
             }
-            if (interval.greatest() == settings.where.greatest())
+            if (interval.greatest() == where.greatest())
                 break;                                  // to prevent possible overflow
             va = interval.greatest() + 1;
         }

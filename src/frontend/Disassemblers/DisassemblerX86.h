@@ -5,6 +5,12 @@
 
 #include "Disassembler.h"
 #include "InstructionEnumsX86.h"
+#include "Cxx_GrammarSerialization.h"
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/split_member.hpp>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -12,11 +18,77 @@ namespace BinaryAnalysis {
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
  *  really not much reason to use this class directly or to call any of these methods directly. */
 class DisassemblerX86: public Disassembler {
+    /* Per-disassembler settings; see init() */
+    X86InstructionSize insnSize;                /**< Default size of instructions, based on architecture; see init() */
 
+    /* Per-instruction settings; see startInstruction() */
+    uint64_t ip;                                /**< Virtual address for start of instruction */
+    SgUnsignedCharList insnbuf;                 /**< Buffer containing bytes of instruction */
+    size_t insnbufat;                           /**< Index of next byte to be read from or write to insnbuf */
 
-    /*========================================================================================================================
-     * Public methods
-     *========================================================================================================================*/
+    /* Temporary flags set by the instruction; initialized by startInstruction() */
+    X86SegmentRegister segOverride;             /**< Set by 0x26,0x2e,0x36,0x3e,0x64,0x65 prefixes */
+    X86BranchPrediction branchPrediction;       /*FIXME: this seems to set only to x86_branch_prediction_true [RPM 2009-06-16] */
+    bool branchPredictionEnabled;
+    bool rexPresent, rexW, rexR, rexX, rexB;    /**< Set by 0x40-0x4f prefixes; extended registers present; see setRex() */
+    bool sizeMustBe64Bit;                       /**< Set if effective operand size must be 64 bits. */
+    bool operandSizeOverride;                   /**< Set by the 0x66 prefix; used by effectiveOperandSize() and mmPrefix() */
+    bool addressSizeOverride;                   /**< Set by the 0x67 prefix; used by effectiveAddressSize() */
+    bool lock;                                  /**< Set by the 0xf0 prefix */
+    X86RepeatPrefix repeatPrefix;               /**< Set by 0xf2 (repne) and 0xf3 (repe) prefixes */
+    bool modregrmByteSet;                       /**< True if modregrmByte is initialized */
+    uint8_t modregrmByte;                       /**< Set by instructions that use ModR/M when the ModR/M byte is read */
+    uint8_t modeField;                          /**< Value (0-3) of high-order two bits of modregrmByte; see getModRegRM() */
+    uint8_t regField;                           /**< Value (0-7) of bits 3-5 inclusive of modregrmByte; see getModRegRM() */
+    uint8_t rmField;                            /**< Value (0-7) of bits 0-3 inclusive of modregrmByte; see getModRegRM() */
+    SgAsmExpression *modrm;                     /**< Register or memory ref expr built from modregrmByte; see getModRegRM() */
+    SgAsmExpression *reg;                       /**< Register reference expression built from modregrmByte; see getModRegRM() */
+    bool isUnconditionalJump;                   /**< True for jmp, farjmp, ret, retf, iret, and hlt */
+    size_t wordSize;                            /**< Base word size. */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize_common(S &s, const unsigned version) {
+        // Most of the data members don't need to be saved because we'll only save/restore disassemblers that are between
+        // instructions (we never save one while it's processing an instruction). Therefore, most of the data members can be
+        // constructed in their initial state by a combination of default constructor and init().
+        s & boost::serialization::base_object<Disassembler>(*this);
+        s & wordSize;
+    }
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        serialize_common(s, version);
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        serialize_common(s, version);
+        init(wordSize);
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Constructors
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+protected:
+    // Default constructor for serialization
+    DisassemblerX86()
+        : insnSize(x86_insnsize_none), ip(0), insnbufat(0), segOverride(x86_segreg_none),
+          branchPrediction(x86_branch_prediction_none), branchPredictionEnabled(false), rexPresent(false), rexW(false), 
+          rexR(false), rexX(false), rexB(false), sizeMustBe64Bit(false), operandSizeOverride(false), addressSizeOverride(false),
+          lock(false), repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), rmField(0), 
+          modrm(NULL), reg(NULL), isUnconditionalJump(false) {}
+
 public:
     explicit DisassemblerX86(size_t wordsize)
         : insnSize(x86_insnsize_none), ip(0), insnbufat(0), segOverride(x86_segreg_none),
@@ -31,8 +103,14 @@ public:
 
     virtual DisassemblerX86 *clone() const ROSE_OVERRIDE { return new DisassemblerX86(*this); }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Public methods
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** See Disassembler::can_disassemble */
     virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+
+    virtual Unparser::BasePtr unparser() const;
 
     /** See Disassembler::disassembleOne */
     virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va,
@@ -61,18 +139,14 @@ private:
     };
 
     /** ModR/M settings that create register expressions (or rmReturnNull for no register) */
-    enum RegisterMode 
-        {
+    enum RegisterMode {
         rmLegacyByte, rmRexByte, rmWord, rmDWord, rmQWord, rmSegment, rmST, rmMM, rmXMM, rmControl, rmDebug, rmReturnNull
     };
 
     /* MMX registers? See mmPrefix method */
-    enum MMPrefix 
-        {
-                mmNone, mmF3, mm66, mmF2
-        };
-
-
+    enum MMPrefix {
+        mmNone, mmF3, mm66, mmF2
+    };
 
 
     /*========================================================================================================================
@@ -183,7 +257,8 @@ private:
 
     /** Constructs a register reference expression. The @p registerType is only used for vector registers that can have more
      *  than one type. */
-    SgAsmRegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode, SgAsmType *registerType=NULL) const;
+    SgAsmRegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode,
+                                                   SgAsmType *registerType=NULL) const;
 
     /* FIXME: documentation? */
     SgAsmRegisterReferenceExpression *makeRegisterEffective(uint8_t fullRegisterNumber) {
@@ -345,7 +420,7 @@ private:
 
 
     /*========================================================================================================================
-     * Data members and their initialization.
+     * Supporting functions
      *========================================================================================================================*/
 private:
 
@@ -383,36 +458,13 @@ private:
         modrm = reg = NULL;
         isUnconditionalJump = false;
     }
-
-    /* Per-disassembler settings; see init() */
-    X86InstructionSize insnSize;                /**< Default size of instructions, based on architecture; see init() */
-
-    /* Per-instruction settings; see startInstruction() */
-    uint64_t ip;                                /**< Virtual address for start of instruction */
-    SgUnsignedCharList insnbuf;                 /**< Buffer containing bytes of instruction */
-    size_t insnbufat;                           /**< Index of next byte to be read from or write to insnbuf */
-
-    /* Temporary flags set by the instruction; initialized by startInstruction() */
-    X86SegmentRegister segOverride;             /**< Set by 0x26,0x2e,0x36,0x3e,0x64,0x65 prefixes */
-    X86BranchPrediction branchPrediction;       /*FIXME: this seems to set only to x86_branch_prediction_true [RPM 2009-06-16] */
-    bool branchPredictionEnabled;
-    bool rexPresent, rexW, rexR, rexX, rexB;    /**< Set by 0x40-0x4f prefixes; extended registers present; see setRex() */
-    bool sizeMustBe64Bit;                       /**< Set if effective operand size must be 64 bits. */
-    bool operandSizeOverride;                   /**< Set by the 0x66 prefix; used by effectiveOperandSize() and mmPrefix() */
-    bool addressSizeOverride;                   /**< Set by the 0x67 prefix; used by effectiveAddressSize() */
-    bool lock;                                  /**< Set by the 0xf0 prefix */
-    X86RepeatPrefix repeatPrefix;               /**< Set by 0xf2 (repne) and 0xf3 (repe) prefixes */
-    bool modregrmByteSet;                       /**< True if modregrmByte is initialized */
-    uint8_t modregrmByte;                       /**< Set by instructions that use ModR/M when the ModR/M byte is read */
-    uint8_t modeField;                          /**< Value (0-3) of high-order two bits of modregrmByte; see getModRegRM() */
-    uint8_t regField;                           /**< Value (0-7) of bits 3-5 inclusive of modregrmByte; see getModRegRM() */
-    uint8_t rmField;                            /**< Value (0-7) of bits 0-3 inclusive of modregrmByte; see getModRegRM() */
-    SgAsmExpression *modrm;                     /**< Register or memory ref expr built from modregrmByte; see getModRegRM() */
-    SgAsmExpression *reg;                       /**< Register reference expression built from modregrmByte; see getModRegRM() */
-    bool isUnconditionalJump;                   /**< True for jmp, farjmp, ret, retf, iret, and hlt */
 };
 
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::DisassemblerX86);
+#endif
 
 #endif

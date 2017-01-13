@@ -319,7 +319,7 @@ Multiplexer::bakeDestinations(const MesgProps &props, BakedDestinations &baked) 
 // Multiplexors are never included in baked results (they control baking instead), so messages should never be posted directly
 // to multiplexers.
 SAWYER_EXPORT void
-Multiplexer::post(const Mesg &mesg, const MesgProps &props) {
+Multiplexer::post(const Mesg &/*mesg*/, const MesgProps &/*props*/) {
     assert(!"messages should not be posted to multiplexers");
 }
 
@@ -615,11 +615,15 @@ Gang::GangMap *Gang::gangs_ = NULL;
 
 // class method; thread-safe
 GangPtr
+Gang::instance() {
+    return GangPtr(new Gang);
+}
+
+// class method; thread-safe
+GangPtr
 Gang::instanceForId(int id) {
     SAWYER_THREAD_TRAITS::LockGuard lock(classMutex_);
-    if (!gangs_)
-        gangs_ = new GangMap;
-    return gangs_->insertMaybe(id, Gang::instance());
+    return intentionally_leaked_NS(id);
 }
 
 // class method; thread-safe
@@ -628,13 +632,18 @@ Gang::instanceForTty() {
     return instanceForId(TTY_GANG);
 }
 
-// class method; thread-safe
-void
-Gang::removeInstance(int id) {
-    SAWYER_THREAD_TRAITS::LockGuard lock(classMutex_);
+// class method; not synchronized
+GangPtr
+Gang::intentionally_leaked_NS(int id) {
+    ASSERT_require(id != NO_GANG_ID);
     if (!gangs_)
         gangs_ = new GangMap;
-    gangs_->erase(id);
+    GangPtr gang = gangs_->getOrDefault(id);
+    if (!gang) {
+        gang = GangPtr(new Gang(id));                   // intentional leak; seek class declaration for details
+        gangs_->insert(id, gang);
+    }
+    return gang;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -698,7 +707,7 @@ Prefix::initFromSystem() {
 }
 
 SAWYER_EXPORT std::string
-Prefix::toString(const Mesg &mesg, const MesgProps &props) const {
+Prefix::toString(const Mesg &/*mesg*/, const MesgProps &props) const {
     std::ostringstream retval;
     std::string separator = "";
 
@@ -830,7 +839,7 @@ UnformattedSink::prefix(const PrefixPtr &p) {
 
 // not thread-safe
 SAWYER_EXPORT std::string
-UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgProps &props) {
+UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgProps &/*props*/) {
     std::string retval;
     if (!mesg.isEmpty()) {
         if (gang()->isValid() && gang()->id() != mesg.id()) {
@@ -853,7 +862,7 @@ UnformattedSink::maybePrefix(const Mesg &mesg, const MesgProps &props) {
 
 // not thread-safe
 SAWYER_EXPORT std::string
-UnformattedSink::maybeBody(const Mesg &mesg, const MesgProps &props) {
+UnformattedSink::maybeBody(const Mesg &mesg, const MesgProps &/*props*/) {
     std::string retval;
     if (!mesg.isEmpty())
         retval = mesg.text().substr(gang()->ntext());
@@ -1045,7 +1054,7 @@ public:
         assert(stream_==NULL || stream_==s);
         stream_ = s;
     }
-    virtual std::streamsize xsputn(const char *s, std::streamsize &n) /*override*/;
+    virtual std::streamsize xsputn(const char *s, std::streamsize n) /*override*/;
     virtual int_type overflow(int_type c = traits_type::eof()) /*override*/;
 
     void completeMessage();                             // Complete and post message, then start a new one.
@@ -1103,7 +1112,7 @@ StreamBuf::bake() {
 
 // thread-safe
 std::streamsize
-StreamBuf::xsputn(const char *s, std::streamsize &n) {
+StreamBuf::xsputn(const char *s, std::streamsize n) {
     static const char termination_symbol = '\n';
 
     // This is called from std::ostream::operator<< (and possibly others), so we need to acquire a lock. Since this object is
@@ -1142,7 +1151,7 @@ StreamBuf::overflow(int_type c) {
 
 SAWYER_EXPORT
 Stream::Stream(const std::string facilityName, Importance imp, const DestinationPtr &destination)
-    : std::ostream(new StreamBuf(this)), nrefs_(0), streambuf_(NULL) {
+    : std::ios(new StreamBuf(this)), std::ostream(std::ios::rdbuf()), nrefs_(0), streambuf_(NULL) {
     streambuf_ = dynamic_cast<StreamBuf*>(rdbuf());
     assert(streambuf_!=NULL);
     streambuf_->owner(this);
@@ -1155,7 +1164,7 @@ Stream::Stream(const std::string facilityName, Importance imp, const Destination
 
 SAWYER_EXPORT
 Stream::Stream(const MesgProps &props, const DestinationPtr &destination)
-    : std::ostream(new StreamBuf(this)), nrefs_(0), streambuf_(NULL) {
+    : std::ios(new StreamBuf(this)), std::ostream(std::ios::rdbuf()), nrefs_(0), streambuf_(NULL) {
     streambuf_ = dynamic_cast<StreamBuf*>(rdbuf());
     assert(streambuf_!=NULL);
     streambuf_->owner(this);
@@ -1168,7 +1177,8 @@ Stream::Stream(const MesgProps &props, const DestinationPtr &destination)
 // thread-safe: locks other, but no need to lock this
 SAWYER_EXPORT
 Stream::Stream(const Stream &other)
-    : std::ostream(new StreamBuf(this)), nrefs_(0), streambuf_(NULL) {
+    : std::ios(new StreamBuf(this)), std::ostream(std::ios::rdbuf()), nrefs_(0), streambuf_(NULL)
+{
     SAWYER_THREAD_TRAITS::LockGuard lock(other.mutex_);
     initFromNS(other);
 }
@@ -1184,7 +1194,7 @@ Stream::operator=(const Stream &other) {
 // thread-safe: locks other, but no need to lock this
 SAWYER_EXPORT
 Stream::Stream(const std::ostream &other_)
-    : std::ostream(rdbuf()), nrefs_(0), streambuf_(NULL) {
+    : std::ios(new StreamBuf(this)), std::ostream(std::ios::rdbuf()), nrefs_(0), streambuf_(NULL) {
     const Stream *other = dynamic_cast<const Stream*>(&other_);
     if (!other)
         throw "Sawyer::Message::Stream initializer is not a Sawyer::Message::Stream (only a std::ostream)";

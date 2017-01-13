@@ -1,10 +1,12 @@
 if (enable-binary-analysis)
 add_library(midend_binary OBJECT
   AbstractLocation.C
+  BinaryBestMapAddress.C
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
   BinaryDominance.C
+  BinaryFeasiblePath.C
   BinaryFunctionCall.C
   BinaryFunctionSimilarity.C
   BinaryMagic.C
@@ -70,10 +72,12 @@ install(
   FILES
     AbstractLocation.h
     BinaryAnalysisUtils.h
+    BinaryBestMapAddress.h
     BinaryCallingConvention.h
     BinaryControlFlow.h
     BinaryDataFlow.h
     BinaryDominance.h
+    BinaryFeasiblePath.h
     BinaryFunctionCall.h
     BinaryFunctionSimilarity.h
     BinaryMagic.h

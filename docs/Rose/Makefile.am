@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
+include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
 # DQ (2/6/2010): I don't understand why this is required in every Makefile.am through out ROSE.
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
@@ -7,7 +7,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # When debugging latex documentation skip using the --interaction=batchmode option
 # PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
 # Liao 12/18/2009, use normal mode to ease finding bugs from hudson logs
-PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex -file-line-error -halt-on-error
+PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests/nonsmoke/functional:.: pdflatex -file-line-error -halt-on-error
 
 # Later we will add ROSETTA documentation here ...
 SUBDIRS = Tutorial 
@@ -334,19 +334,19 @@ ROSE_DemoGuide.pdf: $(latexFiles) $(latexDependences) ROSE_DemoGuide.tex
 # I do this to avoid duplicated test/translator file in both tests and doc directories
 # for ROSE manual: it needs generated files from OpenMP and UPC test directories
 generated_ompLowering_files_for_manual = \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_hello-1.c \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_parallel-reduction.c \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_ompfor.c \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_ompfor5.c \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_ompfor4.c \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_threadprivate.c \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_task_untied3.c \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_task_wait.c \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_helloworld.f \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_shared.f \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_ompdo-default.f \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_ompdo-multiple.f \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_task_largenumber.f
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_hello-1.c \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_parallel-reduction.c \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompfor.c \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompfor5.c \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_ompfor4.c \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_threadprivate.c \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_task_untied3.c \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/rose_task_wait.c \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_helloworld.f \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_shared.f \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_ompdo-default.f \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_ompdo-multiple.f \
+       $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_task_largenumber.f
 
 generated_autoPar_files_for_manual = \
        $(top_builddir)/projects/autoParallelization/tests/rose_doall_2.c \
@@ -357,13 +357,13 @@ generated_autoPar_files_for_manual = \
        $(top_builddir)/projects/autoParallelization/tests/rose_vector2.C
 
 generated_upcCompile_files_for_manual = \
-       $(top_builddir)/tests/CompileTests/UPC_tests/rose_hello.upc \
-       $(top_builddir)/tests/CompileTests/UPC_tests/rose_consistency.upc \
-       $(top_builddir)/tests/CompileTests/UPC_tests/rose_continue.upc \
-       $(top_builddir)/tests/CompileTests/UPC_tests/rose_affinity.upc \
-       $(top_builddir)/tests/CompileTests/UPC_tests/rose_shared.upc.aa \
-       $(top_builddir)/tests/CompileTests/UPC_tests/rose_shared.upc.ab \
-       $(top_builddir)/tests/CompileTests/UPC_tests/rose_lock.upc
+       $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_hello.upc \
+       $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_consistency.upc \
+       $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_continue.upc \
+       $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_affinity.upc \
+       $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_shared.upc.aa \
+       $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_shared.upc.ab \
+       $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_lock.upc
 
 generated_upcTrans_files_for_manual = \
        $(top_builddir)/projects/UpcTranslation/tests/rose_hello.c \
@@ -373,13 +373,13 @@ generated_upcTrans_files_for_manual = \
        $(top_builddir)/projects/UpcTranslation/tests/rose_unshared_1.c.abf
 
 $(generated_ompLowering_files_for_manual):
-	$(MAKE) -C$(top_builddir)/tests/roseTests/ompLoweringTests check
+	$(MAKE) -C$(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests check
 
 $(generated_autoPar_files_for_manual):
 	$(MAKE) -C$(top_builddir)/projects/autoParallelization check
 
 $(generated_upcCompile_files_for_manual):
-	$(MAKE) -C$(top_builddir)/tests/CompileTests/UPC_tests check
+	$(MAKE) -C$(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests check
 
 $(generated_upcTrans_files_for_manual):
 	$(MAKE) -C$(top_builddir)/projects/UpcTranslation check

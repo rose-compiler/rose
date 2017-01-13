@@ -119,7 +119,7 @@ test_fileASTFile:
 	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -save test.ast --batch
 
 
-check-local:
+conditional-check-local:
 	$(VALGRIND) ./BinQ -a $(srcdir)/win_buffer.exe --test --batch
 	$(VALGRIND) ./BinQ -a $(srcdir)/win_buffer.exe-tsv --test --batch
 	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin --test
@@ -145,7 +145,11 @@ CLEANFILES =
 clean:
 	rm -f *.o BinQ *.s *.dump *.txt moc_*.C 
 
+else
+conditional-check-local:
 endif
+
+check-local: conditional-check-local
 
 EXTRA_DIST = BinQGui.h \
              BinQSupport.h \

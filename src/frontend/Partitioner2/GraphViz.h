@@ -624,6 +624,9 @@ public:
     /** Deselect a vertex if it has no selected incident edges. */
     void deselectUnusedVertex(ControlFlowGraph::ConstVertexIterator);
 
+    /** Deselect vertices of specified type if they have no selected incident edges. */
+    void deselectUnusedVertexType(VertexType);
+
     /** Select neighboring vertices.
      *
      *  Selects vertices that are neighbors of selected vertices, and the edges that connect them. */

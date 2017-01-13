@@ -48,7 +48,10 @@ Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
        return "d:" + name;
     }
    std::cerr << "Not field name: " << AstToString(field) << "\n";
-    assert(false);
+   assert(false);
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
+   return "";
 }
 
 static std::string 

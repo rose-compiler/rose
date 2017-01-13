@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_FunctionSimilarity_H
 
 #include <Partitioner2/Function.h>
+#include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
 namespace rose {
@@ -48,16 +49,22 @@ namespace BinaryAnalysis {
  *  3. Populate metric categories with characteristic data for each function
  *  4. Query results */
 class FunctionSimilarity {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Public types and data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    // Exceptions thrown by this analysis
+    /* Exceptions thrown by this analysis. */
     class Exception: public std::runtime_error {
     public:
         Exception(const std::string &what): std::runtime_error(what) {}
         ~Exception() throw () {}
     };
 
-    // Types of characteristic values
-    enum CValKind { CARTESIAN_POINT, ORDERED_LIST };    /**< Kinds of characteristic values. */
+    /** Kinds of characteristic values. */
+    enum CValKind {
+        CARTESIAN_POINT,                                /**< Values are N-dimensional Cartesian points. */
+        ORDERED_LIST                                    /**< Values are lists of integers. */
+    };
     typedef std::vector<double> CartesianPoint;         /**< Characteristic value that's a Cartesian point. */
     typedef std::vector<int> OrderedList;               /**< Characteristic value that's an ordered list of integers. */
 
@@ -77,6 +84,12 @@ public:
     /** Pair of functions. */
     typedef std::pair<Partitioner2::Function::Ptr, Partitioner2::Function::Ptr> FunctionPair;
 
+    /** Diagnostic streams */
+    static Sawyer::Message::Facility mlog;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Private types and data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     // Declaration for metric categories.
     struct Category {
@@ -101,6 +114,7 @@ private:
     // Info about each function
     struct FunctionInfo {
         std::vector<CharacteristicValues> categories;   // characteristic values orgnized by CategoryId
+        FunctionInfo(): categories() {}                 // LLVM's clang++ 3.5 and 3.7 don't generate this for const objs
     };
 
     // Info about all functions
@@ -205,6 +219,15 @@ public:
     void measureCfgConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
     /** @} */
 
+    /** Function calls.
+     *
+     *  This metric creates a point cloud with one Cartesian point for each function called from the specified function.
+     *
+     * @{ */
+    CategoryId declareCallGraphConnectivity(const std::string &categoryName);
+    void measureCallGraphConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
+    /** @} */
+
     /** Instruction mnemonic stream.
      *
      *  This metric creates an ordered list of instruction mnemonics for the entire function by ordering the function's basic
@@ -274,8 +297,10 @@ public:
      *  @em The distance between two categories containing Cartesian points is computed as follows: If one category has fewer
      *      points than the other then temporarily pad the smaller category with points at the origin. Compute the minimum cost
      *      1:1 mapping from points in one category to those in the other and use the total cost as the distance between the
-     *      categories. */
-    double compare(const Partitioner2::Function::Ptr&, const Partitioner2::Function::Ptr&) const;
+     *      categories.
+     *
+     *  If either function has not been analyzed, or has been analyzed but resulted in no data, then return the @p dflt value. */
+    double compare(const Partitioner2::Function::Ptr&, const Partitioner2::Function::Ptr&, double dflt = NAN) const;
 
     /** Compare one function with all others.
      *
@@ -287,17 +312,18 @@ public:
      *
      *  Compare the given @p needle function with all other @p haystack functions. The returned list is unsorted.
      *
+     *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
+     *  <code>--threads=N</code> switch.
+     *
      * @{ */
     template<class FunctionIterator>
     std::vector<FunctionDistancePair>
     compareOneToMany(const Partitioner2::Function::Ptr &needle,
                      const boost::iterator_range<FunctionIterator> &haystack) const {
-        std::vector<FunctionDistancePair> retval;
-        BOOST_FOREACH (const Partitioner2::Function::Ptr &other, haystack) {
-            if (other != needle)
-                retval.push_back(FunctionDistancePair(other, compare(needle, other)));
-        }
-        return retval;
+        std::vector<Partitioner2::Function::Ptr> others;
+        BOOST_FOREACH (const Partitioner2::Function::Ptr &other, haystack)
+            others.push_back(other);
+        return compareOneToMany(needle, others);
     }
 
     template<class FunctionIterator>
@@ -309,17 +335,26 @@ public:
 
     std::vector<FunctionDistancePair>
     compareOneToMany(const Partitioner2::Function::Ptr &needle,
-                     const std::vector<Partitioner2::Function::Ptr> &haystack) const {
-        return compareOneToMany(needle, haystack.begin(), haystack.end());
-    }
+                     const std::vector<Partitioner2::Function::Ptr> &haystack) const;
     /** @} */
-    
+
+    /** Compare many functions to many others.
+     *
+     *  Given two ordered lists of functions, calculate the distances from all functions of the first list to all functions of
+     *  the second list.  The return value is a matrix whose rows are indexed by the functions of the first list and whose
+     *  columns are indexed by the functions of the second list.
+     *
+     *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
+     *  <code>--threads=N</code> switch. */
+    std::vector<std::vector<double> > compareManyToMany(const std::vector<Partitioner2::Function::Ptr>&,
+                                                        const std::vector<Partitioner2::Function::Ptr>&) const;
+
     /** Minimum cost 1:1 mapping.
      *
      *  Compute the minimum cost 1:1 mapping of functions in the first list to those in the second.  If one list is smaller
      *  than the other then it is temporarily padded with null functions. */
-    std::vector<FunctionPair> minimumCostMapping(const std::vector<Partitioner2::Function::Ptr> &list1,
-                                                 const std::vector<Partitioner2::Function::Ptr> &list2) const;
+    std::vector<FunctionPair> findMinimumCostMapping(const std::vector<Partitioner2::Function::Ptr> &list1,
+                                                     const std::vector<Partitioner2::Function::Ptr> &list2) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Sorting
@@ -346,6 +381,9 @@ public:
     // Printing and debugging
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Initializes and registers disassembler diagnostic streams. See Diagnostics::initialize(). */
+    static void initDiagnostics();
+
     /** Print characteristic values for this analysis.
      *
      *  This is a multi-line output intended for debugging. */
@@ -354,7 +392,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Internal functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-protected:
+private:
     static double comparePointClouds(const PointCloud&, const PointCloud&);
     static double compareOrderedLists(const OrderedLists&, const OrderedLists&);
 };

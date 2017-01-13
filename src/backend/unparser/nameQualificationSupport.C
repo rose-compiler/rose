@@ -68,8 +68,7 @@ void NameQualificationTraversal::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          mlog = Sawyer::Message::Facility("NameQualificationTraversal", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+          rose::Diagnostics::initAndRegister(mlog, "rose::NameQualificationTraversal");
         }
    }
 
@@ -816,6 +815,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
      ROSE_ASSERT(positionStatement != NULL);
 
      int  qualificationDepth        = 0;
+
      bool typeElaborationIsRequired = false;
   // bool globalQualifierIsRequired = false;
 
@@ -2351,6 +2351,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
              }
         }
 
+  // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+  // DQ (12/10/2016): Debugging information that makes sure that typeElaborationIsRequired is used and so will not generate a warning.
+  // This is a variable that is essential for internal debugging so we certainly don't want to eliminate it.
+     if (typeElaborationIsRequired == true)
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Note that typeElaborationIsRequired == true \n");
+#endif
+        }
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In NameQualificationTraversal::nameQualificationDepth(): qualificationDepth = %d Report type elaboration: typeElaborationIsRequired = %s \n",qualificationDepth,(typeElaborationIsRequired == true) ? "true" : "false");
 #endif
@@ -3029,7 +3039,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
             // DQ (7/22/2011): The a992-thrifty-mips-compiler Hudson test fails because it generates a 
             // typename that is even longer 5149, so we need an even larger upper bound.  This should be 
             // looked into later to see why some of these different platforms are generating such large 
-            // typenames. See testcode: tests/CompileTests/PythonExample_tests/test2004_92.C (on thrifty).
+            // typenames. See testcode: tests/nonsmoke/functional/CompileTests/PythonExample_tests/test2004_92.C (on thrifty).
             // if (typeNameString.length() > 10000)
             // if (typeNameString.length() > 40000)
                if (typeNameString.length() > 400000)
@@ -4251,7 +4261,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                 // DQ (6/22/2011): I think this is true.  This assertion fails for test2006_78.C (a template example code).
                                 // ROSE_ASSERT(declarationForReferencedNameSet == declaration);
 
-                                // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/roseTests/loopProcessingTests/mm.C
+                                // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/nonsmoke/functional/roseTests/loopProcessingTests/mm.C
                                 // ROSE_ASSERT(declarationForReferencedNameSet != NULL);
                                    if (declarationForReferencedNameSet == NULL)
                                       {
@@ -4817,14 +4827,21 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("Found a SgTemplateInstantiationFunctionDecl that will have template arguments that might require qualification. name = %s \n",templateInstantiationFunctionDeclaration->get_name().str());
 #endif
+            // DQ (12/18/2016): When this is a function call in an array type index expression we can't identify an associated statement.
                SgStatement* currentStatement = TransformationSupport::getStatement(functionRefExp);
-               ROSE_ASSERT(currentStatement != NULL);
+            // ROSE_ASSERT(currentStatement != NULL);
+               if (currentStatement != NULL)
+                  {
+                    SgScopeStatement* currentScope = currentStatement->get_scope();
+                    ROSE_ASSERT(currentScope != NULL);
 
-               SgScopeStatement* currentScope = currentStatement->get_scope();
-               ROSE_ASSERT(currentScope != NULL);
-
-            // traverseTemplatedFunction(functionRefExp,templateInstantiationFunctionDeclaration,currentScope,currentStatement);
-               traverseTemplatedFunction(functionRefExp,functionRefExp,currentScope,currentStatement);
+                 // traverseTemplatedFunction(functionRefExp,templateInstantiationFunctionDeclaration,currentScope,currentStatement);
+                    traverseTemplatedFunction(functionRefExp,functionRefExp,currentScope,currentStatement);
+                  }
+                 else
+                  {
+                    printf ("Note: Name qualification: parent statement could not be identified (may be hidden in array type index) for functionRefExp = %p = %s \n",functionRefExp,functionRefExp->class_name().c_str());
+                  }
              }
         }
 
@@ -5058,7 +5075,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
           printf ("Case of SgVarRefExp: varRefExp = %p currentStatement = %p = %s \n",varRefExp,currentStatement,currentStatement != NULL ? currentStatement->class_name().c_str() : "null");
 #endif
-       // DQ (6/23/2011): This test fails for the new name qualification after a transformation in tests/roseTests/programTransformationTests/test1.C
+       // DQ (6/23/2011): This test fails for the new name qualification after a transformation in tests/nonsmoke/functional/roseTests/programTransformationTests/test1.C
        // ROSE_ASSERT(currentStatement != NULL);
           if (currentStatement != NULL)
              {
@@ -5223,7 +5240,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                                      // It might be better to resolve this to a SgNamedType instead of SgClassType.
                                         classType = isSgClassType(baseType);
-                                        ROSE_ASSERT(classType != NULL);
+                                        if (classType == NULL)
+                                           {
+                                          // DQ (12/18/2016): In the case of Cxx11_tests/test2016_97.C the baseType is a SgTemplateType (though the variable is declared with "auto").
+                                             printf ("Note: Name qualification: case of SgVarRefExp: type is not a SgClassType --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#if 0
+                                             lhs->get_file_info()->display("classType == NULL: debug");
+#endif
+                                           }
+                                     // ROSE_ASSERT(classType != NULL);
                                       }
                                      else
                                       {
@@ -5353,7 +5378,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                printf ("Case of TransformationSupport::getStatement(varRefExp) == NULL explictlySpecifiedCurrentScope = %p \n",explictlySpecifiedCurrentScope);
 #endif
-            // DQ (7/24/2011): This fails for the tests/CompileTests/OpenMP_tests/objectLastprivate.cpp test code.
+            // DQ (7/24/2011): This fails for the tests/nonsmoke/functional/CompileTests/OpenMP_tests/objectLastprivate.cpp test code.
             // ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
                if (explictlySpecifiedCurrentScope != NULL)
                   {
@@ -5375,10 +5400,61 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
 
                          SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(initializedName->get_parent());
-                         ROSE_ASSERT(functionParameterList != NULL);
+
+
+                         SgTemplateClassDeclaration* templateClassDeclaration = NULL;
+
+                      // DQ (11/22/2016): Added debugging information to support test2013_63.C (using GNU g++ version 6.1, C++14 support).
+                         if (functionParameterList == NULL)
+                            {
+                              ROSE_ASSERT(initializedName->get_parent() != NULL);
+#if 0
+                              printf ("initializedName->get_parent() = %p = %s \n",initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
+#endif
+                              SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(initializedName->get_parent());
+                              if (templateClassDefinition != NULL)
+                                 {
+#if 0
+                                   printf ("templateClassDefinition = %p name = %s \n",templateClassDefinition,templateClassDefinition->class_name().c_str());
+                                   templateClassDefinition->get_file_info()->display("functionParameterList == NULL: templateClassDefinition: debug");
+#endif
+                                // SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
+                                   templateClassDeclaration = templateClassDefinition->get_declaration();
+#if 0
+                                   printf ("templateClassDeclaration = %p name = %s \n",templateClassDeclaration,templateClassDeclaration->get_templateName().str());
+                                   templateClassDeclaration->get_file_info()->display("functionParameterList == NULL: templateClassDeclaration: debug");
+
+                                   printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                                   initializedName->get_file_info()->display("functionParameterList == NULL: initializedName: debug");
+#endif
+                                 }
+                            }
+
+                      // DQ (11/22/2016): In test2013_63.C the parent of the SgInitializedName is set to a SgTemplateClassDefinition.
+                      // ROSE_ASSERT(functionParameterList != NULL);
 
                          int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
-                         setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
+
+                      // DQ (11/22/2016): Skip this case as part of testing.
+                      // setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
+                         if (functionParameterList != NULL)
+                            {
+                              setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
+                            }
+                           else
+                            {
+                           // DQ (11/22/2016): Added special handling for test2013_63.C (using GNU g++ version 6.1, C++14 support) as a test.
+                              if (templateClassDeclaration != NULL)
+                                 {
+                                   printf ("WARNING: name qualification special handling for initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                                   setNameQualification(varRefExp,templateClassDeclaration,amountOfNameQualificationRequired);
+                                 }
+                                else
+                                 {
+                                   printf ("ERROR: name qualification skipped for initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                                   ROSE_ASSERT(false);
+                                 }
+                            }
                        }
                       else
                        {
@@ -5680,7 +5756,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (6/22/2011): I think this is true.  This assertion fails for test2006_78.C (a template example code).
             // ROSE_ASSERT(declarationForReferencedNameSet == declaration);
 
-            // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/roseTests/loopProcessingTests/mm.C
+            // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/nonsmoke/functional/roseTests/loopProcessingTests/mm.C
             // ROSE_ASSERT(declarationForReferencedNameSet != NULL);
                if (declarationForReferencedNameSet == NULL)
                   {
@@ -7465,6 +7541,9 @@ NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclaratio
 
   // DQ (6/4/2011): This should not be a SgConstructorInitializer since that uses the qualifiedNameMapForNames instead of the qualifiedNameMapForTypes.
      ROSE_ASSERT(isSgConstructorInitializer(exp) == NULL);
+
+  // DQ (11/22/2016): Added assertion.
+     ROSE_ASSERT(typeDeclaration != NULL);
 
      string qualifier = setNameQualificationSupport(typeDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 

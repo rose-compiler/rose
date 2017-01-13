@@ -38,17 +38,20 @@ if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
  # If we can't process the tutorial directory then we can't run demos
    SUBDIRS += demo
 endif
-SUBDIRS += binaries
 # endif for controling Insure++ usage.
 endif
 endif
 
-ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
+# Pei-Hung (12/06/2016) use "aclocal --print-ac-dir" to specify the include path to support both Linux and Mac
+#ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
+ACLOCAL_INCLUDE = "$$(aclocal --print-ac-dir)"
+ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I $(ACLOCAL_INCLUDE)
 
 all: remove_sage3basic_h_pch
 
 core:
 	$(MAKE) -C $(top_builddir)/src
+	$(MAKE) -C $(top_builddir)/tools
 	$(MAKE) -C $(top_builddir)/exampleTranslators
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
@@ -57,9 +60,11 @@ endif
 install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
+	$(MAKE) install -C $(top_builddir)/tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
+	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif
@@ -314,10 +319,10 @@ docs: FORCE_DOCS_TO_BE_MADE
 	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
 	   $(MAKE) -Ctutorial docs && \
-           $(MAKE) -Ctests/testSupport check && \
-	   $(MAKE) -Ctests/roseTests/astInterfaceTests check && \
-	   $(MAKE) -Ctests/roseTests/ompLoweringTests check && \
-	   $(MAKE) -Ctests/CompileTests/UPC_tests check && \
+           $(MAKE) -Ctests/nonsmoke/functional/testSupport check && \
+	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/astInterfaceTests check && \
+	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/ompLoweringTests check && \
+	   $(MAKE) -Ctests/nonsmoke/functional/CompileTests/UPC_tests check && \
 	   $(MAKE) -Cprojects/UpcTranslation/tests check && \
 	   $(MAKE) -Cprojects/autoParallelization/tests check && \
 	   $(MAKE) -Cdocs docs && \
@@ -424,8 +429,6 @@ NumberOfMakefiles:
 	@du -a $(srcdir)/docs | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in demo directory: "
 	@du -a $(srcdir)/demo | $(FILTER_MAKEFILES) | wc -l
-	@echo "Number of Makefile.am files in binaries directory: "
-	@du -a $(srcdir)/binaries | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in tools directory: "
 	@du -a $(srcdir)/tools | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in config directory: "
@@ -511,8 +514,8 @@ ProblemAreas:
 
 
 # Report the version number of the ROSE translator built.
-PrintRoseTranslatorVersion: $(top_builddir)/tests/testAnalysis
-	$(top_builddir)/tests/testAnalysis --version
+PrintRoseTranslatorVersion: $(top_builddir)/tests/nonsmoke/functional/testAnalysis
+	$(top_builddir)/tests/nonsmoke/functional/testAnalysis --version
 
 release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
 

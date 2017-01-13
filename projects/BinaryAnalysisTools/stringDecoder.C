@@ -149,6 +149,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                "what argument values are used in the synthesis mode.");
 
     SwitchGroup sg("Tool-specific switches");
+    sg.name("tool");
 
     sg.insert(Switch("decoder")
               .argument("address", nonNegativeIntegerParser(settings.decoderVa))
@@ -301,8 +302,7 @@ processSynthesizedCalls(const P2::Partitioner &partitioner, const Settings &sett
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
 
     Settings settings;
     P2::Engine engine;

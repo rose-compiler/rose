@@ -3,6 +3,7 @@
 #include "DisassemblerMips.h"
 #include "integerOps.h"
 #include "Diagnostics.h"
+#include "BinaryUnparserMips.h"
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -81,6 +82,11 @@ DisassemblerMips::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_MIPS_Family;
+}
+
+Unparser::BasePtr
+DisassemblerMips::unparser() const {
+    return Unparser::Mips::instance();
 }
 
 // see base class
@@ -3593,6 +3599,17 @@ static struct Mips32_xori: Mips32 {
 void
 DisassemblerMips::init(ByteOrder::Endianness sex)
 {
+    switch (sex) {
+        case ByteOrder::ORDER_MSB:
+            name("mips-be");
+            break;
+        case ByteOrder::ORDER_LSB:
+            name("mips-le");
+            break;
+        default:
+            ASSERT_not_reachable("invalid MIPS disassembler byte order");
+    }
+
     set_registers(RegisterDictionary::dictionary_mips32());     // only a default
     REG_IP = *get_registers()->lookup("pc");
     REG_SP = *get_registers()->lookup("sp");

@@ -381,6 +381,24 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
+        case V_SgBitAndOp: {
+          res.result=(lhsResult.result.operatorBitwiseAnd(rhsResult.result));
+          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+          resultList.push_back(res);
+          break;
+        }
+        case V_SgBitOrOp: {
+          res.result=(lhsResult.result.operatorBitwiseOr(rhsResult.result));
+          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+          resultList.push_back(res);
+          break;
+        }
+        case V_SgBitXorOp: {
+          res.result=(lhsResult.result.operatorBitwiseXor(rhsResult.result));
+          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+          resultList.push_back(res);
+          break;
+        }
         case V_SgGreaterOrEqualOp: {
           res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
@@ -426,6 +444,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
           if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
             // set result to top when index is top [imprecision]
+            //cerr<<"DEBUG: arr-ref-exp: top!"<<endl;
             res.result=AType::Top();
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
             resultList.push_back(res);

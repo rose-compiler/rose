@@ -316,8 +316,11 @@ if (WIN32)
   # /0s small files
   # /wd4716 to turn no return to a warning and not an error
   set( CMAKE_BUILD_TYPE Release )
-  set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716" )
-  set( CMAKE_C_FLAGS "   /wd4541 " )
+# DQ (11/6/2016): Suggested fix by Pei-Hung for new branch including 
+# EDG 4.11 and EDG 4.12, plus fix for mergeAST_tests directory.
+# set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716 /bigobj" )
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   /wd4541 " )
   set( CMAKE_SHARED_LINKER_FLAGS_DEBUG " ${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
   set( CMAKE_SHARED_LINKER_FLAGS_RELEASE " ${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
   set( CMAKE_MODULE_LINKER_FLAGS_DEBUG " ${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
@@ -328,8 +331,8 @@ if (WIN32)
   set( CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} /INCREMENTAL:NO")
   set( CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} /INCREMENTAL:NO")
 else (WIN32)
-  set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
-  set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fexceptions -DHAVE_CONFIG_H -fPIC" )
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC" )
   #set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
   #set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
   #set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
@@ -949,7 +952,7 @@ include(roseChooseBackendCompiler)
 include(roseGenerateBackendCompilerSpecificHeaders)
 
 # Install the directories within <bin>/include-staging
-install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include/edg)
 
 # --------- finish all fundamental tests, now set derivative variables
 # Liao 12/1/2009, This is essential to find the right include path from either build or installation tree
@@ -1181,27 +1184,22 @@ configure_file(
 
 #TODO: better support for other compilers & operating systems
 set(C_INCLUDE_STRING
-  "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
+  "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
+
 set(CXX_INCLUDE_STRING
-  "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
+  "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
 find_program(shell sh)
 if(shell AND CMAKE_COMPILER_IS_GNUCXX)
+  execute_process(
+    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/dirincludes "./include-staging/" "${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS"
+    OUTPUT_VARIABLE C_includeString
+  )
+  string(STRIP "${C_includeString}" C_includeString)
+  execute_process(
+    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS"
+    OUTPUT_VARIABLE CXX_includeString
+  )
+  string(STRIP "${CXX_includeString}" CXX_includeString)
   execute_process(
 # DQ (2/4/2016): Need additional parameters.
 #   COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs gcc
@@ -1221,11 +1219,13 @@ if(shell AND CMAKE_COMPILER_IS_GNUCXX)
     string(STRIP "${C_include_dir}" C_include_dir)
     set(C_INCLUDE_STRING "${C_INCLUDE_STRING}, \"${C_include_dir}\"")
   endforeach()
+  set(C_INCLUDE_STRING "${C_INCLUDE_STRING} ${C_includeString}, \"/usr/include\"")
 
   foreach(CXX_include_dir ${CXX_backend_includes})
     string(STRIP "${CXX_include_dir}" CXX_include_dir)
     set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}, \"${CXX_include_dir}\"")
   endforeach()
+  set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING} ${CXX_includeString}, \"/usr/include\"")
 
   # In the Autools build system, ROSE stores compiler specific headers in two
   # distinct locations:

@@ -248,7 +248,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
    echo "Starting make check step"
 
-   cd tests/CompileTests/NewEDGInterface_C_tests
+   cd tests/nonsmoke/functional/CompileTests/NewEDGInterface_C_tests
    make -j8 check
    cd ../CudaTests
    make -j8 check

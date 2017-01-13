@@ -201,7 +201,7 @@ void conditionalCopy(const Src *src, const BitRange &srcRange, Dst *dst, const B
     nonoverlappingCopy(src, srcRange, dst, dstRange);
 }
 template<class Src, class Dst>
-void conditionalCopy(const Src *src, const BitRange &srcRange, const Dst *dst, const BitRange &dstRange) {
+void conditionalCopy(const Src */*src*/, const BitRange &/*srcRange*/, const Dst */*dst*/, const BitRange &/*dstRange*/) {
     // do not copy when dst is const
 }
 
@@ -938,7 +938,7 @@ void fromInteger(Word *words, const BitRange &range, boost::uint64_t value) {
     size_t nTmpWords = numberOfWords<Word>(nbits);
     SAWYER_VARIABLE_LENGTH_ARRAY(Word, tmp, nTmpWords);
     for (size_t i=0; i<nTmpWords; ++i)
-        tmp[i] = (value >> (i * bitsPerWord<Word>::value)) & wordMask;
+        tmp[i] = (Word)((value >> (i * bitsPerWord<Word>::value)) & wordMask);
 
     // Copy the value's bit vector to the destination and zero-fill
     copy(tmp, BitRange::baseSize(0, nbits), words, BitRange::baseSize(range.least(), nbits));
@@ -982,7 +982,7 @@ boost::uint64_t toInteger(const Word *words, size_t nbits) {
     for (size_t i=0; i<nTmpWords; ++i)
         result |= (boost::uint64_t)words[i] << (i * bitsPerWord<Word>::value);
     if (nbits < 64)
-        result &= ~((~UINT64_C(0)) << nbits);
+        result &= ~((~(boost::uint64_t)0) << nbits);
     return result;
 }
 

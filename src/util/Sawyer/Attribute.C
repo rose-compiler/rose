@@ -13,7 +13,7 @@
 namespace Sawyer {
 namespace Attribute {
 
-const Id INVALID_ID(-1);
+const Id INVALID_ID((Id)(-1));
 
 typedef Sawyer::Container::BiMap<Id, std::string> DefinedAttributes;
 static DefinedAttributes definedAttributes;

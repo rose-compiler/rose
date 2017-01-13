@@ -52,7 +52,7 @@ DwarfFileInfo::run(SgNode* fileA, SgNode* fileB) {
 
 #if 0
   std::set <std::string> files;
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef  ROSE_HAVE_LIBDWARF
   // The input file is the binary file...
   int binary_file_id = isSgProject(fileA)->get_fileList()[0]->get_file_info()->get_file_id();
 

@@ -3,9 +3,11 @@
 
 #include "RegisterParts.h"
 
-#include <map>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/serialization/string.hpp>
+
 #include <queue>
-#include <string>
 
 /** Defines registers available for a particular architecture.
  *
@@ -50,6 +52,28 @@ public:
     static const RegisterDictionary *dictionary_coldfire();             // FreeScale ColdFire (generic hardware)
     static const RegisterDictionary *dictionary_coldfire_emac();        // FreeScale ColdFire (generic hardware)
 
+private:
+    typedef std::map<uint64_t/*desc_hash*/, std::vector<std::string> > Reverse;
+    static uint64_t hash(const RegisterDescriptor&);
+    std::string name; /*name of the dictionary, usually an architecture name like 'i386'*/
+    Entries forward;
+    Reverse reverse;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & name & forward & reverse;
+    }
+#endif
+
+protected:
+    // needed for serialization
+    RegisterDictionary() {}
+
+public:
     RegisterDictionary(const std::string &name)
         :name(name) {}
     RegisterDictionary(const RegisterDictionary& other) {
@@ -132,6 +156,12 @@ public:
     /** Returns the list of all register descriptors. The returned list may have overlapping register descriptors. The return
      *  value is similar to get_registers() except only the RegisterDescriptor part is returned, not the names. */
     RegisterDescriptors get_descriptors() const;
+
+    /** Returns the first unused major register number. */
+    unsigned firstUnusedMajor() const;
+
+    /** Returns the first unused minor register number. */
+    unsigned firstUnusedMinor(unsigned majr) const;
 
     /** Compares number of bits in register descriptors. This comparator is used to sort register descriptors in either
      *  ascending or descending order depending on the number of significant bits in the register. The default constructor
@@ -221,13 +251,6 @@ public:
 
     /** Return the number of entries in the dictionary. */
     size_t size() const { return forward.size(); }
-
-private:
-    typedef std::map<uint64_t/*desc_hash*/, std::vector<std::string> > Reverse;
-    static uint64_t hash(const RegisterDescriptor&);
-    std::string name; /*name of the dictionary, usually an architecture name like 'i386'*/
-    Entries forward;
-    Reverse reverse;
 };
 
 /** Prints a register name even when no dictionary is available or when the dictionary doesn't contain an entry for the

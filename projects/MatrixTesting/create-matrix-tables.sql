@@ -116,17 +116,19 @@ insert into dependencies values ('boost',        '1.57',             1);
 insert into dependencies values ('boost',        '1.58',             1);
 insert into dependencies values ('boost',        '1.59',             1);
 insert into dependencies values ('boost',        '1.60',             1);
+insert into dependencies values ('boost',        '1.61',             1);
 
 -- DLib version numbers or "system" or "none"
 insert into dependencies values ('dlib',         'none',             1);
-insert into dependencies values ('dlib',         '18.10',            0);
-insert into dependencies values ('dlib',         '18.11',            0);
-insert into dependencies values ('dlib',         '18.12',            0);
-insert into dependencies values ('dlib',         '18.13',            0);
-insert into dependencies values ('dlib',         '18.14',            0);
-insert into dependencies values ('dlib',         '18.15',            0);
-insert into dependencies values ('dlib',         '18.16',            0);
+insert into dependencies values ('dlib',         '18.10',            1);
+insert into dependencies values ('dlib',         '18.11',            1);
+insert into dependencies values ('dlib',         '18.12',            1);
+insert into dependencies values ('dlib',         '18.13',            1);
+insert into dependencies values ('dlib',         '18.14',            1);
+insert into dependencies values ('dlib',         '18.15',            1);
+insert into dependencies values ('dlib',         '18.16',            1);
 insert into dependencies values ('dlib',         '18.17',            1);
+insert into dependencies values ('dlib',         '18.18',            1);
 
 -- Doxygen version numbers or "system" or "none"
 insert into dependencies values ('doxygen',      'none',             0);
@@ -141,11 +143,16 @@ insert into dependencies values ('doxygen',      '1.8.8',            0);
 insert into dependencies values ('doxygen',      '1.8.9',            0);
 insert into dependencies values ('doxygen',      '1.8.10',           1);
 
+-- libdwarf version numbers
+insert into dependencies values ('dwarf',        'ambivalent',       1);
+
 -- EDG version numbers.
 insert into dependencies values ('edg',          '4.4',              0);
-insert into dependencies values ('edg',          '4.7',              1);
-insert into dependencies values ('edg',          '4.8',              1);
+insert into dependencies values ('edg',          '4.7',              0);
+insert into dependencies values ('edg',          '4.8',              0);
 insert into dependencies values ('edg',          '4.9',              1);
+insert into dependencies values ('edg',          '4.11',             1);
+insert into dependencies values ('edg',          '4.12'              1);
 
 -- libmagic version numbers or "system" or "none"
 insert into dependencies values ('magic',        'none',             1);
@@ -230,6 +237,7 @@ create table test_results (
     rmc_debug           varchar(64) default 'unknown',
     rmc_dlib            varchar(64) default 'unknown',
     rmc_doxygen         varchar(64) default 'unknown',
+    rmc_dwarf           varchar(64) default 'unknown',
     rmc_edg             varchar(64) default 'unknown',
     rmc_java            varchar(64) default 'unknown',
     rmc_languages       varchar(64) default 'unknown',

@@ -59,6 +59,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     parser.errorStream(::mlog[FATAL]);
 
     SwitchGroup analysis("Dead code analysis switches");
+    analysis.name("dc");
 
     analysis.insert(Switch("reachable-address")
                     .argument("addresses", P2::addressIntervalParser(settings.reachableVas))
@@ -122,6 +123,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                          "zero (the default) will assume addresses are the same as the architecture's word size."));
 
     SwitchGroup output("Output switches");
+    output.name("out");
 
     output.insert(Switch("show-map")
                   .intrinsicValue(true, settings.showMap)
@@ -196,7 +198,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     output.insert(Switch("show-hexdump")
                   .intrinsicValue(true, settings.showHexDump)
-                  .doc("Show unused addresses in @man{hexdump}(1) style. The @s{no-show-hexdump} disables this feature. The "
+                  .doc("Show unused addresses in @man{hexdump}{1} style. The @s{no-show-hexdump} disables this feature. The "
                        "default is to " + std::string(settings.showHexDump?"":"not ") + "show this output."));
     output.insert(Switch("no-show-hexdump")
                   .key("show-hexdump")
@@ -523,8 +525,7 @@ int main(int argc, char *argv[]) {
     // Initialization, parsing, disassembly, etc.
     //---------------------------------------------
     ROSE_INITIALIZE;
-    ::mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Diagnostics::initAndRegister(::mlog, "tool");
     Diagnostics::Stream info(::mlog[INFO]);
 
     // Use a partitioning engine since this makes this tool much easier to write.

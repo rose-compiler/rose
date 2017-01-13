@@ -121,8 +121,10 @@ libroseLibraries = \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(top_builddir)/src/util/libroseSaywer.la \
-   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(libroseBinaryLibraries)
+
+# DQ (12/18/2016): Moved below to make POET optional.
+#  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
@@ -146,10 +148,20 @@ libroseLibraries = \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(top_builddir)/src/util/libroseSawyer.la \
-   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
+
+# DQ (12/18/2016): Moved below to make POET optional.
+#  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
+endif
+
+if !OS_VENDOR_UBUNTU
+if !OS_VENDOR_DEBIAN
+# DQ (12/18/2016): make POET optional (skip on Debian and Ubuntu systems until the 
+# build is better and can avoid linking issues for these operating systems.
+   libroseLibraries += $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
+endif
 endif
 
 # DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
@@ -213,7 +225,6 @@ check-local: check-trivial-program check-boost-linkage
 # This is true only if we have configured --with-development-libraries, else we have static
 # in each directory and we will link with the collection of all static libraries.
 
-noinst_PROGRAMS = testSharedRoseLib 
 all-local:
 
 # PC (9/15/2006): force the use of the C++ linker
@@ -252,7 +263,7 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
 endif
 
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
-if ROSE_USE_DWARF
+if ROSE_HAVE_LIBDWARF
    librose_la_LIBADD += $(ROSE_DWARF_LIBS_WITH_PATH)
 endif
 
