@@ -598,18 +598,27 @@ CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexIterator &vertex) con
         srcLoc = htmlEscape(srcLoc) + "<br align=\"left\"/>";
     switch (vertex->value().type()) {
         case V_BASIC_BLOCK: {
+            // If this basic block is the entry point to at least one function, show the function name as the basic block's
+            // label.
+            bool foundEntryPoint = false;
             FunctionSet functions = owningFunctions(vertex);
             if (!functions.isEmpty()) {
                 BOOST_FOREACH (const Function::Ptr &function, functions.values()) {
-                    if (function->address() == vertex->value().address())
+                    if (function->address() == vertex->value().address()) {
                         srcLoc += htmlEscape(function->printableName()) + "<br align=\"left\"/>";
+                        foundEntryPoint = true;
+                    }
                 }
-                return "<" + srcLoc + ">";
-            } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-                return "<" + srcLoc + htmlEscape(bb->printableName()) + ">";
-            } else {
-                return "<" + srcLoc + StringUtility::addrToString(vertex->value().address()) + ">";
+                if (foundEntryPoint)
+                    return "<" + srcLoc + ">";
             }
+
+            // If this basic block has a name (i.e., an address) then use it as the label.
+            if (BasicBlock::Ptr bb = vertex->value().bblock())
+                return "<" + srcLoc + htmlEscape(bb->printableName()) + ">";
+
+            // Last resort, use the address stored in the CFG (not sure if this code is even reachable)
+            return "<" + srcLoc + StringUtility::addrToString(vertex->value().address()) + ">";
         }
         case V_NONEXISTING:
             return "\"nonexisting\"";

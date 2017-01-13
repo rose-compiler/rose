@@ -3,6 +3,7 @@
 
 #include <BaseSemantics2.h>
 #include <BinaryStackVariable.h>
+#include <Partitioner2/BasicTypes.h>
 #include <RegisterParts.h>
 
 #include <boost/serialization/access.hpp>
@@ -15,10 +16,6 @@ namespace BinaryAnalysis {
 
 // Forwards
 class Disassembler;
-namespace Partitioner2 {
-    class Partitioner;
-    class Function;
-}
 
 /** Support for binary calling conventions.
  *

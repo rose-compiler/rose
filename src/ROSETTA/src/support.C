@@ -2374,7 +2374,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // in an error with newer compilers (e.g. GNU 6.1) if they were unparsed in the generated code.  This pointer
   // is available as an alternative type that can be unparsed (used by the unparser, and the name qualification).
   // This type does not have any priviate access typedefs contained within it.
-     TemplateArgument.setDataPrototype     ( "SgType*", "uparsable_type_alias", "= NULL",
+     TemplateArgument.setDataPrototype     ( "SgType*", "unparsable_type_alias", "= NULL",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Could be an array bound (integer) or some unknown type

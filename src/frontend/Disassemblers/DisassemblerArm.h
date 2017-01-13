@@ -28,6 +28,8 @@ public:
     /** See Disassembler::can_disassemble */
     virtual bool can_disassemble(SgAsmGenericHeader*) const;
 
+    virtual Unparser::BasePtr unparser() const;
+
     /** See Disassembler::disassembleOne */
     virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
 

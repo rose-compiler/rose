@@ -14,6 +14,7 @@
 #include "integerOps.h"
 #include "stringify.h"
 #include "DispatcherX86.h"
+#include "BinaryUnparserX86.h"
 
 #include <sstream>
 
@@ -58,6 +59,11 @@ DisassemblerX86::can_disassemble(SgAsmGenericHeader *header) const
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family)
         return 8==get_wordsize();
     return false;
+}
+
+Unparser::BasePtr
+DisassemblerX86::unparser() const {
+    return Unparser::X86::instance();
 }
 
 void

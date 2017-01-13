@@ -39,7 +39,7 @@ void foobar()
    {
   // Error unparses as:
   // pair< _Rb_tree< map< int > ::key_type > ::iterator_rb_tree  , bool  > insert_result;
-  // Note that EDG is the source of the norlamization: through the typedef for "iterator_map".
+  // Note that EDG is the source of the normalization: through the typedef for "iterator_map".
   // pair<map<int>::iterator_map, bool > insert_result; 
      pair<map<int>::iterator_map > insert_result; 
    }

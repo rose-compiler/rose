@@ -5,6 +5,7 @@
 #include "Disassembler.h"
 #include "sageBuilderAsm.h"
 #include "DisassemblerPowerpc.h"
+#include "BinaryUnparserPowerpc.h"
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -39,6 +40,11 @@ DisassemblerPowerpc::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return isa == SgAsmExecutableFileFormat::ISA_PowerPC;
+}
+
+Unparser::BasePtr
+DisassemblerPowerpc::unparser() const {
+    return Unparser::Powerpc::instance();
 }
 
 void

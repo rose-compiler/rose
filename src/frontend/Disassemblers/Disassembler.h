@@ -2,6 +2,7 @@
 #define ROSE_DISASSEMBLER_H
 
 #include "BinaryCallingConvention.h"
+#include "BinaryUnparser.h"
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Registers.h"
 #include "MemoryMap.h"
@@ -14,7 +15,6 @@
 
 namespace rose {
 namespace BinaryAnalysis {
-
 
 /** Virtual base class for instruction disassemblers.
  *
@@ -395,6 +395,12 @@ public:
      *                                          Disassembler properties and settings
      ***************************************************************************************************************************/
 public:
+    /** Unparser.
+     *
+     *  Returns an unparser suitable for unparsing the same instruction set architecture as recognized and produced by this
+     *  disassembler. */
+    virtual Unparser::BasePtr unparser() const = 0;
+
     /** Specifies the registers available on this architecture.  Rather than using hard-coded class, number, and position
      *  constants, the disassembler should perform a name lookup in this supplied register dictionary and use the values found
      *  therein. There's usually no need for the user to specify a value because either it will be obtained from an
