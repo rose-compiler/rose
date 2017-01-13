@@ -9,6 +9,8 @@
 #define Sawyer_Optional_H
 
 #include <Sawyer/Sawyer.h>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
 #include <boost/type_traits/aligned_storage.hpp>
 #include <boost/type_traits/type_with_alignment.hpp>
 
@@ -56,6 +58,29 @@ class Optional {
     void *address() { return &mayAlias_; }
     const void*address() const { return &mayAlias_; }
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned /*version*/) const {
+        s <<isEmpty_;
+        if (!isEmpty_)
+            s <<get();
+    }
+
+    template<class S>
+    void load(S &s, const unsigned /*version*/) {
+        *this = Nothing();
+        bool skip = false;
+        s >>skip;
+        if (!skip) {
+            *this = T();
+            s >>get();
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+        
 public:
     /** Type of stored value. */
     typedef T Value;

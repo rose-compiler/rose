@@ -8,13 +8,16 @@
 #ifndef Sawyer_SharedPtr_H
 #define Sawyer_SharedPtr_H
 
-#include <cstddef>
-#include <ostream>
 #include <Sawyer/Assert.h>
 #include <Sawyer/Optional.h>                            // FIXME[Robb Matzke 2014-08-22]: only needed for Sawyer::Nothing
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/Synchronization.h>
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <cstddef>
+#include <ostream>
 
 namespace Sawyer {
 
@@ -38,6 +41,25 @@ private:
     // Returns number of owners remaining
     static size_t releaseOwnership(Pointee *rawPtr);
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned /*version*/) const {
+        s << pointee_;
+    }
+
+    template<class S>
+    void load(S &s, const unsigned /*version*/) {
+        if (pointee_!=NULL && 0==releaseOwnership(pointee_))
+            delete pointee_;
+        pointee_ = NULL;
+        s >> pointee_;
+        acquireOwnership(pointee_);
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+    
 public:
     /** Constructs an empty shared pointer. */
     SharedPointer(): pointee_(NULL) {}

@@ -1509,7 +1509,7 @@ ROSEAttributesList::setFileName(const string & fName)
 
   // DQ (10/4/2013): This code was not previously exercised and is not an error,
   // commented out the assert to allow the test below to be done. This is 
-  // causing tests/testAstFileIO.C to fail on this input test code.  It might be
+  // causing tests/nonsmoke/functional/testAstFileIO.C to fail on this input test code.  It might be
   // that the new token support has caused more to be stored in the AST and thus
   // triggering more comments and CPP directives to be saved as part of the file I/O
   // (serialization of the AST).
@@ -1965,27 +1965,43 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
         }
 
   // The character "!" starts a comment if only blanks are in the leading white space.
+
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
      int positionofHashCharacter = -1;
+#endif
+
      if (firstNonBlankCharacter == '#')
         {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
        // printf ("This is a CPP directive: i = %d lineCounter = %d line = %s length = %" PRIuPTR " \n",i,lineCounter,line.c_str(),line.length());
 #endif
           isLikelyCppDirective = true;
+
+       // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
           positionofHashCharacter = i;
+#endif
         }
 
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
      printf ("i = %" PRIuPTR " positionofHashCharacter = %d \n",i,positionofHashCharacter);
 #endif
+
+  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
      bool hasLineContinuation = false;
+#endif
 
   // DQ (4/21/2009): Fixed possible buffer underflow...
   // char lastCharacter = line[lineLength-1];
      char lastCharacter = (lineLength > 0) ? line[lineLength-1] : '\0';
      if (lastCharacter == '\\')
         {
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+       // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
           hasLineContinuation = true;
+#endif
         }
 
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
@@ -2051,7 +2067,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
           string cppIndentifier = line.substr(positionOfFirstCharacterOfCppIdentifier,cppIdentifierLength);
 
        // Some names will convert to integer values
-          long integerValue = -1;
+       // long integerValue = -1;
           if (spaceAfterHash == true)
              {
             // This is likely going to be a number but test2005_92.C demonstrates a case where this is not true.
@@ -2077,8 +2093,12 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
 
             // strtol will put the string into buffer if str is not a number and 2nd parameter is not NULL.
                errno = 0;
+
             // integerValue = strtol(str,NULL,10);
-               integerValue = strtol(str,&buffer,10);
+
+            // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+            // integerValue = strtol(str,&buffer,10);
+               strtol(str,&buffer,10);
 
             // Setting and checking errno does not appear to work for the detection of errors in the use of strtol
                if (errno != 0)
@@ -2093,12 +2113,16 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
                     isANumber = false;
                   }
             // printf ("cppIndentifier = %s integerValue = %ld \n",cppIndentifier.c_str(),integerValue);
-#if 1
+
             // Avoid memory leak!
-               delete original_buffer;
+
+            // DQ (11/4/2016): This needs to be an array delete (caught by Address Sanitizer).
+            // delete original_buffer;
+               delete [] original_buffer;
+
                original_buffer = NULL;
                buffer = NULL;
-#endif
+
             // This value will be a constant value used to identify a numerical value.
             // This value should be a macro defined in some centralized location.
                if (isANumber == true)
@@ -2199,7 +2223,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
             // This case should be an error...
             // Liao, 5/13/2009
             // This should not be an error. Any weird string can show up in a block of /* */
-            // Check the test input: tests/CompileTests/C_tests/test2009_01.c
+            // Check the test input: tests/nonsmoke/functional/CompileTests/C_tests/test2009_01.c
 #if 0             
                printf ("Error: Unknown cppIndentifier = %s \n",cppIndentifier.c_str());
                ROSE_ASSERT(false);
@@ -2440,7 +2464,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                          // Liao, 5/13/2009
                          // "#  1 2 3" can show up in a comment block /* */, 
                          // In this case it is not a CPP generated linemarker at all.
-                         // We should allow to skip this line as tested in tests/CompileTests/C_tests/test2009_02.c
+                         // We should allow to skip this line as tested in tests/nonsmoke/functional/CompileTests/C_tests/test2009_02.c
 #if 0                     
                          ROSE_ASSERT(positionOfFirstQuote != string::npos);
 

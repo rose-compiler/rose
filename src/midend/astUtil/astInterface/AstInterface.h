@@ -44,7 +44,10 @@ class AstNodePtr {
     { return repr < that.repr; }
   virtual void print() const // for debugging
     { std::cerr << AstToString(*this); }
-  ~AstNodePtr() {}
+
+// DQ (12/5/2016): Added virtual to destructor declaration (eliminating warnings we want to have be errors).
+  virtual ~AstNodePtr() {}
+
   void * get_ptr() const { return repr; }
 };
 #define AST_NULL AstNodePtr()

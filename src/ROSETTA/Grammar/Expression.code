@@ -1135,13 +1135,19 @@ HEADER_CAST_EXPRESSION_START
        */
           enum cast_type_enum
              {
-               e_unknown          = 0,  /*!< Unknown value (error value) */
-               e_default          = 1,  /*!< Default value (default) */
-               e_C_style_cast     = 2,  /*!< C style cast */
-               e_const_cast       = 3,  /*!< C++ const cast */
-               e_static_cast      = 4,  /*!< C++ static cast */
-               e_dynamic_cast     = 5,  /*!< C++ dynamic cast */
-               e_reinterpret_cast = 6   /*!< C++ reinterpret cast */
+               e_unknown               = 0, /*!< Unknown value (error value) */
+               e_default               = 1, /*!< Default value (default) */
+               e_C_style_cast          = 2, /*!< C style cast */
+               e_const_cast            = 3, /*!< C++ const cast */
+               e_static_cast           = 4, /*!< C++ static cast */
+               e_dynamic_cast          = 5, /*!< C++ dynamic cast */
+               e_reinterpret_cast      = 6,  /*!< C++ reinterpret cast */
+            // DQ (8/22/2016): Adding more comprehensive setting of cast semantics (as part of improved C++ cast support).
+            // Not clear if these really need to be present.
+            // e_reference_cast        = 7, /*!< C++ reference cast (base class cast) */
+            // e_rvalue_reference_cast = 8,  /*!< C++ rvalue reference cast (base class cast to rvalue) */
+               e_safe_cast             = 8, /*!< C++ MSVC specific safe cast */
+               e_last_cast  /*!< Last entry in enum of cast types */
              };
 
        // Sg_e_cast_type cast_type();
@@ -1177,6 +1183,8 @@ HEADER_CAST_EXPRESSION_START
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required() const;
           void set_global_qualification_required(bool global_qualification_required);
+
+          static std::string cast_type_to_string ( enum cast_type_enum );
 
 HEADER_CAST_EXPRESSION_END
 
@@ -1383,19 +1391,19 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 #endif
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_requiresGlobalNameQualificationOnType() const;
           void set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           int get_name_qualification_length_for_type() const;
           void set_name_qualification_length_for_type(int name_qualification_length_for_type);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_type_elaboration_required_for_type() const;
           void set_type_elaboration_required_for_type(bool type_elaboration_required_for_type);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required_for_type() const;
           void set_global_qualification_required_for_type(bool global_qualification_required_for_type);
 
@@ -1428,15 +1436,15 @@ HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
        */
           SgClassDeclaration* get_class_decl () const;
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           int get_name_qualification_length() const;
           void set_name_qualification_length(int name_qualification_length);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_type_elaboration_required() const;
           void set_type_elaboration_required(bool type_elaboration_required);
 
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required() const;
           void set_global_qualification_required(bool global_qualification_required);
 
@@ -1457,6 +1465,36 @@ HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_END
+
+HEADER_BRACED_INITIALIZER_EXPRESSION_START
+HEADER_LIST_DECLARATIONS
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+#if 0
+       // DQ (11/15/2016): I don' think that name qualification maes sense for a braced initializer.
+
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_requiresGlobalNameQualificationOnType() const;
+          void set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType);
+
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length_for_type() const;
+          void set_name_qualification_length_for_type(int name_qualification_length_for_type);
+
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required_for_type() const;
+          void set_type_elaboration_required_for_type(bool type_elaboration_required_for_type);
+
+       // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required_for_type() const;
+          void set_global_qualification_required_for_type(bool global_qualification_required_for_type);
+#endif
+
+HEADER_BRACED_INITIALIZER_EXPRESSION_END
+
 
 HEADER_REPLACE_EXPRESSION_START
           int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
@@ -2662,7 +2700,11 @@ SgUnaryOp::get_type() const
    {
   // DQ (1/14/2006): Get the type from the operand
   // return get_expression_type();
-  // printf ("$CLASSNAME::get_type(): getting type from operand \n");
+
+#if 0
+     printf ("$CLASSNAME::get_type(): getting type from operand \n");
+#endif
+
      ROSE_ASSERT(get_operand() != NULL);
 
      SgType* returnType = get_operand()->get_type();
@@ -2796,6 +2838,10 @@ SgBinaryOp::get_type() const
 
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
+
+#if 0
+     printf ("In SgBinaryOp::get_type(): this->class_name() = %s \n",this->class_name().c_str());
+#endif
 
      SgType* lhsType = get_lhs_operand()->get_type();
      ROSE_ASSERT(lhsType != NULL);
@@ -3322,6 +3368,11 @@ SgType*
 SgLambdaExp::get_type() const
    {
   // DQ (9/2/2014): I think we want this to be the return type of the function (deduced or not).
+
+#if 0
+     printf ("In SgLambdaExp::get_type() \n");
+#endif
+
      return SageBuilder::buildVoidType(); // TODO this is wrong
    }
 
@@ -4099,6 +4150,10 @@ SgTemplateParameterVal::get_type() const
   // template functions overloaded on template parameters. See test2013_303.C for an example.
      ROSE_ASSERT(this->get_valueType() != NULL);
 
+#if 0
+     printf ("In SgTemplateParameterVal::get_type() \n");
+#endif
+
      return this->get_valueType();
    }
 
@@ -4217,7 +4272,11 @@ SgCallExpression::replace_expression(SgExpression *o, SgExpression *n)
 SgType*
 SgCallExpression::get_type() const
    {
-       return SageBuilder::buildVoidType(); //TODO this is wrong
+#if 0
+     printf ("In SgCallExpression::get_type() \n");
+#endif
+
+     return SageBuilder::buildVoidType(); //TODO this is wrong
    }
 
 SOURCE_CALL_EXPRESSION_END
@@ -4237,6 +4296,10 @@ SgFunctionCallExp::get_type() const
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
 
   // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type \n");
+
+#if 0
+     printf ("In SgFunctionCallExp::get_type() \n");
+#endif
 
   // DQ (7/20/2006): Peter's patch now allows this function to be simplified to the following (suggested by Jeremiah).
      SgType* returnType = NULL;
@@ -4309,6 +4372,10 @@ SgTypeTraitBuiltinOperator::get_type() const
 
      SgType* returnType = NULL;
 
+#if 0
+     printf ("In SgTypeTraitBuiltinOperator::get_type() \n");
+#endif
+
      if (get_name() == "__underlying_type")
         {
        // This returns an actual type and it is not clear now to handle this.
@@ -4340,6 +4407,10 @@ SgArrowExp::get_type() const
 
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
+
+#if 0
+     printf ("In SgArrowExp::get_type() \n");
+#endif
 
      SgType* returnType = get_rhs_operand()->get_type();
 
@@ -4425,7 +4496,8 @@ SOURCE_ARROW_EXPRESSION_END
 SOURCE_DOT_EXPRESSION_START
 
 SgType*
-$CLASSNAME::get_type() const
+  // $CLASSNAME::get_type() const
+SgDotExp::get_type() const
    {
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
 
@@ -4435,6 +4507,10 @@ $CLASSNAME::get_type() const
 
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
+
+#if 0
+     printf ("In SgDotExp::get_type() \n");
+#endif
 
      SgType* returnType = get_rhs_operand()->get_type();
 
@@ -4466,6 +4542,10 @@ SgDotStarOp::get_type() const
 
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
+
+#if 0
+     printf ("In SgDotStarExp::get_type() \n");
+#endif
 
      SgType* someType = get_rhs_operand()->get_type();
 
@@ -4555,6 +4635,10 @@ SgArrowStarOp::get_type() const
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
 
+#if 0
+     printf ("In SgArrowStarExp::get_type() \n");
+#endif
+
      SgType* someType = get_rhs_operand()->get_type();
 
      SgType* returnType = NULL;
@@ -4626,6 +4710,10 @@ SOURCE_BOOLEAN_GET_TYPE_START
 SgType*
 $CLASSNAME::get_type() const
    {
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
   // DQ (8/27/2006): We can get this result more quickly without searching the AST backward to the root and 
   // if we do so it will be more consistant with what we have to do for the SgTypeBool which similarly must 
   // be unparsed differently for C99 and C++ (gnu gcc also accepts "_Bool" as a type).
@@ -4679,6 +4767,10 @@ $CLASSNAME::get_type() const
    {
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
 
      SgType* returnType = get_rhs_operand()->get_type();
 
@@ -4780,16 +4872,22 @@ SOURCE_NARY_OP_END
 
 SOURCE_NARY_COMPARISON_OP_START
 SgType*
-SgNaryComparisonOp::get_type() const {
-    return SageBuilder::buildBoolType();
-}
+SgNaryComparisonOp::get_type() const 
+   {
+#if 1
+     printf ("In SgNaryComparisonOp::get_type() \n");
+#endif
+
+     return SageBuilder::buildBoolType();
+   }
 SOURCE_NARY_COMPARISON_OP_END
 
 SOURCE_NARY_BOOLEAN_OP_START
 SgType*
-SgNaryBooleanOp::get_type() const {
-    return SageBuilder::buildVoidType();
-}
+SgNaryBooleanOp::get_type() const 
+   {
+     return SageBuilder::buildVoidType();
+   }
 SOURCE_NARY_BOOLEAN_OP_END
 
 SOURCE_AND_OPERATOR_EXPRESSION_START
@@ -4798,6 +4896,10 @@ SgType*
 $CLASSNAME::get_type() const
    {
   // This function returns an integer representing the logical type 
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
 
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
   // DQ (7/20/2006): Modified to remove redundant SgTypeInt qualifier.
@@ -4817,6 +4919,10 @@ SgType*
 $CLASSNAME::get_type() const
    {
   // This function returns an integer representing the logical type 
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
 
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
   // DQ (7/20/2006): Modified to remove redundant SgTypeInt qualifier.
@@ -4852,6 +4958,10 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
 
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = get_rhs_operand()->get_type();
      ROSE_ASSERT(returnType != NULL);
 
@@ -4886,6 +4996,11 @@ $CLASSNAME::get_type() const
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeUnsignedInt::createType();
 
      ROSE_ASSERT(returnType != NULL);
@@ -4981,6 +5096,11 @@ $CLASSNAME::get_type() const
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeUnsignedInt::createType();
 
      ROSE_ASSERT(returnType != NULL);
@@ -5076,6 +5196,11 @@ SgNoexceptOp::get_type() const
   // DQ (2/4/2015): This function returns a bool type (evaluating if exceptions are to be supported).
 
      ROSE_ASSERT(p_operand_expr != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeBool::createType();
 
      ROSE_ASSERT(returnType != NULL);
@@ -5117,6 +5242,11 @@ $CLASSNAME::get_type() const
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeUnsignedInt::createType();
 
      ROSE_ASSERT(returnType != NULL);
@@ -5165,6 +5295,10 @@ SgTypeIdOp::set_type( SgType* type )
 SgType*
 SgTypeIdOp::get_type() const
    {
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
 #if 0
   // DQ (7/20/2006): The typeid operator returns an lvalue of type const std::type_info that represents the 
   // type of expression expr. You must include the standard template library header <typeinfo> to use the 
@@ -5306,6 +5440,10 @@ $CLASSNAME::get_type() const
 
      SgType* returnType = p_expression_type;
 
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
@@ -5371,6 +5509,10 @@ SgPointerDerefExp::get_type() const
      ROSE_ASSERT(get_operand() != NULL);
 
   // printf ("In $CLASSNAME::get_type(): get_operand() = %p = %s \n",get_operand(),get_operand()->class_name().c_str());
+
+#if 0
+     printf ("In SgPointerDerefExp::get_type() \n");
+#endif
 
      SgType* someType = get_operand()->get_type();
      ROSE_ASSERT(someType != NULL);
@@ -5571,8 +5713,9 @@ SgPointerDerefExp::get_type() const
 #endif
                ROSE_ASSERT(false);
 #else
+            // DQ (10/23/2016): Commented out message to avoid output spew.
             // DQ (12/31/2008): This is the new behavior for EDG version 4.x.
-               printf ("Warning: default reached in In SgPointerDerefExp::get_type() someType = %s \n",someType->class_name().c_str());
+            // printf ("Warning: default reached in In SgPointerDerefExp::get_type() someType = %s \n",someType->class_name().c_str());
                returnType = someType;
 #endif
              }
@@ -5593,6 +5736,10 @@ SgAddressOfOp::get_type() const
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
 
   // This function returns a pointer to the type return from get_operand()->get_type().
+
+#if 0
+     printf ("In SgAddressOfOp::get_type() \n");
+#endif
 
      ROSE_ASSERT(get_operand() != NULL);
      SgType* baseType = get_operand()->get_type();
@@ -5788,6 +5935,10 @@ $CLASSNAME::post_construction_initialization()
 SgType*
 SgAtExp::get_type() const
    {
+#if 0
+     printf ("In SgAtExp::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeDefault::createType();
      ROSE_ASSERT(returnType != NULL);
      return returnType;
@@ -5803,6 +5954,10 @@ $CLASSNAME::post_construction_initialization()
 SgType*
 SgFinishExp::get_type() const
    {
+#if 0
+     printf ("In SgFinishExp::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeDefault::createType();
      ROSE_ASSERT(returnType != NULL);
      return returnType;
@@ -5842,6 +5997,10 @@ $CLASSNAME::get_type() const
 
      ROSE_ASSERT(p_true_exp  != NULL);
      ROSE_ASSERT(p_false_exp != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
 
      SgType* trueType   = p_true_exp->get_type();
      ROSE_ASSERT(trueType != NULL);
@@ -5968,6 +6127,10 @@ SgCastExp::get_type() const
 
   // printf ("SgCastOp::get_type(): p_expression_type has been removed from many IR nodes but is required for SgCastOp \n");
 
+#if 0
+     printf ("In SgCastExp::get_type() \n");
+#endif
+
      ROSE_ASSERT(p_expression_type != NULL);
      return p_expression_type;
    }
@@ -6053,6 +6216,30 @@ SgCastExp::set_global_qualification_required ( bool global_qualification_require
      p_global_qualification_required = global_qualification_required;
    }
 
+std::string
+SgCastExp::cast_type_to_string ( enum cast_type_enum cast_type )
+   {
+     string s;
+
+     switch (cast_type)
+       {
+         case e_unknown: s = "e_unknown"; break;
+         case e_default: s = "e_default"; break;
+         case e_C_style_cast: s = "e_C_style_cast"; break;
+         case e_const_cast: s = "e_const_cast"; break;
+         case e_static_cast: s = "e_static_cast"; break;
+         case e_dynamic_cast: s = "e_dynamic_cast"; break;
+         case e_reinterpret_cast: s = "e_reinterpret_cast"; break;
+         case e_safe_cast: s = "e_safe_cast"; break;
+         case e_last_cast: s = "e_last_cast"; break;
+
+         default:
+              printf ("ERROR: default reach in switch: cast_type = %d \n",cast_type);
+       }
+
+     return s;
+   }
+
 
 SOURCE_CAST_EXPRESSION_END
 
@@ -6067,6 +6254,10 @@ SgPntrArrRefExp::get_type() const
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
 
   // printf ("SgPntrArrRefExp::get_type(): p_expression_type has been removed from many IR nodes \n");
+
+#if 0
+     printf ("In SgPntrArrRefExp::get_type() \n");
+#endif
 
   // ROSE_ASSERT(p_expression_type != NULL);
      if (p_expression_type != NULL)
@@ -6313,6 +6504,10 @@ $CLASSNAME::get_type() const
   // a class or struct without an explicit constructor.
      // ROSE_ASSERT(p_constructor_args != NULL); -- JJW hack
 
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
   // Since where the p_constructor_args->get_declaration() == NULL (often for primative types) 
   // we need the explicitly stored p_expression_type pointer anyway so we can just make it the 
   // return type for all cases.
@@ -6418,6 +6613,10 @@ SgDeleteExp::get_type() const
 
   // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we now return SgTypeVoid \n");
 
+#if 0
+     printf ("In SgDeleteExp::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeVoid::createType();
 
      ROSE_ASSERT(returnType != NULL);
@@ -6470,6 +6669,10 @@ $CLASSNAME::post_construction_initialization()
 SgType*
 $CLASSNAME::get_type() const
    {
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeDefault::createType();
      ROSE_ASSERT(returnType != NULL);
      return returnType;
@@ -6497,6 +6700,9 @@ SOURCE_MATRIX_EXP_START
 SgType*
 SgMatrixExp::get_type() const
    {
+#if 0
+     printf ("In SgMatrixExp::get_type() \n");
+#endif
      return SageBuilder::buildMatrixType();
    }
 
@@ -6605,6 +6811,10 @@ $CLASSNAME::get_type() const
    {
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
 
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
   // DQ (1/14/2006): For a list of types held internally it is not clear what to return.
   // So return a SgDefaultType as in Sage II previously.  Might be better to research
   // this in more details later.
@@ -6634,7 +6844,6 @@ SgAggregateInitializer::post_construction_initialization()
           get_initializers()->set_parent(this);
    }
 
-#if 1
 // DQ: trying to remove the nested iterator class
 void
 SgAggregateInitializer::append_initializer(SgExpression* what)
@@ -6655,19 +6864,7 @@ SgAggregateInitializer::append_initializer(SgExpression* what)
   // insert_initializer(p_initializers->end(),what);
      p_initializers->append_expression(what);
    }
-#endif
 
-#if 0
-// DQ: trying to remove the nested iterator class
-// $CLASSNAME::insert_initializer(const SgExpression::iterator& where, SgExpression* what) 
-void
-SgAggregateInitializer::insert_initializer(const SgExpressionPtrList::iterator& where, SgExpression* what) 
-   {
-     p_initializers->insert_expression(where,what);
-   }
-#endif
-
-//#if 0
 SgExpression*
 SgAggregateInitializer::get_next(int& n) const
    {
@@ -6679,7 +6876,6 @@ SgAggregateInitializer::get_next(int& n) const
        else
           return 0;
    }
-//#endif
 
 int
 SgAggregateInitializer::replace_expression(SgExpression* o, SgExpression* n)
@@ -6705,6 +6901,10 @@ SgAggregateInitializer::replace_expression(SgExpression* o, SgExpression* n)
 SgType*
 SgAggregateInitializer::get_type() const
    {
+#if 0
+     printf ("In SgAggregateInitializer::get_type() \n");
+#endif
+
 #if 0
      printf ("In SgAggregateInitializer::get_type(): p_expression_type = %p \n",p_expression_type);
 #endif
@@ -6864,6 +7064,10 @@ SgCompoundInitializer::replace_expression(SgExpression* o, SgExpression* n)
 SgType*
 SgCompoundInitializer::get_type() const
    {
+#if 0
+     printf ("In SgCompoundInitializer::get_type() \n");
+#endif
+
      if (p_expression_type != NULL)
         {
           return p_expression_type;
@@ -7095,6 +7299,7 @@ bool
 SgConstructorInitializer::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
+
      return p_type_elaboration_required;
    }
 
@@ -7154,6 +7359,11 @@ $CLASSNAME::get_type() const
   // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, getting the return type from the stored internal operand \n");
 
      ROSE_ASSERT(get_operand() != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = p_expression_type ? p_expression_type : get_operand()->get_type();
 
      ROSE_ASSERT(returnType != NULL);
@@ -7216,6 +7426,173 @@ $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
    }
 
 SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION_END
+
+
+SOURCE_BRACED_INITIALIZER_EXPRESSION_START
+
+void
+SgBracedInitializer::post_construction_initialization() 
+   {
+     if (get_initializers())
+          get_initializers()->set_parent(this);
+   }
+
+// DQ: trying to remove the nested iterator class
+void
+SgBracedInitializer::append_initializer(SgExpression* what)
+   {
+     assert(this != NULL);
+
+  // DQ (11/15/2006): avoid setting newArgs this late in the process.
+     ROSE_ASSERT(p_initializers != NULL);
+     if(!p_initializers)
+        {
+       // set_initializers(new SgExprListExp(this->get_file_info()));
+          SgExprListExp* newArgs = new SgExprListExp ( this->get_file_info() );
+          assert(newArgs != NULL);
+          newArgs->set_endOfConstruct( this->get_file_info() );
+          set_initializers(newArgs);
+        }
+
+  // insert_initializer(p_initializers->end(),what);
+     p_initializers->append_expression(what);
+   }
+
+SgExpression*
+SgBracedInitializer::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_initializers();
+        }
+       else
+          return 0;
+   }
+
+int
+SgBracedInitializer::replace_expression(SgExpression* o, SgExpression* n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_initializers() == o)
+        {
+          set_initializers(isSgExprListExp(n));
+          n->set_parent(this);
+          return 1;
+        }
+       else
+        {
+          return 0;
+        }
+   }
+
+SgType*
+SgBracedInitializer::get_type() const
+   {
+#if 0
+     printf ("In SgAggregateInitializer::get_type() \n");
+#endif
+
+#if 0
+     printf ("In SgAggregateInitializer::get_type(): p_expression_type = %p \n",p_expression_type);
+#endif
+     if (p_expression_type != NULL)
+        {
+#if 0
+          printf ("SgAggregateInitializer::get_type(): p_expression_type != NULL: return p_expression_type = %p = %s \n",p_expression_type,p_expression_type->class_name().c_str());
+#endif
+          return p_expression_type;
+        }
+       else
+        {
+#if 0
+          printf ("SgAggregateInitializer::get_type(): default case: return SgTypeDefault::createType()\n");
+#endif
+          return SgTypeDefault::createType();
+        }
+   }
+
+#if 0
+// DQ (11/15/2016): I don' think that name qualification maes sense for a braced initializer.
+
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+bool 
+SgBracedInitializer::get_requiresGlobalNameQualificationOnType () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_requiresGlobalNameQualificationOnType;
+   }
+
+void
+SgBracedInitializer::set_requiresGlobalNameQualificationOnType ( bool requiresGlobalNameQualificationOnType )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_requiresGlobalNameQualificationOnType = requiresGlobalNameQualificationOnType;
+   }
+
+int 
+SgBracedInitializer::get_name_qualification_length_for_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length_for_type;
+   }
+
+void
+SgBracedInitializer::set_name_qualification_length_for_type ( int name_qualification_length_for_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length_for_type = name_qualification_length_for_type;
+   }
+
+bool 
+SgBracedInitializer::get_type_elaboration_required_for_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required_for_type;
+   }
+
+void
+SgBracedInitializer::set_type_elaboration_required_for_type ( bool type_elaboration_required_for_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required_for_type = type_elaboration_required_for_type;
+   }
+
+bool 
+SgBracedInitializer::get_global_qualification_required_for_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required_for_type;
+   }
+
+void
+SgBracedInitializer::set_global_qualification_required_for_type ( bool global_qualification_required_for_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required_for_type = global_qualification_required_for_type;
+   }
+#endif
+
+SOURCE_BRACED_INITIALIZER_EXPRESSION_END
 
 
 // ######################################################
@@ -7470,7 +7847,20 @@ SgType*
 $CLASSNAME::get_type() const
    { 
      ROSE_ASSERT(this != NULL);
-     return SgTypeDefault::createType();
+
+#if 0
+     printf ("In $CLASSNAME::get_type() (default_get_type) calling SgTypeDefault::createType() \n");
+#endif
+
+  // DQ (10/31/2016): Debugging...
+  // return SgTypeDefault::createType();
+     SgType* returnType = SgTypeDefault::createType();
+
+#if 0
+     printf ("Leaving $CLASSNAME::get_type() (default_get_type) returnType = %p \n",returnType);
+#endif
+
+     return returnType;
    }
 
 SOURCE_DEFAULT_GET_TYPE_END
@@ -7482,6 +7872,10 @@ SgType*
 $CLASSNAME::get_type() const
    {
      ROSE_ASSERT(this != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
 
      SgSymbol* symbol = this->get_symbol();
      if (symbol == NULL)
@@ -7553,6 +7947,10 @@ SOURCE_GET_TYPE_GENERIC_START
 SgType*
 $CLASSNAME::get_type(void) const
    {
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      return GENERIC_TYPE::createType();
    }
 
@@ -7564,6 +7962,10 @@ SOURCE_GET_TYPE_STRING_START
 SgType*
 SgStringVal::get_type(void) const
    {
+#if 0
+     printf ("In SgStringVal::get_type() \n");
+#endif
+
   // Since this is a literal, it must have a defined size (even if it is length zero).
      size_t stringSize = get_value().size();
 
@@ -7593,6 +7995,11 @@ $CLASSNAME::get_type(void) const
    {
   // Use the stored SgType to return the correct SgTypeComplex using the correct precision.
      ROSE_ASSERT(p_precisionType != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
   // returns a shared SgTypeComplex type
      return SgTypeComplex::createType(p_precisionType);
    }
@@ -7609,6 +8016,10 @@ SgType*
 $CLASSNAME::get_type(void) const
    {
      ROSE_ASSERT(this != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
 
   // DQ (8/5/2006): Now that we store the expression type explicitly this is a simpler function.
      SgType* returnType = p_expression_type;
@@ -7663,6 +8074,11 @@ $CLASSNAME::get_type() const
   // DQ (1/14/2006): The p_pobj_this data member was CC++ specific and no longer used (deprecated in Sage III), p_pobj_this is now removed
      ROSE_ASSERT(get_class_symbol() != NULL);
      ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      return SgPointerType::createType(get_class_symbol()->get_type());
    }
 
@@ -7675,6 +8091,11 @@ $CLASSNAME::get_type() const
    {
      ROSE_ASSERT(get_class_symbol() != NULL);
      ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      return SgPointerType::createType(get_class_symbol()->get_type());
    }
 
@@ -7687,6 +8108,11 @@ $CLASSNAME::get_type() const
    {
      ROSE_ASSERT(get_class_symbol() != NULL);
      ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      return get_class_symbol() -> get_type();
    }
 
@@ -7722,6 +8148,10 @@ $CLASSNAME::get_type() const
 
   // This is the default case (we can look at the last statement of the block later)
   // returnType = SgTypeVoid::createType();
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
 
   // DQ (8/6/2006): The rules for the type of a statement expression are that it is the 
   // type of the last expression in the statement list or void if the last statement is 
@@ -7776,6 +8206,10 @@ $CLASSNAME::get_type() const
 
   // printf ("$CLASSNAME::get_type() for asm operand not implemented p_expression = %p = %s \n",p_expression,p_expression->class_name().c_str());
   // ROSE_ASSERT(false);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
 
   // This is the default case (we can look at the last statement of the block later)
      returnType = p_expression->get_type();
@@ -7870,6 +8304,10 @@ SgSubscriptExpression::get_type() const
   // ROSE_ASSERT(false);
 
      SgType* returnType = NULL;
+
+#if 0
+     printf ("In SgSubscriptExpression::get_type() \n");
+#endif
 
      bool isLowerBoundNullExpression = (isSgNullExpression(get_lowerBound()) != NULL);
      bool isUpperBoundNullExpression = (isSgNullExpression(get_upperBound()) != NULL);
@@ -8004,6 +8442,11 @@ SgColonShapeExp::get_type() const
    {
   // printf ("In SgColonShapeExp::get_type(): Not clear what this type should be. \n");
   // ROSE_ASSERT(false);
+
+#if 0
+     printf ("In SgColonShapeExp::get_type() \n");
+#endif
+
      return SgTypeDefault::createType();
    }
 
@@ -8042,6 +8485,11 @@ SgAsteriskShapeExp::get_type() const
    {
   // printf ("In SgAsteriskShapeExp::get_type(): Not clear what this type should be. \n");
   // ROSE_ASSERT(false);
+
+#if 0
+     printf ("In SgAsteriskShapeExp::get_type() \n");
+#endif
+
      return SgTypeDefault::createType();
    }
 
@@ -8080,6 +8528,7 @@ SgUseOnlyExpression::get_type() const
    {
      printf ("In SgUseOnlyExpression::get_type(): Not clear what this type should be. \n");
      ROSE_ASSERT(false);
+
      return NULL;
    }
 
@@ -8112,6 +8561,7 @@ SgUseRenameExpression::get_type() const
    {
      printf ("In SgUseRenameExpression::get_type(): Not clear what this type should be. \n");
      ROSE_ASSERT(false);
+
      return NULL;
    }
 
@@ -8150,6 +8600,7 @@ SgIOItemExpression::get_type() const
    {
      printf ("In SgIOItemExpression::get_type(): Not clear what this type should be. \n");
      ROSE_ASSERT(false);
+
      return NULL;
    }
 
@@ -8183,6 +8634,11 @@ SgImpliedDo::get_type() const
   // printf ("In SgImpliedDo::get_type(): Not clear what this type should be (returning SgTypeDefault). \n");
   // ROSE_ASSERT(false);
   // return NULL;
+
+#if 1
+     printf ("In SgImpliedDo::get_type() \n");
+#endif
+
      return SgTypeDefault::createType();
    }
 
@@ -8235,6 +8691,11 @@ SgType*
 SgActualArgumentExpression::get_type() const
    {
      ROSE_ASSERT(p_expression != NULL);
+
+#if 0
+     printf ("In SgActualArgumentExpression::get_type() \n");
+#endif
+
      return p_expression->get_type();
    }
 
@@ -8261,6 +8722,11 @@ SgType*
 SgDesignatedInitializer::get_type() const
    {
      ROSE_ASSERT(p_memberInit != NULL);
+
+#if 0
+     printf ("In SgDesignatedInitializer::get_type() \n");
+#endif
+
      return p_memberInit->get_type();
    }
 
@@ -8329,6 +8795,11 @@ $CLASSNAME::get_type() const
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeUnsignedInt::createType();
 
      ROSE_ASSERT(returnType != NULL);
@@ -8362,6 +8833,11 @@ $CLASSNAME::get_type() const
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeUnsignedInt::createType();
 
      ROSE_ASSERT(returnType != NULL);
@@ -8394,6 +8870,11 @@ $CLASSNAME::get_type() const
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
      SgType* returnType = SgTypeUnsignedInt::createType();
 
      ROSE_ASSERT(returnType != NULL);
@@ -8419,6 +8900,11 @@ SgUserDefinedUnaryOp::get_type() const
    {
   // DQ (10/8/2008): Unclear how this should be implemented right now!
      ROSE_ASSERT(get_symbol() != NULL);
+
+#if 1
+     printf ("In SgUserDefinedUnaryOp::get_type() \n");
+#endif
+
      SgType* returnType = get_symbol()->get_type();
      ROSE_ASSERT(returnType != NULL);
      return returnType;
@@ -8432,6 +8918,11 @@ SgUserDefinedBinaryOp::get_type() const
    {
   // DQ (10/8/2008): Unclear how this should be implemented right now!
      ROSE_ASSERT(get_symbol() != NULL);
+
+#if 1
+     printf ("In SgUserDefinedBinaryOp::get_type() \n");
+#endif
+
      SgType* returnType = get_symbol()->get_type();
      ROSE_ASSERT(returnType != NULL);
      return returnType;
@@ -8447,6 +8938,11 @@ SgType*
 SgCAFCoExpression::get_type() const
    {
      SgType* returnType = get_referData()->get_type();
+
+#if 0
+     printf ("In SgCAFCoExpression::get_type() \n");
+#endif
+
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
@@ -8465,25 +8961,30 @@ SOURCE_PSEUDO_DESTRUCTOR_REF_END
 
 SOURCE_LAMBDA_REF_EXP_START
 
-SgType* SgLambdaRefExp::get_type() const {
-	return SageBuilder::buildVoidType();
-}
+SgType* SgLambdaRefExp::get_type() const
+   {
+#if 0
+     printf ("In SgLambdaRefExp::get_type() \n");
+#endif
+
+     return SageBuilder::buildVoidType();
+   }
 
 void
-SgLambdaRefExp::post_construction_initialization() {
-
-}
+SgLambdaRefExp::post_construction_initialization() 
+   {
+   }
 
 SgFunctionParameterList*
-SgLambdaRefExp::get_parameterList() {
-    ROSE_ASSERT(this != NULL);
+SgLambdaRefExp::get_parameterList() 
+   {
+     ROSE_ASSERT(this != NULL);
 
-    SgFunctionDeclaration* func_decl =
-        this->get_functionDeclaration();
-    ROSE_ASSERT(func_decl != NULL);
+     SgFunctionDeclaration* func_decl = this->get_functionDeclaration();
+     ROSE_ASSERT(func_decl != NULL);
 
-    return func_decl->get_parameterList();
-}
+     return func_decl->get_parameterList();
+   }
 
 SgStatement*
 SgLambdaRefExp::get_body() {
@@ -8516,7 +9017,15 @@ SgCudaKernelCallExp::post_construction_initialization()
      // TODO : exec_config
    }
 
-SgType * SgCudaKernelCallExp::get_type() const { return SgFunctionCallExp::get_type(); }
+SgType*
+SgCudaKernelCallExp::get_type() const 
+   { 
+#if 0
+     printf ("In SgCudaKernelCallExp::get_type() \n");
+#endif
+
+     return SgFunctionCallExp::get_type(); 
+   }
 
 SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END
 
@@ -8532,6 +9041,10 @@ $CLASSNAME::get_type() const
   // This function returns an explicitly stored type
 
      SgType* returnType = p_expression_type;
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
 
      ROSE_ASSERT(returnType != NULL);
      return returnType;
@@ -8595,6 +9108,10 @@ SgFunctionParameterRefExp::get_type() const
      ROSE_ASSERT(this != NULL);
 
      SgType* returnType = NULL;
+
+#if 0
+     printf ("In SgFunctionParameterRefExp::get_type() \n");
+#endif
 
   // ROSE_ASSERT(p_parameter_expression != NULL);
      if (p_parameter_expression != NULL)

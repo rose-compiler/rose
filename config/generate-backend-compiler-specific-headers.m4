@@ -96,8 +96,29 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # Phlin (6/18/2012): Added support for AVX.
  # Only GCC 4.6+ supports AVX instructions.
    if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+    # if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "6"; then
       if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "6"; then
-   cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
+         cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
+      fi
+   else
+      if test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -ge "5"; then
+         cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
+      fi
+   fi
+
+ # DQ (11/21/2016): EDG 4.12 can't handle a specific line of the GNU 6.1 vector.h header file. So build a modified version for this case.
+ # The function calls: "_M_move_assign();" appear to be a problem for EDG 4.12 (seqfaults internally in il.c).
+   if test "x$edg_major_version_number" = "x4"; then
+      if test "$edg_minor_version_number" -eq "12"; then
+         if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+            if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+               mkdir -p ./include-staging/${compilerName}_HEADERS/bits
+               cp ${srcdir}/config/rose_specific_GNU_6_1_stl_vector.h ./include-staging/${compilerName}_HEADERS/bits/stl_vector.h
+               cp ${srcdir}/config/rose_specific_GNU_6_1_stl_list.h ./include-staging/${compilerName}_HEADERS/bits/stl_list.h
+               cp ${srcdir}/config/rose_specific_GNU_6_1_stl_deque.h ./include-staging/${compilerName}_HEADERS/bits/stl_deque.h
+               cp ${srcdir}/config/rose_specific_GNU_6_1_hashtable.h ./include-staging/${compilerName}_HEADERS/bits/hashtable.h
+            fi
+         fi
       fi
    fi
 
@@ -108,20 +129,31 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
         exit 1
    fi
 
- # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
-   echo "Now output the builtin generated file into build directory."
- # cp ${srcdir}/config/rose_generated_builtin_functions.h ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
-   ${srcdir}/scripts/builtinLlvmFunctions.pl ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+ # DQ (12/14/2016): We now want this to apply to EDG 4.12 because it does not handle C++11 constexpr 
+ # return type of builtin functions properly. Note that this is only an issue when processing file 
+ # generated via CPP (or using -E flags to the compiler) header files.
+ # DQ (10/10/2016): Make the us of the ROSE generation of builtins dependent on the version of EDG.
+ # This is because EDG 4.12 introduces a new mechanism to handle builtin functions and is thus more 
+ # complete.  However, it is still missing __builtin_fxsave() functions, though this is not clear 
+ # why since they are present in EDG 4.12's tables.
+   if test "x$edg_major_version_number" = "x4"; then
+#     if test "$edg_minor_version_number" -le "11"; then
+         # DQ (9/12/2016): Added use of new support to specify constexpr specific builtin functions (uses an additional file, support added by Robb).
+         # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
+           echo "Now output the builtin generated file into build directory."
+         # ${srcdir}/scripts/builtinLlvmFunctions.pl ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+           ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
 
-   echo "Now output the builtin generated file from the build directory."
- # cat ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+           echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions."
+           sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
 
- # echo "Now output the builtin generated file."
- # cat ${srcdir}/config/rose_generated_builtin_functions.h > $tmpFile
- # cat ${srcdir}/config/rose_generated_builtin_functions.h > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
-   echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file."
-
-   sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+         # echo "ERROR: Could not identify the EDG minor version number."
+         # exit 1
+        else
+         # Note that we will likely want to use our mechanism (but with a smaller list of builtins that are still being missed).
+           echo "EDG 4.12 and later version builtins are determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)."
+#     fi
+   fi
 
  # "./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h"
 

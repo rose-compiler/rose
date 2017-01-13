@@ -234,10 +234,10 @@ if ROSE_USE_BOOST_WAVE
 else
 	@echo "Automake conditional ROSE_USE_BOOST_WAVE: NOT defined"
 endif
-if ROSE_USE_DWARF
-	@echo "Automake conditional ROSE_USE_DWARF: DEFINED"
+if ROSE_HAVE_LIBDWARF
+	@echo "Automake conditional ROSE_HAVE_LIBDWARF: DEFINED"
 else
-	@echo "Automake conditional ROSE_USE_DWARF: NOT defined"
+	@echo "Automake conditional ROSE_HAVE_LIBDWARF: NOT defined"
 endif
 if ROSE_USE_ETHER
 	@echo "Automake conditional ROSE_USE_ETHER: DEFINED"
@@ -503,11 +503,6 @@ if ROSE_WITH_ROSEQT
 	@echo "Automake conditional ROSE_WITH_ROSEQT: DEFINED"
 else
 	@echo "Automake conditional ROSE_WITH_ROSEQT: NOT defined"
-endif
-if USE_BINARY_ANALYSIS_TESTS
-	@echo "Automake conditional USE_BINARY_ANALYSIS_TESTS: DEFINED"
-else
-	@echo "Automake conditional USE_BINARY_ANALYSIS_TESTS: NOT defined"
 endif
 if USE_GCJ
 	@echo "Automake conditional USE_GCJ: DEFINED"

@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#include "OmpAttribute.h"
 
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
@@ -1044,6 +1045,11 @@ ROSE_DLL_API bool templateArgumentListEquivalence(const SgTemplateArgumentPtrLis
 //! Test for equivalence of types independent of access permissions (private or protected modes for members of classes).
 ROSE_DLL_API bool isEquivalentType (const SgType* lhs, const SgType* rhs);
 
+
+//! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
+//! They may differ in one SgTemplateType pointer but identical otherwise. 
+ROSE_DLL_API bool isEquivalentFunctionType (const SgFunctionType* lhs, const SgFunctionType* rhs);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1291,8 +1297,9 @@ T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* sc
              }
             else // Liao 2/9/2010. We should allow NULL scope
              {
-               SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
 #if 0
+            // DQ (12/6/2016): Include this into the debugging code to aboid compiler warning about unused variable.
+               SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
                printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table() = %p \n",symbol);
                printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table()->get_name() = %s \n",symbol->get_name().str());
 #endif
@@ -1584,6 +1591,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 
   //! Find the closest switch outside a given statement (normally used for case and default statements)
   ROSE_DLL_API SgSwitchStatement* findEnclosingSwitch(SgStatement* s);
+
+  //! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly. 
+  ROSE_DLL_API SgOmpClauseBodyStatement* findEnclosingOmpClauseBodyStatement(SgStatement* s);
 
   //! Find the closest loop outside the given statement; if fortranLabel is not empty, the Fortran label of the loop must be equal to it
   ROSE_DLL_API SgScopeStatement* findEnclosingLoop(SgStatement* s, const std::string& fortranLabel = "", bool stopOnSwitches = false);
@@ -2017,7 +2027,7 @@ ROSE_DLL_API void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop,
 #endif
 
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
-ROSE_DLL_API void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results);
+ROSE_DLL_API void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum> > & results);
 
 //! Constant folding an AST subtree rooted at 'r' (replacing its children with their constant values, if applicable). Please be advised that constant folding on floating point computation may decrease the accuracy of floating point computations!
 /*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression. */
@@ -2547,7 +2557,7 @@ bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionD
   // generated (if not specializations) and so we want to include a template instantiation that is marked 
   // as compiler generated, but is from a template declaration that satisfyied a specific user defined filter.
   // The complexity of this detection is isolated here, but knowing that it must be called is more complex.
-  // This function is call in the CG.C file of tests/roseTests/programAnalysisTests/testCallGraphAnalysis.
+  // This function is call in the CG.C file of tests/nonsmoke/functional/roseTests/programAnalysisTests/testCallGraphAnalysis.
 
      bool retval = false;
 

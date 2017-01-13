@@ -12,7 +12,8 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
-#include <map>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/map.hpp>
 #include <stdexcept>
 
 namespace Sawyer {
@@ -69,6 +70,14 @@ public:
 private:
     typedef std::map<Key, Value, Comparator, Alloc> StlMap;
     StlMap map_;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & map_;
+    }
 
 public:
     /** Type for stored nodes.

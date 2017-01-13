@@ -119,7 +119,10 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
                nvar = SymbolicVar(nvarname,body);
           }
           bodylist.push_back(body);
-          for (int i = 1; i < unrollsize; ++i) {
+
+       // DQ (12/6/2016): Fixed to eliminate warning we want to be an error: -Wsign-compare.
+       // for (int i = 1; i < unrollsize; ++i) {
+          for (unsigned i = 1; i < unrollsize; ++i) {
               AstNodePtr bodycopy = fa.CopyAstTree(origbody);
               if (opt & USE_NEWVAR) {
                  AstNodePtr nvarassign = 

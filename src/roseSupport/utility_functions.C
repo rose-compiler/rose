@@ -178,7 +178,7 @@ std::string version_message()
   // with -h and --version, similar to GNU compilers, as I recall.
   // outputPredefinedMacros();
 
-     // A more human-friendly time stamp (ISO 8601 format is recognized around the world, so use that)
+  // A more human-friendly time stamp (ISO 8601 format is recognized around the world, so use that)
      time_t scm_timestamp = rose_scm_version_date();
      std::string scm_timestamp_human;
      if (struct tm *tm = gmtime(&scm_timestamp)) {
@@ -191,6 +191,30 @@ std::string version_message()
          scm_timestamp_human = StringUtility::numberToString(scm_timestamp) + " unix epoch";
      }
 
+#if 0
+  // DQ (12/13/2016): Adding backend compiler and version info.
+     printf ("Using backend C++ compiler (without path): %s version: %d.%d \n",BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH,BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER,BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+     printf ("Using backend C/C++ compiler (with path):  %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+     printf ("Using backend  C  compiler (with path):    %s version: %d.%d \n",BACKEND_C_COMPILER_NAME_WITH_PATH,BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER,BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+
+     printf ("ROSE_COMPILE_TREE_PATH = %s \n",ROSE_COMPILE_TREE_PATH);
+     printf ("ROSE_INSTALLATION_PATH = %s \n",ROSE_INSTALLATION_PATH);
+#endif
+
+     string backend_Cxx_compiler_without_path = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+     string backend_Cxx_compiler_with_path    = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+     string backend_C_compiler_without_path   = BACKEND_C_COMPILER_NAME_WITH_PATH;
+     string backend_C_compiler_with_path      = BACKEND_C_COMPILER_NAME_WITH_PATH;
+     string backend_Cxx_compiler_version      = StringUtility::numberToString(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+
+#ifdef USE_CMAKE
+     string build_tree_path                   = "CMake does not set: ROSE_COMPILE_TREE_PATH";
+     string install_path                      = "CMake does not set: ROSE_INSTALLATION_PATH";
+#else
+     string build_tree_path                   = ROSE_COMPILE_TREE_PATH;
+     string install_path                      = ROSE_INSTALLATION_PATH;
+#endif
+
      return
        // "ROSE (pre-release beta version: " + version_number() + ")" +
           "ROSE (version: " + version_number() + ")" +
@@ -200,6 +224,12 @@ std::string version_message()
           "\n  --- using EDG C/C++ front-end version: " + edgVersionString() +
           "\n  --- using OFP Fortran parser version: " + ofpVersionString() +
           "\n  --- using Boost version: " + boostVersionString() + " (" + rose_boost_version_path() + ")" +
+          "\n  --- using backend C compiler: " + backend_C_compiler_without_path + " version: " + backend_Cxx_compiler_version +
+          "\n  --- using backend C compiler path (as specified at configure time): " + backend_C_compiler_with_path +
+          "\n  --- using backend C++ compiler: " + backend_Cxx_compiler_without_path + " version: " + backend_Cxx_compiler_version +
+          "\n  --- using backend C++ compiler path (as specified at configure time): " + backend_Cxx_compiler_with_path +
+          "\n  --- using original build tree path: " + build_tree_path +
+          "\n  --- using instalation path: " + install_path +
           "\n  --- using GNU readline version: " + readlineVersionString() +
           "\n  --- using libmagic version: " + libmagicVersionString() +
           "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
@@ -688,7 +718,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
 
        // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the 
        // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and 
-       // for which the tests/testTokenGeneration.C translator uses this function to generate object files.
+       // for which the tests/nonsmoke/functional/testTokenGeneration.C translator uses this function to generate object files.
        // finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
           if (project->get_skipfinalCompileStep() == false)
              {
@@ -1386,7 +1416,7 @@ rose::getNextStatement ( SgStatement *currentStatement )
                break;
              }
 
-       // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
+       // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
           case V_SgLabelStatement:
             {
               SgLabelStatement* lableStatement = isSgLabelStatement(currentStatement);

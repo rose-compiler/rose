@@ -4088,13 +4088,39 @@ SgAggregateInitializer::cfgInEdges(unsigned int idx)
    }
 
 std::vector<CFGEdge>
+SgBracedInitializer::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(CFGNode(this, idx), this->get_initializers()->cfgForBeginning(), result); break;
+       case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+       default: ROSE_ASSERT (!"Bad index for SgBracedInitializer");
+     }
+
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgBracedInitializer::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+       case 1: makeEdge(this->get_initializers()->cfgForEnd(), CFGNode(this, idx), result); break;
+       default: ROSE_ASSERT (!"Bad index for SgBracedInitializer");
+     }
+
+     return result;
+   }
+
+std::vector<CFGEdge>
 SgCompoundInitializer::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx) {
        case 0: makeEdge(CFGNode(this, idx), this->get_initializers()->cfgForBeginning(), result); break;
        case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
-       default: ROSE_ASSERT (!"Bad index for SgAggregateInitializer");
+       default: ROSE_ASSERT (!"Bad index for SgCompoundInitializer");
      }
 
      return result;

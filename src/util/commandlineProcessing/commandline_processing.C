@@ -11,6 +11,8 @@
 #include <vector>
 #include <algorithm>
 #include "Diagnostics.h"
+#include <boost/algorithm/string/predicate.hpp>
+#include <rose_paths.h>
 
 // Use Brian Gunney's String List Assignent (SLA) library
 #include "sla.h"
@@ -70,6 +72,23 @@ protected:
     }
 };
 
+Sawyer::CommandLine::Parser
+CommandlineProcessing::createEmptyParser(const std::string &purpose, const std::string &description) {
+    Sawyer::CommandLine::Parser parser;
+    parser.purpose(purpose);
+    if (!description.empty())
+        parser.doc("Description", description);
+    parser.chapter(1, "ROSE Command-line Tools");
+    parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
+    parser.groupNameSeparator(":");                     // ROSE's style is "--rose:help" rather than "--rose-help"
+    return parser;
+}
+
+Sawyer::CommandLine::Parser
+CommandlineProcessing::createEmptyParserStage(const std::string &purpose, const std::string &description) {
+    return createEmptyParser(purpose, description).skippingNonSwitches(true).skippingUnknownSwitches(true);
+}
+
 // Global place to store result of parsing genericSwitches.
 CommandlineProcessing::GenericSwitchArgs CommandlineProcessing::genericSwitchArgs;
 
@@ -85,7 +104,7 @@ CommandlineProcessing::genericSwitches() {
                .doc("Show this documentation.")
                .action(showHelpAndExit(0)));
 
-    gen.insert(Switch("log", 'L')
+    gen.insert(Switch("log")
                .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
                .argument("config")
                .whichValue(SAVE_ALL)
@@ -120,6 +139,25 @@ CommandlineProcessing::genericSwitches() {
                     "concurrency can't be determined)."));
 
     return gen;
+}
+
+void
+CommandlineProcessing::insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &switchName,
+                                           bool &storageLocation, const std::string &documentation) {
+    using namespace Sawyer::CommandLine;
+
+    ASSERT_forbid2(boost::starts_with(switchName, "-"), "specify only the name, not the prefix");
+
+    std::string defaults = " This can be disabled with @s{no-" + switchName + "}. The default is " +
+                           (storageLocation ? "yes" : "no") + ".";
+
+    sg.insert(Switch(switchName)
+              .intrinsicValue(true, storageLocation)
+              .doc(documentation + defaults));
+    sg.insert(Switch("no-"+switchName)
+              .key(switchName)
+              .intrinsicValue(false, storageLocation)
+              .hidden(true));
 }
 
 // DQ (7/8/2005): 
@@ -1242,12 +1280,3 @@ CommandlineProcessing::initExecutableFileSuffixList ( )
         }
    }
 #endif
-
-
-
-
-
-
-
-
-

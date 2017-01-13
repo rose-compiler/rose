@@ -387,8 +387,10 @@ ROSE_DLL_API SgLongIntVal* buildLongIntVal_nfi(long value, const std::string& st
 ROSE_DLL_API SgLongLongIntVal* buildLongLongIntVal(long long value = 0);
 ROSE_DLL_API SgLongLongIntVal* buildLongLongIntValHex(long long value = 0);
 ROSE_DLL_API SgLongLongIntVal* buildLongLongIntVal_nfi(long long value, const std::string& str);
-
+// !Build enum val without file info: nfi
 ROSE_DLL_API SgEnumVal* buildEnumVal_nfi(int value, SgEnumDeclaration* decl, SgName name);
+// !Build enum val with transformation file info
+ROSE_DLL_API SgEnumVal* buildEnumVal(int value, SgEnumDeclaration* decl, SgName name);
 ROSE_DLL_API SgEnumVal* buildEnumVal(SgEnumFieldSymbol * sym);
 
 ROSE_DLL_API SgLongDoubleVal* buildLongDoubleVal(long double value = 0.0);
@@ -745,6 +747,10 @@ ROSE_DLL_API SgCompoundInitializer * buildCompoundInitializer_nfi(SgExprListExp 
 // DQ (!/4/2009): Added support for building SgConstructorInitializer
 ROSE_DLL_API SgConstructorInitializer * buildConstructorInitializer( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
 ROSE_DLL_API SgConstructorInitializer * buildConstructorInitializer_nfi( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
+
+//! Build an braced initializer
+ROSE_DLL_API SgBracedInitializer * buildBracedInitializer(SgExprListExp * initializers = NULL, SgType * expression_type = NULL);
+ROSE_DLL_API SgBracedInitializer * buildBracedInitializer_nfi(SgExprListExp * initializers = NULL, SgType * expression_type = NULL);
 
 //! Build sizeof() expression with an expression parameter
 ROSE_DLL_API SgSizeOfOp* buildSizeOfOp(SgExpression* exp = NULL);

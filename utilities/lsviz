@@ -1,0 +1,172 @@
+#!/usr/bin/perl
+# Author: Markus Schordan, 2003.
+# $Id: lsviz,v 1.1 2003/03/24 20:12:54 markus Exp $
+
+############################################################################
+# this script generates a postscript, gif, jpeg, etc. file, visualizing the
+# directory structure
+# 'lsviz --help' for command line syntax description
+############################################################################
+
+@supportedFormats=("ps","hpgl","pcl","mif","pic","gd","gd2", "gif", "jpeg", "png","wbmp","ismap","imap","vrml","vtx","mp","svg","canon","plain", "dot");
+
+use Getopt::Long;
+
+# inserts only new entries $newEntry in list $container
+sub addOnlyNew {
+  local($newEntry,$container)=@_;
+  foreach $el ( @{$container} ) {
+    if($newEntry eq $el) {
+      return;
+    }
+  }
+  push(@{$container},$newEntry);
+}
+
+# par0: pos, par1-n: array (by value)
+# concatenates strings in array starting from position pos
+# returns concatenated string
+sub prefixname {
+  join("",splice(@_,1,@_[0]));
+}
+
+#generates nodes and edges in dot syntax
+sub generate_graph {
+  foreach $line (@graphDirNotation) {
+    @fields=split(/\//,$line);
+    $numfields=@fields;
+    for($d=1;$d<$numfields;$d++) {
+      $source="\"".prefixname($d,@fields)."\"";
+      $target="\"".prefixname($d+1,@fields)."\"";
+      &addOnlyNew("$source [label=\"@fields[$d-1]\"];\n",\@nodes);
+      &addOnlyNew("$target [label=\"@fields[$d]\"];\n",\@nodes);
+      &addOnlyNew("$source -> $target;\n",\@edges);
+    }
+  }
+  "@nodes @edges";
+}
+
+sub exists_in {
+  local($newEntry,$container)=@_;
+  foreach $el ( @{$container} ) {
+    if($newEntry eq $el) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+sub command {
+  $command=$_[0];
+  $string=$_[1];
+  open(RECDIR, "$command $string|");
+  @recDir=<RECDIR>;
+  close(RECDIR);
+  $string=@recDir[0];
+  $string=~ s/\n//;
+  return $string;
+}
+
+sub printhelp {
+  print("\nSYNOPSIS:\n lsviz path [--format=<FORMAT>] [--outputfile=<FILE>] [--exclude=<REGEX>] [--basename] [--help]\n\n");
+  print("OPTIONS:\n");
+  print("-f --format <FORMAT>   : The output with format FORMAT is generated.\n");
+  print("                         FORMAT = {");
+  for($i=0; $i<$#supportedFormats; $i++) {
+    print("@supportedFormats[$i]");
+    if($i<$#supportedFormats-1) {
+      print(", ");
+    } else {
+      print("}\n");
+    }
+    if(($i+1) % 12 == 0) {
+      print("                          ");
+    }
+  }
+  print("-o --outputfile <FILE> : Place output in file FILE. If not specified, \n");
+  print("                         the dotfile is printed on STDOUT\n");
+  print("-e --exclude <REGEX>   : The regular expression REGEX is used to exclude\n");
+  print("                         directory names when generating the graph.\n");
+  print("-b --basename          : Only the basename of 'path' is used in the graph.\n");
+  print("-h --help              : Print this help message.\n");
+  print("\nEXAMPLES:\n");
+  print("lsviz MYDIR --format ps -o MYDIR.ps\n");
+  print("lsviz MYDIR | dot -Tps -o MYDIR.ps\n");
+  print("lsviz /home/myname/ROSE --format ps -o ROSE.ps --basename --exclude 'CVS' (used in documentation)\n");
+  print("\n");
+
+}
+
+#
+# main
+#
+
+$basename_opt=-1;
+$exclude="";
+$format="";
+GetOptions("outputfile=s" => \$outfile, "basename_opt!" => \$basename_opt, "exclude=s", \$exclude, "format=s" => \$format, "help!" => \$printhelp_opt);
+
+if($printhelp_opt) {
+  printhelp();
+  exit 0;
+}
+
+$E_BADARGS=65;
+if(@ARGV < 1) {
+  printhelp();
+  exit $E_BADARGS;
+}
+
+$pathname=@ARGV[0];
+$basename=command("basename",$pathname);
+$dirname=command("dirname",$pathname);
+
+if($basename_opt==1) {
+  $dotfile="$basename.dot";
+} else {
+  $dotfile="$pathname.dot";
+}
+$dotfile="$basename.temp.dot";
+
+if(!($outputfile eq "") && exists_in($format,\@supportedFormats)==0) {
+  print("Output format \"$format\" not supported.\nUse one of: @supportedFormats.\n");
+  exit $E_BADARGS;
+}
+
+$header="digraph G {\n rankdir=\"LR\";\n concentrate=true;\n node [shape=box];\n rotate=90;\n";
+$footer="}\n";
+if($exclude eq "") {
+  open(RECDIR, "ls -R -1 $pathname|");
+} else {
+  open(RECDIR, "ls -R -1 $pathname| egrep -v $exclude|");
+}
+@recDir=<RECDIR>;
+close(RECDIR);
+
+@graphDirNotation=map {
+			if($basename_opt==1 && !($dirname eq ".")) {
+			  $_=~ s/$dirname\///;
+			}
+			$_="./$_";
+			$_=~ s/(\.\.\/|\.\/)//g;
+			chop($_); chop($_);
+			$_;
+		      } grep {/:/;} @recDir;
+
+$body=generate_graph();
+
+$dotfilestring="$header $body $footer";
+
+# create the visulatization or let the dotfile to be used by the user
+if($outfile eq "") {
+  print("\n$dotfilestring\n");
+} else {
+  open(OUT,">$dotfile") || die "cannot open output file $dotfile ";
+  print OUT $dotfilestring;
+  close(OUT);
+  $exitstatus=system("dot -Gfontname=Helvetica -Gorientation=landscape $dotfile -T$format -o $outfile");
+  system("rm $dotfile");
+  if($exitstatus==0) {
+    print("$outfile generated.\n");
+  }
+}

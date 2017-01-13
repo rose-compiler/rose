@@ -8,13 +8,16 @@
 #ifndef Sawyer_AddressSegment_H
 #define Sawyer_AddressSegment_H
 
-#include <boost/cstdint.hpp>
 #include <Sawyer/Access.h>
 #include <Sawyer/AllocatingBuffer.h>
 #include <Sawyer/MappedBuffer.h>
 #include <Sawyer/NullBuffer.h>
 #include <Sawyer/StaticBuffer.h>
 #include <Sawyer/Sawyer.h>
+
+#include <boost/cstdint.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/string.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -39,6 +42,20 @@ class AddressSegment {
 public:
     typedef A Address;                                  /**< Address types expected to be used by the underlying buffer. */
     typedef T Value;                                    /**< Type of values stored by the underlying buffer. */
+
+private:
+    friend class boost::serialization::access;
+
+    // Users: You'll need to register the subclass once you know its type, such as
+    // BOOST_CLASS_REGISTER(Sawyer::Container::AddressSegment<size_t,uint8_t>);
+    // You'll also need to register the most-derived buffer type.
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & buffer_;
+        s & offset_;
+        s & accessibility_;
+        s & name_;
+    }
 
     //-------------------------------------------------------------------------------------------------------------------
     // Constructors

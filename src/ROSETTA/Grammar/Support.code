@@ -4981,7 +4981,11 @@ HEADER_QUALIFIED_NAME_END
 HEADER_ATTRIBUTE_START
        // SgAttribute(char* str);
           int isSame(const std::string& str);
-          virtual bool isPragma() { return 0; } // MS02/22/02
+
+       // DQ (12/6/2016): This needs to match being const as in the derived class (this also eliminates a compiler warning).
+       // virtual bool isPragma() { return 0; } // MS02/22/02
+          virtual bool isPragma() const { return 0; }
+
        // char *get_name() const;
 
       protected:
@@ -8304,10 +8308,26 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
                break;
              }
 
+       // DQ (9/12/2016): Providing better implementation for template typedef symbol support.
        // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
           case V_SgTemplateTypedefSymbol:
              {
+#if 0
                printf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateArgument>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+               SgTemplateTypedefSymbol* templateTypedefSymbol = isSgTemplateTypedefSymbol(symbol);
+               ROSE_ASSERT(templateTypedefSymbol != NULL);
+
+               ROSE_ASSERT(templateTypedefSymbol->get_declaration() != NULL);
+
+               SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(templateTypedefSymbol->get_declaration());
+            // ROSE_ASSERT(templateTypedefDeclaration != NULL);
+
+               if (templateTypedefDeclaration != NULL)
+                  {
+                 // returnList = templateTypedefDeclaration->get_templateArguments();
+                    returnList = templateTypedefDeclaration->get_templateSpecializationArguments();
+                  }
                break;
              }
 
@@ -9952,7 +9972,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
        // DQ (8/21/2013): This fails for the case of Fortran labels that are numeric and converted to a numeric 
        // value and thus loose leading 0's.  This function was not previously used for labels so this was not 
        // noticed.  An example is in:
-       //    --- tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/endfile_2.f90
+       //    --- tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/endfile_2.f90
        // where the numeric label "0023" is used but stored in the SgLabelDeclaration as a numeric value "23"
        // and thus the string "0023" fails to match with the string "23" in this assertion.  The fundamental
        // problem is that we ask the symbol for the name and this causes the name to be computed from the
@@ -10085,11 +10105,21 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
             // DQ (10/10/2008): The current problem is that this is NULL when the base of an aliased symbol is a SgRenameSymbol.
             // assert(functionSymbol != NULL);
 
+            // Liao 9/15/2016
+            // Allow template function type match. They may have arguments of template types
+            SgFunctionType* f1 = NULL; 
+            if (original_aliased_symbol != NULL && isSgFunctionSymbol(original_aliased_symbol))
+              f1= isSgFunctionType(isSgFunctionSymbol(original_aliased_symbol)->get_declaration()->get_type());
+            SgFunctionType* f2 = NULL; 
+            if (type != NULL)
+              f2 = isSgFunctionType (const_cast <SgType*> (type));
+            bool equavilentFunctionType= ( (f1!= NULL && f2!= NULL) && (SageInterface::isEquivalentFunctionType(f1, f2)) );
+
             // if ( functionSymbol != NULL )
             // if ( original_aliased_symbol != NULL )
             // if ( (original_aliased_symbol != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type))
             // if ( (original_aliased_symbol != NULL) && ( (type == NULL) || (type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type) ) )
-               if ( (original_aliased_symbol != NULL) && ( (type == NULL) || ((type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type)) ) )
+               if ( (original_aliased_symbol != NULL) && ( (type == NULL) || ((type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type || equavilentFunctionType)) ) )
                   {
                  // printf ("Found a valid functionSymbol = %p = %s \n",functionSymbol,functionSymbol->get_name().str());
                     p_name    = nm;
@@ -15227,6 +15257,11 @@ X aggressive
 
   // DQ (12/23/2015): Suppress variable declaration normalizations
      p_suppress_variable_declaration_normalization = false;
+
+  // Matzke (12/05/2016): Added missing initialization
+     p_frontendErrorCode = 0;
+     p_unparserErrorCode = 0;
+     p_backendCompilerErrorCode = 0;
    }
 
 #if 0
@@ -15299,7 +15334,7 @@ SgFile::compileOutput ( int fileNameIndex )
         {
           if (get_Fortran_only() == true)
              {
-            // DQ (4/2/2011): some Fortran tests pass in tests/roseTests/astInterfaceTests pass in EDG options, we
+            // DQ (4/2/2011): some Fortran tests pass in tests/nonsmoke/functional/roseTests/astInterfaceTests pass in EDG options, we
             // might want to correct this (for now we will clean up the command line as part of command line handling).
                stripEdgCommandLineOptions( argv );
 
@@ -16279,6 +16314,16 @@ SgProject::initialization()
    {
   // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
 
+  // Matzke (12/06/2016): Added missing initializations identified by valgrind and code inspection
+     p_javacErrorCode = 0;
+     p_ecjErrorCode = 0;
+     p_midendErrorCode = 0;
+     p_openmp_linking = false;
+
+  // DQ (11/10/2016): Added initialization for keep_going data member and otehr data members that appear to be missing.
+     p_keep_going                   = false;
+     p_unparser__clobber_input_file = false;
+
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.clear();
 #else
@@ -16297,6 +16342,10 @@ SgProject::initialization()
      p_backendErrorCode                    = 0;
      p_outputFileName                      = "";
      p_compileOnly                         = false;
+
+  // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
+     p_wave                         = false;
+
      p_prelink                             = false;
      p_template_instantiation_mode         = e_unknown;
      p_astMerge                            = false;
@@ -16343,9 +16392,25 @@ SgProject::initialization()
   // DQ (10/3/2010): Added entries that had not be properly set previously.
      p_C_only                = false;
      p_Cxx_only              = false;
+
+  // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
+     p_C11_only              = false;
+     p_Cxx0x_only            = false;
+     p_Cxx11_only            = false;
+     p_C14_only              = false;
+     p_Cxx14_only            = false;
+
      p_Fortran_only          = false;
      p_addCppDirectivesToAST = false;
      p_Java_only             = false;
+
+  // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
+     p_X10_only              = false;
+     p_Java_batch_mode       = false;
+     p_Java_nowarn             = false;
+     p_Java_verbose            = false;
+     p_Java_deprecation        = false;
+     p_addCppDirectivesToAST   = false;
 
   // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
      p_frontendConstantFolding = false;
@@ -16365,15 +16430,18 @@ SgProject::initialization()
   // DQ (1/20/2014): This option "-m32" over-rides the 64-bit mode on 64-bit environments and is required for some build systems (e.g. valgrind).
      p_mode_32_bit = false;
 
-  // DQ (1/31/2014): Option to skip AST post-processing constant folding support. Currently required for OpenMP and C++, but not for C.
-  // This option only makes a perfromance difference on a handful of files in the (large) wireshark application (2.5 million line application).
-     p_suppressConstantFoldingPostProcessing = false;
-
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error.
      p_noclobber_output_file              = false;
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      p_noclobber_if_different_output_file = false;
+
+  // DQ (1/31/2014): Option to skip AST post-processing constant folding support. Currently required for OpenMP and C++, but not for C.
+  // This option only makes a perfromance difference on a handful of files in the (large) wireshark application (2.5 million line application).
+     p_suppressConstantFoldingPostProcessing = false;
+
+  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
+     p_unparseTemplateDeclarationsFromAST = false;
 
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      p_appendPID = false;
@@ -17305,8 +17373,12 @@ SgProject::display ( const std::string & label ) const
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      printf ("   p_noclobber_if_different_output_file = %s \n",(p_noclobber_if_different_output_file == true) ? "true" : "false");
+
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      printf ("   p_appendPID = %s \n",(p_appendPID == true) ? "true" : "false");
+
+  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
+     printf ("   p_unparseTemplateDeclarationsFromAST = %s \n",(p_unparseTemplateDeclarationsFromAST == true) ? "true" : "false");
 
      printf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)
@@ -20378,19 +20450,40 @@ SgTypeTable::insert_type(const SgFunctionDeclaration *fdecl)
 SgType*
 SgTypeTable::lookup_type(const SgName& n)
    {
-  // printf ("In SgTypeTable::lookup_function_type: Looking for %s \n",n.str());
+#if 0
+     printf ("In SgTypeTable::lookup_type: Looking for %s \n",n.str());
+#endif
+
      ROSE_ASSERT (p_type_table != NULL);
+
   // SgFunctionTypeSymbol *fsymb = isSgFunctionTypeSymbol(p_function_type_table->findfunctype(n));
+
+#if 0
+     printf ("Is this an error: shouldn't this be looking for any type, and not just a function Type? \n");
+#endif
+
      SgSymbol *symbol = p_type_table->find_function_type(n);
+
+#if 0
+     printf ("In SgTypeTable::lookup_type: symbol = %p \n",symbol);
+#endif
+
      SgFunctionTypeSymbol *fsymb = isSgFunctionTypeSymbol(symbol);
+
      SgType* returnType = NULL;
 
      if (fsymb != NULL)
         {
           returnType = fsymb->get_type();
           ROSE_ASSERT(returnType != NULL);
-       // printf ("In SgTypeTable::lookup_function_type(): found function type %s \n",returnType->class_name().c_str());
+#if 0
+          printf ("In SgTypeTable::lookup_type(): found function type %s \n",returnType->class_name().c_str());
+#endif
         }
+
+#if 0
+     printf ("In SgTypeTable::lookup_type: returnType = %p \n",returnType);
+#endif
 
      return returnType;
    }

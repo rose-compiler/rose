@@ -3,7 +3,11 @@
 /* DQ (11/1/2011): I think we do need this for at least C++ code (e.g. __CHAR_BIT__ must
    be defined along with lots of other Common Predefined Macros.
 */
-#if 1
+// DQ (12/18/2018): Adding support to ignore output of declarations in this file when using
+// EDG frontend for CPP processing with the "-edg:E" option.  Note that "-E" can be specified
+// but that causes the backend compiler to be called directly and this file of preinclude 
+// declarations is not used in that case.
+#ifndef USE_ROSE_CPP_PROCESSING
 
 /* DQ (6/12/2005): Permit this to be optionally commented out because it makes it hard to
     look at the AST merging graphs. The ROSE-IR graphs will now filter nodes associated
@@ -59,6 +63,9 @@
   #define _ZMMINTRIN_H_INCLUDED
   #define _INCLUDED_IMM
   #define _BITS_OPT_RANDOM_H
+
+// DQ (12/17/2016): This is a Microsoft language extension which we need to define away in non-windows mode.
+  #define __declspec(X)
 #endif
 
 /* DQ (8/28/2015): Adding specialized support for Intel compiler. */
@@ -92,11 +99,13 @@
 
 /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
 /* This shuld be a test of the version of EDG, but it is not clear how to do that. */
-#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 8))
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 7))
 #ifndef __INTEL_COMPILER
+#ifndef __clang__
    /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
       typedef long long int __int128_t;
       typedef unsigned long long int __uint128_t;
+#endif
 #endif
 #endif
 
@@ -197,6 +206,10 @@
   #define __imag__ 
   #define _Complex
 #endif
+
+/* DQ (9/13/2016): The GNU 4.2 compiler requires this to be turned off (fails for test2011_133.C). */
+#undef __SSE2__
+
 #endif
 
 /* DQ (10/13/2012): Added to support complex with EDG 4.x work (defines away _Imaginary, I
@@ -224,18 +237,106 @@
 #endif
 
 /* Disable inclusion of complex.h on Linux */
-#define _COMPLEX_H
+/* #define _COMPLEX_H */
 /* Disable inclusion of complex.h on Mac OS X */
-#define __COMPLEX__
+/* #define __COMPLEX__ */
 
 /* Defined this to avoid warnings (e.g. test2001_11.C) from 3.4.6 systems header files. */
-/* DQ (9/6/2016): This is also required to support tests/CompileTests/mergeAST_tests/mergeTest_134.C */
+/* DQ (9/6/2016): This is also required to support tests/nonsmoke/functional/CompileTests/mergeAST_tests/mergeTest_134.C */
 #define __weakref__(NAME)
 
+/* For debugging use the separate generated header file of builtin functions. */
+#if __cplusplus >= 201103L
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
+// DQ (12/16/2016): Added constexpr for EDG 4.9 using c++11.
+// #define ROSE_CONSTEXPR
+   #define ROSE_CONSTEXPR constexpr
+#else
+   #define ROSE_CONSTEXPR constexpr
+#endif
+// #warning "Set ROSE_CONSTEXPR to constexpr"
+#else
+#  define ROSE_CONSTEXPR
+// #warning "NOT setting ROSE_CONSTEXPR to constexpr"
+#endif
+
+
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 409
+
+/* Note that might not be using our builtin function mechanism for EDG 4.12 and later (at least while we sort it out) */
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
+
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#endif
+
+
+/* DQ (9/12/2016): Added builtin functions (not yet supported in config/Builtins.def).
+   These are required to compile: tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2015_08.C
+   Note that these are not in our ROSE specific table of builtin functions at present.
+ */
+// #if 0
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
+  // long long          __builtin_bswap64(long long __X);
+void               __builtin_ia32_fxsave(void *__P);
+void               __builtin_ia32_fxrstor(void *__P);
+void               __builtin_ia32_fxsave64(void *__P);
+void               __builtin_ia32_fxrstor64(void *__P);
+
+int __builtin_signbitf(float) __attribute__((nothrow, const));
+int __builtin_signbitl(long double) __attribute__((nothrow, const));
+#endif
+
+// DQ (12/16/2016): This is incorrect for EDG 4.9, but required for later versions of EDG.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
+unsigned long long int __builtin_bswap64(unsigned long long int) __attribute__((nothrow, const));
+#endif
+
+// DQ (12/16/2016): Skip these for EDG 4.9.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ > 409
+ROSE_CONSTEXPR double __builtin_fabs(double) __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_fabsf(float) __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_fabsl(long double) __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_powf(float, float) __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_powl(long double, long double) __attribute__((nothrow, const));
+
+#ifdef __cplusplus
+ROSE_CONSTEXPR int __builtin_isfinite(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isinf(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isnan(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isnormal(...) __attribute__((nothrow, const));
+#endif
+
+// This need to be const expr in EDG 4.12
+ROSE_CONSTEXPR double __builtin_huge_val() __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_huge_valf() __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_huge_vall() __attribute__((nothrow, const));
+
+ROSE_CONSTEXPR double __builtin_nan(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_nanf(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_nanl(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR double __builtin_nans(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_nansf(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_nansl(char const*) __attribute__((nothrow, const));
+
+// DQ (12/16/2016): evening: allow these to be constexpr.
+ROSE_CONSTEXPR int __builtin_clz(unsigned int) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_clzl(unsigned long int) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_clzll(unsigned long long int) __attribute__((nothrow, const));
+
+ROSE_CONSTEXPR int __builtin_signbitf(float) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_signbitl(long double) __attribute__((nothrow, const));
+#endif
+
+
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
+
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+// #if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
+
 /* DQ (4/12/2015): Removing this mapping for __builtin_va_start to __builtin_stdarg_start
    since EDG now supports __builtin_va_start directly.
  */
@@ -381,8 +482,128 @@ long double __builtin_sqrtl  (long double __builtin__x);
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
+
+/* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 412
+/* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
+// #if (__GNUC__ >= 6)
+
+// DQ (12/17/2016): I think this has to be used for GNU version 5.x as well.
+// #if (__GNUC__ >= 6) || defined(__INTEL_COMPILER)
+#if (__GNUC__ >= 5) || defined(__INTEL_COMPILER)
+/* Test how many files of builtins we have to add */
+   #define _SMMINTRIN_H_INCLUDED
+   #define _AMMINTRIN_H_INCLUDED
+   #define _TMMINTRIN_H_INCLUDED
+   #define _PMMINTRIN_H_INCLUDED
+
+   #define _AVX2INTRIN_H_INCLUDED
+   #define _AVX512FINTRIN_H_INCLUDED
+   #define _AVX512CDINTRIN_H_INCLUDED
+   #define _AVX512VLINTRIN_H_INCLUDED
+   #define _AVX512BWINTRIN_H_INCLUDED
+   #define _AVX512DQINTRIN_H_INCLUDED
+   #define _AVX512VLBWINTRIN_H_INCLUDED
+   #define _AVX512VLDQINTRIN_H_INCLUDED
+   #define _AVX512IFMAINTRIN_H_INCLUDED
+   #define _AVX512IFMAVLINTRIN_H_INCLUDED
+   #define _AVX512VBMIINTRIN_H_INCLUDED
+   #define _AVX512VBMIVLINTRIN_H_INCLUDED
+   #define _SHAINTRIN_H_INCLUDED
+   #define _LZCNTINTRIN_H_INCLUDED
+   #define _BMIINTRIN_H_INCLUDED
+   #define _BMI2INTRIN_H_INCLUDED
+   #define _FMAINTRIN_H_INCLUDED
+   #define _F16CINTRIN_H_INCLUDED
+   #define _RTMINTRIN_H_INCLUDED
+   #define _XTESTINTRIN_H_INCLUDED
+
+/* This just includes a lot of other include files specific to AVX (partially addressed above) */
+/* #define _IMMINTRIN_H_INCLUDED */
+
+   #define _MM3DNOW_H_INCLUDED
+   #define _FMA4INTRIN_H_INCLUDED
+   #define _XOPMMINTRIN_H_INCLUDED
+   #define _LWPINTRIN_H_INCLUDED
+   #define _RDSEEDINTRIN_H_INCLUDED
+   #define _XSAVEINTRIN_H_INCLUDED
+   #define _XSAVEOPTINTRIN_H_INCLUDED
+   #define _ADXINTRIN_H_INCLUDED
+   #define _CLWBINTRIN_H_INCLUDED
+   #define _PCOMMITINTRIN_H_INCLUDED
+   #define _CLFLUSHOPTINTRIN_H_INCLUDED
+   #define _XSAVESINTRIN_H_INCLUDED
+   #define _XSAVECINTRIN_H_INCLUDED
+   #define _MWAITXINTRIN_H_INCLUDED
+   #define _CLZEROINTRIN_H_INCLUDED
+   #define _PKUINTRIN_H_INCLUDED
+
+/* DQ (12/14/2016): Adding more evaluations of required builtin support. */
+// #define _GLIBCXX_ATOMIC_BASE_H
+// #define _GLIBCXX_ATOMIC 1
+   # define _GLIBCXX_VISIBILITY(V) 
+   # define _GLIBCXX_BEGIN_NAMESPACE_VERSION
+   # define _GLIBCXX_END_NAMESPACE_VERSION
+   void __atomic_thread_fence (int memorder);
+   void __atomic_signal_fence (int memorder);
+// bool __atomic_test_and_set (void *ptr, int memorder);
+   #define __atomic_test_and_set(ptr,memorder) false
+// void __atomic_clear (bool *ptr, int memorder);
+   #define __atomic_clear(ptr,memorder)
+
+// bool __atomic_is_lock_free (size_t size, void *ptr);
+   int __atomic_is_lock_free (size_t size, void *ptr);
+
+// void __atomic_store_n (type *ptr, type val, int memorder);
+   #define __atomic_store_n(ptr,val,memorder)
+   #define __atomic_load(ptr,ret,memorder)
+   #define __atomic_load_n(ptr,memorder) *(ptr)
+   #define __atomic_exchange_n(ptr,val,memorder) *(ptr)
+   #define __atomic_exchange(ptr,val,ret,memorder) *(ptr)
+   #define __atomic_compare_exchange_n(ptr,expected,desired,weak,success_memorder,failure_memorder) false
+   long __builtin_labs(long i);
+   long long __builtin_llabs(long long i);
+
+// int __sync_lock_test_and_set( int & v, int n );
+   int __sync_lock_test_and_set( int *v, int n );
+// type __sync_lock_test_and_set (type *ptr, type value, ...)
+
+// DQ (12/15/2016): Need to address the use of C, not just C++.
+// int __sync_lock_release( int & v );
+#ifdef __Cplusplus
+   int __sync_lock_release( int & v );
+#endif
+
+/* DQ (12/15/2016): Adding more evaluations of required builtin support. */
+   #define __builtin_va_arg(v,l) (l)(sizeof(l))
+
+// DQ (12/16/2016): Another iteration of adding builtin functions.
+   #define __atomic_fetch_add(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_sub(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_and(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_xor(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_or(ptr,ret,memorder)   *(ptr)
+   #define __atomic_fetch_nand(ptr,ret,memorder) *(ptr)
+
+// DQ (12/17/2016): Another iteration of adding builtin functions.
+   #define __atomic_add_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_sub_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_and_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_xor_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_or_fetch(ptr,ret,memorder)   *(ptr)
+   #define __atomic_nand_fetch(ptr,ret,memorder) *(ptr)
+
+#endif
+#endif
+
+/* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. 
+   However, these are required for EDG 4.11 to handle C++11 test codes.
+ */
+
 /* DQ (11/6/2014): Use a different mechanism to handle these for the GNU 4.7 compiler and above (required form C++11) */
-#if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
+#if (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) || (__GNUC__ > 4))
 
 #if 0
 /* DQ (11/10/2014): This was added to support the use of math.h header files for C++11, 
@@ -392,10 +613,11 @@ constexpr bool __builtin_isgreater(double x, double y);
 constexpr bool __builtin_isgreaterequal(double x, double y);
 constexpr bool __builtin_isless(double x, double y);
 #else
-int __builtin_isgreater(double x, double y);
-int __builtin_isgreaterequal(double x, double y);
-int __builtin_isless(double x, double y);
+ROSE_CONSTEXPR int __builtin_isgreater(double x, double y);
+ROSE_CONSTEXPR int __builtin_isgreaterequal(double x, double y);
+ROSE_CONSTEXPR int __builtin_isless(double x, double y);
 #endif
+
 int __builtin_ia32_bsrsi(int x);
 unsigned long long __builtin_ia32_rdpmc(int x);
 unsigned long long __builtin_ia32_rdtsc(void);
@@ -406,7 +628,9 @@ unsigned char      __builtin_ia32_rorqi(unsigned char __X, int __C);
 unsigned short     __builtin_ia32_rorhi(unsigned short __X, int __C);
 void               __builtin_ia32_pause();
 int                __builtin_ia32_bsrdi(long long __X);
-long long          __builtin_bswap64(long long __X);
+
+// DQ (12/14/2016): Comment this out.
+// long long          __builtin_bswap64(long long __X);
 
 void               __builtin_ia32_fxsave(void *__P);
 void               __builtin_ia32_fxrstor(void *__P);
@@ -415,11 +639,438 @@ void               __builtin_ia32_fxrstor64(void *__P);
 unsigned char      __builtin_ia32_addcarryx_u32(unsigned char __CF, unsigned int __X, unsigned int __Y, unsigned int *__P);
 unsigned char      __builtin_ia32_addcarryx_u64(unsigned char __CF, unsigned long __X, unsigned long __Y, unsigned long long *__P);
 
+/* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
+unsigned int __builtin_ia32_crc32qi (unsigned int__C,unsigned char __V);
+unsigned int __builtin_ia32_crc32hi (unsigned int __C, unsigned short __V);
+unsigned int __builtin_ia32_crc32si (unsigned int __C, unsigned int __V);
+unsigned long long __builtin_ia32_crc32di (unsigned long long __C, unsigned long long __V);
+unsigned long long __builtin_ia32_readeflags_u64 (void);
+void __builtin_ia32_writeeflags_u64 (unsigned long long X);
+
+// DQ (12/17/2016): Comment this out since they are defined in Intel header 
+// files and are redundant when processing files using CPP.
+#if 0
+
+/* emmintrin.h */
+
+/* SSE3 builtin functions required for GNU 6.1 compiler */
+/* SSE2 */
+typedef double __v2df __attribute__ ((__vector_size__ (16)));
+typedef long long __v2di __attribute__ ((__vector_size__ (16)));
+typedef int __v4si __attribute__ ((__vector_size__ (16)));
+typedef short __v8hi __attribute__ ((__vector_size__ (16)));
+typedef char __v16qi __attribute__ ((__vector_size__ (16)));
+
+/* Internal data types for implementing the intrinsics.  */
+typedef int __v2si __attribute__ ((__vector_size__ (8)));
+typedef char __v8qi __attribute__ ((__vector_size__ (8)));
+
+/* The Intel API is flexible enough that we must allow aliasing with other
+   vector types, and their scalar components.  */
+typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef long long __m128i __attribute__ ((__vector_size__ (16), __may_alias__));
+typedef double __m128d __attribute__ ((__vector_size__ (16), __may_alias__));
+
+/* Not clear what these should be  */
+typedef int __m64 __attribute__ ((__vector_size__ (8), __may_alias__));
+typedef short __v4hi __attribute__ ((__vector_size__ (8)));
+// typedef long long __m64 __attribute__ ((__vector_size__ (16)));
+// typedef int __v4hi __attribute__ ((__vector_size__ (16)));
+typedef float __v2sf __attribute__ ((__vector_size__ (8)));
+typedef float __v4sf __attribute__ ((__vector_size__ (16)));
+
+/* pmmintrin.h */
+__m128 __builtin_ia32_addsubps (__m128 __X, __m128 __Y);
+__m128 __builtin_ia32_haddps (__m128 __X, __m128 __Y);
+__m128 __builtin_ia32_hsubps (__m128 __X, __m128 __Y);
+__m128 __builtin_ia32_movshdup (__m128 __X);
+__m128 __builtin_ia32_movsldup (__m128 __X);
+__m128d __builtin_ia32_addsubpd (__m128d __X, __m128d __Y);
+__m128d __builtin_ia32_haddpd (__m128d __X, __m128d __Y);
+__m128d __builtin_ia32_hsubpd (__m128d __X, __m128d __Y);
+
+/* __m128i __builtin_ia32_lddqu (__m128i const *__P); */
+__m128i __builtin_ia32_lddqu (char const *__P);
+
+/* tmmintrin.h */
+__m128i __builtin_ia32_phaddw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_phaddd128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_phaddsw128 (__v8hi __X, __v8hi __Y);
+__m64   __builtin_ia32_phaddw (__v4hi __X, __v4hi __Y);
+
+__m64 __builtin_ia32_phaddd (__v2si __X, __v2si __Y);
+__m64 __builtin_ia32_phaddsw (__v4hi __X, __v4hi __Y);
+__m128i __builtin_ia32_phsubw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_phsubd128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_phsubsw128 (__v8hi __X, __v8hi __Y);
+__m64 __builtin_ia32_phsubw (__v4hi __X, __v4hi __Y);
+__m64 __builtin_ia32_phsubd (__v2si __X, __v2si __Y);
+__m64 __builtin_ia32_phsubsw (__v4hi __X, __v4hi __Y);
+__m128i __builtin_ia32_pmaddubsw128 (__v16qi __X, __v16qi __Y);
+__m64 __builtin_ia32_pmaddubsw (__v8qi __X, __v8qi __Y);
+__m128i __builtin_ia32_pmulhrsw128 (__v8hi __X, __v8hi __Y);
+__m64 __builtin_ia32_pmulhrsw (__v4hi __X, __v4hi __Y);
+__m128i __builtin_ia32_pshufb128 (__v16qi __X, __v16qi __Y);
+__m64 __builtin_ia32_pshufb (__v8qi __X, __v8qi __Y);
+__m128i __builtin_ia32_psignb128 (__v16qi __X, __v16qi __Y);
+__m128i __builtin_ia32_psignw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_psignd128 (__v4si __X, __v4si __Y);
+__m64 __builtin_ia32_psignb (__v8qi __X, __v8qi __Y);
+__m64 __builtin_ia32_psignw (__v4hi __X, __v4hi __Y);
+__m64 __builtin_ia32_psignd (__v2si __X, __v2si __Y);
+
+__m128i __builtin_ia32_pabsb128 (__v16qi __X);
+__m128i __builtin_ia32_pabsw128 (__v8hi __X);
+__m128i __builtin_ia32_pabsd128 (__v4si __X);
+__m64 __builtin_ia32_pabsb (__v8qi __X);
+__m64 __builtin_ia32_pabsw (__v4hi __X);
+__m64 __builtin_ia32_pabsd (__v2si __X);
+
+void __builtin_ia32_movntsd (double *__P, __v2df __Y);
+void __builtin_ia32_movntss (float *__P, __v4sf __Y);
+__m128i __builtin_ia32_extrq (__v2di __X, __v16qi __Y);
+__m128i __builtin_ia32_insertq (__v2di __X, __v2di __Y);
+
+/* smmintrin.h */
+int __builtin_ia32_ptestz128 (__v2di __M, __v2di __V);
+int __builtin_ia32_ptestc128 (__v2di __M, __v2di __V);
+int __builtin_ia32_ptestnzc128 (__v2di __M, __v2di __V);
+__m128i __builtin_ia32_pblendvb128 (__v16qi __X, __v16qi __Y, __v16qi __M);
+__m128 __builtin_ia32_blendvps (__v4sf __X, __v4sf __Y, __v4sf __M);
+__m128d __builtin_ia32_blendvpd (__v2df __X, __v2df __Y, __v2df __M);
+__m128i __builtin_ia32_pcmpeqq (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_pminsb128 (__v16qi __X, __v16qi __Y);
+__m128i __builtin_ia32_pmaxsb128 (__v16qi __X, __v16qi __Y);
+__m128i __builtin_ia32_pminuw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_pmaxuw128 (__v8hi __X, __v8hi __Y);
+__m128i __builtin_ia32_pminsd128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pmaxsd128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pminud128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pmaxud128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pmulld128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_pmuldq128 (__v4si __X, __v4si __Y);
+
+__m128i __builtin_ia32_phminposuw128 (__v8hi __X);
+__m128i __builtin_ia32_pmovsxbd128 (__v16qi __X);
+__m128i __builtin_ia32_pmovsxwd128 (__v8hi __X);
+__m128i __builtin_ia32_pmovsxbq128 (__v16qi __X);
+__m128i __builtin_ia32_pmovsxdq128 (__v4si __X);
+__m128i __builtin_ia32_pmovsxwq128 (__v8hi __X);
+__m128i __builtin_ia32_pmovsxbw128 (__v16qi __X);
+__m128i __builtin_ia32_pmovzxbd128 (__v16qi __X);
+__m128i __builtin_ia32_pmovzxwd128 (__v8hi __X);
+
+
+__m128i __builtin_ia32_pmovzxbq128 (__v16qi __X);
+__m128i __builtin_ia32_pmovzxdq128 (__v4si __X);
+__m128i __builtin_ia32_pmovzxwq128 (__v8hi __X);
+__m128i __builtin_ia32_pmovzxbw128 (__v16qi __X);
+__m128i __builtin_ia32_packusdw128 (__v4si __X, __v4si __Y);
+__m128i __builtin_ia32_movntdqa (__v2di* __X);
+
+/* wmmintrin.h */
+__m128i __builtin_ia32_aesdec128 (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_aesdeclast128 (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_aesenc128 (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_aesenclast128 (__v2di __X, __v2di __Y);
+__m128i __builtin_ia32_aesimc128 (__v2di __X);
+
+/* avxintrin.h */
+/* Internal data types for implementing the intrinsics.  */
+typedef double __v4df __attribute__ ((__vector_size__ (32)));
+typedef float __v8sf __attribute__ ((__vector_size__ (32)));
+typedef long long __v4di __attribute__ ((__vector_size__ (32)));
+typedef unsigned long long __v4du __attribute__ ((__vector_size__ (32)));
+typedef int __v8si __attribute__ ((__vector_size__ (32)));
+typedef unsigned int __v8su __attribute__ ((__vector_size__ (32)));
+typedef short __v16hi __attribute__ ((__vector_size__ (32)));
+typedef unsigned short __v16hu __attribute__ ((__vector_size__ (32)));
+typedef char __v32qi __attribute__ ((__vector_size__ (32)));
+typedef unsigned char __v32qu __attribute__ ((__vector_size__ (32)));
+
+/* The Intel API is flexible enough that we must allow aliasing with other
+   vector types, and their scalar components.  */
+typedef float __m256 __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef long long __m256i __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef double __m256d __attribute__ ((__vector_size__ (32), __may_alias__));
+
+__m256d __builtin_ia32_addsubpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_addsubps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_andpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_andps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_andnpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_andnps256 (__v8sf __A, __v8sf __B);
+
+__m256d __builtin_ia32_blendvpd256 (__v4df __X, __v4df __Y, __v4df __M);
+__m256 __builtin_ia32_blendvps256 (__v8sf __X, __v8sf __Y, __v8sf __M);
+__m256d __builtin_ia32_haddpd256 (__v4df __X, __v4df __Y);
+__m256 __builtin_ia32_haddps256 (__v8sf __X, __v8sf __Y);
+__m256d __builtin_ia32_hsubpd256 (__v4df __X, __v4df __Y);
+__m256 __builtin_ia32_hsubps256 (__v8sf __X, __v8sf __Y);
+__m256d __builtin_ia32_maxpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_maxps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_minpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_minps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_orpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_orps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_xorpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_xorps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_cvtdq2pd256 (__v4si __A);
+__m256 __builtin_ia32_cvtdq2ps256 (__v8si __A);
+__m128 __builtin_ia32_cvtpd2ps256 (__v4df __A);
+__m256i __builtin_ia32_cvtps2dq256 (__v8sf __A);
+__m256d __builtin_ia32_cvtps2pd256 (__v4sf __A);
+__m128i __builtin_ia32_cvttpd2dq256 (__v4df __A);
+__m128i __builtin_ia32_cvtpd2dq256 (__v4df __A);
+__m256i __builtin_ia32_cvttps2dq256 (__v8sf __A);
+
+void __builtin_ia32_vzeroall();
+void __builtin_ia32_vzeroupper();
+
+__m128d __builtin_ia32_vpermilvarpd (__v2df __A, __v2di __C);
+__m256d __builtin_ia32_vpermilvarpd256 (__v4df __A, __v4di __C);
+__m128 __builtin_ia32_vpermilvarps (__v4sf __A, __v4si __C);
+__m256 __builtin_ia32_vpermilvarps256 (__v8sf __A, __v8si __C);
+__m128 __builtin_ia32_vbroadcastss (float const * __X);
+__m256d __builtin_ia32_vbroadcastsd256 (double const *__X);
+__m256 __builtin_ia32_vbroadcastss256 (float const *__X);
+__m256d __builtin_ia32_vbroadcastf128_pd256 (__m128d const *__X);
+__m256 __builtin_ia32_vbroadcastf128_ps256 (__m128 const *__X);
+
+__m256d __builtin_ia32_loadupd256 (double const *__P);
+void __builtin_ia32_storeupd256 (double *__P, __v4df __A);
+__m256 __builtin_ia32_loadups256 (float const *__P);
+void __builtin_ia32_storeups256 (float *__P, __v8sf __A);
+__m256i __builtin_ia32_loaddqu256 (char const * __P);
+void __builtin_ia32_storedqu256 (char *__P, __v32qi __A);
+__m128d __builtin_ia32_maskloadpd (const __v2df *__P, __v2di __M);
+void __builtin_ia32_maskstorepd (__v2df *__P, __v2di __M, __v2df __A);
+__m256d __builtin_ia32_maskloadpd256 (const __v4df *__P, __v4di __M);
+void __builtin_ia32_maskstorepd256 (__v4df *__P, __v4di __M, __v4df __A);
+__m128 __builtin_ia32_maskloadps (const __v4sf *__P, __v4si __M);
+void __builtin_ia32_maskstoreps (__v4sf * __P, __v4si __M, __v4sf __A);
+__m256 __builtin_ia32_maskloadps256 (const __v8sf *__P, __v8si __M);
+void __builtin_ia32_maskstoreps256 (__v8sf *__P, __v8si __M, __v8sf __A);
+__m256 __builtin_ia32_movshdup256 (__v8sf __X);
+__m256 __builtin_ia32_movsldup256 (__v8sf __X);
+__m256d __builtin_ia32_movddup256 (__v4df __X);
+__m256i __builtin_ia32_lddqu256 (char const *__P);
+void __builtin_ia32_movntdq256 (__v4di * __A, __v4di __B);
+void __builtin_ia32_movntpd256 (double *__A, __v4df __B);
+void __builtin_ia32_movntps256 (float *__P, __v8sf __A);
+__m256 __builtin_ia32_rcpps256 (__v8sf __A);
+__m256 __builtin_ia32_rsqrtps256 (__v8sf __A);
+__m256d __builtin_ia32_sqrtpd256 (__v4df __A);
+__m256 __builtin_ia32_sqrtps256 (__v8sf __A);
+
+// #define _mm256_ceil_pd(V)	_mm256_round_pd ((V), _MM_FROUND_CEIL)
+// #define _mm256_floor_pd(V)	_mm256_round_pd ((V), _MM_FROUND_FLOOR)
+// #define _mm256_ceil_ps(V)	_mm256_round_ps ((V), _MM_FROUND_CEIL)
+// #define _mm256_floor_ps(V)	_mm256_round_ps ((V), _MM_FROUND_FLOOR)
+
+__m256d __builtin_ia32_unpckhpd256 (__v4df __A, __v4df __B);
+__m256d __builtin_ia32_unpcklpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_unpckhps256 (__v8sf __A, __v8sf __B);
+__m256 _builtin_ia32_unpcklps256 (__v8sf __A, __v8sf __B);
+int __builtin_ia32_vtestzpd (__v2df __M, __v2df __V);
+int __builtin_ia32_vtestcpd (__v2df __M, __v2df __V);
+int __builtin_ia32_vtestnzcpd (__v2df __M, __v2df __V);
+int __builtin_ia32_vtestzps (__v4sf __M, __v4sf __V);
+int __builtin_ia32_vtestcps (__v4sf __M, __v4sf __V);
+int __builtin_ia32_vtestnzcps (__v4sf __M, __v4sf __V);
+int __builtin_ia32_vtestzpd256 (__v4df __M, __v4df __V);
+int __builtin_ia32_vtestcpd256 (__v4df __M, __v4df __V);
+int __builtin_ia32_vtestnzcpd256 (__v4df __M, __v4df __V);
+int __builtin_ia32_vtestzps256 (__v8sf __M, __v8sf __V);
+int __builtin_ia32_vtestcps256 (__v8sf __M, __v8sf __V);
+int __builtin_ia32_vtestnzcps256 (__v8sf __M, __v8sf __V);
+int __builtin_ia32_ptestz256 (__v4di __M, __v4di __V);
+int __builtin_ia32_ptestc256 (__v4di __M, __v4di __V);
+int __builtin_ia32_ptestnzc256 (__v4di __M, __v4di __V);
+int __builtin_ia32_movmskpd256 (__v4df __A);
+int __builtin_ia32_movmskps256 (__v8sf __A);
+
+__m128d __builtin_ia32_pd_pd256 (__v4df __A);
+__m128 __builtin_ia32_ps_ps256 (__v8sf __A);
+__m128i __builtin_ia32_si_si256 (__v8si __A);
+__m256d __builtin_ia32_pd256_pd (__v2df __A);
+__m256 __builtin_ia32_ps256_ps (__v4sf __A);
+__m256i __builtin_ia32_si256_si (__v4si __A);
+
+__m256 __builtin_ia32_unpcklps256 (__v8sf __A, __v8sf __B);
+
+void __builtin_ia32_monitor (void const * __P, unsigned int __E, unsigned int __H);
+void __builtin_ia32_mwait (unsigned int __E, unsigned int __H);
+
+
+/* New builtins (11/19/2016) */
+
+__m256d __builtin_ia32_addpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_addps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_divpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_divps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_mulpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_mulps256 (__v8sf __A, __v8sf __B);
+__m256d __builtin_ia32_subpd256 (__v4df __A, __v4df __B);
+__m256 __builtin_ia32_subps256 (__v8sf __A, __v8sf __B);
+
+
+/* Test how many files of builtins we have to add */
+   #define _AVX2INTRIN_H_INCLUDED
+   #define _AVX512FINTRIN_H_INCLUDED
+   #define _AVX512CDINTRIN_H_INCLUDED
+   #define _AVX512VLINTRIN_H_INCLUDED
+   #define _AVX512BWINTRIN_H_INCLUDED
+   #define _AVX512DQINTRIN_H_INCLUDED
+   #define _AVX512VLBWINTRIN_H_INCLUDED
+   #define _AVX512VLDQINTRIN_H_INCLUDED
+   #define _AVX512IFMAINTRIN_H_INCLUDED
+   #define _AVX512IFMAVLINTRIN_H_INCLUDED
+   #define _AVX512VBMIINTRIN_H_INCLUDED
+   #define _AVX512VBMIVLINTRIN_H_INCLUDED
+   #define _SHAINTRIN_H_INCLUDED
+   #define _LZCNTINTRIN_H_INCLUDED
+   #define _BMIINTRIN_H_INCLUDED
+   #define _BMI2INTRIN_H_INCLUDED
+   #define _FMAINTRIN_H_INCLUDED
+   #define _F16CINTRIN_H_INCLUDED
+   #define _RTMINTRIN_H_INCLUDED
+   #define _XTESTINTRIN_H_INCLUDED
+
+/* DQ (12/14/2016): Add to the list. */
+   #define _MMINTRIN_H_INCLUDED
+   #define _XMMINTRIN_H_INCLUDED
+   #define _EMMINTRIN_H_INCLUDED
+// #define _EMMINTRIN_H_INCLUDED
+
+/* DQ (12/14/2016): This is the header file that includes all of the other header files (above). */
+   #define _X86INTRIN_H_INCLUDED
+
+
+/* This just includes a lot of other include files specific to AVX (partially addressed above) */
+/* #define _IMMINTRIN_H_INCLUDED */
+
+/* immintrin.h */
+int __builtin_ia32_rdrand16_step (unsigned short *__P);
+int __builtin_ia32_rdrand32_step (unsigned int *__P);
+unsigned int __builtin_ia32_rdfsbase32();
+unsigned long long __builtin_ia32_rdfsbase64();
+unsigned int __builtin_ia32_rdgsbase32();
+unsigned long long __builtin_ia32_rdgsbase64();
+void __builtin_ia32_wrfsbase32 (unsigned int __B);
+void __builtin_ia32_wrfsbase64 (unsigned long long __B);
+void __builtin_ia32_wrgsbase32 (unsigned int __B);
+void __builtin_ia32_wrgsbase64 (unsigned long long __B);
+int __builtin_ia32_rdrand64_step (unsigned long long *__P);
+
+/* emmintrin.h */
+
+__m128i _mm_set1_epi64x (long long __A);
+__m128d _mm_set1_pd (double __F);
+__m128i _mm_set_epi64x (long long __q1, long long __q0);
+__m128i _mm_and_si128 (__m128i __A, __m128i __B);
+__m128i _mm_or_si128 (__m128i __A, __m128i __B);
+__m128d _mm_sub_pd (__m128d __A, __m128d __B);
+__m128d _mm_mul_pd (__m128d __A, __m128d __B);
+double _mm_cvtsd_f64 (__m128d __A);
+__m128d _mm_hadd_pd (__m128d __X, __m128d __Y);
+__m128d _mm_add_pd (__m128d __A, __m128d __B);
+void _mm_storeu_pd (double *__P, __m128d __A);
+
+
+
+   #define _MM3DNOW_H_INCLUDED
+   #define _FMA4INTRIN_H_INCLUDED
+   #define _XOPMMINTRIN_H_INCLUDED
+   #define _LWPINTRIN_H_INCLUDED
+   #define _RDSEEDINTRIN_H_INCLUDED
+   #define _XSAVEINTRIN_H_INCLUDED
+   #define _XSAVEOPTINTRIN_H_INCLUDED
+   #define _ADXINTRIN_H_INCLUDED
+   #define _CLWBINTRIN_H_INCLUDED
+   #define _PCOMMITINTRIN_H_INCLUDED
+   #define _CLFLUSHOPTINTRIN_H_INCLUDED
+   #define _XSAVESINTRIN_H_INCLUDED
+   #define _XSAVECINTRIN_H_INCLUDED
+   #define _MWAITXINTRIN_H_INCLUDED
+   #define _CLZEROINTRIN_H_INCLUDED
+   #define _PKUINTRIN_H_INCLUDED
+
+
+/* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
+#if (__GNUC__ >= 6)
+   #define __SSE3__
+   #define __SSE2__
+   #define __SSE4A__
+   #define __SSE4_1__
+#endif
+
+// DQ (12/17/2016): Comment this out since they are defined in Intel header 
+// files and are redundant when processing files using CPP.
+#else
+
+   #define _X86INTRIN_H_INCLUDED
+
+// DQ (1/8/2017): I think this is required for GNU 6.1 compiler (see Cxx_tests/test2011_133.C).
+   #define _MMINTRIN_H_INCLUDED
+   #define _XMMINTRIN_H_INCLUDED
+   #define _EMMINTRIN_H_INCLUDED
+
+// DQ (12/17/2016): Added what are likely Intel (v16) specific types.  These may have 
+// to be defined macros since "typedef unsigned __int64 m64_u64;" is a problem.
+// typedef __INT16_TYPE__ __int16;
+// typedef __INT32_TYPE__ __int32;
+// typedef __INT64_TYPE__ __int64;
+#define __int8 char
+#define __int16 short
+#define __int32 int
+#define __int64 long
+
+// DQ (12/17/2016): This is sufficent now that we have modified EDG to eliminate the error on underflow for floating point values.
+#define __INTEL_CLANG_COMPILER
+
+// #define _mm_set1_epi64x(X) ((__m128i)(0LL))
+// #define _mm_set1_epi64x(X)
+// typedef double  __m128d __attribute__((__vector_size__(16)));
+// typedef __int64 __m128i __attribute__((__vector_size__(16)));
+// __m128i _mm_set1_epi64x (long long __A);
+// extern __m128i  _mm_set1_epi64x(__int64);
+
+// DQ (12/17/2016): Intel sets this by default to a value too large for EDG to accept (so we just reset it).
+// This is only used in the limits header file and as the return value for a function that hides this macro.
+// For use in ROSE this is a simple fix that does not effect the users code.  As a result is we generate
+// a file via CPP to process by ROSE we MUST use ROSE to generate the CPP file (so that these macros and
+// the __INTEL_CLANG_COMPILER macro will be seen by CPP and code generated that can be read by ROSE.
+// Else the code generated will be such that only the Intel compiler can read it (Intel specific types
+// and builtin function that return types that are only defined in the Intel header files).
+
+// These values can not be processed as litrals by EDG.
+// #define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// #define __FLT_DENORM_MIN__ 1.40129846e-45F
+// Note that the ROSE configuration fixes the header files to be:
+// #define __DBL_DENORM_MIN__ 4.9406564584124654e-324L
+// #define __FLT_DENORM_MIN__ 1.40129846e-45L
+// But this is not enough to permit the processing of the header 
+// files where they are expanded to a single file via CPP. So
+// we need to define them to be smaller values.
+// #undef __FLT_DENORM_MIN__ 
+// #undef __DBL_DENORM_MIN__ 
+// #define __FLT_DENORM_MIN__ 42.0
+// #define __DBL_DENORM_MIN__ 42.0
+// Note that this should also likely effect:
+// #define __LDBL_DENORM_MIN__ 3.64519953188247460253e-4951L
+// But this value has not been a problem for EDG (so far).
+
+#endif
+
 #else
 
 /* DQ (5/4/2010): Reported problem under Ubuntu 9.10 with GCC 4.4.1 and Boost 1.42.
 */
 int __builtin_fpclassify (int, int, int, int, int, ...);
+
+/* DQ (11/14/2016): For GNU 6.1 (at least) the isunordered() builtin is not available. */
+#if ((__GNUC__ < 6) && (__GNUC_MINOR__ >= 0))
 
 /* GCC provides built-in versions of the ISO C99 floating point comparison macros that
     avoid raising exceptions for unordered operands. They have the same names as the
@@ -476,8 +1127,16 @@ DQ (6/19/2007): These might required math.h to be included.
       fpclassify (__u) == FP_NAN || fpclassify (__v) == FP_NAN; }))
 # endif
 
+/* DQ (11/14/2016): For GNU 6.1 (at least) the isunordered() builtin is not available. */
+#endif
+
 /* #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) */
 #endif
+
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#endif
+
+
 
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
@@ -829,9 +1488,9 @@ was just float or double for complex<float> or complex<double>.
 #endif
 
 /* Disable inclusion of complex.h on Linux */
-#define _COMPLEX_H
+/* #define _COMPLEX_H */
 /* Disable inclusion of complex.h on Mac OS X */
-#define __COMPLEX__
+/* #define __COMPLEX__ */
 
 /* DQ (8/25/2009): Added complex builtin functions as required to compile parts of ROSE with ROSE */
 /* #if _GLIBCXX_USE_C99_COMPLEX */
@@ -2060,10 +2719,19 @@ void prefetch (const __global float16 *p, size_t num_elements);
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
+
+
+
+/* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+/* DQ (10/18/2016): Turn this on for EDG 4.11 but not wanted for EDG 4.12 (we use our own mechanism for EDG versions before EDG 4.11) */
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
+
 /***************************************************************************************
   SSE and MMX support (declarations for builtin functions defined in GNU header files)
 ****************************************************************************************/
 
+#if 0
 /* From: mmintrin.h */
 void __builtin_ia32_emms();
 int __builtin_ia32_vec_init_v2si(int,int);
@@ -2144,7 +2812,7 @@ int __builtin_ia32_xorps(float,float);
 int __builtin_ia32_cmpeqss(float,float);
 int __builtin_ia32_cmpltss(float,float);
 int __builtin_ia32_cmpless(float,float);
-int __builtin_ia32_cmpltss(float,float);
+// int __builtin_ia32_cmpltss(float,float);
 int __builtin_ia32_movss(float,float);
 int __builtin_ia32_cmpless(float,float);
 int __builtin_ia32_cmpneqss(float,float);
@@ -2402,6 +3070,9 @@ int __builtin_ia32_psrlwi(int,int);
 int __builtin_ia32_psrldi(int,int);
 int __builtin_ia32_psrlqi(long long,int);
 
+// DQ (12/14/2016): Commented out
+#endif
+
 // DQ (8/25/2012): Moved this to avoid their output in the debugging mode for ROSE.
 // As a result of this move they are not output in the DOT graphs where the macro
 // SKIP_ROSE_BUILTIN_DECLARATIONS is defined.
@@ -2410,9 +3081,18 @@ int __builtin_ia32_psrlqi(long long,int);
 // systems The built-in declarations from gcc actually specify the bit length 
 // explictly e.g. int32_t __builtin_bswap32 (int32_t x)
 // However, integer types such as int32_t are not defined here.
-int __builtin_bswap32 (int x);
+// int __builtin_bswap32 (int x);
 /* long int __builtin_bswap64 (long int x); */
 
+
+/* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#endif
+
+/* DQ (12/17/2016): Not clear why I don't appear to need this now. it could be that at least 
+   one declaration is being seen so that this specific variable is no longer required. 
+*/
+/* DQ (12/15/2016): We need a variable to be from this file so that we can support internal checking. */
+/* int __frontend_specific_variable_to_provide_header_file_path; */
 
 /* DQ (9/6/2016): We need size_t to be defined, but we only want it defined so that the builtin functions 
    will make sense, then we will undefine it and allow the header files to define it properly.

@@ -122,6 +122,7 @@ SgAsmGenericSection::writable_content(size_t nbytes)
     if (local_data_pool!=NULL)
         free(local_data_pool);
     local_data_pool = (unsigned char*)calloc(nbytes, 1);
+    memset(local_data_pool, 0, nbytes);
     p_data = SgSharedVector<unsigned char>(local_data_pool, nbytes);
     return &(p_data[0]);
 }
