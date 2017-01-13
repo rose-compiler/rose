@@ -1273,6 +1273,17 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgumentType->class_name().c_str());
             // curprint ( "\n /* templateArgument->get_type() */ \n");
 #endif
+            // DQ (1/9/2017): If the result of get_type() was identified as containing parts with non public access then we want to use an alternative type alias.
+            // The test for this is done on the whole of the AST within the ast post processing.
+            // Note that this fix also requires that the name qualification support be computed using the unparsable_type_alias.
+               if (templateArgument->get_unparsable_type_alias() != NULL)
+                  {
+#if 0
+                    printf ("In unparseTemplateArgument(): selected an alternative type to unparse to work waround a bug in EDG (this is likely the original type specified in the source code) \n");
+#endif
+                    templateArgumentType = templateArgument->get_unparsable_type_alias();
+                  }
+
 #if OUTPUT_DEBUGGING_INFORMATION
                printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgumentType->class_name().c_str());
                unp->u_exprStmt->curprint ( "\n /* templateArgument->get_type() */ \n");

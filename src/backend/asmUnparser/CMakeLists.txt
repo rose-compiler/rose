@@ -1,20 +1,35 @@
 if (enable-binary-analysis)
-add_library(roseAsmUnparser OBJECT
-  unparseX86Asm.C
-  unparseArmAsm.C
-  unparsePowerpcAsm.C
-  unparseM68kAsm.C
-  unparseMipsAsm.C
-  AsmUnparser.C
-  AsmUnparser_compat.C
-  AsmFunctionIndex.C)
+    add_library(roseAsmUnparser OBJECT
+        AsmUnparser.C
+        AsmUnparser_compat.C
+        AsmFunctionIndex.C
+        BinaryUnparserArm.C
+        BinaryUnparserBase.C
+        BinaryUnparserM68k.C
+        BinaryUnparserMips.C
+        BinaryUnparserPowerpc.C
+        BinaryUnparserX86.C
+        unparseArmAsm.C
+        unparseM68kAsm.C
+        unparseMipsAsm.C
+        unparsePowerpcAsm.C
+        unparseX86Asm.C)
 else()
-add_library(roseAsmUnparser OBJECT
-  dummyAsmUnparser.C
-)
+    add_library(roseAsmUnparser OBJECT
+        dummyAsmUnparser.C)
 endif()
+
 add_dependencies(roseAsmUnparser rosetta_generated)
 
 install(FILES
-  AsmUnparser.h AsmUnparser_compat.h AsmFunctionIndex.h
-  DESTINATION ${INCLUDE_INSTALL_DIR})
+    AsmUnparser.h
+    AsmUnparser_compat.h
+    AsmFunctionIndex.h
+    BinaryUnparser.h
+    BinaryUnparserArm.h
+    BinaryUnparserBase.h
+    BinaryUnparserM68k.h
+    BinaryUnparserMips.h
+    BinaryUnparserPowerpc.h
+    BinaryUnparserX86.h
+    DESTINATION ${INCLUDE_INSTALL_DIR})
