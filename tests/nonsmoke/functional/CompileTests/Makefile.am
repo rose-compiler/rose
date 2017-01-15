@@ -41,7 +41,14 @@ endif
 # DQ (7/28/2014): Moved to after the C and C++ langauge tests.
 SUBDIRS += x10_tests
 
+# DQ (1/15/2017): Added conditional support to avoid these tests when ROSE is configured for binary only support, failing in ROSE matrix testing).
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+# DQ (1/15/2017): Clang does not support omp.h include file required for OpenMP testing.
+# And we don't have a AUTOMAKE conditional defined for the use of Clang as the backend compiler.
+if !USING_CLANG_COMPILER
 SUBDIRS += OpenMP_tests FailSafe_tests
+endif
+endif
 
 if !ROSE_USE_SANITIZER
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
@@ -112,10 +119,13 @@ endif
 #    SUBDIRS += Matlab_tests
 # endif
 
+# DQ (1/15/2017): Added conditional support to avoid these tests when ROSE is configured for binary only support, failing in ROSE matrix testing).
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 SUBDIRS += CudaTests
 
 # Used to check all C and C++ test codes: not really specific to EDG 4.x
 SUBDIRS += frontend_integration
+endif
 
 # DQ (2/15/2014): Adding systemc tests (part of general C++ robustness tests)
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT

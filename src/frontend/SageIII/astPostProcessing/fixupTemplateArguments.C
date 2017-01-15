@@ -429,24 +429,28 @@ void fixupTemplateArguments()
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance fixupTemplateArguments_timer ("Add reference to non-private template arguments (for unparsing):");
 
-#if 1
-  // DQ (11/27/2016): We only want to support calling this fixup where I am testing it with the GNU 6.x compilers.
-#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)
-
 #if 0
      printf ("Inside of fixupTemplateArguments() \n");
 #endif
 
+  // DQ (1/15/2017): Since this is a fix for GNU 4.9 and greater backend compilers, and Intel and Clang compilers, 
+  // we only want to test fixing it there initially. Later we can apply the fix more uniformally.
+  // DQ (11/27/2016): We only want to support calling this fixup where I am testing it with the GNU 6.x compilers.
+  // #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)
+#if defined(BACKEND_CXX_IS_GNU_COMPILER) && ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 9) || BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 5 )
      FixupTemplateArguments t;
-
      SgTemplateArgument::traverseMemoryPoolNodes(t);
+#else
+// DQ (1/15/2017): And apply this fix for all versions of Intel and Clang backend compilers as well.
+   #if defined(BACKEND_CXX_IS_INTEL_COMPILER) || defined (BACKEND_CXX_IS_CLANG_COMPILER)
+     FixupTemplateArguments t;
+     SgTemplateArgument::traverseMemoryPoolNodes(t);
+   #endif
+#endif
 
-// #if DEBUG_PRIVATE_TYPE
 #if 0
+// #if DEBUG_PRIVATE_TYPE
      printf ("DONE: Inside of fixupTemplateArguments() \n");
-#endif
-
-#endif
 #endif
 
 #if 0
