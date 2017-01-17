@@ -222,7 +222,13 @@ class CopyDeclarations : public ProcessAstTree
      }
 };
 
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
 extern double GetWallTime();
+#else
+// DQ (1/14/2017): Define this function so that ROSE can be compiled and linked.
+double GetWallTime() { return 0.0; }
+#endif
 
 bool LoopTransformation( const AstNodePtr& head, AstNodePtr& result)
 {

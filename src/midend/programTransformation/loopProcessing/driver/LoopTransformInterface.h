@@ -70,7 +70,11 @@ class ROSE_DLL_API LoopTransformInterface
   static AliasAnalysisInterface* aliasInfo;
   static FunctionSideEffectInterface* funcInfo;
   static ArrayAbstractionInterface* arrayInfo;
+
+// DQ (1/15/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
   static AutoTuningInterface* tuning;
+#endif
 
  public:
 
@@ -81,14 +85,23 @@ class ROSE_DLL_API LoopTransformInterface
   static void set_arrayInfo( ArrayAbstractionInterface* array)
     { arrayInfo = array; }
   static void set_astInterface( AstInterface& _fa);
+
+// DQ (1/15/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
   static void set_tuningInterface(AutoTuningInterface* _tuning);
+#endif
+
   static void cmdline_configure(std::vector<std::string>& argv);
 
   static AstInterface& getAstInterface() { assert(fa != 0); return *fa; }
   static AliasAnalysisInterface* getAliasInfo() { return aliasInfo; }
   static FunctionSideEffectInterface* getSideEffectInterface() 
             { return funcInfo; }
+
+// DQ (1/15/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
   static AutoTuningInterface* getAutoTuningInterface() { return tuning; }
+#endif
 
   static bool IsAliasedRef( const AstNodePtr& r1, const AstNodePtr& r2)
     { assert(fa != 0 && aliasInfo!=0); return aliasInfo->may_alias(*fa, r1, r2); }
