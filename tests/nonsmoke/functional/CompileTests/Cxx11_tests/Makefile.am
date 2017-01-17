@@ -101,7 +101,6 @@ test2016_06.C \
 test2016_07.C \
 test2016_10.C \
 test2016_11.C \
-test2016_12.C \
 test2016_13.C \
 test2016_14.C \
 test2016_15.C \
@@ -109,22 +108,14 @@ test2016_16.C \
 test2016_17.C \
 test2016_18.C \
 test2016_19.C \
-test2016_20.C \
 test2016_21.C \
 test2016_22.C \
-test2016_23.C \
-test2016_24.C \
 test2016_25.C \
 test2016_29.C \
 test2016_30.C \
-test2016_33.C \
-test2016_34.C \
-test2016_35.C \
-test2016_36.C \
 test2016_37.C \
 test2016_39.C \
 test2016_42.C \
-test2016_90.C \
 test2016_91.C \
 test2016_92.C \
 test2016_93.C \
@@ -138,6 +129,19 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_28.C \
    test2015_11.C \
    test2016_40.C
+endif
+
+if !OS_MACOSX
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2016_12.C \
+   test2016_20.C \
+   test2016_23.C \
+   test2016_24.C \
+   test2016_33.C \
+   test2016_34.C \
+   test2016_35.C \
+   test2016_36.C \
+   test2016_90.C 
 endif
 
 # DQ (7/9/2016): This test is inconsistatn with what I understand to be the most recent fixes.

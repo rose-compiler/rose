@@ -191,7 +191,10 @@ class Expression_Tree_Node_Type;
 // Prototypes for functions defined in array.C for which prototypes are required before array.h is processed.
 void APP_ABORT();
 void APP_Exit();
-void APP_Assertion_Support ( char* Source_File_With_Error, unsigned Line_Number_In_File );
+
+// DQ (1/16/2017): Avoid wornings by changing to "char*" to "const char*"
+// void APP_Assertion_Support ( char* Source_File_With_Error, unsigned Line_Number_In_File );
+void APP_Assertion_Support ( const char* Source_File_With_Error, unsigned Line_Number_In_File );
 
 #if defined(APP_NDEBUG) || defined(NDEBUG)
 // Define a version of assert for A++/P++ (case of NDEBUG defined)

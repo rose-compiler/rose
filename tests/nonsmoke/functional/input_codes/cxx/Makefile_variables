@@ -135,7 +135,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2004_74.C \
 	test2004_75.C \
 	test2004_76.C \
-	test2004_77.C \
 	test2004_78.C \
 	test2004_79.C \
 	test2004_80.C \
@@ -428,7 +427,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2006_17.C \
 	test2006_18.C \
 	test2006_19.C \
-	test2006_20.C \
 	test2006_22.C \
 	test2006_23.C \
 	test2006_25.C \
@@ -784,8 +782,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2011_138.C \
 	test2011_139.C \
 	test2011_140.C \
-	test2011_141.C \
-	test2011_142.C \
 	test2011_143.C \
 	test2011_146.C \
 	test2011_147.C \
@@ -843,7 +839,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2012_06.C \
 	test2012_07.C \
 	test2012_08.C \
-	test2012_09.C \
 	test2012_10.C \
 	test2012_11.C \
 	test2012_12.C \
@@ -1099,6 +1094,7 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2013_06.C \
 	test2013_07.C \
 	test2013_08.C \
+	test2013_09.C \
 	test2013_10.C \
 	test2013_11.C \
 	test2013_12.C \
@@ -1238,7 +1234,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2013_161.C \
 	test2013_162.C \
 	test2013_163.C \
-	test2013_164.C \
 	test2013_165.C \
 	test2013_166.C \
 	test2013_167.C \
@@ -1284,7 +1279,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2013_209.C \
 	test2013_210.C \
 	test2013_211.C \
-	test2013_212.C \
 	test2013_213.C \
 	test2013_214.C \
 	test2013_215.C \
@@ -1357,10 +1351,31 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 
 # ROSE__CXX_TESTS_WITHOUT_2013_241 = $(ROSE__CXX_TESTS)
 
+# DQ (1/16/2017): If using Clang we can't test test2013_09.C because header files used are
+# implemented using C++11 language features and will not compile in the Cxx_tests which
+# assume C++98 langauge standard.  This test code must be compilied using the -std=c++11 option.
+# Note: test2004_77.C requires C++11 mode, but also failes in an assertion (in name qualification).
+# Note: test2006_20.C requires C++11 mode, and also references bits/stl_algobase.h not present on a Mac.
+
+if !USING_CLANG_COMPILER
 ROSE__CXX_TESTS__BOOST = \
 	test2013_09.C \
-	test2013_236.C
+	test2011_141.C \
+	test2011_142.C \
+	test2012_09.C \
+	test2013_164.C \
+	test2013_212.C \
+	test2013_236.C 
 
+ROSE__CXX_TESTS_WITHOUT_2013_241 += \
+	test2004_77.C \
+	test2006_20.C 
+else
+ROSE__CXX_TESTS__BOOST = \
+	test2013_236.C
+endif
+
+if !USING_CLANG_COMPILER
 # DQ (3/25/2014): These work now with the GNU 4.7 and 4.8 compilers.
 # Previously the use if 128 bit integers was not supported in ROSE
 # and was a problem for these codes using the GNU 4.7 and 4.8 compilers.
@@ -1381,4 +1396,9 @@ ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) \
 
 ROSE__CXX_TESTS__BOOST += \
 	test2013_235.C 
+else
+# DQ (1/16/2017): We need to include this to get the larger list of older test codes as well.
+ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) 
+endif
+
 # endif
