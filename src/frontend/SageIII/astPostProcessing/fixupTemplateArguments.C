@@ -9,16 +9,38 @@
 
 using namespace std;
 
+#define DEBUG_PRIVATE_TYPE 0
+#define DEBUGGING_USING_RECURSIVE_DEPTH 0
+
 bool contains_private_type (SgType* type);
 bool contains_private_type (SgTemplateArgument* templateArgument);
 
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+// For debugging, keep track of the recursive depth.
+static size_t global_depth = 0;
+#endif
+
 bool contains_private_type (SgType* type)
    {
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+  // For debugging, keep track of the recursive depth.
+     static size_t depth = 0;
+
+     printf ("In contains_private_type(SgType*): depth = %zu \n",depth);
+     ROSE_ASSERT(depth < 500);
+
+     printf ("In contains_private_type(SgType*): global_depth = %zu \n",global_depth);
+     ROSE_ASSERT(global_depth < 55);
+#endif
+
   // Note this is the recursive function.
      bool returnValue = false;
 
-#if 1
-     printf ("In contains_private_type(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+#if DEBUG_PRIVATE_TYPE
+  // DQ (1/7/2016): It is a problem to do this for some files (failing about 35 files in Cxx_tests).
+  // The issues appears to be in the unparsing of the template arguments of the qualified names for the types.
+  // printf ("In contains_private_type(SgType*): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+     printf ("In contains_private_type(SgType*): type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
      SgTypedefType* typedefType = isSgTypedefType(type);
@@ -29,14 +51,14 @@ bool contains_private_type (SgType* type)
           ROSE_ASSERT(typedefDeclaration != NULL);
 
           bool isPrivate = typedefDeclaration->get_declarationModifier().get_accessModifier().isPrivate();
-#if 1
+#if DEBUG_PRIVATE_TYPE
           printf ("typedefDeclaration isPrivate = %s \n",isPrivate ? "true" : "false");
 #endif
           if (isPrivate == false)
              {
             // Get the scope and see if it is a template instantiation.
                SgScopeStatement* scope = typedefDeclaration->get_scope();
-#if 1
+#if DEBUG_PRIVATE_TYPE
                printf ("scope = %p = %s \n",scope,scope->class_name().c_str());
 #endif
             // Get the associated declaration.
@@ -56,11 +78,17 @@ bool contains_private_type (SgType* type)
 
                          for (SgTemplateArgumentPtrList::iterator i = templateArgumentPtrList.begin(); i != templateArgumentPtrList.end(); i++)
                             {
-#if 1
+#if DEBUG_PRIVATE_TYPE
                               printf ("recursive call to contains_private_type(%p): name = %s = %s \n",*i,(*i)->class_name().c_str(),(*i)->unparseToString().c_str());
+#endif
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+                              global_depth++;
 #endif
                               bool isPrivateType = contains_private_type(*i);
 
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+                              global_depth--;
+#endif
                               returnValue |= isPrivateType;
                             }
 
@@ -69,7 +97,7 @@ bool contains_private_type (SgType* type)
 
                     default:
                        {
-#if 1
+#if DEBUG_PRIVATE_TYPE
                          printf ("Ignoring non-SgTemplateInstantiationDefn \n");
 #endif
                        }
@@ -82,7 +110,7 @@ bool contains_private_type (SgType* type)
         }
        else
         {
-#if 1
+#if DEBUG_PRIVATE_TYPE
           printf ("could be a wrapped type: type = %p = %s (not a template class instantiaton) \n",type,type->class_name().c_str());
 #endif
        // If this is a default SgModifierType then unwrap it.
@@ -126,22 +154,31 @@ bool contains_private_type (SgType* type)
 
           if (type != NULL && templateType == NULL && classType == NULL && voidType == NULL && rvalueReferenceType == NULL && functionType == NULL && declType == NULL && enumType == NULL)
              {
-#if 1
+#if DEBUG_PRIVATE_TYPE
                printf ("found unwrapped type = %p = %s = %s (not a template class instantiaton) \n",type,type->class_name().c_str(),type->unparseToString().c_str());
 #endif
             // if (type->isIntegerType() == false && type->isFloatType() == false)
                if (type->isIntegerType() == false && type->isFloatType() == false)
                   {
-#if 1
+#if DEBUG_PRIVATE_TYPE
                     printf ("Making call to contains_private_type(type) \n");
 #endif
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+                    depth++;
+                    global_depth++;
+#endif
                     bool isPrivateType = contains_private_type(type);
+
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+                    depth--;
+                    global_depth--;
+#endif
                     returnValue = isPrivateType;
                   }
                  else
                   {
                  // This can't be a private type.
-#if 1
+#if DEBUG_PRIVATE_TYPE
                     printf ("This is an integer or float type (of some sort): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
 #endif
                     returnValue = false;
@@ -153,8 +190,8 @@ bool contains_private_type (SgType* type)
              }
         }
 
-#if 1
-     printf ("Leaving contains_private_type(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+#if DEBUG_PRIVATE_TYPE
+     printf ("Leaving contains_private_type(SgType*): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
 #endif
 
      return returnValue;
@@ -163,11 +200,55 @@ bool contains_private_type (SgType* type)
 
 bool contains_private_type (SgTemplateArgument* templateArgument)
    {
+  // Note that within EDG and ROSE the template arguments may be shared so that we can support testing for equivalence.
+
+  // static std::list<SgTemplateArgument*> templateArgumentList;
+  // templateArgumentList.push_back(templateArgument);
+     static std::set<SgTemplateArgument*> templateArgumentSet;
+
+     if (templateArgumentSet.find(templateArgument) == templateArgumentSet.end())
+        {
+          templateArgumentSet.insert(templateArgument);
+        }
+       else
+        {
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+          printf ("Already being processed: templateArgument = %p = %s templateArgumentSet.size() = %zu \n",templateArgument,templateArgument->unparseToString().c_str(),templateArgumentSet.size());
+#endif
+          return false;
+        }
+
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+     printf ("--- added templateArgument = %p templateArgumentList.size() = %zu \n",templateArgument,templateArgumentSet.size());
+#endif
+
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+  // For debugging, keep track of the recursive depth.
+     static size_t depth = 0;
+
+     printf ("In contains_private_type(SgTemplateArgument*): depth = %zu \n",depth);
+     ROSE_ASSERT(depth < 500);
+
+     printf ("In contains_private_type(SgTemplateArgument*): global_depth = %zu \n",global_depth);
+     if (global_depth >= 50)
+        {
+       // output the list of SgTemplateArgument in the list
+          printf ("Error: too many elements in list: recursuion too deep \n");
+          size_t counter = 0;
+          for (std::set<SgTemplateArgument*>::iterator i = templateArgumentSet.begin(); i != templateArgumentSet.end(); i++)
+             {
+               printf ("--- templateArgumentSet[counter] = %p = %s \n",*i,templateArgument->unparseToString().c_str()); 
+               counter++;
+             }
+        }
+     ROSE_ASSERT(global_depth < 50);
+#endif
+
   // Note this is the recursive function.
      bool returnValue = false;
 
-#if 1
-     printf ("In contains_private_type(): templateArgument = %p = %s = %s \n",templateArgument,templateArgument->class_name().c_str(),templateArgument->unparseToString().c_str());
+#if DEBUG_PRIVATE_TYPE
+     printf ("In contains_private_type(SgTemplateArgument*): templateArgument = %p = %s = %s \n",templateArgument,templateArgument->class_name().c_str(),templateArgument->unparseToString().c_str());
 #endif
 
      switch (templateArgument->get_argumentType())
@@ -177,10 +258,20 @@ bool contains_private_type (SgTemplateArgument* templateArgument)
                ROSE_ASSERT (templateArgument->get_type() != NULL);
 
                SgType* templateArgumentType = templateArgument->get_type();
-#if 1
+#if DEBUG_PRIVATE_TYPE
                printf ("templateArgumentType = %p = %s \n",templateArgumentType,templateArgumentType->class_name().c_str());
 #endif
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+               depth++;
+               global_depth++;
+#endif
+
                returnValue = contains_private_type(templateArgumentType);
+
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+               depth--;
+               global_depth--;
+#endif
 
                if (returnValue == true)
                   {
@@ -203,11 +294,17 @@ bool contains_private_type (SgTemplateArgument* templateArgument)
                          while (foundNonPrivateTypeAlias == false && i != typedefList.end())
                            {
                              ROSE_ASSERT(*i != NULL);
-#if 1
+#if DEBUG_PRIVATE_TYPE
                              printf ("Looking for suitable type alias: *i = %p = %s = %s \n",*i,(*i)->class_name().c_str(),(*i)->unparseToString().c_str());
+#endif
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+                             global_depth++;
 #endif
                              bool isPrivateType = contains_private_type(*i);
 
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+                             global_depth--;
+#endif
                              if (isPrivateType == false)
                                 {
                                   suitableTypeAlias = *i;
@@ -222,15 +319,20 @@ bool contains_private_type (SgTemplateArgument* templateArgument)
                          if (foundNonPrivateTypeAlias == true)
                             {
                               ROSE_ASSERT(suitableTypeAlias != NULL);
-#if 1
+#if DEBUG_PRIVATE_TYPE
                               printf ("Found suitable type alias: suitableTypeAlias = %p = %s = %s \n",suitableTypeAlias,suitableTypeAlias->class_name().c_str(),suitableTypeAlias->unparseToString().c_str());
 #endif
-                              templateArgument->set_uparsable_type_alias(suitableTypeAlias);
+                              templateArgument->set_unparsable_type_alias(suitableTypeAlias);
+
+                           // DQ (1/9/2017): Also set the return result from get_type() so that the name qualification will be handled correctly.
+                              templateArgument->set_type(suitableTypeAlias);
                             }
                        }
                       else
                        {
+#if DEBUG_PRIVATE_TYPE
                          printf ("Alternative types not searched for in nontypedef types (not implemented) \n");
+#endif
                        }
                   }
 
@@ -239,14 +341,21 @@ bool contains_private_type (SgTemplateArgument* templateArgument)
 
           default:
              {
-#if 1
+#if DEBUG_PRIVATE_TYPE
                printf ("Ignoring non-type template arguments \n");
 #endif
              }
         }
 
-#if 1
-     printf ("Leaving contains_private_type(): templateArgument = %p = %s = %s \n",templateArgument,templateArgument->class_name().c_str(),templateArgument->unparseToString().c_str());
+#if DEBUG_PRIVATE_TYPE
+     printf ("Leaving contains_private_type(SgTemplateArgument*): templateArgument = %p = %s = %s \n",templateArgument,templateArgument->class_name().c_str(),templateArgument->unparseToString().c_str());
+#endif
+
+  // templateArgumentList.pop_back();
+     templateArgumentSet.erase(templateArgument);
+
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+     printf ("--- pop templateArgument = %p templateArgumentSet.size() = %zu \n",templateArgument,templateArgumentSet.size());
 #endif
 
      return returnValue;
@@ -258,20 +367,59 @@ FixupTemplateArguments::visit ( SgNode* node )
    {
      ROSE_ASSERT(node != NULL);
 
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+  // For debugging, keep track of the recursive depth.
+     printf ("In FixupTemplateArguments::visit: global_depth = %zu \n",global_depth);
+     ROSE_ASSERT(global_depth < 50);
+#endif
+
      SgTemplateArgument* templateArgument = isSgTemplateArgument(node);
      ROSE_ASSERT(templateArgument != NULL);
 
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+     global_depth++;
+#endif
+
      bool result = contains_private_type(templateArgument);
+
+#if DEBUGGING_USING_RECURSIVE_DEPTH
+     global_depth--;
+#endif
 
      if (result == true)
         {
        // This type will be a problem to unparse, because it contains parts that are private (or protected).
-          printf ("WARNING: This template parameter can NOT be unparsed (contains references to private types) \n\n");
+#if DEBUG_PRIVATE_TYPE
+          printf ("\n\nWARNING: This template parameter can NOT be unparsed (contains references to private types): templateArgument = %p = %s \n",templateArgument,templateArgument->unparseToString().c_str());
+          SgNode* parent = templateArgument->get_parent();
+          SgDeclarationStatement* parentDeclaration = isSgDeclarationStatement(parent);
+          if (parentDeclaration != NULL)
+             {
+               if (parentDeclaration->get_file_info() != NULL)
+                  {
+                    parentDeclaration->get_file_info()->display("location of parent non-defining declaration using templateArgument: debug");
+                    SgDeclarationStatement* parentDefiningDeclaration = isSgDeclarationStatement(parentDeclaration->get_definingDeclaration());
+                    if (parentDefiningDeclaration != NULL)
+                       {
+                         parentDefiningDeclaration->get_file_info()->display("location of parent defining declaration using templateArgument: debug");
+                       }
+                  }
+             }
+            else
+             {
+               if (parent->get_file_info() != NULL)
+                  {
+                    parent->get_file_info()->display("location of parent node using templateArgument: debug");
+                  }
+             }
+#endif
         }
        else
         {
        // This type is fine to unparse
+#if DEBUG_PRIVATE_TYPE
           printf ("Template parameter CAN be unparsed (no private types) \n\n");
+#endif
         }
    }
 
@@ -282,16 +430,27 @@ void fixupTemplateArguments()
      TimingPerformance fixupTemplateArguments_timer ("Add reference to non-private template arguments (for unparsing):");
 
 #if 0
-  // DQ (11/27/2016): We only want to support calling this fixup where I am testing it with the GNU 6.x compilers.
-#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)
      printf ("Inside of fixupTemplateArguments() \n");
-
-     FixupTemplateArguments t;
-
-     SgTemplateArgument::traverseMemoryPoolNodes(t);
-
-     printf ("DONE: Inside of fixupTemplateArguments() \n");
 #endif
+
+  // DQ (1/15/2017): Since this is a fix for GNU 4.9 and greater backend compilers, and Intel and Clang compilers, 
+  // we only want to test fixing it there initially. Later we can apply the fix more uniformally.
+  // DQ (11/27/2016): We only want to support calling this fixup where I am testing it with the GNU 6.x compilers.
+  // #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)
+#if defined(BACKEND_CXX_IS_GNU_COMPILER) && ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 9) || BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 5 )
+     FixupTemplateArguments t;
+     SgTemplateArgument::traverseMemoryPoolNodes(t);
+#else
+// DQ (1/15/2017): And apply this fix for all versions of Intel and Clang backend compilers as well.
+   #if defined(BACKEND_CXX_IS_INTEL_COMPILER) || defined (BACKEND_CXX_IS_CLANG_COMPILER)
+     FixupTemplateArguments t;
+     SgTemplateArgument::traverseMemoryPoolNodes(t);
+   #endif
+#endif
+
+#if 0
+// #if DEBUG_PRIVATE_TYPE
+     printf ("DONE: Inside of fixupTemplateArguments() \n");
 #endif
 
 #if 0

@@ -1011,6 +1011,11 @@ void _mm_storeu_pd (double *__P, __m128d __A);
 
    #define _X86INTRIN_H_INCLUDED
 
+// DQ (1/8/2017): I think this is required for GNU 6.1 compiler (see Cxx_tests/test2011_133.C).
+   #define _MMINTRIN_H_INCLUDED
+   #define _XMMINTRIN_H_INCLUDED
+   #define _EMMINTRIN_H_INCLUDED
+
 // DQ (12/17/2016): Added what are likely Intel (v16) specific types.  These may have 
 // to be defined macros since "typedef unsigned __int64 m64_u64;" is a problem.
 // typedef __INT16_TYPE__ __int16;
