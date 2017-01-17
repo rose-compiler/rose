@@ -238,10 +238,13 @@ void ParameterizeCopyArray:: ApplyXform(
                 CopyArrayConfig& config, LoopTreeNode* repl,
                 LoopTreeNode* init, LoopTreeNode* save)
 {
+// DQ (1/14/2017): makedependence on POET optional.
+#ifdef ROSE_USE_POET
   AutoTuningInterface* tuning = LoopTransformInterface::getAutoTuningInterface();
   assert(tuning != 0);
 
   tuning->CopyArray(config, repl);
+#endif
 }
 
 bool ParameterizeCopyArray::
@@ -274,8 +277,12 @@ ModifyCopyArrayCollect(
             DepCompCopyArrayCollect& collect, DepCompAstRefGraphCreate& refDep)
 {
   CopyArrayUnderSizeLimit::ModifyCopyArrayCollect(collect,refDep);
+
+// DQ (1/14/2017): makedependence on POET optional.
+#ifdef ROSE_USE_POET
   AutoTuningInterface* tuning = LoopTransformInterface::getAutoTuningInterface();
   assert(tuning != 0);
+#endif
 
       for (DepCompCopyArrayCollect::iterator arrays = collect.begin();
            arrays != collect.end(); ++arrays) {
