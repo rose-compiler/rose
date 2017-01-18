@@ -1351,29 +1351,28 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 
 # ROSE__CXX_TESTS_WITHOUT_2013_241 = $(ROSE__CXX_TESTS)
 
-# DQ (1/16/2017): If using Clang we can't test test2013_09.C because header files used are
+# DQ (1/16/2017): If using Clang on Mac OSX we can't test test2013_09.C because header files used are
 # implemented using C++11 language features and will not compile in the Cxx_tests which
 # assume C++98 langauge standard.  This test code must be compilied using the -std=c++11 option.
 # Note: test2004_77.C requires C++11 mode, but also failes in an assertion (in name qualification).
 # Note: test2006_20.C requires C++11 mode, and also references bits/stl_algobase.h not present on a Mac.
 
-if !USING_CLANG_COMPILER
-ROSE__CXX_TESTS__BOOST = \
-	test2013_09.C \
+# DQ (1/18/2017): Changed this to use the proper macro for Mac OSX instead of for Clang.
+# if !USING_CLANG_COMPILER
+if !OS_MACOSX
+ROSE__CXX_TESTS_WITHOUT_2013_241 += \
+	test2004_77.C \
+	test2006_20.C \
 	test2011_141.C \
 	test2011_142.C \
 	test2012_09.C \
+	test2013_09.C \
 	test2013_164.C \
-	test2013_212.C \
-	test2013_236.C 
+	test2013_212.C 
+endif
 
-ROSE__CXX_TESTS_WITHOUT_2013_241 += \
-	test2004_77.C \
-	test2006_20.C 
-else
 ROSE__CXX_TESTS__BOOST = \
 	test2013_236.C
-endif
 
 if !USING_CLANG_COMPILER
 # DQ (3/25/2014): These work now with the GNU 4.7 and 4.8 compilers.
