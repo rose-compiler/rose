@@ -22,6 +22,8 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 accumulateForce.c \
 anti_dep.c \
 array_scalar.c \
+break1.c \
+break2.c \
 c99loop.c \
 coefficientSubscript.c \
 complexCondition.c \
