@@ -129,12 +129,25 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
         exit 1
    fi
 
+   if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xclang"; then
+      cp ${srcdir}/config/rose_specific_clang_atomic ./include-staging/${compilerName}_HEADERS/atomic
+   fi
+
+# DQ (1/15/2017): Debugging info to debug clange on Mac OSX.
+echo "edg_major_version_number = $edg_major_version_number"
+echo "compilerName = ${compilerName}"
+echo "BACKEND_CXX_COMPILER_VENDOR = $BACKEND_CXX_COMPILER_VENDOR"
+echo "build_vendor = $build_vendor"
+
+ # DQ (12/14/2016): We now want this to apply to EDG 4.12 because it does not handle C++11 constexpr 
+ # return type of builtin functions properly. Note that this is only an issue when processing file 
+ # generated via CPP (or using -E flags to the compiler) header files.
  # DQ (10/10/2016): Make the us of the ROSE generation of builtins dependent on the version of EDG.
  # This is because EDG 4.12 introduces a new mechanism to handle builtin functions and is thus more 
  # complete.  However, it is still missing __builtin_fxsave() functions, though this is not clear 
  # why since they are present in EDG 4.12's tables.
    if test "x$edg_major_version_number" = "x4"; then
-      if test "$edg_minor_version_number" -le "11"; then
+#     if test "$edg_minor_version_number" -le "11"; then
          # DQ (9/12/2016): Added use of new support to specify constexpr specific builtin functions (uses an additional file, support added by Robb).
          # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
            echo "Now output the builtin generated file into build directory."
@@ -142,20 +155,29 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
            ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
 
            echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions."
-           sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+
+         # DQ (1/17/2017): Make this different for Mac OSX and other (Linux) systems.
+         # DQ (1/15/2017): Note that on Mac OSX it is required to use the additional option to specify the backup file name (I think this is the more portable form).
+         # sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+         # sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           if test "x$build_vendor" = "xapple"; then
+              sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           else
+              sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           fi
 
          # echo "ERROR: Could not identify the EDG minor version number."
          # exit 1
         else
          # Note that we will likely want to use our mechanism (but with a smaller list of builtins that are still being missed).
            echo "EDG 4.12 and later version builtins are determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)."
-      fi
+#     fi
    fi
 
  # "./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h"
 
- # echo "Exiting as a test in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
- # exit 1
+# echo "Exiting as a test in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
+# exit 1
 ])
 
 

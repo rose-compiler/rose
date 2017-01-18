@@ -166,15 +166,18 @@ display ( std::string s ) const
      printf ("     Marker string = %s \n",markerString.c_str());
      printf ("     treeFragment = %p \n",treeFragment);
 
-     bool treeFragmentCodeAttached    = false;
-     bool listOfTreeFragmentsAttached = false;
+  // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+  // bool treeFragmentCodeAttached    = false;
+  // bool listOfTreeFragmentsAttached = false;
+
      std::string treeFragmentCodeString;
      if (treeFragment != NULL)
         {
 #if 1
           treeFragmentCodeString = treeFragment->unparseToString();
 #endif
-          treeFragmentCodeAttached = true;
+       // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+       // treeFragmentCodeAttached = true;
         }
      
      printf ("     treeFragment code = %s \n",treeFragmentCodeString.c_str());
@@ -193,7 +196,8 @@ display ( std::string s ) const
           std::vector<SgStatement*>::const_iterator j;
           for (j = treeFragementListArray[i].begin(); j != treeFragementListArray[i].end(); j++)
              {
-               listOfTreeFragmentsAttached = true;
+            // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+            // listOfTreeFragmentsAttached = true;
                ROSE_ASSERT ( *j != NULL);
 
             // Make sure this is a SgStatement object

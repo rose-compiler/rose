@@ -179,6 +179,13 @@ write test cases so that
                     preprocessorList.addElement(macrotype,macroString_str.c_str(),globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
 */
 
+/* DQ (12/10/2016): This is a technique to suppress warnings in generated code that we want to be an error elsewhere in ROSE. 
+   See https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html for more detail.
+ */
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
+
 #include "sage3basic.hhh"
 #include <iostream>
 #include <stdio.h>

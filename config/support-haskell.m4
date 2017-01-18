@@ -7,10 +7,16 @@ AC_ARG_WITH([haskell],
 	AS_HELP_STRING([--with-haskell=PATH],
 		[use Haskell for Haskellport (default autodetect).  PATH is bin directory containing ghc and runghc commands if given]),
 	[haskellsetting=$withval],
-	[haskellsetting=try])
+	[haskellsetting=no])
+
+# DQ (12/11/2016): Avoid failing test and allow haskell use only if explicitly specified 
+# (fails for me if environment not setup properly using .bashrc).
+#       [haskellsetting=try]
 
 RUNHS=
 USE_HASKELL=0
+
+# echo "haskellsetting = $haskellsetting"
 
 if test "x$haskellsetting" != xno; then
 	if test "x$haskellsetting" = xtry -o "x$haskellsetting" = xyes ; then

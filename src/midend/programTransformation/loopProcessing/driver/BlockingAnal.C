@@ -242,8 +242,11 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
   for (int j=size-1;j >= 0; --j)  /*QY: arrange the desired loop nesting order*/
      top = op.Transform( comp, slices[j], top);
 
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
   AutoTuningInterface* tuning = LoopTransformInterface::getAutoTuningInterface();
   assert(tuning != 0);
+#endif
 
   const CompSlice* slice_innermost = slices[size-1];
   if (size > 1) {
@@ -260,8 +263,12 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
              loops_innermost.loops.push_back(FuseLoopInfo::Entry(cur,p_inner.CurrentInfo().minalign-p_pivot.CurrentInfo().minalign)); 
          }
          assert(loops_innermost.loops.size() > 0);
+
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
          /*QY: right now do not block the deeper inner loops */
          tuning->BlockLoops(top, loops_innermost.loops[0].first, this, &loops_innermost);
+#endif
          return top;
      }
   }
@@ -274,8 +281,11 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
   const CompSliceDepGraphNode::NestInfo* nonperfect = DoNonPerfectBlocking(nestInfo);
   
   if (nonperfect == 0) { /*QY: all loops are perfectly nested*/
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
      if (size > 1)
          tuning->BlockLoops(top, loop_innermost, this);
+#endif
   }
   else {
       LoopTreeNode* innerTop = LoopTreeTransform().InsertHandle(loop_innermost,1);
@@ -300,7 +310,10 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
        { 
           innerloops.loops.push_back(FuseLoopInfo::Entry(p_inner2.Current(),p_inner2.CurrentInfo().minalign));
        }
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
       tuning->BlockLoops(top, inner2, this, &innerloops);
+#endif
   }
   return top;
 }

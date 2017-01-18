@@ -12,5 +12,5 @@ install(FILES
     IntervalSetMap.h Lexer.h LineVector.h Map.h MappedBuffer.h Message.h NullBuffer.h
     Optional.h PoolAllocator.h ProgressBar.h Sawyer.h Set.h SharedObject.h SharedPointer.h
     SmallObject.h Stack.h StackAllocator.h StaticBuffer.h Stopwatch.h Synchronization.h ThreadWorkers.h
-    WarningsOff.h WarningsRestore.h
+    Trace.h WarningsOff.h WarningsRestore.h
   DESTINATION ${INCLUDE_INSTALL_DIR}/Sawyer)

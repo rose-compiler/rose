@@ -121,8 +121,10 @@ libroseLibraries = \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(top_builddir)/src/util/libroseSaywer.la \
-   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(libroseBinaryLibraries)
+
+# DQ (12/18/2016): Moved below to make POET optional.
+#  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
@@ -146,11 +148,22 @@ libroseLibraries = \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(top_builddir)/src/util/libroseSawyer.la \
-   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
+
+# DQ (12/18/2016): Moved below to make POET optional.
+#  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
 endif
+
+# DQ (1/14/2017): Remove POET uniformally until it can be added to provide greater portability (working on Ubuntu systems).
+# if !OS_VENDOR_UBUNTU
+# if !OS_VENDOR_DEBIAN
+# # DQ (12/18/2016): make POET optional (skip on Debian and Ubuntu systems until the 
+# # build is better and can avoid linking issues for these operating systems.
+#    libroseLibraries += $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
+# endif
+# endif
 
 # DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
 # used $(libroseOpenFortranParserlibraries) to replace $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la

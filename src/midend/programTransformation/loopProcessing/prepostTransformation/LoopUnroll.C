@@ -66,12 +66,16 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
       return false; 
     
    if (opt & POET_TUNING) {
+
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
      AutoTuningInterface* tune = LoopTransformInterface::getAutoTuningInterface();
      if (tune == 0) {
         std::cerr << "ERROR: AutoTuning Interface not defined!\n";
         assert(0);
      }
      tune->UnrollLoop(fa,s, unrollsize);
+#endif
    }
    else {
           AstNodePtr r = s;
