@@ -137,6 +137,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 echo "edg_major_version_number = $edg_major_version_number"
 echo "compilerName = ${compilerName}"
 echo "BACKEND_CXX_COMPILER_VENDOR = $BACKEND_CXX_COMPILER_VENDOR"
+echo "build_vendor = $build_vendor"
 
  # DQ (12/14/2016): We now want this to apply to EDG 4.12 because it does not handle C++11 constexpr 
  # return type of builtin functions properly. Note that this is only an issue when processing file 
@@ -155,9 +156,15 @@ echo "BACKEND_CXX_COMPILER_VENDOR = $BACKEND_CXX_COMPILER_VENDOR"
 
            echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions."
 
+         # DQ (1/17/2017): Make this different for Mac OSX and other (Linux) systems.
          # DQ (1/15/2017): Note that on Mac OSX it is required to use the additional option to specify the backup file name (I think this is the more portable form).
          # sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
-           sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+         # sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           if test "x$build_vendor" = "xapple"; then
+              sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           else
+              sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           fi
 
          # echo "ERROR: Could not identify the EDG minor version number."
          # exit 1
