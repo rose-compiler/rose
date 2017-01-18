@@ -339,6 +339,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
     ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
+    ("explicit-arrays","turns on to represent all arrays explicitly in every state.")
     ;
 
   rersOptions.add_options()
@@ -557,11 +558,13 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("data-race",false);
   boolOptions.registerOption("data-race-fail",false);
   boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled reduce-cfg by default
+  boolOptions.registerOption("explicit-arrays",false);
+
   boolOptions.processZeroArgumentsOption("svcomp-mode");
   boolOptions.processZeroArgumentsOption("reduce-cfg"); // this handles 'no-reduce-cfg'
-
   boolOptions.processZeroArgumentsOption("data-race");
   boolOptions.processZeroArgumentsOption("data-race-fail");
+  boolOptions.processZeroArgumentsOption("explicit-arrays");
 
   return boolOptions;
 }

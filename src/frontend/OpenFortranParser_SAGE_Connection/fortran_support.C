@@ -2916,7 +2916,8 @@ isImplicitNoneScope()
   // Default is that we are NOT in an implicit none scope.
      bool isImplicitNoneScope = false;
 
-     bool foundFunctionDefinition = false;
+  // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+  // bool foundFunctionDefinition = false;
 
      std::list<SgScopeStatement*>::iterator i = astScopeStack.begin();
      while ( i != astScopeStack.end() )
@@ -2927,7 +2928,8 @@ isImplicitNoneScope()
           SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(*i);
           if (functionDefinition != NULL)
              {
-               foundFunctionDefinition = true;
+            // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+            // foundFunctionDefinition = true;
                std::vector<SgStatement*>::iterator j = functionDefinition->get_body()->get_statements().begin();
                while ( j != functionDefinition->get_body()->get_statements().end() )
                   {

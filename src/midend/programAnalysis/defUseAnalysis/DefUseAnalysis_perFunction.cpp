@@ -883,9 +883,12 @@ FilteredCFGNode<IsDFAFilter> DefUseAnalysisPF::run(
   //waitAtMergeNode.clear();
 
   // add this node to worklist and work through the outgoing edges
-  FilteredCFGNode<IsDFAFilter> source = FilteredCFGNode<IsDFAFilter> (
-                                                                      funcDecl->cfgForBeginning());
-  CFGNode cmpSrc = CFGNode(funcDecl->cfgForBeginning());
+  FilteredCFGNode<IsDFAFilter> source = FilteredCFGNode<IsDFAFilter> (funcDecl->cfgForBeginning());
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+// CFGNode cmpSrc = CFGNode(funcDecl->cfgForBeginning());
+   CFGNode(funcDecl->cfgForBeginning());
+
   FilteredCFGNode<IsDFAFilter> rem_source = source;
 
   if (DEBUG_MODE) {

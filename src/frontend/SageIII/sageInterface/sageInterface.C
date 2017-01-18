@@ -20957,6 +20957,44 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
   return rtval;  
 }
 
+//! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
+//! They may differ in one SgTemplateType pointer but identical otherwise. 
+//! The algorithm is to compare return type and all argument types
+bool SageInterface::isEquivalentFunctionType (const SgFunctionType* lhs, const SgFunctionType* rhs)
+{
+  ROSE_ASSERT (lhs != NULL);
+  ROSE_ASSERT (rhs != NULL);
+  if (lhs == rhs)
+    return true;
+    
+  bool rt = false;
+  SgType* rt1 = lhs->get_return_type();
+  SgType* rt2 = rhs->get_return_type();
+
+  if (isEquivalentType (rt1, rt2))
+  {
+    SgTypePtrList f1_arg_types = lhs->get_arguments();
+    SgTypePtrList f2_arg_types = rhs->get_arguments();
+    // Must have same number of argument types
+    if (f1_arg_types.size() == f2_arg_types.size())
+    {
+      int counter = 0; 
+      //iterate through all argument types
+      for (int i=0; i< f1_arg_types.size(); i++)
+      {
+        if (isEquivalentType (f1_arg_types[i], f2_arg_types[i]) )
+           counter ++;  // count the number of equal arguments 
+        else
+          break; // found different type? jump out the loop
+      }
+      // all arguments are equivalent, set to true
+      if (counter == f1_arg_types.size())
+        rt = true;
+    }
+  } // end if equivalent return types
+
+  return rt; 
+}
 
 bool
 SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
@@ -21034,7 +21072,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         }
 #endif
 
-  // Increment the static variable to control the recursive d3epth while we debug this.
+  // Increment the static variable to control the recursive depth while we debug this.
      counter++;
 
   // DQ (11/28/2015): exit with debug output instead of infinte recursion.
@@ -21042,7 +21080,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // if (counter >= 500)
      if (counter >= 280) 
         {
-          printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+       // printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+          printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s = %p Y_element_type = %s = %p \n",counter,X.class_name().c_str(),lhs,Y.class_name().c_str(),rhs);
         }
 
   // DQ (12/23/2015): ASC application code requires this to be increased to over 122 (selected 300 for extra margin of safety).
@@ -21050,7 +21089,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // if (counter > 300)
   // if (counter > 600)
   // if (counter > 5000)
-     if (counter > 300)
+  // if (counter > 300)
+     if (counter > 350)
         {
        // DQ (11/28/2015): I think this is a reasonable limit.
           printf ("ERROR: In SageInterface::isEquivalentType(): recursive limit exceeded for : counter = %d \n",counter);
@@ -21133,6 +21173,10 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          string str2 = Y_array_index_expression->unparseToString();
                          printf ("   --- array index expressions: str1 = %s str2 = %s \n",str1.c_str(),str2.c_str());
 #endif
+                      // DQ (12/9/2016): Need to decriment the counter as part of recursive function call.
+                         counter--;
+
+                      // Recursive call.
                          return isEquivalentType(X_element_type,Y_element_type);
                        }
                   }
@@ -21166,7 +21210,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                        }
                   }
              }
-        }
+        } // end if reference type, pointer type, array type, and template type
 
      SgModifierType* X_modifierType = isSgModifierType(X_element_type);
      SgModifierType* Y_modifierType = isSgModifierType(Y_element_type);
@@ -21487,6 +21531,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                                    if (X_functionType != NULL || Y_functionType != NULL)
                                       {
                                         bool value = ( (X_functionType != NULL && Y_functionType != NULL) && (X_functionType == Y_functionType) );
+                                        //TODO: Liao, 9/15/2016, better comparison of function types
+                                        //bool value = ( (X_functionType != NULL && Y_functionType != NULL) && (isEquivalentFunctionType(X_functionType, Y_functionType)) );
 #if DEBUG_TYPE_EQUIVALENCE || 0
                                         printf ("In SageInterface::isEquivalentType(): loop: Process case of SgFunctionType: value = %s \n",value ? "true" : "false");
 #endif

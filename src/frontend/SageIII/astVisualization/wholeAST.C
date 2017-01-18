@@ -217,15 +217,19 @@ CustomAstDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* to, std:
      return returnString;
    }
 
-std::string
+string
 CustomAstDOTGenerationData::unparseToCompleteStringForDOT( SgNode* astNode )
    {
   // Generate the std::string (pass a SgUnparse_Info object)
      SgUnparse_Info* inputUnparseInfoPointer = new SgUnparse_Info();
      inputUnparseInfoPointer->unset_SkipComments();    // generate comments
      inputUnparseInfoPointer->unset_SkipWhitespaces(); // generate all whitespaces to format the code
-     std::string outputString = globalUnparseToString(astNode,inputUnparseInfoPointer);
-     std::string returnString = StringUtility::escapeNewLineCharaters(outputString);
+     string outputString = globalUnparseToString(astNode,inputUnparseInfoPointer);
+
+  // DQ (12/8/2016): Implemented new function to address most of Robb's points about this depreicated function.
+  // This is part of eliminating a warning that we want to be an error: -Werror=deprecated-declarations.
+  // std::string returnString = StringUtility::escapeNewLineCharaters(outputString);
+     string returnString = StringUtility::escapeNewlineAndDoubleQuoteCharacters(outputString);
 
      delete inputUnparseInfoPointer;
 
@@ -817,6 +821,7 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
                                  node,node->class_name().c_str(),n,n->class_name().c_str(),edgelabel.c_str(),ignoreEdge ? "true" : "false",skipEdgeSet.size());
 #endif
 #if 0
+                      // DQ (1/8/2017): Adding back this edge (actually this is not handled here).
                       // DQ (11/26/2016): Added to support debugging of how we ignore edges.
                       // This is the only way I have been able to eliminate these edges.
                          if (edgelabel == "parent")
@@ -825,6 +830,7 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
                             }
 #endif
 #if 0
+                      // DQ (1/8/2017): Adding back this edge (actually this is not handled here).
                       // DQ (11/26/2016): Added to support debugging of how we ignore edges.
                       // This is the only way I have been able to eliminate these edges.
                          if (edgelabel == "scope")
@@ -950,8 +956,11 @@ CustomMemoryPoolDOTGeneration::edgeFilter(SgNode* nodeSource, SgNode* nodeSink, 
                     nodeSource,nodeSource->class_name().c_str(),nodeSink,nodeSink->class_name().c_str(),DOTgraph.skipEdgeSet.size());
              }
 #endif
+#if 1
+       // DQ (1/8/2017): Don't skip these edges in general.
           EdgeType edge(nodeSource,nodeSink,edgeName);
           skipEdge(edge);
+#endif
 #if 0
           printf ("In edgeFilter(): Skipped parent edge! DOTgraph.skipEdgeSet.size() = %zu \n",DOTgraph.skipEdgeSet.size());
 #endif
@@ -976,6 +985,7 @@ CustomMemoryPoolDOTGeneration::edgeFilter(SgNode* nodeSource, SgNode* nodeSink, 
         }
 
 #if 1
+  // DQ (1/8/2017): Don't skip these edges in general.
   // DQ (11/26/2016): Debugging edge filtering.
      if (edgeName == "scope")
         {
@@ -1445,7 +1455,13 @@ CustomMemoryPoolDOTGeneration::frontendCompatibilityFilter(SgNode* node)
 #endif
      if (isSgTypedefSeq(node) != NULL)
         {
+       // DQ (1/9/2017): If this is an empty typedef sequence, then skip the node in the AST graph (note that this was not sufficent to eliminate the nodes).
        // skipNode(node);
+          SgTypedefSeq* typedefSeq = isSgTypedefSeq(node);
+          if (typedefSeq->get_typedefs().empty() == true)
+             {
+               skipNode(node);
+             }
         }
 
      if (isSgFunctionParameterTypeList(node) != NULL)
@@ -1490,6 +1506,19 @@ CustomMemoryPoolDOTGeneration::defaultFilter(SgNode* node)
                i++;
              }
         }
+
+  // DQ (1/9/2017): Add this here to test elimination of empty typedef sequences.
+     if (isSgTypedefSeq(node) != NULL)
+        {
+       // DQ (1/9/2017): If this is an empty typedef sequence, then skip the node in the AST graph (note that this was not sufficent to eliminate the nodes).
+       // skipNode(node);
+          SgTypedefSeq* typedefSeq = isSgTypedefSeq(node);
+          if (typedefSeq->get_typedefs().empty() == true)
+             {
+               skipNode(node);
+             }
+        }
+
    }
 
 void
@@ -1524,7 +1553,6 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 #endif
                     break;
                   }
-
 
                case V_SgFunctionDeclaration:
                case V_SgProgramHeaderStatement:
@@ -2207,13 +2235,17 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
           AST_NODE_ID id = TransformationTracking::getId(node) ;
           if (id != 0)
-            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
+             {
+               labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
+             }
+
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
-// Liao 11/5/2010, move out of SgSupport
+
+    // Liao 11/5/2010, move out of SgSupport
        if (isSgInitializedName(node) != NULL) 
-//       case V_SgInitializedName:
+    // case V_SgInitializedName:
           {
             SgInitializedName* initializedName = isSgInitializedName(node);
             string additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";

@@ -955,17 +955,26 @@ public:
  *
  *  Thread safety: All methods in this class are thread safe. */
 class Gang: public HighWater, public SharedObject {
+    // Gangs are intentionally leaked. I played with an implementation that removed them from the gangs_ map when they were
+    // destroyed (which also required a GangMap that didn't use shared pointers), but it turned out to not work.  The problem
+    // is that some streams are static objects and there's no portable way to control the order that those objects are
+    // destroyed. What was happening was that boost::thread support was destroyed before the static Sawyer::Message::Stream
+    // objects, so when it came time to destroy their Gang objects we could no longer reliably lock classMutex_.
     typedef Sawyer::Container::Map<int, GangPtr> GangMap;
     static GangMap *gangs_;                             /**< Gangs indexed by file descriptor or other ID. */
     static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
+    static const int NO_GANG_ID = -2;                   /**< Arbitrary ID used for default-constructed objects. */
     static SAWYER_THREAD_TRAITS::Mutex classMutex_;     /**< Mutex for class data. */
+    int id_;                                            /**< Unique ID except for default-constructed objects. */
 protected:
-    Gang() {}
+    Gang(): id_(NO_GANG_ID) {}
+    Gang(int id): id_(id) {}
 public:
-    static GangPtr instance() { return GangPtr(new Gang); }
+    static GangPtr instance();                          /**< New non-shared gang with NO_GANG_ID. */
     static GangPtr instanceForId(int id);               /**< The gang for the specified ID, creating a new one if necessary. */
     static GangPtr instanceForTty();                    /**< Returns the gang for streams that are emitting to a tty. */
-    static void removeInstance(int id);                 /**< Remove specified gang from global list. */
+private:
+    static GangPtr intentionally_leaked_NS(int id);     // non-synchronized implementation for instance methods
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1976,7 +1985,14 @@ private:
  *
  *  This namespace exists so that users can say <code>using namespace Sawyer::Message::Common</code> to be able to use the most
  *  important message types without name qualification and without also bringing in all the things that are less frequently
- *  used.  In particular, this does not include Sawyer::Message::mlog since users often name their own facilities "mlog". */
+ *  used.
+ *
+ *  @li The message importance levels: @ref Message::DEBUG "DEBUG", @ref Message::TRACE "TRACE", @ref Message::WHERE "WHERE",
+ *      @ref Message::MARCH "MARCH", @ref Message::INFO "INFO", @ref Message::WARN "WARN", @ref Message::ERROR "ERROR",
+ *      and @ref Message::FATAL "FATAL".
+ *  @li The types @ref Message::Stream "Stream", @ref Message::Facility "Facility", and @ref Message::Facilities "Facilities".
+ *
+ *  In particular, this does not include @ref Sawyer::Message::mlog since users often name their own facilities "mlog". */
 namespace Common {
 
 using Message::DEBUG;

@@ -42,7 +42,10 @@ endif
 endif
 endif
 
-ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
+# Pei-Hung (12/06/2016) use "aclocal --print-ac-dir" to specify the include path to support both Linux and Mac
+#ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
+ACLOCAL_INCLUDE = "$$(aclocal --print-ac-dir)"
+ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I $(ACLOCAL_INCLUDE)
 
 all: remove_sage3basic_h_pch
 
@@ -61,6 +64,7 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
+	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif

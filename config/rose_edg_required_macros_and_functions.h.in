@@ -3,7 +3,11 @@
 /* DQ (11/1/2011): I think we do need this for at least C++ code (e.g. __CHAR_BIT__ must
    be defined along with lots of other Common Predefined Macros.
 */
-#if 1
+// DQ (12/18/2018): Adding support to ignore output of declarations in this file when using
+// EDG frontend for CPP processing with the "-edg:E" option.  Note that "-E" can be specified
+// but that causes the backend compiler to be called directly and this file of preinclude 
+// declarations is not used in that case.
+#ifndef USE_ROSE_CPP_PROCESSING
 
 /* DQ (6/12/2005): Permit this to be optionally commented out because it makes it hard to
     look at the AST merging graphs. The ROSE-IR graphs will now filter nodes associated
@@ -59,6 +63,9 @@
   #define _ZMMINTRIN_H_INCLUDED
   #define _INCLUDED_IMM
   #define _BITS_OPT_RANDOM_H
+
+// DQ (12/17/2016): This is a Microsoft language extension which we need to define away in non-windows mode.
+  #define __declspec(X)
 #endif
 
 /* DQ (8/28/2015): Adding specialized support for Intel compiler. */
@@ -133,6 +140,53 @@
 	#define __dead2
 	#define __pure2
 #endif
+
+/* DQ (1/16/2017): define this for the mac since it does not have a builtin definition. */
+#define __builtin_va_arg(v,l) (l)(sizeof(l))
+
+/* Required builtins for Clang 3.8 support on Mac 
+    __c11_atomic_init
+    __c11_atomic_thread_fence
+    __c11_atomic_signal_fence
+    __c11_atomic_is_lock_free (The argument is the size of the _Atomic(...) object, instead of its address)
+    __c11_atomic_store
+    __c11_atomic_load
+    __c11_atomic_exchange
+    __c11_atomic_compare_exchange_strong
+    __c11_atomic_compare_exchange_weak
+    __c11_atomic_fetch_add
+    __c11_atomic_fetch_sub
+    __c11_atomic_fetch_and
+    __c11_atomic_fetch_or
+    __c11_atomic_fetch_xor
+*/
+
+// DQ (1/16/2017): Note that we cannot seem to reset the value of the _GNUC_VER macro value.
+// So the best solution is to make a copy of the Mac specifi hdrs1/atomic header file.
+
+// #define _GNUC_VER 408
+// #if !__has_feature(cxx_atomic) && _GNUC_VER < 407
+// #if _GNUC_VER >= 407
+//    #warning _GNUC_VER greater then 407
+// #endif
+
+#if __cplusplus
+bool __c11_atomic_is_lock_free(__SIZE_TYPE__ x);
+#endif
+
+void __atomic_thread_fence (int memorder);
+void __atomic_signal_fence (int memorder);
+#define __atomic_exchange(ptr,val,ret,memorder) *(ptr)
+#define __atomic_store(ptr,val,memorder)
+
+
+/* Clang specific builtins for ARM instructions (these would ahve to be template functions, and specific to C++)
+T __builtin_arm_ldrex(const volatile T *addr);
+T __builtin_arm_ldaex(const volatile T *addr);
+int __builtin_arm_strex(T val, volatile T *addr);
+int __builtin_arm_stlex(T val, volatile T *addr);
+void __builtin_arm_clrex(void);
+*/
 
 #endif //#ifdef __APPLE__
 
@@ -240,8 +294,10 @@
 
 /* For debugging use the separate generated header file of builtin functions. */
 #if __cplusplus >= 201103L
-#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
-   #define ROSE_CONSTEXPR
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
+// DQ (12/16/2016): Added constexpr for EDG 4.9 using c++11.
+// #define ROSE_CONSTEXPR
+   #define ROSE_CONSTEXPR constexpr
 #else
    #define ROSE_CONSTEXPR constexpr
 #endif
@@ -251,24 +307,83 @@
 // #warning "NOT setting ROSE_CONSTEXPR to constexpr"
 #endif
 
+
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 409
+
 /* Note that might not be using our builtin function mechanism for EDG 4.12 and later (at least while we sort it out) */
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
+
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#endif
 
 
 /* DQ (9/12/2016): Added builtin functions (not yet supported in config/Builtins.def).
    These are required to compile: tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2015_08.C
    Note that these are not in our ROSE specific table of builtin functions at present.
  */
-long long          __builtin_bswap64(long long __X);
+// #if 0
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
+  // long long          __builtin_bswap64(long long __X);
 void               __builtin_ia32_fxsave(void *__P);
 void               __builtin_ia32_fxrstor(void *__P);
 void               __builtin_ia32_fxsave64(void *__P);
 void               __builtin_ia32_fxrstor64(void *__P);
 
+int __builtin_signbitf(float) __attribute__((nothrow, const));
+int __builtin_signbitl(long double) __attribute__((nothrow, const));
+#endif
+
+// DQ (12/16/2016): This is incorrect for EDG 4.9, but required for later versions of EDG.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
+unsigned long long int __builtin_bswap64(unsigned long long int) __attribute__((nothrow, const));
+#endif
+
+// DQ (12/16/2016): Skip these for EDG 4.9.
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ > 409
+ROSE_CONSTEXPR double __builtin_fabs(double) __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_fabsf(float) __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_fabsl(long double) __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_powf(float, float) __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_powl(long double, long double) __attribute__((nothrow, const));
+
+#ifdef __cplusplus
+ROSE_CONSTEXPR int __builtin_isfinite(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isinf(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isnan(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isnormal(...) __attribute__((nothrow, const));
+#endif
+
+// This need to be const expr in EDG 4.12
+ROSE_CONSTEXPR double __builtin_huge_val() __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_huge_valf() __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_huge_vall() __attribute__((nothrow, const));
+
+ROSE_CONSTEXPR double __builtin_nan(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_nanf(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_nanl(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR double __builtin_nans(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR float __builtin_nansf(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_nansl(char const*) __attribute__((nothrow, const));
+
+// DQ (12/16/2016): evening: allow these to be constexpr.
+ROSE_CONSTEXPR int __builtin_clz(unsigned int) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_clzl(unsigned long int) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_clzll(unsigned long long int) __attribute__((nothrow, const));
+
+ROSE_CONSTEXPR int __builtin_signbitf(float) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_signbitl(long double) __attribute__((nothrow, const));
+#endif
+
 
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
+
+// DQ (12/16/2016): Comment these out for EDG 4.9.
+// #if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
+
 /* DQ (4/12/2015): Removing this mapping for __builtin_va_start to __builtin_stdarg_start
    since EDG now supports __builtin_va_start directly.
  */
@@ -418,7 +533,11 @@ long double __builtin_sqrtl  (long double __builtin__x);
 /* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
 #if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 412
 /* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
-#if (__GNUC__ >= 6)
+// #if (__GNUC__ >= 6)
+
+// DQ (12/17/2016): I think this has to be used for GNU version 5.x as well.
+// #if (__GNUC__ >= 6) || defined(__INTEL_COMPILER)
+#if (__GNUC__ >= 5) || defined(__INTEL_COMPILER)
 /* Test how many files of builtins we have to add */
    #define _SMMINTRIN_H_INCLUDED
    #define _AMMINTRIN_H_INCLUDED
@@ -465,11 +584,67 @@ long double __builtin_sqrtl  (long double __builtin__x);
    #define _MWAITXINTRIN_H_INCLUDED
    #define _CLZEROINTRIN_H_INCLUDED
    #define _PKUINTRIN_H_INCLUDED
+
+/* DQ (12/14/2016): Adding more evaluations of required builtin support. */
+// #define _GLIBCXX_ATOMIC_BASE_H
+// #define _GLIBCXX_ATOMIC 1
+   # define _GLIBCXX_VISIBILITY(V) 
+   # define _GLIBCXX_BEGIN_NAMESPACE_VERSION
+   # define _GLIBCXX_END_NAMESPACE_VERSION
+   void __atomic_thread_fence (int memorder);
+   void __atomic_signal_fence (int memorder);
+// bool __atomic_test_and_set (void *ptr, int memorder);
+   #define __atomic_test_and_set(ptr,memorder) false
+// void __atomic_clear (bool *ptr, int memorder);
+   #define __atomic_clear(ptr,memorder)
+
+// bool __atomic_is_lock_free (size_t size, void *ptr);
+   int __atomic_is_lock_free (size_t size, void *ptr);
+
+// void __atomic_store_n (type *ptr, type val, int memorder);
+   #define __atomic_store_n(ptr,val,memorder)
+   #define __atomic_load(ptr,ret,memorder)
+   #define __atomic_load_n(ptr,memorder) *(ptr)
+   #define __atomic_exchange_n(ptr,val,memorder) *(ptr)
+   #define __atomic_exchange(ptr,val,ret,memorder) *(ptr)
+   #define __atomic_compare_exchange_n(ptr,expected,desired,weak,success_memorder,failure_memorder) false
+   long __builtin_labs(long i);
+   long long __builtin_llabs(long long i);
+
+// int __sync_lock_test_and_set( int & v, int n );
+   int __sync_lock_test_and_set( int *v, int n );
+// type __sync_lock_test_and_set (type *ptr, type value, ...)
+
+// DQ (12/15/2016): Need to address the use of C, not just C++.
+// int __sync_lock_release( int & v );
+#ifdef __Cplusplus
+   int __sync_lock_release( int & v );
+#endif
+
+/* DQ (12/15/2016): Adding more evaluations of required builtin support. */
+   #define __builtin_va_arg(v,l) (l)(sizeof(l))
+
+// DQ (12/16/2016): Another iteration of adding builtin functions.
+   #define __atomic_fetch_add(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_sub(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_and(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_xor(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_or(ptr,ret,memorder)   *(ptr)
+   #define __atomic_fetch_nand(ptr,ret,memorder) *(ptr)
+
+// DQ (12/17/2016): Another iteration of adding builtin functions.
+   #define __atomic_add_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_sub_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_and_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_xor_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_or_fetch(ptr,ret,memorder)   *(ptr)
+   #define __atomic_nand_fetch(ptr,ret,memorder) *(ptr)
+
 #endif
 #endif
 
 /* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
-#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. 
    However, these are required for EDG 4.11 to handle C++11 test codes.
  */
@@ -485,9 +660,9 @@ constexpr bool __builtin_isgreater(double x, double y);
 constexpr bool __builtin_isgreaterequal(double x, double y);
 constexpr bool __builtin_isless(double x, double y);
 #else
-int __builtin_isgreater(double x, double y);
-int __builtin_isgreaterequal(double x, double y);
-int __builtin_isless(double x, double y);
+ROSE_CONSTEXPR int __builtin_isgreater(double x, double y);
+ROSE_CONSTEXPR int __builtin_isgreaterequal(double x, double y);
+ROSE_CONSTEXPR int __builtin_isless(double x, double y);
 #endif
 
 int __builtin_ia32_bsrsi(int x);
@@ -500,7 +675,9 @@ unsigned char      __builtin_ia32_rorqi(unsigned char __X, int __C);
 unsigned short     __builtin_ia32_rorhi(unsigned short __X, int __C);
 void               __builtin_ia32_pause();
 int                __builtin_ia32_bsrdi(long long __X);
-long long          __builtin_bswap64(long long __X);
+
+// DQ (12/14/2016): Comment this out.
+// long long          __builtin_bswap64(long long __X);
 
 void               __builtin_ia32_fxsave(void *__P);
 void               __builtin_ia32_fxrstor(void *__P);
@@ -516,6 +693,10 @@ unsigned int __builtin_ia32_crc32si (unsigned int __C, unsigned int __V);
 unsigned long long __builtin_ia32_crc32di (unsigned long long __C, unsigned long long __V);
 unsigned long long __builtin_ia32_readeflags_u64 (void);
 void __builtin_ia32_writeeflags_u64 (unsigned long long X);
+
+// DQ (12/17/2016): Comment this out since they are defined in Intel header 
+// files and are redundant when processing files using CPP.
+#if 0
 
 /* emmintrin.h */
 
@@ -803,6 +984,16 @@ __m256 __builtin_ia32_subps256 (__v8sf __A, __v8sf __B);
    #define _RTMINTRIN_H_INCLUDED
    #define _XTESTINTRIN_H_INCLUDED
 
+/* DQ (12/14/2016): Add to the list. */
+   #define _MMINTRIN_H_INCLUDED
+   #define _XMMINTRIN_H_INCLUDED
+   #define _EMMINTRIN_H_INCLUDED
+// #define _EMMINTRIN_H_INCLUDED
+
+/* DQ (12/14/2016): This is the header file that includes all of the other header files (above). */
+   #define _X86INTRIN_H_INCLUDED
+
+
 /* This just includes a lot of other include files specific to AVX (partially addressed above) */
 /* #define _IMMINTRIN_H_INCLUDED */
 
@@ -818,6 +1009,21 @@ void __builtin_ia32_wrfsbase64 (unsigned long long __B);
 void __builtin_ia32_wrgsbase32 (unsigned int __B);
 void __builtin_ia32_wrgsbase64 (unsigned long long __B);
 int __builtin_ia32_rdrand64_step (unsigned long long *__P);
+
+/* emmintrin.h */
+
+__m128i _mm_set1_epi64x (long long __A);
+__m128d _mm_set1_pd (double __F);
+__m128i _mm_set_epi64x (long long __q1, long long __q0);
+__m128i _mm_and_si128 (__m128i __A, __m128i __B);
+__m128i _mm_or_si128 (__m128i __A, __m128i __B);
+__m128d _mm_sub_pd (__m128d __A, __m128d __B);
+__m128d _mm_mul_pd (__m128d __A, __m128d __B);
+double _mm_cvtsd_f64 (__m128d __A);
+__m128d _mm_hadd_pd (__m128d __X, __m128d __Y);
+__m128d _mm_add_pd (__m128d __A, __m128d __B);
+void _mm_storeu_pd (double *__P, __m128d __A);
+
 
 
    #define _MM3DNOW_H_INCLUDED
@@ -844,6 +1050,64 @@ int __builtin_ia32_rdrand64_step (unsigned long long *__P);
    #define __SSE2__
    #define __SSE4A__
    #define __SSE4_1__
+#endif
+
+// DQ (12/17/2016): Comment this out since they are defined in Intel header 
+// files and are redundant when processing files using CPP.
+#else
+
+   #define _X86INTRIN_H_INCLUDED
+
+// DQ (1/8/2017): I think this is required for GNU 6.1 compiler (see Cxx_tests/test2011_133.C).
+   #define _MMINTRIN_H_INCLUDED
+   #define _XMMINTRIN_H_INCLUDED
+   #define _EMMINTRIN_H_INCLUDED
+
+// DQ (12/17/2016): Added what are likely Intel (v16) specific types.  These may have 
+// to be defined macros since "typedef unsigned __int64 m64_u64;" is a problem.
+// typedef __INT16_TYPE__ __int16;
+// typedef __INT32_TYPE__ __int32;
+// typedef __INT64_TYPE__ __int64;
+#define __int8 char
+#define __int16 short
+#define __int32 int
+#define __int64 long
+
+// DQ (12/17/2016): This is sufficent now that we have modified EDG to eliminate the error on underflow for floating point values.
+#define __INTEL_CLANG_COMPILER
+
+// #define _mm_set1_epi64x(X) ((__m128i)(0LL))
+// #define _mm_set1_epi64x(X)
+// typedef double  __m128d __attribute__((__vector_size__(16)));
+// typedef __int64 __m128i __attribute__((__vector_size__(16)));
+// __m128i _mm_set1_epi64x (long long __A);
+// extern __m128i  _mm_set1_epi64x(__int64);
+
+// DQ (12/17/2016): Intel sets this by default to a value too large for EDG to accept (so we just reset it).
+// This is only used in the limits header file and as the return value for a function that hides this macro.
+// For use in ROSE this is a simple fix that does not effect the users code.  As a result is we generate
+// a file via CPP to process by ROSE we MUST use ROSE to generate the CPP file (so that these macros and
+// the __INTEL_CLANG_COMPILER macro will be seen by CPP and code generated that can be read by ROSE.
+// Else the code generated will be such that only the Intel compiler can read it (Intel specific types
+// and builtin function that return types that are only defined in the Intel header files).
+
+// These values can not be processed as litrals by EDG.
+// #define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// #define __FLT_DENORM_MIN__ 1.40129846e-45F
+// Note that the ROSE configuration fixes the header files to be:
+// #define __DBL_DENORM_MIN__ 4.9406564584124654e-324L
+// #define __FLT_DENORM_MIN__ 1.40129846e-45L
+// But this is not enough to permit the processing of the header 
+// files where they are expanded to a single file via CPP. So
+// we need to define them to be smaller values.
+// #undef __FLT_DENORM_MIN__ 
+// #undef __DBL_DENORM_MIN__ 
+// #define __FLT_DENORM_MIN__ 42.0
+// #define __DBL_DENORM_MIN__ 42.0
+// Note that this should also likely effect:
+// #define __LDBL_DENORM_MIN__ 3.64519953188247460253e-4951L
+// But this value has not been a problem for EDG (so far).
+
 #endif
 
 #else
@@ -2508,12 +2772,13 @@ void prefetch (const __global float16 *p, size_t num_elements);
 /* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
 /* DQ (10/18/2016): Turn this on for EDG 4.11 but not wanted for EDG 4.12 (we use our own mechanism for EDG versions before EDG 4.11) */
-#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 411
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
 
 /***************************************************************************************
   SSE and MMX support (declarations for builtin functions defined in GNU header files)
 ****************************************************************************************/
 
+#if 0
 /* From: mmintrin.h */
 void __builtin_ia32_emms();
 int __builtin_ia32_vec_init_v2si(int,int);
@@ -2594,7 +2859,7 @@ int __builtin_ia32_xorps(float,float);
 int __builtin_ia32_cmpeqss(float,float);
 int __builtin_ia32_cmpltss(float,float);
 int __builtin_ia32_cmpless(float,float);
-int __builtin_ia32_cmpltss(float,float);
+// int __builtin_ia32_cmpltss(float,float);
 int __builtin_ia32_movss(float,float);
 int __builtin_ia32_cmpless(float,float);
 int __builtin_ia32_cmpneqss(float,float);
@@ -2852,6 +3117,9 @@ int __builtin_ia32_psrlwi(int,int);
 int __builtin_ia32_psrldi(int,int);
 int __builtin_ia32_psrlqi(long long,int);
 
+// DQ (12/14/2016): Commented out
+#endif
+
 // DQ (8/25/2012): Moved this to avoid their output in the debugging mode for ROSE.
 // As a result of this move they are not output in the DOT graphs where the macro
 // SKIP_ROSE_BUILTIN_DECLARATIONS is defined.
@@ -2860,14 +3128,18 @@ int __builtin_ia32_psrlqi(long long,int);
 // systems The built-in declarations from gcc actually specify the bit length 
 // explictly e.g. int32_t __builtin_bswap32 (int32_t x)
 // However, integer types such as int32_t are not defined here.
-int __builtin_bswap32 (int x);
+// int __builtin_bswap32 (int x);
 /* long int __builtin_bswap64 (long int x); */
 
 
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
-
+/* DQ (12/17/2016): Not clear why I don't appear to need this now. it could be that at least 
+   one declaration is being seen so that this specific variable is no longer required. 
+*/
+/* DQ (12/15/2016): We need a variable to be from this file so that we can support internal checking. */
+/* int __frontend_specific_variable_to_provide_header_file_path; */
 
 /* DQ (9/6/2016): We need size_t to be defined, but we only want it defined so that the builtin functions 
    will make sense, then we will undefine it and allow the header files to define it properly.

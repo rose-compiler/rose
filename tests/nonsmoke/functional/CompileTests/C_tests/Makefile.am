@@ -116,7 +116,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_08.c \
      test2012_11.c \
      test2012_13.c \
-     test2012_14.c \
      test2012_15.c \
      test2012_16.c \
      test2012_17.c \
@@ -127,7 +126,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_22.c \
      test2012_23.c \
      test2012_24.c \
-     test2012_25.c \
      test2012_26.c \
      test2012_27.c \
      test2012_28.c \
@@ -147,15 +145,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_43.c \
      test2012_46.c \
      test2012_47.c \
-     test2012_48.c \
      test2012_49.c \
      test2012_50.c \
-     test2012_51.c \
-     test2012_52.c \
      test2012_53.c \
-     test2012_54.c \
      test2012_55.c \
-     test2012_56.c \
      test2012_57.c \
      test2012_58.c \
      test2012_59.c \
@@ -195,20 +188,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_98.c \
      test2012_99.c \
      test2012_100.c \
-     test2012_101.c \
      test2012_102.c \
      test2012_103.c \
      test2012_104.c \
      test2012_105.c \
-     test2012_106.c \
      test2012_107.c \
      test2012_108.c \
-     test2012_109.c \
-     test2012_110.c \
-     test2012_111.c \
-     test2012_112.c \
-     test2012_113.c \
-     test2012_114.c \
      test2012_115.c \
      test2012_116.c \
      test2012_117.c \
@@ -222,7 +207,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_125.c \
      test2012_126.c \
      test2012_127.c \
-     test2012_129.c \
      test2012_130.c \
      test2012_131.c \
      test2012_133.c \
@@ -247,7 +231,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_157.c \
      test2012_158.c \
      test2012_159.c \
-     test2012_162.c \
      test2012_163.c \
      test2012_164.c \
      test2012_165.c \
@@ -460,7 +443,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2006_132.c \
      test2010_04.c \
      test2010_10.c \
-     test2010_12.c \
      test2010_11.c \
      test2010_14.c \
      constants.c \
@@ -477,14 +459,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_11.c \
      test2015_12.c \
      test2015_13.c \
-     test2015_14.c \
-     test2015_15.c \
-     test2015_16.c \
-     test2015_17.c \
-     test2015_18.c \
      test2015_19.c \
-     test2015_20.c \
-     test2015_21.c \
      test2015_22.c \
      test2015_23.c \
      test2015_24.c \
@@ -500,25 +475,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_35.c \
      test2015_36.c \
      test2015_37.c \
-     test2015_38.c \
-     test2015_39.c \
-     test2015_40.c \
-     test2015_41.c \
-     test2015_42.c \
-     test2015_43.c \
-     test2015_44.c \
-     test2015_45.c \
-     test2015_47.c \
-     test2015_48.c \
-     test2015_49.c \
-     test2015_50.c \
-     test2015_51.c \
      test2015_52.c \
      test2015_53.c \
-     test2015_54.c \
-     test2015_55.c \
-     test2015_57.c \
-     test2015_58.c \
      test2015_59.c \
      test2015_60.c \
      test2015_61.c \
@@ -537,29 +495,14 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_74.c \
      test2015_75.c \
      test2015_76.c \
-     test2015_77.c \
-     test2015_78.c \
-     test2015_79.c \
-     test2015_80.c \
-     test2015_81.c \
-     test2015_82.c \
-     test2015_83.c \
      test2015_84.c \
      test2015_85.c \
      test2015_89.c \
      test2015_90.c \
      test2015_91.c \
      test2015_92.c \
-     test2015_104.c \
-     test2015_105.c \
-     test2015_107.c \
-     test2015_108.c \
      test2015_109.c \
-     test2015_110.c \
-     test2015_113.c \
      test2015_114.c \
-     test2015_115.c \
-     test2015_116.c \
      test2015_117.c \
      test2015_118.c \
      test2015_119.c \
@@ -579,17 +522,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_136.c \
      test2015_137.c \
      test2015_138.c \
-     test2015_139.c \
-     test2015_140.c \
-     test2015_141.c \
-     test2015_142.c \
-     test2015_143.c \
-     test2015_144.c \
      test2015_145.c \
-     test2015_146.c \
-     test2015_147.c \
-     test2015_148.c \
-     test2015_149.c \
      test2015_156.c \
      test2015_157.c \
      test2015_158.c \
@@ -620,6 +553,78 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2016_14.c \
      test2016_15.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
+
+# DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
+if !USING_CLANG_COMPILER
+TESTCODES_REQUIRED_TO_PASS = \
+     test2010_12.c \
+     test2012_14.c \
+     test2012_25.c \
+     test2012_48.c \
+     test2012_51.c \
+     test2012_52.c \
+     test2012_54.c \
+     test2012_56.c \
+     test2012_101.c \
+     test2012_106.c \
+     test2012_109.c \
+     test2012_110.c \
+     test2012_111.c \
+     test2012_112.c \
+     test2012_113.c \
+     test2012_114.c \
+     test2012_129.c \
+     test2012_162.c \
+     test2015_14.c \
+     test2015_15.c \
+     test2015_16.c \
+     test2015_17.c \
+     test2015_18.c \
+     test2015_20.c \
+     test2015_21.c \
+     test2015_38.c \
+     test2015_39.c \
+     test2015_40.c \
+     test2015_41.c \
+     test2015_42.c \
+     test2015_43.c \
+     test2015_44.c \
+     test2015_45.c \
+     test2015_47.c \
+     test2015_48.c \
+     test2015_49.c \
+     test2015_50.c \
+     test2015_51.c \
+     test2015_54.c \
+     test2015_55.c \
+     test2015_57.c \
+     test2015_58.c \
+     test2015_77.c \
+     test2015_78.c \
+     test2015_79.c \
+     test2015_80.c \
+     test2015_81.c \
+     test2015_82.c \
+     test2015_83.c \
+     test2015_104.c \
+     test2015_105.c \
+     test2015_107.c \
+     test2015_108.c \
+     test2015_110.c \
+     test2015_113.c \
+     test2015_115.c \
+     test2015_116.c \
+     test2015_139.c \
+     test2015_140.c \
+     test2015_141.c \
+     test2015_142.c \
+     test2015_143.c \
+     test2015_144.c \
+     test2015_146.c \
+     test2015_147.c \
+     test2015_148.c \
+     test2015_149.c 
+endif
 
 # DQ (4/11/2015): New failing tests:
 FAILING_TESTCODES_XEN = \
@@ -819,11 +824,13 @@ if !ROSE_USE_EDG_VERSION_4_7
      test2006_132.c \
      test2010_04.c \
      test2010_11.c \
-     test2010_12.c \
      test2010_14.c
 endif
 endif
 endif
+
+# DQ (1/16/2017): This file name is already mentioned previously (need not be repeated).
+# test2010_12.c 
 
 # DQ (12/3/2016): Moved test2012_09.c to not be tested withon Mac OSX OS.
 # Note that these might just be an issue specific to Clang version 3.8

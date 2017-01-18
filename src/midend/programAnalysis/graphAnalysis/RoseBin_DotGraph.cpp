@@ -670,9 +670,11 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
     }
     SgAsmInstruction* dest = outEdges.empty() ? NULL : outEdges.front().target().getNode();
     if (!x86InstructionIsControlTransfer(contrl) || contrl->get_kind() == x86_ret) dest = NULL;
-    bool dest_list_empty = true;
-    if (contrl->get_kind() == x86_ret)
-      dest_list_empty = outEdges.empty();
+
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+ // bool dest_list_empty = true;
+ // if (contrl->get_kind() == x86_ret)
+ //   dest_list_empty = outEdges.empty();
 
     SgAsmInstruction* nextNode = isSgAsmInstruction(target->get_SgNode());
     ROSE_ASSERT(nextNode);

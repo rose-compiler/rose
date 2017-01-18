@@ -6,6 +6,7 @@
 #include "stringify.h"
 #include "sageBuilderAsm.h"
 #include "DispatcherM68k.h"
+#include "BinaryUnparserM68k.h"
 
 #include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
 
@@ -312,6 +313,11 @@ DisassemblerM68k::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_M68K_Family;
+}
+
+Unparser::BasePtr
+DisassemblerM68k::unparser() const {
+    return Unparser::M68k::instance();
 }
 
 SgAsmType *

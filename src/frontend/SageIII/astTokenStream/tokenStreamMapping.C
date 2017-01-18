@@ -2249,8 +2249,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                     int current_node_token_subsequence_start   = -1;
                     int current_node_token_subsequence_end     = -1;
 
-                    int last_node_token_subsequence_start = -1; // current_node_token_subsequence_start;
-                    int last_node_token_subsequence_end   = -1; // current_node_token_subsequence_end;
+                 // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+                 // int last_node_token_subsequence_start = -1; // current_node_token_subsequence_start;
+                 // int last_node_token_subsequence_end   = -1; // current_node_token_subsequence_end;
 
                     if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
                        {
@@ -3527,8 +3528,11 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          printf ("   --- TOKENS: AFTER RESET: leading_whitespace tokens (%d,%d) token_subsequence (%d,%d) trailing_whitespace tokens (%d,%d) \n",
                             mappingInfo->leading_whitespace_start,mappingInfo->leading_whitespace_end,mappingInfo->token_subsequence_start,mappingInfo->token_subsequence_end,mappingInfo->trailing_whitespace_start,mappingInfo->trailing_whitespace_end);
 #endif
-                         last_node_token_subsequence_start = token_subsequence_start;
-                         last_node_token_subsequence_end   = token_subsequence_end;
+
+                      // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+                      // last_node_token_subsequence_start = token_subsequence_start;
+                      // last_node_token_subsequence_end   = token_subsequence_end;
+
 #if 0
                       // DQ (1/27/2015): Debugging case of test2015_110.C (prefix operator++() used in for loop increment expression).
                          if (isSgForStatement(n) != NULL && mappingInfo->node == isSgForStatement(n)->get_increment() )
