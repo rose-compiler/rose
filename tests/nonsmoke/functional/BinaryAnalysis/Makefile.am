@@ -141,9 +141,13 @@ TEST_TARGETS += $(testDominance_targets)
 $(testDominance_targets): testDominance-%.passed: $(TEST_WITH_ANSWER) testDominance testDominance-%.ans
 	@$(RTH_RUN)							\
 		TITLE="graph dominance, algorithm $* [$@]"		\
+		DISABLED="$$(./testDominance disabled)"			\
 		CMD="./testDominance $* $(SPECIMEN_DIR)/buffer2.bin"	\
 		ANS="$(srcdir)/testDominance-$*.ans"			\
 		$< $@
+
+PHONIES += check-testDominance
+check-testDominance: $(testDominance_targets)
 
 
 ###############################################################################################################################
@@ -501,22 +505,6 @@ testPeImports.passed: $(TEST_WITH_ANSWER) testPeImports testPeImports.ans
 		CMD="$$(pwd)/testPeImports -rose:read_executable_file_format_only $(SPECIMEN_DIR)/proxycfg.exe"	\
 		USE_SUBDIR=yes												\
 		ANS="$(srcdir)/testPeImports.ans"									\
-		$< $@
-
-
-###############################################################################################################################
-# Symbolic semantics test from Cory Cohen that triggers a reference-counting bug.
-###############################################################################################################################
-noinst_PROGRAMS += cory001
-cory001_SOURCES = cory001.C
-cory001_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-TEST_TARGETS += cory001.passed
-
-cory001.passed: $(TEST_EXIT_STATUS) cory001
-	@$(RTH_RUN)						\
-		TITLE="reference counting [$@]"			\
-		CMD="./cory001 $(SPECIMEN_DIR)//buffer2.bin"	\
 		$< $@
 
 
