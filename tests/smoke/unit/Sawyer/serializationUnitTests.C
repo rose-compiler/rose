@@ -275,21 +275,21 @@ test04() {
 // MappedBuffer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef Sawyer::Container::MappedBuffer<size_t, boost::uint8_t> T05;
+typedef Sawyer::Container::MappedBuffer<size_t, uint8_t> T05;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
 BOOST_CLASS_EXPORT(T05);
 
 static void
 test05() {
-    static const boost::uint8_t data[] = {1, 2, 3};
+    static const uint8_t data[] = {1, 2, 3};
 
     Sawyer::FileSystem::TemporaryFile f;
     f.stream().write((const char*)data, sizeof data);
     ASSERT_always_require(f.stream().good());
     f.stream().close();
 
-    std::cerr <<"MappedBuffer<size_t,boost::uint8_t>\n";
+    std::cerr <<"MappedBuffer<size_t,uint8_t>\n";
     T05::Ptr out = T05::instance(f.name());
     ASSERT_always_require(out->size() == 3);
 
@@ -303,14 +303,14 @@ test05() {
 // NullBuffer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef Sawyer::Container::NullBuffer<size_t, boost::uint8_t> T06;
+typedef Sawyer::Container::NullBuffer<size_t, uint8_t> T06;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
 BOOST_CLASS_EXPORT(T06);
 
 static void
 test06() {
-    std::cerr <<"NullBuffer<size_t,boost::uint8_t>\n";
+    std::cerr <<"NullBuffer<size_t,uint8_t>\n";
     T06::Ptr out = T06::instance(100);
     ASSERT_always_require(out->size() == 100);
 
@@ -359,7 +359,7 @@ static void
 test08() {
     static const boost::uint8_t data[] = {1, 2, 3, 4};
 
-    std::cerr <<"AddressSegment<size_t, boost::uint8_t>\n";
+    std::cerr <<"AddressSegment<size_t, uint8_t>\n";
 
     T08_buffer::Ptr buf = T08_buffer::instance(4);
     size_t nwrite = buf->write(data, 0, 4);
