@@ -10359,6 +10359,19 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
   ubast = test->get_rhs_operand();
 
   //3. Check the increment expression
+  /* Allowed forms
+     ++var
+     var++
+     --var
+     var--
+
+     var += incr
+     var -= incr
+
+     var = var + incr
+     var = incr + var
+     var = var - incr
+  */
   SgExpression* incr = fs->get_increment();
   SgVarRefExp* incr_var = NULL;
   switch (incr->variantT()) {
