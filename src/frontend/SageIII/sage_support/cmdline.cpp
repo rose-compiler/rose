@@ -4319,6 +4319,20 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 #endif
 
+// DQ (1/16/2017): Make C++11 the default when using Clang.
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+     if (get_C_only() == true)
+        {
+       // printf ("For Clang as the backend compiler the default C mode is C11 \n");
+          set_C11_only(true);
+        }
+       else
+        {
+       // printf ("For Clang as the backend compiler the default C++ mode is C++11 \n");
+          set_Cxx11_only(true);
+        }
+#endif
+
 #if 0
      printf ("After part 2 detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
      printf ("After part 2 detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
@@ -6219,6 +6233,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
      commandLine.push_back("--clang");
      commandLine.push_back("--clang_version");
+
+  // DQ (1/16/2017): If this is the Clang backend, then assume we want to use C++11 support (default for later versions of Clang (3.7 and later)).
+  // commandLine.push_back("--c++11");
 #endif
      commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
 #endif
