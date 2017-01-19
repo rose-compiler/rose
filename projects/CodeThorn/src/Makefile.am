@@ -487,9 +487,10 @@ check-local:
 	@./codethorn --internal-checks	
 
 	@echo ================================================================
-	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
+	@echo RUNNING DATA RACE VERIFICATION TESTS
 	@echo ================================================================
-	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
+	codethorn --data-race tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12 --explicit-arrays
+	codethorn --data-race tests/datarace/inner_only_1.no.c --max-time=5 --solver=12 --explicit-arrays
 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@echo ================================================================
@@ -512,6 +513,11 @@ check-local:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm tmp.nsdump
+
+	@echo ================================================================
+	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
+	@echo ================================================================
+	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
 
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
