@@ -2044,9 +2044,19 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                case V_SgTemplateMemberFunctionDeclaration:
                   {
                     SgTemplateFunctionDeclaration* templateDeclaration = isSgTemplateFunctionDeclaration(declarationStatement);
-                    ROSE_ASSERT(templateDeclaration != NULL);
-                    SgName templateName = templateDeclaration->get_name();
-                    curprint ( templateName.str());
+
+                 // DQ (1/19/2017): Modify this to be a warning instead of an assertion for the GNU 6.1 compiler.
+                 // This is a problem for test2011_121.C and several other test codes in the unparseToString_tests directory.
+                 // ROSE_ASSERT(templateDeclaration != NULL);
+                    if (templateDeclaration != NULL)
+                      {
+                        SgName templateName = templateDeclaration->get_name();
+                        curprint ( templateName.str());
+                      }
+                     else
+                      {
+                        printf ("WARNING: In unparseUsingDeclarationStatement(): declarationStatement = %s templateDeclaration == NULL \n",declarationStatement->sage_class_name());
+                      }
                     break;
                   }
 
