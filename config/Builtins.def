@@ -488,7 +488,10 @@ BUILTIN(__builtin_expect, "LiLiLi"   , "nc")
 BUILTIN(__builtin_prefetch, "vvC*.", "nc")
 BUILTIN(__builtin_trap, "v", "nr")
 BUILTIN(__builtin_unreachable, "v", "nr")
-BUILTIN(__builtin_shufflevector, "v."   , "nc")
+
+// DQ (1/16/2017): This is an error for Clang.
+// BUILTIN(__builtin_shufflevector, "v."   , "nc")
+
 BUILTIN(__builtin_alloca, "v*z"   , "n")
 
 // "Overloaded" Atomic operator builtins.  These are overloaded to support data
