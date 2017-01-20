@@ -365,8 +365,8 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
     ("rewrite-ssa", "rewrite SSA form (rewrite rules perform semantics preserving operations).")
-    ("equivalence-check", "Check programs provided on the command line for equivalence")
-    ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
+    //    ("equivalence-check", "Check programs provided on the command line for equivalence")
+    //("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
@@ -1020,9 +1020,6 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
   }
 }
 
-/* refactoring in progress */
-//#include "DataRaceDetection.C"
-
 int main( int argc, char * argv[] ) {
   Sawyer::Message::Facility logger("CodeThorn");
   mfacilities.insert(logger);
@@ -1215,7 +1212,7 @@ int main( int argc, char * argv[] ) {
         logger[TRACE] <<"STATUS: testing constant expressions."<<endl;
         CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
         list<SgExpression*> exprList=exprRootList(sageProject);
-        logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
+        logger[INFO] <<"INFO: found "<<exprList.size()<<" expressions."<<endl;
         for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
           EvalResult r=evaluator->traverse(*i);
           if(r.isConst()) {
@@ -1701,6 +1698,7 @@ int main( int argc, char * argv[] ) {
       }
     }
 
+#if 0
     if(args.count("equivalence-check")) {
       // TODO: iterate over SgFile nodes, create vectors for each phase
       // foreach file in SgFileList
@@ -1717,6 +1715,7 @@ int main( int argc, char * argv[] ) {
       // TODO CHECK with first
       // end foreach
     }
+#endif
 
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
       SAR_MODE sarMode=SAR_SSA;
@@ -1731,13 +1730,6 @@ int main( int argc, char * argv[] ) {
       logger[TRACE] <<"STATUS: performing array analysis on STG."<<endl;
       logger[TRACE] <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 
-      Label fragmentStartLabel=Labeler::NO_LABEL;
-      if(fragmentStartNode!=0) {
-        fragmentStartLabel=analyzer.getLabeler()->getLabel(fragmentStartNode);
-        logger[INFO] <<"Fragment: start-node: "<<fragmentStartNode<<"  start-label: "<<fragmentStartLabel<<endl;
-        logger[INFO] <<"Fragment: start-node: currently not supported."<<endl;
-      }
- 
       bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
 
       timer.start();

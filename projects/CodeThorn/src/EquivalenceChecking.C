@@ -112,7 +112,7 @@ LoopInfoSet EquivalenceChecking::determineLoopInfoSet(SgNode* root, VariableIdMa
         if(SgForStatement* forStmt=isSgForStatement(*j)) {
           map[forStmt]=pragmaDecl;
         } else {
-          cout<<"DEBUG: NOT a for-stmt: "<<(*i)->unparseToString()<<endl;
+          cout<<"WARNING: unsupported omp pragma: "<<(*i)->unparseToString()<<endl;
         }
       }
     }

@@ -991,13 +991,12 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   }
   logger[TRACE]<< "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
   if(oneFunctionOnly) {
-    logger[TRACE]<<"INFO: analyzing one function only. No inter-procedural flow."<<endl;
-  } else {
-    InterFlow interFlow=cfanalyzer->interFlow(flow);
-    logger[TRACE]<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-    cfanalyzer->intraInterFlow(flow,interFlow);
-    logger[TRACE]<< "INIT: IntraInter-CFG OK. (size: " << flow.size() << " edges)"<<endl;
+    logger[TRACE]<<"INFO: analyzing one function only."<<endl;
   }
+  InterFlow interFlow=cfanalyzer->interFlow(flow);
+  logger[TRACE]<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
+  cfanalyzer->intraInterFlow(flow,interFlow);
+  logger[TRACE]<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
   if(boolOptions["reduce-cfg"]) {
