@@ -44,7 +44,11 @@ testNewCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 Test01SpecimenDir = $(srcdir)/test01-specimens
 Test01SpecimenSource = $(addprefix $(Test01SpecimenDir)/, main.C f1.C f2.C)
 Test01SpecimenHeaders = $(Test01SpecimenDir)/functions.h
+
+# DQ (1/19/2017): These is a problem for GNU 6.1.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
 TEST_TARGETS += test01.passed
+endif
 
 test01 test01.passed: testCG $(Test01SpecimenSource) $(Test01SpecimenHeaders)
 	@$(RTH_RUN) \
