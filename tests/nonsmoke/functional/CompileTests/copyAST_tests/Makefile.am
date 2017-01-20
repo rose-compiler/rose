@@ -709,7 +709,8 @@ endif
 
 # DQ (1/19/2017): These is also a problem for GNU 5.1 as well (at least copytest2007_40.C).
 if !ROSE_USING_GCC_VERSION_LATER_5_1
-LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
+# LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += 
+LONG_LIST_TESTCODES_REQUIRED_TO_PASS += \
    copytest2007_40.C 
 endif
 
