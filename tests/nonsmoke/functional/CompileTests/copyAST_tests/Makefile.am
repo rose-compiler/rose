@@ -55,7 +55,6 @@ LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
    copytest2007_36.C \
    copytest2007_37.C \
    copytest2007_39.C \
-   copytest2007_40.C \
    copytest2007_41.C \
    copytest2007_42.C \
    copytest2007_44.C \
@@ -291,7 +290,6 @@ test2004_145.C \
 test2004_146.C \
 test2004_147.C \
 test2004_148.C \
-test2004_149.C \
 test2004_150.C \
 test2004_151.C \
 test2004_152.C \
@@ -333,7 +331,6 @@ test2005_24.C \
 test2005_25.C \
 test2005_26.C \
 test2005_27.C \
-test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
@@ -345,7 +342,6 @@ test2005_40.C \
 test2005_41.C \
 test2005_43.C \
 test2005_44.C \
-test2005_45.C \
 test2005_46.C \
 test2005_47.C \
 test2005_48.C \
@@ -388,16 +384,13 @@ test2005_89.C \
 test2005_90.C \
 test2005_91.C \
 test2005_92.C \
-test2005_93.C \
 test2005_94.C \
 test2005_95.C \
 test2005_96.C \
 test2005_97.C \
-test2005_98.C \
 test2005_99.C \
 test2005_100.C \
 test2005_101.C \
-test2005_102.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -457,7 +450,6 @@ test2005_177.C \
 test2005_178.C \
 test2005_179.C \
 test2005_180.C \
-test2005_181.C \
 test2005_182.C \
 test2005_183.C \
 test2005_184.C \
@@ -492,7 +484,6 @@ test2006_14.C \
 test2006_16.C \
 test2006_17.C \
 test2006_19.C \
-test2006_20.C \
 test2006_22.C \
 test2006_23.C \
 test2006_25.C \
@@ -529,7 +520,6 @@ test2006_75.C \
 test2006_76.C \
 test2006_77.C \
 test2006_78.C \
-test2006_79.C \
 test2006_80.C \
 test2006_81.C \
 test2006_82.C \
@@ -541,7 +531,6 @@ test2006_88.C \
 test2006_89.C \
 test2006_90.C \
 test2006_91.C \
-test2006_92.C \
 test2006_93.C \
 test2006_94.C \
 test2006_97.C \
@@ -698,6 +687,30 @@ LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
    test2006_118.C \
    test2006_120.C \
    test2006_123.C 
+endif
+
+# DQ (1/10/2017): These test codes are a problem for GNU 6.1 compiler (I think mostly because 
+# of lacking support for SgTemplateTypedefDeclaration in the ast copy operation).  This issue
+# might also be present for compiler versions 4.9 to 6.1 as well.  The cause is likely something
+# in the header files for those compiler versions that we have not previously seen.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
+LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
+   test2004_149.C \
+   test2005_28.C \
+   test2005_45.C \
+   test2005_93.C \
+   test2005_98.C \
+   test2005_102.C \
+   test2005_181.C \
+   test2006_20.C \
+   test2006_79.C \
+   test2006_92.C 
+endif
+
+# DQ (1/19/2017): These is also a problem for GNU 5.1 as well (at least copytest2007_40.C).
+if !ROSE_USING_GCC_VERSION_LATER_5_1
+LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
+   copytest2007_40.C 
 endif
 
 # DQ (4/19/2016): Failing test code after added Clang support

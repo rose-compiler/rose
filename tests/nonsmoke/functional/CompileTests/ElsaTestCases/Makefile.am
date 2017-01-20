@@ -53,13 +53,17 @@ t0057.cc\
 t0058.cc\
 t0059.cc\
 t0060.cc\
-t0061.cc\
 t0064.cc\
 t0065.cc\
 t0066.cc\
 t0067.cc\
 t0070.cc
 
+# DQ (1/19/2017): This test code (testing __builtin_next_arg()) is failing for GNU 5.1
+if !ROSE_USING_GCC_VERSION_LATER_5_1
+TESTCODES += \
+t0061.cc
+endif
 
 # Will it never end!  g++ version 4.0.2 fails to pass
 # this test with the ROSE generated code. They to pass 

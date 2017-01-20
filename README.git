@@ -996,3 +996,8 @@ After new desktop machine:
 Debugging ROSE Matrix Testing errors using rmc build VMs:
    "rmc" to testup the environment
    "rmc config" to kick-off the configure, make, make check process.
+
+Build a new branch:
+   git checkout -b <branch_name-dev>
+   cd src/frontend/CxxFrontend/EDG
+   git checkout -b <branch_name-dev>

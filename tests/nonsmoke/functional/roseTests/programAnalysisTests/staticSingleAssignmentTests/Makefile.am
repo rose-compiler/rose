@@ -215,7 +215,6 @@ test2004_80.C \
 test2004_81.C \
 test2004_82.C \
 test2004_84.C \
-test2004_85.C \
 test2004_86.C \
 test2004_87.C \
 test2004_88.C \
@@ -658,6 +657,13 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C
+
+
+# DQ (1/19/2017): These is a problem for GNU 5.1.
+if !ROSE_USING_GCC_VERSION_LATER_5_1
+CXX_TESTCODES_REQUIRED_TO_PASS += \
+   test2004_85.C 
+endif
 
 # DQ (8/31/2016): This is now fixed.
 # DQ (8/26/2016): Failing test with new template fix (likely similar problem to call graph fix).

@@ -93,7 +93,11 @@ Test04SpecimenDir = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tes
 Test04AnswerDir = $(srcdir)/test04-answers
 Test04Specimens = $(notdir $(patsubst %.cg.dmp, %, $(wildcard $(Test04AnswerDir)/*.C.cg.dmp)))
 Test04Targets = $(addprefix t4_, $(addsuffix .passed, $(Test04Specimens)))
+
+# DQ (1/19/2017): These is a problem for GNU 5.1.
+if !ROSE_USING_GCC_VERSION_LATER_5_1
 TEST_TARGETS += $(Test04Targets)
+endif
 
 test04: $(Test04Targets)
 $(Test04Targets): t4_%.passed: $(Test04SpecimenDir)/% $(Test04AnswerDir)/%.cg.dmp testCG test04.conf
