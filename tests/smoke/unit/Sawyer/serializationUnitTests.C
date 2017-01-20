@@ -28,6 +28,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/cstdint.hpp>
 #include <sstream>
 
 // Serialize, then unserialize
@@ -275,14 +276,14 @@ test04() {
 // MappedBuffer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef Sawyer::Container::MappedBuffer<size_t, uint8_t> T05;
+typedef Sawyer::Container::MappedBuffer<size_t, boost::uint8_t> T05;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
 BOOST_CLASS_EXPORT(T05);
 
 static void
 test05() {
-    static const uint8_t data[] = {1, 2, 3};
+    static const boost::uint8_t data[] = {1, 2, 3};
 
     Sawyer::FileSystem::TemporaryFile f;
     f.stream().write((const char*)data, sizeof data);
@@ -303,7 +304,7 @@ test05() {
 // NullBuffer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef Sawyer::Container::NullBuffer<size_t, uint8_t> T06;
+typedef Sawyer::Container::NullBuffer<size_t, boost::uint8_t> T06;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
 BOOST_CLASS_EXPORT(T06);
