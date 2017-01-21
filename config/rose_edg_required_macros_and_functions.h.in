@@ -535,9 +535,11 @@ long double __builtin_sqrtl  (long double __builtin__x);
 /* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
 // #if (__GNUC__ >= 6)
 
+// DQ (1/19/2017): Make the use of at least __builtin_va_arg available to the GNU 4.x compilers when using EDG 4.12.
 // DQ (12/17/2016): I think this has to be used for GNU version 5.x as well.
 // #if (__GNUC__ >= 6) || defined(__INTEL_COMPILER)
-#if (__GNUC__ >= 5) || defined(__INTEL_COMPILER)
+// #if (__GNUC__ >= 5) || defined(__INTEL_COMPILER)
+#if (__GNUC__ >= 4) || defined(__INTEL_COMPILER)
 /* Test how many files of builtins we have to add */
    #define _SMMINTRIN_H_INCLUDED
    #define _AMMINTRIN_H_INCLUDED
