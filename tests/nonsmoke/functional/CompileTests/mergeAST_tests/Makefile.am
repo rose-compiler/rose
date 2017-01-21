@@ -12,8 +12,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_01.C \
      mergeTest_02.C \
      mergeTest_03.C \
-     mergeTest_04.C \
-     mergeTest_05.C \
      mergeTest_08.C \
      mergeTest_09.C \
      mergeTest_10.C \
@@ -101,7 +99,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_106.C \
      mergeTest_107.C \
      mergeTest_110.C \
-     mergeTest_111.C \
      mergeTest_112.C \
      mergeTest_114.C \
      mergeTest_115.C \
@@ -117,6 +114,14 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_134.C \
      mergeTest_135.C \
      mergeTest_138.C 
+
+# DQ (1/19/2017): These are a problem for GNU 6.1.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
+TESTCODES_REQUIRED_TO_PASS += \
+     mergeTest_04.C \
+     mergeTest_05.C \
+     mergeTest_111.C 
+endif
 
 # DQ (8/22/2013): Failing test:
 # This test code is a large complex test, it fails out-side of the debugger, 
