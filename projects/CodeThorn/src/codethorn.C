@@ -553,7 +553,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   /* set booloptions for zero-argument options (does not require
      yes/no on command-line, but resolves it by checking for its
      existence on the command line to true or false)
-     */
+  */
   boolOptions.registerOption("svcomp-mode",false);
   boolOptions.registerOption("data-race",false);
   boolOptions.registerOption("data-race-fail",false);
@@ -1050,10 +1050,12 @@ int main( int argc, char * argv[] ) {
     Analyzer analyzer;
     global_analyzer=&analyzer;
 
+#if 0
     string option_pragma_name;
     if (args.count("limit-to-fragment")) {
       option_pragma_name = args["limit-to-fragment"].as<string>();
     }
+#endif
 
     if (args.count("internal-checks")) {
       if(CodeThorn::internalChecks(argc,argv)==false)
@@ -1337,6 +1339,7 @@ int main( int argc, char * argv[] ) {
     analyzer.getVariableIdMapping()->toStream(cout);
 #endif
 
+#if 0
     // currently not used, but may be revived to properly handle new annotation
     SgNode* fragmentStartNode=0;
     if(option_pragma_name!="") {
@@ -1355,6 +1358,7 @@ int main( int argc, char * argv[] ) {
       list<SgPragmaDeclaration*>::iterator i=pragmaDeclList.begin();
       fragmentStartNode=*i;
     }
+#endif
 
     if(boolOptions["eliminate-arrays"]) {
       //analyzer.initializeVariableIdMapping(sageProject);

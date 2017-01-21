@@ -23,7 +23,7 @@ bool EquivalenceChecking::isOmpParallelFor(SgForStatement* node, ForStmtToOmpPra
 }
 
 LoopInfoSet EquivalenceChecking::determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping, Labeler* labeler) {
-  cout<<"INFO: loop info set and determine iteration vars."<<endl;
+  //cout<<"INFO: loop info set and determine iteration vars."<<endl;
   ForStmtToOmpPragmaMap forStmtToPragmaMap=createOmpPragmaForStmtMap(root);
   cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
   LoopInfoSet loopInfoSet;
@@ -91,7 +91,6 @@ LoopInfoSet EquivalenceChecking::determineLoopInfoSet(SgNode* root, VariableIdMa
     }
     loopInfoSet.push_back(loopInfo);
   }
-  cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
   cout<<"INFO: found "<<Specialization::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
   return loopInfoSet;
 }
