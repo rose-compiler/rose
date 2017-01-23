@@ -37,6 +37,14 @@ else
 VALGRIND =
 endif
 
+# Some tests are disabled for certain combinations of compiler vendor, compiler version, and compiler language. We do that
+# by calling this program, which returns a non-empty string describing why something is disabled, or an empty string if
+# not disabled. Furthermore, if a test cannot even be compiled for a certain combination, we use conditionalDisable.h in
+# the test program itself to cause it to compile an alternative main which prints a message and aborts.
+noinst_PROGRAMS += conditionalDisable
+conditionalDisable_SOURCES = conditionalDisable.C
+conditionalDisable_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+
 ###############################################################################################################################
 # Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
 ###############################################################################################################################
@@ -46,9 +54,10 @@ testSymbolicExprParser_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testSymbolicExprParser.passed
 
-testSymbolicExprParser.passed: $(TEST_WITH_ANSWER) testSymbolicExprParser testSymbolicExprParser.ans
+testSymbolicExprParser.passed: $(TEST_WITH_ANSWER) testSymbolicExprParser testSymbolicExprParser.ans conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="parsing of symbolic expressions [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
 		CMD="./testSymbolicExprParser"			\
 		ANS="$(srcdir)/testSymbolicExprParser.ans"	\
 		$< $@
@@ -79,9 +88,10 @@ testControlFlow_answers = $(testControlFlow_targets:.passed=.ans)
 EXTRA_DIST += $(testControlFlow_answers)
 TEST_TARGETS += $(testControlFlow_targets)
 
-$(testControlFlow_targets): testControlFlow-%.passed: $(TEST_WITH_ANSWER) testControlFlow testControlFlow-%.dot
+$(testControlFlow_targets): testControlFlow-%.passed: $(TEST_WITH_ANSWER) testControlFlow testControlFlow-%.dot conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="AST-based control flow graph, algorithm $* [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testControlFlow $* $(SPECIMEN_DIR)/buffer2.bin"	\
 		ANS="$(srcdir)/testControlFlow-$*.dot"			\
 		$< $@
@@ -109,16 +119,18 @@ testFunctionCall_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += testFunctionCall-A.passed testFunctionCall-B.passed
 EXTRA_DIST += testFunctionCall-A.dot testFunctionCall-B.dot
 
-testFunctionCall-A.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-A.dot
+testFunctionCall-A.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-A.dot conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="function calls, algorithm A [$@]"		\
+		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testFunctionCall A $(SPECIMEN_DIR)/buffer2.bin"	\
 		ANS="$(srcdir)/testFunctionCall-A.dot"			\
 		$< $@
 
-testFunctionCall-B.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-B.dot
+testFunctionCall-B.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-B.dot conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="function calls, algorithm B [$@]"		\
+		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testFunctionCall B $(SPECIMEN_DIR)/buffer2.bin"	\
 		ANS="$(srcdir)/testFunctionCall-B.dot"			\
 		$< $@
@@ -138,10 +150,10 @@ testDominance_answers = $(testDominance_targets:.passed=.ans)
 EXTRA_DIST += $(testDominance_answers)
 TEST_TARGETS += $(testDominance_targets)
 
-$(testDominance_targets): testDominance-%.passed: $(TEST_WITH_ANSWER) testDominance testDominance-%.ans
+$(testDominance_targets): testDominance-%.passed: $(TEST_WITH_ANSWER) testDominance testDominance-%.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="graph dominance, algorithm $* [$@]"		\
-		DISABLED="$$(./testDominance disabled)"			\
+		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testDominance $* $(SPECIMEN_DIR)/buffer2.bin"	\
 		ANS="$(srcdir)/testDominance-$*.ans"			\
 		$< $@
@@ -160,9 +172,10 @@ testElfStrtab_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 TEST_TARGETS += testElfStrtab.passed
 
-testElfStrtab.passed: $(TEST_EXIT_STATUS) testElfStrtab
+testElfStrtab.passed: $(TEST_EXIT_STATUS) testElfStrtab conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="ELF string table allocation [$@]"			\
+		DISABLED="$$(./conditionalDisable)"				\
 		CMD="$$(pwd)/testElfStrtab $(SPECIMEN_DIR)/arm-poweroff"	\
 		USE_SUBDIR=yes							\
 		$< $@
@@ -179,11 +192,12 @@ testElfByteOrder_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIB
 TEST_TARGETS += testElfByteOrder.passed
 EXTRA_DIST += testElfByteOrder.conf
 
-testElfByteOrder.passed: testElfByteOrder.conf testElfByteOrder execFormatsTest testElfStrtab.passed
-	@$(RTH_RUN)						\
+testElfByteOrder.passed: testElfByteOrder.conf testElfByteOrder execFormatsTest testElfStrtab.passed conditionalDisable
+	@$(RTH_RUN)					\
 		TITLE="modification of byte order [$@]"	\
-		INPUT=arm-poweroff				\
-		SPECIMEN_DIR="$(SPECIMEN_DIR)"			\
+		DISABLED="$$(./conditionalDisable)"	\
+		INPUT=arm-poweroff			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		$< $@
 
 
@@ -198,9 +212,10 @@ testElfWordSize_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS
 TEST_TARGETS += testElfWordSize.passed
 EXTRA_DIST += testElfWordSize.conf
 
-testElfWordSize.passed: testElfWordSize.conf testElfWordSize execFormatsTest testElfStrtab.passed testElfByteOrder.passed
+testElfWordSize.passed: testElfWordSize.conf testElfWordSize execFormatsTest testElfStrtab.passed testElfByteOrder.passed conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="modification of word size [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
 		INPUT=arm-poweroff			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		$< $@
@@ -218,16 +233,18 @@ testElfSchulz_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += testElfSchulz-1.passed testElfSchulz-2.passed
 EXTRA_DIST += testElfSchulz.conf
 
-testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz execFormatsTest
+testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz execFormatsTest conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="rename dynamically linked functions #1 [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		FLAGS='-rose:partitioner_search -leftovers'		\
 		N=1							\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		$< $@
-testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz execFormatsTest
+testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz execFormatsTest conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="rename dynamically linked functions #2 [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		FLAGS='-rose:partitioner_search -leftovers'		\
 		N=2							\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
@@ -244,9 +261,10 @@ testElfConstruct_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIB
 
 TEST_TARGETS += testElfConstruct.passed
 
-testElfConstruct.passed: $(TEST_EXIT_STATUS) testElfConstruct
+testElfConstruct.passed: $(TEST_EXIT_STATUS) testElfConstruct conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="build an ELF file from scratch [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
 		CMD="$$(pwd)/testElfConstruct"			\
 		USE_SUBDIR=yes					\
 		$< $@
@@ -262,9 +280,10 @@ testPeConstruct_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS
 
 TEST_TARGETS += testPeConstruct.passed
 
-testPeConstruct.passed: $(TEST_EXIT_STATUS) testPeConstruct
+testPeConstruct.passed: $(TEST_EXIT_STATUS) testPeConstruct conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="build a PE file from scratch [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
 		CMD="$$(pwd)/testPeConstruct"			\
 		USE_SUBDIR=yes					\
 		$< $@
@@ -280,9 +299,10 @@ shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 TEST_TARGETS += shiftResizeSection.passed
 EXTRA_DIST += shiftResizeSection.ans
 
-shiftResizeSection.passed: $(TEST_WITH_ANSWER) shiftResizeSection execFormatsTest shiftResizeSection.ans
+shiftResizeSection.passed: $(TEST_WITH_ANSWER) shiftResizeSection execFormatsTest shiftResizeSection.ans conditionalDisable
 	@$(RTH_RUN)											\
 		TITLE="changing section size and/or location [$@]"					\
+		DISABLED="$$(./conditionalDisable)"							\
 		CMD="$(srcdir)/testShiftResizeSection.sh $(SPECIMEN_DIR)/arm-ctrlaltdel $$(pwd)"	\
 		ANS="$(srcdir)/shiftResizeSection.ans"							\
 		USE_SUBDIR=yes										\
@@ -323,23 +343,26 @@ functionBoundaries_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += functionBoundaries_1.passed functionBoundaries_2.passed functionBoundaries_3.passed
 EXTRA_DIST += functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans
 
-functionBoundaries_1.passed: $(SPECIMEN_DIR)/i686-test1.O0.bin functionBoundaries functionBoundaries_1.ans
+functionBoundaries_1.passed: $(SPECIMEN_DIR)/i686-test1.O0.bin functionBoundaries functionBoundaries_1.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="detect function boundaries $(notdir $<) [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		USE_SUBDIR=yes						\
 		CMD="$$(pwd)/functionBoundaries $<"			\
 		ANS=$(srcdir)/functionBoundaries_1.ans			\
 		$(TEST_WITH_ANSWER) $@
-functionBoundaries_2.passed: $(SPECIMEN_DIR)/i686-test1.O3.bin functionBoundaries functionBoundaries_2.ans
+functionBoundaries_2.passed: $(SPECIMEN_DIR)/i686-test1.O3.bin functionBoundaries functionBoundaries_2.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="detect function boundaries $(notdir $<) [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		USE_SUBDIR=yes						\
 		CMD="$$(pwd)/functionBoundaries $<"			\
 		ANS=$(srcdir)/functionBoundaries_2.ans			\
 		$(TEST_WITH_ANSWER) $@
-functionBoundaries_3.passed: $(SPECIMEN_DIR)/i686-test1.O3-stripped.bin functionBoundaries functionBoundaries_3.ans
+functionBoundaries_3.passed: $(SPECIMEN_DIR)/i686-test1.O3-stripped.bin functionBoundaries functionBoundaries_3.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="detect function boundaries $(notdir $<) [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		USE_SUBDIR=yes						\
 		CMD="$$(pwd)/functionBoundaries $<"			\
 		ANS=$(srcdir)/functionBoundaries_3.ans			\
@@ -371,11 +394,12 @@ rot13_SOURCES=rot13.C
 TEST_TARGETS += rot13.passed
 EXTRA_DIST += rot13.conf
 
-rot13.passed: rot13.conf rot13
-	@$(RTH_RUN)				\
-		TITLE="binary ROT-13 [$@]"	\
-		INPUT=i686-test1.O0.bin		\
-		SPECIMEN_DIR="$(SPECIMEN_DIR)"	\
+rot13.passed: rot13.conf rot13 conditionalDisable
+	@$(RTH_RUN)					\
+		TITLE="binary ROT-13 [$@]"		\
+		DISABLED="$$(./conditionalDisable)"	\
+		INPUT=i686-test1.O0.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		$< $@
 
 
@@ -389,9 +413,10 @@ testAssembler_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += testAssembler.passed
 EXTRA_DIST += testAssembler.ans
 
-testAssembler.passed: $(TEST_WITH_ANSWER) testAssembler testAssembler.ans
+testAssembler.passed: $(TEST_WITH_ANSWER) testAssembler testAssembler.ans conditionalDisable
 	@$(RTH_RUN)												\
 		TITLE="x86 assembler [$@]"									\
+		DISABLED="$$(./conditionalDisable)"								\
 		CMD="$$(pwd)/testAssembler -rose:partitioner_search -leftovers $(SPECIMEN_DIR)/buffer2.bin"	\
 		USE_SUBDIR=yes											\
 		ANS="$(srcdir)/testAssembler.ans"								\
@@ -407,9 +432,10 @@ testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 TEST_TARGETS += testAstIO.passed
 
-testAstIO.passed: $(TEST_EXIT_STATUS) testAstIO
+testAstIO.passed: $(TEST_EXIT_STATUS) testAstIO conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="writing and reading binary AST format [$@]"		\
+		DISABLED="$$(./conditionalDisable)"				\
 		CMD="$$(pwd)/testAstIO $(SPECIMEN_DIR)/i686-test1.O0.bin"	\
 		USE_SUBDIR=yes							\
 		$< $@
@@ -426,9 +452,10 @@ TEST_TARGETS += testAstNeuter.passed
 EXTRA_DIST += testAstNeuter.conf
 
 MOSTLYCLEANFILES += testAstNeuter.ast
-testAstNeuter.passed: testAstNeuter.conf testAstNeuter
+testAstNeuter.passed: testAstNeuter.conf testAstNeuter conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="that neutering works across binary AST IO [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		CMD="$$(pwd)/testAstNeuter" INPUT="i686-test1.O0.bin"	\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		USE_SUBDIR=yes						\
@@ -444,9 +471,10 @@ testRegisters_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 TEST_TARGETS += testRegisters.passed
 
-testRegisters.passed: $(TEST_EXIT_STATUS) testRegisters
+testRegisters.passed: $(TEST_EXIT_STATUS) testRegisters conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="register descriptors and dictionaries [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testRegisters"					\
 		$< $@
 
@@ -461,9 +489,10 @@ testReadPastEOF_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += testReadPastEOF.passed
 EXTRA_DIST += testReadPastEOF.conf testReadPastEOF.ans
 
-testReadPastEOF.passed: testReadPastEOF.conf testReadPastEOF testReadPastEOF.ans
+testReadPastEOF.passed: testReadPastEOF.conf testReadPastEOF testReadPastEOF.ans conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="reading past end-of-file [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		$< $@
 
@@ -479,9 +508,10 @@ testLibraryDb_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testLibraryDb.passed
 
-testLibraryDb.passed: $(TEST_EXIT_STATUS) testLibraryDb
+testLibraryDb.passed: $(TEST_EXIT_STATUS) testLibraryDb conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="library identification [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
 		CMD="$$(pwd)/testLibraryDb"		\
 		USE_SUBDIR=yes				\
 		$< $@
@@ -499,12 +529,13 @@ testPeImports_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testPeImports.passed
 EXTRA_DIST += testPeImports.ans
 
-testPeImports.passed: $(TEST_WITH_ANSWER) testPeImports testPeImports.ans
-	@$(RTH_RUN)													\
-		TITLE="that PE import tables can be parsed [$@]"							\
+testPeImports.passed: $(TEST_WITH_ANSWER) testPeImports testPeImports.ans conditionalDisable
+	@$(RTH_RUN)												\
+		TITLE="that PE import tables can be parsed [$@]"						\
+		DISABLED="$$(./conditionalDisable)"								\
 		CMD="$$(pwd)/testPeImports -rose:read_executable_file_format_only $(SPECIMEN_DIR)/proxycfg.exe"	\
-		USE_SUBDIR=yes												\
-		ANS="$(srcdir)/testPeImports.ans"									\
+		USE_SUBDIR=yes											\
+		ANS="$(srcdir)/testPeImports.ans"								\
 		$< $@
 
 
@@ -525,9 +556,10 @@ cory003_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory003.passed
 
-cory003.passed: $(TEST_EXIT_STATUS) cory003
+cory003.passed: $(TEST_EXIT_STATUS) cory003 conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="generic register states [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
 		CMD=./cory003				\
 		$< $@
 
@@ -541,9 +573,10 @@ cory004_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory004.passed
 
-cory004.passed: $(TEST_EXIT_STATUS) cory004
+cory004.passed: $(TEST_EXIT_STATUS) cory004 conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="register clearing in subclass container [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		CMD=./cory004						\
 		$< $@
 
@@ -557,9 +590,10 @@ cory006_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory006.passed
 
-cory006.passed: $(TEST_EXIT_STATUS) cory006
+cory006.passed: $(TEST_EXIT_STATUS) cory006 conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="inter-functon disassembly [$@]"		\
+		DISABLED="$$(./conditionalDisable)"		\
 		CMD="./cory006 $(SPECIMEN_DIR)//i386-cory006"	\
 		$< $@
 
@@ -573,10 +607,11 @@ cory007_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory007.passed
 
-cory007.passed: $(TEST_EXIT_STATUS) cory007
-	@$(RTH_RUN)				\
-		TITLE="binary attributes [$@]"	\
-		CMD="./cory007"			\
+cory007.passed: $(TEST_EXIT_STATUS) cory007 conditionalDisable
+	@$(RTH_RUN)					\
+		TITLE="binary attributes [$@]"		\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD="./cory007"				\
 		$< $@
 
 
@@ -590,9 +625,10 @@ cory008_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += cory008.passed
 EXTRA_DIST += cory008.ans
 
-cory008.passed: $(TEST_WITH_ANSWER) cory008 cory008.ans
+cory008.passed: $(TEST_WITH_ANSWER) cory008 cory008.ans conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="base objects in SgAsmIntegerValueExpression [$@]"	\
+		DISABLED="$$(./conditionalDisable)"				\
 		CMD="./cory008 $(SPECIMEN_DIR)/i386-nologin"			\
 		ANS=$(srcdir)/cory008.ans					\
 		$< $@
@@ -608,9 +644,10 @@ testSymReadWrite_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testSymReadWrite.passed
 EXTRA_DIST += testSymReadWrite.conf testSymReadWrite.ans
 
-testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadWrite
+testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadWrite conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="symbolic semantic domain read/write [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		INPUT=memreadwrite					\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		$< $@
@@ -625,9 +662,10 @@ testWorkList_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testWorkList.passed
 
-testWorkList.passed: $(TEST_EXIT_STATUS) testWorkList
+testWorkList.passed: $(TEST_EXIT_STATUS) testWorkList conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="work list unit tests [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
 		CMD=./testWorkList			\
 		$< $@
 
@@ -641,9 +679,10 @@ testMap_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testMap.passed
 
-testMap.passed: $(TEST_EXIT_STATUS) testMap
+testMap.passed: $(TEST_EXIT_STATUS) testMap conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="custom Map class unit tests (deprecated) [$@]"	\
+		DISABLED="$$(./conditionalDisable)"			\
 		CMD=./testMap						\
 		$< $@
 
@@ -671,9 +710,10 @@ PointerDetectionSwitches =											\
 EXTRA_DIST += testPointerDetection.ans
 TEST_TARGETS += testPointerDetection.passed
 
-testPointerDetection.passed: $(TEST_WITH_ANSWER) testPointerDetection testPointerDetection.ans
+testPointerDetection.passed: $(TEST_WITH_ANSWER) testPointerDetection testPointerDetection.ans conditionalDisable
 	@$(RTH_RUN)											\
 	    TITLE="pointer detection [$@]"								\
+	    DISABLED="$$(./conditionalDisable)"								\
 	    CMD="./testPointerDetection $(PointerDetectionSwitches) $(PointerDetectionSpecimen)"	\
 	    ANS=$(srcdir)/testPointerDetection.ans							\
 	    $< $@
@@ -689,9 +729,10 @@ testCallDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testCallDetection.passed
 EXTRA_DIST += testCallDetection.ans
 
-testCallDetection.passed: $(TEST_WITH_ANSWER) $(SPECIMEN_DIR)/i386-fcalls testCallDetection testCallDetection.ans
+testCallDetection.passed: $(TEST_WITH_ANSWER) $(SPECIMEN_DIR)/i386-fcalls testCallDetection testCallDetection.ans conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="function call detection [$@]"				\
+		DISABLED="$$(./conditionalDisable)"				\
 		CMD="$$(pwd)/testCallDetection $(SPECIMEN_DIR)/i386-fcalls"	\
 		USE_SUBDIR=yes							\
 		ANS=$(srcdir)/testCallDetection.ans				\
@@ -707,9 +748,10 @@ testReturnsValue_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testReturnsValue.passed
 
-testReturnsValue.passed: $(SPECIMEN_DIR)/buffer2.bin testReturnsValue $(TEST_EXIT_STATUS)
+testReturnsValue.passed: $(SPECIMEN_DIR)/buffer2.bin testReturnsValue $(TEST_EXIT_STATUS) conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="function-returns-value analysis [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
 		CMD="./testReturnsValue $<"			\
 		$(TEST_EXIT_STATUS) $@
 
@@ -722,9 +764,10 @@ testReturnsValue.passed: $(SPECIMEN_DIR)/buffer2.bin testReturnsValue $(TEST_EXI
 TEST_TARGETS += usedef.passed
 EXTRA_DIST += usedef.ans usedef.conf
 
-usedef.passed: usedef.conf symbolicSemantics2 $(SPECIMEN_DIR)/usedef
+usedef.passed: usedef.conf symbolicSemantics2 $(SPECIMEN_DIR)/usedef conditionalDisable
 	@$(RTH_RUN)											\
 		USE_SUBDIR=yes										\
+		DISABLED="$$(./conditionalDisable)"							\
 		TITLE="use-def unit tests"								\
 		CMD="$$(pwd)/symbolicSemantics2 --trace --usedef $(abspath $(SPECIMEN_DIR)/usedef)"	\
 		ANS="$(srcdir)/usedef.ans"								\
@@ -740,9 +783,10 @@ testBitPattern_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testBitPattern.passed
 
-testBitPattern.passed: $(TEST_EXIT_STATUS) testBitPattern
+testBitPattern.passed: $(TEST_EXIT_STATUS) testBitPattern conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="bit pattern matcher [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
 		CMD="./testBitPattern"			\
 		$< $@
 
@@ -756,9 +800,10 @@ testRNG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testRNG.passed
 
-testRNG.passed: $(TEST_EXIT_STATUS) testRNG
+testRNG.passed: $(TEST_EXIT_STATUS) testRNG conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="pseudo random number generator (deprecated) [$@]"	\
+		DISABLED="$$(./conditionalDisable)"				\
 		CMD="./testRNG"							\
 		$< $@
 
@@ -773,9 +818,10 @@ testSymbolicSimplification_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testSymbolicSimplification.passed
 EXTRA_DIST += testSymbolicSimplification.ans
 
-testSymbolicSimplification.passed: $(TEST_WITH_ANSWER) testSymbolicSimplification testSymbolicSimplification.ans
+testSymbolicSimplification.passed: $(TEST_WITH_ANSWER) testSymbolicSimplification testSymbolicSimplification.ans conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="symbolic simplification [$@]"		\
+		DISABLED="$$(./conditionalDisable)"		\
 		CMD="./testSymbolicSimplification"		\
 		ANS="$(srcdir)/testSymbolicSimplification.ans"	\
 		$< $@
@@ -791,9 +837,10 @@ testSymbolicFlags_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testSymbolicFlags.passed
 EXTRA_DIST += testSymbolicFlags.ans
 
-testSymbolicFlags.passed: $(TEST_WITH_ANSWER) testSymbolicFlags testSymbolicFlags.ans
+testSymbolicFlags.passed: $(TEST_WITH_ANSWER) testSymbolicFlags testSymbolicFlags.ans conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="symbolic flags [$@]"		\
+		DISABLED="$$(./conditionalDisable)"	\
 		CMD="./testSymbolicFlags"		\
 		ANS="$(srcdir)/testSymbolicFlags.ans"	\
 		$< $@
@@ -845,12 +892,13 @@ TEST_TARGETS += $(testPartitioner2_test_targets)
 TEST_TARGETS += testPartitioner2_buffer2.bin.passed
 
 $(testPartitioner2_test_targets): \
-testPartitioner2_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 testPartitioner2_%.ans
+testPartitioner2_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 testPartitioner2_%.ans conditionalDisable
 	@$(RTH_RUN)													\
 		TITLE="testPartitioner2 $(notdir $<) [$@]"								\
+		DISABLED="$$(./conditionalDisable)"									\
 		USE_SUBDIR=yes												\
 		CMD="$(SMOKE_BLDDIR)/testPartitioner2 $(if $(findstring exefmt,$<), --no-inter-function-calls) $<"	\
-		ANS="$(srcdir)/testPartitioner2_$*.ans"								\
+		ANS="$(srcdir)/testPartitioner2_$*.ans"									\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 PHONIES += check-testPartitioner2
@@ -881,9 +929,10 @@ disassemble1_answers = $(disassemble1_test_targets:.passed=.ans)
 EXTRA_DIST += $(disassemble1_answers) disassemble.conf
 TEST_TARGETS += $(disassemble1_test_targets)
 
-$(disassemble1_test_targets): disassemble1_%.passed: $(SPECIMEN_DIR)/% disassemble disassemble.conf disassemble1_%.ans
+$(disassemble1_test_targets): disassemble1_%.passed: $(SPECIMEN_DIR)/% disassemble disassemble.conf disassemble1_%.ans conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="disassemble $(notdir $<) [$@]"		\
+		DISABLED="$$(./conditionalDisable)"		\
 		USE_SUBDIR=yes					\
 		EXE="$$(pwd)/disassemble"			\
 		SWITCHES=					\
@@ -899,9 +948,10 @@ disassemble2_answers = $(disassemble2_test_targets:.passed=.ans)
 EXTRA_DIST += $(disassemble2_answers)
 TEST_TARGETS += $(disassemble2_test_targets)
 
-disassemble2_buffer2.raw.passed: $(SPECIMEN_DIR)/buffer2.raw disassemble disassemble.conf disassemble2_buffer2.raw.ans
+disassemble2_buffer2.raw.passed: $(SPECIMEN_DIR)/buffer2.raw disassemble disassemble.conf disassemble2_buffer2.raw.ans conditionalDisable
 	@$(RTH_RUN)													\
 		TITLE="disassemble $(notdir $<) [$@]"									\
+		DISABLED="$$(./conditionalDisable)"									\
 		USE_SUBDIR=yes												\
 		EXE="$$(pwd)/disassemble"										\
 		SWITCHES="--disassemble --linear --raw=0x08048310"							\
@@ -970,8 +1020,13 @@ nullSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN
 nullSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += nullSemantics2.passed
 EXTRA_DIST += semantics.conf nullSemantics2.ans
-nullSemantics2.passed: semantics.conf nullSemantics2
-	@$(RTH_RUN) CMD=nullSemantics2 INPUT=i686-test1.O3.bin SPECIMEN_DIR="$(SPECIMEN_DIR)" $< $@
+nullSemantics2.passed: semantics.conf nullSemantics2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=nullSemantics2			\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		$< $@
 
 # Partial symbolic semantics
 noinst_PROGRAMS += partialSymbolicSemantics2
@@ -980,8 +1035,13 @@ partialSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN
 partialSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += partialSymbolicSemantics2.passed
 EXTRA_DIST += semantics.conf partialSymbolicSemantics2.ans
-partialSymbolicSemantics2.passed: semantics.conf partialSymbolicSemantics2
-	@$(RTH_RUN) CMD=partialSymbolicSemantics2 INPUT=i686-test1.O3.bin SPECIMEN_DIR="$(SPECIMEN_DIR)" $< $@
+partialSymbolicSemantics2.passed: semantics.conf partialSymbolicSemantics2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=partialSymbolicSemantics2		\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		$< $@
 
 # Interval semantics
 noinst_PROGRAMS += intervalSemantics2
@@ -990,8 +1050,13 @@ intervalSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN
 intervalSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += intervalSemantics2.passed
 EXTRA_DIST += semantics.conf intervalSemantics2.ans
-intervalSemantics2.passed: semantics.conf intervalSemantics2
-	@$(RTH_RUN) CMD=intervalSemantics2 INPUT=i686-test1.O3.bin SPECIMEN_DIR="$(SPECIMEN_DIR)" $< $@
+intervalSemantics2.passed: semantics.conf intervalSemantics2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=intervalSemantics2			\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		$< $@
 
 # Symbolic semantics, no SMT solver
 noinst_PROGRAMS += symbolicSemantics2
@@ -1000,8 +1065,13 @@ symbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_
 symbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += symbolicSemantics2.passed
 EXTRA_DIST += semantics.conf symbolicSemantics2.ans
-symbolicSemantics2.passed: semantics.conf symbolicSemantics2
-	@$(RTH_RUN) CMD=symbolicSemantics2 INPUT=i686-test1.O3.bin SPECIMEN_DIR="$(SPECIMEN_DIR)" $< $@
+symbolicSemantics2.passed: semantics.conf symbolicSemantics2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=symbolicSemantics2			\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		$< $@
 
 # Tracing symbolic semantics, no SMT solver
 noinst_PROGRAMS += traceSymbolicSemantics2
@@ -1010,12 +1080,13 @@ traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVE
 traceSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += traceSymbolicSemantics2.passed
 EXTRA_DIST += semantics.conf traceSymbolicSemantics2.ans
-traceSymbolicSemantics2.passed: semantics.conf traceSymbolicSemantics2
-	@$(RTH_RUN)				\
-		CMD=traceSymbolicSemantics2	\
-		SWITCHES="--trace --no-usedef"	\
-		INPUT=i686-test1.O3.bin		\
-		SPECIMEN_DIR="$(SPECIMEN_DIR)"	\
+traceSymbolicSemantics2.passed: semantics.conf traceSymbolicSemantics2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=traceSymbolicSemantics2		\
+		SWITCHES="--trace --no-usedef"		\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		$< $@
 
 # Symbolic semantics, Yices executable
@@ -1026,8 +1097,13 @@ yicesSemanticsExe2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIB
 EXTRA_DIST += semantics.conf yicesSemanticsExe2.ans
 if ROSE_HAVE_YICES
 TEST_TARGETS += yicesSemanticsExe2.passed
-yicesSemanticsExe2.passed: semantics.conf yicesSemanticsExe2
-	@$(RTH_RUN) CMD=yicesSemanticsExe2 INPUT=i686-test1.O3.bin SPECIMEN_DIR="$(SPECIMEN_DIR)" $< $@
+yicesSemanticsExe2.passed: semantics.conf yicesSemanticsExe2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=yicesSemanticsExe2			\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		$< $@
 endif
 
 # Symbolic semantics, Yices library
@@ -1038,8 +1114,13 @@ yicesSemanticsLib2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIB
 EXTRA_DIST += semantics.conf yicesSemanticsLib2.ans
 if ROSE_HAVE_LIBYICES
 TEST_TARGETS += yicesSemanticsLib2.passed
-yicesSemanticsLib2.passed: semantics.conf yicesSemanticsLib2
-	@$(RTH_RUN) CMD=yicesSemanticsLib2 INPUT=i686-test1.O3.bin SPECIMEN_DIR="$(SPECIMEN_DIR)" $< $@
+yicesSemanticsLib2.passed: semantics.conf yicesSemanticsLib2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=yicesSemanticsLib2			\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		$< $@
 endif
 
 # Multi-domain semantics, new API
@@ -1058,8 +1139,11 @@ noinst_PROGRAMS += semanticsSubclassing
 semanticsSubclassing_SOURCES = semanticsSubclassing.C
 semanticsSubclassing_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += semanticsSubclassing.passed
-semanticsSubclassing.passed: $(TEST_EXIT_STATUS) semanticsSubclassing
-	@$(RTH_RUN) CMD=./semanticsSubclassing $< $@
+semanticsSubclassing.passed: $(TEST_EXIT_STATUS) semanticsSubclassing conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=./semanticsSubclassing		\
+		$< $@
 
 
 ###############################################################################################################################
@@ -1122,9 +1206,10 @@ llvmTranscoder_TestTargets = $(addprefix llvm-xcode-, $(addsuffix .passed, $(llv
 TEST_TARGETS += $(llvmTranscoder_TestTargets)
 EXTRA_DIST += llvmTranscoder.conf
 
-$(llvmTranscoder_TestTargets): llvm-xcode-%.passed: $(SPECIMEN_DIR)/% llvmTranscoder llvmTranscoder.conf
+$(llvmTranscoder_TestTargets): llvm-xcode-%.passed: $(SPECIMEN_DIR)/% llvmTranscoder llvmTranscoder.conf conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="LLVM transcoder for $* [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
 		SPECIMEN="$(abspath $<)"		\
 		LLVM_VERSION="$(llvmVersion)"		\
 		$(srcdir)/llvmTranscoder.conf $@
@@ -1170,9 +1255,10 @@ EXTRA_DIST += llvmAnalysis.conf
 #TEST_TARGETS += $(llvmAnalysis_TestTargets)
 MOSTLYCLEANFILES += $(llvmAnalysis_TestTargets) $(llvmAnalysis_TestTargets:.passed=.failed)
 
-$(llvmAnalysis_TestTargets): llvm-analysis-%.passed: $(llvmAnalysis_SpecimenDir)/%.c llvmTranscoder disassemble
+$(llvmAnalysis_TestTargets): llvm-analysis-%.passed: $(llvmAnalysis_SpecimenDir)/%.c llvmTranscoder disassemble conditionalDisable
 	@$(RTH_RUN)											\
 		TITLE="LLVM analysis for $(notdir $<) [$@]"						\
+		DISABLED="$$(./conditionalDisable)"							\
 		USE_SUBDIR=yes										\
 		SPECIMEN="$<"										\
 		OPT_PASSES="$(shell perl -ne '/OPT:\s*(.*?)\s*(\*\/\s*)?$$/ and print qq{$$1\n}' $<)"	\
@@ -1204,12 +1290,13 @@ taintedFlow_TestAnswers = $(addprefix taint_, $(addsuffix .ans, $(taintedFlow_Sp
 TEST_TARGETS += $(taintedFlow_TestTargets)
 EXTRA_DIST += $(taintedFlow_TestAnswers) taintedFlow.conf
 
-$(taintedFlow_TestTargets): taint_%.passed: $(SPECIMEN_DIR)/% taintedFlow taintedFlow.conf
-	@$(RTH_RUN) \
-		TITLE="Tainted flow for $* [$@]" \
-		USE_SUBDIR=yes \
-		CMD="$(abspath ./taintedFlow) --approx=under --blocks --names='^f[0-9]' -- $(abspath $<)" \
-		ANS="$(abs_srcdir)/taint_$*.ans" \
+$(taintedFlow_TestTargets): taint_%.passed: $(SPECIMEN_DIR)/% taintedFlow taintedFlow.conf conditionalDisable
+	@$(RTH_RUN)												\
+		TITLE="Tainted flow for $* [$@]"								\
+		DISABLED="$$(./conditionalDisable)"								\
+		USE_SUBDIR=yes											\
+		CMD="$(abspath ./taintedFlow) --approx=under --blocks --names='^f[0-9]' -- $(abspath $<)"	\
+		ANS="$(abs_srcdir)/taint_$*.ans"								\
 		$(abs_srcdir)/taintedFlow.conf $@
 
 PHONIES += check-taint
@@ -1232,9 +1319,10 @@ testNoop_Switches = --stack=0xdddd0001 --use-semantics --no-find-dead-code --no-
 TEST_TARGETS += $(testNoop_TestTargets)
 EXTRA_DIST += $(testNoop_TestAnswers)
 
-$(testNoop_TestTargets): noop_%.passed: $(SPECIMEN_DIR)/% testNoop
+$(testNoop_TestTargets): noop_%.passed: $(SPECIMEN_DIR)/% testNoop conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="testNoop $* [$@]"					\
+		DISABLED="$$(./conditionalDisable)"				\
 		USE_SUBDIR=yes							\
 		CMD="$(abspath ./testNoop) $(testNoop_Switches) $(abspath $<)"	\
 		ANS="$(abs_srcdir)/noop_$*.ans"					\
@@ -1261,9 +1349,10 @@ testStaticSemantics_specimens = $(filter-out								\
 testStaticSemantics_test_targets = $(addprefix testStaticSemantics_, $(addsuffix .passed, $(testStaticSemantics_specimens)))
 TEST_TARGETS += $(testStaticSemantics_test_targets)
 
-$(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(SPECIMEN_DIR)/% testStaticSemantics
+$(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(SPECIMEN_DIR)/% testStaticSemantics conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="testStaticSemantics $(notdir $<) [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
 		USE_SUBDIR=yes					\
 		CMD="$$(pwd)/testStaticSemantics $<"		\
 		$(top_srcdir)/scripts/test_exit_status $@
@@ -1282,9 +1371,10 @@ testLazyInitialStates_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testLazyInitialStates.passed
 
-testLazyInitialStates.passed: $(SPECIMEN_DIR)/i386-initialState testLazyInitialStates
+testLazyInitialStates.passed: $(SPECIMEN_DIR)/i386-initialState testLazyInitialStates conditionalDisable
 	@$(RTH_RUN)									\
 		TITLE="lazy symbolic states [$@]"					\
+		DISABLED="$$(./conditionalDisable)"					\
 		USE_SUBDIR=yes								\
 		CMD="$$(pwd)/testLazyInitialStates --isa=i386 --start=0 map:0=rx::$<"	\
 		$(top_srcdir)/scripts/test_exit_status $@
@@ -1301,9 +1391,10 @@ parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
 
 TEST_TARGETS += $(parse_Targets)
 
-$(parse_Targets): parse_%.passed: $(SPECIMEN_DIR)/% disassemble
+$(parse_Targets): parse_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="parse $(notdir $<) [$@]"		\
+		DISABLED="$$(./conditionalDisable)"	\
 		CMD="$$(pwd)/disassemble $(abspath $<)"	\
 		USE_SUBDIR=yes				\
 		$(TEST_EXIT_STATUS) $@
@@ -1318,9 +1409,10 @@ disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemb
 
 TEST_TARGETS += $(disassemble_Targets)
 
-$(disassemble_Targets): disassemble_%.passed: $(SPECIMEN_DIR)/% disassemble
+$(disassemble_Targets): disassemble_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="disassemble $(notdir $<) [$@]"		\
+		DISABLED="$$(./conditionalDisable)"		\
 		CMD="$$(pwd)/disassemble --quiet $(abspath $<)"	\
 		USE_SUBDIR=yes					\
 		$(TEST_EXIT_STATUS) $@
@@ -1335,9 +1427,10 @@ unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens
 
 TEST_TARGETS += $(unparse_Targets)
 
-$(unparse_Targets): unparse_%.passed: $(SPECIMEN_DIR)/% disassemble
+$(unparse_Targets): unparse_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
 	@$(RTH_RUN)					\
 		TITLE="unparse $(notdir $<) [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
 		CMD="$$(pwd)/disassemble $(abspath $<)"	\
 		USE_SUBDIR=yes				\
 		$(TEST_EXIT_STATUS) $@
@@ -1352,9 +1445,10 @@ assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specim
 
 TEST_TARGETS += $(assemble_Targets)
 
-$(assemble_Targets): assemble_%.passed: $(SPECIMEN_DIR)/% disassemble
+$(assemble_Targets): assemble_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
 	@$(RTH_RUN)									\
 		TITLE="assemble $(notdir $<) [$@]"					\
+		DISABLED="$$(./conditionalDisable)"					\
 		CMD="$$(pwd)/disassemble --quiet --reassemble --show-bad $(abspath $<)"	\
 		USE_SUBDIR=yes								\
 		$(TEST_EXIT_STATUS) $@
@@ -1369,9 +1463,10 @@ astio_Targets = $(addprefix astio_, $(addsuffix .passed, $(astio_Specimens)))
 
 TEST_TARGETS += $(astio_Targets)
 
-$(astio_Targets): astio_%.passed: $(SPECIMEN_DIR)/% testAstIO
+$(astio_Targets): astio_%.passed: $(SPECIMEN_DIR)/% testAstIO conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="binary AST IO for $(notdir $<) [$@]"		\
+		DISABLED="$$(./conditionalDisable)"			\
 		CMD="$$(pwd)/testAstIO -rose:binary $(abspath $<)"	\
 		USE_SUBDIR=yes						\
 		$(TEST_EXIT_STATUS) $@
@@ -1394,9 +1489,10 @@ testSageSerialization_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testSageSerialization.passed
 
-testSageSerialization.passed: testSageSerialization
+testSageSerialization.passed: testSageSerialization conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="serialization of Sage binary analysis nodes [$@]"	\
+		DISABLED="$$(./conditionalDisable)"				\
 		CMD="$$(pwd)/testSageSerialization"				\
 		$(top_srcdir)/scripts/test_exit_status $@
 

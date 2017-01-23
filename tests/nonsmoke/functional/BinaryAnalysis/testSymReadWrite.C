@@ -1,3 +1,9 @@
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 #include "rose.h"
 
 #if 0 // OLD API
@@ -62,3 +68,4 @@ main(int argc, char *argv[])
     Analysis().traverse(project, preorder);
 }
 
+#endif

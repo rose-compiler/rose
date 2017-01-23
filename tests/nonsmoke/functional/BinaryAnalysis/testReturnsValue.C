@@ -1,5 +1,10 @@
 // Analysis to determine whether functions return values. This looks at the call site for each function to see if the caller
 // uses a return value.  It works only for 32-bit x86 and assumes that the return value is via EAX.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include "rose.h"
 #include "BinaryReturnValueUsed.h"
@@ -21,3 +26,5 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
+#endif

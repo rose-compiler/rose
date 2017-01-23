@@ -4,6 +4,11 @@
 // with a letter ("v" or "m") followed by an automatically generated unique number. If a new variable is created in the middle
 // of the test then all subsequent variables will have a different number and it would be more difficult to verify that the
 // remaining output is correct.  The default expression printer will print a non-empty comment in lieu of the variable name.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include <rose.h>
 #include <BinarySymbolicExpr.h>
@@ -145,3 +150,5 @@ main() {
     testHashing();
     testRelationalFolding();
 }
+
+#endif

@@ -1,4 +1,10 @@
 // Tests ROSE's Map<T> class.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 
 // This is a ROSE utility class, so there's no need to include "rose.h"
 #include "Map.h"
@@ -113,3 +119,4 @@ int main()
     return 0;
 }
 
+#endif
