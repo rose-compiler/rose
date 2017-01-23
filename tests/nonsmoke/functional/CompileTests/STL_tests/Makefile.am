@@ -23,7 +23,13 @@ conditional-check-local:
         @echo "ROSE/tests/nonsmoke/functional/CompileTests/STL_tests: make check rule skipped (not using g++ 4.8 compiler or later)."
 endif
 
+# DQ (1/19/2017): These are a problem for GNU 5.1.
+# Markus and Dan discussed that these tests could not be enforce uniformally on newer compiler versions.
+if !ROSE_USING_GCC_VERSION_LATER_5_1
 check-local: conditional-check-local
+else
+check-local: 
+endif
 	@echo "*******************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/STL_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************************"
