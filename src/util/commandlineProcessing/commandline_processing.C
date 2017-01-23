@@ -477,12 +477,33 @@ CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<
            // get the rest of the string as the option
               optionList.push_back( (newPrefix == "") ? it->substr(prefixLength) : newPrefix + it->substr(prefixLength));
               it = argList.erase(it);
+
            // That sounds real buggy as to detect if an option has parameters it
            // assumes inputPrefix-ed options are consecutive.
               if ( it->substr(0,prefixLength) != inputPrefix )
                  {
                    optionList.push_back(*it);
                    it = argList.erase(it);
+
+                // DQ (1/21/2017): Adding support for options taking more than one paramter.
+                   if (isOptionTakingThirdParameter(inputPrefix) == true)
+                      {
+                        if ( it->substr(0,prefixLength) != inputPrefix )
+                           {
+                             optionList.push_back(*it);
+                             it = argList.erase(it);
+                           }
+                          else
+                           {
+                             printf ("Error: missing 2nd parameter in option with two parameters \n");
+                             ROSE_ABORT();
+                           }
+#if 0
+                        printf ("Need to handle options taking more than one parameter (e.g. --edg_parameter:): inputPrefix = %s \n",inputPrefix.c_str());
+                        ROSE_ASSERT(false);
+#endif
+                      }
+
                  }
                 else
                  {
@@ -547,10 +568,38 @@ CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string opt
 
 void
 CommandlineProcessing::addListToCommandLine ( vector<string> & argv , string prefix, Rose_STL_Container<string> argList )
+   {
+#if 0
+     printf ("In addListToCommandLine(): prefix = %s \n",prefix.c_str());
+#endif
+     bool outputPrefix = false;
+  // for (unsigned int i = 0; i < argList.size(); ++i) 
+     for (size_t i = 0; i < argList.size(); ++i) 
         {
-     for (unsigned int i = 0; i < argList.size(); ++i) {
-       argv.push_back(prefix + argList[i]);
-   }
+       // DQ (1/21/2017): The prefix should only be on the first argument (if it is non-empty).
+       // argv.push_back(prefix + argList[i]);
+#if 0
+          printf ("   argList[%zu] = %s \n",i,argList[i].c_str());
+#endif
+          if (i == 0 && argList[i].empty() == false)
+             {
+               argv.push_back(prefix + argList[i]);
+               outputPrefix = true;
+             }
+            else
+             {
+            // Account for the first entry in the list being empty.
+               if (i > 0 && outputPrefix == false && argList[i].empty() == false)
+                  {
+                    argv.push_back(prefix + argList[i]);
+                    outputPrefix = true;
+                  }
+                 else
+                  {
+                    argv.push_back(argList[i]);
+                  }
+             }
+        }
    }
 
 #if 0
