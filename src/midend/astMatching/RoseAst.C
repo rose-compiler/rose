@@ -135,10 +135,6 @@ RoseAst::iterator::current_node_id() const {
 
 std::string
 RoseAst::iterator::parent_node_id() const {
-// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-// stack_element e=_stack.top();
-   _stack.top();
-
   std::stringstream ss;
   ss << parent(); // MS: a parent cannot be null, therefore the address is sufficient.
   return ss.str();
