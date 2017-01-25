@@ -3151,14 +3151,14 @@ int __builtin_ia32_lfence();
 int __builtin_ia32_mfence();
 
 // Builtin functions specific to GNU 4.4.1 (likely 4.4.x)
-int __builtin_ia32_psllwi(short,int);
-int __builtin_ia32_pslldi(int,int);
-int __builtin_ia32_psllqi(long long,int);
-int __builtin_ia32_psrawi(short,int);
-int __builtin_ia32_psradi(int,int);
-int __builtin_ia32_psrlwi(int,int);
-int __builtin_ia32_psrldi(int,int);
-int __builtin_ia32_psrlqi(long long,int);
+// int __builtin_ia32_psllwi(short,int);
+// int __builtin_ia32_pslldi(int,int);
+// int __builtin_ia32_psllqi(long long,int);
+// int __builtin_ia32_psrawi(short,int);
+// int __builtin_ia32_psradi(int,int);
+// int __builtin_ia32_psrlwi(int,int);
+// int __builtin_ia32_psrldi(int,int);
+// int __builtin_ia32_psrlqi(long long,int);
 
 // DQ (1/21/2017): Added SSE builtins
 #endif
@@ -3540,41 +3540,64 @@ __m512i __builtin_ia32_movdqa32load512_mask (const __v16si *, __v16si, __mmask16
 void __builtin_ia32_movdqa32store512_mask (__v16si *, __v16si, __mmask16);
 // __m512i __builtin_ia32_pmulld512_mask (__v16si, int );
 // __m512i __builtin_ia32_pmulld512_mask (__v16si, int );
+
+// DQ (1/25/2017): Unclear which if these to use for C langauge support (can't be overloaded in C).
+#ifdef __cplusplus__
 __m512i __builtin_ia32_pmulld512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __mmask16 );
+__m512i __builtin_ia32_psrav16si_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_psrlv16si_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_paddq512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psubq512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psllv8di_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psrav8di_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psrlv8di_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_paddd512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_psubd512_mask (__v16si, __v16si, __mmask8);
+__m512d __builtin_ia32_rsqrt14pd512_mask (__v8df, __v8df, __mmask8);
+__m512  __builtin_ia32_rsqrt14ps512_mask (__v16sf, __v16sf, __mmask16);
+// __m512  __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __mmask8);
+__m512  __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __v4sf, __mmask8);
+__m512i __builtin_ia32_pbroadcastd512 (__v4si, int );
+__m512i __builtin_ia32_pbroadcastd512_gpr_mask (int, int );
+#endif
+
+
+// __m512i __builtin_ia32_pmulld512_mask (__v16si, __v16si, __mmask16);
 __m512i __builtin_ia32_pmulld512_mask (__v16si, __v16si, __v16si, __mmask16);
 // __m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __mmask16 );
 __m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __v16si, __mmask16 );
-__m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __mmask16 );
+// __m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __mmask16 );
 // __m512i __builtin_ia32_psrav16si_mask (__v16si, int );
 __m512i __builtin_ia32_psrav16si_mask (__v16si, __v16si, __v16si, __mmask16);
-__m512i __builtin_ia32_psrav16si_mask (__v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_psrav16si_mask (__v16si, __v16si, __mmask16);
 // __m512i __builtin_ia32_psrlv16si_mask (__v16si, int );
 __m512i __builtin_ia32_psrlv16si_mask (__v16si, __v16si, __v16si, __mmask16);
-__m512i __builtin_ia32_psrlv16si_mask (__v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_psrlv16si_mask (__v16si, __v16si, __mmask16);
 // __m512i __builtin_ia32_paddq512_mask (__v8di, int );
 __m512i __builtin_ia32_paddq512_mask (__v8di, __v8di, __v8di, __mmask8);
-__m512i __builtin_ia32_paddq512_mask (__v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_paddq512_mask (__v8di, __v8di, __mmask8);
 
 // __m512i __builtin_ia32_psubq512_mask (__v8di, int );
-__m512i __builtin_ia32_psubq512_mask (__v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_psubq512_mask (__v8di, __v8di, __mmask8);
 __m512i __builtin_ia32_psubq512_mask (__v8di, __v8di, __v8di, __mmask8);
-__m512i __builtin_ia32_psllv8di_mask (__v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_psllv8di_mask (__v8di, __v8di, __mmask8);
 __m512i __builtin_ia32_psllv8di_mask (__v8di, __v8di, __v8di, __mmask8);
 // __m512i __builtin_ia32_psllv8di_mask (__v8di, int );
 // __m512i __builtin_ia32_psrav8di_mask (__v8di, int );
-__m512i __builtin_ia32_psrav8di_mask (__v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_psrav8di_mask (__v8di, __v8di, __mmask8);
 __m512i __builtin_ia32_psrav8di_mask (__v8di, __v8di, __v8di, __mmask8);
 // __m512i __builtin_ia32_psrlv8di_mask (__v8di, int );
-__m512i __builtin_ia32_psrlv8di_mask (__v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_psrlv8di_mask (__v8di, __v8di, __mmask8);
 __m512i __builtin_ia32_psrlv8di_mask (__v8di, __v8di, __v8di, __mmask8);
 // __m512i __builtin_ia32_paddd512_mask (__v16si, int );
 __m512i __builtin_ia32_paddd512_mask (__v16si, __v16si, __v16si, __mmask16);
-__m512i __builtin_ia32_paddd512_mask (__v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_paddd512_mask (__v16si, __v16si, __mmask16);
 // __m512i __builtin_ia32_pmuldq512_mask (__v16si, int );
 // __m512i __builtin_ia32_pmuldq512_mask (__v16si, __v16si, __mmask8);
 __m512i __builtin_ia32_pmuldq512_mask (__v16si, __v16si, __v8di, __mmask8);
 // __m512i __builtin_ia32_psubd512_mask (__v16si, int );
-__m512i __builtin_ia32_psubd512_mask (__v16si, __v16si, __mmask8);
+// __m512i __builtin_ia32_psubd512_mask (__v16si, __v16si, __mmask8);
 __m512i __builtin_ia32_psubd512_mask (__v16si, __v16si, __v16si, __mmask8);
 // __m512i __builtin_ia32_pmuludq512_mask (__v16si, int );
 // __m512i __builtin_ia32_pmuludq512_mask (__v16si, __v16si, __mmask16);
@@ -3606,10 +3629,10 @@ __m512 __builtin_ia32_rcp14ps512_mask (__v16sf, __v16sf, __mmask16);
 __m128d __builtin_ia32_rcp14sd (__v2df, __v2df );
 __m128 __builtin_ia32_rcp14ss (__v4sf, __v4sf );
 // __m512d __builtin_ia32_rsqrt14pd512_mask (__v8df, int );
-__m512d __builtin_ia32_rsqrt14pd512_mask (__v8df, __v8df, __mmask8);
+// __m512d __builtin_ia32_rsqrt14pd512_mask (__v8df, __v8df, __mmask8);
 __m512d __builtin_ia32_rsqrt14pd512_mask (__v8df, __v8df, __v8df, __mmask8);
 // __m512 __builtin_ia32_rsqrt14ps512_mask (__v16sf, int );
-__m512 __builtin_ia32_rsqrt14ps512_mask (__v16sf, __v16sf, __mmask16);
+// __m512 __builtin_ia32_rsqrt14ps512_mask (__v16sf, __v16sf, __mmask16);
 __m512 __builtin_ia32_rsqrt14ps512_mask (__v16sf, __v16sf, __v16sf, __mmask16);
 __m128d __builtin_ia32_rsqrt14sd (__v2df, __v2df );
 __m128 __builtin_ia32_rsqrt14ss (__v4sf, __v4sf );
@@ -3650,16 +3673,16 @@ __m512i __builtin_ia32_pabsq512_mask (__v8di, __v8di, __mmask8);
 __m512i __builtin_ia32_pabsd512_mask (__v16si, __v16si, __mmask16);
 // __m512i __builtin_ia32_pabsd512_mask (__v16si, __v16si, __v16si, __mmask16);
 // __m512 __builtin_ia32_broadcastss512 (__v4sf, int );
-__m512 __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __mmask8);
-__m512 __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __v4sf, __mmask8);
+// __m512 __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __mmask8);
+// __m512 __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __v4sf, __mmask8);
 // __m512d __builtin_ia32_broadcastsd512 (__v2df, int );
 // __m512d __builtin_ia32_broadcastsd512 (__v2df, int );
 // __m512d __builtin_ia32_broadcastsd512 (__v2df, int );
 
 // __m512i __builtin_ia32_pbroadcastd512 (__v4si, int );
 __m512i __builtin_ia32_pbroadcastd512 (__v4si, __v16si, __mmask16);
-__m512i __builtin_ia32_pbroadcastd512 (__v4si, int );
-__m512i __builtin_ia32_pbroadcastd512_gpr_mask (int, int );
+// __m512i __builtin_ia32_pbroadcastd512 (__v4si, int );
+// __m512i __builtin_ia32_pbroadcastd512_gpr_mask (int, int );
 __m512i __builtin_ia32_pbroadcastd512_gpr_mask (int, __v16si, int );
 // void __builtin_ia32_pbroadcastd512_gpr_mask (int, int );
 __m512i __builtin_ia32_pbroadcastq512 (__v2di, __v8di, __mmask8);
@@ -4374,7 +4397,12 @@ __m128 __builtin_ia32_vfmaddsubps (__v4sf, __v4sf, __v4sf );
 
 
 
+// DQ (1/25/2017): Unclear which if these to use for C langauge support (can't be overloaded in C).
+#ifdef __cplusplus__
 __v4sf __builtin_ia32_vcvtph2ps (__v4sf);
+#endif
+
+// __v4sf __builtin_ia32_vcvtph2ps (__v4sf);
 __m128 __builtin_ia32_vcvtph2ps (__v8hi);
 __m256 __builtin_ia32_vcvtph2ps256 (__v8hi);
 unsigned int __builtin_ia32_xbegin ();
