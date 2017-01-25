@@ -2,8 +2,14 @@
 
 #include "rose.h"
 
-#include "inliner.h"
 #include "CommandLineOptions.h"
+#ifdef USE_SAWYER_COMMANDLINE
+#include "Sawyer/CommandLineBoost.h"
+#else
+#include <boost/program_options.hpp>
+#endif
+
+#include "inliner.h"
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
@@ -749,8 +755,14 @@ int main(int argc, char* argv[]) {
       cout << "Error: wrong command line options."<<endl;
       exit(1);
     }
-     // Command line option handling.
+
+    // Command line option handling.
+#ifdef USE_SAWYER_COMMANDLINE
+    namespace po = Sawyer::CommandLine::Boost;
+#else
     namespace po = boost::program_options;
+#endif
+
     po::options_description desc
       ("analyterix V0.2\n"
        "Written by Markus Schordan\n"

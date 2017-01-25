@@ -1,5 +1,12 @@
 /* Reads a binary file, disassembles it, and performs various dominance analyses. */
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 #include "rose.h"
+
 #include "BinaryDominance.h"
 #include "AsmFunctionIndex.h"
 
@@ -25,7 +32,8 @@ int
 main(int argc, char *argv[])
 {
     /* Algorithm is first argument.  It is a letter and can optionally be followed by a colon and either an address or
-     * function name to restrict the test to a single function. */
+     * function name to restrict the test to a single function. If the first arg is "disabled' then the caller is only checking
+     * whether this test is disabled and we should return without printing anything. */
     assert(argc>1);
     std::string algorithm = argv[1];
     memmove(argv+1, argv+2, argc-1); /* also copy null ptr */
@@ -140,3 +148,5 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
+#endif

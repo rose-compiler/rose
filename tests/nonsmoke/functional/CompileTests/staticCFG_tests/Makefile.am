@@ -171,6 +171,11 @@ test_simple_int.C \
 test_wchars.C \
 X.C
 
+# DQ (1/19/2017): These are a problem for GNU 6.1.
+# if !ROSE_USING_GCC_VERSION_LATER_6_1
+# EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS += \
+# endif
+
 # JJW 5-22-2008 This test is not portable to Mac OS X
 # test2006_44.C
 

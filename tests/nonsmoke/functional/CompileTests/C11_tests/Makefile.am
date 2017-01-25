@@ -135,7 +135,8 @@ print_testcodes:
 	echo $(TESTCODES)
 
 check-local:
-if ROSE_USE_EDG_VERSION_4_9
+# DQ (1/18/2017): EDG 4.9 is the default now, and EDG 4.12 will be the default shortly.
+# if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "C11 tests using GNU version 4.8 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
@@ -145,9 +146,9 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 	@$(MAKE) $(PASSING_TEST_Objects)
 endif
 endif
-else
-	@echo "C11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
-endif
+# else
+# 	@echo "C11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
+# endif
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C11_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"

@@ -1,4 +1,10 @@
 // Example of using rose::BinaryAnalysis::PointerDetection to find pointer variables in a binary specimen.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 #include <rose.h>
 
 #include <BinaryPointerDetection.h>
@@ -102,3 +108,5 @@ main(int argc, char *argv[]) {
         }
     }
 }
+
+#endif
