@@ -102,6 +102,7 @@ Hydro_max_min.C \
 pointer_dereference.C \
 DelVolBaseLoopAlgorithm_loopExecute.C \
 ofstream.C \
+StressAccOptimizedV1_loopExecute.C \
 pointer_noaliasing.C
 
 # current failing if no aliasing cannot be assumed.

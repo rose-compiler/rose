@@ -121,6 +121,7 @@ namespace AutoParallelization
       defuse = new DefUseAnalysis(project);
     }
 
+
     ROSE_ASSERT(defuse != NULL);
     // int result = ;
     defuse->run(debug);
@@ -181,6 +182,8 @@ namespace AutoParallelization
   // TODO generate dep graph for the entire function and reuse it for all loops
   LoopTreeDepGraph*  ComputeDependenceGraph(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot)
   {
+
+    LoopTreeDepComp::supportNonFortranLoop=true;
     ROSE_ASSERT(loop && array_interface&& annot);
     //TODO check if its a canonical loop
 
