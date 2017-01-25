@@ -11,6 +11,7 @@
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/Optional.h>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 
 namespace Sawyer {
 
@@ -51,7 +52,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & value_;
+        s & BOOST_SERIALIZATION_NVP(value_);
     }
     
 public:
