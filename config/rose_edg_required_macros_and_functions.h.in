@@ -141,6 +141,53 @@
 	#define __pure2
 #endif
 
+/* DQ (1/16/2017): define this for the mac since it does not have a builtin definition. */
+#define __builtin_va_arg(v,l) (l)(sizeof(l))
+
+/* Required builtins for Clang 3.8 support on Mac 
+    __c11_atomic_init
+    __c11_atomic_thread_fence
+    __c11_atomic_signal_fence
+    __c11_atomic_is_lock_free (The argument is the size of the _Atomic(...) object, instead of its address)
+    __c11_atomic_store
+    __c11_atomic_load
+    __c11_atomic_exchange
+    __c11_atomic_compare_exchange_strong
+    __c11_atomic_compare_exchange_weak
+    __c11_atomic_fetch_add
+    __c11_atomic_fetch_sub
+    __c11_atomic_fetch_and
+    __c11_atomic_fetch_or
+    __c11_atomic_fetch_xor
+*/
+
+// DQ (1/16/2017): Note that we cannot seem to reset the value of the _GNUC_VER macro value.
+// So the best solution is to make a copy of the Mac specifi hdrs1/atomic header file.
+
+// #define _GNUC_VER 408
+// #if !__has_feature(cxx_atomic) && _GNUC_VER < 407
+// #if _GNUC_VER >= 407
+//    #warning _GNUC_VER greater then 407
+// #endif
+
+#if __cplusplus
+bool __c11_atomic_is_lock_free(__SIZE_TYPE__ x);
+#endif
+
+void __atomic_thread_fence (int memorder);
+void __atomic_signal_fence (int memorder);
+#define __atomic_exchange(ptr,val,ret,memorder) *(ptr)
+#define __atomic_store(ptr,val,memorder)
+
+
+/* Clang specific builtins for ARM instructions (these would ahve to be template functions, and specific to C++)
+T __builtin_arm_ldrex(const volatile T *addr);
+T __builtin_arm_ldaex(const volatile T *addr);
+int __builtin_arm_strex(T val, volatile T *addr);
+int __builtin_arm_stlex(T val, volatile T *addr);
+void __builtin_arm_clrex(void);
+*/
+
 #endif //#ifdef __APPLE__
 
 /* This does not work since the include path may not be set to include this file. 
@@ -488,9 +535,11 @@ long double __builtin_sqrtl  (long double __builtin__x);
 /* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
 // #if (__GNUC__ >= 6)
 
+// DQ (1/19/2017): Make the use of at least __builtin_va_arg available to the GNU 4.x compilers when using EDG 4.12.
 // DQ (12/17/2016): I think this has to be used for GNU version 5.x as well.
 // #if (__GNUC__ >= 6) || defined(__INTEL_COMPILER)
-#if (__GNUC__ >= 5) || defined(__INTEL_COMPILER)
+// #if (__GNUC__ >= 5) || defined(__INTEL_COMPILER)
+#if (__GNUC__ >= 4) || defined(__INTEL_COMPILER)
 /* Test how many files of builtins we have to add */
    #define _SMMINTRIN_H_INCLUDED
    #define _AMMINTRIN_H_INCLUDED

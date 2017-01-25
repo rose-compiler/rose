@@ -15,6 +15,7 @@
 #include <Sawyer/Sawyer.h>
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -230,9 +231,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & map_;
-        s & policy_;
-        s & size_;
+        s & BOOST_SERIALIZATION_NVP(map_);
+        s & BOOST_SERIALIZATION_NVP(policy_);
+        s & BOOST_SERIALIZATION_NVP(size_);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
