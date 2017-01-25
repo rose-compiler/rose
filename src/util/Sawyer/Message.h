@@ -973,8 +973,9 @@ public:
     static GangPtr instance();                          /**< New non-shared gang with NO_GANG_ID. */
     static GangPtr instanceForId(int id);               /**< The gang for the specified ID, creating a new one if necessary. */
     static GangPtr instanceForTty();                    /**< Returns the gang for streams that are emitting to a tty. */
+    static void shutdownNS();                           /**< Reset to initial state to free memory. */
 private:
-    static GangPtr intentionally_leaked_NS(int id);     // non-synchronized implementation for instance methods
+    static GangPtr createNS(int id);                    // non-synchronized implementation for instance methods
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1877,6 +1878,12 @@ public:
     Facilities& disable() { return enable(false); }
     /** @} */
 
+    /** Reset facilities to initial state.
+     *
+     *  This function resets each referenced @ref Facility object to its default-constructed state in preparation for program
+     *  exit. */
+    void shutdown();
+
     /** Print the list of facilities and their states.
      *
      *  This is mostly for debugging purposes. The output may have internal line feeds and will end with a line feed.
@@ -1939,6 +1946,15 @@ SAWYER_EXPORT extern Facilities mfacilities;
  *     Sawyer::Message::assertionStream = Sawer::Message::mlog[FATAL];
  * @endcode */
 SAWYER_EXPORT extern SProxy assertionStream;
+
+/** Reset global variables to initial states.
+ *
+ *  This function resets global variables such as @ref merr, @ref mlog, and @ref mfacilities to their default-constructed
+ *  state. Sometimes it's necessary to do this during program exit, otherwise the C++ runtime might terminate the Boost
+ *  thread synchronization library before Sawyer, which leads to exceptions or segmentation faults when Sawyer's stream
+ *  destructors run.  In fact, @ref initializeLibrary arranges for this shutdown function to be called by exit. */
+SAWYER_EXPORT void shutdown();
+    
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Facilities guard
