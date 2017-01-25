@@ -26,7 +26,6 @@
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
-#include "SgNodeHelper.h"
 #include "AType.h"
 #include "AstMatching.h"
 #include "RewriteSystem.h"
@@ -365,8 +364,8 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
     ("rewrite-ssa", "rewrite SSA form (rewrite rules perform semantics preserving operations).")
-    ("equivalence-check", "Check programs provided on the command line for equivalence")
-    ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
+    //    ("equivalence-check", "Check programs provided on the command line for equivalence")
+    //("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
@@ -553,7 +552,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   /* set booloptions for zero-argument options (does not require
      yes/no on command-line, but resolves it by checking for its
      existence on the command line to true or false)
-     */
+  */
   boolOptions.registerOption("svcomp-mode",false);
   boolOptions.registerOption("data-race",false);
   boolOptions.registerOption("data-race-fail",false);
@@ -1020,9 +1019,6 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
   }
 }
 
-/* refactoring in progress */
-//#include "DataRaceDetection.C"
-
 int main( int argc, char * argv[] ) {
   Sawyer::Message::Facility logger("CodeThorn");
   mfacilities.insert(logger);
@@ -1053,10 +1049,12 @@ int main( int argc, char * argv[] ) {
     Analyzer analyzer;
     global_analyzer=&analyzer;
 
+#if 0
     string option_pragma_name;
     if (args.count("limit-to-fragment")) {
       option_pragma_name = args["limit-to-fragment"].as<string>();
     }
+#endif
 
     if (args.count("internal-checks")) {
       if(CodeThorn::internalChecks(argc,argv)==false)
@@ -1215,7 +1213,7 @@ int main( int argc, char * argv[] ) {
         logger[TRACE] <<"STATUS: testing constant expressions."<<endl;
         CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
         list<SgExpression*> exprList=exprRootList(sageProject);
-        logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
+        logger[INFO] <<"INFO: found "<<exprList.size()<<" expressions."<<endl;
         for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
           EvalResult r=evaluator->traverse(*i);
           if(r.isConst()) {
@@ -1340,6 +1338,7 @@ int main( int argc, char * argv[] ) {
     analyzer.getVariableIdMapping()->toStream(cout);
 #endif
 
+#if 0
     // currently not used, but may be revived to properly handle new annotation
     SgNode* fragmentStartNode=0;
     if(option_pragma_name!="") {
@@ -1358,6 +1357,7 @@ int main( int argc, char * argv[] ) {
       list<SgPragmaDeclaration*>::iterator i=pragmaDeclList.begin();
       fragmentStartNode=*i;
     }
+#endif
 
     if(boolOptions["eliminate-arrays"]) {
       //analyzer.initializeVariableIdMapping(sageProject);
@@ -1368,10 +1368,35 @@ int main( int argc, char * argv[] ) {
     }
 
     logger[TRACE]<< "INIT: creating solver."<<endl;
+
     if(option_specialize_fun_name!="") {
       analyzer.initializeSolver1(option_specialize_fun_name,root,true);
     } else {
-      analyzer.initializeSolver1("main",root,false);
+      // if main function exists, start with main-function
+      // if a single function exist, use this function
+      // in all other cases exit with error.
+      RoseAst completeAst(root);
+      string startFunction="main";
+      SgNode* startFunRoot=completeAst.findFunctionByName(startFunction);
+      if(startFunRoot==0) {
+        // no main function exists. check if a single function exists in the translation unit
+        SgProject* project=isSgProject(root);
+        ROSE_ASSERT(project);
+        std::list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(project);
+        if(funDefs.size()==1) {
+          // found exactly one function. Analyse this function.
+          SgFunctionDefinition* functionDef=*funDefs.begin();
+          startFunction=SgNodeHelper::getFunctionName(functionDef);
+        } else if(funDefs.size()>1) {
+          cerr<<"Error: no main function and more than one function in translation unit."<<endl;
+          exit(1);
+        } else if(funDefs.size()==0) {
+          cerr<<"Error: no function in translation unit."<<endl;
+          exit(1);
+        }
+      }
+      ROSE_ASSERT(startFunction!="");
+      analyzer.initializeSolver1(startFunction,root,false);
     }
     analyzer.initLabeledAssertNodes(sageProject);
 
@@ -1701,6 +1726,7 @@ int main( int argc, char * argv[] ) {
       }
     }
 
+#if 0
     if(args.count("equivalence-check")) {
       // TODO: iterate over SgFile nodes, create vectors for each phase
       // foreach file in SgFileList
@@ -1717,6 +1743,7 @@ int main( int argc, char * argv[] ) {
       // TODO CHECK with first
       // end foreach
     }
+#endif
 
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
       SAR_MODE sarMode=SAR_SSA;
@@ -1731,13 +1758,6 @@ int main( int argc, char * argv[] ) {
       logger[TRACE] <<"STATUS: performing array analysis on STG."<<endl;
       logger[TRACE] <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 
-      Label fragmentStartLabel=Labeler::NO_LABEL;
-      if(fragmentStartNode!=0) {
-        fragmentStartLabel=analyzer.getLabeler()->getLabel(fragmentStartNode);
-        logger[INFO] <<"Fragment: start-node: "<<fragmentStartNode<<"  start-label: "<<fragmentStartLabel<<endl;
-        logger[INFO] <<"Fragment: start-node: currently not supported."<<endl;
-      }
- 
       bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
 
       timer.start();

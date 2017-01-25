@@ -82,22 +82,23 @@ int Specialization::numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* var
 Specialization::Specialization():
   _specializedFunctionRootNode(0),
   _checkAllLoops(false),
-  _visualizeReadWriteAccesses(false) {
+  _visualizeReadWriteAccesses(false),
+  _maxNumberOfExtractedUpdates(500) {
 }
 
 int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
   return specializeFunction(project, funNameToFind, param, constInt, "", 0, variableIdMapping);
 }
 
-int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, string varInitName, int initConst, VariableIdMapping* variableIdMapping) {
+int Specialization::specializeFunction(SgProject* project, string funNameToFind, int paramNr, int constInt, string varInitName, int initConst, VariableIdMapping* variableIdMapping) {
   std::list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
   int subst=0;
   for(std::list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
     std::string funName=SgNodeHelper::getFunctionName(*i);
     if(funNameToFind==funName) {
       _specializedFunctionRootNode=*i;
-      if(param>=0) {
-        VariableId varId=determineVariableIdToSpecialize(*i,param,variableIdMapping);
+      if(paramNr>=0) {
+        VariableId varId=determineVariableIdToSpecialize(*i,paramNr,variableIdMapping);
         subst+=substituteVariablesWithConst(*i, variableIdMapping, varId, constInt);
       }
       if(varInitName!="") {
@@ -115,9 +116,9 @@ int Specialization::substituteVarInitWithConst(SgFunctionDefinition* funDef, Var
   for(std::set<SgVariableDeclaration*>::iterator i=varDeclSet.begin();i!=varDeclSet.end();++i) {
     SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(*i);
     SgName sgname=initName->get_qualified_name();
-    cout<<"DEBUG: investigating variable: "<<sgname.getString()<<endl;
+    //cout<<"DEBUG: investigating variable: "<<sgname.getString()<<endl;
     if(sgname.getString()==varInitName) {
-      cout<<"DEBUG: found variable: "<<sgname.getString()<<endl;
+      //cout<<"DEBUG: found variable: "<<sgname.getString()<<endl;
       VariableId varId=variableIdMapping->variableId(initName);
       varInitSubst+=substituteVariablesWithConst(funDef, variableIdMapping, varId, varInitConstInt);
     }
@@ -233,12 +234,16 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
    Labeler* labeler=ana->getLabeler();
    VariableIdMapping* variableIdMapping=ana->getVariableIdMapping();
    TransitionGraph* tg=ana->getTransitionGraph();
+
    const EState* estate=tg->getStartEState();
+   ROSE_ASSERT(estate!=0);
+
    EStatePtrSet succSet=tg->succ(estate);
    ExprAnalyzer* exprAnalyzer=ana->getExprAnalyzer();
    int numProcessedArrayUpdates=0;
    vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
 
+   int numberOfExtractedUpdates=0;
    while(succSet.size()>=1) {
      // investigate state
      Label lab=estate->label();
@@ -249,6 +254,7 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
      if(isSgExpressionRoot(node))
        node=SgNodeHelper::getExprRootChild(node);
      if(SgExpression* exp=isSgExpression(node)) {
+       // TODO: variable declaration with initialization
        if(SgNodeHelper::isArrayElementAssignment(exp)||SgNodeHelper::isFloatingPointAssignment(node)) {
          stgArrayUpdateSequence.push_back(make_pair(estate,exp));
        }
@@ -260,9 +266,16 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
        cerr<<"       source: "<<node->unparseToString()<<endl;
        exit(1);
      } else {
+        ROSE_ASSERT(succSet.size()==1);
        EStatePtrSet::iterator i=succSet.begin();
        estate=*i;
      }  
+     numberOfExtractedUpdates++;
+     if(numberOfExtractedUpdates>_maxNumberOfExtractedUpdates) {
+       std::stringstream ss;
+       ss<<"Maximum number of "<<_maxNumberOfExtractedUpdates<<" extracted updates reached.";
+       throw CodeThorn::Exception(ss.str());
+     }
      // next successor set
      succSet=tg->succ(estate);
    }
@@ -447,6 +460,8 @@ void Specialization::attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates
 
 // this function has become superfluous for SSA numbering (but for substituting uses with rhs of defs it is still necessary (2/2)
 void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode) {
+  if(arrayUpdates.size()==0)
+    return;
   ArrayUpdatesSequence::iterator i=arrayUpdates.begin();
   ++i; // we start at element 2 because no substitutions can be performed in the first one AND this simplifies passing the previous element (i-1) when starting the backward search
   for(;i!=arrayUpdates.end();++i) {
@@ -771,7 +786,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
               if(!intersect.empty()) {
                 // verification failed
 		readWriteRaces.insert(intersect.begin(), intersect.end());
-                cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
+                //cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
                 errorCount++;
 		if (!_checkAllDataRaces) {
 		  if(_checkAllLoops) {
@@ -785,7 +800,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
               if(!intersect.empty()) {
                 // verification failed
 		writeWriteRaces.insert(intersect.begin(), intersect.end());
-                cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
+                //cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
                 errorCount++;
 		if (!_checkAllDataRaces) {
 		  if(_checkAllLoops) {
@@ -816,6 +831,8 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
   } // foreach loop
   if (errorCount == 0) {
     cout<<"DATA RACE CHECK: PASS."<<endl;
+  } else {
+    cout<<"DATA RACE CHECK: FAIL."<<endl;
   }
   return errorCount;
 }
