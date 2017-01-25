@@ -485,6 +485,9 @@ CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<
                    optionList.push_back(*it);
                    it = argList.erase(it);
 
+#if 0
+                // DQ (1/25/2017): Comment this out as a test of C file command line generation to EDG.
+
                 // DQ (1/21/2017): Adding support for options taking more than one paramter.
                    if (isOptionTakingThirdParameter(inputPrefix) == true)
                       {
@@ -503,7 +506,7 @@ CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<
                         ROSE_ASSERT(false);
 #endif
                       }
-
+#endif
                  }
                 else
                  {
@@ -576,6 +579,13 @@ CommandlineProcessing::addListToCommandLine ( vector<string> & argv , string pre
   // for (unsigned int i = 0; i < argList.size(); ++i) 
      for (size_t i = 0; i < argList.size(); ++i) 
         {
+#if 1
+       // DQ (1/25/2017): Original version of code (required for C test codes to pass, see C_tests directory).
+       // However, this causes a problem for the --edg_parameter support (which is fixed by the code below).
+          argv.push_back(prefix + argList[i]);
+#else
+       // DQ (1/25/2017): Comment this out as a test of C file command line generation to EDG.
+
        // DQ (1/21/2017): The prefix should only be on the first argument (if it is non-empty).
        // argv.push_back(prefix + argList[i]);
 #if 0
@@ -599,6 +609,7 @@ CommandlineProcessing::addListToCommandLine ( vector<string> & argv , string pre
                     argv.push_back(argList[i]);
                   }
              }
+#endif
         }
    }
 
