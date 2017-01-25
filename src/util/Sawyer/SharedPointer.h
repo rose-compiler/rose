@@ -15,6 +15,7 @@
 #include <Sawyer/Synchronization.h>
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <cstddef>
 #include <ostream>
@@ -46,7 +47,7 @@ private:
 
     template<class S>
     void save(S &s, const unsigned /*version*/) const {
-        s << pointee_;
+        s << BOOST_SERIALIZATION_NVP(pointee_);
     }
 
     template<class S>

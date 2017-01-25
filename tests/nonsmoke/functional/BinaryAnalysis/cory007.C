@@ -1,4 +1,9 @@
 // Test that user-defined attributes can be added to symbolic expressions.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include <rose.h>
 
@@ -124,3 +129,5 @@ main() {
     a->eraseAttribute(DUCKS);
     ASSERT_always_forbid(a->attributeExists(DUCKS));
 }
+
+#endif

@@ -1,3 +1,9 @@
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 
 // This is now included in libraryIdentification.h
 // #include "functionIdentification.h"
@@ -48,3 +54,5 @@ int main()
 
 
 };
+
+#endif

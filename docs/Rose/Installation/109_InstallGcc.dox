@@ -45,7 +45,7 @@
  *  @code
  *  apt-get install build-essential
  *  apt-get install g++ gfortran
- *  g++ --version # make sure it says 4.8
+ *  g++ --version # make sure it says 5.4.0
  *  @endcode
  *
  *  @section installing_gcc_osx OS X

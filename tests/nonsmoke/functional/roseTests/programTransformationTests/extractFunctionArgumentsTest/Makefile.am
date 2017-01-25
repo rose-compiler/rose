@@ -20,6 +20,8 @@ broken_tests = test2013_242.C
 # tested within this directory.
 broken_tests += test2013_241.C
 
+# DQ (1/19/2017): This normalization of "const char*" literal strings to "char*" is a problem for GNU 6.1 (6.x and later) compilers.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
 # DQ (4/17/2016): This test fails when Clang is used for the backend compiler because 
 # string constants are assgined to non-const char* and so the normalization will have 
 # to address this detail.  This is likely only caught by later version compilers that
@@ -27,6 +29,7 @@ broken_tests += test2013_241.C
 if !USING_CLANG_COMPILER
 ROSE__CXX_TESTS += \
    test2005_50.C 
+endif
 endif
 
 normalizationTranslator_SPECIMENS_DIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests

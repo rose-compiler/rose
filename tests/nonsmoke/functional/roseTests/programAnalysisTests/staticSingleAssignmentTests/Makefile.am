@@ -176,7 +176,6 @@ test2004_29.C \
 test2004_31.C \
 test2004_33.C \
 test2004_34.C \
-test2004_35.C \
 test2004_38.C \
 test2004_39.C \
 test2004_40.C \
@@ -215,7 +214,6 @@ test2004_80.C \
 test2004_81.C \
 test2004_82.C \
 test2004_84.C \
-test2004_85.C \
 test2004_86.C \
 test2004_87.C \
 test2004_88.C \
@@ -316,7 +314,6 @@ test2005_40.C \
 test2005_41.C \
 test2005_43.C \
 test2005_44.C \
-test2005_45.C \
 test2005_46.C \
 test2005_47.C \
 test2005_48.C \
@@ -336,7 +333,6 @@ test2005_71.C \
 test2005_77.C \
 test2005_78.C \
 test2005_80.C \
-test2005_82.C \
 test2005_83.C \
 test2005_84.C \
 test2005_86.C \
@@ -345,12 +341,9 @@ test2005_89.C \
 test2005_90.C \
 test2005_91.C \
 test2005_92.C \
-test2005_93.C \
 test2005_94.C \
-test2005_95.C \
 test2005_96.C \
 test2005_97.C \
-test2005_98.C \
 test2005_99.C \
 test2005_100.C \
 test2005_101.C \
@@ -375,7 +368,6 @@ test2005_124.C \
 test2005_125.C \
 test2005_126.C \
 test2005_127.C \
-test2005_128.C \
 test2005_134.C \
 test2005_136.C \
 test2005_140.C \
@@ -443,7 +435,6 @@ test2006_16.C \
 test2006_17.C \
 test2006_18.C \
 test2006_19.C \
-test2006_20.C \
 test2006_22.C \
 test2006_23.C \
 test2006_25.C \
@@ -483,7 +474,6 @@ test2006_80.C \
 test2006_81.C \
 test2006_82.C \
 test2006_83.C \
-test2006_84.C \
 test2006_85.C \
 test2006_86.C \
 test2006_87.C \
@@ -491,7 +481,6 @@ test2006_88.C \
 test2006_89.C \
 test2006_90.C \
 test2006_91.C \
-test2006_92.C \
 test2006_94.C \
 test2006_95.C \
 test2006_96.C \
@@ -523,7 +512,6 @@ test2006_126.C \
 test2006_129.C \
 test2006_139.C \
 test2006_140.C \
-test2006_141.C \
 test2006_142.C \
 test2006_143.C \
 test2006_144.C \
@@ -608,7 +596,6 @@ test2007_133.C \
 test2007_135.C \
 test2007_137.C \
 test2007_140.C \
-test2007_141.C \
 test2007_142.C \
 test2007_147.C \
 test2007_150.C \
@@ -658,6 +645,30 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C
+
+
+# DQ (1/19/2017): These is a problem for GNU 5.1.
+if !ROSE_USING_GCC_VERSION_LATER_5_1
+CXX_TESTCODES_REQUIRED_TO_PASS += \
+   test2004_85.C 
+endif
+
+# DQ (1/20/2017): These is a problem for GNU 6.1.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
+CXX_TESTCODES_REQUIRED_TO_PASS += \
+   test2004_35.C \
+   test2005_45.C \
+   test2005_82.C \
+   test2005_93.C \
+   test2005_95.C \
+   test2005_98.C \
+   test2005_128.C \
+   test2006_20.C \
+   test2006_84.C \
+   test2006_92.C \
+   test2006_141.C \
+   test2007_141.C 
+endif
 
 # DQ (8/31/2016): This is now fixed.
 # DQ (8/26/2016): Failing test with new template fix (likely similar problem to call graph fix).

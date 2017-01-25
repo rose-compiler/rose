@@ -1,3 +1,9 @@
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 #include "rose.h"
 #include "BinaryControlFlow.h"
 
@@ -26,3 +32,5 @@ int main() {
     test();
     return 0;
 }
+
+#endif

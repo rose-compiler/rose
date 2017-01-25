@@ -13,6 +13,7 @@
 #include <Sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/map.hpp>
 #include <stdexcept>
 
@@ -76,7 +77,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & map_;
+        s & BOOST_SERIALIZATION_NVP(map_);
     }
 
 public:

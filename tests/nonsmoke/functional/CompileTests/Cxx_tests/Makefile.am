@@ -108,12 +108,10 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_67.C \
    test2014_68.C \
    test2014_70.C \
-   test2014_71.C \
    test2014_72.C \
    test2014_73.C \
    test2014_74.C \
    test2014_75.C \
-   test2014_76.C \
    test2014_77.C \
    test2014_78.C \
    test2013_117.C \
@@ -144,8 +142,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_107.C \
    test2014_108.C \
    test2014_109.C \
-   test2014_110.C \
-   test2014_111.C \
    test2014_112.C \
    test2014_114.C \
    test2014_115.C \
@@ -279,7 +275,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_27.C \
    test2015_28.C \
    test2015_29.C \
-   test2015_30.C \
    test2015_32.C \
    test2015_33.C \
    test2015_34.C \
@@ -296,13 +291,11 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_59.C \
    test2015_60.C \
    test2015_61.C \
-   test2015_70.C \
    test2015_76.C \
    test2015_77.C \
    test2015_78.C \
    test2015_79.C \
    test2015_80.C \
-   test2015_81.C \
    test2015_97.C \
    lulesh.C \
    luleshTALC.C \
@@ -329,8 +322,6 @@ NEW_TESTCODES = \
    test2015_112.C \
    test2015_113.C \
    test2015_114.C \
-   test2015_115.C \
-   test2015_116.C \
    test2015_117.C \
    test2015_118.C \
    test2015_119.C \
@@ -356,7 +347,6 @@ NEW_TESTCODES = \
    test2015_145.C \
    test2015_146.C \
    test2015_147.C \
-   test2015_148.C \
    test2015_149.C \
    test2015_150.C \
    test2015_151.C \
@@ -377,10 +367,6 @@ NEW_TESTCODES = \
    test2016_12.C \
    test2016_13.C \
    test2016_14.C \
-   test2016_15.C \
-   test2016_16.C \
-   test2016_17.C \
-   test2016_18.C \
    test2016_19.C \
    test2016_20.C \
    test2016_21.C \
@@ -428,15 +414,36 @@ NEW_TESTCODES = \
    test2016_70.C \
    test2016_80.C \
    test2016_81.C \
-   test2016_82.C \
    test2016_83.C \
    test2016_85.C \
    test2016_86.C \
    test2016_87.C \
    test2016_88.C \
-   test2016_89.C \
    test2016_91.C \
    test2016_93.C
+
+# DQ (1/16/2017): These test codes include not portable macros and references to header files that are a problem for Clang.
+if !USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_71.C \
+   test2014_76.C \
+   test2014_110.C \
+   test2014_111.C \
+   test2015_70.C \
+   test2015_81.C 
+
+NEW_TESTCODES += \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_148.C \
+   test2015_30.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
+   test2016_15.C \
+   test2016_82.C \
+   test2016_89.C 
+endif
 
 # DQ (11/21/2016): This test code does not work on older versions of GNU g++.
 if ROSE_USING_GCC_VERSION_LATER_4_4
@@ -581,10 +588,15 @@ ICPC_SPECIFIC_TESTCODES = \
 # with version 4.9 (not 4.8).
 if !USING_INTEL_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-   test2013_304.C \
    test2014_159.C \
-   test2014_211.C \
+   test2014_211.C 
+
+# DQ (1/16/2017): These test codes include not portable macros and references to header files that are a problem for Clang.
+if !USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2013_304.C \
    test2015_55.C
+endif
 endif
 
 # These should not be tested with the EDG 4.7 frontend (pass only in ROSE with the EDG 4.9 frontend).

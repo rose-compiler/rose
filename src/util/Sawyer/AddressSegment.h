@@ -17,6 +17,7 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/string.hpp>
 
 namespace Sawyer {
@@ -51,10 +52,10 @@ private:
     // You'll also need to register the most-derived buffer type.
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & buffer_;
-        s & offset_;
-        s & accessibility_;
-        s & name_;
+        s & BOOST_SERIALIZATION_NVP(buffer_);
+        s & BOOST_SERIALIZATION_NVP(offset_);
+        s & BOOST_SERIALIZATION_NVP(accessibility_);
+        s & BOOST_SERIALIZATION_NVP(name_);
     }
 
     //-------------------------------------------------------------------------------------------------------------------
