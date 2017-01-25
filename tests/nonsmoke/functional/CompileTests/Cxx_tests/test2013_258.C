@@ -4,8 +4,10 @@
   #include "xmmintrin.h"
   #define __inline inline
 #else
+// DQ (1/25/2017): I think this should be (__vector_size__ (16) for at least GNU 4.8 in C++11 mode.
 // typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
-  typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
+// typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
+  typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
 #endif
 
 #ifdef __INTEL_COMPILER
