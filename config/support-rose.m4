@@ -2379,6 +2379,7 @@ tests/nonsmoke/specimens/c/Makefile
 tests/nonsmoke/specimens/fortran/Makefile
 tests/nonsmoke/specimens/java/Makefile
 tests/nonsmoke/unit/Makefile
+tests/nonsmoke/unit/SageInterface/Makefile
 tests/roseTests/Makefile
 tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/programAnalysisTests/Makefile
