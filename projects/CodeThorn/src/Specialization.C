@@ -82,7 +82,8 @@ int Specialization::numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* var
 Specialization::Specialization():
   _specializedFunctionRootNode(0),
   _checkAllLoops(false),
-  _visualizeReadWriteAccesses(false) {
+  _visualizeReadWriteAccesses(false),
+  _maxNumberOfExtractedUpdates(500) {
 }
 
 int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
@@ -242,7 +243,7 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
    int numProcessedArrayUpdates=0;
    vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
 
-
+   int numberOfExtractedUpdates=0;
    while(succSet.size()>=1) {
      // investigate state
      Label lab=estate->label();
@@ -260,7 +261,7 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
      }
      if(succSet.size()>1) {
        cerr<<estate->toString()<<endl;
-       cerr<<"Error: ST G-States with more than one successor not supported in term extraction yet."<<endl;
+       cerr<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
        cerr<<"       @ node: "<<node->class_name()<<endl;
        cerr<<"       source: "<<node->unparseToString()<<endl;
        exit(1);
@@ -269,6 +270,12 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
        EStatePtrSet::iterator i=succSet.begin();
        estate=*i;
      }  
+     numberOfExtractedUpdates++;
+     if(numberOfExtractedUpdates>_maxNumberOfExtractedUpdates) {
+       std::stringstream ss;
+       ss<<"Maximum number of "<<_maxNumberOfExtractedUpdates<<" extracted updates reached.";
+       throw CodeThorn::Exception(ss.str());
+     }
      // next successor set
      succSet=tg->succ(estate);
    }
@@ -779,7 +786,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
               if(!intersect.empty()) {
                 // verification failed
 		readWriteRaces.insert(intersect.begin(), intersect.end());
-                cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
+                //cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
                 errorCount++;
 		if (!_checkAllDataRaces) {
 		  if(_checkAllLoops) {
@@ -793,7 +800,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
               if(!intersect.empty()) {
                 // verification failed
 		writeWriteRaces.insert(intersect.begin(), intersect.end());
-                cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
+                //cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
                 errorCount++;
 		if (!_checkAllDataRaces) {
 		  if(_checkAllLoops) {
@@ -824,6 +831,8 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
   } // foreach loop
   if (errorCount == 0) {
     cout<<"DATA RACE CHECK: PASS."<<endl;
+  } else {
+    cout<<"DATA RACE CHECK: FAIL."<<endl;
   }
   return errorCount;
 }

@@ -26,7 +26,6 @@
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
-#include "SgNodeHelper.h"
 #include "AType.h"
 #include "AstMatching.h"
 #include "RewriteSystem.h"
@@ -1369,10 +1368,35 @@ int main( int argc, char * argv[] ) {
     }
 
     logger[TRACE]<< "INIT: creating solver."<<endl;
+
     if(option_specialize_fun_name!="") {
       analyzer.initializeSolver1(option_specialize_fun_name,root,true);
     } else {
-      analyzer.initializeSolver1("main",root,false);
+      // if main function exists, start with main-function
+      // if a single function exist, use this function
+      // in all other cases exit with error.
+      RoseAst completeAst(root);
+      string startFunction="main";
+      SgNode* startFunRoot=completeAst.findFunctionByName(startFunction);
+      if(startFunRoot==0) {
+        // no main function exists. check if a single function exists in the translation unit
+        SgProject* project=isSgProject(root);
+        ROSE_ASSERT(project);
+        std::list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(project);
+        if(funDefs.size()==1) {
+          // found exactly one function. Analyse this function.
+          SgFunctionDefinition* functionDef=*funDefs.begin();
+          startFunction=SgNodeHelper::getFunctionName(functionDef);
+        } else if(funDefs.size()>1) {
+          cerr<<"Error: no main function and more than one function in translation unit."<<endl;
+          exit(1);
+        } else if(funDefs.size()==0) {
+          cerr<<"Error: no function in translation unit."<<endl;
+          exit(1);
+        }
+      }
+      ROSE_ASSERT(startFunction!="");
+      analyzer.initializeSolver1(startFunction,root,false);
     }
     analyzer.initLabeledAssertNodes(sageProject);
 
