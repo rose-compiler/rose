@@ -2311,6 +2311,8 @@ private:
                                         "|\\[err\\]: terminated after \\d+ seconds"     // timeout from $(RTH_RUN)
                                         "|: Assertion `[^\\n]+' failed\\."              // failed <cassert> assertion
                                         "|: undefined reference to `"                   // GNU linker error
+                                        "|No space left on device"                      // filesystem is full
+                                        "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
 
                                         ")[^\\n]*$)|"
                                         "(^[^\\n]*?(?:"

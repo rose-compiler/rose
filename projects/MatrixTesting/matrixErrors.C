@@ -35,7 +35,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.purpose("update cache for latest errors");
     parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
     parser.chapter(1, "ROSE Command-line Tools");
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{action} [@{args}...]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{action} [@v{args}...]");
     parser.errorStream(mlog[FATAL]);
 
     parser.doc("Description",
@@ -213,6 +213,8 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                       "|^.* \\[err\\]: +what\\(\\): .*"         // C++ exception
                       "|Assertion `.*'' failed\\.$"             // failed <cassert> assertion
                       "|^.*: undefined reference to `.*"        // GNU linker error
+                      "|No space left on device"
+                      "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
                       "|\\merror: \n.*"                         // ROSE error on next line
                       //----- regular expressions end -----
                       ")')"
