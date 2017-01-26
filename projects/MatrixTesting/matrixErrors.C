@@ -215,7 +215,7 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                       "|^.*: undefined reference to `.*"        // GNU linker error
                       "|No space left on device"
                       "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
-                      "|\\merror: \n.*"                         // ROSE error on next line
+                      "|\\merror: ?\n.*"                        // ROSE error on next line
                       //----- regular expressions end -----
                       ")')"
                       " from attachments att" +
