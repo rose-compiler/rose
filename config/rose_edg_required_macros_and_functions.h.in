@@ -4573,8 +4573,13 @@ void __builtin_ia32_xsaveopt64 (void*__P, long long __M);
 
 
 #if 1
-// DQ (1/22/2017): More builtins specific to GNU 5.1
-typedef unsigned int __mmask32;
+// DQ (1/22/2017): More builtins specific to GNU 5.1 (__mmask32 is required for C++11 mode in GNU 4.8 and likely later versions).
+
+// DQ (1/25/2017): Note that __mmask32 is used template arguments and so in the generated code it is not defined.
+// Use a CPP macro instead to get it into the generated code more directly.
+// typedef unsigned int __mmask32;
+#define __mmask32 unsigned int
+
 typedef unsigned long long __mmask64;
 
 // typedef short __v32hi __attribute__ ((__vector_size__ (64)));
