@@ -26,6 +26,8 @@ using namespace rose;
 
 #define DEBUG_ROSE_EXPERIMENTAL 1
 
+#define USE_EXECUTABLE_FROM_PATH 1
+
 SgUntypedFile*
 experimental_openFortranParser_main(int argc, char **argv)
    {
@@ -125,8 +127,13 @@ experimental_openFortranParser_main(int argc, char **argv)
 
   // Add pipe to begin transforming OFP's ATerm parse tree
      commandString += " | ";
+
+#if USE_EXECUTABLE_FROM_PATH
+     commandString += "ofp2fast";
+#else
      commandString += path_to_fortran_stratego_transformations_directory;
      commandString += "/ofp2fast";
+#endif
 
      string path_to_fortran_aterm_traversal_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal", "bin");
 
@@ -137,8 +144,12 @@ experimental_openFortranParser_main(int argc, char **argv)
         {
        // Convert from OFP's internal representation (FAST) to a ROSE SgUntyped aterm representation
           commandString += " | ";
+#if USE_EXECUTABLE_FROM_PATH
+          commandString += "fast2sage";
+#else
           commandString += path_to_fortran_aterm_traversal_directory;
           commandString += "/fast2sage";
+#endif
 
        // Output the transformed aterm file
           commandString += " -o ";
@@ -224,6 +235,9 @@ experimental_openFortranParser_main(int argc, char **argv)
              }
           else
              {
+#if DEBUG_ROSE_EXPERIMENTAL
+               printf ("In experimental_openFortranParser_main(): false branch taken: traverse_SgUntypedFile() != ATtrue || untypedFile == NULL: untypedFile = %p \n",untypedFile);
+#endif
                return untypedFile;
              }
         }

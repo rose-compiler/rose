@@ -1,6 +1,8 @@
 //Rasmussen-delete-me #define ROSE_USE_ROSE_ATERM_SUPPORT 1
 //Rasmussen-delete-me #define DEBUG_PRINT
 
+#define DEBUG_PRINT
+
 #include "rosePublicConfig.h"
 #include "sage3basic.h"
 
