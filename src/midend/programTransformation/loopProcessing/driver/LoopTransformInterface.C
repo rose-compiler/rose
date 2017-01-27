@@ -17,7 +17,11 @@ int LoopTransformInterface::configIndex = 0;
 AliasAnalysisInterface* LoopTransformInterface::aliasInfo = 0;
 FunctionSideEffectInterface* LoopTransformInterface::funcInfo = 0;
 ArrayAbstractionInterface* LoopTransformInterface::arrayInfo = 0;
+
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
 AutoTuningInterface* LoopTransformInterface::tuning = 0;
+#endif
 
 using namespace std;
 
@@ -153,11 +157,14 @@ std::cerr << "LoopTransformationWrap:operator()\n";
 void LoopTransformInterface:: set_astInterface( AstInterface& _fa)
 { fa = &_fa; }
 
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
 void LoopTransformInterface::
 set_tuningInterface(AutoTuningInterface* _tuning)
 { tuning = _tuning;  
   if (arrayInfo != 0) tuning->set_arrayInfo(*arrayInfo); 
 }
+#endif
 
 void LoopTransformInterface::
 cmdline_configure(std::vector<std::string>& argv)
@@ -183,7 +190,10 @@ cmdline_configure(std::vector<std::string>& argv)
            ArrayUseAccessFunction* r = new ArrayUseAccessFunction(name, arrayInfo, funcInfo);
            funcInfo = r;
            arrayInfo = r;
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
            if (tuning != 0) tuning->set_arrayInfo(*r);
+#endif
         }
         else if (opt == "-poet");
         else 
@@ -198,7 +208,11 @@ TransformTraverse(AstInterfaceImpl& scope,const AstNodePtr& head)
 {
   assert(aliasInfo!=0);  /*QY: alias analysis should never be null*/ 
   AstInterface _fa(&scope);
+
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
   if (tuning != 0) tuning->set_astInterface(_fa);
+#endif
 
   fa = &_fa;  /*QY: use static member variable to save the AstInterface*/
 
@@ -225,7 +239,11 @@ TransformTraverse(AstInterfaceImpl& scope,const AstNodePtr& head)
        result = LoopUnrolling()(result);
   _fa.SetRoot(result);
 
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
   if (tuning != 0)  tuning->ApplyOpt(_fa);
+#endif
+
   fa = 0;
   return result;
 }

@@ -37,7 +37,12 @@ endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
-   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/libexperimentalOFP.la
+
+# DQ (1/26/2017): This is not built in the new way that Craig and I are working together on the new OFP.
+#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/libexperimentalOFP.la
+#  libroseExperimentalOpenFortranParserlibraries = 
+   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 
+
 #  libroseExperimentalOpenFortranParserlibraries =
 #  ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
 #  ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
@@ -156,13 +161,14 @@ libroseLibraries = \
 #  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
 endif
 
-if !OS_VENDOR_UBUNTU
-if !OS_VENDOR_DEBIAN
-# DQ (12/18/2016): make POET optional (skip on Debian and Ubuntu systems until the 
-# build is better and can avoid linking issues for these operating systems.
-   libroseLibraries += $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
-endif
-endif
+# DQ (1/14/2017): Remove POET uniformally until it can be added to provide greater portability (working on Ubuntu systems).
+# if !OS_VENDOR_UBUNTU
+# if !OS_VENDOR_DEBIAN
+# # DQ (12/18/2016): make POET optional (skip on Debian and Ubuntu systems until the 
+# # build is better and can avoid linking issues for these operating systems.
+#    libroseLibraries += $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
+# endif
+# endif
 
 # DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
 # used $(libroseOpenFortranParserlibraries) to replace $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la

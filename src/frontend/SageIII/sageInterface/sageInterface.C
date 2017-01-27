@@ -5,6 +5,7 @@
 #include "fixupNames.h"
 #include "FileUtility.h"
 #include "AstPDFGeneration.h"
+#include "SgNodeHelper.h" //Markus's helper functions
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -10212,7 +10213,52 @@ bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar
   }
   return true;
 }
+//TODO: expose it to the namespace once it matures.
+//! Check if an executable statement (possibly compound), is a structured block
+//  with a single entry at the top and a single exit at the bottom, or an OpenMP construct.
+/*
+From OpenMP 4.5 Specification
 
+1.2.2 OpenMP Language Terminology
+
+For C/C++, an executable statement, possibly compound, with a single entry at the
+top and a single exit at the bottom, or an OpenMP construct.
+
+For Fortran, a block of executable statements with a single entry at the top and a
+single exit at the bottom, or an OpenMP construct.
+
+COMMENTS:
+
+For all base languages:
+* Access to the structured block must not be the result of a branch; and
+* The point of exit cannot be a branch out of the structured block.
+
+ For C/C++:
+* The point of entry must not be a call to setjmp();
+* longjmp() and throw() must not violate the entry/exit criteria;
+* Calls to exit() are allowed in a structured block; and
+* An expression statement, iteration statement, selection statement, or try block is considered to be a structured block if the corresponding compound statement obtained by enclosing it in { and } would be a structured block.
+
+For Fortran:
+* STOP statements are allowed in a structured block.
+
+*/
+bool isStructuredBlock(SgStatement* s)
+{
+  bool rt = true; 
+  ROSE_ASSERT (s != NULL);
+
+  // contain break; 
+  std::set<SgNode*>  bset = SgNodeHelper::LoopRelevantBreakStmtNodes (s);
+  if (bset.size()!=0 ) 
+    rt = false;
+  //TODO: contain goto statement, jumping to outside targets
+  // longjump(), throw(), 
+  // calls to exit() are allowed.
+
+  return rt; 
+  
+}
 
 //! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()
 //TODO check the loop index is not being written in the loop body
@@ -10313,6 +10359,19 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
   ubast = test->get_rhs_operand();
 
   //3. Check the increment expression
+  /* Allowed forms
+     ++var
+     var++
+     --var
+     var--
+
+     var += incr
+     var -= incr
+
+     var = var + incr
+     var = incr + var
+     var = var - incr
+  */
   SgExpression* incr = fs->get_increment();
   SgVarRefExp* incr_var = NULL;
   switch (incr->variantT()) {
@@ -10360,6 +10419,13 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
   if (incr_var == NULL)
     return false;
   if (incr_var->get_symbol() != ivarname->get_symbol_from_symbol_table ())
+    return false;
+
+
+  // single entry and single exit?
+  // only for C for loop for now
+  // TODO: Fortran support later
+  if (fs && !isStructuredBlock(fs->get_loop_body()) )
     return false;
 
   // return loop information if requested
@@ -15720,8 +15786,16 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
          {
            // printf ("Found class declaration: classDeclaration = %p \n",classDeclaration);
            declaration = classDeclaration->get_definingDeclaration();
-           ROSE_ASSERT(declaration != NULL);
-           addDeclaration(declaration);
+           // Liao, 12/09/2016. 
+           // In some cases, forward declaration of class types are used and sufficient, without providing defining declaration.
+           // We should allow this. 
+           if (declaration != NULL)
+           {
+             //  ROSE_ASSERT(declaration != NULL);
+             addDeclaration(declaration);
+           }
+           else 
+             addDeclaration (classDeclaration); // we use the original forward declaration.
 
            // Note that since types are shared in the AST, the declaration for a named type may be (is)
            // associated with the class declaration in the original file. However, we want to associated
