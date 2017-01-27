@@ -15,7 +15,7 @@ DataRaceDetection::Options::Options():active(false),
                                       maxFloatingPointOperations(0),
                                       useConstSubstitutionRule(false),
                                       visualizeReadWriteSets(false),
-                                      printUpdateInfos(true)
+                                      printUpdateInfos(false)
 {
 }
 

@@ -286,6 +286,16 @@ string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   return s;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2017.
+ */
+std::string EState::programPosToString(Labeler* labeler) const {
+  Label lab=this->label();
+  SgNode* node=labeler->getNode(lab);
+  return node->unparseToString();
+}
+
 
 /*! 
   * \author Markus Schordan

@@ -7,12 +7,14 @@ endif
 
 # SUBDIRS = syntax-v0.14 rose_traverse
 # SUBDIRS = sdf_syntax stratego_transformations aterm_traversal
-SUBDIRS = sdf_syntax stratego_transformations aterm_traversal
+# SUBDIRS = sdf_syntax stratego_transformations aterm_traversal
+SUBDIRS = aterm_traversal
 
 # DQ (1/22/2016): This makefile rule uses the hard-coded path to the OFP directory.
 # This is not a problem since it is used only for development purposes.
 # OFP_PATH = /home/dquinlan/ROSE/FORTRAN_LLNL/OFP-SDF/ofp-sdf/fortran
-OFP_PATH = /home/dquinlan/ROSE/OpenFortranParser/GITHUB/ofp-sdf/fortran
+# OFP_PATH = /home/dquinlan/ROSE/OpenFortranParser/GITHUB/ofp-sdf/fortran
+OFP_PATH = /home/quinlan1/ROSE/OpenFortranParser/GITHUB/ofp-sdf/fortran
 
 OLD_copy_sources:
 	@echo "Copy OFP sources from local OFP repository into ROSE source tree..."
