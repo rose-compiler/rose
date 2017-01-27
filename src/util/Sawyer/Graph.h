@@ -17,6 +17,7 @@
 #include <Sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <boost/unordered_map.hpp>
 #include <ostream>
@@ -1297,16 +1298,17 @@ private:
     template<class S>
     void save(S &s, const unsigned /*version*/) const {
         size_t nv = nVertices();
-        s <<nv;
+        s <<BOOST_SERIALIZATION_NVP(nv);
         for (size_t i=0; i<nv; ++i)
-            s <<findVertex(i)->value();
-
+            s <<boost::serialization::make_nvp("vertex", findVertex(i)->value());
+                                               
         size_t ne = nEdges();
-        s <<ne;
+        s <<BOOST_SERIALIZATION_NVP(ne);
         for (size_t i=0; i<ne; ++i) {
             ConstEdgeIterator edge = findEdge(i);
             size_t srcId = edge->source()->id(), tgtId = edge->target()->id();
-            s <<findEdge(i)->value() <<srcId <<tgtId;
+            s <<boost::serialization::make_nvp("edge", findEdge(i)->value());
+            s <<BOOST_SERIALIZATION_NVP(srcId) <<BOOST_SERIALIZATION_NVP(tgtId);
         }
     }
 
