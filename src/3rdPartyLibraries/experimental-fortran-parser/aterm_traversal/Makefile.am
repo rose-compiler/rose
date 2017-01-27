@@ -1,6 +1,8 @@
 # include ../../make.inc
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+STRATEGO_FLAGS = -Xcc -m32 -Xlinker -m32
+
 # SDF_GRAMMAR_DIR = $(srcdir)/../sdf_syntax
 SDF_GRAMMAR_DIR = ../sdf_syntax
 
@@ -19,7 +21,9 @@ LIBS = -L$(ATERM_INSTALL_PATH)/lib -lATerm
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # bin_PROGRAMS = traverse fast2sage
-bin_PROGRAMS = fast2sage
+
+# DQ (1/26/2017): Removed this since we now call the version defined in /nfs/casc/overture/ROSE/aterm_for_rose_bin.
+# bin_PROGRAMS = fast2sage
 
 # noinst_LTLIBRARIES = libOFP.la
 
@@ -61,7 +65,9 @@ EXTRA_DIST = traversal.hpp OFPNodes.hpp OFPExpr.hpp UntypedNodes.h OFPExpr.hpp
 fast2sage: $(srcdir)/SgUntyped.str
 #	strc -i $(srcdir)/../stratego_transformations/fast2sage.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o fast2sage
 #	strc -i $(srcdir)/fast2sage.str -I $(srcdir)/../sdf_syntax -I . -I $(srcdir)/../stratego_transformations -la stratego-lib -o fast2sage
-	strc -i $(srcdir)/fast2sage.str -I $(srcdir)/../sdf_syntax -I $(srcdir) -I $(srcdir)/../stratego_transformations -la stratego-lib -o fast2sage
+#	strc -i $(srcdir)/fast2sage.str -I $(srcdir)/../sdf_syntax -I $(srcdir) -I $(srcdir)/../stratego_transformations -la stratego-lib -o fast2sage
+	strc $(STRATEGO_FLAGS) -i $(srcdir)/fast2sage.str -I $(srcdir)/../sdf_syntax -I $(srcdir) -I $(srcdir)/../stratego_transformations -la stratego-lib -o fast2sage
+
 
 # We build this SgUntyped.str file differently than Craig does, so 
 # Craig is checking him his version so that we can use it directly.

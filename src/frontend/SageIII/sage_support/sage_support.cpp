@@ -2375,7 +2375,8 @@ int openFortranParser_main(int argc, char **argv );
 
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 // This is defined seperately only in configured for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
-int experimental_openFortranParser_main(int argc, char **argv );
+// int experimental_openFortranParser_main(int argc, char **argv );
+SgUntypedFile* experimental_openFortranParser_main(int argc, char **argv );
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -3833,9 +3834,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           string parseTableOption = "--parseTable";
           experimentalFrontEndCommandLine.push_back(parseTableOption);
 
+       // DQ (1/26/2017): We want to put the Fortran.tbl into /nfs/casc/overture/ROSE/aterm_for_rose_bin so that Craig and I can work togehter.
        // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
        // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
-          string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
+       // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
+          string path_to_table = "/nfs/casc/overture/ROSE/aterm_for_rose_bin/Fortran.tbl";
 
           experimentalFrontEndCommandLine.push_back(path_to_table);
 
@@ -3850,7 +3853,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
           printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-          frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
+       // frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
+          SgUntypedFile* untypedFile = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
+          frontendErrorLevel = (untypedFile != NULL) ? 0 : 1;
 #else
           printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
 #endif

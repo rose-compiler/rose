@@ -45,13 +45,10 @@
 0x080483ac: call   0x0804834c<__libc_start_main@plt>
       yes: 0x000000000804834c<134513484>__libc_start_main@plt
 0x080483b4: basic block
-      yes: 0x00000000080483bd<134513597><Func>
-      yes: 0x00000000080483bd<134513597><Func>
-0x080483b8: call   0x080483bd<<Func>>
-      yes: 0x00000000080483bd<134513597><Func>
-0x080483bd: basic block
       yes: 0x00000000080483cf<134513615><BBlock>
       yes: 0x00000000080483d1<134513617><BBlock>
+0x080483b8: call   0x080483bd<<Insn>>
+      yes: 0x00000000080483bd<134513597><Insn>
 0x080483be: add    ebx, 0x0000131b<4891>
   *****no: 0x000000000000131b<4891>
 0x080483c5: mov    eax, dword ds:[ebx + 0xfffffffc<-4>]
@@ -206,15 +203,12 @@
 0x080484d0: jmp    0x08048487<<BBlock>>
       yes: 0x0000000008048487<134513799><BBlock>
 0x080484d4: basic block
-      yes: 0x00000000080484e2<134513890><Func>
-      yes: 0x00000000080484e2<134513890><Func>
-0x080484da: sub    esp, 0x0c
-  *****no: 0x000000000000000c
-0x080484dd: call   0x080484e2<<Func>>
-      yes: 0x00000000080484e2<134513890><Func>
-0x080484e2: basic block
       yes: 0x0000000008048304<134513412><Func>
       yes: 0x00000000080484ee<134513902><BBlock>
+0x080484da: sub    esp, 0x0c
+  *****no: 0x000000000000000c
+0x080484dd: call   0x080484e2<<Insn>>
+      yes: 0x00000000080484e2<134513890><Insn>
 0x080484e3: add    ebx, 0x000011f6<4598>
   *****no: 0x00000000000011f6<4598>
 0x080484e9: call   0x08048304<<Func>>
@@ -250,12 +244,9 @@
 0x0804851e: add    esp, 0x0c
   *****no: 0x000000000000000c
 0x08048528: basic block
-      yes: 0x0000000008048533<134513971><Func>
-      yes: 0x0000000008048533<134513971><Func>
-0x0804852e: call   0x08048533<<Func>>
-      yes: 0x0000000008048533<134513971><Func>
-0x08048533: basic block
       yes: 0x0000000008048558<134514008><BBlock>
+0x0804852e: call   0x08048533<<Insn>>
+      yes: 0x0000000008048533<134513971><Insn>
 0x08048534: add    ebx, 0x000011a5<4517>
   *****no: 0x00000000000011a5<4517>
 0x0804853a: lea    eax, [ebx + 0xffffff20<-224>]
@@ -318,16 +309,13 @@
 0x0804858a: jne    0x08048580<<BBlock>>
       yes: 0x0000000008048580<134514048><BBlock>
 0x08048590: basic block
-      yes: 0x0000000008048599<134514073><Func>
-      yes: 0x0000000008048599<134514073><Func>
-0x08048594: call   0x08048599<<Func>>
-      yes: 0x0000000008048599<134514073><Func>
-0x08048599: basic block
       yes: 0x00000000080483d8<134513624><Func>
       yes: 0x00000000080485a6<134514086><BBlock>
+0x08048594: call   0x08048599<<Insn>>
+      yes: 0x0000000008048599<134514073><Insn>
 0x0804859a: add    ebx, 0x0000113f<4415>
   *****no: 0x000000000000113f<4415>
 0x080485a1: call   0x080483d8<<Func>>
       yes: 0x00000000080483d8<134513624><Func>
-Number of SgAsmIntegerValueExpression nodes: 182
-Number of such nodes having a base object:   128
+Number of SgAsmIntegerValueExpression nodes: 174
+Number of such nodes having a base object:   120
