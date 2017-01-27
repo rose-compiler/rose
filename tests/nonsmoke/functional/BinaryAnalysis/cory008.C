@@ -1,3 +1,9 @@
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 static const char *purpose = "ensure SgAsmIntegerValueExpression nodes have base objects";
 
 static const char *description = "Parses the specimen given on the command line and reports how many "
@@ -60,3 +66,5 @@ main(int argc, char *argv[]) {
     std::cout <<"Number of SgAsmIntegerValueExpression nodes: " <<counts.nTotal <<"\n";
     std::cout <<"Number of such nodes having a base object:   " <<counts.nWithBase <<"\n";
 }
+
+#endif

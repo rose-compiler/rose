@@ -14357,3 +14357,46 @@ SgTypeTuple* SgTypeTuple::build_node_from_nonlist_children()
      return returnNode;
    }
 
+
+// DQ (1/26/2017): Manually added member functions for what are a few new IR nodes added in the last year of so.
+SgFunctionParameterScope* SgFunctionParameterScope::build_node_from_nonlist_children(Sg_File_Info*)
+   {
+     SgFunctionParameterScope* returnNode = NULL;
+     return returnNode;
+   }
+
+SgDotDotExp* SgDotDotExp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgType*)
+   {
+     SgDotDotExp* returnNode = NULL;
+     return returnNode;
+   }
+
+SgAtomicStmt* SgAtomicStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*)
+   {
+     SgAtomicStmt* returnNode = NULL;
+     return returnNode;
+   }
+
+SgFinishExp* SgFinishExp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgStatement*)
+   {
+     SgFinishExp* returnNode = NULL;
+     return returnNode;
+   }
+
+SgAtExp* SgAtExp::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgStatement*)
+   {
+     SgAtExp* returnNode = NULL;
+     return returnNode;
+   }
+
+SgBracedInitializer* SgBracedInitializer::build_node_from_nonlist_children(Sg_File_Info*, SgExprListExp*, SgType*)
+   {
+     SgBracedInitializer* returnNode = NULL;
+     return returnNode;
+   }
+
+SgWhenStmt* SgWhenStmt::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgStatement*)
+   {
+     SgWhenStmt* returnNode = NULL;
+     return returnNode;
+   }

@@ -7,6 +7,11 @@
  * Running the program produces a *.new file in the current working directory (produced by backend()). The *.new file is
  * identical to the input file except the ELF container is byte swapped.  The makefile test reads and parses the *.new file and
  * compares it to the original file. */
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include "rose.h"
 
@@ -39,3 +44,5 @@ main(int argc, char *argv[])
     myTraversal.traverseInputFiles(project, postorder);
     return backend(project);
 }
+
+#endif

@@ -1,4 +1,9 @@
 /* Tests string reallocation functions by changing some strings */
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include "rose.h"
 
@@ -124,3 +129,4 @@ main(int argc, char *argv[])
     return backend(project);
 }
 
+#endif

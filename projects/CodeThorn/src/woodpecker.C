@@ -140,9 +140,15 @@ int main(int argc, char* argv[]) {
       cout<< "INIT: CSV-output file: "<<csvAssertFileName<<endl;
     }
 #endif
+
   // Command line option handling.
+#ifdef USE_SAWYER_COMMANDLINE
+    namespace po = Sawyer::CommandLine::Boost;
+#else
     namespace po = boost::program_options;
-  po::options_description desc
+#endif
+    
+    po::options_description desc
     ("Woodpecker V0.1\n"
      "Written by Markus Schordan\n"
      "Supported options");

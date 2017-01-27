@@ -25,6 +25,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
+#include <boost/serialization/nvp.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -988,7 +989,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & boost::serialization::base_object<Super>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     }
 
 public:

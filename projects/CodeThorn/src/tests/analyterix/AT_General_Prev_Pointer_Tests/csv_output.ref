@@ -71,8 +71,13 @@ V,<unstable>,i,<unstable>,<unstable>,1
 V,<unstable>,val,<unstable>,<unstable>,1
 V,<unstable>,a0,<unstable>,<unstable>,1
 V,<unstable>,a,<unstable>,<unstable>,1
+V,<unstable>,args_list,<unstable>,<unstable>,1
 V,<unstable>,a,<unstable>,<unstable>,1
+V,<unstable>,args_list,<unstable>,<unstable>,1
+V,<unstable>,args_list,<unstable>,<unstable>,1
+V,<unstable>,args_list_copy,<unstable>,<unstable>,1
 V,<unstable>,a,<unstable>,<unstable>,1
+V,<unstable>,vl,<unstable>,<unstable>,1
 V,<unstable>,m_arr,<unstable>,<unstable>,1
 V,<unstable>,my_arr,<unstable>,<unstable>,1
 V,<unstable>,arr_p,<unstable>,<unstable>,1

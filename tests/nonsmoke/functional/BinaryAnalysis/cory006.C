@@ -15,6 +15,12 @@
 //   leave
 //   ret
 
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 #include <rose.h>
 #include <AsmUnparser.h>
 #include <BinaryControlFlow.h>
@@ -117,3 +123,5 @@ main(int argc, char *argv[]) {
     unparser.staticDataDisassembler.init(engine.disassembler());
     unparser.unparse(std::cout, gblock);
 }
+
+#endif

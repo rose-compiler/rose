@@ -623,7 +623,7 @@ Gang::instance() {
 GangPtr
 Gang::instanceForId(int id) {
     SAWYER_THREAD_TRAITS::LockGuard lock(classMutex_);
-    return intentionally_leaked_NS(id);
+    return createNS(id);
 }
 
 // class method; thread-safe
@@ -634,7 +634,7 @@ Gang::instanceForTty() {
 
 // class method; not synchronized
 GangPtr
-Gang::intentionally_leaked_NS(int id) {
+Gang::createNS(int id) {
     ASSERT_require(id != NO_GANG_ID);
     if (!gangs_)
         gangs_ = new GangMap;
@@ -644,6 +644,13 @@ Gang::intentionally_leaked_NS(int id) {
         gangs_->insert(id, gang);
     }
     return gang;
+}
+
+// class method to reset to initial state prior to exit
+void
+Gang::shutdownNS() {
+    delete gangs_;
+    gangs_ = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2016,6 +2023,15 @@ Facilities::facilityNames() const {
     return allNames;
 }
 
+SAWYER_EXPORT void
+Facilities::shutdown() {
+    BOOST_FOREACH (Facility *f, facilities_.values()) {
+        if (f != NULL)
+            *f = Facility();
+    }
+    facilities_.clear();
+}
+
 // thread-safe
 SAWYER_EXPORT void
 Facilities::print(std::ostream &log) const {
@@ -2112,6 +2128,14 @@ initializeLibrary() {
     }
 #endif
     return true;
+}
+
+SAWYER_EXPORT void
+shutdown() {
+    Gang::shutdownNS();
+    mlog = Facility();
+    mfacilities.shutdown();
+    merr = DestinationPtr();
 }
 
 } // namespace

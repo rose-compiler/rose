@@ -285,6 +285,7 @@ class EState {
   bool isConst(VariableIdMapping* vid) const;
   bool isRersTopified(VariableIdMapping* vid) const;
   string predicateToString(VariableIdMapping* vid) const;
+  string programPosToString(Labeler* labeler) const;
  private:
   Label _label;
   const PState* _pstate;

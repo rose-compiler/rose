@@ -319,8 +319,11 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:test" ||
           argument == "-rose:backendCompileFormat" ||
           argument == "-rose:outputFormat" ||
+#if 0
+       // DQ (1/21/2017): Moved to be an option that has three parameters (rose option, edg option, and edg option's parameter).
           argument == "-edg_parameter:" ||
           argument == "--edg_parameter:" ||
+#endif
           argument == "-rose:generateSourcePositionCodes" ||
           argument == "-rose:embedColorCodesInGeneratedCode" ||
           argument == "-rose:instantiation" ||
@@ -446,6 +449,11 @@ CommandlineProcessing::isOptionTakingThirdParameter( string argument )
 
        // DQ (8/20/2008): Add support for Qing's options!
           argument == "-unroll" ||
+#if 1
+       // DQ (1/21/2017): Allow this to take the edg option plus it's parameter (3 paramters with the rose option wrapper, not two). 
+          argument == "-edg_parameter:" ||
+          argument == "--edg_parameter:" ||
+#endif
           false )
         {
           result = true;
@@ -3300,10 +3308,10 @@ SgFile::usage ( int status )
 "                               of rest of ROSE/SAGE)\n"
 "     -edg:KCC_frontend       for use of KCC (with -c option) as new frontend\n"
 "                               (must be specified with -edg:new_frontend)\n"
-"     -edg:XXX                pass -XXX to EDG front-end\n"
+"     -edg:XXX                pass  -XXX to EDG front-end\n"
 "    --edg:XXX                pass --XXX to EDG front-end\n"
-"     -edg_parameter: XXX YYY pass -XXX YYY to EDG front-end\n"
-"    --edg_parameter: XXX YYY pass --XXX YYY to EDG front-end\n"
+"     -edg_parameter: XXX YYY pass  -XXX YYY to EDG front-end (note: space after colon is required)\n"
+"    --edg_parameter: XXX YYY pass --XXX YYY to EDG front-end (note: space after colon is required)\n"
 "\n"
 "Control Fortran frontend processing:\n"
 "     -rose:cray_pointer_support\n"
@@ -4316,6 +4324,20 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // set_C_only(false);
 
           ROSE_ASSERT(get_Cxx11_only() == true);
+        }
+#endif
+
+// DQ (1/16/2017): Make C++11 the default when using Clang.
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+     if (get_C_only() == true)
+        {
+       // printf ("For Clang as the backend compiler the default C mode is C11 \n");
+          set_C11_only(true);
+        }
+       else
+        {
+       // printf ("For Clang as the backend compiler the default C++ mode is C++11 \n");
+          set_Cxx11_only(true);
         }
 #endif
 
@@ -6219,6 +6241,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
      commandLine.push_back("--clang");
      commandLine.push_back("--clang_version");
+
+  // DQ (1/16/2017): If this is the Clang backend, then assume we want to use C++11 support (default for later versions of Clang (3.7 and later)).
+  // commandLine.push_back("--c++11");
 #endif
      commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
 #endif
@@ -7170,9 +7195,37 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Handle general edg options (--xxx abc)
   // *******************************************************************
 
+#if 0
+     std::string tmp1_argString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+     printf ("In build_EDG_CommandLine(): Input Command Line Arguments (BEFORE): \n%s \n",tmp1_argString.c_str());
+#endif
+
   // Handle edg options taking a parameter (string or integer)
      edgOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--edg_parameter:");
+#if 0
+     for (size_t i = 0; i < edgOptionList.size(); i++)
+        {
+          printf ("edgOptionList[%zu] = %s \n",i,edgOptionList[i].c_str());
+        }
+#endif
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"--",edgOptionList);
+
+#if 0
+     std::string tmp2_argString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+     printf ("In build_EDG_CommandLine(): Input Command Line Arguments (AFTER): \n%s \n",tmp2_argString.c_str());
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
+  // DQ (1/21/2017): This does not appear to work since EDG reports: Command-line error: invalid option: --error_limit 200
+     printf ("Increase the number of errors that we permit to be output \n");
+  // inputCommandLine.push_back("--error_limit 20");
+  // inputCommandLine.push_back("-e 20");
+  // inputCommandLine.push_back("--error_limit 200");
+#endif
 
   // *******************************************************************
   //                       Handle UPC modes

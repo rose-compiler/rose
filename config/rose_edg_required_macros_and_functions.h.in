@@ -88,6 +88,15 @@
   extern int  _FENV_PUBAPI feclearexcept (int __excepts) ;
   extern int  _FENV_PUBAPI fegetexceptflag (fexcept_t *__flagp, int __excepts) ;
   extern int  _FENV_PUBAPI fesetexceptflag (const fexcept_t *__flagp, int __excepts) ;
+/* DQ (1/20/2017): Added remaining entries required for work around in Intel v16 compiler. */
+  extern int  _FENV_PUBAPI feraiseexcept (int __excepts) throw ();
+  extern int  _FENV_PUBAPI fetestexcept (int __excepts) throw ();
+  extern int  _FENV_PUBAPI fegetround (void) throw ();
+  extern int  _FENV_PUBAPI fesetround (int __rounding_direction) throw ();
+  extern int  _FENV_PUBAPI fegetenv (fenv_t *__envp) throw ();
+  extern int  _FENV_PUBAPI feholdexcept (fenv_t *__envp) throw ();
+  extern int  _FENV_PUBAPI fesetenv (__const fenv_t *__envp) throw ();
+  extern int  _FENV_PUBAPI feupdateenv (__const fenv_t *__envp) throw ();
 #endif
 
 /* DQ (4/16/2016): Added Clang support.  Turn off the use of the type generic 
@@ -140,6 +149,53 @@
 	#define __dead2
 	#define __pure2
 #endif
+
+/* DQ (1/16/2017): define this for the mac since it does not have a builtin definition. */
+#define __builtin_va_arg(v,l) (l)(sizeof(l))
+
+/* Required builtins for Clang 3.8 support on Mac 
+    __c11_atomic_init
+    __c11_atomic_thread_fence
+    __c11_atomic_signal_fence
+    __c11_atomic_is_lock_free (The argument is the size of the _Atomic(...) object, instead of its address)
+    __c11_atomic_store
+    __c11_atomic_load
+    __c11_atomic_exchange
+    __c11_atomic_compare_exchange_strong
+    __c11_atomic_compare_exchange_weak
+    __c11_atomic_fetch_add
+    __c11_atomic_fetch_sub
+    __c11_atomic_fetch_and
+    __c11_atomic_fetch_or
+    __c11_atomic_fetch_xor
+*/
+
+// DQ (1/16/2017): Note that we cannot seem to reset the value of the _GNUC_VER macro value.
+// So the best solution is to make a copy of the Mac specifi hdrs1/atomic header file.
+
+// #define _GNUC_VER 408
+// #if !__has_feature(cxx_atomic) && _GNUC_VER < 407
+// #if _GNUC_VER >= 407
+//    #warning _GNUC_VER greater then 407
+// #endif
+
+#if __cplusplus
+bool __c11_atomic_is_lock_free(__SIZE_TYPE__ x);
+#endif
+
+void __atomic_thread_fence (int memorder);
+void __atomic_signal_fence (int memorder);
+#define __atomic_exchange(ptr,val,ret,memorder) *(ptr)
+#define __atomic_store(ptr,val,memorder)
+
+
+/* Clang specific builtins for ARM instructions (these would ahve to be template functions, and specific to C++)
+T __builtin_arm_ldrex(const volatile T *addr);
+T __builtin_arm_ldaex(const volatile T *addr);
+int __builtin_arm_strex(T val, volatile T *addr);
+int __builtin_arm_stlex(T val, volatile T *addr);
+void __builtin_arm_clrex(void);
+*/
 
 #endif //#ifdef __APPLE__
 
@@ -488,9 +544,11 @@ long double __builtin_sqrtl  (long double __builtin__x);
 /* DQ (11/17/2016): Added support for more builtin functions (not in EDG, required by 6.1 of GNU. */
 // #if (__GNUC__ >= 6)
 
+// DQ (1/19/2017): Make the use of at least __builtin_va_arg available to the GNU 4.x compilers when using EDG 4.12.
 // DQ (12/17/2016): I think this has to be used for GNU version 5.x as well.
 // #if (__GNUC__ >= 6) || defined(__INTEL_COMPILER)
-#if (__GNUC__ >= 5) || defined(__INTEL_COMPILER)
+// #if (__GNUC__ >= 5) || defined(__INTEL_COMPILER)
+#if (__GNUC__ >= 4) || defined(__INTEL_COMPILER)
 /* Test how many files of builtins we have to add */
    #define _SMMINTRIN_H_INCLUDED
    #define _AMMINTRIN_H_INCLUDED
@@ -2730,6 +2788,2430 @@ void prefetch (const __global float16 *p, size_t num_elements);
 /***************************************************************************************
   SSE and MMX support (declarations for builtin functions defined in GNU header files)
 ****************************************************************************************/
+
+// DQ (1/20/2017): Changed to allow testing of EDG 4.12 with GNU 4.8 and GNU 4.9.
+#if 1
+/* SSE3 builtin functions required for GNU 6.1 compiler */
+/* SSE2 */
+typedef double __v2df __attribute__ ((__vector_size__ (16)));
+typedef long long __v2di __attribute__ ((__vector_size__ (16)));
+typedef int __v4si __attribute__ ((__vector_size__ (16)));
+typedef short __v8hi __attribute__ ((__vector_size__ (16)));
+typedef char __v16qi __attribute__ ((__vector_size__ (16)));
+
+/* Internal data types for implementing the intrinsics.  */
+typedef int __v2si __attribute__ ((__vector_size__ (8)));
+typedef char __v8qi __attribute__ ((__vector_size__ (8)));
+
+/* The Intel API is flexible enough that we must allow aliasing with other
+   vector types, and their scalar components.  */
+// typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
+typedef long long __m128i __attribute__ ((__vector_size__ (16), __may_alias__));
+typedef double __m128d __attribute__ ((__vector_size__ (16), __may_alias__));
+
+/* Not clear what these should be  */
+typedef int __m64 __attribute__ ((__vector_size__ (8), __may_alias__));
+typedef short __v4hi __attribute__ ((__vector_size__ (8)));
+// typedef long long __m64 __attribute__ ((__vector_size__ (16)));
+// typedef int __v4hi __attribute__ ((__vector_size__ (16)));
+typedef float __v2sf __attribute__ ((__vector_size__ (8)));
+typedef float __v4sf __attribute__ ((__vector_size__ (16)));
+
+typedef long long __v1di __attribute__ ((__vector_size__ (8)));
+
+/* From: mmintrin.h */
+void __builtin_ia32_emms();
+__m64 __builtin_ia32_vec_init_v2si(int,int);
+int __builtin_ia32_vec_ext_v2si(__v2si,int);
+__m64 __builtin_ia32_packsswb(__v4hi,__v4hi);
+__m64 __builtin_ia32_packssdw(__v2si,__v2si);
+__m64 __builtin_ia32_packuswb(__v4hi,__v4hi);
+__m64 __builtin_ia32_punpckhbw(__v8qi,__v8qi);
+__m64 __builtin_ia32_punpckhwd(__v4hi,__v4hi);
+__m64 __builtin_ia32_punpckhdq(__v2si,__v2si);
+__m64 __builtin_ia32_punpcklbw(__v8qi,__v8qi);
+__m64 __builtin_ia32_punpcklwd(__v4hi,__v4hi);
+__m64 __builtin_ia32_punpckldq(__v2si,__v2si);
+__m64 __builtin_ia32_paddb(__v8qi,__v8qi);
+__m64 __builtin_ia32_paddw(__v4hi,__v4hi);
+__m64 __builtin_ia32_paddd(__v2si,__v2si);
+__m64 __builtin_ia32_paddq(__v1di,__v1di);
+__m64 __builtin_ia32_paddsb(__v8qi,__v8qi);
+__m64 __builtin_ia32_paddsw(__v4hi,__v4hi);
+__m64 __builtin_ia32_paddusb(__v8qi,__v8qi);
+__m64 __builtin_ia32_paddusw(__v4hi,__v4hi);
+__m64 __builtin_ia32_psubb(__v8qi,__v8qi);
+__m64 __builtin_ia32_psubw(__v4hi,__v4hi);
+__m64 __builtin_ia32_psubd(__v2si,__v2si);
+__m64 __builtin_ia32_psubq(__v1di,__v1di);
+__m64 __builtin_ia32_psubsb(__v8qi,__v8qi);
+__m64 __builtin_ia32_psubsw(__v4hi,__v4hi);
+__m64 __builtin_ia32_psubusb(__v8qi,__v8qi);
+__m64 __builtin_ia32_psubusw(__v4hi,__v4hi);
+__m64 __builtin_ia32_pmaddwd(__v4hi,__v4hi);
+__m64 __builtin_ia32_pmulhw(__v4hi,__v4hi);
+__m64 __builtin_ia32_pmullw(__v4hi,__v4hi);
+__m64 __builtin_ia32_psllw(__v4hi,__v4hi);
+__m64 __builtin_ia32_psllwi(__v4hi,int);
+__m64 __builtin_ia32_pslld(__v2si,__v2si);
+__m64 __builtin_ia32_pslldi(__v2si,int);
+__m64 __builtin_ia32_psllq(__v1di,__v1di);
+__m64 __builtin_ia32_psllqi(__v1di,long long);
+__m64 __builtin_ia32_psraw(__v4hi,__v4hi);
+__m64 __builtin_ia32_psrawi(__v4hi,long long);
+__m64 __builtin_ia32_psrad(__v2si,__v2si);
+__m64 __builtin_ia32_psradi(__v2si, long long);
+__m64 __builtin_ia32_psrlw(__v4hi,__v4hi);
+__m64 __builtin_ia32_psrlwi(__v4hi,long long);
+__m64 __builtin_ia32_psrld(__v2si,__v2si);
+__m64 __builtin_ia32_psrldi(__v2si, long long);
+__m64 __builtin_ia32_psrlq(__v1di,__v1di);
+__m64 __builtin_ia32_psrlqi(__v1di, long long);
+__m64 __builtin_ia32_pand(__m64,__m64);
+__m64 __builtin_ia32_pandn(__m64,__m64);
+__m64 __builtin_ia32_por(__m64,__m64);
+__m64 __builtin_ia32_pxor(__m64,__m64);
+__m64 __builtin_ia32_pcmpeqb(__v8qi,__v8qi);
+__v8qi __builtin_ia32_pcmpgtb(__v8qi,__v8qi);
+__m64 __builtin_ia32_pcmpeqw(__v4hi,__v4hi);
+__v4hi __builtin_ia32_pcmpgtw(__v4hi,__v4hi);
+__m64 __builtin_ia32_pcmpeqd(__v2si,__v2si);
+__m64 __builtin_ia32_pcmpgtd(__v2si,__v2si);
+// int __builtin_ia32_vec_init_v2si(int,int);
+__m64 __builtin_ia32_vec_init_v4hi(short,short,short,short);
+__m64 __builtin_ia32_vec_init_v8qi(char,char,char,char,char,char,char,char);
+
+/* From: xmmintrin.h */
+__m128 __builtin_ia32_addss(__v4sf,__v4sf);
+__m128 __builtin_ia32_subss(__v4sf,__v4sf);
+__m128 __builtin_ia32_mulss(__v4sf,__v4sf);
+__m128 __builtin_ia32_divss(__v4sf,__v4sf);
+__m128 __builtin_ia32_sqrtss(__v4sf);
+__m128 __builtin_ia32_rcpss(__v4sf);
+__m128 __builtin_ia32_rsqrtss(__v4sf);
+__m128 __builtin_ia32_minss(__v4sf,__v4sf);
+__m128 __builtin_ia32_maxss(__v4sf,__v4sf);
+__m128 __builtin_ia32_addps(__v4sf,__v4sf);
+__m128 __builtin_ia32_subps(__v4sf,__v4sf);
+__m128 __builtin_ia32_mulps(__v4sf,__v4sf);
+__m128 __builtin_ia32_divps(__v4sf,__v4sf);
+__m128 __builtin_ia32_sqrtps(__v4sf);
+__m128 __builtin_ia32_rcpps(__v4sf);
+__m128 __builtin_ia32_rsqrtps(__v4sf);
+__m128 __builtin_ia32_minps(__v4sf,__v4sf);
+__m128 __builtin_ia32_maxps(__v4sf,__v4sf);
+__m128 __builtin_ia32_andps(__v4sf,__v4sf);
+__m128 __builtin_ia32_andnps(__v4sf,__v4sf);
+__m128 __builtin_ia32_orps(__v4sf,__v4sf);
+__m128 __builtin_ia32_xorps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpeqss(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpltss(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpless(__v4sf,__v4sf);
+// int __builtin_ia32_cmpltss(float,float);
+__m128 __builtin_ia32_movss(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpless(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpneqss(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpnltss(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpnless(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpordss(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpunordss(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpeqps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpltps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpleps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpgtps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpgeps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpneqps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpnltps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpnleps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpngtps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpngeps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpordps(__v4sf,__v4sf);
+__m128 __builtin_ia32_cmpunordps(__v4sf,__v4sf);
+int __builtin_ia32_comieq(__v4sf,__v4sf);
+int __builtin_ia32_comilt(__v4sf,__v4sf);
+int __builtin_ia32_comile(__v4sf,__v4sf);
+int __builtin_ia32_comigt(__v4sf,__v4sf);
+int __builtin_ia32_comige(__v4sf,__v4sf);
+int __builtin_ia32_comineq(__v4sf,__v4sf);
+int __builtin_ia32_ucomieq(__v4sf,__v4sf);
+int __builtin_ia32_ucomilt(__v4sf,__v4sf);
+int __builtin_ia32_ucomile(__v4sf,__v4sf);
+int __builtin_ia32_ucomigt(__v4sf,__v4sf);
+int __builtin_ia32_ucomige(__v4sf,__v4sf);
+int __builtin_ia32_ucomineq(__v4sf,__v4sf);
+int __builtin_ia32_cvtss2si(__v4sf);
+int __builtin_ia32_cvtss2si64(__v4sf);
+__m64 __builtin_ia32_cvtps2pi(__v4sf);
+int __builtin_ia32_cvttss2si(__v4sf);
+int __builtin_ia32_cvttss2si64(__v4sf);
+__m64 __builtin_ia32_cvttps2pi(__v4sf);
+__m128 __builtin_ia32_cvtsi2ss(__v4sf,int);
+__m128 __builtin_ia32_cvtsi642ss(__v4sf,long long);
+__m128 __builtin_ia32_cvtpi2ps(__v4sf,__v2si);
+__m128 __builtin_ia32_movlhps(__v4sf,__v4sf);
+__m128 __builtin_ia32_movhlps(__v4sf,__v4sf);
+__m64 __builtin_ia32_cvtps2pi(__v4sf);
+__m128 __builtin_ia32_unpckhps(__v4sf,__v4sf);
+__m128 __builtin_ia32_unpcklps(__v4sf,__v4sf);
+__m128 __builtin_ia32_loadhps(__v4sf,const __v2sf *);
+__m128 __builtin_ia32_storehps(__v2sf *,__v4sf);
+__m128 __builtin_ia32_loadlps(__v4sf,const __v2sf *);
+__m128 __builtin_ia32_storelps(__v2sf *,__v4sf);
+int __builtin_ia32_movmskps(__v4sf);
+unsigned int __builtin_ia32_stmxcsr();
+unsigned int __builtin_ia32_ldmxcsr(int);
+__m128 __builtin_ia32_loadups(float const *);
+__m128 __builtin_ia32_shufps(__v4sf,__v4sf,int);
+float __builtin_ia32_vec_ext_v4sf(__v4sf,int);
+void  __builtin_ia32_storeups(float *,__v4sf);
+__m64 __builtin_ia32_pmaxsw(__v4hi,__v4hi);
+__m64 __builtin_ia32_pmaxub(__v8qi,__v8qi);
+__m64 __builtin_ia32_pminsw(__v4hi,__v4hi);
+__m64 __builtin_ia32_pminub(__v8qi,__v8qi);
+int __builtin_ia32_pmovmskb(__v8qi);
+__m64 __builtin_ia32_pmulhuw(__v4hi,__v4hi);
+void __builtin_ia32_maskmovq(__v8qi,__v8qi,char*);
+__m64 __builtin_ia32_pavgb(__v8qi,__v8qi);
+__m64 __builtin_ia32_pavgw(__v4hi,__v4hi);
+__m64 __builtin_ia32_psadbw(__v8qi,__v8qi);
+int __builtin_ia32_movntq(unsigned long long*,unsigned long long);
+void __builtin_ia32_movntps(float *,__v4sf);
+int __builtin_ia32_sfence();
+
+
+/* From: emmintrin.h */
+__m128d __builtin_ia32_movsd(__v2df,__v2df);
+__m128d __builtin_ia32_loadupd(double const *);
+__m128d __builtin_ia32_shufpd(__m128d,__m128d,int);
+void __builtin_ia32_storeupd(double*,__m128d);
+double __builtin_ia32_vec_ext_v2df(__m128d,int);
+/* int __builtin_ia32_shufpd(); */
+int __builtin_ia32_vec_ext_v4si(__v4si,int);
+long long __builtin_ia32_vec_ext_v2di(__v2di,int);
+__m128d __builtin_ia32_addpd(__v2df,__v2df);
+__m128d __builtin_ia32_addsd(__v2df,__v2df);
+__m128d __builtin_ia32_subpd(__v2df,__v2df);
+__m128d __builtin_ia32_subsd(__v2df,__v2df);
+__m128d __builtin_ia32_mulpd(__v2df,__v2df);
+__m128d __builtin_ia32_mulsd(__v2df,__v2df);
+__m128d __builtin_ia32_divpd(__v2df,__v2df);
+__m128d __builtin_ia32_divsd(__v2df,__v2df);
+__m128d __builtin_ia32_sqrtpd(__v2df);
+__m128d __builtin_ia32_sqrtsd(__v2df);
+__m128d __builtin_ia32_minpd(__v2df,__v2df);
+__m128d __builtin_ia32_minsd(__v2df,__v2df);
+__m128d __builtin_ia32_maxpd(__v2df,__v2df);
+__m128d __builtin_ia32_maxsd(__v2df,__v2df);
+__m128d __builtin_ia32_andpd(__v2df,__v2df);
+__m128d __builtin_ia32_andnpd(__v2df,__v2df);
+__m128d __builtin_ia32_orpd(__v2df,__v2df);
+__m128d __builtin_ia32_xorpd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpeqpd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpltpd(__v2df,__v2df);
+__m128d __builtin_ia32_cmplepd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpgtpd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpgepd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpneqpd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpnltpd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpnlepd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpngtpd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpngepd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpordpd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpunordpd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpeqsd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpltsd(__v2df,__v2df);
+__m128d __builtin_ia32_cmplesd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpltsd(__v2df,__v2df);
+__m128d __builtin_ia32_cmplesd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpneqsd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpnltsd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpnlesd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpordsd(__v2df,__v2df);
+__m128d __builtin_ia32_cmpunordsd(__v2df,__v2df);
+int __builtin_ia32_comisdeq(__v2df,__v2df);
+int __builtin_ia32_comisdlt(__v2df,__v2df);
+int __builtin_ia32_comisdle(__v2df,__v2df);
+int __builtin_ia32_comisdgt(__v2df,__v2df);
+int __builtin_ia32_comisdge(__v2df,__v2df);
+int __builtin_ia32_comisdg(__v2df,__v2df);
+int __builtin_ia32_comisdneq(__v2df,__v2df);
+int __builtin_ia32_ucomisdeq(__v2df,__v2df);
+int __builtin_ia32_ucomisdlt(__v2df,__v2df);
+int __builtin_ia32_ucomisdle(__v2df,__v2df);
+int __builtin_ia32_ucomisdgt(__v2df,__v2df);
+int __builtin_ia32_ucomisdge(__v2df,__v2df);
+int __builtin_ia32_ucomisdneq(__v2df,__v2df);
+__m128i __builtin_ia32_loaddqu(char const *);
+void    __builtin_ia32_storedqu(char*, __v16qi);
+__m128d __builtin_ia32_cvtdq2pd(__v4si);
+__m128  __builtin_ia32_cvtdq2ps(__v4si);
+__m128i __builtin_ia32_cvtpd2dq(__v2df);
+__m128i __builtin_ia32_movq128 (__v2di);
+__m64   __builtin_ia32_cvtpd2pi(__v2df);
+__m128  __builtin_ia32_cvtpd2ps(__v2df);
+__m128i __builtin_ia32_cvttpd2dq(__v2df);
+__m64 __builtin_ia32_cvttpd2pi(__v2df);
+__m128d __builtin_ia32_cvtpi2pd(__v2si);
+__m128i __builtin_ia32_cvtps2dq(__v4sf);
+__m128i __builtin_ia32_cvttps2dq(__v4sf);
+__m128d __builtin_ia32_cvtps2pd(__v4sf);
+int __builtin_ia32_cvtsd2si(__v2df);
+int __builtin_ia32_cvtsd2si64(__v2df);
+int __builtin_ia32_cvtsd2si64(__v2df);
+int __builtin_ia32_cvttsd2si(__v2df);
+int __builtin_ia32_cvttsd2si64(__v2df);
+__m128 __builtin_ia32_cvtsd2ss(__v4sf,__v2df);
+__m128d __builtin_ia32_cvtsi2sd (__v2df , int);
+__m128d __builtin_ia32_cvtsi642sd (__v2df, long long);
+__m128d __builtin_ia32_cvtss2sd (__v2df, __v4sf);
+__m128d __builtin_ia32_unpckhpd (__v2df, __v2df);
+__m128d __builtin_ia32_unpcklpd (__v2df, __v2df);
+__m128d __builtin_ia32_loadhpd (__v2df, double const *);
+__m128d __builtin_ia32_loadlpd(__v2df, double const *);
+__m128i __builtin_ia32_packsswb128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_packssdw128 (__v4si, __v4si);
+__m128i __builtin_ia32_packuswb128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_punpckhbw128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_punpckhwd128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_punpckhdq128 (__v4si, __v4si);
+__m128i __builtin_ia32_punpckhqdq128 (__v2di, __v2di);
+__m128i __builtin_ia32_punpcklbw128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_punpcklwd128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_punpckldq128 (__v4si, __v4si);
+__m128i __builtin_ia32_punpcklqdq128 (__v2di, __v2di);
+__m128i __builtin_ia32_paddb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_paddw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_paddd128 (__v4si, __v4si);
+__m128i __builtin_ia32_paddq128 (__v2di, __v2di);
+__m128i __builtin_ia32_paddsb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_paddsw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_paddusb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_paddusw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_psubb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_psubw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_psubd128 (__v4si, __v4si);
+__m128i __builtin_ia32_psubq128 (__v2di, __v2di);
+__m128i __builtin_ia32_psubsb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_psubsw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_psubusb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_psubusw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pmaddwd128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pmulhw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pmullw128 (__v8hi, __v8hi);
+__m64 __builtin_ia32_pmuludq (__v2si, __v2si);
+__m128i __builtin_ia32_pmuludq128 (__v4si, __v4si);
+__m128i __builtin_ia32_psllwi128 (__v8hi, int);
+__m128i __builtin_ia32_pslldi128 (__v4si, int);
+__m128i __builtin_ia32_psllqi128 (__v2di, int);
+__m128i __builtin_ia32_psrawi128 (__v8hi, int);
+__m128i __builtin_ia32_psradi128 (__v4si, int);
+__m128i __builtin_ia32_psrlwi128 (__v8hi, int);
+__m128i __builtin_ia32_psrldi128 (__v4si, int);
+__m128i __builtin_ia32_psrlqi128 (__v2di, int);
+__m128i __builtin_ia32_psllw128(__v8hi, __v8hi);
+__m128i __builtin_ia32_pslld128(__v4si, __v4si);
+__m128i __builtin_ia32_psllq128(__v2di, __v2di);
+__m128i __builtin_ia32_psraw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_psrad128 (__v4si, __v4si);
+__m128i __builtin_ia32_psrlw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_psrld128 (__v4si, __v4si);
+__m128i __builtin_ia32_psrlq128 (__v2di, __v2di);
+__m128i __builtin_ia32_pand128 (__v2di, __v2di);
+__m128i __builtin_ia32_pandn128 (__v2di, __v2di);
+__m128i __builtin_ia32_por128 (__v2di, __v2di);
+__m128i __builtin_ia32_pxor128 (__v2di, __v2di);
+__m128i __builtin_ia32_pcmpeqb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_pcmpeqw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pcmpeqd128 (__v4si, __v4si);
+__m128i __builtin_ia32_pcmpgtb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_pcmpgtw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pcmpgtd128 (__v4si, __v4si);
+__m128i __builtin_ia32_pcmpgtb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_pcmpgtw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pcmpgtd128 (__v4si, __v4si);
+__m128i __builtin_ia32_pmaxsw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pmaxub128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_pminsw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pminub128 (__v16qi, __v16qi);
+int     __builtin_ia32_pmovmskb128 (__v16qi);
+__m128i __builtin_ia32_pmulhuw128 (__v8hi, __v8hi);
+void    __builtin_ia32_maskmovdqu (__v16qi, __v16qi, char*);
+__m128i __builtin_ia32_pavgb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_pavgw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_psadbw128 (__v16qi, __v16qi);
+void __builtin_ia32_movnti64 (long long int *,long long int);
+void __builtin_ia32_movntdq (__v2di *, __v2di);
+void __builtin_ia32_movntpd (double *, __v2df);
+int __builtin_ia32_movmskpd(__v2df);
+void __builtin_ia32_movnti(int*,int);
+
+int __builtin_ia32_clflush(void const *);
+int __builtin_ia32_lfence();
+int __builtin_ia32_mfence();
+
+// Builtin functions specific to GNU 4.4.1 (likely 4.4.x)
+// int __builtin_ia32_psllwi(short,int);
+// int __builtin_ia32_pslldi(int,int);
+// int __builtin_ia32_psllqi(long long,int);
+// int __builtin_ia32_psrawi(short,int);
+// int __builtin_ia32_psradi(int,int);
+// int __builtin_ia32_psrlwi(int,int);
+// int __builtin_ia32_psrldi(int,int);
+// int __builtin_ia32_psrlqi(long long,int);
+
+// DQ (1/21/2017): Added SSE builtins
+#endif
+
+#if 1
+// DQ (1/22/2017): Added AVX builtin functions support.
+typedef double __v4df __attribute__ ((__vector_size__ (32)));
+typedef float __v8sf __attribute__ ((__vector_size__ (32)));
+typedef long long __v4di __attribute__ ((__vector_size__ (32)));
+typedef int __v8si __attribute__ ((__vector_size__ (32)));
+typedef short __v16hi __attribute__ ((__vector_size__ (32)));
+typedef char __v32qi __attribute__ ((__vector_size__ (32)));
+
+typedef float __m256 __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef long long __m256i __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef double __m256d __attribute__ ((__vector_size__ (32), __may_alias__));
+
+typedef double __v8df __attribute__ ((__vector_size__ (64)));
+typedef float __v16sf __attribute__ ((__vector_size__ (64)));
+typedef long long __v8di __attribute__ ((__vector_size__ (64)));
+typedef int __v16si __attribute__ ((__vector_size__ (64)));
+typedef short __v32hi __attribute__ ((__vector_size__ (64)));
+typedef char __v64qi __attribute__ ((__vector_size__ (64)));
+typedef float __m512 __attribute__ ((__vector_size__ (64), __may_alias__));
+typedef long long __m512i __attribute__ ((__vector_size__ (64), __may_alias__));
+typedef double __m512d __attribute__ ((__vector_size__ (64), __may_alias__));
+typedef unsigned char __mmask8;
+typedef unsigned short __mmask16;
+
+__m128 __builtin_ia32_addsubps (__v4sf, __v4sf);
+__m128 __builtin_ia32_haddps (__v4sf, __v4sf);
+__m128 __builtin_ia32_hsubps (__v4sf, __v4sf);
+__m128 __builtin_ia32_movshdup (__v4sf);
+__m128 __builtin_ia32_movsldup (__v4sf);
+__m128d __builtin_ia32_addsubpd (__v2df, __v2df);
+__m128d __builtin_ia32_haddpd (__v2df, __v2df);
+__m128d __builtin_ia32_hsubpd (__v2df, __v2df);
+__m128i __builtin_ia32_lddqu (char const *__P);
+void __builtin_ia32_monitor (void const *, unsigned int, unsigned int);
+void __builtin_ia32_mwait (unsigned int, unsigned int);
+__m128i __builtin_ia32_phaddw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_phaddd128 (__v4si, __v4si);
+__m128i __builtin_ia32_phaddsw128 (__v8hi, __v8hi);
+__m64 __builtin_ia32_phaddw (__v4hi, __v4hi);
+__m64 __builtin_ia32_phaddd (__v2si, __v2si);
+__m64 __builtin_ia32_phaddsw (__v4hi, __v4hi);
+__m128i __builtin_ia32_phsubw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_phsubd128 (__v4si, __v4si);
+__m128i __builtin_ia32_phsubsw128 (__v8hi, __v8hi);
+__m64 __builtin_ia32_phsubw (__v4hi, __v4hi);
+__m64 __builtin_ia32_phsubd (__v2si, __v2si);
+__m64 __builtin_ia32_phsubsw (__v4hi, __v4hi);
+__m128i __builtin_ia32_pmaddubsw128 (__v16qi, __v16qi);
+__m64 __builtin_ia32_pmaddubsw (__v8qi, __v8qi);
+__m128i __builtin_ia32_pmulhrsw128 (__v8hi, __v8hi);
+__m64 __builtin_ia32_pmulhrsw (__v4hi, __v4hi);
+__m128i __builtin_ia32_pshufb128 (__v16qi, __v16qi);
+__m64 __builtin_ia32_pshufb (__v8qi, __v8qi);
+__m128i __builtin_ia32_psignb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_psignw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_psignd128 (__v4si, __v4si);
+__m64 __builtin_ia32_psignb (__v8qi, __v8qi);
+__m64 __builtin_ia32_psignw (__v4hi, __v4hi);
+__m64 __builtin_ia32_psignd (__v2si, __v2si);
+__m128i __builtin_ia32_pabsb128 (__v16qi);
+__m128i __builtin_ia32_pabsw128 (__v8hi);
+__m128i __builtin_ia32_pabsd128 (__v4si);
+__m64 __builtin_ia32_pabsb (__v8qi);
+__m64 __builtin_ia32_pabsw (__v4hi);
+__m64 __builtin_ia32_pabsd (__v2si);
+void __builtin_ia32_movntsd (double*, __v2df);
+void __builtin_ia32_movntss (float*, __v4sf);
+__m128i __builtin_ia32_extrq (__v2di, __v16qi);
+__m128i __builtin_ia32_insertq (__v2di, __v2di);
+int __builtin_ia32_ptestz128 (__v2di, __v2di);
+int __builtin_ia32_ptestc128 (__v2di, __v2di);
+int __builtin_ia32_ptestnzc128 (__v2di, __v2di);
+__m128i __builtin_ia32_pblendvb128 (__v16qi, __v16qi, __v16qi);
+__m128 __builtin_ia32_blendvps (__v4sf, __v4sf, __v4sf );
+__m128d __builtin_ia32_blendvpd (__v2df, __v2df, __v2df );
+__m128i __builtin_ia32_pcmpeqq (__v2di, __v2di);
+__m128i __builtin_ia32_pminsb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_pmaxsb128 (__v16qi, __v16qi);
+__m128i __builtin_ia32_pminuw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pmaxuw128 (__v8hi, __v8hi);
+__m128i __builtin_ia32_pminsd128 (__v4si, __v4si);
+__m128i __builtin_ia32_pmaxsd128 (__v4si, __v4si);
+__m128i __builtin_ia32_pminud128 (__v4si, __v4si);
+__m128i __builtin_ia32_pmaxud128 (__v4si, __v4si);
+__m128i __builtin_ia32_pmulld128 (__v4si, __v4si);
+__m128i __builtin_ia32_pmuldq128 (__v4si, __v4si);
+__m128i __builtin_ia32_phminposuw128 (__v8hi);
+__m128i __builtin_ia32_pmovsxbd128 (__v16qi);
+__m128i __builtin_ia32_pmovsxwd128 (__v8hi);
+__m128i __builtin_ia32_pmovsxbq128 (__v16qi);
+__m128i __builtin_ia32_pmovsxdq128 (__v4si);
+__m128i __builtin_ia32_pmovsxwq128 (__v8hi);
+__m128i __builtin_ia32_pmovsxbw128 (__v16qi);
+__m128i __builtin_ia32_pmovzxbd128 (__v16qi);
+__m128i __builtin_ia32_pmovzxwd128 (__v8hi);
+__m128i __builtin_ia32_pmovzxbq128 (__v16qi);
+__m128i __builtin_ia32_pmovzxdq128 (__v4si);
+__m128i __builtin_ia32_pmovzxwq128 (__v8hi);
+__m128i __builtin_ia32_pmovzxbw128 (__v16qi);
+__m128i __builtin_ia32_packusdw128 (__v4si, __v4si);
+__m128i __builtin_ia32_movntdqa (__v2di *);
+__m128i __builtin_ia32_pcmpgtq (__v2di, __v2di);
+__m128i __builtin_ia32_aesdec128 (__v2di, __v2di);
+__m128i __builtin_ia32_aesdeclast128 (__v2di, __v2di );
+__m128i __builtin_ia32_aesenc128 (__v2di, __v2di);
+__m128i __builtin_ia32_aesenclast128 (__v2di, __v2di);
+__m128i __builtin_ia32_aesimc128 (__v2di);
+__m256d __builtin_ia32_addpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_addps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_addsubpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_addsubps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_andpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_andps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_andnpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_andnps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_blendvpd256 (__v4df, __v4df, __v4df );
+__m256 __builtin_ia32_blendvps256 (__v8sf, __v8sf, __v8sf );
+__m256d __builtin_ia32_divpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_divps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_haddpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_haddps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_hsubpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_hsubps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_maxpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_maxps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_minpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_minps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_mulpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_mulps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_orpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_orps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_subpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_subps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_xorpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_xorps256 (__v8sf, __v8sf);
+__m256d __builtin_ia32_cvtdq2pd256 (__v4si);
+__m256 __builtin_ia32_cvtdq2ps256 (__v8si);
+__m128 __builtin_ia32_cvtpd2ps256 (__v4df);
+__m256i __builtin_ia32_cvtps2dq256 (__v8sf);
+__m256d __builtin_ia32_cvtps2pd256 (__v4sf);
+__m128i __builtin_ia32_cvttpd2dq256 (__v4df);
+__m128i __builtin_ia32_cvtpd2dq256 (__v4df);
+__m256i __builtin_ia32_cvttps2dq256 (__v8sf);
+void __builtin_ia32_vzeroall ();
+void __builtin_ia32_vzeroupper ();
+__m128d __builtin_ia32_vpermilvarpd (__v2df, __v2di );
+__m256d __builtin_ia32_vpermilvarpd256 (__v4df, __v4di );
+__m128 __builtin_ia32_vpermilvarps (__v4sf, __v4si );
+__m256 __builtin_ia32_vpermilvarps256 (__v8sf, __v8si );
+__m128 __builtin_ia32_vbroadcastss (float const*);
+__m256d __builtin_ia32_vbroadcastsd256 (double const*);
+__m256 __builtin_ia32_vbroadcastss256 (float const*);
+// __m256d __builtin_ia32_vbroadcastf128_pd256 (__X);
+__m256d __builtin_ia32_vbroadcastf128_pd256 (__m128d const *__X);
+// __m256 __builtin_ia32_vbroadcastf128_ps256 (__X);
+__m256 __builtin_ia32_vbroadcastf128_ps256 (__m128 const *__X);
+
+__m256d __builtin_ia32_loadupd256 (double const *__P);
+void __builtin_ia32_storeupd256 (double *__P, __v4df __A);
+__m256 __builtin_ia32_loadups256 (float const *__P);
+void __builtin_ia32_storeups256 (float *__P, __v8sf __A);
+__m256i __builtin_ia32_loaddqu256 (char const * __P);
+void __builtin_ia32_storedqu256 (char *__P, __v32qi __A);
+__m128d __builtin_ia32_maskloadpd (const __v2df *__P, __v2di __M);
+void __builtin_ia32_maskstorepd (__v2df *__P, __v2di __M, __v2df __A);
+__m256d __builtin_ia32_maskloadpd256 (const __v4df *__P, __v4di __M);
+void __builtin_ia32_maskstorepd256 (__v4df *__P, __v4di __M, __v4df __A);
+__m128 __builtin_ia32_maskloadps (const __v4sf *__P, __v4si __M);
+void __builtin_ia32_maskstoreps (__v4sf * __P, __v4si __M, __v4sf __A);
+__m256 __builtin_ia32_maskloadps256 (const __v8sf *__P, __v8si __M);
+void __builtin_ia32_maskstoreps256 (__v8sf *__P, __v8si __M, __v8sf __A);
+__m256 __builtin_ia32_movshdup256 (__v8sf __X);
+__m256 __builtin_ia32_movsldup256 (__v8sf __X);
+__m256d __builtin_ia32_movddup256 (__v4df __X);
+__m256i __builtin_ia32_lddqu256 (char const *__P);
+void __builtin_ia32_movntdq256 (__v4di * __A, __v4di __B);
+void __builtin_ia32_movntpd256 (double *__A, __v4df __B);
+void __builtin_ia32_movntps256 (float *__P, __v8sf __A);
+__m256 __builtin_ia32_rcpps256 (__v8sf __A);
+__m256 __builtin_ia32_rsqrtps256 (__v8sf __A);
+__m256d __builtin_ia32_sqrtpd256 (__v4df __A);
+__m256 __builtin_ia32_sqrtps256 (__v8sf __A);
+
+__m256d __builtin_ia32_unpckhpd256 (__v4df, __v4df);
+__m256d __builtin_ia32_unpcklpd256 (__v4df, __v4df);
+__m256 __builtin_ia32_unpckhps256 (__v8sf, __v8sf);
+__m256 __builtin_ia32_unpcklps256 (__v8sf, __v8sf);
+int __builtin_ia32_vtestzpd (__v2df, __v2df);
+int __builtin_ia32_vtestcpd (__v2df, __v2df);
+int __builtin_ia32_vtestnzcpd (__v2df, __v2df);
+int __builtin_ia32_vtestzps (__v4sf, __v4sf);
+int __builtin_ia32_vtestcps (__v4sf, __v4sf);
+
+int __builtin_ia32_vtestnzcps (__v4sf, __v4sf);
+int __builtin_ia32_vtestzpd256 (__v4df, __v4df);
+int __builtin_ia32_vtestcpd256 (__v4df, __v4df);
+int __builtin_ia32_vtestnzcpd256 (__v4df, __v4df);
+int __builtin_ia32_vtestzps256 (__v8sf, __v8sf);
+int __builtin_ia32_vtestcps256 (__v8sf, __v8sf);
+int __builtin_ia32_vtestnzcps256 (__v8sf, __v8sf);
+int __builtin_ia32_ptestz256 (__v4di, __v4di);
+int __builtin_ia32_ptestc256 (__v4di, __v4di);
+int __builtin_ia32_ptestnzc256 (__v4di, __v4di);
+int __builtin_ia32_movmskpd256 (__v4df);
+int __builtin_ia32_movmskps256 (__v8sf);
+__m128d __builtin_ia32_pd_pd256 (__v4df);
+__m128 __builtin_ia32_ps_ps256 (__v8sf);
+__m128i __builtin_ia32_si_si256 (__v8si);
+__m256d __builtin_ia32_pd256_pd (__v2df);
+__m256 __builtin_ia32_ps256_ps (__v4sf);
+__m256i __builtin_ia32_si256_si (__v4si);
+__m256i __builtin_ia32_pabsb256 (__v32qi);
+__m256i __builtin_ia32_pabsw256 (__v16hi);
+__m256i __builtin_ia32_pabsd256 (__v8si);
+__m256i __builtin_ia32_packssdw256 (__v8si, __v8si);
+__m256i __builtin_ia32_packsswb256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_packusdw256 (__v8si, __v8si);
+__m256i __builtin_ia32_packuswb256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_paddb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_paddw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_paddd256 (__v8si, __v8si);
+__m256i __builtin_ia32_paddq256 (__v4di, __v4di);
+__m256i __builtin_ia32_paddsb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_paddsw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_paddusb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_paddusw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_andsi256 (__v4di, __v4di);
+__m256i __builtin_ia32_andnotsi256 (__v4di, __v4di);
+__m256i __builtin_ia32_pavgb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_pavgw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_pblendvb256 (__v32qi, __v32qi, __v32qi );
+__m256i __builtin_ia32_pcmpeqb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_pcmpeqw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_pcmpeqd256 (__v8si, __v8si);
+__m256i __builtin_ia32_pcmpeqq256 (__v4di, __v4di);
+__m256i __builtin_ia32_pcmpgtb256 (__v32qi, __v32qi );
+__m256i __builtin_ia32_pcmpgtw256 (__v16hi, __v16hi );
+__m256i __builtin_ia32_pcmpgtd256 (__v8si, __v8si );
+__m256i __builtin_ia32_pcmpgtq256 (__v4di, __v4di);
+__m256i __builtin_ia32_phaddw256 (__v16hi, __v16hi );
+__m256i __builtin_ia32_phaddd256 (__v8si, __v8si);
+__m256i __builtin_ia32_phaddsw256 (__v16hi, __v16hi );
+__m256i __builtin_ia32_phsubw256 (__v16hi, __v16hi );
+__m256i __builtin_ia32_phsubd256 (__v8si, __v8si);
+__m256i __builtin_ia32_phsubsw256 (__v16hi, __v16hi );
+__m256i __builtin_ia32_pmaddubsw256 (__v32qi, __v32qi );
+__m256i __builtin_ia32_pmaddwd256 (__v16hi, __v16hi );
+__m256i __builtin_ia32_pmaxsb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_pmaxsw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_pmaxsd256 (__v8si, __v8si);
+__m256i __builtin_ia32_pmaxub256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_pmaxuw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_pmaxud256 (__v8si, __v8si);
+__m256i __builtin_ia32_pminsb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_pminsw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_pminsd256 (__v8si, __v8si);
+__m256i __builtin_ia32_pminub256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_pminuw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_pminud256 (__v8si, __v8si);
+int     __builtin_ia32_pmovmskb256 (__v32qi);
+__m256i __builtin_ia32_pmovsxbw256 (__v16qi);
+__m256i __builtin_ia32_pmovsxbd256 (__v16qi);
+__m256i __builtin_ia32_pmovsxbq256 (__v16qi);
+__m256i __builtin_ia32_pmovsxwd256 (__v8hi);
+__m256i __builtin_ia32_pmovsxwq256 (__v8hi);
+__m256i __builtin_ia32_pmovsxdq256 (__v4si);
+__m256i __builtin_ia32_pmovzxbw256 (__v16qi);
+__m256i __builtin_ia32_pmovzxbd256 (__v16qi);
+__m256i __builtin_ia32_pmovzxbq256 (__v16qi);
+__m256i __builtin_ia32_pmovzxwd256 (__v8hi);
+__m256i __builtin_ia32_pmovzxwq256 (__v8hi);
+__m256i __builtin_ia32_pmovzxdq256 (__v4si);
+__m256i __builtin_ia32_pmuldq256 (__v8si, __v8si);
+__m256i __builtin_ia32_pmulhrsw256 (__v16hi, __v16hi );
+__m256i __builtin_ia32_pmulhuw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_pmulhw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_pmullw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_pmulld256 (__v8si, __v8si);
+__m256i __builtin_ia32_pmuludq256 (__v8si, __v8si);
+__m256i __builtin_ia32_por256 (__v4di, __v4di);
+__m256i __builtin_ia32_psadbw256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_pshufb256 (__v32qi, __v32qi );
+__m256i __builtin_ia32_psignb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_psignw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_psignd256 (__v8si, __v8si);
+__m256i __builtin_ia32_psllwi256 (__v16hi, int);
+__m256i __builtin_ia32_psllw256(__v16hi, __v8hi);
+__m256i __builtin_ia32_pslldi256 (__v8si, int);
+__m256i __builtin_ia32_pslld256(__v8si, __v4si);
+__m256i __builtin_ia32_psllqi256 (__v4di, int);
+__m256i __builtin_ia32_psllq256(__v4di, __v2di);
+__m256i __builtin_ia32_psrawi256 (__v16hi, int);
+__m256i __builtin_ia32_psraw256 (__v16hi, __v8hi);
+__m256i __builtin_ia32_psradi256 (__v8si, int);
+__m256i __builtin_ia32_psrad256 (__v8si, __v4si);
+__m256i __builtin_ia32_psrlwi256 (__v16hi, int);
+__m256i __builtin_ia32_psrlw256(__v16hi, __v8hi);
+__m256i __builtin_ia32_psrldi256 (__v8si, int);
+__m256i __builtin_ia32_psrld256(__v8si, __v4si);
+__m256i __builtin_ia32_psrlqi256 (__v4di, int);
+__m256i __builtin_ia32_psrlq256(__v4di, __v2di);
+__m256i __builtin_ia32_psubb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_psubw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_psubd256 (__v8si, __v8si);
+__m256i __builtin_ia32_psubq256 (__v4di, __v4di);
+__m256i __builtin_ia32_psubsb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_psubsw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_psubusb256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_psubusw256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_punpckhbw256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_punpckhwd256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_punpckhdq256 (__v8si, __v8si);
+__m256i __builtin_ia32_punpckhqdq256 (__v4di, __v4di);
+__m256i __builtin_ia32_punpcklbw256 (__v32qi, __v32qi);
+__m256i __builtin_ia32_punpcklwd256 (__v16hi, __v16hi);
+__m256i __builtin_ia32_punpckldq256 (__v8si, __v8si);
+__m256i __builtin_ia32_punpcklqdq256 (__v4di, __v4di);
+__m256i __builtin_ia32_pxor256 (__v4di, __v4di);
+__m256i __builtin_ia32_movntdqa256 (__v4di *);
+__m128 __builtin_ia32_vbroadcastss_ps (__v4sf);
+__m256 __builtin_ia32_vbroadcastss_ps256 (__v4sf);
+__m256d __builtin_ia32_vbroadcastsd_pd256 (__v2df);
+__m256i __builtin_ia32_vbroadcastsi256 (__v2di);
+__m256i __builtin_ia32_pbroadcastb256 (__v16qi);
+__m256i __builtin_ia32_pbroadcastw256 (__v8hi);
+__m256i __builtin_ia32_pbroadcastd256 (__v4si);
+__m256i __builtin_ia32_pbroadcastq256 (__v2di);
+__m128i __builtin_ia32_pbroadcastb128 (__v16qi);
+__m128i __builtin_ia32_pbroadcastw128 (__v8hi);
+__m128i __builtin_ia32_pbroadcastd128 (__v4si);
+__m128i __builtin_ia32_pbroadcastq128 (__v2di);
+__m256i __builtin_ia32_permvarsi256 (__v8si, __v8si);
+__m256 __builtin_ia32_permvarsf256 (__v8sf, __v8si);
+__m256i __builtin_ia32_maskloadd256 (const __v8si *, __v8si );
+__m256i __builtin_ia32_maskloadq256 (const __v4di *, __v4di );
+__m128i __builtin_ia32_maskloadd (const __v4si *, __v4si );
+__m128i __builtin_ia32_maskloadq (const __v2di *, __v2di );
+void __builtin_ia32_maskstored256 (__v8si *, __v8si, __v8si);
+void __builtin_ia32_maskstoreq256 (__v4di *, __v4di, __v4di);
+void __builtin_ia32_maskstored (__v4si *, __v4si, __v4si);
+void __builtin_ia32_maskstoreq (__v2di *, __v2di, __v2di);
+__m256i __builtin_ia32_psllv8si (__v8si, __v8si);
+__m128i __builtin_ia32_psllv4si (__v4si, __v4si);
+__m256i __builtin_ia32_psllv4di (__v4di, __v4di);
+__m128i __builtin_ia32_psllv2di (__v2di, __v2di);
+__m256i __builtin_ia32_psrav8si (__v8si, __v8si);
+__m128i __builtin_ia32_psrav4si (__v4si, __v4si);
+__m256i __builtin_ia32_psrlv8si (__v8si, __v8si);
+__m128i __builtin_ia32_psrlv4si (__v4si, __v4si);
+__m256i __builtin_ia32_psrlv4di (__v4di, __v4di);
+__m128i __builtin_ia32_psrlv2di (__v2di, __v2di);
+// __m512d __builtin_ia32_broadcastsd512 ( int );
+__m512d __builtin_ia32_broadcastsd512 (__v2df, __v8df, __mmask8);
+__m512 __builtin_ia32_broadcastss512 ( __v4sf, __v16sf, __mmask16);
+// __m512d __builtin_ia32_movapd512_mask (__v8df, int );
+__m512d __builtin_ia32_movapd512_mask (__v8df, __v8df, __mmask8);
+// __m512 __builtin_ia32_movaps512_mask (__v16sf, int );
+   __m512 __builtin_ia32_movaps512_mask (__v16sf, __v16sf , __mmask16);
+// __m512d __builtin_ia32_loadapd512_mask (const __v8df *, int );
+__m512d __builtin_ia32_loadapd512_mask (const __v8df *, __v8df, __mmask8);
+void __builtin_ia32_storeapd512_mask (__v8df *, __v8df, int );
+// __m512 __builtin_ia32_loadaps512_mask (const __v16sf *, int );
+__m512 __builtin_ia32_loadaps512_mask (const __v16sf *, __v16sf, __mmask16);
+void __builtin_ia32_storeaps512_mask (__v16sf *, __v16sf, int );
+// __m512i __builtin_ia32_movdqa64_512_mask (__v8di, int );
+__m512i __builtin_ia32_movdqa64_512_mask (__v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_movdqa64load512_mask (const __v8di *, int );
+__m512i __builtin_ia32_movdqa64load512_mask (const __v8di *, __v8di, __mmask8);
+void __builtin_ia32_movdqa64store512_mask (__v8di *, __v8di, int );
+// __m512i __builtin_ia32_movdqa32_512_mask (__v16si, int );
+__m512i __builtin_ia32_movdqa32_512_mask (__v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_movdqa32load512_mask (const __v16si *, int );
+__m512i __builtin_ia32_movdqa32load512_mask (const __v16si *, __v16si, __mmask16);
+void __builtin_ia32_movdqa32store512_mask (__v16si *, __v16si, __mmask16);
+// __m512i __builtin_ia32_pmulld512_mask (__v16si, int );
+// __m512i __builtin_ia32_pmulld512_mask (__v16si, int );
+
+// DQ (1/25/2017): Unclear which if these to use for C langauge support (can't be overloaded in C).
+#ifdef __cplusplus__
+__m512i __builtin_ia32_pmulld512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __mmask16 );
+__m512i __builtin_ia32_psrav16si_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_psrlv16si_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_paddq512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psubq512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psllv8di_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psrav8di_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psrlv8di_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_paddd512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_psubd512_mask (__v16si, __v16si, __mmask8);
+__m512d __builtin_ia32_rsqrt14pd512_mask (__v8df, __v8df, __mmask8);
+__m512  __builtin_ia32_rsqrt14ps512_mask (__v16sf, __v16sf, __mmask16);
+// __m512  __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __mmask8);
+__m512  __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __v4sf, __mmask8);
+__m512i __builtin_ia32_pbroadcastd512 (__v4si, int );
+__m512i __builtin_ia32_pbroadcastd512_gpr_mask (int, int );
+#endif
+
+
+// __m512i __builtin_ia32_pmulld512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_pmulld512_mask (__v16si, __v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __mmask16 );
+__m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __v16si, __mmask16 );
+// __m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __mmask16 );
+// __m512i __builtin_ia32_psrav16si_mask (__v16si, int );
+__m512i __builtin_ia32_psrav16si_mask (__v16si, __v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_psrav16si_mask (__v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_psrlv16si_mask (__v16si, int );
+__m512i __builtin_ia32_psrlv16si_mask (__v16si, __v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_psrlv16si_mask (__v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_paddq512_mask (__v8di, int );
+__m512i __builtin_ia32_paddq512_mask (__v8di, __v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_paddq512_mask (__v8di, __v8di, __mmask8);
+
+// __m512i __builtin_ia32_psubq512_mask (__v8di, int );
+// __m512i __builtin_ia32_psubq512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psubq512_mask (__v8di, __v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_psllv8di_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psllv8di_mask (__v8di, __v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_psllv8di_mask (__v8di, int );
+// __m512i __builtin_ia32_psrav8di_mask (__v8di, int );
+// __m512i __builtin_ia32_psrav8di_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psrav8di_mask (__v8di, __v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_psrlv8di_mask (__v8di, int );
+// __m512i __builtin_ia32_psrlv8di_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psrlv8di_mask (__v8di, __v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_paddd512_mask (__v16si, int );
+__m512i __builtin_ia32_paddd512_mask (__v16si, __v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_paddd512_mask (__v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_pmuldq512_mask (__v16si, int );
+// __m512i __builtin_ia32_pmuldq512_mask (__v16si, __v16si, __mmask8);
+__m512i __builtin_ia32_pmuldq512_mask (__v16si, __v16si, __v8di, __mmask8);
+// __m512i __builtin_ia32_psubd512_mask (__v16si, int );
+// __m512i __builtin_ia32_psubd512_mask (__v16si, __v16si, __mmask8);
+__m512i __builtin_ia32_psubd512_mask (__v16si, __v16si, __v16si, __mmask8);
+// __m512i __builtin_ia32_pmuludq512_mask (__v16si, int );
+// __m512i __builtin_ia32_pmuludq512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_pmuludq512_mask (__v16si, __v16si, __v8di, __mmask16);
+// __m512i __builtin_ia32_psllq512_mask (__v8di, int );
+// __m512i __builtin_ia32_psllq512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psllq512_mask (__v8di, __v2di, __v8di, __mmask8 );
+// __m512i __builtin_ia32_psrlq512_mask (__v8di, int );
+// __m512i __builtin_ia32_psrlq512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psrlq512_mask (__v8di, __v2di, __v8di, __mmask8);
+// __m512i __builtin_ia32_psraq512_mask (__v8di, int );
+// __m512i __builtin_ia32_psraq512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_psraq512_mask (__v8di, __v2di, __v8di, __mmask8);
+// __m512i __builtin_ia32_pslld512_mask (__v16si, int );
+// __m512i __builtin_ia32_pslld512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_pslld512_mask (__v16si, __v4si, __v16si, __mmask16);
+// __m512i __builtin_ia32_psrld512_mask (__v16si, int );
+// __m512i __builtin_ia32_psrld512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_psrld512_mask (__v16si, __v4si, __v16si, __mmask16);
+// __m512i __builtin_ia32_psrad512_mask (__v16si, int );
+// __m512i __builtin_ia32_psrad512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_psrad512_mask (__v16si, __v4si, __v16si, __mmask16);
+// __m512d __builtin_ia32_rcp14pd512_mask (__v8df, int );
+__m512d __builtin_ia32_rcp14pd512_mask (__v8df, __v8df, __mmask8);
+// __m512d __builtin_ia32_rcp14pd512_mask (__v8df, __v8df, __v8df, __mmask8);
+// __m512 __builtin_ia32_rcp14ps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_rcp14ps512_mask (__v16sf, __v16sf, __mmask16);
+__m512 __builtin_ia32_rcp14ps512_mask (__v16sf, __v16sf, __mmask16);
+__m128d __builtin_ia32_rcp14sd (__v2df, __v2df );
+__m128 __builtin_ia32_rcp14ss (__v4sf, __v4sf );
+// __m512d __builtin_ia32_rsqrt14pd512_mask (__v8df, int );
+// __m512d __builtin_ia32_rsqrt14pd512_mask (__v8df, __v8df, __mmask8);
+__m512d __builtin_ia32_rsqrt14pd512_mask (__v8df, __v8df, __v8df, __mmask8);
+// __m512 __builtin_ia32_rsqrt14ps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_rsqrt14ps512_mask (__v16sf, __v16sf, __mmask16);
+__m512 __builtin_ia32_rsqrt14ps512_mask (__v16sf, __v16sf, __v16sf, __mmask16);
+__m128d __builtin_ia32_rsqrt14sd (__v2df, __v2df );
+__m128 __builtin_ia32_rsqrt14ss (__v4sf, __v4sf );
+// __m512i __builtin_ia32_pmovsxbd512_mask (__v16qi, int );
+__m512i __builtin_ia32_pmovsxbd512_mask (__v16qi, __v16si, __mmask16);
+// __m512i __builtin_ia32_pmovsxbd512_mask (__v16qi, __v16qi, __v16qi, __mmask16);
+// __m512i __builtin_ia32_pmovsxbq512_mask (__v16qi, int );
+__m512i __builtin_ia32_pmovsxbq512_mask (__v16qi, __v8di, __mmask16);
+// __m512i __builtin_ia32_pmovsxbq512_mask (__v16qi, __v16qi, __v16qi, __mmask16);
+// __m512i __builtin_ia32_pmovsxwd512_mask (__v16hi, int );
+__m512i __builtin_ia32_pmovsxwd512_mask (__v16hi, __v16si, __mmask16);
+// __m512i __builtin_ia32_pmovsxwd512_mask (__v16hi, __v16hi, __v16hi, __mmask16);
+// __m512i __builtin_ia32_pmovsxwq512_mask (__v8hi, int );
+__m512i __builtin_ia32_pmovsxwq512_mask (__v8hi, __v8di, __mmask8);
+// __m512i __builtin_ia32_pmovsxwq512_mask (__v8hi, __v8hi, __v8hi, __mmask8);
+// __m512i __builtin_ia32_pmovsxdq512_mask (__v8si, int );
+__m512i __builtin_ia32_pmovsxdq512_mask (__v8si, __v8di, __mmask8);
+// __m512i __builtin_ia32_pmovsxdq512_mask (__v8si, __v8si, __v8si, __mmask8);
+// __m512i __builtin_ia32_pmovzxbd512_mask (__v16qi, int );
+__m512i __builtin_ia32_pmovzxbd512_mask (__v16qi, __v16si, __mmask16);
+// __m512i __builtin_ia32_pmovzxbd512_mask (__v16qi, __v16qi, __v16qi, __mmask16);
+// __m512i __builtin_ia32_pmovzxbq512_mask (__v16qi, int );
+__m512i __builtin_ia32_pmovzxbq512_mask (__v16qi, __v8di, __mmask16);
+// __m512i __builtin_ia32_pmovzxbq512_mask (__v16qi, __v16qi, __v16qi, __mmask16);
+// __m512i __builtin_ia32_pmovzxwd512_mask (__v16hi, int );
+__m512i __builtin_ia32_pmovzxwd512_mask (__v16hi, __v16si, __mmask16);
+// __m512i __builtin_ia32_pmovzxwd512_mask (__v16hi, __v16hi, __v16hi, __mmask16);
+// __m512i __builtin_ia32_pmovzxwq512_mask (__v8hi, int );
+__m512i __builtin_ia32_pmovzxwq512_mask (__v8hi, __v8di, __mmask8);
+// __m512i __builtin_ia32_pmovzxwq512_mask (__v8hi, __v8hi, __v8hi, __mmask8);
+// __m512i __builtin_ia32_pmovzxdq512_mask (__v8si, int );
+__m512i __builtin_ia32_pmovzxdq512_mask (__v8si, __v8di, __mmask8);
+// __m512i __builtin_ia32_pmovzxdq512_mask (__v8si, __v8si, __v8si, __mmask8);
+// __m512i __builtin_ia32_pabsq512_mask (__v8di, int );
+__m512i __builtin_ia32_pabsq512_mask (__v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_pabsq512_mask (__v8di, __v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_pabsd512_mask (__v16si, int );
+__m512i __builtin_ia32_pabsd512_mask (__v16si, __v16si, __mmask16);
+// __m512i __builtin_ia32_pabsd512_mask (__v16si, __v16si, __v16si, __mmask16);
+// __m512 __builtin_ia32_broadcastss512 (__v4sf, int );
+// __m512 __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __mmask8);
+// __m512 __builtin_ia32_broadcastss512 (__v4sf, __v4sf, __v4sf, __mmask8);
+// __m512d __builtin_ia32_broadcastsd512 (__v2df, int );
+// __m512d __builtin_ia32_broadcastsd512 (__v2df, int );
+// __m512d __builtin_ia32_broadcastsd512 (__v2df, int );
+
+// __m512i __builtin_ia32_pbroadcastd512 (__v4si, int );
+__m512i __builtin_ia32_pbroadcastd512 (__v4si, __v16si, __mmask16);
+// __m512i __builtin_ia32_pbroadcastd512 (__v4si, int );
+// __m512i __builtin_ia32_pbroadcastd512_gpr_mask (int, int );
+__m512i __builtin_ia32_pbroadcastd512_gpr_mask (int, __v16si, int );
+// void __builtin_ia32_pbroadcastd512_gpr_mask (int, int );
+__m512i __builtin_ia32_pbroadcastq512 (__v2di, __v8di, __mmask8);
+// __m512i __builtin_ia32_pbroadcastq512 (__v2di, int );
+// __m512i __builtin_ia32_pbroadcastq512 (__v2di, int );
+// __m512i __builtin_ia32_pbroadcastq512_mem_mask (long long, int );
+__m512i __builtin_ia32_pbroadcastq512_mem_mask (long long, __v8di, __mmask8);
+// void __builtin_ia32_pbroadcastq512_mem_mask (long long, int );
+
+// __m512 __builtin_ia32_broadcastf32x4_512 (__v4sf, int );
+// __m512 __builtin_ia32_broadcastf32x4_512 (__v4sf, int );
+__m512 __builtin_ia32_broadcastf32x4_512 (__v4sf, __v16sf, __mmask16);
+
+__m512i __builtin_ia32_broadcasti32x4_512 (__v4si, __v16si, __mmask16);
+// __m512i __builtin_ia32_broadcasti32x4_512 (__v4si, int );
+// __m512i __builtin_ia32_broadcasti32x4_512 (__v4si, int );
+
+// __m512d __builtin_ia32_broadcastf64x4_512 (__v4df, int );
+// __m512d __builtin_ia32_broadcastf64x4_512 (__v4df, int );
+__m512d __builtin_ia32_broadcastf64x4_512 (__v4df, __v8df, __mmask8);
+
+// __m512i __builtin_ia32_broadcasti64x4_512 (__v4di, int );
+// __m512i __builtin_ia32_broadcasti64x4_512 (__v4di, int );
+__m512i __builtin_ia32_broadcasti64x4_512 (__v4di, __v8di, __mmask8);
+
+// __m512i __builtin_ia32_prolvd512_mask (__v16si, int );
+// __m512i __builtin_ia32_prolvd512_mask (__v16si, int );
+__m512i __builtin_ia32_prolvd512_mask (__v16si, __v16si, __v16si, __mmask16);
+
+// __m512i __builtin_ia32_prorvd512_mask (__v16si, int );
+// __m512i __builtin_ia32_prorvd512_mask (__v16si, int );
+__m512i __builtin_ia32_prorvd512_mask (__v16si, __v16si, __v16si, __mmask16);
+
+// __m512i __builtin_ia32_prolvq512_mask (__v8di, int );
+// __m512i __builtin_ia32_prolvq512_mask (__v8di, int );
+__m512i __builtin_ia32_prolvq512_mask (__v8di, __v8di, __v8di, __mmask8);
+
+// __m512i __builtin_ia32_prorvq512_mask (__v8di, int );
+// __m512i __builtin_ia32_prorvq512_mask (__v8di, int );
+__m512i __builtin_ia32_prorvq512_mask (__v8di, __v8di, __v8di, __mmask8);
+
+__m128d __builtin_ia32_cvtusi2sd32 (__v2df, unsigned);
+void __builtin_ia32_pmovdb512mem_mask (__v16qi *, __v16si, __mmask16);
+// __m128i __builtin_ia32_pmovdb512_mask (__v16si, int );
+// __m128i __builtin_ia32_pmovdb512_mask (__v16si, int );
+__m128i __builtin_ia32_pmovdb512_mask (__v16si, __v16qi, __mmask16);
+
+void __builtin_ia32_pmovsdb512mem_mask (__v16qi *, __v16si, __mmask16);
+
+// __m128i __builtin_ia32_pmovsdb512_mask (__v16si, int );
+// __m128i __builtin_ia32_pmovsdb512_mask (__v16si, int );
+__m128i __builtin_ia32_pmovsdb512_mask (__v16si, __v16qi, __mmask16);
+void __builtin_ia32_pmovusdb512mem_mask (__v16qi *, __v16si, __mmask16);
+
+// __m128i __builtin_ia32_pmovusdb512_mask (__v16si, int );
+// __m128i __builtin_ia32_pmovusdb512_mask (__v16si, int );
+__m128i __builtin_ia32_pmovusdb512_mask (__v16si, __v16qi, __mmask16);
+
+void __builtin_ia32_pmovdw512mem_mask (__v16hi *, __v16si, __mmask16);
+// __m256i __builtin_ia32_pmovdw512_mask (__v16si, int );
+// __m256i __builtin_ia32_pmovdw512_mask (__v16si, int );
+__m256i __builtin_ia32_pmovdw512_mask (__v16si, __v16hi, __mmask16);
+
+void __builtin_ia32_pmovsdw512mem_mask (__v16hi*, __v16si, __mmask16);
+// __m256i __builtin_ia32_pmovsdw512_mask (__v16si, int );
+// __m256i __builtin_ia32_pmovsdw512_mask (__v16si, int );
+__m256i __builtin_ia32_pmovsdw512_mask (__v16si, __v16hi, __mmask16);
+
+void __builtin_ia32_pmovusdw512mem_mask (__v16hi*, __v16si, __mmask16);
+// __m256i __builtin_ia32_pmovusdw512_mask (__v16si, int );
+// __m256i __builtin_ia32_pmovusdw512_mask (__v16si, int );
+__m256i __builtin_ia32_pmovusdw512_mask (__v16si, __v16hi, __mmask16);
+
+void __builtin_ia32_pmovqd512mem_mask (__v8si *, __v8di, __mmask16);
+// __m256i __builtin_ia32_pmovqd512_mask (__v8di, int );
+// __m256i __builtin_ia32_pmovqd512_mask (__v8di, int );
+__m256i __builtin_ia32_pmovqd512_mask (__v8di, __v8si, __mmask8);
+
+void __builtin_ia32_pmovsqd512mem_mask (__v8si *, __v8di, __mmask16);
+// __m256i __builtin_ia32_pmovsqd512_mask (__v8di, int );
+// __m256i __builtin_ia32_pmovsqd512_mask (__v8di, int );
+__m256i __builtin_ia32_pmovsqd512_mask (__v8di, __v8si, __mmask8);
+
+void __builtin_ia32_pmovusqd512mem_mask (__v8si*, __v8di, __mmask16);
+// __m256i __builtin_ia32_pmovusqd512_mask (__v8di, int );
+// __m256i __builtin_ia32_pmovusqd512_mask (__v8di, int );
+__m256i __builtin_ia32_pmovusqd512_mask (__v8di, __v8si, __mmask8);
+
+void __builtin_ia32_pmovqw512mem_mask (__v8hi *, __v8di, __mmask16);
+// __m128i __builtin_ia32_pmovqw512_mask (__v8di, int );
+// __m128i __builtin_ia32_pmovqw512_mask (__v8di, int );
+__m128i __builtin_ia32_pmovqw512_mask (__v8di, __v8hi, __mmask8);
+
+void __builtin_ia32_pmovsqw512mem_mask (__v8hi *, __v8di, __mmask16);
+// __m128i __builtin_ia32_pmovsqw512_mask (__v8di, int );
+// __m128i __builtin_ia32_pmovsqw512_mask (__v8di, int );
+__m128i __builtin_ia32_pmovsqw512_mask (__v8di, __v8hi, __mmask8);
+
+void __builtin_ia32_pmovusqw512mem_mask (__v8hi*, __v8di, __mmask16);
+// __m128i __builtin_ia32_pmovusqw512_mask (__v8di, int );
+// __m128i __builtin_ia32_pmovusqw512_mask (__v8di, int );
+__m128i __builtin_ia32_pmovusqw512_mask (__v8di, __v8hi, __mmask8);
+
+void __builtin_ia32_pmovqb512mem_mask (__v16qi *, __v8di, __mmask16);
+// __m128i __builtin_ia32_pmovqb512_mask (__v8di, int );
+// __m128i __builtin_ia32_pmovqb512_mask (__v8di, int );
+__m128i __builtin_ia32_pmovqb512_mask (__v8di, __v16qi, __mmask8);
+
+void __builtin_ia32_pmovsqb512mem_mask (__v16qi *, __v8di, __mmask16);
+// __m128i __builtin_ia32_pmovsqb512_mask (__v8di, int );
+// __m128i __builtin_ia32_pmovsqb512_mask (__v8di, int );
+__m128i __builtin_ia32_pmovsqb512_mask (__v8di, __v16qi, __mmask8);
+
+void __builtin_ia32_pmovusqb512mem_mask (__v16qi *, __v8di, __mmask16);
+// __m128i __builtin_ia32_pmovusqb512_mask (__v8di, int );
+// __m128i __builtin_ia32_pmovusqb512_mask (__v8di, int );
+__m128i __builtin_ia32_pmovusqb512_mask (__v8di, __v16qi, __mmask8);
+
+// __m512d __builtin_ia32_cvtdq2pd512_mask (__v8si, int );
+// __m512d __builtin_ia32_cvtdq2pd512_mask (__v8si, int );
+__m512d __builtin_ia32_cvtdq2pd512_mask (__v8si, __v8df, __mmask8);
+
+// __m512d __builtin_ia32_cvtudq2pd512_mask (__v8si, int );
+// __m512d __builtin_ia32_cvtudq2pd512_mask (__v8si, int );
+__m512d __builtin_ia32_cvtudq2pd512_mask (__v8si, __v8df, __mmask8);
+
+// __m512d __builtin_ia32_loadupd512_mask (const __v8df *, int );
+// __m512d __builtin_ia32_loadupd512_mask (const __v8df *, int );
+__m512d __builtin_ia32_loadupd512_mask (const __v8df *, __v8df, __mmask8);
+
+void __builtin_ia32_storeupd512_mask (__v8df *, __v8df, int );
+void __builtin_ia32_storeupd512_mask (__v8df *, __v8df, int );
+
+// __m512 __builtin_ia32_loadups512_mask (const __v16sf *, int );
+// __m512 __builtin_ia32_loadups512_mask (const __v16sf *, int );
+__m512 __builtin_ia32_loadups512_mask (const __v16sf *, __v16sf, __mmask16);
+
+void __builtin_ia32_storeups512_mask (__v16sf *, __v16sf, int );
+void __builtin_ia32_storeups512_mask (__v16sf *, __v16sf, int );
+
+// __m512i __builtin_ia32_loaddqudi512_mask (const __v8di *, int );
+__m512i __builtin_ia32_loaddqudi512_mask (const __v8di *, __v8di, __mmask8);
+
+void __builtin_ia32_storedqudi512_mask (__v8di *, __v8di, int );
+
+// __m512i __builtin_ia32_loaddqusi512_mask (const __v16si *, int );
+// __m512i __builtin_ia32_loaddqusi512_mask (const __v16si *, int );
+__m512i __builtin_ia32_loaddqusi512_mask (const __v16si *, __v16si, __mmask16);
+
+void __builtin_ia32_storedqusi512_mask (__v16si *, __v16si, int );
+void __builtin_ia32_storedqusi512_mask (__v16si *, __v16si, int );
+
+// __m512d __builtin_ia32_vpermilvarpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_vpermilvarpd512_mask (__v8df, int );
+__m512d __builtin_ia32_vpermilvarpd512_mask (__v8df, __v8di, __v8df, __mmask8);
+
+// __m512 __builtin_ia32_vpermilvarps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_vpermilvarps512_mask (__v16sf, int );
+__m512 __builtin_ia32_vpermilvarps512_mask (__v16sf, __v16si, __v16sf, __mmask16);
+
+// __m512i __builtin_ia32_vpermt2varq512_mask (__v8di, int );
+__m512i __builtin_ia32_vpermt2varq512_mask (__v8di, __v8di,__v8di, __mmask8);
+
+__m512i __builtin_ia32_vpermi2varq512_mask (__v8di, __v8di,__v8di, __mmask8);
+
+// __m512i __builtin_ia32_vpermt2vard512_mask (__v16si, int );
+__m512i __builtin_ia32_vpermt2varq512_maskz (__v8di, __v8di,__v8di, __mmask8);
+
+__m512i __builtin_ia32_vpermt2vard512_mask (__v16si, __v16si,__v16si, __mmask16);
+
+__m512i __builtin_ia32_vpermi2vard512_mask (__v16si, __v16si,__v16si, __mmask16);
+
+__m512i __builtin_ia32_vpermt2vard512_maskz (__v16si, __v16si,__v16si, __mmask16);
+
+// __m512d __builtin_ia32_vpermt2varpd512_mask (__v8di, int );
+__m512d __builtin_ia32_vpermt2varpd512_mask (__v8di, __v8df,__v8df, __mmask8);
+
+__m512d __builtin_ia32_vpermi2varpd512_mask (__v8df, __v8di,__v8df, __mmask8);
+
+__m512d __builtin_ia32_vpermt2varpd512_maskz (__v8di, __v8df,__v8df, __mmask8);
+
+// __m512 __builtin_ia32_vpermt2varps512_mask (__v16si, int );
+__m512 __builtin_ia32_vpermt2varps512_mask (__v16si, __v16sf,__v16sf, __mmask16);
+
+__m512 __builtin_ia32_vpermi2varps512_mask (__v16sf, __v16si,__v16sf, __mmask16);
+
+__m512 __builtin_ia32_vpermt2varps512_maskz (__v16si, __v16sf,__v16sf, __mmask16);
+
+__m512i __builtin_ia32_permvardi512_mask (__v8di, __v8di,__v8di, __mmask8);
+// __m512i __builtin_ia32_permvardi512_mask (__v8di, int );
+// __m512i __builtin_ia32_permvardi512_mask (__v8di, int );
+
+// __m512i __builtin_ia32_permvarsi512_mask (__v16si, int );
+// __m512i __builtin_ia32_permvarsi512_mask (__v16si, int );
+__m512i __builtin_ia32_permvarsi512_mask (__v16si, __v16si,__v16si, __mmask16);
+
+// __m512d __builtin_ia32_permvardf512_mask (__v8df, int );
+// __m512d __builtin_ia32_permvardf512_mask (__v8df, int );
+__m512d __builtin_ia32_permvardf512_mask (__v8df, __v8di,__v8df, __mmask8);
+
+// __m512 __builtin_ia32_permvarsf512_mask (__v16sf, int );
+// __m512 __builtin_ia32_permvarsf512_mask (__v16sf, int );
+__m512 __builtin_ia32_permvarsf512_mask (__v16sf, __v16si,__v16sf, __mmask16);
+
+// __m512 __builtin_ia32_movshdup512_mask (__v16sf, int );
+// __m512 __builtin_ia32_movshdup512_mask (__v16sf, int );
+__m512 __builtin_ia32_movshdup512_mask (__v16sf, __v16sf, __mmask16);
+
+// __m512 __builtin_ia32_movsldup512_mask (__v16sf, int );
+// __m512 __builtin_ia32_movsldup512_mask (__v16sf, int );
+__m512 __builtin_ia32_movsldup512_mask (__v16sf, __v16sf, __mmask16);
+
+// __m512i __builtin_ia32_pord512_mask (__v16si, int );
+// __m512i __builtin_ia32_pord512_mask (__v16si, int );
+// __m512i __builtin_ia32_pord512_mask (__v16si, int );
+__m512i __builtin_ia32_pord512_mask (__v16si, __v16si,__v16si, __mmask16);
+
+__m512i __builtin_ia32_porq512_mask (__v8di, __v8di,__v8di, __mmask8);
+// __m512i __builtin_ia32_porq512_mask (__v8di, int );
+// __m512i __builtin_ia32_porq512_mask (__v8di, int );
+
+// __m512i __builtin_ia32_pxord512_mask (__v16si, int );
+// __m512i __builtin_ia32_pxord512_mask (__v16si, int );
+// __m512i __builtin_ia32_pxord512_mask (__v16si, int );
+__m512i __builtin_ia32_pxord512_mask (__v16si, __v16si,__v16si, __mmask16);
+
+// __m512i __builtin_ia32_pxorq512_mask (__v8di, int );
+// __m512i __builtin_ia32_pxorq512_mask (__v8di, int );
+__m512i __builtin_ia32_pxorq512_mask (__v8di, __v8di,__v8di, __mmask8);
+
+// __m512i __builtin_ia32_pandd512_mask (__v16si, int );
+// __m512i __builtin_ia32_pandd512_mask (__v16si, int );
+// __m512i __builtin_ia32_pandd512_mask (__v16si, int );
+__m512i __builtin_ia32_pandd512_mask (__v16si, __v16si,__v16si, __mmask16);
+
+// __m512i __builtin_ia32_pandq512_mask (__v8di, int );
+// __m512i __builtin_ia32_pandq512_mask (__v8di, int );
+__m512i __builtin_ia32_pandq512_mask (__v8di, __v8di,__v8di, __mmask16);
+
+// __m512i __builtin_ia32_pandnd512_mask (__v16si, int );
+// __m512i __builtin_ia32_pandnd512_mask (__v16si, int );
+// __m512i __builtin_ia32_pandnd512_mask (__v16si, int );
+__m512i __builtin_ia32_pandnd512_mask (__v16si, __v16si,__v16si, __mmask16);
+
+// __m512i __builtin_ia32_pandnq512_mask (__v8di, int );
+// __m512i __builtin_ia32_pandnq512_mask (__v8di, int );
+__m512i __builtin_ia32_pandnq512_mask (__v8di, __v8di,__v8di, __mmask8);
+
+// __mmask16 __builtin_ia32_ptestmd512 (__v16si, int );
+__mmask16 __builtin_ia32_ptestmd512 (__v16si, __v16si, __mmask16);
+
+// __mmask8 __builtin_ia32_ptestmq512 (__v8di, int );
+__mmask8 __builtin_ia32_ptestmq512 (__v8di, __v8di, __mmask8);
+
+// __mmask16 __builtin_ia32_ptestnmd512 (__v16si, int );
+__mmask16 __builtin_ia32_ptestnmd512 (__v16si, __v16si, __mmask16);
+
+// __mmask8 __builtin_ia32_ptestnmq512 (__v8di, int );
+__mmask8 __builtin_ia32_ptestnmq512 (__v8di, __v8di, __mmask8);
+
+// __m512i __builtin_ia32_punpckhdq512_mask (__v16si, int );
+// __m512i __builtin_ia32_punpckhdq512_mask (__v16si, int );
+__m512i __builtin_ia32_punpckhdq512_mask (__v16si, __v16si,__v16si, __mmask16);
+
+// __m512i __builtin_ia32_punpckhqdq512_mask (__v8di, int );
+// __m512i __builtin_ia32_punpckhqdq512_mask (__v8di, int );
+__m512i __builtin_ia32_punpckhqdq512_mask (__v8di, __v8di,__v8di, __mmask8);
+
+// __m512i __builtin_ia32_punpckldq512_mask (__v16si, int );
+// __m512i __builtin_ia32_punpckldq512_mask (__v16si, int );
+__m512i __builtin_ia32_punpckldq512_mask (__v16si, __v16si,__v16si, __mmask16);
+
+// __m512i __builtin_ia32_punpcklqdq512_mask (__v8di, int );
+// __m512i __builtin_ia32_punpcklqdq512_mask (__v8di, int );
+__m512i __builtin_ia32_punpcklqdq512_mask (__v8di, __v8di,__v8di, __mmask8);
+
+// __m512d __builtin_ia32_movddup512_mask (__v8df, int );
+// __m512d __builtin_ia32_movddup512_mask (__v8df, int );
+__m512d __builtin_ia32_movddup512_mask (__v8df, __v8df, __mmask8);
+
+// __m512d __builtin_ia32_unpcklpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_unpcklpd512_mask (__v8df, int );
+__m512d __builtin_ia32_unpcklpd512_mask (__v8df, __v8df, __v8df, __mmask8);
+
+// __m512d __builtin_ia32_unpckhpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_unpckhpd512_mask (__v8df, int );
+__m512d __builtin_ia32_unpckhpd512_mask (__v8df, __v8df, __v8df, __mmask8);
+
+// __m512 __builtin_ia32_unpckhps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_unpckhps512_mask (__v16sf, int );
+__m512 __builtin_ia32_unpckhps512_mask (__v16sf, __v16sf,__v16sf, __mmask16);
+
+void __builtin_ia32_movntdq512 (__v8di *, __v8di);
+void __builtin_ia32_movntps512 (float*, __v16sf);
+void __builtin_ia32_movntpd512 (double*, __v8df);
+__m512i __builtin_ia32_movntdqa512 (__v8di *);
+
+// __m512 __builtin_ia32_rndscaleps_mask (__v16sf, int );
+// __m512 __builtin_ia32_rndscaleps_mask (__v16sf, int );
+// __m512 __builtin_ia32_rndscaleps_mask (__v16sf, int );
+__m512 __builtin_ia32_rndscaleps_mask (__v16sf, int,__v16sf, int, int);
+
+// __m512d __builtin_ia32_rndscalepd_mask (__v8df, int );
+// __m512d __builtin_ia32_rndscalepd_mask (__v8df, int );
+// __m512d __builtin_ia32_rndscalepd_mask (__v8df, int );
+__m512d __builtin_ia32_rndscalepd_mask (__v8df, int, __v8df, int, int);
+
+// __mmask16 __builtin_ia32_pcmpeqd512_mask (__v16si, int );
+__mmask16 __builtin_ia32_pcmpeqd512_mask (__v16si, __v16si, __mmask16);
+
+// __mmask8 __builtin_ia32_pcmpeqq512_mask (__v8di, int );
+__mmask8 __builtin_ia32_pcmpeqq512_mask (__v8di, __v8di, __mmask8);
+
+// __mmask16 __builtin_ia32_pcmpgtd512_mask (__v16si, int );
+__mmask16 __builtin_ia32_pcmpgtd512_mask (__v16si, __v16si, __mmask16);
+
+// __mmask8 __builtin_ia32_pcmpgtq512_mask (__v8di, int );
+__mmask8 __builtin_ia32_pcmpgtq512_mask (__v8di, __v8di, __mmask8);
+
+// __mmask16 __builtin_ia32_cmpd512_mask (__v16si, int );
+// __mmask16 __builtin_ia32_cmpd512_mask (__v16si, int );
+// __mmask16 __builtin_ia32_cmpd512_mask (__v16si, int );
+__mmask16 __builtin_ia32_cmpd512_mask (__v16si, __v16si, int, __mmask16);
+
+
+// __mmask16 __builtin_ia32_ucmpd512_mask (__v16si, int );
+// __mmask16 __builtin_ia32_ucmpd512_mask (__v16si, int );
+// __mmask16 __builtin_ia32_ucmpd512_mask (__v16si, int );
+__mmask16 __builtin_ia32_ucmpd512_mask (__v16si, __v16si, int, __mmask16);
+
+__mmask8 __builtin_ia32_ucmpq512_mask (__v8di, __v8di, int, __mmask8);
+// __mmask8 __builtin_ia32_ucmpq512_mask (__v8di, int );
+// __mmask8 __builtin_ia32_ucmpq512_mask (__v8di, int );
+
+// __mmask8 __builtin_ia32_cmpq512_mask (__v8di, int );
+// __mmask8 __builtin_ia32_cmpq512_mask (__v8di, int );
+// __mmask8 __builtin_ia32_cmpq512_mask (__v8di, int );
+__mmask8 __builtin_ia32_cmpq512_mask (__v8di,  __v8di, int, __mmask8);
+
+__mmask8 __builtin_ia32_ucmpq512_mask (__v8di,  __v8di, int, __mmask8);
+
+// __m512d __builtin_ia32_compressdf512_mask (__v8df, int );
+__m512d __builtin_ia32_compressdf512_mask (__v8df, __v8df, __mmask8);
+
+void   __builtin_ia32_compressstoredf512_mask (__v8df *, __v8df, int );
+
+// __m512 __builtin_ia32_compresssf512_mask (__v16sf, int );
+__m512 __builtin_ia32_compresssf512_mask (__v16sf, __v16sf, __mmask16);
+
+void __builtin_ia32_compressstoresf512_mask (__v16sf *, __v16sf, int );
+
+// __m512i __builtin_ia32_compressdi512_mask (__v8di, int );
+__m512i __builtin_ia32_compressdi512_mask (__v8di,  __v8di, __mmask8);
+
+void __builtin_ia32_compressstoredi512_mask (__v8di *, __v8di, int );
+
+// __m512i __builtin_ia32_compresssi512_mask (__v16si, int );
+__m512i __builtin_ia32_compresssi512_mask (__v16si, __v16si, __mmask16);
+
+void __builtin_ia32_compressstoresi512_mask (__v16si *, __v16si, int );
+
+__m512d __builtin_ia32_expanddf512_mask (__v8df, __v8df, __mmask8);
+__m512d __builtin_ia32_expanddf512_maskz (__v8df, __v8df, __mmask8);
+__m512d __builtin_ia32_expandloaddf512_mask (const __v8df *, __v8df, __mmask8);
+__m512d __builtin_ia32_expandloaddf512_maskz (const __v8df *, __v8df, __mmask8);
+
+__m512 __builtin_ia32_expandsf512_mask (__v16sf, __v16sf, __mmask16);
+__m512 __builtin_ia32_expandsf512_maskz (__v16sf, __v16sf, __mmask16);
+__m512 __builtin_ia32_expandloadsf512_mask (const __v16sf *, __v16sf, __mmask16);
+__m512 __builtin_ia32_expandloadsf512_maskz (const __v16sf *, __v16sf, __mmask16);
+
+__m512i __builtin_ia32_expanddi512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_expanddi512_maskz (__v8di, __v8di, __mmask8);
+
+__m512i __builtin_ia32_expandloaddi512_mask (const __v8di *, __v8di, __mmask8);
+__m512i __builtin_ia32_expandloaddi512_maskz (const __v8di *, __v8di, __mmask8);
+
+__m512i __builtin_ia32_expandsi512_mask (__v16si, __v16si, __mmask16);
+__m512i __builtin_ia32_expandsi512_maskz (__v16si, __v16si, __mmask16);
+
+__m512i __builtin_ia32_expandloadsi512_mask (const __v16si *, __v16si, __mmask16);
+__m512i __builtin_ia32_expandloadsi512_maskz (const __v16si *, __v16si, __mmask16);
+
+__mmask16 __builtin_ia32_kandhi (__mmask16, __mmask16);
+__mmask16 __builtin_ia32_kandnhi (__mmask16, __mmask16);
+__mmask16 __builtin_ia32_korhi (__mmask16, __mmask16);
+__mmask16 __builtin_ia32_kortestzhi (__mmask16, int );
+__mmask16 __builtin_ia32_kortestchi (__mmask16, int );
+__mmask16 __builtin_ia32_kxnorhi (__mmask16, __mmask16);
+__mmask16 __builtin_ia32_kxorhi (__mmask16, __mmask16);
+__mmask16 __builtin_ia32_knothi (__mmask16);
+__mmask16 __builtin_ia32_kunpckhi (__mmask16, __mmask16);
+
+__m512i __builtin_ia32_pmaxsq512_mask (__v8di, __v8di, __v8di, __mmask8);
+// __m512i __builtin_ia32_pmaxsq512_mask (__v8di, int );
+// __m512i __builtin_ia32_pmaxsq512_mask (__v8di, int );
+
+// __m512i __builtin_ia32_pminsq512_mask (__v8di, int );
+// __m512i __builtin_ia32_pminsq512_mask (__v8di, int );
+__m512i __builtin_ia32_pminsq512_mask (__v8di, __v8di, __v8di, __mmask8);
+
+// __m512i __builtin_ia32_pmaxuq512_mask (__v8di, int );
+// __m512i __builtin_ia32_pmaxuq512_mask (__v8di, int );
+__m512i __builtin_ia32_pmaxuq512_mask (__v8di, __v8di, __v8di, __mmask8);
+
+// __m512i __builtin_ia32_pminuq512_mask (__v8di, int );
+// __m512i __builtin_ia32_pminuq512_mask (__v8di, int );
+__m512i __builtin_ia32_pminuq512_mask (__v8di, __v8di, __v8di, __mmask8);
+
+// __m512i __builtin_ia32_pmaxsd512_mask (__v16si, int );
+// __m512i __builtin_ia32_pmaxsd512_mask (__v16si, int );
+__m512i __builtin_ia32_pmaxsd512_mask (__v16si, __v16si, __v16si, __mmask16);
+
+// __m512i __builtin_ia32_pminsd512_mask (__v16si, int );
+// __m512i __builtin_ia32_pminsd512_mask (__v16si, int );
+__m512i __builtin_ia32_pminsd512_mask (__v16si, __v16si, __v16si, __mmask16);
+
+// __m512i __builtin_ia32_pmaxud512_mask (__v16si, int );
+// __m512i __builtin_ia32_pmaxud512_mask (__v16si, int );
+__m512i __builtin_ia32_pmaxud512_mask (__v16si, __v16si, __v16si, __mmask16);
+
+// __m512i __builtin_ia32_pminud512_mask (__v16si, int );
+// __m512i __builtin_ia32_pminud512_mask (__v16si, int );
+__m512i __builtin_ia32_pminud512_mask (__v16si, __v16si, __v16si, __mmask16);
+
+// __m512 __builtin_ia32_unpcklps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_unpcklps512_mask (__v16sf, int );
+__m512 __builtin_ia32_unpcklps512_mask (__v16sf, __v16sf, __v16sf, __mmask16);
+
+__m512d __builtin_ia32_blendmpd_512_mask (__v8df, __v8df, __mmask8);
+
+__m512  __builtin_ia32_blendmps_512_mask (__v16sf, __v16sf, __mmask16);
+
+__m512i __builtin_ia32_blendmq_512_mask (__v8di, __v8di, __mmask8);
+__m512i __builtin_ia32_blendmd_512_mask (__v16si, __v16si, __mmask16);
+
+// __m512d __builtin_ia32_sqrtpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_sqrtpd512_mask (__v8df, int );
+__m512d __builtin_ia32_sqrtpd512_mask (__v8df,  __v8df, __mmask8, int);
+
+// __m512 __builtin_ia32_sqrtps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_sqrtps512_mask (__v16sf, int );
+__m512 __builtin_ia32_sqrtps512_mask (__v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_addpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_addpd512_mask (__v8df, int );
+__m512d __builtin_ia32_addpd512_mask (__v8df, __v8df, __v8df, __mmask8, int);
+
+// __m512 __builtin_ia32_addps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_addps512_mask (__v16sf, int );
+__m512 __builtin_ia32_addps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_subpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_subpd512_mask (__v8df, int );
+__m512d __builtin_ia32_subpd512_mask (__v8df, __v8df, __v8df, __mmask8, int);
+
+// __m512 __builtin_ia32_subps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_subps512_mask (__v16sf, int );
+__m512 __builtin_ia32_subps512_mask (__v16sf, __v16sf,__v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_mulpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_mulpd512_mask (__v8df, int );
+__m512d __builtin_ia32_mulpd512_mask (__v8df, __v8df, __v8df, __mmask8, int);
+
+// __m512 __builtin_ia32_mulps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_mulps512_mask (__v16sf, int );
+__m512 __builtin_ia32_mulps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_divpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_divpd512_mask (__v8df, int );
+__m512d __builtin_ia32_divpd512_mask (__v8df, __v8df, __v8df, __mmask8, int);
+
+// __m512 __builtin_ia32_divps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_divps512_mask (__v16sf, int );
+__m512 __builtin_ia32_divps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_maxpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_maxpd512_mask (__v8df, int );
+__m512d __builtin_ia32_maxpd512_mask (__v8df, __v8df, __v8df, __mmask8, int);
+
+// __m512 __builtin_ia32_maxps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_maxps512_mask (__v16sf, int );
+__m512 __builtin_ia32_maxps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_minpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_minpd512_mask (__v8df, int );
+__m512d __builtin_ia32_minpd512_mask (__v8df, __v8df, __v8df, __mmask8, int);
+
+// __m512 __builtin_ia32_minps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_minps512_mask (__v16sf, int );
+__m512 __builtin_ia32_minps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_scalefpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_scalefpd512_mask (__v8df, int );
+__m512d __builtin_ia32_scalefpd512_mask (__v8df, __v8df,__v8df,  __mmask8, int);
+
+// __m512 __builtin_ia32_scalefps512_mask (__v16sf, int );
+// __m512 __builtin_ia32_scalefps512_mask (__v16sf, int );
+__m512 __builtin_ia32_scalefps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+__m128d __builtin_ia32_scalefsd_round (__v2df, __v2df, int );
+__m128 __builtin_ia32_scalefss_round (__v4sf, __v4sf, int );
+
+// __m512d __builtin_ia32_vfmaddpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_vfmaddpd512_mask (__v8df, int );
+// __m512d __builtin_ia32_vfmaddpd512_mask (__v8df, int );
+__m512d __builtin_ia32_vfmaddpd512_mask (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmaddpd512_mask3 (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmaddpd512_maskz (__v8df, __v8df,__v8df,  __mmask8, int);
+
+// __m512 __builtin_ia32_vfmaddps512_mask (__v16sf, int );
+__m512 __builtin_ia32_vfmaddps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmaddps512_mask3 (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmaddps512_maskz (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+__m512d __builtin_ia32_vfmsubpd512_mask3 (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmaddpd512_maskz (__v8df, __v8df,__v8df,  __mmask8, int);
+
+// __m512 __builtin_ia32_vfmaddps512_mask (__v16sf, int );
+__m512 __builtin_ia32_vfmaddps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmsubps512_mask3 (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmaddps512_maskz (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_vfmaddsubpd512_mask (__v8df, int );
+__m512d __builtin_ia32_vfmaddsubpd512_mask (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmaddsubpd512_mask3 (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmaddsubpd512_maskz (__v8df, __v8df,__v8df,  __mmask8, int);
+
+// __m512 __builtin_ia32_vfmaddsubps512_mask (__v16sf, int );
+__m512 __builtin_ia32_vfmaddsubps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmaddsubps512_mask3 (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmaddsubps512_maskz (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_vfmaddsubpd512_mask (__v8df, int );
+__m512d __builtin_ia32_vfmaddsubpd512_mask (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmsubaddpd512_mask3 (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmaddsubpd512_maskz (__v8df, __v8df,__v8df,  __mmask8, int);
+
+// __m512 __builtin_ia32_vfmaddsubps512_mask (__v16sf, int );
+__m512 __builtin_ia32_vfmaddsubps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmsubaddps512_mask3 (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmaddsubps512_maskz (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_vfmaddpd512_mask (__v8df, int );
+__m512d __builtin_ia32_vfnmaddpd512_mask (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmaddpd512_mask3 (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmaddpd512_maskz (__v8df, __v8df,__v8df,  __mmask8, int);
+
+// __m512 __builtin_ia32_vfmaddps512_mask (__v16sf, int );
+__m512 __builtin_ia32_vfnmaddps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmaddps512_mask3 (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmaddps512_maskz (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m512d __builtin_ia32_vfmaddpd512_mask (__v8df, int );
+__m512d __builtin_ia32_vfnmsubpd512_mask (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfnmsubpd512_mask3 (__v8df, __v8df,__v8df,  __mmask8, int);
+__m512d __builtin_ia32_vfmaddpd512_maskz (__v8df, __v8df,__v8df,  __mmask8, int);
+
+// __m512 __builtin_ia32_vfmaddps512_mask (__v16sf, int );
+__m512 __builtin_ia32_vfnmsubps512_mask (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfnmsubps512_mask3 (__v16sf, __v16sf, __v16sf, __mmask16, int);
+__m512 __builtin_ia32_vfmaddps512_maskz (__v16sf, __v16sf, __v16sf, __mmask16, int);
+
+// __m256i __builtin_ia32_cvttpd2dq512_mask (__v8df, int );
+// __m256i __builtin_ia32_cvttpd2dq512_mask (__v8df, int );
+__m256i __builtin_ia32_cvttpd2dq512_mask (__v8df, __v8si, __mmask8, int);
+
+// __m256i __builtin_ia32_cvttpd2udq512_mask (__v8df, int );
+// __m256i __builtin_ia32_cvttpd2udq512_mask (__v8df, int );
+__m256i __builtin_ia32_cvttpd2udq512_mask (__v8df, __v8si, __mmask8, int );
+
+// __m256i __builtin_ia32_cvtpd2dq512_mask (__v8df, int );
+// __m256i __builtin_ia32_cvtpd2dq512_mask (__v8df, int );
+__m256i __builtin_ia32_cvtpd2dq512_mask (__v8df, __v8si, __mmask8, int);
+
+// __m256i __builtin_ia32_cvtpd2udq512_mask (__v8df, int );
+// __m256i __builtin_ia32_cvtpd2udq512_mask (__v8df, int );
+__m256i __builtin_ia32_cvtpd2udq512_mask (__v8df, __v8si, __mmask8, int);
+
+// __m512i __builtin_ia32_cvttps2dq512_mask (__v16sf, int );
+// __m512i __builtin_ia32_cvttps2dq512_mask (__v16sf, int );
+__m512i __builtin_ia32_cvttps2dq512_mask (__v16sf, __v16si, __mmask16, int);
+
+// __m512i __builtin_ia32_cvttps2udq512_mask (__v16sf, int );
+// __m512i __builtin_ia32_cvttps2udq512_mask (__v16sf, int );
+__m512i __builtin_ia32_cvttps2udq512_mask (__v16sf, __v16si, __mmask16, int);
+
+// __m512i __builtin_ia32_cvtps2dq512_mask (__v16sf, int );
+// __m512i __builtin_ia32_cvtps2dq512_mask (__v16sf, int );
+__m512i __builtin_ia32_cvtps2dq512_mask (__v16sf, __v16si, __mmask16, int);
+
+// __m512i __builtin_ia32_cvtps2udq512_mask (__v16sf, int );
+// __m512i __builtin_ia32_cvtps2udq512_mask (__v16sf, int );
+__m512i __builtin_ia32_cvtps2udq512_mask (__v16sf, __v16si, __mmask16, int);
+
+__m128  __builtin_ia32_cvtusi2ss64 (__v4sf, unsigned long long, int );
+__m128d __builtin_ia32_cvtusi2sd64 (__v2df, unsigned long long, int );
+__m128  __builtin_ia32_cvtusi2ss32 (__v4sf, unsigned, int );
+
+// __m512 __builtin_ia32_cvtdq2ps512_mask (__v16si, int );
+// __m512 __builtin_ia32_cvtdq2ps512_mask (__v16si, int );
+__m512 __builtin_ia32_cvtdq2ps512_mask (__v16si, __v16sf, __mmask16, int);
+
+// __m512 __builtin_ia32_cvtudq2ps512_mask (__v16si, int );
+// __m512 __builtin_ia32_cvtudq2ps512_mask (__v16si, int );
+__m512 __builtin_ia32_cvtudq2ps512_mask (__v16si, __v16sf, __mmask16, int);
+
+unsigned long long __builtin_ia32_vcvtss2usi64 (__v4sf, int );
+unsigned long long __builtin_ia32_vcvttss2usi64 (__v4sf, int );
+
+long long __builtin_ia32_vcvttss2si64 (__v4sf, int );
+
+unsigned __builtin_ia32_vcvtss2usi32 (__v4sf, int );
+unsigned __builtin_ia32_vcvttss2usi32 (__v4sf, int );
+
+int __builtin_ia32_vcvttss2si32 (__v4sf, int );
+
+unsigned long long __builtin_ia32_vcvtsd2usi64 (__v2df, int );
+unsigned long long __builtin_ia32_vcvttsd2usi64 (__v2df, int );
+
+long long __builtin_ia32_vcvttsd2si64 (__v2df, int );
+
+unsigned __builtin_ia32_vcvtsd2usi32 (__v2df, int );
+unsigned __builtin_ia32_vcvttsd2usi32 (__v2df, int );
+
+int __builtin_ia32_vcvttsd2si32 (__v2df, int );
+
+// __m512d __builtin_ia32_cvtps2pd512_mask (__v8sf, int );
+// __m512d __builtin_ia32_cvtps2pd512_mask (__v8sf, int );
+__m512d __builtin_ia32_cvtps2pd512_mask (__v8sf, __v8df, __mmask8, int);
+
+// __m512 __builtin_ia32_vcvtph2ps512_mask (__v16hi, int );
+// __m512 __builtin_ia32_vcvtph2ps512_mask (__v16hi, int );
+__m512 __builtin_ia32_vcvtph2ps512_mask (__v16hi, __v16sf, __mmask16, int);
+
+// __m256 __builtin_ia32_cvtpd2ps512_mask (__v8df, int );
+// __m256 __builtin_ia32_cvtpd2ps512_mask (__v8df, int );
+__m256 __builtin_ia32_cvtpd2ps512_mask (__v8df, __v8sf, __mmask8, int);
+
+__mmask16 __builtin_ia32_kmov16 (__mmask16);
+
+// void __builtin_ia32_vpconflictsi_512_mask (__v16si, int );
+// void __builtin_ia32_vpconflictsi_512_mask (__v16si, int );
+__m512i __builtin_ia32_vpconflictsi_512_mask (__v16si, __v16si, __mmask16);
+
+// void __builtin_ia32_vpconflictdi_512_mask (__v8di, int );
+__m512i __builtin_ia32_vpconflictdi_512_mask (__v8di, __v8di, __mmask8);
+// void __builtin_ia32_vpconflictdi_512_mask (__v8di, int );
+
+// void __builtin_ia32_vplzcntq_512_mask (__v8di, int );
+__m512i __builtin_ia32_vplzcntq_512_mask (__v8di, __v8di, __mmask8);
+// void __builtin_ia32_vplzcntq_512_mask (__v8di, int );
+// void __builtin_ia32_vplzcntd_512_mask (__v16si, int );
+__m512i __builtin_ia32_vplzcntd_512_mask (__v16si, __v16si, __mmask16);
+// void __builtin_ia32_vplzcntd_512_mask (__v16si, int );
+
+__m512i __builtin_ia32_broadcastmb512 (__mmask8);
+__m512i __builtin_ia32_broadcastmw512 (__mmask16);
+
+__m128i __builtin_ia32_sha1msg1 (__v4si, __v4si);
+__m128i __builtin_ia32_sha1msg2 (__v4si, __v4si);
+__m128i __builtin_ia32_sha1nexte (__v4si, __v4si);
+__m128i __builtin_ia32_sha256msg1 (__v4si, __v4si);
+__m128i __builtin_ia32_sha256msg2 (__v4si, __v4si);
+__m128i __builtin_ia32_sha256rnds2 (__v4si, __v4si, __v4si);
+
+unsigned short __builtin_clzs (unsigned short);
+unsigned short __builtin_ctzs (unsigned int);
+unsigned int __builtin_ia32_bextr_u32 (unsigned int, unsigned int);
+// void __builtin_ia32_bextr_u32 (unsigned int, int);
+// void __builtin_ia32_bextr_u64 (unsigned int, int);
+unsigned long long __builtin_ia32_bextr_u64 (unsigned long long, unsigned long long);
+
+unsigned int __builtin_ia32_bzhi_si (unsigned int, unsigned int);
+unsigned int __builtin_ia32_pdep_si (unsigned int, unsigned int);
+unsigned int __builtin_ia32_pext_si (unsigned int, unsigned int);
+unsigned long __builtin_ia32_bzhi_di (unsigned long, unsigned long);
+unsigned long __builtin_ia32_pdep_di (unsigned long, unsigned long);
+unsigned long __builtin_ia32_pext_di (unsigned long, unsigned long);
+
+__m128d __builtin_ia32_vfmaddpd (__v2df, __v2df, __v2df );
+__m256d __builtin_ia32_vfmaddpd256 (__v4df, __v4df, __v4df );
+__m128 __builtin_ia32_vfmaddps (__v4sf, __v4sf, __v4sf );
+__m256 __builtin_ia32_vfmaddps256 (__v8sf, __v8sf, __v8sf );
+__m128d __builtin_ia32_vfmaddsd3 (__v2df, __v2df, __v2df );
+__m128 __builtin_ia32_vfmaddss3 (__v4sf, __v4sf, __v4sf );
+__m128d __builtin_ia32_vfmaddpd (__v2df, __v2df, __v2df );
+__m256d __builtin_ia32_vfmaddpd256 (__v4df, __v4df, __v4df );
+__m128 __builtin_ia32_vfmaddps (__v4sf, __v4sf, __v4sf );
+__m256 __builtin_ia32_vfmaddps256 (__v8sf, __v8sf, __v8sf );
+__m128d __builtin_ia32_vfmaddsd3 (__v2df, __v2df, __v2df );
+__m128 __builtin_ia32_vfmaddss3 (__v4sf, __v4sf, __v4sf );
+__m128d __builtin_ia32_vfmaddpd (__v2df, __v2df, __v2df );
+__m256d __builtin_ia32_vfmaddpd256 (__v4df, __v4df, __v4df );
+__m128 __builtin_ia32_vfmaddps (__v4sf, __v4sf, __v4sf );
+__m256 __builtin_ia32_vfmaddps256 (__v8sf, __v8sf, __v8sf );
+__m128d __builtin_ia32_vfmaddsd3 (__v2df, __v2df,__v2df );
+__m128 __builtin_ia32_vfmaddss3 (__v4sf, __v4sf, __v4sf );
+__m128d __builtin_ia32_vfmaddpd (__v2df, __v2df, __v2df );
+__m256d __builtin_ia32_vfmaddpd256 (__v4df, __v4df, __v4df );
+__m128 __builtin_ia32_vfmaddps (__v4sf, __v4sf, __v4sf );
+__m256 __builtin_ia32_vfmaddps256 (__v8sf, __v8sf, __v8sf );
+__m128d __builtin_ia32_vfmaddsd3 (__v2df, __v2df, __v2df );
+__m128 __builtin_ia32_vfmaddss3 (__v4sf, __v4sf, __v4sf );
+__m128d __builtin_ia32_vfmaddsubpd (__v2df, __v2df, __v2df );
+__m256d __builtin_ia32_vfmaddsubpd256 (__v4df, __v4df, __v4df );
+__m128 __builtin_ia32_vfmaddsubps (__v4sf, __v4sf, __v4sf );
+__m256 __builtin_ia32_vfmaddsubps256 (__v8sf, __v8sf, __v8sf);
+__m128d __builtin_ia32_vfmaddsubpd (__v2df, __v2df, __v2df );
+__m256d __builtin_ia32_vfmaddsubpd256 (__v4df, __v4df, __v4df );
+__m128 __builtin_ia32_vfmaddsubps (__v4sf, __v4sf, __v4sf );
+
+
+
+// DQ (1/25/2017): Unclear which if these to use for C langauge support (can't be overloaded in C).
+#ifdef __cplusplus__
+__v4sf __builtin_ia32_vcvtph2ps (__v4sf);
+#endif
+
+// __v4sf __builtin_ia32_vcvtph2ps (__v4sf);
+__m128 __builtin_ia32_vcvtph2ps (__v8hi);
+__m256 __builtin_ia32_vcvtph2ps256 (__v8hi);
+unsigned int __builtin_ia32_xbegin ();
+void __builtin_ia32_xend ();
+int  __builtin_ia32_xtest ();
+int  __builtin_ia32_rdrand16_step (unsigned short*);
+int  __builtin_ia32_rdrand32_step (unsigned int *);
+unsigned int __builtin_ia32_rdfsbase32 ();
+unsigned long __builtin_ia32_rdfsbase64 ();
+unsigned int __builtin_ia32_rdgsbase32 ();
+unsigned long __builtin_ia32_rdgsbase64 ();
+void __builtin_ia32_wrfsbase32 (unsigned int);
+void __builtin_ia32_wrfsbase64 (unsigned long);
+void __builtin_ia32_wrgsbase32 (unsigned int);
+void __builtin_ia32_wrgsbase64 (unsigned long);
+int  __builtin_ia32_rdrand64_step (unsigned long long*);
+void __builtin_ia32_femms();
+__m64 __builtin_ia32_pavgusb (__v8qi, __v8qi );
+__m64 __builtin_ia32_pf2id (__v2sf);
+__m64 __builtin_ia32_pfacc (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfadd (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfcmpeq (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfcmpge (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfcmpgt (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfmax (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfmin (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfmul (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfrcp (__v2sf);
+__m64 __builtin_ia32_pfrcpit1 (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfrcpit2 (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfrsqrt (__v2sf);
+__m64 __builtin_ia32_pfrsqit1 (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfsub (__v2sf, __v2sf);
+__m64 __builtin_ia32_pfsubr (__v2sf , __v2sf );
+__m64 __builtin_ia32_pi2fd (__v2si);
+__m64 __builtin_ia32_pmulhrw (__v4hi, __v4hi);
+__m128 __builtin_ia32_vfmaddss (__v4sf, __v4sf, __v4sf);
+__m128d __builtin_ia32_vfmaddsd (__v2df, __v2df, __v2df);
+__m128 __builtin_ia32_vfmaddss (__v4sf, __v4sf, __v4sf);
+__m128d __builtin_ia32_vfmaddsd (__v2df, __v2df, __v2df);
+__m128 __builtin_ia32_vfmaddss (__v4sf, __v4sf, __v4sf);
+__m128d __builtin_ia32_vfmaddsd (__v2df, __v2df, __v2df);
+__m128 __builtin_ia32_vfmaddss (__v4sf, __v4sf, __v4sf);
+__m128d __builtin_ia32_vfmaddsd (__v2df, __v2df, __v2df);
+__m128i __builtin_ia32_vpmacssww (__v8hi,__v8hi, __v8hi);
+__m128i __builtin_ia32_vpmacsww (__v8hi, __v8hi, __v8hi);
+__m128i __builtin_ia32_vpmacsswd (__v8hi, __v8hi, __v4si);
+__m128i __builtin_ia32_vpmacswd (__v8hi, __v8hi, __v4si);
+__m128i __builtin_ia32_vpmacssdd (__v4si, __v4si, __v4si);
+__m128i __builtin_ia32_vpmacsdd (__v4si, __v4si, __v4si);
+__m128i __builtin_ia32_vpmacssdql (__v4si, __v4si, __v2di);
+__m128i __builtin_ia32_vpmacsdql (__v4si, __v4si, __v2di);
+__m128i __builtin_ia32_vpmacssdqh (__v4si, __v4si, __v2di);
+__m128i __builtin_ia32_vpmacsdqh (__v4si, __v4si, __v2di);
+__m128i __builtin_ia32_vpmadcsswd (__v8hi,__v8hi,__v4si);
+__m128i __builtin_ia32_vpmadcswd (__v8hi,__v8hi,__v4si);
+__m128i __builtin_ia32_vphaddbw (__v16qi);
+__m128i __builtin_ia32_vphaddbd (__v16qi);
+__m128i __builtin_ia32_vphaddbq (__v16qi);
+__m128i __builtin_ia32_vphaddwd (__v8hi);
+__m128i __builtin_ia32_vphaddwq (__v8hi);
+__m128i __builtin_ia32_vphadddq (__v4si);
+__m128i __builtin_ia32_vphaddubw (__v16qi);
+__m128i __builtin_ia32_vphaddubd (__v16qi);
+__m128i __builtin_ia32_vphaddubq (__v16qi);
+__m128i __builtin_ia32_vphadduwd (__v8hi);
+__m128i __builtin_ia32_vphadduwq (__v8hi);
+__m128i __builtin_ia32_vphaddudq (__v4si);
+__m128i __builtin_ia32_vphsubbw (__v16qi);
+__m128i __builtin_ia32_vphsubwd (__v8hi);
+__m128i __builtin_ia32_vphsubdq (__v4si);
+__m128i __builtin_ia32_vpcmov (__m128i, __m128i, __m128i);
+__m128i __builtin_ia32_vpperm (__v16qi, __v16qi, __v16qi);
+__m128i __builtin_ia32_vprotb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vprotw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vprotd (__v4si, __v4si);
+__m128i __builtin_ia32_vprotq (__v2di, __v2di);
+__m128i __builtin_ia32_vpshlb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpshlw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpshld (__v4si, __v4si);
+__m128i __builtin_ia32_vpshlq (__v2di, __v2di);
+__m128i __builtin_ia32_vpshab (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpshaw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpshad (__v4si, __v4si);
+__m128i __builtin_ia32_vpshaq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomltub (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomleub (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomgtub (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomgeub (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomequb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomnequb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomfalseub (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomtrueub (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomltuw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomleuw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomgtuw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomgeuw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomequw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomnequw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomfalseuw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomtrueuw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomltud (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomleud (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomgtud (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomgeud (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomequd (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomnequd (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomfalseud (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomtrueud (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomltuq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomleuq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomgtuq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomgeuq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomequq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomnequq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomfalseuq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomtrueuq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomltb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomleb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomgtb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomgeb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomeqb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomneqb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomfalseb (__v16qi, __v16qi);
+__m128i __builtin_ia32_vpcomtrueb (__v16qi, __v16qi );
+__m128i __builtin_ia32_vpcomltw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomlew (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomgtw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomgew (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomeqw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomneqw (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomfalsew (__v8hi, __v8hi);
+__m128i __builtin_ia32_vpcomtruew (__v8hi, __v8hi );
+__m128i __builtin_ia32_vpcomltd (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomled (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomgtd (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomged (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomeqd (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomneqd (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomfalsed (__v4si, __v4si);
+__m128i __builtin_ia32_vpcomtrued (__v4si, __v4si );
+__m128i __builtin_ia32_vpcomltq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomleq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomgtq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomgeq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomeqq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomneqq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomfalseq (__v2di, __v2di);
+__m128i __builtin_ia32_vpcomtrueq (__v2di, __v2di );
+__m128  __builtin_ia32_vfrczps (__v4sf);
+__m128d __builtin_ia32_vfrczpd (__v2df);
+__v4sf  __builtin_ia32_vfrczss (__v4sf);
+__v2df  __builtin_ia32_vfrczsd (__v2df);
+__m256  __builtin_ia32_vfrczps256 (__v8sf);
+__m256d __builtin_ia32_vfrczpd256 (__v4df);
+void    __builtin_ia32_llwpcb (void*);
+void*   __builtin_ia32_slwpcb ();
+int __builtin_ia32_rdseed_hi_step (unsigned short*);
+int __builtin_ia32_rdseed_si_step (unsigned int*);
+int __builtin_ia32_rdseed_di_step (unsigned long long*);
+void __builtin_ia32_xsave (void* __P, long long __M);
+void __builtin_ia32_xrstor (void* __P, long long __M);
+void __builtin_ia32_xsave64 (void* __P, long long __M);
+void __builtin_ia32_xrstor64 (void*__P, long long __M);
+void __builtin_ia32_xsaveopt (void*__P, long long __M);
+void __builtin_ia32_xsaveopt64 (void*__P, long long __M);
+#endif
+
+
+#if 1
+// DQ (1/22/2017): More builtins specific to GNU 5.1 (__mmask32 is required for C++11 mode in GNU 4.8 and likely later versions).
+
+// DQ (1/25/2017): Note that __mmask32 is used template arguments and so in the generated code it is not defined.
+// Use a CPP macro instead to get it into the generated code more directly.
+// typedef unsigned int __mmask32;
+#define __mmask32 unsigned int
+
+typedef unsigned long long __mmask64;
+
+// typedef short __v32hi __attribute__ ((__vector_size__ (64)));
+// typedef char __v64qi __attribute__ ((__vector_size__ (64)));
+
+__m512i __builtin_ia32_pbroadcastq512_gpr_mask (long long, __v8di, __mmask8);
+// __m512i __builtin_ia32_pbroadcastq512_gpr_mask (__A, __v8di, int );
+//         __builtin_ia32_pbroadcastq512_gpr_mask (__A, int );
+__m512d __builtin_ia32_pd512_pd(__m128d);
+__m512  __builtin_ia32_ps512_ps(__m128);
+__m512i __builtin_ia32_si512_si(__v4si);
+// __m512  __builtin_ia32_pd512_256pd (__m256d);
+__m512d __builtin_ia32_pd512_256pd (__m256d);
+__m512  __builtin_ia32_ps512_256ps (__m256);
+__m512i __builtin_ia32_si512_256si (__v8si);
+__m256d __builtin_ia32_movapd256_mask (__v4df, __v4df, __mmask8);
+__m128d __builtin_ia32_movapd128_mask (__v2df, __v2df, __mmask8);
+__m256d __builtin_ia32_loadapd256_mask (__v4df *, __v4df, __mmask8);
+__m128d __builtin_ia32_loadapd128_mask (__v2df *, __v2df, __mmask8);
+void    __builtin_ia32_storeapd256_mask (__v4df *, __v4df, __mmask8);
+void    __builtin_ia32_storeapd128_mask (__v2df *, __v2df, __mmask8);
+__m256 __builtin_ia32_movaps256_mask (__v8sf, __v8sf, __mmask8);
+__m128 __builtin_ia32_movaps128_mask (__v4sf, __v4sf, __mmask8);
+__m256 __builtin_ia32_loadaps256_mask (__v8sf *, __v8sf, __mmask8);
+__m128 __builtin_ia32_loadaps128_mask (__v4sf *, __v4sf, __mmask8);
+void   __builtin_ia32_storeaps256_mask (__v8sf *, __v8sf, __mmask8);
+void   __builtin_ia32_storeaps128_mask (__v4sf *, __v4sf, __mmask8);
+__m256i __builtin_ia32_movdqa64_256_mask (__v4di, __v4di, __mmask8);
+__m128i __builtin_ia32_movdqa64_128_mask (__v2di, __v2di, __mmask8);
+__m256i __builtin_ia32_movdqa64load256_mask (__v4di *, __v4di, __mmask8);
+__m128i __builtin_ia32_movdqa64load128_mask (__v2di *, __v2di, __mmask8);
+void    __builtin_ia32_movdqa64store256_mask (__v4di *, __v4di, __mmask8);
+void    __builtin_ia32_movdqa64store128_mask (__v2di *, __v2di, __mmask8);
+__m256i __builtin_ia32_movdqa32_256_mask (__v8si, __v8si, __mmask8);
+__m128i __builtin_ia32_movdqa32_128_mask (__v4si, __v4si, __mmask8);
+__m256i __builtin_ia32_movdqa32load256_mask (__v8si *, __v8si, __mmask8);
+__m128i __builtin_ia32_movdqa32load128_mask (__v4si *, __v4si, __mmask8);
+void    __builtin_ia32_movdqa32store256_mask (__v8si *, __v8si, __mmask8);
+void    __builtin_ia32_movdqa32store128_mask (__v4si *, __v4si, __mmask8);
+__m128d __builtin_ia32_addpd128_mask (__v2df, __v2df, __v2df, __mmask8);
+__m256d __builtin_ia32_addpd256_mask (__v4df, __v4df, __v4df, __mmask8);
+__m128 __builtin_ia32_addps128_mask (__v4sf, __v4sf, __v4sf, __mmask8);
+__m256 __builtin_ia32_addps256_mask (__v8sf, __v8sf, __v8sf, __mmask8);
+__m128d __builtin_ia32_subpd128_mask (__v2df,__v2df, __v2df, __mmask8);
+__m256d __builtin_ia32_subpd256_mask (__v4df, __v4df, __v4df, __mmask8);
+__m128 __builtin_ia32_subps128_mask (__v4sf, __v4sf, __v4sf, __mmask8);
+__m256 __builtin_ia32_subps256_mask (__v8sf, __v8sf, __v8sf, __mmask8);
+__m256d __builtin_ia32_loadupd256_mask (__v4df *, __v4df, __mmask8);
+__m128d __builtin_ia32_loadupd128_mask (__v2df *, __v2df, __mmask8);
+void    __builtin_ia32_storeupd256_mask (__v4df *, __v4df, __mmask8);
+void    __builtin_ia32_storeupd128_mask (__v2df *, __v2df, __mmask8);
+__m256 __builtin_ia32_loadups256_mask (__v8sf *, __v8sf, __mmask8);
+__m128 __builtin_ia32_loadups128_mask (__v4sf *, __v4sf, __mmask8);
+void    __builtin_ia32_storeups256_mask (__v8sf *, __v8sf, __mmask8);
+void    __builtin_ia32_storeups128_mask (__v4sf *, __v4sf, __mmask8);
+__m256i __builtin_ia32_loaddqudi256_mask (__v4di *, __v4di, __mmask8);
+__m128i __builtin_ia32_loaddqudi128_mask (__v2di *, __v2di, __mmask8);
+void    __builtin_ia32_storedqudi256_mask (__v4di *, __v4di, __mmask8);
+void    __builtin_ia32_storedqudi128_mask (__v2di *, __v2di, __mmask8);
+__m256i __builtin_ia32_loaddqusi256_mask (__v8si *, __v8si, __mmask8);
+__m128i __builtin_ia32_loaddqusi128_mask (__v4si *, __v4si, __mmask8);
+void    __builtin_ia32_storedqusi256_mask (__v8si *, __v8si, __mmask8);
+void    __builtin_ia32_storedqusi128_mask (__v4si *, __v4si, __mmask8);
+__m256i __builtin_ia32_pabsd256_mask (__v8si, __v8si, __mmask8);
+__m128i __builtin_ia32_pabsd128_mask (__v4si, __v4si, __mmask8);
+__m256i __builtin_ia32_pabsq256_mask (__v4di, __v4di, __mmask8);
+__m128i __builtin_ia32_pabsq128_mask (__v2di, __v2di, __mmask8);
+__m128i __builtin_ia32_cvtpd2udq256_mask (__v4df, __v4si, __mmask8);
+__m128i __builtin_ia32_cvtpd2udq128_mask (__v2df, __v4si, __mmask8);
+__m256i __builtin_ia32_cvttps2dq256_mask (__v8sf, __v8si, __mmask8);
+
+
+#if 0
+// DQ (1/22/2017): these are the remaining builtins to fixup for GNU 5.1 (then we cna focus on whatever might be missing from GNU 6.1).
+// Since I have to go on travel and leave rediculusly early, I need to save these for when I get back.
+__m128i __builtin_ia32_cvttps2dq128_mask (__v4sf, int );
+__m256i __builtin_ia32_cvttps2udq256_mask (__v8sf, int );
+__m128i __builtin_ia32_cvttps2udq128_mask (__v4sf, int );
+__m128i __builtin_ia32_cvttpd2dq256_mask (__v4df, int );
+__m128i __builtin_ia32_cvttpd2dq128_mask (__v2df, int );
+__m128i __builtin_ia32_cvttpd2udq256_mask (__v4df, int );
+__m128i __builtin_ia32_cvttpd2udq128_mask (__v2df, int );
+__m128i __builtin_ia32_cvtpd2dq256_mask (__v4df, int );
+__m128i __builtin_ia32_cvtpd2dq128_mask (__v2df, int );
+__m256d __builtin_ia32_cvtdq2pd256_mask (__v4si, int );
+__m128d __builtin_ia32_cvtdq2pd128_mask (__v4si, int );
+__m256d __builtin_ia32_cvtudq2pd256_mask (__v4si, int );
+__m128d __builtin_ia32_cvtudq2pd128_mask (__v4si, int );
+__m256 __builtin_ia32_cvtdq2ps256_mask (__v8si, int );
+__m128 __builtin_ia32_cvtdq2ps128_mask (__v4si, int );
+__m256 __builtin_ia32_cvtudq2ps256_mask (__v8si, int );
+__m128 __builtin_ia32_cvtudq2ps128_mask (__v4si, int );
+__m256d __builtin_ia32_cvtps2pd256_mask (__v4sf, int );
+__m128d __builtin_ia32_cvtps2pd128_mask (__v4sf, int );
+__m128i __builtin_ia32_pmovdb128_mask (__v4si, int );
+void    __builtin_ia32_pmovdb128mem_mask (__v16qi *, __v4si, __m128i, __mmask8);
+__m128i __builtin_ia32_pmovdb128_mask (__v4si, int );
+__m128i __builtin_ia32_pmovdb256_mask (__v8si, int );
+void    __builtin_ia32_pmovdb256mem_mask (__v16qi *, __v8si, __mmask8);
+__m128i __builtin_ia32_pmovdb256_mask (__v8si, int );
+__m128i __builtin_ia32_pmovsdb128_mask (__v4si, int );
+void    __builtin_ia32_pmovsdb128mem_mask (__v16qi *, __v4si, __mmask8);
+__m128i __builtin_ia32_pmovsdb128_mask (__v4si, int );
+__m128i __builtin_ia32_pmovsdb256_mask (__v8si, int );
+void    __builtin_ia32_pmovsdb256mem_mask (__v16qi *, __v8si, __mmask8);
+__m128i __builtin_ia32_pmovsdb256_mask (__v8si, int );
+__m128i __builtin_ia32_pmovusdb128_mask (__v4si, int );
+void    __builtin_ia32_pmovusdb128mem_mask (__v16qi *, __v4si, __mmask8);
+__m128i __builtin_ia32_pmovusdb128_mask (__v4si, int );
+__m128i __builtin_ia32_pmovusdb256_mask (__v8si, int );
+void    __builtin_ia32_pmovusdb256mem_mask (__v16qi*, __v8si, __mmask8);
+__m128i __builtin_ia32_pmovusdb256_mask (__v8si, int );
+__m128i __builtin_ia32_pmovdw128_mask (__v4si, int );
+void    __builtin_ia32_pmovdw128mem_mask (__v8hi *, __v4si, __mmask8);
+__m128i __builtin_ia32_pmovdw128_mask (__v4si, int );
+__m128i __builtin_ia32_pmovdw256_mask (__v8si, int );
+void    __builtin_ia32_pmovdw256mem_mask (__v8hi *, __v8si, __mmask8);
+__m128i __builtin_ia32_pmovdw256_mask (__v8si, int );
+__m128i __builtin_ia32_pmovsdw128_mask (__v4si, int );
+void    __builtin_ia32_pmovsdw128mem_mask (__v8hi *, __v4si, __mmask8);
+__m128i __builtin_ia32_pmovsdw128_mask (__v4si, int );
+__m128i __builtin_ia32_pmovsdw256_mask (__v8si, int );
+void    __builtin_ia32_pmovsdw256mem_mask (__v8hi *, __v8si, __mmask8);
+__m128i __builtin_ia32_pmovsdw256_mask (__v8si, int );
+__m128i __builtin_ia32_pmovusdw128_mask (__v4si, int );
+void    __builtin_ia32_pmovusdw128mem_mask (__v8hi *, __v4si, __mmask8);
+__m128i __builtin_ia32_pmovusdw128_mask (__v4si, int );
+__m128i __builtin_ia32_pmovusdw256_mask (__v8si, int );
+void    __builtin_ia32_pmovusdw256mem_mask (__v8hi *, __v8si, __mmask8);
+__m128i __builtin_ia32_pmovusdw256_mask (__v8si, int );
+__m128i __builtin_ia32_pmovqb128_mask (__v2di, int );
+void    __builtin_ia32_pmovqb128mem_mask (__v16qi *, __v2di, __mmask8);
+__m128i __builtin_ia32_pmovqb128_mask (__v2di, int );
+__m128i __builtin_ia32_pmovqb256_mask (__v4di, int );
+void    __builtin_ia32_pmovqb256mem_mask (__v16qi *, __v4di, __mmask8);
+__m128i __builtin_ia32_pmovqb256_mask (__v4di, int );
+__m128i __builtin_ia32_pmovsqb128_mask (__v2di, int );
+void    __builtin_ia32_pmovsqb128mem_mask (__v16qi *, __v2di, __mmask8);
+__m128i __builtin_ia32_pmovsqb128_mask (__v2di, int );
+__m128i __builtin_ia32_pmovsqb256_mask (__v4di, int );
+void    __builtin_ia32_pmovsqb256mem_mask (__v16qi *, __v4di, __mmask8);
+__m128i __builtin_ia32_pmovsqb256_mask (__v4di, int );
+__m128i __builtin_ia32_pmovusqb128_mask (__v2di, int );
+void    __builtin_ia32_pmovusqb128mem_mask (__v16qi *, __v2di, __mmask8);
+__m128i __builtin_ia32_pmovusqb128_mask (__v2di, int );
+__m128i __builtin_ia32_pmovusqb256_mask (__v4di, int );
+void    __builtin_ia32_pmovusqb256mem_mask (__v16qi *, __v4di, __mmask8);
+__m128i __builtin_ia32_pmovusqb256_mask (__v4di, int );
+__m128i __builtin_ia32_pmovqw128_mask (__v2di, int );
+void    __builtin_ia32_pmovqw128mem_mask (__v8hi *, __v2di, __mmask8);
+__m128i __builtin_ia32_pmovqw128_mask (__v2di, int );
+__m128i __builtin_ia32_pmovqw256_mask (__v4di, int );
+void    __builtin_ia32_pmovqw256mem_mask (__v8hi *, __v4di, __mmask8);
+__m128i __builtin_ia32_pmovqw256_mask (__v4di, int );
+__m128i __builtin_ia32_pmovsqw128_mask (__v2di, int );
+void    __builtin_ia32_pmovsqw128mem_mask (__v8hi *, __v2di, __mmask8);
+__m128i __builtin_ia32_pmovsqw128_mask (__v2di, int );
+__m128i __builtin_ia32_pmovsqw256_mask (__v4di, int );
+void    __builtin_ia32_pmovsqw256mem_mask (__v8hi *, __v4di, __mmask8);
+__m128i __builtin_ia32_pmovsqw256_mask (__v4di, int );
+__m128i __builtin_ia32_pmovusqw128_mask (__v2di, int );
+void    __builtin_ia32_pmovusqw128mem_mask (__v8hi *, __v2di, __mmask8);
+__m128i __builtin_ia32_pmovusqw128_mask (__v2di, int );
+__m128i __builtin_ia32_pmovusqw256_mask (__v4di, int );
+void    __builtin_ia32_pmovusqw256mem_mask (__v8hi *, __v4di, __mmask8);
+__m128i __builtin_ia32_pmovusqw256_mask (__v4di, int );
+__m128i __builtin_ia32_pmovqd128_mask (__v2di, int );
+void    __builtin_ia32_pmovqd128mem_mask (__v4si *, __v2di, __mmask8);
+__m128i __builtin_ia32_pmovqd128_mask (__v2di, int );
+__m128i __builtin_ia32_pmovqd256_mask (__v4di, int );
+void    __builtin_ia32_pmovqd256mem_mask (__v4si *, __v4di, __mmask8);
+__m128i __builtin_ia32_pmovqd256_mask (__v4di, int );
+__m128i __builtin_ia32_pmovsqd128_mask (__v2di, int );
+void    __builtin_ia32_pmovsqd128mem_mask (__v4si *, __v2di, __mmask8);
+__m128i __builtin_ia32_pmovsqd128_mask (__v2di, int );
+__m128i __builtin_ia32_pmovsqd256_mask (__v4di, int );
+void    __builtin_ia32_pmovsqd256mem_mask (__v4si *, __v4di, __mmask8);
+__m128i __builtin_ia32_pmovsqd256_mask (__v4di, int );
+__m128i __builtin_ia32_pmovusqd128_mask (__v2di, int );
+void    __builtin_ia32_pmovusqd128mem_mask (__v4si *, __v2di, __mmask8);
+__m128i __builtin_ia32_pmovusqd128_mask (__v2di, int );
+__m128i __builtin_ia32_pmovusqd256_mask (__v4di, int );
+void    __builtin_ia32_pmovusqd256mem_mask (__v4si *, __v4di, __mmask8);
+__m128i __builtin_ia32_pmovusqd256_mask (__v4di, int );
+__m256 __builtin_ia32_broadcastss256_mask (__v4sf, int );
+__m128 __builtin_ia32_broadcastss128_mask (__v4sf, int );
+__m256d __builtin_ia32_broadcastsd256_mask (__v2df, int );
+__m256i __builtin_ia32_pbroadcastd256_mask (__v4si, int );
+__m256i __builtin_ia32_pbroadcastd256_gpr_mask (int, __v8si, int );
+// __m256i __builtin_ia32_pbroadcastd256_gpr_mask (int, int );
+__m128i __builtin_ia32_pbroadcastd128_mask (__v4si, int );
+__m128i __builtin_ia32_pbroadcastd128_gpr_mask (__v4si, __v4si, int );
+// __m128i __builtin_ia32_pbroadcastd128_gpr_mask (int, int );
+// __m256i __builtin_ia32_pbroadcastq256_mask (__v2di, int );
+__m256i __builtin_ia32_pbroadcastq256_gpr_mask (long long, __v4di, int );
+// __m256i __builtin_ia32_pbroadcastq256_gpr_mask (__A, int );
+__m128i __builtin_ia32_pbroadcastq128_mask (__v2di, int );
+__m128i __builtin_ia32_pbroadcastq128_gpr_mask (long long, __v2di, int );
+// __m128i __builtin_ia32_pbroadcastq128_gpr_mask (__A, int );
+__m256 __builtin_ia32_broadcastf32x4_256_mask (__v4sf, int );
+__m256i __builtin_ia32_broadcasti32x4_256_mask (__v4si,  int );
+__m256i __builtin_ia32_pmovsxbd256_mask (__v16qi, int );
+__m128i __builtin_ia32_pmovsxbd128_mask (__v16qi, int );
+__m256i __builtin_ia32_pmovsxbq256_mask (__v16qi, int );
+__m128i __builtin_ia32_pmovsxbq128_mask (__v16qi, int );
+__m256i __builtin_ia32_pmovsxwd256_mask (__v8hi, int );
+__m128i __builtin_ia32_pmovsxwd128_mask (__v8hi, int );
+__m256i __builtin_ia32_pmovsxwq256_mask (__v8hi, int );
+__m128i __builtin_ia32_pmovsxwq128_mask (__v8hi, int );
+__m256i __builtin_ia32_pmovsxdq256_mask (__v4si, int );
+__m128i __builtin_ia32_pmovsxdq128_mask (__v4si, int );
+__m256i __builtin_ia32_pmovzxbd256_mask (__v16qi, int );
+__m128i __builtin_ia32_pmovzxbd128_mask (__v16qi, int );
+__m256i __builtin_ia32_pmovzxbq256_mask (__v16qi, int );
+__m128i __builtin_ia32_pmovzxbq128_mask (__v16qi, int );
+__m256i __builtin_ia32_pmovzxwd256_mask (__v8hi, int );
+__m128i __builtin_ia32_pmovzxwd128_mask (__v8hi, int );
+__m256i __builtin_ia32_pmovzxwq256_mask (__v8hi, int );
+__m128i __builtin_ia32_pmovzxwq128_mask (__v8hi, int );
+__m256i __builtin_ia32_pmovzxdq256_mask (__v4si, int );
+__m128i __builtin_ia32_pmovzxdq128_mask (__v4si, int );
+__m256d __builtin_ia32_rcp14pd256_mask (__v4df, int );
+__m128d __builtin_ia32_rcp14pd128_mask (__v2df, int );
+__m256 __builtin_ia32_rcp14ps256_mask (__v8sf, int );
+__m128 __builtin_ia32_rcp14ps128_mask (__v4sf, int );
+__m256d __builtin_ia32_rsqrt14pd256_mask (__v4df, int );
+__m128d __builtin_ia32_rsqrt14pd128_mask (__v2df, int );
+__m256 __builtin_ia32_rsqrt14ps256_mask (__v8sf, int );
+__m128 __builtin_ia32_rsqrt14ps128_mask (__v4sf, int );
+__m256d __builtin_ia32_sqrtpd256_mask (__v4df, int );
+__m128d __builtin_ia32_sqrtpd128_mask (__v2df, int );
+__m256 __builtin_ia32_sqrtps256_mask (__v8sf, int );
+__m128 __builtin_ia32_sqrtps128_mask (__v4sf, int );
+__m256i __builtin_ia32_paddd256_mask (__v8si, int );
+__m256i __builtin_ia32_paddq256_mask (__v4di, int );
+__m256i __builtin_ia32_psubd256_mask (__v8si, int );
+__m256i __builtin_ia32_psubq256_mask (__v4di, int );
+__m128i __builtin_ia32_paddd128_mask (__v4si, int );
+__m128i __builtin_ia32_paddq128_mask (__v2di, int );
+__m128i __builtin_ia32_psubd128_mask (__v4si, int );
+__m128i __builtin_ia32_psubq128_mask (__v2di, int );
+__m256 __builtin_ia32_getexpps256_mask (__v8sf, int );
+__m256d __builtin_ia32_getexppd256_mask (__v4df, int );
+__m128 __builtin_ia32_getexpps128_mask (__v4sf, int );
+__m128d __builtin_ia32_getexppd128_mask (__v2df, int );
+__m256i __builtin_ia32_psrld256_mask (__v8si, int );
+__m128i __builtin_ia32_psrld128_mask (__v4si, int );
+__m256i __builtin_ia32_psrlq256_mask (__v4di , int );
+__m128i __builtin_ia32_psrlq128_mask (__v2di , int );
+__m256i __builtin_ia32_pandd256_mask (__v8si , int );
+__m256d __builtin_ia32_scalefpd256_mask (__v4df , int );
+__m256 __builtin_ia32_scalefps256_mask (__v8sf , int );
+__m128d __builtin_ia32_scalefpd128_mask (__v2df , int );
+__m128 __builtin_ia32_scalefps128_mask (__v4sf , int );
+__m256d __builtin_ia32_vfmaddpd256_mask (__v4df , int );
+__m256d __builtin_ia32_vfmaddpd256_mask3 (__v4df , int );
+__m256d __builtin_ia32_vfmaddpd256_maskz (__v4df , int );
+__m128d __builtin_ia32_vfmaddpd128_mask (__v2df , int );
+__m128d __builtin_ia32_vfmaddpd128_mask3 (__v2df , int );
+__m128d __builtin_ia32_vfmaddpd128_maskz (__v2df , int );
+__m256 __builtin_ia32_vfmaddps256_mask (__v8sf , int );
+__m256 __builtin_ia32_vfmaddps256_mask3 (__v8sf , int );
+__m256 __builtin_ia32_vfmaddps256_maskz (__v8sf , int );
+__m128 __builtin_ia32_vfmaddps128_mask (__v4sf , int );
+__m128 __builtin_ia32_vfmaddps128_mask3 (__v4sf , int );
+__m128 __builtin_ia32_vfmaddps128_maskz (__v4sf , int );
+__m256d __builtin_ia32_vfmaddpd256_mask (__v4df , int );
+__m256d __builtin_ia32_vfmsubpd256_mask3 (__v4df , int );
+__m256d __builtin_ia32_vfmaddpd256_maskz (__v4df , int );
+__m128d __builtin_ia32_vfmaddpd128_mask (__v2df , int );
+__m128d __builtin_ia32_vfmsubpd128_mask3 (__v2df , int );
+__m128d __builtin_ia32_vfmaddpd128_maskz (__v2df , int );
+__m256 __builtin_ia32_vfmaddps256_mask (__v8sf , int );
+__m256 __builtin_ia32_vfmsubps256_mask3 (__v8sf , int );
+__m256 __builtin_ia32_vfmaddps256_maskz (__v8sf , int );
+__m128 __builtin_ia32_vfmaddps128_mask (__v4sf , int );
+__m128 __builtin_ia32_vfmsubps128_mask3 (__v4sf , int );
+__m128 __builtin_ia32_vfmaddps128_maskz (__v4sf , int );
+__m256d __builtin_ia32_vfmaddsubpd256_mask (__v4df , int );
+__m256d __builtin_ia32_vfmaddsubpd256_mask3 (__v4df , int );
+__m256d __builtin_ia32_vfmaddsubpd256_maskz (__v4df , int );
+__m128d __builtin_ia32_vfmaddsubpd128_mask (__v2df , int );
+__m128d __builtin_ia32_vfmaddsubpd128_mask3 (__v2df , int );
+__m128d __builtin_ia32_vfmaddsubpd128_maskz (__v2df , int );
+__m256 __builtin_ia32_vfmaddsubps256_mask (__v8sf , int );
+__m256 __builtin_ia32_vfmaddsubps256_mask3 (__v8sf , int );
+__m256 __builtin_ia32_vfmaddsubps256_maskz (__v8sf , int );
+__m128 __builtin_ia32_vfmaddsubps128_mask (__v4sf , int );
+__m128 __builtin_ia32_vfmaddsubps128_mask3 (__v4sf , int );
+__m128 __builtin_ia32_vfmaddsubps128_maskz (__v4sf , int );
+__m256d __builtin_ia32_vfmaddsubpd256_mask (__v4df , int );
+__m256d __builtin_ia32_vfmsubaddpd256_mask3 (__v4df , int );
+__m256d __builtin_ia32_vfmaddsubpd256_maskz (__v4df , int );
+__m128d __builtin_ia32_vfmaddsubpd128_mask (__v2df , int );
+__m128d __builtin_ia32_vfmsubaddpd128_mask3 (__v2df , int );
+__m128d __builtin_ia32_vfmaddsubpd128_maskz (__v2df , int );
+__m256 __builtin_ia32_vfmaddsubps256_mask (__v8sf , int );
+__m256 __builtin_ia32_vfmsubaddps256_mask3 (__v8sf , int );
+__m256 __builtin_ia32_vfmaddsubps256_maskz (__v8sf , int );
+__m128 __builtin_ia32_vfmaddsubps128_mask (__v4sf , int );
+__m128 __builtin_ia32_vfmsubaddps128_mask3 (__v4sf , int );
+__m128 __builtin_ia32_vfmaddsubps128_maskz (__v4sf , int );
+__m256d __builtin_ia32_vfnmaddpd256_mask (__v4df , int );
+__m256d __builtin_ia32_vfmaddpd256_mask3 (__v4df , int );
+__m256d __builtin_ia32_vfmaddpd256_maskz (__v4df , int );
+__m128d __builtin_ia32_vfnmaddpd128_mask (__v2df , int );
+__m128d __builtin_ia32_vfmaddpd128_mask3 (__v2df , int );
+__m128d __builtin_ia32_vfmaddpd128_maskz (__v2df , int );
+__m256 __builtin_ia32_vfnmaddps256_mask (__v8sf , int );
+__m256 __builtin_ia32_vfmaddps256_mask3 (__v8sf , int );
+__m256 __builtin_ia32_vfmaddps256_maskz (__v8sf , int );
+__m128 __builtin_ia32_vfnmaddps128_mask (__v4sf , int );
+__m128 __builtin_ia32_vfmaddps128_mask3 (__v4sf , int );
+__m128 __builtin_ia32_vfmaddps128_maskz (__v4sf , int );
+__m256d __builtin_ia32_vfnmsubpd256_mask (__v4df , int );
+__m256d __builtin_ia32_vfnmsubpd256_mask3 (__v4df , int );
+__m256d __builtin_ia32_vfmaddpd256_maskz (__v4df , int );
+__m128d __builtin_ia32_vfnmsubpd128_mask (__v2df , int );
+__m128d __builtin_ia32_vfnmsubpd128_mask3 (__v2df , int );
+__m128d __builtin_ia32_vfmaddpd128_maskz (__v2df , int );
+__m256 __builtin_ia32_vfnmsubps256_mask (__v8sf , int );
+__m256 __builtin_ia32_vfnmsubps256_mask3 (__v8sf , int );
+__m256 __builtin_ia32_vfmaddps256_maskz (__v8sf , int );
+__m128 __builtin_ia32_vfnmsubps128_mask (__v4sf , int );
+__m128 __builtin_ia32_vfnmsubps128_mask3 (__v4sf , int );
+__m128 __builtin_ia32_vfmaddps128_maskz (__v4sf , int );
+__m128i __builtin_ia32_pandd128_mask (__v4si , int );
+__m256i __builtin_ia32_pandnd256_mask (__v8si , int );
+__m128i __builtin_ia32_pandnd128_mask (__v4si , int );
+__m256i __builtin_ia32_pord256_mask (__v8si , int );
+__m128i __builtin_ia32_pord128_mask (__v4si , int );
+__m256i __builtin_ia32_pxord256_mask (__v8si , int );
+__m128i __builtin_ia32_pxord128_mask (__v4si , int );
+__m128 __builtin_ia32_cvtpd2ps_mask (__v2df , int );
+__m128 __builtin_ia32_cvtpd2ps256_mask (__v4df , int );
+__m256i __builtin_ia32_cvtps2dq256_mask (__v8sf , int );
+__m128i __builtin_ia32_cvtps2dq128_mask (__v4sf , int );
+__m256i __builtin_ia32_cvtps2udq256_mask (__v8sf , int );
+__m128i __builtin_ia32_cvtps2udq128_mask (__v4sf , int );
+__m256d __builtin_ia32_movddup256_mask (__v4df , int );
+__m128d __builtin_ia32_movddup128_mask (__v2df , int );
+__m256 __builtin_ia32_movshdup256_mask (__v8sf , int );
+__m128 __builtin_ia32_movshdup128_mask (__v4sf , int );
+__m256 __builtin_ia32_movsldup256_mask (__v8sf , int );
+__m128 __builtin_ia32_movsldup128_mask (__v4sf , int );
+__m128i __builtin_ia32_punpckhdq128_mask (__v4si , int );
+__m256i __builtin_ia32_punpckhdq256_mask (__v8si , int );
+__m128i __builtin_ia32_punpckhqdq128_mask (__v2di , int );
+__m256i __builtin_ia32_punpckhqdq256_mask (__v4di , int );
+__m128i __builtin_ia32_punpckldq128_mask (__v4si , int );
+__m256i __builtin_ia32_punpckldq256_mask (__v8si , int );
+__m128i __builtin_ia32_punpcklqdq128_mask (__v2di , int );
+__m256i __builtin_ia32_punpcklqdq256_mask (__v4di , int );
+__mmask8 __builtin_ia32_ucmpd128_mask (__v4si , int );
+__mmask8 __builtin_ia32_pcmpeqd128_mask (__v4si , int );
+__mmask8 __builtin_ia32_ucmpd128_mask (__v4si , int );
+__mmask8 __builtin_ia32_pcmpeqd128_mask (__v4si , int );
+__mmask8 __builtin_ia32_ucmpd256_mask (__v8si , int );
+__mmask8 __builtin_ia32_pcmpeqd256_mask (__v8si , int );
+__mmask8 __builtin_ia32_ucmpd256_mask (__v8si , int );
+__mmask8 __builtin_ia32_pcmpeqd256_mask (__v8si , int );
+__mmask8 __builtin_ia32_ucmpq128_mask (__v2di , int );
+__mmask8 __builtin_ia32_pcmpeqq128_mask (__v2di , int );
+__mmask8 __builtin_ia32_ucmpq128_mask (__v2di , int );
+__mmask8 __builtin_ia32_pcmpeqq128_mask (__v2di , int );
+__mmask8 __builtin_ia32_ucmpq256_mask (__v4di , int );
+__mmask8 __builtin_ia32_pcmpeqq256_mask (__v4di , int );
+__mmask8 __builtin_ia32_ucmpq256_mask (__v4di , int );
+__mmask8 __builtin_ia32_pcmpeqq256_mask (__v4di , int );
+__mmask8 __builtin_ia32_ucmpd128_mask (__v4si , int );
+__mmask8 __builtin_ia32_pcmpgtd128_mask (__v4si , int );
+__mmask8 __builtin_ia32_ucmpd128_mask (__v4si , int );
+__mmask8 __builtin_ia32_pcmpgtd128_mask (__v4si , int );
+__mmask8 __builtin_ia32_ucmpd256_mask (__v8si , int );
+__mmask8 __builtin_ia32_pcmpgtd256_mask (__v8si , int );
+__mmask8 __builtin_ia32_ucmpd256_mask (__v8si , int );
+__mmask8 __builtin_ia32_pcmpgtd256_mask (__v8si , int );
+__mmask8 __builtin_ia32_ucmpq128_mask (__v2di , int );
+__mmask8 __builtin_ia32_pcmpgtq128_mask (__v2di , int );
+__mmask8 __builtin_ia32_ucmpq128_mask (__v2di , int );
+__mmask8 __builtin_ia32_pcmpgtq128_mask (__v2di , int );
+__mmask8 __builtin_ia32_ucmpq256_mask (__v4di , int );
+__mmask8 __builtin_ia32_pcmpgtq256_mask (__v4di , int );
+__mmask8 __builtin_ia32_ucmpq256_mask (__v4di , int );
+__mmask8 __builtin_ia32_pcmpgtq256_mask (__v4di , int );
+__mmask8 __builtin_ia32_ptestmd128 (__v4si , int );
+__mmask8 __builtin_ia32_ptestmd256 (__v8si , int );
+__mmask8 __builtin_ia32_ptestmq128 (__v2di , int );
+__mmask8 __builtin_ia32_ptestmq256 (__v4di , int );
+__mmask8 __builtin_ia32_ptestnmd128 (__v4si , int );
+__mmask8 __builtin_ia32_ptestnmd256 (__v8si , int );
+__mmask8 __builtin_ia32_ptestnmq128 (__v2di , int );
+__mmask8 __builtin_ia32_ptestnmq256 (__v4di , int );
+__m256d __builtin_ia32_compressdf256_mask (__v4df , int );
+void    __builtin_ia32_compressstoredf256_mask (__v4df *, int );
+__m128d __builtin_ia32_compressdf128_mask (__v2df , int );
+void    __builtin_ia32_compressstoredf128_mask (__v2df *, int );
+__m256 __builtin_ia32_compresssf256_mask (__v8sf , int );
+void    __builtin_ia32_compressstoresf256_mask (__v8sf *, int );
+__m128 __builtin_ia32_compresssf128_mask (__v4sf , int );
+void    __builtin_ia32_compressstoresf128_mask (__v4sf *, int );
+__m256i __builtin_ia32_compressdi256_mask (__v4di , int );
+void    __builtin_ia32_compressstoredi256_mask (__v4di *, int );
+__m128i __builtin_ia32_compressdi128_mask (__v2di , int );
+void    __builtin_ia32_compressstoredi128_mask (__v2di *, int );
+__m256i __builtin_ia32_compresssi256_mask (__v8si , int );
+void    __builtin_ia32_compressstoresi256_mask (__v8si *, int );
+__m128i __builtin_ia32_compresssi128_mask (__v4si , int );
+void    __builtin_ia32_compressstoresi128_mask (__v4si *, int );
+__m256d __builtin_ia32_expanddf256_mask (__v4df , int );
+__m256d __builtin_ia32_expanddf256_maskz (__v4df , int );
+__m256d __builtin_ia32_expandloaddf256_mask (__v4df *, int );
+__m256d __builtin_ia32_expandloaddf256_maskz (__v4df *, int );
+__m128d __builtin_ia32_expanddf128_mask (__v2df , int );
+__m128d __builtin_ia32_expanddf128_maskz (__v2df , int );
+__m128d __builtin_ia32_expandloaddf128_mask (__v2df *, int );
+__m128d __builtin_ia32_expandloaddf128_maskz (__v2df *, int );
+__m256 __builtin_ia32_expandsf256_mask (__v8sf , int );
+__m256 __builtin_ia32_expandsf256_maskz (__v8sf , int );
+__m256 __builtin_ia32_expandloadsf256_mask (__v8sf *, int );
+__m256 __builtin_ia32_expandloadsf256_maskz (__v8sf *, int );
+__m128 __builtin_ia32_expandsf128_mask (__v4sf , int );
+__m128 __builtin_ia32_expandsf128_maskz (__v4sf , int );
+__m128 __builtin_ia32_expandloadsf128_mask (__v4sf *, int );
+__m128 __builtin_ia32_expandloadsf128_maskz (__v4sf *, int );
+__m256i __builtin_ia32_expanddi256_mask (__v4di , int );
+__m256i __builtin_ia32_expanddi256_maskz (__v4di , int );
+__m256i __builtin_ia32_expandloaddi256_mask (__v4di *, int );
+__m256i __builtin_ia32_expandloaddi256_maskz (__v4di *, int );
+__m128i __builtin_ia32_expanddi128_mask (__v2di , int );
+__m128i __builtin_ia32_expanddi128_maskz (__v2di , int );
+__m128i __builtin_ia32_expandloaddi128_mask (__v2di *, int );
+__m128i __builtin_ia32_expandloaddi128_maskz (__v2di *, int );
+__m256i __builtin_ia32_expandsi256_mask (__v8si , int );
+__m256i __builtin_ia32_expandsi256_maskz (__v8si , int );
+__m256i __builtin_ia32_expandloadsi256_mask (__v8si *, int );
+__m256i __builtin_ia32_expandloadsi256_maskz (__v8si *, int );
+__m128i __builtin_ia32_expandsi128_mask (__v4si , int );
+__m128i __builtin_ia32_expandsi128_maskz (__v4si , int );
+__m128i __builtin_ia32_expandloadsi128_mask (__v4si *, int );
+__m128i __builtin_ia32_expandloadsi128_maskz (__v4si *, int );
+__m256d __builtin_ia32_vpermt2varpd256_mask (__v4di, int );
+__m256d __builtin_ia32_vpermi2varpd256_mask (__v4df , int );
+__m256d __builtin_ia32_vpermt2varpd256_maskz (__v4di, int );
+__m256 __builtin_ia32_vpermt2varps256_mask (__v8si __I, int );
+__m256 __builtin_ia32_vpermi2varps256_mask (__v8sf , int );
+__m256 __builtin_ia32_vpermt2varps256_maskz (__v8si, int );
+__m128i __builtin_ia32_vpermt2varq128_mask (__v2di, int );
+__m128i __builtin_ia32_vpermi2varq128_mask (__v2di , int );
+__m128i __builtin_ia32_vpermt2varq128_maskz (__v2di, int );
+__m128i __builtin_ia32_vpermt2vard128_mask (__v4si, int );
+__m128i __builtin_ia32_vpermi2vard128_mask (__v4si , int );
+__m128i __builtin_ia32_vpermt2vard128_maskz (__v4si, int );
+__m256i __builtin_ia32_vpermt2varq256_mask (__v4di, int );
+__m256i __builtin_ia32_vpermi2varq256_mask (__v4di , int );
+__m256i __builtin_ia32_vpermt2varq256_maskz (__v4di, int );
+__m256i __builtin_ia32_vpermt2vard256_mask (__v8si, int );
+__m256i __builtin_ia32_vpermi2vard256_mask (__v8si , int );
+__m256i __builtin_ia32_vpermt2vard256_maskz (__v8si, int );
+__m128d __builtin_ia32_vpermt2varpd128_mask (__v2di, int );
+__m128d __builtin_ia32_vpermi2varpd128_mask (__v2df , int );
+__m128d __builtin_ia32_vpermt2varpd128_maskz (__v2di, int );
+__m128 __builtin_ia32_vpermt2varps128_mask (__v4si, int );
+__m128 __builtin_ia32_vpermi2varps128_mask (__v4sf , int );
+__m128 __builtin_ia32_vpermt2varps128_maskz (__v4si, int );
+__m128i __builtin_ia32_psravq128_mask (__v2di, int );
+__m256i __builtin_ia32_psllv8si_mask (__v8si, int );
+__m128i __builtin_ia32_psllv4si_mask (__v4si, int );
+__m256i __builtin_ia32_psllv4di_mask (__v4di, int );
+__m128i __builtin_ia32_psllv2di_mask (__v2di, int );
+__m256i __builtin_ia32_psrav8si_mask (__v8si, int );
+__m128i __builtin_ia32_psrav4si_mask (__v4si, int );
+__m256i __builtin_ia32_psrlv8si_mask (__v8si, int );
+__m128i __builtin_ia32_psrlv4si_mask (__v4si, int );
+__m256i __builtin_ia32_psrlv4di_mask (__v4di, int );
+__m128i __builtin_ia32_psrlv2di_mask (__v2di, int );
+__m256i __builtin_ia32_prolvd256_mask (__v8si , int );
+__m128i __builtin_ia32_prolvd128_mask (__v4si , int );
+__m256i __builtin_ia32_prorvd256_mask (__v8si , int );
+__m128i __builtin_ia32_prorvd128_mask (__v4si , int );
+__m256i __builtin_ia32_prolvq256_mask (__v4di , int );
+__m128i __builtin_ia32_prolvq128_mask (__v2di , int );
+__m256i __builtin_ia32_prorvq256_mask (__v4di , int );
+__m128i __builtin_ia32_prorvq128_mask (__v2di , int );
+__m256i __builtin_ia32_psravq256_mask (__v4di, int );
+__m256i __builtin_ia32_pandq256_mask (__v4di , int );
+__m128i __builtin_ia32_pandq128_mask (__v2di , int );
+__m256i __builtin_ia32_pandnq256_mask (__v4di , int );
+__m128i __builtin_ia32_pandnq128_mask (__v2di , int );
+__m256i __builtin_ia32_porq256_mask (__v4di , int );
+__m128i __builtin_ia32_porq128_mask (__v2di , int );
+__m256i __builtin_ia32_pxorq256_mask (__v4di , int );
+__m128i __builtin_ia32_pxorq128_mask (__v2di , int );
+__m256d __builtin_ia32_maxpd256_mask (__v4df , int );
+__m256 __builtin_ia32_maxps256_mask (__v8sf , int );
+__m128 __builtin_ia32_divps_mask (__v4sf , int );
+__m128d __builtin_ia32_divpd_mask (__v2df , int );
+__m256d __builtin_ia32_minpd256_mask (__v4df , int );
+__m256d __builtin_ia32_divpd256_mask (__v4df , int );
+__m256d __builtin_ia32_minpd256_mask (__v4df , int );
+__m256 __builtin_ia32_minps256_mask (__v8sf , int );
+__m256d __builtin_ia32_divpd256_mask (__v4df , int );
+__m256 __builtin_ia32_divps256_mask (__v8sf , int );
+__m256 __builtin_ia32_minps256_mask (__v8sf , int );
+__m256 __builtin_ia32_divps256_mask (__v8sf , int );
+__m128 __builtin_ia32_minps_mask (__v4sf , int );
+__m128 __builtin_ia32_mulps_mask (__v4sf , int );
+__m128 __builtin_ia32_minps_mask (__v4sf , int );
+__m128 __builtin_ia32_mulps_mask (__v4sf , int );
+__m128 __builtin_ia32_maxps_mask (__v4sf , int );
+__m128d __builtin_ia32_minpd_mask (__v2df , int );
+__m128d __builtin_ia32_maxpd_mask (__v2df , int );
+__m128d __builtin_ia32_mulpd_mask (__v2df , int );
+__m256 __builtin_ia32_mulps256_mask (__v8sf , int );
+__m256d __builtin_ia32_mulpd256_mask (__v4df , int );
+__m256i __builtin_ia32_pmaxsq256_mask (__v4di , int );
+__m256i __builtin_ia32_pminsq256_mask (__v4di , int );
+__m256i __builtin_ia32_pmaxuq256_mask (__v4di , int );
+__m256i __builtin_ia32_pmaxsq256_mask (__v4di , int );
+__m256i __builtin_ia32_pmaxuq256_mask (__v4di , int );
+__m256i __builtin_ia32_pminuq256_mask (__v4di , int );
+__m256i __builtin_ia32_pmaxsd256_mask (__v8si , int );
+__m256i __builtin_ia32_pminsd256_mask (__v8si , int );
+__m256i __builtin_ia32_pmaxud256_mask (__v8si , int );
+__m256i __builtin_ia32_pminud256_mask (__v8si , int );
+__m128i __builtin_ia32_pmaxsq128_mask (__v2di , int );
+__m128i __builtin_ia32_pminsq128_mask (__v2di , int );
+__m128i __builtin_ia32_pmaxuq128_mask (__v2di , int );
+__m128i __builtin_ia32_pmaxsq128_mask (__v2di , int );
+__m128i __builtin_ia32_pmaxuq128_mask (__v2di , int );
+__m128i __builtin_ia32_pminuq128_mask (__v2di , int );
+__m128i __builtin_ia32_pmaxsd128_mask (__v4si , int );
+__m128i __builtin_ia32_pminsd128_mask (__v4si , int );
+__m128i __builtin_ia32_pmaxud128_mask (__v4si , int );
+__m128i __builtin_ia32_pminud128_mask (__v4si , int );
+__m128i __builtin_ia32_broadcastmb128 ();
+__m256i __builtin_ia32_broadcastmb256 ();
+__m128i __builtin_ia32_broadcastmw128 ();
+__m256i __builtin_ia32_broadcastmw256 ();
+__m256i __builtin_ia32_vplzcntd_256_mask (__v8si , int );
+__m256i __builtin_ia32_vplzcntq_256_mask (__v4di , int );
+__m256i __builtin_ia32_vpconflictdi_256_mask (__v4di , int );
+__m256i __builtin_ia32_vpconflictsi_256_mask (__v8si , int );
+__m128i __builtin_ia32_vplzcntd_128_mask (__v4si , int );
+__m128i __builtin_ia32_vplzcntq_128_mask (__v2di , int );
+__m128i __builtin_ia32_vpconflictdi_128_mask (__v2di , int );
+__m128i __builtin_ia32_vpconflictsi_128_mask (__v4si , int );
+__m256d __builtin_ia32_unpcklpd256_mask (__v4df , int );
+__m128d __builtin_ia32_unpcklpd128_mask (__v2df , int );
+__m256 __builtin_ia32_unpcklps256_mask (__v8sf , int );
+__m256d __builtin_ia32_unpckhpd256_mask (__v4df , int );
+__m128d __builtin_ia32_unpckhpd128_mask (__v2df , int );
+__m256 __builtin_ia32_unpckhps256_mask (__v8sf , int );
+__m128 __builtin_ia32_unpckhps128_mask (__v4sf , int );
+__m128 __builtin_ia32_vcvtph2ps_mask (__v8hi , int );
+__m256 __builtin_ia32_unpcklps256_mask (__v8sf , int );
+__m256 __builtin_ia32_vcvtph2ps256_mask (__v8hi , int );
+__m128 __builtin_ia32_unpcklps128_mask (__v4sf , int );
+__m256i __builtin_ia32_psrad256_mask (__v8si , int );
+__m128i __builtin_ia32_psrad128_mask (__v4si , int );
+__m256i __builtin_ia32_psraq256_mask (__v4di , int );
+__m128i __builtin_ia32_psraq128_mask (__v2di , int );
+__m128i __builtin_ia32_pslld128_mask (__v4si , int );
+__m128i __builtin_ia32_psllq128_mask (__v2di , int );
+__m256i __builtin_ia32_pslld256_mask (__v8si , int );
+__m256i __builtin_ia32_psllq256_mask (__v4di , int );
+__m256 __builtin_ia32_permvarsf256_mask (__v8sf, int );
+__m256d __builtin_ia32_permvardf256_mask (__v4df, int );
+__m256d __builtin_ia32_vpermilvarpd256_mask (__v4df , int );
+__m256 __builtin_ia32_vpermilvarps256_mask (__v8sf , int );
+__m128d __builtin_ia32_vpermilvarpd_mask (__v2df , int );
+__m128 __builtin_ia32_vpermilvarps_mask (__v4sf , int );
+__m256i __builtin_ia32_pmulld256_mask (__v8si , int );
+__m256i __builtin_ia32_permvardi256_mask (__v4di, int );
+__m256i __builtin_ia32_pmulld256_mask (__v8si , int );
+__m128i __builtin_ia32_pmulld128_mask (__v4si , int );
+__m256i __builtin_ia32_pmuldq256_mask (__v8si, int );
+__m128i __builtin_ia32_pmuldq128_mask (__v4si, int );
+__m256i __builtin_ia32_permvardi256_mask (__v4di, int );
+__m256i __builtin_ia32_pmuludq256_mask (__v8si, int );
+__m256i __builtin_ia32_permvarsi256_mask (__v8si, int );
+__m256i __builtin_ia32_pmuludq256_mask (__v8si, int );
+__m128i __builtin_ia32_pmuludq128_mask (__v4si, int );
+__m256i __builtin_ia32_permvarsi256_mask (__v8si, int );
+__m512i __builtin_ia32_movdquhi512_mask (__v32hi , int );
+__m512i __builtin_ia32_loaddquhi512_mask (__v32hi *, int );
+void    __builtin_ia32_storedquhi512_mask (__v32hi *, int );
+__m512i __builtin_ia32_movdquqi512_mask (__v64qi , int );
+__mmask32 __builtin_ia32_kunpcksi (__mmask32, int );
+__mmask64 __builtin_ia32_kunpckdi (__mmask64, int );
+__m512i __builtin_ia32_loaddquqi512_mask (__v64qi *, int );
+void    __builtin_ia32_storedquqi512_mask (__v64qi *, int );
+__m512i __builtin_ia32_psadbw512 (__v64qi , int );
+__m256i __builtin_ia32_pmovwb512_mask (__v32hi , int );
+__m256i __builtin_ia32_pmovswb512_mask (__v32hi , int );
+__m256i __builtin_ia32_pmovuswb512_mask (__v32hi , int );
+__m512i __builtin_ia32_pbroadcastb512_mask (__v16qi , int );
+__m512i __builtin_ia32_pbroadcastb512_gpr_mask (char, int );
+__m512i __builtin_ia32_pbroadcastw512_mask (__v8hi , int );
+__m512i __builtin_ia32_pbroadcastw512_gpr_mask (short, int );
+__m512i __builtin_ia32_pmulhrsw512_mask (__v32hi , int );
+__m512i __builtin_ia32_pmulhw512_mask (__v32hi , int );
+__m512i __builtin_ia32_pmulhuw512_mask (__v32hi , int );
+__m512i __builtin_ia32_pmullw512_mask (__v32hi , int );
+__m512i __builtin_ia32_pmovsxbw512_mask (__v32qi, int );
+__m512i __builtin_ia32_pmovzxbw512_mask (__v32qi, int );
+__m512i __builtin_ia32_permvarhi512_mask (__v32hi, int );
+__m512i __builtin_ia32_vpermt2varhi512_mask (__v32hi, int );
+__m512i __builtin_ia32_vpermi2varhi512_mask (__v32hi , int );
+__m512i __builtin_ia32_vpermt2varhi512_maskz (__v32hi, int );
+__m512i __builtin_ia32_pavgb512_mask (__v64qi , int );
+__m512i __builtin_ia32_paddb512_mask (__v64qi , int );
+__m512i __builtin_ia32_psubb512_mask (__v64qi , int );
+__m512i __builtin_ia32_pavgw512_mask (__v32hi , int );
+__m512i __builtin_ia32_psubsb512_mask (__v64qi , int );
+__m512i __builtin_ia32_psubusb512_mask (__v64qi , int );
+__m512i __builtin_ia32_paddsb512_mask (__v64qi, int );
+
+
+void __builtin_ia32_pmovdb128mem_mask (__v16qi *, __v4si, __mmask8);
+__m128i __builtin_ia32_pbroadcastd128_gpr_mask (int, __v4si, int );
+__m128i __builtin_ia32_pbroadcastd128_gpr_mask (int, int);
+__m256i __builtin_ia32_pbroadcastq256_mask (__v2di, int );
+
+__m128 __builtin_ia32_extractf32x4_mask (__v16sf, int, __v4sf, __mmask8);
+__m128i __builtin_ia32_extracti32x4_mask (__v16si, int, __v4si, __mmask8);
+__m256d __builtin_ia32_extractf64x4_mask (__v8df, int, __v4df, __mmask8);
+__m256d __builtin_ia32_extractf64x4_mask (__v8df, int, __v4df, __mmask8);
+__m256d __builtin_ia32_extractf64x4_mask (__v8df, int, __v4df, __mmask8);
+#endif
+#endif
+
 
 #if 0
 /* From: mmintrin.h */

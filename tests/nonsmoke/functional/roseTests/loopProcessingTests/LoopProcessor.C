@@ -88,9 +88,12 @@ main ( int argc,  char * argv[] )
     std::string fname = sageFile->get_file_info()->get_raw_filename();
     fname=fname.substr(fname.find_last_of('/')+1);
 
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
     AutoTuningInterface tuning(fname);
-
     LoopTransformInterface::set_tuningInterface(&tuning);
+#endif
+
     SgGlobal *root = sageFile->get_globalScope();
     ROSE_ASSERT(root != NULL);
 
@@ -121,7 +124,11 @@ main ( int argc,  char * argv[] )
       AstTests::runAllTests(sageProject);
 #endif
     }
+
+// DQ (1/14/2017): make dependence on POET optional.
+#ifdef ROSE_USE_POET
     tuning.GenOutput();
+#endif
 
 #if 0
   // DQ (11/19/2013): Added AST consistency tests (this fails).

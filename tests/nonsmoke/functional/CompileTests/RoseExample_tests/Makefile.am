@@ -8,14 +8,19 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Files that represent header files from ROSE that we can now compilie with ROSE.
 TESTCODES_REQUIRED_TO_PASS = \
 testRoseHeaders_00.C \
+testRoseHeaders_07.C \
+testRoseHeaders_08.C
+
+# DQ (1/19/2017): These are a problem for GNU 5.1 (but maybe just because __atomic_is_lock_free() is not correctly handled).
+if !ROSE_USING_GCC_VERSION_LATER_5_1
+TESTCODES_REQUIRED_TO_PASS += \
 testRoseHeaders_01.C \
 testRoseHeaders_02.C \
 testRoseHeaders_03.C \
 testRoseHeaders_04.C \
 testRoseHeaders_05.C \
-testRoseHeaders_06.C \
-testRoseHeaders_07.C \
-testRoseHeaders_08.C
+testRoseHeaders_06.C 
+endif
 
 EXTRA_TESTCODES_REQUIRED_TO_PASS = \
      test2003_33.C \

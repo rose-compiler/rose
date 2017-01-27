@@ -669,12 +669,12 @@ int tg = getTarget(oeds[j], g);
     }
     borrowed = true;
     std::vector<std::vector<int> > lps2;
-    unsigned int maxpaths = 1000;
-    unsigned int pathdivisor = 1;//paths.size()/maxpaths;///paths.size();
+    //unsigned int maxpaths = 1000;
+    //unsigned int pathdivisor = 1;//paths.size()/maxpaths;///paths.size();
 
     //if (pathdivisor < 1) {
-        pathdivisor = 1;
-        maxpaths = paths.size();
+        //pathdivisor = 1;
+        //maxpaths = paths.size();
    // }
 /*
     for (unsigned int j = 0; j < pathdivisor+1; j++) {
