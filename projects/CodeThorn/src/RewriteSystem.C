@@ -7,8 +7,9 @@ using namespace SPRAY;
 using namespace Sawyer::Message;
 
 Sawyer::Message::Facility RewriteSystem::logger = [](){
-  Facility log("RewriteSystem");
-  mfacilities.insert(log);
+  Facility log;
+  rose::Diagnostics::initialize();
+  rose::Diagnostics::initAndRegister(log, "RewriteSystem");
   return log;
 }();
 
@@ -292,13 +293,13 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
          }
        }
      } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
-     
+
      if(ruleAddReorder) {
        do {
          // the following rules guarantee convergence
-         
+
          // REWRITE: re-ordering (normalization) of expressions
-         // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
+         // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other)
          //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
          transformationApplied=false;
          MatchResult res=m.performMatching("$BinaryOp1=SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal)",root);
@@ -325,13 +326,13 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                  if(rewriteTrace)
                    cout<<((*i)["$BinaryOp1"])->unparseToString()<<endl;
                  dump1_stats.numAddOpReordering++;
-               }       
+               }
              }
            }
          }
        } while(transformationApplied);
      }
-     
+
      // REWRITE: constant folding of constant integer (!) expressions
      // we intentionally avoid folding of float values
      do {
@@ -377,10 +378,10 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
          }
        }
      } while(transformationApplied);
-     
+
      normalizeFloatingPointNumbersForUnparsing(root);
      //eliminateSuperfluousCasts(root);
-     
+
      //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
    } while(someTransformationApplied);
 }

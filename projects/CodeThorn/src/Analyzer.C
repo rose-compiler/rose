@@ -26,8 +26,9 @@ using namespace std;
 using namespace Sawyer::Message;
 
 Sawyer::Message::Facility Analyzer::logger = [](){
-  Facility log("Analyzer");
-  mfacilities.insert(log);
+  Facility log;
+  rose::Diagnostics::initialize();
+  rose::Diagnostics::initAndRegister(log, "Analyzer");
   return log;
 }();
 
@@ -636,7 +637,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
       ROSE_ASSERT(initDeclVar);
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
-      
+
       // not possible to support yet. getIntValue must succeed on declarations.
       if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
         PState newPState=*currentEState.pstate();
@@ -2755,7 +2756,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
   ROSE_ASSERT(funCall);
   string funName=SgNodeHelper::getFunctionName(funCall);
   // handling of error function (TODO: generate dedicated state (not failedAssert))
-  
+
   if(boolOptions["rers-binary"]) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
     string funName=SgNodeHelper::getFunctionName(funCall);
@@ -2764,7 +2765,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
       return elistify();
     }
   }
-  
+
   SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   // ad 2)
   SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
@@ -2949,17 +2950,17 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
     {
       returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
     }
-    
+
     if(newPState.find(returnVarId)!=newPState.end()) {
       AValue evalResult=newPState[returnVarId];
       //newPState[lhsVarId]=evalResult;
       newPState.setVariableToValue(lhsVarId,evalResult);
-      
+
       cset.addAssignEqVarVar(lhsVarId,returnVarId);
-      
+
       newPState.deleteVar(returnVarId); // remove $return from state
       cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
-      
+
       return elistify(createEState(edge.target(),newPState,cset));
     } else {
       // no $return variable found in state. This can be the case for an extern function.
@@ -2995,7 +2996,7 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
     // 2a) remove variable from state
     // 2b) remove all constraints concerning this variable
     // 3) create new EState and return
-    
+
     // ad 1)
     set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
     // ad 2)
@@ -3006,7 +3007,7 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
     VariableIdMapping::VariableIdSet formalParams=determineVariableIdsOfSgInitializedNames(formalParamInitNames);
     VariableIdMapping::VariableIdSet vars=localVars+formalParams;
     set<string> names=variableIdsToVariableNames(vars);
-    
+
     for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
       VariableId varId=*i;
       newPState.deleteVar(varId);
@@ -3148,7 +3149,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       }
     }
   }
-  
+
   // for all other external functions we use identity as transfer function
   EState newEState=currentEState;
   newEState.io=newio;
@@ -3202,7 +3203,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
     EState estate=(*i).estate;
     PState newPState=*estate.pstate();
     ConstraintSet cset=*estate.constraints();
-      
+
     AType::ConstIntLattice varVal=newPState[var];
     AType::ConstIntLattice const1=1;
     switch(nextNodeToAnalyze2->variantT()) {
@@ -3221,7 +3222,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
     }
     //newPState[var]=varVal;
     newPState.setVariableToValue(var,varVal);
-      
+
     if(!(*i).result.isTop())
       cset.removeAllConstraintsOfVar(var);
     list<EState> estateList;

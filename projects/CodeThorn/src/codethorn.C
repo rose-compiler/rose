@@ -70,6 +70,8 @@ namespace po = boost::program_options;
 using namespace CodeThorn;
 using namespace SPRAY;
 using namespace boost;
+
+#include "Diagnostics.h"
 using namespace Sawyer::Message;
 
 // experimental
@@ -527,7 +529,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("std-out-only",false);
   boolOptions.registerOption("keep-error-states",false);
   boolOptions.registerOption("no-input-input",false);
- 
+
   boolOptions.registerOption("with-counterexamples",false);
   boolOptions.registerOption("with-assert-counterexamples",false);
   boolOptions.registerOption("with-ltl-counterexamples",false);
@@ -1020,8 +1022,14 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
 }
 
 int main( int argc, char * argv[] ) {
-  Sawyer::Message::Facility logger("CodeThorn");
-  mfacilities.insert(logger);
+  ROSE_INITIALIZE;
+
+  rose::Diagnostics::mprefix->showProgramName(false);
+  rose::Diagnostics::mprefix->showThreadId(false);
+  rose::Diagnostics::mprefix->showElapsedTime(false);
+
+  Sawyer::Message::Facility logger;
+  rose::Diagnostics::initAndRegister(logger, "CodeThorn");
 
   mfacilities.disable(DEBUG);
   mfacilities.disable(TRACE);
