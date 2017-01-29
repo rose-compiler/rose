@@ -105,6 +105,8 @@ else
 conditional-check-local:
 # DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)
 if !OS_VENDOR_DEBIAN
+# DQ (1/28/2017): HPCToolKit appears to have problems on later versions of GNU compilers (GNU 4.9 and later).
+if !ROSE_USING_GCC_VERSION_LATER_4_9
 if ROSE_BUILD_C_LANGUAGE_SUPPORT
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_attach01a.sh
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_attach01.sh
@@ -121,6 +123,7 @@ else
 endif
 else
 	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
+endif
 endif
 endif
 
