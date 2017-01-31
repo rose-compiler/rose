@@ -132,10 +132,6 @@ int main(int argc, char* argv[]) {
   Sawyer::Message::Facility logger;
   rose::Diagnostics::initAndRegister(logger, "Woodpecker");
 
-  mfacilities.disable(DEBUG);
-  mfacilities.disable(TRACE);
-  mfacilities.disable(INFO);
-
   try {
     if(argc==1) {
       logger[ERROR] << "wrong command line options."<<endl;
@@ -178,6 +174,7 @@ int main(int argc, char* argv[]) {
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
     ("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
     ("transform-thread-variable", "transform code to use additional thread variable.")
+    ("log-level",po::value< string >()->default_value(">=warn"),"Set the log level")
     ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -225,6 +222,9 @@ int main(int argc, char* argv[]) {
 
   if(boolOptions["verbose"])
     detailedOutput=1;
+
+  mfacilities.control(args["log-level"].as<string>());
+  logger[TRACE] << "Log level is " << args["log-level"].as<string>() << endl;
 
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
