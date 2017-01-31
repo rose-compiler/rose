@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
     ("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
     ("transform-thread-variable", "transform code to use additional thread variable.")
-    ("log-level",po::value< string >()->default_value(">=warn"),"Set the log level")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level")
     ;
   //    ("int-option",po::value< int >(),"option info")
 
