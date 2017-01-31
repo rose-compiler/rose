@@ -2313,6 +2313,8 @@ private:
                                         "|: undefined reference to `"                   // GNU linker error
                                         "|No space left on device"                      // filesystem is full
                                         "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
+                                        "|^Makefile:[0-9]+: recipe for target '.*' failed"
+                                        "|\\*{7} HPCTOOLKIT .* FAILED \\*{9}"
 
                                         ")[^\\n]*$)|"
                                         "(^[^\\n]*?(?:"

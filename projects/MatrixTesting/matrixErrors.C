@@ -215,6 +215,8 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                       "|^.*: undefined reference to `.*"        // GNU linker error
                       "|No space left on device"
                       "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
+                      "|^Makefile:[0-9]+: recipe for target ''.*'' failed"
+                      "|\\*{7} HPCTOOLKIT .* FAILED \\*{9}"
                       "|\\merror: ?\n.*"                        // ROSE error on next line
                       //----- regular expressions end -----
                       ")')"
