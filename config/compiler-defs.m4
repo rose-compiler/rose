@@ -27,7 +27,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f1 |\
                 cut -d\( -f1)
-             CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
+            CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f2 |\
                 cut -d\( -f1)
@@ -53,6 +53,10 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
               # version of the OS, but I'm not certain that is the best solution.  Perhaps we can asset that
               # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
               # of Clang version number, or take it directly from the XCode version number if that is a better solution.
+
+                CXX_VERSION_MAJOR=`${srcdir}/config/getAppleCxxMajorVersionNumber.sh`
+                CXX_VERSION_MINOR=`${srcdir}/config/getAppleCxxMinorVersionNumber.sh`
+                CXX_VERSION_PATCH=`${srcdir}/config/getAppleCxxPatchVersionNumber.sh`
 
                 XCODE_VERSION_MAJOR=$CXX_VERSION_MAJOR
                 XCODE_VERSION_MINOR=$CXX_VERSION_MINOR
