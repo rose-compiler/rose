@@ -102,12 +102,12 @@ echo "Testing value of FC = $FC"
    # exit 1
   else
 
-  # DQ (12/3/2016): Note that even if the bckend compiler is specified to be GNU, on a Mac OSX system this will be clang.
-  # So we can trigger behavior based on the backend compiler name direcltly when on an OSX system.
+  # DQ (12/3/2016): Note that even if the backend compiler is specified to be GNU, on a Mac OSX system this will be clang.
+  # So we can trigger behavior based on the backend compiler name directly when on an OSX system.
     if test "x$OS_vendor" = xapple; then
 
-        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getClangMajorVersionNumber.sh`
-        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getClangMinorVersionNumber.sh`
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMinorVersionNumber.sh`
 
         echo "     (g++ but really clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
         echo "     (g++ but really clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
@@ -124,7 +124,7 @@ echo "Testing value of FC = $FC"
         XCODE_VERSION_MINOR=$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
         XCODE_VERSION_PATCH=$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER
 
-      # I think the clange versions all have patch level equal to zero.
+      # I think the clang versions all have patch level equal to zero.
         BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
 
         if test $XCODE_VERSION_MAJOR -eq 7; then
