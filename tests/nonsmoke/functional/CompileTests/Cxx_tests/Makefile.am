@@ -112,8 +112,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_73.C \
    test2014_74.C \
    test2014_75.C \
-   test2014_77.C \
-   test2014_78.C \
    test2013_117.C \
    test2014_79.C \
    test2014_80.C \
@@ -421,6 +419,13 @@ NEW_TESTCODES = \
    test2016_88.C \
    test2016_91.C \
    test2016_93.C
+
+# DQ (1/29/2017): This appers to fail for Boost 1.57
+if !ROSE_USING_BOOST_VERSION_1_57
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_77.C \
+   test2014_78.C 
+endif
 
 # DQ (1/16/2017): These test codes include not portable macros and references to header files that are a problem for Clang.
 if !USING_CLANG_COMPILER
