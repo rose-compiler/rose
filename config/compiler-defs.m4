@@ -62,12 +62,12 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 XCODE_VERSION_MINOR=$CXX_VERSION_MINOR
                 XCODE_VERSION_PATCH=$CXX_VERSION_PATCH
 
-              # I think the clange versions all have patch level equal to zero.
+              # I think the clang versions all have patch level equal to zero.
                 CXX_VERSION_PATCH=0
 
                 if test $XCODE_VERSION_MAJOR -eq 7; then
 
-                  # The versions of Clang all depend upon the minor version number of XCode (for major version number equal to 7).
+                  # The versions of clang all depend upon the minor version number of XCode (for major version number equal to 7).
                     CXX_VERSION_MAJOR=3
                     case "$XCODE_VERSION_MINOR" in
                         0)
@@ -78,6 +78,18 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             ;;
                         *)
                             echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
+                            exit 1
+                            ;;
+                    esac
+                elif test $XCODE_VERSION_MAJOR -eq 8; then
+                    CXX_VERSION_MAJOR=3
+                    case "$XCODE_VERSION_MINOR" in
+                        0)
+                            CXX_VERSION_MINOR=8
+                            ;;
+                        *)
+                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
+                            exit 1
                             ;;
                     esac
                 else
