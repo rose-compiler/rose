@@ -129,7 +129,7 @@ echo "Testing value of FC = $FC"
 
         if test $XCODE_VERSION_MAJOR -eq 7; then
 
-          # The versions of Clang all depend upon the minor version number of XCode (for major version number equal to 7).
+          # The versions of clang all depend upon the minor version number of XCode (for major version number equal to 7).
             BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
             case "$XCODE_VERSION_MINOR" in
                 0)
@@ -140,6 +140,18 @@ echo "Testing value of FC = $FC"
                     ;;
                 *)
                     echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
+                    exit 1
+                    ;;
+            esac
+        elif test $XCODE_VERSION_MAJOR -eq 8; then
+            BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+            case "$XCODE_VERSION_MINOR" in
+                0)
+                    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+                    ;;
+                *)
+                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
+                    exit 1
                     ;;
             esac
         else
