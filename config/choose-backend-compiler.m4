@@ -139,8 +139,8 @@ echo "Testing value of FC = $FC"
                     BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
                     ;;
                 *)
-                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
-                    exit 1
+                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                    exit 1;
                     ;;
             esac
         elif test $XCODE_VERSION_MAJOR -eq 8; then
@@ -150,8 +150,8 @@ echo "Testing value of FC = $FC"
                     BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
                     ;;
                 *)
-                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
-                    exit 1
+                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                    exit 1;
                     ;;
             esac
         else
