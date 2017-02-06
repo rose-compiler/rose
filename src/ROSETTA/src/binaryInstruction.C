@@ -214,8 +214,10 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmInstruction>(*this);
-            s & p_kind & p_condition & p_positionOfConditionInMnemonic;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+            s & BOOST_SERIALIZATION_NVP(p_kind);
+            s & BOOST_SERIALIZATION_NVP(p_condition);
+            s & BOOST_SERIALIZATION_NVP(p_positionOfConditionInMnemonic);
         }
 #endif
 
@@ -274,9 +276,15 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmInstruction>(*this);
-            s & p_kind & p_baseSize & p_operandSize & p_addressSize & p_lockPrefix & p_repeatPrefix & p_branchPrediction;
-            s & p_segmentOverride;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+            s & BOOST_SERIALIZATION_NVP(p_kind);
+            s & BOOST_SERIALIZATION_NVP(p_baseSize);
+            s & BOOST_SERIALIZATION_NVP(p_operandSize);
+            s & BOOST_SERIALIZATION_NVP(p_addressSize);
+            s & BOOST_SERIALIZATION_NVP(p_lockPrefix);
+            s & BOOST_SERIALIZATION_NVP(p_repeatPrefix);
+            s & BOOST_SERIALIZATION_NVP(p_branchPrediction);
+            s & BOOST_SERIALIZATION_NVP(p_segmentOverride);
         }
 #endif
 
@@ -338,8 +346,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmInstruction>(*this);
-            s & p_kind;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+            s & BOOST_SERIALIZATION_NVP(p_kind);
         }
 #endif
 
@@ -383,8 +391,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmInstruction>(*this);
-            s & p_kind;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+            s & BOOST_SERIALIZATION_NVP(p_kind);
         }
 #endif
 
@@ -433,8 +441,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmInstruction>(*this);
-            s & p_kind;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+            s & BOOST_SERIALIZATION_NVP(p_kind);
         }
 #endif
 
@@ -513,8 +521,11 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmStatement>(*this);
-            s & p_mnemonic & p_raw_bytes & p_operandList & p_sources;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
+            s & BOOST_SERIALIZATION_NVP(p_mnemonic);
+            s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
+            s & BOOST_SERIALIZATION_NVP(p_operandList);
+            s & BOOST_SERIALIZATION_NVP(p_sources);
         }
 #endif
 
@@ -849,8 +860,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmNode>(*this);
-            s & p_operands;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_NVP(p_operands);
         }
 #endif
 
@@ -884,7 +895,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryAdd_OTHERS
@@ -912,7 +923,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinarySubtract_OTHERS
@@ -940,7 +951,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryMultiply_OTHERS
@@ -968,7 +979,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryDivide_OTHERS
@@ -996,7 +1007,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryMod_OTHERS
@@ -1024,7 +1035,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryAddPreupdate_OTHERS
@@ -1052,7 +1063,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinarySubtractPreupdate_OTHERS
@@ -1080,7 +1091,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryAddPostupdate_OTHERS
@@ -1108,7 +1119,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinarySubtractPostupdate_OTHERS
@@ -1136,7 +1147,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryLsl_OTHERS
@@ -1164,7 +1175,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryLsr_OTHERS
@@ -1192,7 +1203,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryAsr_OTHERS
@@ -1220,7 +1231,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmBinaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
 #endif // SgAsmBinaryRor_OTHERS
@@ -1279,8 +1290,9 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_lhs & p_rhs;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_lhs);
+            s & BOOST_SERIALIZATION_NVP(p_rhs);
         }
 #endif
 #endif // SgAsmBinaryExpression_OTHERS
@@ -1308,7 +1320,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
 #endif // SgAsmUnaryPlus_OTHERS
@@ -1336,7 +1348,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
 #endif // SgAsmUnaryMinus_OTHERS
@@ -1364,7 +1376,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
 #endif // SgAsmUnaryRrx_OTHERS
@@ -1392,7 +1404,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmUnaryExpression>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
 #endif // SgAsmUnaryArmSpecialRegisterList_OTHERS
@@ -1428,8 +1440,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_operand;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_operand);
         }
 #endif
 #endif // SgAsmUnaryExpression_OTHERS
@@ -1463,8 +1475,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmRegisterReferenceExpression>(*this);
-            s & p_psr_mask;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
+            s & BOOST_SERIALIZATION_NVP(p_psr_mask);
         }
 #endif
 
@@ -1509,8 +1521,11 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmRegisterReferenceExpression>(*this);
-            s & p_stride & p_offset & p_index & p_modulus;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
+            s & BOOST_SERIALIZATION_NVP(p_stride);
+            s & BOOST_SERIALIZATION_NVP(p_offset);
+            s & BOOST_SERIALIZATION_NVP(p_index);
+            s & BOOST_SERIALIZATION_NVP(p_modulus);
         }
 #endif
 
@@ -1569,8 +1584,9 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_descriptor & p_adjustment;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_descriptor);
+            s & BOOST_SERIALIZATION_NVP(p_adjustment);
         }
 #endif
 
@@ -1610,8 +1626,9 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_registers & p_mask;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_registers);
+            s & BOOST_SERIALIZATION_NVP(p_mask);
         }
 #endif
 #endif // SgAsmRegisterNames_OTHERS
@@ -1670,8 +1687,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmConstantExpression>(*this);
-            s & p_baseNode;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmConstantExpression);
+            s & BOOST_SERIALIZATION_NVP(p_baseNode);
         }
 #endif
 
@@ -1795,9 +1812,9 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmConstantExpression>(*this);
-            s & p_nativeValue;
-            s & p_nativeValueIsValid;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmConstantExpression);
+            s & BOOST_SERIALIZATION_NVP(p_nativeValue);
+            s & BOOST_SERIALIZATION_NVP(p_nativeValueIsValid);
         }
 #endif
 
@@ -1855,8 +1872,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmValueExpression>(*this);
-            s & p_bitVector;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmValueExpression);
+            s & BOOST_SERIALIZATION_NVP(p_bitVector);
         }
 #endif
 
@@ -1906,12 +1923,14 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_unfolded_expression_tree & p_bit_offset & p_bit_size;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_unfolded_expression_tree);
+            s & BOOST_SERIALIZATION_NVP(p_bit_offset);
+            s & BOOST_SERIALIZATION_NVP(p_bit_size);
 #if 1
             ASSERT_require2(p_symbol == NULL, "not implemented yet");
 #else
-            s & p_symbol;
+            s & BOOST_SERIALIZATION_NVP(p_symbol);
 #endif
         }
 #endif
@@ -1947,9 +1966,9 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_address;
-            s & p_segment;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_address);
+            s & BOOST_SERIALIZATION_NVP(p_segment);
         }
 #endif
 #endif // SgAsmMemoryReferenceExpression_OTHERS
@@ -1982,8 +2001,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_bit_flags;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_bit_flags);
         }
 #endif
 #endif // SgAsmControlFlagsExpression_OTHERS
@@ -2016,8 +2035,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_subexpression;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_subexpression);
         }
 #endif
 #endif // SgAsmCommonSubExpression_OTHERS
@@ -2121,8 +2140,9 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_riscOperator & p_operands;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_riscOperator);
+            s & BOOST_SERIALIZATION_NVP(p_operands);
         }
 #endif
 #endif // SgAsmRiscOperation_OTHERS
@@ -2155,8 +2175,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmExpression>(*this);
-            s & p_expressions;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_expressions);
         }
 #endif
 #endif // SgAsmExprListExp_OTHERS
@@ -2218,8 +2238,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmNode>(*this);
-            s & p_type;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_NVP(p_type);
         }
 #endif
 
@@ -2269,8 +2289,8 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmScalarType>(*this);
-            s & p_isSigned;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmScalarType);
+            s & BOOST_SERIALIZATION_NVP(p_isSigned);
         }
 #endif
 
@@ -2327,14 +2347,14 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmScalarType>(*this);
-            s & p_significandOffset;
-            s & p_significandNBits;
-            s & p_signBitOffset;
-            s & p_exponentOffset;
-            s & p_exponentNBits;
-            s & p_exponentBias;
-            s & p_flags;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmScalarType);
+            s & BOOST_SERIALIZATION_NVP(p_significandOffset);
+            s & BOOST_SERIALIZATION_NVP(p_significandNBits);
+            s & BOOST_SERIALIZATION_NVP(p_signBitOffset);
+            s & BOOST_SERIALIZATION_NVP(p_exponentOffset);
+            s & BOOST_SERIALIZATION_NVP(p_exponentNBits);
+            s & BOOST_SERIALIZATION_NVP(p_exponentBias);
+            s & BOOST_SERIALIZATION_NVP(p_flags);
         }
 #endif
 
@@ -2414,8 +2434,11 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmType>(*this);
-            s & p_minorOrder & p_majorOrder & p_majorNBytes & p_nBits;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmType);
+            s & BOOST_SERIALIZATION_NVP(p_minorOrder);
+            s & BOOST_SERIALIZATION_NVP(p_majorOrder);
+            s & BOOST_SERIALIZATION_NVP(p_majorNBytes);
+            s & BOOST_SERIALIZATION_NVP(p_nBits);
         }
 #endif
 
@@ -2474,8 +2497,9 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmType>(*this);
-            s & p_nElmts & p_elmtType;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmType);
+            s & BOOST_SERIALIZATION_NVP(p_nElmts);
+            s & BOOST_SERIALIZATION_NVP(p_elmtType);
         }
 #endif
 
@@ -2517,7 +2541,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgAsmNode>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         }
 #endif
 
@@ -2708,8 +2732,9 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgNode>(*this);
-            s & p_address & p_comment;
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgNode);
+            s & BOOST_SERIALIZATION_NVP(p_address);
+            s & BOOST_SERIALIZATION_NVP(p_comment);
         }
 #endif
 #endif // SgAsmStatement_OTHERS
@@ -4823,7 +4848,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & boost::serialization::base_object<SgNode>(*this);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgNode);
         }
 #endif
 #endif // SgAsmNode_OTHERS

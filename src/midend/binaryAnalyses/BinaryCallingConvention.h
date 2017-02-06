@@ -102,12 +102,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & type_;
-        s & reg_;
+        s & BOOST_SERIALIZATION_NVP(type_);
+        s & BOOST_SERIALIZATION_NVP(reg_);
         if (STACK==type_) {
-            s & offset_;
+            s & BOOST_SERIALIZATION_NVP(offset_);
         } else {
-            s & va_;
+            s & BOOST_SERIALIZATION_NVP(va_);
         }
     }
 #endif
@@ -252,21 +252,21 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & name_;
-        s & comment_;
-        s & wordWidth_;
-        s & regDict_;
-        s & inputParameters_;
-        s & outputParameters_;
-        s & stackParameterOrder_;
-        s & stackPointerRegister_;
-        s & nonParameterStackSize_;
-        s & stackAlignment_;
-        s & stackDirection_;
-        s & stackCleanup_;
-        s & thisParameter_;
-        s & calleeSavedRegisters_;
-        s & scratchRegisters_;
+        s & BOOST_SERIALIZATION_NVP(name_);
+        s & BOOST_SERIALIZATION_NVP(comment_);
+        s & BOOST_SERIALIZATION_NVP(wordWidth_);
+        s & BOOST_SERIALIZATION_NVP(regDict_);
+        s & BOOST_SERIALIZATION_NVP(inputParameters_);
+        s & BOOST_SERIALIZATION_NVP(outputParameters_);
+        s & BOOST_SERIALIZATION_NVP(stackParameterOrder_);
+        s & BOOST_SERIALIZATION_NVP(stackPointerRegister_);
+        s & BOOST_SERIALIZATION_NVP(nonParameterStackSize_);
+        s & BOOST_SERIALIZATION_NVP(stackAlignment_);
+        s & BOOST_SERIALIZATION_NVP(stackDirection_);
+        s & BOOST_SERIALIZATION_NVP(stackCleanup_);
+        s & BOOST_SERIALIZATION_NVP(thisParameter_);
+        s & BOOST_SERIALIZATION_NVP(calleeSavedRegisters_);
+        s & BOOST_SERIALIZATION_NVP(scratchRegisters_);
     }
 #endif
     
@@ -785,17 +785,17 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & cpu_;
-        s & regDict_;
-        s & defaultCc_;
-        s & hasResults_;
-        s & didConverge_;
-        s & restoredRegisters_;
-        s & inputRegisters_;
-        s & outputRegisters_;
-        s & inputStackParameters_;
-        s & outputStackParameters_;
-        s & stackDelta_;
+        s & BOOST_SERIALIZATION_NVP(cpu_);
+        s & BOOST_SERIALIZATION_NVP(regDict_);
+        s & BOOST_SERIALIZATION_NVP(defaultCc_);
+        s & BOOST_SERIALIZATION_NVP(hasResults_);
+        s & BOOST_SERIALIZATION_NVP(didConverge_);
+        s & BOOST_SERIALIZATION_NVP(restoredRegisters_);
+        s & BOOST_SERIALIZATION_NVP(inputRegisters_);
+        s & BOOST_SERIALIZATION_NVP(outputRegisters_);
+        s & BOOST_SERIALIZATION_NVP(inputStackParameters_);
+        s & BOOST_SERIALIZATION_NVP(outputStackParameters_);
+        s & BOOST_SERIALIZATION_NVP(stackDelta_);
     }
 #endif
 
