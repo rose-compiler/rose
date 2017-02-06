@@ -3550,7 +3550,7 @@ void __builtin_ia32_movdqa32store512_mask (__v16si *, __v16si, __mmask16);
 // __m512i __builtin_ia32_pmulld512_mask (__v16si, int );
 
 // DQ (1/25/2017): Unclear which if these to use for C langauge support (can't be overloaded in C).
-#ifdef __cplusplus__
+#ifdef __cplusplus
 __m512i __builtin_ia32_pmulld512_mask (__v16si, __v16si, __mmask16);
 __m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __mmask16 );
 __m512i __builtin_ia32_psrav16si_mask (__v16si, __v16si, __mmask16);
@@ -4406,7 +4406,7 @@ __m128 __builtin_ia32_vfmaddsubps (__v4sf, __v4sf, __v4sf );
 
 
 // DQ (1/25/2017): Unclear which if these to use for C langauge support (can't be overloaded in C).
-#ifdef __cplusplus__
+#ifdef __cplusplus
 __v4sf __builtin_ia32_vcvtph2ps (__v4sf);
 #endif
 
