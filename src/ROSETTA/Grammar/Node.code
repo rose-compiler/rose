@@ -174,7 +174,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & majr & minr & offset & nbits;
+        s & BOOST_SERIALIZATION_NVP(majr);
+        s & BOOST_SERIALIZATION_NVP(minr);
+        s & BOOST_SERIALIZATION_NVP(offset);
+        s & BOOST_SERIALIZATION_NVP(nbits);
     }
 #endif
 
