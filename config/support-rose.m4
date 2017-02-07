@@ -551,6 +551,22 @@ echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
 
 # *****************************************************************
 
+echo "Calling AX CXX COMPILE STDCXX 11 macro."
+AX_CXX_COMPILE_STDCXX_11(, optional)
+
+echo "rose_frontend_compiler_default_is_cxx11_success = $rose_frontend_compiler_default_is_cxx11_success"
+echo "gcc_version_4_8                                 = $gcc_version_4_8"
+
+AM_CONDITIONAL(ROSE_USING_GCC_VERSION_4_8_CXX11, [test "x$gcc_version_4_8" = "xyes" && test "x$rose_frontend_compiler_default_is_cxx11_success" = "xyes"])
+
+echo "Calling AX CXX COMPILE STDCXX 14 macro."
+AX_CXX_COMPILE_STDCXX_14(, optional)
+
+# echo "Exiting in support-rose after computing the C++ mode (c++11, and c++14 modes)"
+# exit 1
+
+# *****************************************************************
+
 # DQ (12/7/2016): Added support for specification of specific warnings a for those specific warnings to be treated as errors.
 ROSE_SUPPORT_FATAL_WARNINGS
 
