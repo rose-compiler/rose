@@ -373,8 +373,13 @@ echo "Testing value of FC = $FC"
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_7, [test "x$gcc_version_later_4_7" = "xyes"])
 
 # DQ (7/28/2014): GNU GCC 4.8 starts C11 support.
+  gcc_version_4_8=no 
   gcc_version_later_4_8=no
-  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+ if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -eq "8"; then
+        echo "Note: we have identified specific version 4.8 of gcc!"
+        gcc_version_4_8=yes
+     fi
      if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "8"; then
         echo "Note: we have identified version 4.8+ of gcc!"
         gcc_version_later_4_8=yes
