@@ -551,8 +551,22 @@ echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
 
 # *****************************************************************
 
+# DQ (2/7/2017): These macros test for C++11 and C++14 features and 
+# the default behavior of the CXX compiler.  Unfortunately the also
+# modify the CXX value so we have to save it and reset it after the
+# macros are called.  We modified the macros as well to save the 
+# default behavior of the CXX compiler so that we can detect C++11
+# mode within the frontend compiler used to compile ROSE.  Thi is used
+# mostly so far to just disable some test that are causing GNU g++
+# version 4.8.x internal errors (because the C++11 support is new).
+
+echo "Before checking C++11 support: CXX = $CXX CXXCPP = $CXXCPP"
+
 echo "Calling AX CXX COMPILE STDCXX 11 macro."
+save_CXX="$CXX"
 AX_CXX_COMPILE_STDCXX_11(, optional)
+
+echo "After checking C++11 support: CXX = $CXX CXXCPP = $CXXCPP"
 
 echo "rose_frontend_compiler_default_is_cxx11_success = $rose_frontend_compiler_default_is_cxx11_success"
 echo "gcc_version_4_8                                 = $gcc_version_4_8"
@@ -561,6 +575,11 @@ AM_CONDITIONAL(ROSE_USING_GCC_VERSION_4_8_CXX11, [test "x$gcc_version_4_8" = "xy
 
 echo "Calling AX CXX COMPILE STDCXX 14 macro."
 AX_CXX_COMPILE_STDCXX_14(, optional)
+
+echo "After checking C++14 support: CXX = $CXX CXXCPP = $CXXCPP"
+CXX="$save_CXX"
+
+echo "After restoring the saved value of CXX: CXX = $CXX CXXCPP = $CXXCPP"
 
 # echo "Exiting in support-rose after computing the C++ mode (c++11, and c++14 modes)"
 # exit 1
