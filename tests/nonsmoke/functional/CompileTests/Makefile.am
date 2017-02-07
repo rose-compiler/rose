@@ -57,7 +57,9 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #  SUBDIRS += Fortran_tests CAF2_tests
    SUBDIRS += Fortran_tests
 #Pei-Hung (7/13/2015): Adding mixlanguage tests (patches from Stephen Guzik)
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += mixLanguage_tests
+endif
 endif
 endif
 
