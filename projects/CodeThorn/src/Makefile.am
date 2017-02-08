@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo varwatch
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo varwatch
 
 CLEANFILES = 
 
@@ -479,6 +479,10 @@ AM_LFLAGS =
 #ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
+
+varwatch_DEPENDENCIES=libspray.la
+varwatch_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
 check-local:
 	@echo ================================================================
