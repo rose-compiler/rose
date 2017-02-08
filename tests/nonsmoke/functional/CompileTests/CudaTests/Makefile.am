@@ -64,6 +64,7 @@ else
 	@echo "Rose is configured without C for CUDA support"
 endif
 
+
 clean-local:
 	rm -f *.o rose_* test_*
 
