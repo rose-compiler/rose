@@ -484,6 +484,13 @@ varwatch_DEPENDENCIES=libspray.la
 varwatch_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
+check-varwatch:
+	./varwatch --edg:no_warnings $(srcdir)/tests/rers_mini1.c
+
+check-matcher:
+	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
+#	./ast_demo $(srcdir)/tests/basictest5.C
+
 check-local:
 	@echo ================================================================
 	@echo RUNNING CODETHORN INTERNAL CHECKS
@@ -536,10 +543,6 @@ check-local:
 check-arrays:
 	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
-
-checkdemos: 
-	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
-	./ast_demo $(srcdir)/tests/basictest5.C
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
