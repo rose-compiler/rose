@@ -3014,6 +3014,8 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        // DQ (7/13/2011): OSX can have types that are about 2487 characters long (see test2004_35.C).
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
+       // if (typeNameString.length() > 6000)
+       // if (typeNameString.length() > 600)
           if (typeNameString.length() > 6000)
              {
                if (SgProject::get_verbose() > 0)
@@ -3028,6 +3030,10 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                   {
                     printf ("   --- example typeNameString = %s \n",typeNameString.c_str());
                     outputOneExample = false;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
                   }
 #endif
 
@@ -3042,11 +3048,28 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
             // typenames. See testcode: tests/nonsmoke/functional/CompileTests/PythonExample_tests/test2004_92.C (on thrifty).
             // if (typeNameString.length() > 10000)
             // if (typeNameString.length() > 40000)
+            // if (typeNameString.length() > 400000)
+            // if (typeNameString.length() > 400)
                if (typeNameString.length() > 400000)
                   {
                  // If your ever curious, you can output the type name.
                  // printf ("Error: typeNameString = %s \n",typeNameString.c_str());
+#if 0
+                 // DQ (2/7/2017): Output offending type name string to a file for inspection.
+                    ROSE_ASSERT(positionStatement != NULL);
+                    positionStatement->get_file_info()->display("Output offending type name string to a file for inspection: debug");
 
+                    SgFile* problemFile = TransformationSupport::getFile(positionStatement);
+                    string filename = problemFile->getFileName();
+                    filename += ".typename";
+
+                    printf ("Generating a file (%s) to hold the typename \n",filename.c_str());
+
+                    std::ofstream output_file(filename.c_str());
+                 // std::ofstream output_file(filename);
+                    output_file << typeNameString;
+                    output_file.close();
+#endif
                     printf ("Error: type names should not be this long... (even in boost, I think) typeNameString.length() = %" PRIuPTR " \n",typeNameString.length());
                     ROSE_ASSERT(false);
                   }
