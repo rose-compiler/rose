@@ -560,6 +560,10 @@ if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" ; then
 
    AC_SUBST(GCC_VERSION)
    AC_SUBST(GCC_MINOR_VERSION)
+else
+ # DQ (2/8/2017): Default configuration of EDG will behave like GNU 4.8.x (unclear if this is idea).
+   GCC_VERSION=4
+   GCC_MINOR_VERSION=8
 fi
 
 # echo "Exiting after test for GNU compiler and setting the version info for EDG (GCC_VERSION and GCC_MINOR_VERSION)."
