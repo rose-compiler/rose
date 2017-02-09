@@ -29,6 +29,23 @@ if !ROSE_USE_INSURE
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
    SUBDIRS += projects
 endif
+
+# DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
+# Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors 
+# in compiling the C++ code represented by some more complex C++ test codes using ROSE).  Interestingly, the
+# GNU 4.8 C++11 mode works fine for the C++ code that implements ROSE itself.
+# if ROSE_USING_GCC_VERSION_4_8_CXX11
+#check-local:
+# all: remove_sage3basic_h_pch
+# all:
+#	@echo "**********************************************************************************************"
+#	@echo "**********************************************************************************************"
+#	@echo "Skipping tests in tutorial, exampleTranslators, docs, tools, scripts, and demo directories for"
+#	@echo "GNU 4.8.x using C++11 mode (GNU 4.8 compiler has internal errors when using the C++11 mode)."
+#	@echo "**********************************************************************************************"
+#	@echo "**********************************************************************************************"
+if !ROSE_USING_GCC_VERSION_4_8_CXX11
+
 if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
  # If we can't process the tutorial directory then we can't generate example translators or the documentation
    SUBDIRS += tutorial exampleTranslators docs 
@@ -38,6 +55,10 @@ if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
  # If we can't process the tutorial directory then we can't run demos
    SUBDIRS += demo
 endif
+
+# endif for excluding tests using GNU 4.8 and C++11 mode together.
+endif
+
 # endif for controling Insure++ usage.
 endif
 endif
