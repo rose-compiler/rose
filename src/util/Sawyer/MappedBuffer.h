@@ -74,12 +74,17 @@ private:
     // BOOST_CLASS_REGISTER(Sawyer::Container::MappedBuffer<size_t,uint8_t>);
     template<class S>
     void load(S &s, const unsigned /*version*/) {
-        s & boost::serialization::base_object<Super>(*this);
-        s & params_.path & params_.flags & params_.mode & params_.offset & params_.length & params_.new_file_size;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & boost::serialization::make_nvp("path", params_.path);
+        s & boost::serialization::make_nvp("flags", params_.flags);
+        s & boost::serialization::make_nvp("mode", params_.mode);
+        s & boost::serialization::make_nvp("offset", params_.offset);
+        s & boost::serialization::make_nvp("length", params_.length);
+        s & boost::serialization::make_nvp("new_file_size", params_.new_file_size);
 
         boost::uint64_t hint;
         BOOST_STATIC_ASSERT(sizeof hint >= sizeof params_.hint);
-        s & hint;
+        s & BOOST_SERIALIZATION_NVP(hint);
         params_.hint = (const char*)hint;
 
         device_.open(params_);
