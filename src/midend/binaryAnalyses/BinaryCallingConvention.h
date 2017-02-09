@@ -236,6 +236,7 @@ public:
     static const Definition& x86_32bit_stdcall();
     static const Definition& x86_64bit_stdcall();
     static const Definition& x86_32bit_fastcall();
+    static const Definition& x86_64bit_sysv();
     /** @} */
 
     /** Constructs a new pre-defined calling convention based on a register dictionary.
