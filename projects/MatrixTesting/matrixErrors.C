@@ -148,7 +148,7 @@ sqlIdLimitation(const std::string &columnName, const std::vector<int> &testIds) 
     if (!testIds.empty()) {
         std::string sql;
         BOOST_FOREACH (int id, testIds)
-            sql = (sql.empty() ? "" : ", ") + boost::lexical_cast<std::string>(id);
+            sql += (sql.empty() ? "" : ", ") + boost::lexical_cast<std::string>(id);
         sql = " " + columnName + " in (" + sql + ") ";
         return sql;
     } else {
@@ -211,12 +211,16 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                       "|^.* \\[err\\]: terminated after .+"     // RTH timeout
                       "|^.* \\[err\\]: command died with .+"    // RTH_RUN failure
                       "|^.* \\[err\\]: +what\\(\\): .*"         // C++ exception
+                      "|^.* \\[err\\]: .*Segmentation fault"    // shell output
                       "|Assertion `.*'' failed\\.$"             // failed <cassert> assertion
                       "|^.*: undefined reference to `.*"        // GNU linker error
                       "|No space left on device"
+                      "|relocation R_X86_64_32S against `.*'' can not be used when making a shared object.*"
                       "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
+                      "|make\\[[0-9]+\\]: \\*\\*\\* No rule to make target `.*''"
                       "|^Makefile:[0-9]+: recipe for target ''.*'' failed"
                       "|\\*{7} HPCTOOLKIT .* FAILED \\*{9}"
+
                       "|\\merror: ?\n.*"                        // ROSE error on next line
                       //----- regular expressions end -----
                       ")')"
@@ -237,6 +241,8 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
     // Replace absolute file names "/foo/bar/baz" with "/.../baz"
     std::string fileNameChar    =  "[-+=_.a-zA-Z0-9]";
     std::string nonFileNameChar = "[^-+=_.a-zA-Z0-9]";
+
+    // Replace file paths with just the last component of the path
     tx->statement("update test_results test"
                   " set first_error_staging = regexp_replace(first_error_staging,"
                   "   '(^|" + nonFileNameChar + ")((/" + fileNameChar + "+)+)/(" + fileNameChar + "+)',"
@@ -246,10 +252,22 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                   " and " + sqlIdLimitation("test.id", testIds))
         ->execute(); 
 
+    // Remove the process ID and time from Sawyer::Message prefixes: "a.out[123] 45.678" => "a.out[...] ..."
     tx->statement("update test_results test"
                   " set first_error_staging = regexp_replace(first_error_staging,"
                   "   '(" + fileNameChar + ")\\[[0-9]+\\] [0-9]+\\.[0-9]+s ',"
                   "   '\\1[...] ... ',"
+                  "   'g')"
+                  " where test.first_error_staging is not null"
+                  " and " + sqlIdLimitation("test.id", testIds))
+        ->execute();
+
+    // The shell likes to print process IDs also, so remove them. "deepDelete [err]: sh: line 1: 1518 Segmentation fault" =>
+    // "deepDelete [err]: sh: line 1: ... Segmentation fault"
+    tx->statement("update test_results test"
+                  " set first_error_staging = regexp_replace(first_error_staging,"
+                  "   '(\\[err\\]: sh: line [0-9]+: )[0-9]+ ',"
+                  "   '\\1... ',"
                   "   'g')"
                   " where test.first_error_staging is not null"
                   " and " + sqlIdLimitation("test.id", testIds))
