@@ -50,9 +50,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<MemoryCellState>(*this);
-        s & cells;
-        s & occlusionsErased_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(MemoryCellState);
+        s & BOOST_SERIALIZATION_NVP(cells);
+        s & BOOST_SERIALIZATION_NVP(occlusionsErased_);
     }
 #endif
 

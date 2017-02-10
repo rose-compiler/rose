@@ -9,7 +9,9 @@ namespace rose {
 /** Graph utilities. */
 namespace GraphUtility {
 
-/** Serialize a graph into a stream of bytes. */
+/** Serialize a graph into a stream of bytes.
+ *
+ *  Note that there are other ways to do this, since Sawyer::Container::Graph supports boost::serialization. */
 template<class Graph>
 void
 serialize(std::ostream &output, Graph &graph)

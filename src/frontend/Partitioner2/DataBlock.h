@@ -34,7 +34,10 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         // s & boost::serialization::base_object<Sawyer::Attribute::Storage>(*this); -- not serialized
-        s & isFrozen_ & startVa_ & size_ & nAttachedOwners_;
+        s & BOOST_SERIALIZATION_NVP(isFrozen_);
+        s & BOOST_SERIALIZATION_NVP(startVa_);
+        s & BOOST_SERIALIZATION_NVP(size_);
+        s & BOOST_SERIALIZATION_NVP(nAttachedOwners_);
     }
 #endif
     

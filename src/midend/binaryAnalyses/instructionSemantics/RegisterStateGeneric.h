@@ -66,7 +66,8 @@ public:
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & majr & minr;
+            s & BOOST_SERIALIZATION_NVP(majr);
+            s & BOOST_SERIALIZATION_NVP(minr);
         }
 #endif
 
@@ -96,7 +97,8 @@ public:
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & desc & value;
+            s & BOOST_SERIALIZATION_NVP(desc);
+            s & BOOST_SERIALIZATION_NVP(value);
         }
 #endif
 
@@ -175,12 +177,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<RegisterState>(*this);
-        s & properties_;
-        s & writers_;
-        s & accessModifiesExistingLocations_;
-        s & accessCreatesLocations_;
-        s & registers_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(RegisterState);
+        s & BOOST_SERIALIZATION_NVP(properties_);
+        s & BOOST_SERIALIZATION_NVP(writers_);
+        s & BOOST_SERIALIZATION_NVP(accessModifiesExistingLocations_);
+        s & BOOST_SERIALIZATION_NVP(accessCreatesLocations_);
+        s & BOOST_SERIALIZATION_NVP(registers_);
     }
 #endif
     

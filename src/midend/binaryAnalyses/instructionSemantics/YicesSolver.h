@@ -55,10 +55,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<SMTSolver>(*this);
-        s & linkage;
-        s & termNames;
-        s & evidence;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SMTSolver);
+        s & BOOST_SERIALIZATION_NVP(linkage);
+        s & BOOST_SERIALIZATION_NVP(termNames);
+        s & BOOST_SERIALIZATION_NVP(evidence);
         //s & context; -- not saved
     }
 #endif

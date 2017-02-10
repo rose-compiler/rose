@@ -75,16 +75,16 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not stored
-        s & entryVa_;
-        s & name_;
-        s & comment_;
-        s & reasons_;
-        s & bblockVas_;
-        s & dblocks_;
-        s & isFrozen_;
-        s & ccAnalysis_;
-        s & stackDeltaAnalysis_;
-        s & stackDeltaOverride_;
+        s & BOOST_SERIALIZATION_NVP(entryVa_);
+        s & BOOST_SERIALIZATION_NVP(name_);
+        s & BOOST_SERIALIZATION_NVP(comment_);
+        s & BOOST_SERIALIZATION_NVP(reasons_);
+        s & BOOST_SERIALIZATION_NVP(bblockVas_);
+        s & BOOST_SERIALIZATION_NVP(dblocks_);
+        s & BOOST_SERIALIZATION_NVP(isFrozen_);
+        s & BOOST_SERIALIZATION_NVP(ccAnalysis_);
+        s & BOOST_SERIALIZATION_NVP(stackDeltaAnalysis_);
+        s & BOOST_SERIALIZATION_NVP(stackDeltaOverride_);
     }
 #endif
     

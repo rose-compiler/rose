@@ -77,7 +77,7 @@ public:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & i;
+        s & BOOST_SERIALIZATION_NVP(i);
     }
 };
 
@@ -94,8 +94,8 @@ public:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & boost::serialization::base_object<T0_base>(*this);
-        s & j;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(T0_base);
+        s & BOOST_SERIALIZATION_NVP(j);
     }
 };
 
@@ -112,8 +112,8 @@ public:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & boost::serialization::base_object<T0_base>(*this);
-        s & j;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(T0_base);
+        s & BOOST_SERIALIZATION_NVP(j);
     }
 };
 
@@ -167,7 +167,7 @@ private:
     friend class boost::serialization::access;
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & i_;
+        s & BOOST_SERIALIZATION_NVP(i_);
     }
 protected:
     T02(int i = 0): i_(i) {}
@@ -507,8 +507,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & boost::serialization::base_object<T12_SgAsmExpression>(*this);
-        s & unfolded_expression_tree & bit_offset & bit_size;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(T12_SgAsmExpression);
+        s & BOOST_SERIALIZATION_NVP(unfolded_expression_tree);
+        s & BOOST_SERIALIZATION_NVP(bit_offset);
+        s & BOOST_SERIALIZATION_NVP(bit_size);
         ASSERT_require(symbol == NULL);
         // s & symbol;
     }
@@ -538,8 +540,8 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & boost::serialization::base_object<T12_SgAsmValueExpression>(*this);
-        s & bitVector;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(T12_SgAsmValueExpression);
+        s & BOOST_SERIALIZATION_NVP(bitVector);
     }
 
 public:
@@ -568,8 +570,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & boost::serialization::base_object<T12_SgAsmConstantExpression>(*this);
-        s & nativeValue & nativeValueIsValid;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(T12_SgAsmConstantExpression);
+        s & BOOST_SERIALIZATION_NVP(nativeValue);
+        s & BOOST_SERIALIZATION_NVP(nativeValueIsValid);
     }
 
 public:
@@ -638,7 +641,8 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & a & b;
+        s & BOOST_SERIALIZATION_NVP(a);
+        s & BOOST_SERIALIZATION_NVP(b);
     }
 };
 
@@ -701,7 +705,7 @@ struct T14_vertex {
     
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & a;
+        s & BOOST_SERIALIZATION_NVP(a);
     }
 };
 
@@ -716,7 +720,7 @@ struct T14_edge {
     
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & b;
+        s & BOOST_SERIALIZATION_NVP(b);
     }
 };
 
@@ -798,7 +802,7 @@ struct T16 {
     
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & a;
+        s & BOOST_SERIALIZATION_NVP(a);
     }
 };
 

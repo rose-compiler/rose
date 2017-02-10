@@ -2309,8 +2309,14 @@ private:
                                         "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*Aborted$"     // fatal exception in shell command
                                         "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*command died" // fatal exception from $(RTH_RUN)
                                         "|\\[err\\]: terminated after \\d+ seconds"     // timeout from $(RTH_RUN)
+                                        "|\\[err\\]: .*Segmentation fault"              // shell output
                                         "|: Assertion `[^\\n]+' failed\\."              // failed <cassert> assertion
                                         "|: undefined reference to `"                   // GNU linker error
+                                        "|No space left on device"                      // filesystem is full
+                                        "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
+                                        "|make\\[[0-9]+\\]: \\*\\*\\* No rule to make target"
+                                        "|^Makefile:[0-9]+: recipe for target '.*' failed"
+                                        "|\\*{7} HPCTOOLKIT .* FAILED \\*{9}"
 
                                         ")[^\\n]*$)|"
                                         "(^[^\\n]*?(?:"

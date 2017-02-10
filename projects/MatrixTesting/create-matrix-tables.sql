@@ -294,4 +294,35 @@ create table errors (
     mtime int default 0                                 -- time that commentary was added/changed (unix)
 );
 
+--
+-- Table for tracking progress compiling applications
+--
+create table application_results (
+    id serial primary key,
+    enabled boolean default true,			-- can be set to false to prevent test from showing in browser
+
+    -- who did the testing and reporting
+    reporting_user integer references auth_users(id),	-- user making this report
+    reporting_time integer,	      			-- when report was made (unix time)
+    tester varchar(256),				-- who did the testing (e.g., a Jenkins slave name)
+    os varchar(64),					-- operating system information
+
+    -- what version of ROSE did the testing
+    rose varchar(64) not null,				-- SHA1 of the ROSE version that was compiling
+    rose_date integer,					-- time at which version was created if known (unix time)
+
+    -- what application was compiled
+    application varchar(64) not null,			-- name of the application
+    application_version varchar(64),			-- version string or other identifying information
+    application_date integer,				-- application version date if known (unix time)
+
+    -- status of the test
+    nfiles integer,					-- total number of files processed by ROSE, failing or not
+    npass integer,					-- number of files which were compiled successfully
+    duration integer,					-- length of compilation in seconds if known
+    noutput integer,					-- number of lines of stdout + stderr produced by ROSE
+    nwarnings integer					-- number or warnings produced by ROSE
+);
+    
+    
 commit;
