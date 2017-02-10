@@ -3186,7 +3186,11 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
 #if 1
                printf ("Error: function names should not be this long... functionNameString          = \n%s \n",functionNameString.c_str());
 #endif
+#if 0
+            // DQ (2/9/2017): Debugging if this should be failing on GNU 4.9.3 with EDG 4.12 on tests/CompileTests/RoseExample_tests/testRoseHeaders_01.C
+            // This also might be caused by the new support for template arguments which prevents private/protected types from being used where a public alias is available.
                ROSE_ASSERT(false);
+#endif
              }
 
        // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
