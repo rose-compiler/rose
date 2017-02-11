@@ -15,55 +15,62 @@ using namespace std;
 
 namespace po = boost::program_options;
 
+void printLineColInfo(SgNode* astRoot) {
+  RoseAst ast(astRoot);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(isSgLocatedNode(*i)) {
+      cout<<(*i)->class_name()<<": (TODO)"<<endl;
+    }
+  }
+}
+
 int main( int argc, char *argv[] ) {
   try {
-  // Command line option handling.
-  po::options_description desc
-    ("varwatch 0.1\n"
-     "Written by Markus Schordan 2017\n"
-     "Supported options");
-  desc.add_options()
-    ("help,h", "produce this help message")
-    ("rose-help", "show help for compiler frontend options")
-    ("version,v", "display the version")
-    ;
-
-  po::store(po::command_line_parser(argc, argv).
-            options(desc).allow_unregistered().run(), args);
-  po::notify(args);
+    // Command line option handling.
+    po::options_description desc
+      ("varwatch 0.1\n"
+       "Written by Markus Schordan 2017\n"
+       "Supported options");
+    desc.add_options()
+      ("help,h", "produce this help message")
+      ("rose-help", "show help for compiler frontend options")
+      ("dump-varidmapping", "print variable-id mapping")
+      ("dump-linecolinfo", "print line:column information for SgLocated nodes")
+      ("version,v", "display the version")
+      ;
+    
+    po::store(po::command_line_parser(argc, argv).
+              options(desc).allow_unregistered().run(), args);
+    po::notify(args);
   
-  if (args.count("version")) {
-    cout << "varwatch 1.0\n";
-    return 0;
-  }
-  if (args.count("help")) {
-    cout << desc << "\n";
-    return 0;
-  }
-  if (args.count("rose-help")) {
-    argv[1] = strdup("--help");
-  }
+    if (args.count("version")) {
+      cout << "varwatch 1.0\n";
+      return 0;
+    }
+    if (args.count("help")) {
+      cout << desc << "\n";
+      return 0;
+    }
+    if (args.count("rose-help")) {
+      argv[1] = strdup("--help");
+    }
 
-  // Build the AST used by ROSE
-  cout << "INIT: Parsing and creating AST: started."<<endl;
-  SgProject* astRoot = frontend(argc,argv);
-  cout << "INIT: Parsing and creating AST: finished."<<endl;
-  VariableIdMapping variableIdMapping;
-  variableIdMapping.computeVariableSymbolMapping(astRoot);
-#if 0
-  bool check=variableIdMapping.isUniqueVariableSymbolMapping();
-  cout << "VariableIdMapping is unique variable symbol mapping: ";
-  check? cout << "YES":cout<<"NO";
-  cout << endl;
-  if(!check)
-    variableIdMapping.reportUniqueVariableSymbolMappingViolations();
-#endif
+    // Build the AST used by ROSE
+    cout << "INIT: Parsing and creating AST: started."<<endl;
+    SgProject* astRoot = frontend(argc,argv);
+    cout << "INIT: Parsing and creating AST: finished."<<endl;
+    VariableIdMapping variableIdMapping;
+    variableIdMapping.computeVariableSymbolMapping(astRoot);
 
-  cout<<"MAPPING:\n";
-  variableIdMapping.toStream(cout);
-  cout<<"-------------------------------------- OK --------------------------------------"<<endl;
-  //variableIdMapping.generateDot("vidmapping.dot",astRoot);
-
+    if(args.count("dump-varidmapping")) {
+      cout<<"MAPPING:\n";
+      variableIdMapping.toStream(cout);
+      cout<<"-------------------------------------- OK --------------------------------------"<<endl;
+      //variableIdMapping.generateDot("vidmapping.dot",astRoot);
+    }
+    if(args.count("dump-linecolinfo")) {
+      printLineColInfo(astRoot);
+    }
   } catch(char* str) {
     cerr << "*Exception raised: " << str << endl;
     return 1;
@@ -73,7 +80,7 @@ int main( int argc, char *argv[] ) {
   } catch(string str) {
     cerr << "Exception raised: " << str << endl;
     return 1;
- }
+  }
 
   return 0;
 
