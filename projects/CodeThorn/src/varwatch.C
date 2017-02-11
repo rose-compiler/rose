@@ -1,12 +1,13 @@
 // Author: Markus Schordan, 2013.
 
 #include <boost/program_options.hpp>
+#include <iostream>
 
 #include "rose.h"
 
 #include "VariableIdMapping.h"
 #include "CommandLineOptions.h"
-#include <iostream>
+#include "LineColInfo.h"
 
 using std::cout;
 using std::endl;
@@ -18,8 +19,23 @@ namespace po = boost::program_options;
 void printLineColInfo(SgNode* astRoot) {
   RoseAst ast(astRoot);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(isSgLocatedNode(*i)) {
-      cout<<(*i)->class_name()<<": (TODO)"<<endl;
+    if(SgLocatedNode* loc=isSgLocatedNode(*i)) {
+      if(!isSgInitializedName(loc)&&!loc->isCompilerGenerated()&&!isSgGlobal(loc)) {
+        LineColInfo li(loc);
+        cout<<li.toString()<<": "<<(*i)->class_name()<<" #"<<(*i)->unparseToString()<<"#"<<endl;
+      }
+    }
+  }
+}
+
+void printClassName(SgNode* astRoot) {
+  RoseAst ast(astRoot);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgClassDeclaration* classDecl=isSgClassDeclaration(*i)) {
+      //      SgClassDeclaration* classDecl=classDefinition->get_declaration();
+      std::string name=classDecl->get_name();
+      LineColInfo li(classDecl);
+      cout<<li.toString()<<": "<<(*i)->class_name()<<" #"<<name<<"#"<<endl;
     }
   }
 }
@@ -34,8 +50,9 @@ int main( int argc, char *argv[] ) {
     desc.add_options()
       ("help,h", "produce this help message")
       ("rose-help", "show help for compiler frontend options")
-      ("dump-varidmapping", "print variable-id mapping")
-      ("dump-linecolinfo", "print line:column information for SgLocated nodes")
+      ("varidmapping", "print variable-id mapping")
+      ("linecol", "print line:column information for SgLocated nodes")
+      ("classname", "print class name SgClass nodes")
       ("version,v", "display the version")
       ;
     
@@ -56,20 +73,23 @@ int main( int argc, char *argv[] ) {
     }
 
     // Build the AST used by ROSE
-    cout << "INIT: Parsing and creating AST: started."<<endl;
+    //cout << "INIT: Parsing and creating AST: started."<<endl;
     SgProject* astRoot = frontend(argc,argv);
-    cout << "INIT: Parsing and creating AST: finished."<<endl;
+    //cout << "INIT: Parsing and creating AST: finished."<<endl;
     VariableIdMapping variableIdMapping;
     variableIdMapping.computeVariableSymbolMapping(astRoot);
 
-    if(args.count("dump-varidmapping")) {
+    if(args.count("varidmapping")) {
       cout<<"MAPPING:\n";
       variableIdMapping.toStream(cout);
       cout<<"-------------------------------------- OK --------------------------------------"<<endl;
       //variableIdMapping.generateDot("vidmapping.dot",astRoot);
     }
-    if(args.count("dump-linecolinfo")) {
+    if(args.count("linecol")) {
       printLineColInfo(astRoot);
+    }
+    if(args.count("classname")) {
+      printClassName(astRoot);
     }
   } catch(char* str) {
     cerr << "*Exception raised: " << str << endl;

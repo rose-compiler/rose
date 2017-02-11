@@ -482,7 +482,7 @@ AM_LFLAGS =
 
 varwatch_DEPENDENCIES=libspray.la
 varwatch_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
+varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C LineColInfo.C
 
 check-varwatch:
 	./varwatch --edg:no_warnings $(srcdir)/tests/rers_mini1.c
