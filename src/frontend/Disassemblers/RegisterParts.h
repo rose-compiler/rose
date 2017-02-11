@@ -37,7 +37,8 @@ private:
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & majr_ & minr_;
+            s & BOOST_SERIALIZATION_NVP(majr_);
+            s & BOOST_SERIALIZATION_NVP(minr_);
         }
 #endif
 
@@ -65,7 +66,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & map_;
+        s & BOOST_SERIALIZATION_NVP(map_);
     }
 #endif
     

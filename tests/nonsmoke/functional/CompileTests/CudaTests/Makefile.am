@@ -37,11 +37,14 @@ $(TESTCODES_Objects): ../../testTranslator
 
 if ROSE_USE_EDG_VERSION_4_9
 # DQ (1/25/2016): These are conditional upon EDG 4.9 which is the only version with the C++11 support.
+if !ROSE_USING_GCC_VERSION_LATER_4_9
+# DQ (2/6/2017): We can't use C++11 mode on GNU 4.9 and greater with EDG 4.9 (requires EDG 4.12).
 testDeviceTransformation_01: deviceTranformation
 	./deviceTranformation -std=c++11 -rose:skipfinalCompileStep -c $(srcdir)/inputCode_01.cu
 
 testDeviceTransformation_02: deviceTranformation
 	./deviceTranformation -std=c++11 -rose:skipfinalCompileStep -c $(srcdir)/test2016_03.cu
+endif
 endif
 
 check-local:
@@ -49,8 +52,10 @@ if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
 	@echo "Tests C for CUDA support"
 	@$(MAKE) $(TESTCODES_Objects)
 if ROSE_USE_EDG_VERSION_4_9
+if !ROSE_USING_GCC_VERSION_LATER_4_9
 	@$(MAKE) testDeviceTransformation_01
 	@$(MAKE) testDeviceTransformation_02
+endif
 endif
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/CudaTests: make check rule complete (terminated normally) ******"
@@ -58,6 +63,7 @@ endif
 else
 	@echo "Rose is configured without C for CUDA support"
 endif
+
 
 clean-local:
 	rm -f *.o rose_* test_*

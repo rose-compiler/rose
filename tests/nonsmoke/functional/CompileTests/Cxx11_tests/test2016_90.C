@@ -1,3 +1,8 @@
+
+// DQ (1/24/2017): Added declaration of this type that comes from the rose_edg_required_macros_and_functions.h file.
+// Note that this is only required within ROSE is using the GNU 5.1 compiler.  Not yet clear why that is.
+// typedef unsigned int __mmask32;
+
 template <typename S, typename T>
 class ParseAndSetMember
 {};

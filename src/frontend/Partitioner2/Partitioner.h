@@ -361,22 +361,22 @@ private:
         s.template register_type<Semantics::RegisterState>();
         s.template register_type<Semantics::State>();
         s.template register_type<Semantics::RiscOperators>();
-        s & settings_;
+        s & BOOST_SERIALIZATION_NVP(settings_);
         // s & config_;                         -- FIXME[Robb P Matzke 2016-11-08]
-        s & instructionProvider_;
-        s & memoryMap_;
-        s & cfg_;
+        s & BOOST_SERIALIZATION_NVP(instructionProvider_);
+        s & BOOST_SERIALIZATION_NVP(memoryMap_);
+        s & BOOST_SERIALIZATION_NVP(cfg_);
         // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
-        s & aum_;
-        s & solver_;
-        s & progressTotal_;
-        s & isReportingProgress_;
-        s & functions_;
-        s & autoAddCallReturnEdges_;
-        s & assumeFunctionsReturn_;
-        s & stackDeltaInterproceduralLimit_;
-        s & addressNames_;
-        s & semanticMemoryParadigm_;
+        s & BOOST_SERIALIZATION_NVP(aum_);
+        s & BOOST_SERIALIZATION_NVP(solver_);
+        s & BOOST_SERIALIZATION_NVP(progressTotal_);
+        s & BOOST_SERIALIZATION_NVP(isReportingProgress_);
+        s & BOOST_SERIALIZATION_NVP(functions_);
+        s & BOOST_SERIALIZATION_NVP(autoAddCallReturnEdges_);
+        s & BOOST_SERIALIZATION_NVP(assumeFunctionsReturn_);
+        s & BOOST_SERIALIZATION_NVP(stackDeltaInterproceduralLimit_);
+        s & BOOST_SERIALIZATION_NVP(addressNames_);
+        s & BOOST_SERIALIZATION_NVP(semanticMemoryParadigm_);
         // s & unparser_;                       -- not saved; restored from disassembler
         // s & cfgAdjustmentCallbacks_;         -- not saved/restored
         // s & basicBlockCallbacks_;            -- not saved/restored

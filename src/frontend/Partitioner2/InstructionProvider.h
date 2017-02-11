@@ -47,10 +47,13 @@ private:
     void save(S &s, const unsigned version) const {
         roseAstSerializationRegistration(s);            // so we can save instructions through SgAsmInstruction base ptrs
         bool hasDisassembler = disassembler_ != NULL;
-        s <<hasDisassembler <<useDisassembler_ <<memMap_ <<insnMap_;
+        s <<BOOST_SERIALIZATION_NVP(hasDisassembler);
+        s <<BOOST_SERIALIZATION_NVP(useDisassembler_);
+        s <<BOOST_SERIALIZATION_NVP(memMap_);
+        s <<BOOST_SERIALIZATION_NVP(insnMap_);
         if (hasDisassembler) {
             std::string disName = disassembler_->name();
-            s <<disName;
+            s <<BOOST_SERIALIZATION_NVP(disName);
         }
     }
 
@@ -58,10 +61,13 @@ private:
     void load(S &s, const unsigned version) {
         roseAstSerializationRegistration(s);
         bool hasDisassembler = false;
-        s >>hasDisassembler >>useDisassembler_ >>memMap_ >>insnMap_;
+        s >>BOOST_SERIALIZATION_NVP(hasDisassembler);
+        s >>BOOST_SERIALIZATION_NVP(useDisassembler_);
+        s >>BOOST_SERIALIZATION_NVP(memMap_);
+        s >>BOOST_SERIALIZATION_NVP(insnMap_);
         if (hasDisassembler) {
             std::string disName;
-            s >>disName;
+            s >>BOOST_SERIALIZATION_NVP(disName);
             disassembler_ = Disassembler::lookup(disName);
             ASSERT_not_null2(disassembler_, "disassembler name=" + disName);
         }
