@@ -41,14 +41,6 @@ endif
 # DQ (7/28/2014): Moved to after the C and C++ langauge tests.
 SUBDIRS += x10_tests
 
-# DQ (1/15/2017): Added conditional support to avoid these tests when ROSE is configured for binary only support, failing in ROSE matrix testing).
-if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-# DQ (1/15/2017): Clang does not support omp.h include file required for OpenMP testing.
-# And we don't have a AUTOMAKE conditional defined for the use of Clang as the backend compiler.
-if !USING_CLANG_COMPILER
-SUBDIRS += OpenMP_tests FailSafe_tests
-endif
-endif
 
 if !ROSE_USE_SANITIZER
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
@@ -58,6 +50,16 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += Fortran_tests
 #Pei-Hung (7/13/2015): Adding mixlanguage tests (patches from Stephen Guzik)
    SUBDIRS += mixLanguage_tests
+endif
+endif
+
+# Liao 2/130/2017: moved to after Fortran tests. So OpenMP's Fortran tests will be tested after Fortran_tests
+# DQ (1/15/2017): Added conditional support to avoid these tests when ROSE is configured for binary only support, failing in ROSE matrix testing).
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+# DQ (1/15/2017): Clang does not support omp.h include file required for OpenMP testing.
+# And we don't have a AUTOMAKE conditional defined for the use of Clang as the backend compiler.
+if !USING_CLANG_COMPILER
+SUBDIRS += OpenMP_tests FailSafe_tests
 endif
 endif
 
