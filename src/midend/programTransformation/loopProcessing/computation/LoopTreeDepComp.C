@@ -8,6 +8,9 @@
 #include <LoopTreeTransform.h>
 #include <GraphIO.h>
 
+// A hack to support non-Fortran loop in loop tree
+bool LoopTreeDepComp::supportNonFortranLoop=false;
+
 void LoopTreeDepGraphCreate::AddNode(LoopTreeDepGraphNode* result)
     {
       LoopTreeNode *s = result->GetInfo();

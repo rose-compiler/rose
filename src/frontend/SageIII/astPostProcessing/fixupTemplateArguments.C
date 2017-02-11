@@ -433,6 +433,11 @@ void fixupTemplateArguments()
      printf ("Inside of fixupTemplateArguments() \n");
 #endif
 
+#if 1
+  // DQ (2/10/2017): The default should be for this to be on, but it needs to be fixed to allow some of the later test codes to also pass.
+  // DQ (2/9/2017): This is causing type names to be too long (over 400K), so it causes tests/CompileTests/RoseExample_tests/testRoseHeaders_03.C
+  // to fails (along with several other of the ROSE specific test codes in that directory (tests 3,4,5,and 6)).
+
   // DQ (1/15/2017): Since this is a fix for GNU 4.9 and greater backend compilers, and Intel and Clang compilers, 
   // we only want to test fixing it there initially. Later we can apply the fix more uniformally.
   // DQ (11/27/2016): We only want to support calling this fixup where I am testing it with the GNU 6.x compilers.
@@ -446,6 +451,8 @@ void fixupTemplateArguments()
      FixupTemplateArguments t;
      SgTemplateArgument::traverseMemoryPoolNodes(t);
    #endif
+#endif
+
 #endif
 
 #if 0

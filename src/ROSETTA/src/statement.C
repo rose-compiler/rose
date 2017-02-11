@@ -87,6 +87,10 @@ Grammar::setUpStatements ()
   // NEW_TERMINAL_MACRO (ClassDefinition,           "ClassDefinition",           "CLASS_DEFN_STMT" );
      NEW_TERMINAL_MACRO (StmtDeclarationStatement,  "StmtDeclarationStatement",  "STMT_DECL_STMT" );
      NEW_TERMINAL_MACRO (EnumDeclaration,           "EnumDeclaration",           "ENUM_DECL_STMT" );
+
+  // DQ (1/25/2017): Adding support for C++11 strongly typed enums ("enum class" or "enum struct").
+  // NEW_TERMINAL_MACRO (StronglyTypedEnumDeclaration, "StronglyTypedEnumDeclaration", "STRONGLY_TYPED_ENUM_DECL_STMT" );
+
      NEW_TERMINAL_MACRO (AsmStmt,                   "AsmStmt",                   "ASM_STMT" );
      NEW_TERMINAL_MACRO (FunctionTypeTable,         "FunctionTypeTable",         "FUNC_TBL_STMT" );
      NEW_TERMINAL_MACRO (ExprStatement,             "ExprStatement",             "EXPR_STMT" );
@@ -491,18 +495,18 @@ Grammar::setUpStatements ()
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
-          FunctionParameterList                   | VariableDeclaration       | VariableDefinition       | 
-          ClinkageDeclarationStatement            | EnumDeclaration           | AsmStmt                  |
-          AttributeSpecificationStatement         | FormatStatement           | TemplateDeclaration      | 
-          TemplateInstantiationDirectiveStatement | UseStatement              | ParameterStatement       |
-          NamespaceDeclarationStatement           | EquivalenceStatement      | InterfaceStatement       |
-          NamespaceAliasDeclarationStatement      | CommonBlock               | TypedefDeclaration       |
-          StatementFunctionStatement              | CtorInitializerList       | PragmaDeclaration        |
-          UsingDirectiveStatement                 | ClassDeclaration          | ImplicitStatement        | 
-          UsingDeclarationStatement               | NamelistStatement         | ImportStatement          |
-          FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement        |
-          C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine       | 
-          JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement |
+          FunctionParameterList                   | VariableDeclaration       | VariableDefinition           |
+          ClinkageDeclarationStatement            | EnumDeclaration           | /* StronglyTypedEnumDeclaration | */  AsmStmt                  |
+          AttributeSpecificationStatement         | FormatStatement           | TemplateDeclaration          | 
+          TemplateInstantiationDirectiveStatement | UseStatement              | ParameterStatement           |
+          NamespaceDeclarationStatement           | EquivalenceStatement      | InterfaceStatement           |
+          NamespaceAliasDeclarationStatement      | CommonBlock               | TypedefDeclaration           |
+          StatementFunctionStatement              | CtorInitializerList       | PragmaDeclaration            |
+          UsingDirectiveStatement                 | ClassDeclaration          | ImplicitStatement            | 
+          UsingDeclarationStatement               | NamelistStatement         | ImportStatement              |
+          FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement            |
+          C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine           | 
+          JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
           StaticAssertionDeclaration              | MicrosoftAttributeDeclaration /*| ClassPropertyList |*/, 
           "DeclarationStatement", "DECL_STMT", false);
 

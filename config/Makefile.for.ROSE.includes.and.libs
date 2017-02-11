@@ -228,7 +228,10 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #   libroseExperimentalOpenFortranParserlibraries =
 #   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
 #   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal -lexperimentalRoseFortran
+
+# DQ (1/26/2017): This is not built in the new way that Craig and I are working together on the new OFP.
     ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalOFP
+#   ROSE_EXPERIMENTAL_OFP_LIBS    = 
 endif
 
 # DQ (1/9/2010): Added use of libimf with libm (the two go together when using Intel icc and icpc)
