@@ -418,11 +418,17 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           printf ("In Unparser::unparseFile(): generateNameQualificationSupport(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
 #endif
 #if 1
-          printf ("Calling name qualification support. \n");
+          if (SgProject::get_verbose() > 0)
+             {
+               printf ("Calling name qualification support. \n");
+             }
 #endif
           generateNameQualificationSupport(file,referencedNameSet);
 #if 1
-          printf ("DONE: Calling name qualification support. \n");
+          if (SgProject::get_verbose() > 0)
+             {
+               printf ("DONE: Calling name qualification support. \n");
+             }
 #endif
 #endif
 
