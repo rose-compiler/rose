@@ -170,8 +170,8 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: Instruction kind.
          *
-         *  Every instruction of every architecture has a @c kind property which is an enum for the particular kind of
-         *  instruction, similar to the mnemonic for the instruction.
+         *  Returns an enum constant describing the ARM instruction. These enum constants correspond roughly 1:1 with
+         *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
         ArmInstructionKind get_kind() const;
@@ -222,6 +222,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        // Overrides are documented in the base class
         virtual std::string description() const ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
@@ -249,21 +250,106 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Instruction kind.
+         *
+         *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
+         *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
+         *
+         * @{ */
+        X86InstructionKind get_kind() const;
+        void set_kind(X86InstructionSize);
+        /** @} */
+#else
         AsmX86Instruction.setDataPrototype("X86InstructionKind", "kind", "= x86_unknown_instruction",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: An enum constant describing the base size of an x86 instruction.
+         *
+         * @{ */
+        X86InstructionSize get_baseSize() const;
+        void set_baseSize(X86InstructionSize);
+        /** @} */
+#else
         AsmX86Instruction.setDataPrototype("X86InstructionSize", "baseSize", "= x86_insnsize_none",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: An enum describing the x86 instruction operand size.
+         *
+         * @{ */
+        X86InstructionSize get_operandSize() const;
+        void set_operandSize(X86InstructionSize);
+        /** @} */
+#else
         AsmX86Instruction.setDataPrototype("X86InstructionSize", "operandSize", "= x86_insnsize_none",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: An enum describing the x86 address size.
+         *
+         *  @{ */
+        X86InstructionSize get_addressSize() const;
+        void set_addressSize(X86InstructionSize);
+        /** @} */
+#else
         AsmX86Instruction.setDataPrototype("X86InstructionSize", "addressSize", "= x86_insnsize_none",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Whether the x86 lock prefix was present.
+         *
+         *  Returns true if this instruction had the x86 lock prefix byte; false otherwise.
+         *
+         *  @{ */
+        bool get_lockPrefix() const;
+        void set_lockPrefix(bool);
+        /** @} */
+#else
         AsmX86Instruction.setDataPrototype("bool", "lockPrefix", "= false",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: An enum constant describing whether the instruction is repeated.
+         *
+         * @{ */
+        X86RepeatPrefix get_repeatPrefix() const;
+        void set_repeatPrefix(X86RepeatPrefix);
+        /** @} */
+#else
         AsmX86Instruction.setDataPrototype("X86RepeatPrefix", "repeatPrefix", "= x86_repeat_none",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: An enum constant describing branch prediction.
+         *
+         * @{ */
+        X86BranchPrediction get_branchPrediction() const;
+        void set_branchPrediction(X86BranchPrediction);
+        /** @} */
+#else
         AsmX86Instruction.setDataPrototype("X86BranchPrediction", "branchPrediction", "= x86_branch_prediction_none",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: The segment override register.
+         *
+         *  Returns an enum describing the segment register override. Note that this is not a register descriptor, but an enum
+         *  constant.
+         *
+         *  @{ */
+        X86SegmentRegister get_segmentOverride() const;
+        void set_segmentOverride(X86SegmentRegister);
+        /** @} */
+#else
         AsmX86Instruction.setDataPrototype("X86SegmentRegister", "segmentOverride", "= x86_segreg_none",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
@@ -290,11 +376,29 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Converts a size to an instruction size enum.
+         *
+         *  Given a size in bits, which must be 16, 32, or 64, return the corresponding enum constant. */
         static X86InstructionSize instructionSizeForWidth(size_t);
+
+        /** Converts a size enum constant to a size.
+         *
+         *  Given a size enum constant, return the number of bits that enum represents. */
         static size_t widthForInstructionSize(X86InstructionSize);
+
+        /** Return the register dictionary for an x86 architecture.
+         *
+         *  Given an instruction size enum constant return the register dictionary that describes the x86 architecture with
+         *  the specified word size.  See also, @ref registersForWidth. */
         static const RegisterDictionary* registersForInstructionSize(X86InstructionSize);
+
+        /** Return the register dictionary for an x86 architecture.
+         *
+         *  Given an instruction size of 16, 32, or 64 return the register dictionary that describes the x86 architecture with
+         *  the specified word size.  See also, @ref registersForInstructionSize. */
         static const RegisterDictionary* registersForWidth(size_t);
 
+        // Overrides are documented in the base class
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
                                         rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
@@ -307,11 +411,8 @@ void Grammar::setUpBinaryInstructions() {
         virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                     bool* complete,
                                                     const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
-
-        /** Determines whether this instruction is the special x86 "unknown" instruction. */
-        virtual bool isUnknown() const;
-
-        virtual unsigned get_anyKind() const;
+        virtual bool isUnknown() const ROSE_OVERRIDE;
+        virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 #endif // SgAsmX86Instruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -333,7 +434,17 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Instruction kind.
+         *
+         *  Returns an enum constant describing the PowerPC instruction. These enum constants correspond roughly 1:1 with
+         *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
+         *
+         * @{ */
+        PowerpcInstructionKind get_kind() const;
+        void set_kind(PowerpcInstructionKind);
+        /** @} */
+#else
         AsmPowerpcInstruction.setDataPrototype("PowerpcInstructionKind", "kind", "= powerpc_unknown_instruction",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
                                                COPY_DATA);
@@ -353,11 +464,12 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        // Overrides are documented in the base class
         virtual std::string description() const ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
         virtual bool isUnknown() const ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const;
+        virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 #endif // SgAsmPowerpcInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -379,7 +491,17 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Instruction kind.
+         *
+         *  Returns an enum constant describing the MIPS instruction. These enum constants correspond roughly 1:1 with
+         *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
+         *
+         * @{ */
+        MipsInstructionKind get_kind() const;
+        void set_kind(MipsInstructionKind);
+        /** @} */
+#else
         AsmMipsInstruction.setDataPrototype("MipsInstructionKind", "kind", "= mips_unknown_instruction",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
                                             COPY_DATA);
@@ -399,6 +521,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        // Overrides are documented in the base class
         virtual std::string description() const ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
@@ -430,7 +553,17 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Instruction kind.
+         *
+         *  Returns an enum constant describing the ARM instruction. These enum constants correspond roughly 1:1 with
+         *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
+         *
+         * @{ */
+        M68kInstructionKind get_kind() const;
+        void set_kind(M68kInstructionKind);
+        /** @} */
+#else
         AsmM68kInstruction.setDataPrototype("M68kInstructionKind", "kind", " = m68k_unknown_instruction",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
                                             COPY_DATA);
@@ -450,6 +583,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        // Overrides are documented in the base class
         virtual std::string description() const ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
@@ -489,19 +623,64 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Instruction mnemonic string.
+         *
+         *  The short string that describes the instruction. When comparing instructions, it's faster to use the @ref get_kind
+         *  or @ref get_anyKind methods instead of comparing mnemonic strings. But be aware that some architectures have
+         *  mnemonics that include information about the instruction operands and this information is typically not represented
+         *  by the instruction kind enum constants.
+         *
+         * @{ */
+        const std::string& get_mnemonic() const;
+        void set_mnemonic(const std::string&);
+        /** @} */
+#else
         AsmInstruction.setDataPrototype("std::string", "mnemonic", "= \"\"",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Raw bytes of an instruction.
+         *
+         *  These are the bytes that were actually decoded to obtain the instruction AST.
+         *
+         * @{ */
+        const SgUnsignedList& get_raw_bytes() const;
+        void set_raw_bytes(const SgUnsignedList&);
+        /** @} */
+#else
         AsmInstruction.setDataPrototype("SgUnsignedCharList", "raw_bytes", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: AST node that holds all operands.
+         *
+         *  This is the @ref SgAsmOperandList AST node that holds all the operands of this instruction. A separate node is
+         *  necessary (rather than storing the operand list directly in the instruction node) due to limitations of ROSETTA.
+         *
+         * @{ */
+        SgAsmOperandList* get_operandList() const;
+        void set_operandList(SgAsmOperandList*);
+        /** @} */
+#else
         AsmInstruction.setDataPrototype("SgAsmOperandList*", "operandList", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        // FIXME[Robb P Matzke 2017-02-13]: unused?
+#else
         AsmInstruction.setDataPrototype("SgAsmStatementPtrList", "sources", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 #ifdef DOCUMENTATION
         /** Property: Stack pointer at start of instruction relative to start of instruction's function.
+         *
+         *  If the stack delta was not computed, or could not be computed, or is a non-numeric value then the special value
+         *  @ref INVALID_STACK_DELTA is used.
          *
          *  @{ */
         int64_t get_stackDeltaIn() const;
@@ -512,7 +691,9 @@ void Grammar::setUpBinaryInstructions() {
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        // FIXME[Robb P Matzke 2017-02-13]: unused?
+#else
         AsmInstruction.setDataPrototype("SgAsmExprListExp*", "semantics", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
@@ -534,6 +715,10 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Represents an invalid stack delta.
+         *
+         *  This value is used for the result of a stack delta analysis stored in the instruction AST if the stack delta
+         *  analysis was not run or did not produce a numeric result. */
         static const int64_t INVALID_STACK_DELTA;
 
         /** Return a description of this instruction.
@@ -543,9 +728,15 @@ void Grammar::setUpBinaryInstructions() {
          *  empty string. */
         virtual std::string description() const { return ""; }
 
-        SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
-        std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
-        std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
+        // [Robb P Matzke 2017-02-13]: deprecating this old API
+        SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info)
+            ROSE_DEPRECATED("cfgBin is deprecated");
+        std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info)
+            ROSE_DEPRECATED("cfgBin is deprecated");
+        std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info)
+            ROSE_DEPRECATED("cfgBin is deprecated");
+
+        // FIXME[Robb P Matzke 2017-02-13]: unused?
         void appendSources( SgAsmInstruction* instruction );
 
         /** Determines if this instruction normally terminates a basic block.
@@ -858,7 +1049,17 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Ordered list of instruction operands.
+         *
+         *  The operand list is its own Sage node type (rather than operands being stored directly in the instruction node)
+         *  because of limitations of ROSETTA.
+         *
+         * @{ */
+        const SgAsmExpressionPtrList& get_operands() const;
+        void set_oerands(const SgAsmExpressionPtrList&);
+        /** @} */
+#else
         AsmOperandList.setDataPrototype("SgAsmExpressionPtrList", "operands", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
@@ -877,6 +1078,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Append another operand expression to this node. */
         void append_operand(SgAsmExpression* operand);
 #endif // SgAsmOperandList_OTHERS
 
@@ -1438,7 +1640,14 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Operand for a unary expression.
+         *
+         * @{ */
+        SgAsmExpression* get_operand() const;
+        void set_operand(SgAsmExpression*);
+        /** @} */
+#else
         AsmUnaryExpression.setDataPrototype("SgAsmExpression*", "operand", "= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
@@ -1472,7 +1681,14 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: PSR mask for ARM architectures.
+         *
+         * @{ */
+        unsigned get_psr_mask() const;
+        void set_psr_mask(unsigned);
+        /** @} */
+#else
         AsmDirectRegisterExpression.setDataPrototype("unsigned", "psr_mask", "=0", // for ARM
                                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
                                                      NO_DELETE);
@@ -1507,19 +1723,78 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmIndirectRegisterExpression);
 
 #ifdef DOCUMENTATION
-    /** Registers accessed indirectly.  For instance, x86 ST(1) which has base register "st", stride={0,1,0,0}, and offset
-     *  register fpstatus_top, index is 1, and modulus is 8. */
+    /** Registers accessed indirectly.
+     *
+     *  An indirect register is a register whose descriptor is computed dynamically.  The dynamic descriptor is computed by
+     *  reading "offset" register to obtain an integral value and adding it to the integral "index" modulo the specified
+     *  "modulus" to obtain an integer @ref i. (These are all properties of this node.)  Then, the final register descriptor
+     *  is calculated by adding @ref i times "stride" to the base register descriptor (@ref get_descriptor). The @ref i times
+     *  "stride" multiplies each member of "stride" by @em i, and addition of two register descriptors is defined as the
+     *  pair-wise addition of their elements.
+     *
+     *  An example of an indirect register is x86 ST(1) which has base register "st", stride={0,1,0,0}, offset
+     *  register "fpstatus_top", index is 1, and modulus is 8. Thus, the dynamically-computed register is:
+     *
+     *  @code
+     *   i = (read("fpstatus_top") + index) % modulo;
+     *   result = descriptor("st") + {0,1,0,0} * i;
+     *  @endcode */
     class SgAsmIndirectRegisterExpression: public SgAsmRegisterReferenceExpression {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Register descriptor stride.
+         *
+         *  This is the "stride" referred to in the documentation for this class.  This is not an actual register.
+         *
+         * @{ */
+        const RegisterDescriptor& get_stride() const;
+        void set_stride(const RegisterDescriptor&);
+        /** @} */
+#else
         AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "stride", "",
                                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Register descriptor offset.
+         *
+         *  This is the "offset" referred to in the documentation for this class.
+         *
+         * @{ */
+        const RegisterDescriptor& get_offset() const;
+        void set_offset(const RegisterDescriptor&);
+        /** @} */
+#else
         AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "offset", "",
                                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Register descriptor index.
+         *
+         *  This is the "index" referred to in the documentation for this class.
+         *
+         * @{ */
+        size_t get_index() const;
+        void set_index(size_t);
+        /** @} */
+#else
         AsmIndirectRegisterExpression.setDataPrototype("size_t", "index", "",
                                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Register descriptor modulus.
+         *
+         *  This is the "modulus" referred to in the documentation for this class.
+         *
+         * @{ */
+        size_t get_modulus() const;
+        void set_modulus(size_t);
+        /** @} */
+#else
         AsmIndirectRegisterExpression.setDataPrototype("size_t", "modulus", "",
                                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -1558,6 +1833,7 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmRegisterReferenceExpression);
 
 #ifdef DOCUMENTATION
+    /** Base class for references to a machine register. */
     class SgAsmRegisterReferenceExpression: public SgAsmExpression {
     public:
 #endif
@@ -1566,8 +1842,8 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Descriptor for accessed register.
          *
          *  @{ */
-        RegisterDescriptor get_descriptor() const;
-        void set_descriptor(RegisterDescriptor);
+        const RegisterDescriptor& get_descriptor() const;
+        void set_descriptor(const RegisterDescriptor&);
         /** @} */
 #else
         AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
@@ -1576,6 +1852,8 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
         /** Property: Post-increment or pre-decrement amount.
+         *
+         *  This is a value that's added or subtracted from a register each time the containing instruction is executed.
          *
          *  @{ */
         int get_adjustment() const;
@@ -1622,9 +1900,32 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: List of registers.
+         *
+         *  These are the actual registers contained in this node.  Registers are stored in this node instead of directly in a
+         *  @ref SgAsmRegisterNames node because of limitations of ROSETTA.
+         *
+         * @{ */
+        const SgAsmRegisterReferenceExpressionPtrList& get_registers() const;
+        void set_registers(const SgAsmRegisterReferenceExpressionPtrList&);
+        /** @} */
+#else
         AsmRegisterNames.setDataPrototype("SgAsmRegisterReferenceExpressionPtrList", "registers", "",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Bit mask.
+         *
+         *  This is an optional bit mask representing the registers. It's used by the m68k disassembler and represents the mask
+         *  that appeared in the encoded instruction.
+         *
+         * @{ */
+        unsigned get_mask() const;
+        void set_mask(unsigned);
+        /** @} */
+#else
         AsmRegisterNames.setDataPrototype("unsigned", "mask", "=0",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -1681,6 +1982,8 @@ void Grammar::setUpBinaryInstructions() {
          * have returned before calling set_baseNode().  If this is not the behavior that's needed, see the makeRelativeTo()
          * method.
          *
+         * The base node is not considered to be a child of this node in the AST.
+         *
          * @{ */
         SgNode* get_baseNode() const;
         void set_baseNode(SgNode*);
@@ -1704,7 +2007,17 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Construct a new value of specified type.
+         *
+         *  Creates a new AST node having value @p n of type @p type. See also, the constructor that takes a bit vector as the
+         *  first argument, which is useful when the value is non-integral or is too large to fit in a @c uint64_t. */
         SgAsmIntegerValueExpression(uint64_t n, SgAsmType *type);
+
+        /** Construct a new value of specified type.
+         *
+         *  Creates a new AST node having value @p bv of type @p type.  See also, the constructor that takes a @c uint64_t as
+         *  the first argument which might be simpler to call in situations where the value is an integral type not more than
+         *  64 bits. */
         SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type);
 
         /** Returns the base address of an addressable IR node. */
@@ -1830,12 +2143,42 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Default constructor.
+         *
+         *  Creates a new floating-point value of unspecified type initialized to positive zero.  We recommend using a
+         *  constructor that takes a @ref SgAsmType argument instead. */
         SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
+
+        /** Construct specified floating-point value.
+         *
+         *  Creates a new floating-point constant AST node having the specified native value and type. See also, the
+         *  constructor that takes a bit vector as its first argument, which is useful in cases where the native representation
+         *  of a floating point value does not match the target machine's representation. */
         SgAsmFloatValueExpression(double nativeValue, SgAsmType*);
+
+        /** Construct specified floating-point value.
+         *
+         *  Creates a new floating-point constant AST node having the specified value and type.  See also, the constructor that
+         *  takes a @c double argument for those cases when the native representation matches the target machine's
+         *  representation. */
         SgAsmFloatValueExpression(const Sawyer::Container::BitVector&,SgAsmType*);
+
+        /** Set AST node value to specified native value. */
         void set_nativeValue(double);
+
+        /** Get value in native format. */
         double get_nativeValue() const;
+
+        /** Update bit vector from native representation.
+         *
+         *  Resets the bit vector using the cached native representation.  The bit vector is considered to be the canonical
+         *  value of this AST node. */
         void updateBitVector();
+
+        /** Update cached native value from bit vector.
+         *
+         *  Resets the cached native value from the bit vector. The bit vector is considered to be the canonical value of this
+         *  AST node, and the native format value is a cached representation that can be used in arithmetic. */
         void updateNativeValue() const;
 #endif // SgAsmFloatValueExpression_OTHERS
 
@@ -1857,20 +2200,16 @@ void Grammar::setUpBinaryInstructions() {
 #endif // SgAsmConstantExpression_HEADERS
 
 #ifdef DOCUMENTATION
-    /** Base class for constants.  Represents integer values, floating-point values, etc. This class holds the actual bits for
-    // the constant value.  Subclasses provide the intepretation of those bits. */
+    /** Base class for constants.
+     *
+     *  Represents integer values, floating-point values, etc. This class holds the actual bits for the constant value.
+     *  Subclasses provide the intepretation of those bits. */
     class SgAsmConstantExpression: public SgAsmValueExpression {
     public:
 #endif
 
-#ifdef DOCUMENTATION
-        /** Property: Bits for constant.
-         *
-         *  @{ */
-        Sawyer::Container::BitVector get_bitVector() const;
-        void set_bitVector(Sawyer::Container::BitVector);
-        /** @} */
-#else
+#ifndef DOCUMENTATION
+        // Documented below. Implemented below due to ROSETTA limitations.
         AsmConstantExpression.setDataPrototype("Sawyer::Container::BitVector", "bitVector", "",
                                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -1889,9 +2228,15 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Property: Bits for constant.
+         *
+         *  This is the canonical value of an AST node; subclasses may cache native representations of this value.
+         *
+         *  @{ */
         const Sawyer::Container::BitVector& get_bitVector() const { return p_bitVector; }
         Sawyer::Container::BitVector& get_bitVector() { return p_bitVector; }
         void set_bitVector(const Sawyer::Container::BitVector &bv) { p_bitVector = bv; }
+        /** @} */
 #endif // SgAsmConstantExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1915,13 +2260,63 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Alternate expression without constant folding.
+         *
+         *  This is an optional expression that's equivalent to this expression but without constant folding.
+         *
+         *  Note: All of the ROSE disassemblers always set this to null regardless of whether they do any constant folding.
+         *
+         * @{ */
+        SgAsmValueExpression* get_unfolded_expression_tree() const;
+        void set_unfolded_expression_tree(SgAsmValueExpression*);
+        /** @} */
+#else
         AsmValueExpression.setDataPrototype("SgAsmValueExpression*", "unfolded_expression_tree", "= NULL",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Where this expression is encoded within the instruction.
+         *
+         *  This is the bit offset into the instruction's raw bytes where this expression is encoded. If it is not supported by
+         *  the architectures, it will be set to zero and the "bit_size" property will also be zero.
+         *
+         * @{ */
+        unsigned short get_bit_offset() const;
+        void set_bit_offset(unsigned short);
+        /** @} */
+#else
         AsmValueExpression.setDataPrototype("unsigned short", "bit_offset", "= 0",         // DOXYGEN
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Where this expression is encoded within the instruction.
+         *
+         *  This is the size in bits of the encoding for this expression within the instruction.  If it is not supported by
+         *  the architecture, it will be set to zero.
+         *
+         * @{ */
+        unsigned short get_bit_size() const;
+        void set_bit_size(unsigned short);
+        /** @} */
+#else
         AsmValueExpression.setDataPrototype("unsigned short", "bit_size", "= 0",           // DOXYGEN
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol corresponding to this expression.
+         *
+         *  If a symbol refers to this expression then it is linked by this property, otherwise null.  The symbol is not
+         *  considered to be a child of this node in the AST.
+         *
+         * @{ */
+        SgSymbol* get_symbol() const;
+        void set_symbol(SgSymbol*);
+        /** @} */
+#else
         AsmValueExpression.setDataPrototype("SgSymbol*", "symbol", "= NULL",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -1962,9 +2357,34 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Memory address expression.
+         *
+         *  This property stores the address of the memory reference.  If the reference is for multiple bytes of memory, then
+         *  only one address is stored and the instruction semantics determine which address it is. Usually multi-byte
+         *  references store the lowest address.
+         *
+         * @{ */
+        SgAsmExpression* get_address() const;
+        void set_address(SgAsmExpression*);
+        /** @} */
+#else
         AsmMemoryReferenceExpression.setDataPrototype("SgAsmExpression*", "address", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Optional memory segment register.
+         *
+         *  If a segment register is specified then the actual memory address is formed by adding the stored memory address to
+         *  the current value of the segment register.  The x86 architecture is the only ROSE architecture that uses segment
+         *  registers, and most of the time they are initialized to zero by the instruction semantics.
+         *
+         * @{ */
+        SgAsmExpression* get_segment() const;
+        void set_segment(SgAsmExpression*);
+        /** @} */
+#else
         AsmMemoryReferenceExpression.setDataPrototype("SgAsmExpression*", "segment", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
@@ -2074,9 +2494,32 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Low-level semantic operation.
+         *
+         *  This property is an enum constant that represents an operation in @ref
+         *  rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators "RiscOperators".
+         *
+         * @{ */
+        RiscOperator get_riscOperator() const;
+        void set_riscOperator(RiscOperator);
+        /** @} */
+#else
         AsmRiscOperation.setDataPrototype("SgAsmRiscOperation::RiscOperator", "riscOperator", "= SgAsmRiscOperation::OP_NONE",
                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Operands for the low-level operation.
+         *
+         *  These are the operands used by the low-level operation. The actual list is stored in a separate @ref
+         *  SgAsmExprListExpr AST node instead of directly in this node due to limitations of ROSETTA.
+         *
+         * @{ */
+        SgAsmExprListExp* get_operands() const;
+        void set_operands(SgAsmExprListExp*);
+        /** @} */
+#else
         AsmRiscOperation.setDataPrototype("SgAsmExprListExp*", "operands", "= NULL",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
@@ -2173,7 +2616,17 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Pointers to expressions.
+         *
+         *  List of expression nodes are stored in their own @ref SgAsmExprListExp node instead of in parent AST nodes due to
+         *  limitations of ROSETTA.
+         *
+         * @{ */
+        const SgAsmExpressionPtrList& get_expressions() const;
+        void set_expressions(const SgAsmExpressionPtrList&);
+        /** @} */
+#else
         AsmExprListExp.setDataPrototype("SgAsmExpressionPtrList", "expressions", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
@@ -2213,9 +2666,18 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifndef DOCUMENTATION
-    AsmExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#ifdef DOCUMENTATION
+        /** Property: Type of expression.
+         *
+         *  The type node is not considered a child of this node in the AST.
+         *
+         * @{ */
+        SgAsmType* get_type() const;
+        void set_type(SgAsmType*);
+        /** @} */
+#else
+        AsmExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 #ifdef DOCUMENTATION
@@ -2236,7 +2698,16 @@ void Grammar::setUpBinaryInstructions() {
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Comment.
+         *
+         *  User-defined comment for an expression.
+         *
+         * @{ */
+        const std::string& get_comment() const;
+        void set_comment(const std::string&);
+        /** @} */
+#else
         AsmExpression.setDataPrototype("std::string", "comment", "= \"\"",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -2255,6 +2726,9 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Property: Width of expression in bits.
+         *
+         *  Returns the width of the expression in bits according to its data type. The "type" property must be non-null. */
         size_t get_nBits() const;
 #endif // SgAsmExpression_OTHERS
 
@@ -2287,7 +2761,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifndef DOCUMENTATION
-        // Repeated below because they're read-only
+        // Documented below due to ROSETTA limitations
         AsmIntegerType.setDataPrototype("bool", "isSigned", "=false", // read-only
                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -2306,10 +2780,19 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Constructor with specified member values.
+         *
+         *  Constructs a new integer type and initializes its properties according to the arguments. */
         SgAsmIntegerType(ByteOrder::Endianness, size_t nBits, bool isSigned);
-        virtual void check() const;
-        virtual std::string toString() const;
+
+        /** Property: whether the integral type is signed or unsigned.
+         *
+         *  Returns true if this is a signed type, otherwise false. */
         bool get_isSigned() const;
+
+        // Overrides documented in base class
+        virtual void check() const ROSE_OVERRIDE;
+        virtual std::string toString() const ROSE_OVERRIDE;
 #endif // SgAsmIntegerType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2333,7 +2816,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifndef DOCUMENTATION
-        // Repeated below because they're read-only
+        // Documented below because of ROSETTA limitations (they're read-only)
         AsmFloatType.setDataPrototype("size_t", "significandOffset", "=(size_t)(-1)", // read-only
                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
         AsmFloatType.setDataPrototype("size_t", "significandNBits", "=(size_t)(-1)", // read-only
@@ -2382,9 +2865,6 @@ void Grammar::setUpBinaryInstructions() {
                        const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
                        uint64_t exponentBias, unsigned flags);
 
-        virtual void check() const;
-        virtual std::string toString() const;
-
         /** Property: Offset to significand least significant bit. */
         BitRange significandBits() const;
 
@@ -2405,6 +2885,10 @@ void Grammar::setUpBinaryInstructions() {
 
         /** Property: Whether type has normalized significand. */
         bool normalizedSignificand() const;
+
+        // Overrides documented in base class
+        virtual void check() const ROSE_OVERRIDE;
+        virtual std::string toString() const ROSE_OVERRIDE;
 #endif // SgAsmFloatType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2426,7 +2910,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifndef DOCUMENTATION
-        // Repeated below since these are read-only
+        // Documented below due to ROSETTA limitations (read-only)
         AsmScalarType.setDataPrototype("ByteOrder::Endianness", "minorOrder", "= ByteOrder::ORDER_UNSPECIFIED", // read-only
                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
         AsmScalarType.setDataPrototype("ByteOrder::Endianness", "majorOrder", "= ByteOrder::ORDER_UNSPECIFIED", // read-only
@@ -2461,9 +2945,6 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmScalarType(ByteOrder::Endianness, size_t nBits);
 
     public:
-        virtual void check() const;
-        virtual std::string toString() const;
-
         /** Property: Number of bits. */
         virtual size_t get_nBits() const ROSE_OVERRIDE;
 
@@ -2475,6 +2956,10 @@ void Grammar::setUpBinaryInstructions() {
 
         /** Property: Stride of major byte order for mixed order types. */
         size_t get_majorNBytes() const;
+
+        // Overrides documented in base class
+        virtual void check() const ROSE_OVERRIDE;
+        virtual std::string toString() const ROSE_OVERRIDE;
 #endif // SgAsmScalarType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2493,7 +2978,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifndef DOCUMENTATION
-        // Repeated below since these are read-only
+        // Documented below due to ROSETTA limitations (read-only)
         AsmVectorType.setDataPrototype("size_t", "nElmts", "=0", // read-only
                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
         AsmVectorType.setDataPrototype("SgAsmType*", "elmtType", "=NULL", // read-only
@@ -2518,8 +3003,13 @@ void Grammar::setUpBinaryInstructions() {
         /** Construct a new vector type. */
         SgAsmVectorType(size_t nElmts, SgAsmType *elmtType);
 
+        /** Property: Number of elements in vector. */
         size_t get_nElmts() const;
+
+        /** Property: Type of each vector element. */
         SgAsmType* get_elmtType() const;
+
+        // Overrides documented in base class
         virtual void check() const ROSE_OVERRIDE;
         virtual std::string toString() const ROSE_OVERRIDE;
         virtual size_t get_nBits() const ROSE_OVERRIDE;
@@ -2530,7 +3020,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
- 
+
     NEW_NONTERMINAL_MACRO(AsmType, AsmScalarType | AsmVectorType, "AsmType", "AsmTypeTag", false);
     AsmType.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmType);
@@ -2557,11 +3047,39 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Validate properties collectively.
+         *
+         *  This method collectively validates the properties of a type since validation is not always possible or convenient
+         *  when the user modifies an individual property.  For instance, when changing the bit fields in a floating-point
+         *  type, it would be very inconvenient to the user if those properties individually validated there settings because
+         *  it would require the user to shuffle fields around in such a way that they never overlap. This way, the overlap
+         *  validation can occur after the user is all done moving the fields. */
         virtual void check() const;
-        virtual std::string toString() const { abort(); return NULL; }       // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
-        virtual size_t get_nBits() const { abort(); return (size_t)-1; }           // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
+
+        /** Convert a type to a string.
+         *
+         *  The output is intended mostly for debugging since it contains more details than what would be typically useful. For
+         *  instance, instead of the word "double", this will probably print all the details about where the various
+         *  floating-point fields are located, how the exponent field works, etc. */
+        virtual std::string toString() const {
+            abort();                                    // ROSETTA limitation: intended pure virtual
+            return NULL;                                // Windows limitation: return value required [Too, 2014-08-11]
+        }
+
+        /** Width of type in bits. */
+        virtual size_t get_nBits() const {
+            abort();                                    // ROSETTA limitation: intended pure virtual
+            return (size_t)-1;                          // Windows limitation: return value required [Too, 2014-08-11]
+        }
+
+        /** Width of type in bytes. */
         virtual size_t get_nBytes() const;
 
+        /** Registers a type with the type system.
+         *
+         *  This method registers the specified type by its @ref toString value so it can be found later.  If a type by the
+         *  same name is already registered then the specified one is deleted.  The return value is the type that is ultimately
+         *  in the registry (either one that existed their previously or the specified type). */
         template<class Type>                                    // Type is a subclass of SgAsmType
         static Type* registerOrDelete(Type *toInsert) {
             ASSERT_not_null(toInsert);
