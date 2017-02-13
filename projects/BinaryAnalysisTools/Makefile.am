@@ -111,6 +111,14 @@ binaryToSource_CPPFLAGS = $(ROSE_INCLUDES)
 binaryToSource_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Generate a program trace and show some properties of it
+
+bin_PROGRAMS += trace
+trace_SOURCES = trace.C
+trace_CPPFLAGS = $(ROSE_INCLUDES)
+trace_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
 
 detectConstants: detectConstants.C

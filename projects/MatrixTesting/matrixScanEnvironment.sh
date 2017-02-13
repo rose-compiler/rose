@@ -67,6 +67,39 @@ if [ "$RMC_RMC_VERSION" != "" ]; then
     append_rmc_record wt         RMC_WT_VERSION
     append_rmc_record yaml       RMC_YAML_VERSION
     append_rmc_record yices      RMC_YICES_VERSION
+
+elif [ "$RMC_HASH" != "" -a "$SPOCK_VERSION" != "" ]; then
+    # We're using the Spock variant of RMC
+    append_rmc_record assertions RMC_ASSERTIONS
+    append_rmc_record boost      BOOST_VERSION
+    append_rmc_record build      RMC_BUILD
+    append_rmc_record debug      RMC_DEBUG
+    append_rmc_record dlib       DLIB_VERSION
+    append_rmc_record doxygen    DOXYGEN_VERSION
+    append_rmc_record dwarf      DWARF_VERSION
+    append_rmc_record edg        RMC_EDG
+    append_rmc_record languages  RMC_LANGUAGES
+    append_rmc_record magic      LIBMAGIC_VERSION
+    append_rmc_record optimize   RMC_OPTIMIZE
+    append_rmc_record os         RMC_OS_NAME_SHORT
+    append_rmc_record python     PYTHON_VERSION
+    append_rmc_record qt         QT_VERSION
+    append_rmc_record readline   READLINE_VERSION
+    append_rmc_record sqlite     SQLITE_VERSION
+    append_rmc_record warnings   RMC_WARNINGS
+    append_rmc_record wt         WT_VERSION
+    append_rmc_record yaml       YAMLCPP_VERSION
+    append_rmc_record yices      YICES_VERSION
+
+    case "$CXX_VENDOR" in
+	gnu) cxx_vendor=gcc ;;
+	*)   cxx_vendor="$CXX_VENDOR" ;;
+    esac
+    append_rmc_record compiler   CXX_VENDOR "$cxx_vendor" "$CXX_VERSION" "$CXX_LANGUAGE"
+
+    java_version=$(eval "echo \"\$$(echo $JAVA_VENDOR |tr a-z A-Z)_JAVA_VERSION\"")
+    append_rmc_record java       JAVA_VENDOR "$JAVA_VENDOR" "$java_version"
+
 else
     # User is using some other meta config system...
     : not handled yet, Justin
