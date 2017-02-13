@@ -222,6 +222,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        virtual std::string description() const ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
         virtual bool isUnknown() const ROSE_OVERRIDE;
@@ -352,6 +353,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        virtual std::string description() const ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
         virtual bool isUnknown() const ROSE_OVERRIDE;
@@ -397,6 +399,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        virtual std::string description() const ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
                                         rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
@@ -447,6 +450,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        virtual std::string description() const ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
                                         rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
@@ -531,6 +535,13 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         static const int64_t INVALID_STACK_DELTA;
+
+        /** Return a description of this instruction.
+         *
+         *  Descriptions are useful for generating comments in the disassembly listing to say what each instruction does when
+         *  the audience is not well versed in that instruction set architecture.  The base implementation always returns an
+         *  empty string. */
+        virtual std::string description() const { return ""; }
 
         SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
         std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);

@@ -15,7 +15,7 @@ Arm::unparseArmCondition(ArmInstructionCondition cond) {
 }
 
 void
-Arm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::string sign, std::string *suffix) const {
+Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::string sign, std::string *suffix) const {
     std::ostringstream extra;
     SgAsmUnaryExpression *uno = isSgAsmUnaryExpression(expr);
     SgAsmBinaryExpression *dos = isSgAsmBinaryExpression(expr);
@@ -31,9 +31,9 @@ Arm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::strin
             sign = "-";
             // fall through
         case V_SgAsmBinaryAddPreupdate: {
-            emitExpr(out, dos->get_lhs(), state, "");
+            outputExpr(out, dos->get_lhs(), state, "");
             out <<", ";
-            emitExpr(out, dos->get_rhs(), state, sign);
+            outputExpr(out, dos->get_rhs(), state, sign);
             extra <<"!";
             break;
         }
@@ -44,65 +44,65 @@ Arm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::strin
         case V_SgAsmBinaryAddPostupdate:
             if (suffix) {
                 // Appears inside a memory reference expression
-                emitExpr(out, dos->get_lhs(), state, "");
+                outputExpr(out, dos->get_lhs(), state, "");
                 extra <<", ";
-                emitExpr(extra, dos->get_rhs(), state, sign);
+                outputExpr(extra, dos->get_rhs(), state, sign);
             } else {
                 // Used by LDM* and STM* instructions outside memory reference expressions. RHS is unused.
-                emitExpr(out, dos->get_lhs(), state, "");
+                outputExpr(out, dos->get_lhs(), state, "");
                 out <<"!";
             }
             break;
 
         case V_SgAsmBinaryAdd:
-            emitExpr(out, dos->get_lhs(), state, "");
+            outputExpr(out, dos->get_lhs(), state, "");
             out <<", ";
-            emitExpr(out, dos->get_rhs(), state, "+");
+            outputExpr(out, dos->get_rhs(), state, "+");
             break;
 
         case V_SgAsmBinarySubtract:
-            emitExpr(out, dos->get_lhs(), state, "");
+            outputExpr(out, dos->get_lhs(), state, "");
             out <<", ";
-            emitExpr(out, dos->get_rhs(), state, "+");
+            outputExpr(out, dos->get_rhs(), state, "+");
             break;
 
         case V_SgAsmBinaryMultiply:
-            emitExpr(out, dos->get_lhs(), state, "");
+            outputExpr(out, dos->get_lhs(), state, "");
             out <<"*";
-            emitExpr(out, dos->get_rhs(), state, "");
+            outputExpr(out, dos->get_rhs(), state, "");
             break;
 
         case V_SgAsmBinaryLsl:
-            emitExpr(out, dos->get_lhs(), state, "");
+            outputExpr(out, dos->get_lhs(), state, "");
             out <<", lsl ";
-            emitExpr(out, dos->get_rhs(), state, "");
+            outputExpr(out, dos->get_rhs(), state, "");
             break;
 
         case V_SgAsmBinaryLsr:
-            emitExpr(out, dos->get_lhs(), state, "");
+            outputExpr(out, dos->get_lhs(), state, "");
             out <<", lsr ";
-            emitExpr(out, dos->get_rhs(), state, "");
+            outputExpr(out, dos->get_rhs(), state, "");
             break;
 
         case V_SgAsmBinaryAsr:
-            emitExpr(out, dos->get_lhs(), state, "");
+            outputExpr(out, dos->get_lhs(), state, "");
             out <<", asr ";
-            emitExpr(out, dos->get_rhs(), state, "");
+            outputExpr(out, dos->get_rhs(), state, "");
             break;
 
         case V_SgAsmBinaryRor:
-            emitExpr(out, dos->get_lhs(), state, "");
+            outputExpr(out, dos->get_lhs(), state, "");
             out <<", ror ";
-            emitExpr(out, dos->get_rhs(), state, "");
+            outputExpr(out, dos->get_rhs(), state, "");
             break;
 
         case V_SgAsmUnaryRrx:
-            emitExpr(out, uno->get_operand(), state, "");
+            outputExpr(out, uno->get_operand(), state, "");
             out <<", rrx";
             break;
 
         case V_SgAsmUnaryArmSpecialRegisterList:
-            emitExpr(out, uno->get_operand(), state, "");
+            outputExpr(out, uno->get_operand(), state, "");
             out <<"^";
             break;
 
@@ -112,7 +112,7 @@ Arm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::strin
             for (size_t i = 0; i < exprs.size(); ++i) {
                 if (i != 0)
                     out <<", ";
-                emitExpr(out, exprs[i], state, "");
+                outputExpr(out, exprs[i], state, "");
             }
             out <<"}";
             break;
@@ -135,16 +135,16 @@ Arm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::strin
             }
 
             std::string suffix;
-            emitTypeName(out, expr->get_type(), state);
+            state.frontUnparser().emitTypeName(out, expr->get_type(), state);
             out <<" [";
-            emitExpr(out, addr, state, "", &suffix);
+            outputExpr(out, addr, state, "", &suffix);
             out <<"]" <<suffix;
             break;
         }
 
         case V_SgAsmDirectRegisterExpression: {
             SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(expr);
-            emitRegister(out, rre->get_descriptor(), state);
+            state.frontUnparser().emitRegister(out, rre->get_descriptor(), state);
             if (rre->get_descriptor().get_major() == arm_regclass_psr && rre->get_psr_mask() !=0) {
                 out <<"_";
                 if (rre->get_psr_mask() & 1)
@@ -162,7 +162,7 @@ Arm::emitExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::strin
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(expr);
             out <<"#" <<sign;
-            comments = emitUnsignedInteger(out, ive->get_bitVector(), state);
+            comments = state.frontUnparser().emitUnsignedInteger(out, ive->get_bitVector(), state);
             break;
         }
 
@@ -211,9 +211,9 @@ Arm::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) con
         ASSERT_require(insn->get_operandList()->get_operands()[0]==expr);
         SgAsmIntegerValueExpression *tgt = isSgAsmIntegerValueExpression(expr);
         ASSERT_not_null(tgt);
-        emitAddress(out, tgt->get_bitVector(), state);
+        state.frontUnparser().emitAddress(out, tgt->get_bitVector(), state);
     } else {
-        emitExpr(out, expr, state, "");
+        outputExpr(out, expr, state, "");
     }
 }
 
