@@ -3103,134 +3103,937 @@ void Grammar::setUpBinaryInstructions() {
      *                                  Collections of Instructions
      **************************************************************************************************************************/
 
-    // A function is a collection of blocks holding instructions (basic blocks) or static data.  Instructions might have
-    // references to addresses or data which are described by symbols (not to be confused with the binary's symbol table) in
-    // the function's symbol table (the SgAsmFunction::symbol_table member).
-    NEW_TERMINAL_MACRO(AsmFunction, "AsmFunction", "AsmFunctionTag");
-    AsmFunction.setPredeclarationString("HEADER_BINARY_FUNCTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
-    AsmFunction.setFunctionPrototype("HEADER_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
-    AsmFunction.setFunctionSource("SOURCE_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
-    AsmFunction.setDataPrototype("std::string", "name", "= \"\"",
-                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmFunction.setDataPrototype("unsigned", "reason", "= SgAsmFunction::FUNC_NONE", /*bit flags*/
-                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmFunction.setDataPrototype("SgAsmFunction::function_kind_enum", "function_kind", "= SgAsmFunction::e_unknown",
-                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    AsmFunction.setDataPrototype("SgAsmFunction::MayReturn", "may_return", "= SgAsmFunction::RET_UNKNOWN",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmFunction.setDataPrototype("std::string", "name_md5", "= \"\"",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmFunction.setDataPrototype("SgAsmStatementPtrList", "statementList", "",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmFunction.setDataPrototype("SgAsmStatementPtrList", "dest", "",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmFunction.setDataPrototype("rose_addr_t", "entry_va", "= 0",  /*entry point virtual address*/
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmFunction.setDataPrototype("SgSymbolTable*", "symbol_table", "= NULL",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
-    AsmFunction.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::FunctionCall
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    // net effect of function on the stack pointer
-    AsmFunction.setDataPrototype("int64_t", "stackDelta", "= SgAsmInstruction::INVALID_STACK_DELTA",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmFunction.setDataPrototype("const rose::BinaryAnalysis::CallingConvention::Definition*", "callingConvention", "=NULL",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmFunction);
+    IS_SERIALIZABLE(AsmFunction);
+
+    DECLARE_HEADERS(AsmFunction);
+#if defined(SgAsmFunction_HEADERS) || defined(DOCUMENTATION)
+    namespace rose {
+    namespace BinaryAnalysis {
+    namespace CallingConvention {
+    class Definition;
+    } // namespace
+    } // namespace
+    } // namespace
+#endif // SgAsmFunction_HEADERS
+
+#ifdef DOCUMENTATION
+    /** Represents a synthesized function.
+     *
+     *  A function is a collection of blocks holding instructions (basic blocks) or static data.  Instructions might have
+     *  references to addresses or data which are described by symbols (not to be confused with the binary's symbol table) in
+     *  the function's symbol table (@ref get_symbol_table).  Functions do not explicitly exist in a binary, but are
+     *  synthesized by ROSE as part of the disassembly and partitioning steps. The individual instructions and/or individual
+     *  static data areas need not cover a contiguous region of the address space.  Some synthesized functions will likely not
+     *  be a "function" or "produceure" in the strict sense of those words due to such factors as compiler optimizations,
+     *  hand-coded routines, exception handling, non-local branching, shortcomings of ROSE's partitioning solvers, etc. In any
+     *  case, each function will have one primary entry address.  Although the AST requires that every function have its own
+     *  basic block children, which have their own instructions (definition of "tree" data structures), logically two functions
+     *  might share basic blocks, although this is uncommon.
+     *
+     *  Warning: Although currently basic blocks are direct children of function nodes in the AST, this may change in a future
+     *  version of ROSE as new node types are introduced to describe scopes and control structures. */
+    class SgAsmFunction: public SgAsmSynthesizedDeclaration {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  The optional string name of a function.
+         *
+         * @{ */
+        const std::string& get_name() const;
+        void set_name(const std::string&);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("std::string", "name", "= \"\"",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Reason that function exists.
+         *
+         *  This is a bit vector of enum constants that describe why this function was created. See @ref
+         *  SgAsmFunction::FunctionReason for details.
+         *
+         * @{ */
+        unsigned get_reason() const;
+        void set_reason(unsigned);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("unsigned", "reason", "= SgAsmFunction::FUNC_NONE", /*bit flags*/
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Kind of function.
+         *
+         *  This enum constant describes the kind of function. See @ref SgAsmFunction::function_kind_enum for details.
+         *
+         * @{ */
+        function_kind_enum get_function_kind() const;
+        void set_function_kind(function_kind_enum);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("SgAsmFunction::function_kind_enum", "function_kind", "= SgAsmFunction::e_unknown",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Whether a function could return to its caller.
+         *
+         * @{ */
+        MayReturn get_may_return() const;
+        void set_may_return(MayReturn);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("SgAsmFunction::MayReturn", "may_return", "= SgAsmFunction::RET_UNKNOWN",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Hash of the function.
+         *
+         *  This is unused by ROSE, but can be set by users to identify a function by hash string.
+         *
+         * @{ */
+        const std::string& get_name_md5() const;
+        void set_name_md5(const std::string&);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("std::string", "name_md5", "= \"\"",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Statements that make up a function.
+         *
+         *  The "statements" of a function are things like instructions, static data blocks, etc.
+         *
+         * @{ */
+        const SgAsmStatementPtrList& get_statementList() const;
+        void set_statementList(const SgAsmStatementPtrList&);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("SgAsmStatementPtrList", "statementList", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        // FIXME[Robb P Matzke 2017-02-13]: unused?
+#else
+        AsmFunction.setDataPrototype("SgAsmStatementPtrList", "dest", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Primary entry address.
+         *
+         *  Every function has one primary entry address that uniquely identifies the function in the AST. This is the starting
+         *  address of the function's entry instruction.  The abbreviation "va" means "virtual address".
+         *
+         * @{ */
+        rose_addr_t get_entry_va() const;
+        void set_entry_va(rose_addr_t);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("rose_addr_t", "entry_va", "= 0",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol table.
+         *
+         *  A ROSE symbol table associated with this function. This is not the same as the symbol table that appears in the
+         *  binary specimen, such as ELF or PE symbol tables.
+         *
+         * @{ */
+        SgSymbolTable* get_symbol_table() const;
+        void set_symbol_table(SgSymbolTable*);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("SgSymbolTable*", "symbol_table", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        // FIXME[Robb P Matzke 2017-02-13]: what is this?
+#else
+        AsmFunction.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::FunctionCall
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Net effect of function on the stack pointer.
+         *
+         *  Net effect that this function has on the machine's stack pointer register.  For most x86 Linux ELF specimens the
+         *  net effect is to pop the return address from the stack, thus +4 for 32-bit specimens and +8 for 64-bit specimens.
+         *
+         *  If the stack delta analysis has not run or could not determine a constant stack delta, then the special value @c
+         *  SgAsmInstruction::INVALID_STACK_DELTA is used.
+         *
+         * @{ */
+        int64_t get_stackDelta() const;
+        void set_stackDelta(int64_t);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("int64_t", "stackDelta", "= SgAsmInstruction::INVALID_STACK_DELTA",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Primary calling convention.
+         *
+         *  This is the primary calling convention for this function. When the semantics of the function match multiple
+         *  calling convention definitions, this property holds the "best" one for some definition of "best". It is also
+         *  possible for the semantics to not match any calling convention definition in which case this property is null. It
+         *  is also null if the calling convention analysis was not performed.
+         *
+         * @{ */
+        const rose::BinaryAnalysis::CallingConvention::Definition* get_callingConvention() const;
+        void set_callingConvention(const rose::BinaryAnalysis::CallingConventionD::Definition*);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("const rose::BinaryAnalysis::CallingConvention::Definition*", "callingConvention", "=NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmFunction);
+#if defined(SgAsmFunction_OTHERS) || defined(DOCUMENTATION)
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
+            s & BOOST_SERIALIZATION_NVP(p_name);
+            s & BOOST_SERIALIZATION_NVP(p_reason);
+            s & BOOST_SERIALIZATION_NVP(p_function_kind);
+            s & BOOST_SERIALIZATION_NVP(p_may_return);
+            s & BOOST_SERIALIZATION_NVP(p_name_md5);
+            s & BOOST_SERIALIZATION_NVP(p_statementList);
+            s & BOOST_SERIALIZATION_NVP(p_dest);
+            s & BOOST_SERIALIZATION_NVP(p_entry_va);
+            //s & BOOST_SERIALIZATION_NVP(p_symbol_table); // not implemented yet
+            s & BOOST_SERIALIZATION_NVP(p_cached_vertex);
+            s & BOOST_SERIALIZATION_NVP(p_stackDelta);
+            s & BOOST_SERIALIZATION_NVP(p_callingConvention);
+        }
+#endif
+
+    public:
+        // [Robb P Matzke 2017-02-13]: Deprecated because it uses a very old CFG implementation
+        int nrOfValidInstructions(std::vector<SgNode*>& succs) ROSE_DEPRECATED("use modern CFG classes instead");
+
+        /** Adds statement to end of statement list. */
+        void append_statement(SgAsmStatement*);
+
+        /** Erases statement from statement list.
+         *
+         *  If the specified statement is found in the list of statements then it is erased without being deleted. */
+        void remove_statement(SgAsmStatement* statement);
+
+        // [Robb P Matzke 2017-02-13]: I don't think this is used anywhere. It appends to the poorly named "dest" property.
+        void append_dest(SgAsmStatement* instruction) ROSE_DEPRECATED("apparently not used anywhere");
+
+        // FIXME[Robb P Matzke 2017-02-13]: This is a bad name--it removes only statements, not all AST children.
+        /** Removes all statements.
+         *
+         *  Clears the statement list without deleting any of them. */
+        void remove_children();
+
+        /** Function entry basic block.
+         *
+         *  Returns the basic block that represents the function primary entry point. Returns null for a function
+         *  that contains no instructions. */
+        SgAsmBlock* get_entry_block() const;
+
+        /** Whether a function returns. */
+        enum MayReturn {
+                RET_UNKNOWN,                    /**< It is unknown whether this function ever returns or not. */
+                RET_NEVER,                      /**< This function is known to never return. */
+                RET_SOMETIMES,                  /**< This function may return or not, depending on how it is called. */
+                RET_ALWAYS                      /**< This function returns each time it is called. */
+        };
+
+        /** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
+         *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
+         *  instructions into functions. */
+        enum FunctionReason {
+                // NOTE: If you add more here, then fix Partitioner::parse_switches()
+                //       Also fix SgAsmFunction::reason_key()
+                FUNC_NONE        = 0x00000000,  /**< Used for initialization; not a bit flag. */
+                FUNC_EXCEPTION_HANDLER
+                                 = 0x00008000,  /**< Function for handling an exception. */
+                FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */
+                FUNC_CALL_TARGET = 0x00020000,  /**< Target of a function call instruction sequence in the CFG. When used as
+                                                 *   a partitioning heuristic, the partitioner will create new functions when
+                                                 *   it discovers a call-like sequence while traversing the CFG. */
+                FUNC_CALL_INSN   = 0x00040000,  /**< Target of call, possibly not in the CFG (see Partitioner::mark_call_insns).
+                                                 *   When used as a partitioning heuristic, the partitioner will search all
+                                                 *   available instructions for instances of call-like instructions and define
+                                                 *   a function for each target. The function entry points added in this way
+                                                 *   become initial nodes of the CFG which is used by some of
+                                                 *   the other function discovery methods, including FUNC_CALL_TARGET. */
+                FUNC_EH_FRAME    = 0x00080000,  /**< Address mentioned in the ELF .eh_frame section. */
+                FUNC_SYMBOL      = 0x00100000,  /**< Address of a function symbol in a symbol table. */
+                FUNC_PATTERN     = 0x00200000,  /**< Appears to be a function based on pattern of instructions. When used as
+                                                 *   a partitioning heuristic, the partitioner will search through all available
+                                                 *   instructions and create function entry points. The function entry points are
+                                                 *   added to the CFG which is used by some of the other function discovery
+                                                 *   methods. */
+                FUNC_GRAPH       = 0x00400000,  /**< Implied by inter-basicblock branching. When used as a partitioning
+                                                 *   heuristic, the partitioner creates a new function when it discovers, by
+                                                 *   CFG traversal, that two different functions branch to a common basic block.
+                                                 *   The block in common becomes a new function under this rule. */
+                FUNC_USERDEF     = 0x00800000,  /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
+                FUNC_PADDING     = 0x01000000,  /**< Created to represent NOP padding between other functions. When used as a
+                                                 *   partitioning heuristic, the partitioner searches for padding after all
+                                                 *   CFG-based analysis has completed.  Padding can consist of either NOP
+                                                 *   instructions or zero bytes. The former requires that instructions at the
+                                                 *   interfunction addresses have been disassembled. */
+                FUNC_DISCONT     = 0x02000000,  /**< Blocks of function are not contiguous in memory. This is not a partitioner
+                                                 *   heuristic, but rather only an indication of whether the function's basic
+                                                 *   blocks occupy contiguous memory locations. */
+                FUNC_INSNHEAD    = 0x04000000,  /**< Initial instructions not in any other function. (UNUSED?) */
+                FUNC_IMPORT      = 0x08000000,  /**< Functions dynamically linked. For ELF containers, these are the entries
+                                                 *   in the procedure lookup table (PLT). When used as a partitioning heuristic,
+                                                 *   the partitioner will scan the PLT and define a function for each entry. */
+                FUNC_LEFTOVERS   = 0x10000000,  /**< Generated function to hold blocks that are otherwise not part of
+                                                 *   any function.  If this bit is turned off then the instruction
+                                                 *   Partitioner will delete instructions that it couldn't assign to
+                                                 *   a function. */
+                FUNC_INTRABLOCK  = 0x20000000,  /**< Function contains basic blocks that were inserted by searching the
+                                                 *   address space between the blocks discovered by analyzing the control flow.
+                                                 *   Blocks added by this algorithm do not take control flow into account, and
+                                                 *   therefore, the global control flow graph (CFG) may have edges into the
+                                                 *   middle of such blocks, or such blocks may have edges into the middle of
+                                                 *   other blocks, including inter-function edges.  Also, blocks added by this
+                                                 *   method might not represent true instructions, but rather data that was
+                                                 *   disassembled as instructions. */
+                FUNC_THUNK       = 0x40000000,  /**< Function is a thunk.  Thunks are small pieces of code whose only purpose
+                                                 *   is to branch to another function.  Depending on how the disassembler and
+                                                 *   partitioner are run, a thunk can exist either as its own function or the
+                                                 *   thunk's instructions will be subsumed by the called function.  The
+                                                 *   partitioner only sets this flag for functions that are created due to
+                                                 *   the thunk recognition pass; other functions that don't have this bit set
+                                                 *   might also be thunks, and functions that have this bit set might not
+                                                 *   be a thunk.  The Partitioner::is_thunk() method will return true for
+                                                 *   functions whose content looks like a thunk. */
+                FUNC_EXPORT      = 0x80000000,  /**< Exported function. These are the functions that appear in a PE export
+                                                 *   table. */
+                FUNC_DEFAULT     = 0xefff80ff,  /**< Default value for Partitioner class. */
+
+                /*========= Miscellaneous Reasons ===========================================================================
+                 * The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is
+                 * availalble for users to use as they see fit. */
+                FUNC_MISCMASK    = 0x000000ff,  /**< Miscellaneous.  These are all the other special purpose function detectors
+                                                 *   that are implemented in the Partitioner. Each one is identified by an
+                                                 *   eight-bit integer stored in the low order bits.  Only one such reason can
+                                                 *   be stored at a time.  These are not used to control which partitioning
+                                                 *   heuristics to use, but rather to indicate which one (of possibly many)
+                                                 *   that detected the function. */
+                FUNC_INTERPADFUNC = 0x00000001  /**< Detected by Partitioner::FindInterPadFunctions, which looks for unassigned
+                                                 *   space between two inter-function padding blocks and makes the first such
+                                                 *   address the beginning of one of these functions. */
+        };
+
+        /** Multi-line description of function reason keys from unparser.
+         *
+         *  Returns a string that describes what the one-letter function reasons mean in the unparser output. */
+        static std::string reason_key(const std::string &prefix="");
+        
+        /** Returns a very short string describing the reason mask. */
+        std::string reason_str(bool pad) const;
+
+        /** Class method that converts a reason bit vector to a human-friendly string.
+         *
+         *  The second argument is the bit vector of SgAsmFunction::FunctionReason bits. */
+        static std::string reason_str(bool pad, unsigned reason);
+
+        /** Selection functor for SgAsmFunction::get_extent(). */
+        class NodeSelector {
+        public:
+                virtual ~NodeSelector() {}
+                virtual bool operator()(SgNode*) = 0;
+        };
+
+        /** Returns information about the function addresses.
+         *
+         *  Every non-empty function has a minimum (inclusive) and maximum (exclusive) address which are returned by reference,
+         *  but not all functions own all the bytes within that range of addresses. Therefore, the exact bytes are returned by
+         *  adding them to the optional ExtentMap argument.  This function returns the number of nodes (instructions and static
+         *  data items) in the function.  If the function contains no nodes then @p extents is not modified and the low and
+         *  high addresses are both set to zero.
+         *
+         *  If an @p selector functor is provided, then only nodes for which it returns true are considered part of the
+         *  function.  This can be used for such things as filtering out data blocks that are marked as padding.  For example:
+         *
+         *  @code
+         *  class NotPadding: public SgAsmFunction::NodeSelector {
+         *  public:
+         *      virtual bool operator()(SgNode *node) {
+         *          SgAsmStaticData *data = isSgAsmStaticData(node);
+         *          SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(data);
+         *          return !data || !block || block->get_reason()!=SgAsmBlock::BLK_PADDING;
+         *      }
+         *  } notPadding;
+         *
+         *  AddressIntervalSet extents;
+         *  function->get_extent(&extents, NULL, NULL, &notPadding);
+         *  @endcode
+         *
+         *  Here's another example that calculates the extent of only the padding data, based on the negation of the filter in
+         *  the previous example:
+         *
+         *  @code
+         *  class OnlyPadding: public NotPadding {
+         *  public:
+         *      virtual bool operator()(SgNode *node) {
+         *          return !NotPadding::operator()(node);
+         *      }
+         *  } onlyPadding;
+         *
+         *  AddressIntervalSet extents;
+         *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
+         *  @endcode */
+        size_t get_extent(AddressIntervalSet *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
+                          NodeSelector *selector=NULL);
+
+        /** Computes the SHA1 message digest for the bytes of a function.
+         *
+         *  Returns true if the SHA1 is available, false if the message digest cannot be computed because the prerequisite
+         *  gcrypt functions are not available. The optional @p selector argument can be used to limit the digest to only
+         *  certain nodes of the function; by default, all instructions and static data are accumulated. */
+        bool get_sha1(uint8_t digest[20]/*out*/, NodeSelector *selector=NULL);
+
+        /** Constants for the "function_kind" property. */
+        enum function_kind_enum {
+            e_unknown  = 0,
+            e_standard = 1,
+            e_library  = 2,
+            e_imported = 3,
+            e_thunk     = 4,
+            e_last
+        };
+
+        // Computes the offset of the stack at the end of the call relative the the start of the call (in a perfect function
+        // this would be zero, this is used to score properly formed functions).
+        // [Robb P Matzke 2017-02-13]: deprecated
+        int get_stackNutralityMetric() const ROSE_DEPRECATED("use get_stackDelta instead");
+#endif // SgAsmFunction_OTHERS
 
 
-
-    // Instruction basic block. One entry point (first instruction) and one exit point (last instruction).  However,
-    // SgAsmBlock is also used for other things, such as collections of functions.
-    //
-    // statementList and successors should have been pointers to nodes that contain the list rather than being the lists
-    // themselves because ROSETTA doesn't allow traversals on multiple list data members--we can traverse either one list or
-    // the other, but not both.  It's too late to change how this part of the AST is structured because so much user code
-    // already depends on it, therefore we can only traverse statementList and not successors. [Robb Matzke 2016-02-25]
-    NEW_TERMINAL_MACRO(AsmBlock, "AsmBlock", "AsmBlockTag");
-    AsmBlock.setFunctionPrototype("HEADER_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
-    AsmBlock.setFunctionSource("SOURCE_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
-    AsmBlock.setDataPrototype("rose_addr_t", "next_block_true_address", "= 0", // [tps 05Apr07] needed for the control_flow_graph
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmBlock.setDataPrototype("rose_addr_t", "next_block_false_address", "= 0",
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmBlock.setDataPrototype("rose_addr_t", "id", "= 0",
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    AsmBlock.setDataPrototype("unsigned", "reason", "= SgAsmBlock::BLK_NONE", // why this block exists
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmBlock.setDataPrototype("SgAsmStatementPtrList", "statementList", "", //in order of execution
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmBlock.setDataPrototype("SgAsmIntegerValuePtrList", "successors", "",
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmBlock.setDataPrototype("bool", "successors_complete", "= false",
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmBlock.setDataPrototype("SgAsmBlock*", "immediate_dominator", "=NULL",
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmBlock.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::ControlFlow
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmBlock.setDataPrototype("double", "code_likelihood", "= 0.0",
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    // stack pointer at end of basic block relative to start of block's function
-    AsmBlock.setDataPrototype("int64_t", "stackDeltaOut", "= SgAsmInstruction::INVALID_STACK_DELTA",
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
-    // Represents static data in an executable.  For now, we don't associate any type with the data because ROSE's data type
-    // infrastructure (source or binary) is not capable of representing the information we need: multiple interpretations of
-    // overlapping parts of memory (i.e., two or more types for the same bytes); arbitrary offsets and padding in structured
-    // types; size-specific integers and floating-point types; regions of unknown type; ease of improving type information by
-    // filling in more details as the type is discovered; etc.
-    NEW_TERMINAL_MACRO(AsmStaticData, "AsmStaticData", "AsmStaticDataTag");
-    AsmStaticData.setFunctionPrototype("HEADER_STATIC_DATA", "../Grammar/BinaryInstruction.code");
-    AsmStaticData.setDataPrototype("SgUnsignedCharList", "raw_bytes", "",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-
-
-
-    // Declaration-like nodes that encapsulate multiple instructions.  Binary ASTs have two sides: the container side that
-    // corresponds to the ELF/PE/etc. file formats, and the interpretation side that corresponds to instructions and data from
-    // multiple sources (specimen + dynamic libraries) organized into multiple SgAsmInterpretation where each interpretation
-    // makes a coherent binary entity such as the DOS part of a PE executable.  The declaration-like nodes that follow appear
-    // on the interpretation side of the AST.  We may add other declaration nodes to the container side of the AST at a later
-    // time.
-    //
-    // These interpretation-side declaration-like nodes are used by the projects/BinaryDataStructureRecognition even if they
-    // aren't used internally by ROSE.
-    NEW_TERMINAL_MACRO(AsmSynthesizedDataStructureDeclaration,
-                       "AsmSynthesizedDataStructureDeclaration", "AsmSynthesizedDataStructureDeclarationTag");
-    AsmSynthesizedDataStructureDeclaration.setFunctionPrototype("HEADER_BINARY_DATA_STRUCTURE",
-                                                                "../Grammar/BinaryInstruction.code");
-    AsmSynthesizedDataStructureDeclaration.setFunctionSource("SOURCE_BINARY_DATA_STRUCTURE",
-                                                             "../Grammar/BinaryInstruction.code");
-#if 0
-    // DQ (3/15/2007): I can't seem to get this to compile so I will leave it out for now!
-    // Binaries have some easily resolved data structures so we use this to represent these
-    AsmDataStructureDeclaration.setDataPrototype("std::list<SgAsmDeclaration*>","declarationList","",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
-                                                 NO_DELETE, COPY_DATA);
+#ifdef DOCUMENTATION
+    };
 #endif
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    DECLARE_LEAF_CLASS(AsmBlock);
+    IS_SERIALIZABLE(AsmBlock);
 
-    NEW_TERMINAL_MACRO(AsmSynthesizedFieldDeclaration, "AsmSynthesizedFieldDeclaration", "AsmSynthesizedFieldDeclarationTag");
-    // These are used as data members in AsmDataStructureDeclaration
-    AsmSynthesizedFieldDeclaration.setDataPrototype("std::string","name","= \"\"",
-                                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    // Not clear if we want to store the offset explicitly
-    AsmSynthesizedFieldDeclaration.setDataPrototype("uint64_t","offset","= 0",
-                                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#ifdef DOCUMENTATION
+    /** Instruction basic block.
+     *
+     *  One entry point (first instruction) and one exit point (last instruction).  However, SgAsmBlock has also historically
+     *  been used for other things, such as collections of functions. */
+    class SgAsmBlock: public SgAsmStatement {
+    public:
+#endif
+        
+#if 0 // [Robb P Matzke 2017-02-13]: not used anymore? Not serialized.
+        // [tps 05Apr07] needed for the control_flow_graph
+        AsmBlock.setDataPrototype("rose_addr_t", "next_block_true_address", "= 0",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#if 0 // [Robb P Matzke 2017-02-13]: not used anymore? Not serialized.
+        AsmBlock.setDataPrototype("rose_addr_t", "next_block_false_address", "= 0",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Identification.
+         *
+         *  Block unique identification number. Not used by ROSE.
+         *
+         * @{ */
+        rose_addr_t get_id() const;
+        void set_id(rose_addr_t);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("rose_addr_t", "id", "= 0",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Reasons this block was created.
+         *
+         *  This property holds a bit mask of @ref SgAsmBlock::Reason bits that indicate why this block was created.
+         *
+         * @{ */
+        unsigned get_reason() const;
+        void set_reason(unsigned);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("unsigned", "reason", "= SgAsmBlock::BLK_NONE",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        // statementList and successors should have been pointers to nodes that contain the list rather than being the lists
+        // themselves because ROSETTA doesn't allow traversals on multiple list data members--we can traverse either one list or
+        // the other, but not both.  It's too late to change how this part of the AST is structured because so much user code
+        // already depends on it, therefore we can only traverse statementList and not successors. [Robb Matzke 2016-02-25]
+        /** Property: Statements of which this block is composed.
+         *
+         *  This is the list of "statements" that belong to this block. Statements are usually instructions, but historical
+         *  code may have used basic blocks with other children.
+         *
+         * @{ */
+        const SgAsmStatementPtrList& get_statementList() const;
+        void set_statementList(const SgAsmStatementPtrList&);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("SgAsmStatementPtrList", "statementList", "",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        // statementList and successors should have been pointers to nodes that contain the list rather than being the lists
+        // themselves because ROSETTA doesn't allow traversals on multiple list data members--we can traverse either one list or
+        // the other, but not both.  It's too late to change how this part of the AST is structured because so much user code
+        // already depends on it, therefore we can only traverse statementList and not successors. [Robb Matzke 2016-02-25]
+        /** Property: Control flow successors.
+         *
+         *  This property holds the list of addresses which are control flow successors of this block.  The @ref
+         *  rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow graph
+         *  that can reference indeterminate addresses and store data in the edges, and which is copiable.
+         *
+         * @{ */
+        const SgAsmIntegerValuePtrList& get_successors() const;
+        void set_successors(const SgAsmIntegerValuePtrList&);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("SgAsmIntegerValuePtrList", "successors", "",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Whether the successors list is complete.
+         *
+         *  This property is true if the "successors" property holds an incomplete list of successors. Since this
+         *  representation of a control flow graph is unable to represent edges that point to indeterminate addresses (e.g.,
+         *  computed branches), the "successors_complete" property can be used.
+         *
+         *  The @ref rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
+         *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable.
+         *
+         * @{ */
+        bool get_successors_complete() const;
+        void set_successors_complete(bool);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("bool", "successors_complete", "= false",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Holds the immediate dominator block in the control flow graph.
+         *
+         *  The immediate dominator is the closest block to this one (by following reverse control flow edges) through which
+         *  all control paths pass in order to get from the function entry block to this block.
+         *
+         *  The @ref rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
+         *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable.
+         *
+         * @{ */
+        SgAsmBlock* get_immediate_dominator() const;
+        void set_immediate_dominator(SgAsmBlock*);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("SgAsmBlock*", "immediate_dominator", "=NULL",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Cached vertex for control flow graphs.
+         *
+         *  This property is used by the virtual control flow graph mechanism.
+         *
+         *  The @ref rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
+         *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable.
+         *
+         * @{ */
+        size_t get_cached_vertex() const;
+        void set_cached_vertex(size_t);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::ControlFlow
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Likelihood that this block represents real instructions.
+         *
+         *  This property holds the results of an analysis that determines how likely it is that the memory from which this
+         *  basic block was disassembled represents actual instructions that would be executed when the specimen runs.
+         *
+         * @{ */
+        double get_code_likelihood() const;
+        void set_code_likelihood(double);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("double", "code_likelihood", "= 0.0",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Stack pointer at block exit w.r.t. stack pointer at function entry.
+         *
+         *  This is the difference between the stack pointer after the last instruction of this block executes and the stack
+         *  pointer when this block's function was entered.  It stores the result of a stack delta analysis. If stack delta
+         *  analysis hasn't run, or was unable to determine a constant delta, then the special value @ref
+         *  SgAsmInstruction::INVALID_STACK_DELTA is stored.
+         *
+         * @{ */
+        int64_t get_stackDeltaOut() const;
+        void set_stackDeltaOut(int64_t);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("int64_t", "stackDeltaOut", "= SgAsmInstruction::INVALID_STACK_DELTA",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmBlock);
+#if defined(SgAsmBlock_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
+            s & BOOST_SERIALIZATION_NVP(p_reason);
+            s & BOOST_SERIALIZATION_NVP(p_statementList);
+            s & BOOST_SERIALIZATION_NVP(p_successors);
+            s & BOOST_SERIALIZATION_NVP(p_successors_complete);
+            s & BOOST_SERIALIZATION_NVP(p_immediate_dominator);
+            s & BOOST_SERIALIZATION_NVP(p_cached_vertex);
+            s & BOOST_SERIALIZATION_NVP(p_code_likelihood);
+            s & BOOST_SERIALIZATION_NVP(p_stackDeltaOut);
+        }
+#endif
+
+    public:
+        /** Reasons why a basic block might have been assigned to a function. */
+        enum Reason {
+            // Please update SgAsmBlock::reason_str() if you change this enum!
+            BLK_NONE        = 0x00000000,           /**< No particular reason.  Mostly just for initialization. */
+            BLK_ENTRY_POINT = 0x00010000,           /**< Block is an entry point for the function. */
+            BLK_PADDING     = 0x00020000,           /**< Block is used for padding. */
+            BLK_FRAGMENT    = 0x00080000,           /**< This block created because it seems to belong to the function although
+                                                     *   CFG traversal did not find it. */
+            BLK_CFGHEAD     = 0x00100000,           /**< Block serves as an explicit starting point for CFG analysis. */
+            BLK_USERDEF     = 0x00200000,           /**< User says block belongs to the function. */
+            BLK_LEFTOVERS   = 0x00400000,           /**< Block is being assigned to a FUNC_LEFTOVERS function because it could
+                                                     *   not be assigned to any other function. */
+            BLK_JUMPTABLE   = 0x00800000,           /**< Table of code addresses used by indirect branches. */
+            BLK_GRAPH1      = 0x01000000,           /**< Block was added by the main CFG analysis. */
+            BLK_GRAPH2      = 0x02000000,           /**< Block was added by a second pass of CFG analysis. */
+            BLK_GRAPH3      = 0x04000000,           /**< Block was added by a third pass of CFG analysis. */
+                
+            BLK_DEFAULT     = BLK_NONE,             //NO_STRINGIFY
+
+            // ========= Miscellaneous Reasons ===========================================================================
+            // The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is
+            // availalble for users to use as they see fit.
+            BLK_MISCMASK    = 0x000000ff,           /**< Miscellaneous reasons go here. We can store only one such reason at
+                                                     *   a time. */
+            BLK_FINDDATA    = 0x00000001,           /**< Added by Partitioner::FindData, which attaches unassigned parts of the
+                                                     *   disassembly address space to the preceding function. */
+            BLK_POSTFUNC    = 0x00000002            /**< Added by Partitioner::FindPostFunctionInsns, which adds unassigned
+                                                     *   instructions to the immediately preceding function. */
+        };
+
+        /** Add the specified statement to the end of the statement list.
+         *
+         *  This is is usually used to add the next instruction to the end of a basic block. */
+        void append_statement(SgAsmStatement*);
+
+        /** Erase the specified statement.
+         *
+         *  If the specified statement exists in the "statementList" property then it is erased but not deleted. */
+        void remove_statement(SgAsmStatement*);
+
+        // FIXME[Robb P Matzke 2017-02-13]: wrong name -- erases only statements, not all children
+        /** Removes all statements from the block.
+         *
+         *  This makes the block empty, and not having a unique starting virtual address. It does not erase all children, just
+         *  the statement children.  None of the statements that are erased are deleted. */
+        void remove_children();
+
+        /** Fall-through virtual address.
+         *
+         *  A block's fall-through address is the virtual address that follows the last byte of the block's last instruction.
+         *  The block must have instructions (e.g., it cannot be a strict data block). */
+        rose_addr_t get_fallthrough_va();
+
+        /** Returns the function that owns this block.
+         *
+         *  This is just a convenience wrapper around @ref SageInterface::getEnclosingNode. */
+        SgAsmFunction *get_enclosing_function() const;
+
+        /** Determins if a block contains instructions.
+         *
+         *  Returns true if the block has instructions, false otherwise. We look only at the immediate descendants of this
+         *  block.  See also, @ref SageInterface::querySubTree in order to get the list of all instructions or to consider all
+         *  descendants. */
+        bool has_instructions() const;
+
+        /** Determine if a block contains instructions.
+         *
+         *  Returns true if the block has instructions, false otherwise. We look only at the immediate descendants of this
+         *  block.  See also, @ref SageInterface::querySubTree in order to get the list of all instructions or to consider all
+         *  descendants. */
+        bool is_basic_block() const { return has_instructions(); }
+
+        /** Returns true if basic block appears to be a function call.
+         *
+         *  If the target address is known and is a single value then it is stored in the @p target_va argument, otherwise we
+         *  store the maximum 64-bit address.  If the return address for the function call is known then it is stored in the @p
+         *  return_va argument, otherwise @p return_va will contain the maximum 64-bit address. The return address is usually
+         *  the fall-through address of the basic block.
+         *
+         * Note: Use this function in preference to SgAsmInstruction::isFunctionCallSlow() because the latter is intended to be
+         * used by the Partitioner before an AST is created and might not be as accurate. */
+        bool is_function_call(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/);
+
+        /** Multi-line string describing the letters used for basic block reasons.
+         *
+         *  The letters are returned by the padding version of @ref reason_str and appear in unparser output. */
+        static std::string reason_key(const std::string &prefix="");
+
+        /** Returns reason string for this block.
+         *
+         *  The reason string is a very short string describing the reason that the block was created. */
+        std::string reason_str(bool pad) const;
+
+        /** Converts a reason bit vector to a human-friendly string.
+         *
+         *  The second argument is the bit vector of @ref SgAsmBlock::Reason bits.  Some of the positions in the padded return
+         *  value are used for more than one bit.  For instance, the first character can be "L" for leftovers, "N" for padding,
+         *  "E" for entry point, or "-" for none of the above. */
+        static std::string reason_str(bool pad, unsigned reason);
+#endif // SgAsmBlock_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    DECLARE_LEAF_CLASS(AsmStaticData);
+    IS_SERIALIZABLE(AsmStaticData);
 
-    // DQ (9/2/2013): We may later wish to change "AsmFunction" to "AsmSynthesizedFunction", since functions are
-    // philosophically a synthesized concept within a binary (except where Binary API standards must be followed to permit
-    // seperate compilation).
-    // RPM (9/18/2013): On the other hand, most things on the interpretation side of the AST will be synthesized: basic
-    // blocks, functions, code vs. data, thunk tables, trampolines, exception handling structures, data types, CFG structures
-    // like switch statements, ... do users want or need "synthesized" in all those node type names?
+#ifdef DOCUMENTATION
+    /** Represents static data in an executable.
+     *
+     *  For now, we don't associate any type with the data because ROSE's data type infrastructure (source or binary) is not
+     *  capable of representing the information we need: multiple interpretations of overlapping parts of memory (i.e., two or
+     *  more types for the same bytes); arbitrary offsets and padding in structured types; size-specific integers and
+     *  floating-point types; regions of unknown type; ease of improving type information by filling in more details as the
+     *  type is discovered; etc. */
+    class SgAsmStaticData: public SgAsmStatement {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Raw bytes.
+         *
+         *  These are the raw memory bytes of static data that appear in the binary specimen. Type information is painted onto
+         *  these bytes.
+         *
+         * @{ */
+        const SgUnsignedCharList& get_raw_bytes() const;
+        void set_raw_bytes(const SgUnsignedCharList&);
+        /** @} */
+#else
+        AsmStaticData.setDataPrototype("SgUnsignedCharList", "raw_bytes", "",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+        DECLARE_OTHERS(AsmStaticData);
+#if defined(SgAsmStaticData_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
+            s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
+        }
+#endif
+
+    public:
+        /** Property: Size of static data in bytes.
+         *
+         *  This returns the number of raw data bytes rather than the size of any data type painted onto those bytes. */
+        size_t get_size() const { return p_raw_bytes.size(); }
+#endif // SgAsmStaticData_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    DECLARE_LEAF_CLASS(AsmSynthesizedDataStructureDeclaration);
+    IS_SERIALIZABLE(AsmSynthesizedDataStructureDeclaration);
+
+#ifdef DOCUMENTATION
+    /** Declaration-like nodes that encapsulate multiple instructions.
+     *
+     *  Binary ASTs have two sides: the container side that corresponds to the ELF/PE/etc. file formats, and the interpretation
+     *  side that corresponds to instructions and data from multiple sources (specimen + dynamic libraries) organized into
+     *  multiple SgAsmInterpretation where each interpretation makes a coherent binary entity such as the DOS part of a PE
+     *  executable.  The declaration-like nodes that follow appear on the interpretation side of the AST.  We may add other
+     *  declaration nodes to the container side of the AST at a later time.
+     *
+     *  These interpretation-side declaration-like nodes are used by the projects/BinaryDataStructureRecognition even if they
+     *  aren't used internally by ROSE. */
+    class SgAsmSynthesizedDataStructureDeclaration: public SgAsmSynthesizedDeclaration {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmSynthesizedDataStructureDeclaration);
+#if defined(SgAsmSynthesizedDataStructureDeclaration) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S & s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
+        }
+#endif
+     protected:
+          SgAsmSynthesizedDeclarationPtrList p_declarationList;
+
+    public:
+        /** Appends another declaration. */
+        void append_declaration(SgAsmSynthesizedDeclaration *declaration) {
+            p_declarationList.push_back(declaration);
+        }
+#endif // SgAsmSynthesizedDataStructureDeclaration_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmSynthesizedFieldDeclaration);
+    IS_SERIALIZABLE(AsmSynthesizedFieldDeclaration);
+
+#ifdef DOCUMENTATION
+    // FIXME[Robb P Matzke 2017-02-13]: what is this?
+    class SgAsmSynthesizedFieldDeclaration: public SgAsmSynthesizedDeclaration {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         * @{ */
+        const std::string& get_name() const;
+        void set_name(const std::string&);
+        /** @} */
+#else
+        AsmSynthesizedFieldDeclaration.setDataPrototype("std::string","name","= \"\"",
+                                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                                        NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        // FIXME[Robb P Matzke 2017-02-13]: Is this bytes, bits, or what?
+        /** Property: Offset.
+         *
+         * @{ */
+        uint64_t get_offset() const;
+        void set_ofset(uint64_t);
+        /** @} */
+#else
+        // Not clear if we want to store the offset explicitly
+        AsmSynthesizedFieldDeclaration.setDataPrototype("uint64_t","offset","= 0",
+                                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                                        NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmSynthesizedFieldDeclaration);
+#if defined(SgAsmSynthesizedFieldDeclaration_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
+        }
+#endif
+#endif // SgAsmSynthesizedFieldDeclaration_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     NEW_NONTERMINAL_MACRO(AsmSynthesizedDeclaration,
                           AsmSynthesizedDataStructureDeclaration | AsmFunction | AsmSynthesizedFieldDeclaration,
                           "AsmSynthesizedDeclaration", "AsmSynthesizedDeclarationTag", false );
-    AsmSynthesizedDeclaration.setFunctionPrototype("HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
+    AsmSynthesizedFieldDeclaration.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmSynthesizedDeclaration);
+
+#ifdef DOCUMENTATION
+    /** Base class for synthesized declarations.
+     *
+     *  A synthesized declaration is one created by ROSE which does not appear in the binary specimen. At one point we
+     *  considered adding "synthesized" to all such intities, but later decided against it since most declarations are missing
+     *  from binary specimens are are synthesized by ROSE, and would therefore lead to a lot of extra letters in many class
+     *  names. */
+    class SgAsmSynthesizedDeclaration: public SgAsmStatement {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmSynthesizedDeclaration);
+#if defined(SgAsmSynthesizedDeclaration_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
+        };
+#endif
+#endif // SgAsmSynthesizedDeclaration_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

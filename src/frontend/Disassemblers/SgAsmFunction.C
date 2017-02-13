@@ -11,8 +11,6 @@
 
 using namespace rose;
 
-/** Returns a multi-line string describing the letters used for function reasons.  The letters are returned by the padding
- *  version of reason_str(). */
 std::string
 SgAsmFunction::reason_key(const std::string &prefix)
 {
@@ -28,15 +26,12 @@ SgAsmFunction::reason_key(const std::string &prefix)
             prefix + "      \"C\" means the call is in the CFG.\n");
 }
 
-/** Returns reason string for this function. */
 std::string
 SgAsmFunction::reason_str(bool do_pad) const
 {
     return reason_str(do_pad, get_reason());
 }
 
-/** Class method that converts a reason bit vector to a human-friendly string. The second argument is the bit vector of
- *  SgAsmFunction::FunctionReason bits. */
 std::string
 SgAsmFunction::reason_str(bool do_pad, unsigned r)
 {
@@ -106,44 +101,6 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
     return result;
 }
 
-/** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
- *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
- *  addresses. Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
- *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no nodes then
- *  @p extents is not modified and the low and high addresses are both set to zero.
- *
- *  If an @p selector functor is provided, then only nodes for which it returns true are considered part of the function.  This
- *  can be used for such things as filtering out data blocks that are marked as padding.  For example:
- *
- *  @code
- *  class NotPadding: public SgAsmFunction::NodeSelector {
- *  public:
- *      virtual bool operator()(SgNode *node) {
- *          SgAsmStaticData *data = isSgAsmStaticData(node);
- *          SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(data);
- *          return !data || !block || block->get_reason()!=SgAsmBlock::BLK_PADDING;
- *      }
- *  } notPadding;
- *
- *  AddressIntervalSet extents;
- *  function->get_extent(&extents, NULL, NULL, &notPadding);
- *  @endcode
- *
- *  Here's another example that calculates the extent of only the padding data, based on the negation of the filter in the
- *  previous example:
- *
- *  @code
- *  class OnlyPadding: public NotPadding {
- *  public:
- *      virtual bool operator()(SgNode *node) {
- *          return !NotPadding::operator()(node);
- *      }
- *  } onlyPadding;
- *
- *  AddressIntervalSet extents;
- *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
- *  @endcode
- */
 size_t
 SgAsmFunction::get_extent(AddressIntervalSet *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
 {
@@ -249,3 +206,85 @@ SgAsmFunction::get_entry_block() const {
     }
     return NULL;
 }
+
+int 
+SgAsmFunction::nrOfValidInstructions( std::vector<SgNode*>& succs  ) {
+//  std::vector<SgNode*> succs = this->get_traversalSuccessorContainer();
+  std::vector<SgNode*>::reverse_iterator j = succs.rbegin();
+  int instructions = succs.size();
+  bool foundRet=false;
+  bool nodeOtherThanNopAfterRetExists=false;    
+/*
+  if (j!=succs.begin())
+    j--;
+  else
+    return 0;
+*/
+  for (;j!=succs.rend(); j++) {
+     SgAsmX86Instruction* n = isSgAsmX86Instruction(*j);
+     if (n && (n->get_kind() == x86_ret || n->get_kind() == x86_hlt)) {
+          foundRet=true;
+          break;
+    } else {
+       if (n && n->get_kind() != x86_nop) {
+          nodeOtherThanNopAfterRetExists= true;
+       }
+       instructions--;
+    }
+  }
+  if (!foundRet)
+     instructions = succs.size();
+  // if we find a return and there are NOPs following it somewhere,
+  // we cut off the CFG at the NOP but we keep valid instructions
+  // after the RET
+  if (foundRet)
+    if (nodeOtherThanNopAfterRetExists)
+      return succs.size();
+   
+  return instructions;
+}
+
+void
+SgAsmFunction::remove_children(  )
+   {
+     p_statementList.clear();
+   }
+
+void
+SgAsmFunction::append_dest( SgAsmStatement* statement )
+   {
+     p_dest.push_back(statement);
+   }
+
+void
+SgAsmFunction::append_statement( SgAsmStatement* statement )
+   {
+     p_statementList.push_back(statement);
+   }
+
+void
+SgAsmFunction::remove_statement( SgAsmStatement* statement )
+   {
+     SgAsmStatementPtrList::iterator l = p_statementList.begin();
+     for (;l!=p_statementList.end();l++) {
+        SgAsmStatement* st = *l;
+        if (st==statement) {
+             break;
+        }
+     }  
+        if (l!=p_statementList.end())
+            p_statementList.erase(l);
+   }
+
+// DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
+int
+SgAsmFunction::get_stackNutralityMetric() const
+   {
+  // This function computes the positon of the stack at the end of the function relative to the 
+  // start of the function and contributes to a scoring of functions as valid functions.
+
+     printf ("Error: This SgAsmFunction::get_stackNutralityMetric() function is not yet implemented. \n");
+     ROSE_ASSERT(false);
+
+     return 0;
+   }
