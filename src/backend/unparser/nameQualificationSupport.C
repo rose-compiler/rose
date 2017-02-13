@@ -3054,7 +3054,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                   {
                  // If your ever curious, you can output the type name.
                  // printf ("Error: typeNameString = %s \n",typeNameString.c_str());
-#if 0
+#if 1
                  // DQ (2/7/2017): Output offending type name string to a file for inspection.
                     ROSE_ASSERT(positionStatement != NULL);
                     positionStatement->get_file_info()->display("Output offending type name string to a file for inspection: debug");
@@ -3071,6 +3071,11 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                     output_file.close();
 #endif
                     printf ("Error: type names should not be this long... (even in boost, I think) typeNameString.length() = %" PRIuPTR " \n",typeNameString.length());
+                    printf ("nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+                    if (nodeReferenceToType->get_file_info())
+                       {
+                         nodeReferenceToType->get_file_info()->display("Error: type names should not be this long...: debug");
+                       }
                     ROSE_ASSERT(false);
                   }
 #if 0
