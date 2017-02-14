@@ -645,20 +645,6 @@ HEADER_ELF_HEADER_END
 
 
 
-HEADER_ELF_SECTION_TABLE_START
-        public:
-                explicit SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
-                        : SgAsmGenericSection(fhdr->get_file(), fhdr)
-                        {ctor();}
-                virtual SgAsmElfSectionTable *parse();
-                SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*);
-                rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
-                virtual bool reallocate();
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-        private:
-                void ctor();    
-HEADER_ELF_SECTION_TABLE_END
 
 
 
@@ -1344,130 +1330,9 @@ HEADER_ELF_SYMVER_NEEDED_AUX_START
 HEADER_ELF_SYMVER_NEEDED_AUX_END
 
 
-HEADER_ELF_SEGMENT_TABLE_START
-        public:
-                explicit SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
-                        : SgAsmGenericSection(fhdr->get_file(), fhdr)
-                        {ctor();}
-                virtual SgAsmElfSegmentTable *parse();
-                SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*);
-                rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
-                virtual bool reallocate();
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-        private:
-                void ctor();
-HEADER_ELF_SEGMENT_TABLE_END
 
 
 
-HEADER_ELF_SEGMENT_TABLE_ENTRY_START
-        public:
-
-                /* Segment types (host order). All other values are reserved. */
-                enum SegmentType {
-                        PT_NULL         = 0,            /* entry is ignored; other values of entry are undefined */
-                        PT_LOAD         = 1,            /* loadable by mapping file contents into memory */
-                        PT_DYNAMIC      = 2,            /* dynamic linking information */
-                        PT_INTERP       = 3,            /* segment contains NUL-terminated path name of interpreter */
-                        PT_NOTE         = 4,            /* auxiliary information */
-                        PT_SHLIB        = 5,            /* Reserved w/unspecified semantics; such a file is nonconforming */
-                        PT_PHDR         = 6,            /* Segment contains the segment table itself (program header array) */
-                        PT_TLS          = 7,            /* Thread local storage */
-
-                        /* OS- and Processor-specific ranges */
-                        PT_LOOS         = 0x60000000,   /* Values reserved for OS-specific semantics */
-                        PT_HIOS         = 0x6fffffff,
-                        PT_LOPROC       = 0x70000000,   /* Values reserved for processor-specific semantics */
-                        PT_HIPROC       = 0x7fffffff,
-
-                        /* OS-specific values for GNU/Linux */
-                        PT_GNU_EH_FRAME = 0x6474e550,   /* GCC .eh_frame_hdr segment */
-                        PT_GNU_STACK    = 0x6474e551,   /* Indicates stack executability */
-                        PT_GNU_RELRO    = 0x6474e552,   /* Read-only after relocation */
-                        PT_PAX_FLAGS    = 0x65041580,   /* Indicates PaX flag markings */
-
-                        /* OS-specific values for Sun */
-                        PT_SUNWBSS      = 0x6ffffffa,   /* Sun Specific segment */
-                        PT_SUNWSTACK    = 0x6ffffffb    /* Stack segment */
-                };
-
-                /* Segment bit flags */
-                enum SegmentFlags {
-                        PF_NONE         = 0,            /* Initial value in c'tor */
-                        PF_RESERVED     = 0x000ffff8,   /* Reserved bits */
-                        PF_XPERM        = 0x00000001,   /* Execute permission */
-                        PF_WPERM        = 0x00000002,   /* Write permission */
-                        PF_RPERM        = 0x00000004,   /* Read permission */
-                        PF_OS_MASK      = 0x0ff00000,   /* os-specific bits */
-                        PF_PROC_MASK    = 0xf0000000    /* Processor-specific bits */
-                };
-
-#ifdef _MSC_VER
-# pragma pack (1)
-#endif
-                /* File format of an ELF Segment header. Byte order of members depends on e_ident value in file header. This code
-                 * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool
-                 * Interface Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5)
-                 * man page. Segment table entries (a.k.a., ELF program headers) either describe process segments or give
-                 * supplementary info which does not contribute to the process image. */
-                struct Elf32SegmentTableEntry_disk {
-                        uint32_t        p_type;         /* 0x00 kind of segment */
-                        uint32_t        p_offset;       /* 0x04 file offset */
-                        uint32_t        p_vaddr;        /* 0x08 desired mapped address of segment */
-                        uint32_t        p_paddr;        /* 0x0c physical address where supported (unused by System V) */
-                        uint32_t        p_filesz;       /* 0x20 bytes in file (may be zero or other value smaller than p_memsz) */
-                        uint32_t        p_memsz;        /* 0x24 number of bytes when mapped (may be zero) */
-                        uint32_t        p_flags;        /* 0x28 */
-                        uint32_t        p_align;        /* 0x2c alignment for file and memory (0,1=>none); power of two */
-                }                                       /* 0x30 */
-// DQ (3/7/2013): Adding support to restrict visability to SWIG.
-#ifndef SWIG
-#ifndef _MSC_VER
-                __attribute__((packed))
-#endif
-#endif
-                ;
-
-                struct Elf64SegmentTableEntry_disk {
-                        uint32_t        p_type;         /* 0x00 */
-                        uint32_t        p_flags;        /* 0x04 */
-                        uint64_t        p_offset;       /* 0x08 */
-                        uint64_t        p_vaddr;        /* 0x10 */
-                        uint64_t        p_paddr;        /* 0x18 */
-                        uint64_t        p_filesz;       /* 0x20 */
-                        uint64_t        p_memsz;        /* 0x28 */
-                        uint64_t        p_align;        /* 0x30 */
-                }                                       /* 0x38 */
-// DQ (3/7/2013): Adding support to restrict visability to SWIG.
-#ifndef SWIG
-#ifndef _MSC_VER
-                __attribute__((packed))
-#endif
-#endif
-                ;
-#ifdef _MSC_VER
-# pragma pack ()
-#endif
-
-
-                SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
-                        const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
-                SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
-                        const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
-
-                void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
-                void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
-                void update_from_section(SgAsmElfSection*);
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-                static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType);
-                static std::string to_string(SgAsmElfSegmentTableEntry::SegmentFlags);
-
-
-        private:
-                void ctor(ByteOrder::Endianness, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
-                void ctor(ByteOrder::Endianness, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
-HEADER_ELF_SEGMENT_TABLE_ENTRY_END
 
 
 
@@ -3431,28 +3296,6 @@ SgAsmElfSection::set_linked_section ( SgAsmElfSection* linked_section )
 SOURCE_ELF_SECTION_END
 
 
-SOURCE_ELF_SEGMENT_TABLE_ENTRY_START
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk)
-   {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     ctor(sex, disk);
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-   }
-
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk)
-   {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     ctor(sex, disk);
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-   }
-
-SOURCE_ELF_SEGMENT_TABLE_ENTRY_END
 
 
 
