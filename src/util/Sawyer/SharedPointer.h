@@ -55,7 +55,7 @@ private:
         if (pointee_!=NULL && 0==releaseOwnership(pointee_))
             delete pointee_;
         pointee_ = NULL;
-        s >> BOOST_SERIALIZATION_NVP(pointee_);
+        s >> pointee_;
         acquireOwnership(pointee_);
     }
 
