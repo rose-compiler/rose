@@ -12,9 +12,13 @@
 // identify it and provide a pointer to use it instead.  This appears to be a normalization within EDG,
 // one that only effects the use in ROSE as a source-to-source compiler.
 
+#if 0
 class FixupTemplateArguments
 // : public SgSimpleProcessing
    : public ROSE_VisitTraversal
+#else
+class FixupTemplateArguments : public SgSimpleProcessing
+#endif
    {
      public:
       //! Function to support traversal of types (where islands can hide)
@@ -23,12 +27,23 @@ class FixupTemplateArguments
       //! Required traversal function
           void visit (SgNode* node);
 
+       // FixupTemplateArguments () {}
+          void processTemplateArgument ( SgTemplateArgument* templateArgument );
+
        // This avoids a warning by g++
        // virtual ~FixupTemplateArgumentsOnMemoryPool(); 
+
+          bool contains_private_type (SgType* type);
+          bool contains_private_type (SgTemplateArgument* templateArgument);
+          bool contains_private_type ( const SgTemplateArgumentPtrList & templateArgListPtr );
+
+       // DQ (2/11/2017): Debugging support.
+          std::string generate_string_name (SgType* type, SgNode* nodeReferenceToType);
    };
 
 
-void fixupTemplateArguments();
+// void fixupTemplateArguments();
+void fixupTemplateArguments( SgNode* node );
 
 // endif for FIXUP_TEMPLATE_ARGUMENTS_H
 #endif
