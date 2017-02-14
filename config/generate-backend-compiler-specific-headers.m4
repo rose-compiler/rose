@@ -129,6 +129,22 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
         exit 1
    fi
 
+   if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xclang"; then
+      cp ${srcdir}/config/rose_specific_clang_atomic ./include-staging/${compilerName}_HEADERS/atomic
+   fi
+
+# DQ (2/4/2017): Need to add required header file to support Intel compiler because we are using 
+# the __INTEL_CLANG_COMPILER macro to use EDG with the Intel header files.
+   if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xintel"; then
+      cp ${srcdir}/config/rose_specific_tgmath_clang.h ./include-staging/${compilerName}_HEADERS/tgmath_clang.h
+   fi
+
+# DQ (1/15/2017): Debugging info to debug clange on Mac OSX.
+echo "edg_major_version_number = $edg_major_version_number"
+echo "compilerName = ${compilerName}"
+echo "BACKEND_CXX_COMPILER_VENDOR = $BACKEND_CXX_COMPILER_VENDOR"
+echo "build_vendor = $build_vendor"
+
  # DQ (12/14/2016): We now want this to apply to EDG 4.12 because it does not handle C++11 constexpr 
  # return type of builtin functions properly. Note that this is only an issue when processing file 
  # generated via CPP (or using -E flags to the compiler) header files.
@@ -145,7 +161,16 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
            ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
 
            echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions."
-           sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+
+         # DQ (1/17/2017): Make this different for Mac OSX and other (Linux) systems.
+         # DQ (1/15/2017): Note that on Mac OSX it is required to use the additional option to specify the backup file name (I think this is the more portable form).
+         # sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+         # sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           if test "x$build_vendor" = "xapple"; then
+              sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           else
+              sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+           fi
 
          # echo "ERROR: Could not identify the EDG minor version number."
          # exit 1
@@ -157,8 +182,8 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
  # "./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h"
 
- # echo "Exiting as a test in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
- # exit 1
+# echo "Exiting as a test in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
+# exit 1
 ])
 
 

@@ -548,13 +548,13 @@ my %config = load_config $config_file, \%variables;
 # is disabled.
 my $test_title = $config{title} || $target;
 if ($config{disabled} && $config{disabled} ne 'no') {
-  print "  TEST     $test_title (disabled: $config{disabled})\n";
+  print "  TEST     $test_title \033[31;1m(disabled: $config{disabled})\033[0m\n";
   open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
   print TARGET "test is disabled: $config{disabled}\n";
   close TARGET;
   exit 0;
 } elsif ($config{require_memory} && $config{require_memory} > installed_memory) {
-  print "  TEST     $test_title (disabled: this machine does not have enough memory)\n";
+  print "  TEST     $test_title \033[31;1m(disabled: this machine does not have enough memory)\033[0m\n";
   open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
   print TARGET "test is skipped: not enough memory installed\n";
   close TARGET;

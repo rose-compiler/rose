@@ -956,7 +956,8 @@ CustomMemoryPoolDOTGeneration::edgeFilter(SgNode* nodeSource, SgNode* nodeSink, 
                     nodeSource,nodeSource->class_name().c_str(),nodeSink,nodeSink->class_name().c_str(),DOTgraph.skipEdgeSet.size());
              }
 #endif
-#if 1
+#if 0
+       // DQ (1/25/2017): Don't skip these.
        // DQ (1/8/2017): Don't skip these edges in general.
           EdgeType edge(nodeSource,nodeSink,edgeName);
           skipEdge(edge);
@@ -984,7 +985,8 @@ CustomMemoryPoolDOTGeneration::edgeFilter(SgNode* nodeSource, SgNode* nodeSink, 
              }
         }
 
-#if 1
+#if 0
+  // DQ (1/25/2017): Don't skip these.
   // DQ (1/8/2017): Don't skip these edges in general.
   // DQ (11/26/2016): Debugging edge filtering.
      if (edgeName == "scope")
