@@ -15,6 +15,7 @@
 
 #include <boost/range/iterator_range.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <iterator>
 #include <vector>
@@ -305,12 +306,13 @@ private:
     template<class S>
     void save(S &s, const unsigned /*version*/) const {
         size_t n = size();
-        s <<n;
+        s <<BOOST_SERIALIZATION_NVP(n);
         for (const ProtoNode *pnode = head_->next; pnode != head_; pnode = pnode->next) {
             ASSERT_require(n-- > 0);
             size_t id = pnode->dereference().id();
             const Value &value = pnode->dereference().value();
-            s <<id <<value;
+            s <<BOOST_SERIALIZATION_NVP(id);
+            s <<BOOST_SERIALIZATION_NVP(value);
         }
     }
 
@@ -318,14 +320,14 @@ private:
     void load(S &s, const unsigned /*version*/) {
         clear();
         size_t n = 0;
-        s >>n;
+        s >>BOOST_SERIALIZATION_NVP(n);
         ASSERT_require(index_.empty());
         index_.resize(n, NULL);
         for (size_t i=0; i<n; ++i) {
             size_t id = 0;
-            s >>id;
+            s >>BOOST_SERIALIZATION_NVP(id);
             Node *node = new (allocator_.allocate(sizeof(Node))) Node(id, Value());
-            s >>node->value();
+            s >>boost::serialization::make_nvp("value", node->value());
 
             ASSERT_require(id < index_.size());
             ASSERT_require(index_[id] == NULL);

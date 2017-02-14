@@ -188,6 +188,10 @@ class ROSE_DLL_API LoopTreeDepComp
   void DumpTree() const;
   void DumpDep() const;
   void DumpNode( LoopTreeNode *s) const;
+
+  // a hack to support building loop tree with non-canonical loops in order to generate dependence graph
+  // Liao, 1/25/2017
+  static bool supportNonFortranLoop; 
 };
 
 class LoopTreeDepGraphSubtree : public GraphSelect<LoopTreeDepGraph>

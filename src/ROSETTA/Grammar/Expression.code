@@ -4686,11 +4686,29 @@ SgArrowStarOp::get_type() const
                someType = modifierType->get_base_type();
                goto keepStripping;
              }
+#if 0
+       // DQ (1/19/2017): Added support for SgTemplateType.  However we might want to handle this similarly to SgDotStarExp::get_type() (above)
+          case V_SgTemplateType:
+             {
+#if 1
+               printf ("In SgArrowStarOp::get_type(): Found SgTemplateType \n");
+#endif
+               SgTemplateType* templateType = isSgTemplateType(someType);
+               someType = templateType->get_base_type();
+               goto keepStripping;
+             }
+#endif
 
           default:
              {
+#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
+            // DQ (1/19/2017): I think we want to fix this similarly to the case of SgDotStarExp::get_type() (above)
+            // printf ("Using default case in SgArrowStarOp::get_type() differently with EDG version 4.x someType = %s \n",someType->class_name().c_str());
+               returnType = someType;
+#else
                printf ("Error: default reached in In SgArrowStarOp::get_type() someType = %s \n",someType->class_name().c_str());
                ROSE_ASSERT(false);
+#endif
              }
         }
 
