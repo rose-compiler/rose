@@ -147,6 +147,7 @@ print_testcodes:
 	echo $(TESTCODES)
 
 check-local:
+if !ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_5_2
 	@echo "C++14 tests using GNU version 5.2 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
@@ -161,7 +162,10 @@ if USING_CLANG_COMPILER
 endif
 endif
 else
-	@echo "C++14 tests require configuration with EDG version 4.11 and GNU version 5.2 or later backend compilers."
+	@echo "C++14 tests require configuration with EDG version 4.12 and GNU version 5.2 or later backend compilers (compiler too old)."
+endif
+else
+	@echo "C++14 tests require configuration with EDG version 4.12 and GNU version 5.2 or later backend compilers (EDG version too old)."
 endif
 	@echo "*********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx14_tests: make check rule complete (terminated normally) ******"

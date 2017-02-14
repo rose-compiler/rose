@@ -1,4 +1,9 @@
 // Test that serialization works.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include <rose.h>
 
@@ -286,4 +291,5 @@ main() {
     std::cerr <<"Disabled because libboost_serialization is was not enabled at ROSE configure time\n";
 }
 
+#endif
 #endif

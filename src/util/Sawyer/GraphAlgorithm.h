@@ -244,6 +244,36 @@ graphCopySubgraph(const Graph &g, const std::vector<size_t> &vertexIdVector) {
     return retval;
 }
 
+/** Erase parallel edges.
+ *
+ *  Given a graph, erase all but one parallel edge between any two vertices. Parallel edges are defined as any two edges where
+ *  both have the same source vertex, and both have the same target vertex, and both have equal values. Edge values must be
+ *  equality comparable but need not be less-than comparable. */
+template<class Graph>
+void
+graphEraseParallelEdges(Graph &g) {
+    BOOST_FOREACH (const typename Graph::Vertex &src, g.vertices()) {
+        if (src.nOutEdges() > 1) {
+            Map<typename Graph::ConstVertexIterator /*target*/, std::vector<typename Graph::ConstEdgeIterator> > edgesByTarget;
+            typename Graph::ConstEdgeIterator nextEdge = src.outEdges().begin();
+            while (nextEdge != src.outEdges().end()) {
+                typename Graph::ConstEdgeIterator curEdge = nextEdge++;
+                std::vector<typename Graph::ConstEdgeIterator> &prevEdges = edgesByTarget.insertMaybeDefault(curEdge->target());
+                bool erased = false;
+                BOOST_FOREACH (typename Graph::ConstEdgeIterator prevEdge, prevEdges) {
+                    if (curEdge->value() == prevEdge->value()) {
+                        g.eraseEdge(curEdge);
+                        erased = true;
+                        break;
+                    }
+                }
+                if (!erased)
+                    prevEdges.push_back(curEdge);
+            }
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Common subgraph isomorphism (CSI)
 // Loosely based on the algorithm presented by Evgeny B. Krissinel and Kim Henrick

@@ -64,6 +64,12 @@ t0024.c\
 t0025.c\
 t0026.c
 
+# DQ (1/28/2017): This test code (testing __builtin_next_arg()) is failing for GNU 4.9 (so backup the exclusion of this test to GNU 4.9).
+if !ROSE_USING_GCC_VERSION_LATER_4_9
+C_TESTCODES += \
+dC0010.c
+endif
+
 # DQ (11/11/2012): Added support to build testTranslator if it has not been built yet.
 $(TRANSLATOR_EXECUTABLE):
 	cd $(top_builddir)/tests/; $(MAKE) testTranslator

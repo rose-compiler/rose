@@ -23,6 +23,7 @@ namespace BinaryAnalysis {
  *  query whether each is fully present in this container, report its name if present, and then remove its part from this
  *  container. If the container is non-empty at the end then all that can be done is to report which parts are still present. */
 class RegisterParts {
+
 private:
     typedef Sawyer::Container::Interval<size_t> BitRange;
     typedef Sawyer::Container::IntervalSet<BitRange> BitSet;
@@ -37,7 +38,8 @@ private:
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & majr_ & minr_;
+            s & BOOST_SERIALIZATION_NVP(majr_);
+            s & BOOST_SERIALIZATION_NVP(minr_);
         }
 #endif
 
@@ -65,7 +67,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & map_;
+        s & BOOST_SERIALIZATION_NVP(map_);
     }
 #endif
     
