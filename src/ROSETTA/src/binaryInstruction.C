@@ -3458,7 +3458,7 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Returns a string that describes what the one-letter function reasons mean in the unparser output. */
         static std::string reason_key(const std::string &prefix="");
-        
+
         /** Returns a very short string describing the reason mask. */
         std::string reason_str(bool pad) const;
 
@@ -3546,7 +3546,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmBlock);
     IS_SERIALIZABLE(AsmBlock);
 
@@ -3558,7 +3558,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmBlock: public SgAsmStatement {
     public:
 #endif
-        
+
 #if 0 // [Robb P Matzke 2017-02-13]: not used anymore? Not serialized.
         // [tps 05Apr07] needed for the control_flow_graph
         AsmBlock.setDataPrototype("rose_addr_t", "next_block_true_address", "= 0",
@@ -3760,7 +3760,7 @@ void Grammar::setUpBinaryInstructions() {
             BLK_GRAPH1      = 0x01000000,           /**< Block was added by the main CFG analysis. */
             BLK_GRAPH2      = 0x02000000,           /**< Block was added by a second pass of CFG analysis. */
             BLK_GRAPH3      = 0x04000000,           /**< Block was added by a third pass of CFG analysis. */
-                
+
             BLK_DEFAULT     = BLK_NONE,             //NO_STRINGIFY
 
             // ========= Miscellaneous Reasons ===========================================================================
@@ -3851,7 +3851,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmStaticData);
     IS_SERIALIZABLE(AsmStaticData);
 
@@ -3908,7 +3908,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmSynthesizedDataStructureDeclaration);
     IS_SERIALIZABLE(AsmSynthesizedDataStructureDeclaration);
 
@@ -3928,7 +3928,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         DECLARE_OTHERS(AsmSynthesizedDataStructureDeclaration);
-#if defined(SgAsmSynthesizedDataStructureDeclaration) || defined(DOCUMENTATION)
+#if defined(SgAsmSynthesizedDataStructureDeclaration_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
@@ -4011,7 +4011,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_NONTERMINAL_MACRO(AsmSynthesizedDeclaration,
                           AsmSynthesizedDataStructureDeclaration | AsmFunction | AsmSynthesizedFieldDeclaration,
                           "AsmSynthesizedDeclaration", "AsmSynthesizedDeclarationTag", false );
@@ -4156,15 +4156,82 @@ void Grammar::setUpBinaryInstructions() {
 
     /*************************************************************************************************************************
      *                                         ELF Section Tables
-     * The ELF Section Table is itself a section.  The entries of the table are stored with the section they describe rather
-     * than storing them all in the SgAsmSectionTable node.  We can reconstruct the ELF Section Table since sections have
-     * unique ID numbers that are their original indices in the ELF Section Table.
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    NEW_TERMINAL_MACRO(AsmElfSectionTable, "AsmElfSectionTable", "AsmElfSectionTableTag");
-    AsmElfSectionTable.setFunctionPrototype("HEADER_ELF_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
+    DECLARE_LEAF_CLASS(AsmElfSectionTable);
+    IS_SERIALIZABLE(AsmElfSectionTable);
+
+#ifdef DOCUMENTATION
+    /** Represents an ELF section table.
+     *
+     *  The ELF Section Table is itself a section.  The entries of the table are stored with the section they describe rather
+     *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the ELF Section Table since sections have
+     *  unique ID numbers that are their original indices in the ELF Section Table. */
+    class SgAsmElfSectionTable: public SgAsmGenericSection {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmElfSectionTable);
+#if defined(SgAsmElfSectionTable_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        }
+#endif
+
+    public:
+        /** Constructor creates section table within the AST. */
+        explicit SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
+            : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+            ctor();
+        }
+
+        /** Parses an ELF Section Table.
+         *
+         *  Parses an ELF section table and constructs and parses all sections reachable from the table. The section is
+         *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
+         *  object. */
+        virtual SgAsmElfSectionTable *parse();
+
+        /** Attaches a previously unattached ELF Section to the section table.
+         *
+         *  If @p section is an ELF String Section (SgAsmElfStringSection) that contains an ELF String Table
+         *  (SgAsmElfStringTable) and the ELF Section Table has no associated string table then the @p section will be used as
+         *  the string table to hold the section names.
+         *
+         *  This method complements SgAsmElfSection::init_from_section_table. This method initializes the section table from
+         *  the section while init_from_section_table() initializes the section from the section table.
+         *
+         *  Returns the new section table entry linked into the AST. */
+        SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*);
+
+        /** Returns info about the size of the entries based on information already available.
+         *
+         *  Any or all arguments may be null pointers if the caller is not interested in the value. */
+        rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+
+        /** Update prior to unparsing. */
+        virtual bool reallocate();
+
+        /** Write the section table section back to disk */
+        virtual void unparse(std::ostream&) const;
+
+        /** Print some debugging info */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    private:
+        void ctor();    
+#endif // SgAsmElfSectionTable_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4485,52 +4552,429 @@ void Grammar::setUpBinaryInstructions() {
         void ctor(ByteOrder::Endianness, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*);
 #endif // SgAsmElfSectionTableEntry_OTHERS
 
+#ifdef DOCUMENTATION
+    };
+#endif
+
 
 
     /*************************************************************************************************************************
      *                                         ELF Segment Tables
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmElfSegmentTable);
+    IS_SERIALIZABLE(AsmElfSegmentTable);
+
+#ifdef DOCUMENTATION
+    /** Represents an ELF segment table.
+     * 
      * The ELF Segment Table is an ELF Section that has entries describing the various segments of the ELF file.  Each segment
      * is also an SgAsmElfSection and the entries of the ELF Segment Table are associated with the SgAsmElfSection they
      * describe.  The ELF Segment Table can be reconstructed by traversing the AST and finding the SgAsmElfSegmentTableEntry
-     * nodes.
-     *************************************************************************************************************************/
+     * nodes. */
+    class SgAsmElfSegmentTable: public SgAsmGenericSection {
+    public:
+#endif
 
-    NEW_TERMINAL_MACRO(AsmElfSegmentTable, "AsmElfSegmentTable", "AsmElfSegmentTableTag");
-    AsmElfSegmentTable.setFunctionPrototype("HEADER_ELF_SEGMENT_TABLE", "../Grammar/BinaryInstruction.code");
+        DECLARE_OTHERS(AsmElfSegmentTable);
+#if defined(SgAsmElfSegmentTable_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        }
+#endif
+
+    public:
+        /** Constuct segment table linked into the AST. */
+        explicit SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
+            : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+            ctor();
+        }
+
+        /** Parses an ELF Segment (Program Header) Table.
+         *
+         *  Parses an ELF segment table and constructs and parses all segments reachable from the table. The section is
+         *  extended as necessary based on the number of entries and teh size of each entry. */
+        virtual SgAsmElfSegmentTable *parse();
+
+        /** Attaches new segments to the segment table.
+         *
+         *  Attaches a previously unattached ELF Segment (@ref SgAsmElfSection) to the ELF Segment Table (@ref
+         *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::init_from_segment_table. This method
+         *  initializes the segment table from the segment while init_from_segment_table initializes the segment from the
+         *  segment table.
+         *  
+         *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much
+         *  in their features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table
+         *  and/or the ELF Segment Table and you can determine where it was located by calling @ref get_section_entry and
+         *  @ref get_segment_entry.
+         *
+         *  Returns the new segment table entry linked into the AST. */
+        SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*);
+
+        /** Returns info about the size of the entries based on information already available.
+         *
+         *  Any or all arguments may be null pointers if the caller is not interested in the value. */
+        rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+
+        /** Pre-unparsing updates */
+        virtual bool reallocate();
+
+        /** Write the segment table to disk. */
+        virtual void unparse(std::ostream&) const;
+
+        /** Print some debugging info */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        private:
+                void ctor();
+#endif // SgAsmElfSegmentTable_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmElfSegmentTableEntryList);
+    IS_SERIALIZABLE(AsmElfSegmentTableEntryList);
+
+#ifdef DOCUMENTATION
+    class SgAsmElfSegmentTableEntryList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Segment table entries.
+         *
+         *  List of entries in this segment table.  The reason we have a whole AST node dedicated to holding this list rather
+         *  than just storing the list directly in the nodes that need it is due to limitations with ROSETTA.
+         *
+         * @{ */
+        const SgAsmElfSegmentTableEntryPtrList& get_entries();
+        void set_entries(const SgAsmElfSegmentTableEntryPtrList&);
+        /** @} */
+#else
+        AsmElfSegmentTableEntryList.setDataPrototype("SgAsmElfSegmentTableEntryPtrList", "entries", "",
+                                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
+                                                     NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfSegmentTableEntryList);
+#if defined(SgAsmElfSegmentTableEntryList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+        }
+#endif
+#endif // SgAsmElfSegmentTableEntryList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    NEW_TERMINAL_MACRO(AsmElfSegmentTableEntryList, "AsmElfSegmentTableEntryList", "AsmElfSegmentTableEntryListTag");
-    AsmElfSegmentTableEntryList.setDataPrototype("SgAsmElfSegmentTableEntryPtrList", "entries", "",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    DECLARE_LEAF_CLASS(AsmElfSegmentTableEntry);
+    IS_SERIALIZABLE(AsmElfSegmentTableEntry);
 
+#ifdef DOCUMENTATION
+    /** Represents one entry of a segment table. */
+    class SgAsmElfSegmentTableEntry: public SgAsmExecutableFileFormat {
+    public:
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: Index into table.
+         *
+         *  This is the index of this entry within the ELF segment table.
+         *
+         * @{ */
+        size_t get_index() const;
+        void set_index(size_t);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("size_t", "index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
-    NEW_TERMINAL_MACRO(AsmElfSegmentTableEntry, "AsmElfSegmentTableEntry", "AsmElfSegmentTableEntryTag");
-    AsmElfSegmentTableEntry.setFunctionPrototype("HEADER_ELF_SEGMENT_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
-    AsmElfSegmentTableEntry.setFunctionSource("SOURCE_ELF_SEGMENT_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
-    AsmElfSegmentTableEntry.setDataPrototype("size_t", "index", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentType", "type",
-                                             "= SgAsmElfSegmentTableEntry::PT_LOAD",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentFlags", "flags",
-                                             "= SgAsmElfSegmentTableEntry::PF_NONE",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "offset", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "vaddr", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "paddr", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "filesz", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "memsz", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "align", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSegmentTableEntry.setDataPrototype("SgUnsignedCharList", "extra", "",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#ifdef DOCUMENTATION
+        /** Property: Segment type.
+         *
+         * @{ */
+        SegmentType get_type() const;
+        void set_type(SegmentType);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentType", "type",
+                                                 "= SgAsmElfSegmentTableEntry::PT_LOAD",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Segment flags.
+         *
+         * @{ */
+        SegmentFlags get_flags() const;
+        void set_flags(SegmentFlags);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentFlags", "flags",
+                                                 "= SgAsmElfSegmentTableEntry::PF_NONE",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Offset of segment in the file.
+         *
+         *  This is the starting byte offset of the segment within the file.
+         *
+         * @{ */
+        rose_addr_t get_offset() const;
+        void set_offset(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "offset", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Virtual address.
+         *
+         *  This is the virtual address for the start of the segment as stored in the segment table. This is only a hint to the
+         *  loader, which may map the segment to some other virtual address.
+         *
+         * @{ */
+        rose_addr_t get_vaddr() const;
+        void set_vaddr(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "vaddr", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: ELF paddr field.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        rose_addr_t get_paddr() const;
+        void set_paddr(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "paddr", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Size of segment in file.
+         *
+         *  Size of the segment in bytes as it is stored in the file.
+         *
+         * @{ */
+        rose_addr_t get_filesz() const;
+        void set_filesz(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "filesz", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property:  Size of segment in memory.
+         *
+         *  Size of the segment in bytes after it is loaded into virtual memory.
+         *
+         * @{ */
+        rose_addr_t get_memsz() const;
+        void set_memsz(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "memsz", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Alignment.
+         *
+         *  Alignment in memory in bytes. Zero means the same thing as one, namely no alignment.
+         *
+         * @{ */
+        rose_addr_t get_align() const;
+        void set_align(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t", "align", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Extra bytes.
+         *
+         *  These are bytes from the table entry that are not assigned any specific purpose by the ELF specification.
+         *
+         * @{ */
+        const SgUnsignedCharList& get_extra() const;
+        void set_extra(const SgUnsignedCharList&);
+        /** @} */
+#else
+        AsmElfSegmentTableEntry.setDataPrototype("SgUnsignedCharList", "extra", "",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfSegmentTableEntry);
+#if defined(SgAsmElfSegmentTableEntry_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_index);
+            s & BOOST_SERIALIZATION_NVP(p_type);
+            s & BOOST_SERIALIZATION_NVP(p_flags);
+            s & BOOST_SERIALIZATION_NVP(p_offset);
+            s & BOOST_SERIALIZATION_NVP(p_vaddr);
+            s & BOOST_SERIALIZATION_NVP(p_paddr);
+            s & BOOST_SERIALIZATION_NVP(p_filesz);
+            s & BOOST_SERIALIZATION_NVP(p_memsz);
+            s & BOOST_SERIALIZATION_NVP(p_align);
+            s & BOOST_SERIALIZATION_NVP(p_extra);
+        }
+#endif
+
+    public:
+        /** Segment types (host order). All other values are reserved. */
+        enum SegmentType {
+            PT_NULL         = 0,                        /**< Ignored entry. Other values of entry are undefined. */
+            PT_LOAD         = 1,                        /**< Loadable by mapping file contents into memory. */
+            PT_DYNAMIC      = 2,                        /**< Dynamic linking information. */
+            PT_INTERP       = 3,                        /**< Segment contains NUL-terminated path name of interpreter. */
+            PT_NOTE         = 4,                        /**< Auxiliary information. */
+            PT_SHLIB        = 5,                        /**< Reserved w/unspecified semantics. Such a file is nonconforming. */
+            PT_PHDR         = 6,                        /**< Segment contains the segment table itself (program header array) */
+            PT_TLS          = 7,                        /**< Thread local storage. */
+
+            // OS- and Processor-specific ranges
+            PT_LOOS         = 0x60000000,               /**< Values reserved for OS-specific semantics */
+            PT_HIOS         = 0x6fffffff,
+            PT_LOPROC       = 0x70000000,               /**< Values reserved for processor-specific semantics */
+            PT_HIPROC       = 0x7fffffff,
+
+            // OS-specific values for GNU/Linux
+            PT_GNU_EH_FRAME = 0x6474e550,               /**< GCC .eh_frame_hdr segment */
+            PT_GNU_STACK    = 0x6474e551,               /**< Indicates stack executability */
+            PT_GNU_RELRO    = 0x6474e552,               /**< Read-only after relocation */
+            PT_PAX_FLAGS    = 0x65041580,               /**< Indicates PaX flag markings */
+
+            // OS-specific values for Sun
+            PT_SUNWBSS      = 0x6ffffffa,               /**< Sun Specific segment */
+            PT_SUNWSTACK    = 0x6ffffffb                /**< Stack segment */
+        };
+
+        /** Segment bit flags */
+        enum SegmentFlags {
+            PF_NONE         = 0,                        /**< Initial value in c'tor */
+            PF_RESERVED     = 0x000ffff8,               /**< Reserved bits */
+            PF_XPERM        = 0x00000001,               /**< Execute permission */
+            PF_WPERM        = 0x00000002,               /**< Write permission */
+            PF_RPERM        = 0x00000004,               /**< Read permission */
+            PF_OS_MASK      = 0x0ff00000,               /**< os-specific bits */
+            PF_PROC_MASK    = 0xf0000000                /**< Processor-specific bits */
+        };
+
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        /** File format of an ELF Segment header.
+         *
+         * Byte order of members depends on e_ident value in file header. This code comes directly from "Executable and
+         * Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool Interface Standards (TIS) and not from any
+         * header file. The 64-bit structure is gleaned from the Linux elf(5) man page. Segment table entries (a.k.a., ELF
+         * program headers) either describe process segments or give supplementary info which does not contribute to the
+         * process image. */
+        struct Elf32SegmentTableEntry_disk {
+            uint32_t        p_type;                  /**< 0x00 kind of segment */
+            uint32_t        p_offset;                /**< 0x04 file offset */
+            uint32_t        p_vaddr;                 /**< 0x08 desired mapped address of segment */
+            uint32_t        p_paddr;                 /**< 0x0c physical address where supported (unused by System V) */
+            uint32_t        p_filesz;                /**< 0x20 bytes in file (may be zero or other value smaller than p_memsz) */
+            uint32_t        p_memsz;                 /**< 0x24 number of bytes when mapped (may be zero) */
+            uint32_t        p_flags;                 /**< 0x28 */
+            uint32_t        p_align;                 /**< 0x2c alignment for file and memory (0,1=>none); power of two */
+        }                                            /* 0x30 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+
+        struct Elf64SegmentTableEntry_disk {
+            uint32_t        p_type;         /* 0x00 */
+            uint32_t        p_flags;        /* 0x04 */
+            uint64_t        p_offset;       /* 0x08 */
+            uint64_t        p_vaddr;        /* 0x10 */
+            uint64_t        p_paddr;        /* 0x18 */
+            uint64_t        p_filesz;       /* 0x20 */
+            uint64_t        p_memsz;        /* 0x28 */
+            uint64_t        p_align;        /* 0x30 */
+        }                                       /* 0x38 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        /** Construct node from 32-bit file data. */
+        SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+                                  const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
+
+        /** Construct node from 64-bit file data. */
+        SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+                                  const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
+
+        /** Converts segment table entry back into disk structure.
+         *
+         * @{ */
+        void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
+        void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
+        /** @} */
+
+        /** Update this segment table entry with newer information from the section */
+        void update_from_section(SgAsmElfSection*);
+
+        /** Print some debugging info */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        /** Convert segment type to string. */
+        static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType);
+
+        /** Convert segment flags to string. */
+        static std::string to_string(SgAsmElfSegmentTableEntry::SegmentFlags);
+
+    private:
+        void ctor(ByteOrder::Endianness, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
+        void ctor(ByteOrder::Endianness, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
+#endif // SgAsmElfSegmentTableEntry_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
 
 
 
@@ -6219,7 +6663,7 @@ void Grammar::setUpBinaryInstructions() {
         virtual std::string get_string(bool escape=false) const ROSE_OVERRIDE;
         virtual void set_string(const std::string&) ROSE_OVERRIDE;
         virtual void set_string(rose_addr_t) ROSE_OVERRIDE;
-        
+
     private:
         void ctor();
 #endif // SgAsmBasicString_OTHERS
@@ -6230,7 +6674,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_TERMINAL_MACRO(AsmStoredString, "AsmStoredString", "AsmStoredStringTag");
     AsmStoredString.setFunctionPrototype("HEADER_STORED_STRING", "../Grammar/BinaryInstruction.code");
     AsmStoredString.setDataPrototype("SgAsmStringStorage*", "storage", "= NULL",
@@ -6292,7 +6736,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
-        
+
     /*************************************************************************************************************************
      *                                         Generic Binary IR Nodes
      * These are mostly base classes for the container-specific nodes defined above.
@@ -6553,7 +6997,7 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmExecutableFileFormat);
 
     DECLARE_HEADERS(AsmExecutableFileFormat);
-#if defined(SgAsmExecutableFileFormat) || defined(DOCUMENTATION)
+#if defined(SgAsmExecutableFileFormat_HEADERS) || defined(DOCUMENTATION)
 #include <Sawyer/Message.h>
 #endif // SgAsmExecutableFileFormat_HEADERS
 
@@ -6770,7 +7214,7 @@ void Grammar::setUpBinaryInstructions() {
                                                          *   IXP460, IXP465 cores */
             ISA_ARM_ARM11               = 0x090d,       /**< ARMv{6,6T2,6KZ,6K} cores */
             ISA_ARM_Cortex              = 0x090e,       /**< Cortex-{A8,A9,A9 MPCore,R4(F),M3,M1} cores */
-          
+
             // Others, not yet incorporated into this enum
             ISA_OTHER_Family            = 0xf000,
 
