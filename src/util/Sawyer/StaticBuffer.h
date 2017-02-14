@@ -16,6 +16,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/base_object.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/split_member.hpp>
 
 namespace Sawyer {
@@ -42,17 +43,19 @@ private:
 
     template<class S>
     void save(S &s, const unsigned version) const {
-        s & boost::serialization::base_object<Super>(*this);
-        s & size_ & rdonly_;
-        s & boost::serialization::make_array(values_, size_);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(size_);
+        s & BOOST_SERIALIZATION_NVP(rdonly_);
+        s & boost::serialization::make_nvp("values", boost::serialization::make_array(values_, size_));
     }
 
     template<class S>
     void load(S &s, const unsigned version) {
-        s & boost::serialization::base_object<Super>(*this);
-        s & size_ & rdonly_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(size_);
+        s & BOOST_SERIALIZATION_NVP(rdonly_);
         values_ = new Value[size_];
-        s & boost::serialization::make_array(values_, size_);
+        s & boost::serialization::make_nvp("values", boost::serialization::make_array(values_, size_));
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();

@@ -1,6 +1,13 @@
 /* Tests ability to build a new executable from scratch */
-//#include "fileoffsetbits.h"
 #include "sage3basic.h"
+
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
+//#include "fileoffsetbits.h"
 
 int
 main() 
@@ -372,5 +379,5 @@ main()
 
     return 0;
 }
-
     
+#endif

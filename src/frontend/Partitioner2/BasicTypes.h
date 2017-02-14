@@ -220,9 +220,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & usingSemantics;
-        s & checkingCallBranch;
-        s & basicBlockSemanticsAutoDrop;
+        s & BOOST_SERIALIZATION_NVP(usingSemantics);
+        s & BOOST_SERIALIZATION_NVP(checkingCallBranch);
+        s & BOOST_SERIALIZATION_NVP(basicBlockSemanticsAutoDrop);
     }
 
 public:

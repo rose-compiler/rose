@@ -1,3 +1,9 @@
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 #include <rose.h>
 #include <BinarySymbolicExpr.h>
 #include <SymbolicSemantics2.h>
@@ -94,3 +100,5 @@ main() {
     test_add_simplifications();
     test_svalues();
 }
+
+#endif

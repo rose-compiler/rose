@@ -2375,7 +2375,8 @@ int openFortranParser_main(int argc, char **argv );
 
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 // This is defined seperately only in configured for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
-int experimental_openFortranParser_main(int argc, char **argv );
+// int experimental_openFortranParser_main(int argc, char **argv );
+SgUntypedFile* experimental_openFortranParser_main(int argc, char **argv );
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -3833,9 +3834,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           string parseTableOption = "--parseTable";
           experimentalFrontEndCommandLine.push_back(parseTableOption);
 
+       // DQ (1/26/2017): We want to put the Fortran.tbl into /nfs/casc/overture/ROSE/aterm_for_rose_bin so that Craig and I can work togehter.
        // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
        // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
-          string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
+       // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
+          string path_to_table = "/nfs/casc/overture/ROSE/aterm_for_rose_bin/Fortran.tbl";
 
           experimentalFrontEndCommandLine.push_back(path_to_table);
 
@@ -3850,7 +3853,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
           printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-          frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
+       // frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
+          SgUntypedFile* untypedFile = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
+          frontendErrorLevel = (untypedFile != NULL) ? 0 : 1;
 #else
           printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
 #endif
@@ -4863,6 +4868,46 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      int clang_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = clang_main (c_cxx_argc, c_cxx_argv, *this);
 #else /* default to EDG */
+
+  // DQ (1/24/2017): We want to conditionally support C++11 input files. It is an error 
+  // to violate this conditions.  Within the ROSE regression test we don't test C++11
+  // files if they would violate this conditions. 
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER == 9))
+     #ifdef BACKEND_CXX_IS_GNU_COMPILER
+       // DQ (1/24/2017): Add restrictions to handle exclusigon of C++11 specific files when ROSE is configured using EDG 4.9 and GNU 4.9 as the backend.
+          #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 9))
+            // And if this is a C++11 file.
+               if (this->get_Cxx11_only() == true)
+                  {
+                    printf ("Note: C++11 input files to ROSE are NOT supported using EDG 4.9 configuration with GNU compilers 4.9 and greater (configure ROSE using EDG 4.12) \n");
+                    exit(1);
+                  }
+          #else
+               #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 5)
+            // And if this is a C++11 file.
+               if (this->get_Cxx11_only() == true)
+                  {
+                    printf ("Note: C++11 input files to ROSE are NOT supported using EDG 4.9 configuration with GNU compilers 5.x and greater (configure ROSE using EDG 4.12) \n");
+                    exit(1);
+                  }
+               #endif
+          #endif
+     #else
+          #ifdef BACKEND_CXX_IS_CLANG_COMPILER
+               #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 5))
+            // And if this is a C++11 file.
+               if (this->get_Cxx11_only() == true)
+                  {
+                    printf ("Note: C++11 input files to ROSE are NOT supported using EDG 4.9 configuration with Clang/LLVM compiler 3.5 (configure ROSE using EDG 4.12) \n");
+                    exit(1);
+                  }
+               #endif
+          #endif
+     #endif
+#else
+  // DQ (1/24/2017): C++, C++11, and C++14 files are allowed for EDG 4.12.
+#endif
+
      int edg_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = edg_main (c_cxx_argc, c_cxx_argv, *this);
 #endif /* clang or edg */

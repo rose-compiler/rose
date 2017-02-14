@@ -13,6 +13,7 @@
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
+#include <boost/serialization/nvp.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -38,8 +39,8 @@ private:
     // BOOST_CLASS_REGISTER(Sawyer::Container::NullBuffer<size_t,uint8_t>);
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & boost::serialization::base_object<Super>(*this);
-        s & size_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(size_);
     }
 
 protected:

@@ -121,6 +121,7 @@ namespace AutoParallelization
       defuse = new DefUseAnalysis(project);
     }
 
+
     ROSE_ASSERT(defuse != NULL);
     // int result = ;
     defuse->run(debug);
@@ -181,6 +182,8 @@ namespace AutoParallelization
   // TODO generate dep graph for the entire function and reuse it for all loops
   LoopTreeDepGraph*  ComputeDependenceGraph(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot)
   {
+
+    LoopTreeDepComp::supportNonFortranLoop=true;
     ROSE_ASSERT(loop && array_interface&& annot);
     //TODO check if its a canonical loop
 
@@ -395,6 +398,7 @@ namespace AutoParallelization
   // Return NULL if the loop is not canonical
   SgInitializedName* getLoopInvariant(SgNode* loop)
   {
+#if 0    
     AstInterfaceImpl faImpl(loop);
     AstInterface fa(&faImpl);
     AstNodePtr ivar2 ;
@@ -402,11 +406,18 @@ namespace AutoParallelization
     bool result=fa.IsFortranLoop(loop2, &ivar2);
     if (!result)
       return NULL;
-    SgVarRefExp* invar = isSgVarRefExp(AstNodePtrImpl(ivar2).get_ptr());
+   SgVarRefExp* invar = isSgVarRefExp(AstNodePtrImpl(ivar2).get_ptr());
     ROSE_ASSERT(invar);
     SgInitializedName* invarname = invar->get_symbol()->get_declaration();
     // cout<<"debug ivar:"<<invarname<< " name "
     // <<invarname->get_name().getString()<<endl;
+#endif
+     // Qing's IsFortranLoop does not check the structured block requirement
+    // We use our own isCanonicalLoop instead.
+    SgInitializedName* invarname = NULL; 
+    if (!SageInterface::isCanonicalForLoop(loop, &invarname) )
+      return NULL;
+ 
     return invarname;
   }
 

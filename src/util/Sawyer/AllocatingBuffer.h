@@ -14,6 +14,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/vector.hpp>
 #include <cstring>                                      // memcpy
 #include <string>
@@ -43,8 +44,9 @@ private:
     // BOOST_CLASS_REGISTER(Sawyer::Container::AllocatingBuffer<size_t,uint8_t>);
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & boost::serialization::base_object<Super>(*this);
-        s & size_ & values_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(size_);
+        s & BOOST_SERIALIZATION_NVP(values_);
     }
 
 protected:
