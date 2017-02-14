@@ -6,7 +6,6 @@
 using namespace rose;
 using namespace rose::Diagnostics;
 
-/** Converts 32-bit disk representation to host representation */
 void
 SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf32SectionTableEntry_disk *disk) 
 {
@@ -22,7 +21,6 @@ SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf32SectionTab
     p_sh_entsize   = ByteOrder::disk_to_host(sex, disk->sh_entsize);
 }
     
-/** Converts 64-bit disk representation to host representation */
 void
 SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SectionTableEntry_disk *disk) 
 {
@@ -38,7 +36,6 @@ SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SectionTab
     p_sh_entsize   = ByteOrder::disk_to_host(sex, disk->sh_entsize);
 }
 
-/** Encode a section table entry into the disk structure */
 void *
 SgAsmElfSectionTableEntry::encode(ByteOrder::Endianness sex, Elf32SectionTableEntry_disk *disk) const
 {
@@ -70,6 +67,28 @@ SgAsmElfSectionTableEntry::encode(ByteOrder::Endianness sex, Elf64SectionTableEn
     ByteOrder::host_to_disk(sex, p_sh_entsize,   &(disk->sh_entsize));
 
     return disk;
+}
+
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+                                                     const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
+{
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+    ctor(sex, disk);
+#else
+    printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+    ROSE_ASSERT(false);
+#endif
+}
+
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+                                                     const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
+{
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+    ctor(sex, disk);
+#else
+    printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+    ROSE_ASSERT(false);
+#endif
 }
 
 /** Non-parsing constructor for an ELF Section Table */
@@ -423,7 +442,6 @@ SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t 
     return entry_size * nentries;
 }
 
-/** Update this section table entry with newer information from the section */
 void
 SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 {
@@ -546,7 +564,6 @@ SgAsmElfSectionTableEntry::to_string(SectionFlags val)
   return str;
 }
 
-/** Print some debugging info */
 void
 SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
