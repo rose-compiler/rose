@@ -4161,36 +4161,329 @@ void Grammar::setUpBinaryInstructions() {
      * unique ID numbers that are their original indices in the ELF Section Table.
      *************************************************************************************************************************/
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     NEW_TERMINAL_MACRO(AsmElfSectionTable, "AsmElfSectionTable", "AsmElfSectionTableTag");
     AsmElfSectionTable.setFunctionPrototype("HEADER_ELF_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    NEW_TERMINAL_MACRO(AsmElfSectionTableEntry, "AsmElfSectionTableEntry", "AsmElfSectionTableEntryTag");
-    AsmElfSectionTableEntry.setFunctionPrototype("HEADER_ELF_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
-    AsmElfSectionTableEntry.setFunctionSource("SOURCE_ELF_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
-    AsmElfSectionTableEntry.setDataPrototype("unsigned", "sh_name", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("SgAsmElfSectionTableEntry::SectionType", "sh_type", "= SHT_PROGBITS",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("unsigned long", "sh_link", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("unsigned long", "sh_info", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("uint64_t", "sh_flags", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_addr", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_offset", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_size", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_addralign", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_entsize", "= 0",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSectionTableEntry.setDataPrototype("SgUnsignedCharList", "extra", "",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    DECLARE_LEAF_CLASS(AsmElfSectionTableEntry);
+    IS_SERIALIZABLE(AsmElfSectionTableEntry);
+
+#ifdef DOCUMENTATION
+    /** Represents one entry in an ELF section table. */
+    class SgAsmElfSectionTableEntry: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_name.
+         *
+         *  The sh_name property of an ELF section table. See official ELF specification.
+         *
+         * @{ */
+        unsigned get_sh_name() const;
+        void set_sh_name(unsigned);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("unsigned", "sh_name", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_type.
+         *
+         *  The sh_type property of an ELF section table. See official ELF specification.
+         *
+         * @{ */
+        SectionType get_sh_type() const;
+        void set_sh_type(SectionType);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("SgAsmElfSectionTableEntry::SectionType", "sh_type", "= SHT_PROGBITS",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_link.
+         *
+         *  The sh_link property of an ELF section table. See official ELF specification.
+         *
+         * @{ */
+        unsigned long get_sh_link() const;
+        void set_sh_link(unsigned long);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("unsigned long", "sh_link", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_info.
+         *
+         *  The sh_info property of an ELF section table. See official ELF specification.
+         *
+         * @{ */
+        unsigned long get_sh_info() const;
+        void set_sh_info(unsigned long);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("unsigned long", "sh_info", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_flags.
+         *
+         *  The sh_flags property of an ELF section table.  See official ELF specification.
+         *
+         * @{ */
+        uint64_t get_sh_flags() const;
+        void set_sh_flags(uint64_t);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("uint64_t", "sh_flags", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_addr.
+         *
+         *  The sh_addr property of an ELF section table. See official ELF specification.
+         *
+         * @{ */
+        rose_addr_t get_sh_addr() const;
+        void set_sh_addr(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_addr", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_offset.
+         *
+         *  The sh_offset property of an ELF section table. See official ELF specification.
+         *
+         * @{ */
+        rose_addr_t get_sh_offset() const;
+        void set_sh_offset(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_offset", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_size.
+         *
+         *  The sh_size property of an ELF section table. See official ELF specification.
+         *
+         * @{ */
+        rose_addr_t get_sh_size() const;
+        void set_sh_size(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_size", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_addralign.
+         *
+         *  The sh_addralign property of an ELF section table. See official ELF specification.
+         *
+         * @{ */
+        rose_addr_t get_sh_addralign() const;
+        void set_sh_addralign(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_addralign", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sh_entsize.
+         *
+         *  The sh_entsize property of an ELF section table. See official ELF specification.
+         *
+         * @{ */
+        rose_addr_t get_sh_entsize() const;
+        void set_sh_entsize(rose_addr_t);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("rose_addr_t", "sh_entsize", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Extra bytes not officially part of the table entry.
+         *
+         *  These are the extra bytes that aren't assigned any meaning by the specification.
+         *
+         * @{ */
+        const SgUnsignedCharList& get_extra() const;
+        void set_extra(const SgUnsignedCharLit&);
+        /** @} */
+#else
+        AsmElfSectionTableEntry.setDataPrototype("SgUnsignedCharList", "extra", "",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                                 NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfSectionTableEntry);
+#if defined(SgAsmElfSectionTableEntry_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_sh_name);
+            s & BOOST_SERIALIZATION_NVP(p_sh_type);
+            s & BOOST_SERIALIZATION_NVP(p_sh_link);
+            s & BOOST_SERIALIZATION_NVP(p_sh_info);
+            s & BOOST_SERIALIZATION_NVP(p_sh_flags);
+            s & BOOST_SERIALIZATION_NVP(p_sh_addr);
+            s & BOOST_SERIALIZATION_NVP(p_sh_offset);
+            s & BOOST_SERIALIZATION_NVP(p_sh_size);
+            s & BOOST_SERIALIZATION_NVP(p_sh_addralign);
+            s & BOOST_SERIALIZATION_NVP(p_sh_entsize);
+            s & BOOST_SERIALIZATION_NVP(p_extra);
+        }
+#endif
+
+    public:
+        /** Section types (host order). All other values are reserved. */
+        enum SectionType {
+            SHT_NULL        = 0,                  /**< Section header is inactive */
+            SHT_PROGBITS    = 1,                  /**< Info defined by the program; format and meaning determined by prog */
+            SHT_SYMTAB      = 2,                  /**< Complete symbol table */
+            SHT_STRTAB      = 3,                  /**< String table */
+            SHT_RELA        = 4,                  /**< Relocation entries with explicit addends (e.g., Elf32_Rela types) */
+            SHT_HASH        = 5,                  /**< Symbol hash table (used by dynamic linking) */
+            SHT_DYNAMIC     = 6,                  /**< Information for dynamic linking */
+            SHT_NOTE        = 7,                  /**< Information that marks the file in some way */
+            SHT_NOBITS      = 8,                  /**< Like SHT_PROGBITS but occupies no file space */
+            SHT_REL         = 9,                  /**< Relocation entries without explicit addends (e.g., Elf32_Rel types) */
+            SHT_SHLIB       = 10,                 /**< Reserved, unspecified semantics; Present only in non-conforming files */
+            SHT_DYNSYM      = 11,                 /**< Minimal set of dynamic linking symbols */
+
+            SHT_LOOS        = 0x60000000,         /**< OS specific semantics */
+            SHT_GNU_verdef  = 0x6ffffffd,         /**< Symbol Version Definitions [gnu extension] .gnu.version_d */
+            SHT_GNU_verneed = 0x6ffffffe,         /**< Symbol Version Requirements [gnu extension] .gnu.version_r */
+            SHT_GNU_versym  = 0x6fffffff,         /**< Symbol Version Table [gnu extension] .gnu.version */
+            SHT_HIOS        = 0x6fffffff,         /**< End OS specific semantics */       /*NO_STRINGIFY*/
+
+            SHT_LOPROC      = 0x70000000,         /* Processor specific semantics */
+            SHT_HIPROC      = 0x7fffffff,
+            SHT_LOUSER      = 0x80000000,         /* Application specific semantics */
+            SHT_HIUSER      = 0xffffffff
+        };
+
+        /** Section Flags (host order).  All other values are reserved. */
+        enum SectionFlags {
+            SHF_NULL=                  0,        /**< Invalid section flag (added for rose) */
+            SHF_WRITE=           (1 << 0),       /**< Writable */
+            SHF_ALLOC=           (1 << 1),       /**< Occupies memory during execution */
+            SHF_EXECINSTR=       (1 << 2),       /**< Executable */
+            SHF_MERGE=           (1 << 4),       /**< Might be merged */
+            SHF_STRINGS=         (1 << 5),       /**< Contains nul-terminated strings */
+            SHF_INFO_LINK=       (1 << 6),       /**< 'sh_info' contains SHT index */
+            SHF_LINK_ORDER=      (1 << 7),       /**< Preserve order after combining */
+            SHF_OS_NONCONFORMING=(1 << 8),       /**< Non-standard OS specific handling required */
+            SHF_GROUP=           (1 << 9),       /**< Section is member of a group.  */
+            SHF_TLS=             (1 << 10),      /**< Section hold thread-local data.  */
+            SHF_MASKOS=          0x0ff00000,     /**< OS-specific.  */
+            SHF_MASKPROC=        0xf0000000      /**< Processor-specific */
+        };
+
+        /** File format of an ELF Section header.
+         *
+         *  Byte order of members depends on e_ident value in file header. This code
+         * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool
+         * Interface Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5) man
+         * page. */
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        struct Elf32SectionTableEntry_disk {
+            uint32_t        sh_name;             /* 0x00 Section name; index into section header string table */
+            uint32_t        sh_type;             /* 0x04 Section contents and semantics (see SectionType enum) */
+            uint32_t        sh_flags;            /* 0x08 Bit flags */
+            uint32_t        sh_addr;             /* 0x0c Desired mapped address */
+            uint32_t        sh_offset;           /* 0x10 Section location in file unless sh_type==SHT_NOBITS */
+            uint32_t        sh_size;             /* 0x14 Section size in bytes */
+            uint32_t        sh_link;             /* 0x18 Section ID of another section; meaning depends on section type */
+            uint32_t        sh_info;             /* 0x1c Extra info depending on section type */
+            uint32_t        sh_addralign;        /* 0x20 Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned*/
+            uint32_t        sh_entsize;          /* 0x24 If non-zero, size in bytes of each array member in the section */
+        }                                        /* 0x28 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
+#ifndef _MSC_VER
+        __attribute__((packed))
+#endif
+#endif
+        ;
+
+        struct Elf64SectionTableEntry_disk {
+            uint32_t        sh_name;             /* 0x00 see Elf32SectionTableEntry_disk */
+            uint32_t        sh_type;             /* 0x04 */
+            uint64_t        sh_flags;            /* 0x08 */
+            uint64_t        sh_addr;             /* 0x10 */
+            uint64_t        sh_offset;           /* 0x18 */
+            uint64_t        sh_size;             /* 0x20 */
+            uint32_t        sh_link;             /* 0x28 */
+            uint32_t        sh_info;             /* 0x2c */
+            uint64_t        sh_addralign;        /* 0x30 */
+            uint64_t        sh_entsize;          /* 0x38 */
+        }                                        /* 0x40 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
+#ifndef _MSC_VER
+        __attribute__((packed))
+#endif
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        /** Converts 32-bit disk representation to host representation. */
+        SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+                                  const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
+
+        /** Converts 64-bit disk representation to host representation. */
+        SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+                                  const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
+
+        /** Encode a section table entry into the disk structure.
+         *
+         * @{ */
+        void *encode(ByteOrder::Endianness sex,
+                     SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
+        void *encode(ByteOrder::Endianness sex,
+                     SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
+        /** @} */
+
+        /** Update this section table entry with newer information from the section. */
+        void update_from_section(SgAsmElfSection*);
+
+        /** Print some debugging info */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        // Use rose::stringify... function instead.
+        static std::string to_string(SgAsmElfSectionTableEntry::SectionType);
+        static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags);
+
+    private:
+        void ctor(ByteOrder::Endianness, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*);
+        void ctor(ByteOrder::Endianness, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*);
+#endif // SgAsmElfSectionTableEntry_OTHERS
 
 
 
