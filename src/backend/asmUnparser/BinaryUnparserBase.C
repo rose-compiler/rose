@@ -20,7 +20,6 @@ namespace Unparser {
 
 State::State(const P2::Partitioner &p, const Settings &settings, const Base &frontUnparser)
     : partitioner_(p), registerNames_(p.instructionProvider().registerDictionary()), frontUnparser_(frontUnparser) {
-    ASSERT_not_null(frontUnparser);
     if (settings.function.cg.showing)
         cg_ = p.functionCallGraph(false);
 }
