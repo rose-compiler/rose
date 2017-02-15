@@ -417,9 +417,19 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #if 0
           printf ("In Unparser::unparseFile(): generateNameQualificationSupport(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
 #endif
-       // printf ("Developing a new implementation of the name qualification support. \n");
+#if 1
+          if (SgProject::get_verbose() > 0)
+             {
+               printf ("Calling name qualification support. \n");
+             }
+#endif
           generateNameQualificationSupport(file,referencedNameSet);
-       // printf ("DONE: new name qualification support built. \n*************************\n\n");
+#if 1
+          if (SgProject::get_verbose() > 0)
+             {
+               printf ("DONE: Calling name qualification support. \n");
+             }
+#endif
 #endif
 
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.

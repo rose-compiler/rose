@@ -3,6 +3,11 @@
  * and does everything the hard way.  This allows us more control over what happens and even allows us to disassemble raw
  * buffers of machine instructions.  This test also does a variety of analyses and Robb uses it as a general tool and staging
  * area for testing new features before they're added to ROSE. */
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include "rose.h"
 
@@ -1698,7 +1703,5 @@ main(int argc, char *argv[])
     return 0;
 }
 
-
-
-
+#endif
 #endif

@@ -7,6 +7,11 @@
  *
  * The process should be started in Windows XP manually after this test is running.
  */
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include "rose.h"
 
@@ -148,3 +153,4 @@ int main(int argc, char *argv[])
 }
 
 #endif /*ROSE_USE_ETHER*/
+#endif

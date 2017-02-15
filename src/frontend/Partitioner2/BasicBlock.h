@@ -49,7 +49,9 @@ public:
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & expr_ & type_ & confidence_;
+            s & BOOST_SERIALIZATION_NVP(expr_);
+            s & BOOST_SERIALIZATION_NVP(type_);
+            s & BOOST_SERIALIZATION_NVP(confidence_);
         }
 #endif
 
@@ -135,22 +137,22 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not saved
-        s & isFrozen_;
-        s & startVa_;
-        s & comment_;
-        s & insns_;
-        s & dispatcher_;                                // FIXME[Robb P Matzke 2016-11-07]
-        s & operators_;                                 // FIXME[Robb P Matzke 2016-11-07]
-        s & initialState_;
-        s & usingDispatcher_;
-        s & optionalPenultimateState_;
-        s & dblocks_;
-        s & insnAddrMap_;
-        s & successors_;
-        s & ghostSuccessors_;
-        s & isFunctionCall_;
-        s & isFunctionReturn_;
-        s & mayReturn_;
+        s & BOOST_SERIALIZATION_NVP(isFrozen_);
+        s & BOOST_SERIALIZATION_NVP(startVa_);
+        s & BOOST_SERIALIZATION_NVP(comment_);
+        s & BOOST_SERIALIZATION_NVP(insns_);
+        s & BOOST_SERIALIZATION_NVP(dispatcher_);       // FIXME[Robb P Matzke 2016-11-07]
+        s & BOOST_SERIALIZATION_NVP(operators_);        // FIXME[Robb P Matzke 2016-11-07]
+        s & BOOST_SERIALIZATION_NVP(initialState_);
+        s & BOOST_SERIALIZATION_NVP(usingDispatcher_);
+        s & BOOST_SERIALIZATION_NVP(optionalPenultimateState_);
+        s & BOOST_SERIALIZATION_NVP(dblocks_);
+        s & BOOST_SERIALIZATION_NVP(insnAddrMap_);
+        s & BOOST_SERIALIZATION_NVP(successors_);
+        s & BOOST_SERIALIZATION_NVP(ghostSuccessors_);
+        s & BOOST_SERIALIZATION_NVP(isFunctionCall_);
+        s & BOOST_SERIALIZATION_NVP(isFunctionReturn_);
+        s & BOOST_SERIALIZATION_NVP(mayReturn_);
     }
 #endif
 

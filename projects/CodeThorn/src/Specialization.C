@@ -83,7 +83,7 @@ Specialization::Specialization():
   _specializedFunctionRootNode(0),
   _checkAllLoops(false),
   _visualizeReadWriteAccesses(false),
-  _maxNumberOfExtractedUpdates(500) {
+  _maxNumberOfExtractedUpdates(-1) {
 }
 
 int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
@@ -243,7 +243,7 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
    int numProcessedArrayUpdates=0;
    vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
 
-   int numberOfExtractedUpdates=0;
+   long numberOfExtractedUpdates=0;
    while(succSet.size()>=1) {
      // investigate state
      Label lab=estate->label();
@@ -271,7 +271,8 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
        estate=*i;
      }  
      numberOfExtractedUpdates++;
-     if(numberOfExtractedUpdates>_maxNumberOfExtractedUpdates) {
+     //cout<<"DEBUG: updates: "<<numberOfExtractedUpdates<<"/"<<_maxNumberOfExtractedUpdates<<endl;
+     if(numberOfExtractedUpdates==_maxNumberOfExtractedUpdates) {
        std::stringstream ss;
        ss<<"Maximum number of "<<_maxNumberOfExtractedUpdates<<" extracted updates reached.";
        throw CodeThorn::Exception(ss.str());

@@ -16,6 +16,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/vector.hpp>
 
 namespace Sawyer {
@@ -73,7 +74,8 @@ private:
     friend class boost::serialization::access;
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & size_ & words_;
+        s & BOOST_SERIALIZATION_NVP(size_);
+        s & BOOST_SERIALIZATION_NVP(words_);
     }
     
 public:
