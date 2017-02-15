@@ -6,7 +6,6 @@
 using namespace rose;
 using namespace rose::Diagnostics;
 
-/** Converts 32-bit disk representation to host representation */
 void
 SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf32SectionTableEntry_disk *disk) 
 {
@@ -22,7 +21,6 @@ SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf32SectionTab
     p_sh_entsize   = ByteOrder::disk_to_host(sex, disk->sh_entsize);
 }
     
-/** Converts 64-bit disk representation to host representation */
 void
 SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SectionTableEntry_disk *disk) 
 {
@@ -38,7 +36,6 @@ SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SectionTab
     p_sh_entsize   = ByteOrder::disk_to_host(sex, disk->sh_entsize);
 }
 
-/** Encode a section table entry into the disk structure */
 void *
 SgAsmElfSectionTableEntry::encode(ByteOrder::Endianness sex, Elf32SectionTableEntry_disk *disk) const
 {
@@ -72,7 +69,29 @@ SgAsmElfSectionTableEntry::encode(ByteOrder::Endianness sex, Elf64SectionTableEn
     return disk;
 }
 
-/** Non-parsing constructor for an ELF Section Table */
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+                                                     const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
+{
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+    ctor(sex, disk);
+#else
+    printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+    ROSE_ASSERT(false);
+#endif
+}
+
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+                                                     const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
+{
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+    ctor(sex, disk);
+#else
+    printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+    ROSE_ASSERT(false);
+#endif
+}
+
+/* Non-parsing constructor for an ELF Section Table */
 void
 SgAsmElfSectionTable::ctor()
 {
@@ -93,8 +112,6 @@ SgAsmElfSectionTable::ctor()
     fhdr->set_section_table(this);
 }
     
-/** Parses an ELF Section Table and constructs and parses all sections reachable from the table. The section is extended as
- *  necessary based on the number of entries and the size of each entry. */
 SgAsmElfSectionTable *
 SgAsmElfSectionTable::parse()
 {
@@ -293,14 +310,6 @@ SgAsmElfSectionTable::parse()
     return this;
 }
 
-/** Attaches a previously unattached ELF Section to the section table. If @p section is an  ELF String Section
- *  (SgAsmElfStringSection) that contains an ELF String Table (SgAsmElfStringTable) and the ELF Section Table has no
- *  associated string table then the @p section will be used as the string table to hold the section names.
- *
- *  This method complements SgAsmElfSection::init_from_section_table. This method initializes the section table from the
- *  section while init_from_section_table() initializes the section from the section table.
- *
- *  Returns the new section table entry linked into the AST. */
 SgAsmElfSectionTableEntry *
 SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
 {
@@ -352,7 +361,7 @@ SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
     return shdr;
 }
 
-/** Make this section's name to be stored in the specified string table. */
+/* Make this section's name to be stored in the specified string table. */
 void
 SgAsmElfSection::allocate_name_to_storage(SgAsmElfStringSection *strsec)
 {
@@ -368,8 +377,6 @@ SgAsmElfSection::allocate_name_to_storage(SgAsmElfStringSection *strsec)
     }
 }
 
-/** Returns info about the size of the entries based on information already available. Any or all arguments may be null
- *  pointers if the caller is not interested in the value. */
 rose_addr_t
 SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -423,7 +430,6 @@ SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t 
     return entry_size * nentries;
 }
 
-/** Update this section table entry with newer information from the section */
 void
 SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 {
@@ -467,7 +473,6 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
     }
 }
 
-/** Change symbol to string */
 std::string
 SgAsmElfSectionTableEntry::to_string(SectionType t)
 {
@@ -546,7 +551,6 @@ SgAsmElfSectionTableEntry::to_string(SectionFlags val)
   return str;
 }
 
-/** Print some debugging info */
 void
 SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -576,7 +580,6 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 
-/** Pre-unparsing updates */
 bool
 SgAsmElfSectionTable::reallocate()
 {
@@ -606,7 +609,6 @@ SgAsmElfSectionTable::reallocate()
     return reallocated;
 }
 
-/** Write the section table section back to disk */
 void
 SgAsmElfSectionTable::unparse(std::ostream &f) const
 {
@@ -658,7 +660,6 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
     }
 }
 
-/** Print some debugging info */
 void
 SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

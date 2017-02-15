@@ -605,3 +605,258 @@ SgAsmM68kInstruction::getBranchTarget(rose_addr_t *target)
         *target = target_expr->get_absoluteValue();
     return true;
 }
+
+std::string
+SgAsmM68kInstruction::description() const {
+    switch (get_kind()) {
+        case m68k_unknown_instruction:  return "";
+        case m68k_abcd:                 return "add decimal with extended";
+        case m68k_add:                  return "add";
+        case m68k_adda:                 return "add address";
+        case m68k_addi:                 return "add immediate";
+        case m68k_addq:                 return "add quick";
+        case m68k_addx:                 return "add extended";
+        case m68k_and:                  return "logical AND";
+        case m68k_andi:                 return "immediate AND";
+        case m68k_asl:                  return "arithmetic shift left";
+        case m68k_asr:                  return "arithmetic shift right";
+        case m68k_bcc:                  return "branch carry clear";
+        case m68k_bcs:                  return "branch carry set";
+        case m68k_beq:                  return "branch equal";
+        case m68k_bge:                  return "branch greater or equal";
+        case m68k_bgt:                  return "branch greater than";
+        case m68k_bhi:                  return "branch high";
+        case m68k_ble:                  return "branch less or equal";
+        case m68k_bls:                  return "branch lower or same";
+        case m68k_blt:                  return "branch less than";
+        case m68k_bmi:                  return "branch minus";
+        case m68k_bne:                  return "branch not equal";
+        case m68k_bpl:                  return "branch plus";
+        case m68k_bvc:                  return "branch overflow clear";
+        case m68k_bvs:                  return "branch overflow set";
+        case m68k_bchg:                 return "test bit and change";
+        case m68k_bclr:                 return "test bit and clear";
+        case m68k_bfchg:                return "test bit field and change";
+        case m68k_bfclr:                return "test bit field and clear";
+        case m68k_bfexts:               return "extract bit field signed";
+        case m68k_bfextu:               return "extract bit field unsigned";
+        // m68k_bfffo,                  find first one in bit field
+        case m68k_bfins:                return "insert bit field";
+        case m68k_bfset:                return "test bit field and set";
+        case m68k_bftst:                return "test bit field";
+        // m68k_bitrev,                 bit reverse register
+        case m68k_bkpt:                 return "breakpoint";
+        case m68k_bra:                  return "branch always";
+        case m68k_bset:                 return "test bit and set";
+        case m68k_bsr:                  return "branch to subroutine";
+        case m68k_btst:                 return "test bit";
+        // m68k_byterev,                byte reverse register
+        case m68k_callm:                return "call module";
+        case m68k_cas:                  return "compare and swap with operand";
+        case m68k_cas2:                 return "compare and swap with operands";
+        case m68k_chk:                  return "check register against bounds";
+        case m68k_chk2:                 return "check register against bounds";
+        case m68k_clr:                  return "clear";
+        case m68k_cmp:                  return "compare";
+        case m68k_cmp2:                 return "compare register against bounds";
+        case m68k_cmpa:                 return "compare address";
+        case m68k_cmpi:                 return "compare immediate";
+        case m68k_cmpm:                 return "compare memory";
+        case m68k_cpusha:               return "push and invalidate all";
+        case m68k_cpushl:               return "push and invalidate cache lines";
+        case m68k_cpushp:               return "push and invalidate cache pages";
+        case m68k_dbt:                  return "decrement and branch if true";
+        case m68k_dbf:                  return "decrement and branch if false";
+        case m68k_dbhi:                 return "decrement and branch if high";
+        case m68k_dbls:                 return "decrement and branch if lower or same";
+        case m68k_dbcc:                 return "decrement and branch if cary clear";
+        case m68k_dbcs:                 return "decrement and branch if carry set";
+        case m68k_dbne:                 return "decrement and branch if not equal";
+        case m68k_dbeq:                 return "decrement and branch if equal";
+        case m68k_dbvc:                 return "decrement and branch if overflow clear";
+        case m68k_dbvs:                 return "decrement and branch if overflow set";
+        case m68k_dbpl:                 return "decrement and branch if plus";
+        case m68k_dbmi:                 return "decrement and branch if minus";
+        case m68k_dbge:                 return "decrement and branch if greater or equal";
+        case m68k_dblt:                 return "decrement and branch if less than";
+        case m68k_dbgt:                 return "decrement and branch if greater than";
+        case m68k_dble:                 return "decrement and branch if less than or equal";
+        case m68k_divs:                 return "signed divide with optional remainder";
+        case m68k_divsl:                return "signed divide 32-bit quotient with remainder";
+        case m68k_divu:                 return "unsigned divide with optional remainder";
+        case m68k_divul:                return "unsigned divide 32-bit quotient with remainder";
+        case m68k_eor:                  return "exclusive-OR logical";
+        case m68k_eori:                 return "exclusive-OR immediate";
+        case m68k_exg:                  return "exchange registers";
+        case m68k_ext:                  return "sign extend";
+        case m68k_extb:                 return "sign extend byte to longword";
+        case m68k_fabs:                 return "fp absolute value with FPCR rounding";
+        case m68k_fadd:                 return "fp add with FPCR rounding";
+        case m68k_fbeq:                 return "fp branch if equal";
+        case m68k_fbne:                 return "fp branch if not equal";
+        case m68k_fbgt:                 return "fp branch if greater than";
+        case m68k_fbngt:                return "fp branch if not greater than";
+        case m68k_fbge:                 return "fp branch if greater than or equal";
+        case m68k_fbnge:                return "fp branch if not greater than or equal";
+        case m68k_fblt:                 return "fp branch if less than";
+        case m68k_fbnlt:                return "fp branch if not less than";
+        case m68k_fble:                 return "fp branch if less than or equal";
+        case m68k_fbnle:                return "fp branch if not less than or equal";
+        case m68k_fbgl:                 return "fp branch if greater or less than";
+        case m68k_fbngl:                return "fp branch if not greater or less than";
+        case m68k_fbgle:                return "fp branch if greater, less, or equal";
+        case m68k_fbngle:               return "fp branch if not greater, less, or equal";
+        case m68k_fbogt:                return "fp branch if ordered greater than";
+        case m68k_fbule:                return "fp branch if unordered or less or equal";
+        case m68k_fboge:                return "fp branch if ordered greater than or equal";
+        case m68k_fbult:                return "fp branch if unordered less than";
+        case m68k_fbolt:                return "fp branch if ordered less than";
+        case m68k_fbuge:                return "fp branch if unordered or greater than or equal";
+        case m68k_fbole:                return "fp branch if ordered less than or equal";
+        case m68k_fbugt:                return "fp branch if unordered or greater than";
+        case m68k_fbogl:                return "fp branch if ordered greater or less than";
+        case m68k_fbueq:                return "fp branch if unordered or equal";
+        case m68k_fbor:                 return "fp branch if ordered";
+        case m68k_fbun:                 return "fp branch if unordered";
+        case m68k_fbf:                  return "fp branch if false";
+        case m68k_fbt:                  return "fp branch if true";
+        case m68k_fbsf:                 return "fp branch if signaling false";
+        case m68k_fbst:                 return "fp branch if signaling true";
+        case m68k_fbseq:                return "fp branch if signaling equal";
+        case m68k_fbsne:                return "fp branch if signaling not equal";
+        case m68k_fcmp:                 return "fp compare";
+        case m68k_fdabs:                return "fp absolute value with double-precision rounding";
+        case m68k_fdadd:                return "fp add with double-precision rounding";
+        case m68k_fddiv:                return "fp divide with double-precision rounding";
+        case m68k_fdiv:                 return "fp divide with FPCR rounding";
+        case m68k_fdmove:               return "copy fp data with double-precision rounding";
+        case m68k_fdmul:                return "fp multiple with double-precision rounding";
+        case m68k_fdneg:                return "fp negation with double-precision rounding";
+        case m68k_fdsqrt:               return "fp square root with double-precision rounding";
+        case m68k_fdsub:                return "fp subtract with double-precision rounding";
+        // m68k_ff1,                    find first one in register
+        case m68k_fint:                 return "fp integer part";
+        case m68k_fintrz:               return "fp integer part rounded-to-zero";
+        case m68k_fmove:                return "copy fp data with FPCR rounding";
+        case m68k_fmovem:               return "copy multiple fp data registers";
+        case m68k_fmul:                 return "fp multiply with FPCR rounding";
+        case m68k_fneg:                 return "fp negate with FPCR rounding";
+        case m68k_fnop:                 return "fp no operation";
+        // m68k_frestore,
+        case m68k_fsabs:                return "fp absolute value with single-precision rounding";
+        case m68k_fsadd:                return "fp add with single-precision rounding";
+        // m68k_fsave,
+        case m68k_fsdiv:                return "fp divide with single-precision rounding";
+        case m68k_fsmove:               return "copy fp data with single-precision rounding";
+        case m68k_fsmul:                return "fp multiply with single-precision rounding";
+        case m68k_fsneg:                return "fp negation with single-precision rounding";
+        case m68k_fsqrt:                return "fp square root with FPCR rounding";
+        case m68k_fssqrt:               return "fp square root with single-precision rounding";
+        case m68k_fssub:                return "fp subtract with single-precision rounding";
+        case m68k_fsub:                 return "fp subtract with FPCR rounding";
+        case m68k_ftst:                 return "fp test";
+        // m68k_halt,                   halt the CPU
+        case m68k_illegal:              return "take illegal instruction trap";
+        // m68k_intouch,
+        case m68k_jmp:                  return "jump";
+        case m68k_jsr:                  return "jump to subroutine";
+        case m68k_lea:                  return "load effective address";
+        case m68k_link:                 return "link and allocate";
+        case m68k_lsl:                  return "logical shift left";
+        case m68k_lsr:                  return "logical shift right";
+        case m68k_mac:                  return "multiply accumulate";
+        case m68k_mov3q:                return "copy 3-bit data quick";
+        case m68k_movclr:               return "copy from MAC ACC register and clear";
+        case m68k_move:                 return "copy data";
+        case m68k_move_acc:             return "copy MAC ACC register";
+        case m68k_move_accext:          return "copy MAC ACCext register";
+        case m68k_move_ccr:             return "copy condition code register";
+        case m68k_move_macsr:           return "copy MAC status register";
+        case m68k_move_mask:            return "copy MAC MASK register";
+        case m68k_move_sr:              return "copy status register";
+        case m68k_move16:               return "copy 16-byte block";
+        case m68k_movea:                return "copy address";
+        case m68k_movec:                return "copy control register";
+        case m68k_movem:                return "copy multiple registers";
+        case m68k_movep:                return "copy peripheral data";
+        case m68k_moveq:                return "copy quick";
+        case m68k_msac:                 return "multiply subtract";
+        case m68k_muls:                 return "signed multiply";
+        case m68k_mulu:                 return "unsigned multiply";
+        case m68k_mvs:                  return "copy with sign extend";
+        case m68k_mvz:                  return "copy with zero fill";
+        case m68k_nbcd:                 return "negate decimal with extend";
+        case m68k_neg:                  return "negate";
+        case m68k_negx:                 return "negate with extend";
+        case m68k_nop:                  return "no operation";
+        case m68k_not:                  return "logical complement";
+        case m68k_or:                   return "inclusive-OR logical";
+        case m68k_ori:                  return "inclusive-OR immediate";
+        case m68k_pack:                 return "pack";
+        case m68k_pea:                  return "push effective address";
+        // m68k_pulse,                  generate unique processor status
+        // m68k_rems,                   signed divide remainder -- see divs instead
+        // m68k_remu,                   unsigned divide remainder -- see divu instead
+        case m68k_rol:                  return "rotate left without extend";
+        case m68k_ror:                  return "rotate right without extend";
+        case m68k_roxl:                 return "rotate left with extend";
+        case m68k_roxr:                 return "rotate right with extend";
+        case m68k_rtd:                  return "return and deallocate";
+        case m68k_rtm:                  return "return from module";
+        // m68k_rte,                    return from exception
+        case m68k_rtr:                  return "return and restore condition codes";
+        case m68k_rts:                  return "return from subroutine";
+        // m68k_sats,                   signed saturate
+        case m68k_sbcd:                 return "subtract decimal with extend";
+        case m68k_st:                   return "set if true";
+        case m68k_sf:                   return "set if false";
+        case m68k_shi:                  return "set if high";
+        case m68k_sls:                  return "set if lower or same";
+        case m68k_scc:                  return "set if carry clear (HS)";
+        case m68k_scs:                  return "set if carry set (LO)";
+        case m68k_sne:                  return "set if not equal";
+        case m68k_seq:                  return "set if equal";
+        case m68k_svc:                  return "set if overflow clear";
+        case m68k_svs:                  return "set if overflow set";
+        case m68k_spl:                  return "set if plus";
+        case m68k_smi:                  return "set if minus";
+        case m68k_sge:                  return "set if greater or equal";
+        case m68k_slt:                  return "set if less than";
+        case m68k_sgt:                  return "set if greater than";
+        case m68k_sle:                  return "set if less or equal";
+        // m68k_stop,
+        case m68k_sub:                  return "subtract";
+        case m68k_suba:                 return "subtract address";
+        case m68k_subi:                 return "subtract immediate";
+        case m68k_subq:                 return "subtract quick";
+        case m68k_subx:                 return "subtract extended";
+        case m68k_swap:                 return "swap register halves";
+        case m68k_tas:                  return "test and set";
+        // m68k_tpf,                    trap false (no operation)
+        case m68k_trap:                 return "trap";
+        case m68k_trapt:                return "trap if true";
+        case m68k_trapf:                return "trap if false";
+        case m68k_traphi:               return "trap if high";
+        case m68k_trapls:               return "trap if lower or same";
+        case m68k_trapcc:               return "trap if carry clear (HS)";
+        case m68k_trapcs:               return "trap if carry set (LO)";
+        case m68k_trapne:               return "trap if not equal";
+        case m68k_trapeq:               return "trap if equal";
+        case m68k_trapvc:               return "trap if overflow clear";
+        case m68k_trapvs:               return "trap if overflow set";
+        case m68k_trappl:               return "trap if plus";
+        case m68k_trapmi:               return "trap if minus";
+        case m68k_trapge:               return "trap if greater or equal";
+        case m68k_traplt:               return "trap if less than";
+        case m68k_trapgt:               return "trap if greater than";
+        case m68k_traple:               return "trap if less or equal";
+        case m68k_trapv:                return "trap on overflow";
+        case m68k_tst:                  return "test";
+        case m68k_unlk:                 return "unlink";
+        case m68k_unpk:                 return "unpack binary coded decimal";
+        // m68k_wddata,                 write to debug data
+        // m68k_wdebug,
+        case m68k_last_instruction:     ASSERT_not_reachable("not a valid m68k instruction kind");
+    }
+    ASSERT_not_reachable("invalid m68k instruction kind: " + StringUtility::numberToString(get_kind()));
+}
