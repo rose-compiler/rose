@@ -186,7 +186,7 @@ int main(int argc, char* argv[]) {
   if (args.count("help")) {
     cout << "woodpecker <filename> [OPTIONS]"<<endl;
     cout << desc << "\n";
-    return 0;
+    exit(0);
   }
   if (args.count("rose-help")) {
     argv[1] = strdup("--help");
@@ -195,7 +195,7 @@ int main(int argc, char* argv[]) {
   if (args.count("version")) {
     cout << "Woodpecker version 0.1\n";
     cout << "Written by Markus Schordan 2013\n";
-    return 0;
+    exit(0);
   }
   if (args.count("csv-assert")) {
     csvAssertFileName=args["csv-assert"].as<string>().c_str();
@@ -403,22 +403,29 @@ int main(int argc, char* argv[]) {
   // main function try-catch
   } catch(CodeThorn::Exception& e) {
     cerr << "CodeThorn::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(SPRAY::Exception& e) {
     cerr << "Spray::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(std::exception& e) {
     cerr << "std::exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(char* str) {
     cerr << "*Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(const char* str) {
     cerr << "Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(string str) {
     cerr << "Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   }
+  mfacilities.shutdown();
   return 0;
 }

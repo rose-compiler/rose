@@ -1073,6 +1073,7 @@ int main( int argc, char * argv[] ) {
 #endif
 
     if (args.count("internal-checks")) {
+      mfacilities.shutdown();
       if(CodeThorn::internalChecks(argc,argv)==false)
         return 1;
       else
@@ -1238,6 +1239,7 @@ int main( int argc, char * argv[] ) {
         }
         delete evaluator;
       }
+      mfacilities.shutdown();
       return 0;
     }
 
@@ -1464,6 +1466,7 @@ int main( int argc, char * argv[] ) {
     int inputSeqLengthCovered = -1;
     if ( boolOptions["determine-prefix-depth"]) {
       logger[ERROR] << "option \"determine-prefix-depth\" currenlty deactivated." << endl;
+      mfacilities.shutdown();
       return 1;
     }
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
@@ -2133,23 +2136,30 @@ int main( int argc, char * argv[] ) {
     // main function try-catch
   } catch(CodeThorn::Exception& e) {
     logger[FATAL] << "CodeThorn::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(SPRAY::Exception& e) {
     logger[FATAL]<< "Spray::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(std::exception& e) {
     logger[FATAL]<< "std::exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(char const* str) {
     logger[FATAL]<< "*Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(string str) {
     logger[FATAL]<< "Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(...) {
     logger[FATAL]<< "Unknown exception raised." << endl;
+    mfacilities.shutdown();
     return 1;
   }
+  mfacilities.shutdown();
   return 0;
 }
 
