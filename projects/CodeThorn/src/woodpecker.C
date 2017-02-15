@@ -35,6 +35,8 @@
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
+
+#include "Diagnostics.h"
 using namespace Sawyer::Message;
 
 #include "PropertyValueTable.h"
@@ -121,8 +123,14 @@ void printCodeStatistics(SgNode* root) {
 }
 
 int main(int argc, char* argv[]) {
-  Sawyer::Message::Facility logger("Woodpecker");
-  mfacilities.insert(logger);
+  ROSE_INITIALIZE;
+
+  rose::Diagnostics::mprefix->showProgramName(false);
+  rose::Diagnostics::mprefix->showThreadId(false);
+  rose::Diagnostics::mprefix->showElapsedTime(false);
+
+  Sawyer::Message::Facility logger;
+  rose::Diagnostics::initAndRegister(logger, "Woodpecker");
 
   mfacilities.disable(DEBUG);
   mfacilities.disable(TRACE);
@@ -147,7 +155,7 @@ int main(int argc, char* argv[]) {
 #else
     namespace po = boost::program_options;
 #endif
-    
+
     po::options_description desc
     ("Woodpecker V0.1\n"
      "Written by Markus Schordan\n"

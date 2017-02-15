@@ -112,6 +112,7 @@ dictionaryX86() {
 
         // other conventions
         dict.push_back(Definition::x86_64bit_stdcall());
+        dict.push_back(Definition::x86_64bit_sysv());
     }
     return dict;
 }
@@ -276,6 +277,82 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
     std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
     cc.calleeSavedRegisters().insert(registers.begin(), registers.end());
 
+    return cc;
+}
+
+// class method
+const Definition&
+Definition::x86_64bit_sysv() {
+    static Definition cc;
+    if (cc.name().empty()) {
+        const RegisterDictionary *regDict = RegisterDictionary::dictionary_amd64();
+        const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
+
+        cc = Definition(64, "sysv", "x86-64 sysv", regDict);
+
+        // Stack characteristics
+        cc.stackPointerRegister(SP);
+        cc.stackDirection(GROWS_DOWN);
+        cc.nonParameterStackSize(cc.wordWidth() >> 3);  // return address
+
+        // The first six integer or pointer arguments are passed in registers RDI, RSI, RDX, RCX, R8, and R9.
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_di));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_si));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r8));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r9));
+
+        // The first eight SSE arguments are passed in registers xmm0 through xmm7
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 0));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 1));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 2));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 3));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 4));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 5));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 6));
+        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 7));
+
+        // The AL register is an input register that stores the number of SSE registers used for variable argument calls. (It
+        // is also part of the first return value).
+        cc.appendInputParameter(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 8)); // for varargs calls
+
+        // Return values
+        cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+        cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx)); // second integer return
+        cc.appendOutputParameter(SP);                   // final value is usually 8 greater than initial value
+        cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_xmm, 0));
+        cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_xmm, 1));
+        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 0)); // dynamic st(0), overlaps mm<i>
+        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 1)); // dynamic st(1), overlaps mm<i+1>
+
+        // Scratch registers (i.e., modified, not callee-saved, not return registers)
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r10)); //static chain ptr
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r11));
+
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 8));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 9));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 10));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 11));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 12));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 13));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 14));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 15));
+
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 0)); // i.e., statically mm0
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 1)); // mm1, etc. Since mm<i> could
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 2)); // overlap with st(0) or st(1),
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 3)); // two of these could also be
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 4)); // return values.
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 5));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 6));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 7));
+        
+        // Callee-saved registers (everything else)
+        RegisterParts regParts = regDict->getAllParts() - cc.getUsedRegisterParts();
+        std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
+        cc.calleeSavedRegisters().insert(registers.begin(), registers.end());
+    }
     return cc;
 }
         

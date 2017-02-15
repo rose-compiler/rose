@@ -38,9 +38,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & insn_;
-        s & bblocks_;
-        s & odblock_;
+        s & BOOST_SERIALIZATION_NVP(insn_);
+        s & BOOST_SERIALIZATION_NVP(bblocks_);
+        s & BOOST_SERIALIZATION_NVP(odblock_);
     }
 #endif
 
@@ -167,7 +167,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & users_;
+        s & BOOST_SERIALIZATION_NVP(users_);
     }
 #endif
 
@@ -354,7 +354,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & map_;
+        s & BOOST_SERIALIZATION_NVP(map_);
     }
 #endif
 
