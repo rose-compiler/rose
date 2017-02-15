@@ -390,7 +390,6 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
       }
     }
   }
-  cout << "STATUS: computeVariableSymbolMapping: done."<<endl;
   return;
 }
 
