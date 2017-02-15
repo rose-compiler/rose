@@ -77,6 +77,12 @@ using namespace Sawyer::Message;
 // experimental
 #include "IOSequenceGenerator.C"
 
+void CodeThorn::initDiagnostics() {
+  rose::Diagnostics::initialize();
+  Analyzer::initDiagnostics();
+  RewriteSystem::initDiagnostics();
+}
+
 bool isExprRoot(SgNode* node) {
   if(SgExpression* exp=isSgExpression(node)) {
     return isSgStatement(exp->get_parent());
@@ -1024,6 +1030,8 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
 
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
+
+  CodeThorn::initDiagnostics();
 
   rose::Diagnostics::mprefix->showProgramName(false);
   rose::Diagnostics::mprefix->showThreadId(false);
