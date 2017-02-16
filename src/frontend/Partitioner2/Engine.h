@@ -107,6 +107,14 @@ public:
         PartitionerSettings partitioner;                /**< Settings for creating a partitioner. */
         EngineSettings engine;                          /**< Settings that control engine behavior. */
         AstConstructionSettings astConstruction;        /**< Settings for constructing the AST. */
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, unsigned version) {
+            s & loader & disassembler & partitioner & engine & astConstruction;
+        }
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,7 +299,8 @@ public:
      *
      *  Disassembles and organizes instructions into basic blocks and functions with these steps:
      *
-     *  @li If the specimen is not loaded (@ref areSpecimensLoaded) then call @ref loadSpecimens.
+     *  @li If the specimen is not loaded (@ref areSpecimensLoaded) then call @ref loadSpecimens. The no-argument version of
+     *  this function requires that specimens have already been loaded.
      *
      *  @li Obtain a disassembler by calling @ref obtainDisassembler.
      *
@@ -311,7 +320,8 @@ public:
      *  Constructs a new abstract syntax tree (AST) from partitioner information with these steps:
      *
      *  @li If the partitioner has not been run yet (according to @ref isPartitioned), then do that now with the same
-     *      arguments.
+     *      arguments.  The zero-argument version invokes the zero-argument @ref partition, which requires that the specimen
+     *      has already been loaded by @ref loadSpecimens.
      *
      *  @li Call Modules::buildAst to build the AST.
      *
