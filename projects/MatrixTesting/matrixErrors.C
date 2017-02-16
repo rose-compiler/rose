@@ -219,6 +219,7 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                       "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
                       "|make\\[[0-9]+\\]: \\*\\*\\* No rule to make target `.*''"
                       "|^Makefile:[0-9]+: recipe for target ''.*'' failed"
+                      "|^make\\[[0-9]+\\]: \\*\\*\\* \\[.+\\] Error [0-9]+"
                       "|\\*{7} HPCTOOLKIT .* FAILED \\*{9}"
 
                       "|\\merror: ?\n.*"                        // ROSE error on next line

@@ -2315,6 +2315,7 @@ private:
                                         "|No space left on device"                      // filesystem is full
                                         "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
                                         "|make\\[[0-9]+\\]: \\*\\*\\* No rule to make target"
+                                        "|make\\[[0-9]+\\]: \\*\\*\\* \\[.+\\] Error [0-9]+"
                                         "|^Makefile:[0-9]+: recipe for target '.*' failed"
                                         "|\\*{7} HPCTOOLKIT .* FAILED \\*{9}"
 

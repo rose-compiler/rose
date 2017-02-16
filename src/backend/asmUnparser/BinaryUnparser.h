@@ -72,6 +72,7 @@ struct Settings {
 
         struct {
             bool showing;                               /**< Show instruction comments? */
+            bool usingDescription;                      /**< Lacking comment, use instruction description as comment? */
             std::string pre;                            /**< String to introduce a comment. */
             std::string post;                           /**< String to terminate a comment. */
             size_t fieldWidth;                          /**< Min characters to use for the comment field. */
