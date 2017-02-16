@@ -12,6 +12,11 @@
  *     expandCoreDump core a.out
  *
  * Generates a new core file called "core.new" */
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
@@ -296,3 +301,5 @@ int main(int argc, char *argv[]) {
     sd.core_header->get_file()->reallocate();
     sd.core_header->get_file()->unparse(f);
 }
+
+#endif

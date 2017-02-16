@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo varwatch
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo varwatch
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo astinfo
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo astinfo
 
 CLEANFILES = 
 
@@ -379,41 +379,9 @@ REGRESSION_DATA_DIR=regressiondata
 
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
-# MS: matcher_demo
-matcher_demo_DEPENDENCIES=libspray.la
-matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-matcher_demo_SOURCES = Timer.cpp matcher_demo.C
-BUILT_SOURCES = 
-AM_YFLAGS =
-AM_LFLAGS =
-
-varwatch_DEPENDENCIES=libspray.la
-varwatch_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
-
-#rdmain_LDADD = -lrose
-#rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
-  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
-  DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  UDAstAttribute.h                 \
-  UDAstAttribute.C                 \
-  Miscellaneous.C                  \
-  Miscellaneous.h                  \
-  ProgramStats.h                 \
-  ProgramStats.C                 \
-  Flow.h \
-  Flow.C \
-  DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  PropertyState.h \
-  PropertyState.C \
-  FIPointerAnalysis.h \
-  FIPointerAnalysis.C \
-  rdmain.C 
-
 woodpecker_DEPENDENCIES=libspray.la
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
-woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize -DSPOT_NOT_AVAILABLE
 woodpecker_LDFLAGS = -L$(SPOT_PREFIX)/lib
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
@@ -423,10 +391,6 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   UDAstAttribute.C                 \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
-  SpotMiscellaneous.C 		   \
-  SpotMiscellaneous.h 		   \
-  SpotRenameVisitor.C 		   \
-  SpotRenameVisitor.h 		   \
   ProgramStats.h                 \
   ProgramStats.C                 \
   FIConstAnalysis.h FIConstAnalysis.C \
@@ -494,6 +458,15 @@ analyterix_SOURCES = \
 #	cat lex.yy.c y.tab.c > matcherparser.C
 #	rm lex.yy.c y.tab.c
 
+# MS: matcher_demo
+matcher_demo_DEPENDENCIES=libspray.la
+matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+matcher_demo_SOURCES = Timer.cpp matcher_demo.C
+BUILT_SOURCES = 
+AM_YFLAGS =
+AM_LFLAGS =
+
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
 #iterator_test_LDADD = -lrose libmatcher.la
@@ -503,6 +476,22 @@ analyterix_SOURCES = \
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
 
+astinfo_DEPENDENCIES=
+astinfo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+astinfo_SOURCES = astinfo.C LineColInfo.C
+
+check-astinfo:
+	@echo "-------------------------------------------------------------"
+	./astinfo --classname --edg:no_warnings $(srcdir)/tests/bugs/bug1.C
+	@echo "-------------------------------------------------------------"
+	./astinfo --linecol --edg:no_warnings $(srcdir)/tests/bugs/bug2.C
+	@echo "-------------------------------------------------------------"
+	./astinfo --linecol --edg:no_warnings $(srcdir)/tests/bugs/bug3.C
+	@echo "-------------------------------------------------------------"
+
+check-matcher:
+	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
+#	./ast_demo $(srcdir)/tests/basictest5.C
 
 check-local:
 	@echo ================================================================
@@ -511,9 +500,10 @@ check-local:
 	@./codethorn --internal-checks	
 
 	@echo ================================================================
-	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
+	@echo RUNNING DATA RACE VERIFICATION TESTS
 	@echo ================================================================
-	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
+	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12 --explicit-arrays
+	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12 --explicit-arrays
 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@echo ================================================================
@@ -538,6 +528,11 @@ check-local:
 	@rm tmp.nsdump
 
 	@echo ================================================================
+	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
+	@echo ================================================================
+	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
+
+	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	@rm -f *.consistent
@@ -550,10 +545,6 @@ check-local:
 check-arrays:
 	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
-
-checkdemos: 
-	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
-	./ast_demo $(srcdir)/tests/basictest5.C
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

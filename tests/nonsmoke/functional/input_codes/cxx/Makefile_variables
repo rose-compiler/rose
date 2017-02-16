@@ -141,7 +141,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2004_81.C \
 	test2004_83.C \
 	test2004_84.C \
-	test2004_85.C \
 	test2004_86.C \
 	test2004_87.C \
 	test2004_88.C \
@@ -1384,20 +1383,41 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 += \
 	test2005_42.C \
 	test2012_90.C \
 	test2013_63.C \
-	test2013_234.C \
-	test2013_240.C \
 	#EXPECTED FAILURE: test2013_242.C 
 	test2013_246.C 
 
+# DQ (1/19/2017): This normalization of "const char*" literal strings to "char*" is a problem for GNU 6.1 (6.x and later) compilers.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
 # DQ (5/26/2014): Separate out test2014_241.C from use in the normalization tests.
 ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) \
 	test2013_241.C 
+
+ROSE__CXX_TESTS_WITHOUT_2013_241 += \
+	test2013_234.C \
+	test2013_240.C 
+else
+ROSE__CXX_TESTS =
+endif
 
 ROSE__CXX_TESTS__BOOST += \
 	test2013_235.C 
 else
 # DQ (1/16/2017): We need to include this to get the larger list of older test codes as well.
 ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) 
+endif
+
+# DQ (1/28/2017): This fails in EDG for EDG 4.9 using Clang 3.8 header files.
+# EDG 4.9 can't handle the header files from later versions of GNU and Clang 
+# is using the later version GNU header files (need to configure ROSE with 
+# version EDG 4.12 or later).
+if USING_CLANG_COMPILER
+if !ROSE_USE_EDG_VERSION_4_9
+ROSE__CXX_TESTS += \
+	test2004_85.C 
+endif
+else
+ROSE__CXX_TESTS += \
+   test2004_85.C 
 endif
 
 # endif

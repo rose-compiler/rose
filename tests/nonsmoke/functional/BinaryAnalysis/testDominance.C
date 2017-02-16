@@ -1,13 +1,11 @@
 /* Reads a binary file, disassembles it, and performs various dominance analyses. */
-#include "rose.h"
-
-// GCC 4.8.3 c++11 has problems compiling this file on our Jenkins systems. The compiler reports internal errors.
-#if defined(__GNUC__) && defined(__cplusplus) && \
-    __GNUC__ == 4 && __GNUC_MINOR__ == 8 && __GNUC_PATCHLEVEL__==3 && __cplusplus == 201103ul
-int main() {
-    std::cout <<"GCC-4.8.3 c++11\n";
-}
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
 #else
+
+#include "rose.h"
 
 #include "BinaryDominance.h"
 #include "AsmFunctionIndex.h"
@@ -40,8 +38,6 @@ main(int argc, char *argv[])
     std::string algorithm = argv[1];
     memmove(argv+1, argv+2, argc-1); /* also copy null ptr */
     --argc;
-    if (algorithm == "disabled")
-        return 0;
 
     /* Parse the binary file */
     SgProject *project = frontend(argc, argv);

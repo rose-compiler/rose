@@ -58,8 +58,8 @@ private:
         // Most of the data members don't need to be saved because we'll only save/restore disassemblers that are between
         // instructions (we never save one while it's processing an instruction). Therefore, most of the data members can be
         // constructed in their initial state by a combination of default constructor and init().
-        s & boost::serialization::base_object<Disassembler>(*this);
-        s & wordSize;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
+        s & BOOST_SERIALIZATION_NVP(wordSize);
     }
 
     template<class S>

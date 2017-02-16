@@ -141,6 +141,7 @@ class Specialization {
   bool _checkAllLoops;
   bool _checkAllDataRaces;
   bool _visualizeReadWriteAccesses;
+  long _maxNumberOfExtractedUpdates;
 };
 
 #endif

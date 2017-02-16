@@ -21,7 +21,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & offset & nBytes & address;
+        s & BOOST_SERIALIZATION_NVP(offset);
+        s & BOOST_SERIALIZATION_NVP(nBytes);
+        s & BOOST_SERIALIZATION_NVP(address);
     }
 #endif
 
@@ -45,8 +47,8 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & writers;
-        s & ioProperties;
+        s & BOOST_SERIALIZATION_NVP(writers);
+        s & BOOST_SERIALIZATION_NVP(ioProperties);
     }
 #endif
 
@@ -71,7 +73,8 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & location & meta;
+        s & BOOST_SERIALIZATION_NVP(location);
+        s & BOOST_SERIALIZATION_NVP(meta);
     }
 #endif
 

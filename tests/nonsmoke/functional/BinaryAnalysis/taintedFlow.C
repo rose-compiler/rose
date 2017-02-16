@@ -60,6 +60,11 @@
 //     flow paths.
 //
 //   * An initial CFG vertex and its initial incoming state.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include <rose.h>
 
@@ -379,3 +384,4 @@ void compileTests(SgAsmInterpretation *interp) {
     FunctionCall().copy(cg2);
 }
 
+#endif

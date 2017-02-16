@@ -3,6 +3,11 @@
 // bash script.  This test code take any binary as input (technically
 // it takes any source code (C, C++, Fortran, etc.) as well, since 
 // nothing here is specific to binaries).
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include "rose.h"
 #include "stringify.h"
@@ -105,3 +110,4 @@ main(int argc, char *argv[])
     return backend(project);
 }
 
+#endif

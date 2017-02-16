@@ -4,6 +4,7 @@
 
 #include <LoopTree.h>
 #include <ProcessAstTree.h>
+#include <LoopTreeDepComp.h> // obtain the flag to just build loop tree for non-fortran loop
 
 class LoopTreeBuild : public ProcessAstTree
 {
@@ -16,7 +17,8 @@ class LoopTreeBuild : public ProcessAstTree
     {
        LoopTreeNode *root = lt->GetTreeRoot();
        if (t == AstInterface::PreVisit) {
-          if (fa.IsFortranLoop(loop)) {
+         // Liao, we want to allow a loop with nested non-fortran loop in the loop tree. 
+          if (fa.IsFortranLoop(loop)||LoopTreeDepComp::supportNonFortranLoop) {
               LoopTreeNode* result = lt->CreateLoopNode(loop);
               result->Link(cur, LoopTreeNode::AsLastChild);
               cur = result;

@@ -1203,6 +1203,16 @@ public:
     virtual void namingStrings(bool b) { settings_.partitioner.namingStrings = b; }
     /** @} */
 
+    /** Property: Demangle names.
+     *
+     *  If this property is set, then names are passed through a demangle step, which generally converts them from a low-level
+     *  format to a source language format.
+     *
+     * @{ */
+    bool demangleNames() const /*final*/ { return settings_.partitioner.demangleNames; }
+    virtual void demangleNames(bool b) { settings_.partitioner.demangleNames = b; }
+    /** @} */
+
     /** Property: Whether to allow empty global block in the AST.
      *
      *  If partitioner has not detected any functions, then it will create an AST containing either a single global block with

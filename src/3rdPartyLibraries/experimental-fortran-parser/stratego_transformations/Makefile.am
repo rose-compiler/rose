@@ -5,19 +5,25 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # all : fast2sage
 all : fast2pp
 
+STRATEGO_FLAGS = -Xcc -m32 -Xlinker -m32
+
 ofp-simplify : ofp-simplify.str
 #	strc -i ofp-simplify.str $(CFLAGS) $(LDFLAGS) --main io-ofp-simplify
 #	strc -i $(srcdir)/ofp-simplify.str -I $(srcdir)/../sdf_syntax -la stratego-lib --main io-ofp-simplify
-	strc -i $(srcdir)/ofp-simplify.str -I $(srcdir)/../sdf_syntax -la stratego-lib --main io-ofp-simplify -o ofp-simplify
+#	strc -i $(srcdir)/ofp-simplify.str -I $(srcdir)/../sdf_syntax -la stratego-lib --main io-ofp-simplify -o ofp-simplify
+	strc $(STRATEGO_FLAGS) -i $(srcdir)/ofp-simplify.str -I $(srcdir)/../sdf_syntax -la stratego-lib --main io-ofp-simplify -o ofp-simplify
 
 no-to-none: ofp-simplify
-	strc -i $(srcdir)/no-to-none.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o no-to-none
+#	strc -i $(srcdir)/no-to-none.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o no-to-none
+	strc $(STRATEGO_FLAGS) -i $(srcdir)/no-to-none.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o no-to-none
 
 ofp2fast: no-to-none
-	strc -i $(srcdir)/ofp2fast.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o ofp2fast
+#	strc -i $(srcdir)/ofp2fast.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o ofp2fast
+	strc $(STRATEGO_FLAGS) -i $(srcdir)/ofp2fast.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o ofp2fast
 
 fast2pp: ofp2fast
-	strc -i $(srcdir)/fast2pp.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o fast2pp
+#	strc -i $(srcdir)/fast2pp.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o fast2pp
+	strc $(STRATEGO_FLAGS) -i $(srcdir)/fast2pp.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o fast2pp
 
 # fast2sage: fast2pp
 #	strc -i $(srcdir)/fast2sage.str -I $(srcdir)/../sdf_syntax -la stratego-lib -o fast2sage
