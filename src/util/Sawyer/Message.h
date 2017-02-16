@@ -1953,7 +1953,7 @@ SAWYER_EXPORT extern SProxy assertionStream;
  *  state. Sometimes it's necessary to do this during program exit, otherwise the C++ runtime might terminate the Boost
  *  thread synchronization library before Sawyer, which leads to exceptions or segmentation faults when Sawyer's stream
  *  destructors run.  In fact, @ref initializeLibrary arranges for this shutdown function to be called by exit. */
-void shutdown();
+SAWYER_EXPORT void shutdown();
     
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
