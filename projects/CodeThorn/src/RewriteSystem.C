@@ -6,12 +6,7 @@ using namespace std;
 using namespace SPRAY;
 using namespace Sawyer::Message;
 
-Sawyer::Message::Facility RewriteSystem::logger = [](){
-  Facility log;
-  rose::Diagnostics::initialize();
-  rose::Diagnostics::initAndRegister(log, "RewriteSystem");
-  return log;
-}();
+Sawyer::Message::Facility RewriteSystem::logger;
 
 RewriteSystem::RewriteSystem():_rewriteCondStmt(false) {
 }
@@ -23,6 +18,7 @@ RewriteStatistics RewriteSystem::getRewriteStatistics() {
 RewriteStatistics::RewriteStatistics() {
   init();
 }
+
 void RewriteStatistics::init() {
   numElimMinusOperator=0;
   numElimAssignOperator=0;
@@ -35,6 +31,16 @@ void RewriteStatistics::init() {
 void RewriteStatistics::reset() {
   init();
 }
+
+void RewriteSystem::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::RewriteSystem", rose::Diagnostics::destination);
+    rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
+}
+
 RewriteStatistics RewriteSystem::getStatistics() {
   return dump1_stats;
 }

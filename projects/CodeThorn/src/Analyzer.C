@@ -25,12 +25,16 @@ using namespace CodeThorn;
 using namespace std;
 using namespace Sawyer::Message;
 
-Sawyer::Message::Facility Analyzer::logger = [](){
-  Facility log;
-  rose::Diagnostics::initialize();
-  rose::Diagnostics::initAndRegister(log, "Analyzer");
-  return log;
-}();
+Sawyer::Message::Facility Analyzer::logger;
+
+void Analyzer::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::Analyzer", rose::Diagnostics::destination);
+    rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
+}
 
 bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
   //return _labeler->getLabeler()->isFunctionCallWithAssignment(lab,varIdPtr);
@@ -67,7 +71,6 @@ void Analyzer::disableExternalFunctionSemantics() {
 }
 
 Analyzer::Analyzer():
-  // Set logging
   startFunRoot(0),
   cfanalyzer(0),
   _globalTopifyMode(GTM_IO),
