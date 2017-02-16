@@ -84,7 +84,7 @@ void initialize() {
 
         // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, but
         // insertAndAdjust will change that based on mfacilities' settings.
-        initAndRegister(mlog, "rose");
+        initAndRegister(&mlog, "rose");
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];
@@ -132,10 +132,17 @@ bool isInitialized() {
     return isInitialized_;
 }
 
+// [Robb P Matzke 2017-02-16]: deprecated
 void
 initAndRegister(Facility &mlog, const std::string &name) {
-    mlog = Facility(name, destination);
-    mfacilities.insertAndAdjust(mlog);
+    initAndRegister(&mlog, name);
+}
+
+void
+initAndRegister(Facility *mlog, const std::string &name) {
+    ASSERT_not_null(mlog);
+    *mlog = Facility(name, destination);
+    mfacilities.insertAndAdjust(*mlog);
 }
 
 StreamPrintf mfprintf(std::ostream &stream) {

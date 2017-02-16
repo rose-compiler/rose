@@ -11,6 +11,6 @@ SgAsmExecutableFileFormat::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::Ast");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::Ast");
     }
 }

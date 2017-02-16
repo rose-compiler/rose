@@ -26,7 +26,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::CallingConvention");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::CallingConvention");
     }
 }
 

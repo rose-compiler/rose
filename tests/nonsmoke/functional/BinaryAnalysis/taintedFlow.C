@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
 {
     // Configure diagnostic output
     ROSE_INITIALIZE;
-    rose::Diagnostics::initAndRegister(::mlog, "taintedFlow");
+    rose::Diagnostics::initAndRegister(&::mlog, "taintedFlow");
     rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
 
     // Describe the command-line

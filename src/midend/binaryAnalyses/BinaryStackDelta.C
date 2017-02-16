@@ -25,7 +25,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::StackDelta");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::StackDelta");
     }
 }
 
