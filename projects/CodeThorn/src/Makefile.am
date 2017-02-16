@@ -22,6 +22,7 @@ libspray_la_SOURCES=\
  AnalysisAstAnnotator.h \
  AstTerm.h \
  AType.h \
+ BoolLattice.h \
  CFAnalysis.h \
  DFAnalysisBase.h \
  DFTransferFunctions.h \
@@ -55,6 +56,7 @@ libspray_la_SOURCES=\
  AliasAnalysis.C \
  AstTerm.C \
  AType.C \
+ BoolLattice.C \
  CFAnalysis.C \
  CppExprEvaluator.C \
  DFAnalysisBase.C \
