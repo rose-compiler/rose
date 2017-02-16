@@ -9,6 +9,11 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+const std::string&
+Function::demangledName() const {
+    return demangledName_.empty() ? name_ : demangledName_;
+}
+
 bool
 Function::insertDataBlock(const DataBlock::Ptr &dblock) {
     if (isFrozen_)
@@ -35,8 +40,9 @@ Function::eraseDataBlock(const DataBlock::Ptr &dblock) {
 std::string
 Function::printableName() const {
     std::string s = "function " + StringUtility::addrToString(address());
-    if (!name_.empty())
-        s += " \"" + StringUtility::cEscape(name_) + "\"";
+    const std::string &name = demangledName();
+    if (!name.empty())
+        s += " \"" + StringUtility::cEscape(name) + "\"";
     return s;
 }
 
