@@ -114,7 +114,7 @@ void FixupAstDeclarationScope::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::FixupAstDeclarationScope");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::FixupAstDeclarationScope");
         }
    }
 
