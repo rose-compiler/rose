@@ -1,6 +1,3 @@
-// CER (12/15/2016):  This is temporary and should be removed before committing to ROSE
-#define ROSE_USE_ROSE_ATERM_SUPPORT 1
-
 #include "sage3basic.h"
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
@@ -17,6 +14,7 @@
 
 #include <aterm2.h>
 #include "traverse_SgUntypedNodes.hpp"
+#include "UntypedTraversal.h"
 
 // DQ (9/10/2014): I think this is declared in the other Fortran support (both of which exist).
 // SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
@@ -35,6 +33,8 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      int i, err;
      string parse_table;
+     SgUntypedFile* untypedFile = NULL;
+
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): Put the call to the new SDF Open Fortran Parser here... argc = %d \n",argc);
@@ -226,8 +226,6 @@ experimental_openFortranParser_main(int argc, char **argv)
           printf ("In experimental_openFortranParser_main(): Calling traverse_SgUntypedFile() \n");
 #endif
 
-          SgUntypedFile* untypedFile = NULL;
-
           if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue || untypedFile == NULL)
              {
                fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to parse file %s\n\n", filenameWithoutPath.c_str());
@@ -236,9 +234,8 @@ experimental_openFortranParser_main(int argc, char **argv)
           else
              {
 #if DEBUG_ROSE_EXPERIMENTAL
-               printf ("In experimental_openFortranParser_main(): false branch taken: traverse_SgUntypedFile() != ATtrue || untypedFile == NULL: untypedFile = %p \n",untypedFile);
+               printf ("In experimental_openFortranParser_main(): successfully traversed ATerms untypedFile = %p \n",untypedFile);
 #endif
-               return untypedFile;
              }
         }
 
@@ -246,5 +243,26 @@ experimental_openFortranParser_main(int argc, char **argv)
      printf ("In experimental_openFortranParser_main(): exiting normally without using OFP round trip support\n");
 #endif
 
-     return NULL;
+//----------------------------------------------------------------------
+//  Traverse the SgUntypedFile object and convert to regular sage nodes
+//----------------------------------------------------------------------
+
+  // Build the traversal object
+     SgUntyped::UntypedTraversal traversal;
+
+     traversal.traverse(untypedFile);
+
+     return NULL;  // not fully implemented yet
+
+#if 0
+  // Let's play around with SgProject object
+  //
+     SgProject* project = new SgProject();
+
+     project->processCommandLine(argc, argv);
+
+     cout << endl << "Created project: " << project->numberOfFiles() << " files" << endl << endl;
+#endif
+
+     return untypedFile;
   }
