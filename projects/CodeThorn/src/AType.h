@@ -76,7 +76,7 @@ class ConstIntLattice {
   ConstIntLattice operatorBitwiseAnd(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseComplement() const;
 
-
+  ConstIntLattice operatorAdd
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   bool operator==(AType::ConstIntLattice other) const;
@@ -90,7 +90,6 @@ class ConstIntLattice {
   int getIntValue() const;
   SPRAY::VariableId getVariableId() const;
   long hash() const;
-  static bool arithTop;
   // returns length of integer dependent on valueType
   int intLength();
  private:
