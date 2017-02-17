@@ -28,6 +28,9 @@ private:
     typedef Sawyer::Container::Interval<size_t> BitRange;
     typedef Sawyer::Container::IntervalSet<BitRange> BitSet;
 
+ // DQ (2/13/2017): Testing a simpler case.
+ // BitSet XXX;
+
 private:
     class MajorMinor {
         unsigned majr_, minr_;
@@ -57,8 +60,18 @@ private:
     };
 
 private:
+ // DQ (2/13/2017): Test alternative formulation.
     typedef Sawyer::Container::Map<MajorMinor, BitSet> Map;
+
+ // DQ (2/13/2017): Testing a simpler case.
+ // typedef Sawyer::Container::Map<MajorMinor, BitSet > MapXXX;
+ // MapXXX Map_YYY;
+
+ // DQ (2/13/2017): Both of these work fine.
+ // typedef Sawyer::Container::Map<MajorMinor, Sawyer::Container::IntervalSet< Sawyer::Container::Interval<size_t> > > Map;
+ // typedef Sawyer::Container::Map<MajorMinor, Sawyer::Container::IntervalSet< BitRange > > Map;
     Map map_;
+
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -176,6 +189,7 @@ private:
         ASSERT_require(reg.is_valid());
         return BitRange::baseSize(reg.get_offset(), reg.get_nbits());
     }
+
 };
 
 } // namespace
