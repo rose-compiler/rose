@@ -1,4 +1,3 @@
-#include "BoolLattice.h"
 
 // -*- mode: C++; coding: utf-8; -*-
 /*************************************************************
@@ -7,6 +6,8 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include "sage3basic.h"
+#include "BoolLattice.h"
 #include "AType.h"
 #include "assert.h"
 #include "CommandLineOptions.h"

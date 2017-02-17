@@ -5,6 +5,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include "sage3basic.h"
 #include "AType.h"
 #include "assert.h"
 #include "CommandLineOptions.h"
@@ -51,7 +52,7 @@ AType::ConstIntLattice::ConstIntLattice(short x) {valueType=AType::ConstIntLatti
 AType::ConstIntLattice::ConstIntLattice(int x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=x;}
 AType::ConstIntLattice::ConstIntLattice(long int x) {
   if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+   valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
 }
 AType::ConstIntLattice::ConstIntLattice(long long int x) {
   if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
@@ -80,6 +81,7 @@ bool AType::ConstIntLattice::isTrue() const {return valueType==AType::ConstIntLa
 bool AType::ConstIntLattice::isFalse() const {return valueType==AType::ConstIntLattice::CONSTINT && intValue==0;}
 bool AType::ConstIntLattice::isBot() const {return valueType==AType::ConstIntLattice::BOT;}
 bool AType::ConstIntLattice::isConstInt() const {return valueType==AType::ConstIntLattice::CONSTINT;}
+bool AType::ConstIntLattice::isPtr() const {return valueType==AType::ConstIntLattice::PTR;}
 
 long AType::ConstIntLattice::hash() const {
   if(isTop()) return LONG_MAX;
@@ -162,17 +164,46 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorAnd(ConstIntLattice other
   if(isFalse() && other.isFalse()) return false;
   throw CodeThorn::Exception("Error: ConstIntLattice operation&& failed.");
 }
-
+ 
 bool AType::strictWeakOrderingIsSmaller(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) {
-  if(c1.isConstInt() && c2.isConstInt())
-    return c1.getIntValue()<c2.getIntValue();
-  return (c1.getValueType()<c2.getValueType());
+  if (c1.getValueType()!=c2.getValueType()) {
+    return c1.getValueType()<c2.getValueType();
+  } else {
+    ROSE_ASSERT(c1.getValueType()==c2.getValueType()); 
+    if(c1.isConstInt() && c2.isConstInt()) {
+      return c1.getIntValue()<c2.getIntValue();
+    } else if(c1.isPtr() && c2.isPtr()) {
+      if(c1.getVariableId()!=c2.getVariableId()) {
+        return c1.getVariableId()<c2.getVariableId();
+      } else {
+        return c1.getIntValue()<c2.getIntValue();
+      }
+    } else if (c1.isBot()==c2.isBot()) {
+      return false;
+    } else if (c1.isTop()==c2.isTop()) {
+      return false;
+    } else {
+      throw CodeThorn::Exception("Error: ConstIntLattice::strictWeakOrderingIsSmaller: unknown equal values.");
+    }
+  }
 }
+
 bool AType::strictWeakOrderingIsEqual(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) {
-  if(c1.isConstInt() && c2.isConstInt())
-    return c1.getIntValue()==c2.getIntValue();
-  return c1.getValueType()==c2.getValueType();
+  if(c1.getValueType()==c2.getValueType()) {
+    if(c1.isConstInt() && c2.isConstInt())
+      return c1.getIntValue()==c2.getIntValue();
+    else if(c1.isPtr() && c2.isPtr()) {
+      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue();
+    } else {
+      ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
+      return true;
+    }
+  } else {
+    // different value types
+    return false;
+  }
 }
+
 bool AType::ConstIntLatticeCmp::operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const {
   return AType::strictWeakOrderingIsSmaller(c1,c2);
 }
@@ -329,6 +360,15 @@ int AType::ConstIntLattice::getIntValue() const {
   }
   else 
     return intValue;
+}
+
+ SPRAY::VariableId AType::ConstIntLattice::getVariableId() const { 
+   if(valueType!=PTR) {
+     cerr << "ConstIntLattice: valueType="<<valueType<<endl;
+     throw CodeThorn::Exception("Error: ConstIntLattice::getVariableId operation failed.");
+  }
+  else 
+    return variableId;
 }
 
 // arithmetic operators

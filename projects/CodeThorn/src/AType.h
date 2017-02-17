@@ -11,6 +11,7 @@
 #include <string>
 #include <sstream>
 #include "BoolLattice.h"
+#include "VariableIdMapping.h"
 
 using std::string;
 using std::istream;
@@ -34,7 +35,7 @@ class ConstIntLattice {
  public:
   friend bool strictWeakOrderingIsSmaller(const ConstIntLattice& c1, const ConstIntLattice& c2);
   friend bool strictWeakOrderingIsEqual(const ConstIntLattice& c1, const ConstIntLattice& c2);
-  enum ValueType { BOT, CONSTINT, TOP};
+  enum ValueType { BOT, CONSTINT, PTR, TOP};
   ConstIntLattice();
   ConstIntLattice(bool val);
   // type conversion
@@ -58,6 +59,7 @@ class ConstIntLattice {
   bool isBot() const;
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
+  bool isPtr() const;
   ConstIntLattice operatorNot();
   ConstIntLattice operatorUnaryMinus(); // unary minus
   ConstIntLattice operatorOr(ConstIntLattice other);
@@ -86,6 +88,7 @@ class ConstIntLattice {
   void fromStream(istream& is);
   ValueType getValueType() const;
   int getIntValue() const;
+  SPRAY::VariableId getVariableId() const;
   long hash() const;
   static bool arithTop;
   // returns length of integer dependent on valueType
@@ -93,6 +96,7 @@ class ConstIntLattice {
  private:
   ValueType valueType;
   int intValue;
+  SPRAY::VariableId variableId;
 };
 
 // arithmetic operators
