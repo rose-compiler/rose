@@ -145,6 +145,12 @@ initAndRegister(Facility *mlog, const std::string &name) {
     mfacilities.insertAndAdjust(*mlog);
 }
 
+void
+deregister(Facility *mlog) {
+    if (mlog != NULL)
+        mfacilities.erase(*mlog);
+}
+
 StreamPrintf mfprintf(std::ostream &stream) {
     return StreamPrintf(stream);
 }
