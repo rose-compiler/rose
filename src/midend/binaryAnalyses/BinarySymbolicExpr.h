@@ -220,7 +220,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & nBits_ & domainWidth_ & flags_ & comment_ & hashval_;
+        s & BOOST_SERIALIZATION_NVP(nBits_);
+        s & BOOST_SERIALIZATION_NVP(domainWidth_);
+        s & BOOST_SERIALIZATION_NVP(flags_);
+        s & BOOST_SERIALIZATION_NVP(comment_);
+        s & BOOST_SERIALIZATION_NVP(hashval_);
         // s & userData_;
     }
 #endif
@@ -725,8 +729,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<Node>(*this);
-        s & op_ & children_ & nnodes_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
+        s & BOOST_SERIALIZATION_NVP(op_);
+        s & BOOST_SERIALIZATION_NVP(children_);
+        s & BOOST_SERIALIZATION_NVP(nnodes_);
     }
 #endif
 
@@ -892,14 +898,18 @@ private:
 
     template<class S>
     void save(S &s, const unsigned version) const {
-        s & boost::serialization::base_object<Node>(*this);
-        s & leafType_ & bits_ & name_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
+        s & BOOST_SERIALIZATION_NVP(leafType_);
+        s & BOOST_SERIALIZATION_NVP(bits_);
+        s & BOOST_SERIALIZATION_NVP(name_);
     }
 
     template<class S>
     void load(S &s, const unsigned version) {
-        s & boost::serialization::base_object<Node>(*this);
-        s & leafType_ & bits_ & name_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
+        s & BOOST_SERIALIZATION_NVP(leafType_);
+        s & BOOST_SERIALIZATION_NVP(bits_);
+        s & BOOST_SERIALIZATION_NVP(name_);
         nextNameCounter(name_);
     }
 

@@ -51,7 +51,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & name_;
+        s & BOOST_SERIALIZATION_NVP(name_);
     }
 #endif
 
