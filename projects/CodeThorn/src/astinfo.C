@@ -6,8 +6,19 @@
 #include "rose.h"
 
 #include "VariableIdMapping.h"
-#include "CommandLineOptions.h"
 #include "LineColInfo.h"
+
+#ifdef USE_SAWYER_COMMANDLINE
+#include "Sawyer/CommandLineBoost.h"
+#else
+#include <boost/program_options.hpp>
+#endif
+
+#ifdef USE_SAWYER_COMMANDLINE
+Sawyer::CommandLine::Boost::variables_map args;
+#else
+boost::program_options::variables_map args;
+#endif
 
 using std::cout;
 using std::endl;
@@ -44,7 +55,7 @@ int main( int argc, char *argv[] ) {
   try {
     // Command line option handling.
     po::options_description desc
-      ("varwatch 0.1\n"
+      ("astinfo 0.1\n"
        "Written by Markus Schordan 2017\n"
        "Supported options");
     desc.add_options()

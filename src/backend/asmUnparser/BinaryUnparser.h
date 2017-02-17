@@ -18,6 +18,7 @@ struct Settings {
 
     struct {
         bool showingReasons;                            /**< Show reasons for function existing. */
+        bool showingDemangled;                          /**< Show demangled name in preference to mangled name. */
         struct {
             bool showing;                               /**< Show function call graph? */
         } cg;                                           /**< Settings for function call graphs. */

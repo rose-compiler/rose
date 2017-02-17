@@ -50,6 +50,7 @@ public:
 private:
     rose_addr_t entryVa_;                               // entry address; destination for calls to this function
     std::string name_;                                  // optional function name
+    std::string demangledName_;                         // optional demangled name
     std::string comment_;                               // optional multi-line, plain-text, commment
     unsigned reasons_;                                  // reason bits from SgAsmFunction::FunctionReason
     std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
@@ -77,6 +78,7 @@ private:
         //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not stored
         s & BOOST_SERIALIZATION_NVP(entryVa_);
         s & BOOST_SERIALIZATION_NVP(name_);
+        s & BOOST_SERIALIZATION_NVP(demangledName_);
         s & BOOST_SERIALIZATION_NVP(comment_);
         s & BOOST_SERIALIZATION_NVP(reasons_);
         s & BOOST_SERIALIZATION_NVP(bblockVas_);
@@ -117,9 +119,21 @@ public:
 
     /** Optional function name.
      *
+     *  This is the official name. See also @ref demangledName, which can also return the value of this @ref name property.
+     *
      *  @{ */
     const std::string& name() const { return name_; }
     void name(const std::string &name) { name_ = name; }
+    /** @} */
+
+    /** Optional demangled name.
+     *
+     *  This property holds the override string to use as the demangled name. If set to the empty string, then reading this
+     *  property returns the true @ref name instead.
+     *
+     * @{ */
+    const std::string& demangledName() const;
+    void demangledName(const std::string &name) { demangledName_ = name; }
     /** @} */
 
     /** Optional function comment.
@@ -270,8 +284,10 @@ public:
     CallingConvention::Analysis& callingConventionAnalysis() { return ccAnalysis_; }
     /** @} */
 
-    /** A printable name for the function.  Returns a string like 'function 0x10001234 "main"'.  The function name is not
-     *  included if the name is empty. */
+    /** A printable name for the function.
+     *
+     *  Returns a string like 'function 0x10001234 "main"'.  The function name is not included if this function has neither a
+     *  demangled name nor a true name. The @ref demangledName overrides the true @ref name. */
     std::string printableName() const;
 
     /** Cached results of function no-op analysis.

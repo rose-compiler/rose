@@ -174,6 +174,7 @@ Base::juxtaposeColumns(const std::vector<std::string> &parts, const std::vector<
 
 Settings::Settings() {
     function.showingReasons = true;
+    function.showingDemangled = true;
     function.cg.showing = true;
     function.stackDelta.showing = false;                // very slow for some reason
     function.stackDelta.concrete = true;
@@ -212,6 +213,7 @@ Settings
 Settings::minimal() {
     Settings s = full();
     s.function.showingReasons = false;
+    s.function.showingDemangled = false;
     s.function.cg.showing = false;
     s.function.stackDelta.showing = false;
     s.function.callconv.showing = false;
@@ -248,6 +250,9 @@ commandLineSwitches(Settings &settings) {
 
     insertBooleanSwitch(sg, "function-reasons", settings.function.showingReasons,
                         "Show the list of reasons why a function was created.");
+
+    insertBooleanSwitch(sg, "demangle-names", settings.function.showingDemangled,
+                        "Show demangled names in preference to mangled names when a function has both.");
 
     insertBooleanSwitch(sg, "function-cg", settings.function.cg.showing,
                         "Show the function call graph. That is, for each function show the functions that call the said "
@@ -449,8 +454,16 @@ Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function,
     if (nextUnparser()) {
         nextUnparser()->emitFunctionPrologue(out, function, state);
     } else {
-        out <<std::string(120, ';') <<"\n"
-            <<";;; " <<function->printableName() <<"\n";
+        out <<std::string(120, ';') <<"\n";
+        if (settings().function.showingDemangled) {
+            out <<";;; " <<function->printableName() <<"\n";
+            if (function->demangledName() != function->name())
+                out <<";;; mangled name is \"" <<StringUtility::cEscape(function->name()) <<"\"\n";
+        } else {
+            out <<";;; function " <<StringUtility::addrToString(function->address());
+            if (!function->name().empty())
+                out <<" \"" <<StringUtility::cEscape(function->name()) <<"\"\n";
+        }
         state.frontUnparser().emitFunctionComment(out, function, state);
         if (settings().function.showingReasons)
             state.frontUnparser().emitFunctionReasons(out, function, state);
