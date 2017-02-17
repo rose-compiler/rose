@@ -28,17 +28,17 @@ class FixupTemplateArguments : public SgSimpleProcessing
           void visit (SgNode* node);
 
        // FixupTemplateArguments () {}
-          void processTemplateArgument ( SgTemplateArgument* templateArgument );
+          void processTemplateArgument ( SgTemplateArgument* templateArgument, SgScopeStatement* targetScope );
 
        // This avoids a warning by g++
        // virtual ~FixupTemplateArgumentsOnMemoryPool(); 
 
-          bool contains_private_type (SgType* type);
-          bool contains_private_type (SgTemplateArgument* templateArgument);
-          bool contains_private_type ( const SgTemplateArgumentPtrList & templateArgListPtr );
+          bool contains_private_type ( SgType* type, SgScopeStatement* targetScope );
+          bool contains_private_type ( SgTemplateArgument* templateArgument, SgScopeStatement* targetScope );
+          bool contains_private_type ( SgTemplateArgumentPtrList & templateArgListPtr, SgScopeStatement* targetScope );
 
        // DQ (2/11/2017): Debugging support.
-          std::string generate_string_name (SgType* type, SgNode* nodeReferenceToType);
+          std::string generate_string_name ( SgType* type, SgNode* nodeReferenceToType );
    };
 
 
