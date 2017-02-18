@@ -149,12 +149,23 @@ list<SingleEvalResultConstInt> ExprAnalyzer::listify(SingleEvalResultConstInt re
   return resList;
 }
 
+void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints, AType::ConstIntLattice result) {
+  this->estate=estate;
+  this->exprConstraints=exprConstraints;
+  this->result=result;
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
   assert(estate.pstate()); // ensure state exists
-  SingleEvalResultConstInt res;
   // initialize with default values from argument(s)
+#ifdef EXPR_VISITOR
+  ConstraintSet exprConstraintsInit;
+  res.init(estate,exprContraintsInit,AType::Bot());
+#else
+  SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
+#endif
 
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
     cout << "Error: incdec-op not supported in conditions."<<endl;
@@ -667,3 +678,53 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
+// EVAL FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef EXPR_VISITOR
+// evaluation functions
+list<SingleEvalResultConstInt> evalConditionalExpr(SgNode* node){
+}
+list<SingleEvalResultConstInt> evalEqualOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalNotEqualOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalGreaterThanOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalLessThanOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalLessOrEqualOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalAndOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalOrOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalNotOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalBitAndOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalBitOrOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalBitXorOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalBitNotOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalUnaryMinusOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalAddOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalSubOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalMulOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalDivOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalModOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalCastOp(SgNode* node) {
+}
+list<SingleEvalResultConstInt> evalArrayReference(SgNode* node) {
+}
+#endif

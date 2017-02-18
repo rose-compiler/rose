@@ -76,7 +76,12 @@ class ConstIntLattice {
   ConstIntLattice operatorBitwiseAnd(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseComplement() const;
 
-  ConstIntLattice operatorAdd
+  ConstIntLattice operatorAdd(ConstIntLattice& a,ConstIntLattice& b);
+  ConstIntLattice operatorSub(ConstIntLattice& a,ConstIntLattice& b);
+  ConstIntLattice operatorMul(ConstIntLattice& a,ConstIntLattice& b);
+  ConstIntLattice operatorDiv(ConstIntLattice& a,ConstIntLattice& b);
+  ConstIntLattice operatorMod(ConstIntLattice& a,ConstIntLattice& b);
+
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   bool operator==(AType::ConstIntLattice other) const;
@@ -86,12 +91,13 @@ class ConstIntLattice {
   friend ostream& operator<<(ostream& os, const ConstIntLattice& value);
   friend istream& operator>>(istream& os, ConstIntLattice& value);
   void fromStream(istream& is);
+
   ValueType getValueType() const;
   int getIntValue() const;
   SPRAY::VariableId getVariableId() const;
+
+  int intLength();   // returns length of integer dependent on valueType
   long hash() const;
-  // returns length of integer dependent on valueType
-  int intLength();
  private:
   ValueType valueType;
   int intValue;

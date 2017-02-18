@@ -385,7 +385,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorUnaryMinus() {
   return tmp;
 }
 
-AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorAdd(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -395,7 +395,7 @@ AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIn
   assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()+b.getIntValue();
 }
-AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorSub(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -405,7 +405,7 @@ AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIn
   assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()-b.getIntValue();
 }
-AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorMul(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -414,8 +414,9 @@ AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIn
     return a;
   assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()*b.getIntValue();
+
 }
-AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorDiv(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -424,8 +425,9 @@ AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIn
     return a;
   assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()/b.getIntValue();
+
 }
-AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorMod(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -434,4 +436,20 @@ AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIn
     return a;
   assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()%b.getIntValue();
+}
+
+AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  return a.operatorAdd(a,b);
+}
+AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  return a.operatorSub(a,b);
+}
+AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  return a.operatorMul(a,b);
+}
+AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  return a.operatorDiv(a,b);
+}
+AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  return a.operatorMod(a,b);
 }
