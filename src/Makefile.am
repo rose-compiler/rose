@@ -39,6 +39,8 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
 
 # DQ (1/26/2017): This is built in the new way that Craig and I are working together on the new OFP.
+# Rasmussen (2/7/2017): The ATerm traversal library is needed by the frontend/Experimental_OpenFortranParser_ROSE_Connection.
+# Adding this library is ok because it is built with the normal 64-bit mode of the compiler (no -m32 CFLAGS) and then linked with the 64-bit ATerm library.
    libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/libexperimentalOFP.la
 
 #  libroseExperimentalOpenFortranParserlibraries =
