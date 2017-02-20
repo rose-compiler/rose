@@ -5897,6 +5897,11 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
           cscope = SageBuilder::topScopeStack();
      ROSE_ASSERT(cscope != NULL);
 
+#if 0
+     printf ("In lookupTypedefSymbolInParentScopes(): name = %s starting with cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
+     printf ("--- parent scope = %p = %s \n",cscope->get_scope(),(cscope->get_scope() != NULL) ? cscope->get_scope()->class_name().c_str() : "null");
+#endif
+
      while ((cscope != NULL) && (symbol == NULL))
         {
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
@@ -5906,7 +5911,15 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
             else
                cscope = NULL;
+
+#if 0
+          printf ("In lookupTypedefSymbolInParentScopes(): symbol = %p next cscope = %p = %s \n",symbol,cscope,(cscope != NULL) ? cscope->class_name().c_str() : "null");
+#endif
         }
+
+#if 0
+     printf ("Leaving lookupTypedefSymbolInParentScopes(): symbol = %p \n",symbol);
+#endif
 
      return symbol;
    }
@@ -19289,6 +19302,9 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   }
 #endif
 
+#if 0
+  // DQ (2/16/2017): This is a static function that is defined but not used in this file (compiler waring).
+
   /// \brief swaps the "defining elements" of two function declarations
   static
   void swapDefiningElements(SgFunctionDeclaration& ll, SgFunctionDeclaration& rr)
@@ -19299,6 +19315,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     // \todo do we need to swap also exception spec, decorator_list, etc. ?
   }
+#endif
 
 #if 0
   // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
@@ -20978,9 +20995,12 @@ bool SageInterface::isEquivalentFunctionType (const SgFunctionType* lhs, const S
     // Must have same number of argument types
     if (f1_arg_types.size() == f2_arg_types.size())
     {
-      int counter = 0; 
-      //iterate through all argument types
-      for (int i=0; i< f1_arg_types.size(); i++)
+   // DQ (2/16/2017): Fixed compiler warning about comparison between signed and unsigned integers
+   // int counter = 0; 
+      size_t counter = 0; 
+   // iterate through all argument types
+   // for (int i=0; i< f1_arg_types.size(); i++)
+      for (size_t i=0; i< f1_arg_types.size(); i++)
       {
         if (isEquivalentType (f1_arg_types[i], f2_arg_types[i]) )
            counter ++;  // count the number of equal arguments 

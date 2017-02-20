@@ -7097,7 +7097,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("In unparseVarDeclStmt(): Output asm register name code \n");
 #endif
                       // an asm ("<register name>") is in use
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+                      // DQ (2/4/2017): Added support for asm register names for Intel compiler (see test2015_105,c).
+                         curprint ( string(" __asm__ (\""));
+#else
                          curprint ( string(" asm (\""));
+#endif
                       // curprint ( string("<unparse register name>";
                          curprint ( unparse_register_name(decl_item->get_register_name_code()));
                          curprint ( string("\")"));
@@ -7112,7 +7117,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("In unparseVarDeclStmt(): Output asm register name \n");
 #endif
                       // an asm ("<register name>") is in use
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+                      // DQ (2/4/2017): Added support for asm register names for Intel compiler (see test2015_105,c).
+                         curprint ( string(" __asm__ (\""));
+#else
                          curprint ( string(" asm (\""));
+#endif
                          curprint ( decl_item->get_register_name_string() );
                          curprint ( string("\")"));
                        }
