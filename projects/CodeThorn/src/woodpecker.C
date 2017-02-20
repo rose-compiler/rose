@@ -35,6 +35,8 @@
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
+
+#include "Diagnostics.h"
 using namespace Sawyer::Message;
 
 #include "PropertyValueTable.h"
@@ -121,12 +123,14 @@ void printCodeStatistics(SgNode* root) {
 }
 
 int main(int argc, char* argv[]) {
-  Sawyer::Message::Facility logger("Woodpecker");
-  mfacilities.insert(logger);
+  ROSE_INITIALIZE;
 
-  mfacilities.disable(DEBUG);
-  mfacilities.disable(TRACE);
-  mfacilities.disable(INFO);
+  rose::Diagnostics::mprefix->showProgramName(false);
+  rose::Diagnostics::mprefix->showThreadId(false);
+  rose::Diagnostics::mprefix->showElapsedTime(false);
+
+  Sawyer::Message::Facility logger;
+  rose::Diagnostics::initAndRegister(logger, "Woodpecker");
 
   try {
     if(argc==1) {
@@ -147,7 +151,7 @@ int main(int argc, char* argv[]) {
 #else
     namespace po = boost::program_options;
 #endif
-    
+
     po::options_description desc
     ("Woodpecker V0.1\n"
      "Written by Markus Schordan\n"
@@ -170,6 +174,7 @@ int main(int argc, char* argv[]) {
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
     ("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
     ("transform-thread-variable", "transform code to use additional thread variable.")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level")
     ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -181,7 +186,7 @@ int main(int argc, char* argv[]) {
   if (args.count("help")) {
     cout << "woodpecker <filename> [OPTIONS]"<<endl;
     cout << desc << "\n";
-    return 0;
+    exit(0);
   }
   if (args.count("rose-help")) {
     argv[1] = strdup("--help");
@@ -190,7 +195,7 @@ int main(int argc, char* argv[]) {
   if (args.count("version")) {
     cout << "Woodpecker version 0.1\n";
     cout << "Written by Markus Schordan 2013\n";
-    return 0;
+    exit(0);
   }
   if (args.count("csv-assert")) {
     csvAssertFileName=args["csv-assert"].as<string>().c_str();
@@ -217,6 +222,9 @@ int main(int argc, char* argv[]) {
 
   if(boolOptions["verbose"])
     detailedOutput=1;
+
+  mfacilities.control(args["log-level"].as<string>());
+  logger[TRACE] << "Log level is " << args["log-level"].as<string>() << endl;
 
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
@@ -395,22 +403,29 @@ int main(int argc, char* argv[]) {
   // main function try-catch
   } catch(CodeThorn::Exception& e) {
     cerr << "CodeThorn::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(SPRAY::Exception& e) {
     cerr << "Spray::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(std::exception& e) {
     cerr << "std::exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(char* str) {
     cerr << "*Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(const char* str) {
     cerr << "Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(string str) {
     cerr << "Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   }
+  mfacilities.shutdown();
   return 0;
 }

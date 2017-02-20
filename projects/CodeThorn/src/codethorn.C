@@ -70,10 +70,18 @@ namespace po = boost::program_options;
 using namespace CodeThorn;
 using namespace SPRAY;
 using namespace boost;
+
+#include "Diagnostics.h"
 using namespace Sawyer::Message;
 
 // experimental
 #include "IOSequenceGenerator.C"
+
+void CodeThorn::initDiagnostics() {
+  rose::Diagnostics::initialize();
+  Analyzer::initDiagnostics();
+  RewriteSystem::initDiagnostics();
+}
 
 bool isExprRoot(SgNode* node) {
   if(SgExpression* exp=isSgExpression(node)) {
@@ -411,6 +419,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
     ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")
@@ -527,7 +536,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("std-out-only",false);
   boolOptions.registerOption("keep-error-states",false);
   boolOptions.registerOption("no-input-input",false);
- 
+
   boolOptions.registerOption("with-counterexamples",false);
   boolOptions.registerOption("with-assert-counterexamples",false);
   boolOptions.registerOption("with-ltl-counterexamples",false);
@@ -1020,12 +1029,16 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
 }
 
 int main( int argc, char * argv[] ) {
-  Sawyer::Message::Facility logger("CodeThorn");
-  mfacilities.insert(logger);
+  ROSE_INITIALIZE;
 
-  mfacilities.disable(DEBUG);
-  mfacilities.disable(TRACE);
-  mfacilities.disable(INFO);
+  CodeThorn::initDiagnostics();
+
+  rose::Diagnostics::mprefix->showProgramName(false);
+  rose::Diagnostics::mprefix->showThreadId(false);
+  rose::Diagnostics::mprefix->showElapsedTime(false);
+
+  Sawyer::Message::Facility logger;
+  rose::Diagnostics::initAndRegister(logger, "CodeThorn");
 
   try {
     Timer timer;
@@ -1035,6 +1048,9 @@ int main( int argc, char * argv[] ) {
     BoolOptions boolOptions = parseBoolOptions(argc, argv);
 
     // Start execution
+
+    mfacilities.control(args["log-level"].as<string>());
+    logger[TRACE] << "Log level is " << args["log-level"].as<string>() << endl;
 
     if (args.count("generate-automata")) {
       generateAutomata(args);
@@ -1057,6 +1073,7 @@ int main( int argc, char * argv[] ) {
 #endif
 
     if (args.count("internal-checks")) {
+      mfacilities.shutdown();
       if(CodeThorn::internalChecks(argc,argv)==false)
         return 1;
       else
@@ -1171,7 +1188,7 @@ int main( int argc, char * argv[] ) {
 
     // handle RERS mode: reconfigure options
     if(boolOptions["rersmode"]||boolOptions["rers-mode"]) {
-      logger[INFO] <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
+      logger[TRACE] <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
       boolOptions.setOption("stderr-like-failed-assert",true);
     }
 
@@ -1213,7 +1230,7 @@ int main( int argc, char * argv[] ) {
         logger[TRACE] <<"STATUS: testing constant expressions."<<endl;
         CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
         list<SgExpression*> exprList=exprRootList(sageProject);
-        logger[INFO] <<"INFO: found "<<exprList.size()<<" expressions."<<endl;
+        logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
         for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
           EvalResult r=evaluator->traverse(*i);
           if(r.isConst()) {
@@ -1222,6 +1239,7 @@ int main( int argc, char * argv[] ) {
         }
         delete evaluator;
       }
+      mfacilities.shutdown();
       return 0;
     }
 
@@ -1448,6 +1466,7 @@ int main( int argc, char * argv[] ) {
     int inputSeqLengthCovered = -1;
     if ( boolOptions["determine-prefix-depth"]) {
       logger[ERROR] << "option \"determine-prefix-depth\" currenlty deactivated." << endl;
+      mfacilities.shutdown();
       return 1;
     }
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
@@ -2117,23 +2136,30 @@ int main( int argc, char * argv[] ) {
     // main function try-catch
   } catch(CodeThorn::Exception& e) {
     logger[FATAL] << "CodeThorn::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(SPRAY::Exception& e) {
     logger[FATAL]<< "Spray::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(std::exception& e) {
     logger[FATAL]<< "std::exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(char const* str) {
     logger[FATAL]<< "*Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(string str) {
     logger[FATAL]<< "Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(...) {
     logger[FATAL]<< "Unknown exception raised." << endl;
+    mfacilities.shutdown();
     return 1;
   }
+  mfacilities.shutdown();
   return 0;
 }
 

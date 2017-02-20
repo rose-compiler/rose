@@ -4,6 +4,8 @@
 : ${TOOL1:=g++}
 : ${TOOL2:=identityTranslator}
 : ${ASAN_OPTIONS=""}
+: ${CPP98_STL_TESTS:="yes"}
+: ${CPP11_STL_TESTS:="yes"}
 
 CLEANUP_ON_SUCCESS="yes"
 CLEANUP_AND_EXIT="no"
@@ -64,7 +66,7 @@ function cleanup {
 }
 
 function test_failed {
-    echo -e "${RED}${TOTAL_FAIL} TESTS FAILED. See above list for details.${COLOREND}"
+    echo -e "Error: ${RED}${TOTAL_FAIL} TESTS FAILED. See above list for details.${COLOREND}"
     exit 1
 }
 
@@ -194,60 +196,69 @@ echo "             BACKEND (BE)         : $TOOL2"
 echo "             CLEANUP ON SUCCESS   : $CLEANUP_ON_SUCCESS"
 echo "             PERL AVAILABLE       : $PERL_AVAILABLE"
 echo "             ADDRESS SANITIZER    : $ASAN_USED"
+echo "             Running C++98 Tests  : $CPP98_STL_TESTS"
+echo "             Running C++11 Tests  : $CPP11_STL_TESTS"
 echo "-----------------------------------------------------------------"
 echo
 echo "-----------------------------------------------------------------"
 echo "STL C++98 FRONTEND+BACKEND CHECK         COMP FE   BE   : SUCCESS"
 echo "-----------------------------------------------------------------"
 
-# DQ: (comment out here to skip these tests).
-check "$STL_CPP98_HEADERS_PASSING" "c++98" ""
-if [ ${TOTAL_FAIL} -gt 0 ]; then
-  test_failed
-else
-  echo "PASS (FRONTEND+BACKEND)."
-fi
+if [ "$CPP98_STL_TESTS" == "yes" ]; then
 
-echo
-echo "-----------------------------------------------------------------"
-echo "STL C++98 FRONTEND+BACKEND CHECK         COMP FE   BE   : SUCCESS"
-echo "-----------------------------------------------------------------"
-# DQ: (comment out here to skip these tests).
-check "$STL_CPP98_HEADERS_FAILING" "c++98" ""
+    check "$STL_CPP98_HEADERS_PASSING" "c++98" ""
+    if [ ${TOTAL_FAIL} -gt 0 ]; then
+        test_failed
+    else
+        echo "PASS (FRONTEND+BACKEND)."
+    fi
 
-# for headers known to fail, only the generated code fails (T2_FAIL)
-# therefore we only check that the front end does not fail for any
-# of those C++ 98 headers.
-((CPP98_FAIL=T0_FAIL+T1_FAIL))
-if [ ${CPP98_FAIL} -gt 0 ]; then
-  test_failed
+    echo
+    echo "-----------------------------------------------------------------"
+    echo "STL C++98 FRONTEND+BACKEND CHECK         COMP FE   BE   : SUCCESS"
+    echo "-----------------------------------------------------------------"
+    check "$STL_CPP98_HEADERS_FAILING" "c++98" ""
+
+    # for headers known to fail, only the generated code fails (T2_FAIL)
+    # therefore we only check that the front end does not fail for any
+    # of those C++ 98 headers.
+    ((CPP98_FAIL=T0_FAIL+T1_FAIL))
+    if [ ${CPP98_FAIL} -gt 0 ]; then
+        test_failed
+    else
+        echo "PASS (FRONTEND:PASS, BACKEND: known to fail)."
+    fi
 else
-  echo "PASS (FRONTEND:PASS, BACKEND: known to fail)."
-fi
+    echo "SKIPPING C++98 STL tests (as requested)."
+fi # end of c++98 tests
+
 
 echo
 echo "-----------------------------------------------------------------"
 echo "STL C++11 FRONTEND+BACKEND CHECK         COMP FE   BE   : SUCCESS"
 echo "-----------------------------------------------------------------"
-check "$STL_CPP11_HEADERS_PASSING" "c++11" ""
 
-FAILING_FRONTEND_TESTS_WITH_ASAN=6
-
-# code generation not correct for any C++11 header. We only check the front end.
-((CPP11_FAIL=T0_FAIL+T1_FAIL))
-if [ "$ASAN_USED" == "yes" ]; then
-    if [ ${CPP11_FAIL} -gt $FAILING_FRONTEND_TESTS_WITH_ASAN ]; then
-        test_failed
+if [ "$CPP11_STL_TESTS" == "yes" ]; then
+    check "$STL_CPP11_HEADERS_PASSING" "c++11" ""
+    FAILING_FRONTEND_TESTS_WITH_ASAN=6
+    # code generation not correct for any C++11 header. We only check the front end.
+    ((CPP11_FAIL=T0_FAIL+T1_FAIL))
+    if [ "$ASAN_USED" == "yes" ]; then
+        if [ ${CPP11_FAIL} -gt $FAILING_FRONTEND_TESTS_WITH_ASAN ]; then
+            test_failed
+        else
+            echo "PASS (FRONTEND:known to fail for $FAILING_FRONTEND_TESTS_WITH_ASAN (with asan), BACKEND: known to fail for all)."
+        fi
     else
-        echo "PASS (FRONTEND:known to fail for $FAILING_FRONTEND_TESTS_WITH_ASAN (with asan), BACKEND: known to fail for all)."
+        if [ ${CPP11_FAIL} -gt 0 ]; then
+            test_failed
+        else
+            echo "PASS (FRONTEND:PASS, BACKEND: known to fail)."
+        fi
     fi
 else
-    if [ ${CPP11_FAIL} -gt 0 ]; then
-        test_failed
-    else
-        echo "PASS (FRONTEND:PASS, BACKEND: known to fail)."
-    fi
-fi
+    echo "SKIPPING C++11 STL tests (as requested)."
+fi # end of c++11 tests
 
 echo
 echo -e "${GREEN}-----------------------------------------------------------------${COLOREND}"

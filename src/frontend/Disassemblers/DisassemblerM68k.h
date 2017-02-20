@@ -60,13 +60,13 @@ private:
 
     template<class S>
     void serialize_common(S &s, const unsigned version) {
-        s & boost::serialization::base_object<Disassembler>(*this);
-        s & family;
-        s & map;
-        s & insn_va;
-        s & iwords;
-        s & niwords;
-        s & niwords_used;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
+        s & BOOST_SERIALIZATION_NVP(family);
+        s & BOOST_SERIALIZATION_NVP(map);
+        s & BOOST_SERIALIZATION_NVP(insn_va);
+        s & BOOST_SERIALIZATION_NVP(iwords);
+        s & BOOST_SERIALIZATION_NVP(niwords);
+        s & BOOST_SERIALIZATION_NVP(niwords_used);
         //s & idis_table; -- not saved
     }
 

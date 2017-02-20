@@ -6,11 +6,7 @@ using namespace std;
 using namespace SPRAY;
 using namespace Sawyer::Message;
 
-Sawyer::Message::Facility RewriteSystem::logger = [](){
-  Facility log("RewriteSystem");
-  mfacilities.insert(log);
-  return log;
-}();
+Sawyer::Message::Facility RewriteSystem::logger;
 
 RewriteSystem::RewriteSystem():_rewriteCondStmt(false) {
 }
@@ -22,6 +18,7 @@ RewriteStatistics RewriteSystem::getRewriteStatistics() {
 RewriteStatistics::RewriteStatistics() {
   init();
 }
+
 void RewriteStatistics::init() {
   numElimMinusOperator=0;
   numElimAssignOperator=0;
@@ -34,6 +31,16 @@ void RewriteStatistics::init() {
 void RewriteStatistics::reset() {
   init();
 }
+
+void RewriteSystem::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::RewriteSystem", rose::Diagnostics::destination);
+    rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
+}
+
 RewriteStatistics RewriteSystem::getStatistics() {
   return dump1_stats;
 }
@@ -292,13 +299,13 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
          }
        }
      } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
-     
+
      if(ruleAddReorder) {
        do {
          // the following rules guarantee convergence
-         
+
          // REWRITE: re-ordering (normalization) of expressions
-         // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
+         // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other)
          //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
          transformationApplied=false;
          MatchResult res=m.performMatching("$BinaryOp1=SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal)",root);
@@ -325,13 +332,13 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                  if(rewriteTrace)
                    cout<<((*i)["$BinaryOp1"])->unparseToString()<<endl;
                  dump1_stats.numAddOpReordering++;
-               }       
+               }
              }
            }
          }
        } while(transformationApplied);
      }
-     
+
      // REWRITE: constant folding of constant integer (!) expressions
      // we intentionally avoid folding of float values
      do {
@@ -377,10 +384,10 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
          }
        }
      } while(transformationApplied);
-     
+
      normalizeFloatingPointNumbersForUnparsing(root);
      //eliminateSuperfluousCasts(root);
-     
+
      //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
    } while(someTransformationApplied);
 }

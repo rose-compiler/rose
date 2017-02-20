@@ -40,7 +40,7 @@
 !I don't think that this is ever called!
 !c_action_actual_arg_spec_list__begin()
 !testTranslator:
-!/disks/utke/Argonne/svn/CodeReps/anonymous/rose/src/frontend/OpenFortranParser_SAGE_Connection/FortranParserAction!ROSE.C:16169:
+!/disks/utke/Argonne/svn/CodeReps/anonymous/rose/src/frontend/OpenFortranParser_SAGE_Connection/FortranParserActionROSE.C:16169:
 !void c_action_actual_arg_spec_list__begin(): Assertion `false' failed.
 !--
 !

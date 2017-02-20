@@ -17,6 +17,9 @@ typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 
 class DispatcherM68k: public BaseSemantics::Dispatcher {
 public:
+    typedef BaseSemantics::Dispatcher Super;
+
+public:
     /** Cached register.
      *
      *  This register is cached so that there are not so many calls to Dispatcher::findRegister(). Changing the register
@@ -41,12 +44,12 @@ private:
 
     template<class S>
     void save(S &s, const unsigned version) const {
-        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     };
 
     template<class S>
     void load(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         regcache_init();
         iproc_init();
         memory_init();

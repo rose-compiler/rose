@@ -21,6 +21,9 @@ namespace InstructionSemantics2 {
 typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
+public:
+    typedef BaseSemantics::Dispatcher Super;
+
 protected:
     X86InstructionSize processorMode_;
 
@@ -62,14 +65,14 @@ private:
 
     template<class S>
     void save(S &s, const unsigned version) const {
-        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
-        s & processorMode_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(processorMode_);
     }
     
     template<class S>
     void load(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
-        s & processorMode_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(processorMode_);
         regcache_init();
         iproc_init();
         memory_init();

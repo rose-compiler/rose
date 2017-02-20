@@ -66,6 +66,7 @@ bool SgAsmArmInstruction::terminatesBasicBlock() { return false; }
 bool SgAsmArmInstruction::isUnknown() const { return false; }
 std::set<rose_addr_t> SgAsmArmInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>(); }
 unsigned SgAsmArmInstruction::get_anyKind() const { return 0; }
+std::string SgAsmArmInstruction::description() const { return ""; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmM68kInstruction
@@ -79,6 +80,7 @@ bool SgAsmM68kInstruction::isUnknown() const { return false; }
 bool SgAsmM68kInstruction::getBranchTarget(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmM68kInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
 unsigned SgAsmM68kInstruction::get_anyKind() const { return 0; }
+std::string SgAsmM68kInstruction::description() const { return ""; }
 
 std::set<rose_addr_t>
 SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
@@ -97,6 +99,7 @@ bool SgAsmMipsInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstructi
 bool SgAsmMipsInstruction::getBranchTarget(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmMipsInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 unsigned SgAsmMipsInstruction::get_anyKind() const { return 0; }
+std::string SgAsmMipsInstruction::description() const { return ""; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPowerpcInstruction
@@ -105,6 +108,7 @@ bool SgAsmPowerpcInstruction::terminatesBasicBlock() { return false; }
 bool SgAsmPowerpcInstruction::isUnknown() const { return false; } 
 std::set<rose_addr_t> SgAsmPowerpcInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 unsigned SgAsmPowerpcInstruction::get_anyKind() const { return 0; }
+std::string SgAsmPowerpcInstruction::description() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmX86Instruction

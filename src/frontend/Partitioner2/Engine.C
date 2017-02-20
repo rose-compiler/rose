@@ -508,6 +508,16 @@ Engine::partitionerSwitches() {
               .key("call-branch")
               .intrinsicValue(false, settings_.partitioner.base.checkingCallBranch)
               .hidden(true));
+
+    sg.insert(Switch("demangle-names")
+              .intrinsicValue(true, settings_.partitioner.demangleNames)
+              .doc("Causes all function names to be run through a demangler process to undo the name mangling that "
+                   "normally happens with some compilers.  The @s{no-demangle-names} switch disables this step. The "
+                   "default is to " + std::string(settings_.partitioner.demangleNames ? "" : "not ") + "do this step."));
+    sg.insert(Switch("no-demangle-names")
+              .key("demangle-names")
+              .intrinsicValue(false, settings_.partitioner.demangleNames)
+              .hidden(true));
     
     return sg;
 }
@@ -1146,6 +1156,8 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         Modules::nameConstants(partitioner);
     if (settings_.partitioner.namingStrings)
         Modules::nameStrings(partitioner);
+    if (settings_.partitioner.demangleNames)
+        Modules::demangleFunctionNames(partitioner);
 }
 
 void
