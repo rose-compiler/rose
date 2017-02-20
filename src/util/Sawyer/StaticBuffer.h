@@ -51,10 +51,11 @@ private:
 
     template<class S>
     void load(S &s, const unsigned version) {
-        s & boost::serialization::base_object<Super>(*this);
-        s & size_ & rdonly_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(size_);
+        s & BOOST_SERIALIZATION_NVP(rdonly_);
         values_ = new Value[size_];
-        s & boost::serialization::make_array(values_, size_);
+        s & boost::serialization::make_nvp("values", boost::serialization::make_array(values_, size_));
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
