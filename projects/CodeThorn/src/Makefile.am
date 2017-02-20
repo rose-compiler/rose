@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo astinfo
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo astinfo
 
 CLEANFILES = 
 
@@ -380,8 +380,8 @@ REGRESSION_DATA_DIR=regressiondata
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
 woodpecker_DEPENDENCIES=libspray.la
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
-woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize -DSPOT_NOT_AVAILABLE
 woodpecker_LDFLAGS = -L$(SPOT_PREFIX)/lib
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
@@ -391,10 +391,6 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   UDAstAttribute.C                 \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
-  SpotMiscellaneous.C 		   \
-  SpotMiscellaneous.h 		   \
-  SpotRenameVisitor.C 		   \
-  SpotRenameVisitor.h 		   \
   ProgramStats.h                 \
   ProgramStats.C                 \
   FIConstAnalysis.h FIConstAnalysis.C \
@@ -480,6 +476,23 @@ AM_LFLAGS =
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
 
+astinfo_DEPENDENCIES=
+astinfo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+astinfo_SOURCES = astinfo.C LineColInfo.C
+
+check-astinfo:
+	@echo "-------------------------------------------------------------"
+	./astinfo --classname --edg:no_warnings $(srcdir)/tests/bugs/bug1.C
+	@echo "-------------------------------------------------------------"
+	./astinfo --linecol --edg:no_warnings $(srcdir)/tests/bugs/bug2.C
+	@echo "-------------------------------------------------------------"
+	./astinfo --linecol --edg:no_warnings $(srcdir)/tests/bugs/bug3.C
+	@echo "-------------------------------------------------------------"
+
+check-matcher:
+	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
+#	./ast_demo $(srcdir)/tests/basictest5.C
+
 check-local:
 	@echo ================================================================
 	@echo RUNNING CODETHORN INTERNAL CHECKS
@@ -532,10 +545,6 @@ check-local:
 check-arrays:
 	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
-
-checkdemos: 
-	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
-	./ast_demo $(srcdir)/tests/basictest5.C
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

@@ -23,9 +23,13 @@ namespace BinaryAnalysis {
  *  query whether each is fully present in this container, report its name if present, and then remove its part from this
  *  container. If the container is non-empty at the end then all that can be done is to report which parts are still present. */
 class RegisterParts {
+
 private:
     typedef Sawyer::Container::Interval<size_t> BitRange;
     typedef Sawyer::Container::IntervalSet<BitRange> BitSet;
+
+ // DQ (2/13/2017): Testing a simpler case.
+ // BitSet XXX;
 
 private:
     class MajorMinor {
@@ -37,7 +41,8 @@ private:
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & majr_ & minr_;
+            s & BOOST_SERIALIZATION_NVP(majr_);
+            s & BOOST_SERIALIZATION_NVP(minr_);
         }
 #endif
 
@@ -56,8 +61,18 @@ private:
     };
 
 private:
+ // DQ (2/13/2017): Test alternative formulation.
     typedef Sawyer::Container::Map<MajorMinor, BitSet> Map;
+
+ // DQ (2/13/2017): Testing a simpler case.
+ // typedef Sawyer::Container::Map<MajorMinor, BitSet > MapXXX;
+ // MapXXX Map_YYY;
+
+ // DQ (2/13/2017): Both of these work fine.
+ // typedef Sawyer::Container::Map<MajorMinor, Sawyer::Container::IntervalSet< Sawyer::Container::Interval<size_t> > > Map;
+ // typedef Sawyer::Container::Map<MajorMinor, Sawyer::Container::IntervalSet< BitRange > > Map;
     Map map_;
+
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -65,7 +80,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & map_;
+        s & BOOST_SERIALIZATION_NVP(map_);
     }
 #endif
     
@@ -175,6 +190,7 @@ private:
         ASSERT_require(reg.is_valid());
         return BitRange::baseSize(reg.get_offset(), reg.get_nbits());
     }
+
 };
 
 } // namespace

@@ -452,7 +452,7 @@ cuda)
 	;;
 fortran)
 	if test "x$USE_JAVA" = x1; then
-	  if test "x$GFORTRAN_PATH" = "x"; then
+	  if test "x$GFORTRAN_PATH" = "x" -o "x$GFORTRAN_PATH" = "xno"; then
             AC_MSG_FAILURE([[[Fortran support]] gfortran not found: required for syntax checking and semantic analysis.
                            Do you need to explicitly specify gfortran using the "--with-gfortran=path/to/gfortran" configure-option? (See ./configure --help)])
           else

@@ -220,9 +220,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & usingSemantics;
-        s & checkingCallBranch;
-        s & basicBlockSemanticsAutoDrop;
+        s & BOOST_SERIALIZATION_NVP(usingSemantics);
+        s & BOOST_SERIALIZATION_NVP(checkingCallBranch);
+        s & BOOST_SERIALIZATION_NVP(basicBlockSemanticsAutoDrop);
     }
 
 public:
@@ -272,6 +272,7 @@ struct PartitionerSettings {
     SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
     bool namingConstants;                           /**< Give names to constants by calling @ref Modules::nameConstants. */
     bool namingStrings;                             /**< Give labels to constants that are string literal addresses. */
+    bool demangleNames;                             /**< Run all names through a demangling step. */
 
     PartitionerSettings()
         : followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
@@ -279,7 +280,8 @@ struct PartitionerSettings {
           findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
           doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
           functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingThunks(true),
-          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true) {}
+          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true),
+          demangleNames(true) {}
 };
 
 /** Settings for controling the engine behavior.

@@ -154,38 +154,6 @@ echo "GFORTRAN_PATH = $GFORTRAN_PATH"
   AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
   AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
-# DQ (2/27/2016): Added version 4.9.x to supported compilers.
-AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.9.x)])
-AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.9.x verification check]),,[enableval=yes])
-if test "x$enableval" = "xyes" ; then
-      AC_LANG_PUSH([C])
-      # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
-      AC_COMPILE_IFELSE([
-        AC_LANG_SOURCE([[
-          #if (__GNUC__ >= 4 && __GNUC_MINOR__ <= 8)
-            int rose_supported_gcc;
-          #else
-            not gcc, or gcc version is not supported by rose
-          #endif
-        ]])
-       ],
-       [AC_MSG_RESULT([done])],
-       gcc_version=`gcc -dumpversion`
-       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE. GCC 4.0.x to 4.8.x is supported now.])])
-      AC_LANG_POP([C])
-else
-    AC_MSG_RESULT([skipping])
-fi
-
-GCC_VERSION=`gcc -dumpversion | cut -d\. -f1`
-GCC_MINOR_VERSION=`gcc -dumpversion | cut -d\. -f2`
-
-echo "Initial compiler version test: GCC_VERSION = $GCC_VERSION"
-echo "Initial compiler version test: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
-
-AC_SUBST(GCC_VERSION)
-AC_SUBST(GCC_MINOR_VERSION)
-
   ROSE_SUPPORT_UPC
   ROSE_SUPPORT_COMPASS2
   ROSE_SUPPORT_GMP
@@ -548,6 +516,93 @@ unset ax_cv_cxx_compiler_vendor
   echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
 
 echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+
+# *****************************************************************
+
+# DQ (2/27/2016): Added version 4.9.x to supported compilers.
+AC_MSG_CHECKING([whether your compiler is a GNU compiler and the version that is supported by ROSE (4.0.x - 6.3.x)])
+AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 6.3.x verification check]),,[enableval=yes])
+if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" ; then
+if test "x$enableval" = "xyes" ; then
+      AC_LANG_PUSH([C])
+      # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
+      AC_COMPILE_IFELSE([
+        AC_LANG_SOURCE([[
+          #if (__GNUC__ >= 4 && __GNUC_MINOR__ <= 9)
+            int rose_supported_gcc;
+          #else
+            not gcc, or gcc version is not supported by rose
+          #endif
+        ]])
+       ],
+       [AC_MSG_RESULT([done])],
+       gcc_version=`gcc -dumpversion`
+       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE. GCC 4.0.x to 4.8.x is supported now.])])
+      AC_LANG_POP([C])
+else
+    AC_MSG_RESULT([skipping])
+fi
+else
+    AC_MSG_RESULT([not a GNU compiler])
+fi
+
+# *****************************************************************
+
+# DQ (2/7/17): This is a problem reported by Robb (sometimes gcc is not installed).
+# This is used in EDG (host_envir.h)  Test by building a bad version of gcc
+# use shell script called gcc with "exit 1" inside. 
+if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" ; then
+   GCC_VERSION=`gcc -dumpversion | cut -d\. -f1`
+   GCC_MINOR_VERSION=`gcc -dumpversion | cut -d\. -f2`
+
+   echo "Initial compiler version test: GCC_VERSION = $GCC_VERSION"
+   echo "Initial compiler version test: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+
+   AC_SUBST(GCC_VERSION)
+   AC_SUBST(GCC_MINOR_VERSION)
+else
+ # DQ (2/8/2017): Default configuration of EDG will behave like GNU 4.8.x (unclear if this is idea).
+   GCC_VERSION=4
+   GCC_MINOR_VERSION=8
+fi
+
+# echo "Exiting after test for GNU compiler and setting the version info for EDG (GCC_VERSION and GCC_MINOR_VERSION)."
+# exit 1
+
+# *****************************************************************
+
+# DQ (2/7/2017): These macros test for C++11 and C++14 features and 
+# the default behavior of the CXX compiler.  Unfortunately the also
+# modify the CXX value so we have to save it and reset it after the
+# macros are called.  We modified the macros as well to save the 
+# default behavior of the CXX compiler so that we can detect C++11
+# mode within the frontend compiler used to compile ROSE.  Thi is used
+# mostly so far to just disable some test that are causing GNU g++
+# version 4.8.x internal errors (because the C++11 support is new).
+
+echo "Before checking C++11 support: CXX = $CXX CXXCPP = $CXXCPP"
+
+echo "Calling AX CXX COMPILE STDCXX 11 macro."
+save_CXX="$CXX"
+AX_CXX_COMPILE_STDCXX_11(, optional)
+
+echo "After checking C++11 support: CXX = $CXX CXXCPP = $CXXCPP"
+
+echo "rose_frontend_compiler_default_is_cxx11_success = $rose_frontend_compiler_default_is_cxx11_success"
+echo "gcc_version_4_8                                 = $gcc_version_4_8"
+
+AM_CONDITIONAL(ROSE_USING_GCC_VERSION_4_8_CXX11, [test "x$gcc_version_4_8" = "xyes" && test "x$rose_frontend_compiler_default_is_cxx11_success" = "xyes"])
+
+echo "Calling AX CXX COMPILE STDCXX 14 macro."
+AX_CXX_COMPILE_STDCXX_14(, optional)
+
+echo "After checking C++14 support: CXX = $CXX CXXCPP = $CXXCPP"
+CXX="$save_CXX"
+
+echo "After restoring the saved value of CXX: CXX = $CXX CXXCPP = $CXXCPP"
+
+# echo "Exiting in support-rose after computing the C++ mode (c++11, and c++14 modes)"
+# exit 1
 
 # *****************************************************************
 
@@ -2379,6 +2434,7 @@ tests/nonsmoke/specimens/c/Makefile
 tests/nonsmoke/specimens/fortran/Makefile
 tests/nonsmoke/specimens/java/Makefile
 tests/nonsmoke/unit/Makefile
+tests/nonsmoke/unit/SageInterface/Makefile
 tests/roseTests/Makefile
 tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/programAnalysisTests/Makefile

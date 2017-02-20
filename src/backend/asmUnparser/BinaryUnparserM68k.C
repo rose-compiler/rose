@@ -8,12 +8,12 @@ namespace Unparser {
 void
 M68k::emitInstruction(std::ostream &out, SgAsmInstruction *insn_, State &state) const {
     SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
-    ASSERT_not_null2(insn, "not an m68k instruction");
+    ASSERT_always_not_null2(insn, "not an m68k instruction");
     Base::emitInstruction(out, insn_, state);
 }
 
 void
-M68k::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
+M68k::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;
 
@@ -21,28 +21,28 @@ M68k::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) co
         int adjustment = rre->get_adjustment();
         if (adjustment < 0)
             out <<"--";
-        emitRegister(out, rre->get_descriptor(), state);
+        state.frontUnparser().emitRegister(out, rre->get_descriptor(), state);
         if (adjustment > 0)
             out <<"++";
 
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(expr)) {
-        emitTypeName(out, expr->get_type(), state);
+        state.frontUnparser().emitTypeName(out, expr->get_type(), state);
         out <<" [";
-        emitOperandBody(out, mre->get_address(), state);
+        outputExpr(out, mre->get_address(), state);
         out <<"]";
 
     } else if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(expr)) {
-        emitOperandBody(out, add->get_lhs(), state);
+        outputExpr(out, add->get_lhs(), state);
         out <<"+";
-        emitOperandBody(out, add->get_rhs(), state);
+        outputExpr(out, add->get_rhs(), state);
 
     } else if (SgAsmBinaryMultiply *mul = isSgAsmBinaryMultiply(expr)) {
-        emitOperandBody(out, mul->get_lhs(), state);
+        outputExpr(out, mul->get_lhs(), state);
         out <<"*";
-        emitOperandBody(out, mul->get_rhs(), state);
+        outputExpr(out, mul->get_rhs(), state);
 
     } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr)) {
-        comments = emitSignedInteger(out, ival->get_bitVector(), state);
+        comments = state.frontUnparser().emitSignedInteger(out, ival->get_bitVector(), state);
 
     } else if (SgAsmRegisterNames *regs = isSgAsmRegisterNames(expr)) {
         // The usual assembly is to show only an integer register mask.  That's not very friendly, especially since the meaning
@@ -53,7 +53,7 @@ M68k::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) co
         BOOST_FOREACH (SgAsmRegisterReferenceExpression *rre, regs->get_registers()) {
             if (++nregs > 1)
                 out <<", ";
-            emitOperandBody(out, rre, state);
+            outputExpr(out, rre, state);
         }
         out <<"}";
         if (regs->get_mask()!=0)
@@ -70,7 +70,11 @@ M68k::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) co
     if (!comments.empty())
         out <<"<" + boost::join(comments, ",") <<">";
 }
-    
+void
+M68k::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
+    outputExpr(out, expr, state);
+}
+
 } // namespace
 } // namespace
 } // namespace

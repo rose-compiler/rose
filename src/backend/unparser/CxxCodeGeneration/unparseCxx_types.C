@@ -50,6 +50,9 @@ Unparse_Type::generateElaboratedType(SgDeclarationStatement* declarationStatemen
 
 string get_type_name(SgType* t)
    {
+  // DQ (2/12/2017): Added assertion.
+     ROSE_ASSERT(t != NULL);
+
 #if 0
      printf ("In get_type_name(t = %p): t->class_name() = %s \n",t,t->class_name().c_str());
 #endif
@@ -615,9 +618,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_SIGNED_128BIT_INTEGER:
                case T_UNSIGNED_128BIT_INTEGER:
 
-                 //SK: Matrix type for Matlab
+            // SK: Matrix type for Matlab
                case T_MATRIX:
-             case T_TUPLE:
+               case T_TUPLE:
                case T_LONG_DOUBLE:
                case T_STRING:
                case T_BOOL:

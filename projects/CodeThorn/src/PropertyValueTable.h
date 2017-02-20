@@ -6,7 +6,9 @@
 
 #include "sage3basic.h"
 #include "Miscellaneous.h"
+#ifndef SPOT_NOT_AVAILABLE
 #include "SpotMiscellaneous.h"
+#endif
 
 using namespace std;
 
@@ -54,7 +56,9 @@ class PropertyValueTable {
   void printResults(string yesAnswer, string noAnswer, string propertyName = "property", bool withCounterExample = false);
   void printResultsStatistics();
   string getLtlsRersFormat(bool withResults=false, bool withAnnotations=false);
+#ifndef SPOT_NOT_AVAILABLE
   string getLtlsAsPromelaCode(bool withResults=false, bool withAnnotations=false);
+#endif
   void init();
   void init(size_t size);
   int entriesWithValue(PropertyValue v);

@@ -265,16 +265,17 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & p_registers;
-        s & REG_IP & REG_SS;
+        s & BOOST_SERIALIZATION_NVP(p_registers);
+        s & BOOST_SERIALIZATION_NVP(REG_IP);
+        s & BOOST_SERIALIZATION_NVP(REG_SS);
         //s & p_partitioner -- not serialized
-        s & p_search;
-        s & p_wordsize;
-        s & p_sex;
-        s & p_alignment;
-        s & p_ndisassembled;
-        s & p_protection;
-        s & p_name;
+        s & BOOST_SERIALIZATION_NVP(p_search);
+        s & BOOST_SERIALIZATION_NVP(p_wordsize);
+        s & BOOST_SERIALIZATION_NVP(p_sex);
+        s & BOOST_SERIALIZATION_NVP(p_alignment);
+        s & BOOST_SERIALIZATION_NVP(p_ndisassembled);
+        s & BOOST_SERIALIZATION_NVP(p_protection);
+        s & BOOST_SERIALIZATION_NVP(p_name);
     }
 #endif
 
