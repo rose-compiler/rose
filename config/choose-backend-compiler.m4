@@ -106,6 +106,16 @@ echo "Testing value of FC = $FC"
   # So we can trigger behavior based on the backend compiler name directly when on an OSX system.
     if test "x$OS_vendor" = xapple; then
 
+      # Rasmussen (2/20/2017): The grep -Po option is not available on Mac OSX without installing a new
+      # version of grep.  In addition, man pages from gnu.org on grep don't provide confidence in using it:
+      #   -P
+      #   --perl-regex
+      #      Interpret the pattern as a Perl-compatible regular expression (PCRE). This is highly experimental,
+      #      particularly when combined with the -z (--null-data) option, and ‘grep -P’ may warn of
+      #      unimplemented features.
+      #
+      # Tnerefore, grep -Po usage has been replaced by shell scripts.
+
         BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
         BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMinorVersionNumber.sh`
 

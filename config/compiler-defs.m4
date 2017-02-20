@@ -54,6 +54,16 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
               # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
               # of Clang version number, or take it directly from the XCode version number if that is a better solution.
 
+              # Rasmussen (2/20/2017): The grep -Po option is not available on Mac OSX without installing a new
+              # version of grep.  In addition, man pages from gnu.org on grep don't provide confidence in using it:
+              #   -P
+              #   --perl-regex
+              #      Interpret the pattern as a Perl-compatible regular expression (PCRE). This is highly experimental,
+              #      particularly when combined with the -z (--null-data) option, and ‘grep -P’ may warn of
+              #      unimplemented features.
+              #
+              # Tnerefore, grep -Po usage has been replaced by shell scripts.
+
                 CXX_VERSION_MAJOR=`${srcdir}/config/getAppleCxxMajorVersionNumber.sh`
                 CXX_VERSION_MINOR=`${srcdir}/config/getAppleCxxMinorVersionNumber.sh`
                 CXX_VERSION_PATCH=`${srcdir}/config/getAppleCxxPatchVersionNumber.sh`
