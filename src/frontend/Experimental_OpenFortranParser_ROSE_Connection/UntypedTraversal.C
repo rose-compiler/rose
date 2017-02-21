@@ -1,10 +1,144 @@
 #include "sage3basic.h"
 #include "UntypedTraversal.h"
 
-using namespace SgUntyped;
+using namespace Fortran::Untyped;
+
+void initialize_global_scope(SgSourceFile* file)
+   {
+  // First we have to get the global scope initialized (and pushed onto the stack).
+
+  // Set the default for source position generation to be consistent with other languages (e.g. C/C++).
+     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
+
+#if 0
+  // printf ("In initialize_global_scope_if_required(): astScopeStack.empty() = %s \n",astScopeStack.empty() ? "true" : "false");
+     if (astScopeStack.empty() == true)
+        {
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("In initialize_global_scope_if_required(): OpenFortranParser_globalFilePointer = %p \n",OpenFortranParser_globalFilePointer);
+
+          //CER          ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
+          //CER          SgSourceFile* file = OpenFortranParser_globalFilePointer;
+          SgGlobal* globalScope = file->get_globalScope();
+          ROSE_ASSERT(globalScope != NULL);
+          ROSE_ASSERT(globalScope->get_parent() != NULL);
+
+       // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+          globalScope->setCaseInsensitive(true);
+
+       // DQ (8/21/2008): endOfConstruct is not set to be consistant with startOfConstruct.
+          ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
+          ROSE_ASSERT(globalScope->get_startOfConstruct() != NULL);
+
+       // Scopes should be pushed onto the front of the stack (we define the top of the stack to
+       // be the front).  I have used a vector instead of a stack for now, this might change later.
+          ROSE_ASSERT(astScopeStack.empty() == true);
+          astScopeStack.push_front(globalScope);
+
+       // DQ (10/10/2010): Set the start position of global scope to "1".
+          globalScope->get_startOfConstruct()->set_line(1);
+
+       // DQ (10/10/2010): Set this position to the same value so that if we increment
+       // by "1" the start and end will not be the same value.
+          globalScope->get_endOfConstruct()->set_line(1);
+#if 0
+          astScopeStack.front()->get_startOfConstruct()->display("In initialize_global_scope_if_required(): start");
+          astScopeStack.front()->get_endOfConstruct  ()->display("In initialize_global_scope_if_required(): end");
+#endif
+        }
+
+  // Testing the scope stack...
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     std::list<SgScopeStatement*>::iterator scopeInterator = astScopeStack.begin();
+     while (scopeInterator != astScopeStack.end())
+        {
+          if ((*scopeInterator)->isCaseInsensitive() == false)
+             {
+               printf ("##### Error (in initialize_global_scope_if_required): the scope handling is set to case sensitive scopeInterator = %p = %s \n",*scopeInterator,(*scopeInterator)->class_name().c_str());
+            // (*scopeInterator)->setCaseInsensitive(true);
+             }
+          ROSE_ASSERT((*scopeInterator)->isCaseInsensitive() == true);
+          scopeInterator++;
+        }
+#endif
+   }
+
+
+InheritedAttribute
+UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute attr)
+{
+   SgScopeStatement* sg_scope = SageBuilder::getGlobalScopeFromScopeStack();
+
+   if (isSgUntypedFile(n) != NULL)
+      {
+         SgUntypedFile* ut_file = dynamic_cast<SgUntypedFile*>(n);
+         printf ("Down Traverse: found a file   ... %s\n", ut_file->class_name().c_str());
+
+         SgSourceFile* sg_file = OpenFortranParser_globalFilePointer;
+         ROSE_ASSERT(sg_file != NULL);
+         printf ("                       SgSourceFile       %p\n", sg_file);
+
+         SgUntypedGlobalScope*	ut_globalScope = ut_file->get_scope();
+         printf ("                    ut_global scope       %p\n", ut_globalScope);
+
+        // DQ: This is the earliest location to setup the global scope (I think).
+         initialize_global_scope(sg_file);
+      }
+
+   else if (isSgUntypedGlobalScope(n) != NULL)
+      {
+         std::vector<SgNode*> list;
+
+         SgUntypedGlobalScope* scope = dynamic_cast<SgUntypedGlobalScope*>(n);
+         printf ("Down Traverse: found a global scope   ... %s\n", n->class_name().c_str());
+         printf ("                    ut_global scope       %p\n", scope);
+
+         if (OpenFortranParser_globalFilePointer != NULL)
+            {
+               printf ("                               name       %s\n", OpenFortranParser_globalFilePointer->getFileName().c_str());
+            }
+
+         list = scope->get_declaration_list()->get_traversalSuccessorContainer();
+         ROSE_ASSERT(list.size() == 0);
+
+         list = scope->get_statement_list()->get_traversalSuccessorContainer();
+         ROSE_ASSERT(list.size() == 0);
+
+         list = scope->get_function_list()->get_traversalSuccessorContainer();
+         ROSE_ASSERT(list.size() != 0);
+
+         if (isSgUntypedProgramHeaderDeclaration(list.front()))
+            {
+               SgUntypedProgramHeaderDeclaration* program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(list.front());
+               printf ("                         found a program  %s\n", program->get_name().c_str());
+
+               SgName name = program->get_name();
+
+               // We should test if this is in the function type table, but do this later
+               SgFunctionType* type = new SgFunctionType(SgTypeVoid::createType(), false);
+
+               SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(name, type, NULL);
+
+#if 0
+               // This is the defining declaration and there is no non-defining declaration!
+               programDeclaration->set_definingDeclaration(programDeclaration);
+
+               programDeclaration->set_scope(topOfStack);
+               programDeclaration->set_parent(topOfStack);
+#endif
+
+            }
+      }
+   else
+      {
+         printf ("Down Traverse: found a node of type ... %s\n", n->class_name().c_str());
+      }
+   return attr;
+}
+
 
 SynthesizedAttribute
-UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, SynthesizedAttributesList childAttrs)
+UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute attr, SynthesizedAttributesList childAttrs)
 {
 // synthesized attribute is temporarily an expression, initialize to NULL for when an expression doesn't make sense;
    SynthesizedAttribute sg_expr = NULL;   

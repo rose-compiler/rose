@@ -240,7 +240,8 @@ experimental_openFortranParser_main(int argc, char **argv)
         }
 
 #if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): exiting normally without using OFP round trip support\n");
+     printf ("In experimental_openFortranParser_main(): will begin traversal\n");
+     printf ("--------------------------------------------------------------\n\n");
 #endif
 
 //----------------------------------------------------------------------
@@ -248,9 +249,10 @@ experimental_openFortranParser_main(int argc, char **argv)
 //----------------------------------------------------------------------
 
   // Build the traversal object
-     SgUntyped::UntypedTraversal traversal;
+     Fortran::Untyped::UntypedTraversal traversal;
+     Fortran::Untyped::InheritedAttribute scope = NULL;
 
-     traversal.traverse(untypedFile);
+     traversal.traverse(untypedFile,scope);
 
      return NULL;  // not fully implemented yet
 
