@@ -224,7 +224,7 @@ SUBDIRS += TileK
 PROJECTS_ROBB    = BinaryAnalysisTools
 PROJECTS_JUSTIN  = compass2 compass binCompass
 PROJECTS_DAN     =
-PROJECTS_MARKUS  =
+PROJECTS_MARKUS  = CodeThorn
 PROJECTS_PEIHUNG =
 PROJECTS_LEO     =
 
