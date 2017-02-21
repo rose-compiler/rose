@@ -25,6 +25,29 @@ fi
 
 AC_SUBST(llvm_path)
 
+LLVM_CONFIG=$llvm_path/bin/llvm-config
+AC_SUBST(LLVM_CONFIG)
+LLVM_COMPILER_MAJOR_VERSION_NUMBER=`echo|$LLVM_CONFIG --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f1`
+LLVM_COMPILER_MINOR_VERSION_NUMBER=`echo|$LLVM_CONFIG --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2`
 
+# Pei-Hung (02/15/2017): LLVM version 3.6 for RoseToLLVM tool 
+llvm_version_3_6=no
+if test x$LLVM_COMPILER_MAJOR_VERSION_NUMBER == x3; then
+   if test x$LLVM_COMPILER_MINOR_VERSION_NUMBER == x6; then
+      echo "Note: we have identified version 3.6 of LLVM!"
+      llvm_version_3_6=yes
+   fi
+fi
+AM_CONDITIONAL(ROSE_USING_LLVM_3_6, [test "x$llvm_version_3_6" = "xyes"])
+
+LLVM_LIB_DIR="`${LLVM_CONFIG} --libdir`"
+LLVM_CPPFLAGS="`${LLVM_CONFIG} --cppflags | sed s/-I/-isystem\ /`"
+LLVM_CPPFLAGS+=" -DLLVMVERSION="
+LLVM_CPPFLAGS+="`${LLVM_CONFIG} --version`"
+LLVM_LDFLAGS="`${LLVM_CONFIG} --ldflags` -R${LLVM_LIB_DIR}"
+LLVM_LIBS="`${LLVM_CONFIG} --libs all` -lpthread -ldl -lm -ltinfo"
+AC_SUBST(LLVM_CPPFLAGS)
+AC_SUBST(LLVM_LDFLAGS)
+AC_SUBST(LLVM_LIBS)
 ]
 )
