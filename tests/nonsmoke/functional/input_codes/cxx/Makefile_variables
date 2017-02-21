@@ -1406,6 +1406,7 @@ else
 ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) 
 endif
 
+# DQ (2/18/2017): Moved test2004_143.C and test2004_149.C to be excluded from CLANG using EDG 4.9.
 # DQ (1/28/2017): This fails in EDG for EDG 4.9 using Clang 3.8 header files.
 # EDG 4.9 can't handle the header files from later versions of GNU and Clang 
 # is using the later version GNU header files (need to configure ROSE with 
@@ -1413,7 +1414,7 @@ endif
 if USING_CLANG_COMPILER
 if !ROSE_USE_EDG_VERSION_4_9
 ROSE__CXX_TESTS += \
-	test2004_85.C 
+	test2004_85.C
 endif
 else
 ROSE__CXX_TESTS += \

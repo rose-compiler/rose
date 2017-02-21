@@ -4082,6 +4082,10 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                          break;
                        }
 
+
+                 // DQ (2/18/2017): Added support for C++11 SgTemplateTypedefDeclaration.
+                    case V_SgTemplateTypedefDeclaration:
+
                     case V_SgTypedefDeclaration:
                        {
                          SgTypedefDeclaration* derivedDeclaration = isSgTypedefDeclaration(declaration);
@@ -4232,6 +4236,15 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                       {
                         printf ("Special cases not handled %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
                         ROSE_ASSERT(false);
+                        break;
+                      }
+
+                  case V_SgStaticAssertionDeclaration:
+                      {
+                     // DQ (2/18/2017): This is not really a declaration (I think).  This will be fixed later.
+#if 0
+                        printf ("A static assertion statement (SgStaticAssertionDeclaration) declaration is not really a declaration %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
+#endif
                         break;
                       }
 

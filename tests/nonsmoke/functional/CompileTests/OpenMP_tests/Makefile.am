@@ -138,10 +138,29 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	upperCase.c \
 	variables.c 
 
+
+# DQ (2/19/2017): This logic has not yet been updated to reflect the new logic for GNU, Clang, Intel compilers.
+# It might be that it need not be updated since it is sufficently portable as it is (if not then it will be updated).
 if USING_CLANG_COMPILER
 C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc2.c
+
+CXX_TESTCODES_REQUIRED_TO_PASS = \
+        jacobi-ompacc2.cpp \
+	classMember.cpp \
+	hello1.cpp \
+	helloNested.cpp \
+	memberFunction.cpp \
+	memberFunction2.cpp \
+	objectPrivate.cpp \
+	objectFirstPrivate.cpp \
+	objectLastprivate.cpp \
+	orphanedAtomic.cpp \
+	preprocessingInfo2.cpp \
+	task_link.cpp \
+	task_link2.cpp \
+	task_tree.cpp 
 else
 C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
@@ -157,7 +176,6 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 	jacobi-ompacc-opt1.c \
 	jacobi-ompacc-opt2.c \
 	jacobi-ompacc-multiGPU.c
-endif
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
         jacobi-ompacc2.cpp \
@@ -175,6 +193,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	task_link2.cpp \
 	task_tree.cpp \
 	referenceType.cpp
+endif
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING = \
