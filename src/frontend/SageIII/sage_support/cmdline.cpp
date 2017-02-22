@@ -4258,99 +4258,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 #endif
 
-// #ifdef __INTEL_COMPILER
-#ifdef BACKEND_CXX_IS_INTEL_COMPILER
-  // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
-#if 0
-     printf ("Intel compiler being used as backend compiler: Identified this = %p -std=c++11 via more direct command line argument evaluation \n",this);
-#endif
-
-     if ( SgProject::get_verbose() >= 1 )
-          printf ("Intel compiler being used: Cxx11 mode ON \n");
-
-#if 0     
-     printf ("After detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
-     printf ("After detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
-#endif
-
-  // DQ (10/7/2015): The file was already determined to be C or C++, or the associated command line option was used to specify it explicitly.
-     if (get_C_only() == true)
-        {
-       // This is the case of a C file.
-          ROSE_ASSERT(get_Cxx_only() == false);
-
-          set_Cxx11_only(false);
-          set_Cxx11_gnu_only(false);
-
-       // Set gnu specific level of C99 support to false.
-       // set_Cxx11_gnu_only(false);
-
-       // DQ (7/31/2013): If we turn on C99, then turn off C89.
-          set_C89_only(false);
-          set_C89_gnu_only(false);
-
-       // DQ (10/7/2015): I think that Intel compiler is trying to be consitant with C99.
-          set_C99_only(true);
-          set_C99_gnu_only(false);
-
-       // DQ (10/7/2015): I don't think that the Intel compiler for C code is C11.
-       // printf ("Is the Intel icc compiler for C code really C11? \n");
-
-          set_C11_only(false);
-          set_C11_gnu_only(false);
-
-          ROSE_ASSERT(get_C_only() == true);
-        }
-       else
-        {
-       // This is the case of a C++ file.
-          set_Cxx11_only(true);
-          set_Cxx11_gnu_only(false);
-
-       // Set gnu specific level of C99 support to false.
-       // set_Cxx11_gnu_only(false);
-
-       // DQ (7/31/2013): If we turn on C99, then turn off C89.
-          set_C89_only(false);
-          set_C89_gnu_only(false);
-          set_C99_only(false);
-          set_C99_gnu_only(false);
-          set_C11_only(false);
-          set_C11_gnu_only(false);
-
-          ROSE_ASSERT(get_C_only() == false);
-
-       // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
-       // set_C_only(false);
-
-          ROSE_ASSERT(get_Cxx11_only() == true);
-        }
-#endif
-
-// DQ (1/16/2017): Make C++11 the default when using Clang.
-#ifdef BACKEND_CXX_IS_CLANG_COMPILER
-     if (get_C_only() == true)
-        {
-       // printf ("For Clang as the backend compiler the default C mode is C11 \n");
-          set_C11_only(true);
-        }
-       else
-        {
-       // printf ("For Clang as the backend compiler the default C++ mode is C++11 \n");
-          set_Cxx11_only(true);
-        }
-#endif
-
-#if 0
-     printf ("After part 2 detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
-     printf ("After part 2 detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
-#endif
-
   //
   // C11 only option (turns on EDG c11 options (using the edg --c11 option).
   //
@@ -4539,6 +4446,112 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
 #endif
         }
+
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+  // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
+#if 0
+     printf ("Intel compiler being used as backend compiler: Identified this = %p -std=c++11 via more direct command line argument evaluation \n",this);
+#endif
+
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("Intel compiler being used: Cxx11 mode ON \n");
+
+#if 0
+     printf ("After detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
+     printf ("--- C++11 = %s \n",get_Cxx11_only() ? "true" : "false");
+     printf ("--- C++14 = %s \n",get_Cxx14_only() ? "true" : "false");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // DQ (10/7/2015): The file was already determined to be C or C++, or the associated command line option was used to specify it explicitly.
+     if (get_C_only() == true)
+        {
+       // This is the case of a C file.
+          ROSE_ASSERT(get_Cxx_only() == false);
+
+          set_Cxx11_only(false);
+          set_Cxx11_gnu_only(false);
+
+       // Set gnu specific level of C99 support to false.
+       // set_Cxx11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+
+       // DQ (10/7/2015): I think that Intel compiler is trying to be consitant with C99.
+          set_C99_only(true);
+          set_C99_gnu_only(false);
+
+       // DQ (10/7/2015): I don't think that the Intel compiler for C code is C11.
+       // printf ("Is the Intel icc compiler for C code really C11? \n");
+
+          set_C11_only(false);
+          set_C11_gnu_only(false);
+
+          ROSE_ASSERT(get_C_only() == true);
+        }
+       else
+        {
+       // This is the case of a C++ file.
+
+       // DQ (2/21/2017): If C++14 was not specified explicitly then let the default be C++11 for this compiler.
+          if (get_Cxx14_only() == false && get_Cxx14_gnu_only() == false)
+             {
+               set_Cxx11_only(true);
+               set_Cxx11_gnu_only(false);
+             }
+       // Set gnu specific level of C99 support to false.
+       // set_Cxx11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+          set_C11_only(false);
+          set_C11_gnu_only(false);
+
+          ROSE_ASSERT(get_C_only() == false);
+
+       // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+       // set_C_only(false);
+
+       // DQ (2/21/2017): Modified this assertion.
+       // ROSE_ASSERT(get_Cxx11_only() == true);
+          ROSE_ASSERT(get_Cxx11_only() == true || get_Cxx14_only() == true);
+        }
+#endif
+
+// DQ (1/16/2017): Make C++11 the default when using Clang.
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+     if (get_C_only() == true)
+        {
+       // printf ("For Clang as the backend compiler the default C mode is C11 \n");
+          set_C11_only(true);
+        }
+       else
+        {
+       // printf ("For Clang as the backend compiler the default C++ mode is C++11 \n");
+          set_Cxx11_only(true);
+        }
+#endif
+
+#if 0
+     printf ("After part 2 detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After part 2 detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
   // DQ (2/5/2009): We now have one at the SgProject and the SgFile levels.
   // DQ (2/4/2009): Moved to SgProject.
@@ -6714,9 +6727,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                   {
                     if (get_Cxx14_only() == true)
                        {
+#if 0
+                      // DQ (2/21/2017): Not is is going into place, so we don't need this assertion.
                          printf ("C++14 support for Intel compiler not implemented in ROSE yet! \n");
                          ROSE_ASSERT(false);
-
+#endif
                          commandLine.push_back("-D__cplusplus=201400L");
                        }
                       else

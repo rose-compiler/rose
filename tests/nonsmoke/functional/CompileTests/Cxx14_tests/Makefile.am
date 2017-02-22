@@ -17,9 +17,22 @@ test2016_14.C \
 test2016_15.C \
 test2016_19.C \
 test2016_24.C \
-test2016_25.C \
 test2016_26.C \
 last.C
+
+# DQ (2/21/2017): Some compilers are not handling the C++14 support.
+if USING_GNU_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2016_25.C 
+else # NOT USING_GNU_COMPILER
+if USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2016_25.C 
+else # NOT USING_CLANG_COMPILER
+if USING_INTEL_COMPILER
+# Intel v16 can not handle this C++14 support.
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2016_25.C 
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
 
 # These are incomplete non-compilable code fragments
 TESTCODE_CURRENTLY_FAILING = \
