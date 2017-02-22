@@ -1354,6 +1354,19 @@ DQ (6/19/2007): These might required math.h to be included.
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
+/* DQ (2/22/2017): Added to support GNU 4.8 in C++11 mode using EDG 4.9. */
+#ifdef __cplusplus
+// DQ (2/21/2017): These functions are not defined for C language support.
+ROSE_CONSTEXPR int __builtin_isgreater(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isgreaterequal(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isless(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_islessequal(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_islessgreater(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isunordered(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_fpclassify(int, int, int, int, ...) __attribute__((nothrow, const));
+int __builtin_isinf_sign(...) __attribute__((nothrow, const));
+#endif
+
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
 
