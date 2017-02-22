@@ -133,11 +133,12 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
       cp ${srcdir}/config/rose_specific_clang_atomic ./include-staging/${compilerName}_HEADERS/atomic
    fi
 
+# DQ (2/21/2017): This is only required for C language support (not for C++).
 # DQ (2/4/2017): Need to add required header file to support Intel compiler because we are using 
 # the __INTEL_CLANG_COMPILER macro to use EDG with the Intel header files.
-   if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xintel"; then
-      cp ${srcdir}/config/rose_specific_tgmath_clang.h ./include-staging/${compilerName}_HEADERS/tgmath_clang.h
-   fi
+#  if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xintel"; then
+#     cp ${srcdir}/config/rose_specific_tgmath_clang.h ./include-staging/${compilerName}_HEADERS/tgmath_clang.h
+#  fi
 
 # DQ (1/15/2017): Debugging info to debug clange on Mac OSX.
 echo "edg_major_version_number = $edg_major_version_number"
@@ -396,7 +397,15 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
    echo "includeString = $includeString"
    AC_DEFINE_UNQUOTED([C_INCLUDE_STRING],$includeString,[Include path for backend C compiler.])
 
- # echo "Exiting as a test in SETUP BACKEND C COMPILER SPECIFIC REFERENCES"
- # exit 1
+# DQ (2/21/2017): Need to add required header file to support Intel compiler because we are using 
+# the __INTEL_CLANG_COMPILER macro to use EDG with the Intel header files.
+   if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xintel"; then
+#     echo "SETUP BACKEND C COMPILER: Copying config/rose_specific_tgmath_clang.h to ${compilerNameC}_HEADERS/tgmath_clang.h"
+      cp ${srcdir}/config/rose_specific_tgmath_clang.h ./include-staging/${compilerNameC}_HEADERS/tgmath_clang.h
+#     echo "DONE: SETUP BACKEND C COMPILER: Copying config/rose_specific_tgmath_clang.h to ${compilerNameC}_HEADERS/tgmath_clang.h"
+   fi
+
+#  echo "Exiting as a test in SETUP BACKEND C COMPILER SPECIFIC REFERENCES: BACKEND_CXX_COMPILER_VENDOR = $BACKEND_CXX_COMPILER_VENDOR"
+#  exit 1
 ])
 
