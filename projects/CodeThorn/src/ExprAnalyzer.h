@@ -65,7 +65,7 @@ class ExprAnalyzer {
   //! true-case the other one representing the false-case.
   //! When the option useConstraints is set to false constraints are not used when determining the
   //! values of top-variables. 
-  list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation);
+  list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState estate, bool useConstraints);
   void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
   void setSkipSelectedFunctionCalls(bool skip);
   bool getSkipSelectedFunctionCalls();
@@ -78,20 +78,23 @@ class ExprAnalyzer {
   VariableIdMapping* _variableIdMapping;
   bool _skipSelectedFunctionCalls;
   bool _skipArrayAccesses;
- protected:
+ public:
   //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
   static bool variable(SgNode* node,VariableName& varName);
   //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
   bool variable(SgNode* node,VariableId& varId);
+ protected:
   AType::ConstIntLattice constIntLatticeFromSgValueExp(SgValueExp* valueExp);
   static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
 
   // evaluation state
 #ifdef EXPR_VISITOR
   SingleEvalResultConstInt res;
-
+#endif
   // evaluation functions
-  list<SingleEvalResultConstInt> evalConditionalExpr(SgNode* node);
+  list<SingleEvalResultConstInt> evalConditionalExpr(SgConditionalExp* node, EState estate, bool useConstraints);
+
+#ifdef EXPR_VISITOR
   list<SingleEvalResultConstInt> evalEqualOp(SgNode* node);
   list<SingleEvalResultConstInt> evalNotEqualOp(SgNode* node);
   list<SingleEvalResultConstInt> evalGreaterThanOp(SgNode* node);
