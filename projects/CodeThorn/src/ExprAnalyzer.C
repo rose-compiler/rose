@@ -155,17 +155,14 @@ void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints
   this->result=result;
 }
 
+#define CASE_EXPR_ANALYZER_EVAL(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),lhsResult,rhsResult,estate,useConstraints));break
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints) {
   assert(estate.pstate()); // ensure state exists
   // initialize with default values from argument(s)
-#ifdef EXPR_VISITOR
-  ConstraintSet exprConstraintsInit;
-  res.init(estate,exprContraintsInit,AType::Bot());
-#else
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
-#endif
 
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
     cout << "Error: incdec-op not supported in conditions."<<endl;
@@ -176,8 +173,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   }
 
   if(dynamic_cast<SgBinaryOp*>(node)) {
-    //cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
-
     SgNode* lhs=SgNodeHelper::getLhs(node);
     list<SingleEvalResultConstInt> lhsResultList=evalConstInt(lhs,estate,useConstraints);
     SgNode* rhs=SgNodeHelper::getRhs(node);
@@ -193,57 +188,23 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         SingleEvalResultConstInt rhsResult=*riter;
 
         switch(node->variantT()) {
-        case V_SgEqualityOp:
-          resultList.splice(resultList.end(),evalEqualOp(isSgEqualityOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgNotEqualOp:
-          resultList.splice(resultList.end(),evalNotEqualOp(isSgNotEqualOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgAndOp:
-          resultList.splice(resultList.end(),evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgOrOp:
-          return evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,useConstraints);
-          break;
-        case V_SgAddOp:
-          resultList.splice(resultList.end(),evalAddOp(isSgAddOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgSubtractOp:
-          resultList.splice(resultList.end(),evalSubOp(isSgSubtractOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgMultiplyOp:
-          resultList.splice(resultList.end(),evalMulOp(isSgMultiplyOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgDivideOp:
-          resultList.splice(resultList.end(),evalDivOp(isSgDivideOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgModOp:
-          resultList.splice(resultList.end(),evalModOp(isSgModOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgBitAndOp:
-          resultList.splice(resultList.end(),evalBitAndOp(isSgBitAndOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgBitOrOp:
-          resultList.splice(resultList.end(),evalBitOrOp(isSgBitOrOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgBitXorOp:
-          resultList.splice(resultList.end(),evalBitXorOp(isSgBitXorOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgGreaterOrEqualOp:
-          resultList.splice(resultList.end(),evalGreaterOrEqualOp(isSgGreaterOrEqualOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgGreaterThanOp:
-          resultList.splice(resultList.end(),evalGreaterThanOp(isSgGreaterThanOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgLessThanOp:
-          resultList.splice(resultList.end(),evalLessThanOp(isSgLessThanOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgLessOrEqualOp:
-          resultList.splice(resultList.end(),evalLessOrEqualOp(isSgLessOrEqualOp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
-        case V_SgPntrArrRefExp:
-          resultList.splice(resultList.end(),evalArrayReferenceOp(isSgPntrArrRefExp(node),lhsResult,rhsResult,estate,useConstraints));
-          break;
+          CASE_EXPR_ANALYZER_EVAL(SgEqualityOp,evalEqualOp);
+          CASE_EXPR_ANALYZER_EVAL(SgNotEqualOp,evalNotEqualOp);
+          CASE_EXPR_ANALYZER_EVAL(SgAndOp,evalAndOp);
+          CASE_EXPR_ANALYZER_EVAL(SgOrOp,evalOrOp);
+          CASE_EXPR_ANALYZER_EVAL(SgAddOp,evalAddOp);
+          CASE_EXPR_ANALYZER_EVAL(SgSubtractOp,evalSubOp);
+          CASE_EXPR_ANALYZER_EVAL(SgMultiplyOp,evalMulOp);
+          CASE_EXPR_ANALYZER_EVAL(SgDivideOp,evalDivOp);
+          CASE_EXPR_ANALYZER_EVAL(SgModOp,evalModOp);
+          CASE_EXPR_ANALYZER_EVAL(SgBitAndOp,evalBitAndOp);
+          CASE_EXPR_ANALYZER_EVAL(SgBitOrOp,evalBitOrOp);
+          CASE_EXPR_ANALYZER_EVAL(SgBitXorOp,evalBitXorOp);
+          CASE_EXPR_ANALYZER_EVAL(SgGreaterOrEqualOp,evalGreaterOrEqualOp);
+          CASE_EXPR_ANALYZER_EVAL(SgGreaterThanOp,evalGreaterThanOp);
+          CASE_EXPR_ANALYZER_EVAL(SgLessThanOp,evalLessThanOp);
+          CASE_EXPR_ANALYZER_EVAL(SgLessOrEqualOp,evalLessOrEqualOp);
+          CASE_EXPR_ANALYZER_EVAL(SgPntrArrRefExp,evalArrayReferenceOp);
         default:
             cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
           throw CodeThorn::Exception("Error: evalConstInt::unkown binary operation.");
@@ -305,7 +266,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   case V_SgVarRefExp: {
     VariableId varId;
     bool isVar=ExprAnalyzer::variable(node,varId);
-    //cout<<"DEBUG: EvalConstInt: V_SgVarRefExp: isVar:"<<isVar<<", varIdcode:"<<varId.getIdCode()<<"Source:"<<node->unparseToString()<<endl;
+      //cout<<"DEBUG: EvalConstInt: V_SgVarRefExp: isVar:"<<isVar<<", varIdcode:"<<varId.getIdCode()<<"Source:"<<node->unparseToString()<<endl;
     assert(isVar);
     const PState* pstate=estate.pstate();
     if(pstate->varExists(varId)) {
