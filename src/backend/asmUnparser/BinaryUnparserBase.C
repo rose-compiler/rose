@@ -462,7 +462,8 @@ Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function,
         } else {
             out <<";;; function " <<StringUtility::addrToString(function->address());
             if (!function->name().empty())
-                out <<" \"" <<StringUtility::cEscape(function->name()) <<"\"\n";
+                out <<" \"" <<StringUtility::cEscape(function->name()) <<"\"";
+            out <<"\n";
         }
         state.frontUnparser().emitFunctionComment(out, function, state);
         if (settings().function.showingReasons)
@@ -669,10 +670,22 @@ Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &
         const CallingConvention::Analysis &analyzer = function->callingConventionAnalysis();
         if (analyzer.hasResults()) {
             if (analyzer.didConverge()) {
+                // Calling convention analysis
                 std::ostringstream ss;
-                ss <<analyzer;
-                out <<";;; calling convention:\n";
+                analyzer.print(ss, true /*multi-line*/);
+                state.frontUnparser().emitCommentBlock(out, "calling convention analysis:", state);
                 state.frontUnparser().emitCommentBlock(out, ss.str(), state, ";;;   ");
+
+                // Calling convention dictionary matches
+                CallingConvention::Dictionary matches = state.partitioner().functionCallingConventionDefinitions(function);
+                std::string s = "calling convention definitions:";
+                if (!matches.empty()) {
+                    BOOST_FOREACH (const CallingConvention::Definition &ccdef, matches)
+                        s += " " + ccdef.name();
+                } else {
+                    s += " unknown";
+                }
+                state.frontUnparser().emitCommentBlock(out, s, state);
             } else {
                 out <<";;; calling convention analysis did not converge\n";
             }
