@@ -130,19 +130,45 @@ class ExprAnalyzer {
                                            SingleEvalResultConstInt lhsResult, 
                                            SingleEvalResultConstInt rhsResult,
                                            EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitAndOp(SgBitAndOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitOrOp(SgBitOrOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitXorOp(SgBitXorOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
 
-  list<SingleEvalResultConstInt> evalGreaterThanOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalLessThanOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalLessOrEqualOp(SgNode* node);
+  list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalGreaterThanOp(SgGreaterThanOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalLessOrEqualOp(SgLessOrEqualOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalLessThanOp(SgLessThanOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+
+  list<SingleEvalResultConstInt> evalArrayReferenceOp(SgPntrArrRefExp* node,
+                                                    SingleEvalResultConstInt lhsResult, 
+                                                    SingleEvalResultConstInt rhsResult,
+                                                    EState estate, bool useConstraints);
+
   list<SingleEvalResultConstInt> evalNotOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalBitAndOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalBitOrOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalBitXorOp(SgNode* node);
   list<SingleEvalResultConstInt> evalBitNotOp(SgNode* node);
   list<SingleEvalResultConstInt> evalUnaryMinusOp(SgNode* node);
   list<SingleEvalResultConstInt> evalCastOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalArrayReference(SgNode* node);
 
 };
 

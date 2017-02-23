@@ -199,69 +199,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         case V_SgNotEqualOp:
           resultList.splice(resultList.end(),evalNotEqualOp(isSgNotEqualOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-#if 1
         case V_SgAndOp:
           resultList.splice(resultList.end(),evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-#else
-        case V_SgAndOp: {
-          //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
-          res.result=(lhsResult.result.operatorAnd(rhsResult.result));
-          //cout << res.result.toString()<<endl;
-          if(lhsResult.result.isFalse()) {
-            res.exprConstraints=lhsResult.exprConstraints;
-            // rhs is not considered due to short-circuit CPP-AND-semantics
-          }
-          if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
-            res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-            // nothing to do
-          }
-          if(lhsResult.result.isTrue() && rhsResult.result.isTrue()) {
-            res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          }
-          
-          // in case of top we do not propagate constraints [inprecision]
-          if(!lhsResult.result.isTop()) {
-            res.exprConstraints+=lhsResult.exprConstraints;
-          }
-          if(!rhsResult.result.isTop()) {
-            res.exprConstraints+=rhsResult.exprConstraints;
-          }
-          resultList.push_back(res);
-          break;
-        }
-#endif
-#if 1
         case V_SgOrOp:
           return evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,useConstraints);
           break;
-#else
-        case V_SgOrOp: {
-          res.result=lhsResult.result.operatorOr(rhsResult.result);
-          // we encode short-circuit CPP-OR-semantics here!
-          if(lhsResult.result.isTrue()) {
-            res.result=lhsResult.result;
-            res.exprConstraints=lhsResult.exprConstraints;
-          }
-          if(lhsResult.result.isFalse() && rhsResult.result.isFalse()) {
-            res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          }
-          if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
-            res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          }
-          // in case of top we do not propagate constraints [imprecision]
-          if(!lhsResult.result.isTop()) {
-            res.exprConstraints+=lhsResult.exprConstraints;
-          }
-          if(!rhsResult.result.isTop()) {
-            res.exprConstraints+=rhsResult.exprConstraints;
-          }
-          resultList.push_back(res);
-          break;
-        }
-#endif
-
-#if 1
         case V_SgAddOp:
           resultList.splice(resultList.end(),evalAddOp(isSgAddOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
@@ -277,214 +220,30 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         case V_SgModOp:
           resultList.splice(resultList.end(),evalModOp(isSgModOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-#else
-        case V_SgAddOp: {
-          res.result=(lhsResult.result+rhsResult.result);
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+        case V_SgBitAndOp:
+          resultList.splice(resultList.end(),evalBitAndOp(isSgBitAndOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-        }
-        case V_SgSubtractOp: {
-          res.result=(lhsResult.result-rhsResult.result);
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+        case V_SgBitOrOp:
+          resultList.splice(resultList.end(),evalBitOrOp(isSgBitOrOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-        }
-        case V_SgMultiplyOp: {
-          res.result=(lhsResult.result*rhsResult.result);
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+        case V_SgBitXorOp:
+          resultList.splice(resultList.end(),evalBitXorOp(isSgBitXorOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-        }
-        case V_SgDivideOp: {
-          res.result=(lhsResult.result/rhsResult.result);
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+        case V_SgGreaterOrEqualOp:
+          resultList.splice(resultList.end(),evalGreaterOrEqualOp(isSgGreaterOrEqualOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-        }
-        case V_SgModOp: {
-          res.result=(lhsResult.result%rhsResult.result);
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+        case V_SgGreaterThanOp:
+          resultList.splice(resultList.end(),evalGreaterThanOp(isSgGreaterThanOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-        }
-#endif
-        case V_SgBitAndOp: {
-          res.result=(lhsResult.result.operatorBitwiseAnd(rhsResult.result));
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+        case V_SgLessThanOp:
+          resultList.splice(resultList.end(),evalLessThanOp(isSgLessThanOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-        }
-        case V_SgBitOrOp: {
-          res.result=(lhsResult.result.operatorBitwiseOr(rhsResult.result));
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+        case V_SgLessOrEqualOp:
+          resultList.splice(resultList.end(),evalLessOrEqualOp(isSgLessOrEqualOp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-        }
-        case V_SgBitXorOp: {
-          res.result=(lhsResult.result.operatorBitwiseXor(rhsResult.result));
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+        case V_SgPntrArrRefExp:
+          resultList.splice(resultList.end(),evalArrayReferenceOp(isSgPntrArrRefExp(node),lhsResult,rhsResult,estate,useConstraints));
           break;
-        }
-        case V_SgGreaterOrEqualOp: {
-          res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
-          if(boolOptions["relop-constraints"]) {
-            if(res.result.isTop())
-              throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-          }
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
-          break;
-        }
-        case V_SgGreaterThanOp: {
-          res.result=(lhsResult.result.operatorMore(rhsResult.result));
-          if(boolOptions["relop-constraints"]) {
-            if(res.result.isTop())
-              throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-          }
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
-          break;
-        }
-        case V_SgLessThanOp: {
-          res.result=(lhsResult.result.operatorLess(rhsResult.result));
-          if(boolOptions["relop-constraints"]) {
-            if(res.result.isTop())
-              throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-          }
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
-          break;
-        }
-        case V_SgLessOrEqualOp: {
-          res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
-          if(boolOptions["relop-constraints"]) {
-            if(res.result.isTop())
-              throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-          }
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
-          break;
-        }
-        case V_SgPntrArrRefExp: {
-          // assume top for array elements (array elements are not stored in state)
-          //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
-          if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
-            // set result to top when index is top [imprecision]
-            //cerr<<"DEBUG: arr-ref-exp: top!"<<endl;
-            res.result=AType::Top();
-            res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-            resultList.push_back(res);
-            break;
-          } else {
-            if(SgVarRefExp* varRefExp=isSgVarRefExp(lhs)) {
-              const PState* pstate=estate.pstate();
-              PState pstate2=*pstate; // also removes constness
-              VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
-              // two cases
-              if(_variableIdMapping->hasArrayType(arrayVarId)) {
-                // has already correct id
-                // nothing to do
-              } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
-                // in case it is a pointer retrieve pointer value
-                //cout<<"DEBUG: pointer-array access!"<<endl;
-                if(pstate->varExists(arrayVarId)) {
-                  AValue aValuePtr=pstate2[arrayVarId];
-                  // convert integer to VariableId
-                  // TODO (topify mode: does read this as integer)
-                  if(!aValuePtr.isConstInt()) {
-                    res.result=AType::Top();
-                    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-                    resultList.push_back(res);
-                    return resultList;
-                  }
-                  int aValueInt=aValuePtr.getIntValue();
-                  // change arrayVarId to refered array!
-                  //cout<<"DEBUG: defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
-                  arrayVarId=_variableIdMapping->variableIdFromCode(aValueInt);
-                  //cout<<" to "<<_variableIdMapping->variableName(arrayVarId)<<endl;//DEBUG
-                } else {
-                  cerr<<"Error: pointer variable does not exist in PState."<<endl;
-                  exit(1);
-                }
-              } else {
-                cerr<<"Error: unkown type of array or pointer."<<endl;
-                exit(1);
-              }
-              VariableId arrayElementId;
-              AValue aValue=rhsResult.value();
-              int index=-1;
-              if(aValue.isConstInt()) {
-                index=aValue.getIntValue();
-                arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
-                //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
-              } else {
-                cerr<<"Error: array index cannot be evaluated to a constant. Not supported yet."<<endl;
-                cerr<<"expr: "<<varRefExp->unparseToString()<<endl;
-                exit(1);
-              }
-              ROSE_ASSERT(arrayElementId.isValid());
-              // read value of variable var id (same as for VarRefExp - TODO: reuse)
-              // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
-              if(pstate->varExists(arrayElementId)) {
-                res.result=pstate2[arrayElementId];
-                //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
-                if(res.result.isTop() && useConstraints) {
-                  AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
-                  res.result=val;
-                }
-                return listify(res);
-              } else {
-                // check that array is constant array (it is therefore ok that it is not in the state)
-                if(_variableIdMapping->isConstantArray(arrayVarId)) {
-                  SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
-                  int elemIndex=0;
-                  // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
-                  for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-                    //VariableId arrayElemId=_variableIdMapping->variableIdOfArrayElement(initDeclVarId,elemIndex);
-                    SgExpression* exp=*i;
-                    SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
-                    if(assignInit) {
-                      SgExpression* initExp=assignInit->get_operand_i();
-                      ROSE_ASSERT(initExp);
-                      if(SgIntVal* intValNode=isSgIntVal(initExp)) {
-                        int intVal=intValNode->get_value();
-                        //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-                        //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
-                        if(elemIndex==index) {
-                          AType::ConstIntLattice val=AType::ConstIntLattice(intVal);
-                          res.result=val;
-                          return listify(res);
-                        }
-                      } else {
-                        cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
-                        exit(1);
-                      }
-                    } else {
-                      cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
-                    }
-                    elemIndex++;
-                  }
-                  cerr<<"Error: access to element of constant array (not in state). Not supported yet."<<endl;
-                  exit(1);
-                } else {
-                  cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
-                  cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
-                  cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
-                  cerr<<"AST: "<<node->unparseToString()<<endl;
-                  exit(1);
-                }
-              }
-            } else {
-              cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;
-              cerr<<"expr: "<<lhs->unparseToString()<<endl;
-              cerr<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
-              exit(1);
-            }
-          }
-          break;
-        }
         default:
             cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
           throw CodeThorn::Exception("Error: evalConstInt::unkown binary operation.");
@@ -654,37 +413,37 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalEqualOp(SgEqualityOp* node,
   res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   // record new constraint
   if(useConstraints) {
-  VariableId varId;
-  SgNode* lhs=SgNodeHelper::getLhs(node);
-  SgNode* rhs=SgNodeHelper::getRhs(node);
-  if(variable(lhs,varId) && rhsResult.isConstInt()) {
-    // if var is top add two states with opposing constraints
-    if(!res.estate.pstate()->varIsConst(varId)) {
-      SingleEvalResultConstInt tmpres1=res;
-      SingleEvalResultConstInt tmpres2=res;
-      tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
-      tmpres1.result=true;
-      tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
-      tmpres2.result=false;
-      resultList.push_back(tmpres1);
-      resultList.push_back(tmpres2);
-      //return resultList; MS: removed 3/11/2014
-      goto done;
+    VariableId varId;
+    SgNode* lhs=SgNodeHelper::getLhs(node);
+    SgNode* rhs=SgNodeHelper::getRhs(node);
+    if(variable(lhs,varId) && rhsResult.isConstInt()) {
+      // if var is top add two states with opposing constraints
+      if(!res.estate.pstate()->varIsConst(varId)) {
+        SingleEvalResultConstInt tmpres1=res;
+        SingleEvalResultConstInt tmpres2=res;
+        tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
+        tmpres1.result=true;
+        tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
+        tmpres2.result=false;
+        resultList.push_back(tmpres1);
+        resultList.push_back(tmpres2);
+        //return resultList; MS: removed 3/11/2014
+        goto done;
+      }
     }
-  }
-  if(lhsResult.isConstInt() && variable(rhs,varId)) {
-    // only add the equality constraint if no constant is bound to the respective variable
-    if(!res.estate.pstate()->varIsConst(varId)) {
-      SingleEvalResultConstInt tmpres1=res;
-      SingleEvalResultConstInt tmpres2=res;
-      tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
-      tmpres1.result=true;
-      tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
-      tmpres2.result=false;
-      resultList.push_back(tmpres1);
-      resultList.push_back(tmpres2);
+    if(lhsResult.isConstInt() && variable(rhs,varId)) {
+      // only add the equality constraint if no constant is bound to the respective variable
+      if(!res.estate.pstate()->varIsConst(varId)) {
+        SingleEvalResultConstInt tmpres1=res;
+        SingleEvalResultConstInt tmpres2=res;
+        tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
+        tmpres1.result=true;
+        tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
+        tmpres2.result=false;
+        resultList.push_back(tmpres1);
+        resultList.push_back(tmpres2);
+      }
     }
-  }
   done:;
   }
   resultList.push_back(res);
@@ -854,6 +613,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDivOp(SgDivideOp* node,
   resultList.push_back(res);
   return resultList;
 }
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalModOp(SgModOp* node,
                                                       SingleEvalResultConstInt lhsResult, 
                                                       SingleEvalResultConstInt rhsResult,
@@ -868,39 +628,247 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalModOp(SgModOp* node,
   return resultList;
 }
 
-list<SingleEvalResultConstInt> evalGreaterThanOp(SgNode* node) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalBitAndOp(SgBitAndOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorBitwiseAnd(rhsResult.result));
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
   return resultList;
 }
-list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgNode* node) {
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalBitOrOp(SgBitOrOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorBitwiseOr(rhsResult.result));
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
   return resultList;
 }
-list<SingleEvalResultConstInt> evalLessThanOp(SgNode* node) {
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalBitXorOp(SgBitXorOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorBitwiseXor(rhsResult.result));
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
   return resultList;
 }
-list<SingleEvalResultConstInt> evalLessOrEqualOp(SgNode* node) {
+
+list<SingleEvalResultConstInt> 
+ExprAnalyzer::evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
+                                   SingleEvalResultConstInt lhsResult, 
+                                   SingleEvalResultConstInt rhsResult,
+                                   EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
+  if(boolOptions["relop-constraints"]) {
+    if(res.result.isTop())
+      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
+  }
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
   return resultList;
 }
+
+list<SingleEvalResultConstInt> 
+ExprAnalyzer::evalGreaterThanOp(SgGreaterThanOp* node,
+                                SingleEvalResultConstInt lhsResult, 
+                                SingleEvalResultConstInt rhsResult,
+                                EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorMore(rhsResult.result));
+  if(boolOptions["relop-constraints"]) {
+    if(res.result.isTop())
+      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
+  }
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt>
+ExprAnalyzer::evalLessOrEqualOp(SgLessOrEqualOp* node,
+                                SingleEvalResultConstInt lhsResult, 
+                                SingleEvalResultConstInt rhsResult,
+                                EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
+  if(boolOptions["relop-constraints"]) {
+    if(res.result.isTop())
+      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
+  }
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt>
+ExprAnalyzer::evalLessThanOp(SgLessThanOp* node,
+                             SingleEvalResultConstInt lhsResult, 
+                             SingleEvalResultConstInt rhsResult,
+                             EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorLess(rhsResult.result));
+  if(boolOptions["relop-constraints"]) {
+    if(res.result.isTop())
+      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
+  }
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt> 
+ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
+                                 SingleEvalResultConstInt lhsResult, 
+                                 SingleEvalResultConstInt rhsResult,
+                                 EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  SgNode* lhs=SgNodeHelper::getLhs(node);
+  
+  // assume top for array elements (array elements are not stored in state)
+  //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
+  if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
+    // set result to top when index is top [imprecision]
+    //cerr<<"DEBUG: arr-ref-exp: top!"<<endl;
+    res.result=AType::Top();
+    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+    resultList.push_back(res);
+    return resultList;
+  } else {
+    if(SgVarRefExp* varRefExp=isSgVarRefExp(lhs)) {
+      const PState* pstate=estate.pstate();
+      PState pstate2=*pstate; // also removes constness
+      VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
+      // two cases
+      if(_variableIdMapping->hasArrayType(arrayVarId)) {
+        // has already correct id
+        // nothing to do
+      } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
+        // in case it is a pointer retrieve pointer value
+        //cout<<"DEBUG: pointer-array access!"<<endl;
+        if(pstate->varExists(arrayVarId)) {
+          AValue aValuePtr=pstate2[arrayVarId];
+          // convert integer to VariableId
+          // TODO (topify mode: does read this as integer)
+          if(!aValuePtr.isConstInt()) {
+            res.result=AType::Top();
+            res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+            resultList.push_back(res);
+            return resultList;
+          }
+          int aValueInt=aValuePtr.getIntValue();
+          // change arrayVarId to refered array!
+          //cout<<"DEBUG: defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
+          arrayVarId=_variableIdMapping->variableIdFromCode(aValueInt);
+          //cout<<" to "<<_variableIdMapping->variableName(arrayVarId)<<endl;//DEBUG
+        } else {
+          cerr<<"Error: pointer variable does not exist in PState."<<endl;
+          exit(1);
+        }
+      } else {
+        cerr<<"Error: unkown type of array or pointer."<<endl;
+        exit(1);
+      }
+      VariableId arrayElementId;
+      AValue aValue=rhsResult.value();
+      int index=-1;
+      if(aValue.isConstInt()) {
+        index=aValue.getIntValue();
+        arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
+        //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
+      } else {
+        cerr<<"Error: array index cannot be evaluated to a constant. Not supported yet."<<endl;
+        cerr<<"expr: "<<varRefExp->unparseToString()<<endl;
+        exit(1);
+      }
+      ROSE_ASSERT(arrayElementId.isValid());
+      // read value of variable var id (same as for VarRefExp - TODO: reuse)
+      // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
+      if(pstate->varExists(arrayElementId)) {
+        res.result=pstate2[arrayElementId];
+        //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
+        if(res.result.isTop() && useConstraints) {
+          AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
+          res.result=val;
+        }
+        return listify(res);
+      } else {
+        // check that array is constant array (it is therefore ok that it is not in the state)
+        if(_variableIdMapping->isConstantArray(arrayVarId)) {
+          SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
+          int elemIndex=0;
+          // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
+          for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+            //VariableId arrayElemId=_variableIdMapping->variableIdOfArrayElement(initDeclVarId,elemIndex);
+            SgExpression* exp=*i;
+            SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+            if(assignInit) {
+              SgExpression* initExp=assignInit->get_operand_i();
+              ROSE_ASSERT(initExp);
+              if(SgIntVal* intValNode=isSgIntVal(initExp)) {
+                int intVal=intValNode->get_value();
+                //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+                //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
+                if(elemIndex==index) {
+                  AType::ConstIntLattice val=AType::ConstIntLattice(intVal);
+                  res.result=val;
+                  return listify(res);
+                }
+              } else {
+                cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                exit(1);
+              }
+            } else {
+              cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+            }
+            elemIndex++;
+          }
+          cerr<<"Error: access to element of constant array (not in state). Not supported yet."<<endl;
+          exit(1);
+        } else {
+          cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
+          cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
+          cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
+          cerr<<"AST: "<<node->unparseToString()<<endl;
+          exit(1);
+        }
+      }
+    } else {
+      cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;
+      cerr<<"expr: "<<lhs->unparseToString()<<endl;
+      cerr<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
+      exit(1);
+    }
+    return resultList;
+  }
+  ROSE_ASSERT(false); // not reachable
+}
+
 list<SingleEvalResultConstInt> evalNotOp(SgNode* node) {
-  list<SingleEvalResultConstInt> resultList;
-  return resultList;
-}
-list<SingleEvalResultConstInt> evalBitAndOp(SgNode* node) {
-  list<SingleEvalResultConstInt> resultList;
-  return resultList;
-}
-list<SingleEvalResultConstInt> evalBitOrOp(SgNode* node) {
-  list<SingleEvalResultConstInt> resultList;
-  return resultList;
-}
-list<SingleEvalResultConstInt> evalBitXorOp(SgNode* node) {
-  list<SingleEvalResultConstInt> resultList;
-  return resultList;
-}
-list<SingleEvalResultConstInt> evalBitNotOp(SgNode* node) {
   list<SingleEvalResultConstInt> resultList;
   return resultList;
 }
@@ -908,11 +876,12 @@ list<SingleEvalResultConstInt> evalUnaryMinusOp(SgNode* node) {
   list<SingleEvalResultConstInt> resultList;
   return resultList;
 }
+list<SingleEvalResultConstInt> evalBitNotOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
+}
 list<SingleEvalResultConstInt> evalCastOp(SgNode* node) {
   list<SingleEvalResultConstInt> resultList;
   return resultList;
 }
-list<SingleEvalResultConstInt> evalArrayReference(SgNode* node) {
-  list<SingleEvalResultConstInt> resultList;
-  return resultList;
-}
+
