@@ -182,8 +182,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     list<SingleEvalResultConstInt> lhsResultList=evalConstInt(lhs,estate,useConstraints);
     SgNode* rhs=SgNodeHelper::getRhs(node);
     list<SingleEvalResultConstInt> rhsResultList=evalConstInt(rhs,estate,useConstraints);
-    //assert(lhsResultList.size()==1);
-    //assert(rhsResultList.size()==1);
     list<SingleEvalResultConstInt> resultList;
     for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
         liter!=lhsResultList.end();
@@ -195,96 +193,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         SingleEvalResultConstInt rhsResult=*riter;
 
         switch(node->variantT()) {
-#if 1
         case V_SgEqualityOp:
           return evalEqualOp(isSgEqualityOp(node),lhsResult,rhsResult,estate,useConstraints);
         case V_SgNotEqualOp:
           return evalNotEqualOp(isSgNotEqualOp(node),lhsResult,rhsResult,estate,useConstraints);
+#if 0
+        case V_SgAndOp:
+          return evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,useConstraints);
 #else
-        case V_SgEqualityOp: {
-          res.result=(lhsResult.result.operatorEq(rhsResult.result));
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          // record new constraint
-          VariableId varId;
-          if(variable(lhs,varId) && rhsResult.isConstInt()) {
-            // if var is top add two states with opposing constraints
-            if(!res.estate.pstate()->varIsConst(varId)) {
-              SingleEvalResultConstInt tmpres1=res;
-              SingleEvalResultConstInt tmpres2=res;
-              tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
-              tmpres1.result=true;
-              tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
-              tmpres2.result=false;
-              resultList.push_back(tmpres1);
-              resultList.push_back(tmpres2);
-              //return resultList; MS: removed 3/11/2014
-              break;
-            }
-          }
-          if(lhsResult.isConstInt() && variable(rhs,varId)) {
-            // only add the equality constraint if no constant is bound to the respective variable
-            if(!res.estate.pstate()->varIsConst(varId)) {
-              SingleEvalResultConstInt tmpres1=res;
-              SingleEvalResultConstInt tmpres2=res;
-              tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
-              tmpres1.result=true;
-              tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
-              tmpres2.result=false;
-              resultList.push_back(tmpres1);
-              resultList.push_back(tmpres2);
-              break;
-            }
-          }
-          resultList.push_back(res);
-          break;
-        }
-        case V_SgNotEqualOp: {
-          res.result=(lhsResult.result.operatorNotEq(rhsResult.result));
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          // record new constraint
-          VariableId varId;
-          if(variable(lhs,varId) && rhsResult.isConstInt()) {
-            // only add the equality constraint if no constant is bound to the respective variable
-            if(!res.estate.pstate()->varIsConst(varId)) {
-              SingleEvalResultConstInt tmpres1=res;
-              SingleEvalResultConstInt tmpres2=res;
-              tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
-              tmpres1.result=true;
-              tmpres2.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
-              tmpres2.result=false;
-              resultList.push_back(tmpres1);
-              resultList.push_back(tmpres2);
-              break;
-            }
-          }
-          if(lhsResult.isConstInt() && variable(rhs,varId)) {
-            // only add the equality constraint if no constant is bound to the respective variable
-            if(!res.estate.pstate()->varIsConst(varId)) {
-              SingleEvalResultConstInt tmpres1=res;
-              SingleEvalResultConstInt tmpres2=res;
-              tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
-              tmpres1.result=true;
-              tmpres2.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
-              tmpres2.result=false;
-              resultList.push_back(tmpres1);
-              resultList.push_back(tmpres2);
-              break;
-            }
-          }
-          resultList.push_back(res);
-          break;
-        }
-#endif
         case V_SgAndOp: {
           //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
           res.result=(lhsResult.result.operatorAnd(rhsResult.result));
           //cout << res.result.toString()<<endl;
-#if 0
-          cout << lhsResult.exprConstraints.toString();
-          cout << "&&";
-          cout << rhsResult.exprConstraints.toString();
-          cout << " == > ";
-#endif
           if(lhsResult.result.isFalse()) {
             res.exprConstraints=lhsResult.exprConstraints;
             // rhs is not considered due to short-circuit CPP-AND-semantics
@@ -307,6 +227,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
+#endif
+#if 0
+        case V_SgOrOp:
+          return evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,useConstraints);
+#else
         case V_SgOrOp: {
           res.result=lhsResult.result.operatorOr(rhsResult.result);
           // we encode short-circuit CPP-OR-semantics here!
@@ -330,6 +255,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
+#endif
+
+#if 1
+        case V_SgAddOp:
+          return evalAddOp(isSgAddOp(node),lhsResult,rhsResult,estate,useConstraints);
+        case V_SgSubtractOp:
+          return evalSubOp(isSgSubtractOp(node),lhsResult,rhsResult,estate,useConstraints);
+        case V_SgMultiplyOp:
+          return evalMulOp(isSgMultiplyOp(node),lhsResult,rhsResult,estate,useConstraints);
+        case V_SgDivideOp:
+          return evalDivOp(isSgDivideOp(node),lhsResult,rhsResult,estate,useConstraints);
+        case V_SgModOp:
+          return evalModOp(isSgModOp(node),lhsResult,rhsResult,estate,useConstraints);
+#else
         case V_SgAddOp: {
           res.result=(lhsResult.result+rhsResult.result);
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
@@ -360,6 +299,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
+#endif
         case V_SgBitAndOp: {
           res.result=(lhsResult.result.operatorBitwiseAnd(rhsResult.result));
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
@@ -789,43 +729,181 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalNotEqualOp(SgNotEqualOp* node,
   return resultList;
 }
 
-#ifdef EXPR_VISITOR
+list<SingleEvalResultConstInt> ExprAnalyzer::evalAndOp(SgAndOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
+  res.result=(lhsResult.result.operatorAnd(rhsResult.result));
+  //cout << res.result.toString()<<endl;
+  if(lhsResult.result.isFalse()) {
+    res.exprConstraints=lhsResult.exprConstraints;
+    // rhs is not considered due to short-circuit CPP-AND-semantics
+  }
+  if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
+    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+    // nothing to do
+  }
+  if(lhsResult.result.isTrue() && rhsResult.result.isTrue()) {
+    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  }
+  
+  // in case of top we do not propagate constraints [inprecision]
+  if(!lhsResult.result.isTop()) {
+    res.exprConstraints+=lhsResult.exprConstraints;
+  }
+  if(!rhsResult.result.isTop()) {
+    res.exprConstraints+=rhsResult.exprConstraints;
+  }
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalOrOp(SgOrOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=lhsResult.result.operatorOr(rhsResult.result);
+
+  // encode short-circuit CPP-OR-semantics
+  if(lhsResult.result.isTrue()) {
+    res.result=lhsResult.result;
+    res.exprConstraints=lhsResult.exprConstraints;
+  } 
+  if(lhsResult.result.isFalse() && rhsResult.result.isFalse()) {
+    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  } 
+  if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
+    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  }
+
+  // in case of top do not propagate constraints [imprecision]
+  if(!lhsResult.result.isTop()) {
+    res.exprConstraints+=lhsResult.exprConstraints;
+  }
+  if(!rhsResult.result.isTop()) {
+    res.exprConstraints+=rhsResult.exprConstraints;
+  }
+
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalAddOp(SgAddOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result+rhsResult.result);
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+list<SingleEvalResultConstInt> ExprAnalyzer::evalSubOp(SgSubtractOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result-rhsResult.result);
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+list<SingleEvalResultConstInt> ExprAnalyzer::evalMulOp(SgMultiplyOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
+
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result*rhsResult.result);
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+list<SingleEvalResultConstInt> ExprAnalyzer::evalDivOp(SgDivideOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
+
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result/rhsResult.result);
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+list<SingleEvalResultConstInt> ExprAnalyzer::evalModOp(SgModOp* node,
+                                                      SingleEvalResultConstInt lhsResult, 
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, bool useConstraints) {
+
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result%rhsResult.result);
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+
 list<SingleEvalResultConstInt> evalGreaterThanOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalLessThanOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalLessOrEqualOp(SgNode* node) {
-}
-list<SingleEvalResultConstInt> evalAndOp(SgNode* node) {
-}
-list<SingleEvalResultConstInt> evalOrOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalNotOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalBitAndOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalBitOrOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalBitXorOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalBitNotOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalUnaryMinusOp(SgNode* node) {
-}
-list<SingleEvalResultConstInt> evalAddOp(SgNode* node) {
-}
-list<SingleEvalResultConstInt> evalSubOp(SgNode* node) {
-}
-list<SingleEvalResultConstInt> evalMulOp(SgNode* node) {
-}
-list<SingleEvalResultConstInt> evalDivOp(SgNode* node) {
-}
-list<SingleEvalResultConstInt> evalModOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalCastOp(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
 list<SingleEvalResultConstInt> evalArrayReference(SgNode* node) {
+  list<SingleEvalResultConstInt> resultList;
+  return resultList;
 }
-#endif

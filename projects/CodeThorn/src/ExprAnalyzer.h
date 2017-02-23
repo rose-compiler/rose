@@ -102,27 +102,47 @@ class ExprAnalyzer {
                                              SingleEvalResultConstInt lhsResult, 
                                              SingleEvalResultConstInt rhsResult,
                                              EState estate, bool useConstraints);
-#ifdef EXPR_VISITOR
+  list<SingleEvalResultConstInt> evalAndOp(SgAndOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalOrOp(SgOrOp* node,
+                                          SingleEvalResultConstInt lhsResult, 
+                                          SingleEvalResultConstInt rhsResult,
+                                          EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalAddOp(SgAddOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalSubOp(SgSubtractOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalMulOp(SgMultiplyOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalDivOp(SgDivideOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalModOp(SgModOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+
   list<SingleEvalResultConstInt> evalGreaterThanOp(SgNode* node);
   list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgNode* node);
   list<SingleEvalResultConstInt> evalLessThanOp(SgNode* node);
   list<SingleEvalResultConstInt> evalLessOrEqualOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalAndOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalOrOp(SgNode* node);
   list<SingleEvalResultConstInt> evalNotOp(SgNode* node);
   list<SingleEvalResultConstInt> evalBitAndOp(SgNode* node);
   list<SingleEvalResultConstInt> evalBitOrOp(SgNode* node);
   list<SingleEvalResultConstInt> evalBitXorOp(SgNode* node);
   list<SingleEvalResultConstInt> evalBitNotOp(SgNode* node);
   list<SingleEvalResultConstInt> evalUnaryMinusOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalAddOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalSubOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalMulOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalDivOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalModOp(SgNode* node);
   list<SingleEvalResultConstInt> evalCastOp(SgNode* node);
   list<SingleEvalResultConstInt> evalArrayReference(SgNode* node);
-#endif
 
 };
 
