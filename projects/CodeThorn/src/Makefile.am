@@ -529,10 +529,10 @@ check-local:
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm tmp.nsdump
 
-	@echo ================================================================
-	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
-	@echo ================================================================
-	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
+#	@echo ================================================================
+#	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
+#	@echo ================================================================
+#	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
 
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS

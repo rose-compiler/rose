@@ -94,9 +94,15 @@ class ExprAnalyzer {
   // evaluation functions
   list<SingleEvalResultConstInt> evalConditionalExpr(SgConditionalExp* node, EState estate, bool useConstraints);
 
+  list<SingleEvalResultConstInt> evalEqualOp(SgEqualityOp* node,
+                                             SingleEvalResultConstInt lhsResult, 
+                                             SingleEvalResultConstInt rhsResult,
+                                             EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalNotEqualOp(SgNotEqualOp* node,
+                                             SingleEvalResultConstInt lhsResult, 
+                                             SingleEvalResultConstInt rhsResult,
+                                             EState estate, bool useConstraints);
 #ifdef EXPR_VISITOR
-  list<SingleEvalResultConstInt> evalEqualOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalNotEqualOp(SgNode* node);
   list<SingleEvalResultConstInt> evalGreaterThanOp(SgNode* node);
   list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgNode* node);
   list<SingleEvalResultConstInt> evalLessThanOp(SgNode* node);

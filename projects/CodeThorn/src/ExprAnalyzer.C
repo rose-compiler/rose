@@ -195,6 +195,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         SingleEvalResultConstInt rhsResult=*riter;
 
         switch(node->variantT()) {
+#if 1
+        case V_SgEqualityOp:
+          return evalEqualOp(isSgEqualityOp(node),lhsResult,rhsResult,estate,useConstraints);
+        case V_SgNotEqualOp:
+          return evalNotEqualOp(isSgNotEqualOp(node),lhsResult,rhsResult,estate,useConstraints);
+#else
         case V_SgEqualityOp: {
           res.result=(lhsResult.result.operatorEq(rhsResult.result));
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
@@ -268,6 +274,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
+#endif
         case V_SgAndOp: {
           //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
           res.result=(lhsResult.result.operatorAnd(rhsResult.result));
@@ -687,11 +694,102 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
   }
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalEqualOp(SgEqualityOp* node,
+                                                         SingleEvalResultConstInt lhsResult, 
+                                                         SingleEvalResultConstInt rhsResult,
+                                                         EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorEq(rhsResult.result));
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  // record new constraint
+  if(useConstraints) {
+  VariableId varId;
+  SgNode* lhs=SgNodeHelper::getLhs(node);
+  SgNode* rhs=SgNodeHelper::getRhs(node);
+  if(variable(lhs,varId) && rhsResult.isConstInt()) {
+    // if var is top add two states with opposing constraints
+    if(!res.estate.pstate()->varIsConst(varId)) {
+      SingleEvalResultConstInt tmpres1=res;
+      SingleEvalResultConstInt tmpres2=res;
+      tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
+      tmpres1.result=true;
+      tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
+      tmpres2.result=false;
+      resultList.push_back(tmpres1);
+      resultList.push_back(tmpres2);
+      //return resultList; MS: removed 3/11/2014
+      goto done;
+    }
+  }
+  if(lhsResult.isConstInt() && variable(rhs,varId)) {
+    // only add the equality constraint if no constant is bound to the respective variable
+    if(!res.estate.pstate()->varIsConst(varId)) {
+      SingleEvalResultConstInt tmpres1=res;
+      SingleEvalResultConstInt tmpres2=res;
+      tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
+      tmpres1.result=true;
+      tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
+      tmpres2.result=false;
+      resultList.push_back(tmpres1);
+      resultList.push_back(tmpres2);
+    }
+  }
+  done:;
+  }
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalNotEqualOp(SgNotEqualOp* node,
+                                                            SingleEvalResultConstInt lhsResult, 
+                                                            SingleEvalResultConstInt rhsResult,
+                                                            EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  if(useConstraints) {
+    res.result=(lhsResult.result.operatorNotEq(rhsResult.result));
+    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+    // record new constraint
+    VariableId varId;
+    SgNode* lhs=SgNodeHelper::getLhs(node);
+    SgNode* rhs=SgNodeHelper::getRhs(node);
+    if(variable(lhs,varId) && rhsResult.isConstInt()) {
+      // only add the equality constraint if no constant is bound to the respective variable
+      if(!res.estate.pstate()->varIsConst(varId)) {
+        SingleEvalResultConstInt tmpres1=res;
+        SingleEvalResultConstInt tmpres2=res;
+        tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
+        tmpres1.result=true;
+        tmpres2.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
+        tmpres2.result=false;
+        resultList.push_back(tmpres1);
+        resultList.push_back(tmpres2);
+        goto done;
+      }
+    }
+    if(lhsResult.isConstInt() && variable(rhs,varId)) {
+      // only add the equality constraint if no constant is bound to the respective variable
+      if(!res.estate.pstate()->varIsConst(varId)) {
+        SingleEvalResultConstInt tmpres1=res;
+        SingleEvalResultConstInt tmpres2=res;
+        tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
+        tmpres1.result=true;
+        tmpres2.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
+        tmpres2.result=false;
+        resultList.push_back(tmpres1);
+        resultList.push_back(tmpres2);
+      }
+    }
+  done:;
+  }
+  resultList.push_back(res);
+  return resultList;
+}
+
 #ifdef EXPR_VISITOR
-list<SingleEvalResultConstInt> evalEqualOp(SgNode* node) {
-}
-list<SingleEvalResultConstInt> evalNotEqualOp(SgNode* node) {
-}
 list<SingleEvalResultConstInt> evalGreaterThanOp(SgNode* node) {
 }
 list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgNode* node) {
