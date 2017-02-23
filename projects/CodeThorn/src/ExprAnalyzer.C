@@ -194,12 +194,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 
         switch(node->variantT()) {
         case V_SgEqualityOp:
-          return evalEqualOp(isSgEqualityOp(node),lhsResult,rhsResult,estate,useConstraints);
+          resultList.splice(resultList.end(),evalEqualOp(isSgEqualityOp(node),lhsResult,rhsResult,estate,useConstraints));
+          break;
         case V_SgNotEqualOp:
-          return evalNotEqualOp(isSgNotEqualOp(node),lhsResult,rhsResult,estate,useConstraints);
-#if 0
+          resultList.splice(resultList.end(),evalNotEqualOp(isSgNotEqualOp(node),lhsResult,rhsResult,estate,useConstraints));
+          break;
+#if 1
         case V_SgAndOp:
-          return evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,useConstraints);
+          resultList.splice(resultList.end(),evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,useConstraints));
+          break;
 #else
         case V_SgAndOp: {
           //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
@@ -228,9 +231,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
 #endif
-#if 0
+#if 1
         case V_SgOrOp:
           return evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,useConstraints);
+          break;
 #else
         case V_SgOrOp: {
           res.result=lhsResult.result.operatorOr(rhsResult.result);
@@ -259,15 +263,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 
 #if 1
         case V_SgAddOp:
-          return evalAddOp(isSgAddOp(node),lhsResult,rhsResult,estate,useConstraints);
+          resultList.splice(resultList.end(),evalAddOp(isSgAddOp(node),lhsResult,rhsResult,estate,useConstraints));
+          break;
         case V_SgSubtractOp:
-          return evalSubOp(isSgSubtractOp(node),lhsResult,rhsResult,estate,useConstraints);
+          resultList.splice(resultList.end(),evalSubOp(isSgSubtractOp(node),lhsResult,rhsResult,estate,useConstraints));
+          break;
         case V_SgMultiplyOp:
-          return evalMulOp(isSgMultiplyOp(node),lhsResult,rhsResult,estate,useConstraints);
+          resultList.splice(resultList.end(),evalMulOp(isSgMultiplyOp(node),lhsResult,rhsResult,estate,useConstraints));
+          break;
         case V_SgDivideOp:
-          return evalDivOp(isSgDivideOp(node),lhsResult,rhsResult,estate,useConstraints);
+          resultList.splice(resultList.end(),evalDivOp(isSgDivideOp(node),lhsResult,rhsResult,estate,useConstraints));
+          break;
         case V_SgModOp:
-          return evalModOp(isSgModOp(node),lhsResult,rhsResult,estate,useConstraints);
+          resultList.splice(resultList.end(),evalModOp(isSgModOp(node),lhsResult,rhsResult,estate,useConstraints));
+          break;
 #else
         case V_SgAddOp: {
           res.result=(lhsResult.result+rhsResult.result);
