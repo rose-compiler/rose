@@ -140,19 +140,40 @@ namespace BinaryAnalysis {
  *
  *  @includelineno binaryHelloWorld.C
  *
+ *
+ *
+ *  @section bintut_compile Compiling programs that use ROSE
+ *
  *  To compile this program you'll want to use the same compiler, preprocessor switches, compiler switches, and loader switches
- *  as are used when compiling ROSE.  This is important!  For instance, if you've compiled Boost with default settings it
- *  probably has multi-threading support, in which case if you're compiling with g++ you'll amost certainly need the "-pthread"
- *  switch in your compile and link commands, and failing to do so might result in core dumps.  ROSE has a tool that provides
- *  you with this information: rose-config.  Invoke it with one argument, the word "cxx", "cppflags", "cflags", or "ldflags"
- *  to get the necessary switches.
+ *  as are used when compiling ROSE.  This is important! Since C++ has no official, documented application binary interface,
+ *  mixing libraries compiled with different compilers, compiler versions, compiler optimization levels, or even other
+ *  seemingly benign compiler switches is not guaranteed to work.  The easiest way to compile the above example is to change
+ *  directories to <code>$ROSE_BUILD/tutorial</code>, where $ROSE_BUILD is the top of your build tree, and run <code>make
+ *  binaryHelloWorld</code>. Similar commands will work for the other examples in this tutorial.
  *
- *  When you run the "Hello, World!" example you may need to provide paths for the dynamic libraries. It is important to use
- *  the currect versions of libraries--the same versions used when compiling rose--so the rose-config command comes in handy
- *  again with its "libdirs" setting, which should be stored in the @c LD_LIBRARY_PATH environment variable on Linux (similar
- *  mechanisms exist on other operating systems).  See the output from "rose-config --help".
+ *  On the other hand, if you've already installed the ROSE library and blown away your build tree, or if you're writing your
+ *  own programs that use ROSE, you won't be able to leverage ROSE's own build system to compile your program, and you probably
+ *  have no idea what compiler command was used to compile ROSE. Fear not, ROSE installed a "rose-config" tool in its "bin"
+ *  directory that has all this info (at least if you configured and built ROSE using GNU auto-tools; CMake users are out of
+ *  luck for the time being). Using it is a three step process:
  *
- * 
+ *  @li First, you need to be able to run "rose-config". Since it uses a couple shared libraries, you may need to add those
+ *  directories to your LD_LIBRARY_PATH environment variable. On my machine, I need the directory that holds the Java virtual
+ *  machine library (libjvm.so) and the directory that holds the Boost libraries. Be sure to use the same libraries that were
+ *  used when you compiled ROSE, and be sure that LD_LIBRARY_PATH is exported.  Once you do this, the <code>rose-config
+ *  --help</code> should work. If the program runs but you don't get a man page, try installing perldoc, which on Debian-based
+ *  systems (inc. Ubunbu) is done with <code>sudo apt-get install perl-doc</code>.
+ *
+ *  @li Once rose-config is working, you can compile your program like this: <code>$(rose-config cxx) $(rose-config cppflags)
+ *  $(rose-config cxxflags) -o binaryHelloWorld binaryHelloWorld.C $(rose-config ldflags)</code>.  Most projects will have a
+ *  Makefile or CMakeLists.txt that can call rose-config to set variables. Traditionally, makefiles have variables with the
+ *  same name (but upper case) as the argument passed to rose-config.  The @ref installation "ROSE installation guide" as an
+ *  example makefile at the bottom of the page.
+ *
+ *  @li When you run your program, you may need additional shared libraries beyond what is needed to run rose-config. You can
+ *  get this list with <code>rose-config libdirs</code> and add them to your LD_LIBRARY_PATH environment variable. It is
+ *  important that you use the same libraries at runtime as you did when compiling ROSE and your program.
+ *
  *
  *
  *  @section bintut_fcfg Generating a function control flow graph.
