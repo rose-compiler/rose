@@ -7575,7 +7575,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // case the -rose:C_only option is used.
   // if (get_C_only() == true || get_C99_only() == true)
      if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
-     {
+        {
        // compilerNameString = "gcc ";
           compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
 #if 0
@@ -7635,9 +7635,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                        }
                   }
              }
-     }
-     else if (get_Cxx_only())
-     {
+        }
+       else 
+        if (get_Cxx_only())
+        {
        compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
 
     // DQ (7/26/2014): Adding support for C11 (option to backend compiler).

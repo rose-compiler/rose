@@ -410,8 +410,15 @@ void postProcessingSupport (SgNode* node)
           postProcessingTestFunctionCallArguments(node);
 #endif
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupTemplateArguments() \n");
+             }
+
+       // DQ (2/11/2017): Changed API to use SgSimpleProcessing based traversal.
        // DQ (11/27/2016): Fixup template arguments to additionally reference a type that can be unparsed.
-          fixupTemplateArguments();
+       // fixupTemplateArguments();
+          fixupTemplateArguments(node);
 
        // DQ (2/12/2012): This is a problem for test2004_35.C (debugging this issue).
        // printf ("Exiting after calling resetTemplateNames() \n");

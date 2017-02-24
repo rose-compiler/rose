@@ -109,8 +109,8 @@ private:
         s.template register_type<MappedBuffer>();
         s.template register_type<NullBuffer>();
         s.template register_type<StaticBuffer>();
-        s & boost::serialization::base_object<Super>(*this);
-        s & endianness_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(endianness_);
     }
 #endif
 

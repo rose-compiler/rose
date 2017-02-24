@@ -1,6 +1,3 @@
-//Rasmussen-delete-me #define ROSE_USE_ROSE_ATERM_SUPPORT 1
-//Rasmussen-delete-me #define DEBUG_PRINT
-
 #include "rosePublicConfig.h"
 #include "sage3basic.h"
 
@@ -13,7 +10,7 @@
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgLocatedNode(ATerm term, SgLocatedNode** var_SgLocatedNode)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgLocatedNode: %s\n", ATwriteToString(term));
 #endif
 
@@ -33,7 +30,7 @@ ATbool traverse_SgLocatedNode(ATerm term, SgLocatedNode** var_SgLocatedNode)
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgLocatedNodeSupport(ATerm term, SgLocatedNodeSupport** var_SgLocatedNodeSupport)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgLocatedNodeSupport: %s\n", ATwriteToString(term));
 #endif
 
@@ -53,7 +50,7 @@ ATbool traverse_SgLocatedNodeSupport(ATerm term, SgLocatedNodeSupport** var_SgLo
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedNode(ATerm term, SgUntypedNode** var_SgUntypedNode)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedNode: %s\n", ATwriteToString(term));
 #endif
 
@@ -73,7 +70,7 @@ ATbool traverse_SgUntypedNode(ATerm term, SgUntypedNode** var_SgUntypedNode)
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedExpression(ATerm term, SgUntypedExpression** var_SgUntypedExpression)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedExpression: %s\n", ATwriteToString(term));
 #endif
 
@@ -108,7 +105,7 @@ ATbool traverse_SgUntypedExpression(ATerm term, SgUntypedExpression** var_SgUnty
 //CER-FIXME ATbool traverse_SgToken_ROSE_Fortran_Keywords(ATerm term, SgToken::ROSE_Fortran_Keywords** var_SgToken_ROSE_Fortran_Keywords)
 ATbool traverse_SgToken_ROSE_Fortran_Keywords(ATerm term, SgToken::ROSE_Fortran_Keywords* var_SgToken_ROSE_Fortran_Keywords)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgToken_ROSE_Fortran_Keywords: %s\n", ATwriteToString(term));
 #endif
 
@@ -131,7 +128,7 @@ ATbool traverse_SgToken_ROSE_Fortran_Keywords(ATerm term, SgToken::ROSE_Fortran_
 //CER-FIXME ATbool traverse_SgToken_ROSE_Fortran_Operators(ATerm term, SgToken::ROSE_Fortran_Operators** var_SgToken_ROSE_Fortran_Operators)
 ATbool traverse_SgToken_ROSE_Fortran_Operators(ATerm term, SgToken::ROSE_Fortran_Operators* var_SgToken_ROSE_Fortran_Operators)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgToken_ROSE_Fortran_Operators: %s\n", ATwriteToString(term));
 #endif
 
@@ -153,7 +150,7 @@ ATbool traverse_SgToken_ROSE_Fortran_Operators(ATerm term, SgToken::ROSE_Fortran
 //CER-FIXME ATbool traverse_SgUntypedType_type_enum(ATerm term, SgUntypedType::type_enum** var_SgUntypedType_type_enum)
 ATbool traverse_SgUntypedType_type_enum(ATerm term, SgUntypedType::type_enum* var_SgUntypedType_type_enum)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedType_type_enum: %s\n", ATwriteToString(term));
 #endif
 
@@ -174,7 +171,7 @@ ATbool traverse_SgUntypedType_type_enum(ATerm term, SgUntypedType::type_enum* va
 //----------------------------------------------------------------------------------------
 ATbool traverse_bool(ATerm term, bool** var_bool)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_bool: %s\n", ATwriteToString(term));
 #endif
 
@@ -194,7 +191,7 @@ ATbool traverse_bool(ATerm term, bool** var_bool)
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedUnaryOperator(ATerm term, SgUntypedUnaryOperator** var_SgUntypedUnaryOperator)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedUnaryOperator: %s\n", ATwriteToString(term));
 #endif
 
@@ -229,7 +226,7 @@ ATbool traverse_SgUntypedUnaryOperator(ATerm term, SgUntypedUnaryOperator** var_
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedBinaryOperator(ATerm term, SgUntypedBinaryOperator** var_SgUntypedBinaryOperator)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedBinaryOperator: %s\n", ATwriteToString(term));
 #endif
 
@@ -268,7 +265,7 @@ ATbool traverse_SgUntypedBinaryOperator(ATerm term, SgUntypedBinaryOperator** va
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedValueExpression(ATerm term, SgUntypedValueExpression** var_SgUntypedValueExpression)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedValueExpression: %s\n", ATwriteToString(term));
 #endif
 
@@ -298,7 +295,7 @@ ATbool traverse_SgUntypedValueExpression(ATerm term, SgUntypedValueExpression** 
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedArrayReferenceExpression(ATerm term, SgUntypedArrayReferenceExpression** var_SgUntypedArrayReferenceExpression)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedArrayReferenceExpression: %s\n", ATwriteToString(term));
 #endif
 
@@ -323,7 +320,7 @@ ATbool traverse_SgUntypedArrayReferenceExpression(ATerm term, SgUntypedArrayRefe
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedOtherExpression(ATerm term, SgUntypedOtherExpression** var_SgUntypedOtherExpression)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedOtherExpression: %s\n", ATwriteToString(term));
 #endif
 
@@ -348,7 +345,7 @@ ATbool traverse_SgUntypedOtherExpression(ATerm term, SgUntypedOtherExpression** 
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedFunctionCallOrArrayReferenceExpression(ATerm term, SgUntypedFunctionCallOrArrayReferenceExpression** var_SgUntypedFunctionCallOrArrayReferenceExpression)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedFunctionCallOrArrayReferenceExpression: %s\n", ATwriteToString(term));
 #endif
 
@@ -373,7 +370,7 @@ ATbool traverse_SgUntypedFunctionCallOrArrayReferenceExpression(ATerm term, SgUn
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedReferenceExpression(ATerm term, SgUntypedReferenceExpression** var_SgUntypedReferenceExpression)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedReferenceExpression: %s\n", ATwriteToString(term));
 #endif
 
@@ -399,7 +396,7 @@ ATbool traverse_SgUntypedReferenceExpression(ATerm term, SgUntypedReferenceExpre
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedImplicitDeclaration(ATerm term, SgUntypedImplicitDeclaration** var_SgUntypedImplicitDeclaration)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedImplicitDeclaration: %s\n", ATwriteToString(term));
 #endif
 
@@ -426,7 +423,7 @@ ATbool traverse_SgUntypedImplicitDeclaration(ATerm term, SgUntypedImplicitDeclar
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedVariableDeclaration(ATerm term, SgUntypedVariableDeclaration** var_SgUntypedVariableDeclaration)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedVariableDeclaration: %s\n", ATwriteToString(term));
 #endif
 
@@ -460,7 +457,7 @@ ATbool traverse_SgUntypedVariableDeclaration(ATerm term, SgUntypedVariableDeclar
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedFunctionDeclaration(ATerm term, SgUntypedFunctionDeclaration** var_SgUntypedFunctionDeclaration)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedFunctionDeclaration: %s\n", ATwriteToString(term));
 #endif
 
@@ -480,7 +477,7 @@ ATbool traverse_SgUntypedFunctionDeclaration(ATerm term, SgUntypedFunctionDeclar
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedModuleDeclaration(ATerm term, SgUntypedModuleDeclaration** var_SgUntypedModuleDeclaration)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedModuleDeclaration: %s\n", ATwriteToString(term));
 #endif
 
@@ -500,7 +497,7 @@ ATbool traverse_SgUntypedModuleDeclaration(ATerm term, SgUntypedModuleDeclaratio
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedProgramHeaderDeclaration(ATerm term, SgUntypedProgramHeaderDeclaration** var_SgUntypedProgramHeaderDeclaration)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedProgramHeaderDeclaration: %s\n", ATwriteToString(term));
 #endif
 
@@ -541,7 +538,7 @@ ATbool traverse_SgUntypedProgramHeaderDeclaration(ATerm term, SgUntypedProgramHe
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedSubroutineDeclaration(ATerm term, SgUntypedSubroutineDeclaration** var_SgUntypedSubroutineDeclaration)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedSubroutineDeclaration: %s\n", ATwriteToString(term));
 #endif
 
@@ -583,7 +580,7 @@ ATbool traverse_SgUntypedSubroutineDeclaration(ATerm term, SgUntypedSubroutineDe
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedStatement(ATerm term, SgUntypedStatement** var_SgUntypedStatement)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedStatement: %s\n", ATwriteToString(term));
 #endif
 
@@ -609,7 +606,7 @@ ATbool traverse_SgUntypedStatement(ATerm term, SgUntypedStatement** var_SgUntype
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedType(ATerm term, SgUntypedType** var_SgUntypedType)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedType: %s\n", ATwriteToString(term));
 #endif
 
@@ -651,7 +648,7 @@ ATbool traverse_SgUntypedType(ATerm term, SgUntypedType** var_SgUntypedType)
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedAttribute(ATerm term, SgUntypedAttribute** var_SgUntypedAttribute)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedAttribute: %s\n", ATwriteToString(term));
 #endif
 
@@ -677,7 +674,7 @@ ATbool traverse_SgUntypedAttribute(ATerm term, SgUntypedAttribute** var_SgUntype
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedInitializedName(ATerm term, SgUntypedInitializedName** var_SgUntypedInitializedName)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedInitializedName: %s\n", ATwriteToString(term));
 #endif
 
@@ -702,7 +699,7 @@ ATbool traverse_SgUntypedInitializedName(ATerm term, SgUntypedInitializedName** 
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedFile(ATerm term, SgUntypedFile** var_SgUntypedFile)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedFile: %s\n", ATwriteToString(term));
 #endif
 
@@ -726,7 +723,7 @@ ATbool traverse_SgUntypedFile(ATerm term, SgUntypedFile** var_SgUntypedFile)
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedStatementList(ATerm term, SgUntypedStatementList** var_SgUntypedStatementList)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedStatementList: %s\n", ATwriteToString(term));
 #endif
 
@@ -793,7 +790,7 @@ ATbool traverse_SgUntypedStatementList(ATerm term, SgUntypedStatementList** var_
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedDeclarationStatementList(ATerm term, SgUntypedDeclarationStatementList** var_SgUntypedDeclarationStatementList)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedDeclarationStatementList: %s\n", ATwriteToString(term));
 #endif
 
@@ -845,7 +842,7 @@ ATbool traverse_SgUntypedDeclarationStatementList(ATerm term, SgUntypedDeclarati
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedFunctionDeclarationList(ATerm term, SgUntypedFunctionDeclarationList** var_SgUntypedFunctionDeclarationList)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedFunctionDeclarationList: %s\n", ATwriteToString(term));
 #endif
 
@@ -886,7 +883,7 @@ ATbool traverse_SgUntypedFunctionDeclarationList(ATerm term, SgUntypedFunctionDe
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedInitializedNameList(ATerm term, SgUntypedInitializedNameList** var_SgUntypedInitializedNameList)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedInitializedNameList: %s\n", ATwriteToString(term));
 #endif
 
@@ -924,7 +921,7 @@ ATbool traverse_SgUntypedInitializedNameList(ATerm term, SgUntypedInitializedNam
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedDeclarationStatement(ATerm term, SgUntypedDeclarationStatement** var_SgUntypedDeclarationStatement)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedDeclarationStatement: %s\n", ATwriteToString(term));
 #endif
 
@@ -950,7 +947,7 @@ ATbool traverse_SgUntypedDeclarationStatement(ATerm term, SgUntypedDeclarationSt
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedAssignmentStatement(ATerm term, SgUntypedAssignmentStatement** var_SgUntypedAssignmentStatement)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedAssignmentStatement: %s\n", ATwriteToString(term));
 #endif
 
@@ -984,7 +981,7 @@ ATbool traverse_SgUntypedAssignmentStatement(ATerm term, SgUntypedAssignmentStat
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedFunctionCallStatement(ATerm term, SgUntypedFunctionCallStatement** var_SgUntypedFunctionCallStatement)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedFunctionCallStatement: %s\n", ATwriteToString(term));
 #endif
 
@@ -1010,7 +1007,7 @@ ATbool traverse_SgUntypedFunctionCallStatement(ATerm term, SgUntypedFunctionCall
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedBlockStatement(ATerm term, SgUntypedBlockStatement** var_SgUntypedBlockStatement)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedBlockStatement: %s\n", ATwriteToString(term));
 #endif
 
@@ -1040,7 +1037,7 @@ ATbool traverse_SgUntypedBlockStatement(ATerm term, SgUntypedBlockStatement** va
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedNamedStatement(ATerm term, SgUntypedNamedStatement** var_SgUntypedNamedStatement)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedNamedStatement: %s\n", ATwriteToString(term));
 #endif
 
@@ -1067,7 +1064,7 @@ ATbool traverse_SgUntypedNamedStatement(ATerm term, SgUntypedNamedStatement** va
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedOtherStatement(ATerm term, SgUntypedOtherStatement** var_SgUntypedOtherStatement)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedOtherStatement: %s\n", ATwriteToString(term));
 #endif
 
@@ -1093,7 +1090,7 @@ ATbool traverse_SgUntypedOtherStatement(ATerm term, SgUntypedOtherStatement** va
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedScope(ATerm term, SgUntypedScope** var_SgUntypedScope)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedScope: %s\n", ATwriteToString(term));
 #endif
 
@@ -1131,7 +1128,7 @@ ATbool traverse_SgUntypedScope(ATerm term, SgUntypedScope** var_SgUntypedScope)
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedFunctionScope(ATerm term, SgUntypedFunctionScope** var_SgUntypedFunctionScope)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedFunctionScope: %s\n", ATwriteToString(term));
 #endif
 
@@ -1169,7 +1166,7 @@ ATbool traverse_SgUntypedFunctionScope(ATerm term, SgUntypedFunctionScope** var_
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedModuleScope(ATerm term, SgUntypedModuleScope** var_SgUntypedModuleScope)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedModuleScope: %s\n", ATwriteToString(term));
 #endif
 
@@ -1207,7 +1204,7 @@ ATbool traverse_SgUntypedModuleScope(ATerm term, SgUntypedModuleScope** var_SgUn
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedGlobalScope(ATerm term, SgUntypedGlobalScope** var_SgUntypedGlobalScope)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedGlobalScope: %s\n", ATwriteToString(term));
 #endif
 
@@ -1244,7 +1241,7 @@ ATbool traverse_SgUntypedGlobalScope(ATerm term, SgUntypedGlobalScope** var_SgUn
 //----------------------------------------------------------------------------------------
 ATbool traverse_SgUntypedArrayType(ATerm term, SgUntypedArrayType** var_SgUntypedArrayType)
 {
-#ifdef DEBUG_PRINT
+#ifdef PRINT_ATERM_TRAVERSAL
   printf("... traverse_SgUntypedArrayType: %s\n", ATwriteToString(term));
 #endif
 

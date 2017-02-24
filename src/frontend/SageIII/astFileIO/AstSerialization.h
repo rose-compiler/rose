@@ -27,14 +27,17 @@ namespace rose {
  *
  *      template<class Archive>
  *      void serialize<Archive &archive, const unsigned version) {
- *          archive & boost::serialization::base_object<TheBaseClass>(*this);
- *          archive & p_member1 & p_member2 & ... ;
+ *          archive & BOOST_SERIALIZATION_BASE_OBJECT_NVP(TheBaseClass);
+ *          archive & BOOST_SERIALIZATION_NVP(p_member1);
+ *          archive & BOOST_SERIALIZATION_NVP(p_member2);
+ *          ... ;
  *      }
  *  #endif
  *  @endcode
  *
  *  where @c TheBaseClass is the Sage node class from which this node class is derived, and @c p_member1 etc. are the data
- *  members that should be saved and restored.
+ *  members that should be saved and restored. We wrap everything in name-value pairs (NVP) so serializers that need names
+ *  (like XML and JSON) will work.
  *
  *  Also, the class must have a default constructor, although that constructor may be protected if it's not suitable for end
  *  users.
@@ -58,7 +61,7 @@ void saveAst(Archive &archive, SgNode *ast) {
 
     T1 saveRestoreRootParent(ast);
     roseAstSerializationRegistration(archive);
-    archive <<ast;
+    archive <<BOOST_SERIALIZATION_NVP(ast);
 }
 
 /** Restore AST from an archive.
@@ -70,7 +73,7 @@ template<class Archive>
 SgNode* restoreAst(Archive &archive) {
     roseAstSerializationRegistration(archive);
     SgNode *ast = NULL;
-    archive >>ast;
+    archive >>BOOST_SERIALIZATION_NVP(ast);
     return ast;
 }
 
@@ -88,14 +91,18 @@ inline void save(Archive &archive, const SgNode &node, const unsigned version) {
     SgNode *parent = node.get_parent();
     bool isModified = node.get_isModified();
     bool containsTransformation = node.get_containsTransformation();
-    archive <<parent <<isModified <<containsTransformation;
+    archive <<BOOST_SERIALIZATION_NVP(parent);
+    archive <<BOOST_SERIALIZATION_NVP(isModified);
+    archive <<BOOST_SERIALIZATION_NVP(containsTransformation);
 }
 
 template<class Archive>
 inline void load(Archive &archive, SgNode &node, const unsigned version) {
     SgNode *parent = NULL;
     bool isModified=false, containsTransformation=false;
-    archive >>parent >>isModified >>containsTransformation;
+    archive >>BOOST_SERIALIZATION_NVP(parent);
+    archive >>BOOST_SERIALIZATION_NVP(isModified);
+    archive >>BOOST_SERIALIZATION_NVP(containsTransformation);
     node.set_parent(parent);
     node.set_isModified(isModified);
     node.set_containsTransformation(containsTransformation);

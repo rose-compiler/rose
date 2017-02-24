@@ -3,6 +3,26 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (4/17/2010): These directories are now organized based on what sets of languages 
 # are enabled in ROSE (including binary analysis).
 SUBDIRS =
+
+
+if ROSE_USE_EDG_VERSION_4_9
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == true"
+# DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
+# Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors 
+# in compiling the C++ code represented by some more complex C++ test codes using ROSE).  Interestingly, the
+# GNU 4.8 C++11 mode works fine for the C++ code that implements ROSE itself.
+if ROSE_USING_GCC_VERSION_4_8_CXX11
+check-local:
+	@echo "********************************************************************************************************************************************"
+	@echo "********************************************************************************************************************************************"
+	@echo "Skipping tests in tests/roseTests directory for GNU 4.8.x using C++11 mode (GNU 4.8 compiler has internal errors when using the C++11 mode)."
+	@echo "********************************************************************************************************************************************"
+	@echo "********************************************************************************************************************************************"
+
+else
+
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += astMergeTests astPerformanceTests \
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests astSnippetTests \
@@ -38,6 +58,14 @@ endif
 endif
 endif
 
+else  # NOT USING_GNU_COMPILER
+# DQ (2/19/2017): Skipping testing with other non-GNU compilers for now.
+#	@echo "USING_GNU_COMPILER == false"
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+endif # ROSE_USE_EDG_VERSION_4_9
+
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPTests
 endif
@@ -51,4 +79,14 @@ if !ROSE_USE_INSURE
 # SUBDIRS += roseHPCToolkitTests utilTests
 # SUBDIRS += roseHPCToolkitTests
 
+endif
+
+check-local:
+	@echo "*******************************************"
+	@echo "*******************************************"
+	@echo "Passed tests for tests/roseTests directory."
+	@echo "*******************************************"
+	@echo "*******************************************"
+
+# endif for ROSE_USING_GCC_VERSION_4_8_CXX11
 endif

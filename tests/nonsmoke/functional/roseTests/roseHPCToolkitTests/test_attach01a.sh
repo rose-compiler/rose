@@ -26,7 +26,7 @@ if [ $rc -eq $PASS ]; then
   echo "******* HPCTOOLKIT test_attach01a PASSED *********"
 #  rm -f test_attach01a-out.txt
 else
-  echo "******* HPCTOOLKIT test_attach01a FAILED *********"
+  echo "error: ******* HPCTOOLKIT test_attach01a FAILED *********"
 fi
 
 

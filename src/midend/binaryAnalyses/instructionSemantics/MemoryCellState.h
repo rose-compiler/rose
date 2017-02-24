@@ -30,9 +30,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<MemoryState>(*this);
-        s & protocell;
-        s & latestWrittenCell_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(MemoryState);
+        s & BOOST_SERIALIZATION_NVP(protocell);
+        s & BOOST_SERIALIZATION_NVP(latestWrittenCell_);
     }
 #endif
 

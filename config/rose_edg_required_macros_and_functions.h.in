@@ -71,7 +71,10 @@
 /* DQ (8/28/2015): Adding specialized support for Intel compiler. */
 #ifdef __INTEL_COMPILER
   #define __inline inline
+#endif
 
+#if __cplusplus >= 201103L
+/* DQ (1/27/2017): This is needed for at least the Intel compilers and GNU 4.8 and later compilers in C++11 mode. */
 /* DQ (10/8/2015): Added support for Intel compiler to handle fenv.h header file. 
    This is reported as a bug in Intel v14 support for Boost, but this is a fix to
    permit the code in test2015_87.C to compile.
@@ -198,6 +201,11 @@ void __builtin_arm_clrex(void);
 */
 
 #endif //#ifdef __APPLE__
+
+/* DQ (1/28/2017): Adding support for builtin va args required on at least on GNU 4.8 and 4.9 compilers. 
+   A better solution is to exclude tests using this builtin for EDG version 4.12.
+__builtin_va_list & __builtin_next_arg(char const *format); 
+ */
 
 /* This does not work since the include path may not be set to include this file. 
    Also including this is problematic since it would be used in both the compilation 
@@ -609,8 +617,21 @@ long double __builtin_sqrtl  (long double __builtin__x);
 // void __atomic_clear (bool *ptr, int memorder);
    #define __atomic_clear(ptr,memorder)
 
+// DQ (2/9/2017): Last parameter should be const volatile uint8_t* for processing boost files.
+// See tests/CompileTests/RoseExample_tests/testRoseHeaders_01.C on GNU 4.9.3 in non-C++11 mode.
 // bool __atomic_is_lock_free (size_t size, void *ptr);
+// int __atomic_is_lock_free (size_t size, void *ptr);
+// int __atomic_is_lock_free (size_t size, const volatile uint8_t*);
    int __atomic_is_lock_free (size_t size, void *ptr);
+#ifdef __cplusplus
+   int __atomic_is_lock_free (size_t size, const volatile unsigned char*);
+   int __atomic_is_lock_free (size_t size, const volatile unsigned long*);
+// DQ (2/12/2017): Added to support C++11 test2014_04.C.
+#if __cplusplus >= 201103L
+   typedef decltype(nullptr) nullptr_t;
+   int __atomic_is_lock_free (size_t size, nullptr_t);
+#endif
+#endif
 
 // void __atomic_store_n (type *ptr, type val, int memorder);
    #define __atomic_store_n(ptr,val,memorder)
@@ -626,9 +647,10 @@ long double __builtin_sqrtl  (long double __builtin__x);
    int __sync_lock_test_and_set( int *v, int n );
 // type __sync_lock_test_and_set (type *ptr, type value, ...)
 
+// DQ (2/10/2017): Change __Cplusplus to the correct __cplusplus.
 // DQ (12/15/2016): Need to address the use of C, not just C++.
 // int __sync_lock_release( int & v );
-#ifdef __Cplusplus
+#ifdef __cplusplus
    int __sync_lock_release( int & v );
 #endif
 
@@ -3542,7 +3564,7 @@ void __builtin_ia32_movdqa32store512_mask (__v16si *, __v16si, __mmask16);
 // __m512i __builtin_ia32_pmulld512_mask (__v16si, int );
 
 // DQ (1/25/2017): Unclear which if these to use for C langauge support (can't be overloaded in C).
-#ifdef __cplusplus__
+#ifdef __cplusplus
 __m512i __builtin_ia32_pmulld512_mask (__v16si, __v16si, __mmask16);
 __m512i __builtin_ia32_psllv16si_mask (__v16si, __v16si, __mmask16 );
 __m512i __builtin_ia32_psrav16si_mask (__v16si, __v16si, __mmask16);
@@ -4398,7 +4420,7 @@ __m128 __builtin_ia32_vfmaddsubps (__v4sf, __v4sf, __v4sf );
 
 
 // DQ (1/25/2017): Unclear which if these to use for C langauge support (can't be overloaded in C).
-#ifdef __cplusplus__
+#ifdef __cplusplus
 __v4sf __builtin_ia32_vcvtph2ps (__v4sf);
 #endif
 

@@ -64,16 +64,16 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & cpu_;
-        s & initialConcreteStackPointer_;
-        s & hasResults_;
-        s & didConverge_;
-        s & functionStackPtrs_;
-        s & functionDelta_;
-        s & bblockStackPtrs_;
-        s & bblockDeltas_;
-        s & insnStackPtrs_;
-        s & insnDeltas_;
+        s & BOOST_SERIALIZATION_NVP(cpu_);
+        s & BOOST_SERIALIZATION_NVP(initialConcreteStackPointer_);
+        s & BOOST_SERIALIZATION_NVP(hasResults_);
+        s & BOOST_SERIALIZATION_NVP(didConverge_);
+        s & BOOST_SERIALIZATION_NVP(functionStackPtrs_);
+        s & BOOST_SERIALIZATION_NVP(functionDelta_);
+        s & BOOST_SERIALIZATION_NVP(bblockStackPtrs_);
+        s & BOOST_SERIALIZATION_NVP(bblockDeltas_);
+        s & BOOST_SERIALIZATION_NVP(insnStackPtrs_);
+        s & BOOST_SERIALIZATION_NVP(insnDeltas_);
     }
 #endif
     

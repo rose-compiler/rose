@@ -26,7 +26,7 @@ rc=$?
 if [ $rc -eq $PASS ]; then
   echo "******* HPCTOOLKIT test_prop01 PASSED *********"
 else
-  echo "******* HPCTOOLKIT test_prop01 FAILED *********"
+  echo "error: ******* HPCTOOLKIT test_prop01 FAILED *********"
 fi
 
 #rm -f test_prop01-out.txt
