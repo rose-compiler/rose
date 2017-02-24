@@ -164,12 +164,18 @@ class ExprAnalyzer {
                                                     SingleEvalResultConstInt lhsResult, 
                                                     SingleEvalResultConstInt rhsResult,
                                                     EState estate, bool useConstraints);
-
-  list<SingleEvalResultConstInt> evalNotOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalBitNotOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalUnaryMinusOp(SgNode* node);
-  list<SingleEvalResultConstInt> evalCastOp(SgNode* node);
-
+  list<SingleEvalResultConstInt> evalNotOp(SgNotOp* node, 
+                                           SingleEvalResultConstInt operandResult, 
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalUnaryMinusOp(SgMinusOp* node, 
+                                                  SingleEvalResultConstInt operandResult, 
+                                                  EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalCastOp(SgCastExp* node, 
+                                            SingleEvalResultConstInt operandResult, 
+                                            EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitComplementOp(SgBitComplementOp* node, 
+                                              SingleEvalResultConstInt operandResult, 
+                                              EState estate, bool useConstraints);
 };
 
 } // end of namespace CodeThorn

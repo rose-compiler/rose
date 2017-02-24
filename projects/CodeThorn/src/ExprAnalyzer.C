@@ -157,6 +157,8 @@ void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints
 
 #define CASE_EXPR_ANALYZER_EVAL(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),lhsResult,rhsResult,estate,useConstraints));break
 
+#define CASE_EXPR_ANALYZER_EVAL_UNARY_OP(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),operandResult,estate,useConstraints));break
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints) {
   assert(estate.pstate()); // ensure state exists
   // initialize with default values from argument(s)
@@ -224,12 +226,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         ++oiter) {
       SingleEvalResultConstInt operandResult=*oiter;
       switch(node->variantT()) {
+#if 1
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgNotOp,evalNotOp);
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgCastExp,evalCastOp);
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgBitComplementOp,evalBitComplementOp);
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
+#endif
+#if 0
       case V_SgNotOp:
         res.result=operandResult.result.operatorNot();
         // we do NOT invert the constraints, instead we negate the operand result (TODO: investigate)
         res.exprConstraints=operandResult.exprConstraints;
         resultList.push_back(res);
-      break;
+        break;
+        // unary minus
       case V_SgCastExp: {
         // TODO: model effect of cast when sub language is extended
         //SgCastExp* castExp=isSgCastExp(node);
@@ -238,13 +248,19 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         resultList.push_back(res);
         break;
       }
-        // unary minus
+      case V_SgBitComplementOp: {
+        //res.result=operandResult.result.operatorBitComplement();
+        res.exprConstraints=operandResult.exprConstraints;
+        resultList.push_back(res);
+        break;
+      }
       case V_SgMinusOp: {
         res.result=operandResult.result.operatorUnaryMinus();
         res.exprConstraints=operandResult.exprConstraints;
         resultList.push_back(res);
         break;
       }
+#endif
       default:
         cerr << "@NODE:"<<node->sage_class_name()<<endl;
         string exceptionInfo=string("Error: evalConstInt::unknown unary operation @")+string(node->sage_class_name());
@@ -829,20 +845,47 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
   ROSE_ASSERT(false); // not reachable
 }
 
-list<SingleEvalResultConstInt> evalNotOp(SgNode* node) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalNotOp(SgNotOp* node, 
+                                                       SingleEvalResultConstInt operandResult, 
+                                                       EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
-  return resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=operandResult.result.operatorNot();
+  // do *not* invert the constraints, instead negate the operand result (TODO: investigate)
+  res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
 }
-list<SingleEvalResultConstInt> evalUnaryMinusOp(SgNode* node) {
-  list<SingleEvalResultConstInt> resultList;
-  return resultList;
-}
-list<SingleEvalResultConstInt> evalBitNotOp(SgNode* node) {
-  list<SingleEvalResultConstInt> resultList;
-  return resultList;
-}
-list<SingleEvalResultConstInt> evalCastOp(SgNode* node) {
-  list<SingleEvalResultConstInt> resultList;
-  return resultList;
+list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node, 
+                                                              SingleEvalResultConstInt operandResult, 
+                                                              EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=operandResult.result.operatorUnaryMinus();
+  res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node, 
+                                                        SingleEvalResultConstInt operandResult, 
+                                                        EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  // TODO: model effect of cast when sub language is extended
+  //SgCastExp* castExp=isSgCastExp(node);
+  res.result=operandResult.result;
+  res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalBitComplementOp(SgBitComplementOp* node, 
+                                                                 SingleEvalResultConstInt operandResult, 
+                                                                 EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  //res.result=operandResult.result.operatorBitComplement();
+  res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+}
