@@ -198,7 +198,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           CASE_EXPR_ANALYZER_EVAL(SgLessThanOp,evalLessThanOp);
           CASE_EXPR_ANALYZER_EVAL(SgLessOrEqualOp,evalLessOrEqualOp);
           CASE_EXPR_ANALYZER_EVAL(SgPntrArrRefExp,evalArrayReferenceOp);
+
           // TODO: shift operators
+          //CASE_EXPR_ANALYZER_EVAL(SgLshiftOp,evalLeftShiftOp);
+          //CASE_EXPR_ANALYZER_EVAL(SgRshiftOp,evalRightShiftOp);
+
         default:
             cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
           throw CodeThorn::Exception("Error: evalConstInt::unkown binary operation.");
