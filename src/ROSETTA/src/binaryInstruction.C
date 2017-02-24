@@ -6733,7 +6733,7 @@ void Grammar::setUpBinaryInstructions() {
             uint32_t      vn_aux;                       /**< Offset (in bytes) to start of array of vernaux entries */
             uint32_t      vn_next;                      /**< Offset (in bytes) to next verneed entry */
         }
-#if !defined(SWIG) || !defined(_MSC_VER)
+#if !defined(SWIG) && !defined(_MSC_VER)
         __attribute__((packed))
 #endif
         ;
