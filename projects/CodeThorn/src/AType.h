@@ -71,9 +71,9 @@ class ConstIntLattice {
   ConstIntLattice operatorMoreOrEq(ConstIntLattice other) const;
   ConstIntLattice operatorMore(ConstIntLattice other) const;
 
+  ConstIntLattice operatorBitwiseAnd(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseOr(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseXor(ConstIntLattice other) const;
-  ConstIntLattice operatorBitwiseAnd(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseComplement() const;
 
   ConstIntLattice operatorAdd(ConstIntLattice& a,ConstIntLattice& b);

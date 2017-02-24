@@ -130,15 +130,15 @@ class ExprAnalyzer {
                                            SingleEvalResultConstInt lhsResult, 
                                            SingleEvalResultConstInt rhsResult,
                                            EState estate, bool useConstraints);
-  list<SingleEvalResultConstInt> evalBitAndOp(SgBitAndOp* node,
+  list<SingleEvalResultConstInt> evalBitwiseAndOp(SgBitAndOp* node,
                                            SingleEvalResultConstInt lhsResult, 
                                            SingleEvalResultConstInt rhsResult,
                                            EState estate, bool useConstraints);
-  list<SingleEvalResultConstInt> evalBitOrOp(SgBitOrOp* node,
+  list<SingleEvalResultConstInt> evalBitwiseOrOp(SgBitOrOp* node,
                                            SingleEvalResultConstInt lhsResult, 
                                            SingleEvalResultConstInt rhsResult,
                                            EState estate, bool useConstraints);
-  list<SingleEvalResultConstInt> evalBitXorOp(SgBitXorOp* node,
+  list<SingleEvalResultConstInt> evalBitwiseXorOp(SgBitXorOp* node,
                                            SingleEvalResultConstInt lhsResult, 
                                            SingleEvalResultConstInt rhsResult,
                                            EState estate, bool useConstraints);
@@ -173,9 +173,19 @@ class ExprAnalyzer {
   list<SingleEvalResultConstInt> evalCastOp(SgCastExp* node, 
                                             SingleEvalResultConstInt operandResult, 
                                             EState estate, bool useConstraints);
-  list<SingleEvalResultConstInt> evalBitComplementOp(SgBitComplementOp* node, 
+  list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 
                                               SingleEvalResultConstInt operandResult, 
                                               EState estate, bool useConstraints);
+
+  // use of Variable as rvalue (not as lvalue; lvalues are handled in the transfer function of assignments)
+  list<SingleEvalResultConstInt> evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, bool useConstraints);
+
+  /* should never occur in a normalized program
+     if it does occur functions have to be in the list of selected function calls to be skipped (=ignored), otherwise
+     an error is reported. */
+  list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
+
 };
 
 } // end of namespace CodeThorn

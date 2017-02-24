@@ -63,16 +63,7 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
     // found variable
     assert(_variableIdMapping);
-#if 0
-    SgSymbol* sym=varref->get_symbol();
-    assert(sym);
-    varId=_variableIdMapping->variableId(sym);
-#else
-    // MS: to investigate: even with the new var-sym-only case this does not work
-    // MS: investigage getSymbolOfVariable
-    // MS: 9/6/2014: this seems to work now
     varId=_variableIdMapping->variableId(varref);
-#endif
     return true;
   } else {
     VariableId defaultVarId;
@@ -199,14 +190,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           CASE_EXPR_ANALYZER_EVAL(SgMultiplyOp,evalMulOp);
           CASE_EXPR_ANALYZER_EVAL(SgDivideOp,evalDivOp);
           CASE_EXPR_ANALYZER_EVAL(SgModOp,evalModOp);
-          CASE_EXPR_ANALYZER_EVAL(SgBitAndOp,evalBitAndOp);
-          CASE_EXPR_ANALYZER_EVAL(SgBitOrOp,evalBitOrOp);
-          CASE_EXPR_ANALYZER_EVAL(SgBitXorOp,evalBitXorOp);
+          CASE_EXPR_ANALYZER_EVAL(SgBitAndOp,evalBitwiseAndOp);
+          CASE_EXPR_ANALYZER_EVAL(SgBitOrOp,evalBitwiseOrOp);
+          CASE_EXPR_ANALYZER_EVAL(SgBitXorOp,evalBitwiseXorOp);
           CASE_EXPR_ANALYZER_EVAL(SgGreaterOrEqualOp,evalGreaterOrEqualOp);
           CASE_EXPR_ANALYZER_EVAL(SgGreaterThanOp,evalGreaterThanOp);
           CASE_EXPR_ANALYZER_EVAL(SgLessThanOp,evalLessThanOp);
           CASE_EXPR_ANALYZER_EVAL(SgLessOrEqualOp,evalLessOrEqualOp);
           CASE_EXPR_ANALYZER_EVAL(SgPntrArrRefExp,evalArrayReferenceOp);
+          // TODO: shift operators
         default:
             cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
           throw CodeThorn::Exception("Error: evalConstInt::unkown binary operation.");
@@ -226,41 +218,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         ++oiter) {
       SingleEvalResultConstInt operandResult=*oiter;
       switch(node->variantT()) {
-#if 1
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgNotOp,evalNotOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgCastExp,evalCastOp);
-        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgBitComplementOp,evalBitComplementOp);
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgBitComplementOp,evalBitwiseComplementOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
-#endif
-#if 0
-      case V_SgNotOp:
-        res.result=operandResult.result.operatorNot();
-        // we do NOT invert the constraints, instead we negate the operand result (TODO: investigate)
-        res.exprConstraints=operandResult.exprConstraints;
-        resultList.push_back(res);
-        break;
-        // unary minus
-      case V_SgCastExp: {
-        // TODO: model effect of cast when sub language is extended
-        //SgCastExp* castExp=isSgCastExp(node);
-        res.result=operandResult.result;
-        res.exprConstraints=operandResult.exprConstraints;
-        resultList.push_back(res);
-        break;
-      }
-      case V_SgBitComplementOp: {
-        //res.result=operandResult.result.operatorBitComplement();
-        res.exprConstraints=operandResult.exprConstraints;
-        resultList.push_back(res);
-        break;
-      }
-      case V_SgMinusOp: {
-        res.result=operandResult.result.operatorUnaryMinus();
-        res.exprConstraints=operandResult.exprConstraints;
-        resultList.push_back(res);
-        break;
-      }
-#endif
       default:
         cerr << "@NODE:"<<node->sage_class_name()<<endl;
         string exceptionInfo=string("Error: evalConstInt::unknown unary operation @")+string(node->sage_class_name());
@@ -274,58 +235,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   
   // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
   // EXPRESSION LEAF NODES
+  // this test holds for all subclasses of SgValueExp
   if(SgValueExp* exp=isSgValueExp(node)) {
-    res.result=constIntLatticeFromSgValueExp(exp);
-    return listify(res);
+    return evalValueExp(isSgValueExp(exp),estate,useConstraints);
   }
   switch(node->variantT()) {
-  case V_SgVarRefExp: {
-    VariableId varId;
-    bool isVar=ExprAnalyzer::variable(node,varId);
-      //cout<<"DEBUG: EvalConstInt: V_SgVarRefExp: isVar:"<<isVar<<", varIdcode:"<<varId.getIdCode()<<"Source:"<<node->unparseToString()<<endl;
-    assert(isVar);
-    const PState* pstate=estate.pstate();
-    if(pstate->varExists(varId)) {
-      PState pstate2=*pstate; // also removes constness
-
-      if(_variableIdMapping->hasArrayType(varId)) {
-        // CODE-POINT-1
-        // for arrays (by default the address is used) return its pointer value (the var-id-code)
-        res.result=AType::ConstIntLattice(varId.getIdCode());
-      } else {
-        res.result=pstate2[varId]; // this include assignment of pointer values
-      }
-      if(res.result.isTop() && useConstraints) {
-        // in case of TOP we try to extract a possibly more precise value from the constraints
-        AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(varId);
-        // TODO: TOPIFY-MODE: most efficient here
-        res.result=val;
-      }
-      return listify(res);
-    } else {
-      if(_variableIdMapping->isConstantArray(varId) && boolOptions["rersmode"]) {
-        res.result=AType::ConstIntLattice(varId.getIdCode());
-        return listify(res);
-      } else {
-        res.result=AType::Top();
-        //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
-        return listify(res);
-      }
-    }
-    break;
-  }
-  case V_SgFunctionCallExp: {
-    if(getSkipSelectedFunctionCalls()) {
-      // return default value
-      return listify(res);
-    } else {
-      throw CodeThorn::Exception("Error: evalConstInt::function call inside expression.");
-    }
-
-  }
+  case V_SgVarRefExp:
+    return evalRValueVarExp(isSgVarRefExp(node),estate,useConstraints);
+  case V_SgFunctionCallExp:
+    return evalFunctionCall(isSgFunctionCallExp(node),estate,useConstraints);
   default:
-    cerr << "@NODE:"<<node->sage_class_name()<<endl;
-    throw CodeThorn::Exception("Error: evalConstInt::unknown operation failed.");
+    throw CodeThorn::Exception("Error: evalConstInt::unknown node in expression ("+string(node->sage_class_name())+")");
   } // end of switch
   throw CodeThorn::Exception("Error: evalConstInt failed.");
 }
@@ -605,10 +525,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalModOp(SgModOp* node,
   return resultList;
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalBitAndOp(SgBitAndOp* node,
-                                                      SingleEvalResultConstInt lhsResult, 
-                                                      SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseAndOp(SgBitAndOp* node,
+                                                              SingleEvalResultConstInt lhsResult, 
+                                                              SingleEvalResultConstInt rhsResult,
+                                                              EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -618,10 +538,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalBitAndOp(SgBitAndOp* node,
   return resultList;
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalBitOrOp(SgBitOrOp* node,
-                                                      SingleEvalResultConstInt lhsResult, 
-                                                      SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseOrOp(SgBitOrOp* node,
+                                                             SingleEvalResultConstInt lhsResult, 
+                                                             SingleEvalResultConstInt rhsResult,
+                                                             EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -631,10 +551,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalBitOrOp(SgBitOrOp* node,
   return resultList;
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalBitXorOp(SgBitXorOp* node,
-                                                      SingleEvalResultConstInt lhsResult, 
-                                                      SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseXorOp(SgBitXorOp* node,
+                                                              SingleEvalResultConstInt lhsResult, 
+                                                              SingleEvalResultConstInt rhsResult,
+                                                              EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -848,7 +768,6 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalNotOp(SgNotOp* node, 
                                                        SingleEvalResultConstInt operandResult, 
                                                        EState estate, bool useConstraints) {
-  list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=operandResult.result.operatorNot();
@@ -869,7 +788,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node, 
                                                         SingleEvalResultConstInt operandResult, 
                                                         EState estate, bool useConstraints) {
-  list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   // TODO: model effect of cast when sub language is extended
@@ -879,13 +797,68 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node,
   return listify(res);
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalBitComplementOp(SgBitComplementOp* node, 
-                                                                 SingleEvalResultConstInt operandResult, 
-                                                                 EState estate, bool useConstraints) {
-  list<SingleEvalResultConstInt> resultList;
+list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseComplementOp(SgBitComplementOp* node, 
+                                                                     SingleEvalResultConstInt operandResult, 
+                                                                     EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   res.estate=estate;
-  //res.result=operandResult.result.operatorBitComplement();
+  res.result=operandResult.result.operatorBitwiseComplement();
   res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.init(estate,*estate.constraints(),AType::ConstIntLattice(AType::Bot()));
+  VariableId varId;
+  bool isVar=ExprAnalyzer::variable(node,varId);
+  //cout<<"DEBUG: EvalConstInt: V_SgVarRefExp: isVar:"<<isVar<<", varIdcode:"<<varId.getIdCode()<<"Source:"<<node->unparseToString()<<endl;
+  assert(isVar);
+  const PState* pstate=estate.pstate();
+  if(pstate->varExists(varId)) {
+    PState pstate2=*pstate; // also removes constness
+    
+    if(_variableIdMapping->hasArrayType(varId)) {
+      // CODE-POINT-1
+      // for arrays (by default the address is used) return its pointer value (the var-id-code)
+      res.result=AType::ConstIntLattice(varId.getIdCode());
+    } else {
+      res.result=pstate2[varId]; // this include assignment of pointer values
+    }
+    if(res.result.isTop() && useConstraints) {
+      // in case of TOP we try to extract a possibly more precise value from the constraints
+      AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(varId);
+        // TODO: TOPIFY-MODE: most efficient here
+      res.result=val;
+      }
+    return listify(res);
+  } else {
+    if(_variableIdMapping->isConstantArray(varId) && boolOptions["rersmode"]) {
+      res.result=AType::ConstIntLattice(varId.getIdCode());
+      return listify(res);
+    } else {
+      res.result=AType::Top();
+      //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
+      return listify(res);
+    }
+  }
+  // unreachable
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.init(estate,*estate.constraints(),AType::ConstIntLattice(AType::Bot()));
+  if(getSkipSelectedFunctionCalls()) {
+    // return default value
+    return listify(res);
+  } else {
+    throw CodeThorn::Exception("Error: evalConstInt::function call inside expression.");
+  }
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.init(estate,*estate.constraints(),AType::ConstIntLattice(AType::Bot()));
+  res.result=constIntLatticeFromSgValueExp(node);
   return listify(res);
 }
