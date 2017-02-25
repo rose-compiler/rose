@@ -372,136 +372,6 @@ ROSE_CONSTEXPR int __builtin_isnan(...) __attribute__((nothrow, const));
 ROSE_CONSTEXPR int __builtin_isnormal(...) __attribute__((nothrow, const));
 #endif
 
-
-#ifdef __cplusplus
-// DQ (2/21/2017): These functions are not defined for C language support.
-ROSE_CONSTEXPR int __builtin_isgreater(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isgreaterequal(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isless(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_islessequal(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_islessgreater(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isunordered(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_fpclassify(int, int, int, int, ...) __attribute__((nothrow, const));
-int __builtin_isinf_sign(...) __attribute__((nothrow, const));
-#endif
-
-#ifdef __cplusplus
-// DQ (2/21/2017): These functions are not defined for C language support.
-int __builtin_constant_p(...) __attribute__((nothrow, const));
-int __builtin_classify_type(...) __attribute__((nothrow, const));
-void __builtin_va_start(__builtin_va_list&, ...) __attribute__((nothrow));
-void __builtin_va_end(__builtin_va_list&) __attribute__((nothrow));
-void __builtin_va_copy(__builtin_va_list&, __builtin_va_list&) __attribute__((nothrow));
-void __builtin_stdarg_start(__builtin_va_list&, ...) __attribute__((nothrow));
-#endif
-
-
-#ifdef __cplusplus
-// DQ (2/21/2017): These functions are not defined for C language support.
-void __builtin_prefetch(void const*, ...) __attribute__((nothrow, const));
-#endif
-
-#ifdef __cplusplus
-// DQ (2/21/2017): These functions are not defined for C language support.
-void __sync_fetch_and_add(...);
-char __sync_fetch_and_add_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_add_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_add_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_add_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_add_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_fetch_and_sub(...);
-char __sync_fetch_and_sub_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_sub_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_sub_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_sub_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_sub_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_fetch_and_or(...);
-char __sync_fetch_and_or_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_or_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_or_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_or_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_or_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_fetch_and_and(...);
-char __sync_fetch_and_and_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_and_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_and_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_and_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_and_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_fetch_and_xor(...);
-char __sync_fetch_and_xor_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_xor_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_xor_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_xor_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_xor_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_add_and_fetch(...);
-char __sync_add_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_add_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_add_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_add_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_add_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_sub_and_fetch(...);
-char __sync_sub_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_sub_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_sub_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_sub_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_sub_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_or_and_fetch(...);
-char __sync_or_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_or_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_or_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_or_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_or_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_and_and_fetch(...);
-char __sync_and_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_and_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_and_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_and_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_and_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_xor_and_fetch(...);
-char __sync_xor_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_xor_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_xor_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_xor_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_xor_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_bool_compare_and_swap(...);
-void __sync_val_compare_and_swap(...);
-char __sync_val_compare_and_swap_1(char volatile*, char, char, ...) __attribute__((nothrow));
-short __sync_val_compare_and_swap_2(short volatile*, short, short, ...) __attribute__((nothrow));
-int __sync_val_compare_and_swap_4(int volatile*, int, int, ...) __attribute__((nothrow));
-long long int __sync_val_compare_and_swap_8(long long int volatile*, long long int, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_val_compare_and_swap_16(__int128_t volatile*, __int128_t, __int128_t, ...) __attribute__((nothrow));
-char __sync_lock_test_and_set_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_lock_test_and_set_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_lock_test_and_set_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_lock_test_and_set_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_lock_test_and_set_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_lock_release(...);
-void __sync_lock_release_1(char volatile*, ...) __attribute__((nothrow));
-void __sync_lock_release_2(short volatile*, ...) __attribute__((nothrow));
-void __sync_lock_release_4(int volatile*, ...) __attribute__((nothrow));
-void __sync_lock_release_8(long long int volatile*, ...) __attribute__((nothrow));
-void __sync_lock_release_16(__int128_t volatile*, ...) __attribute__((nothrow));
-void __sync_swap(...);
-char __sync_swap_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_swap_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_swap_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_swap_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_swap_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_synchronize(...) __attribute__((nothrow));
-#endif
-
-#ifdef __cplusplus
-// DQ (2/21/2017): These functions are not defined for C language support.
-void __noop(...) __attribute__((nothrow));
-#endif
-
-#if defined(__INTEL_COMPILER) && (__cplusplus >= 201400L)
-// DQ (2/21/2017): Debugging C++14 support specific to the Intel compiler.
-extern "C" char* gets (char* __s) __attribute__((deprecated));
-// char* gets (char* __s) __attribute__((deprecated));
-#endif
-
-
 // This need to be const expr in EDG 4.12
 ROSE_CONSTEXPR double __builtin_huge_val() __attribute__((nothrow, const));
 ROSE_CONSTEXPR float __builtin_huge_valf() __attribute__((nothrow, const));
@@ -758,10 +628,8 @@ long double __builtin_sqrtl  (long double __builtin__x);
    int __atomic_is_lock_free (size_t size, const volatile unsigned long*);
 // DQ (2/12/2017): Added to support C++11 test2014_04.C.
 #if __cplusplus >= 201103L
-// DQ (2/21/2017): We don't want to inject this type into the global namespace.
-// typedef decltype(nullptr) nullptr_t;
-// int __atomic_is_lock_free (size_t size, nullptr_t);
-   int __atomic_is_lock_free (size_t size, decltype(nullptr));
+   typedef decltype(nullptr) nullptr_t;
+   int __atomic_is_lock_free (size_t size, nullptr_t);
 #endif
 #endif
 
@@ -1277,9 +1145,6 @@ void _mm_storeu_pd (double *__P, __m128d __A);
 
 #else
 
-/* DQ (2/21/2017): This is a problem for the Clang compiler. */
-#if 0
-
 /* DQ (5/4/2010): Reported problem under Ubuntu 9.10 with GCC 4.4.1 and Boost 1.42.
 */
 int __builtin_fpclassify (int, int, int, int, int, ...);
@@ -1342,9 +1207,6 @@ DQ (6/19/2007): These might required math.h to be included.
       fpclassify (__u) == FP_NAN || fpclassify (__v) == FP_NAN; }))
 # endif
 
-/* DQ (2/21/2017): This is a problem for the Clang compiler. */
-#endif
-
 /* DQ (11/14/2016): For GNU 6.1 (at least) the isunordered() builtin is not available. */
 #endif
 
@@ -1354,18 +1216,8 @@ DQ (6/19/2007): These might required math.h to be included.
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
-/* DQ (2/22/2017): Added to support GNU 4.8 in C++11 mode using EDG 4.9. */
-#ifdef __cplusplus
-// DQ (2/21/2017): These functions are not defined for C language support.
-ROSE_CONSTEXPR int __builtin_isgreater(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isgreaterequal(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isless(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_islessequal(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_islessgreater(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isunordered(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_fpclassify(int, int, int, int, ...) __attribute__((nothrow, const));
-int __builtin_isinf_sign(...) __attribute__((nothrow, const));
-#endif
+
+
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
