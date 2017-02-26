@@ -78,7 +78,7 @@ int
 main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    rose::Diagnostics::initAndRegister(::mlog, "tool");
+    rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
     Settings settings;
     SgProject *project = buildAst(argc, argv, settings);

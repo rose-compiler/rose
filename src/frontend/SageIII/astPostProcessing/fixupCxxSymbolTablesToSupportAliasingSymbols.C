@@ -51,7 +51,7 @@ void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::FixupAstSymbolTablesToSupportAliasedSymbols");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::FixupAstSymbolTablesToSupportAliasedSymbols");
         }
    }
 

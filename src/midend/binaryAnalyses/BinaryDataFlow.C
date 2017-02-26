@@ -17,7 +17,7 @@ DataFlow::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        rose::Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::DataFlow");
+        rose::Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::DataFlow");
     }
 }
 

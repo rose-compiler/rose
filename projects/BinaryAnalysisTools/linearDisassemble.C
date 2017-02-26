@@ -89,7 +89,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 int main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse the command-line
     P2::Engine engine;

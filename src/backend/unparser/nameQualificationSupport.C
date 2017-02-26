@@ -68,7 +68,7 @@ void NameQualificationTraversal::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::NameQualificationTraversal");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::NameQualificationTraversal");
         }
    }
 

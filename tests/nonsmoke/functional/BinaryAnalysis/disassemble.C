@@ -680,7 +680,7 @@ main(int argc, char *argv[])
      * can be controlled by the same command-line switches that control ROSE.
      *------------------------------------------------------------------------------------------------------------------------*/
     ROSE_INITIALIZE;
-    rose::Diagnostics::initAndRegister(mlog, "tool");
+    rose::Diagnostics::initAndRegister(&mlog, "tool");
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Generic switches
