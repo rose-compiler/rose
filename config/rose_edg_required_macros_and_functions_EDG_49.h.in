@@ -1217,6 +1217,48 @@ DQ (6/19/2007): These might required math.h to be included.
 #endif
 
 
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ == 409
+// DQ (2/26/2017): These need to be visible in the case of EDG 4.9 (e.g. for GNU 4.4 using the tests in the RoseExample_tests directory).
+// Note: this only appears to be an issue for Boost version 1.55.
+   #define __atomic_store_n(ptr,val,memorder)
+   #define __atomic_load(ptr,ret,memorder)
+   #define __atomic_load_n(ptr,memorder) *(ptr)
+   #define __atomic_exchange_n(ptr,val,memorder) *(ptr)
+   #define __atomic_exchange(ptr,val,ret,memorder) *(ptr)
+   #define __atomic_compare_exchange_n(ptr,expected,desired,weak,success_memorder,failure_memorder) false
+   long __builtin_labs(long i);
+   long long __builtin_llabs(long long i);
+
+// int __sync_lock_test_and_set( int & v, int n );
+   int __sync_lock_test_and_set( int *v, int n );
+// type __sync_lock_test_and_set (type *ptr, type value, ...)
+
+// DQ (2/10/2017): Change __Cplusplus to the correct __cplusplus.
+// DQ (12/15/2016): Need to address the use of C, not just C++.
+// int __sync_lock_release( int & v );
+#ifdef __cplusplus
+   int __sync_lock_release( int & v );
+#endif
+
+/* DQ (12/15/2016): Adding more evaluations of required builtin support. */
+   #define __builtin_va_arg(v,l) (l)(sizeof(l))
+
+// DQ (12/16/2016): Another iteration of adding builtin functions.
+   #define __atomic_fetch_add(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_sub(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_and(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_xor(ptr,ret,memorder)  *(ptr)
+   #define __atomic_fetch_or(ptr,ret,memorder)   *(ptr)
+   #define __atomic_fetch_nand(ptr,ret,memorder) *(ptr)
+
+// DQ (12/17/2016): Another iteration of adding builtin functions.
+   #define __atomic_add_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_sub_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_and_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_xor_fetch(ptr,ret,memorder)  *(ptr)
+   #define __atomic_or_fetch(ptr,ret,memorder)   *(ptr)
+   #define __atomic_nand_fetch(ptr,ret,memorder) *(ptr)
+#endif
 
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
