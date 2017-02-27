@@ -248,25 +248,28 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
         if (0 == vertex.id())
             out <<" style=filled fillcolor=\"" <<entryColor.toHtml() <<"\"";
 
-        out <<" label=";
+        out <<" label=<Vertex " <<vertex.id() <<"<br/>";
         switch (vertex.value().type()) {
             case DfCfgVertex::BBLOCK:
-                out <<"\"" <<vertex.value().bblock()->printableName() <<"\"";
+                out <<GraphViz::htmlEscape(vertex.value().bblock()->printableName()) <<">";
                 break;
             case DfCfgVertex::FAKED_CALL:
                 if (Function::Ptr callee = vertex.value().callee()) {
-                    out <<"<fake call to " <<GraphViz::htmlEscape(vertex.value().callee()->printableName()) <<">";
+                    out <<"fake call to<br/>function " <<StringUtility::addrToString(callee->address());
+                    if (!callee->demangledName().empty())
+                        out <<"<br/>" <<GraphViz::htmlEscape(callee->demangledName());
+                    out <<">";
                 } else {
-                    out <<"\"fake call to indeterminate function\"";
+                    out <<"fake call to<br/>indeterminate function>";
                     out <<" style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
                 }
                 break;
             case DfCfgVertex::FUNCRET:
-                out <<"\"function return\"";
+                out <<"function return>";
                 out <<" style=filled fillcolor=\"" <<returnColor.toHtml() <<"\"";
                 break;
             case DfCfgVertex::INDET:
-                out <<"\"indeterminate\" style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
+                out <<"indeterminate> style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
                 break;
         }
 
