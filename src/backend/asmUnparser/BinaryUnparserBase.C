@@ -187,7 +187,7 @@ Settings::Settings() {
     bblock.cfg.showingSharing = true;
 
     insn.address.showing = true;
-    insn.address.fieldWidth = 10;
+    insn.address.fieldWidth = 11;                       // "0x" + 8 hex digits + ":"
     insn.bytes.showing = true;
     insn.bytes.perLine = 8;
     insn.bytes.fieldWidth = 25;
@@ -740,6 +740,18 @@ Base::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
             state.frontUnparser().emitBasicBlockSharing(out, bb, state);
         if (settings().bblock.cfg.showingPredecessors)
             state.frontUnparser().emitBasicBlockPredecessors(out, bb, state);
+
+        // Comment warning about block not being the function entry point.
+        if (state.currentFunction() && bb->address() == *state.currentFunction()->basicBlockAddresses().begin() &&
+            bb->address() != state.currentFunction()->address()) {
+            out <<"\t;; this is not the function entry point; entry point is ";
+            if (settings().insn.address.showing) {
+                out <<StringUtility::addrToString(state.currentFunction()->address()) <<"\n";
+            } else {
+                out <<state.basicBlockLabels().getOrElse(state.currentFunction()->address(),
+                                                         StringUtility::addrToString(state.currentFunction()->address())) <<"\n";
+            }
+        }
     }
 }
 
