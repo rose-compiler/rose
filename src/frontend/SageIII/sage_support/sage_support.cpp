@@ -3859,14 +3859,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #else
           printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
 #endif
-          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) frontendErrorLevel = %d \n",frontendErrorLevel);
+          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete; failure expected) frontendErrorLevel = %d \n",frontendErrorLevel);
           if (frontendErrorLevel == 0)
              {
 #if 0
                printf ("Exiting before unparser (checking only through call to experimental_openFortranParser_main(): SUCESS! \n");
                exit(0);
 #else
-               printf ("frontendErrorLevel == 0: call to experimental_openFortranParser_main(): SUCESS! \n");
+               printf ("frontendErrorLevel == 0: call to experimental_openFortranParser_main(): SUCCESS! \n");
 #endif
              }
             else

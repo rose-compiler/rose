@@ -742,6 +742,9 @@ public:
 /** A ordered collection of calling convention definitions. */
 typedef std::vector<Definition> Dictionary;
 
+/** Common calling conventions for amd64 (x86-64). */
+const Dictionary& dictionaryAmd64();
+
 /** Common calling conventions for ARM. */
 const Dictionary& dictionaryArm();
 
@@ -754,8 +757,9 @@ const Dictionary& dictionaryMips();
 /** Common calling conventions for PowerPC. */
 const Dictionary& dictionaryPowerpc();
 
-/** Common calling conventions for x86. */
+/** Common calling conventions for 32-bit x86. */
 const Dictionary& dictionaryX86();
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Analysis
@@ -925,8 +929,11 @@ public:
      *  those in the specified dictionary. */
     Dictionary match(const Dictionary&) const;
 
-    /** Print information about the analysis results. */
-    void print(std::ostream&) const;
+    /** Print information about the analysis results.
+     *
+     *  The output is a single line of comma-separated values if @p multiLine is true. Otherwise, the top-level commas are
+     *  replaced by linefeeds. */
+    void print(std::ostream&, bool multiLine=false) const;
 
 private:
     // Finish constructing

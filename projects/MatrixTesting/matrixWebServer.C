@@ -4037,7 +4037,7 @@ int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Sawyer::Message::mfacilities.control("none,>=info");
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
 #ifdef ROSE_USE_WT
     // Initialized global state shared by all serving threads.
