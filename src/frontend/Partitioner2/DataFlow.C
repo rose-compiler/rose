@@ -497,9 +497,9 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
     ASSERT_require(vertex != dfCfg.vertices().end());
     if (DfCfgVertex::FAKED_CALL == vertex->value().type()) {
         Function::Ptr callee = vertex->value().callee();
-        bool isStackPtrFixed = false;
         BaseSemantics::RegisterStateGenericPtr genericRegState =
             boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->registerState());
+        BaseSemantics::SValuePtr origStackPtr = ops->readRegister(STACK_POINTER_REG);
 
         BaseSemantics::SValuePtr stackDelta;            // non-null if a stack delta is known for the callee
         if (callee)
@@ -507,7 +507,10 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
 
         // Clobber registers that are modified by the callee. The extra calls to updateWriteProperties is because most
         // RiscOperators implementation won't do that if they don't have a current instruction (which we don't).
-        if (callee && callee->callingConventionAnalysis().hasResults()) {
+        if (callee && callee->callingConventionAnalysis().didConverge()) {
+#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
+            std::cerr <<"ROBB: clobbering output registers according to calling convention analysis\n";
+#endif
             // A previous calling convention analysis knows what registers are clobbered by the call.
             const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
             BOOST_FOREACH (const RegisterDescriptor &reg, ccAnalysis.outputRegisters().listAll(regDict)) {
@@ -515,17 +518,15 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
                 if (genericRegState)
                     genericRegState->insertProperties(reg, BaseSemantics::IO_WRITE);
             }
-            if (ccAnalysis.stackDelta()) {
-                ops->writeRegister(STACK_POINTER_REG,
-                                   ops->add(ops->readRegister(STACK_POINTER_REG),
-                                            ops->number_(STACK_POINTER_REG.get_nbits(), *ccAnalysis.stackDelta())));
-                if (genericRegState)
-                    genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
-                isStackPtrFixed = true;
-            }
+            if (ccAnalysis.stackDelta())
+                stackDelta = ops->number_(STACK_POINTER_REG.get_nbits(), *ccAnalysis.stackDelta());
+
         } else if (defaultCallingConvention_) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
+#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
+            std::cerr <<"ROBB: clobbering output registers according to default calling convention\n";
+#endif
             BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, defaultCallingConvention_->outputParameters()) {
                 if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
                     ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().get_nbits()));
@@ -540,48 +541,37 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
                         genericRegState->updateWriteProperties(reg, BaseSemantics::IO_WRITE);
                 }
             }
-            if (!stackDelta && // don't fix it here if we'll fix it below with more accurate information
-                defaultCallingConvention_->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER &&
-                defaultCallingConvention_->nonParameterStackSize() != 0) {
-                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
-                BaseSemantics::SValuePtr delta =
-                    ops->number_(oldStack->get_width(), defaultCallingConvention_->nonParameterStackSize());
-                if (defaultCallingConvention_->stackDirection() == CallingConvention::GROWS_UP)
-                    delta = ops->negate(delta);
-                BaseSemantics::SValuePtr newStack = ops->add(oldStack, delta);
-                ops->writeRegister(STACK_POINTER_REG, newStack);
-                if (genericRegState)
-                    genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
-                isStackPtrFixed = true;
+
+            // Use the stack delta from the default calling convention only if we don't already know the stack delta from a
+            // stack delta analysis, and only if the default CC is caller-cleanup.
+            if (!stackDelta || !stackDelta->is_number() || stackDelta->get_width() > 64) {
+                if (defaultCallingConvention_->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER) {
+                    stackDelta = ops->number_(origStackPtr->get_width(), defaultCallingConvention_->nonParameterStackSize());
+                    if (defaultCallingConvention_->stackDirection() == CallingConvention::GROWS_UP)
+                        stackDelta = ops->negate(stackDelta);
+                }
             }
+
         } else {
             // We have not performed a calling convention analysis and we don't have a default calling convention definition. A
             // conservative approach would need to set all registers to bottom.  We'll only adjust the stack pointer (below).
+#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
+            std::cerr <<"ROBB: no register clobbering\n";
+#endif
         }
 
-        // Adjust the stack pointer if we haven't already.
-        if (!isStackPtrFixed) {
-            BaseSemantics::SValuePtr newStack, delta;
-            if (callee)
-                delta = callee->stackDelta();
-            if (delta) {
-                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
-                newStack = ops->add(oldStack, delta);
-            } else if (false) { // FIXME[Robb P. Matzke 2014-12-15]: should only apply if caller cleans up arguments
-                // We don't know the callee's delta, so assume that the callee pops only its return address. This is usually
-                // the correct for caller-cleanup ABIs common on Unix/Linux, but not usually correct for callee-cleanup ABIs
-                // common on Microsoft systems.
-                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
-                newStack = ops->add(oldStack, callRetAdjustment_);
-            } else {
-                // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
-                newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
-            }
-            ASSERT_not_null(newStack);
-            ops->writeRegister(STACK_POINTER_REG, newStack);
-            if (genericRegState)
-                genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
+        // Adjust the stack pointer (regardless of whether we also did something to it above)
+        BaseSemantics::SValuePtr newStack;
+        if (stackDelta && stackDelta->is_number() && stackDelta->get_width() <= 64) {
+            newStack = ops->add(origStackPtr, stackDelta);
+        } else {
+            // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
+            newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
         }
+        ASSERT_not_null(newStack);
+        ops->writeRegister(STACK_POINTER_REG, newStack);
+        if (genericRegState)
+            genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
 
     } else if (DfCfgVertex::FUNCRET == vertex->value().type()) {
         // Identity semantics; this vertex just merges all the various return blocks in the function.

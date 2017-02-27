@@ -189,6 +189,9 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
     cc.stackParameterOrder(RIGHT_TO_LEFT);
     cc.stackCleanup(CLEANUP_BY_CALLER);
 
+    // Other inputs
+    cc.appendInputParameter(*regDict->lookup("df"));    // direction flag is always assumed to be valid
+
     // Return values
     cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
     cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_st, x86_st_0));
@@ -245,6 +248,9 @@ Definition::x86_stdcall(const RegisterDictionary *regDict) {
     cc.stackParameterOrder(RIGHT_TO_LEFT);
     cc.stackCleanup(CLEANUP_BY_CALLEE);
 
+    // Other inputs
+    cc.appendInputParameter(*regDict->lookup("df"));    // direction flag is always assumed to be valid
+
     // Return values
     cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
     cc.appendOutputParameter(SP);
@@ -292,6 +298,7 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
     cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
     cc.stackParameterOrder(RIGHT_TO_LEFT);
     cc.stackCleanup(CLEANUP_BY_CALLEE);
+    cc.appendInputParameter(*regDict->lookup("df"));    // direction flag is always assumed to be valid
 
     // Return values
     cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -351,6 +358,9 @@ Definition::x86_64bit_sysv() {
         // The AL register is an input register that stores the number of SSE registers used for variable argument calls. (It
         // is also part of the first return value).
         cc.appendInputParameter(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 8)); // for varargs calls
+
+        // direction flag is always assumed to be initialized and is thus often treated as input
+        cc.appendInputParameter(*regDict->lookup("df"));
 
         // Arguments that don't fit in the input registers are passed on the stack
         cc.stackParameterOrder(RIGHT_TO_LEFT);
@@ -618,6 +628,16 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // into a special CALLRET vertex (which is absent if there are no returns).
     typedef P2::DataFlow::DfCfg DfCfg;
     DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), partitioner.findPlaceholder(function->address()));
+#if 1 // DEBUGGING [Robb P Matzke 2017-02-24]
+    {
+        boost::filesystem::path debugDir = "./rose-debug/BinaryAnalysis/CallingConvention";
+        boost::filesystem::create_directories(debugDir);
+        boost::filesystem::path fileName = debugDir /
+                                           ("F_" + StringUtility::addrToString(function->address()).substr(2) + ".dot");
+        std::ofstream f(fileName.string().c_str());
+        P2::DataFlow::dumpDfCfg(f, dfCfg);
+    }
+#endif
     size_t startVertexId = 0;
     DfCfg::ConstVertexIterator returnVertex = dfCfg.vertices().end();
     BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
@@ -650,6 +670,10 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     StatePtr initialState = xfer.initialState();
     RegisterStateGenericPtr initialRegState = RegisterStateGeneric::promote(initialState->registerState());
     initialRegState->initialize_large();
+    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    rose_addr_t initialStackPointer = 0xcf000000;       // arbitrary
+    initialRegState->writeRegister(SP, cpu_->get_operators()->number_(SP.get_nbits(), initialStackPointer),
+                                   cpu_->get_operators().get());
 
     // Run data flow analysis
     bool converged = true;
@@ -838,7 +862,7 @@ Analysis::match(const Definition &cc) const {
 
     if (cc.wordWidth() != cpu_->stackPointerRegister().get_nbits()) {
         SAWYER_MESG(debug) <<"  mismatch: defn word size (" <<cc.wordWidth() <<") != analysis word size ("
-                           <<cpu_->stackPointerRegister().get_nbits() <<"\n";
+                           <<cpu_->stackPointerRegister().get_nbits() <<")\n";
         return false;
     }
 
