@@ -248,7 +248,10 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
 	@echo "ROSE source tests: tests using EDG 4.9 and GNU version 4.9 backend compiler are disabled (except for tests 1, 7, and 8)."
+# DQ (2/27/2017): Don't test GNU 5.1 and greater using EDG 4.9 (requires EDG 4.12 and later).
+if !ROSE_USING_GCC_VERSION_LATER_5_1
 	@$(MAKE) $(PASSING_TEST_Sources)
+endif
 # Exclude these tests on GNU 4.9 and later compilers).
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
 # If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.

@@ -1001,3 +1001,9 @@ Build a new branch:
    git checkout -b <branch_name-dev>
    cd src/frontend/CxxFrontend/EDG
    git checkout -b <branch_name-dev>
+
+
+Using ssh to access files within emacs:
+SSH in emacs works!  Try this to open a file:
+
+C-x C-f /ssh:your_login@some_machine:/path/to/remote/file RET

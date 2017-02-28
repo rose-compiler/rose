@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-test2014_01.c \
-test2014_02.c \
 test2014_03.c \
-test2014_04.c \
-test2014_05.c \
 test2014_06.c \
 test2014_07.c \
 test2014_08.c \
@@ -34,6 +30,13 @@ test2014_29.c \
 test2014_30.c \
 last.c
 
+if !USING_INTEL_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_01.c \
+   test2014_02.c \
+   test2014_04.c \
+   test2014_05.c 
+endif
 
 TESTCODE_CURRENTLY_FAILING = \
 test2012_03.c \
