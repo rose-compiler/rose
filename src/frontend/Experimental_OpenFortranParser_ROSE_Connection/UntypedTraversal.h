@@ -1,8 +1,6 @@
 #ifndef UNTYPED_TRAVERSAL_H
 #define UNTYPED_TRAVERSAL_H
 
-extern SgSourceFile* OpenFortranParser_globalFilePointer;
-
 //-----------------------------------------------------------------------------------
 // The SgUntyped::UntypedTraversal class is used to traverse SgUntypedNodes and
 // convert them to regular SgNodes.
@@ -16,7 +14,7 @@ typedef SgExpression*      SynthesizedAttribute;
 
 class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>
   {
-    public :
+    public:
 
       virtual InheritedAttribute   evaluateInheritedAttribute   (SgNode* n, InheritedAttribute inheritedAttribute );
       virtual SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* n, InheritedAttribute inheritedAttribute
@@ -28,6 +26,13 @@ class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,S
       static SgUnaryOp*  convert_SgUntypedUnaryOperator (SgUntypedUnaryOperator* untyped_operator, SgExpression* expr);
       static SgBinaryOp* convert_SgUntypedBinaryOperator(SgUntypedBinaryOperator* untyped_operator, SgExpression* lhs, SgExpression* rhs);
 
+      UntypedTraversal(SgSourceFile* sourceFile);
+
+    private:
+
+      SgSourceFile* p_source_file;
+
+      static void initialize_global_scope(SgSourceFile* file);
   };
 
 } // namespace Fortran
