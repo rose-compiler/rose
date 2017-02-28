@@ -3841,8 +3841,13 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // string path_to_table = "/nfs/casc/overture/ROSE/aterm_for_rose_bin/Fortran.tbl";
 
        // Rasmussen (2/22/2017): OFP_BIN_PATH is the path to the Fortran parse table and other
-       // binaries used in transforming an OFP parse tree to a SgUntypedNode Aterm representation.
-          string path_to_table = OFP_BIN_PATH "/Fortran.tbl";
+       // binaries used in transforming an OFP parse tree to an SgUntypedNode ATerm representation.
+#ifndef USE_CMAKE
+          std::string path_to_table = OFP_BIN_PATH;
+#else
+          std::string path_to_table = "";
+#endif
+          path_to_table += "/Fortran.tbl";
 
           experimentalFrontEndCommandLine.push_back(path_to_table);
 
