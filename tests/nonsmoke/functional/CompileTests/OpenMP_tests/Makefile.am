@@ -54,7 +54,6 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	hello-2.c \
 	hello-ordered.c \
 	include_header_only.c \
-	init.c \
 	lastprivate0.c \
 	lastprivate.c \
 	lastprivateOrphaned.c \
@@ -193,6 +192,11 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	task_link2.cpp \
 	task_tree.cpp \
 	referenceType.cpp
+endif
+
+if !USING_INTEL_COMPILER
+C_TESTCODES_REQUIRED_TO_PASS += \
+	init.c 
 endif
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine

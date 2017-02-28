@@ -261,7 +261,7 @@ public:
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse command-line
     P2::Engine engine;
