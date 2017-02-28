@@ -25,10 +25,14 @@ config_vector=()
 append_rmc_record() {
     local key="$1"; shift
     local var="$1"; shift
+    local var2="$1"; shift # used if var is unset
     # additional args override the variable's value if the variable is set
 
     local x=$(eval 'echo "${'$var'+is_set}"')
-    [ -z "$x" ] && return 0
+    if [ -z "$x" -a -n "$var2" ]; then
+	local x=$(eval 'echo "${'$var2'+is_set}"')
+	[ -z "$x" ] && return 0
+    fi
 
     local val
     if [ "$#" -gt 0 ]; then
@@ -36,6 +40,7 @@ append_rmc_record() {
 	val="$(echo "$val" |sed 's/^-*//;s/---*/-/g;s/-*$//')"
     else
 	val=$(eval 'echo "$'$var'"')
+	[ -n "$val" ] || val=$(eval 'echo "$'$var'"')
     fi
     [ "$val" = "system" ] && val=unknown
     [ "$val" = "" ] && val=none
@@ -44,11 +49,11 @@ append_rmc_record() {
 }
 
 if [ "$RMC_RMC_VERSION" != "" ]; then
-    # User is using the ROSE Meta Config system, so look for RMC_* environment variables
+    # Using the ROSE Meta Config (RMC) system version 0 or 1, so look for RMC_* environment variables
     append_rmc_record assertions RMC_ASSERTIONS
     append_rmc_record boost      RMC_BOOST_VERSION
     append_rmc_record build      RMC_BUILD_SYSTEM
-    append_rmc_record compiler   RMC_CXX_VERSION        "$RMC_CXX_VENDOR" "$RMC_CXX_VERSION" "$RMC_CXX_LANGUAGE"
+    append_rmc_record compiler   RMC_CXX_VERSION        ""         "$RMC_CXX_VENDOR" "$RMC_CXX_VERSION" "$RMC_CXX_LANGUAGE"
     append_rmc_record debug      RMC_DEBUG
     append_rmc_record dlib       RMC_DLIB_VERSION
     append_rmc_record doxygen    RMC_DOXYGEN_VERSION
@@ -69,36 +74,38 @@ if [ "$RMC_RMC_VERSION" != "" ]; then
     append_rmc_record yices      RMC_YICES_VERSION
 
 elif [ "$RMC_HASH" != "" -a "$SPOCK_VERSION" != "" ]; then
-    # We're using the Spock variant of RMC
+    # Using RMC >= 2, so look for a combination of package variables and RMC variables. For instance, DLIB_VERSION will
+    # be a version number like "18.17" or an empty string. If it's empty, then RMC_DLIB is probably "none" or "ambivalent"
+    # and we'll use that instead.
     append_rmc_record assertions RMC_ASSERTIONS
     append_rmc_record boost      BOOST_VERSION
     append_rmc_record build      RMC_BUILD
     append_rmc_record debug      RMC_DEBUG
-    append_rmc_record dlib       DLIB_VERSION
-    append_rmc_record doxygen    DOXYGEN_VERSION
-    append_rmc_record dwarf      DWARF_VERSION
+    append_rmc_record dlib       DLIB_VERSION      RMC_DLIB
+    append_rmc_record doxygen    DOXYGEN_VERSION   RMC_DOXYGEN
+    append_rmc_record dwarf      DWARF_VERSION     RMC_DWARF
     append_rmc_record edg        RMC_EDG
     append_rmc_record languages  RMC_LANGUAGES
-    append_rmc_record magic      LIBMAGIC_VERSION
+    append_rmc_record magic      LIBMAGIC_VERSION  RMC_MAGIC
     append_rmc_record optimize   RMC_OPTIMIZE
     append_rmc_record os         RMC_OS_NAME_SHORT
-    append_rmc_record python     PYTHON_VERSION
-    append_rmc_record qt         QT_VERSION
-    append_rmc_record readline   READLINE_VERSION
-    append_rmc_record sqlite     SQLITE_VERSION
+    append_rmc_record python     PYTHON_VERSION    RMC_PYTHON
+    append_rmc_record qt         QT_VERSION        RMC_QT
+    append_rmc_record readline   READLINE_VERSION  RMC_READLINE
+    append_rmc_record sqlite     SQLITE_VERSION    RMC_SQLITE
     append_rmc_record warnings   RMC_WARNINGS
-    append_rmc_record wt         WT_VERSION
-    append_rmc_record yaml       YAMLCPP_VERSION
-    append_rmc_record yices      YICES_VERSION
+    append_rmc_record wt         WT_VERSION        RMC_WT
+    append_rmc_record yaml       YAMLCPP_VERSION   RMC_YAML
+    append_rmc_record yices      YICES_VERSION     RMC_YICES
 
     case "$CXX_VENDOR" in
 	gnu) cxx_vendor=gcc ;;
 	*)   cxx_vendor="$CXX_VENDOR" ;;
     esac
-    append_rmc_record compiler   CXX_VENDOR "$cxx_vendor" "$CXX_VERSION" "$CXX_LANGUAGE"
+    append_rmc_record compiler   CXX_VENDOR        ""             "$cxx_vendor" "$CXX_VERSION" "$CXX_LANGUAGE"
 
     java_version=$(eval "echo \"\$$(echo $JAVA_VENDOR |tr a-z A-Z)_JAVA_VERSION\"")
-    append_rmc_record java       JAVA_VENDOR "$JAVA_VENDOR" "$java_version"
+    append_rmc_record java       JAVA_VENDOR       ""             "${JAVA_VENDOR}-java" "$java_version"
 
 else
     # User is using some other meta config system...

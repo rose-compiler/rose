@@ -349,25 +349,21 @@ BUILTIN(__builtin_ctanh, "XdXd", "Fnc")
 BUILTIN(__builtin_ctanhf, "XfXf", "Fnc")
 BUILTIN(__builtin_ctanhl, "XLdXLd", "Fnc")
 
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
 // FP Comparisons.
-// BUILTIN(__builtin_isgreater     , "i.", "nc")
-// BUILTIN(__builtin_isgreaterequal, "i.", "nc")
-// BUILTIN(__builtin_isless        , "i.", "nc")
-// BUILTIN(__builtin_islessequal   , "i.", "nc")
-// BUILTIN(__builtin_islessgreater , "i.", "nc")
-// BUILTIN(__builtin_isunordered   , "i.", "nc")
+BUILTIN(__builtin_isgreater     , "i.", "nc")
+BUILTIN(__builtin_isgreaterequal, "i.", "nc")
+BUILTIN(__builtin_isless        , "i.", "nc")
+BUILTIN(__builtin_islessequal   , "i.", "nc")
+BUILTIN(__builtin_islessgreater , "i.", "nc")
+BUILTIN(__builtin_isunordered   , "i.", "nc")
 
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
 // Unary FP classification
-// BUILTIN(__builtin_fpclassify, "iiiii.", "nc")
+BUILTIN(__builtin_fpclassify, "iiiii.", "nc")
 
 // DQ (12/16/2016): These must be represented as constexpr only for EDG versions strictly greater than 4.9.
 // BUILTIN(__builtin_isfinite,   "i.", "nc")
 // BUILTIN(__builtin_isinf,      "i.", "nc")
-
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
-// BUILTIN(__builtin_isinf_sign, "i.", "nc")
+BUILTIN(__builtin_isinf_sign, "i.", "nc")
 
 // DQ (12/16/2016): These must be represented as constexpr only for EDG versions strictly greater than 4.9.
 // BUILTIN(__builtin_isnan,      "i.", "nc")
@@ -408,21 +404,15 @@ BUILTIN(__builtin_bswap32, "UiUi", "nc")
 // DQ (12/16/2016): This is defined differently within EDG 4.9 builtins, but required for later versions of EDG where we turn off their builtin function support.
 // BUILTIN(__builtin_bswap64, "ULLiULLi", "nc")
 
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
 // Random GCC builtins
-// BUILTIN(__builtin_constant_p, "i.", "nct")
-// BUILTIN(__builtin_classify_type, "i.", "nct")
+BUILTIN(__builtin_constant_p, "i.", "nct")
+BUILTIN(__builtin_classify_type, "i.", "nct")
 // BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
 // BUILTIN(__builtin___NSStringMakeConstantString, "FC*cC*", "nc")
-
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
-// BUILTIN(__builtin_va_start, "vA.", "n")
-// BUILTIN(__builtin_va_end, "vA", "n")
-// BUILTIN(__builtin_va_copy, "vAA", "n")
-
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
-// BUILTIN(__builtin_stdarg_start, "vA.", "n")
-
+BUILTIN(__builtin_va_start, "vA.", "n")
+BUILTIN(__builtin_va_end, "vA", "n")
+BUILTIN(__builtin_va_copy, "vAA", "n")
+BUILTIN(__builtin_stdarg_start, "vA.", "n")
 BUILTIN(__builtin_bcmp, "iv*v*z", "n")
 BUILTIN(__builtin_bcopy, "vv*v*z", "n")
 BUILTIN(__builtin_bzero, "vv*z", "nF")
@@ -495,10 +485,7 @@ BUILTIN(__builtin___vsprintf_chk, "ic*izcC*a", "FP:3:")
 BUILTIN(__builtin___vprintf_chk, "iicC*a", "FP:1:")
 
 BUILTIN(__builtin_expect, "LiLiLi"   , "nc")
-
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
-// BUILTIN(__builtin_prefetch, "vvC*.", "nc")
-
+BUILTIN(__builtin_prefetch, "vvC*.", "nc")
 BUILTIN(__builtin_trap, "v", "nr")
 BUILTIN(__builtin_unreachable, "v", "nr")
 
@@ -515,118 +502,116 @@ BUILTIN(__builtin_alloca, "v*z"   , "n")
 // FIXME: These assume that char -> i8, short -> i16, int -> i32,
 // long long -> i64.
 
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
-// BUILTIN(__sync_fetch_and_add, "v.", "")
-// BUILTIN(__sync_fetch_and_add_1, "ccD*c.", "n")
-// BUILTIN(__sync_fetch_and_add_2, "ssD*s.", "n")
-// BUILTIN(__sync_fetch_and_add_4, "iiD*i.", "n")
-// BUILTIN(__sync_fetch_and_add_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_fetch_and_add_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_fetch_and_add, "v.", "")
+BUILTIN(__sync_fetch_and_add_1, "ccD*c.", "n")
+BUILTIN(__sync_fetch_and_add_2, "ssD*s.", "n")
+BUILTIN(__sync_fetch_and_add_4, "iiD*i.", "n")
+BUILTIN(__sync_fetch_and_add_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_fetch_and_add_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_fetch_and_sub, "v.", "")
-// BUILTIN(__sync_fetch_and_sub_1, "ccD*c.", "n")
-// BUILTIN(__sync_fetch_and_sub_2, "ssD*s.", "n")
-// BUILTIN(__sync_fetch_and_sub_4, "iiD*i.", "n")
-// BUILTIN(__sync_fetch_and_sub_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_fetch_and_sub_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_fetch_and_sub, "v.", "")
+BUILTIN(__sync_fetch_and_sub_1, "ccD*c.", "n")
+BUILTIN(__sync_fetch_and_sub_2, "ssD*s.", "n")
+BUILTIN(__sync_fetch_and_sub_4, "iiD*i.", "n")
+BUILTIN(__sync_fetch_and_sub_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_fetch_and_sub_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_fetch_and_or, "v.", "")
-// BUILTIN(__sync_fetch_and_or_1, "ccD*c.", "n")
-// BUILTIN(__sync_fetch_and_or_2, "ssD*s.", "n")
-// BUILTIN(__sync_fetch_and_or_4, "iiD*i.", "n")
-// BUILTIN(__sync_fetch_and_or_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_fetch_and_or_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_fetch_and_or, "v.", "")
+BUILTIN(__sync_fetch_and_or_1, "ccD*c.", "n")
+BUILTIN(__sync_fetch_and_or_2, "ssD*s.", "n")
+BUILTIN(__sync_fetch_and_or_4, "iiD*i.", "n")
+BUILTIN(__sync_fetch_and_or_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_fetch_and_or_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_fetch_and_and, "v.", "")
-// BUILTIN(__sync_fetch_and_and_1, "ccD*c.", "n")
-// BUILTIN(__sync_fetch_and_and_2, "ssD*s.", "n")
-// BUILTIN(__sync_fetch_and_and_4, "iiD*i.", "n")
-// BUILTIN(__sync_fetch_and_and_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_fetch_and_and_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_fetch_and_and, "v.", "")
+BUILTIN(__sync_fetch_and_and_1, "ccD*c.", "n")
+BUILTIN(__sync_fetch_and_and_2, "ssD*s.", "n")
+BUILTIN(__sync_fetch_and_and_4, "iiD*i.", "n")
+BUILTIN(__sync_fetch_and_and_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_fetch_and_and_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_fetch_and_xor, "v.", "")
-// BUILTIN(__sync_fetch_and_xor_1, "ccD*c.", "n")
-// BUILTIN(__sync_fetch_and_xor_2, "ssD*s.", "n")
-// BUILTIN(__sync_fetch_and_xor_4, "iiD*i.", "n")
-// BUILTIN(__sync_fetch_and_xor_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_fetch_and_xor_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_fetch_and_xor, "v.", "")
+BUILTIN(__sync_fetch_and_xor_1, "ccD*c.", "n")
+BUILTIN(__sync_fetch_and_xor_2, "ssD*s.", "n")
+BUILTIN(__sync_fetch_and_xor_4, "iiD*i.", "n")
+BUILTIN(__sync_fetch_and_xor_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_fetch_and_xor_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_add_and_fetch, "v.", "")
-// BUILTIN(__sync_add_and_fetch_1, "ccD*c.", "n")
-// BUILTIN(__sync_add_and_fetch_2, "ssD*s.", "n")
-// BUILTIN(__sync_add_and_fetch_4, "iiD*i.", "n")
-// BUILTIN(__sync_add_and_fetch_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_add_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_sub_and_fetch, "v.", "")
-// BUILTIN(__sync_sub_and_fetch_1, "ccD*c.", "n")
-// BUILTIN(__sync_sub_and_fetch_2, "ssD*s.", "n")
-// BUILTIN(__sync_sub_and_fetch_4, "iiD*i.", "n")
-// BUILTIN(__sync_sub_and_fetch_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_sub_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_add_and_fetch, "v.", "")
+BUILTIN(__sync_add_and_fetch_1, "ccD*c.", "n")
+BUILTIN(__sync_add_and_fetch_2, "ssD*s.", "n")
+BUILTIN(__sync_add_and_fetch_4, "iiD*i.", "n")
+BUILTIN(__sync_add_and_fetch_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_add_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_or_and_fetch, "v.", "")
-// BUILTIN(__sync_or_and_fetch_1, "ccD*c.", "n")
-// BUILTIN(__sync_or_and_fetch_2, "ssD*s.", "n")
-// BUILTIN(__sync_or_and_fetch_4, "iiD*i.", "n")
-// BUILTIN(__sync_or_and_fetch_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_or_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_sub_and_fetch, "v.", "")
+BUILTIN(__sync_sub_and_fetch_1, "ccD*c.", "n")
+BUILTIN(__sync_sub_and_fetch_2, "ssD*s.", "n")
+BUILTIN(__sync_sub_and_fetch_4, "iiD*i.", "n")
+BUILTIN(__sync_sub_and_fetch_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_sub_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_and_and_fetch, "v.", "")
-// BUILTIN(__sync_and_and_fetch_1, "ccD*c.", "n")
-// BUILTIN(__sync_and_and_fetch_2, "ssD*s.", "n")
-// BUILTIN(__sync_and_and_fetch_4, "iiD*i.", "n")
-// BUILTIN(__sync_and_and_fetch_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_and_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_or_and_fetch, "v.", "")
+BUILTIN(__sync_or_and_fetch_1, "ccD*c.", "n")
+BUILTIN(__sync_or_and_fetch_2, "ssD*s.", "n")
+BUILTIN(__sync_or_and_fetch_4, "iiD*i.", "n")
+BUILTIN(__sync_or_and_fetch_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_or_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_xor_and_fetch, "v.", "")
-// BUILTIN(__sync_xor_and_fetch_1, "ccD*c.", "n")
-// BUILTIN(__sync_xor_and_fetch_2, "ssD*s.", "n")
-// BUILTIN(__sync_xor_and_fetch_4, "iiD*i.", "n")
-// BUILTIN(__sync_xor_and_fetch_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_xor_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_and_and_fetch, "v.", "")
+BUILTIN(__sync_and_and_fetch_1, "ccD*c.", "n")
+BUILTIN(__sync_and_and_fetch_2, "ssD*s.", "n")
+BUILTIN(__sync_and_and_fetch_4, "iiD*i.", "n")
+BUILTIN(__sync_and_and_fetch_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_and_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_bool_compare_and_swap, "v.", "")
+BUILTIN(__sync_xor_and_fetch, "v.", "")
+BUILTIN(__sync_xor_and_fetch_1, "ccD*c.", "n")
+BUILTIN(__sync_xor_and_fetch_2, "ssD*s.", "n")
+BUILTIN(__sync_xor_and_fetch_4, "iiD*i.", "n")
+BUILTIN(__sync_xor_and_fetch_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_xor_and_fetch_16, "LLLiLLLiD*LLLi.", "n")
+
+BUILTIN(__sync_bool_compare_and_swap, "v.", "")
 // BUILTIN(__sync_bool_compare_and_swap_1, "bcD*cc.", "n")
 // BUILTIN(__sync_bool_compare_and_swap_2, "bsD*ss.", "n")
 // BUILTIN(__sync_bool_compare_and_swap_4, "biD*ii.", "n")
 // BUILTIN(__sync_bool_compare_and_swap_8, "bLLiD*LLiLLi.", "n")
 // BUILTIN(__sync_bool_compare_and_swap_16, "bLLLiD*LLLiLLLi.", "n")
 
-// BUILTIN(__sync_val_compare_and_swap, "v.", "")
-// BUILTIN(__sync_val_compare_and_swap_1, "ccD*cc.", "n")
-// BUILTIN(__sync_val_compare_and_swap_2, "ssD*ss.", "n")
-// BUILTIN(__sync_val_compare_and_swap_4, "iiD*ii.", "n")
-// BUILTIN(__sync_val_compare_and_swap_8, "LLiLLiD*LLiLLi.", "n")
-// BUILTIN(__sync_val_compare_and_swap_16, "LLLiLLLiD*LLLiLLLi.", "n")
+BUILTIN(__sync_val_compare_and_swap, "v.", "")
+BUILTIN(__sync_val_compare_and_swap_1, "ccD*cc.", "n")
+BUILTIN(__sync_val_compare_and_swap_2, "ssD*ss.", "n")
+BUILTIN(__sync_val_compare_and_swap_4, "iiD*ii.", "n")
+BUILTIN(__sync_val_compare_and_swap_8, "LLiLLiD*LLiLLi.", "n")
+BUILTIN(__sync_val_compare_and_swap_16, "LLLiLLLiD*LLLiLLLi.", "n")
 
 // BUILTIN(__sync_lock_test_and_set, "v.", "")
-// BUILTIN(__sync_lock_test_and_set_1, "ccD*c.", "n")
-// BUILTIN(__sync_lock_test_and_set_2, "ssD*s.", "n")
-// BUILTIN(__sync_lock_test_and_set_4, "iiD*i.", "n")
-// BUILTIN(__sync_lock_test_and_set_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_lock_test_and_set_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_lock_test_and_set_1, "ccD*c.", "n")
+BUILTIN(__sync_lock_test_and_set_2, "ssD*s.", "n")
+BUILTIN(__sync_lock_test_and_set_4, "iiD*i.", "n")
+BUILTIN(__sync_lock_test_and_set_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_lock_test_and_set_16, "LLLiLLLiD*LLLi.", "n")
 
-// BUILTIN(__sync_lock_release, "v.", "")
-// BUILTIN(__sync_lock_release_1, "vcD*.", "n")
-// BUILTIN(__sync_lock_release_2, "vsD*.", "n")
-// BUILTIN(__sync_lock_release_4, "viD*.", "n")
-// BUILTIN(__sync_lock_release_8, "vLLiD*.", "n")
-// BUILTIN(__sync_lock_release_16, "vLLLiD*.", "n")
+BUILTIN(__sync_lock_release, "v.", "")
+BUILTIN(__sync_lock_release_1, "vcD*.", "n")
+BUILTIN(__sync_lock_release_2, "vsD*.", "n")
+BUILTIN(__sync_lock_release_4, "viD*.", "n")
+BUILTIN(__sync_lock_release_8, "vLLiD*.", "n")
+BUILTIN(__sync_lock_release_16, "vLLLiD*.", "n")
 
-// BUILTIN(__sync_swap, "v.", "")
-// BUILTIN(__sync_swap_1, "ccD*c.", "n")
-// BUILTIN(__sync_swap_2, "ssD*s.", "n")
-// BUILTIN(__sync_swap_4, "iiD*i.", "n")
-// BUILTIN(__sync_swap_8, "LLiLLiD*LLi.", "n")
-// BUILTIN(__sync_swap_16, "LLLiLLLiD*LLLi.", "n")
+BUILTIN(__sync_swap, "v.", "")
+BUILTIN(__sync_swap_1, "ccD*c.", "n")
+BUILTIN(__sync_swap_2, "ssD*s.", "n")
+BUILTIN(__sync_swap_4, "iiD*i.", "n")
+BUILTIN(__sync_swap_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_swap_16, "LLLiLLLiD*LLLi.", "n")
 
 
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
+
 // Non-overloaded atomic builtins.
-// BUILTIN(__sync_synchronize, "v.", "n")
-
-
+BUILTIN(__sync_synchronize, "v.", "n")
 // LLVM instruction builtin [Clang extension].
 // BUILTIN(__builtin_llvm_memory_barrier,"vbbbbb", "n")
 // GCC does not support these, they are a Clang extension.
@@ -640,10 +625,9 @@ BUILTIN(__builtin_abort, "v", "Fnr")
 BUILTIN(__builtin_index, "c*cC*i", "Fn")
 BUILTIN(__builtin_rindex, "c*cC*i", "Fn")
 
-// DQ (2/21/2017): These contain "..." which is not understood by the C language specific support in Intel icc.
 // Microsoft builtins.
 // BUILTIN(__assume, "vb", "n")
-// BUILTIN(__noop, "v.", "n")
+BUILTIN(__noop, "v.", "n")
 
 // C99 library functions
 // C99 stdlib.h

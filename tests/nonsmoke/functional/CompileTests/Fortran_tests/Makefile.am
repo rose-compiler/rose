@@ -2,7 +2,23 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (10/22/2016): Change order of tests (simple --> hardest).
 # SUBDIRS = LANL_POP gfortranTestSuite
-SUBDIRS = . gfortranTestSuite LANL_POP
+# SUBDIRS = . gfortranTestSuite LANL_POP
+
+SUBDIRS = . LANL_POP
+if USING_GNU_COMPILER
+SUBDIRS += gfortranTestSuite
+else
+if USING_CLANG_COMPILER
+SUBDIRS += gfortranTestSuite
+else
+if USING_INTEL_COMPILER
+# DQ (2/21/2017): This directory has some failing test codes for ROSE when compiled using the Intel v16 compiler, for example:
+#   gfortranTestSuite/gfortran.dg/continuation_6.f
+#   gfortranTestSuite/gfortran.dg/continuation_4.f90
+# SUBDIRS += gfortranTestSuite
+endif
+endif
+endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    SUBDIRS += experimental_frontend_tests

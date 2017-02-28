@@ -99,6 +99,7 @@ DisassemblerX86::init(size_t wordsize)
             REG_IP = *regdict->lookup("eip");
             REG_SP = *regdict->lookup("esp");
             REG_SS = *regdict->lookup("ss");
+            callingConventions(CallingConvention::dictionaryX86());
             break;
         case 8:
             name("amd64");
@@ -108,6 +109,7 @@ DisassemblerX86::init(size_t wordsize)
             REG_IP = *regdict->lookup("rip");
             REG_SP = *regdict->lookup("rsp");
             REG_SS = *regdict->lookup("ss");
+            callingConventions(CallingConvention::dictionaryAmd64());
             break;
         default:
             ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
@@ -121,8 +123,6 @@ DisassemblerX86::init(size_t wordsize)
     set_alignment(1);
     set_sex(ByteOrder::ORDER_LSB);
     ASSERT_not_null(get_registers());
-
-    callingConventions(CallingConvention::dictionaryX86());
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
      * members to reasonable values for debugging. */

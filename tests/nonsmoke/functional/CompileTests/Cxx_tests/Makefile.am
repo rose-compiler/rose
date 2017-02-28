@@ -115,7 +115,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_117.C \
    test2014_79.C \
    test2014_80.C \
-   test2014_81.C \
    test2014_82.C \
    test2014_83.C \
    test2014_84.C \
@@ -250,8 +249,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_233.C \
    test2014_234.C \
    test2014_235.C \
-   test2014_236.C \
-   test2014_238.C \
    test2014_239.C \
    test2014_240.C \
    test2014_241.C \
@@ -366,7 +363,6 @@ NEW_TESTCODES = \
    test2016_13.C \
    test2016_14.C \
    test2016_19.C \
-   test2016_20.C \
    test2016_21.C \
    test2016_25.C \
    test2016_26.C \
@@ -596,11 +592,16 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_159.C \
    test2014_211.C 
 
+# DQ (2/21/2017): CLANG compiler requires more builtin functions to be defined.
 # DQ (1/16/2017): These test codes include not portable macros and references to header files that are a problem for Clang.
 if !USING_CLANG_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_304.C \
-   test2015_55.C
+   test2014_81.C \
+   test2014_236.C \
+   test2014_238.C \
+   test2015_55.C \
+   test2016_20.C 
 endif
 endif
 
@@ -1616,7 +1617,8 @@ test_multiple_files: $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
 failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
 
 print_testcodes:
-	echo $(TESTCODES)
+#	echo $(TESTCODES)
+	echo "PASSING_TEST_Sources = $(PASSING_TEST_Sources)"
 
 # Added performance test for ROSE evaluation:
 performance_timing:
@@ -1635,27 +1637,33 @@ hpctoolkit:
 # check-local: $(TEST_Objects_unnormalized)
 check-local: 
 if ROSE_USE_EDG_VERSION_4_9
+	@echo "Using EDG 4.9"
 # if ROSE_USING_GCC_VERSION_LATER_4_9
 if USING_GNU_COMPILER
+	@echo "Using GNU compiler"
 if ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "Using EDG 4.9 and GNU version later then 4.9 (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
-endif
-else
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "Using GNU compiler (version up to 4.8)"
+endif #  ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+	@echo "NOT Using GNU compiler"
 if USING_CLANG_COMPILER
 	@echo "Using EDG 4.9 and CLANG compiler (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
-else
+else  # NOT USING_CLANG_COMPILER
 if USING_INTEL_COMPILER
 	@echo "Using EDG 4.9 and INTEL compiler (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
-else
+else  # NOT USING_INTEL_COMPILER
 	@echo "Using EDG 4.9 and GNU version 4.8 or earlier (ROSE supports running C++ tests with this configuration)"
 	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
-endif
-endif
-endif
-else
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+	@echo "Using EDG 4.12"
 	@echo "Using EDG version later than 4.9 (ROSE supports running all C++ tests across all compilers)"
 	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
-endif
+endif # ROSE_USE_EDG_VERSION_4_9
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed

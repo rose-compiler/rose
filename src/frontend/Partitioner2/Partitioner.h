@@ -2072,9 +2072,14 @@ public:
     /** Obtain new RiscOperators.
      *
      *  Creates a new instruction semantics infrastructure with a fresh machine state.  The partitioner supports two kinds of
-     *  memory state representations: list-based and map-based (see @ref semanticMemoryParadigm).  Returns a null pointer if
-     *  the architecture does not support semantics. */
+     *  memory state representations: list-based and map-based (see @ref semanticMemoryParadigm). If the memory paradigm is not
+     *  specified then the partitioner's default paradigm is used. Returns a null pointer if the architecture does not support
+     *  semantics.
+     *
+     * @{ */
     BaseSemantics::RiscOperatorsPtr newOperators() const /*final*/;
+    BaseSemantics::RiscOperatorsPtr newOperators(SemanticMemoryParadigm) const /*final*/;
+    /** @} */
 
     /** Obtain a new instruction semantics dispatcher.
      *

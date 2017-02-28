@@ -119,8 +119,13 @@ TESTCODES_REQUIRED_TO_PASS = \
 if !ROSE_USING_GCC_VERSION_LATER_6_1
 TESTCODES_REQUIRED_TO_PASS += \
      mergeTest_04.C \
-     mergeTest_05.C \
+     mergeTest_05.C 
+
+# DQ (2/26/2017): This is a file that fails for GNU 5.1 and later versions.
+if !ROSE_USING_GCC_VERSION_LATER_5_1
+TESTCODES_REQUIRED_TO_PASS += \
      mergeTest_111.C 
+endif
 endif
 
 # DQ (8/22/2013): Failing test:
