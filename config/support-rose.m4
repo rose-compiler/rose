@@ -676,6 +676,9 @@ ROSE_CONFIGURE_SECTION([Backend C/C++ compiler specific references])
 SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
 SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
 
+# echo "In configure.in ... CXX = $CXX : exiting after call to setup backend C and C++ compilers specific references."
+# exit 1
+
 # DQ (1/15/2007): Check if longer internal make check rule is to be used (default is short tests)
 ROSE_SUPPORT_LONG_MAKE_CHECK_RULE
 
