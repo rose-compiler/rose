@@ -109,9 +109,10 @@
    #define __TGMATH_H
 #endif
 
+/* DQ (2/27/2017): Fixed to support GNU 4.6 and later compilers instead of just GNU 4.7 and later compilers. */
 /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
 /* This shuld be a test of the version of EDG, but it is not clear how to do that. */
-#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 7))
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 6))
 #ifndef __INTEL_COMPILER
 #ifndef __clang__
    /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
@@ -201,6 +202,17 @@ void __builtin_arm_clrex(void);
 */
 
 #endif //#ifdef __APPLE__
+
+
+#if defined(__clang__)
+
+/* DQ (2/27/2017): These are required to support Clang 3.5.0 using Boost 1.55. */
+unsigned long long __builtin_ia32_rdpmc(int x);
+unsigned long long __builtin_ia32_rdtsc(void);
+unsigned long long __builtin_ia32_rdtscp(unsigned int *__A);
+
+#endif
+
 
 /* DQ (1/28/2017): Adding support for builtin va args required on at least on GNU 4.8 and 4.9 compilers. 
    A better solution is to exclude tests using this builtin for EDG version 4.12.
