@@ -45,7 +45,8 @@ LLVM_CPPFLAGS="`${LLVM_CONFIG} --cppflags | sed s/-I/-isystem\ /`"
 LLVM_CPPFLAGS+=" -DLLVMVERSION="
 LLVM_CPPFLAGS+="`${LLVM_CONFIG} --version`"
 LLVM_LDFLAGS="`${LLVM_CONFIG} --ldflags` -R${LLVM_LIB_DIR}"
-LLVM_LIBS="`${LLVM_CONFIG} --libs all` -lpthread -ldl -lm -ltinfo"
+LLVM_LIBS="`${LLVM_CONFIG} --libs all`"
+LLVM_LIBS+=" `${LLVM_CONFIG} --system-libs`"
 AC_SUBST(LLVM_CPPFLAGS)
 AC_SUBST(LLVM_LDFLAGS)
 AC_SUBST(LLVM_LIBS)
