@@ -17,7 +17,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::Partitioner2");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::Partitioner2");
     }
 }
 
