@@ -45,7 +45,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute attr)
          printf ("                       SgSourceFile       %p\n", sg_file);
          printf ("                               name       %s\n", sg_file->getFileName().c_str());
 
-         SgUntypedGlobalScope*	ut_globalScope = ut_file->get_scope();
+         SgUntypedGlobalScope* ut_globalScope = ut_file->get_scope();
          printf ("                    ut_global scope       %p\n", ut_globalScope);
 
          initialize_global_scope(sg_file);
