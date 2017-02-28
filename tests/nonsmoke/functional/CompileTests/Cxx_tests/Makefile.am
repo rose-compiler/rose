@@ -1667,8 +1667,11 @@ endif # ROSE_USE_EDG_VERSION_4_9
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
+# DQ (2/27/2017): Adding additional restrictions for EDG 4.9 (fails for Clang and Boost 1.55).
+if !ROSE_USE_EDG_VERSION_4_9
 	@$(MAKE) test_common_configure_test_with_link_part_1.passed
 	@$(MAKE) test_common_configure_test_with_link_part_2.passed
+endif
 #	DQ (9/22/2013): I think this failes on later versions of GNU (e.g. gnu 4.4.5).
 #	@$(MAKE) test_common_configure_test_with_link_part_3
 	@$(MAKE) testTemplateExample

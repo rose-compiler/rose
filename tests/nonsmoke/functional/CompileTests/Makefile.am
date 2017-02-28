@@ -79,7 +79,8 @@ if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
-SUBDIRS += OpenMP_tests FailSafe_tests
+# DQ (2/27/2017): If this is really an unknown compile then don't do any testing (until we understand this case).
+# SUBDIRS += OpenMP_tests FailSafe_tests
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
