@@ -439,17 +439,17 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorMod(AType::ConstIntLattic
 }
 
 AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
-  return a.operatorAdd(a,b);
+  return ConstIntLattice::operatorAdd(a,b);
 }
 AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
-  return a.operatorSub(a,b);
+  return ConstIntLattice::operatorSub(a,b);
 }
 AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
-  return a.operatorMul(a,b);
+  return ConstIntLattice::operatorMul(a,b);
 }
 AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
-  return a.operatorDiv(a,b);
+  return ConstIntLattice::operatorDiv(a,b);
 }
 AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
-  return a.operatorMod(a,b);
+  return ConstIntLattice::operatorMod(a,b);
 }

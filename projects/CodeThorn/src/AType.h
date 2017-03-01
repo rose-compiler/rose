@@ -35,7 +35,7 @@ class ConstIntLattice {
  public:
   friend bool strictWeakOrderingIsSmaller(const ConstIntLattice& c1, const ConstIntLattice& c2);
   friend bool strictWeakOrderingIsEqual(const ConstIntLattice& c1, const ConstIntLattice& c2);
-  enum ValueType { BOT, CONSTINT, PTR, TOP};
+  enum ValueType { BOT, CONSTINT, PTR, PATHEXPR, TOP};
   ConstIntLattice();
   ConstIntLattice(bool val);
   // type conversion
@@ -76,11 +76,11 @@ class ConstIntLattice {
   ConstIntLattice operatorBitwiseXor(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseComplement() const;
 
-  ConstIntLattice operatorAdd(ConstIntLattice& a,ConstIntLattice& b);
-  ConstIntLattice operatorSub(ConstIntLattice& a,ConstIntLattice& b);
-  ConstIntLattice operatorMul(ConstIntLattice& a,ConstIntLattice& b);
-  ConstIntLattice operatorDiv(ConstIntLattice& a,ConstIntLattice& b);
-  ConstIntLattice operatorMod(ConstIntLattice& a,ConstIntLattice& b);
+  static ConstIntLattice operatorAdd(ConstIntLattice& a,ConstIntLattice& b);
+  static ConstIntLattice operatorSub(ConstIntLattice& a,ConstIntLattice& b);
+  static ConstIntLattice operatorMul(ConstIntLattice& a,ConstIntLattice& b);
+  static ConstIntLattice operatorDiv(ConstIntLattice& a,ConstIntLattice& b);
+  static ConstIntLattice operatorMod(ConstIntLattice& a,ConstIntLattice& b);
 
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
