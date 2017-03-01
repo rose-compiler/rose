@@ -806,7 +806,13 @@ extern __host__ cudaError_t cudaThreadSynchronize(void);
 cudaError_t cudaMallocManaged(void **devPtr, size_t size, unsigned int flags=0);
 cudaError_t cudaDeviceSynchronize();
 
-/* DQ (2/28/2017): Added builtin function to support CUDA code (this declaration is required 
+#if defined(__cplusplus)
+}
+#endif /* __cplusplus */
+
+/* DQ (3/1/2017): Moved this to be outside of the extern "C" declarations above (required to 
+   support possible multiple overloaded declarations of __builtin_bswap32).
+   DQ (2/28/2017): Added builtin function to support CUDA code (this declaration is required 
    to compile cu test file test_2011_13.cu on gcc-4.8-c++11 ubuntu1404 platform).
  */
 
@@ -819,6 +825,3 @@ int __builtin_bswap32 (int x);
 #endif
 
 
-#if defined(__cplusplus)
-}
-#endif /* __cplusplus */
