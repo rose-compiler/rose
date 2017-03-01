@@ -91,7 +91,7 @@ namespace rose {
  *      static bool initialized = false;
  *      if (!initialized) {
  *          initialized = true;
- *          Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::BinaryLoader");
+ *          Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::BinaryLoader");
  *      }
  *  }
  * @endcode
@@ -129,7 +129,7 @@ namespace rose {
  * @code
  *  int main(int argc, char *argv[]) {
  *      ROSE_INITIALIZE;
- *      mlog = rose::Diagnostics::initAndRegister(mlog, "name-of-my-tool");
+ *      mlog = rose::Diagnostics::initAndRegister(&mlog, "name-of-my-tool");
  * @endcode
  *
  *  If you want to globally adjust which levels of diagnostics are output by default (later modified by the command-line) you
@@ -304,8 +304,23 @@ bool isInitialized();
 /** Initialize and register a logging facility.
  *
  *  Initializes the specified facility by giving it a name and pointing it to the same place as the other ROSE diagnostic
- *  streams. Then register the facility with ROSE's global list of facilities so it can be controlled from the command-line. */
-void initAndRegister(Facility &mlog, const std::string &name);
+ *  streams. Then register the facility with ROSE's global list of facilities so it can be controlled from the command-line.
+ *  Registering a facility does not copy it--it only saves a reference to it. Therefore, either facilties should be statically
+ *  declared or they should be de-registered before they go out of scope. */
+void initAndRegister(Facility *mlog, const std::string &name);
+
+// [Robb P Matzke 2017-02-16]: deprecated: The version that takes a pointer first argument is a better design because it gives
+// the user a better clue that we're saving a reference rather than a copy. Note: ROSE_DEPRECATED not defined here.
+void initAndRegister(Facility &mlog, const std::string &name) SAWYER_DEPRECATED("use a pointer for the first argument");
+
+/** Deregister a facility.
+ *
+ *  Do this before your facility goes out of scope.  In general, you don't need to deregister a Facility object from a
+ *  Facilities collection when the Facility object is destroyed because Sawyer will notice the destruction
+ *  automatically. However, the recognition is heuristic based on magic numbers manipulated by constructors and destructors and
+ *  could potentially fail.  The general safe, rule is that if a registered Facility object is destroyed other than at program
+ *  exit, you should explicitly deregister it before it's destroyed. */
+void deregister(Facility *mlog);
 
 /** Intermediate class for printing to C++ ostreams with a printf-like API.
  *

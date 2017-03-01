@@ -1,6 +1,3 @@
-// CER (12/15/2016):  This is temporary and should be removed before committing to ROSE
-#define ROSE_USE_ROSE_ATERM_SUPPORT 1
-
 #include "sage3basic.h"
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
@@ -17,9 +14,7 @@
 
 #include <aterm2.h>
 #include "traverse_SgUntypedNodes.hpp"
-
-// DQ (9/10/2014): I think this is declared in the other Fortran support (both of which exist).
-// SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
+#include "UntypedTraversal.h"
 
 using namespace std;
 using namespace rose;
@@ -28,13 +23,15 @@ using namespace rose;
 
 #define USE_EXECUTABLE_FROM_PATH 1
 
-SgUntypedFile*
+int
 experimental_openFortranParser_main(int argc, char **argv)
    {
   // Make system call to call the parser and build an ATERM file (put into the build tree).
 
      int i, err;
      string parse_table;
+     SgUntypedFile* untypedFile = NULL;
+
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): Put the call to the new SDF Open Fortran Parser here... argc = %d \n",argc);
@@ -43,7 +40,7 @@ experimental_openFortranParser_main(int argc, char **argv)
      if (argc < 4)
         {
           printf("usage: fortran_parser --parseTable parse_table_path filename(s)\n");
-          return NULL;
+          return 1;
         }
 
   // DQ (1/22/2016): We want to assume that the stratego sglri executable is in the user's path, which is better than using a hard coded path.
@@ -102,7 +99,7 @@ experimental_openFortranParser_main(int argc, char **argv)
      if (parse_table.empty() == true)
         {
           fprintf(stderr, "fortran_parser: no parse table provided, use option --parseTable\n");
-          return NULL;
+          return 1;
         }
 
 #if DEBUG_ROSE_EXPERIMENTAL
@@ -188,7 +185,7 @@ experimental_openFortranParser_main(int argc, char **argv)
      if (err)
         {
           fprintf(stderr, "fortran_parser: error parsing file %s\n", argv[i]);
-          return NULL;
+          return 1;
         }
 
   // At this point we have a valid aterm file in the working (current) directory.
@@ -216,7 +213,7 @@ experimental_openFortranParser_main(int argc, char **argv)
           if (file == NULL)
              {
                fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to open file %s\n\n", filenameWithoutPath.c_str());
-               return NULL;
+               return 1;
              }
 
           ATerm SgUntypedFile_term = ATreadFromTextFile(file);
@@ -226,25 +223,36 @@ experimental_openFortranParser_main(int argc, char **argv)
           printf ("In experimental_openFortranParser_main(): Calling traverse_SgUntypedFile() \n");
 #endif
 
-          SgUntypedFile* untypedFile = NULL;
-
           if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue || untypedFile == NULL)
              {
                fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to parse file %s\n\n", filenameWithoutPath.c_str());
-               return NULL;
+               return 1;
              }
           else
              {
 #if DEBUG_ROSE_EXPERIMENTAL
-               printf ("In experimental_openFortranParser_main(): false branch taken: traverse_SgUntypedFile() != ATtrue || untypedFile == NULL: untypedFile = %p \n",untypedFile);
+               printf ("In experimental_openFortranParser_main(): successfully traversed ATerms untypedFile = %p \n",untypedFile);
 #endif
-               return untypedFile;
              }
         }
 
 #if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): exiting normally without using OFP round trip support\n");
+     printf ("In experimental_openFortranParser_main(): successfully traversed ATerms, beginning traversal \n");
+     printf ("--------------------------------------------------------------\n\n");
 #endif
 
-     return NULL;
+//----------------------------------------------------------------------
+//  Traverse the SgUntypedFile object and convert to regular sage nodes
+//----------------------------------------------------------------------
+
+  // Build the traversal object
+     Fortran::Untyped::UntypedTraversal traversal(OpenFortranParser_globalFilePointer);
+     Fortran::Untyped::InheritedAttribute scope = NULL;
+
+  // Traverse the untyped tree and convert to sage nodes
+     traversal.traverse(untypedFile,scope);
+
+     delete untypedFile;
+
+     return 0;
   }
