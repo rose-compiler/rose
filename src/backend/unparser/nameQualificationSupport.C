@@ -68,7 +68,7 @@ void NameQualificationTraversal::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::NameQualificationTraversal");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::NameQualificationTraversal");
         }
    }
 
@@ -497,7 +497,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
      ROSE_ASSERT(currentScope      != NULL);
      ROSE_ASSERT(positionStatement != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      printf ("In evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
           declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 #endif
@@ -540,7 +540,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                   {
                     SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
                     ROSE_ASSERT(templateInstantiationDeclaration != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                  // printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
                     printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %" PRIuPTR " \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
 #endif
@@ -553,7 +553,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                   {
                     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
                     ROSE_ASSERT(templateInstantiationFunctionDeclaration != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                     printf ("$$$$$$$$$ --- templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
 #endif
                  // Evaluate all template arguments.
@@ -564,7 +564,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
                     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                     printf ("$$$$$$$$$ --- templateInstantiationMemberFunctionDeclaration = %p \n",templateInstantiationMemberFunctionDeclaration);
 #endif
                     ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration != NULL);
@@ -578,7 +578,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
 
                default:
                   {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                     printf ("This IR node does not contain template arguments to process: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
                   }
@@ -2452,7 +2452,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
   // Used for debugging...
      int counter = 0;
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      printf ("\n\n*********************************************************************************************************************\n");
      printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
      printf ("*********************************************************************************************************************\n");
@@ -2470,9 +2470,11 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
           SgTemplateArgument* templateArgument = *i;
           ROSE_ASSERT(templateArgument != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
           printf ("*** Processing template argument #%d templateArgument = %p \n",counter,templateArgument);
        // SgName testNameInMap = templateArgument->get_qualified_name_prefix();
+#endif
+#if 0
           printf ("===== Before being finished with evaluation of templateArgument name qualification: testNameInMap = %s \n",templateArgument->unparseToString().c_str());
 #endif
           SgType* type = templateArgument->get_type();
@@ -2606,7 +2608,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
           counter++;
         }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      printf ("*****************************************************************************************************************************\n");
      printf ("Leaving NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
      printf ("*****************************************************************************************************************************\n\n");
@@ -3007,7 +3009,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 
           string typeNameString = globalUnparseToString(type,unparseInfoPointer);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
           printf ("++++++++++++++++ typeNameString (globalUnparseToString()) = %s \n",typeNameString.c_str());
 #endif
 
@@ -3403,6 +3405,35 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      printf ("****************************************************** \n");
      printf ("Inside of NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
      printf ("****************************************************** \n");
+#endif
+
+#if 0
+  // DQ (2/13/2017): This will report progress through the global scope.
+     if (SgProject::get_verbose() >= 0)
+       {
+         SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(n);
+         SgDeclarationStatement* definingDeclarationStatement = NULL;
+         if (declarationStatement != NULL)
+            {
+#if 0
+              printf ("Name qualification progress: test: declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+#endif
+              definingDeclarationStatement = declarationStatement->get_definingDeclaration();
+            }
+         if (declarationStatement != NULL && declarationStatement == definingDeclarationStatement)
+            {
+           // This is the defining declaration
+              printf ("Name qualification progress (inheritedAttribute): declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+              string filename = declarationStatement->get_file_info()->get_filename();
+              int linenumber  = declarationStatement->get_file_info()->get_line();
+              printf ("--- filename = %s line = %d \n",filename.c_str(),linenumber);
+            }
+         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(n);
+         if (typedefDeclaration != NULL)
+            {
+              printf ("Name qualification progress: typedefDeclaration = %p = %s name = %s \n",typedefDeclaration,typedefDeclaration->class_name().c_str(),typedefDeclaration->get_name().str());
+            }
+       }
 #endif
 
   // DQ (5/24/2013): Allow the current scope to be tracked from the traversal of the AST
@@ -4680,10 +4711,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
 
 #if 0
+       // DQ (2/15/2017): Note that this output will be the way to identify the start of a failing infinite loop 
+       // for tests/nonsmoke/functional/CompileTests/RoseExample_tests/testRoseHeaders_11.C.
           printf ("Calling traverseType on SgTypedefDeclaration = %p name = %s \n",typedefDeclaration,typedefDeclaration->get_name().str());
 #endif
        // DQ (6/3/2011): Traverse the type to set any possible template arguments (or other subtypes?) that require name qualification.
           traverseType(baseType,typedefDeclaration,currentScope,typedefDeclaration);
+#if 0
+          printf ("DONE: Calling traverseType on SgTypedefDeclaration = %p name = %s \n",typedefDeclaration,typedefDeclaration->get_name().str());
+#endif
         }
 
   // Handle references in SgUsingDirectiveStatement...
@@ -5939,6 +5975,35 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
             // do nothing
              }
         }
+#endif
+
+#if 0
+  // DQ (2/13/2017): This will report progress through the global scope.
+     if (SgProject::get_verbose() >= 0)
+       {
+         SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(n);
+         SgDeclarationStatement* definingDeclarationStatement = NULL;
+         if (declarationStatement != NULL)
+            {
+#if 0
+              printf ("Name qualification progress (synthesized attribute): test: declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+#endif
+              definingDeclarationStatement = declarationStatement->get_definingDeclaration();
+            }
+         if (declarationStatement != NULL && declarationStatement == definingDeclarationStatement)
+            {
+           // This is the defining declaration
+              printf ("Name qualification progress (synthesized attribute): declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+              string filename = declarationStatement->get_file_info()->get_filename();
+              int linenumber  = declarationStatement->get_file_info()->get_line();
+              printf ("--- filename = %s line = %d \n",filename.c_str(),linenumber);
+            }
+         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(n);
+         if (typedefDeclaration != NULL)
+            {
+              printf ("Name qualification progress (synthesized attribute): typedefDeclaration = %p = %s name = %s \n",typedefDeclaration,typedefDeclaration->class_name().c_str(),typedefDeclaration->get_name().str());
+            }
+       }
 #endif
 
      return returnAttribute;
@@ -7910,7 +7975,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                                         ROSE_ASSERT(templateParameter != NULL);
 
                                         string template_parameter_name = globalUnparseToString(templateParameter,unparseInfoPointer);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 1
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                                         printf ("In NameQualificationTraversal::setNameQualificationSupport(): templateParameter = %p template_parameter_name (globalUnparseToString()) = %s \n",templateParameter,template_parameter_name.c_str());
 #endif
                                         template_name += "/* Is this a pointer? */";
