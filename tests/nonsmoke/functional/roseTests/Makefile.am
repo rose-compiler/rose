@@ -4,6 +4,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # are enabled in ROSE (including binary analysis).
 SUBDIRS =
 
+
+if ROSE_USE_EDG_VERSION_4_9
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == true"
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
 # Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors 
 # in compiling the C++ code represented by some more complex C++ test codes using ROSE).  Interestingly, the
@@ -52,6 +57,14 @@ endif
 endif
 endif
 endif
+
+else  # NOT USING_GNU_COMPILER
+# DQ (2/19/2017): Skipping testing with other non-GNU compilers for now.
+#	@echo "USING_GNU_COMPILER == false"
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+endif # ROSE_USE_EDG_VERSION_4_9
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPTests

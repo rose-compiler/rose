@@ -41,7 +41,7 @@ nonsmoke_getDataSharingAttribute_c_output_verify = $(addsuffix .output, ${nonsmo
 
 # similar to the previous one
 $(nonsmoke_getDataSharingAttribute_c_output): getDataSharingAttribute
-	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:%.output=%) > $@
+	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:%.output=%)
 
 # the diff files .output.diff
 nonsmoke_getDataSharingAttribute_c_output_diff = $(addsuffix .diff, ${nonsmoke_getDataSharingAttribute_c_output_verify})
@@ -62,8 +62,7 @@ generateOutput: $(nonsmoke_getDataSharingAttribute_c_output)
 getDataSharingAttribute_diff_check: $(nonsmoke_getDataSharingAttribute_c_output_diff)
 
 #  generate the diff files
-# commenting out the test for now to debug failures on different gcc versions 
-#check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff)
+check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff)
 
 
 clean-local:

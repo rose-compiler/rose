@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
+#include <BinaryDemangler.h>
 #include <BinaryString.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/Modules.h>
@@ -32,6 +33,34 @@ canonicalFunctionName(const std::string &name) {
         return function + "@" + library;
     }
     return name;
+}
+
+void
+demangleFunctionNames(const Partitioner &p) {
+    // The demangler is most efficient if we give it all the names at once.
+    std::vector<std::string> mangledNames;
+    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+        if (!f->name().empty() && f->name() == f->demangledName())
+            mangledNames.push_back(f->name());
+    }
+
+    // Demangle everything that possible to demangle.  An exception probably means that c++filt is not available or doesn't
+    // work.
+    Demangler demangler;
+    try {
+        demangler.fillCache(mangledNames);
+    } catch (const std::runtime_error &e) {
+        mlog[WARN] <<"name demangler failed: " <<e.what() <<"\n";
+        return;
+    }
+
+    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+        if (!f->name().empty() && f->name() == f->demangledName()) { // same condition as above
+            std::string demangled = demangler.demangle(f->name());
+            if (demangled != f->name())
+                f->demangledName(demangled);
+        }
+    }
 }
 
 bool

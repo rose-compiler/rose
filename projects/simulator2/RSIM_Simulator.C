@@ -187,7 +187,7 @@ RSIM_Simulator::ctor()
     static bool classInitialized = false;
     if (!classInitialized) {
         ROSE_INITIALIZE;
-        rose::Diagnostics::initAndRegister(mlog, "RSIM");
+        rose::Diagnostics::initAndRegister(&mlog, "RSIM");
         classInitialized = true;
     }
     

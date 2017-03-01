@@ -174,6 +174,7 @@ Base::juxtaposeColumns(const std::vector<std::string> &parts, const std::vector<
 
 Settings::Settings() {
     function.showingReasons = true;
+    function.showingDemangled = true;
     function.cg.showing = true;
     function.stackDelta.showing = false;                // very slow for some reason
     function.stackDelta.concrete = true;
@@ -186,7 +187,7 @@ Settings::Settings() {
     bblock.cfg.showingSharing = true;
 
     insn.address.showing = true;
-    insn.address.fieldWidth = 10;
+    insn.address.fieldWidth = 11;                       // "0x" + 8 hex digits + ":"
     insn.bytes.showing = true;
     insn.bytes.perLine = 8;
     insn.bytes.fieldWidth = 25;
@@ -212,6 +213,7 @@ Settings
 Settings::minimal() {
     Settings s = full();
     s.function.showingReasons = false;
+    s.function.showingDemangled = false;
     s.function.cg.showing = false;
     s.function.stackDelta.showing = false;
     s.function.callconv.showing = false;
@@ -248,6 +250,9 @@ commandLineSwitches(Settings &settings) {
 
     insertBooleanSwitch(sg, "function-reasons", settings.function.showingReasons,
                         "Show the list of reasons why a function was created.");
+
+    insertBooleanSwitch(sg, "demangle-names", settings.function.showingDemangled,
+                        "Show demangled names in preference to mangled names when a function has both.");
 
     insertBooleanSwitch(sg, "function-cg", settings.function.cg.showing,
                         "Show the function call graph. That is, for each function show the functions that call the said "
@@ -449,8 +454,17 @@ Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function,
     if (nextUnparser()) {
         nextUnparser()->emitFunctionPrologue(out, function, state);
     } else {
-        out <<std::string(120, ';') <<"\n"
-            <<";;; " <<function->printableName() <<"\n";
+        out <<std::string(120, ';') <<"\n";
+        if (settings().function.showingDemangled) {
+            out <<";;; " <<function->printableName() <<"\n";
+            if (function->demangledName() != function->name())
+                out <<";;; mangled name is \"" <<StringUtility::cEscape(function->name()) <<"\"\n";
+        } else {
+            out <<";;; function " <<StringUtility::addrToString(function->address());
+            if (!function->name().empty())
+                out <<" \"" <<StringUtility::cEscape(function->name()) <<"\"";
+            out <<"\n";
+        }
         state.frontUnparser().emitFunctionComment(out, function, state);
         if (settings().function.showingReasons)
             state.frontUnparser().emitFunctionReasons(out, function, state);
@@ -656,10 +670,22 @@ Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &
         const CallingConvention::Analysis &analyzer = function->callingConventionAnalysis();
         if (analyzer.hasResults()) {
             if (analyzer.didConverge()) {
+                // Calling convention analysis
                 std::ostringstream ss;
-                ss <<analyzer;
-                out <<";;; calling convention:\n";
+                analyzer.print(ss, true /*multi-line*/);
+                state.frontUnparser().emitCommentBlock(out, "calling convention analysis:", state);
                 state.frontUnparser().emitCommentBlock(out, ss.str(), state, ";;;   ");
+
+                // Calling convention dictionary matches
+                CallingConvention::Dictionary matches = state.partitioner().functionCallingConventionDefinitions(function);
+                std::string s = "calling convention definitions:";
+                if (!matches.empty()) {
+                    BOOST_FOREACH (const CallingConvention::Definition &ccdef, matches)
+                        s += " " + ccdef.name();
+                } else {
+                    s += " unknown";
+                }
+                state.frontUnparser().emitCommentBlock(out, s, state);
             } else {
                 out <<";;; calling convention analysis did not converge\n";
             }
@@ -714,6 +740,18 @@ Base::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
             state.frontUnparser().emitBasicBlockSharing(out, bb, state);
         if (settings().bblock.cfg.showingPredecessors)
             state.frontUnparser().emitBasicBlockPredecessors(out, bb, state);
+
+        // Comment warning about block not being the function entry point.
+        if (state.currentFunction() && bb->address() == *state.currentFunction()->basicBlockAddresses().begin() &&
+            bb->address() != state.currentFunction()->address()) {
+            out <<"\t;; this is not the function entry point; entry point is ";
+            if (settings().insn.address.showing) {
+                out <<StringUtility::addrToString(state.currentFunction()->address()) <<"\n";
+            } else {
+                out <<state.basicBlockLabels().getOrElse(state.currentFunction()->address(),
+                                                         StringUtility::addrToString(state.currentFunction()->address())) <<"\n";
+            }
+        }
     }
 }
 

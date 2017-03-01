@@ -55,11 +55,16 @@ namespace CodeThorn {
   class Analyzer {
     friend class Visualizer;
     friend class VariableValueMonitor;
+
   public:
-    
     Analyzer();
     ~Analyzer();
-    
+
+  protected:
+    static Sawyer::Message::Facility logger;
+
+  public:
+    static void initDiagnostics();
     void initAstNodeInfo(SgNode* node);
     bool isInExplicitStateMode();
     bool isActiveGlobalTopify();
@@ -285,8 +290,6 @@ namespace CodeThorn {
 
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-
-    static Sawyer::Message::Facility logger;
 
     // only used in LTL-driven mode
     void setStartEState(const EState* estate);

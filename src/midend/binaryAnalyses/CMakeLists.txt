@@ -5,6 +5,7 @@ add_library(midend_binary OBJECT
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
+  BinaryDemangler.C
   BinaryDominance.C
   BinaryFeasiblePath.C
   BinaryFunctionCall.C
@@ -76,6 +77,7 @@ install(
     BinaryCallingConvention.h
     BinaryControlFlow.h
     BinaryDataFlow.h
+    BinaryDemangler.h
     BinaryDominance.h
     BinaryFeasiblePath.h
     BinaryFunctionCall.h

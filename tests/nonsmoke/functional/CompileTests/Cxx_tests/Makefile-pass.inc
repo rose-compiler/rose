@@ -777,21 +777,189 @@ test2005_104.C \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION) \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS)
 
+
+# Orgainize files lists:
+EDG_49_CLANG_PROBLEM_FILES = \
+   test2006_02.C 
+
+EDG_49_GNU_6_1_PROBLEM_FILES = \
+ test2005_42.C \
+ test2004_130.C \
+ test2004_143.C \
+ test2004_149.C \
+ test2005_161.C 
+
+EDG_412_GNU_6_1_PROBLEM_FILES = \
+ inputBug317.C \
+ inputBug327.C \
+ test2004_35.C \
+ test2004_77.C \
+ test2004_85.C \
+ test2004_120.C \
+ test2004_127.C \
+ test2004_129.C \
+ test2005_34.C \
+ test2005_35.C \
+ test2005_28.C \
+ test2005_39.C \
+ test2005_45.C \
+ test2005_82.C \
+ test2005_93.C \
+ test2005_98.C \
+ test2005_102.C \
+ test2005_103.C \
+ test2005_128.C \
+ test2005_129.C \
+ test2005_130.C \
+ test2005_131.C \
+ test2005_132.C \
+ test2005_133.C \ 
+ test2005_142.C \
+ test2005_181.C \
+ test2006_20.C \
+ test2006_79.C \
+ test2006_84.C \
+ test2006_92.C \
+ test2006_124.C \
+ test2006_141.C \
+ test2007_141.C \
+ test2009_40.C \
+ test2009_41.C \
+ test2010_24.C \
+ test2011_06.C \
+ test2011_141.C \
+ test2011_142.C 
+
+# DQ (2/19/2017): NEW VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
+# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
+# the compiler vendor and GNU compiler version).
+if ROSE_USE_EDG_VERSION_4_9
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_49_CLANG_PROBLEM_FILES)
+# Exclude these tests on GNU 4.9 and later compilers).
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
+
+endif # ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+#	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+#	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+#	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+#	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+# Using EDG 4.12 or later (run all tests independent of the compiler).
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+
+if USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+# Exclude these tests on GNU 4.9 and later compilers).
+if ROSE_USING_GCC_VERSION_LATER_6_1
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_49_CLANG_PROBLEM_FILES)
+else # NOT ROSE_USING_GCC_VERSION_LATER_6_1
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
+endif # ROSE_USING_GCC_VERSION_LATER_6_1
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
+endif # ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+#	@echo "USING_CLANG_COMPILER == true"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES)
+else # NOT USING_CLANG_COMPILER
+#	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+#	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+#	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+
+endif # ROSE_USE_EDG_VERSION_4_9
+
+
+
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS = 
+
 # DQ (4/17/2016): This test code is a problem for Clang.
 if !USING_CLANG_COMPILER
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
    test2006_02.C 
 endif
 
 # DQ (1/19/2017): This test code fails for GNU 6.1 in the unparseToString_tests directory.
-if !ROSE_USING_GCC_VERSION_LATER_6_1
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+# if !ROSE_USING_GCC_VERSION_LATER_6_1
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+#  test2005_42.C 
+# endif
+
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = 
+
+# DQ (2/18/2017): New logic to control use of specific tests debendent on EDG and Compiler used.
+if ROSE_USE_EDG_VERSION_4_9
+if ROSE_USING_GCC_VERSION_LATER_6_1
+else
+
+if USING_INTEL_COMPILER
+else
+
+if USING_CLANG_COMPILER
+else
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
  test2005_42.C 
+
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION += \
+ test2004_130.C \
+ test2004_143.C \
+ test2004_149.C \
+ test2005_161.C 
 endif
 
-# DQ (1/19/2017): This test code fails for GNU 6.1 in the staticCFG_tests directory.
+endif
+endif
+
+else
+# Case of not EDG 4.9 (EDG 4.12)
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+ test2005_42.C 
+
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION += \
+ test2004_130.C \
+ test2004_143.C \
+ test2004_149.C \
+ test2005_161.C 
+
 if !ROSE_USING_GCC_VERSION_LATER_6_1
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+# DQ (1/19/2017): These test codes fails for GNU 6.1 in the staticCFG_tests directory.
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
  inputBug317.C \
  inputBug327.C \
  test2004_35.C \
@@ -833,8 +1001,11 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
  test2011_142.C 
 endif
 
+endif
+
+
 # DQ (9/17/2011): Failing name qualification...fix after fixing original expression tree AST consistancy.
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = \
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION += \
  test2005_32.C \
  test2007_05.C \
  test2009_37.C \
@@ -843,29 +1014,30 @@ FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = \
  test2011_66.C \
  test2011_89.C 
 
+# DQ (2/18/2017): Move this to the unified logic above.
 # DQ (1/19/2017): This test code fails for GNU 6.1 in the staticCFG_tests directory.
-if !ROSE_USING_GCC_VERSION_LATER_6_1
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION += \
- test2004_130.C \
- test2004_143.C \
- test2004_149.C \
- test2005_161.C 
-endif
+# if !ROSE_USING_GCC_VERSION_LATER_6_1
+# FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION += \
+#  test2004_130.C \
+#  test2004_143.C \
+#  test2004_149.C \
+#  test2005_161.C 
+# endif
 
 
 # DQ (9/17/2011): Failing tests for constant folding AST consitancy support.
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_ORIGINAL_EXPRESSION_TREE_ELIMINATION = \
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_ORIGINAL_EXPRESSION_TREE_ELIMINATION = \
 test2006_112.C \
 test2010_25.C 
 
 
 # DQ (9/24/2011): Failing astFileIO test as a result of making replacing constant folded values with the original expression trees.
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS = \
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS = \
  test2006_125.C 
 
 # DQ (1/19/2017): This test code fails for GNU 6.1 in the staticCFG_tests directory.
 if !ROSE_USING_GCC_VERSION_LATER_6_1
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS += \
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS += \
  test2011_121.C 
 endif
 

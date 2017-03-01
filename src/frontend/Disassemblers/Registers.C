@@ -70,7 +70,7 @@ RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDiction
     ss <<prefix <<rdesc.get_major() <<"." <<rdesc.get_minor();
     if (show_offset>0 || (show_offset<0 && rdesc.get_offset()!=0))
         ss <<offset_prefix <<rdesc.get_offset() <<offset_suffix;
-    if (show_size)
+    if (show_size>0 || (show_size<0 && rdesc.get_offset()!=0))
         ss <<size_prefix <<rdesc.get_nbits() <<size_suffix;
     ss <<suffix;
     return ss.str();

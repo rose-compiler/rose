@@ -14,6 +14,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryCallingConvention.C					\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
+    BinaryDemangler.C						\
     BinaryDominance.C						\
     BinaryFeasiblePath.C					\
     BinaryFunctionCall.C					\
@@ -83,6 +84,7 @@ pkginclude_HEADERS =					\
     BinaryCallingConvention.h				\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
+    BinaryDemangler.h					\
     BinaryDominance.h					\
     BinaryFeasiblePath.h				\
     BinaryFunctionCall.h				\
