@@ -8,6 +8,9 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 DEPENDENCIES = $(REQUIRED_LIBS)
 LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+
+# DQ (2/28/2017): NOTE: bug125 is executed and takes a very long time (about 15 minutes; we should maybe look into this).
+
 # most test translators should not be installed (noinst)
 # The bug numbers come from ROSE's SciDAC bug trackers
 noinst_PROGRAMS = \

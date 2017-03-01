@@ -761,7 +761,8 @@ else  # NOT USING_GNU_COMPILER
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 #	@echo "USING_CLANG_COMPILER == true"
-LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES)
+# LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES)
+# LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += 
 else # NOT USING_CLANG_COMPILER
 #	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER
@@ -1117,9 +1118,9 @@ check-local:
 	@echo "Tests for AST Copy."
 #	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_TEST_Sources)
-	@echo "***************************************************************************************************"
+	@echo "***********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/copyAST_tests: make check rule complete (terminated normally) ******"
-	@echo "***************************************************************************************************"
+	@echo "***********************************************************************************************************************"
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.C_copy_graph_old_nodes

@@ -71,10 +71,14 @@ if ROSE_USE_EDG_VERSION_4_9
 else # NOT ROSE_USE_EDG_VERSION_4_9
 # DQ (2/10/2017): Run tests using GNU 5.1 and later using only EDG 4.12
 	@echo "NOT USE_EDG_VERSION_4_9"
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
 	@echo "Run tests using GNU 4.12 and EDG 5.1 and later compilers and CLANG and INTEL compilers (run all C++11 tests)"
 # DQ (2/22/2017): Break this up to first test the non C++11 support using the latest compilers and EDG 4.12.
 #	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=yes $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
 	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=no $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
+else  # NOT USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == false"
 if USING_CLANG_COMPILER
 # This will demonstrate at least two bugs in ROSE.
 	@echo "Run tests for CLANG compilers."
@@ -89,6 +93,7 @@ else # NOT USING_INTEL_COMPILER
 	exit 1
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
 endif # ROSE_USE_EDG_VERSION_4_9
 endif # USING_GNU_COMPILER
 	@echo "DONE: Running the conditional-check-local rule."
