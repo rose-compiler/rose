@@ -109,9 +109,10 @@
    #define __TGMATH_H
 #endif
 
+/* DQ (2/28/2017): Fixed to support GNU 4.6 and later compilers instead of just GNU 4.7 and later compilers. */
 /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
 /* This shuld be a test of the version of EDG, but it is not clear how to do that. */
-#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 7))
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 6))
 #ifndef __INTEL_COMPILER
 #ifndef __clang__
    /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */

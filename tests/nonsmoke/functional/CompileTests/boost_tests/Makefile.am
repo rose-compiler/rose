@@ -131,7 +131,25 @@ endif # USING_GNU_COMPILER
 else  # NOT ROSE_USE_EDG_VERSION_4_9
 # Using EDG 4.12 or later (run all tests independent of the compiler).
 	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+#	@$(MAKE) $(TEST_TARGETS)
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
 	@$(MAKE) $(TEST_TARGETS)
+else
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif
 endif # ROSE_USE_EDG_VERSION_4_9
 	@echo "*********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/boost_tests: make check rule complete (terminated normally) ******"
