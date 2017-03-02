@@ -1791,7 +1791,9 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
         {
           if (untypedNode->get_startOfConstruct() == NULL)
              {
-               printf ("Warning: untypedNode->get_startOfConstruct() == NULL (untypedNode = %p = %s) \n",untypedNode,untypedNode->class_name().c_str());
+            // Rasmussen (2/27/2017): Turning off warning temporarily as OFP/Stratego does not yet provide
+            //                        location information.
+            // printf ("Warning: untypedNode->get_startOfConstruct() == NULL (untypedNode = %p = %s) \n",untypedNode,untypedNode->class_name().c_str());
              }
         }
    }

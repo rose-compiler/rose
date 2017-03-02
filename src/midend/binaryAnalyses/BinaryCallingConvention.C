@@ -26,7 +26,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::CallingConvention");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::CallingConvention");
     }
 }
 
@@ -63,6 +63,61 @@ dictionaryPowerpc() {
 }
 
 const Dictionary&
+dictionaryAmd64() {
+    static Dictionary dict;
+    if (dict.empty()) {
+        //--------
+        // 64-bit
+        //--------
+
+        // Listed first because it's the most common
+        dict.push_back(Definition::x86_64bit_sysv());
+
+#if 0 // [Robb P. Matzke 2015-08-21]: don't bother distinguishing because alignment is not used yet.
+        // cdecl: gcc < 4.5 uses 4-byte stack alignment
+        cc = Definition::x86_64bit_cdecl();
+        cc.comment(cc.comment() + " 4-byte alignment");
+        cc.stackAlignment(4);
+        dict.push_back(cc);
+
+        // cdecl: gcc >= 4.5 uses 16-byte stack alignment
+        cc = Definition::x86_64bit_cdecl();
+        cc.comment(cc.comment() + " 16-byte alignment");
+        cc.stackAlignment(16);
+        dict.push_back(cc);
+#else
+        dict.push_back(Definition::x86_64bit_cdecl());
+#endif
+        dict.push_back(Definition::x86_64bit_stdcall());
+
+        //--------
+        // 32-bit
+        //--------
+
+#if 0 // [Robb P. Matzke 2015-08-21]: don't bother distinguishing because alignment is not used yet.
+        // cdecl: gcc < 4.5 uses 4-byte stack alignment
+        Definition cc = Definition::x86_32bit_cdecl();
+        cc.comment(cc.comment() + " 4-byte alignment");
+        cc.stackAlignment(4);
+        dict.push_back(cc);
+
+        // cdecl: gcc >= 4.5 uses 16-byte stack alignment
+        cc = Definition::x86_32bit_cdecl();
+        cc.comment(cc.comment() + " 16-byte alignment");
+        cc.stackAlignment(16);
+        dict.push_back(cc);
+#else
+        dict.push_back(Definition::x86_32bit_cdecl());
+#endif
+
+        // other conventions
+        dict.push_back(Definition::x86_32bit_stdcall());
+        dict.push_back(Definition::x86_32bit_fastcall());
+    }
+    return dict;
+}
+
+const Dictionary&
 dictionaryX86() {
     static Dictionary dict;
     if (dict.empty()) {
@@ -89,33 +144,10 @@ dictionaryX86() {
         // other conventions
         dict.push_back(Definition::x86_32bit_stdcall());
         dict.push_back(Definition::x86_32bit_fastcall());
-
-        //--------
-        // 64-bit
-        //--------
-
-#if 0 // [Robb P. Matzke 2015-08-21]: don't bother distinguishing because alignment is not used yet.
-        // cdecl: gcc < 4.5 uses 4-byte stack alignment
-        cc = Definition::x86_64bit_cdecl();
-        cc.comment(cc.comment() + " 4-byte alignment");
-        cc.stackAlignment(4);
-        dict.push_back(cc);
-
-        // cdecl: gcc >= 4.5 uses 16-byte stack alignment
-        cc = Definition::x86_64bit_cdecl();
-        cc.comment(cc.comment() + " 16-byte alignment");
-        cc.stackAlignment(16);
-        dict.push_back(cc);
-#else
-        dict.push_back(Definition::x86_64bit_cdecl());
-#endif
-
-        // other conventions
-        dict.push_back(Definition::x86_64bit_stdcall());
-        dict.push_back(Definition::x86_64bit_sysv());
     }
     return dict;
 }
+    
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Definition
@@ -156,6 +188,9 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
     // All parameters are passed on the stack.
     cc.stackParameterOrder(RIGHT_TO_LEFT);
     cc.stackCleanup(CLEANUP_BY_CALLER);
+
+    // Other inputs
+    cc.appendInputParameter(*regDict->lookup("df"));    // direction flag is always assumed to be valid
 
     // Return values
     cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -213,6 +248,9 @@ Definition::x86_stdcall(const RegisterDictionary *regDict) {
     cc.stackParameterOrder(RIGHT_TO_LEFT);
     cc.stackCleanup(CLEANUP_BY_CALLEE);
 
+    // Other inputs
+    cc.appendInputParameter(*regDict->lookup("df"));    // direction flag is always assumed to be valid
+
     // Return values
     cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
     cc.appendOutputParameter(SP);
@@ -260,6 +298,7 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
     cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
     cc.stackParameterOrder(RIGHT_TO_LEFT);
     cc.stackCleanup(CLEANUP_BY_CALLEE);
+    cc.appendInputParameter(*regDict->lookup("df"));    // direction flag is always assumed to be valid
 
     // Return values
     cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -295,7 +334,10 @@ Definition::x86_64bit_sysv() {
         cc.stackDirection(GROWS_DOWN);
         cc.nonParameterStackSize(cc.wordWidth() >> 3);  // return address
 
+        //---- Function arguments ----
+
         // The first six integer or pointer arguments are passed in registers RDI, RSI, RDX, RCX, R8, and R9.
+        // These registers are also not preserved across the call.
         cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_di));
         cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_si));
         cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
@@ -317,7 +359,15 @@ Definition::x86_64bit_sysv() {
         // is also part of the first return value).
         cc.appendInputParameter(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 8)); // for varargs calls
 
-        // Return values
+        // direction flag is always assumed to be initialized and is thus often treated as input
+        cc.appendInputParameter(*regDict->lookup("df"));
+
+        // Arguments that don't fit in the input registers are passed on the stack
+        cc.stackParameterOrder(RIGHT_TO_LEFT);
+        cc.stackCleanup(CLEANUP_BY_CALLER);
+
+        //---- Return values ----
+
         cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
         cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx)); // second integer return
         cc.appendOutputParameter(SP);                   // final value is usually 8 greater than initial value
@@ -326,10 +376,34 @@ Definition::x86_64bit_sysv() {
         //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 0)); // dynamic st(0), overlaps mm<i>
         //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 1)); // dynamic st(1), overlaps mm<i+1>
 
-        // Scratch registers (i.e., modified, not callee-saved, not return registers)
+        //---- Scratch registers (modified, not callee-saved, not return values) ----
+
+        // Registers that hold arguments are also scratch registers (as long as they're not return values)
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_di));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_si));
+        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx)); this is a return reg
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r8));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r9));
+
+        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 0)); this is a return reg
+        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 1)); this is a return reg
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 2));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 3));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 4));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 5));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 6));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 7));
+
+        // These registers are almost always modified by a function
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
+        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
+
         cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r10)); //static chain ptr
         cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r11));
 
+        // Floating point registers are pretty much all scratch.
         cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 8));
         cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 9));
         cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 10));
@@ -465,7 +539,7 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
     }
     
     if (nonParameterStackSize_ > 0)
-        out <<", " <<(nonParameterStackSize_ >> 3) <<"-byte return";
+        out <<", " <<nonParameterStackSize_ <<"-byte return";
 
     if (stackParameterOrder_ != ORDER_UNSPECIFIED || nonParameterStackSize_ > 0) {
         switch (stackDirection_) {
@@ -546,7 +620,7 @@ Analysis::clearNonResults() {
 
 void
 Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
-    mlog[DEBUG] <<"analyzeFunction(" <<function->printableName() <<")\n";
+    mlog[DEBUG] <<"analyzing " <<function->printableName() <<"\n";
     clearResults();
 
     // Build the CFG used by the dataflow: dfCfg.  The dfCfg includes only those vertices that are reachable from the entry
@@ -554,6 +628,16 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // into a special CALLRET vertex (which is absent if there are no returns).
     typedef P2::DataFlow::DfCfg DfCfg;
     DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), partitioner.findPlaceholder(function->address()));
+#if 1 // DEBUGGING [Robb P Matzke 2017-02-24]
+    {
+        boost::filesystem::path debugDir = "./rose-debug/BinaryAnalysis/CallingConvention";
+        boost::filesystem::create_directories(debugDir);
+        boost::filesystem::path fileName = debugDir /
+                                           ("F_" + StringUtility::addrToString(function->address()).substr(2) + ".dot");
+        std::ofstream f(fileName.string().c_str());
+        P2::DataFlow::dumpDfCfg(f, dfCfg);
+    }
+#endif
     size_t startVertexId = 0;
     DfCfg::ConstVertexIterator returnVertex = dfCfg.vertices().end();
     BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
@@ -586,6 +670,10 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     StatePtr initialState = xfer.initialState();
     RegisterStateGenericPtr initialRegState = RegisterStateGeneric::promote(initialState->registerState());
     initialRegState->initialize_large();
+    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    rose_addr_t initialStackPointer = 0xcf000000;       // arbitrary
+    initialRegState->writeRegister(SP, cpu_->get_operators()->number_(SP.get_nbits(), initialStackPointer),
+                                   cpu_->get_operators().get());
 
     // Run data flow analysis
     bool converged = true;
@@ -629,6 +717,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     updateStackDelta(initialState, finalState);
     hasResults_ = true;
     didConverge_ = converged;
+
+    SAWYER_MESG(mlog[DEBUG]) <<"  analysis results for " <<function->printableName() <<": " <<*this <<"\n";
 }
 
 void
@@ -707,7 +797,7 @@ Analysis::updateStackDelta(const StatePtr &initialState, const StatePtr &finalSt
 }
 
 void
-Analysis::print(std::ostream &out) const {
+Analysis::print(std::ostream &out, bool multiLine) const {
     RegisterNames regName(regDict_);
     std::string separator;
 
@@ -722,7 +812,7 @@ Analysis::print(std::ostream &out) const {
                 out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
         }
         out <<" }";
-        separator = ", ";
+        separator = multiLine ? "\n" : ", ";
     }
 
     if (!outputRegisters_.isEmpty() || !outputStackParameters_.empty()) {
@@ -736,7 +826,7 @@ Analysis::print(std::ostream &out) const {
                 out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
         }
         out <<" }";
-        separator = ", ";
+        separator = multiLine ? "\n" : ", ";
     }
 
     if (!restoredRegisters_.isEmpty()) {
@@ -744,12 +834,12 @@ Analysis::print(std::ostream &out) const {
         BOOST_FOREACH (const RegisterDescriptor &reg, restoredRegisters_.listAll(regDict_))
             out <<" " <<regName(reg);
         out <<" }";
-        separator = ", ";
+        separator = multiLine ? "\n" : ", ";
     }
 
     if (stackDelta_) {
         out <<separator <<"stackDelta=" <<(*stackDelta_>=0?"+":"") <<*stackDelta_;
-        separator = ", ";
+        separator = multiLine ? "\n" : ", ";
     }
     
     if (separator.empty())
@@ -759,10 +849,22 @@ Analysis::print(std::ostream &out) const {
 bool
 Analysis::match(const Definition &cc) const {
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    if (!hasResults_)
+
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"matching calling convention definition to analysis\n"
+                       <<"  definition: " <<cc <<"\n"
+                       <<"  analysis results: " <<*this <<"\n";
+
+    if (!hasResults_) {
+        SAWYER_MESG(debug) <<"  mismatch: no analysis results\n";
         return false;
-    if (cc.wordWidth() != cpu_->stackPointerRegister().get_nbits())
+    }
+
+    if (cc.wordWidth() != cpu_->stackPointerRegister().get_nbits()) {
+        SAWYER_MESG(debug) <<"  mismatch: defn word size (" <<cc.wordWidth() <<") != analysis word size ("
+                           <<cpu_->stackPointerRegister().get_nbits() <<")\n";
         return false;
+    }
 
     // Gather up definition's input registers. We always add EIP (or similar) because the analysis will have read it to obtain
     // the function's first instruction before ever writing to it.  Similarly, we add ESP (or similar) because pushing,
@@ -786,14 +888,19 @@ Analysis::match(const Definition &cc) const {
         int64_t normalizedStackDelta = *stackDelta_ * normalization; // in bytes
 
         // All callees must pop the non-parameter area (e.g., return address) of the stack.
-        if (normalizedStackDelta < 0 || (uint64_t)normalizedStackDelta < cc.nonParameterStackSize())
+        if (normalizedStackDelta < 0 || (uint64_t)normalizedStackDelta < cc.nonParameterStackSize()) {
+            SAWYER_MESG(debug) <<"  mismatch: callee did not pop " <<cc.nonParameterStackSize() <<"-byte"
+                               <<" non-parameter area from stack\n";
             return false;
+        }
         normalizedStackDelta -= cc.nonParameterStackSize();
 
         // The callee must not pop stack parameters if the caller cleans them up.
-        if (cc.stackCleanup() == CLEANUP_BY_CALLER && normalizedStackDelta != 0)
+        if (cc.stackCleanup() == CLEANUP_BY_CALLER && normalizedStackDelta != 0) {
+            SAWYER_MESG(debug) <<"  mismatch: callee popped stack parameters but definition is caller-cleanup\n";
             return false;
-
+        }
+        
         // For callee cleanup, the callee must pop all the stack variables. It may pop more than what it used (i.e., it must
         // pop even unused arguments).
         if (cc.stackCleanup() == CLEANUP_BY_CALLEE) {
@@ -802,40 +909,87 @@ Analysis::match(const Definition &cc) const {
                 normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
             BOOST_FOREACH (const StackVariable &var, outputStackParameters_)
                 normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
-            if (normalizedStackDelta < normalizedEnd)
+            if (normalizedStackDelta < normalizedEnd) {
+                SAWYER_MESG(debug) <<"  mismatch: callee failed to pop callee-cleanup stack parameters\n";
                 return false;
+            }
         }
     }
     
     // All analysis output registers must be a definition's output or scratch register.
-    if (!(outputRegisters_ - ccOutputRegisters).isEmpty())
+    if (!(outputRegisters_ - ccOutputRegisters).isEmpty()) {
+        if (debug) {
+            debug <<"  mismatch: actual outputs are not defined outputs or scratch registers: ";
+            RegisterParts parts = outputRegisters_ - ccOutputRegisters;
+            RegisterNames regName(registerDictionary());
+            BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
+                debug <<" " <<regName(reg);
+            debug <<"\n";
+        }
         return false;
+    }
 
     // All analysis input registers must be a definition's input or "this" register.
-    if (!(inputRegisters_ - ccInputRegisters).isEmpty())
+    if (!(inputRegisters_ - ccInputRegisters).isEmpty()) {
+        if (debug) {
+            debug <<"  mismatch: actual inputs are not defined inputs or \"this\" register: ";
+            RegisterParts parts = inputRegisters_ - ccInputRegisters;
+            RegisterNames regName(registerDictionary());
+            BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
+                debug <<" " <<regName(reg);
+            debug <<"\n";
+        }
         return false;
-
+    }
+    
     // All analysis restored registers must be a definition's callee-saved register.
-    if (!(restoredRegisters_ - cc.calleeSavedRegisterParts()).isEmpty())
+    if (!(restoredRegisters_ - cc.calleeSavedRegisterParts()).isEmpty()) {
+        if (debug) {
+            debug <<"  mismatch: restored registers that are not defined as callee-saved:";
+            RegisterParts parts = restoredRegisters_ - cc.calleeSavedRegisterParts();
+            RegisterNames regName(registerDictionary());
+            BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
+                debug <<" " <<regName(reg);
+            debug <<"\n";
+        }
         return false;
-
+    }
+    
     // If we modified registers we were not allowed to have modified then we're not this calling convention.
-    if (!(outputRegisters_ & ccOutputRegisters).isEmpty())
+    if (!(outputRegisters_ & ccOutputRegisters).isEmpty()) {
+        if (debug) {
+            debug <<"  mismatch: actual output register is not defined as output:";
+            RegisterParts parts = outputRegisters_ & ccOutputRegisters;
+            RegisterNames regName(registerDictionary());
+            BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
+                debug <<" " <<regName(reg);
+            debug <<"\n";
+        }
         return false;
-
+    }
+    
     // If the definition has an object pointer ("this" parameter) then it should not be an anlysis output or scratch register,
     // but must be an analysis input register.
     if (cc.thisParameter().type() == ParameterLocation::REGISTER) {
-        if (ccOutputRegisters.existsAny(cc.thisParameter().reg()))
+        if (ccOutputRegisters.existsAny(cc.thisParameter().reg())) {
+            SAWYER_MESG(debug) <<"  mismatch: actual output defined as \"this\" register: "
+                               <<RegisterNames(registerDictionary())(cc.thisParameter().reg()) <<"\n";
             return false;
-        if (!ccInputRegisters.existsAll(cc.thisParameter().reg()))
+        }
+        if (!ccInputRegisters.existsAll(cc.thisParameter().reg())) {
+            SAWYER_MESG(debug) <<"  mismatch: actual input does not include \"this\" register: "
+                               <<RegisterNames(registerDictionary())(cc.thisParameter().reg()) <<"\n";
             return false;
+        }
     }
 
     // If the analysis has stack inputs or outputs then the definition must have a valid stack parameter direction.
-    if ((!inputStackParameters().empty() || !outputStackParameters().empty()) && cc.stackParameterOrder() == ORDER_UNSPECIFIED)
+    if ((!inputStackParameters().empty() || !outputStackParameters().empty()) && cc.stackParameterOrder() == ORDER_UNSPECIFIED) {
+        SAWYER_MESG(debug) <<"  mismatch: stack parameters detected but not allowed by definition\n";
         return false;
+    }
 
+    SAWYER_MESG(debug) <<"  analysis matches definition\n";
     return true;
 }
 
