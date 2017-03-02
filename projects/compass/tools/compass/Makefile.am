@@ -46,14 +46,24 @@ if USING_GNU_COMPILER
 
 if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_6_1
-	@$(MAKE) testNewChecker
+# DQ (3/2/2017): This makefile rule will modify the source tree and the CHECKER_LIST file which is a 
+# problem for development because the modification is done to the source tree and the new directory
+# will not be a part of the git repository, and which the work is commited and tested the modified
+# CHECKER_LIST file will reference a checker "blankTestChecker" that does not exist.  This rule
+# should be modified to only make changes to the build tree.
+#	@$(MAKE) testNewChecker
 	@echo "***********************"
 	@echo "*** Testing compass ***"
 	@echo "***********************"
 	@$(MAKE) test
 else
 if !ROSE_USING_GCC_VERSION_LATER_4_8
-	@$(MAKE) testNewChecker
+# DQ (3/2/2017): This makefile rule will modify the source tree and the CHECKER_LIST file which is a 
+# problem for development because the modification is done to the source tree and the new directory
+# will not be a part of the git repository, and which the work is commited and tested the modified
+# CHECKER_LIST file will reference a checker "blankTestChecker" that does not exist.  This rule
+# should be modified to only make changes to the build tree.
+#	@$(MAKE) testNewChecker
 	@echo "***********************"
 	@echo "*** Testing compass ***"
 	@echo "***********************"
