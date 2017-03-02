@@ -73,10 +73,16 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute attr)
          SgScopeStatement* topOfStack = SageBuilder::topScopeStack();
          ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
 
-         // We should test if this is in the function type table, but do this later
+      // We should test if this is in the function type table, but do this later
          SgFunctionType* type = new SgFunctionType(SgTypeVoid::createType(), false);
 
          SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName, type, NULL);
+
+      // Set the end statement name if it exists
+         if (ut_program->get_end_statement()->get_statement_name().empty() != true)
+            {
+               programDeclaration->set_named_in_end_statement(true);
+            }
 
       // This is the defining declaration and there is no non-defining declaration!
          programDeclaration->set_definingDeclaration(programDeclaration);
@@ -151,9 +157,6 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute attr)
         ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() != programDeclaration);
         ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() == NULL);
 
-
-//----------------------------- end statement (sort of)
-
 //        if (programDeclaration->get_program_statement_explicit() == false)
            {
            // The function declaration should be forced to match the "end" keyword.
@@ -161,11 +164,6 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute attr)
 //FIXME-no this      programDeclaration->get_startOfConstruct()->set_filenameString(p_source_file->getFileName());
 //FIXME              programDeclaration->get_endOfConstruct()->set_filenameString(p_source_file->getFileName());
            }
-
-//        if (end_statement_name != NULL)
-        {
-            programDeclaration->set_named_in_end_statement(true);
-        }
 
         printf("--- finished buiding program %s\n", programDeclaration->get_name().str());
 
