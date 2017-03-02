@@ -64,7 +64,6 @@ test2004_04.C \
 test2004_05.C \
 test2004_13.C \
 test2004_14.C \
-test2004_19.C \
 test2004_23.C \
 test2004_28.C \
 test2004_29.C \
@@ -101,11 +100,9 @@ test2005_95.C \
 test2005_100.C \
 test2005_111.C \
 test2005_116.C \
-test2005_125.C \
 test2005_157.C \
 test2005_159.C \
 test2005_164.C \
-test2005_165.C \
 test2005_169.C \
 test2005_170.C \
 test2005_176.C \
@@ -137,7 +134,6 @@ test2006_75.C \
 test2006_76.C \
 test2006_82.C \
 test2006_83.C \
-test2006_88.C \
 test2006_91.C \
 test2006_93.C \
 test2006_94.C \
@@ -150,7 +146,6 @@ test2006_106.C \
 test2006_107.C \
 test2006_108.C \
 test2006_109.C \
-test2006_111.C \
 test2006_113.C \
 test2006_116.C \
 test2006_137.C \
@@ -179,7 +174,64 @@ test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
 test_wchars.C \
-X.C
+X.C 
+
+if ROSE_USE_EDG_VERSION_4_9
+
+TESTCODES_REQUIRED_TO_PASS += \
+   test2004_19.C \
+   test2005_125.C \
+   test2006_111.C 
+
+if USING_GNU_COMPILER
+if ROSE_USING_GCC_VERSION_LATER_6_1
+TESTCODES_REQUIRED_TO_PASS += \
+   test2005_165.C \
+   test2006_88.C 
+else
+if !ROSE_USING_GCC_VERSION_LATER_4_8
+TESTCODES_REQUIRED_TO_PASS += \
+   test2005_165.C \
+   test2006_88.C 
+else
+# GNU Compiler version numbers 4.8 and and greater and strictly less than 6.1
+endif
+endif
+endif
+
+else
+
+if USING_GNU_COMPILER
+if ROSE_USING_GCC_VERSION_LATER_6_1
+TESTCODES_REQUIRED_TO_PASS += \
+   test2004_19.C \
+   test2005_125.C \
+   test2005_165.C \
+   test2006_88.C \
+   test2006_111.C 
+else
+if !ROSE_USING_GCC_VERSION_LATER_4_8
+TESTCODES_REQUIRED_TO_PASS += \
+   test2004_19.C \
+   test2005_125.C \
+   test2005_165.C \
+   test2006_88.C \
+   test2006_111.C 
+else
+# GNU Compiler version numbers 4.8 and and greater and strictly less than 6.1
+endif
+endif
+endif
+
+endif
+
+# DQ (3/1/2017): These are failing tests for newer versions of GNU compiler (e.g. GNU 4.8), but work fine on the GNU 6.1 compiler.
+FAILING_TESTS = \
+   test2004_19.C \
+   test2005_125.C \
+   test2005_165.C \
+   test2006_88.C \
+   test2006_111.C 
 
 else
 
@@ -210,7 +262,16 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (3/1/2017): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}

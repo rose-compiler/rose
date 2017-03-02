@@ -34,6 +34,15 @@ TEST_RUN_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:C_only \
                  -I. -Ialt-mpi-headers/include -I$(srcdir)/testCodes \
                  --mpi-api $(srcdir)/MPI.api
 
+# DQ (3/1/2017): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
+
 test: libMPIAbstraction.la testMPIAbstraction$(EXEEXT) \
 	    $(srcdir)/testCodes/is.c \
 	    $(srcdir)/testCodes/npbparams.h \
@@ -41,7 +50,7 @@ test: libMPIAbstraction.la testMPIAbstraction$(EXEEXT) \
 	@echo "============================================================"
 	@echo "Trying to recognize MPI abstractions in 'is.c'..."
 	@echo "============================================================"
-	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) -c $(srcdir)/testCodes/is.c
+	$(VALGRIND) ./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) -c $(srcdir)/testCodes/is.c
 	@echo "============================================================"
 	@echo "Compare to a grep-based search (functions only)..."
 	@echo "============================================================"

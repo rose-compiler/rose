@@ -18,11 +18,20 @@ compassMain_LDADD = -lCompassCheckers $(ROSE_LIBS) $(compass_support_bdir)/libCo
 compassMain_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassCheckers.la 
 
 
+# DQ (3/1/2017): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
+
 test: compassMain compass_parameters $(compass_test_dir)/exampleTest_1.C 
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C
 
 testCmdLineMashup: compassMain compass_parameters $(compass_test_dir)/exampleTest_1.C $(srcdir)/NOTES
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -rose:skip_unparser -rose:skipfinalCompileStep $(srcdir)/NOTES $(compass_test_dir)/exampleTest_1.C
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain -rose:skip_unparser -rose:skipfinalCompileStep $(srcdir)/NOTES $(compass_test_dir)/exampleTest_1.C
 
 docs:
 	cd doc; $(MAKE) docs
@@ -33,11 +42,28 @@ check-local:
 	@echo "*****************************************************************************"
 # DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)
 if !OS_VENDOR_DEBIAN
+if USING_GNU_COMPILER
+
+if ROSE_USE_EDG_VERSION_4_9
+if ROSE_USING_GCC_VERSION_LATER_6_1
 	@$(MAKE) testNewChecker
 	@echo "***********************"
 	@echo "*** Testing compass ***"
 	@echo "***********************"
 	@$(MAKE) test
+else
+if !ROSE_USING_GCC_VERSION_LATER_4_8
+	@$(MAKE) testNewChecker
+	@echo "***********************"
+	@echo "*** Testing compass ***"
+	@echo "***********************"
+	@$(MAKE) test
+else
+# GNU Compiler version numbers 4.8 and and greater and strictly less than 6.1
+endif
+endif
+endif
+endif
 endif
 	@echo "*****************************************************************************"
 	@echo "*** ROSE/projects/compass/tools/compass: make check rule complete (terminated normally) ***"
@@ -59,18 +85,18 @@ CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_makefile.inc compass_paramete
 
 # Test Compass using a small test file
 testRose: compassMain compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(AM_CPPFLAGS) $(srcdir)/tests/exampleTest_2.C
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain -I$(top_builddir) $(AM_CPPFLAGS) $(srcdir)/tests/exampleTest_2.C
 
 # Test Compass using a large file within ROSE
 testCxx_Grammar: compassMain compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(AM_CPPFLAGS) $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain -I$(top_builddir) $(AM_CPPFLAGS) $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 
 testAllInputsTogether: compassMain compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain $(COMPASS_CHECKER_TESTS)
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain $(COMPASS_CHECKER_TESTS)
 
 # Flymake Support in ROSE
 check-syntax: compassMain compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
 #       @$(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:excludeFile .code -rose:excludeFile .macro -rose:includeFile $(CHK_SOURCES) $(CHK_SOURCES)
 #       $(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
 
@@ -87,11 +113,11 @@ testCompass:
 
 # This runs compass on the compass binary, small because this is dynamically linked
 demo_small: test
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain .libs/compassMain
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain .libs/compassMain
 
 # Linux binary selected from Linux
 demo_linux: test
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain $(top_srcdir)/projects/BinQ/linux-ls
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain $(top_srcdir)/projects/BinQ/linux-ls
 
 #demo_bufferOverflow:
 #	./compassMain $(top_srcdir)/projects/BinQ/buffer2.bin
@@ -99,11 +125,11 @@ demo_linux: test
 # Note that gzip.c appears to take over ten minutes in the Defuse Analysis (something is wrong here).
 demo_compassGUI_source:
 #	./gui/compassMainGui $(top_srcdir)/developersScratchSpace/Dan/C_tests/gzip.c
-	./gui/compassMainGui $(compass_test_dir)/exampleTest_1.C
+	$(VALGRIND) ./gui/compassMainGui $(compass_test_dir)/exampleTest_1.C
 
 demo_compassGUI_binary:
-	./gui/compassMainGui $(top_srcdir)/projects/BinQ/buffer2.bin
+	$(VALGRIND) ./gui/compassMainGui $(top_srcdir)/projects/BinQ/buffer2.bin
 
 demo_compassGUI_compass_binary:
-	./gui/compassMainGui .libs/compassMain
+	$(VALGRIND) ./gui/compassMainGui .libs/compassMain
 

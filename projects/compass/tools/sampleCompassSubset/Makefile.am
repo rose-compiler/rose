@@ -21,8 +21,17 @@ sampleCompassSubset_LDADD = -lSampleCompassSubsetCheckers $(ROSE_LIBS) $(compass
 
 sampleCompassSubset_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libSampleCompassSubsetCheckers.la
 
+# DQ (3/1/2017): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
+
 test: sampleCompassSubset compass_parameters $(compass_test_dir)/exampleTest_1.C
-	env COMPASS_PARAMETERS=./compass_parameters ./sampleCompassSubset -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C 
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./sampleCompassSubset -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C 
 
 docs:
 	@echo "Write your documentation rule here"

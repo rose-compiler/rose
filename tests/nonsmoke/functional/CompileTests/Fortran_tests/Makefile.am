@@ -418,6 +418,10 @@ endif
 #     test2010_119.f90
 
 
+# DQ (3/1/2017): If using Clang or Intel compilers then these variable might not be set. So avoid
+# using GNU 5.4 compiler on Ubuntu system by mistake (see ROSE Matrix Testing for 2/28/2017).
+if USING_GNU_COMPILER
+
 if !ROSE_USING_GFORTRAN_VERSION_4_0
  # These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
    F90_TESTCODES_REQUIRED_TO_PASS += test2007_263.f90
@@ -437,6 +441,9 @@ if !ROSE_USING_GFORTRAN_VERSION_LATER_4_5
      test2011_37.f90 
 endif
 endif
+
+endif
+
 
 # DQ (4/9/2011): Insure++ has identified problems with these tests, great news but I am not prepared to fix 
 # them yet. Currently these fail for Insure++, they also report errors which will be valuable in identifing 
