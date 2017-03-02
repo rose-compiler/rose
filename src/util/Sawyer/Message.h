@@ -1920,6 +1920,9 @@ private:
     static Importance importanceFromString(const std::string&);
     static std::list<ControlTerm> parseImportanceList(const std::string &facilityName, const char* &input, bool isGlobal);
 
+    // Remove Facility objects that have apparently been destroyed
+    void eraseDestroyedNS();
+
 };
 
 
