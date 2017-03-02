@@ -11,6 +11,17 @@ class Map: public std::map<Key, T, Compare, Alloc> {
 public:
     typedef std::map<Key, T, Compare, Alloc> map_type;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(map_type);
+    }
+#endif
+
+public:
     // Constructors are the same as for std::map
     Map() {}
 

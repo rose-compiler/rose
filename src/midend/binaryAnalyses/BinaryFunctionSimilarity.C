@@ -37,7 +37,7 @@ FunctionSimilarity::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::FunctionSimilarity");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::FunctionSimilarity");
     }
 }
 
