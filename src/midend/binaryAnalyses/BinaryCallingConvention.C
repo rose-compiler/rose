@@ -628,7 +628,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // into a special CALLRET vertex (which is absent if there are no returns).
     typedef P2::DataFlow::DfCfg DfCfg;
     DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), partitioner.findPlaceholder(function->address()));
-#if 1 // DEBUGGING [Robb P Matzke 2017-02-24]
+#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
     {
         boost::filesystem::path debugDir = "./rose-debug/BinaryAnalysis/CallingConvention";
         boost::filesystem::create_directories(debugDir);
