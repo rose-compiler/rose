@@ -5,21 +5,27 @@
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
-#include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
 #include "BinaryBestMapAddress.h"                       // rose::BinaryAnalysis::BestMapAddress
-#include "BinaryCallingConvention.h"                    // rose::BinaryAnalysis::CallingConvention
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
 #include "BinaryFeasiblePath.h"                         // rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryLoader.h"                               // BinaryLoader
 #include "BinaryNoOperation.h"                          // rose::BinaryAnalysis::NoOperation
-#include "BinaryPointerDetection.h"                     // rose::BinaryAnalysis::PointerDetection
-#include "BinaryStackDelta.h"                           // rose::BinaryAnalysis::StackDelta
-#include "BinaryString.h"                               // rose::BinaryAnalysis::String
 #include "BinaryTaintedFlow.h"                          // rose::BinaryAnalysis::TaintedFlow
 #include "Disassembler.h"                               // rose::BinaryAnalysis::Disassembler
-#include "Partitioner.h"                                // rose::BinaryAnalysis::Partitioner
-#include <Partitioner2/Utility.h>                       // rose::BinaryAnalysis::Partitioner2
+#include "Partitioner.h"                                // old partitioner
+
+namespace rose {
+namespace BinaryAnalysis {
+    namespace CallingConvention { void initDiagnostics(); }
+    namespace InstructionSemantics2 { void initDiagnostics(); }
+    namespace Partitioner2 { void initDiagnostics(); }
+    namespace PointerDetection { void initDiagnostics(); }
+    namespace ReturnValueUsed { void initDiagnostics(); }
+    namespace StackDelta { void initDiagnostics(); }
+    namespace Strings { void initDiagnostics(); }
+} // namespace
+} // namespace
 #endif
 
 #include "Diagnostics.h"                                // rose::Diagnostics
