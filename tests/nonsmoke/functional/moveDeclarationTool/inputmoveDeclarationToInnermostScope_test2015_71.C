@@ -25,13 +25,17 @@ class Block
    };
 
 #if ((__GNUC__ == 4) && (__GNUC_MINOR__ == 8))
-uint64_t 
-#else
 unsigned long
+#else
+uint64_t 
 #endif
 getNumberOfZones(const vector<Block>& blocks) 
    {
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ == 8))
+     unsigned long numZones = 0;
+#else
      uint64_t numZones = 0;
+#endif
 
      BOOST_FOREACH(const Block& block, blocks) 
         {
