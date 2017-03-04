@@ -19,7 +19,7 @@ NoOperation::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::NoOperation");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::NoOperation");
     }
 }
     
