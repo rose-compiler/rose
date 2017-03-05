@@ -81,7 +81,7 @@ P2::BasicBlock::Ptr isBasicBlock(const P2::ControlFlowGraph::Vertex &v) {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse the command-line to configure the partitioner engine, obtain the executable and its arguments, and generate a man
     // page, adjust global settings, etc. This demo tool has no switches of its own, which makes this even easier. For a
