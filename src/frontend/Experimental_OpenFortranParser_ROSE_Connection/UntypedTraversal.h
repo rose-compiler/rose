@@ -31,8 +31,6 @@ class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,S
     private:
 
       SgSourceFile* p_source_file;
-
-      static void initialize_global_scope(SgSourceFile* file);
   };
 
 } // namespace Fortran
