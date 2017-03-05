@@ -1007,3 +1007,13 @@ Using ssh to access files within emacs:
 SSH in emacs works!  Try this to open a file:
 
 C-x C-f /ssh:your_login@some_machine:/path/to/remote/file RET
+
+
+How to debug builtin function support:
+   1) It helps to increase the number of errors reported by EDG (see "DQ (1/21/2017): 
+      Increase the error limit" comment in error.c of EDG src directory).
+   2) Use:
+      ../../../../../tests/nonsmoke/functional/testTranslator -rose:skipfinalCompileStep -I. --edg:no_warnings test_algorithm_cxx11.pp.C -std=c++11 2>&1 | grep " __builtin" 
+      to generate list of missing functions.
+   3) Then generate the unique list to remove duplicates:
+      ../../../../../tests/nonsmoke/functional/testTranslator -rose:skipfinalCompileStep -I. --edg:no_warnings test_algorithm_cxx11.pp.C -std=c++11 2>&1 | grep " __builtin" | uniq > new_builtin_list
