@@ -87,6 +87,26 @@ std::map<SgScopeStatement*,SgStatement*> rose::representativeWhitespaceStatement
 std::map<SgStatement*,MacroExpansion*> rose::macroExpansionMap;
 
 
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
+Sawyer::Message::Facility rose::ir_node_mlog;
+
+void rose::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+       // printf ("In rose::initDiagnostics(): Calling Sawyer::Message::Facility() \n");
+          ir_node_mlog = Sawyer::Message::Facility("rose_ir_node", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(ir_node_mlog);
+       // printf ("In rose::initDiagnostics(): DONE Calling Sawyer::Message::Facility() \n");
+        }
+   }
+
+
 // DQ (4/17/2010): This function must be defined if C++ support in ROSE is disabled.
 std::string edgVersionString()
    {

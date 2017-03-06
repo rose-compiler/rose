@@ -210,6 +210,12 @@ namespace rose
 
        // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
           extern std::map<SgStatement*,MacroExpansion*> macroExpansionMap;
+
+
+  // DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
+     extern Sawyer::Message::Facility ir_node_mlog;
+
+     void initDiagnostics();
    };
 
 

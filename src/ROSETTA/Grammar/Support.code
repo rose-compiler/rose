@@ -8453,7 +8453,10 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
        // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
           case V_SgTemplateTypedefSymbol:
              {
-               printf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateParameter>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#if 1
+            // DQ (3/5/2017): Converted to use message logging, but the mechanism is not supported here yet.
+               mprintf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateParameter>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
                break;
              }
 #if 0
